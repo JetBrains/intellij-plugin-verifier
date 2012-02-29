@@ -39,7 +39,7 @@
               <packageName>com.jetbrains.pluginverifier</packageName>
             </manifest>
           </archive>
-          <finalName>${project.build.finalName}-for-jar-jar</finalName>
+          <finalName>for-jarjar-${project.build.finalName}</finalName>
         </configuration>
       </plugin>
 
