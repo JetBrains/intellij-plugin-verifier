@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier;
+package com.jetbrains.pluginverifier.util;
 
 import java.io.*;
 import java.util.Enumeration;
@@ -20,7 +20,7 @@ public class Unzip {
     out.close();
   }
 
-  public static void unzip(final File where, final ZipFile zipFile) throws IOException {
+  public static void unzipJars(final File where, final ZipFile zipFile) throws IOException {
     final Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
     while (entries.hasMoreElements()) {

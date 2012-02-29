@@ -50,10 +50,10 @@ public class VerifierUtil {
            "F".equals(type) || "S".equals(type) || "D".equals(type) || "C".equals(type); 
   }
 
-  public static boolean methodExists(final Resolver resolver, final String className, final String methodName) {
-    final Boolean cached = methodExistsCache.get(resolver.getName() + ";" + className + ";" + methodName);
+  public static boolean methodExists(final Resolver resolver, final String className, final String methodName, final String methodDesc) {
+    final Boolean cached = methodExistsCache.get(resolver.getName() + ";" + className + ";" + methodName + ";" + methodDesc);
     if (cached != null) return cached;
-    final boolean result =  resolver.findMethod(className, methodName) != null;
+    final boolean result =  resolver.findMethod(className, methodName, methodDesc) != null;
     methodExistsCache.put(resolver.getName() + ";" + className + ";" + methodName, result);
     return result;
   }

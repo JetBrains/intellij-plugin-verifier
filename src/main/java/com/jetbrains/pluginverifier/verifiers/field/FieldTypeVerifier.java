@@ -14,6 +14,6 @@ public class FieldTypeVerifier implements FieldVerifier {
     final String className = field.desc;
     if(className == null || VerifierUtil.isNativeType(className) ||
         VerifierUtil.classExists(resolver, className)) return;
-    register.registerError(resolver.getName(), clazz.name, "field "  + field.name + ", type " + className + " not found");
+    register.registerError(clazz.name, "field "  + field.name + ", type " + className + " not found");
   }
 }

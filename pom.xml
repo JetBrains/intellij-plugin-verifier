@@ -56,7 +56,16 @@
             <configuration>
               <output>${project.build.directory}/${project.build.finalName}.jar</output>
               <overwrite>true</overwrite>
-              <rules/>
+              <rules>
+                <rule>
+                  <pattern>org.objectweb.asm.**</pattern>
+                  <result>com.jetbrains.pluginverifier.internal.asm.@1</result>
+                </rule>
+                <rule>
+                  <pattern>org.apache.commons.**</pattern>
+                  <result>com.jetbrains.pluginverifier.internal.apachecommons.@1</result>
+                </rule>
+              </rules>
             </configuration>
           </execution>
         </executions>

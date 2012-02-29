@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier;
+package com.jetbrains.pluginverifier.util;
 
 import java.io.File;
 import java.io.IOException;

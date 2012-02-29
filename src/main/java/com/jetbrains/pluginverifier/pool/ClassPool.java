@@ -10,5 +10,7 @@ import java.util.Collection;
 public interface ClassPool {
   ClassNode getClassNode(String className);
   Collection<String> getAllClasses();
-  public String getName();
+  String getMoniker();
+
+  boolean isEmpty();
 }

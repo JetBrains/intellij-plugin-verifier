@@ -13,6 +13,6 @@ public class TypeInstructionVerifier implements InstructionVerifier {
     if (!(instr instanceof TypeInsnNode)) return;
     final String className = ((TypeInsnNode)instr).desc;
     if(className == null || VerifierUtil.classExists(resolver, className)) return;
-    register.registerError(resolver.getName(), clazz.name + "." + method.name, "class " + className + " not found");
+    register.registerError(clazz.name + "." + method.name, "class " + className + " not found");
   }
 }

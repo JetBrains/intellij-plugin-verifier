@@ -13,7 +13,7 @@ public class InterfacesVerifier implements ClassVerifier {
     for (Object o : clazz.interfaces) {
       final String iface = (String)o;
       if(!VerifierUtil.classExists(resolver, iface, true)) {
-        register.registerError(resolver.getName(), clazz.name, "implemented interface " + iface + " not found");
+        register.registerError(clazz.name, "implemented interface " + iface + " not found");
         return;
       }
     }

@@ -14,7 +14,7 @@ public class SuperClassVerifier implements ClassVerifier {
   public void verify(final ClassNode clazz, final Resolver resolver, final ErrorRegister register) {
     final String className = clazz.superName;
     if(!VerifierUtil.classExists(resolver, className, false))  {
-      register.registerError(resolver.getName(), clazz.name, "super class " + className + " not found");
+      register.registerError(clazz.name, "super class " + className + " not found");
       return;
     }
     if ((clazz.access & Opcodes.ACC_ABSTRACT) != 0) return;
@@ -22,9 +22,9 @@ public class SuperClassVerifier implements ClassVerifier {
     for (Object o : superClass.methods) {
       final MethodNode method = (MethodNode)o;
       if (VerifierUtil.isAbstract(method)) {
-        final MethodNode impl = resolver.findMethod(clazz.name, method.name);
+        final MethodNode impl = resolver.findMethod(clazz.name, method.name, method.desc);
         if (impl == null) {
-          register.registerError(resolver.getName(), clazz.name, "abstract method " + method.name + "not implemented");
+          register.registerError(clazz.name, "abstract method " + method.name + "not implemented");
         }
       }
     }

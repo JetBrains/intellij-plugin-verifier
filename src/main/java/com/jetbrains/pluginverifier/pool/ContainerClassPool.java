@@ -33,7 +33,21 @@ public class ContainerClassPool implements ClassPool {
     return result;
   }
 
-  public String getName() {
+  public String getMoniker() {
     return myName;
+  }
+
+  public List<ClassPool> getPools() {
+    return myPools;
+  }
+
+  @Override
+  public boolean isEmpty() {
+    for (ClassPool pool : myPools) {
+      if (!pool.isEmpty())
+        return false;
+    }
+
+    return true;
   }
 }

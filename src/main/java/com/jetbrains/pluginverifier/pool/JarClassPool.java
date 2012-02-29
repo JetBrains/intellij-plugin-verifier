@@ -21,11 +21,11 @@ public class JarClassPool implements ClassPool {
   private final JarFile myJarFile;
   private final Map<String, SoftReference<ClassNode>> myClassMap = new HashMap<String, SoftReference<ClassNode>>();
   private static final String CLASS_SUFFIX = ".class";
-  private final String myName;
+  private final String myMoniker;
 
-  public JarClassPool(final String name, final JarFile jarFile) throws IOException {
+  public JarClassPool(final JarFile jarFile) throws IOException {
     myJarFile = jarFile;
-    myName = name;
+    myMoniker = jarFile.getName();
     preloadClassMap();
   }
 
@@ -55,8 +55,13 @@ public class JarClassPool implements ClassPool {
     return myClassMap.keySet();
   }
 
-  public String getName() {
-    return myName;
+  public String getMoniker() {
+    return myMoniker;
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return myClassMap.isEmpty();
   }
 
   private ClassNode evaluateNode(final String className) {
