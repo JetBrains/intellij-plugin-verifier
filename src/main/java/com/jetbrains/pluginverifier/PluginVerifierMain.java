@@ -25,7 +25,7 @@ public class PluginVerifierMain {
       ErrorRegister errorRegister = new ErrorRegister() {
         @Override
         public void registerError(final String className, final String error) {
-          System.out.println("  ERROR  " + className.replace('/', '.') + ": " + error);
+          printError(className.replace('/', '.') + ": " + error);
           failed[0] = true;
         }
       };
@@ -37,5 +37,12 @@ public class PluginVerifierMain {
     System.out.println("Plugin verification took " + (System.currentTimeMillis() - start) + "ms");
     System.out.println(failed[0] ? "FAILED" : "OK");
     System.exit(failed[0] ? 1 : 0);
+  }
+
+  private static void printError(String errorMessage) {
+    if (System.getenv("TEAMCITY_VERSION") != null)
+      System.err.println("##teamcity[message text='" + errorMessage + "' status='ERROR']");
+    else
+      System.err.println("  ERROR  " + errorMessage);
   }
 }
