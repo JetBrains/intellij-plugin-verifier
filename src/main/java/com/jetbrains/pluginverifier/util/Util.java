@@ -1,7 +1,15 @@
 package com.jetbrains.pluginverifier.util;
 
+import com.jetbrains.pluginverifier.pool.ClassPool;
+import com.jetbrains.pluginverifier.pool.ContainerClassPool;
+import com.jetbrains.pluginverifier.pool.JarClassPool;
+
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.jar.JarFile;
 
 public class Util {
   public static void fail(String message) {
@@ -9,31 +17,29 @@ public class Util {
     System.exit(1);
   }
 
-  // From Guava lib
-  public static File createTempDir() {
-    File baseDir = new File(System.getProperty("java.io.tmpdir"));
-    String baseName = System.currentTimeMillis() + "-";
-
-    for (int counter = 0; counter < 10000; counter++) {
-      File tempDir = new File(baseDir, baseName + counter);
-      if (tempDir.mkdir()) {
-        return tempDir;
+  public static List<JarFile> getJars(File directory) throws IOException {
+    final File[] jars = directory.listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(final File dir, final String name) {
+        return name.equalsIgnoreCase(".jar");
       }
+    });
+
+    List<JarFile> jarFiles = new ArrayList<JarFile>(jars.length);
+    for (File jar : jars) {
+      jarFiles.add(new JarFile(jar, false));
     }
 
-    throw new IllegalStateException("Failed to create directory");
+    return jarFiles;
   }
 
-  // From Guava lib
-  public static void createParentDirs(File file) throws IOException {
-    File parent = file.getCanonicalFile().getParentFile();
-    if (parent == null) {
-      return;
+  public static ClassPool makeClassPool(String moniker, List<JarFile> jars) throws IOException {
+    List<ClassPool> pool = new ArrayList<ClassPool>();
+
+    for (JarFile jar : jars) {
+      pool.add(new JarClassPool(jar));
     }
 
-    parent.mkdirs();
-    if (!parent.isDirectory()) {
-      throw new IOException("Unable to create parent directories of " + file);
-    }
+    return new ContainerClassPool(moniker, pool);
   }
 }

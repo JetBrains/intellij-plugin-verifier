@@ -1,10 +1,9 @@
 package com.jetbrains.pluginverifier.verifiers;
 
 import com.jetbrains.pluginverifier.ErrorRegister;
-import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
+import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.pool.ClassPool;
-import com.jetbrains.pluginverifier.pool.Resolver;
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
 import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier;
 import com.jetbrains.pluginverifier.verifiers.instruction.InstructionVerifier;
@@ -18,18 +17,16 @@ import java.util.Iterator;
  * @author Dennis.Ushakov
  */
 public class ReferencesVerifier implements Verifier {
-  private final Resolver myResolver;
-  private final VerificationContext myContext;
   private final ErrorRegister myErrors;
+  private final IdeaPlugin myPlugin;
 
-  public ReferencesVerifier(VerificationContext context, ErrorRegister errors) {
-    myContext = context;
+  public ReferencesVerifier(IdeaPlugin plugin, ErrorRegister errors) {
+    myPlugin = plugin;
     myErrors = errors;
-    myResolver = new Resolver(context.getIdeaClasses().getMoniker(), context.getPluginClasses(), context.getIdeaClasses());
   }
 
   public void verify() {
-    final ClassPool pluginPool = myContext.getPluginClasses();
+    final ClassPool pluginPool = myPlugin.getClassPool();
 
     final Collection<String> classes = pluginPool.getAllClasses();
     for (String className : classes) {
@@ -46,7 +43,7 @@ public class ReferencesVerifier implements Verifier {
 
   private void verifyClass(final ClassNode node) {
     for (ClassVerifier verifier : Verifiers.getClassVerifiers()) {
-      verifier.verify(node, myResolver, myErrors);
+      verifier.verify(node, myPlugin.getResolver(), myErrors);
     }
 
     for (Object o : node.methods) {
@@ -62,13 +59,13 @@ public class ReferencesVerifier implements Verifier {
 
   private void verifyField(final ClassNode node, final FieldNode method) {
     for (FieldVerifier verifier : Verifiers.getFieldVerifiers()) {
-      verifier.verify(node, method, myResolver, myErrors);
+      verifier.verify(node, method, myPlugin.getResolver(), myErrors);
     }
   }
 
   private void verifyMethod(final ClassNode node, final MethodNode method) {
     for (MethodVerifier verifier : Verifiers.getMemberVerifiers()) {
-      verifier.verify(node, method, myResolver, myErrors);
+      verifier.verify(node, method, myPlugin.getResolver(), myErrors);
     }
 
     final InsnList instructions = method.instructions;
@@ -80,7 +77,7 @@ public class ReferencesVerifier implements Verifier {
 
   private void verifyInstruction(final ClassNode node, final MethodNode method, final AbstractInsnNode instruction) {
     for (InstructionVerifier verifier : Verifiers.getInstructionVerifiers()) {
-      verifier.verify(node, method, instruction, myResolver, myErrors);
+      verifier.verify(node, method, instruction, myPlugin.getResolver(), myErrors);
     }
   }
 }

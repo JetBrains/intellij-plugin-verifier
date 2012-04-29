@@ -1,9 +1,11 @@
 package com.jetbrains.pluginverifier;
 
-import com.jetbrains.pluginverifier.pool.ClassPool;
-import com.jetbrains.pluginverifier.pool.ContainerClassPool;
-import com.jetbrains.pluginverifier.util.*;
+import com.jetbrains.pluginverifier.domain.Idea;
+import com.jetbrains.pluginverifier.domain.IdeaPlugin;
+import com.jetbrains.pluginverifier.domain.JDK;
+import com.jetbrains.pluginverifier.util.Util;
 import org.apache.commons.cli.*;
+import org.jdom.JDOMException;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,10 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PluginVerifierOptions {
-  private final VerificationContext[] myContexts;
+  private final IdeaPlugin[] myContexts;
   private final String[] myPrefixesToSkipForDuplicateClassesCheck;
 
-  public PluginVerifierOptions(final VerificationContext[] contexts, final String[] prefixesToSkipForDuplicateClassesCheck) {
+  public PluginVerifierOptions(final IdeaPlugin[] contexts, final String[] prefixesToSkipForDuplicateClassesCheck) {
     myContexts = contexts;
     myPrefixesToSkipForDuplicateClassesCheck = prefixesToSkipForDuplicateClassesCheck;
   }
@@ -27,7 +29,7 @@ public class PluginVerifierOptions {
     return options;
   }
 
-  public static PluginVerifierOptions parseOpts(final String[] args) throws IOException {
+  public static PluginVerifierOptions parseOpts(final String[] args) throws IOException, JDOMException {
     if (args.length < 2) {
       return null;
     }
@@ -58,37 +60,23 @@ public class PluginVerifierOptions {
       Util.fail("runtime directory is not found");
     }
 
+    final JDK jdk = new JDK(runtimeDirectory);
+
     final String pluginDir = freeArgs[0];
 
-    final List<ClassPool> ideaPools = new ArrayList<ClassPool>();
+    final List<IdeaPlugin> result = new ArrayList<IdeaPlugin>();
 
     for (int i = 1; i < freeArgs.length; i++) {
       final File ideaDirectory = new File(freeArgs[i]);
-      final String moniker = ideaDirectory.getPath();
 
       if (!ideaDirectory.exists() || !ideaDirectory.isDirectory()) {
-        System.err.println("Input directory " + moniker + " is not found");
+        System.err.println("Input directory " + ideaDirectory + " is not found");
       }
 
-      ArrayList<ClassPool> jars = new ArrayList<ClassPool>();
-      JarDiscovery.createJarPoolsFromIdeaDir(moniker, ideaDirectory, jars);
-      if (jars.size() == 0) {
-        Util.fail("Nothing discovered under " + moniker + " directory");
-      }
+      final Idea idea = new Idea(ideaDirectory, jdk);
+      final IdeaPlugin ideaPlugin = JarDiscovery.createIdeaPlugin(new File(pluginDir), idea);
 
-      JarDiscovery.createJarPoolsFromDirectory(runtimeDirectory.getPath(), runtimeDirectory, jars, true);
-
-      ideaPools.add(new ContainerClassPool(moniker, jars));
-    }
-
-    final ClassPool pluginPool = JarDiscovery.createPluginPool(new File(pluginDir));
-    if (pluginPool.isEmpty()) {
-      Util.fail("No classes discovered in plugin");
-    }
-
-    final VerificationContext[] result = new VerificationContext[ideaPools.size()];
-    for (int i = 0; i < ideaPools.size(); i++) {
-      result[i] = new VerificationContext(pluginPool, ideaPools.get(i));
+      result.add(ideaPlugin);
     }
 
     final String[] prefixesToSkipDupCheck;
@@ -99,7 +87,7 @@ public class PluginVerifierOptions {
     else
       prefixesToSkipDupCheck = new String[0];
 
-    return new PluginVerifierOptions(result, prefixesToSkipDupCheck);
+    return new PluginVerifierOptions(result.toArray(new IdeaPlugin[result.size()]), prefixesToSkipDupCheck);
   }
 
   public static void printHelp() {
@@ -107,7 +95,7 @@ public class PluginVerifierOptions {
     formatter.printHelp("verifier [options] PluginZip IdeaDirectory [IdeaDirectory]*", createCommandLineOptions());
   }
 
-  public VerificationContext[] getContexts() {
+  public IdeaPlugin[] getContexts() {
     return myContexts;
   }
 

@@ -51,6 +51,11 @@ public class JarClassPool implements ClassPool {
     return node;
   }
 
+  @Override
+  public String getClassLocationMoniker(final String className) {
+    return myMoniker;
+  }
+
   public Collection<String> getAllClasses() {
     return myClassMap.keySet();
   }

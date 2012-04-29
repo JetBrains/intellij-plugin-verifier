@@ -1,34 +1,33 @@
 package com.jetbrains.pluginverifier.verifiers;
 
 import com.jetbrains.pluginverifier.ErrorRegister;
-import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
-import com.jetbrains.pluginverifier.pool.ClassPool;
-import com.jetbrains.pluginverifier.pool.Resolver;
+import com.jetbrains.pluginverifier.domain.IdeaPlugin;
+import com.jetbrains.pluginverifier.resolvers.Resolver;
 
 public class DuplicateClassesVerifier implements Verifier {
-  private VerificationContext myContext;
   private final ErrorRegister myErrorRegister;
   private final String[] myPrefixesToSkipForDuplicateClassesCheck;
+  private final IdeaPlugin myPlugin;
 
-  public DuplicateClassesVerifier(final VerificationContext context, final ErrorRegister errorRegister, final String[] prefixesToSkipForDuplicateClassesCheck) {
-    myContext = context;
+  public DuplicateClassesVerifier(final IdeaPlugin plugin, final ErrorRegister errorRegister, final String[] prefixesToSkipForDuplicateClassesCheck) {
+    myPlugin = plugin;
     myErrorRegister = errorRegister;
     myPrefixesToSkipForDuplicateClassesCheck = prefixesToSkipForDuplicateClassesCheck;
   }
 
   @Override
   public void verify() {
-    Resolver ideaResolver = new Resolver(myContext.getIdeaClasses().getMoniker(), myContext.getIdeaClasses());
+    final Resolver resolverOfDependencies = myPlugin.getResolverOfDependecies();
 
-    for (String className : myContext.getPluginClasses().getAllClasses()) {
+    for (String className : myPlugin.getClassPool().getAllClasses()) {
       if (skip(className)) {
         continue;
       }
 
-      final ClassPool classPool = ideaResolver.getClassPool(className);
-      if (classPool != null) {
-        myErrorRegister.registerError(className, "duplicate class in IDEA classes (" + classPool.getMoniker() + ")");
+      final String moniker = resolverOfDependencies.getClassLocationMoniker(className);
+      if (moniker != null) {
+        myErrorRegister.registerError(className, "duplicate class in IDEA classes (" + moniker + ")");
       }
     }
   }

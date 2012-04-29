@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.util;
 
+import com.google.common.io.Files;
+
 import java.io.*;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
@@ -34,7 +36,7 @@ public class Unzip {
       }
 
       final File entryFile = new File(where, name);
-      Util.createParentDirs(entryFile);
+      Files.createParentDirs(entryFile);
 
       System.out.println("Extracting jar file: " + name);
       copyInputStream(zipFile.getInputStream(entry), new BufferedOutputStream(new FileOutputStream(entryFile)));

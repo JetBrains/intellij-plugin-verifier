@@ -9,6 +9,7 @@ import java.util.Collection;
  */
 public interface ClassPool {
   ClassNode getClassNode(String className);
+  String getClassLocationMoniker(String className);
   Collection<String> getAllClasses();
   String getMoniker();
 

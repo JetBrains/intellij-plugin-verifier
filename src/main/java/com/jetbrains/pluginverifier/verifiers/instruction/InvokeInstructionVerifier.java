@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.instruction;
 
 import com.jetbrains.pluginverifier.ErrorRegister;
-import com.jetbrains.pluginverifier.pool.Resolver;
+import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;

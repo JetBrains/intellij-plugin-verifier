@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.field;
 
 import com.jetbrains.pluginverifier.ErrorRegister;
-import com.jetbrains.pluginverifier.pool.Resolver;
+import com.jetbrains.pluginverifier.resolvers.Resolver;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 

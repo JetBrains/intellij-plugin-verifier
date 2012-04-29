@@ -1,21 +1,22 @@
 package com.jetbrains.pluginverifier;
 
-import com.jetbrains.pluginverifier.pool.ClassPool;
+import com.jetbrains.pluginverifier.domain.Idea;
+import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 
 public class VerificationContext {
-  private ClassPool myIdeaClasses;
-  private ClassPool myPluginClasses;
+  private Idea myIdea;
+  private IdeaPlugin myPlugin;
 
-  public VerificationContext(final ClassPool pluginClasses, final ClassPool ideaClasses) {
-    myIdeaClasses = ideaClasses;
-    myPluginClasses = pluginClasses;
+  public VerificationContext(final Idea idea, final IdeaPlugin plugin) {
+    myIdea = idea;
+    myPlugin = plugin;
   }
 
-  public ClassPool getIdeaClasses() {
-    return myIdeaClasses;
+  public Idea getIdea() {
+    return myIdea;
   }
 
-  public ClassPool getPluginClasses() {
-    return myPluginClasses;
+  public IdeaPlugin getPlugin() {
+    return myPlugin;
   }
 }

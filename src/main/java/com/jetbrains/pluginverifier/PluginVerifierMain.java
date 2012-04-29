@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier;
 
+import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.verifiers.DuplicateClassesVerifier;
 import com.jetbrains.pluginverifier.verifiers.ReferencesVerifier;
 
@@ -13,14 +14,14 @@ public class PluginVerifierMain {
       System.exit(1);
     }
 
-    final VerificationContext[] contexts = options.getContexts();
+    final IdeaPlugin[] contexts = options.getContexts();
 
     System.out.println("Reading directories took " + (System.currentTimeMillis() - start) + "ms");
     start = System.currentTimeMillis();
 
     final boolean[] failed = {false};
-    for (VerificationContext context : contexts) {
-      System.out.println("Verifying " + context.getPluginClasses().getMoniker() + " against " + context.getIdeaClasses().getMoniker());
+    for (IdeaPlugin plugin : contexts) {
+      System.out.println("Verifying " + plugin.getId() + " against " + plugin.getIdea().getMoniker());
 
       ErrorRegister errorRegister = new ErrorRegister() {
         @Override
@@ -30,8 +31,8 @@ public class PluginVerifierMain {
         }
       };
 
-      new ReferencesVerifier(context, errorRegister).verify();
-      new DuplicateClassesVerifier(context, errorRegister, options.getPrefixesToSkipForDuplicateClassesCheck()).verify();
+      new ReferencesVerifier(plugin, errorRegister).verify();
+      new DuplicateClassesVerifier(plugin, errorRegister, options.getPrefixesToSkipForDuplicateClassesCheck()).verify();
     }
 
     System.out.println("Plugin verification took " + (System.currentTimeMillis() - start) + "ms");
