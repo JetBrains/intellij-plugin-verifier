@@ -25,7 +25,14 @@ public class JDK {
   }
 
   private void collectJars(File dir) throws IOException {
-    myJars.addAll(Util.getJars(dir));
+    final List<JarFile> jars = Util.getJars(dir);
+
+    for (JarFile jar : jars) {
+      final String jarName = jar.getName().toLowerCase();
+
+      if (jarName.equals("rt.jar") || jarName.equals("tools.jar") || jarName.equals("classes.jar"))
+        myJars.add(jar);
+    }
 
     final File[] files = dir.listFiles();
     if (files == null)

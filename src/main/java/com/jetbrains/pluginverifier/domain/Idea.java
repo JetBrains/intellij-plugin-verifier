@@ -51,6 +51,13 @@ public class Idea {
     final File lib = new File(ideaDir, "lib");
     final List<JarFile> jars = Util.getJars(lib);
 
+    for (JarFile jar : new ArrayList<JarFile>(jars)) {
+      final String jarName = jar.getName().toLowerCase();
+
+      if (jarName.endsWith("_rt.jar") || jarName.endsWith("javac2.jar"))
+        jars.remove(jar);
+    }
+
     return Util.makeClassPool(ideaDir.getPath(), jars);
   }
 

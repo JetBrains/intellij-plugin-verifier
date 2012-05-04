@@ -25,7 +25,17 @@ public class JarDiscovery {
       return null;
     }
 
-    return new IdeaPlugin(idea, realDir);
+    final String[] topLevelList = realDir.list();
+    assert topLevelList != null;
+
+    if (topLevelList.length == 0)
+      Util.fail("Plugin root is empty");
+
+    if (topLevelList.length > 1) {
+      Util.fail("Plugin root contains more than one element");
+    }
+
+    return new IdeaPlugin(idea, new File(realDir, topLevelList[0]));
   }
 
   private static File unzipPlugin(final File zipFile) throws IOException {

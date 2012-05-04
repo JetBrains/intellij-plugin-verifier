@@ -58,8 +58,14 @@ public class IdeaPlugin {
   private static String getPluginId(Document pluginXml) {
     final String id = pluginXml.getRootElement().getChildText("id");
 
-    if (id == null || id.length() == 0)
-      throw new RuntimeException("No id in plugin.xml");
+    if (id == null || id.length() == 0) {
+      final String name = pluginXml.getRootElement().getChildText("name");
+
+      if (name == null || name.length() == 0)
+        throw new RuntimeException("No id or name in plugin.xml");
+
+      return name;
+    }
 
     return id;
   }

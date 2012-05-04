@@ -21,7 +21,7 @@ public class Util {
     final File[] jars = directory.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(final File dir, final String name) {
-        return name.equalsIgnoreCase(".jar");
+        return name.toLowerCase().endsWith(".jar");
       }
     });
 
