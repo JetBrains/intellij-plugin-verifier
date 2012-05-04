@@ -28,7 +28,7 @@ public class JDK {
     final List<JarFile> jars = Util.getJars(dir);
 
     for (JarFile jar : jars) {
-      final String jarName = jar.getName().toLowerCase();
+      final String jarName = new File(jar.getName()).getName().toLowerCase().toLowerCase();
 
       if (jarName.equals("rt.jar") || jarName.equals("tools.jar") || jarName.equals("classes.jar"))
         myJars.add(jar);
