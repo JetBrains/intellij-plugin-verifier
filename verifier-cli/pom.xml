@@ -82,6 +82,18 @@
                   <pattern>org.apache.commons.**</pattern>
                   <result>com.jetbrains.pluginverifier.internal.apachecommons.@1</result>
                 </rule>
+                <rule>
+                  <pattern>org.jdom.**</pattern>
+                  <result>com.jetbrains.pluginverifier.internal.jdom.@1</result>
+                </rule>
+                <rule>
+                  <pattern>org.intellij.lang.annotations.**</pattern>
+                  <result>com.jetbrains.pluginverifier.internal.intellijanno.@1</result>
+                </rule>
+                <rule>
+                  <pattern>org.jetbrains.annotations.**</pattern>
+                  <result>com.jetbrains.pluginverifier.internal.jetbrainsanno.@1</result>
+                </rule>
               </rules>
             </configuration>
           </execution>
