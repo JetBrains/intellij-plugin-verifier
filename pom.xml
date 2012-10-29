@@ -22,4 +22,16 @@
     <maven.compiler.target>1.6</maven.compiler.target>
   </properties>
 
+  <distributionManagement>
+    <repository>
+      <id>jetbrains-intellij-plugin-verifier</id>
+      <name>repository.jetbrains.com-releases</name>
+      <url>http://repository.jetbrains.com/intellij-plugin-verifier</url>
+    </repository>
+    <snapshotRepository>
+      <id>jetbrains-intellij-plugin-verifier</id>
+      <name>repository.jetbrains.com-snapshots</name>
+      <url>http://repository.jetbrains.com/intellij-plugin-verifier</url>
+    </snapshotRepository>
+  </distributionManagement>
 </project>

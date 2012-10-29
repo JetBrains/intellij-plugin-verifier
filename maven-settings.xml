@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd"
+          xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <mirrors>
+    <mirror>
+      <mirrorOf>central</mirrorOf>
+      <name>repo</name>
+      <url>http://repository.jetbrains.com/remote-repos</url>
+      <id>repo</id>
+    </mirror>
+  </mirrors>
+
+  <servers>
+    <server>
+      <id>jetbrains-intellij-plugin-verifier</id>
+      <username>tc-plugin-verifier</username>
+      <password>${tc-plugin-verifier.password}</password>
+    </server>
+  </servers>
+</settings>
