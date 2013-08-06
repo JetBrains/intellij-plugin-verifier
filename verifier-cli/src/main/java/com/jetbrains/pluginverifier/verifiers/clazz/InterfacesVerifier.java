@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.verifiers.clazz;
 
-import com.jetbrains.pluginverifier.problems.SuperClassNotFoundProblem;
+import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
+import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.util.Consumer;
-import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -15,7 +15,7 @@ public class InterfacesVerifier implements ClassVerifier {
     for (Object o : clazz.interfaces) {
       final String iface = (String)o;
       if(!VerifierUtil.classExists(resolver, iface, true)) {
-        errorHandler.consume(new SuperClassNotFoundProblem(clazz.name, iface));
+        errorHandler.consume(new ClassNotFoundProblem(clazz.name, iface));
         return;
       }
     }

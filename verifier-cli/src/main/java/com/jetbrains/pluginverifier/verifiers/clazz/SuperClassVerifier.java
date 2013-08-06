@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.verifiers.clazz;
 
+import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem;
-import com.jetbrains.pluginverifier.problems.SuperClassNotFoundProblem;
+import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.util.Consumer;
-import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
@@ -17,7 +17,7 @@ public class SuperClassVerifier implements ClassVerifier {
   public void verify(final ClassNode clazz, final Resolver resolver, final Consumer<Problem> errorHandler) {
     final String superClassName = clazz.superName;
     if(!VerifierUtil.classExists(resolver, superClassName, false))  {
-      errorHandler.consume(new SuperClassNotFoundProblem(clazz.name, superClassName));
+      errorHandler.consume(new ClassNotFoundProblem(clazz.name, superClassName));
       return;
     }
 

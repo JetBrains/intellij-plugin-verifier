@@ -14,6 +14,11 @@ public class ClassNotFoundProblem extends Problem {
 
   }
 
+  public ClassNotFoundProblem(@NotNull String className, String unknownClass) {
+    setLocation(new ProblemLocation(className));
+    myUnknownClass = unknownClass;
+  }
+
   public ClassNotFoundProblem(@NotNull String className, @NotNull String methodDescr, String unknownClass) {
     setLocation(new ProblemLocation(className, methodDescr));
     myUnknownClass = unknownClass;
