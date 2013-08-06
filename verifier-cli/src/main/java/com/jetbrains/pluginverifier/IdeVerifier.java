@@ -100,37 +100,7 @@ public class IdeVerifier {
   private static void storeResults(File file, String build, Map<Integer, List<Problem>> results) throws IOException, JAXBException {
     System.out.print("Saving results to " + file);
 
-    Writer writer = new BufferedWriter(new FileWriter(file), 1024*1024) ;
-
-    Marshaller marshaller = ProblemUtils.createMarshaller();
-    marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
-    marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-
-    try {
-      writer.append("<results ide=\"").append(build).append("\">\n");
-
-      for (Map.Entry<Integer, List<Problem>> entry : results.entrySet()) {
-        List<Problem> problemList = entry.getValue();
-        if (problemList.isEmpty()) {
-          writer.append("<update id=\"").append(String.valueOf(entry.getKey())).append("\" />\n");
-        }
-        else {
-          writer.append("<update id=\"").append(String.valueOf(entry.getKey())).append("\">\n");
-
-          for (Problem problem : problemList) {
-            marshaller.marshal(problem, writer);
-            writer.append('\n');
-          }
-
-          writer.append("</update>\n");
-        }
-      }
-
-      writer.append("</results>");
-    }
-    finally {
-      writer.close();
-    }
+    ProblemUtils.saveProblems(file, build, results);
 
     System.out.println("  done");
   }

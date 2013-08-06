@@ -3,23 +3,13 @@ package com.jetbrains.pluginverifier.utils;
 import com.jetbrains.pluginverifier.problems.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ProblemUtils {
@@ -34,6 +24,8 @@ public class ProblemUtils {
                                              OverridingFinalMethodProblem.class,
                                              SuperClassNotFoundProblem.class,
                                              DuplicateClassProblem.class,
+                                             ResultsElement.class,
+                                             UpdateElement.class,
                                              FailedToReadClassProblem.class);
     }
     catch (JAXBException e) {
@@ -91,74 +83,59 @@ public class ProblemUtils {
     }
   }
 
-  public static Map<Integer, Set<Problem>> loadProblems(InputStream inputStream, @Nullable AtomicReference<String> ideIdRef) throws IOException {
-    Document document;
+  public static void saveProblems(@NotNull File output, @NotNull String ide, @NotNull Map<Integer, List<Problem>> problems)
+    throws IOException {
+    ResultsElement resultsElement = new ResultsElement();
+    resultsElement.setIde(ide);
+
+    for (Map.Entry<Integer, List<Problem>> entry : problems.entrySet()) {
+      UpdateElement updateElement = new UpdateElement();
+      updateElement.setId(entry.getKey());
+      updateElement.setProblem(new ArrayList<Problem>(entry.getValue()));
+
+      resultsElement.getUpdate().add(updateElement);
+    }
+
+    Marshaller marshaller = createMarshaller();
 
     try {
-      document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputStream);
-    }
-    catch (SAXException e) {
-      throw new IOException("Failed to parse problem list", e);
-    }
-    catch (ParserConfigurationException e) {
-      throw new IOException("Failed to parse problem list", e);
-    }
+      marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
+      marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 
-    Element root = document.getDocumentElement();
-    if (!"results".equals(root.getTagName())) {
-      throw new IOException("Invalid results file: root element must be 'results'");
+      marshaller.marshal(resultsElement, output);
     }
+    catch (JAXBException e) {
+      throw new IOException(e);
+    }
+  }
 
-    String ideId = root.getAttribute("ide");
-    if (ideId == null || ideId.isEmpty()) {
-      throw new IOException("Invalid result file: 'ide' attribute is missing");
-    }
+  public static @NotNull Map<Integer, Set<Problem>> loadProblems(InputStream inputStream, @Nullable AtomicReference<String> ideIdRef) throws IOException {
+    ResultsElement resultsElement = loadProblems(inputStream);
 
     if (ideIdRef != null) {
-      ideIdRef.set(ideId);
+      ideIdRef.set(resultsElement.getIde());
     }
-
-    NodeList pluginBuilds = root.getElementsByTagName("update");
-
-    Unmarshaller unmarshaller = createUnmarshaller();
 
     Map<Integer, Set<Problem>> res = new HashMap<Integer, Set<Problem>>();
 
-    for (int i = 0; i < pluginBuilds.getLength(); i++) {
-      Element e = (Element)pluginBuilds.item(i);
-
-      String idAttribute = e.getAttribute("id");
-      if (idAttribute == null || idAttribute.isEmpty()) {
-        throw new IOException("Invalid result file: <build> element without 'id' attribute");
-      }
-
-      Integer buildId;
-      try {
-        buildId = Integer.parseInt(idAttribute);
-      }
-      catch (NumberFormatException e1) {
-        throw new IOException("Invalid result file: <build> element with invalid 'id' attribute: " + idAttribute);
-      }
-
-      Set<Problem> problemSet = new HashSet<Problem>();
-
-      NodeList problemNodes = e.getChildNodes();
-      for (int k = 0; k < problemNodes.getLength(); k++) {
-        Node problemNode = problemNodes.item(k);
-        if (problemNode instanceof Element) {
-          try {
-            problemSet.add((Problem)unmarshaller.unmarshal(problemNode));
-          }
-          catch (JAXBException e1) {
-            throw new IOException("Invalid result file: <build> element without 'id' attribute");
-          }
-        }
-      }
-
-      res.put(buildId, problemSet);
+    for (UpdateElement updateElement : resultsElement.getUpdate()) {
+      Set<Problem> set = updateElement.getProblem() == null || updateElement.getProblem().isEmpty() ? Collections.<Problem>emptySet() : new HashSet<Problem>(updateElement.getProblem());
+      res.put(updateElement.getId(), set);
     }
 
     return res;
+  }
+
+  public static ResultsElement loadProblems(InputStream inputStream) throws IOException {
+    Unmarshaller unmarshaller = createUnmarshaller();
+
+    try {
+      return (ResultsElement)unmarshaller.unmarshal(inputStream);
+
+    }
+    catch (JAXBException e) {
+      throw new IOException(e);
+    }
   }
 
 }
