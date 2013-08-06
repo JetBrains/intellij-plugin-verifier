@@ -1,10 +1,11 @@
 package com.jetbrains.pluginverifier.verifiers.instruction;
 
+import com.jetbrains.pluginverifier.pool.ResolverUtil;
+import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.MethodNotFoundProblem;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.util.Consumer;
 import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
@@ -25,10 +26,20 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
     if (invoke.owner.startsWith("java/dyn/"))
       return;
 
-    if (!VerifierUtil.methodExists(resolver, invoke.owner, invoke.name, invoke.desc)) {
-      register.consume(new MethodNotFoundProblem(clazz.name,
-                                                 method.name + method.desc,
-                                                 invoke.owner + '#' + invoke.name + invoke.desc));
+    String className = invoke.owner;
+
+    if (className.startsWith("[")) return;
+
+    ClassNode classNode = resolver.findClass(className);
+    if (classNode == null) {
+      register.consume(new ClassNotFoundProblem(clazz.name, method.name + method.desc, className));
+    }
+    else {
+      if (ResolverUtil.findMethod(resolver, classNode, invoke.name, invoke.desc) == null) {
+        register.consume(new MethodNotFoundProblem(clazz.name,
+                                                   method.name + method.desc,
+                                                   invoke.owner + '#' + invoke.name + invoke.desc));
+      }
     }
   }
 }

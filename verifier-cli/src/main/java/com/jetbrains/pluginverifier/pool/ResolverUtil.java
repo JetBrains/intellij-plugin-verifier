@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.pool;
 
 import com.jetbrains.pluginverifier.resolvers.Resolver;
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -17,25 +18,29 @@ public class ResolverUtil {
     }
 
     final ClassNode clazz = resolver.findClass(className);
-    if (clazz != null) {
-      for (Object o : clazz.methods) {
-        final MethodNode method = (MethodNode)o;
-        if (methodName.equals(method.name) && methodDesc.equals(method.desc)) {
-          return method;
-        }
-      }
+    if (clazz == null) return null;
 
-      if (clazz.superName != null) {
-        final MethodNode method = findMethod(resolver, clazz.superName, methodName, methodDesc);
-        if (method != null)
-          return method;
-      }
+    return findMethod(resolver, clazz, methodName, methodDesc);
+  }
 
-      for (Object anInterface : clazz.interfaces) {
-        final MethodNode method = findMethod(resolver, (String)anInterface, methodName, methodDesc);
-        if (method != null)
-          return method;
+  public static MethodNode findMethod(@NotNull Resolver resolver, @NotNull ClassNode clazz, @NotNull String methodName, @NotNull String methodDesc) {
+    for (Object o : clazz.methods) {
+      final MethodNode method = (MethodNode)o;
+      if (methodName.equals(method.name) && methodDesc.equals(method.desc)) {
+        return method;
       }
+    }
+
+    if (clazz.superName != null) {
+      final MethodNode method = findMethod(resolver, clazz.superName, methodName, methodDesc);
+      if (method != null)
+        return method;
+    }
+
+    for (Object anInterface : clazz.interfaces) {
+      final MethodNode method = findMethod(resolver, (String)anInterface, methodName, methodDesc);
+      if (method != null)
+        return method;
     }
 
     return null;
