@@ -41,6 +41,15 @@ public class Util {
     return new File(System.getProperty("user.home") + "/.pluginVerifier");
   }
 
+  public static File getPluginCacheDir() {
+    String pluginCacheDir = System.getProperty("verifier.plugin.cache.dir");
+    if (pluginCacheDir != null) {
+      return new File(pluginCacheDir);
+    }
+
+    return new File(getValidatorHome(), "cache");
+  }
+
   public static List<JarFile> getJars(File directory) throws IOException {
     final File[] jars = directory.listFiles(new FilenameFilter() {
       @Override

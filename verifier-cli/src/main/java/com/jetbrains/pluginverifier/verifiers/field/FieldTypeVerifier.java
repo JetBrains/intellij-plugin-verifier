@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.field;
 
-import com.jetbrains.pluginverifier.problems.UnknownTypeFieldProblem;
+import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
+import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.util.Consumer;
 import com.jetbrains.pluginverifier.problems.Problem;
@@ -17,6 +18,12 @@ public class FieldTypeVerifier implements FieldVerifier {
     if(className == null || VerifierUtil.isNativeType(className) ||
         VerifierUtil.classExists(resolver, className)) return;
 
-    register.consume(new UnknownTypeFieldProblem(clazz.name, field.name, className));
+    ClassNotFoundProblem problem = new ClassNotFoundProblem();
+    ProblemLocation location = new ProblemLocation(clazz.name);
+    location.setFieldName(field.name);
+    problem.setLocation(location);
+    problem.setUnknownClass(className);
+
+    register.consume(problem);
   }
 }

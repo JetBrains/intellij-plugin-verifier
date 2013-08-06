@@ -1,21 +1,24 @@
 package com.jetbrains.pluginverifier.problems;
 
-import com.jetbrains.pluginverifier.problems.ClassProblem;
+import com.jetbrains.pluginverifier.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
-public class DuplicateClassProblem extends ClassProblem {
+public class DuplicateClassProblem extends Problem {
   private String myMoniker;
+
+  private String myClassName;
 
   public DuplicateClassProblem() {
 
   }
 
   public DuplicateClassProblem(@NotNull String className, @NotNull String moniker) {
-    super(className);
     myMoniker = moniker;
+    myClassName = className;
+    setLocation(new ProblemLocation(className));
   }
 
   public String getMoniker() {
@@ -26,14 +29,16 @@ public class DuplicateClassProblem extends ClassProblem {
     myMoniker = moniker;
   }
 
-  @Override
-  public String getDescription() {
-    return "duplicated class (className=" + getClassNameHuman() + " location=" + myMoniker + ")";
+  public String getClassName() {
+    return myClassName;
   }
 
-  @NotNull
+  public void setClassName(String className) {
+    myClassName = className;
+  }
+
   @Override
-  public String evaluateUID() {
-    return evaluateUID(getClassName());
+  public String getDescription() {
+    return "duplicated class (className=" + MessageUtils.convertClassName(myClassName) + " location=" + myMoniker + ")";
   }
 }

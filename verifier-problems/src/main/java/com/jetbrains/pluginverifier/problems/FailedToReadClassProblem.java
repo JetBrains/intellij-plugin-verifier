@@ -1,29 +1,23 @@
 package com.jetbrains.pluginverifier.problems;
 
-import com.jetbrains.pluginverifier.problems.ClassProblem;
+import com.jetbrains.pluginverifier.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
-public class FailedToReadClassProblem extends ClassProblem {
+public class FailedToReadClassProblem extends Problem {
 
   public FailedToReadClassProblem() {
 
   }
 
   public FailedToReadClassProblem(@NotNull String className) {
-    super(className);
+    setLocation(new ProblemLocation(className));
   }
 
   @Override
   public String getDescription() {
-    return "failed to read class: " + getClassNameHuman();
-  }
-
-  @NotNull
-  @Override
-  public String evaluateUID() {
-    return evaluateUID(getClassName());
+    return "failed to read class: " + MessageUtils.convertClassName(getLocation().getClassName());
   }
 }

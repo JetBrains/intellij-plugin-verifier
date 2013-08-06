@@ -12,9 +12,7 @@ import java.net.URL;
 public class DownloadUtils {
 
   public static File getUpdate(int updateId) throws IOException {
-    File home = Util.getValidatorHome();
-
-    File downloadDir = new File(home, "cache");
+    File downloadDir = Util.getPluginCacheDir();
     if (!downloadDir.isDirectory()) {
       downloadDir.mkdirs();
       if (!downloadDir.isDirectory()) {

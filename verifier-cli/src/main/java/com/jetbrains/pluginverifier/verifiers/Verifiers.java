@@ -26,7 +26,7 @@ public class Verifiers {
   private static final FieldVerifier[] FIELD_VERIFIERS = new FieldVerifier[] {new FieldTypeVerifier()};
   private static final InstructionVerifier[] INSTRUCTION_VERIFIERS = new InstructionVerifier[] {new InvokeInstructionVerifier(), new TypeInstructionVerifier()};
 
-  public static final Verifier[] PLUGIN_VERIFIERS = new Verifier[]{new DuplicateClassesVerifier(), new ReferencesVerifier()};
+  public static final Verifier[] PLUGIN_VERIFIERS = new Verifier[]{new ReferencesVerifier()};
 
   public static ClassVerifier[] getClassVerifiers() {
     return CLASS_VERIFIERS;

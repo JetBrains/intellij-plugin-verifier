@@ -20,7 +20,7 @@ public class OverrideNonFinalVerifier implements MethodVerifier {
     final MethodNode superMethod = ResolverUtil.findMethod(resolver, superClass, method.name, method.desc);
     if (superMethod == null) return;
     if (VerifierUtil.isFinal(superMethod) && !VerifierUtil.isAbstract(superMethod)) {
-      register.consume(new OverridingFinalMethodProblem(clazz.name, method.name + method.desc));
+      register.consume(new OverridingFinalMethodProblem(clazz.name + '#' + method.name + method.desc));
     }
   }
 }

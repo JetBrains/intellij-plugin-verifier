@@ -84,6 +84,7 @@ public class IdeVerifier {
           System.out.println(problem.getDescription());
         }
       }
+      //if (id > 100) break;
     }
 
     System.out.println("Verification completed (" + ((System.currentTimeMillis() - time) / 1000) + "s)");

@@ -32,8 +32,6 @@ public class ProblemUtils {
                                              ClassNotFoundProblem.class,
                                              SuperMethodNotFoundProblem.class,
                                              OverridingFinalMethodProblem.class,
-                                             InterfaceNotFoundProblem.class,
-                                             UnknownTypeFieldProblem.class,
                                              SuperClassNotFoundProblem.class,
                                              DuplicateClassProblem.class,
                                              FailedToReadClassProblem.class);

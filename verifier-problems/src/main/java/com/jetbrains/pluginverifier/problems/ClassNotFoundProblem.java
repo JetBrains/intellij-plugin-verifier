@@ -1,13 +1,12 @@
 package com.jetbrains.pluginverifier.problems;
 
-import com.jetbrains.pluginverifier.problems.MethodProblem;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
-public class ClassNotFoundProblem extends MethodProblem {
+public class ClassNotFoundProblem extends Problem {
 
   private String myUnknownClass;
 
@@ -16,7 +15,7 @@ public class ClassNotFoundProblem extends MethodProblem {
   }
 
   public ClassNotFoundProblem(@NotNull String className, @NotNull String methodDescr, String unknownClass) {
-    super(className, methodDescr);
+    setLocation(new ProblemLocation(className, methodDescr));
     myUnknownClass = unknownClass;
   }
 
@@ -26,17 +25,11 @@ public class ClassNotFoundProblem extends MethodProblem {
 
   public void setUnknownClass(String unknownClass) {
     myUnknownClass = unknownClass;
-    cleanUid();
   }
 
   @Override
   public String getDescription() {
-    return "accessing to unknown class: " + MessageUtils.convertClassName(myUnknownClass) + " (from " + getMethodDescrHuman() + ')';
+    return "accessing to unknown class: " + MessageUtils.convertClassName(myUnknownClass) + " (from " + getLocation() + ')';
   }
 
-  @NotNull
-  @Override
-  public String evaluateUID() {
-    return evaluateUID(myUnknownClass, getMethodDescr());
-  }
 }

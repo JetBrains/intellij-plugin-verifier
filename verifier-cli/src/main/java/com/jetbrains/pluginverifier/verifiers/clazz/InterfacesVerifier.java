@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.clazz;
 
-import com.jetbrains.pluginverifier.problems.InterfaceNotFoundProblem;
+import com.jetbrains.pluginverifier.problems.SuperClassNotFoundProblem;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.util.Consumer;
 import com.jetbrains.pluginverifier.problems.Problem;
@@ -15,7 +15,7 @@ public class InterfacesVerifier implements ClassVerifier {
     for (Object o : clazz.interfaces) {
       final String iface = (String)o;
       if(!VerifierUtil.classExists(resolver, iface, true)) {
-        errorHandler.consume(new InterfaceNotFoundProblem(clazz.name, iface));
+        errorHandler.consume(new SuperClassNotFoundProblem(clazz.name, iface));
         return;
       }
     }
