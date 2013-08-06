@@ -32,22 +32,22 @@ public class IdeVerifier {
       Util.fail("failed to read IDE version ($IDE_HOME/build.txt)");
     }
 
-    List<Integer> pluginIds = new ArrayList<Integer>();
+    List<Integer> updateIds = new ArrayList<Integer>();
 
     URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/manager/allCompatibleUpdateIds/?build=" + build);
     String text = IOUtils.toString(url);
 
     for (String id : text.split("[,;\\s]+")) {
-      pluginIds.add(Integer.parseInt(id));
+      updateIds.add(Integer.parseInt(id));
     }
 
-    System.out.println(pluginIds.size() + " compatible plugins found");
+    System.out.println(updateIds.size() + " compatible plugins found");
 
     Map<Integer, List<Problem>> results = new TreeMap<Integer, List<Problem>>();
 
     long time = System.currentTimeMillis();
 
-    for (Integer id : pluginIds) {
+    for (Integer id : updateIds) {
       File update;
       try {
         update = DownloadUtils.getUpdate(id);
