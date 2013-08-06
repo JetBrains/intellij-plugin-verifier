@@ -30,7 +30,7 @@ public class ProblemUtils {
     try {
       JAXB_CONTEXT = JAXBContext.newInstance(MethodNotFoundProblem.class,
                                              ClassNotFoundProblem.class,
-                                             SuperMethodNotFoundProblem.class,
+                                             MethodNotImplementedProblem.class,
                                              OverridingFinalMethodProblem.class,
                                              SuperClassNotFoundProblem.class,
                                              DuplicateClassProblem.class,
