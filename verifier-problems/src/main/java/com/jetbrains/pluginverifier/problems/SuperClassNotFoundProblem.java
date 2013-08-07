@@ -31,4 +31,24 @@ public class SuperClassNotFoundProblem extends Problem {
   public void setSuperClassName(String superClassName) {
     mySuperClassName = superClassName;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof SuperClassNotFoundProblem)) return false;
+    if (!super.equals(o)) return false;
+
+    SuperClassNotFoundProblem problem = (SuperClassNotFoundProblem)o;
+
+    if (mySuperClassName != null ? !mySuperClassName.equals(problem.mySuperClassName) : problem.mySuperClassName != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (mySuperClassName != null ? mySuperClassName.hashCode() : 0);
+    return result;
+  }
 }

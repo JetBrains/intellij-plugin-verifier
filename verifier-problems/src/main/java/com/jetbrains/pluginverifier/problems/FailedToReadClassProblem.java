@@ -20,4 +20,5 @@ public class FailedToReadClassProblem extends Problem {
   public String getDescription() {
     return "failed to read class: " + MessageUtils.convertClassName(getLocation().getClassName());
   }
+
 }
