@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.pool;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -43,11 +44,10 @@ public class JarClassPool implements ClassPool {
   public ClassNode getClassNode(String className) {
     if (!myClassMap.containsKey(className)) return null;
     final SoftReference<ClassNode> ref = myClassMap.get(className);
-    final ClassNode node;
-    if (ref == null || ref.get() == null) {
+    ClassNode node;
+    if (ref == null || (node = ref.get()) == null) {
       node = evaluateNode(className);
-    } else {
-      node = ref.get();
+      myClassMap.put(className, new SoftReference<ClassNode>(node));
     }
     return node;
   }
@@ -74,6 +74,7 @@ public class JarClassPool implements ClassPool {
     return myClassMap.isEmpty();
   }
 
+  @Nullable
   private ClassNode evaluateNode(final String className) {
     try {
       final ZipEntry entry = myJarFile.getEntry(className + CLASS_SUFFIX);
