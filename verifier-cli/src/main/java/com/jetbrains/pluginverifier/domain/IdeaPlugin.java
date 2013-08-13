@@ -15,13 +15,13 @@ import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.tree.ClassNode;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -83,41 +83,37 @@ public class IdeaPlugin {
 
 
   public static IdeaPlugin createFromZip(Idea idea, File zipFile) throws IOException, BrokenPluginException {
-    JarFile rootJar = new JarFile(zipFile);
-    ZipEntry pluginXmlEntry = rootJar.getEntry(PLUGIN_XML_ENTRY_NAME);
-
-    if (pluginXmlEntry == null) {
-      Enumeration<JarEntry> entries = rootJar.entries();
-      while (entries.hasMoreElements()) {
-        JarEntry entry = entries.nextElement();
-        String name = entry.getName();
-        if (name.endsWith(PLUGIN_XML_ENTRY_NAME) && name.indexOf('/') == name.length() - PLUGIN_XML_ENTRY_NAME.length() - 1) {
-          pluginXmlEntry = entry;
-          break;
-        }
-      }
-    }
-
-    if (pluginXmlEntry != null) {
-      Document pluginXml = readPluginXml(rootJar.getInputStream(pluginXmlEntry));
-      return new IdeaPlugin(idea, zipFile.getPath(), new JarClassPool(rootJar), ClassPool.EMPTY, pluginXml);
-    }
-
-    rootJar.close();
-
     byte[] pluginXmlBytes = null;
     ClassPool pluginClassPool = null;
 
+    InMemoryJarClassPool zipRootPool = new InMemoryJarClassPool("PLUGIN ROOT");
+
     List<ClassPool> libraryPool = new ArrayList<ClassPool>();
 
-    final ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(zipFile));
+    final ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(zipFile)));
 
     try {
       ZipEntry entry;
       while ((entry = zipInputStream.getNextEntry()) != null) {
+        if (entry.isDirectory()) continue;
+
         String entryName = entry.getName();
 
-        if (entryName.endsWith(".jar") && !entry.isDirectory()) {
+        if (entryName.endsWith(".class")) {
+          ClassNode node = new ClassNode();
+          new ClassReader(zipInputStream).accept(node, 0);
+
+          zipRootPool.addClass(node);
+        }
+        if (isPluginXmlInRoot(entryName)) {
+          if (pluginXmlBytes != null) {
+            throw new BrokenPluginException("Plugin has more then one jars with plugin.xml");
+          }
+
+          pluginXmlBytes = IOUtils.toByteArray(zipInputStream);
+          pluginClassPool = zipRootPool;
+        }
+        else if (entryName.endsWith(".jar")) {
           ZipInputStream innerJar = new ZipInputStream(zipInputStream);
 
           InMemoryJarClassPool pool = new InMemoryJarClassPool(entryName);
@@ -148,12 +144,24 @@ public class IdeaPlugin {
       zipInputStream.close();
     }
 
-    Document pluginXml = null;
-    if (pluginXmlBytes != null) {
-      pluginXml = readPluginXml(new ByteArrayInputStream(pluginXmlBytes));
+    if (pluginXmlBytes == null) {
+      throw new BrokenPluginException("No plugin.xml found for plugin " + zipFile.getPath());
+    }
+    Document pluginXml = readPluginXml(new ByteArrayInputStream(pluginXmlBytes));
+
+    if (!zipRootPool.isEmpty()) {
+      if (pluginClassPool != zipRootPool) {
+        throw new BrokenPluginException("Plugin contains .class files in the root, but has no META-INF/plugin.xml");
+      }
     }
 
     return new IdeaPlugin(idea, zipFile.getPath(), pluginClassPool, ContainerClassPool.union(zipFile.getPath(), libraryPool), pluginXml);
+  }
+
+  private static boolean isPluginXmlInRoot(String entryName) {
+    if (entryName.equals(PLUGIN_XML_ENTRY_NAME)) return true;
+
+    return entryName.endsWith(PLUGIN_XML_ENTRY_NAME) && entryName.indexOf('/') == entryName.length() - PLUGIN_XML_ENTRY_NAME.length() - 1;
   }
 
   private static Document readPluginXml(InputStream inputStream) throws BrokenPluginException, IOException {

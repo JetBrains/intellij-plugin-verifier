@@ -30,6 +30,10 @@ public class InMemoryJarClassPool implements ClassPool {
     myClassMap.put(name, code);
   }
 
+  public void addClass(@NotNull ClassNode node) {
+    myClassMap.put(node.name, node);
+  }
+
   @Override
   public ClassNode getClassNode(String className) {
     Object obj = myClassMap.get(className);
