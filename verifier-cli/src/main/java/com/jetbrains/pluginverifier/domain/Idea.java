@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.resolvers.CombiningResolver;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.util.Util;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,12 +19,18 @@ public class Idea {
   private final File myIdeaDir;
   private final JDK myJdk;
   private final ClassPool myClassPool;
+  private final ClassPool myExternalClasspath;
   private final List<IdeaPlugin> myPlugins;
   private Resolver myResolver;
 
   public Idea(final File ideaDir, JDK jdk) throws IOException, JDOMException {
+    this(ideaDir, jdk, null);
+  }
+
+  public Idea(final File ideaDir, JDK jdk, @Nullable ClassPool classpath) throws IOException, JDOMException {
     myIdeaDir = ideaDir;
     myJdk = jdk;
+    myExternalClasspath = classpath;
     myClassPool = getIdeaClassPool(ideaDir);
     myPlugins = getIdeaPlugins();
   }
@@ -94,7 +101,14 @@ public class Idea {
 
   public Resolver getResolver() {
     if (myResolver == null) {
-      myResolver = new CombiningResolver(Arrays.asList(new ClassPoolResolver(getClassPool()), myJdk.getResolver()));
+      if (myExternalClasspath != null) {
+        myResolver = new CombiningResolver(Arrays.asList(new ClassPoolResolver(getClassPool()),
+                                                         myJdk.getResolver(),
+                                                         new ClassPoolResolver(myExternalClasspath)));
+      }
+      else {
+        myResolver = new CombiningResolver(Arrays.asList(new ClassPoolResolver(getClassPool()), myJdk.getResolver()));
+      }
     }
 
     return myResolver;

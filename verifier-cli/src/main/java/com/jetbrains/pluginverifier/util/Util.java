@@ -20,6 +20,7 @@ public class Util {
     .addOption("r", "runtime", true, "Path to directory containing Java runtime jars (usually rt.jar and tools.jar is sufficient)")
     .addOption("s", "skip-class-for-dup-check", true, "Class name prefixes to skip in duplicate classes check, delimited by ':'")
     .addOption("a", "check-all-plugins-with-ide", false, "Check IDE build with all compatible plugins")
+    .addOption("cp", "external-class-path", true, "External class path")
     .addOption("c", "compare-problem-list", false, "Compare problem lists (validator -c CURRENT_BUILD_NUMBER PREVIOUS_BUILD_NUMBER)");
 
   public static void fail(String message) {

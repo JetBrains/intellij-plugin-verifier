@@ -3,6 +3,9 @@ package com.jetbrains.pluginverifier;
 import com.jetbrains.pluginverifier.domain.Idea;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.domain.JDK;
+import com.jetbrains.pluginverifier.pool.ClassPool;
+import com.jetbrains.pluginverifier.pool.ContainerClassPool;
+import com.jetbrains.pluginverifier.pool.JarClassPool;
 import com.jetbrains.pluginverifier.util.*;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
@@ -13,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.jar.JarFile;
 
 public class PluginVerifierMain {
 
@@ -40,6 +44,21 @@ public class PluginVerifierMain {
     return new JDK(runtimeDirectory);
   }
 
+  private static ClassPool getExternalClassPath(CommandLine commandLine) throws IOException {
+    String[] values = commandLine.getOptionValues("cp");
+    if (values == null) {
+      return null;
+    }
+
+    List<ClassPool> pools = new ArrayList<ClassPool>(values.length);
+
+    for (String value : values) {
+      pools.add(new JarClassPool(new JarFile(value)));
+    }
+
+    return ContainerClassPool.union("external_class_path", pools);
+  }
+
   private static void checkIde(CommandLine commandLine) throws IOException, JDOMException {
     String[] freeArgs = commandLine.getArgs();
 
@@ -51,13 +70,15 @@ public class PluginVerifierMain {
 
     PluginVerifierOptions options = PluginVerifierOptions.parseOpts(commandLine);
 
+    ClassPool externalClassPath = getExternalClassPath(commandLine);
+
     for (String ideHome : freeArgs) {
       File ideToCheck = new File(ideHome);
       if (!ideToCheck.isDirectory()) {
         Util.fail("IDE home is not a directory: " + ideToCheck);
       }
 
-      Idea idea = new Idea(ideToCheck, jdk);
+      Idea idea = new Idea(ideToCheck, jdk, externalClassPath);
       IdeVerifier.verifyIde(idea, options);
     }
   }
@@ -119,7 +140,7 @@ public class PluginVerifierMain {
         Util.fail("Input directory is not found: " + ideaDirectory);
       }
 
-      Idea idea = new Idea(ideaDirectory, jdk);
+      Idea idea = new Idea(ideaDirectory, jdk, getExternalClassPath(commandLine));
 
       IdeaPlugin ideaPlugin;
       if (pluginToTest.matches("\\#\\d+")) {
