@@ -105,12 +105,14 @@ public class IdeaPlugin {
 
           zipRootPool.addClass(node);
         }
-        if (isPluginXmlInRoot(entryName)) {
-          if (pluginXmlBytes != null) {
+        else if (isPluginXmlInRoot(entryName)) {
+          byte[] data = IOUtils.toByteArray(zipInputStream);
+
+          if (pluginXmlBytes != null && !Arrays.equals(data, pluginXmlBytes)) {
             throw new BrokenPluginException("Plugin has more then one jars with plugin.xml");
           }
 
-          pluginXmlBytes = IOUtils.toByteArray(zipInputStream);
+          pluginXmlBytes = data;
           pluginClassPool = zipRootPool;
         }
         else if (entryName.endsWith(".jar")) {
@@ -122,11 +124,13 @@ public class IdeaPlugin {
           while ((innerEntry = innerJar.getNextEntry()) != null) {
             String name = innerEntry.getName();
             if (name.equals(PLUGIN_XML_ENTRY_NAME)) {
-              if (pluginXmlBytes != null) {
+              byte[] data = IOUtils.toByteArray(innerJar);
+
+              if (pluginXmlBytes != null && !Arrays.equals(data, pluginXmlBytes)) {
                 throw new BrokenPluginException("Plugin has more then one jars with plugin.xml");
               }
 
-              pluginXmlBytes = IOUtils.toByteArray(innerJar);
+              pluginXmlBytes = data;
               pluginClassPool = pool;
             }
             else if (name.endsWith(".class")) {
