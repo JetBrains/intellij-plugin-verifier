@@ -115,7 +115,7 @@ public class IdeaPlugin {
           pluginXmlBytes = data;
           pluginClassPool = zipRootPool;
         }
-        else if (entryName.endsWith(".jar")) {
+        else if (entryName.matches("([^/]+/)?lib/[^/]+\\.jar")) {
           ZipInputStream innerJar = new ZipInputStream(zipInputStream);
 
           InMemoryJarClassPool pool = new InMemoryJarClassPool(entryName);
