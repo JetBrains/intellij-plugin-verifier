@@ -5,7 +5,7 @@ import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
-import com.jetbrains.pluginverifier.ProblemsCollector;
+import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.VerifierCommand;
 import com.jetbrains.pluginverifier.domain.Idea;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
@@ -18,15 +18,12 @@ import com.jetbrains.pluginverifier.util.UpdateJson;
 import com.jetbrains.pluginverifier.util.Util;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.xml.bind.JAXBException;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -147,19 +144,19 @@ public class CheckIdeCommand extends VerifierCommand {
 
       System.out.print("testing plugin " + plugin.getId() + " (#" + updateJson.getUpdateId() + ")... ");
 
-      ProblemsCollector problemRegister = new ProblemsCollector();
-      Verifiers.processAllVerifiers(plugin, options, problemRegister);
+      VerificationContextImpl ctx = new VerificationContextImpl(options);
+      Verifiers.processAllVerifiers(plugin, ctx);
 
-      if (problemRegister.getProblems().isEmpty()) {
+      if (ctx.getProblems().isEmpty()) {
         System.out.println("ok");
       }
       else {
         System.out.println("error");
 
-        results.put(updateJson.getUpdateId(), problemRegister.getProblems());
+        results.put(updateJson.getUpdateId(), ctx.getProblems());
 
-        System.err.println("Plugin " + updateJson + " has " + problemRegister.getProblems().size() + " errors");
-        for (Problem problem : problemRegister.getProblems()) {
+        System.err.println("Plugin " + updateJson + " has " + ctx.getProblems().size() + " errors");
+        for (Problem problem : ctx.getProblems()) {
           System.err.print("    ");
           System.err.println(problem.getDescription());
         }

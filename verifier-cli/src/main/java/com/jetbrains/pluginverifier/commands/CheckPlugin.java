@@ -97,10 +97,10 @@ public class CheckPlugin extends VerifierCommand {
     for (IdeaPlugin plugin : plugins) {
       System.out.println("Verifying " + plugin.getId() + " against " + plugin.getIdea().getMoniker());
 
-      ProblemsCollector collector = new ProblemsCollector();
-      Verifiers.processAllVerifiers(plugin, options, collector);
+      VerificationContextImpl ctx = new VerificationContextImpl(options);
+      Verifiers.processAllVerifiers(plugin, ctx);
 
-      for (Problem problem : collector.getProblems()) {
+      for (Problem problem : ctx.getProblems()) {
         hasError = true;
         System.out.println(problem.getDescription());
       }

@@ -1,12 +1,10 @@
 package com.jetbrains.pluginverifier.verifiers;
 
-import com.jetbrains.pluginverifier.PluginVerifierOptions;
+import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.problems.FailedToReadClassProblem;
-import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.util.Consumer;
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
 import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier;
 import com.jetbrains.pluginverifier.verifiers.instruction.InstructionVerifier;
@@ -24,7 +22,7 @@ import java.util.List;
 public class ReferencesVerifier implements Verifier {
 
   @Override
-  public void verify(@NotNull IdeaPlugin plugin, @NotNull PluginVerifierOptions options, @NotNull Consumer<Problem> problemRegister) {
+  public void verify(@NotNull IdeaPlugin plugin, @NotNull VerificationContext ctx) {
     final ClassPool pluginPool = plugin.getPluginClassPool();
 
     final Collection<String> classes = pluginPool.getAllClasses();
@@ -32,36 +30,36 @@ public class ReferencesVerifier implements Verifier {
       final ClassNode node = pluginPool.getClassNode(className);
 
       if (node == null) {
-        problemRegister.consume(new FailedToReadClassProblem(className));
+        ctx.registerProblem(new FailedToReadClassProblem(className));
         continue;
       }
 
-      verifyClass(plugin, node, problemRegister);
+      verifyClass(plugin, node, ctx);
     }
   }
 
-  private void verifyClass(@NotNull IdeaPlugin plugin, @NotNull ClassNode node, @NotNull Consumer<Problem> errorHandler) {
+  private void verifyClass(@NotNull IdeaPlugin plugin, @NotNull ClassNode node, @NotNull VerificationContext ctx) {
     for (ClassVerifier verifier : Verifiers.getClassVerifiers()) {
-      verifier.verify(node, plugin.getResolver(), errorHandler);
+      verifier.verify(node, plugin.getResolver(), ctx);
     }
 
     for (MethodNode method : (List<MethodNode>)node.methods) {
       for (MethodVerifier verifier : Verifiers.getMemberVerifiers()) {
-        verifier.verify(node, method, plugin.getResolver(), errorHandler);
+        verifier.verify(node, method, plugin.getResolver(), ctx);
       }
 
       final InsnList instructions = method.instructions;
       for (Iterator<AbstractInsnNode> i = instructions.iterator(); i.hasNext(); ) {
         AbstractInsnNode instruction = i.next();
         for (InstructionVerifier verifier : Verifiers.getInstructionVerifiers()) {
-          verifier.verify(node, method, instruction, plugin.getResolver(), errorHandler);
+          verifier.verify(node, method, instruction, plugin.getResolver(), ctx);
         }
       }
     }
 
     for (FieldNode method : (List<FieldNode>)node.fields) {
       for (FieldVerifier verifier : Verifiers.getFieldVerifiers()) {
-        verifier.verify(node, method, plugin.getResolver(), errorHandler);
+        verifier.verify(node, method, plugin.getResolver(), ctx);
       }
     }
   }

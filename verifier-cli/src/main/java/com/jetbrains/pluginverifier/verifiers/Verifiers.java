@@ -1,10 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers;
 
-import com.jetbrains.pluginverifier.PluginVerifierOptions;
+import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
-import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.util.Consumer;
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
 import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier;
 import com.jetbrains.pluginverifier.verifiers.clazz.SuperClassVerifier;
@@ -44,9 +42,9 @@ public class Verifiers {
     return INSTRUCTION_VERIFIERS;
   }
 
-  public static void processAllVerifiers(IdeaPlugin plugin, PluginVerifierOptions options, Consumer<Problem> problemRegister) {
+  public static void processAllVerifiers(IdeaPlugin plugin, VerificationContext ctx) {
     for (Verifier verifier : PLUGIN_VERIFIERS) {
-      verifier.verify(plugin, options, problemRegister);
+      verifier.verify(plugin, ctx);
     }
   }
 }

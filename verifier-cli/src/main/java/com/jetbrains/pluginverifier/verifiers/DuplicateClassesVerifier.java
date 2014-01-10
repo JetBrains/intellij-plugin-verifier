@@ -1,12 +1,11 @@
 package com.jetbrains.pluginverifier.verifiers;
 
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
+import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.problems.DuplicateClassProblem;
-import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
-import com.jetbrains.pluginverifier.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 public class DuplicateClassesVerifier implements Verifier {
@@ -22,17 +21,17 @@ public class DuplicateClassesVerifier implements Verifier {
   }
 
   @Override
-  public void verify(@NotNull IdeaPlugin plugin, @NotNull PluginVerifierOptions options, @NotNull Consumer<Problem> problemRegister) {
+  public void verify(@NotNull IdeaPlugin plugin, @NotNull VerificationContext ctx) {
     final Resolver resolverOfDependencies = plugin.getResolverOfDependecies();
 
     for (String className : plugin.getPluginClassPool().getAllClasses()) {
-      if (skip(className, options)) {
+      if (skip(className, ctx.getOptions())) {
         continue;
       }
 
       final String moniker = resolverOfDependencies.getClassLocationMoniker(className);
       if (moniker != null) {
-        problemRegister.consume(new DuplicateClassProblem(className, moniker));
+        ctx.registerProblem(new DuplicateClassProblem(className, moniker));
       }
     }
   }
