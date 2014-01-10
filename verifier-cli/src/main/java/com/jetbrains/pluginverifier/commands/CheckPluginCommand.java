@@ -20,8 +20,8 @@ import java.util.List;
  * Default command
  * @author Sergey Evdokimov
  */
-public class CheckPlugin extends VerifierCommand {
-  public CheckPlugin() {
+public class CheckPluginCommand extends VerifierCommand {
+  public CheckPluginCommand() {
     super("check-plugin");
   }
 

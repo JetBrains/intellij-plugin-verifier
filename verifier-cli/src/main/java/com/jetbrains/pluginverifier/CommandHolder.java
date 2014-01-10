@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier;
 
 import com.jetbrains.pluginverifier.commands.CheckIdeCommand;
-import com.jetbrains.pluginverifier.commands.CheckPlugin;
+import com.jetbrains.pluginverifier.commands.CheckPluginCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class CommandHolder {
 
-  private static final VerifierCommand defaultCommand = new CheckPlugin();
+  private static final VerifierCommand defaultCommand = new CheckPluginCommand();
 
   private static final Map<String, VerifierCommand> COMMAND_MAP = new HashMap<String, VerifierCommand>();
   static {
