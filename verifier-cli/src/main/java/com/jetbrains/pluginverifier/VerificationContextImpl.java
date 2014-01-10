@@ -2,8 +2,7 @@ package com.jetbrains.pluginverifier;
 
 import com.jetbrains.pluginverifier.problems.Problem;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Sergey Evdokimov
@@ -12,7 +11,7 @@ public class VerificationContextImpl implements VerificationContext {
 
   private final PluginVerifierOptions options;
 
-  private final List<Problem> problems = new ArrayList<Problem>();
+  private final Set<Problem> problems = new LinkedHashSet<Problem>();
 
   public VerificationContextImpl(PluginVerifierOptions options) {
     this.options = options;
@@ -28,7 +27,7 @@ public class VerificationContextImpl implements VerificationContext {
     problems.add(problem);
   }
 
-  public List<Problem> getProblems() {
+  public Collection<Problem> getProblems() {
     return problems;
   }
 }

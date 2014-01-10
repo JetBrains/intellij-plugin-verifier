@@ -118,7 +118,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     List<UpdateJson> updateIds = getUpdateIds(ide, commandLine);
 
-    Map<Integer, List<Problem>> results = new TreeMap<Integer, List<Problem>>();
+    Map<Integer, Collection<Problem>> results = new TreeMap<Integer, Collection<Problem>>();
 
     long time = System.currentTimeMillis();
 

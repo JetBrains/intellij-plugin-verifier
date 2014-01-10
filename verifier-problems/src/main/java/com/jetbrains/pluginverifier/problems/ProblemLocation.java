@@ -77,4 +77,26 @@ public class ProblemLocation {
 
     return MessageUtils.convertClassName(className) + '#' + methodDescr;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ProblemLocation location = (ProblemLocation)o;
+
+    if (className != null ? !className.equals(location.className) : location.className != null) return false;
+    if (fieldName != null ? !fieldName.equals(location.fieldName) : location.fieldName != null) return false;
+    if (methodDescr != null ? !methodDescr.equals(location.methodDescr) : location.methodDescr != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = className != null ? className.hashCode() : 0;
+    result = 31 * result + (methodDescr != null ? methodDescr.hashCode() : 0);
+    result = 31 * result + (fieldName != null ? fieldName.hashCode() : 0);
+    return result;
+  }
 }
