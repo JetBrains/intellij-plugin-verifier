@@ -49,9 +49,16 @@ public class Configuration {
     return INSTANCE;
   }
 
+  public String getProperty(String propertyName) {
+    String systemProperty = System.getProperty(propertyName);
+    if (systemProperty != null) return systemProperty;
+
+    return myProperties.getProperty(propertyName);
+  }
+
   @NotNull
   public String getPluginRepositoryUrl() {
-    return myProperties.getProperty("plugin.repository.url");
+    return getProperty("plugin.repository.url");
   }
 
 }
