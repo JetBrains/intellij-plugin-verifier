@@ -4,13 +4,18 @@ import com.jetbrains.pluginverifier.domain.BrokenPluginException;
 import com.jetbrains.pluginverifier.domain.Idea;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.util.Util;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 
 public class JarDiscovery {
-  public static IdeaPlugin createIdeaPlugin(final File pluginDir, final Idea idea) throws IOException, BrokenPluginException {
-    if (!pluginDir.exists()) return null;
+
+  @NotNull
+  public static IdeaPlugin createIdeaPlugin(@NotNull final File pluginDir, @NotNull final Idea idea) throws IOException, BrokenPluginException {
+    if (!pluginDir.exists()) {
+      throw  Util.fail("Plugin not found: " + pluginDir);
+    }
 
     final File realDir;
     if (pluginDir.isFile() && pluginDir.getName().endsWith(".zip")) {
@@ -18,18 +23,18 @@ public class JarDiscovery {
     } else if (pluginDir.isDirectory()) {
       realDir = pluginDir;
     } else {
-      Util.fail("Unknown input file: " + pluginDir);
-      return null;
+      throw Util.fail("Unknown input file: " + pluginDir);
     }
 
     final String[] topLevelList = realDir.list();
     assert topLevelList != null;
 
-    if (topLevelList.length == 0)
-      Util.fail("Plugin root is empty");
+    if (topLevelList.length == 0) {
+      throw Util.fail("Plugin root is empty");
+    }
 
     if (topLevelList.length > 1) {
-      Util.fail("Plugin root contains more than one element");
+      throw Util.fail("Plugin root contains more than one element");
     }
 
     return IdeaPlugin.createFromDirectory(idea, new File(realDir, topLevelList[0]));

@@ -19,23 +19,19 @@ public class Util {
     .addOption("h", "help", false, "Show help")
     .addOption("r", "runtime", true, "Path to directory containing Java runtime jars (usually rt.jar and tools.jar is sufficient)")
     .addOption("s", "skip-class-for-dup-check", true, "Class name prefixes to skip in duplicate classes check, delimited by ':'")
-    .addOption("a", "check-all-plugins-with-ide", false, "Check IDE build with all compatible plugins")
-    .addOption("cp", "external-class-path", true, "External class path")
-    .addOption("c", "compare-problem-list", false, "Compare problem lists (validator -c CURRENT_BUILD_NUMBER PREVIOUS_BUILD_NUMBER)");
+    .addOption("all", "check-all-plugins-with-ide", false, "Check IDE build with all compatible plugins")
+    .addOption("pl", "plugin-list", true, "List of plugin id to check with IDE.")
+    .addOption("ebf", "excluded-build-file", true, "File with list of excluded plugin builds.")
+    .addOption("cp", "external-class-path", true, "External class path");
 
-  public static void fail(String message) {
+  public static RuntimeException fail(String message) {
     System.err.println(message);
     System.exit(1);
-  }
-
-  public static void failWithHelp(String message) {
-    System.err.println(message);
-    printHelp();
-    System.exit(1);
+    return new RuntimeException();
   }
 
   public static void printHelp() {
-    new HelpFormatter().printHelp("verifier [options] PluginZip IdeaDirectory [IdeaDirectory]*", CMD_OPTIONS);
+    new HelpFormatter().printHelp("java -jar verifier.jar <command> [<args>]", CMD_OPTIONS);
   }
 
   public static File getValidatorHome() {
