@@ -19,8 +19,9 @@ public class Util {
     .addOption("h", "help", false, "Show help")
     .addOption("r", "runtime", true, "Path to directory containing Java runtime jars (usually rt.jar and tools.jar is sufficient)")
     .addOption("s", "skip-class-for-dup-check", true, "Class name prefixes to skip in duplicate classes check, delimited by ':'")
+    .addOption("e", "external-classes", true, "Classes from external libraries. Error will not be reported if class not found. Delimited by ':'")
     .addOption("all", "check-all-plugins-with-ide", false, "Check IDE build with all compatible plugins")
-    .addOption("pl", "plugin-list", true, "List of plugin id to check with IDE.")
+    .addOption("pl", "plugin-list", true, "List of plugin id to check with IDE, delimited by ':'")
     .addOption("ebf", "excluded-build-file", true, "File with list of excluded plugin builds.")
     .addOption("cp", "external-class-path", true, "External class path");
 

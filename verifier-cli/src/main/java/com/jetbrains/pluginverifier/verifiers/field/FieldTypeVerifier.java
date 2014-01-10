@@ -14,8 +14,9 @@ import org.objectweb.asm.tree.FieldNode;
 public class FieldTypeVerifier implements FieldVerifier {
   public void verify(final ClassNode clazz, final FieldNode field, final Resolver resolver, final VerificationContext ctx) {
     final String className = field.desc;
-    if(className == null || VerifierUtil.isNativeType(className) ||
-        VerifierUtil.classExists(resolver, className)) return;
+    if(className == null || VerifierUtil.classExists(ctx.getOptions(), resolver, className)) {
+      return;
+    }
 
     ClassNotFoundProblem problem = new ClassNotFoundProblem();
     ProblemLocation location = new ProblemLocation(clazz.name);

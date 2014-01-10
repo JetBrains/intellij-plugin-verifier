@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.util;
 
+import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.pool.ResolverUtil;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import org.objectweb.asm.Opcodes;
@@ -7,24 +8,28 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 public class VerifierUtil {
-  public static boolean classExists(final Resolver resolver, final String className) {
-    return classExists(resolver, className, null);
+  public static boolean classExists(PluginVerifierOptions opt, final Resolver resolver, final String className) {
+    return classExists(opt, resolver, className, null);
   }
 
-  public static boolean classExists(final Resolver resolver, final String className, final Boolean isInterface) {
+  public static boolean classExists(PluginVerifierOptions opt, final Resolver resolver, final String className, final Boolean isInterface) {
     if (isNativeType(className))
       return true;
 
     if (className.startsWith("[") || className.endsWith(";")) {
       final String name = prepareArrayName(className);
       // "" means it's a primitive type, validation can be skipped
-      return "".equals(name) || isValidClassOrInterface(resolver, name, isInterface);
+      return "".equals(name) || isValidClassOrInterface(opt, resolver, name, isInterface);
     } else {
-      return isValidClassOrInterface(resolver, className, isInterface);
+      return isValidClassOrInterface(opt, resolver, className, isInterface);
     }
   }
 
-  private static boolean isValidClassOrInterface(final Resolver resolver, final String name, final Boolean isInterface) {
+  private static boolean isValidClassOrInterface(PluginVerifierOptions opt, final Resolver resolver, final String name, final Boolean isInterface) {
+    if (opt.isExternalClass(name)) {
+      return true;
+    }
+
     final ClassNode clazz = resolver.findClass(name);
     return clazz != null && (isInterface == null || isInterface == ((clazz.access & Opcodes.ACC_INTERFACE) != 0));
   }

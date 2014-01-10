@@ -15,7 +15,7 @@ import org.objectweb.asm.tree.MethodNode;
 public class SuperClassVerifier implements ClassVerifier {
   public void verify(final ClassNode clazz, final Resolver resolver, final VerificationContext ctx) {
     final String superClassName = clazz.superName;
-    if(!VerifierUtil.classExists(resolver, superClassName, false))  {
+    if(!VerifierUtil.classExists(ctx.getOptions(), resolver, superClassName, false)) {
       ctx.registerProblem(new ClassNotFoundProblem(clazz.name, superClassName));
       return;
     }

@@ -16,7 +16,7 @@ public class TypeInstructionVerifier implements InstructionVerifier {
   public void verify(final ClassNode clazz, final MethodNode method, final AbstractInsnNode instr, final Resolver resolver, final VerificationContext ctx) {
     if (!(instr instanceof TypeInsnNode)) return;
     final String className = ((TypeInsnNode)instr).desc;
-    if(className == null || VerifierUtil.classExists(resolver, className)) return;
+    if(className == null || VerifierUtil.classExists(ctx.getOptions(), resolver, className)) return;
 
     ctx.registerProblem(new ClassNotFoundProblem(clazz.name, method.name + method.desc, className));
   }

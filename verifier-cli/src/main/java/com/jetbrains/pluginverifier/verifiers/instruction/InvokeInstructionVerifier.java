@@ -29,6 +29,8 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
 
     if (className.startsWith("[")) return;
 
+    if (ctx.getOptions().isExternalClass(className)) return;
+
     ClassNode classNode = resolver.findClass(className);
     if (classNode == null) {
       ctx.registerProblem(new ClassNotFoundProblem(clazz.name, method.name + method.desc, className));
