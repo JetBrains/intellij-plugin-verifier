@@ -101,12 +101,12 @@ public class Idea {
   public Resolver getResolver() {
     if (myResolver == null) {
       if (myExternalClasspath != null) {
-        myResolver = new CombiningResolver(Arrays.asList(getClassPool(),
-                                                         myJdk.getResolver(),
-                                                         myExternalClasspath));
+        myResolver = CombiningResolver.union(Arrays.asList(getClassPool(),
+                                                           myJdk.getResolver(),
+                                                           myExternalClasspath));
       }
       else {
-        myResolver = new CombiningResolver(Arrays.asList(getClassPool(), myJdk.getResolver()));
+        myResolver = CombiningResolver.union(Arrays.asList(getClassPool(), myJdk.getResolver()));
       }
     }
 

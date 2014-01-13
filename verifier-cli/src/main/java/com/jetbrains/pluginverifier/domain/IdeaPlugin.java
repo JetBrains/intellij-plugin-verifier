@@ -253,7 +253,7 @@ public class IdeaPlugin {
           resolvers.add(plugin.getResolver());
       }
 
-      myResolver = new CombiningResolver(resolvers);
+      myResolver = CombiningResolver.union(resolvers);
     }
 
     return myResolver;
@@ -270,7 +270,7 @@ public class IdeaPlugin {
         resolvers.add(plugin.getResolver());
     }
 
-    return new CombiningResolver(resolvers);
+    return CombiningResolver.union(resolvers);
   }
 
   public Idea getIdea() {
