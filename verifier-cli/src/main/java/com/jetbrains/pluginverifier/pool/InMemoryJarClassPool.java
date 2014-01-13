@@ -35,7 +35,7 @@ public class InMemoryJarClassPool implements ClassPool {
   }
 
   @Override
-  public ClassNode getClassNode(String className) {
+  public ClassNode findClass(String className) {
     Object obj = myClassMap.get(className);
 
     if (obj == null) return null;

@@ -41,7 +41,7 @@ public class JarClassPool implements ClassPool {
     }
   }
 
-  public ClassNode getClassNode(String className) {
+  public ClassNode findClass(String className) {
     if (!myClassMap.containsKey(className)) return null;
     final SoftReference<ClassNode> ref = myClassMap.get(className);
     ClassNode node;

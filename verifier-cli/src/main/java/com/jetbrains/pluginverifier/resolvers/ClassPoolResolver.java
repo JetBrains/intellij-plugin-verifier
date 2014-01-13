@@ -12,7 +12,7 @@ public class ClassPoolResolver implements Resolver {
 
   @Override
   public ClassNode findClass(final String className) {
-    return myPool.getClassNode(className);
+    return myPool.findClass(className);
   }
 
   @Override

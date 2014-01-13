@@ -17,9 +17,9 @@ public class ContainerClassPool implements ClassPool {
     myPools.addAll(pools);
   }
 
-  public ClassNode getClassNode(String className) {
+  public ClassNode findClass(String className) {
     for (ClassPool pool : myPools) {
-      final ClassNode node = pool.getClassNode(className);
+      final ClassNode node = pool.findClass(className);
       if (node != null) return node;
     }
     return null;

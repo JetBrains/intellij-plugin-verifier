@@ -12,7 +12,7 @@ import java.util.Collections;
  */
 public interface ClassPool {
   @Nullable
-  ClassNode getClassNode(String className);
+  ClassNode findClass(String className);
 
   @Nullable
   String getClassLocationMoniker(String className);
@@ -27,7 +27,7 @@ public interface ClassPool {
   public static final ClassPool EMPTY = new ClassPool() {
     @Nullable
     @Override
-    public ClassNode getClassNode(String className) {
+    public ClassNode findClass(String className) {
       return null;
     }
 
