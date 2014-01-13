@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.domain;
 
 import com.jetbrains.pluginverifier.pool.ClassPool;
-import com.jetbrains.pluginverifier.resolvers.ClassPoolResolver;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.util.Util;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,7 +44,8 @@ public class JDK {
     }
   }
 
+  @NotNull
   public Resolver getResolver() {
-    return new ClassPoolResolver(myPool);
+    return myPool;
   }
 }

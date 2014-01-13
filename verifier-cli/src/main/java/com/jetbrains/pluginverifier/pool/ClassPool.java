@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.pool;
 
+import com.jetbrains.pluginverifier.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -10,7 +11,7 @@ import java.util.Collections;
 /**
  * @author Dennis.Ushakov
  */
-public interface ClassPool {
+public interface ClassPool extends Resolver {
   @Nullable
   ClassNode findClass(String className);
 

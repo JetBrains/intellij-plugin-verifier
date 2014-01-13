@@ -4,7 +4,6 @@ import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.pool.ContainerClassPool;
 import com.jetbrains.pluginverifier.pool.InMemoryJarClassPool;
 import com.jetbrains.pluginverifier.pool.JarClassPool;
-import com.jetbrains.pluginverifier.resolvers.ClassPoolResolver;
 import com.jetbrains.pluginverifier.resolvers.CombiningResolver;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.util.Util;
@@ -245,7 +244,7 @@ public class IdeaPlugin {
     if (myResolver == null) {
       List<Resolver> resolvers = new ArrayList<Resolver>();
 
-      resolvers.add(new ClassPoolResolver(getClassPool()));
+      resolvers.add(getClassPool());
       resolvers.add(myIdea.getResolver());
 
       for (PluginDependency pluginDependency : getDependencies()) {

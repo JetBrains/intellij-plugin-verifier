@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.domain;
 
 import com.jetbrains.pluginverifier.pool.ClassPool;
-import com.jetbrains.pluginverifier.resolvers.ClassPoolResolver;
 import com.jetbrains.pluginverifier.resolvers.CombiningResolver;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.util.Util;
@@ -102,12 +101,12 @@ public class Idea {
   public Resolver getResolver() {
     if (myResolver == null) {
       if (myExternalClasspath != null) {
-        myResolver = new CombiningResolver(Arrays.asList(new ClassPoolResolver(getClassPool()),
+        myResolver = new CombiningResolver(Arrays.asList(getClassPool(),
                                                          myJdk.getResolver(),
-                                                         new ClassPoolResolver(myExternalClasspath)));
+                                                         myExternalClasspath));
       }
       else {
-        myResolver = new CombiningResolver(Arrays.asList(new ClassPoolResolver(getClassPool()), myJdk.getResolver()));
+        myResolver = new CombiningResolver(Arrays.asList(getClassPool(), myJdk.getResolver()));
       }
     }
 
