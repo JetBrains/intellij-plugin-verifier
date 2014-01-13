@@ -18,9 +18,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -35,6 +33,10 @@ public class IdeaPlugin {
 
   private final String myId;
   private Resolver myResolver;
+
+  private Set<IdeaPlugin> dependenciesWithTransitive;
+  private static final Set<IdeaPlugin> DEP_CALC_MARKER = new HashSet<IdeaPlugin>();
+
   private final List<PluginDependency> myDependencies;
 
   private IdeaPlugin(Idea idea, String pluginDirectory, ClassPool pluginClassPool, ClassPool libraryClassPool,  @Nullable Document pluginXml) throws BrokenPluginException {
@@ -240,6 +242,37 @@ public class IdeaPlugin {
     return myLibraryClassPool;
   }
 
+  public Set<IdeaPlugin> getDependenciesWithTransitive() {
+    Set<IdeaPlugin> res = dependenciesWithTransitive;
+    if (res == DEP_CALC_MARKER) throw new RuntimeException("Cyclic plugin dependencies");
+
+    if (dependenciesWithTransitive == null) {
+      dependenciesWithTransitive = DEP_CALC_MARKER;
+
+      try {
+        res = new HashSet<IdeaPlugin>();
+
+        for (PluginDependency pluginDependency : getDependencies()) {
+          final IdeaPlugin plugin = myIdea.getBundledPlugin(pluginDependency.getId());
+          if (plugin != null) {
+            if (res.add(plugin)) {
+              res.addAll(plugin.getDependenciesWithTransitive());
+            }
+          }
+        }
+
+        dependenciesWithTransitive = res;
+      }
+      finally {
+        if (dependenciesWithTransitive == DEP_CALC_MARKER) {
+          dependenciesWithTransitive = null;
+        }
+      }
+    }
+
+    return res;
+  }
+
   public Resolver getResolver() {
     if (myResolver == null) {
       List<Resolver> resolvers = new ArrayList<Resolver>();
@@ -247,10 +280,9 @@ public class IdeaPlugin {
       resolvers.add(getClassPool());
       resolvers.add(myIdea.getResolver());
 
-      for (PluginDependency pluginDependency : getDependencies()) {
-        final IdeaPlugin plugin = myIdea.getBundledPlugin(pluginDependency.getId());
-        if (plugin != null)
-          resolvers.add(plugin.getResolver());
+      for (IdeaPlugin dep : getDependenciesWithTransitive()) {
+        resolvers.add(dep.getPluginClassPool());
+        resolvers.add(dep.getLibraryClassPool());
       }
 
       myResolver = CombiningResolver.union(resolvers);
@@ -264,10 +296,8 @@ public class IdeaPlugin {
 
     resolvers.add(myIdea.getResolver());
 
-    for (PluginDependency pluginDependency : getDependencies()) {
-      final IdeaPlugin plugin = myIdea.getBundledPlugin(pluginDependency.getId());
-      if (plugin != null)
-        resolvers.add(plugin.getResolver());
+    for (IdeaPlugin dep : getDependenciesWithTransitive()) {
+      resolvers.add(dep.getClassPool());
     }
 
     return CombiningResolver.union(resolvers);
