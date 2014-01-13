@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.domain;
 
 import com.jetbrains.pluginverifier.pool.ClassPool;
+import com.jetbrains.pluginverifier.resolvers.CacheResolver;
 import com.jetbrains.pluginverifier.resolvers.CombiningResolver;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.util.Util;
@@ -100,14 +101,18 @@ public class Idea {
 
   public Resolver getResolver() {
     if (myResolver == null) {
+
+      List<Resolver> resolverList;
       if (myExternalClasspath != null) {
-        myResolver = CombiningResolver.union(Arrays.asList(getClassPool(),
-                                                           myJdk.getResolver(),
-                                                           myExternalClasspath));
+        resolverList = Arrays.asList(getClassPool(),
+                                     myJdk.getResolver(),
+                                     myExternalClasspath);
       }
       else {
-        myResolver = CombiningResolver.union(Arrays.asList(getClassPool(), myJdk.getResolver()));
+        resolverList = Arrays.asList(getClassPool(), myJdk.getResolver());
       }
+
+      myResolver = new CacheResolver(CombiningResolver.union(resolverList));
     }
 
     return myResolver;

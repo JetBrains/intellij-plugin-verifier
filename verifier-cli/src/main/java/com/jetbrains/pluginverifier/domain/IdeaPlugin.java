@@ -281,8 +281,15 @@ public class IdeaPlugin {
       resolvers.add(myIdea.getResolver());
 
       for (IdeaPlugin dep : getDependenciesWithTransitive()) {
-        resolvers.add(dep.getPluginClassPool());
-        resolvers.add(dep.getLibraryClassPool());
+        ClassPool pluginClassPool = dep.getPluginClassPool();
+        if (!pluginClassPool.isEmpty()) {
+          resolvers.add(pluginClassPool);
+        }
+
+        ClassPool libraryClassPool = dep.getLibraryClassPool();
+        if (!libraryClassPool.isEmpty()) {
+          resolvers.add(libraryClassPool);
+        }
       }
 
       myResolver = CombiningResolver.union(resolvers);
