@@ -259,7 +259,7 @@ public class IdeaPlugin {
     return myResolver;
   }
 
-  public Resolver getResolverOfDependecies() {
+  public Resolver getResolverOfDependencies() {
     List<Resolver> resolvers = new ArrayList<Resolver>();
 
     resolvers.add(myIdea.getResolver());

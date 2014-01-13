@@ -22,7 +22,7 @@ public class DuplicateClassesVerifier implements Verifier {
 
   @Override
   public void verify(@NotNull IdeaPlugin plugin, @NotNull VerificationContext ctx) {
-    final Resolver resolverOfDependencies = plugin.getResolverOfDependecies();
+    final Resolver resolverOfDependencies = plugin.getResolverOfDependencies();
 
     for (String className : plugin.getPluginClassPool().getAllClasses()) {
       if (skip(className, ctx.getOptions())) {
