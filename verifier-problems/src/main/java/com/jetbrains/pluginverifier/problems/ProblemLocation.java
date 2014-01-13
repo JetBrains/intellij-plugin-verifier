@@ -75,7 +75,7 @@ public class ProblemLocation {
       return MessageUtils.convertClassName(className);
     }
 
-    return MessageUtils.convertClassName(className) + '#' + methodDescr;
+    return MessageUtils.convertMethodDescr(methodDescr, className);
   }
 
   @Override

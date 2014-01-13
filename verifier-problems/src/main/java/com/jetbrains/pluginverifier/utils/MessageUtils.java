@@ -1,5 +1,8 @@
 package com.jetbrains.pluginverifier.utils;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 public class MessageUtils {
 
   private MessageUtils() {
@@ -74,30 +77,49 @@ public class MessageUtils {
     return end;
   }
 
+  public static String convertMethodDescr(String methodDescr) {
+    return convertMethodDescr0(methodDescr, null);
+  }
+
   /**
    * @param methodDescr example:
    *                    com/intellij/codeInsight/intention/ConditionalOperatorConvertor#isAvailable(Lcom/intellij/openapi/project/Project;Lcom/intellij/openapi/editor/Editor;Lcom/intellij/psi/PsiFile;)Z
    */
-  public static String convertMethodDescr(String methodDescr) {
-    int classSeparatorIndex = methodDescr.indexOf('#');
-    if (classSeparatorIndex == -1) return methodDescr;
+  public static String convertMethodDescr(String methodDescr, @NotNull String className) {
+    return convertMethodDescr0(methodDescr, className);
+  }
+
+  public static String convertMethodDescr0(String methodDescr, @Nullable String className) {
+    int closeBracketIndex = methodDescr.lastIndexOf(')');
 
     int openBracketIndex = methodDescr.indexOf('(');
     if (openBracketIndex == -1) return methodDescr;
 
-    int closeBracketIndex = methodDescr.lastIndexOf(')');
-
     StringBuilder res = new StringBuilder();
 
-    int i = processJavaType(res, methodDescr, closeBracketIndex + 1);
-
+    processJavaType(res, methodDescr, closeBracketIndex + 1);
     res.append(' ');
 
-    res.append(methodDescr.substring(0, classSeparatorIndex).replace('/', '.'));
+    int methodNameIndex;
 
-    res.append(methodDescr, classSeparatorIndex, openBracketIndex + 1);
+    if (className != null) {
+      assert methodDescr.indexOf('#') == -1;
+      methodNameIndex = 0;
+    }
+    else {
+      int classSeparatorIndex = methodDescr.indexOf('#');
+      if (classSeparatorIndex == -1) return methodDescr;
+      className = methodDescr.substring(0, classSeparatorIndex);
 
-    i = openBracketIndex + 1;
+      methodNameIndex = classSeparatorIndex + 1;
+    }
+
+    res.append(className.replace('/', '.'));
+    res.append('#');
+
+    res.append(methodDescr, methodNameIndex, openBracketIndex + 1);
+
+    int i = openBracketIndex + 1;
     boolean isFirst = true;
     while (i < closeBracketIndex) {
       if (isFirst) {
