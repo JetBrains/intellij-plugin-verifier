@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.jar.JarFile;
 
@@ -38,11 +39,11 @@ public class Idea {
   private List<IdeaPlugin> getIdeaPlugins() throws JDOMException, IOException {
     final File pluginsDir = new File(myIdeaDir, "plugins");
 
-    List<IdeaPlugin> plugins = new ArrayList<IdeaPlugin>();
-
     final File[] files = pluginsDir.listFiles();
     if (files == null)
-      return plugins;
+      return Collections.emptyList();
+
+    List<IdeaPlugin> plugins = new ArrayList<IdeaPlugin>();
 
     for (File file : files) {
       if (!file.isDirectory())
