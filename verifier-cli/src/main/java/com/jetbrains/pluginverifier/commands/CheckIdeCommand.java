@@ -71,7 +71,7 @@ public class CheckIdeCommand extends VerifierCommand {
       throw Util.fail("You have to specify list of plugins to check using -pl option");
     }
 
-    System.out.print("Loading compatible plugins list... ");
+    System.out.println("Loading compatible plugins list... ");
 
     URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/manager/originalCompatibleUpdatesByPluginIds/?build=" + build + "&pluginIds=" + Joiner
       .on("&pluginIds=").join(pluginIds));
