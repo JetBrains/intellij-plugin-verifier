@@ -142,7 +142,7 @@ public class CheckIdeCommand extends VerifierCommand {
         continue;
       }
 
-      System.out.print("testing plugin " + plugin.getId() + " (#" + updateJson.getUpdateId() + ")... ");
+      System.out.print("testing plugin " + plugin.getId() + " " + updateJson + "... ");
 
       VerificationContextImpl ctx = new VerificationContextImpl(options);
       Verifiers.processAllVerifiers(plugin, ctx);
