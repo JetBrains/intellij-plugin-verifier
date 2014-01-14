@@ -58,9 +58,12 @@ public class CheckIdeCommand extends VerifierCommand {
   }
 
   private List<UpdateJson> getUpdateIds(Idea ide, @NotNull CommandLine commandLine) throws IOException {
-    String build = Files.toString(new File(ide.getIdeaDir(), "build.txt"), Charset.defaultCharset()).trim();
-    if (build.length() == 0) {
-      throw Util.fail("failed to read IDE version (" + ide.getIdeaDir() + "/build.txt)");
+    String build = commandLine.getOptionValue("iv");
+    if (build == null || build.isEmpty()) {
+      build = Files.toString(new File(ide.getIdeaDir(), "build.txt"), Charset.defaultCharset()).trim();
+      if (build.length() == 0) {
+        throw Util.fail("failed to read IDE version (" + ide.getIdeaDir() + "/build.txt)");
+      }
     }
 
     List<UpdateJson> res;

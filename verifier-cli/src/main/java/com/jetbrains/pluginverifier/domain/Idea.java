@@ -1,6 +1,8 @@
 package com.jetbrains.pluginverifier.domain;
 
 import com.jetbrains.pluginverifier.pool.ClassPool;
+import com.jetbrains.pluginverifier.pool.CompileOutputPool;
+import com.jetbrains.pluginverifier.pool.ContainerClassPool;
 import com.jetbrains.pluginverifier.resolvers.CacheResolver;
 import com.jetbrains.pluginverifier.resolvers.CombiningResolver;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
@@ -32,8 +34,15 @@ public class Idea {
     myIdeaDir = ideaDir;
     myJdk = jdk;
     myExternalClasspath = classpath;
-    myClassPool = getIdeaClassPool(ideaDir);
-    myPlugins = getIdeaPlugins();
+
+    if (isSourceDir(ideaDir)) {
+      myClassPool = getIdeaClassPoolFromSources(ideaDir);
+      myPlugins = Collections.emptyList();
+    }
+    else {
+      myClassPool = getIdeaClassPoolFromLibraries(ideaDir);
+      myPlugins = getIdeaPlugins();
+    }
   }
 
   private List<IdeaPlugin> getIdeaPlugins() throws JDOMException, IOException {
@@ -60,7 +69,7 @@ public class Idea {
     return plugins;
   }
 
-  private static ClassPool getIdeaClassPool(File ideaDir) throws IOException {
+  private static ClassPool getIdeaClassPoolFromLibraries(File ideaDir) throws IOException {
     final File lib = new File(ideaDir, "lib");
     final List<JarFile> jars = Util.getJars(lib);
 
@@ -72,6 +81,26 @@ public class Idea {
     }
 
     return Util.makeClassPool(ideaDir.getPath(), jars);
+  }
+
+  private static ClassPool getIdeaClassPoolFromSources(File ideaDir) throws IOException {
+    List<ClassPool> pools = new ArrayList<ClassPool>();
+
+    pools.add(getIdeaClassPoolFromLibraries(ideaDir));
+    pools.add(new CompileOutputPool(new File(ideaDir, "out/classes/production")));
+
+    File communityLib = new File(ideaDir, "community");
+    if (communityLib.isDirectory()) {
+      pools.add(getIdeaClassPoolFromLibraries(new File(ideaDir, "community")));
+    }
+
+    return ContainerClassPool.union(ideaDir.getPath(), pools);
+  }
+
+  private static boolean isSourceDir(File dir) {
+    return new File(dir, "build").isDirectory()
+           && new File(dir, "out").isDirectory()
+           && new File(dir, ".git").isDirectory();
   }
 
   public ClassPool getClassPool()  {

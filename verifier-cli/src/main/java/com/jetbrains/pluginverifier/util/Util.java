@@ -22,6 +22,7 @@ public class Util {
     .addOption("e", "external-classes", true, "Classes from external libraries. Error will not be reported if class not found. Delimited by ':'")
     .addOption("all", "check-all-plugins-with-ide", false, "Check IDE build with all compatible plugins")
     .addOption("pl", "plugin-list", true, "List of plugin id to check with IDE, delimited by ':'")
+    .addOption("iv", "ide-version", true, "Version of IDE that will be tested, e.g. IU-133.439")
     .addOption("ebf", "excluded-build-file", true, "File with list of excluded plugin builds.")
     .addOption("cp", "external-class-path", true, "External class path");
 
