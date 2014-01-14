@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.util;
 
-import java.util.Objects;
-
 /**
  * @author Sergey Evdokimov
  */
