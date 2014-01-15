@@ -23,7 +23,7 @@ public class Util {
     .addOption("all", "check-all-plugins-with-ide", false, "Check IDE build with all compatible plugins")
     .addOption("pl", "plugin-list", true, "List of plugin id to check with IDE, delimited by ':'")
     .addOption("iv", "ide-version", true, "Version of IDE that will be tested, e.g. IU-133.439")
-    .addOption("ebf", "excluded-build-file", true, "File with list of excluded plugin builds.")
+    .addOption("epf", "excluded-plugin-file", true, "File with list of excluded plugin builds.")
     .addOption("cp", "external-class-path", true, "External class path");
 
   public static RuntimeException fail(String message) {

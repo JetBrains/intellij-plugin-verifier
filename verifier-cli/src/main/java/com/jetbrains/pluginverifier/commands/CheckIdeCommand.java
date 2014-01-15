@@ -82,9 +82,9 @@ public class CheckIdeCommand extends VerifierCommand {
 
     res = new Gson().fromJson(text, updateListType);
 
-    String ebf = commandLine.getOptionValue("ebf");
-    if (ebf != null) {
-      String excludedBuildListStr = Files.toString(new File(ebf), Charset.defaultCharset());
+    String epf = commandLine.getOptionValue("epf");
+    if (epf != null) {
+      String excludedBuildListStr = Files.toString(new File(epf), Charset.defaultCharset());
       List<UpdateJson> excludedBuildList = new Gson().fromJson(excludedBuildListStr, updateListType);
       for (UpdateJson excludedBuild : excludedBuildList) {
         for (Iterator<UpdateJson> itr = res.iterator(); itr.hasNext(); ) {
