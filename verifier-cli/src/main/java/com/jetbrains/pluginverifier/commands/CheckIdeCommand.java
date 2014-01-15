@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.commands;
 import com.google.common.base.Joiner;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
@@ -18,6 +19,7 @@ import com.jetbrains.pluginverifier.util.UpdateJson;
 import com.jetbrains.pluginverifier.util.Util;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,6 +59,22 @@ public class CheckIdeCommand extends VerifierCommand {
     return res;
   }
 
+  private void removeExcludedPlugins(List<UpdateJson> updates, CommandLine commandLine) throws IOException {
+    String epf = commandLine.getOptionValue("epf");
+    if (epf != null) {
+      String excludedBuildListStr = Files.toString(new File(epf), Charset.defaultCharset());
+      List<UpdateJson> excludedBuildList = new Gson().fromJson(excludedBuildListStr, updateListType);
+      for (UpdateJson excludedBuild : excludedBuildList) {
+        for (Iterator<UpdateJson> itr = updates.iterator(); itr.hasNext(); ) {
+          UpdateJson u = itr.next();
+          if (excludedBuild.equalsByIdOrVersion(u)) {
+            itr.remove();
+          }
+        }
+      }
+    }
+  }
+
   private List<UpdateJson> getUpdateIds(Idea ide, @NotNull CommandLine commandLine) throws IOException {
     String build = commandLine.getOptionValue("iv");
     if (build == null || build.isEmpty()) {
@@ -65,8 +83,6 @@ public class CheckIdeCommand extends VerifierCommand {
         throw Util.fail("failed to read IDE version (" + ide.getIdeaDir() + "/build.txt)");
       }
     }
-
-    List<UpdateJson> res;
 
     List<String> pluginIds = extractPluginList(commandLine);
 
@@ -80,24 +96,7 @@ public class CheckIdeCommand extends VerifierCommand {
       .on("&pluginIds=").join(pluginIds));
     String text = IOUtils.toString(url);
 
-    res = new Gson().fromJson(text, updateListType);
-
-    String epf = commandLine.getOptionValue("epf");
-    if (epf != null) {
-      String excludedBuildListStr = Files.toString(new File(epf), Charset.defaultCharset());
-      List<UpdateJson> excludedBuildList = new Gson().fromJson(excludedBuildListStr, updateListType);
-      for (UpdateJson excludedBuild : excludedBuildList) {
-        for (Iterator<UpdateJson> itr = res.iterator(); itr.hasNext(); ) {
-          UpdateJson u = itr.next();
-          if (excludedBuild.equalsByIdOrVersion(u)) {
-            itr.remove();
-          }
-        }
-      }
-
-    }
-
-    return res;
+    return new Gson().fromJson(text, updateListType);
   }
 
   @Override
@@ -120,6 +119,12 @@ public class CheckIdeCommand extends VerifierCommand {
     Idea ide = new Idea(ideToCheck, jdk, externalClassPath);
 
     List<UpdateJson> updateIds = getUpdateIds(ide, commandLine);
+
+    String dumpBrokenPluginsFile = commandLine.getOptionValue("d");
+
+    if (dumpBrokenPluginsFile == null) {
+      removeExcludedPlugins(updateIds, commandLine);
+    }
 
     Map<Integer, Collection<Problem>> results = new TreeMap<Integer, Collection<Problem>>();
 
@@ -167,8 +172,35 @@ public class CheckIdeCommand extends VerifierCommand {
     }
 
     System.out.println("Verification completed (" + ((System.currentTimeMillis() - time) / 1000) + "s)");
-    if (!results.isEmpty()) {
-      System.exit(2);
+
+    if (dumpBrokenPluginsFile != null) {
+      System.out.println("Dumping list of broken plugins to " + dumpBrokenPluginsFile);
+
+      List<UpdateJson> res = new ArrayList<UpdateJson>();
+
+      for (UpdateJson updateJson : updateIds) {
+        if (results.get(updateJson.getUpdateId()) != null && !results.get(updateJson.getUpdateId()).isEmpty()) {
+          res.add(updateJson);
+        }
+      }
+
+      Gson gson = new GsonBuilder().setPrettyPrinting().create();
+      String json = gson.toJson(res, updateListType);
+      FileUtils.writeStringToFile(new File(dumpBrokenPluginsFile), json);
+
+      List<UpdateJson> updatesToCheck = new ArrayList<UpdateJson>(updateIds);
+      removeExcludedPlugins(updatesToCheck, commandLine);
+
+      for (UpdateJson updateJson : updatesToCheck) {
+        if (results.get(updateJson.getUpdateId()) != null) {
+          System.exit(2);
+        }
+      }
+    }
+    else {
+      if (!results.isEmpty()) {
+        System.exit(2);
+      }
     }
   }
 }
