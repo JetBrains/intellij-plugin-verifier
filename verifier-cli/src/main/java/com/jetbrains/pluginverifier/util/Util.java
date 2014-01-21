@@ -60,7 +60,15 @@ public class Util {
 
     List<JarFile> jarFiles = new ArrayList<JarFile>(jars.length);
     for (File jar : jars) {
-      jarFiles.add(new JarFile(jar, false));
+      JarFile jarFile;
+      try {
+        jarFile = new JarFile(jar, false);
+      }
+      catch (IOException e) {
+        throw new IOException("Failed to open " + jar, e);
+      }
+
+      jarFiles.add(jarFile);
     }
 
     return jarFiles;
