@@ -190,7 +190,7 @@ public class IdeaPlugin {
     if (id == null || id.length() == 0) {
       final String name = pluginXml.getRootElement().getChildText("name");
 
-      if (name.length() == 0) {
+      if (name == null || name.length() == 0) {
         return null;
       }
 
