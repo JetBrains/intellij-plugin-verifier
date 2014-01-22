@@ -69,7 +69,7 @@ public class Util {
         jarFile = new JarFile(jar, false);
       }
       catch (IOException e) {
-        throw new IOException("Failed to open " + jar, e);
+        continue;
       }
 
       jarFiles.add(jarFile);
