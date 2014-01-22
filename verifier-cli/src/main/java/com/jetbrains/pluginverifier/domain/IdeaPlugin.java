@@ -49,6 +49,10 @@ public class IdeaPlugin {
     }
 
     myId = getPluginId(pluginXml);
+    if (myId == null) {
+      throw new BrokenPluginException("No id or name in plugin.xml (" + pluginDirectory + ')');
+    }
+
     myDependencies = getPluginDependencies(pluginXml);
 
     myAllClassesPool = ContainerClassPool.union(pluginDirectory, Arrays.asList(pluginClassPool, libraryClassPool));
@@ -179,14 +183,16 @@ public class IdeaPlugin {
     }
   }
 
+  @Nullable
   private static String getPluginId(@NotNull Document pluginXml) {
     final String id = pluginXml.getRootElement().getChildText("id");
 
     if (id == null || id.length() == 0) {
       final String name = pluginXml.getRootElement().getChildText("name");
 
-      if (name == null || name.length() == 0)
-        throw new RuntimeException("No id or name in plugin.xml");
+      if (name.length() == 0) {
+        return null;
+      }
 
       return name;
     }
