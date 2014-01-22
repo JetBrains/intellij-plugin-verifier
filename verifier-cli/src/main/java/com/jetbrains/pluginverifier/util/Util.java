@@ -58,6 +58,10 @@ public class Util {
       }
     });
 
+    if (jars == null) {
+      throw new IOException("Failed to read jar directory: " + directory);
+    }
+
     List<JarFile> jarFiles = new ArrayList<JarFile>(jars.length);
     for (File jar : jars) {
       JarFile jarFile;
