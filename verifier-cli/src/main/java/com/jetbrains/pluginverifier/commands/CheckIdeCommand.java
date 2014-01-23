@@ -163,10 +163,10 @@ public class CheckIdeCommand extends VerifierCommand {
 
         results.put(updateJson.getUpdateId(), ctx.getProblems());
 
-        System.err.println("Plugin " + updateJson + " has " + ctx.getProblems().size() + " errors");
+        System.out.println("Plugin " + updateJson + " has " + ctx.getProblems().size() + " errors");
         for (Problem problem : ctx.getProblems()) {
-          System.err.print("    ");
-          System.err.println(problem.getDescription());
+          System.out.print("    ");
+          System.out.println(problem.getDescription());
         }
       }
     }
