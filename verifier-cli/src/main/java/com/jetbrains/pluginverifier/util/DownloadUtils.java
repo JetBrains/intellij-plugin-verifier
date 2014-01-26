@@ -25,7 +25,7 @@ public class DownloadUtils {
     if (!pluginInCache.exists()) {
       File currentDownload = File.createTempFile("currentDownload", ".zip", downloadDir);
 
-      System.out.print("Downloading plugin #" + updateId + "... ");
+      System.out.print("Downloading update #" + updateId + "... ");
 
       FileUtils.copyURLToFile(new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/plugin/download/?noStatistic=true&updateId=" + updateId), currentDownload);
 
