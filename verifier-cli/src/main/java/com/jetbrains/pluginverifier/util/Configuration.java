@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Properties;
@@ -59,6 +60,11 @@ public class Configuration {
   @NotNull
   public String getPluginRepositoryUrl() {
     return getProperty("plugin.repository.url");
+  }
+
+  @Nullable
+  public String getPluginCacheDir() {
+    return getProperty("plugin.cache.dir");
   }
 
 }

@@ -42,7 +42,7 @@ public class Util {
   }
 
   public static File getPluginCacheDir() {
-    String pluginCacheDir = System.getProperty("verifier.plugin.cache.dir");
+    String pluginCacheDir = Configuration.getInstance().getPluginCacheDir();
     if (pluginCacheDir != null) {
       return new File(pluginCacheDir);
     }
