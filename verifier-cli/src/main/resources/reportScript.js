@@ -4,7 +4,7 @@
   }
 
   function cutClassesInText(text) {
-    var classNameFragments = text.match(/([a-zA-Z_$][a-zA-Z_$0-9]*\.)+([a-zA-Z_$][a-zA-Z_$0-9]*)/g)
+    var classNameFragments = text.match(/([a-zA-Z_$][a-zA-Z_$0-9]*\.)+([A-Z][a-zA-Z_$0-9]*)/g)
 
     var index = 0;
     var res = ""
