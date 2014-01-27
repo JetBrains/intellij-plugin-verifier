@@ -200,7 +200,7 @@ public class CheckIdeCommand extends VerifierCommand {
       }
 
       if (reportFile != null) {
-        System.out.println("Saving report to " + reportFile);
+        System.out.println("Saving report to " + new File(reportFile).getAbsolutePath());
         CheckIdeHtmlReportBuilder.build(new File(reportFile), ideVersion, results);
       }
     }
