@@ -25,6 +25,7 @@ public class Util {
     .addOption("iv", "ide-version", true, "Version of IDE that will be tested, e.g. IU-133.439")
     .addOption("epf", "excluded-plugin-file", true, "File with list of excluded plugin builds.")
     .addOption("d", "dump-broken-plugin-list", true, "File to dump broken plugin list.")
+    .addOption("report", "make-report", true, "Create a detailed report about broken plugins.")
     .addOption("cp", "external-class-path", true, "External class path");
 
   public static RuntimeException fail(String message) {

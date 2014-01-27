@@ -59,7 +59,7 @@ public class CheckIdeCommand extends VerifierCommand {
     return res;
   }
 
-  private void removeExcludedPlugins(List<UpdateJson> updates, CommandLine commandLine) throws IOException {
+  private static void removeExcludedPlugins(Collection<UpdateJson> updates, CommandLine commandLine) throws IOException {
     String epf = commandLine.getOptionValue("epf");
     if (epf != null) {
       String excludedBuildListStr = Files.toString(new File(epf), Charset.defaultCharset());
@@ -75,7 +75,8 @@ public class CheckIdeCommand extends VerifierCommand {
     }
   }
 
-  private List<UpdateJson> getUpdateIds(Idea ide, @NotNull CommandLine commandLine) throws IOException {
+  @NotNull
+  private String getIdeVersion(@NotNull Idea ide, @NotNull CommandLine commandLine) throws IOException {
     String build = commandLine.getOptionValue("iv");
     if (build == null || build.isEmpty()) {
       build = Files.toString(new File(ide.getIdeaDir(), "build.txt"), Charset.defaultCharset()).trim();
@@ -84,6 +85,10 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
+    return build;
+  }
+
+  private List<UpdateJson> getUpdateIds(@NotNull String ideVersion, @NotNull CommandLine commandLine) throws IOException {
     List<String> pluginIds = extractPluginList(commandLine);
 
     if (pluginIds.isEmpty()) {
@@ -92,7 +97,8 @@ public class CheckIdeCommand extends VerifierCommand {
 
     System.out.println("Loading compatible plugins list... ");
 
-    URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/manager/originalCompatibleUpdatesByPluginIds/?build=" + build + "&pluginIds=" + Joiner
+    URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/manager/originalCompatibleUpdatesByPluginIds/?build=" +
+                      ideVersion + "&pluginIds=" + Joiner
       .on("&pluginIds=").join(pluginIds));
     String text = IOUtils.toString(url);
 
@@ -118,15 +124,19 @@ public class CheckIdeCommand extends VerifierCommand {
 
     Idea ide = new Idea(ideToCheck, jdk, externalClassPath);
 
-    List<UpdateJson> updateIds = getUpdateIds(ide, commandLine);
+    String ideVersion = getIdeVersion(ide, commandLine);
+    List<UpdateJson> updateIds = getUpdateIds(ideVersion, commandLine);
 
     String dumpBrokenPluginsFile = commandLine.getOptionValue("d");
+    String reportFile = commandLine.getOptionValue("report");
 
-    if (dumpBrokenPluginsFile == null) {
+    boolean checkExcludedBuilds = dumpBrokenPluginsFile != null || reportFile != null;
+
+    if (checkExcludedBuilds) {
       removeExcludedPlugins(updateIds, commandLine);
     }
 
-    Map<Integer, Collection<Problem>> results = new TreeMap<Integer, Collection<Problem>>();
+    Map<UpdateJson, Collection<Problem>> results = new HashMap<UpdateJson, Collection<Problem>>();
 
     long time = System.currentTimeMillis();
 
@@ -150,20 +160,18 @@ public class CheckIdeCommand extends VerifierCommand {
         continue;
       }
 
-      System.out.print("testing plugin " + plugin.getId() + " " + updateJson + "... ");
+      System.out.print("testing " + updateJson + "... ");
 
       VerificationContextImpl ctx = new VerificationContextImpl(options);
       Verifiers.processAllVerifiers(plugin, ctx);
+
+      results.put(updateJson, ctx.getProblems());
 
       if (ctx.getProblems().isEmpty()) {
         System.out.println("ok");
       }
       else {
-        System.out.println("error");
-
-        results.put(updateJson.getUpdateId(), ctx.getProblems());
-
-        System.out.println("Plugin " + updateJson + " has " + ctx.getProblems().size() + " errors");
+        System.out.println(" has " + ctx.getProblems().size() + " errors");
         for (Problem problem : ctx.getProblems()) {
           System.out.print("    ");
           System.out.println(problem.getDescription());
@@ -173,32 +181,33 @@ public class CheckIdeCommand extends VerifierCommand {
 
     System.out.println("Verification completed (" + ((System.currentTimeMillis() - time) / 1000) + "s)");
 
-    if (dumpBrokenPluginsFile != null) {
-      System.out.println("Dumping list of broken plugins to " + dumpBrokenPluginsFile);
+    if (checkExcludedBuilds) {
 
-      List<UpdateJson> res = new ArrayList<UpdateJson>();
+      if (dumpBrokenPluginsFile != null) {
+        System.out.println("Dumping list of broken plugins to " + dumpBrokenPluginsFile);
 
-      for (UpdateJson updateJson : updateIds) {
-        if (results.get(updateJson.getUpdateId()) != null && !results.get(updateJson.getUpdateId()).isEmpty()) {
-          res.add(updateJson);
+        List<UpdateJson> res = new ArrayList<UpdateJson>();
+
+        for (UpdateJson updateJson : updateIds) {
+          if (!results.get(updateJson).isEmpty()) {
+            res.add(updateJson);
+          }
         }
+
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String json = gson.toJson(res, updateListType);
+        FileUtils.writeStringToFile(new File(dumpBrokenPluginsFile), json);
       }
 
-      Gson gson = new GsonBuilder().setPrettyPrinting().create();
-      String json = gson.toJson(res, updateListType);
-      FileUtils.writeStringToFile(new File(dumpBrokenPluginsFile), json);
-
-      List<UpdateJson> updatesToCheck = new ArrayList<UpdateJson>(updateIds);
-      removeExcludedPlugins(updatesToCheck, commandLine);
-
-      for (UpdateJson updateJson : updatesToCheck) {
-        if (results.get(updateJson.getUpdateId()) != null) {
-          System.exit(2);
-        }
+      if (reportFile != null) {
+        System.out.println("Saving report to " + reportFile);
+        CheckIdeHtmlReportBuilder.build(new File(reportFile), ideVersion, results);
       }
     }
-    else {
-      if (!results.isEmpty()) {
+
+    removeExcludedPlugins(results.keySet(), commandLine);
+    for (Collection<Problem> problems : results.values()) {
+      if (!problems.isEmpty()) {
         System.exit(2);
       }
     }
