@@ -3,10 +3,12 @@ package com.jetbrains.pluginverifier.commands;
 import com.google.common.html.HtmlEscapers;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.util.UpdateJson;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.util.*;
@@ -58,16 +60,13 @@ public class CheckIdeHtmlReportBuilder {
                  "    .hasError .marker {\n" +
                  "      background: #f00;\n" +
                  "    }\n" +
+                 "" +
+                 "    .className {\n" +
+                 "      color: #2B587A !important;\n" +
+                 "    }\n" +
                  "  </style>\n" +
 
                  "</head>\n" +
-                 "\n" +
-                 "<script>\n" +
-                 "  $(function() {\n" +
-                 "    $( \"#tabs\" ).tabs();\n" +
-                 "    $( \".updates\" ).accordion({active: false, collapsible: true, heightStyle: 'content'});\n" +
-                 "  });\n" +
-                 "</script>\n" +
                  "\n" +
                  "<body>\n" +
                  "\n" +
@@ -122,6 +121,13 @@ public class CheckIdeHtmlReportBuilder {
       }
 
       out.append("</div>\n"); // tabs
+
+
+      InputStream reportScript = CheckIdeHtmlReportBuilder.class.getResourceAsStream("/reportScript.js");
+      out.append("<script>\n");
+      IOUtils.copy(reportScript, out);
+      out.append("</script>\n");
+
       out.append("</body>\n");
       out.append("</html>");
     }
