@@ -8,28 +8,28 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class OverridingFinalMethodProblem extends Problem {
 
-  private String myMethod;
+  private String mySuperFinalMethod;
 
   public OverridingFinalMethodProblem() {
 
   }
 
-  public OverridingFinalMethodProblem(@NotNull String method) {
-    setLocation(new ProblemLocation());
-    myMethod = method;
+  public OverridingFinalMethodProblem(@NotNull String className, @NotNull String method, @NotNull String superFinalMethod) {
+    setLocation(new ProblemLocation(className, method));
+    mySuperFinalMethod = superFinalMethod;
   }
 
   public String getMethod() {
-    return myMethod;
+    return mySuperFinalMethod;
   }
 
   public void setMethod(String method) {
-    myMethod = method;
+    mySuperFinalMethod = method;
   }
 
   @Override
   public String getDescription() {
-    return "overriding final method: " + MessageUtils.convertMethodDescr(myMethod);
+    return "overriding final method: " + MessageUtils.convertMethodDescr(mySuperFinalMethod);
   }
 
   @Override
@@ -40,7 +40,7 @@ public class OverridingFinalMethodProblem extends Problem {
 
     OverridingFinalMethodProblem problem = (OverridingFinalMethodProblem)o;
 
-    if (myMethod != null ? !myMethod.equals(problem.myMethod) : problem.myMethod != null) return false;
+    if (mySuperFinalMethod != null ? !mySuperFinalMethod.equals(problem.mySuperFinalMethod) : problem.mySuperFinalMethod != null) return false;
 
     return true;
   }
@@ -48,7 +48,7 @@ public class OverridingFinalMethodProblem extends Problem {
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + (myMethod != null ? myMethod.hashCode() : 0);
+    result = 31 * result + (mySuperFinalMethod != null ? mySuperFinalMethod.hashCode() : 0);
     return result;
   }
 }

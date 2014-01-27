@@ -16,10 +16,10 @@ public class OverrideNonFinalVerifier implements MethodVerifier {
   public void verify(final ClassNode clazz, final MethodNode method, final Resolver resolver, final VerificationContext ctx) {
     if ((method.access & Opcodes.ACC_PRIVATE) != 0) return;
     final String superClass = clazz.superName;
-    final MethodNode superMethod = ResolverUtil.findMethod(resolver, superClass, method.name, method.desc);
+    final ResolverUtil.MethodLocation superMethod = ResolverUtil.findMethod(resolver, superClass, method.name, method.desc);
     if (superMethod == null) return;
-    if (VerifierUtil.isFinal(superMethod) && !VerifierUtil.isAbstract(superMethod)) {
-      ctx.registerProblem(new OverridingFinalMethodProblem(clazz.name + '#' + method.name + method.desc));
+    if (VerifierUtil.isFinal(superMethod.getMethodNode()) && !VerifierUtil.isAbstract(superMethod.getMethodNode())) {
+      ctx.registerProblem(new OverridingFinalMethodProblem(clazz.name, method.name + method.desc, superMethod.getMethodDescr()));
     }
   }
 }
