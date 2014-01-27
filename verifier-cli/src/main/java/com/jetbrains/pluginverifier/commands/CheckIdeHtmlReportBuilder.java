@@ -96,10 +96,12 @@ public class CheckIdeHtmlReportBuilder {
 
             out.printf("<div class=\"updates\">\n");
 
-            out.printf("  <h3 class='%s'><span class='marker'>   </span> %s (#%d)</h3>\n",
+            out.printf("  <h3 class='%s'><span class='marker'>   </span> %s (#%d) %s</h3>\n",
                        problems.isEmpty() ? "ok" : "hasError",
                        HtmlEscapers.htmlEscaper().escape(update.getVersion()),
-                       update.getUpdateId());
+                       update.getUpdateId(),
+                       problems.isEmpty() ? "" : "<small>" + problems.size() + " errors found</small>"
+                       );
 
             out.printf("  <div>\n");
 
@@ -107,8 +109,17 @@ public class CheckIdeHtmlReportBuilder {
               out.printf(" No problems.");
             }
             else {
+              String[] problemText = new String[problems.size()];
+
+              int i = 0;
               for (Problem problem : problems) {
-                out.printf("    <div class='errorDetails'>%s</div>", HtmlEscapers.htmlEscaper().escape(problem.getDescription()));
+                problemText[i++] = problem.getDescription();
+              }
+
+              Arrays.sort(problemText);
+
+              for (String s : problemText) {
+                out.printf("    <div class='errorDetails'>%s</div>", HtmlEscapers.htmlEscaper().escape(s));
               }
             }
 
