@@ -17,6 +17,7 @@ import com.jetbrains.pluginverifier.domain.JDK;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
 import com.jetbrains.pluginverifier.util.*;
+import com.jetbrains.pluginverifier.util.TeamCityLog;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.io.FileUtils;
@@ -134,6 +135,8 @@ public class CheckIdeCommand extends VerifierCommand {
       throw Util.fail("IDE home is not a directory: " + ideToCheck);
     }
 
+    TeamCityLog tc = commandLine.hasOption("tc") ? new TeamCityLog(System.out) : TeamCityLog.NULL_LOG;
+
     JDK jdk = createJdk(commandLine);
 
     PluginVerifierOptions options = PluginVerifierOptions.parseOpts(commandLine);
@@ -189,9 +192,17 @@ public class CheckIdeCommand extends VerifierCommand {
 
       if (ctx.getProblems().isEmpty()) {
         System.out.println("ok");
+        tc.message(updateJson.getPluginId() + ':' + updateJson.getVersion() + " ok");
       }
       else {
         System.out.println(" has " + ctx.getProblems().count() + " errors");
+
+        if (updateFilter.apply(updateJson)) {
+          tc.messageError(updateJson.getPluginId() + ':' + updateJson.getVersion() + " has error");
+        }
+        else {
+          tc.message(updateJson.getPluginId() + ':' + updateJson.getVersion() + " has error, but is excluded in brokenPlugins.json");
+        }
 
         ctx.getProblems().printProblems(System.out, "    ");
       }
