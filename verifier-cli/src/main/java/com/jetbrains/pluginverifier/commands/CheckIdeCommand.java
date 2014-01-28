@@ -179,6 +179,7 @@ public class CheckIdeCommand extends VerifierCommand {
       }
       catch (Exception e) {
         System.out.println("Plugin is broken: " + updateJson);
+        tc.messageWarn("Failed to read plugin: " + e.getLocalizedMessage());
         e.printStackTrace();
         continue;
       }

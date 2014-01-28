@@ -36,4 +36,8 @@ public class TeamCityLog {
   public void message(@NotNull String text) {
     out.printf("##teamcity[message text='%s']\n", escape(text));
   }
+
+  public void messageWarn(@NotNull String text) {
+    out.printf("##teamcity[message text='%s' status='WARNING']\n", escape(text));
+  }
 }
