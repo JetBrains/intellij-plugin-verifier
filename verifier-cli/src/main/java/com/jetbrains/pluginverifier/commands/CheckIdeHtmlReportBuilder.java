@@ -2,6 +2,8 @@ package com.jetbrains.pluginverifier.commands;
 
 import com.google.common.html.HtmlEscapers;
 import com.jetbrains.pluginverifier.problems.Problem;
+import com.jetbrains.pluginverifier.problems.ProblemLocation;
+import com.jetbrains.pluginverifier.problems.ProblemSet;
 import com.jetbrains.pluginverifier.util.UpdateJson;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
@@ -16,14 +18,16 @@ import java.util.*;
 public class CheckIdeHtmlReportBuilder {
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
-  public static void build(@NotNull File report, @NotNull String ideVersion, @NotNull Map<UpdateJson, Collection<Problem>> results)
+  public static void build(@NotNull File report,
+                           @NotNull String ideVersion,
+                           @NotNull Map<UpdateJson, ProblemSet> results)
     throws IOException {
-    Map<String, Map<UpdateJson, Collection<Problem>>> pluginsMap = new TreeMap<String, Map<UpdateJson, Collection<Problem>>>();
+    Map<String, Map<UpdateJson, ProblemSet>> pluginsMap = new TreeMap<String, Map<UpdateJson, ProblemSet>>();
 
-    for (Map.Entry<UpdateJson, Collection<Problem>> entry : results.entrySet()) {
-      Map<UpdateJson, Collection<Problem>> pluginMap = pluginsMap.get(entry.getKey().getPluginId());
+    for (Map.Entry<UpdateJson, ProblemSet> entry : results.entrySet()) {
+      Map<UpdateJson, ProblemSet> pluginMap = pluginsMap.get(entry.getKey().getPluginId());
       if (pluginMap == null) {
-        pluginMap = new HashMap<UpdateJson, Collection<Problem>>();
+        pluginMap = new HashMap<UpdateJson, ProblemSet>();
         pluginsMap.put(entry.getKey().getPluginId(), pluginMap);
       }
 
@@ -61,8 +65,14 @@ public class CheckIdeHtmlReportBuilder {
                  "      background: #f00;\n" +
                  "    }\n" +
                  "" +
-                 "    .className {\n" +
+                 "    .errorDetails a {\n" +
                  "      color: #2B587A !important;\n" +
+                 "    }\n" +
+                 "" +
+                 "    .errLoc {\n" +
+                 "      display: none;\n" +
+                 "      margin-left: 100px;\n" +
+                 "      padding: 2px;\n" +
                  "    }\n" +
                  "  </style>\n" +
 
@@ -81,7 +91,7 @@ public class CheckIdeHtmlReportBuilder {
       out.append("  </ul>\n");
 
       idx = 1;
-      for (Map.Entry<String, Map<UpdateJson, Collection<Problem>>> entry : pluginsMap.entrySet()) {
+      for (Map.Entry<String, Map<UpdateJson, ProblemSet>> entry : pluginsMap.entrySet()) {
         out.printf("  <div id=\"tabs-%d\">\n", idx++);
 
         if (entry.getValue().isEmpty()) {
@@ -92,7 +102,7 @@ public class CheckIdeHtmlReportBuilder {
           Collections.sort(updates, Collections.reverseOrder(new UpdatesComparator()));
 
           for (UpdateJson update : updates) {
-            Collection<Problem> problems = entry.getValue().get(update);
+            ProblemSet problems = entry.getValue().get(update);
 
             out.printf("<div class=\"updates\">\n");
 
@@ -100,7 +110,7 @@ public class CheckIdeHtmlReportBuilder {
                        problems.isEmpty() ? "ok" : "hasError",
                        HtmlEscapers.htmlEscaper().escape(update.getVersion()),
                        update.getUpdateId(),
-                       problems.isEmpty() ? "" : "<small>" + problems.size() + " errors found</small>"
+                       problems.isEmpty() ? "" : "<small>" + problems.count() + " errors found</small>"
                        );
 
             out.printf("  <div>\n");
@@ -109,17 +119,32 @@ public class CheckIdeHtmlReportBuilder {
               out.printf(" No problems.");
             }
             else {
-              String[] problemText = new String[problems.size()];
+              List<Problem> problemList = new ArrayList<Problem>(problems.getAllProblems());
+              Collections.sort(problemList, new ToStringProblemComparator());
 
-              int i = 0;
-              for (Problem problem : problems) {
-                problemText[i++] = problem.getDescription();
-              }
+              for (Problem problem : problemList) {
+                out.append("    <div class='errorDetails'>").append(HtmlEscapers.htmlEscaper().escape(problem.getDescription())).append(' ')
+                  .append("<a href=\"#\" class='detailsLink'>details</a>\n");
 
-              Arrays.sort(problemText);
 
-              for (String s : problemText) {
-                out.printf("    <div class='errorDetails'>%s</div>", HtmlEscapers.htmlEscaper().escape(s));
+                out.append("<div class='errLoc'>");
+
+                List<ProblemLocation> locationList = new ArrayList<ProblemLocation>(problems.getLocations(problem));
+                Collections.sort(locationList, new ToStringCachedComparator<ProblemLocation>());
+
+                boolean isFirst = true;
+                for (ProblemLocation location : locationList) {
+                  if (isFirst) {
+                    isFirst = false;
+                  }
+                  else {
+                    out.append("<br>");
+                  }
+
+                  out.append(location.toString());
+                }
+
+                out.append("</div></div>");
               }
             }
 
@@ -144,6 +169,40 @@ public class CheckIdeHtmlReportBuilder {
     }
     finally {
       out.close();
+    }
+  }
+
+  private static class ToStringProblemComparator extends ToStringCachedComparator<Problem> {
+    @NotNull
+    @Override
+    protected String toString(Problem object) {
+      return object.getDescription();
+    }
+  }
+
+  private static class ToStringCachedComparator<T> implements Comparator<T> {
+
+    private final IdentityHashMap<T, String> myCache = new IdentityHashMap<T, String>();
+
+    @NotNull
+    protected String toString(T object) {
+      return object.toString();
+    }
+
+    @NotNull
+    private String getDescriptor(T obj) {
+      String res = myCache.get(obj);
+      if (res == null) {
+        res = toString(obj);
+        myCache.put(obj, res);
+      }
+
+      return res;
+    }
+
+    @Override
+    public int compare(T o1, T o2) {
+      return getDescriptor(o1).compareTo(getDescriptor(o2));
     }
   }
 

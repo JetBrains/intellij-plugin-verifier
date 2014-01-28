@@ -4,6 +4,7 @@ import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.pool.ResolverUtil;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.MethodNotFoundProblem;
+import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -33,13 +34,12 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
 
     ClassNode classNode = resolver.findClass(className);
     if (classNode == null) {
-      ctx.registerProblem(new ClassNotFoundProblem(clazz.name, method.name + method.desc, className));
+      ctx.registerProblem(new ClassNotFoundProblem(className), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));
     }
     else {
       if (ResolverUtil.findMethod(resolver, classNode, invoke.name, invoke.desc) == null) {
-        ctx.registerProblem(new MethodNotFoundProblem(clazz.name,
-                                                      method.name + method.desc,
-                                                      invoke.owner + '#' + invoke.name + invoke.desc));
+        ctx.registerProblem(new MethodNotFoundProblem(invoke.owner + '#' + invoke.name + invoke.desc),
+                            new ProblemLocation(clazz.name, method.name + method.desc));
       }
     }
   }

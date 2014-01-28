@@ -14,13 +14,7 @@ public class ClassNotFoundProblem extends Problem {
 
   }
 
-  public ClassNotFoundProblem(@NotNull String className, String unknownClass) {
-    setLocation(new ProblemLocation(className));
-    myUnknownClass = unknownClass;
-  }
-
-  public ClassNotFoundProblem(@NotNull String className, @NotNull String methodDescr, String unknownClass) {
-    setLocation(new ProblemLocation(className, methodDescr));
+  public ClassNotFoundProblem(String unknownClass) {
     myUnknownClass = unknownClass;
   }
 
@@ -34,26 +28,21 @@ public class ClassNotFoundProblem extends Problem {
 
   @Override
   public String getDescription() {
-    return "accessing to unknown class: " + MessageUtils.convertClassName(myUnknownClass) + " (from " + getLocation() + ')';
+    return "accessing to unknown class: " + MessageUtils.convertClassName(myUnknownClass);
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
 
     ClassNotFoundProblem problem = (ClassNotFoundProblem)o;
 
-    if (myUnknownClass != null ? !myUnknownClass.equals(problem.myUnknownClass) : problem.myUnknownClass != null) return false;
-
-    return true;
+    return !(myUnknownClass != null ? !myUnknownClass.equals(problem.myUnknownClass) : problem.myUnknownClass != null);
   }
 
   @Override
   public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + (myUnknownClass != null ? myUnknownClass.hashCode() : 0);
-    return result;
+    return 12345 + (myUnknownClass != null ? myUnknownClass.hashCode() : 0);
   }
 }

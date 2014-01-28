@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.domain.Idea;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.domain.JDK;
 import com.jetbrains.pluginverifier.pool.ClassPool;
-import com.jetbrains.pluginverifier.problems.Problem;
+import com.jetbrains.pluginverifier.problems.ProblemSet;
 import com.jetbrains.pluginverifier.util.Configuration;
 import com.jetbrains.pluginverifier.util.DownloadUtils;
 import com.jetbrains.pluginverifier.util.UpdateJson;
@@ -136,7 +136,7 @@ public class CheckIdeCommand extends VerifierCommand {
       removeExcludedPlugins(updateIds, commandLine);
     }
 
-    Map<UpdateJson, Collection<Problem>> results = new HashMap<UpdateJson, Collection<Problem>>();
+    Map<UpdateJson, ProblemSet> results = new HashMap<UpdateJson, ProblemSet>();
 
     long time = System.currentTimeMillis();
 
@@ -171,11 +171,9 @@ public class CheckIdeCommand extends VerifierCommand {
         System.out.println("ok");
       }
       else {
-        System.out.println(" has " + ctx.getProblems().size() + " errors");
-        for (Problem problem : ctx.getProblems()) {
-          System.out.print("    ");
-          System.out.println(problem.getDescription());
-        }
+        System.out.println(" has " + ctx.getProblems().count() + " errors");
+
+        ctx.getProblems().printProblems(System.out, "    ");
       }
     }
 
@@ -206,7 +204,7 @@ public class CheckIdeCommand extends VerifierCommand {
     }
 
     removeExcludedPlugins(results.keySet(), commandLine);
-    for (Collection<Problem> problems : results.values()) {
+    for (ProblemSet problems : results.values()) {
       if (!problems.isEmpty()) {
         System.exit(2);
       }

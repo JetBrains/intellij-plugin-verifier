@@ -100,9 +100,10 @@ public class CheckPluginCommand extends VerifierCommand {
       VerificationContextImpl ctx = new VerificationContextImpl(options);
       Verifiers.processAllVerifiers(plugin, ctx);
 
-      for (Problem problem : ctx.getProblems()) {
+      ctx.getProblems().printProblems(System.out, "");
+
+      if (!ctx.getProblems().isEmpty()) {
         hasError = true;
-        System.out.println(problem.getDescription());
       }
     }
 

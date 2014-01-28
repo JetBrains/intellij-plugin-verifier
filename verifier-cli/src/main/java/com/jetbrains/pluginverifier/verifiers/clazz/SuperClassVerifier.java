@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.verifiers.clazz;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem;
+import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.Opcodes;
@@ -16,7 +17,7 @@ public class SuperClassVerifier implements ClassVerifier {
   public void verify(final ClassNode clazz, final Resolver resolver, final VerificationContext ctx) {
     final String superClassName = clazz.superName;
     if(!VerifierUtil.classExists(ctx.getOptions(), resolver, superClassName, false)) {
-      ctx.registerProblem(new ClassNotFoundProblem(clazz.name, superClassName));
+      ctx.registerProblem(new ClassNotFoundProblem(superClassName), new ProblemLocation(clazz.name));
       return;
     }
 
@@ -37,7 +38,8 @@ public class SuperClassVerifier implements ClassVerifier {
           }
         }
 
-        ctx.registerProblem(new MethodNotImplementedProblem(clazz.name, superClassName + '#' + abstractMethod.name + abstractMethod.desc));
+        ctx.registerProblem(new MethodNotImplementedProblem(superClassName + '#' + abstractMethod.name + abstractMethod.desc),
+                            new ProblemLocation(clazz.name));
       }
     }
   }

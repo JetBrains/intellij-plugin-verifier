@@ -18,7 +18,6 @@ public class DuplicateClassProblem extends Problem {
   public DuplicateClassProblem(@NotNull String className, @NotNull String moniker) {
     myMoniker = moniker;
     myClassName = className;
-    setLocation(new ProblemLocation(className));
   }
 
   public String getMoniker() {
@@ -46,7 +45,6 @@ public class DuplicateClassProblem extends Problem {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
 
     DuplicateClassProblem problem = (DuplicateClassProblem)o;
 
@@ -58,8 +56,7 @@ public class DuplicateClassProblem extends Problem {
 
   @Override
   public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + (myMoniker != null ? myMoniker.hashCode() : 0);
+    int result = myMoniker != null ? myMoniker.hashCode() : 0;
     result = 31 * result + (myClassName != null ? myClassName.hashCode() : 0);
     return result;
   }

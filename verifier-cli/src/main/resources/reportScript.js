@@ -4,7 +4,7 @@
   }
 
   function cutClassesInText(text) {
-    var classNameFragments = text.match(/([a-zA-Z_$][a-zA-Z_$0-9]*\.)+([A-Z][a-zA-Z_$0-9]*)/g)
+    var classNameFragments = text.match(/([a-zA-Z_$][a-zA-Z_$0-9]+\.)+([A-Z][a-zA-Z_$0-9]+)/g)
 
     var index = 0;
     var res = ""
@@ -56,3 +56,17 @@
   });
 
   cutClasses($(".errorDetails"))
+  cutClasses($(".errLoc"))
+
+  $(".detailsLink").click(function() {
+    var locDiv = $(this).parent().find(".errLoc")
+
+    if (locDiv.css('display') != 'block') {
+      locDiv.css('display', 'block')
+    }
+    else {
+      locDiv.css('display', 'none')
+    }
+
+    return false
+  })

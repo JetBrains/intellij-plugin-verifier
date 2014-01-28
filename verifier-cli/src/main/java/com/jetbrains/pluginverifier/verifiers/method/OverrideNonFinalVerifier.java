@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.verifiers.method;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.pool.ResolverUtil;
 import com.jetbrains.pluginverifier.problems.OverridingFinalMethodProblem;
+import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.Opcodes;
@@ -19,7 +20,7 @@ public class OverrideNonFinalVerifier implements MethodVerifier {
     final ResolverUtil.MethodLocation superMethod = ResolverUtil.findMethod(resolver, superClass, method.name, method.desc);
     if (superMethod == null) return;
     if (VerifierUtil.isFinal(superMethod.getMethodNode()) && !VerifierUtil.isAbstract(superMethod.getMethodNode())) {
-      ctx.registerProblem(new OverridingFinalMethodProblem(clazz.name, method.name + method.desc, superMethod.getMethodDescr()));
+      ctx.registerProblem(new OverridingFinalMethodProblem(superMethod.getMethodDescr()), new ProblemLocation(clazz.name, method.name + method.desc));
     }
   }
 }

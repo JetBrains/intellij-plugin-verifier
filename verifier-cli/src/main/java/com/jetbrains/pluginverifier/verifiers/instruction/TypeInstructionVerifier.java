@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.instruction;
 
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
+import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -18,6 +19,6 @@ public class TypeInstructionVerifier implements InstructionVerifier {
     final String className = ((TypeInsnNode)instr).desc;
     if(className == null || VerifierUtil.classExists(ctx.getOptions(), resolver, className)) return;
 
-    ctx.registerProblem(new ClassNotFoundProblem(clazz.name, method.name + method.desc, className));
+    ctx.registerProblem(new ClassNotFoundProblem(className), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));
   }
 }

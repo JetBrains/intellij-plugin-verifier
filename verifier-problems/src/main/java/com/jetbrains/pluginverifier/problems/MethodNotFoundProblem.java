@@ -14,8 +14,7 @@ public class MethodNotFoundProblem extends Problem {
 
   }
 
-  public MethodNotFoundProblem(@NotNull String className, @NotNull String methodDescr, @NotNull String calledMethod) {
-    setLocation(new ProblemLocation(className, methodDescr));
+  public MethodNotFoundProblem(@NotNull String calledMethod) {
     myCalledMethod = calledMethod;
   }
 
@@ -29,26 +28,21 @@ public class MethodNotFoundProblem extends Problem {
 
   @Override
   public String getDescription() {
-    return "invoking unknown method: " + MessageUtils.convertMethodDescr(myCalledMethod) + " (from " + getLocation() + ')';
+    return "invoking unknown method: " + MessageUtils.convertMethodDescr(myCalledMethod);
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
 
     MethodNotFoundProblem problem = (MethodNotFoundProblem)o;
 
-    if (myCalledMethod != null ? !myCalledMethod.equals(problem.myCalledMethod) : problem.myCalledMethod != null) return false;
-
-    return true;
+    return !(myCalledMethod != null ? !myCalledMethod.equals(problem.myCalledMethod) : problem.myCalledMethod != null);
   }
 
   @Override
   public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + (myCalledMethod != null ? myCalledMethod.hashCode() : 0);
-    return result;
+    return 130807 + (myCalledMethod != null ? myCalledMethod.hashCode() : 0);
   }
 }

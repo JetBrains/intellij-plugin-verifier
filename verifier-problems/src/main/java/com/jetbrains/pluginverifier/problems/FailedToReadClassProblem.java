@@ -8,17 +8,24 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class FailedToReadClassProblem extends Problem {
 
+  public static final FailedToReadClassProblem INSTANCE = new FailedToReadClassProblem();
+
   public FailedToReadClassProblem() {
 
   }
 
-  public FailedToReadClassProblem(@NotNull String className) {
-    setLocation(new ProblemLocation(className));
+  @Override
+  public String getDescription() {
+    return "failed to read class";
   }
 
   @Override
-  public String getDescription() {
-    return "failed to read class: " + MessageUtils.convertClassName(getLocation().getClassName());
+  public boolean equals(Object o) {
+    return o instanceof FailedToReadClassProblem;
   }
 
+  @Override
+  public int hashCode() {
+    return 24111985;
+  }
 }

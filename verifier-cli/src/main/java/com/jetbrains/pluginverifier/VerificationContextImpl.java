@@ -1,6 +1,9 @@
 package com.jetbrains.pluginverifier;
 
 import com.jetbrains.pluginverifier.problems.Problem;
+import com.jetbrains.pluginverifier.problems.ProblemLocation;
+import com.jetbrains.pluginverifier.problems.ProblemSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -11,7 +14,7 @@ public class VerificationContextImpl implements VerificationContext {
 
   private final PluginVerifierOptions options;
 
-  private final Set<Problem> problems = new LinkedHashSet<Problem>();
+  private final ProblemSet problems = new ProblemSet();
 
   public VerificationContextImpl(PluginVerifierOptions options) {
     this.options = options;
@@ -23,11 +26,11 @@ public class VerificationContextImpl implements VerificationContext {
   }
 
   @Override
-  public void registerProblem(Problem problem) {
-    problems.add(problem);
+  public void registerProblem(@NotNull Problem problem, @NotNull ProblemLocation location) {
+    problems.addProblem(problem, location);
   }
 
-  public Collection<Problem> getProblems() {
+  public ProblemSet getProblems() {
     return problems;
   }
 }

@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.Verifier;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.problems.FailedToReadClassProblem;
+import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.resolvers.CacheResolver;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
@@ -34,7 +35,7 @@ public class ReferencesVerifier implements Verifier {
       final ClassNode node = pluginPool.findClass(className);
 
       if (node == null) {
-        ctx.registerProblem(new FailedToReadClassProblem(className));
+        ctx.registerProblem(FailedToReadClassProblem.INSTANCE, new ProblemLocation(className));
         continue;
       }
 

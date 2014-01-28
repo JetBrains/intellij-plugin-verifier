@@ -22,7 +22,6 @@ public class ProblemUtils {
                                              ClassNotFoundProblem.class,
                                              MethodNotImplementedProblem.class,
                                              OverridingFinalMethodProblem.class,
-                                             SuperClassNotFoundProblem.class,
                                              DuplicateClassProblem.class,
                                              ResultsElement.class,
                                              UpdateElement.class,

@@ -18,12 +18,6 @@ public class FieldTypeVerifier implements FieldVerifier {
       return;
     }
 
-    ClassNotFoundProblem problem = new ClassNotFoundProblem();
-    ProblemLocation location = new ProblemLocation(clazz.name);
-    location.setFieldName(field.name);
-    problem.setLocation(location);
-    problem.setUnknownClass(className);
-
-    ctx.registerProblem(problem);
+    ctx.registerProblem(new ClassNotFoundProblem(className), ProblemLocation.fromField(clazz.name, field.name));
   }
 }

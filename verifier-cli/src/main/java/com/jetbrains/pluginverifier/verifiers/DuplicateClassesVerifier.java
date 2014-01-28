@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.problems.DuplicateClassProblem;
+import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,7 @@ public class DuplicateClassesVerifier implements Verifier {
 
       final String moniker = resolverOfDependencies.getClassLocationMoniker(className);
       if (moniker != null) {
-        ctx.registerProblem(new DuplicateClassProblem(className, moniker));
+        ctx.registerProblem(new DuplicateClassProblem(className, moniker), new ProblemLocation(className));
       }
     }
   }

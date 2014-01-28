@@ -61,6 +61,23 @@ public class ProblemLocation {
     this.fieldName = fieldName;
   }
 
+  public static ProblemLocation fromField(@NotNull String className, @NotNull String fieldName) {
+    ProblemLocation res = new ProblemLocation();
+    res.setClassName(className);
+    res.setFieldName(fieldName);
+    return res;
+  }
+
+  public static ProblemLocation fromMethod(@NotNull String className, @NotNull String methodDescr) {
+    ProblemLocation res = new ProblemLocation();
+    res.setClassName(className);
+
+    assert !methodDescr.contains("#") : methodDescr;
+    res.setMethodDescr(methodDescr);
+
+    return res;
+  }
+
   @Override
   public String toString() {
     if (className == null) {
