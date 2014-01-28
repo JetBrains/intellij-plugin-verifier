@@ -70,3 +70,6 @@
 
     return false
   })
+
+  $(".hasError .marker").attr('title', "Errors found")
+  $(".excluded .marker").attr('title', "Excluded")

@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.commands;
 
+import com.google.common.base.Predicate;
 import com.google.common.html.HtmlEscapers;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
@@ -20,6 +21,7 @@ public class CheckIdeHtmlReportBuilder {
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   public static void build(@NotNull File report,
                            @NotNull String ideVersion,
+                           @NotNull Predicate<UpdateJson> updateFilter,
                            @NotNull Map<UpdateJson, ProblemSet> results)
     throws IOException {
     Map<String, Map<UpdateJson, ProblemSet>> pluginsMap = new TreeMap<String, Map<UpdateJson, ProblemSet>>();
@@ -56,13 +58,16 @@ public class CheckIdeHtmlReportBuilder {
                  "" +
                  "    .marker {\n" +
                  "      white-space: pre;\n" +
+                 "      font-weight: bold;\n" +
                  "    }\n" +
                  "\n" +
                  "    .ok .marker {\n" +
                  "      background: #0f0;\n" +
+                 "      color: #0f0;\n" +
                  "    }\n" +
                  "    .hasError .marker {\n" +
                  "      background: #f00;\n" +
+                 "      color: #f00;\n" +
                  "    }\n" +
                  "" +
                  "    .errorDetails a {\n" +
@@ -74,86 +79,98 @@ public class CheckIdeHtmlReportBuilder {
                  "      margin-left: 100px;\n" +
                  "      padding: 2px;\n" +
                  "    }\n" +
+                 "" +
+                 "    .excluded .marker {\n" +
+                 "      background: #888 !important;\n" +
+                 "    }" +
+
                  "  </style>\n" +
 
                  "</head>\n" +
                  "\n" +
                  "<body>\n" +
                  "\n" +
-                 "<div id=\"tabs\">\n" +
-                 "  <ul>\n");
+                 "<div id=\"tabs\">\n");
 
-      int idx = 1;
-      for (String pluginId : pluginsMap.keySet()) {
-        out.printf("    <li><a href=\"#tabs-%d\">%s</a></li>\n", idx++, pluginId);
+      if (pluginsMap.isEmpty()) {
+        out.print("No plugins to check.\n");
       }
+      else {
+        out.print("  <ul>\n");
 
-      out.append("  </ul>\n");
-
-      idx = 1;
-      for (Map.Entry<String, Map<UpdateJson, ProblemSet>> entry : pluginsMap.entrySet()) {
-        out.printf("  <div id=\"tabs-%d\">\n", idx++);
-
-        if (entry.getValue().isEmpty()) {
-          out.printf("There are no updates compatible with %s in the Plugin Repository\n", ideVersion);
+        int idx = 1;
+        for (String pluginId : pluginsMap.keySet()) {
+          out.printf("    <li><a href=\"#tabs-%d\">%s</a></li>\n", idx++, pluginId);
         }
-        else {
-          List<UpdateJson> updates = new ArrayList<UpdateJson>(entry.getValue().keySet());
-          Collections.sort(updates, Collections.reverseOrder(new UpdatesComparator()));
 
-          for (UpdateJson update : updates) {
-            ProblemSet problems = entry.getValue().get(update);
+        out.append("  </ul>\n");
 
-            out.printf("<div class=\"updates\">\n");
+        idx = 1;
+        for (Map.Entry<String, Map<UpdateJson, ProblemSet>> entry : pluginsMap.entrySet()) {
+          out.printf("  <div id=\"tabs-%d\">\n", idx++);
 
-            out.printf("  <h3 class='%s'><span class='marker'>   </span> %s (#%d) %s</h3>\n",
-                       problems.isEmpty() ? "ok" : "hasError",
-                       HtmlEscapers.htmlEscaper().escape(update.getVersion()),
-                       update.getUpdateId(),
-                       problems.isEmpty() ? "" : "<small>" + problems.count() + " errors found</small>"
-                       );
-
-            out.printf("  <div>\n");
-
-            if (problems.isEmpty()) {
-              out.printf(" No problems.");
-            }
-            else {
-              List<Problem> problemList = new ArrayList<Problem>(problems.getAllProblems());
-              Collections.sort(problemList, new ToStringProblemComparator());
-
-              for (Problem problem : problemList) {
-                out.append("    <div class='errorDetails'>").append(HtmlEscapers.htmlEscaper().escape(problem.getDescription())).append(' ')
-                  .append("<a href=\"#\" class='detailsLink'>details</a>\n");
-
-
-                out.append("<div class='errLoc'>");
-
-                List<ProblemLocation> locationList = new ArrayList<ProblemLocation>(problems.getLocations(problem));
-                Collections.sort(locationList, new ToStringCachedComparator<ProblemLocation>());
-
-                boolean isFirst = true;
-                for (ProblemLocation location : locationList) {
-                  if (isFirst) {
-                    isFirst = false;
-                  }
-                  else {
-                    out.append("<br>");
-                  }
-
-                  out.append(location.toString());
-                }
-
-                out.append("</div></div>");
-              }
-            }
-
-            out.printf("  </div>\n");
-            out.printf("</div>\n");
+          if (entry.getValue().isEmpty()) {
+            out.printf("There are no updates compatible with %s in the Plugin Repository\n", ideVersion);
           }
-        }
+          else {
+            List<UpdateJson> updates = new ArrayList<UpdateJson>(entry.getValue().keySet());
+            Collections.sort(updates, Collections.reverseOrder(new UpdatesComparator()));
 
-        out.append("  </div>\n");
+            for (UpdateJson update : updates) {
+              ProblemSet problems = entry.getValue().get(update);
+
+              out.printf("<div class=\"updates\">\n");
+
+              out.printf("  <h3 class='%s %s'><span class='marker'>   </span> %s (#%d) %s</h3>\n",
+                         problems.isEmpty() ? "ok" : "hasError",
+                         updateFilter.apply(update) ? "" : "excluded",
+                         HtmlEscapers.htmlEscaper().escape(update.getVersion()),
+                         update.getUpdateId(),
+                         problems.isEmpty() ? "" : "<small>" + problems.count() + " errors found</small>"
+              );
+
+              out.printf("  <div>\n");
+
+              if (problems.isEmpty()) {
+                out.printf(" No problems.");
+              }
+              else {
+                List<Problem> problemList = new ArrayList<Problem>(problems.getAllProblems());
+                Collections.sort(problemList, new ToStringProblemComparator());
+
+                for (Problem problem : problemList) {
+                  out.append("    <div class='errorDetails'>").append(HtmlEscapers.htmlEscaper().escape(problem.getDescription())).append(' ')
+                    .append("<a href=\"#\" class='detailsLink'>details</a>\n");
+
+
+                  out.append("<div class='errLoc'>");
+
+                  List<ProblemLocation> locationList = new ArrayList<ProblemLocation>(problems.getLocations(problem));
+                  Collections.sort(locationList, new ToStringCachedComparator<ProblemLocation>());
+
+                  boolean isFirst = true;
+                  for (ProblemLocation location : locationList) {
+                    if (isFirst) {
+                      isFirst = false;
+                    }
+                    else {
+                      out.append("<br>");
+                    }
+
+                    out.append(location.toString());
+                  }
+
+                  out.append("</div></div>");
+                }
+              }
+
+              out.printf("  </div>\n");
+              out.printf("</div>\n");
+            }
+          }
+
+          out.append("  </div>\n");
+        }
       }
 
       out.append("</div>\n"); // tabs

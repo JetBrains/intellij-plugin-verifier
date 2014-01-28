@@ -1,6 +1,9 @@
 package com.jetbrains.pluginverifier.commands;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Collections2;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -13,10 +16,7 @@ import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.domain.JDK;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
-import com.jetbrains.pluginverifier.util.Configuration;
-import com.jetbrains.pluginverifier.util.DownloadUtils;
-import com.jetbrains.pluginverifier.util.UpdateJson;
-import com.jetbrains.pluginverifier.util.Util;
+import com.jetbrains.pluginverifier.util.*;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.io.FileUtils;
@@ -59,20 +59,38 @@ public class CheckIdeCommand extends VerifierCommand {
     return res;
   }
 
-  private static void removeExcludedPlugins(Collection<UpdateJson> updates, CommandLine commandLine) throws IOException {
+  private static Predicate<UpdateJson> getExcludedPluginsPredicate(@NotNull CommandLine commandLine) throws IOException {
     String epf = commandLine.getOptionValue("epf");
-    if (epf != null) {
-      String excludedBuildListStr = Files.toString(new File(epf), Charset.defaultCharset());
-      List<UpdateJson> excludedBuildList = new Gson().fromJson(excludedBuildListStr, updateListType);
-      for (UpdateJson excludedBuild : excludedBuildList) {
-        for (Iterator<UpdateJson> itr = updates.iterator(); itr.hasNext(); ) {
-          UpdateJson u = itr.next();
-          if (excludedBuild.equalsByIdOrVersion(u)) {
-            itr.remove();
-          }
-        }
+    if (epf == null) {
+      return Predicates.alwaysTrue();
+    }
+
+    String excludedBuildListStr = Files.toString(new File(epf), Charset.defaultCharset());
+    List<UpdateJson> excludedBuildList = new Gson().fromJson(excludedBuildListStr, updateListType);
+
+    final Set<Object> excludedUpdate = new HashSet<Object>();
+
+    for (UpdateJson updateJson : excludedBuildList) {
+      if (updateJson.getUpdateId() != null) {
+        excludedUpdate.add(updateJson.getUpdateId());
+      }
+
+      if (updateJson.getPluginId() != null && updateJson.getVersion() != null) {
+        excludedUpdate.add(Pair.create(updateJson.getPluginId(), updateJson.getVersion()));
       }
     }
+
+    return new Predicate<UpdateJson>() {
+      @Override
+      public boolean apply(UpdateJson json) {
+        if (excludedUpdate.contains(json.getUpdateId())) {
+          return false;
+        }
+
+        Pair<String,String> pair = Pair.create(json.getPluginId(), json.getVersion());
+        return !excludedUpdate.contains(pair);
+      }
+    };
   }
 
   @NotNull
@@ -125,15 +143,17 @@ public class CheckIdeCommand extends VerifierCommand {
     Idea ide = new Idea(ideToCheck, jdk, externalClassPath);
 
     String ideVersion = getIdeVersion(ide, commandLine);
-    List<UpdateJson> updateIds = getUpdateIds(ideVersion, commandLine);
+    Collection<UpdateJson> updateIds = getUpdateIds(ideVersion, commandLine);
 
     String dumpBrokenPluginsFile = commandLine.getOptionValue("d");
     String reportFile = commandLine.getOptionValue("report");
 
     boolean checkExcludedBuilds = dumpBrokenPluginsFile != null || reportFile != null;
 
-    if (checkExcludedBuilds) {
-      removeExcludedPlugins(updateIds, commandLine);
+    Predicate<UpdateJson> updateFilter = getExcludedPluginsPredicate(commandLine);
+
+    if (!checkExcludedBuilds) {
+      updateIds = Collections2.filter(updateIds, updateFilter);
     }
 
     Map<UpdateJson, ProblemSet> results = new HashMap<UpdateJson, ProblemSet>();
@@ -199,13 +219,13 @@ public class CheckIdeCommand extends VerifierCommand {
 
       if (reportFile != null) {
         System.out.println("Saving report to " + new File(reportFile).getAbsolutePath());
-        CheckIdeHtmlReportBuilder.build(new File(reportFile), ideVersion, results);
+        CheckIdeHtmlReportBuilder.build(new File(reportFile), ideVersion, updateFilter, results);
       }
     }
 
-    removeExcludedPlugins(results.keySet(), commandLine);
-    for (ProblemSet problems : results.values()) {
-      if (!problems.isEmpty()) {
+    Collections2.filter(results.keySet(), updateFilter);
+    for (Map.Entry<UpdateJson, ProblemSet> entry : results.entrySet()) {
+      if (updateFilter.apply(entry.getKey()) && !entry.getValue().isEmpty()) {
         System.exit(2);
       }
     }
