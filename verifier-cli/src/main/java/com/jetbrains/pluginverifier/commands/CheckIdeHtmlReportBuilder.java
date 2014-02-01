@@ -129,7 +129,7 @@ public class CheckIdeHtmlReportBuilder {
                          updateFilter.apply(update) ? "" : "excluded",
                          HtmlEscapers.htmlEscaper().escape(update.getVersion()),
                          update.getUpdateId(),
-                         problems.isEmpty() ? "" : "<small>" + problems.count() + " errors found</small>"
+                         problems.isEmpty() ? "" : "<small>" + problems.count() + " problems found</small>"
               );
 
               out.printf("  <div>\n");
