@@ -3,7 +3,26 @@ package com.jetbrains.pluginverifier.utils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class MessageUtils {
+
+  private static final Pattern CLASS_QUALIFIED_NAME = Pattern.compile("(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(?:\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*)\\.(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)");
+
+  private static final Set<String> COMMON_CLASSES = new HashSet<String>(Arrays.asList("com.intellij.openapi.vfs.VirtualFile",
+                                                                                      "com.intellij.openapi.module.Module",
+                                                                                      "com.intellij.openapi.project.Project",
+                                                                                      "com.intellij.psi.PsiElement",
+                                                                                      "com.intellij.openapi.util.TextRange",
+                                                                                      "com.intellij.psi.PsiFile",
+                                                                                      "com.intellij.psi.PsiReference",
+                                                                                      "com.intellij.psi.search.GlobalSearchScope",
+                                                                                      "com.intellij.lang.ASTNode"));
+  private static final Set<String> COMMON_PACKAGES = new HashSet<String>(Arrays.asList("java.io", "java.lang", "java.util"));
 
   private MessageUtils() {
   }
@@ -137,5 +156,29 @@ public class MessageUtils {
     return res.toString();
   }
 
+  public static CharSequence cutCommonPackages(@NotNull String text) {
+    Matcher matcher = CLASS_QUALIFIED_NAME.matcher(text);
 
+    if (!matcher.find()) return text;
+
+    int idx = 0;
+    StringBuilder res = new StringBuilder();
+
+    do {
+      res.append(text, idx, matcher.start());
+
+      if (COMMON_CLASSES.contains(matcher.group()) || COMMON_PACKAGES.contains(matcher.group(1))) {
+        res.append(matcher.group(2)); // class name without package
+      }
+      else {
+        res.append(matcher.group()); // qualified class name
+      }
+
+      idx = matcher.end();
+    } while (matcher.find());
+
+    res.append(text, idx, text.length());
+
+    return res;
+  }
 }

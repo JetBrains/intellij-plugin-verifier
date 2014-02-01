@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.problems;
 
+import com.jetbrains.pluginverifier.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,14 +39,14 @@ public class ProblemSet {
 
     for (Map.Entry<Problem, Set<ProblemLocation>> entry : asMap().entrySet()) {
       out.print(indent);
-      out.println(entry.getKey().getDescription());
+      out.println(MessageUtils.cutCommonPackages(entry.getKey().getDescription()));
 
       out.printf("%s    at %d locations\n", indent, entry.getValue().size());
 
       for (ProblemLocation location : entry.getValue()) {
         out.print(indent);
         out.print("    ");
-        out.println(location.toString());
+        out.println(MessageUtils.cutCommonPackages(location.toString()));
       }
 
       out.println();

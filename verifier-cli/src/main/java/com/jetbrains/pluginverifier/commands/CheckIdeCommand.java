@@ -282,7 +282,7 @@ public class CheckIdeCommand extends VerifierCommand {
       List<UpdateJson> updates = new ArrayList<UpdateJson>(problems.get(problem));
       Collections.sort(updates, new ToStringCachedComparator<UpdateJson>());
 
-      log.buildProblem(problem.getDescription() + " (in " + Joiner.on(", ").join(updates) + ')');
+      log.buildProblem(MessageUtils.cutCommonPackages(problem.getDescription()) + " (in " + Joiner.on(", ").join(updates) + ')');
     }
   }
 }
