@@ -164,48 +164,55 @@ public class CheckIdeCommand extends VerifierCommand {
     long time = System.currentTimeMillis();
 
     for (UpdateJson updateJson : updateIds) {
-      File update;
+      TeamCityLog.Block block = tc.blockOpen(updateJson.toString());
+
       try {
-        update = DownloadUtils.getUpdate(updateJson.getUpdateId());
-      }
-      catch (IOException e) {
-        System.out.println("failed to download: " + e.getMessage());
-        continue;
-      }
+        File update;
+        try {
+          update = DownloadUtils.getUpdate(updateJson.getUpdateId());
+        }
+        catch (IOException e) {
+          System.out.println("failed to download: " + e.getMessage());
+          continue;
+        }
 
-      IdeaPlugin plugin;
-      try {
-        plugin = IdeaPlugin.createFromZip(ide, update);
-      }
-      catch (Exception e) {
-        System.out.println("Plugin is broken: " + updateJson);
-        tc.messageWarn("Failed to read plugin: " + e.getLocalizedMessage());
-        e.printStackTrace();
-        continue;
-      }
+        IdeaPlugin plugin;
+        try {
+          plugin = IdeaPlugin.createFromZip(ide, update);
+        }
+        catch (Exception e) {
+          System.out.println("Plugin is broken: " + updateJson);
+          tc.messageWarn("Failed to read plugin: " + e.getLocalizedMessage());
+          e.printStackTrace();
+          continue;
+        }
 
-      System.out.print("testing " + updateJson + "... ");
+        System.out.print("testing " + updateJson + "... ");
 
-      VerificationContextImpl ctx = new VerificationContextImpl(options);
-      Verifiers.processAllVerifiers(plugin, ctx);
+        VerificationContextImpl ctx = new VerificationContextImpl(options);
+        Verifiers.processAllVerifiers(plugin, ctx);
 
-      results.put(updateJson, ctx.getProblems());
+        results.put(updateJson, ctx.getProblems());
 
-      if (ctx.getProblems().isEmpty()) {
-        System.out.println("ok");
-        tc.message(updateJson.getPluginId() + ':' + updateJson.getVersion() + " ok");
-      }
-      else {
-        System.out.println(" has " + ctx.getProblems().count() + " errors");
-
-        if (updateFilter.apply(updateJson)) {
-          tc.messageError(updateJson.getPluginId() + ':' + updateJson.getVersion() + " has error");
+        if (ctx.getProblems().isEmpty()) {
+          System.out.println("ok");
+          tc.message(updateJson.getPluginId() + ':' + updateJson.getVersion() + " ok");
         }
         else {
-          tc.message(updateJson.getPluginId() + ':' + updateJson.getVersion() + " has error, but is excluded in brokenPlugins.json");
-        }
+          System.out.println(" has " + ctx.getProblems().count() + " errors");
 
-        ctx.getProblems().printProblems(System.out, "    ");
+          if (updateFilter.apply(updateJson)) {
+            tc.messageError(updateJson.getPluginId() + ':' + updateJson.getVersion() + " has error");
+          }
+          else {
+            tc.message(updateJson.getPluginId() + ':' + updateJson.getVersion() + " has error, but is excluded in brokenPlugins.json");
+          }
+
+          ctx.getProblems().printProblems(System.out, "    ");
+        }
+      }
+      finally {
+        block.close();
       }
     }
 

@@ -40,4 +40,21 @@ public class TeamCityLog {
   public void messageWarn(@NotNull String text) {
     out.printf("##teamcity[message text='%s' status='WARNING']\n", escape(text));
   }
+
+  public Block blockOpen(@NotNull String name) {
+    out.printf("##teamcity[blockOpened name='%s']\n", escape(name));
+    return new Block(name);
+  }
+
+  public class Block {
+    private String name;
+
+    public Block(String name) {
+      this.name = name;
+    }
+
+    public void close() {
+      out.printf("##teamcity[blockClosed name='%s']\n", escape(name));
+    }
+  }
 }
