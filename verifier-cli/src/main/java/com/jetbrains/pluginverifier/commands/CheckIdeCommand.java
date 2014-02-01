@@ -254,7 +254,7 @@ public class CheckIdeCommand extends VerifierCommand {
     }
 
     if (allProblems.size() > 0) {
-      tc.buildStatus(allProblems.size() + " problems");
+      tc.buildStatus(allProblems.size() + (allProblems.size() == 1 ? " problem" : " problems") );
       System.out.printf("IDE has %d problems at non-excluded plugins", allProblems.size());
       System.exit(2);
     }
