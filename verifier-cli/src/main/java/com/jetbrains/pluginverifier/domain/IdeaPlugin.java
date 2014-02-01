@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.domain;
 
+import com.google.common.base.Predicates;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.pool.ContainerClassPool;
 import com.jetbrains.pluginverifier.pool.InMemoryJarClassPool;
@@ -221,7 +222,7 @@ public class IdeaPlugin {
     if (!lib.isDirectory())
       throw new RuntimeException("Plugin lib is not found: " + lib);
 
-    final List<JarFile> jars = Util.getJars(lib);
+    final List<JarFile> jars = Util.getJars(lib, Predicates.<File>alwaysTrue());
     if (jars.size() == 0)
       throw new RuntimeException("No jar files found under " + lib);
 

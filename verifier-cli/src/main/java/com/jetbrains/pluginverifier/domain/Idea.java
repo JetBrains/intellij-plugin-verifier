@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.domain;
 
+import com.google.common.base.Predicate;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.pool.CompileOutputPool;
 import com.jetbrains.pluginverifier.pool.ContainerClassPool;
@@ -71,14 +72,12 @@ public class Idea {
 
   private static ClassPool getIdeaClassPoolFromLibraries(File ideaDir) throws IOException {
     final File lib = new File(ideaDir, "lib");
-    final List<JarFile> jars = Util.getJars(lib);
-
-    for (JarFile jar : new ArrayList<JarFile>(jars)) {
-      final String jarName = jar.getName().toLowerCase();
-
-      if (jarName.endsWith("javac2.jar"))
-        jars.remove(jar);
-    }
+    final List<JarFile> jars = Util.getJars(lib, new Predicate<File>() {
+      @Override
+      public boolean apply(File file) {
+        return !file.getName().endsWith("javac2.jar");
+      }
+    });
 
     return Util.makeClassPool(ideaDir.getPath(), jars);
   }

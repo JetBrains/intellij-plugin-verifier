@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.util;
 
+import com.google.common.base.Predicate;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.pool.ContainerClassPool;
 import com.jetbrains.pluginverifier.pool.JarClassPool;
@@ -7,7 +8,6 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,29 +52,24 @@ public class Util {
     return new File(getValidatorHome(), "cache");
   }
 
-  public static List<JarFile> getJars(File directory) throws IOException {
-    final File[] jars = directory.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(final File dir, final String name) {
-        return name.toLowerCase().endsWith(".jar");
-      }
-    });
+  public static List<JarFile> getJars(File directory, Predicate<File> filter) throws IOException {
+    File[] children = directory.listFiles();
 
-    if (jars == null) {
+    if (children == null) {
       throw new IOException("Failed to read jar directory: " + directory);
     }
 
-    List<JarFile> jarFiles = new ArrayList<JarFile>(jars.length);
-    for (File jar : jars) {
-      JarFile jarFile;
-      try {
-        jarFile = new JarFile(jar, false);
-      }
-      catch (IOException e) {
-        continue;
-      }
+    List<JarFile> jarFiles = new ArrayList<JarFile>();
 
-      jarFiles.add(jarFile);
+    for (File file : children) {
+      if (file.getName().toLowerCase().endsWith(".jar") && filter.apply(file)) {
+        try {
+          jarFiles.add(new JarFile(file, false));
+        }
+        catch (IOException e) {
+          System.out.println("Failed to open jar file: " + file + " , " + e.getMessage());
+        }
+      }
     }
 
     return jarFiles;

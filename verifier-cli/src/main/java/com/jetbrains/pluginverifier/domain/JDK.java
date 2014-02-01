@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.domain;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.util.Util;
@@ -9,9 +11,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.JarFile;
 
 public class JDK {
+
+  private static final Set<String> JDK_JAR_NAMES = ImmutableSet.of("rt.jar", "tools.jar", "classes.jar", "jsse.jar", "javaws.jar",
+                                                                   "jce.jar");
+
   private final File myJdkDir;
   private final List<JarFile> myJars;
   private final ClassPool myPool;
@@ -25,14 +32,14 @@ public class JDK {
   }
 
   private void collectJars(File dir) throws IOException {
-    final List<JarFile> jars = Util.getJars(dir);
+    final List<JarFile> jars = Util.getJars(dir, new Predicate<File>() {
+      @Override
+      public boolean apply(File file) {
+        return JDK_JAR_NAMES.contains(file.getName().toLowerCase());
+      }
+    });
 
-    for (JarFile jar : jars) {
-      final String jarName = new File(jar.getName()).getName().toLowerCase().toLowerCase();
-
-      if (jarName.equals("rt.jar") || jarName.equals("tools.jar") || jarName.equals("classes.jar"))
-        myJars.add(jar);
-    }
+    myJars.addAll(jars);
 
     final File[] files = dir.listFiles();
     if (files == null)
