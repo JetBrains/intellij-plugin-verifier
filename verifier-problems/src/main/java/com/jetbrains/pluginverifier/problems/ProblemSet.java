@@ -39,11 +39,11 @@ public class ProblemSet {
       out.print(indent);
       out.println(entry.getKey().getDescription());
 
-      out.printf("%s%sat %d locations\n", indent, indent, entry.getValue().size());
+      out.printf("%s    at %d locations\n", indent, entry.getValue().size());
 
       for (ProblemLocation location : entry.getValue()) {
         out.print(indent);
-        out.print(indent);
+        out.print("    ");
         out.println(location.toString());
       }
     }
