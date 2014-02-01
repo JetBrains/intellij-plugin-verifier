@@ -62,10 +62,10 @@ public class ProblemSet {
   }
 
   public boolean isEmpty() {
-    return map.isEmpty();
+    return asMap().isEmpty();
   }
 
   public int count() {
-    return map.size();
+    return asMap().size();
   }
 }
