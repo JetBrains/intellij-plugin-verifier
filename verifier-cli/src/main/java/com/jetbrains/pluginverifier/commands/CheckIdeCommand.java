@@ -5,6 +5,7 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
@@ -246,10 +247,16 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
-    for (Map.Entry<UpdateJson, ProblemSet> entry : results.entrySet()) {
-      if (updateFilter.apply(entry.getKey()) && !entry.getValue().isEmpty()) {
-        System.exit(2);
-      }
+    Set<Problem> allProblems = new HashSet<Problem>();
+
+    for (ProblemSet problemSet : Maps.filterKeys(results, updateFilter).values()) {
+      allProblems.addAll(problemSet.getAllProblems());
+    }
+
+    if (allProblems.size() > 0) {
+      tc.buildStatus(allProblems.size() + " problems");
+      System.out.printf("IDE has %d problems at non-excluded plugins", allProblems.size());
+      System.exit(2);
     }
   }
 

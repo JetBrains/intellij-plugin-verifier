@@ -45,6 +45,10 @@ public class TeamCityLog {
     out.printf("##teamcity[buildProblem description='%s']\n", escape(description));
   }
 
+  public void buildStatus(@NotNull String text) {
+    out.printf("##teamcity[buildStatus text='%s']\n", escape(text));
+  }
+
   public Block blockOpen(@NotNull String name) {
     out.printf("##teamcity[blockOpened name='%s']\n", escape(name));
     return new Block(name);
