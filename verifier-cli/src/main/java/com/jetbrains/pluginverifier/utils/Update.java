@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.utils;
 /**
  * @author Sergey Evdokimov
  */
-public class UpdateJson {
+public class Update {
 
   private Integer updateId;
 
@@ -35,7 +35,7 @@ public class UpdateJson {
     this.version = version;
   }
 
-  public boolean equalsByIdOrVersion(UpdateJson another) {
+  public boolean equalsByIdOrVersion(Update another) {
     if (updateId != null && another.updateId != null) {
       return updateId.equals(another.updateId);
     }

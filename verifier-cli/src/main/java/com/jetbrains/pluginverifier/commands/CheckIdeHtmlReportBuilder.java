@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
 import com.jetbrains.pluginverifier.utils.ToStringCachedComparator;
 import com.jetbrains.pluginverifier.utils.ToStringProblemComparator;
-import com.jetbrains.pluginverifier.utils.UpdateJson;
+import com.jetbrains.pluginverifier.utils.Update;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,15 +23,15 @@ public class CheckIdeHtmlReportBuilder {
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   public static void build(@NotNull File report,
                            @NotNull String ideVersion,
-                           @NotNull Predicate<UpdateJson> updateFilter,
-                           @NotNull Map<UpdateJson, ProblemSet> results)
+                           @NotNull Predicate<Update> updateFilter,
+                           @NotNull Map<Update, ProblemSet> results)
     throws IOException {
-    Map<String, Map<UpdateJson, ProblemSet>> pluginsMap = new TreeMap<String, Map<UpdateJson, ProblemSet>>();
+    Map<String, Map<Update, ProblemSet>> pluginsMap = new TreeMap<String, Map<Update, ProblemSet>>();
 
-    for (Map.Entry<UpdateJson, ProblemSet> entry : results.entrySet()) {
-      Map<UpdateJson, ProblemSet> pluginMap = pluginsMap.get(entry.getKey().getPluginId());
+    for (Map.Entry<Update, ProblemSet> entry : results.entrySet()) {
+      Map<Update, ProblemSet> pluginMap = pluginsMap.get(entry.getKey().getPluginId());
       if (pluginMap == null) {
-        pluginMap = new HashMap<UpdateJson, ProblemSet>();
+        pluginMap = new HashMap<Update, ProblemSet>();
         pluginsMap.put(entry.getKey().getPluginId(), pluginMap);
       }
 
@@ -109,17 +109,17 @@ public class CheckIdeHtmlReportBuilder {
         out.append("  </ul>\n");
 
         idx = 1;
-        for (Map.Entry<String, Map<UpdateJson, ProblemSet>> entry : pluginsMap.entrySet()) {
+        for (Map.Entry<String, Map<Update, ProblemSet>> entry : pluginsMap.entrySet()) {
           out.printf("  <div id=\"tabs-%d\">\n", idx++);
 
           if (entry.getValue().isEmpty()) {
             out.printf("There are no updates compatible with %s in the Plugin Repository\n", ideVersion);
           }
           else {
-            List<UpdateJson> updates = new ArrayList<UpdateJson>(entry.getValue().keySet());
+            List<Update> updates = new ArrayList<Update>(entry.getValue().keySet());
             Collections.sort(updates, Collections.reverseOrder(new UpdatesComparator()));
 
-            for (UpdateJson update : updates) {
+            for (Update update : updates) {
               ProblemSet problems = entry.getValue().get(update);
 
               out.printf("<div class=\"updates\">\n");
@@ -192,9 +192,9 @@ public class CheckIdeHtmlReportBuilder {
     }
   }
 
-  private static class UpdatesComparator implements Comparator<UpdateJson> {
+  private static class UpdatesComparator implements Comparator<Update> {
     @Override
-    public int compare(UpdateJson o1, UpdateJson o2) {
+    public int compare(Update o1, Update o2) {
       return o1.getUpdateId() - o2.getUpdateId();
     }
   }
