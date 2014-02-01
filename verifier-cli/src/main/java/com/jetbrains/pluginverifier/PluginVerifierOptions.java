@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier;
 
-import com.jetbrains.pluginverifier.util.Configuration;
-import com.jetbrains.pluginverifier.util.Util;
+import com.jetbrains.pluginverifier.utils.Configuration;
+import com.jetbrains.pluginverifier.utils.Util;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.jetbrains.annotations.NotNull;

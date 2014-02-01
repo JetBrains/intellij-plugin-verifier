@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier;
 import com.jetbrains.pluginverifier.domain.BrokenPluginException;
 import com.jetbrains.pluginverifier.domain.Idea;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
-import com.jetbrains.pluginverifier.util.Util;
+import com.jetbrains.pluginverifier.utils.Util;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

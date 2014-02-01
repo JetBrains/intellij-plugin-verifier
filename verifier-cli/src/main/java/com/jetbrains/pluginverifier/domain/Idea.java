@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.pool.ContainerClassPool;
 import com.jetbrains.pluginverifier.resolvers.CacheResolver;
 import com.jetbrains.pluginverifier.resolvers.CombiningResolver;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
-import com.jetbrains.pluginverifier.util.Util;
+import com.jetbrains.pluginverifier.utils.Util;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
 

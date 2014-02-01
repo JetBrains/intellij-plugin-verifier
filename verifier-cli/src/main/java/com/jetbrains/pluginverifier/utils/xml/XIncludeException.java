@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.jetbrains.pluginverifier.util.xml;
+package com.jetbrains.pluginverifier.utils.xml;
 
 public class XIncludeException extends RuntimeException {
 

@@ -4,13 +4,12 @@ import com.jetbrains.pluginverifier.domain.JDK;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.pool.ContainerClassPool;
 import com.jetbrains.pluginverifier.pool.JarClassPool;
-import com.jetbrains.pluginverifier.util.Util;
+import com.jetbrains.pluginverifier.utils.Util;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarFile;

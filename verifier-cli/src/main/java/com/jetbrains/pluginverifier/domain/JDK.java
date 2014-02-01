@@ -4,7 +4,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
-import com.jetbrains.pluginverifier.util.Util;
+import com.jetbrains.pluginverifier.utils.Util;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

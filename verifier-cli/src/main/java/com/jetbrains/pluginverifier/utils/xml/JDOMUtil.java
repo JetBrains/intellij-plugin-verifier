@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.pluginverifier.util.xml;
+package com.jetbrains.pluginverifier.utils.xml;
 
-import com.jetbrains.pluginverifier.util.ArrayUtil;
-import com.jetbrains.pluginverifier.util.Comparing;
+import com.jetbrains.pluginverifier.utils.ArrayUtil;
+import com.jetbrains.pluginverifier.utils.Comparing;
 import org.jdom.*;
 import org.jdom.filter.Filter;
 import org.jdom.input.SAXBuilder;

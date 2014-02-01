@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier;
 
 import com.jetbrains.pluginverifier.utils.ProblemUtils;
-import com.jetbrains.pluginverifier.util.Util;
+import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.problems.Problem;
 import org.jetbrains.annotations.NotNull;
 

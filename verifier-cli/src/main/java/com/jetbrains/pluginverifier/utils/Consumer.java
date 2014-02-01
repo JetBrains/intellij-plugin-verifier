@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.util;
+package com.jetbrains.pluginverifier.utils;
 
 /**
  * @author Sergey Evdokimov

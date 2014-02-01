@@ -5,7 +5,7 @@ import com.google.common.html.HtmlEscapers;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
-import com.jetbrains.pluginverifier.util.UpdateJson;
+import com.jetbrains.pluginverifier.utils.UpdateJson;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 

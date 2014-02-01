@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.jetbrains.pluginverifier.util.xml;
+package com.jetbrains.pluginverifier.utils.xml;
 
 import org.apache.commons.io.IOUtils;
 import org.jdom.*;

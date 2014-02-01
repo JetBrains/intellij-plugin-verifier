@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.util;
+package com.jetbrains.pluginverifier.utils;
 
 import com.google.common.base.Predicate;
 import com.jetbrains.pluginverifier.pool.ClassPool;
