@@ -5,6 +5,8 @@ import com.google.common.html.HtmlEscapers;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
+import com.jetbrains.pluginverifier.utils.ToStringCachedComparator;
+import com.jetbrains.pluginverifier.utils.ToStringProblemComparator;
 import com.jetbrains.pluginverifier.utils.UpdateJson;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
@@ -186,40 +188,6 @@ public class CheckIdeHtmlReportBuilder {
     }
     finally {
       out.close();
-    }
-  }
-
-  private static class ToStringProblemComparator extends ToStringCachedComparator<Problem> {
-    @NotNull
-    @Override
-    protected String toString(Problem object) {
-      return object.getDescription();
-    }
-  }
-
-  private static class ToStringCachedComparator<T> implements Comparator<T> {
-
-    private final IdentityHashMap<T, String> myCache = new IdentityHashMap<T, String>();
-
-    @NotNull
-    protected String toString(T object) {
-      return object.toString();
-    }
-
-    @NotNull
-    private String getDescriptor(T obj) {
-      String res = myCache.get(obj);
-      if (res == null) {
-        res = toString(obj);
-        myCache.put(obj, res);
-      }
-
-      return res;
-    }
-
-    @Override
-    public int compare(T o1, T o2) {
-      return getDescriptor(o1).compareTo(getDescriptor(o2));
     }
   }
 

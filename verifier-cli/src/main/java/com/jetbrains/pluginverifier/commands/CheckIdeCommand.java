@@ -15,6 +15,8 @@ import com.jetbrains.pluginverifier.domain.Idea;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.domain.JDK;
 import com.jetbrains.pluginverifier.pool.ClassPool;
+import com.jetbrains.pluginverifier.problems.Problem;
+import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
 import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.utils.TeamCityLog;
@@ -30,6 +32,7 @@ import java.lang.reflect.Type;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Sergey Evdokimov
@@ -218,6 +221,8 @@ public class CheckIdeCommand extends VerifierCommand {
 
     System.out.println("Verification completed (" + ((System.currentTimeMillis() - time) / 1000) + "s)");
 
+    printTeamCityProblems(tc, results, updateFilter);
+
     if (checkExcludedBuilds) {
 
       if (dumpBrokenPluginsFile != null) {
@@ -242,11 +247,43 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
-    Collections2.filter(results.keySet(), updateFilter);
     for (Map.Entry<UpdateJson, ProblemSet> entry : results.entrySet()) {
       if (updateFilter.apply(entry.getKey()) && !entry.getValue().isEmpty()) {
         System.exit(2);
       }
+    }
+  }
+
+  private static void printTeamCityProblems(TeamCityLog log, Map<UpdateJson, ProblemSet> results, Predicate<UpdateJson> updateFilter) {
+    if (log == TeamCityLog.NULL_LOG) return;
+
+    Map<Problem, AtomicInteger> problems = new HashMap<Problem, AtomicInteger>();
+
+    for (Map.Entry<UpdateJson, ProblemSet> entry : results.entrySet()) {
+      if (!updateFilter.apply(entry.getKey())) continue;
+
+      for (Map.Entry<Problem, Set<ProblemLocation>> prEntry : entry.getValue().asMap().entrySet()) {
+        Problem problem = prEntry.getKey();
+
+        AtomicInteger occurCount = problems.get(problem);
+        if (occurCount == null) {
+          occurCount = new AtomicInteger();
+          problems.put(problem, occurCount);
+        }
+
+        occurCount.addAndGet(prEntry.getValue().size());
+      }
+
+    }
+
+    if (problems.isEmpty()) return;
+
+    Problem[] p = problems.keySet().toArray(new Problem[problems.size()]);
+    Arrays.sort(p, new ToStringProblemComparator());
+
+    for (Problem problem : p) {
+      AtomicInteger occurCount = problems.get(problem);
+      log.buildProblem(problem.getDescription() + " (occurs at " + occurCount.get() + " places)");
     }
   }
 }
