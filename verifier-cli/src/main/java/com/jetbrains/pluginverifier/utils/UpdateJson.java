@@ -52,9 +52,12 @@ public class UpdateJson {
   @Override
   public String toString() {
     if (StringUtil.isNotEmpty(pluginId)) {
-      return pluginId
-             + (StringUtil.isEmpty(version) ? "" : ':' + version)
-             + (updateId == null ? "" : " (#" + updateId + ')');
+      if (StringUtil.isEmpty(version)) {
+        return pluginId + (updateId == null ? "" : "#" + updateId);
+      }
+      else {
+        return pluginId + ':' + version;
+      }
     }
 
     return "#" + updateId;
