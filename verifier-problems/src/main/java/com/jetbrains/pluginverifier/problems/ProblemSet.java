@@ -4,23 +4,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Sergey Evdokimov
  */
 public class ProblemSet {
 
-  private Map<Problem, Set<ProblemLocation>> map = new LinkedHashMap<Problem, Set<ProblemLocation>>();
+  private Map<Problem, Set<ProblemLocation>> map;
 
   public Map<Problem, Set<ProblemLocation>> asMap() {
-    return map;
+    return map == null ? Collections.<Problem, Set<ProblemLocation>>emptyMap() : map;
   }
 
   public void addProblem(@NotNull Problem problem, @NotNull ProblemLocation location) {
+    if (map == null) {
+      map = new LinkedHashMap<Problem, Set<ProblemLocation>>();
+    }
+
     Set<ProblemLocation> locations = map.get(problem);
     if (locations == null) {
       locations = new LinkedHashSet<ProblemLocation>();
@@ -35,7 +36,7 @@ public class ProblemSet {
       indent = "";
     }
 
-    for (Map.Entry<Problem, Set<ProblemLocation>> entry : map.entrySet()) {
+    for (Map.Entry<Problem, Set<ProblemLocation>> entry : asMap().entrySet()) {
       out.print(indent);
       out.println(entry.getKey().getDescription());
 
@@ -52,11 +53,11 @@ public class ProblemSet {
   }
 
   public Set<Problem> getAllProblems() {
-    return map.keySet();
+    return asMap().keySet();
   }
 
   public Set<ProblemLocation> getLocations(Problem problem) {
-    return map.get(problem);
+    return asMap().get(problem);
   }
 
   public boolean isEmpty() {
