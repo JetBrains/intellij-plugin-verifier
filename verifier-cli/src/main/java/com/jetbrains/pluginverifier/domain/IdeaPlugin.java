@@ -7,7 +7,10 @@ import com.jetbrains.pluginverifier.pool.InMemoryJarClassPool;
 import com.jetbrains.pluginverifier.pool.JarClassPool;
 import com.jetbrains.pluginverifier.resolvers.CombiningResolver;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
+import com.jetbrains.pluginverifier.util.StringUtil;
 import com.jetbrains.pluginverifier.util.Util;
+import com.jetbrains.pluginverifier.util.xml.JDOMUtil;
+import com.jetbrains.pluginverifier.util.xml.JDOMXIncluder;
 import org.apache.commons.io.IOUtils;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -19,6 +22,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.*;
+import java.net.URL;
 import java.util.*;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
@@ -76,7 +80,18 @@ public class IdeaPlugin {
         }
 
         pluginClassPool = new JarClassPool(jar);
-        pluginXml = readPluginXml(jar.getInputStream(pluginXmlEntry));
+
+        URL jarURL = new URL(
+          "jar:" + StringUtil.replace(new File(jar.getName()).toURI().toASCIIString(), "!", "%21") + "!/META-INF/plugin.xml"
+        );
+
+        try {
+          pluginXml = JDOMUtil.loadDocument(jarURL);
+          pluginXml = JDOMXIncluder.resolve(pluginXml, jarURL.toExternalForm());
+        }
+        catch (JDOMException e) {
+          throw new BrokenPluginException("Invalid plugin.xml", e);
+        }
       }
       else {
         libraryPools.add(new JarClassPool(jar));
