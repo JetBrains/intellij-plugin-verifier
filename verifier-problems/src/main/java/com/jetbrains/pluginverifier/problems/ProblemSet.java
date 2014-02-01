@@ -46,6 +46,8 @@ public class ProblemSet {
         out.print("    ");
         out.println(location.toString());
       }
+
+      out.println();
     }
   }
 
