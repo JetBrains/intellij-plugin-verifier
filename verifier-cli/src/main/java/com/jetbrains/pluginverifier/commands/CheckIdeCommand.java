@@ -196,16 +196,16 @@ public class CheckIdeCommand extends VerifierCommand {
 
         if (ctx.getProblems().isEmpty()) {
           System.out.println("ok");
-          tc.message(updateJson.getPluginId() + ':' + updateJson.getVersion() + " ok");
+          tc.message(updateJson + " ok");
         }
         else {
           System.out.println(" has " + ctx.getProblems().count() + " errors");
 
           if (updateFilter.apply(updateJson)) {
-            tc.messageError(updateJson.getPluginId() + ':' + updateJson.getVersion() + " has error");
+            tc.messageError(updateJson + " has error");
           }
           else {
-            tc.message(updateJson.getPluginId() + ':' + updateJson.getVersion() + " has error, but is excluded in brokenPlugins.json");
+            tc.message(updateJson + " has error, but is excluded in brokenPlugins.json");
           }
 
           ctx.getProblems().printProblems(System.out, "    ");

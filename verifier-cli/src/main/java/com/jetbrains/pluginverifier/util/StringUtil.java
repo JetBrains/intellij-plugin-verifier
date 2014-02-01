@@ -37,5 +37,11 @@ public class StringUtil {
     return newText != null ? newText.toString() : "";
   }
 
+  public static boolean isEmpty(@Nullable String s) {
+    return s == null || s.isEmpty();
+  }
 
+  public static boolean isNotEmpty(@Nullable String s) {
+    return s != null && !s.isEmpty();
+  }
 }
