@@ -16,7 +16,7 @@
 
 package com.jetbrains.pluginverifier.util.xml;
 
-class XIncludeException extends RuntimeException {
+public class XIncludeException extends RuntimeException {
 
   public XIncludeException() {
   }

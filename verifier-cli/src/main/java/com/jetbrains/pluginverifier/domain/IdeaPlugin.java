@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.util.StringUtil;
 import com.jetbrains.pluginverifier.util.Util;
 import com.jetbrains.pluginverifier.util.xml.JDOMUtil;
 import com.jetbrains.pluginverifier.util.xml.JDOMXIncluder;
+import com.jetbrains.pluginverifier.util.xml.XIncludeException;
 import org.apache.commons.io.IOUtils;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -91,6 +92,9 @@ public class IdeaPlugin {
         }
         catch (JDOMException e) {
           throw new BrokenPluginException("Invalid plugin.xml", e);
+        }
+        catch (XIncludeException e) {
+          throw new BrokenPluginException("Failed to read plugin.xml", e);
         }
       }
       else {
