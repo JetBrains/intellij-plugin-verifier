@@ -92,6 +92,7 @@ public class CheckIdeHtmlReportBuilder {
                  "\n" +
                  "<body>\n" +
                  "\n" +
+                 "<h2>" + ideVersion + "</h2>" +
                  "<div id=\"tabs\">\n");
 
       if (pluginsMap.isEmpty()) {
