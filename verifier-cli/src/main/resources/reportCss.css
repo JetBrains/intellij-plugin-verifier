@@ -1,0 +1,30 @@
+.errorDetails {
+    padding: 2px;
+}
+.updates div div:nth-child(odd) {
+    background: #eee;
+}
+.marker {
+    white-space: pre;
+    font-weight: bold;
+}
+
+.ok .marker {
+    background: #0f0;
+    color: #0f0;
+}
+.hasError .marker {
+    background: #f00;
+    color: #f00;
+}
+.errorDetails a {
+    color: #2B587A !important;
+}
+.errLoc {
+    display: none;
+    margin-left: 100px;
+    padding: 2px;
+}
+.excluded .marker {
+    background: #888 !important;
+}

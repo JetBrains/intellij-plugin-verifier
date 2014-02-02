@@ -50,42 +50,7 @@ public class CheckIdeHtmlReportBuilder {
                  "  <script src=\"http://code.jquery.com/ui/1.10.4/jquery-ui.js\"></script>\n" +
 
                  "  <style type=\"text/css\">\n" +
-                 "    .errorDetails {\n" +
-                 "      padding: 2px;\n" +
-                 "    }\n" +
-                 "" +
-                 "    .updates div div:nth-child(odd) {\n" +
-                 "      background: #eee;\n" +
-                 "    }\n" +
-                 "" +
-                 "    .marker {\n" +
-                 "      white-space: pre;\n" +
-                 "      font-weight: bold;\n" +
-                 "    }\n" +
-                 "\n" +
-                 "    .ok .marker {\n" +
-                 "      background: #0f0;\n" +
-                 "      color: #0f0;\n" +
-                 "    }\n" +
-                 "    .hasError .marker {\n" +
-                 "      background: #f00;\n" +
-                 "      color: #f00;\n" +
-                 "    }\n" +
-                 "" +
-                 "    .errorDetails a {\n" +
-                 "      color: #2B587A !important;\n" +
-                 "    }\n" +
-                 "" +
-                 "    .errLoc {\n" +
-                 "      display: none;\n" +
-                 "      margin-left: 100px;\n" +
-                 "      padding: 2px;\n" +
-                 "    }\n" +
-                 "" +
-                 "    .excluded .marker {\n" +
-                 "      background: #888 !important;\n" +
-                 "    }" +
-
+                 Resources.toString(CheckIdeHtmlReportBuilder.class.getResource("/reportCss.css"), Charset.forName("UTF-8")) +
                  "  </style>\n" +
 
                  "</head>\n" +
