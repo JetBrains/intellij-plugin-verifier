@@ -3,13 +3,9 @@ package com.jetbrains.pluginverifier.commands;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.*;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
@@ -23,12 +19,10 @@ import com.jetbrains.pluginverifier.problems.ProblemSet;
 import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -69,32 +63,37 @@ public class CheckIdeCommand extends VerifierCommand {
       return Predicates.alwaysTrue();
     }
 
-    String excludedBuildListStr = Files.toString(new File(epf), Charset.defaultCharset());
-    List<Update> excludedBuildList = new Gson().fromJson(excludedBuildListStr, updateListType);
+    BufferedReader br = new BufferedReader(new FileReader(new File(epf)));
+    try {
+      final SetMultimap<String, String> m = HashMultimap.create();
 
-    final Set<Object> excludedUpdate = new HashSet<Object>();
+      String s;
+      while ((s = br.readLine()) != null) {
+        s = s.trim();
+        if (s.startsWith("//")) continue;
 
-    for (Update update : excludedBuildList) {
-      if (update.getUpdateId() != null) {
-        excludedUpdate.add(update.getUpdateId());
-      }
+        List<String> tokens = ParametersListUtil.parse(s);
+        if (tokens.isEmpty()) continue;
 
-      if (update.getPluginId() != null && update.getVersion() != null) {
-        excludedUpdate.add(Pair.create(update.getPluginId(), update.getVersion()));
-      }
-    }
-
-    return new Predicate<Update>() {
-      @Override
-      public boolean apply(Update json) {
-        if (excludedUpdate.contains(json.getUpdateId())) {
-          return false;
+        if (tokens.size() == 1) {
+          throw new IOException(epf + " is broken. The line contains plugin name, but does not contains version: " + s);
         }
 
-        Pair<String,String> pair = Pair.create(json.getPluginId(), json.getVersion());
-        return !excludedUpdate.contains(pair);
+        String pluginId = tokens.get(0);
+
+        m.putAll(pluginId, tokens.subList(1, tokens.size()));
       }
-    };
+
+      return new Predicate<Update>() {
+        @Override
+        public boolean apply(Update json) {
+          return !m.containsEntry(json.getPluginId(), json.getVersion());
+        }
+      };
+    }
+    finally {
+      br.close();
+    }
   }
 
   @NotNull
@@ -150,7 +149,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     List<String> pluginIds = extractPluginList(commandLine);
 
-    Collection<Update> updateIds = getUpdateIds(ideVersion, pluginIds);
+    Collection<Update> updates = getUpdateIds(ideVersion, pluginIds);
 
     String dumpBrokenPluginsFile = commandLine.getOptionValue("d");
     String reportFile = commandLine.getOptionValue("report");
@@ -160,14 +159,14 @@ public class CheckIdeCommand extends VerifierCommand {
     Predicate<Update> updateFilter = getExcludedPluginsPredicate(commandLine);
 
     if (!checkExcludedBuilds) {
-      updateIds = Collections2.filter(updateIds, updateFilter);
+      updates = Collections2.filter(updates, updateFilter);
     }
 
-    Map<Update, ProblemSet> results = new HashMap<Update, ProblemSet>();
+    final Map<Update, ProblemSet> results = new HashMap<Update, ProblemSet>();
 
     long time = System.currentTimeMillis();
 
-    for (Update updateJson : updateIds) {
+    for (Update updateJson : updates) {
       TeamCityLog.Block block = tc.blockOpen(updateJson.toString());
 
       try {
@@ -229,17 +228,12 @@ public class CheckIdeCommand extends VerifierCommand {
       if (dumpBrokenPluginsFile != null) {
         System.out.println("Dumping list of broken plugins to " + dumpBrokenPluginsFile);
 
-        List<Update> res = new ArrayList<Update>();
-
-        for (Update update : updateIds) {
-          if (!results.get(update).isEmpty()) {
-            res.add(update);
+        dumbBrokenPluginsList(dumpBrokenPluginsFile, Collections2.filter(updates, new Predicate<Update>() {
+          @Override
+          public boolean apply(Update update) {
+            return results.get(update) != null && !results.get(update).isEmpty();
           }
-        }
-
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        String json = gson.toJson(res, updateListType);
-        FileUtils.writeStringToFile(new File(dumpBrokenPluginsFile), json);
+        }));
       }
 
       if (reportFile != null) {
@@ -284,6 +278,32 @@ public class CheckIdeCommand extends VerifierCommand {
       Collections.sort(updates, new ToStringCachedComparator<Update>());
 
       log.buildProblem(MessageUtils.cutCommonPackages(problem.getDescription()) + " (in " + Joiner.on(", ").join(updates) + ')');
+    }
+  }
+
+  private static void dumbBrokenPluginsList(@NotNull String dumpBrokenPluginsFile, Collection<Update> brokenUpdates)
+    throws IOException {
+    Multimap<String, String> m = TreeMultimap.create(Ordering.natural(), Ordering.natural().reverse());
+
+    for (Update update : brokenUpdates) {
+      m.put(update.getPluginId(), update.getVersion());
+    }
+
+    PrintWriter out = new PrintWriter(dumpBrokenPluginsFile);
+    try {
+      out.println("// This file contains list of broken plugins.\n" +
+                  "// Each line contains plugin ID and list of versions that are broken.\n" +
+                  "// If plugin name or version contains a space you can quote it like in command line.\n");
+
+      for (Map.Entry<String, Collection<String>> entry : m.asMap().entrySet()) {
+
+        out.print(ParametersListUtil.join(Collections.singletonList(entry.getKey())));
+        out.print("    ");
+        out.println(ParametersListUtil.join(new ArrayList<String>(entry.getValue())));
+      }
+    }
+    finally {
+      out.close();
     }
   }
 }
