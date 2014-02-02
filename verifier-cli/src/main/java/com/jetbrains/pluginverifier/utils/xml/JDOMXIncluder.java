@@ -46,12 +46,7 @@ public class JDOMXIncluder {
   private JDOMXIncluder() {
   }
 
-  public static Document resolve(Document original, String base) throws XIncludeException {
-
-    if (original == null) {
-      throw new NullPointerException("Document must not be null");
-    }
-
+  public static Document resolve(@NotNull Document original, @Nullable String base) throws XIncludeException {
     Document result = (Document)original.clone();
 
     Element root = result.getRootElement();
@@ -129,7 +124,7 @@ public class JDOMXIncluder {
     return result;
   }
 
-  public static List<Content> resolve(@NotNull Element original, String base) throws XIncludeException {
+  public static List<Content> resolve(@NotNull Element original, @Nullable String base) throws XIncludeException {
     Stack<String> bases = new Stack<String>();
     if (base != null) bases.push(base);
 

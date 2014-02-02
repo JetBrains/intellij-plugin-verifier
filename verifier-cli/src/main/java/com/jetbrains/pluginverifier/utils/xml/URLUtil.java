@@ -15,7 +15,6 @@
  */
 package com.jetbrains.pluginverifier.utils.xml;
 
-import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 public class URLUtil {
   public static final String SCHEME_SEPARATOR = "://";
@@ -132,18 +132,42 @@ public class URLUtil {
 
   @NotNull
   private static InputStream openJarStream(@NotNull URL url) throws IOException {
-    Pair<String, String> paths = splitJarUrl(url.getFile());
-    if (paths == null) {
+    String[] paths = splitJarUrl(url.getFile());
+    if (paths == null || paths.length == 1 || paths.length > 3) {
       throw new MalformedURLException(url.getFile());
     }
 
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") final ZipFile zipFile = new ZipFile(unquote(paths.first));
-    ZipEntry zipEntry = zipFile.getEntry(paths.second);
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    final ZipFile zipFile = new ZipFile(unquote(paths[0]));
+    ZipEntry zipEntry = zipFile.getEntry(paths[1]);
     if (zipEntry == null) {
-      throw new FileNotFoundException("Entry " + paths.second + " not found in " + paths.first);
+      zipFile.close();
+      throw new FileNotFoundException("Entry " + paths[1] + " not found in " + paths[0]);
     }
 
-    return new FilterInputStream(zipFile.getInputStream(zipEntry)) {
+    InputStream in = null;
+
+    if (paths.length == 2) {
+      in = zipFile.getInputStream(zipEntry);
+    }
+    else {
+      ZipInputStream innerJar = new ZipInputStream(zipFile.getInputStream(zipEntry));
+
+      ZipEntry innerEntry;
+      while ((innerEntry = innerJar.getNextEntry()) != null) {
+        if (paths[2].equals(innerEntry.getName())) {
+          in = innerJar;
+          break;
+        }
+      }
+
+      if (in == null) {
+        zipFile.close();
+        throw new FileNotFoundException("Entry " + paths[2] + " not found in " + paths[0] + "!/" + paths[1]);
+      }
+    }
+
+    return new FilterInputStream(in) {
         @Override
         public void close() throws IOException {
           super.close();
@@ -153,17 +177,12 @@ public class URLUtil {
   }
 
   @Nullable
-  public static Pair<String, String> splitJarUrl(@NotNull String fullPath) {
-    int delimiter = fullPath.indexOf(JAR_SEPARATOR);
-    if (delimiter >= 0) {
-      String resourcePath = fullPath.substring(delimiter + 2);
-      String jarPath = fullPath.substring(0, delimiter);
-      if (jarPath.startsWith(FILE_PROTOCOL + ":")) {
-        jarPath = jarPath.substring(FILE_PROTOCOL.length() + 1);
-        return Pair.create(jarPath, resourcePath);
-      }
-    }
-    return null;
+  public static String[] splitJarUrl(@NotNull String fullPath) {
+    if (!fullPath.startsWith(FILE_PROTOCOL + ":")) return null;
+
+    String path = fullPath.substring(FILE_PROTOCOL.length() + 1);
+
+    return path.split("\\!/");
   }
 
 }

@@ -115,6 +115,8 @@ public class IdeaPlugin {
 
     List<ClassPool> libraryPool = new ArrayList<ClassPool>();
 
+    URL pluginXmlUrl = null;
+
     final ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(zipFile)));
 
     try {
@@ -139,6 +141,9 @@ public class IdeaPlugin {
 
           pluginXmlBytes = data;
           pluginClassPool = zipRootPool;
+          pluginXmlUrl = new URL(
+            "jar:" + StringUtil.replace(zipFile.toURI().toASCIIString(), "!", "%21") + "!/META-INF/plugin.xml"
+          );
         }
         else if (entryName.matches("([^/]+/)?lib/[^/]+\\.jar")) {
           ZipInputStream innerJar = new ZipInputStream(zipInputStream);
@@ -157,6 +162,7 @@ public class IdeaPlugin {
 
               pluginXmlBytes = data;
               pluginClassPool = pool;
+              pluginXmlUrl = new URL("jar:" + StringUtil.replace(zipFile.toURI().toASCIIString(), "!", "%21") + "!/" + entryName + "!/META-INF/plugin.xml");
             }
             else if (name.endsWith(".class")) {
               pool.addClass(name.substring(0, name.length() - ".class".length()), ByteStreams.toByteArray(innerJar));
@@ -176,7 +182,19 @@ public class IdeaPlugin {
     if (pluginXmlBytes == null) {
       throw new BrokenPluginException("No plugin.xml found for plugin " + zipFile.getPath());
     }
-    Document pluginXml = readPluginXml(new ByteArrayInputStream(pluginXmlBytes));
+
+    Document pluginXml;
+
+    try {
+      pluginXml = JDOMUtil.loadDocument(new ByteArrayInputStream(pluginXmlBytes));
+      pluginXml = JDOMXIncluder.resolve(pluginXml, pluginXmlUrl.toExternalForm());
+    }
+    catch (JDOMException e) {
+      throw new BrokenPluginException("Invalid plugin.xml", e);
+    }
+    catch (XIncludeException e) {
+      throw new BrokenPluginException("Failed to read plugin.xml", e);
+    }
 
     if (!zipRootPool.isEmpty()) {
       if (pluginClassPool != zipRootPool) {
