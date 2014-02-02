@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.domain;
 
+import com.google.common.base.Strings;
+
 public class PluginDependency {
   private final String myId;
   private final Boolean myIsOptional;
@@ -15,5 +17,10 @@ public class PluginDependency {
 
   public Boolean isOptional() {
     return myIsOptional;
+  }
+
+  @Override
+  public String toString() {
+    return Strings.nullToEmpty(myId);
   }
 }
