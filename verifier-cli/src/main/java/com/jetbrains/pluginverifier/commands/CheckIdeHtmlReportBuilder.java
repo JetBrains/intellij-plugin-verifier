@@ -2,19 +2,19 @@ package com.jetbrains.pluginverifier.commands;
 
 import com.google.common.base.Predicate;
 import com.google.common.html.HtmlEscapers;
+import com.google.common.io.Resources;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
 import com.jetbrains.pluginverifier.utils.ToStringCachedComparator;
 import com.jetbrains.pluginverifier.utils.ToStringProblemComparator;
 import com.jetbrains.pluginverifier.utils.Update;
-import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.util.*;
 
@@ -179,9 +179,8 @@ public class CheckIdeHtmlReportBuilder {
       out.append("</div>\n"); // tabs
 
 
-      InputStream reportScript = CheckIdeHtmlReportBuilder.class.getResourceAsStream("/reportScript.js");
       out.append("<script>\n");
-      IOUtils.copy(reportScript, out);
+      out.append(Resources.toString(CheckIdeHtmlReportBuilder.class.getResource("/reportScript.js"), Charset.forName("UTF-8")));
       out.append("</script>\n");
 
       out.append("</body>\n");

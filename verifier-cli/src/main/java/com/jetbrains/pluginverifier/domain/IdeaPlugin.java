@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.domain;
 
 import com.google.common.base.Predicates;
+import com.google.common.io.ByteStreams;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.pool.ContainerClassPool;
 import com.jetbrains.pluginverifier.pool.InMemoryJarClassPool;
@@ -12,7 +13,6 @@ import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.utils.xml.JDOMUtil;
 import com.jetbrains.pluginverifier.utils.xml.JDOMXIncluder;
 import com.jetbrains.pluginverifier.utils.xml.XIncludeException;
-import org.apache.commons.io.IOUtils;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -131,7 +131,7 @@ public class IdeaPlugin {
           zipRootPool.addClass(node);
         }
         else if (isPluginXmlInRoot(entryName)) {
-          byte[] data = IOUtils.toByteArray(zipInputStream);
+          byte[] data = ByteStreams.toByteArray(zipInputStream);
 
           if (pluginXmlBytes != null && !Arrays.equals(data, pluginXmlBytes)) {
             throw new BrokenPluginException("Plugin has more then one jars with plugin.xml");
@@ -149,7 +149,7 @@ public class IdeaPlugin {
           while ((innerEntry = innerJar.getNextEntry()) != null) {
             String name = innerEntry.getName();
             if (name.equals(PLUGIN_XML_ENTRY_NAME)) {
-              byte[] data = IOUtils.toByteArray(innerJar);
+              byte[] data = ByteStreams.toByteArray(innerJar);
 
               if (pluginXmlBytes != null && !Arrays.equals(data, pluginXmlBytes)) {
                 throw new BrokenPluginException("Plugin has more then one jars with plugin.xml");
@@ -159,7 +159,7 @@ public class IdeaPlugin {
               pluginClassPool = pool;
             }
             else if (name.endsWith(".class")) {
-              pool.addClass(name.substring(0, name.length() - ".class".length()), IOUtils.toByteArray(innerJar));
+              pool.addClass(name.substring(0, name.length() - ".class".length()), ByteStreams.toByteArray(innerJar));
             }
           }
 
