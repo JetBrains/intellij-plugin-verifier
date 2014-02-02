@@ -1,6 +1,8 @@
 package com.jetbrains.pluginverifier.commands;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Ordering;
 import com.google.common.html.HtmlEscapers;
 import com.google.common.io.Resources;
 import com.jetbrains.pluginverifier.problems.Problem;
@@ -15,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
-import java.text.DateFormat;
 import java.util.*;
 
 public class CheckIdeHtmlReportBuilder {
@@ -23,19 +24,30 @@ public class CheckIdeHtmlReportBuilder {
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   public static void build(@NotNull File report,
                            @NotNull String ideVersion,
-                           @NotNull Predicate<Update> updateFilter,
+                           List<String> pluginIds, @NotNull Predicate<Update> updateFilter,
                            @NotNull Map<Update, ProblemSet> results)
     throws IOException {
-    Map<String, Map<Update, ProblemSet>> pluginsMap = new TreeMap<String, Map<Update, ProblemSet>>();
+    Map<String, List<Update>> pluginsMap = new TreeMap<String, List<Update>>();
 
-    for (Map.Entry<Update, ProblemSet> entry : results.entrySet()) {
-      Map<Update, ProblemSet> pluginMap = pluginsMap.get(entry.getKey().getPluginId());
-      if (pluginMap == null) {
-        pluginMap = new HashMap<Update, ProblemSet>();
-        pluginsMap.put(entry.getKey().getPluginId(), pluginMap);
-      }
+    for (String pluginId : pluginIds) {
+      pluginsMap.put(pluginId, new ArrayList<Update>());
+    }
 
-      pluginMap.put(entry.getKey(), entry.getValue());
+    Map<Update, Integer> updateIdMap = new HashMap<Update, Integer>();
+
+    int idx = 1;
+
+    for (Update update : results.keySet()) {
+      updateIdMap.put(update, idx++);
+
+      List<Update> updatesList = pluginsMap.get(update.getPluginId());
+      assert updatesList != null : "Invalid arguments, pluginIds doesn't contains " + update.getPluginId();
+
+      updatesList.add(update);
+    }
+
+    for (List<Update> updateList : pluginsMap.values()) {
+      Collections.sort(updateList, Collections.reverseOrder(UpdatesComparator.INSTANCE));
     }
 
     PrintWriter out = new PrintWriter(report);
@@ -43,55 +55,51 @@ public class CheckIdeHtmlReportBuilder {
     try {
       out.append("<html>\n" +
                  "<head>\n" +
-                 "  <title>Report created at " + DateFormat.getDateTimeInstance().format(new Date()) + "</title>\n" +
+                 "  <title>Result of checking " + ideVersion + "</title>\n" +
                  "\n" +
-                 "  <link rel=\"stylesheet\" href=\"http://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css\">\n" +
-                 "  <script src=\"http://code.jquery.com/jquery-1.9.1.js\"></script>\n" +
-                 "  <script src=\"http://code.jquery.com/ui/1.10.4/jquery-ui.js\"></script>\n" +
+                 "  <link rel='stylesheet' href='http://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css'>\n" +
+                 "  <script src='http://code.jquery.com/jquery-1.9.1.js'></script>\n" +
+                 "  <script src='http://code.jquery.com/ui/1.10.4/jquery-ui.js'></script>\n" +
 
-                 "  <style type=\"text/css\">\n" +
+                 "  <style type='text/css'>\n" +
                  Resources.toString(CheckIdeHtmlReportBuilder.class.getResource("/reportCss.css"), Charset.forName("UTF-8")) +
                  "  </style>\n" +
-
                  "</head>\n" +
                  "\n" +
                  "<body>\n" +
                  "\n" +
-                 "<h2>" + ideVersion + "</h2>" +
-                 "<div id=\"tabs\">\n");
-
+                 "<h2>" + ideVersion + "</h2>\n" +
+                 "<div id='tabs'>\n" +
+                 "  <ul>\n" +
+                 "    <li><a href='#tab-plugins'>Plugins</a></li>\n" +
+                 "    <li><a href='#tab-problems'>Problems</a></li>\n" +
+                 "  </ul>\n" +
+                 "  <div id='tab-plugins'>\n");
       if (pluginsMap.isEmpty()) {
-        out.print("No plugins to check.\n");
+        out.print("No plugins checked.\n");
       }
       else {
-        out.print("  <ul>\n");
+        for (Map.Entry<String, List<Update>> entry : pluginsMap.entrySet()) {
+          out.printf("<div class='plugin'>\n");
 
-        int idx = 1;
-        for (String pluginId : pluginsMap.keySet()) {
-          out.printf("    <li><a href=\"#tabs-%d\">%s</a></li>\n", idx++, pluginId);
-        }
+          String pluginId = entry.getKey();
 
-        out.append("  </ul>\n");
-
-        idx = 1;
-        for (Map.Entry<String, Map<Update, ProblemSet>> entry : pluginsMap.entrySet()) {
-          out.printf("  <div id=\"tabs-%d\">\n", idx++);
+          out.printf("  <h3>%s</h3>\n", pluginId);
+          out.printf("  <div>\n");
 
           if (entry.getValue().isEmpty()) {
             out.printf("There are no updates compatible with %s in the Plugin Repository\n", ideVersion);
           }
           else {
-            List<Update> updates = new ArrayList<Update>(entry.getValue().keySet());
-            Collections.sort(updates, Collections.reverseOrder(new UpdatesComparator()));
+            for (Update update : entry.getValue()) {
+              ProblemSet problems = results.get(update);
 
-            for (Update update : updates) {
-              ProblemSet problems = entry.getValue().get(update);
-
-              out.printf("<div class=\"updates\">\n");
-
-              out.printf("  <h3 class='%s %s'><span class='marker'>   </span> %s (#%d) %s</h3>\n",
+              out.printf("<div id='u%d' class='update %s %s'>\n",
+                         updateIdMap.get(update),
                          problems.isEmpty() ? "ok" : "hasError",
-                         updateFilter.apply(update) ? "" : "excluded",
+                         updateFilter.apply(update) ? "" : "excluded");
+
+              out.printf("  <h3><span class='marker'>   </span> %s (#%d) %s</h3>\n",
                          HtmlEscapers.htmlEscaper().escape(update.getVersion()),
                          update.getUpdateId(),
                          problems.isEmpty() ? "" : "<small>" + problems.count() + " problems found</small>"
@@ -100,14 +108,15 @@ public class CheckIdeHtmlReportBuilder {
               out.printf("  <div>\n");
 
               if (problems.isEmpty()) {
-                out.printf(" No problems.");
+                out.printf("No problems.\n");
               }
               else {
                 List<Problem> problemList = new ArrayList<Problem>(problems.getAllProblems());
                 Collections.sort(problemList, new ToStringProblemComparator());
 
                 for (Problem problem : problemList) {
-                  out.append("    <div class='errorDetails'>").append(HtmlEscapers.htmlEscaper().escape(problem.getDescription())).append(' ')
+                  out.append("    <div class='errorDetails'>").append(HtmlEscapers.htmlEscaper().escape(problem.getDescription()))
+                    .append(' ')
                     .append("<a href=\"#\" class='detailsLink'>details</a>\n");
 
 
@@ -125,7 +134,7 @@ public class CheckIdeHtmlReportBuilder {
                       out.append("<br>");
                     }
 
-                    out.append(location.toString());
+                    out.append(HtmlEscapers.htmlEscaper().escape(location.toString()));
                   }
 
                   out.append("</div></div>");
@@ -133,16 +142,22 @@ public class CheckIdeHtmlReportBuilder {
               }
 
               out.printf("  </div>\n");
-              out.printf("</div>\n");
+              out.printf("  </div>\n"); // <div class='update'>
             }
           }
 
-          out.append("  </div>\n");
+          out.printf("  </div>\n");
+          out.printf("</div>\n"); //  <div class='plugin'>
         }
       }
 
-      out.append("</div>\n"); // tabs
+      out.append("  </div>\n" + // tab-plugins
+                 "  <div id='tab-problems'>\n");
 
+      out.println("    Problems\n");
+
+      out.append("  </div>\n"); // tab-problems
+      out.append("</div>\n"); // tabs
 
       out.append("<script>\n");
       out.append(Resources.toString(CheckIdeHtmlReportBuilder.class.getResource("/reportScript.js"), Charset.forName("UTF-8")));
@@ -157,9 +172,18 @@ public class CheckIdeHtmlReportBuilder {
   }
 
   private static class UpdatesComparator implements Comparator<Update> {
+
+    private static final Comparator<Update> INSTANCE = new UpdatesComparator();
+
     @Override
     public int compare(Update o1, Update o2) {
-      return o1.getUpdateId() - o2.getUpdateId();
+      Ordering<Comparable> c = Ordering.natural().nullsLast();
+
+      return ComparisonChain.start()
+        .compare(o1.getUpdateId(), o2.getUpdateId(), c)
+        .compare(o1.getPluginId(), o2.getPluginId(), c)
+        .compare(o1.getVersion(), o2.getVersion(), c)
+        .result();
     }
   }
 }

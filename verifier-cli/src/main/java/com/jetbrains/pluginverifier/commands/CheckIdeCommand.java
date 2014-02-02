@@ -110,9 +110,7 @@ public class CheckIdeCommand extends VerifierCommand {
     return build;
   }
 
-  private List<Update> getUpdateIds(@NotNull String ideVersion, @NotNull CommandLine commandLine) throws IOException {
-    List<String> pluginIds = extractPluginList(commandLine);
-
+  private List<Update> getUpdateIds(@NotNull String ideVersion, @NotNull List<String> pluginIds) throws IOException {
     if (pluginIds.isEmpty()) {
       throw Util.fail("You have to specify list of plugins to check using -pl option");
     }
@@ -149,7 +147,10 @@ public class CheckIdeCommand extends VerifierCommand {
     Idea ide = new Idea(ideToCheck, jdk, externalClassPath);
 
     String ideVersion = getIdeVersion(ide, commandLine);
-    Collection<Update> updateIds = getUpdateIds(ideVersion, commandLine);
+
+    List<String> pluginIds = extractPluginList(commandLine);
+
+    Collection<Update> updateIds = getUpdateIds(ideVersion, pluginIds);
 
     String dumpBrokenPluginsFile = commandLine.getOptionValue("d");
     String reportFile = commandLine.getOptionValue("report");
@@ -243,7 +244,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
       if (reportFile != null) {
         System.out.println("Saving report to " + new File(reportFile).getAbsolutePath());
-        CheckIdeHtmlReportBuilder.build(new File(reportFile), ideVersion, updateFilter, results);
+        CheckIdeHtmlReportBuilder.build(new File(reportFile), ideVersion, pluginIds, updateFilter, results);
       }
     }
 

@@ -50,10 +50,9 @@
     })
   }
 
-  $(function() {
-    $( "#tabs" ).tabs();
-    $( ".updates" ).accordion({active: false, collapsible: true, heightStyle: 'content'});
-  });
+  $( "#tabs" ).tabs();
+  $( ".plugin" ).accordion({active: false, collapsible: true, heightStyle: 'content'})
+  $( ".update" ).accordion({active: false, collapsible: true, heightStyle: 'content'})
 
   cutClasses($(".errorDetails"))
   cutClasses($(".errLoc"))
