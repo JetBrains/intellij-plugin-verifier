@@ -50,7 +50,7 @@
     })
   }
 
-  $( "#tabs" ).tabs();
+  //$( "#tabs" ).tabs();
   $( ".plugin" ).accordion({active: false, collapsible: true, heightStyle: 'content'})
   $( ".update" ).accordion({active: false, collapsible: true, heightStyle: 'content'})
 

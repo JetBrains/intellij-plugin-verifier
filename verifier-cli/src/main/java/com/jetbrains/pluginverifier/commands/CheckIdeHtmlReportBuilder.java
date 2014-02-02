@@ -68,13 +68,13 @@ public class CheckIdeHtmlReportBuilder {
                  "\n" +
                  "<body>\n" +
                  "\n" +
-                 "<h2>" + ideVersion + "</h2>\n" +
-                 "<div id='tabs'>\n" +
-                 "  <ul>\n" +
-                 "    <li><a href='#tab-plugins'>Plugins</a></li>\n" +
-                 "    <li><a href='#tab-problems'>Problems</a></li>\n" +
-                 "  </ul>\n" +
-                 "  <div id='tab-plugins'>\n");
+                 "<h2>" + ideVersion + "</h2>\n");
+                 //"<div id='tabs'>\n" +
+                 //"  <ul>\n" +
+                 //"    <li><a href='#tab-plugins'>Plugins</a></li>\n" +
+                 //"    <li><a href='#tab-problems'>Problems</a></li>\n" +
+                 //"  </ul>\n" +
+                 //"  <div id='tab-plugins'>\n");
       if (pluginsMap.isEmpty()) {
         out.print("No plugins checked.\n");
       }
@@ -151,13 +151,13 @@ public class CheckIdeHtmlReportBuilder {
         }
       }
 
-      out.append("  </div>\n" + // tab-plugins
-                 "  <div id='tab-problems'>\n");
-
-      out.println("    Problems\n");
-
-      out.append("  </div>\n"); // tab-problems
-      out.append("</div>\n"); // tabs
+      //out.append("  </div>\n" + // tab-plugins
+      //           "  <div id='tab-problems'>\n");
+      //
+      //out.println("    Problems\n");
+      //
+      //out.append("  </div>\n"); // tab-problems
+      //out.append("</div>\n"); // tabs
 
       out.append("<script>\n");
       out.append(Resources.toString(CheckIdeHtmlReportBuilder.class.getResource("/reportScript.js"), Charset.forName("UTF-8")));
