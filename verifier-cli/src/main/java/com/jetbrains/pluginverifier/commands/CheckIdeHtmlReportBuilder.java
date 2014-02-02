@@ -33,13 +33,7 @@ public class CheckIdeHtmlReportBuilder {
       pluginsMap.put(pluginId, new ArrayList<Update>());
     }
 
-    Map<Update, Integer> updateIdMap = new HashMap<Update, Integer>();
-
-    int idx = 1;
-
     for (Update update : results.keySet()) {
-      updateIdMap.put(update, idx++);
-
       List<Update> updatesList = pluginsMap.get(update.getPluginId());
       assert updatesList != null : "Invalid arguments, pluginIds doesn't contains " + update.getPluginId();
 
@@ -80,11 +74,12 @@ public class CheckIdeHtmlReportBuilder {
       }
       else {
         for (Map.Entry<String, List<Update>> entry : pluginsMap.entrySet()) {
-          out.printf("<div class='plugin'>\n");
+          out.printf("<div class='plugin %s'>\n",
+                     pluginHasProblems(entry.getValue(), results, updateFilter) ? "pluginHasProblem" : "pluginOk");
 
           String pluginId = entry.getKey();
 
-          out.printf("  <h3>%s</h3>\n", pluginId);
+          out.printf("  <h3><span class='pMarker'>   </span> %s</h3>\n", HtmlEscapers.htmlEscaper().escape(pluginId));
           out.printf("  <div>\n");
 
           if (entry.getValue().isEmpty()) {
@@ -94,12 +89,11 @@ public class CheckIdeHtmlReportBuilder {
             for (Update update : entry.getValue()) {
               ProblemSet problems = results.get(update);
 
-              out.printf("<div id='u%d' class='update %s %s'>\n",
-                         updateIdMap.get(update),
-                         problems.isEmpty() ? "ok" : "hasError",
+              out.printf("<div class='update %s %s'>\n",
+                         problems.isEmpty() ? "updateOk" : "updateHasProblems",
                          updateFilter.apply(update) ? "" : "excluded");
 
-              out.printf("  <h3><span class='marker'>   </span> %s (#%d) %s</h3>\n",
+              out.printf("  <h3><span class='uMarker'>   </span> %s (#%d) %s</h3>\n",
                          HtmlEscapers.htmlEscaper().escape(update.getVersion()),
                          update.getUpdateId(),
                          problems.isEmpty() ? "" : "<small>" + problems.count() + " problems found</small>"
@@ -169,6 +163,16 @@ public class CheckIdeHtmlReportBuilder {
     finally {
       out.close();
     }
+  }
+
+  private static boolean pluginHasProblems(List<Update> updates, Map<Update, ProblemSet> results, Predicate<Update> updateFilter) {
+    for (Update update : updates) {
+      if (updateFilter.apply(update)) {
+        if (!results.get(update).isEmpty()) return true;
+      }
+    }
+
+    return false;
   }
 
   private static class UpdatesComparator implements Comparator<Update> {

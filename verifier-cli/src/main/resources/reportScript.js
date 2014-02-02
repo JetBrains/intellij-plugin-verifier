@@ -70,5 +70,8 @@
     return false
   })
 
-  $(".hasError .marker").attr('title', "Errors found")
-  $(".excluded .marker").attr('title', "Excluded")
+  $(".updateHasProblems .uMarker").attr('title', "Problems found")
+  $(".excluded .uMarker").attr('title', "Excluded")
+
+  $(".pluginHasProblem .pMarker").attr('title', "Problems found")
+  $(".pluginOk .pMarker").attr('title', "Excluded")
