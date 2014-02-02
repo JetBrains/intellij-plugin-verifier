@@ -62,7 +62,12 @@ public class CheckIdeHtmlReportBuilder {
                  "\n" +
                  "<body>\n" +
                  "\n" +
-                 "<h2>" + ideVersion + "</h2>\n");
+                 "<h2>" + ideVersion + "</h2>\n" +
+                 "<label>\n" +
+                 "  <input id='problematicOnlyCB' type='checkbox' onchange=\"if ($('#problematicOnlyCB').is(':checked')) {$('body').addClass('problematicOnly')} else {$('body').removeClass('problematicOnly')} \">\n" +
+                 "  Show problematic plugins only\n" +
+                 "</label>\n");
+
                  //"<div id='tabs'>\n" +
                  //"  <ul>\n" +
                  //"    <li><a href='#tab-plugins'>Plugins</a></li>\n" +
