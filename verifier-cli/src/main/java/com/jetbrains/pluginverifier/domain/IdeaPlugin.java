@@ -16,7 +16,6 @@ import com.jetbrains.pluginverifier.utils.xml.XIncludeException;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
@@ -209,16 +208,6 @@ public class IdeaPlugin {
     if (entryName.equals(PLUGIN_XML_ENTRY_NAME)) return true;
 
     return entryName.endsWith(PLUGIN_XML_ENTRY_NAME) && entryName.indexOf('/') == entryName.length() - PLUGIN_XML_ENTRY_NAME.length() - 1;
-  }
-
-  private static Document readPluginXml(InputStream inputStream) throws BrokenPluginException, IOException {
-    SAXBuilder builder = new SAXBuilder();
-    try {
-      return builder.build(inputStream);
-    }
-    catch (JDOMException e) {
-      throw new BrokenPluginException("Invalid plugin.xml", e);
-    }
   }
 
   @Nullable
