@@ -35,20 +35,6 @@ public class Update {
     this.version = version;
   }
 
-  public boolean equalsByIdOrVersion(Update another) {
-    if (updateId != null && another.updateId != null) {
-      return updateId.equals(another.updateId);
-    }
-
-    if (pluginId != null && another.pluginId != null) {
-      if (pluginId.equals(another.pluginId) && version != null && version.equals(another.version)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   @Override
   public String toString() {
     if (StringUtil.isNotEmpty(pluginId)) {
