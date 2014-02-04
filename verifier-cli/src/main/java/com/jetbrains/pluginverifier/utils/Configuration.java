@@ -37,7 +37,7 @@ public class Configuration {
         }
       }
       catch (IOException e) {
-        throw new RuntimeException("Failet to read config file: " + cfg, e);
+        throw new RuntimeException("Failed to read config file: " + cfg, e);
       }
     }
   }
