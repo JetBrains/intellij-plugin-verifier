@@ -46,7 +46,7 @@ public class CheckIdeCommand extends VerifierCommand {
     List<String> res = new ArrayList<String>();
 
     for (String pluginId : pluginIds) {
-      for (StringTokenizer st = new StringTokenizer(pluginId, ",; "); st.hasMoreTokens(); ) {
+      for (StringTokenizer st = new StringTokenizer(pluginId, ","); st.hasMoreTokens(); ) {
         String token = st.nextToken();
         if (!token.isEmpty()) {
           res.add(token);
