@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.domain;
 
 import com.google.common.base.Predicates;
+import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.pool.ContainerClassPool;
@@ -44,6 +45,8 @@ public class IdeaPlugin {
 
   private final List<PluginDependency> myDependencies;
 
+  private final String myPluginName;
+
   private IdeaPlugin(Idea idea, String pluginDirectory, ClassPool pluginClassPool, ClassPool libraryClassPool,  @Nullable Document pluginXml) throws BrokenPluginException {
     myIdea = idea;
     myPluginClassPool = pluginClassPool;
@@ -57,6 +60,12 @@ public class IdeaPlugin {
     if (myId == null) {
       throw new BrokenPluginException("No id or name in plugin.xml (" + pluginDirectory + ')');
     }
+
+    String name = pluginXml.getRootElement().getChildTextTrim("name");
+    if (Strings.isNullOrEmpty(name)) {
+      name = myId;
+    }
+    myPluginName = name;
 
     myDependencies = getPluginDependencies(pluginXml);
 
@@ -345,6 +354,10 @@ public class IdeaPlugin {
 
   public Idea getIdea() {
     return myIdea;
+  }
+
+  public String getPluginName() {
+    return myPluginName;
   }
 }
 

@@ -9,7 +9,11 @@ public class Update {
 
   private String pluginId;
 
+  private String pluginName;
+
   private String version;
+
+  private Long cdate;
 
   public Integer getUpdateId() {
     return updateId;
@@ -33,6 +37,26 @@ public class Update {
 
   public void setVersion(String version) {
     this.version = version;
+  }
+
+  public String getPluginName() {
+    return pluginName;
+  }
+
+  public void setPluginName(String pluginName) {
+    this.pluginName = pluginName;
+  }
+
+  public Long getCdate() {
+    return cdate;
+  }
+
+  public void setCdate(Long cdate) {
+    this.cdate = cdate;
+  }
+
+  public String getDisplayName() {
+    return StringUtil.isEmpty(pluginName) ? pluginId : pluginName;
   }
 
   @Override

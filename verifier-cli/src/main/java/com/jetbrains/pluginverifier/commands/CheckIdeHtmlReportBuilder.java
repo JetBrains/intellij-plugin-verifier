@@ -8,6 +8,7 @@ import com.google.common.io.Resources;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
+import com.jetbrains.pluginverifier.utils.StringUtil;
 import com.jetbrains.pluginverifier.utils.ToStringCachedComparator;
 import com.jetbrains.pluginverifier.utils.ToStringProblemComparator;
 import com.jetbrains.pluginverifier.utils.Update;
@@ -17,9 +18,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class CheckIdeHtmlReportBuilder {
+
+  private static final DateFormat UPDATE_DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd HH:mm");
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   public static void build(@NotNull File report,
@@ -84,7 +89,17 @@ public class CheckIdeHtmlReportBuilder {
 
           String pluginId = entry.getKey();
 
-          out.printf("  <h3><span class='pMarker'>   </span> %s</h3>\n", HtmlEscapers.htmlEscaper().escape(pluginId));
+          String pluginName = null;
+
+          if (!entry.getValue().isEmpty()) {
+            pluginName = entry.getValue().get(0).getPluginName();
+          }
+
+          if (StringUtil.isEmpty(pluginName)) {
+            pluginName = pluginId;
+          }
+
+          out.printf("  <h3><span class='pMarker'>   </span> %s</h3>\n", HtmlEscapers.htmlEscaper().escape(pluginName));
           out.printf("  <div>\n");
 
           if (entry.getValue().isEmpty()) {
@@ -98,9 +113,10 @@ public class CheckIdeHtmlReportBuilder {
                          problems.isEmpty() ? "updateOk" : "updateHasProblems",
                          updateFilter.apply(update) ? "" : "excluded");
 
-              out.printf("  <h3><span class='uMarker'>   </span> %s (#%d) %s</h3>\n",
+              out.printf("  <h3><span class='uMarker'>   </span> %s <small>(#%d%s)</small> %s</h3>\n",
                          HtmlEscapers.htmlEscaper().escape(update.getVersion()),
                          update.getUpdateId(),
+                         update.getCdate() == null ? "" : ", " + UPDATE_DATE_FORMAT.format(new Date(update.getCdate())),
                          problems.isEmpty() ? "" : "<small>" + problems.count() + " problems found</small>"
               );
 
