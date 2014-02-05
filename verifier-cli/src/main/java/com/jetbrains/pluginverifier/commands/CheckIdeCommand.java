@@ -242,6 +242,10 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
+    if (commandLine.hasOption("xr")) {
+      saveResultsToXml(commandLine.getOptionValue("xr"), ideVersion, results);
+    }
+
     Set<Problem> allProblems = new HashSet<Problem>();
 
     for (ProblemSet problemSet : Maps.filterKeys(results, updateFilter).values()) {
@@ -305,5 +309,20 @@ public class CheckIdeCommand extends VerifierCommand {
     finally {
       out.close();
     }
+  }
+
+  private static void saveResultsToXml(@NotNull String xmlFile, String ideVersion, Map<Update, ProblemSet> results)
+    throws IOException {
+    Map<Integer, Collection<Problem>> problems = new HashMap<Integer, Collection<Problem>>();
+
+    for (Map.Entry<Update, ProblemSet> entry : results.entrySet()) {
+      Integer updateId = entry.getKey().getUpdateId();
+
+      if (updateId == null) continue;
+
+      problems.put(updateId, entry.getValue().getAllProblems());
+    }
+
+    ProblemUtils.saveProblems(new File(xmlFile), ideVersion, problems);
   }
 }

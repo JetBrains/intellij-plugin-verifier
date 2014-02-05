@@ -82,12 +82,12 @@ public class ProblemUtils {
     }
   }
 
-  public static void saveProblems(@NotNull File output, @NotNull String ide, @NotNull Map<Integer, List<Problem>> problems)
+  public static void saveProblems(@NotNull File output, @NotNull String ide, @NotNull Map<Integer, Collection<Problem>> problems)
     throws IOException {
     ResultsElement resultsElement = new ResultsElement();
     resultsElement.setIde(ide);
 
-    for (Map.Entry<Integer, List<Problem>> entry : problems.entrySet()) {
+    for (Map.Entry<Integer, Collection<Problem>> entry : problems.entrySet()) {
       UpdateElement updateElement = new UpdateElement();
       updateElement.setId(entry.getKey());
       updateElement.setProblem(new ArrayList<Problem>(entry.getValue()));

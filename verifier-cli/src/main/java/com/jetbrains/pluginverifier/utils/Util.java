@@ -26,6 +26,7 @@ public class Util {
     .addOption("epf", "excluded-plugin-file", true, "File with list of excluded plugin builds.")
     .addOption("d", "dump-broken-plugin-list", true, "File to dump broken plugin list.")
     .addOption("report", "make-report", true, "Create a detailed report about broken plugins.")
+    .addOption("xr", "save-results-xml", true, "Save results to xml file")
     .addOption("tc", "team-city-output", false, "Print TeamCity compatible output.")
     .addOption("cp", "external-class-path", true, "External class path");
 
