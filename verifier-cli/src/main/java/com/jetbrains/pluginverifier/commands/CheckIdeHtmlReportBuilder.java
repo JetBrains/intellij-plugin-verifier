@@ -8,10 +8,7 @@ import com.google.common.io.Resources;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
-import com.jetbrains.pluginverifier.utils.StringUtil;
-import com.jetbrains.pluginverifier.utils.ToStringCachedComparator;
-import com.jetbrains.pluginverifier.utils.ToStringProblemComparator;
-import com.jetbrains.pluginverifier.utils.Update;
+import com.jetbrains.pluginverifier.utils.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -126,8 +123,7 @@ public class CheckIdeHtmlReportBuilder {
                 out.printf("No problems.\n");
               }
               else {
-                List<Problem> problemList = new ArrayList<Problem>(problems.getAllProblems());
-                Collections.sort(problemList, new ToStringProblemComparator());
+                List<Problem> problemList = ProblemUtils.sort(problems.getAllProblems());
 
                 for (Problem problem : problemList) {
                   out.append("    <div class='errorDetails'>").append(HtmlEscapers.htmlEscaper().escape(problem.getDescription()))

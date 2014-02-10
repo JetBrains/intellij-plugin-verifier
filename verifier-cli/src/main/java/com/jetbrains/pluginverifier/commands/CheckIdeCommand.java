@@ -274,8 +274,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     if (problems.isEmpty()) return;
 
-    List<Problem> p = new ArrayList<Problem>(problems.keySet());
-    Collections.sort(p, new ToStringProblemComparator());
+    List<Problem> p = ProblemUtils.sort(problems.keySet());
 
     for (Problem problem : p) {
       List<Update> updates = new ArrayList<Update>(problems.get(problem));

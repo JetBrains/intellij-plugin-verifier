@@ -137,4 +137,9 @@ public class ProblemUtils {
     }
   }
 
+  public static List<Problem> sort(Collection<Problem> problems) {
+    List<Problem> res = new ArrayList<Problem>(problems);
+    Collections.sort(res, new ToStringProblemComparator());
+    return res;
+  }
 }
