@@ -15,6 +15,11 @@ public class ResolverUtil {
 
   private final static MethodLocation ARRAY_METHOD_LOCATION = new MethodLocation(ARRAY_CLASS_NODE, ARRAY_METHOD_NODE);
 
+  private final static MethodNode UNKNOWN_CLASS_METHOD_NODE = new MethodNode();
+  private final static ClassNode UNKNOWN_CLASS_NODE = new ClassNode();
+
+  private final static MethodLocation UNKNOWN_METHOD_LOCATION = new MethodLocation(UNKNOWN_CLASS_NODE, UNKNOWN_CLASS_METHOD_NODE);
+
   @Nullable
   public static MethodLocation findMethod(final Resolver resolver, final String className, final String methodName, final String methodDesc) {
     if (className.startsWith("[")) {
@@ -23,7 +28,9 @@ public class ResolverUtil {
     }
 
     final ClassNode clazz = resolver.findClass(className);
-    if (clazz == null) return null;
+    if (clazz == null) {
+      return UNKNOWN_METHOD_LOCATION;
+    }
 
     return findMethod(resolver, clazz, methodName, methodDesc);
   }
