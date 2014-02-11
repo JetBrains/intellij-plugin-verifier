@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.util;
 
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
-import com.jetbrains.pluginverifier.pool.ResolverUtil;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
@@ -45,10 +44,6 @@ public class VerifierUtil {
 
     return "Z".equals(type) || "I".equals(type) || "J".equals(type) || "B".equals(type) ||
            "F".equals(type) || "S".equals(type) || "D".equals(type) || "C".equals(type); 
-  }
-
-  public static boolean methodExists(final Resolver resolver, final String className, final String methodName, final String methodDesc) {
-    return ResolverUtil.findMethod(resolver, className, methodName, methodDesc) != null;
   }
 
   public static boolean isFinal(final MethodNode superMethod) {
