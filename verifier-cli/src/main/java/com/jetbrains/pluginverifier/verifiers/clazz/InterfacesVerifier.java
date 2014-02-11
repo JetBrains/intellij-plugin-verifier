@@ -8,6 +8,8 @@ import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.tree.ClassNode;
 
 /**
+ * Check that all explicitly defined interfaces exists.
+ *
  * @author Dennis.Ushakov
  */
 public class InterfacesVerifier implements ClassVerifier {
