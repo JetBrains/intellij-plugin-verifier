@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.util;
 
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -52,5 +53,9 @@ public class VerifierUtil {
 
   public static boolean isAbstract(final MethodNode superMethod) {
     return (superMethod.access & Opcodes.ACC_ABSTRACT) != 0;
+  }
+
+  public static boolean isAbstract(@NotNull ClassNode clazz) {
+    return (clazz.access & Opcodes.ACC_ABSTRACT) != 0;
   }
 }

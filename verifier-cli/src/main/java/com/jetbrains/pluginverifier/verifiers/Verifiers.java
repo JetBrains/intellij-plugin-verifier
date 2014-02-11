@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.verifiers;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
+import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier;
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
 import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier;
 import com.jetbrains.pluginverifier.verifiers.clazz.SuperClassVerifier;
@@ -19,7 +20,7 @@ import com.jetbrains.pluginverifier.verifiers.method.OverrideNonFinalVerifier;
  */
 public class Verifiers {
   // TODO: add dynamic loading
-  private static final ClassVerifier[] CLASS_VERIFIERS = new ClassVerifier[] {new SuperClassVerifier(), new InterfacesVerifier()};
+  private static final ClassVerifier[] CLASS_VERIFIERS = new ClassVerifier[] {new SuperClassVerifier(), new InterfacesVerifier(), new AbstractMethodVerifier()};
   private static final MethodVerifier[] METHOD_VERIFIERS = new MethodVerifier[] {new OverrideNonFinalVerifier()};
   private static final FieldVerifier[] FIELD_VERIFIERS = new FieldVerifier[] {new FieldTypeVerifier()};
   private static final InstructionVerifier[] INSTRUCTION_VERIFIERS = new InstructionVerifier[] {new InvokeInstructionVerifier(), new TypeInstructionVerifier()};
