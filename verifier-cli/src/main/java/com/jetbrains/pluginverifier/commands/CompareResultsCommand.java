@@ -6,6 +6,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.jetbrains.pluginverifier.VerifierCommand;
 import com.jetbrains.pluginverifier.problems.Problem;
+import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
 import com.jetbrains.pluginverifier.utils.ProblemUtils;
 import com.jetbrains.pluginverifier.utils.Util;
@@ -37,17 +38,17 @@ public class CompareResultsCommand extends VerifierCommand {
     File currentBuildProblems = new File(freeArgs.get(1));
 
     Set<Problem> oldProblems = getOldProblems(previousBuildProblems);
-    Map<Integer, Set<Problem>> currentProblemMap = ProblemUtils.loadProblems(currentBuildProblems);
+    Map<UpdateInfo, Collection<Problem>> currentProblemMap = ProblemUtils.loadProblems(currentBuildProblems).asMap();
 
-    Multimap<Problem, Integer> res = HashMultimap.create();
+    Multimap<Problem, UpdateInfo> res = HashMultimap.create();
 
-    for (Map.Entry<Integer, Set<Problem>> entry : currentProblemMap.entrySet()) {
-      Integer updateId = entry.getKey();
-      Set<Problem> updateProblems = entry.getValue();
+    for (Map.Entry<UpdateInfo, Collection<Problem>> entry : currentProblemMap.entrySet()) {
+      UpdateInfo update = entry.getKey();
+      Collection<Problem> updateProblems = entry.getValue();
 
       for (Problem problem : updateProblems) {
         if (!oldProblems.contains(problem)) {
-          res.put(problem, updateId);
+          res.put(problem, update);
         }
       }
     }
@@ -58,10 +59,10 @@ public class CompareResultsCommand extends VerifierCommand {
     else {
       System.out.printf("Found %d new problems:\n", res.asMap().size());
 
-      for (Map.Entry<Problem, Collection<Integer>> entry : res.asMap().entrySet()) {
+      for (Map.Entry<Problem, Collection<UpdateInfo>> entry : res.asMap().entrySet()) {
         System.out.println(MessageUtils.cutCommonPackages(entry.getKey().getDescription()));
 
-        Collection<Integer> updates = entry.getValue();
+        Collection<UpdateInfo> updates = entry.getValue();
 
         System.out.printf("    at %d locations: %s\n", updates.size(), Joiner.on(", ").join(updates));
 
@@ -74,10 +75,10 @@ public class CompareResultsCommand extends VerifierCommand {
   }
 
   private Set<Problem> getOldProblems(File previousResults) throws IOException {
-    Map<Integer, Set<Problem>> previousProblemMap = ProblemUtils.loadProblems(previousResults);
+    Map<UpdateInfo, Collection<Problem>> previousProblemMap = ProblemUtils.loadProblems(previousResults).asMap();
 
     Set<Problem> oldProblems = Sets.newHashSet();
-    for (Set<Problem> problems : previousProblemMap.values()) {
+    for (Collection<Problem> problems : previousProblemMap.values()) {
       oldProblems.addAll(problems);
     }
 

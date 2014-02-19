@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.utils;
 
 import com.jetbrains.pluginverifier.problems.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -10,7 +9,6 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class ProblemUtils {
 
@@ -24,7 +22,7 @@ public class ProblemUtils {
                                              OverridingFinalMethodProblem.class,
                                              DuplicateClassProblem.class,
                                              ResultsElement.class,
-                                             UpdateElement.class,
+                                             UpdateInfo.class,
                                              FailedToReadClassProblem.class);
     }
     catch (JAXBException e) {
@@ -71,30 +69,29 @@ public class ProblemUtils {
     }
   }
 
-  public static Map<Integer, Set<Problem>> loadProblems(File xml) throws IOException {
+  public static ResultsElement loadProblems(File xml) throws IOException {
     InputStream inputStream = new BufferedInputStream(new FileInputStream(xml));
 
     try {
-      return loadProblems(inputStream, null);
+      return loadProblems(inputStream);
     }
     finally {
       inputStream.close();
     }
   }
 
-  public static void saveProblems(@NotNull File output, @NotNull String ide, @NotNull Map<Integer, Collection<Problem>> problems)
+  public static void saveProblems(@NotNull File output, @NotNull String ide, @NotNull Map<UpdateInfo, Collection<Problem>> problems)
     throws IOException {
     ResultsElement resultsElement = new ResultsElement();
+
     resultsElement.setIde(ide);
+    resultsElement.initFromMap(problems);
 
-    for (Map.Entry<Integer, Collection<Problem>> entry : problems.entrySet()) {
-      UpdateElement updateElement = new UpdateElement();
-      updateElement.setId(entry.getKey());
-      updateElement.setProblem(new ArrayList<Problem>(entry.getValue()));
+    saveProblems(output, resultsElement);
+  }
 
-      resultsElement.getUpdate().add(updateElement);
-    }
-
+  public static void saveProblems(@NotNull File output, ResultsElement resultsElement)
+    throws IOException {
     Marshaller marshaller = createMarshaller();
 
     try {
@@ -108,29 +105,11 @@ public class ProblemUtils {
     }
   }
 
-  public static @NotNull Map<Integer, Set<Problem>> loadProblems(InputStream inputStream, @Nullable AtomicReference<String> ideIdRef) throws IOException {
-    ResultsElement resultsElement = loadProblems(inputStream);
-
-    if (ideIdRef != null) {
-      ideIdRef.set(resultsElement.getIde());
-    }
-
-    Map<Integer, Set<Problem>> res = new HashMap<Integer, Set<Problem>>();
-
-    for (UpdateElement updateElement : resultsElement.getUpdate()) {
-      Set<Problem> set = updateElement.getProblem() == null || updateElement.getProblem().isEmpty() ? Collections.<Problem>emptySet() : new HashSet<Problem>(updateElement.getProblem());
-      res.put(updateElement.getId(), set);
-    }
-
-    return res;
-  }
-
   public static ResultsElement loadProblems(InputStream inputStream) throws IOException {
     Unmarshaller unmarshaller = createUnmarshaller();
 
     try {
       return (ResultsElement)unmarshaller.unmarshal(inputStream);
-
     }
     catch (JAXBException e) {
       throw new IOException(e);

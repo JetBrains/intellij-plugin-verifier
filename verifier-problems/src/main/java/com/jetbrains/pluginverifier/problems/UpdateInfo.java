@@ -1,8 +1,12 @@
 package com.jetbrains.pluginverifier.problems;
 
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * @author Sergey Evdokimov
  */
+@XmlRootElement(name = "update")
 public class UpdateInfo {
 
   private Integer updateId;
@@ -15,6 +19,7 @@ public class UpdateInfo {
 
   private Long cdate;
 
+  @XmlAttribute
   public Integer getUpdateId() {
     return updateId;
   }
@@ -23,6 +28,7 @@ public class UpdateInfo {
     this.updateId = updateId;
   }
 
+  @XmlAttribute
   public String getPluginId() {
     return pluginId;
   }
@@ -31,6 +37,7 @@ public class UpdateInfo {
     this.pluginId = pluginId;
   }
 
+  @XmlAttribute
   public String getVersion() {
     return version;
   }
@@ -39,6 +46,7 @@ public class UpdateInfo {
     this.version = version;
   }
 
+  @XmlAttribute
   public String getPluginName() {
     return pluginName;
   }
@@ -47,6 +55,7 @@ public class UpdateInfo {
     this.pluginName = pluginName;
   }
 
+  @XmlAttribute
   public Long getCdate() {
     return cdate;
   }

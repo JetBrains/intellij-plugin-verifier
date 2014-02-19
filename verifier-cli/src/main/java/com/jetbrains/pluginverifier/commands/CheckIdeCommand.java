@@ -336,14 +336,10 @@ public class CheckIdeCommand extends VerifierCommand {
 
   private static void saveResultsToXml(@NotNull String xmlFile, String ideVersion, Map<UpdateInfo, ProblemSet> results)
     throws IOException {
-    Map<Integer, Collection<Problem>> problems = new HashMap<Integer, Collection<Problem>>();
+    Map<UpdateInfo, Collection<Problem>> problems = new LinkedHashMap<UpdateInfo, Collection<Problem>>();
 
     for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
-      Integer updateId = entry.getKey().getUpdateId();
-
-      if (updateId == null) continue;
-
-      problems.put(updateId, entry.getValue().getAllProblems());
+      problems.put(entry.getKey(), entry.getValue().getAllProblems());
     }
 
     ProblemUtils.saveProblems(new File(xmlFile), ideVersion, problems);
