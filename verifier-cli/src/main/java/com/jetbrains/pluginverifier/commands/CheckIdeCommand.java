@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.commands;
 
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
@@ -110,18 +111,40 @@ public class CheckIdeCommand extends VerifierCommand {
   }
 
   private List<Update> getUpdateIds(@NotNull String ideVersion, @NotNull List<String> pluginIds) throws IOException {
-    if (pluginIds.isEmpty()) {
-      throw Util.fail("You have to specify list of plugins to check using -pl option");
+    if (!pluginIds.isEmpty()) {
+      System.out.println("Loading compatible plugins list... ");
+
+      URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/manager/originalCompatibleUpdatesByPluginIds/?build=" +
+                        ideVersion + "&pluginIds=" + Joiner
+        .on("&pluginIds=").join(pluginIds));
+      String text = IOUtils.toString(url);
+
+      return new Gson().fromJson(text, updateListType);
     }
 
     System.out.println("Loading compatible plugins list... ");
 
-    URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/manager/originalCompatibleUpdatesByPluginIds/?build=" +
-                      ideVersion + "&pluginIds=" + Joiner
-      .on("&pluginIds=").join(pluginIds));
+    URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/manager/allCompatibleUpdateIds/?build=" + ideVersion);
     String text = IOUtils.toString(url);
 
-    return new Gson().fromJson(text, updateListType);
+    List<Update> res = new ArrayList<Update>();
+    for (StringTokenizer st = new StringTokenizer(text, ", \n"); st.hasMoreTokens(); ) {
+      String s = st.nextToken();
+      if (!s.isEmpty()) {
+        Update update = new Update();
+        update.setUpdateId(Integer.parseInt(s));
+        res.add(update);
+      }
+    }
+
+    Collections.sort(res, Ordering.natural().onResultOf(new Function<Update, Comparable>() {
+      @Override
+      public Comparable apply(Update update) {
+        return update.getUpdateId();
+      }
+    }));
+
+    return res;
   }
 
   @Override
