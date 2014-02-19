@@ -17,6 +17,7 @@ import com.jetbrains.pluginverifier.domain.JDK;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
+import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
@@ -34,7 +35,7 @@ import java.util.*;
  */
 public class CheckIdeCommand extends VerifierCommand {
 
-  private static final Type updateListType = new TypeToken<List<Update>>() {}.getType();
+  private static final Type updateListType = new TypeToken<List<UpdateInfo>>() {}.getType();
 
   public CheckIdeCommand() {
     super("check-ide");
@@ -58,7 +59,7 @@ public class CheckIdeCommand extends VerifierCommand {
     return res;
   }
 
-  private static Predicate<Update> getExcludedPluginsPredicate(@NotNull CommandLine commandLine) throws IOException {
+  private static Predicate<UpdateInfo> getExcludedPluginsPredicate(@NotNull CommandLine commandLine) throws IOException {
     String epf = commandLine.getOptionValue("epf");
     if (epf == null) {
       return Predicates.alwaysTrue();
@@ -85,9 +86,9 @@ public class CheckIdeCommand extends VerifierCommand {
         m.putAll(pluginId, tokens.subList(1, tokens.size()));
       }
 
-      return new Predicate<Update>() {
+      return new Predicate<UpdateInfo>() {
         @Override
-        public boolean apply(Update json) {
+        public boolean apply(UpdateInfo json) {
           return !m.containsEntry(json.getPluginId(), json.getVersion());
         }
       };
@@ -110,7 +111,7 @@ public class CheckIdeCommand extends VerifierCommand {
     return build;
   }
 
-  private List<Update> getUpdateIds(@NotNull String ideVersion, @NotNull List<String> pluginIds) throws IOException {
+  private List<UpdateInfo> getUpdateIds(@NotNull String ideVersion, @NotNull List<String> pluginIds) throws IOException {
     if (!pluginIds.isEmpty()) {
       System.out.println("Loading compatible plugins list... ");
 
@@ -127,19 +128,19 @@ public class CheckIdeCommand extends VerifierCommand {
     URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/manager/allCompatibleUpdateIds/?build=" + ideVersion);
     String text = IOUtils.toString(url);
 
-    List<Update> res = new ArrayList<Update>();
+    List<UpdateInfo> res = new ArrayList<UpdateInfo>();
     for (StringTokenizer st = new StringTokenizer(text, ", \n"); st.hasMoreTokens(); ) {
       String s = st.nextToken();
       if (!s.isEmpty()) {
-        Update update = new Update();
+        UpdateInfo update = new UpdateInfo();
         update.setUpdateId(Integer.parseInt(s));
         res.add(update);
       }
     }
 
-    Collections.sort(res, Ordering.natural().onResultOf(new Function<Update, Comparable>() {
+    Collections.sort(res, Ordering.natural().onResultOf(new Function<UpdateInfo, Comparable>() {
       @Override
-      public Comparable apply(Update update) {
+      public Comparable apply(UpdateInfo update) {
         return update.getUpdateId();
       }
     }));
@@ -172,24 +173,24 @@ public class CheckIdeCommand extends VerifierCommand {
 
     List<String> pluginIds = extractPluginList(commandLine);
 
-    Collection<Update> updates = getUpdateIds(ideVersion, pluginIds);
+    Collection<UpdateInfo> updates = getUpdateIds(ideVersion, pluginIds);
 
     String dumpBrokenPluginsFile = commandLine.getOptionValue("d");
     String reportFile = commandLine.getOptionValue("report");
 
     boolean checkExcludedBuilds = dumpBrokenPluginsFile != null || reportFile != null;
 
-    Predicate<Update> updateFilter = getExcludedPluginsPredicate(commandLine);
+    Predicate<UpdateInfo> updateFilter = getExcludedPluginsPredicate(commandLine);
 
     if (!checkExcludedBuilds) {
       updates = Collections2.filter(updates, updateFilter);
     }
 
-    final Map<Update, ProblemSet> results = new HashMap<Update, ProblemSet>();
+    final Map<UpdateInfo, ProblemSet> results = new HashMap<UpdateInfo, ProblemSet>();
 
     long time = System.currentTimeMillis();
 
-    for (Update updateJson : updates) {
+    for (UpdateInfo updateJson : updates) {
       TeamCityLog.Block block = tc.blockOpen(updateJson.toString());
 
       try {
@@ -251,9 +252,9 @@ public class CheckIdeCommand extends VerifierCommand {
       if (dumpBrokenPluginsFile != null) {
         System.out.println("Dumping list of broken plugins to " + dumpBrokenPluginsFile);
 
-        dumbBrokenPluginsList(dumpBrokenPluginsFile, Collections2.filter(updates, new Predicate<Update>() {
+        dumbBrokenPluginsList(dumpBrokenPluginsFile, Collections2.filter(updates, new Predicate<UpdateInfo>() {
           @Override
-          public boolean apply(Update update) {
+          public boolean apply(UpdateInfo update) {
             return results.get(update) != null && !results.get(update).isEmpty();
           }
         }));
@@ -282,12 +283,12 @@ public class CheckIdeCommand extends VerifierCommand {
     }
   }
 
-  private static void printTeamCityProblems(TeamCityLog log, Map<Update, ProblemSet> results, Predicate<Update> updateFilter) {
+  private static void printTeamCityProblems(TeamCityLog log, Map<UpdateInfo, ProblemSet> results, Predicate<UpdateInfo> updateFilter) {
     if (log == TeamCityLog.NULL_LOG) return;
 
-    Multimap<Problem, Update> problems = ArrayListMultimap.create();
+    Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
 
-    for (Map.Entry<Update, ProblemSet> entry : results.entrySet()) {
+    for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
       if (!updateFilter.apply(entry.getKey())) continue;
 
       for (Problem problem : entry.getValue().getAllProblems()) {
@@ -300,18 +301,18 @@ public class CheckIdeCommand extends VerifierCommand {
     List<Problem> p = ProblemUtils.sort(problems.keySet());
 
     for (Problem problem : p) {
-      List<Update> updates = new ArrayList<Update>(problems.get(problem));
-      Collections.sort(updates, new ToStringCachedComparator<Update>());
+      List<UpdateInfo> updates = new ArrayList<UpdateInfo>(problems.get(problem));
+      Collections.sort(updates, new ToStringCachedComparator<UpdateInfo>());
 
       log.buildProblem(MessageUtils.cutCommonPackages(problem.getDescription()) + " (in " + Joiner.on(", ").join(updates) + ')');
     }
   }
 
-  private static void dumbBrokenPluginsList(@NotNull String dumpBrokenPluginsFile, Collection<Update> brokenUpdates)
+  private static void dumbBrokenPluginsList(@NotNull String dumpBrokenPluginsFile, Collection<UpdateInfo> brokenUpdates)
     throws IOException {
     Multimap<String, String> m = TreeMultimap.create(Ordering.natural(), Ordering.natural().reverse());
 
-    for (Update update : brokenUpdates) {
+    for (UpdateInfo update : brokenUpdates) {
       m.put(update.getPluginId(), update.getVersion());
     }
 
@@ -333,11 +334,11 @@ public class CheckIdeCommand extends VerifierCommand {
     }
   }
 
-  private static void saveResultsToXml(@NotNull String xmlFile, String ideVersion, Map<Update, ProblemSet> results)
+  private static void saveResultsToXml(@NotNull String xmlFile, String ideVersion, Map<UpdateInfo, ProblemSet> results)
     throws IOException {
     Map<Integer, Collection<Problem>> problems = new HashMap<Integer, Collection<Problem>>();
 
-    for (Map.Entry<Update, ProblemSet> entry : results.entrySet()) {
+    for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
       Integer updateId = entry.getKey().getUpdateId();
 
       if (updateId == null) continue;

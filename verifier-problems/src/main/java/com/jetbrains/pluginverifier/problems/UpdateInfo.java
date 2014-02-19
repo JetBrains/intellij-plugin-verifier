@@ -1,9 +1,9 @@
-package com.jetbrains.pluginverifier.utils;
+package com.jetbrains.pluginverifier.problems;
 
 /**
  * @author Sergey Evdokimov
  */
-public class Update {
+public class UpdateInfo {
 
   private Integer updateId;
 
@@ -56,13 +56,13 @@ public class Update {
   }
 
   public String getDisplayName() {
-    return StringUtil.isEmpty(pluginName) ? pluginId : pluginName;
+    return pluginName == null || pluginName.isEmpty() ? pluginId : pluginName;
   }
 
   @Override
   public String toString() {
-    if (StringUtil.isNotEmpty(pluginId)) {
-      if (StringUtil.isEmpty(version)) {
+    if (pluginId != null && !pluginId.isEmpty()) {
+      if (version == null || version.isEmpty()) {
         return pluginId + (updateId == null ? "" : "#" + updateId);
       }
       else {

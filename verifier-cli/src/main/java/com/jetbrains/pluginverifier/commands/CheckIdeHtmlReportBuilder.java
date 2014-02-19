@@ -8,6 +8,7 @@ import com.google.common.io.Resources;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
+import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.utils.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,23 +27,23 @@ public class CheckIdeHtmlReportBuilder {
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   public static void build(@NotNull File report,
                            @NotNull String ideVersion,
-                           List<String> pluginIds, @NotNull Predicate<Update> updateFilter,
-                           @NotNull Map<Update, ProblemSet> results)
+                           List<String> pluginIds, @NotNull Predicate<UpdateInfo> updateFilter,
+                           @NotNull Map<UpdateInfo, ProblemSet> results)
     throws IOException {
-    Map<String, List<Update>> pluginsMap = new TreeMap<String, List<Update>>();
+    Map<String, List<UpdateInfo>> pluginsMap = new TreeMap<String, List<UpdateInfo>>();
 
     for (String pluginId : pluginIds) {
-      pluginsMap.put(pluginId, new ArrayList<Update>());
+      pluginsMap.put(pluginId, new ArrayList<UpdateInfo>());
     }
 
-    for (Update update : results.keySet()) {
-      List<Update> updatesList = pluginsMap.get(update.getPluginId());
+    for (UpdateInfo update : results.keySet()) {
+      List<UpdateInfo> updatesList = pluginsMap.get(update.getPluginId());
       assert updatesList != null : "Invalid arguments, pluginIds doesn't contains " + update.getPluginId();
 
       updatesList.add(update);
     }
 
-    for (List<Update> updateList : pluginsMap.values()) {
+    for (List<UpdateInfo> updateList : pluginsMap.values()) {
       Collections.sort(updateList, Collections.reverseOrder(UpdatesComparator.INSTANCE));
     }
 
@@ -80,7 +81,7 @@ public class CheckIdeHtmlReportBuilder {
         out.print("No plugins checked.\n");
       }
       else {
-        for (Map.Entry<String, List<Update>> entry : pluginsMap.entrySet()) {
+        for (Map.Entry<String, List<UpdateInfo>> entry : pluginsMap.entrySet()) {
           out.printf("<div class='plugin %s'>\n",
                      pluginHasProblems(entry.getValue(), results, updateFilter) ? "pluginHasProblem" : "pluginOk");
 
@@ -103,7 +104,7 @@ public class CheckIdeHtmlReportBuilder {
             out.printf("There are no updates compatible with %s in the Plugin Repository\n", ideVersion);
           }
           else {
-            for (Update update : entry.getValue()) {
+            for (UpdateInfo update : entry.getValue()) {
               ProblemSet problems = results.get(update);
 
               out.printf("<div class='update %s %s'>\n",
@@ -182,8 +183,8 @@ public class CheckIdeHtmlReportBuilder {
     }
   }
 
-  private static boolean pluginHasProblems(List<Update> updates, Map<Update, ProblemSet> results, Predicate<Update> updateFilter) {
-    for (Update update : updates) {
+  private static boolean pluginHasProblems(List<UpdateInfo> updates, Map<UpdateInfo, ProblemSet> results, Predicate<UpdateInfo> updateFilter) {
+    for (UpdateInfo update : updates) {
       if (updateFilter.apply(update)) {
         if (!results.get(update).isEmpty()) return true;
       }
@@ -192,12 +193,12 @@ public class CheckIdeHtmlReportBuilder {
     return false;
   }
 
-  private static class UpdatesComparator implements Comparator<Update> {
+  private static class UpdatesComparator implements Comparator<UpdateInfo> {
 
-    private static final Comparator<Update> INSTANCE = new UpdatesComparator();
+    private static final Comparator<UpdateInfo> INSTANCE = new UpdatesComparator();
 
     @Override
-    public int compare(Update o1, Update o2) {
+    public int compare(UpdateInfo o1, UpdateInfo o2) {
       Ordering<Comparable> c = Ordering.natural().nullsLast();
 
       return ComparisonChain.start()
