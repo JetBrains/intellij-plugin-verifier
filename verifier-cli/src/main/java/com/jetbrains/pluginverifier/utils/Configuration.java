@@ -59,7 +59,11 @@ public class Configuration {
 
   @NotNull
   public String getPluginRepositoryUrl() {
-    return getProperty("plugin.repository.url");
+    String res = getProperty("plugin.repository.url");
+    if (res.endsWith("/")) {
+      res = res.substring(0, res.length() - 1);
+    }
+    return res;
   }
 
   @Nullable
