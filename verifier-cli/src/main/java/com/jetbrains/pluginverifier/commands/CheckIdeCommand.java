@@ -42,21 +42,10 @@ public class CheckIdeCommand extends VerifierCommand {
   }
 
   private static List<String> extractPluginList(@NotNull CommandLine commandLine) {
-    String[] pluginIds = commandLine.getOptionValues("pl");
+    String[] pluginIds = commandLine.getOptionValues('p');
     if (pluginIds == null) return Collections.emptyList();
 
-    List<String> res = new ArrayList<String>();
-
-    for (String pluginId : pluginIds) {
-      for (StringTokenizer st = new StringTokenizer(pluginId, ","); st.hasMoreTokens(); ) {
-        String token = st.nextToken();
-        if (!token.isEmpty()) {
-          res.add(token);
-        }
-      }
-    }
-
-    return res;
+    return Arrays.asList(pluginIds);
   }
 
   private static Predicate<UpdateInfo> getExcludedPluginsPredicate(@NotNull CommandLine commandLine) throws IOException {

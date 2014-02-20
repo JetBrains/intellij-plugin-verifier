@@ -21,7 +21,7 @@ public class Util {
     .addOption("s", "skip-class-for-dup-check", true, "Class name prefixes to skip in duplicate classes check, delimited by ':'")
     .addOption("e", "external-classes", true, "Classes from external libraries. Error will not be reported if class not found. Delimited by ':'")
     .addOption("all", "check-all-plugins-with-ide", false, "Check IDE build with all compatible plugins")
-    .addOption("pl", "plugin-list", true, "List of plugin id to check with IDE, delimited by ':'")
+    .addOption("p", "plugin-to-check", true, "A plugin id to check with IDE")
     .addOption("iv", "ide-version", true, "Version of IDE that will be tested, e.g. IU-133.439")
     .addOption("epf", "excluded-plugin-file", true, "File with list of excluded plugin builds.")
     .addOption("d", "dump-broken-plugin-list", true, "File to dump broken plugin list.")
