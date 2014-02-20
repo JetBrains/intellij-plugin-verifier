@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.MethodNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
+import com.jetbrains.pluginverifier.utils.StringUtil;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
@@ -38,7 +39,16 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
     }
     else {
       if (ResolverUtil.findMethod(resolver, classNode, invoke.name, invoke.desc) == null) {
-        ctx.registerProblem(new MethodNotFoundProblem(invoke.owner + '#' + invoke.name + invoke.desc),
+        String calledMethod = invoke.owner + '#' + invoke.name + invoke.desc;
+
+        if (invoke.owner.equals(clazz.name)) {
+          // Looks like method was defined in some parent class
+          if (StringUtil.isNotEmpty(classNode.superName) && classNode.interfaces.isEmpty()) {
+            calledMethod = classNode.superName + '#' + invoke.name + invoke.desc;
+          }
+        }
+
+        ctx.registerProblem(new MethodNotFoundProblem(calledMethod),
                             new ProblemLocation(clazz.name, method.name + method.desc));
       }
     }
