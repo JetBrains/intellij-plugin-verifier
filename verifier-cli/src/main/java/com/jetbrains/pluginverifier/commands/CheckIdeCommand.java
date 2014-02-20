@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -104,9 +105,15 @@ public class CheckIdeCommand extends VerifierCommand {
     if (!pluginIds.isEmpty()) {
       System.out.println("Loading compatible plugins list... ");
 
-      URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/manager/originalCompatibleUpdatesByPluginIds/?build=" +
-                        ideVersion + "&pluginIds=" + Joiner
-        .on("&pluginIds=").join(pluginIds));
+      StringBuilder urlSb = new StringBuilder();
+      urlSb.append(Configuration.getInstance().getPluginRepositoryUrl())
+        .append("/manager/originalCompatibleUpdatesByPluginIds/?build=").append(ideVersion);
+
+      for (String id : pluginIds) {
+        urlSb.append("&pluginIds=").append(URLEncoder.encode(id, "UTF-8"));
+      }
+
+      URL url = new URL(urlSb.toString());
       String text = IOUtils.toString(url);
 
       return new Gson().fromJson(text, updateListType);
