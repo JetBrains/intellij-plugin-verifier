@@ -121,27 +121,10 @@ public class CheckIdeCommand extends VerifierCommand {
 
     System.out.println("Loading compatible plugins list... ");
 
-    URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/manager/allCompatibleUpdateIds/?build=" + ideVersion);
+    URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/manager/allCompatibleUpdates/?build=" + ideVersion);
     String text = IOUtils.toString(url);
 
-    List<UpdateInfo> res = new ArrayList<UpdateInfo>();
-    for (StringTokenizer st = new StringTokenizer(text, ", \n"); st.hasMoreTokens(); ) {
-      String s = st.nextToken();
-      if (!s.isEmpty()) {
-        UpdateInfo update = new UpdateInfo();
-        update.setUpdateId(Integer.parseInt(s));
-        res.add(update);
-      }
-    }
-
-    Collections.sort(res, Ordering.natural().onResultOf(new Function<UpdateInfo, Comparable>() {
-      @Override
-      public Comparable apply(UpdateInfo update) {
-        return update.getUpdateId();
-      }
-    }));
-
-    return res;
+    return new Gson().fromJson(text, updateListType);
   }
 
   @Override
