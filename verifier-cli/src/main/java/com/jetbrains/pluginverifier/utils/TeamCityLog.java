@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.utils;
 
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.io.output.NullOutputStream;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,6 +48,10 @@ public class TeamCityLog {
 
   public void buildStatus(@NotNull String text) {
     out.printf("##teamcity[buildStatus text='%s']\n", escape(text));
+  }
+
+  public static TeamCityLog getInstance(@NotNull CommandLine commandLine) {
+    return commandLine.hasOption("tc") ? new TeamCityLog(System.out) : TeamCityLog.NULL_LOG;
   }
 
   public Block blockOpen(@NotNull String name) {

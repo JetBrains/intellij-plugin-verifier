@@ -138,7 +138,7 @@ public class CheckIdeCommand extends VerifierCommand {
       throw Util.fail("IDE home is not a directory: " + ideToCheck);
     }
 
-    TeamCityLog tc = commandLine.hasOption("tc") ? new TeamCityLog(System.out) : TeamCityLog.NULL_LOG;
+    TeamCityLog tc = TeamCityLog.getInstance(commandLine);
 
     JDK jdk = createJdk(commandLine);
 
@@ -275,16 +275,7 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
-    if (problems.isEmpty()) return;
-
-    List<Problem> p = ProblemUtils.sort(problems.keySet());
-
-    for (Problem problem : p) {
-      List<UpdateInfo> updates = new ArrayList<UpdateInfo>(problems.get(problem));
-      Collections.sort(updates, new ToStringCachedComparator<UpdateInfo>());
-
-      log.buildProblem(MessageUtils.cutCommonPackages(problem.getDescription()) + " (in " + Joiner.on(", ").join(updates) + ')');
-    }
+    TeamCityUtil.printTeamCityProblems(log, problems);
   }
 
   private static void dumbBrokenPluginsList(@NotNull String dumpBrokenPluginsFile, Collection<UpdateInfo> brokenUpdates)

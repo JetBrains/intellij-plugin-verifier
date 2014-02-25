@@ -7,9 +7,7 @@ import com.google.common.collect.Sets;
 import com.jetbrains.pluginverifier.VerifierCommand;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
-import com.jetbrains.pluginverifier.utils.MessageUtils;
-import com.jetbrains.pluginverifier.utils.ProblemUtils;
-import com.jetbrains.pluginverifier.utils.Util;
+import com.jetbrains.pluginverifier.utils.*;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,6 +68,8 @@ public class CompareResultsCommand extends VerifierCommand {
       }
     }
 
+    TeamCityLog tc = TeamCityLog.getInstance(commandLine);
+    TeamCityUtil.printTeamCityProblems(tc, res);
 
     System.out.println("Done");
   }
