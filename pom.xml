@@ -14,6 +14,7 @@
   <modules>
     <module>verifier-problems</module>
     <module>verifier-cli</module>
+    <module>uploader</module>
   </modules>
 
   <properties>
