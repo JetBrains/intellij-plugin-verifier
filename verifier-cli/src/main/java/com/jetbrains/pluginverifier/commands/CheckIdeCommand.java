@@ -3,9 +3,6 @@ package com.jetbrains.pluginverifier.commands;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
-import com.google.common.io.Files;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.VerifierCommand;
@@ -19,22 +16,15 @@ import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.lang.reflect.Type;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.util.*;
 
 /**
  * @author Sergey Evdokimov
  */
 public class CheckIdeCommand extends VerifierCommand {
-
-  private static final Type updateListType = new TypeToken<List<UpdateInfo>>() {}.getType();
 
   public CheckIdeCommand() {
     super("check-ide");
@@ -86,43 +76,12 @@ public class CheckIdeCommand extends VerifierCommand {
     }
   }
 
-  @NotNull
-  private String getIdeVersion(@NotNull Idea ide, @NotNull CommandLine commandLine) throws IOException {
-    String build = commandLine.getOptionValue("iv");
-    if (build == null || build.isEmpty()) {
-      build = Files.toString(new File(ide.getIdeaDir(), "build.txt"), Charset.defaultCharset()).trim();
-      if (build.length() == 0) {
-        throw Util.fail("failed to read IDE version (" + ide.getIdeaDir() + "/build.txt)");
-      }
-    }
-
-    return build;
-  }
-
   private List<UpdateInfo> getUpdateIds(@NotNull String ideVersion, @NotNull List<String> pluginIds) throws IOException {
     if (!pluginIds.isEmpty()) {
-      System.out.println("Loading compatible plugins list... ");
-
-      StringBuilder urlSb = new StringBuilder();
-      urlSb.append(Configuration.getInstance().getPluginRepositoryUrl())
-        .append("/manager/originalCompatibleUpdatesByPluginIds/?build=").append(ideVersion);
-
-      for (String id : pluginIds) {
-        urlSb.append("&pluginIds=").append(URLEncoder.encode(id, "UTF-8"));
-      }
-
-      URL url = new URL(urlSb.toString());
-      String text = IOUtils.toString(url);
-
-      return new Gson().fromJson(text, updateListType);
+      return PRUtil.getOriginalCompatibleUpdatesByPluginIds(ideVersion, pluginIds);
     }
 
-    System.out.println("Loading compatible plugins list... ");
-
-    URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/manager/allCompatibleUpdates/?build=" + ideVersion);
-    String text = IOUtils.toString(url);
-
-    return new Gson().fromJson(text, updateListType);
+    return PRUtil.getAllCompatibleUpdates(ideVersion);
   }
 
   @Override

@@ -11,7 +11,7 @@ import java.net.URL;
  */
 public class DownloadUtils {
 
-  public static File getUpdate(int updateId) throws IOException {
+  private static File getDownloadDir() throws IOException {
     File downloadDir = Util.getPluginCacheDir();
     if (!downloadDir.isDirectory()) {
       downloadDir.mkdirs();
@@ -19,6 +19,12 @@ public class DownloadUtils {
         throw new IOException("Failed to create temp directory: " + downloadDir);
       }
     }
+
+    return downloadDir;
+  }
+
+  public static File getUpdate(int updateId) throws IOException {
+    File downloadDir = getDownloadDir();
 
     File pluginInCache = new File(downloadDir, updateId + ".zip");
 
@@ -41,5 +47,19 @@ public class DownloadUtils {
     return pluginInCache;
   }
 
+  public static File getCheckResult(String build) throws IOException {
+    File downloadDir = getDownloadDir();
+
+    File checkResDir = new File(downloadDir, "checkResult");
+    checkResDir.mkdirs();
+
+    File res = new File(checkResDir, build + ".xml");
+
+    if (!res.exists()) {
+
+    }
+
+    return res;
+  }
 
 }

@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier;
 
+import com.google.common.io.Files;
+import com.jetbrains.pluginverifier.domain.Idea;
 import com.jetbrains.pluginverifier.domain.JDK;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.pool.ContainerClassPool;
@@ -10,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarFile;
@@ -71,6 +74,19 @@ public abstract class VerifierCommand {
     }
 
     return ContainerClassPool.union("external_class_path", pools);
+  }
+
+  @NotNull
+  protected String getIdeVersion(@NotNull Idea ide, @NotNull CommandLine commandLine) throws IOException {
+    String build = commandLine.getOptionValue("iv");
+    if (build == null || build.isEmpty()) {
+      build = Files.toString(new File(ide.getIdeaDir(), "build.txt"), Charset.defaultCharset()).trim();
+      if (build.length() == 0) {
+        throw Util.fail("failed to read IDE version (" + ide.getIdeaDir() + "/build.txt)");
+      }
+    }
+
+    return build;
   }
 
 }
