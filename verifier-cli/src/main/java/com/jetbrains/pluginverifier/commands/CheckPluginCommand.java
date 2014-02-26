@@ -25,7 +25,7 @@ public class CheckPluginCommand extends VerifierCommand {
   }
 
   @Override
-  public void execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
+  public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (commandLine.getArgs().length == 0) {
       // it's default command. Looks like user start application without parameters
       throw Util.fail("You must specify one of the commands: " + Joiner.on(", ").join(CommandHolder.getCommandMap().keySet()) + "\n" +
@@ -85,10 +85,10 @@ public class CheckPluginCommand extends VerifierCommand {
       pluginsToVerify.add(ideaPlugin);
     }
 
-    verifyPluginList(pluginsToVerify, options);
+    return verifyPluginList(pluginsToVerify, options);
   }
 
-  private static void verifyPluginList(List<IdeaPlugin> plugins, PluginVerifierOptions options) {
+  private static int verifyPluginList(List<IdeaPlugin> plugins, PluginVerifierOptions options) {
     long start = System.currentTimeMillis();
 
     boolean hasError = false;
@@ -108,7 +108,7 @@ public class CheckPluginCommand extends VerifierCommand {
 
     System.out.println("Plugin verification took " + (System.currentTimeMillis() - start) + "ms");
     System.out.println(hasError ? "FAILED" : "OK");
-    System.exit(hasError ? 1 : 0);
+    return hasError ? 2 : 0;
   }
 
 }

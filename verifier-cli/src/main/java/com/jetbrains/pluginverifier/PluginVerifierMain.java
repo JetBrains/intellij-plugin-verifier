@@ -40,7 +40,11 @@ public class PluginVerifierMain {
       }
     }
 
-    command.execute(commandLine, freeArgs);
+    int exitCode = command.execute(commandLine, freeArgs);
+
+    if (exitCode != 0 && !Boolean.getBoolean("exitCode0")) {
+      System.exit(exitCode);
+    }
   }
 
 }

@@ -29,7 +29,10 @@ public abstract class VerifierCommand {
     return name;
   }
 
-  public abstract void execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception;
+  /**
+   * @return exit code
+   */
+  public abstract int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception;
 
   protected JDK createJdk(CommandLine commandLine) throws IOException {
     File runtimeDirectory;

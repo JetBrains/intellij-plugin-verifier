@@ -27,7 +27,7 @@ public class CompareResultsCommand extends VerifierCommand {
   }
 
   @Override
-  public void execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
+  public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.size() != 2) {
       throw Util.fail("You have to specify two result files. For example: \"java -jar verifier.jar compare-results res_133.200.xml res_133.201.xml\"");
     }
@@ -72,6 +72,8 @@ public class CompareResultsCommand extends VerifierCommand {
     TeamCityUtil.printTeamCityProblems(tc, res);
 
     System.out.println("Done");
+
+    return 0;
   }
 
   private Set<Problem> getOldProblems(File previousResults) throws IOException {

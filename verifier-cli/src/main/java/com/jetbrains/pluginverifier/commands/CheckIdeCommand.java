@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.commands;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
@@ -128,7 +126,7 @@ public class CheckIdeCommand extends VerifierCommand {
   }
 
   @Override
-  public void execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
+  public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.isEmpty()) {
       throw Util.fail("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"");
     }
@@ -258,8 +256,10 @@ public class CheckIdeCommand extends VerifierCommand {
     if (allProblems.size() > 0) {
       tc.buildStatus(allProblems.size() + (allProblems.size() == 1 ? " problem" : " problems") );
       System.out.printf("IDE has %d problems", allProblems.size());
-      System.exit(2);
+      return 2;
     }
+
+    return 0;
   }
 
   private static void printTeamCityProblems(TeamCityLog log, Map<UpdateInfo, ProblemSet> results, Predicate<UpdateInfo> updateFilter) {
