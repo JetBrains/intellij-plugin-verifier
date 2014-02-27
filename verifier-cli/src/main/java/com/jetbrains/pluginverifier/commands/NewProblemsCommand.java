@@ -73,9 +73,11 @@ public class NewProblemsCommand extends VerifierCommand {
       }
     }
 
-    String currentBuildName = "current (" + checkResult.getIde() + ')';
+    String currentBuildName = "#" + checkResult.getIde();
 
     buildToProblems.putAll(currentBuildName, problems);
+
+    List<String> tcMessages = new ArrayList<String>();
 
     for (String prevBuild : Iterables.concat(previousCheckedBuild, Collections.singleton(currentBuildName))) {
       Collection<Problem> problemsInBuild = buildToProblems.get(prevBuild);
@@ -83,14 +85,23 @@ public class NewProblemsCommand extends VerifierCommand {
         System.out.printf("\nIn %s found %d new problems:\n", prevBuild,problemsInBuild.size());
 
         for (Problem problem : problemsInBuild) {
+          CharSequence problemDescription = MessageUtils.cutCommonPackages(problem.getDescription());
+          Collection<UpdateInfo> affectedUpdates = problemsToUpdates.get(problem);
+
           System.out.print("    ");
-          System.out.println(MessageUtils.cutCommonPackages(problem.getDescription()));
-          System.out.println("        in " + Joiner.on(", ").join(problemsToUpdates.get(problem)));
+          System.out.println(problemDescription);
+          System.out.println("        in " + Joiner.on(", ").join(affectedUpdates));
+
+          tcMessages.add("since " + prevBuild + "  " + problemDescription + " (in " + Joiner.on(", ").join(affectedUpdates) + ')' );
         }
       }
     }
 
+    TeamCityLog tc = TeamCityLog.getInstance(commandLine);
 
+    for (int i = tcMessages.size() - 1; i >= 0; i--) {
+      tc.buildProblem(tcMessages.get(i));
+    }
 
     return 0;
   }
