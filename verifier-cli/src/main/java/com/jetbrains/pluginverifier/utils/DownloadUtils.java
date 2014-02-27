@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.utils;
 
+import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -39,7 +40,7 @@ public class DownloadUtils {
         throw new IOException("Broken zip archive");
       }
 
-      FileUtils.moveFile(currentDownload, pluginInCache);
+      Files.move(currentDownload, pluginInCache);
 
       System.out.println("done");
     }
@@ -56,7 +57,11 @@ public class DownloadUtils {
     File res = new File(checkResDir, build + ".xml");
 
     if (!res.exists()) {
+      File currentDownload = File.createTempFile("currentDownload", ".zip", downloadDir);
 
+      FileUtils.copyURLToFile(new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/files/checkResults/" + build + ".xml"), currentDownload);
+
+      Files.move(currentDownload, res);
     }
 
     return res;

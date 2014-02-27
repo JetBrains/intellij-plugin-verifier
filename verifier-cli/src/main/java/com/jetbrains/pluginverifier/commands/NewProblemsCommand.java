@@ -1,29 +1,18 @@
 package com.jetbrains.pluginverifier.commands;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import com.jetbrains.pluginverifier.PluginVerifierOptions;
-import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.VerifierCommand;
-import com.jetbrains.pluginverifier.domain.Idea;
-import com.jetbrains.pluginverifier.domain.IdeaPlugin;
-import com.jetbrains.pluginverifier.domain.JDK;
-import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.problems.ProblemSet;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.utils.*;
-import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * @author Sergey Evdokimov
@@ -40,89 +29,87 @@ public class NewProblemsCommand extends VerifierCommand {
       throw Util.fail("You have to specify IDE to check. For example: \"java -jar verifier.jar new-problems ~/EAPs/idea-IU-133.439\"");
     }
 
-    File ideToCheck = new File(freeArgs.get(0));
-    if (!ideToCheck.isDirectory()) {
-      throw Util.fail("IDE home is not a directory: " + ideToCheck);
+    File reportToCheck = new File(freeArgs.get(0));
+    if (!reportToCheck.isFile()) {
+      throw Util.fail("Report not found: " + reportToCheck);
     }
 
-    JDK jdk = createJdk(commandLine);
+    ResultsElement checkResult = ProblemUtils.loadProblems(reportToCheck);
 
-    PluginVerifierOptions options = PluginVerifierOptions.parseOpts(commandLine);
+    List<String> previousCheckedBuild = findPreviousBuilds(checkResult.getIde());
 
-    ClassPool externalClassPath = getExternalClassPath(commandLine);
-
-    Idea ide = new Idea(ideToCheck, jdk, externalClassPath);
-
-    String ideVersion = getIdeVersion(ide, commandLine);
-
-    List<String> resultsList = PRUtil.loadAvailableCheckResultsList();
-
-    Pair<String, Integer> checkedIde = parseBuildNumber(ideVersion);
-
-    TreeMap<Integer, String> previousBuilds = new TreeMap<Integer, String>();
-
-    for (String build : resultsList) {
-      Pair<String, Integer> pair = parseBuildNumber(build);
-
-      if (checkedIde.first.equals(pair.first) && checkedIde.second > pair.second) {
-        previousBuilds.put(pair.second, build);
-      }
-    }
-
-    if (previousBuilds.isEmpty()) {
+    if (previousCheckedBuild.isEmpty()) {
       System.out.println("Plugin repository does not contain check result to compare.");
+      return 0;
     }
 
-    List<UpdateInfo> updates = PRUtil.getAllCompatibleUpdates(ideVersion);
+    Multimap<Problem, UpdateInfo> problemsToUpdates = ArrayListMultimap.create();
 
-    Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
-
-    for (UpdateInfo updateInfo : updates) {
-      File update;
-      try {
-        update = DownloadUtils.getUpdate(updateInfo.getUpdateId());
-      }
-      catch (IOException e) {
-        System.out.println("failed to download: " + e.getMessage());
-        continue;
-      }
-
-      IdeaPlugin plugin;
-      try {
-        plugin = IdeaPlugin.createFromZip(ide, update);
-      }
-      catch (Exception e) {
-        System.out.println("Plugin is broken: " + updateInfo);
-        e.printStackTrace();
-        continue;
-      }
-
-      System.out.print("testing " + updateInfo + "... ");
-
-      VerificationContextImpl ctx = new VerificationContextImpl(options);
-      Verifiers.processAllVerifiers(plugin, ctx);
-
-      for (Problem problem : ctx.getProblems().getAllProblems()) {
-        problems.put(problem, updateInfo);
-      }
-
-      if (ctx.getProblems().isEmpty()) {
-        System.out.println("ok");
-      }
-      else {
-        System.out.println(" has " + ctx.getProblems().count() + " problems");
-
-        ctx.getProblems().printProblems(System.out, "    ");
+    for (Map.Entry<UpdateInfo, Collection<Problem>> entry : checkResult.asMap().entrySet()) {
+      for (Problem problem : entry.getValue()) {
+        problemsToUpdates.put(problem, entry.getKey());
       }
     }
 
+    Multimap<String, Problem> buildToProblems = ArrayListMultimap.create();
 
+    Set<Problem> problems = new HashSet<Problem>(problemsToUpdates.keySet());
+
+    String firstCheckedBuild = previousCheckedBuild.get(0);
+    ResultsElement firstBuildResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResult(firstCheckedBuild));
+
+    previousCheckedBuild = previousCheckedBuild.subList(1, previousCheckedBuild.size());
+
+    problems.removeAll(firstBuildResult.getProblems());
+
+    for (String prevBuild : previousCheckedBuild) {
+      ResultsElement prevBuildResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResult(prevBuild));
+
+      for (Problem problem : prevBuildResult.getProblems()) {
+        if (problems.remove(problem)) {
+          buildToProblems.put(prevBuild, problem);
+        }
+      }
+    }
+
+    buildToProblems.putAll("current", problems);
+
+    for (String prevBuild : previousCheckedBuild) {
+      Collection<Problem> problemsInBuild = buildToProblems.get(prevBuild);
+      if (!problemsInBuild.isEmpty()) {
+        System.out.printf("\nIn %s found %d new problems:\n", prevBuild,problemsInBuild.size());
+
+        for (Problem problem : problemsInBuild) {
+          System.out.print("    ");
+          System.out.println(MessageUtils.cutCommonPackages(problem.getDescription()));
+          System.out.println("        in " + Joiner.on(", ").join(problemsToUpdates.get(problem)));
+        }
+      }
+    }
 
     return 0;
   }
 
+  private static List<String> findPreviousBuilds(String currentBuild) throws IOException {
+    List<String> resultsOnInPluginRepository = PRUtil.loadAvailableCheckResultsList();
+
+    Pair<String, Integer> parsedCurrentBuild = parseBuildNumber(currentBuild);
+
+    TreeMap<Integer, String> buildMap = new TreeMap<Integer, String>();
+
+    for (String build : resultsOnInPluginRepository) {
+      Pair<String, Integer> pair = parseBuildNumber(build);
+
+      if (parsedCurrentBuild.first.equals(pair.first) && parsedCurrentBuild.second > pair.second) {
+        buildMap.put(pair.second, build);
+      }
+    }
+
+    return new ArrayList<String>(buildMap.values());
+  }
+
   private static Pair<String, Integer> parseBuildNumber(String buildNumber) {
-    int idx = buildNumber.lastIndexOf('-');
+    int idx = buildNumber.lastIndexOf('.');
 
     return Pair.create(buildNumber.substring(0, idx), Integer.parseInt(buildNumber.substring(idx + 1)));
   }
