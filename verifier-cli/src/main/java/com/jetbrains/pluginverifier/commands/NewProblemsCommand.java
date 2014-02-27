@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.commands;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.jetbrains.pluginverifier.VerifierCommand;
 import com.jetbrains.pluginverifier.problems.Problem;
@@ -72,9 +73,11 @@ public class NewProblemsCommand extends VerifierCommand {
       }
     }
 
-    buildToProblems.putAll("current", problems);
+    String currentBuildName = "current (" + checkResult.getIde() + ')';
 
-    for (String prevBuild : previousCheckedBuild) {
+    buildToProblems.putAll(currentBuildName, problems);
+
+    for (String prevBuild : Iterables.concat(previousCheckedBuild, Collections.singleton(currentBuildName))) {
       Collection<Problem> problemsInBuild = buildToProblems.get(prevBuild);
       if (!problemsInBuild.isEmpty()) {
         System.out.printf("\nIn %s found %d new problems:\n", prevBuild,problemsInBuild.size());
@@ -86,6 +89,8 @@ public class NewProblemsCommand extends VerifierCommand {
         }
       }
     }
+
+
 
     return 0;
   }
