@@ -59,11 +59,12 @@ public class NewProblemsCommand extends VerifierCommand {
     String firstCheckedBuild = previousCheckedBuild.get(0);
     ResultsElement firstBuildResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResult(firstCheckedBuild));
 
-    previousCheckedBuild = previousCheckedBuild.subList(1, previousCheckedBuild.size());
-
     problems.removeAll(firstBuildResult.getProblems());
 
-    for (String prevBuild : previousCheckedBuild) {
+    int newProblemsCount = problems.size();
+
+    for (int i = 1; i < previousCheckedBuild.size(); i++) {
+      String prevBuild = previousCheckedBuild.get(i);
       ResultsElement prevBuildResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResult(prevBuild));
 
       for (Problem problem : prevBuildResult.getProblems()) {
@@ -79,7 +80,7 @@ public class NewProblemsCommand extends VerifierCommand {
 
     List<Pair<String, String>> tcMessages = new ArrayList<Pair<String, String>>();
 
-    for (String prevBuild : Iterables.concat(previousCheckedBuild, Collections.singleton(currentBuildName))) {
+    for (String prevBuild : Iterables.concat(previousCheckedBuild.subList(1, previousCheckedBuild.size()), Collections.singleton(currentBuildName))) {
       Collection<Problem> problemsInBuild = buildToProblems.get(prevBuild);
       if (!problemsInBuild.isEmpty()) {
         System.out.printf("\nIn %s found %d new problems:\n", prevBuild,problemsInBuild.size());
@@ -102,6 +103,8 @@ public class NewProblemsCommand extends VerifierCommand {
     for (int i = tcMessages.size() - 1; i >= 0; i--) {
       tc.buildProblem(tcMessages.get(i).first, tcMessages.get(i).second);
     }
+
+    tc.buildStatusSuccess(String.format("Done, %d new problems found since %s", newProblemsCount, previousCheckedBuild.get(0)));
 
     return 0;
   }

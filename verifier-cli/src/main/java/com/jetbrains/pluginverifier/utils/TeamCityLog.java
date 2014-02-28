@@ -54,6 +54,10 @@ public class TeamCityLog {
     out.printf("##teamcity[buildStatus text='%s']\n", escape(text));
   }
 
+  public void buildStatusSuccess(@NotNull String text) {
+    out.printf("##teamcity[buildStatus status='SUCCESS' text='%s']\n", escape(text));
+  }
+
   public static TeamCityLog getInstance(@NotNull CommandLine commandLine) {
     return commandLine.hasOption("tc") ? new TeamCityLog(System.out) : TeamCityLog.NULL_LOG;
   }
