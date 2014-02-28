@@ -112,6 +112,14 @@ public class NewProblemsCommand extends VerifierCommand {
   private static List<String> findPreviousBuilds(String currentBuild) throws IOException {
     List<String> resultsOnInPluginRepository = PRUtil.loadAvailableCheckResultsList();
 
+    String firstBuild = System.getProperty("firstBuild");
+    if (firstBuild != null) {
+      int idx = resultsOnInPluginRepository.indexOf(firstBuild);
+      if (idx != -1) {
+        resultsOnInPluginRepository = resultsOnInPluginRepository.subList(idx, resultsOnInPluginRepository.size());
+      }
+    }
+
     Pair<String, Integer> parsedCurrentBuild = parseBuildNumber(currentBuild);
 
     TreeMap<Integer, String> buildMap = new TreeMap<Integer, String>();
