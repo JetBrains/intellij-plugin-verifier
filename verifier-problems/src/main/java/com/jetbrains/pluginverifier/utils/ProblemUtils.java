@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.utils;
 
+import com.google.common.hash.Hashing;
 import com.jetbrains.pluginverifier.problems.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -8,6 +9,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.*;
 
 public class ProblemUtils {
@@ -120,5 +122,10 @@ public class ProblemUtils {
     List<Problem> res = new ArrayList<Problem>(problems);
     Collections.sort(res, new ToStringProblemComparator());
     return res;
+  }
+
+  public static String hash(Problem problem) {
+    String s = problemToString(problem, false);
+    return Hashing.md5().hashString(s, Charset.defaultCharset()).toString();
   }
 }
