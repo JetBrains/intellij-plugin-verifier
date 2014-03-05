@@ -240,7 +240,9 @@ public class IdeaPlugin {
       final boolean optional = Boolean.parseBoolean(dependsElement.getAttributeValue("optional", "false"));
       final String pluginId = dependsElement.getTextTrim();
 
-      dependencies.add(new PluginDependency(pluginId, optional));
+      if (!pluginId.startsWith("com.intellij.modules.")) {
+        dependencies.add(new PluginDependency(pluginId, optional));
+      }
     }
 
     return dependencies;

@@ -4,6 +4,7 @@ import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.resolvers.CombiningResolver;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 
+import java.io.IOException;
 import java.util.*;
 
 public class DependenciesCache {
@@ -75,11 +76,18 @@ public class DependenciesCache {
         res = new HashSet<IdeaPlugin>();
 
         for (PluginDependency pluginDependency : plugin.getDependencies()) {
-          final IdeaPlugin bundledPlugin = ide.getBundledPlugin(pluginDependency.getId());
-          if (bundledPlugin != null) {
-            if (res.add(bundledPlugin)) {
-              res.addAll(getDependenciesWithTransitive(ide, bundledPlugin));
+          IdeaPlugin depPlugin = ide.getBundledPlugin(pluginDependency.getId());
+          if (depPlugin == null) {
+            try {
+              depPlugin = RemotePluginCache.getInstance().getUpdate(ide.getVersion(), pluginDependency.getId());
             }
+            catch (IOException e) {
+              e.printStackTrace();
+            }
+          }
+
+          if (depPlugin != null && res.add(depPlugin)) {
+            res.addAll(getDependenciesWithTransitive(ide, depPlugin));
           }
         }
 
