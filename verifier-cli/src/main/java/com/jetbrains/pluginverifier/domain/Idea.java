@@ -74,7 +74,7 @@ public class Idea {
         continue;
 
       try {
-        plugins.add(IdeaPlugin.createFromDirectory(this, file));
+        plugins.add(IdeaPlugin.createFromDirectory(file));
       }
       catch (BrokenPluginException e) {
         System.out.println("Failed to read plugin " + file + ": " + e.getMessage());

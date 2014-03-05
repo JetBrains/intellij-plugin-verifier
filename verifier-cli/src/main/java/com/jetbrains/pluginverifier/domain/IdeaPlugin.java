@@ -7,8 +7,6 @@ import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.pool.ContainerClassPool;
 import com.jetbrains.pluginverifier.pool.InMemoryJarClassPool;
 import com.jetbrains.pluginverifier.pool.JarClassPool;
-import com.jetbrains.pluginverifier.resolvers.CombiningResolver;
-import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.utils.xml.JDOMUtil;
@@ -24,7 +22,9 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.io.*;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -32,23 +32,17 @@ import java.util.zip.ZipInputStream;
 public class IdeaPlugin {
   public static final String PLUGIN_XML_ENTRY_NAME = "META-INF/plugin.xml";
 
-  private final Idea myIdea;
   private final ClassPool myPluginClassPool;
   private final ClassPool myLibraryClassPool;
   private final ClassPool myAllClassesPool;
 
   private final String myId;
-  private Resolver myResolver;
-
-  private Set<IdeaPlugin> dependenciesWithTransitive;
-  private static final Set<IdeaPlugin> DEP_CALC_MARKER = new HashSet<IdeaPlugin>();
 
   private final List<PluginDependency> myDependencies;
 
   private final String myPluginName;
 
-  private IdeaPlugin(Idea idea, String pluginDirectory, ClassPool pluginClassPool, ClassPool libraryClassPool,  @Nullable Document pluginXml) throws BrokenPluginException {
-    myIdea = idea;
+  private IdeaPlugin(String pluginDirectory, ClassPool pluginClassPool, ClassPool libraryClassPool,  @Nullable Document pluginXml) throws BrokenPluginException {
     myPluginClassPool = pluginClassPool;
     myLibraryClassPool = libraryClassPool;
 
@@ -72,7 +66,7 @@ public class IdeaPlugin {
     myAllClassesPool = ContainerClassPool.union(pluginDirectory, Arrays.asList(pluginClassPool, libraryClassPool));
   }
 
-  public static IdeaPlugin createFromDirectory(Idea idea, File pluginDirectory) throws IOException, BrokenPluginException {
+  public static IdeaPlugin createFromDirectory(File pluginDirectory) throws IOException, BrokenPluginException {
     List<JarFile> jarFiles = getPluginJars(pluginDirectory);
 
     Document pluginXml = null;
@@ -110,12 +104,12 @@ public class IdeaPlugin {
       }
     }
 
-    return new IdeaPlugin(idea, pluginDirectory.getPath(), pluginClassPool, ContainerClassPool.union(pluginDirectory.getPath(),
-                                                                                                     libraryPools), pluginXml);
+    return new IdeaPlugin(pluginDirectory.getPath(), pluginClassPool, ContainerClassPool.union(pluginDirectory.getPath(),
+                                                                                               libraryPools), pluginXml);
   }
 
 
-  public static IdeaPlugin createFromZip(Idea idea, File zipFile) throws IOException, BrokenPluginException {
+  public static IdeaPlugin createFromZip(File zipFile) throws IOException, BrokenPluginException {
     byte[] pluginXmlBytes = null;
     ClassPool pluginClassPool = null;
 
@@ -210,7 +204,7 @@ public class IdeaPlugin {
       }
     }
 
-    return new IdeaPlugin(idea, zipFile.getPath(), pluginClassPool, ContainerClassPool.union(zipFile.getPath(), libraryPool), pluginXml);
+    return new IdeaPlugin(zipFile.getPath(), pluginClassPool, ContainerClassPool.union(zipFile.getPath(), libraryPool), pluginXml);
   }
 
   private static boolean isPluginXmlInRoot(String entryName) {
@@ -282,78 +276,6 @@ public class IdeaPlugin {
 
   public ClassPool getLibraryClassPool() {
     return myLibraryClassPool;
-  }
-
-  public Set<IdeaPlugin> getDependenciesWithTransitive() {
-    Set<IdeaPlugin> res = dependenciesWithTransitive;
-    if (res == DEP_CALC_MARKER) throw new RuntimeException("Cyclic plugin dependencies");
-
-    if (dependenciesWithTransitive == null) {
-      dependenciesWithTransitive = DEP_CALC_MARKER;
-
-      try {
-        res = new HashSet<IdeaPlugin>();
-
-        for (PluginDependency pluginDependency : getDependencies()) {
-          final IdeaPlugin plugin = myIdea.getBundledPlugin(pluginDependency.getId());
-          if (plugin != null) {
-            if (res.add(plugin)) {
-              res.addAll(plugin.getDependenciesWithTransitive());
-            }
-          }
-        }
-
-        dependenciesWithTransitive = res;
-      }
-      finally {
-        if (dependenciesWithTransitive == DEP_CALC_MARKER) {
-          dependenciesWithTransitive = null;
-        }
-      }
-    }
-
-    return res;
-  }
-
-  public Resolver getResolver() {
-    if (myResolver == null) {
-      List<Resolver> resolvers = new ArrayList<Resolver>();
-
-      resolvers.add(getClassPool());
-      resolvers.add(myIdea.getResolver());
-
-      for (IdeaPlugin dep : getDependenciesWithTransitive()) {
-        ClassPool pluginClassPool = dep.getPluginClassPool();
-        if (!pluginClassPool.isEmpty()) {
-          resolvers.add(pluginClassPool);
-        }
-
-        ClassPool libraryClassPool = dep.getLibraryClassPool();
-        if (!libraryClassPool.isEmpty()) {
-          resolvers.add(libraryClassPool);
-        }
-      }
-
-      myResolver = CombiningResolver.union(resolvers);
-    }
-
-    return myResolver;
-  }
-
-  public Resolver getResolverOfDependencies() {
-    List<Resolver> resolvers = new ArrayList<Resolver>();
-
-    resolvers.add(myIdea.getResolver());
-
-    for (IdeaPlugin dep : getDependenciesWithTransitive()) {
-      resolvers.add(dep.getClassPool());
-    }
-
-    return CombiningResolver.union(resolvers);
-  }
-
-  public Idea getIdea() {
-    return myIdea;
   }
 
   public String getPluginName() {

@@ -1,11 +1,10 @@
 package com.jetbrains.pluginverifier;
 
+import com.jetbrains.pluginverifier.domain.Idea;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
 
 /**
  * @author Sergey Evdokimov
@@ -16,8 +15,11 @@ public class VerificationContextImpl implements VerificationContext {
 
   private final ProblemSet problems = new ProblemSet();
 
-  public VerificationContextImpl(PluginVerifierOptions options) {
+  private final Idea ide;
+
+  public VerificationContextImpl(PluginVerifierOptions options, Idea ide) {
     this.options = options;
+    this.ide = ide;
   }
 
   @Override
@@ -32,5 +34,9 @@ public class VerificationContextImpl implements VerificationContext {
 
   public ProblemSet getProblems() {
     return problems;
+  }
+
+  public Idea getIde() {
+    return ide;
   }
 }

@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers;
 
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
+import com.jetbrains.pluginverifier.domain.DependenciesCache;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.problems.FailedToReadClassProblem;
@@ -28,7 +29,7 @@ public class ReferencesVerifier implements Verifier {
   public void verify(@NotNull IdeaPlugin plugin, @NotNull VerificationContext ctx) {
     final ClassPool pluginPool = plugin.getPluginClassPool();
 
-    Resolver cacheResolver = new CacheResolver(plugin.getResolver());
+    Resolver cacheResolver = new CacheResolver(DependenciesCache.getInstance().getResolver(ctx.getIde(), plugin));
 
     final Collection<String> classes = pluginPool.getAllClasses();
     for (String className : classes) {

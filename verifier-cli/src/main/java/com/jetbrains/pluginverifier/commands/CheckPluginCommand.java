@@ -12,7 +12,6 @@ import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,6 +47,14 @@ public class CheckPluginCommand extends VerifierCommand {
       throw Util.fail("Unknown command: " + pluginToTest + "\navailable commands: " + Joiner.on(", ").join(CommandHolder.getCommandMap().keySet()));
     }
 
+    IdeaPlugin plugin;
+    if (pluginToTest.matches("\\#\\d+")) {
+      File update = DownloadUtils.getUpdate(Integer.parseInt(pluginToTest.substring(1)));
+      plugin = IdeaPlugin.createFromZip(update);
+    }
+    else {
+      plugin = JarDiscovery.createIdeaPlugin(new File(pluginToTest));
+    }
 
     if (freeArgs.size() == 1) {
       throw Util.fail("You must specify IDE directory/directories, example:\n" +
@@ -58,7 +65,9 @@ public class CheckPluginCommand extends VerifierCommand {
 
     PluginVerifierOptions options = PluginVerifierOptions.parseOpts(commandLine);
 
-    List<IdeaPlugin> pluginsToVerify = new ArrayList<IdeaPlugin>();
+    long start = System.currentTimeMillis();
+
+    boolean hasError = false;
 
     for (int i = 1; i < freeArgs.size(); i++) {
       File ideaDirectory = new File(freeArgs.get(i));
@@ -73,30 +82,9 @@ public class CheckPluginCommand extends VerifierCommand {
 
       Idea idea = new Idea(ideaDirectory, jdk, getExternalClassPath(commandLine));
 
-      IdeaPlugin ideaPlugin;
-      if (pluginToTest.matches("\\#\\d+")) {
-        File update = DownloadUtils.getUpdate(Integer.parseInt(pluginToTest.substring(1)));
-        ideaPlugin = IdeaPlugin.createFromZip(idea, update);
-      }
-      else {
-        ideaPlugin = JarDiscovery.createIdeaPlugin(new File(pluginToTest), idea);
-      }
+      System.out.println("Verifying " + plugin.getId() + " against " + idea.getMoniker());
 
-      pluginsToVerify.add(ideaPlugin);
-    }
-
-    return verifyPluginList(pluginsToVerify, options);
-  }
-
-  private static int verifyPluginList(List<IdeaPlugin> plugins, PluginVerifierOptions options) {
-    long start = System.currentTimeMillis();
-
-    boolean hasError = false;
-
-    for (IdeaPlugin plugin : plugins) {
-      System.out.println("Verifying " + plugin.getId() + " against " + plugin.getIdea().getMoniker());
-
-      VerificationContextImpl ctx = new VerificationContextImpl(options);
+      VerificationContextImpl ctx = new VerificationContextImpl(options, idea);
       Verifiers.processAllVerifiers(plugin, ctx);
 
       ctx.getProblems().printProblems(System.out, "");
@@ -110,5 +98,6 @@ public class CheckPluginCommand extends VerifierCommand {
     System.out.println(hasError ? "FAILED" : "OK");
     return hasError ? 2 : 0;
   }
+
 
 }

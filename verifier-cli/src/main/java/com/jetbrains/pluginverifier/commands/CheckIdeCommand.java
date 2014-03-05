@@ -140,7 +140,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
         IdeaPlugin plugin;
         try {
-          plugin = IdeaPlugin.createFromZip(ide, update);
+          plugin = IdeaPlugin.createFromZip(update);
         }
         catch (Exception e) {
           System.out.println("Plugin is broken: " + updateJson);
@@ -151,7 +151,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
         System.out.print("testing " + updateJson + "... ");
 
-        VerificationContextImpl ctx = new VerificationContextImpl(options);
+        VerificationContextImpl ctx = new VerificationContextImpl(options, ide);
         Verifiers.processAllVerifiers(plugin, ctx);
 
         results.put(updateJson, ctx.getProblems());
