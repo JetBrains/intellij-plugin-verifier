@@ -104,7 +104,10 @@ public class NewProblemsCommand extends VerifierCommand {
       tc.buildProblem(tcMessages.get(i).first, tcMessages.get(i).second);
     }
 
-    tc.buildStatusSuccess(String.format("Done, %d new problems found since %s", newProblemsCount, previousCheckedBuild.get(0)));
+    tc.buildStatusSuccess(String.format("Done, %d new problems found between %s and %s",
+                                        newProblemsCount,
+                                        previousCheckedBuild.get(0),
+                                        previousCheckedBuild.get(previousCheckedBuild.size() - 1)));
 
     return 0;
   }
