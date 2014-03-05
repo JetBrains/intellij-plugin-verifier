@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.domain;
 
 import com.google.common.base.Predicate;
+import com.google.common.io.Files;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.pool.CompileOutputPool;
 import com.jetbrains.pluginverifier.pool.ContainerClassPool;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,6 +28,8 @@ public class Idea {
   private final ClassPool myExternalClasspath;
   private final List<IdeaPlugin> myPlugins;
   private Resolver myResolver;
+
+  private String myVersion;
 
   public Idea(final File ideaDir, JDK jdk) throws IOException, JDOMException {
     this(ideaDir, jdk, null);
@@ -43,7 +47,17 @@ public class Idea {
     else {
       myClassPool = getIdeaClassPoolFromLibraries(ideaDir);
       myPlugins = getIdeaPlugins();
+
+      myVersion = Files.toString(new File(ideaDir, "build.txt"), Charset.defaultCharset()).trim();
     }
+  }
+
+  public String getVersion() {
+    return myVersion;
+  }
+
+  public void setVersion(String myVersion) {
+    this.myVersion = myVersion;
   }
 
   private List<IdeaPlugin> getIdeaPlugins() throws JDOMException, IOException {

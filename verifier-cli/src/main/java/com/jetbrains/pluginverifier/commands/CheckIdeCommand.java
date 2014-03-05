@@ -104,12 +104,11 @@ public class CheckIdeCommand extends VerifierCommand {
     ClassPool externalClassPath = getExternalClassPath(commandLine);
 
     Idea ide = new Idea(ideToCheck, jdk, externalClassPath);
-
-    String ideVersion = getIdeVersion(ide, commandLine);
+    updateIdeVersionFromCmd(ide, commandLine);
 
     List<String> pluginIds = extractPluginList(commandLine);
 
-    Collection<UpdateInfo> updates = getUpdateIds(ideVersion, pluginIds);
+    Collection<UpdateInfo> updates = getUpdateIds(ide.getVersion(), pluginIds);
 
     String dumpBrokenPluginsFile = commandLine.getOptionValue("d");
     String reportFile = commandLine.getOptionValue("report");
@@ -198,12 +197,12 @@ public class CheckIdeCommand extends VerifierCommand {
 
       if (reportFile != null) {
         System.out.println("Saving report to " + new File(reportFile).getAbsolutePath());
-        CheckIdeHtmlReportBuilder.build(new File(reportFile), ideVersion, pluginIds, updateFilter, results);
+        CheckIdeHtmlReportBuilder.build(new File(reportFile), ide.getVersion(), pluginIds, updateFilter, results);
       }
     }
 
     if (commandLine.hasOption("xr")) {
-      saveResultsToXml(commandLine.getOptionValue("xr"), ideVersion, results);
+      saveResultsToXml(commandLine.getOptionValue("xr"), ide.getVersion(), results);
     }
 
     Set<Problem> allProblems = new HashSet<Problem>();
