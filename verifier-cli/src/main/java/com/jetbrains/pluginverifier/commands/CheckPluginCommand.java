@@ -82,10 +82,12 @@ public class CheckPluginCommand extends VerifierCommand {
 
       Idea idea = new Idea(ideaDirectory, jdk, getExternalClassPath(commandLine));
 
-      System.out.println("Verifying " + plugin.getId() + " against " + idea.getMoniker());
+      System.out.print("Verifying " + plugin.getId() + " against " + idea.getMoniker() + "... ");
 
       VerificationContextImpl ctx = new VerificationContextImpl(options, idea);
       Verifiers.processAllVerifiers(plugin, ctx);
+
+      System.out.println(ctx.getProblems().isEmpty() ? "Ok" : ctx.getProblems().count() + " errors");
 
       ctx.getProblems().printProblems(System.out, "");
 
