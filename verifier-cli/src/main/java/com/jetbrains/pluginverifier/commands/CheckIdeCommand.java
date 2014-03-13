@@ -31,10 +31,31 @@ public class CheckIdeCommand extends VerifierCommand {
   }
 
   private static List<String> extractPluginList(@NotNull CommandLine commandLine) {
-    String[] pluginIds = commandLine.getOptionValues('p');
-    if (pluginIds == null) return Collections.emptyList();
+    List<String> res = new ArrayList<String>();
 
-    return Arrays.asList(pluginIds);
+    String[] pluginIds = commandLine.getOptionValues('p');
+    if (pluginIds != null) {
+      res.addAll(Arrays.asList(pluginIds));
+    }
+
+    String pluginsFile = commandLine.getOptionValue("pluginsFile");
+    if (pluginsFile != null) {
+      try {
+        BufferedReader reader = new BufferedReader(new FileReader(pluginsFile));
+        String s;
+        while ((s = reader.readLine()) != null) {
+          s = s.trim();
+          if (s.isEmpty()) continue;
+
+          res.add(s);
+        }
+      }
+      catch (IOException e) {
+        throw Util.fail("Failed to read plugins file " + pluginsFile + ": " + e.getLocalizedMessage());
+      }
+    }
+
+    return res;
   }
 
   private static Predicate<UpdateInfo> getExcludedPluginsPredicate(@NotNull CommandLine commandLine) throws IOException {

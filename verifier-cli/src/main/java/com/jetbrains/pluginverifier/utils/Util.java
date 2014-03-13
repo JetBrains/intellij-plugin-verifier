@@ -28,6 +28,7 @@ public class Util {
     .addOption("report", "make-report", true, "Create a detailed report about broken plugins.")
     .addOption("xr", "save-results-xml", true, "Save results to xml file")
     .addOption("tc", "team-city-output", false, "Print TeamCity compatible output.")
+    .addOption("pluginsFile", "plugins-to-check-file", true, "The file that contains list of plugins to check.")
     .addOption("cp", "external-class-path", true, "External class path");
 
   public static RuntimeException fail(String message) {
