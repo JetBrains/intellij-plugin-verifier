@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.commands;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
@@ -54,6 +55,8 @@ public class CheckIdeCommand extends VerifierCommand {
         throw Util.fail("Failed to read plugins file " + pluginsFile + ": " + e.getLocalizedMessage());
       }
     }
+
+    System.out.println("List of plugins to check: " + Joiner.on(", ").join(res));
 
     return res;
   }
