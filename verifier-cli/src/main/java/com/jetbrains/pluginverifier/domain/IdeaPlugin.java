@@ -108,7 +108,7 @@ public class IdeaPlugin {
                                                                                                libraryPools), pluginXml);
   }
 
-
+  @NotNull
   public static IdeaPlugin createFromZip(File zipFile) throws IOException, BrokenPluginException {
     byte[] pluginXmlBytes = null;
     ClassPool pluginClassPool = null;
