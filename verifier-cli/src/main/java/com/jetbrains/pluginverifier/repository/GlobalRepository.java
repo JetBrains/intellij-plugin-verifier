@@ -1,14 +1,15 @@
-package com.jetbrains.pluginverifier.utils;
+package com.jetbrains.pluginverifier.repository;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
+import com.jetbrains.pluginverifier.utils.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -18,20 +19,41 @@ import java.util.StringTokenizer;
 /**
  * @author Sergey Evdokimov
  */
-public class PRUtil {
+public class GlobalRepository extends PluginRepository {
 
   public static final Type updateListType = new TypeToken<List<UpdateInfo>>() {}.getType();
 
-  public static List<UpdateInfo> getAllCompatibleUpdates(@NotNull String ideVersion) throws IOException {
+  private final String url;
+
+  public GlobalRepository(String url) {
+    this.url = url;
+  }
+
+  @Override
+  public List<UpdateInfo> getAllCompatibleUpdates(@NotNull String ideVersion) throws IOException {
     System.out.println("Loading compatible plugins list... ");
 
-    URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/manager/allCompatibleUpdates/?build=" + ideVersion);
-    String text = IOUtils.toString(url);
+    URL url1 = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/manager/allCompatibleUpdates/?build=" + ideVersion);
+    String text = IOUtils.toString(url1);
 
     return new Gson().fromJson(text, updateListType);
   }
 
-  public static List<UpdateInfo> getOriginalCompatibleUpdatesByPluginIds(@NotNull String ideVersion, @NotNull List<String> pluginIds) throws IOException {
+  @Nullable
+  @Override
+  public UpdateInfo findPlugin(@NotNull String ideVersion, @NotNull String pluginId) throws IOException {
+    URL u = new URL(url + "/manager/getCompatibleUpdateId/?build=" + ideVersion + "&pluginId=" + URLEncoder.encode(pluginId, "UTF-8"));
+
+    int updateId = Integer.parseInt(IOUtils.toString(u));
+
+    UpdateInfo res = new UpdateInfo();
+    res.setUpdateId(updateId);
+
+    return res;
+  }
+
+  @Override
+  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull String ideVersion, List<String> pluginIds) throws IOException {
     System.out.println("Loading compatible plugins list... ");
 
     StringBuilder urlSb = new StringBuilder();
@@ -42,10 +64,18 @@ public class PRUtil {
       urlSb.append("&pluginIds=").append(URLEncoder.encode(id, "UTF-8"));
     }
 
-    URL url = new URL(urlSb.toString());
-    String text = IOUtils.toString(url);
+    URL url1 = new URL(urlSb.toString());
+    String text = IOUtils.toString(url1);
 
     return new Gson().fromJson(text, updateListType);
+  }
+
+  @NotNull
+  @Override
+  public String getUpdateUrl(UpdateInfo update) {
+    assert update.getUpdateId() != null;
+
+    return url + "/plugin/download/?noStatistic=true&updateId=" + update.getUpdateId();
   }
 
   public static List<String> loadAvailableCheckResultsList() throws IOException {

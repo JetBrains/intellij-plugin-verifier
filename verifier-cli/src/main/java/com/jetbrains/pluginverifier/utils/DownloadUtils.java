@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.utils;
 
 import com.google.common.base.Throwables;
-import com.google.common.io.Files;
 import com.google.common.net.HttpHeaders;
 import org.apache.commons.io.FileUtils;
 
@@ -27,44 +26,20 @@ public class DownloadUtils {
     httpDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
 
-  private static File getDownloadDir() throws IOException {
+  public static File getOrCreateDownloadDir() {
     File downloadDir = Util.getPluginCacheDir();
     if (!downloadDir.isDirectory()) {
       downloadDir.mkdirs();
       if (!downloadDir.isDirectory()) {
-        throw new IOException("Failed to create temp directory: " + downloadDir);
+        throw new RuntimeException("Failed to create temp directory: " + downloadDir);
       }
     }
 
     return downloadDir;
   }
 
-  public static File getUpdate(int updateId) throws IOException {
-    File downloadDir = getDownloadDir();
-
-    File pluginInCache = new File(downloadDir, updateId + ".zip");
-
-    if (!pluginInCache.exists()) {
-      File currentDownload = File.createTempFile("currentDownload", ".zip", downloadDir);
-
-      System.out.print("Downloading update #" + updateId + "... ");
-
-      FileUtils.copyURLToFile(new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/plugin/download/?noStatistic=true&updateId=" + updateId), currentDownload);
-
-      if (currentDownload.length() < 200) {
-        throw new IOException("Broken zip archive");
-      }
-
-      Files.move(currentDownload, pluginInCache);
-
-      System.out.println("done");
-    }
-
-    return pluginInCache;
-  }
-
   public static File getCheckResult(String build) throws IOException {
-    File downloadDir = getDownloadDir();
+    File downloadDir = getOrCreateDownloadDir();
 
     File checkResDir = new File(downloadDir, "checkResult");
     checkResDir.mkdirs();

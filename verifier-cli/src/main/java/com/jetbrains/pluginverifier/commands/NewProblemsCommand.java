@@ -7,6 +7,7 @@ import com.google.common.collect.Multimap;
 import com.jetbrains.pluginverifier.VerifierCommand;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
+import com.jetbrains.pluginverifier.repository.GlobalRepository;
 import com.jetbrains.pluginverifier.utils.*;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
@@ -113,7 +114,7 @@ public class NewProblemsCommand extends VerifierCommand {
   }
 
   private static List<String> findPreviousBuilds(String currentBuild) throws IOException {
-    List<String> resultsOnInPluginRepository = PRUtil.loadAvailableCheckResultsList();
+    List<String> resultsOnInPluginRepository = GlobalRepository.loadAvailableCheckResultsList();
 
     String firstBuild = System.getProperty("firstBuild");
     if (firstBuild != null) {

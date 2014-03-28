@@ -1,9 +1,12 @@
 package com.jetbrains.pluginverifier.domain;
 
 import com.jetbrains.pluginverifier.pool.ClassPool;
+import com.jetbrains.pluginverifier.problems.UpdateInfo;
+import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.resolvers.CombiningResolver;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -79,7 +82,11 @@ public class DependenciesCache {
           IdeaPlugin depPlugin = ide.getBundledPlugin(pluginDependency.getId());
           if (depPlugin == null) {
             try {
-              depPlugin = RemotePluginCache.getInstance().getUpdate(ide.getVersion(), pluginDependency.getId());
+              UpdateInfo updateInfo = RepositoryManager.getInstance().findPlugin(ide.getVersion(), pluginDependency.getId());
+              if (updateInfo != null) {
+                File pluginZip = RepositoryManager.getInstance().getOrLoadUpdate(updateInfo);
+                depPlugin = PluginCache.getInstance().getPlugin(pluginZip);
+              }
             }
             catch (IOException e) {
               e.printStackTrace();

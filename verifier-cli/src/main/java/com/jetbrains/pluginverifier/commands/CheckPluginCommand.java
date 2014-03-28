@@ -5,6 +5,8 @@ import com.jetbrains.pluginverifier.*;
 import com.jetbrains.pluginverifier.domain.Idea;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.domain.JDK;
+import com.jetbrains.pluginverifier.problems.UpdateInfo;
+import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.utils.DownloadUtils;
 import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
@@ -49,7 +51,8 @@ public class CheckPluginCommand extends VerifierCommand {
 
     IdeaPlugin plugin;
     if (pluginToTest.matches("\\#\\d+")) {
-      File update = DownloadUtils.getUpdate(Integer.parseInt(pluginToTest.substring(1)));
+      UpdateInfo updateInfo = RepositoryManager.getInstance().findUpdateById(Integer.parseInt(pluginToTest.substring(1)));
+      File update = RepositoryManager.getInstance().getOrLoadUpdate(updateInfo);
       plugin = IdeaPlugin.createFromZip(update);
     }
     else {

@@ -14,6 +14,7 @@ import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
+import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
@@ -100,14 +101,6 @@ public class CheckIdeCommand extends VerifierCommand {
     }
   }
 
-  private List<UpdateInfo> getUpdateIds(@NotNull String ideVersion, @NotNull List<String> pluginIds) throws IOException {
-    if (!pluginIds.isEmpty()) {
-      return PRUtil.getOriginalCompatibleUpdatesByPluginIds(ideVersion, pluginIds);
-    }
-
-    return PRUtil.getAllCompatibleUpdates(ideVersion);
-  }
-
   @Override
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.isEmpty()) {
@@ -132,7 +125,13 @@ public class CheckIdeCommand extends VerifierCommand {
 
     List<String> pluginIds = extractPluginList(commandLine);
 
-    Collection<UpdateInfo> updates = getUpdateIds(ide.getVersion(), pluginIds);
+    Collection<UpdateInfo> updates;
+    if (pluginIds.isEmpty()) {
+      updates = RepositoryManager.getInstance().getAllCompatibleUpdates(ide.getVersion());
+    }
+    else {
+      updates = RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(ide.getVersion(), pluginIds);
+    }
 
     String dumpBrokenPluginsFile = commandLine.getOptionValue("d");
     String reportFile = commandLine.getOptionValue("report");
@@ -155,7 +154,7 @@ public class CheckIdeCommand extends VerifierCommand {
       try {
         File update;
         try {
-          update = DownloadUtils.getUpdate(updateJson.getUpdateId());
+          update = RepositoryManager.getInstance().getOrLoadUpdate(updateJson);
         }
         catch (IOException e) {
           System.out.println("failed to download: " + e.getMessage());

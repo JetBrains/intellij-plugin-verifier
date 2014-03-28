@@ -68,6 +68,10 @@ public class UpdateInfo {
     return pluginName == null || pluginName.isEmpty() ? pluginId : pluginName;
   }
 
+  public boolean validate() {
+    return updateId != null || (pluginId != null && !pluginId.isEmpty() && version != null && !version.isEmpty());
+  }
+
   @Override
   public String toString() {
     if (pluginId != null && !pluginId.isEmpty()) {
