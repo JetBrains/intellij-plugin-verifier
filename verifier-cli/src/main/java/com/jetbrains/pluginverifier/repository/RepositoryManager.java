@@ -1,18 +1,18 @@
 package com.jetbrains.pluginverifier.repository;
 
+import com.google.common.base.Throwables;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.utils.Configuration;
 import com.jetbrains.pluginverifier.utils.DownloadUtils;
 import com.jetbrains.pluginverifier.utils.Pair;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
+import com.jetbrains.pluginverifier.utils.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.*;
 
 /**
@@ -32,7 +32,22 @@ public class RepositoryManager {
 
   private RepositoryManager() {
     globalRepository = new GlobalRepository(Configuration.getInstance().getPluginRepositoryUrl());
-    repositories = Collections.<PluginRepository>singletonList(globalRepository);
+
+    repositories = new ArrayList<PluginRepository>();
+    repositories.add(globalRepository);
+
+    String customRepositories = Configuration.getInstance().getCustomRepositories();
+    if (StringUtil.isNotEmpty(customRepositories)) {
+      for (StringTokenizer tokenizer = new StringTokenizer(customRepositories, ", "); tokenizer.hasMoreTokens(); ) {
+        String repositoryUrl = tokenizer.nextToken();
+        try {
+          repositories.add(new CustomRepository(new URL(repositoryUrl)));
+        }
+        catch (MalformedURLException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    }
   }
 
   public static RepositoryManager getInstance() {
@@ -73,50 +88,12 @@ public class RepositoryManager {
     return res;
   }
 
-  private static String getCacheFileName(UpdateInfo update) {
-    if (update.getUpdateId() != null) {
-      return update.getUpdateId() + ".zip";
-    }
-    else {
-      String updateAndVersion = update.getPluginId() + ":" + update.getVersion();
-      return (updateAndVersion + '_' + Integer.toHexString(updateAndVersion.hashCode()) + ".zip").replaceAll("[^A-Z0-9_\\-.]+", "_");
-    }
-  }
-
   @NotNull
   public File getOrLoadUpdate(UpdateInfo update) throws IOException {
-    File downloadDir = DownloadUtils.getOrCreateDownloadDir();
+    PluginRepository repository = update2repository.get(update);
+    assert repository != null : "Unknown update, update should be found by RepositorManager";
 
-    File pluginInCache = new File(downloadDir, getCacheFileName(update));
-
-    if (!pluginInCache.exists()) {
-      File currentDownload = File.createTempFile("currentDownload", ".zip", downloadDir);
-
-      System.out.println("Downloading " + update + "... ");
-
-      boolean downloadFail = true;
-      try {
-        PluginRepository repository = update2repository.get(update);
-
-        FileUtils.copyURLToFile(new URL(repository.getUpdateUrl(update)), currentDownload);
-
-        if (currentDownload.length() < 200) {
-          throw new IOException("Broken zip archive");
-        }
-
-        System.out.println("done");
-        downloadFail = false;
-      }
-      finally {
-        if (downloadFail) {
-          System.out.println("error");
-        }
-      }
-
-      FileUtils.moveFile(currentDownload, pluginInCache);
-    }
-
-    return pluginInCache;
+    return DownloadUtils.getOrLoadUpdate(update, new URL(repository.getUpdateUrl(update)));
   }
 
   @Nullable

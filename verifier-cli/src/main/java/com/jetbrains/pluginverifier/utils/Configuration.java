@@ -71,4 +71,8 @@ public class Configuration {
     return getProperty("plugin.cache.dir");
   }
 
+  @Nullable
+  public String getCustomRepositories() {
+    return getProperty("plugin.custom.repositories");
+  }
 }

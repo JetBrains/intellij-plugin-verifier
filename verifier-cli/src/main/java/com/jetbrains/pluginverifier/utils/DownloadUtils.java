@@ -2,7 +2,9 @@ package com.jetbrains.pluginverifier.utils;
 
 import com.google.common.base.Throwables;
 import com.google.common.net.HttpHeaders;
+import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import org.apache.commons.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -93,4 +95,49 @@ public class DownloadUtils {
       connection.disconnect();
     }
   }
+
+  private static String getCacheFileName(UpdateInfo update) {
+    if (update.getUpdateId() != null) {
+      return update.getUpdateId() + ".zip";
+    }
+    else {
+      String updateAndVersion = update.getPluginId() + ":" + update.getVersion();
+      return (updateAndVersion + '_' + Integer.toHexString(updateAndVersion.hashCode()) + ".zip").replaceAll("[^a-zA-Z0-9_\\-.]+", "_");
+    }
+  }
+
+  @NotNull
+  public static File getOrLoadUpdate(UpdateInfo update, URL url) throws IOException {
+    File downloadDir = DownloadUtils.getOrCreateDownloadDir();
+
+    File pluginInCache = new File(downloadDir, getCacheFileName(update));
+
+    if (!pluginInCache.exists()) {
+      File currentDownload = File.createTempFile("currentDownload", ".zip", downloadDir);
+
+      System.out.println("Downloading " + update + "... ");
+
+      boolean downloadFail = true;
+      try {
+        FileUtils.copyURLToFile(url, currentDownload);
+
+        if (currentDownload.length() < 200) {
+          throw new IOException("Broken zip archive");
+        }
+
+        System.out.println("done");
+        downloadFail = false;
+      }
+      finally {
+        if (downloadFail) {
+          System.out.println("error");
+        }
+      }
+
+      FileUtils.moveFile(currentDownload, pluginInCache);
+    }
+
+    return pluginInCache;
+  }
+
 }

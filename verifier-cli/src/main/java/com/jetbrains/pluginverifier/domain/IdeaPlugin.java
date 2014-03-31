@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.pool.ContainerClassPool;
 import com.jetbrains.pluginverifier.pool.InMemoryJarClassPool;
 import com.jetbrains.pluginverifier.pool.JarClassPool;
 import com.jetbrains.pluginverifier.utils.StringUtil;
+import com.jetbrains.pluginverifier.utils.UpdateBuild;
 import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.utils.xml.JDOMUtil;
 import com.jetbrains.pluginverifier.utils.xml.JDOMXIncluder;
@@ -42,6 +43,9 @@ public class IdeaPlugin {
 
   private final String myPluginName;
 
+  private UpdateBuild mySinceBuild;
+  private UpdateBuild myUntilBuild;
+
   private IdeaPlugin(String pluginDirectory, ClassPool pluginClassPool, ClassPool libraryClassPool,  @Nullable Document pluginXml) throws BrokenPluginException {
     myPluginClassPool = pluginClassPool;
     myLibraryClassPool = libraryClassPool;
@@ -63,7 +67,55 @@ public class IdeaPlugin {
 
     myDependencies = getPluginDependencies(pluginXml);
 
+    Element ideaVersion = pluginXml.getRootElement().getChild("idea-version");
+    if (ideaVersion != null) {
+      mySinceBuild = new UpdateBuild(ideaVersion.getAttributeValue("since-build"));
+      if (!mySinceBuild.isOk()) {
+        throw new BrokenPluginException("<idea-version since-build= /> attribute has incorrect value");
+      }
+
+      String untilBuild = ideaVersion.getAttributeValue("until-build");
+      if (!StringUtil.isEmpty(untilBuild)) {
+        if (untilBuild.endsWith(".*") || untilBuild.endsWith(".999") || untilBuild.endsWith(".9999") || untilBuild.endsWith(".99999")) {
+          int idx = untilBuild.lastIndexOf('.');
+          untilBuild = untilBuild.substring(0, idx + 1) + 2147483647;
+        }
+
+        myUntilBuild = new UpdateBuild(untilBuild);
+        if (!myUntilBuild.isOk()) {
+          throw new BrokenPluginException("<idea-version until-build= /> attribute has incorrect value");
+        }
+      }
+      else {
+        myUntilBuild = null;
+      }
+    }
+
+
+
     myAllClassesPool = ContainerClassPool.union(pluginDirectory, Arrays.asList(pluginClassPool, libraryClassPool));
+  }
+
+  @Nullable
+  public UpdateBuild getSinceBuild() {
+    return mySinceBuild;
+  }
+
+  @Nullable
+  public UpdateBuild getUntilBuild() {
+    return myUntilBuild;
+  }
+
+  public boolean isCompatibleWithIde(String ideVersion) {
+    UpdateBuild ide = new UpdateBuild(ideVersion);
+    if (!ide.isOk()) {
+      return false;
+    }
+
+    if (mySinceBuild == null) return true;
+
+    return UpdateBuild.VERSION_COMPARATOR.compare(mySinceBuild, ide) <= 0
+           && (myUntilBuild == null || UpdateBuild.VERSION_COMPARATOR.compare(ide, myUntilBuild) <= 0);
   }
 
   public static IdeaPlugin createFromDirectory(File pluginDirectory) throws IOException, BrokenPluginException {
