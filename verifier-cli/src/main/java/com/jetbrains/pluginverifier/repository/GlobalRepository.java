@@ -45,6 +45,9 @@ public class GlobalRepository extends PluginRepository {
     URL u = new URL(url + "/manager/getCompatibleUpdateId/?build=" + ideVersion + "&pluginId=" + URLEncoder.encode(pluginId, "UTF-8"));
 
     int updateId = Integer.parseInt(IOUtils.toString(u));
+    if (updateId == 0) {
+      return null;
+    }
 
     UpdateInfo res = new UpdateInfo();
     res.setUpdateId(updateId);
