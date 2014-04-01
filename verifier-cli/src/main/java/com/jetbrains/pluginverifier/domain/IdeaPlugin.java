@@ -68,7 +68,7 @@ public class IdeaPlugin {
     myDependencies = getPluginDependencies(pluginXml);
 
     Element ideaVersion = pluginXml.getRootElement().getChild("idea-version");
-    if (ideaVersion != null) {
+    if (ideaVersion != null && ideaVersion.getAttributeValue("min") == null) { // min != null in legacy plugins.
       mySinceBuild = new UpdateBuild(ideaVersion.getAttributeValue("since-build"));
       if (!mySinceBuild.isOk()) {
         throw new BrokenPluginException("<idea-version since-build= /> attribute has incorrect value");
