@@ -28,7 +28,7 @@ public class NewProblemsCommand extends VerifierCommand {
   @Override
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.isEmpty()) {
-      throw Util.fail("You have to specify IDE to check. For example: \"java -jar verifier.jar new-problems ~/EAPs/idea-IU-133.439\"");
+      throw Util.fail("You have to specify IDE to check. For example: \"java -jar verifier.jar new-problems report-133.439.xml\"");
     }
 
     File reportToCheck = new File(freeArgs.get(0));
