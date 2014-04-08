@@ -10,6 +10,7 @@ import org.apache.commons.cli.Options;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.jar.JarFile;
 
@@ -21,7 +22,8 @@ public class Util {
     .addOption("s", "skip-class-for-dup-check", true, "Class name prefixes to skip in duplicate classes check, delimited by ':'")
     .addOption("e", "external-classes", true, "Classes from external libraries. Error will not be reported if class not found. Delimited by ':'")
     .addOption("all", "check-all-plugins-with-ide", false, "Check IDE build with all compatible plugins")
-    .addOption("p", "plugin-to-check", true, "A plugin id to check with IDE")
+    .addOption("p", "plugin-to-check", true, "A plugin id to check with IDE, plugin verifier will check ALL compatible plugin builds")
+    .addOption("u", "update-to-check", true, "A plugin id to check with IDE, plugin verifier will check LAST plugin build only")
     .addOption("iv", "ide-version", true, "Version of IDE that will be tested, e.g. IU-133.439")
     .addOption("epf", "excluded-plugin-file", true, "File with list of excluded plugin builds.")
     .addOption("d", "dump-broken-plugin-list", true, "File to dump broken plugin list.")
@@ -85,5 +87,12 @@ public class Util {
     }
 
     return ContainerClassPool.union(moniker, pool);
+  }
+
+  public static <T> List<T> concat(Collection<T> first, Collection<T> second) {
+    List<T> res = new ArrayList<T>(first.size() + second.size());
+    res.addAll(first);
+    res.addAll(second);
+    return res;
   }
 }

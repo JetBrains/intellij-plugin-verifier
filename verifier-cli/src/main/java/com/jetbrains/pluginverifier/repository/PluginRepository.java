@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -17,7 +18,7 @@ public abstract class PluginRepository {
   @Nullable
   public abstract UpdateInfo findPlugin(@NotNull String ideVersion, @NotNull String pluginId) throws IOException;
 
-  public abstract List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull String ideVersion, List<String> pluginIds) throws IOException;
+  public abstract List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull String ideVersion, Collection<String> pluginIds) throws IOException;
 
   @NotNull
   public abstract String getUpdateUrl(UpdateInfo update);

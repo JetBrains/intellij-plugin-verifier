@@ -19,10 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Sergey Evdokimov
@@ -113,7 +110,7 @@ public class CustomRepository extends PluginRepository {
   }
 
   @Override
-  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull String ideVersion, final List<String> pluginIds) throws IOException {
+  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull String ideVersion, final Collection<String> pluginIds) throws IOException {
     return getUpdates(ideVersion, new Predicate<UpdateInfo>() {
       @Override
       public boolean apply(UpdateInfo input) {

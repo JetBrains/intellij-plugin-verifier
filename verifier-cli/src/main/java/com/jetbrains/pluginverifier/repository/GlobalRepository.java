@@ -13,6 +13,7 @@ import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -56,7 +57,7 @@ public class GlobalRepository extends PluginRepository {
   }
 
   @Override
-  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull String ideVersion, List<String> pluginIds) throws IOException {
+  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull String ideVersion, Collection<String> pluginIds) throws IOException {
     System.out.println("Loading compatible plugins list... ");
 
     StringBuilder urlSb = new StringBuilder();

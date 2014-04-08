@@ -32,12 +32,18 @@ public class CheckIdeCommand extends VerifierCommand {
     super("check-ide");
   }
 
-  private static List<String> extractPluginList(@NotNull CommandLine commandLine) {
-    List<String> res = new ArrayList<String>();
+  private static Pair<List<String>, List<String>> extractPluginList(@NotNull CommandLine commandLine) {
+    List<String> pluginsCheckAllBuilds = new ArrayList<String>();
+    List<String> pluginsCheckLastBuilds = new ArrayList<String>();
 
-    String[] pluginIds = commandLine.getOptionValues('p');
-    if (pluginIds != null) {
-      res.addAll(Arrays.asList(pluginIds));
+    String[] pluginIdsCheckAllBuilds = commandLine.getOptionValues('p');
+    if (pluginIdsCheckAllBuilds != null) {
+      pluginsCheckAllBuilds.addAll(Arrays.asList(pluginIdsCheckAllBuilds));
+    }
+
+    String[] pluginIdsCheckLastBuilds = commandLine.getOptionValues('u');
+    if (pluginIdsCheckLastBuilds != null) {
+      pluginsCheckLastBuilds.addAll(Arrays.asList(pluginIdsCheckLastBuilds));
     }
 
     String pluginsFile = commandLine.getOptionValue("pluginsFile");
@@ -47,9 +53,26 @@ public class CheckIdeCommand extends VerifierCommand {
         String s;
         while ((s = reader.readLine()) != null) {
           s = s.trim();
-          if (s.isEmpty()) continue;
+          if (s.isEmpty() || s.startsWith("//")) continue;
 
-          res.add(s);
+          boolean checkAllBuilds = true;
+          if (s.endsWith("$")) {
+            s = s.substring(0, s.length() - 1).trim();
+            checkAllBuilds = false;
+          }
+          if (s.startsWith("$")) {
+            s = s.substring(1).trim();
+            checkAllBuilds = false;
+          }
+
+          if (checkAllBuilds) {
+            if (s.isEmpty()) continue;
+
+            pluginsCheckLastBuilds.add(s);
+          }
+          else {
+            pluginsCheckAllBuilds.add(s);
+          }
         }
       }
       catch (IOException e) {
@@ -57,9 +80,9 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
-    System.out.println("List of plugins to check: " + Joiner.on(", ").join(res));
+    System.out.println("List of plugins to check: " + Joiner.on(", ").join(Iterables.concat(pluginsCheckAllBuilds, pluginsCheckLastBuilds)));
 
-    return res;
+    return Pair.create(pluginsCheckAllBuilds, pluginsCheckLastBuilds);
   }
 
   private static Predicate<UpdateInfo> getExcludedPluginsPredicate(@NotNull CommandLine commandLine) throws IOException {
@@ -123,14 +146,27 @@ public class CheckIdeCommand extends VerifierCommand {
     Idea ide = new Idea(ideToCheck, jdk, externalClassPath);
     updateIdeVersionFromCmd(ide, commandLine);
 
-    List<String> pluginIds = extractPluginList(commandLine);
+    Pair<List<String>, List<String>> pluginIds = extractPluginList(commandLine);
+    List<String> pluginsCheckAllBuilds = pluginIds.first;
+    List<String> pluginsCheckLastBuilds = pluginIds.second;
 
     Collection<UpdateInfo> updates;
-    if (pluginIds.isEmpty()) {
+    if (pluginsCheckAllBuilds.isEmpty() && pluginsCheckLastBuilds.isEmpty()) {
       updates = RepositoryManager.getInstance().getAllCompatibleUpdates(ide.getVersion());
     }
     else {
-      updates = RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(ide.getVersion(), pluginIds);
+      updates = new ArrayList<UpdateInfo>();
+
+      if (pluginsCheckAllBuilds.size() > 0) {
+        updates.addAll(RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(ide.getVersion(), pluginsCheckAllBuilds));
+      }
+
+      for (String pluginId : pluginsCheckLastBuilds) {
+        UpdateInfo updateInfo = RepositoryManager.getInstance().findPlugin(ide.getVersion(), pluginId);
+        if (updateInfo != null) {
+          updates.add(updateInfo);
+        }
+      }
     }
 
     String dumpBrokenPluginsFile = commandLine.getOptionValue("d");
@@ -220,7 +256,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
       if (reportFile != null) {
         System.out.println("Saving report to " + new File(reportFile).getAbsolutePath());
-        CheckIdeHtmlReportBuilder.build(new File(reportFile), ide.getVersion(), pluginIds, updateFilter, results);
+        CheckIdeHtmlReportBuilder.build(new File(reportFile), ide.getVersion(), Util.concat(pluginIds.first, pluginIds.second), updateFilter, results);
       }
     }
 

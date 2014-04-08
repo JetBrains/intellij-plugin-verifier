@@ -73,7 +73,7 @@ public class RepositoryManager {
     return res;
   }
 
-  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull String ideVersion, @NotNull List<String> pluginIds) throws IOException {
+  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull String ideVersion, @NotNull Collection<String> pluginIds) throws IOException {
     List<UpdateInfo> res = new ArrayList<UpdateInfo>();
 
     for (PluginRepository repository : getRepositories()) {
