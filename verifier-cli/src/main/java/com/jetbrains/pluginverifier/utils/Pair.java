@@ -10,7 +10,7 @@ public class Pair<A, B> {
   public final A first;
   public final B second;
 
-  public Pair(@Nullable A first, @Nullable B second) {
+  public Pair(A first, B second) {
     this.first = first;
     this.second = second;
   }
