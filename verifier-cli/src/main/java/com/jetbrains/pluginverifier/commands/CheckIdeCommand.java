@@ -66,12 +66,12 @@ public class CheckIdeCommand extends VerifierCommand {
           }
 
           if (checkAllBuilds) {
+            pluginsCheckAllBuilds.add(s);
+          }
+          else {
             if (s.isEmpty()) continue;
 
             pluginsCheckLastBuilds.add(s);
-          }
-          else {
-            pluginsCheckAllBuilds.add(s);
           }
         }
       }
@@ -161,11 +161,17 @@ public class CheckIdeCommand extends VerifierCommand {
         updates.addAll(RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(ide.getVersion(), pluginsCheckAllBuilds));
       }
 
-      for (String pluginId : pluginsCheckLastBuilds) {
-        UpdateInfo updateInfo = RepositoryManager.getInstance().findPlugin(ide.getVersion(), pluginId);
-        if (updateInfo != null) {
-          updates.add(updateInfo);
+      if (pluginsCheckLastBuilds.size() > 0) {
+        Map<String, UpdateInfo> lastBuilds = new HashMap<String, UpdateInfo>();
+
+        for (UpdateInfo info : RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(ide.getVersion(), pluginsCheckLastBuilds)) {
+          UpdateInfo existsBuild = lastBuilds.get(info.getPluginId());
+          if (existsBuild == null || existsBuild.getUpdateId() < info.getUpdateId()) {
+            lastBuilds.put(info.getPluginId(), info);
+          }
         }
+
+        updates.addAll(lastBuilds.values());
       }
     }
 
