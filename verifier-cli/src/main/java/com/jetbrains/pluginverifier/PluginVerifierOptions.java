@@ -7,8 +7,12 @@ import org.apache.commons.cli.Option;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class PluginVerifierOptions {
-  private String[] myPrefixesToSkipForDuplicateClassesCheck = new String[]{"com/intellij/uiDesigner/core"};
+  private String[] myPrefixesToSkipForDuplicateClassesCheck = new String[0];
 
   private String[] externalClassPrefixes = new String[0];
 
@@ -23,18 +27,52 @@ public class PluginVerifierOptions {
   }
 
   @NotNull
+  private static List<String> getOptionValues(CommandLine commandLine, String shortKey) {
+    List<String> res = new ArrayList<String>();
+
+    String[] cmdValues = commandLine.getOptionValues(shortKey);
+    if (cmdValues != null) {
+      Collections.addAll(res, cmdValues);
+    }
+
+    Option option = Util.CMD_OPTIONS.getOption(shortKey);
+    String cfgProperty = Configuration.getInstance().getProperty(option.getLongOpt());
+
+    if (cfgProperty != null) {
+      res.add(cfgProperty);
+    }
+
+    return res;
+  }
+
+  @NotNull
+  private static String[] getOptionValuesSplit(CommandLine commandLine, String splitter, String shortKey) {
+    List<String> res = new ArrayList<String>();
+    for (String optionStr : getOptionValues(commandLine, shortKey)) {
+      if (optionStr.isEmpty()) continue;
+
+      Collections.addAll(res, optionStr.split(splitter));
+    }
+
+    return res.toArray(new String[res.size()]);
+  }
+
+  @NotNull
   public static PluginVerifierOptions parseOpts(CommandLine commandLine) {
     PluginVerifierOptions res = new PluginVerifierOptions();
 
-    final String prefixes = getOption(commandLine, "s");
-    if (prefixes != null && prefixes.length() > 0) {
-      res.setPrefixesToSkipForDuplicateClassesCheck(prefixes.replace('.', '/').split(":"));
+    String[] prefixesToSkipForDuplicateClassesCheck = getOptionValuesSplit(commandLine, ":", "s");
+    for (int i = 0; i < prefixesToSkipForDuplicateClassesCheck.length; i++) {
+      prefixesToSkipForDuplicateClassesCheck[i] = prefixesToSkipForDuplicateClassesCheck[i].replace('.', '/');
     }
+    res.setPrefixesToSkipForDuplicateClassesCheck(prefixesToSkipForDuplicateClassesCheck);
 
-    final String e = getOption(commandLine, "e");
-    if (e != null && e.length() > 0) {
-      res.setExternalClassPrefixes(e.replace('.', '/').split(":"));
+
+    String[] externalClasses = getOptionValuesSplit(commandLine, ":", "e");
+    for (int i = 0; i < externalClasses.length; i++) {
+      externalClasses[i] = externalClasses[i].replace('.', '/');
     }
+    res.setExternalClassPrefixes(externalClasses);
 
     return res;
   }
