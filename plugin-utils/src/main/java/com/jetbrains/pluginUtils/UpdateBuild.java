@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.utils;
+package com.jetbrains.pluginUtils;
 
 import com.google.common.collect.ImmutableBiMap;
 import org.jetbrains.annotations.Nullable;

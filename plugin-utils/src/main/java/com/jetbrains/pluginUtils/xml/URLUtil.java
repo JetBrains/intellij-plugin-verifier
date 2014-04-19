@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.pluginverifier.utils.xml;
+package com.jetbrains.pluginUtils.xml;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

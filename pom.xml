@@ -15,6 +15,7 @@
     <module>verifier-problems</module>
     <module>verifier-cli</module>
     <module>uploader</module>
+    <module>plugin-utils</module>
   </modules>
 
   <properties>
@@ -39,6 +40,21 @@
       </plugin>
     </plugins>
   </build>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>15.0</version>
+      </dependency>
+      <dependency>
+        <groupId>com.intellij</groupId>
+        <artifactId>annotations</artifactId>
+        <version>RELEASE</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <distributionManagement>
     <repository>
