@@ -196,7 +196,7 @@ public class IdeaPlugin {
           pluginXmlBytes = data;
           pluginClassPool = zipRootPool;
           pluginXmlUrl = new URL(
-            "jar:" + StringUtil.replace(zipFile.toURI().toASCIIString(), "!", "%21") + "!/META-INF/plugin.xml"
+            "jar:" + StringUtil.replace(zipFile.toURI().toASCIIString(), "!", "%21") + "!/" + entryName
           );
         }
         else if (entryName.matches("([^/]+/)?lib/[^/]+\\.jar")) {
