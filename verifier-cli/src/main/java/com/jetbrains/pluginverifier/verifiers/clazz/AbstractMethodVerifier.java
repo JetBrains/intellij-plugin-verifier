@@ -39,7 +39,11 @@ public class AbstractMethodVerifier implements ClassVerifier {
 
     ClassNode p = superClass;
 
+    Queue<String> queue = new LinkedList<String>((List<String>)clazz.interfaces);
+
     while (VerifierUtil.isAbstract(p)) {
+      queue.addAll((List<String>)p.interfaces);
+
       for (MethodNode methodNode : (List<MethodNode>)p.methods) {
         if (allSign.add(new MethodSign(methodNode))) {
           if (VerifierUtil.isAbstract(methodNode)) {
@@ -61,8 +65,6 @@ public class AbstractMethodVerifier implements ClassVerifier {
     }
 
     Set<String> processedInterfaces = new HashSet<String>();
-
-    Queue<String> queue = new LinkedList<String>((List<String>)clazz.interfaces);
 
     while (!queue.isEmpty()) {
       String iName = queue.remove();
