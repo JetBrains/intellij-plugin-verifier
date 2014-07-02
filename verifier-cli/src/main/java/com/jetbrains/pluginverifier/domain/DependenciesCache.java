@@ -49,7 +49,7 @@ public class DependenciesCache {
       resolvers.add(plugin.getClassPool());
       resolvers.add(ide.getResolver());
 
-      for (IdeaPlugin dep : getDependenciesWithTransitive(ide, plugin, new LinkedList<IdeaPlugin>())) {
+      for (IdeaPlugin dep : getDependenciesWithTransitive(ide, plugin, new ArrayList<PluginDependenciesDescriptor>())) {
         ClassPool pluginClassPool = dep.getPluginClassPool();
         if (!pluginClassPool.isEmpty()) {
           resolvers.add(pluginClassPool);
@@ -67,15 +67,22 @@ public class DependenciesCache {
     return descr.myResolver;
   }
 
-  public Set<IdeaPlugin> getDependenciesWithTransitive(Idea ide, IdeaPlugin plugin, LinkedList<IdeaPlugin> pluginStack) {
+  public Set<IdeaPlugin> getDependenciesWithTransitive(Idea ide, IdeaPlugin plugin, List<PluginDependenciesDescriptor> pluginStack) {
     PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
 
     Set<IdeaPlugin> res = descriptor.dependenciesWithTransitive;
-    if (res == DEP_CALC_MARKER) throw new RuntimeException("Cyclic plugin dependencies: " + Joiner.on(" -> ").join(pluginStack) + " -> " + plugin);
+    if (res == DEP_CALC_MARKER) {
+      for (int i = pluginStack.size() - 1; i >= 0; i--) {
+        pluginStack.get(i).isCyclic = true;
+        if (pluginStack.get(i) == descriptor) break;
+      }
+
+      return Collections.emptySet();
+    }
 
     if (descriptor.dependenciesWithTransitive == null) {
       descriptor.dependenciesWithTransitive = DEP_CALC_MARKER;
-      pluginStack.add(plugin);
+      pluginStack.add(descriptor);
 
       try {
         res = new HashSet<IdeaPlugin>();
@@ -100,10 +107,15 @@ public class DependenciesCache {
           }
         }
 
-        descriptor.dependenciesWithTransitive = res;
+        if (descriptor.isCyclic) {
+          descriptor.dependenciesWithTransitive = null;
+        }
+        else {
+          descriptor.dependenciesWithTransitive = res;
+        }
       }
       finally {
-        pluginStack.removeLast();
+        pluginStack.remove(pluginStack.size() - 1);
 
         if (descriptor.dependenciesWithTransitive == DEP_CALC_MARKER) {
           descriptor.dependenciesWithTransitive = null;
@@ -116,6 +128,8 @@ public class DependenciesCache {
 
   private static class PluginDependenciesDescriptor {
     public Resolver myResolver;
+
+    public boolean isCyclic;
 
     public Set<IdeaPlugin> dependenciesWithTransitive;
   }
