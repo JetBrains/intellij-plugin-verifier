@@ -42,6 +42,7 @@ public class IdeaPlugin {
   private final List<PluginDependency> myDependencies;
 
   private final String myPluginName;
+  private final String myVersion;
 
   private UpdateBuild mySinceBuild;
   private UpdateBuild myUntilBuild;
@@ -64,6 +65,7 @@ public class IdeaPlugin {
       name = myId;
     }
     myPluginName = name;
+    myVersion = pluginXml.getRootElement().getChildTextTrim("version");
 
     myDependencies = getPluginDependencies(pluginXml);
 
@@ -334,6 +336,11 @@ public class IdeaPlugin {
 
   public String getPluginName() {
     return myPluginName;
+  }
+
+  @Override
+  public String toString() {
+    return myId + ":" + myVersion;
   }
 }
 

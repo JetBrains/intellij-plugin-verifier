@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.domain;
 
+import com.google.common.base.Joiner;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
@@ -48,7 +49,7 @@ public class DependenciesCache {
       resolvers.add(plugin.getClassPool());
       resolvers.add(ide.getResolver());
 
-      for (IdeaPlugin dep : getDependenciesWithTransitive(ide, plugin)) {
+      for (IdeaPlugin dep : getDependenciesWithTransitive(ide, plugin, new LinkedList<IdeaPlugin>())) {
         ClassPool pluginClassPool = dep.getPluginClassPool();
         if (!pluginClassPool.isEmpty()) {
           resolvers.add(pluginClassPool);
@@ -66,14 +67,15 @@ public class DependenciesCache {
     return descr.myResolver;
   }
 
-  public Set<IdeaPlugin> getDependenciesWithTransitive(Idea ide, IdeaPlugin plugin) {
+  public Set<IdeaPlugin> getDependenciesWithTransitive(Idea ide, IdeaPlugin plugin, LinkedList<IdeaPlugin> pluginStack) {
     PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
 
     Set<IdeaPlugin> res = descriptor.dependenciesWithTransitive;
-    if (res == DEP_CALC_MARKER) throw new RuntimeException("Cyclic plugin dependencies");
+    if (res == DEP_CALC_MARKER) throw new RuntimeException("Cyclic plugin dependencies: " + Joiner.on(" -> ").join(pluginStack) + " -> " + plugin);
 
     if (descriptor.dependenciesWithTransitive == null) {
       descriptor.dependenciesWithTransitive = DEP_CALC_MARKER;
+      pluginStack.add(plugin);
 
       try {
         res = new HashSet<IdeaPlugin>();
@@ -94,13 +96,15 @@ public class DependenciesCache {
           }
 
           if (depPlugin != null && res.add(depPlugin)) {
-            res.addAll(getDependenciesWithTransitive(ide, depPlugin));
+            res.addAll(getDependenciesWithTransitive(ide, depPlugin, pluginStack));
           }
         }
 
         descriptor.dependenciesWithTransitive = res;
       }
       finally {
+        pluginStack.removeLast();
+
         if (descriptor.dependenciesWithTransitive == DEP_CALC_MARKER) {
           descriptor.dependenciesWithTransitive = null;
         }
