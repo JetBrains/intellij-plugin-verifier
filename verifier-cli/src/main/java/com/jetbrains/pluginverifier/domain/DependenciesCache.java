@@ -72,6 +72,11 @@ public class DependenciesCache {
 
     Set<IdeaPlugin> res = descriptor.dependenciesWithTransitive;
     if (res == DEP_CALC_MARKER) {
+      if (!"false".equalsIgnoreCase(System.getProperty("fail.on.cyclic.dependencies"))) {
+        int idx = pluginStack.lastIndexOf(descriptor);
+        throw new FatalError("Cyclic plugin dependencies: " + Joiner.on(" -> ").join(pluginStack.subList(idx, pluginStack.size())) + " -> " + plugin);
+      }
+
       for (int i = pluginStack.size() - 1; i >= 0; i--) {
         pluginStack.get(i).isCyclic = true;
         if (pluginStack.get(i) == descriptor) break;
