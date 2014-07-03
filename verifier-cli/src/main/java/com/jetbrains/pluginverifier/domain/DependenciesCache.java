@@ -34,7 +34,7 @@ public class DependenciesCache {
 
     PluginDependenciesDescriptor descr = m.get(plugin);
     if (descr == null) {
-      descr = new PluginDependenciesDescriptor();
+      descr = new PluginDependenciesDescriptor(plugin.toString());
       m.put(plugin, descr);
     }
 
@@ -132,10 +132,21 @@ public class DependenciesCache {
   }
 
   private static class PluginDependenciesDescriptor {
+    public final String pluginName;
+
     public Resolver myResolver;
 
     public boolean isCyclic;
 
     public Set<IdeaPlugin> dependenciesWithTransitive;
+
+    private PluginDependenciesDescriptor(String pluginName) {
+      this.pluginName = pluginName;
+    }
+
+    @Override
+    public String toString() {
+      return pluginName;
+    }
   }
 }
