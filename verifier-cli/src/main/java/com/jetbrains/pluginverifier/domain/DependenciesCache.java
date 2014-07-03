@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.resolvers.CombiningResolver;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
+import com.jetbrains.pluginverifier.utils.Configuration;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,7 +73,7 @@ public class DependenciesCache {
 
     Set<IdeaPlugin> res = descriptor.dependenciesWithTransitive;
     if (res == DEP_CALC_MARKER) {
-      if (!"false".equalsIgnoreCase(System.getProperty("fail.on.cyclic.dependencies"))) {
+      if (Boolean.parseBoolean(Configuration.getInstance().getProperty("fail.on.cyclic.dependencies"))) {
         int idx = pluginStack.lastIndexOf(descriptor);
         throw new FatalError("Cyclic plugin dependencies: " + Joiner.on(" -> ").join(pluginStack.subList(idx, pluginStack.size())) + " -> " + plugin);
       }
