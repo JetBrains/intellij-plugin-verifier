@@ -5,9 +5,13 @@ import com.jetbrains.pluginverifier.*;
 import com.jetbrains.pluginverifier.domain.Idea;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.domain.JDK;
+import com.jetbrains.pluginverifier.problems.Problem;
+import com.jetbrains.pluginverifier.problems.ProblemSet;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.utils.DownloadUtils;
+import com.jetbrains.pluginverifier.utils.StringUtil;
+import com.jetbrains.pluginverifier.utils.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
@@ -70,8 +74,8 @@ public class CheckPluginCommand extends VerifierCommand {
 
     long start = System.currentTimeMillis();
 
-    boolean hasError = false;
-
+    TeamCityLog tc = TeamCityLog.getInstance(commandLine);
+    int problems = 0;
     for (int i = 1; i < freeArgs.size(); i++) {
       File ideaDirectory = new File(freeArgs.get(i));
 
@@ -85,23 +89,30 @@ public class CheckPluginCommand extends VerifierCommand {
 
       Idea idea = new Idea(ideaDirectory, jdk, getExternalClassPath(commandLine));
 
-      System.out.print("Verifying " + plugin.getId() + " against " + idea.getMoniker() + "... ");
+      String message = "Verifying " + plugin.getId() + " against " + idea.getMoniker() + "... ";
+      System.out.print(message);
+      tc.message(message);
 
       VerificationContextImpl ctx = new VerificationContextImpl(options, idea);
       Verifiers.processAllVerifiers(plugin, ctx);
 
-      System.out.println(ctx.getProblems().isEmpty() ? "Ok" : ctx.getProblems().count() + " errors");
-
-      ctx.getProblems().printProblems(System.out, "");
-
-      if (!ctx.getProblems().isEmpty()) {
-        hasError = true;
+      ProblemSet problemSet = ctx.getProblems();
+      System.out.println(problemSet.isEmpty() ? "Ok" : problemSet.count() + " errors");
+      problemSet.printProblems(System.out, "");
+      for (Problem problem : problemSet.getAllProblems()) {
+        tc.buildProblem(problem.getDescription());
       }
+
+      problems += problemSet.count();
     }
 
     System.out.println("Plugin verification took " + (System.currentTimeMillis() - start) + "ms");
-    System.out.println(hasError ? "FAILED" : "OK");
-    return hasError ? 2 : 0;
+    boolean hasProblems = problems > 0;
+    System.out.println(hasProblems ? "FAILED" : "OK");
+    if (hasProblems) {
+      tc.buildStatus(problems > 1 ? problems + " problems" : "1 problem");
+    }
+    return hasProblems ? 2 : 0;
   }
 
 
