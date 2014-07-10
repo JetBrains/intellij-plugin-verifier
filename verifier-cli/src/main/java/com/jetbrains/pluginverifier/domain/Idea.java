@@ -100,11 +100,14 @@ public class Idea {
     List<ClassPool> pools = new ArrayList<ClassPool>();
 
     pools.add(getIdeaClassPoolFromLibraries(ideaDir));
-    pools.add(new CompileOutputPool(new File(ideaDir, "out/classes/production")));
 
     File communityLib = new File(ideaDir, "community");
     if (communityLib.isDirectory()) {
+      pools.add(new CompileOutputPool(new File(ideaDir, "out/classes/production")));
       pools.add(getIdeaClassPoolFromLibraries(new File(ideaDir, "community")));
+    }
+    else {
+      pools.add(new CompileOutputPool(new File(ideaDir, "out/production")));
     }
 
     return ContainerClassPool.union(ideaDir.getPath(), pools);
