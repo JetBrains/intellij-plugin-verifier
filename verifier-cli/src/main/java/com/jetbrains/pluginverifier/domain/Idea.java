@@ -43,6 +43,13 @@ public class Idea {
     if (isSourceDir(ideaDir)) {
       myClassPool = getIdeaClassPoolFromSources(ideaDir);
       myPlugins = Collections.emptyList();
+      File versionFile = new File(ideaDir, "build.txt");
+      if (!versionFile.exists()) {
+        versionFile = new File(ideaDir, "community/build.txt");
+      }
+      if (versionFile.exists()) {
+        myVersion = Files.toString(versionFile, Charset.defaultCharset()).trim();
+      }
     }
     else {
       myClassPool = getIdeaClassPoolFromLibraries(ideaDir);
