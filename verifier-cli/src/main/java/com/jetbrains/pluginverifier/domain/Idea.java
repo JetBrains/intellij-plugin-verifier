@@ -108,8 +108,7 @@ public class Idea {
 
     pools.add(getIdeaClassPoolFromLibraries(ideaDir));
 
-    File communityLib = new File(ideaDir, "community");
-    if (communityLib.isDirectory()) {
+    if (new File(ideaDir, "community/.idea").isDirectory()) {
       pools.add(new CompileOutputPool(new File(ideaDir, "out/classes/production")));
       pools.add(getIdeaClassPoolFromLibraries(new File(ideaDir, "community")));
     }
