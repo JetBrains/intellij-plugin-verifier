@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  */
 public class UpdateBuild {
 
-  public static final Pattern PATTERN = Pattern.compile("(?:(IC|IU|RM|WS|PS|PY|PC|OC|MPS|AI|DB)-)?(\\d{1,8})\\.(?:(\\d{1,10})|SNAPSHOT)");
+  public static final Pattern PATTERN = Pattern.compile("(?:(IC|IU|RM|WS|PS|PY|PC|OC|MPS|AI|DB|CP)-)?(\\d{1,8})\\.(?:(\\d{1,10})|SNAPSHOT)");
 
   private static final Map<String, String> PRODUCT_MAP = new HashMap<String, String>();
   private static final Map<String, String> PRODUCT_ID_TO_CODE;
@@ -30,6 +30,7 @@ public class UpdateBuild {
     PRODUCT_MAP.put("MPS", "mps");
     PRODUCT_MAP.put("AI", "androidstudio");
     PRODUCT_MAP.put("DB", "dbe");
+    PRODUCT_MAP.put("CP", "clion");
 
     PRODUCT_ID_TO_CODE = ImmutableBiMap.copyOf(PRODUCT_MAP).inverse();
   }

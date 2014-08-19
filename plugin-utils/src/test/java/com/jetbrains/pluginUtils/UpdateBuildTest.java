@@ -17,8 +17,8 @@ public class UpdateBuildTest {
 
     @Test
     public void testSnapshotBuild() {
-        UpdateBuild updateBuild = new UpdateBuild("PS-138.SNAPSHOT");
-        Assert.assertEquals(138, updateBuild.getBranch());
+        UpdateBuild updateBuild = new UpdateBuild("PS-136.SNAPSHOT");
+        Assert.assertEquals(136, updateBuild.getBranch());
         Assert.assertEquals(Integer.MAX_VALUE, updateBuild.getBuild());
         Assert.assertEquals("PS", updateBuild.getProductCode());
         Assert.assertEquals("phpStorm", updateBuild.getProductName());
@@ -35,5 +35,16 @@ public class UpdateBuildTest {
         Assert.assertNull(updateBuild.getProductName());
         Assert.assertEquals(false, updateBuild.isSnapshot());
         Assert.assertEquals(false, updateBuild.isOk());
+    }
+
+    @Test
+    public void testCLionTypicalBuild() {
+        UpdateBuild updateBuild = new UpdateBuild("CP-140.1197");
+        Assert.assertEquals(140, updateBuild.getBranch());
+        Assert.assertEquals(1197, updateBuild.getBuild());
+        Assert.assertEquals("CP", updateBuild.getProductCode());
+        Assert.assertEquals("clion", updateBuild.getProductName());
+        Assert.assertEquals(false, updateBuild.isSnapshot());
+        Assert.assertEquals(true, updateBuild.isOk());
     }
 }
