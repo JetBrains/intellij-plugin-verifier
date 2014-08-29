@@ -30,7 +30,7 @@ public class UpdateBuild {
     PRODUCT_MAP.put("MPS", "mps");
     PRODUCT_MAP.put("AI", "androidstudio");
     PRODUCT_MAP.put("DB", "dbe");
-    PRODUCT_MAP.put("CP", "clion");
+    PRODUCT_MAP.put("CL", "clion");
 
     PRODUCT_ID_TO_CODE = ImmutableBiMap.copyOf(PRODUCT_MAP).inverse();
   }
