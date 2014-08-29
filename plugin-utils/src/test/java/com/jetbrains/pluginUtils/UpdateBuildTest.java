@@ -39,10 +39,10 @@ public class UpdateBuildTest {
 
     @Test
     public void testCLionTypicalBuild() {
-        UpdateBuild updateBuild = new UpdateBuild("CP-140.1197");
+        UpdateBuild updateBuild = new UpdateBuild("CL-140.1197");
         Assert.assertEquals(140, updateBuild.getBranch());
         Assert.assertEquals(1197, updateBuild.getBuild());
-        Assert.assertEquals("CP", updateBuild.getProductCode());
+        Assert.assertEquals("CL", updateBuild.getProductCode());
         Assert.assertEquals("clion", updateBuild.getProductName());
         Assert.assertEquals(false, updateBuild.isSnapshot());
         Assert.assertEquals(true, updateBuild.isOk());

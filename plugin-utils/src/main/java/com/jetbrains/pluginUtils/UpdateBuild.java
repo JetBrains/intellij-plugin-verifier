@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  */
 public class UpdateBuild {
 
-  public static final Pattern PATTERN = Pattern.compile("(?:(IC|IU|RM|WS|PS|PY|PC|OC|MPS|AI|DB|CP)-)?(\\d{1,8})\\.(?:(\\d{1,10})|SNAPSHOT)");
+  public static final Pattern PATTERN = Pattern.compile("(?:(IC|IU|RM|WS|PS|PY|PC|OC|MPS|AI|DB|CL)-)?(\\d{1,8})\\.(?:(\\d{1,10})|SNAPSHOT)");
 
   private static final Map<String, String> PRODUCT_MAP = new HashMap<String, String>();
   private static final Map<String, String> PRODUCT_ID_TO_CODE;
