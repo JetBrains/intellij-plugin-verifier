@@ -20,8 +20,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.jar.JarFile;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Idea {
+  private static final Pattern BUILD_NUMBER_PATTERN = Pattern.compile("([^\\.]+\\.\\d+)\\.\\d+");
   private final File myIdeaDir;
   private final JDK myJdk;
   private final ClassPool myClassPool;
@@ -48,15 +51,24 @@ public class Idea {
         versionFile = new File(ideaDir, "community/build.txt");
       }
       if (versionFile.exists()) {
-        myVersion = Files.toString(versionFile, Charset.defaultCharset()).trim();
+        myVersion = readBuildNumber(versionFile);
       }
     }
     else {
       myClassPool = getIdeaClassPoolFromLibraries(ideaDir);
       myPlugins = getIdeaPlugins();
 
-      myVersion = Files.toString(new File(ideaDir, "build.txt"), Charset.defaultCharset()).trim();
+      myVersion = readBuildNumber(new File(ideaDir, "build.txt"));
     }
+  }
+
+  private static String readBuildNumber(File versionFile) throws IOException {
+    String buildNumberString = Files.toString(versionFile, Charset.defaultCharset()).trim();
+    Matcher matcher = BUILD_NUMBER_PATTERN.matcher(buildNumberString);
+    if (matcher.matches()) {
+      return matcher.group(1);
+    }
+    return buildNumberString;
   }
 
   public String getVersion() {
