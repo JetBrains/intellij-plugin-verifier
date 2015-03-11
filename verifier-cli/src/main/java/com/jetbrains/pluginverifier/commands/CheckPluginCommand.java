@@ -93,29 +93,34 @@ public class CheckPluginCommand extends VerifierCommand {
 
       String message = "Verifying " + plugin.getId() + " against " + idea.getMoniker() + "... ";
       System.out.print(message);
-      tc.message(message);
+      TeamCityLog.Block block = tc.blockOpen(message);
 
-      VerificationContextImpl ctx = new VerificationContextImpl(options, idea);
-      Verifiers.processAllVerifiers(plugin, ctx);
+      try {
+        VerificationContextImpl ctx = new VerificationContextImpl(options, idea);
+        Verifiers.processAllVerifiers(plugin, ctx);
 
-      ProblemSet problemSet = ctx.getProblems();
-      System.out.println(problemSet.isEmpty() ? "Ok" : problemSet.count() + " errors");
-      problemSet.printProblems(System.out, "");
-      for (Problem problem : problemSet.getAllProblems()) {
-        StringBuilder description = new StringBuilder(problem.getDescription());
-        Set<ProblemLocation> locations = problemSet.getLocations(problem);
-        if (!locations.isEmpty()) {
-          description.append(" at ").append(locations.iterator().next());
-          int remaining = locations.size() - 1;
-          if (remaining > 0) {
-            description.append(" and ").append(remaining).append(" more location");
-            if (remaining > 1) description.append("s");
+        ProblemSet problemSet = ctx.getProblems();
+        System.out.println(problemSet.isEmpty() ? "Ok" : problemSet.count() + " errors");
+        problemSet.printProblems(System.out, "");
+        for (Problem problem : problemSet.getAllProblems()) {
+          StringBuilder description = new StringBuilder(problem.getDescription());
+          Set<ProblemLocation> locations = problemSet.getLocations(problem);
+          if (!locations.isEmpty()) {
+            description.append(" at ").append(locations.iterator().next());
+            int remaining = locations.size() - 1;
+            if (remaining > 0) {
+              description.append(" and ").append(remaining).append(" more location");
+              if (remaining > 1) description.append("s");
+            }
           }
+          tc.buildProblem(description.toString());
         }
-        tc.buildProblem(description.toString());
-      }
 
-      problems += problemSet.count();
+        problems += problemSet.count();
+      }
+      finally {
+        block.close();
+      }
     }
 
     System.out.println("Plugin verification took " + (System.currentTimeMillis() - start) + "ms");
