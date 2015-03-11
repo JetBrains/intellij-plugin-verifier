@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.domain.Idea;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.domain.JDK;
 import com.jetbrains.pluginverifier.problems.Problem;
+import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Default command
@@ -100,7 +102,17 @@ public class CheckPluginCommand extends VerifierCommand {
       System.out.println(problemSet.isEmpty() ? "Ok" : problemSet.count() + " errors");
       problemSet.printProblems(System.out, "");
       for (Problem problem : problemSet.getAllProblems()) {
-        tc.buildProblem(problem.getDescription());
+        StringBuilder description = new StringBuilder(problem.getDescription());
+        Set<ProblemLocation> locations = problemSet.getLocations(problem);
+        if (!locations.isEmpty()) {
+          description.append(" at ").append(locations.iterator().next());
+          int remaining = locations.size() - 1;
+          if (remaining > 0) {
+            description.append(" and ").append(remaining).append(" more location");
+            if (remaining > 1) description.append("s");
+          }
+        }
+        tc.buildProblem(description.toString());
       }
 
       problems += problemSet.count();
