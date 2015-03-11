@@ -71,9 +71,10 @@ public class IdeaPlugin {
 
     Element ideaVersion = pluginXml.getRootElement().getChild("idea-version");
     if (ideaVersion != null && ideaVersion.getAttributeValue("min") == null) { // min != null in legacy plugins.
-      mySinceBuild = new UpdateBuild(ideaVersion.getAttributeValue("since-build"));
+      String sinceBuildString = ideaVersion.getAttributeValue("since-build");
+      mySinceBuild = new UpdateBuild(sinceBuildString);
       if (!mySinceBuild.isOk()) {
-        throw new BrokenPluginException("<idea-version since-build= /> attribute has incorrect value");
+        throw new BrokenPluginException("<idea-version since-build= /> attribute has incorrect value: " + sinceBuildString);
       }
 
       String untilBuild = ideaVersion.getAttributeValue("until-build");
@@ -85,7 +86,7 @@ public class IdeaPlugin {
 
         myUntilBuild = new UpdateBuild(untilBuild);
         if (!myUntilBuild.isOk()) {
-          throw new BrokenPluginException("<idea-version until-build= /> attribute has incorrect value");
+          throw new BrokenPluginException("<idea-version until-build= /> attribute has incorrect value: " + untilBuild);
         }
       }
       else {
