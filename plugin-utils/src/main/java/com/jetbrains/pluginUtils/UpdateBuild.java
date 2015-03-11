@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  */
 public class UpdateBuild {
 
-  public static final Pattern PATTERN = Pattern.compile("(?:(IC|IU|RM|WS|PS|PY|PC|OC|MPS|AI|DB|CL)-)?(\\d{1,8})\\.(?:(\\d{1,10})|SNAPSHOT)");
+  public static final Pattern PATTERN = Pattern.compile("(?:(IC|IU|RM|WS|PS|PY|PC|OC|MPS|AI|DB|CL)-)?(\\d{1,8})\\.(?:(\\d{1,10})(?:\\.(\\d{1,10}))?|SNAPSHOT)");
 
   private static final Map<String, String> PRODUCT_MAP = new HashMap<String, String>();
   private static final Map<String, String> PRODUCT_ID_TO_CODE;
@@ -38,6 +38,7 @@ public class UpdateBuild {
   private String productCode;
   private int branch;
   private int build;
+  private int attempt;
   private boolean isOk;
 
   private boolean isSnapshot;
@@ -51,6 +52,8 @@ public class UpdateBuild {
       if (o1.getBuild() > o2.getBuild()) return 1;
       if (o1.getBuild() < o2.getBuild()) return -1;
 
+      if (o1.getAttempt() > o2.getAttempt()) return 1;
+      if (o1.getAttempt() < o2.getAttempt()) return -1;
       return 0;
     }
   };
@@ -82,6 +85,13 @@ public class UpdateBuild {
       else {
         build = Integer.MAX_VALUE;
         isSnapshot = true;
+      }
+      if (matcher.group(4) != null) {
+        try {
+          attempt = Integer.parseInt(matcher.group(4));
+        } catch (NumberFormatException e) {
+          isOk = false;
+        }
       }
 
       return;
@@ -150,6 +160,10 @@ public class UpdateBuild {
 
   public int getBuild() {
     return build;
+  }
+
+  public int getAttempt() {
+    return attempt;
   }
 
   public boolean isOk() {
@@ -222,10 +236,6 @@ public class UpdateBuild {
     res.put("max", max);
 
     return res;
-  }
-
-  public long getAbsoluteBuildNumber() {
-    return ((long)branch << 32) + build;
   }
 
   public static String getProductIdByCode(String code) {
