@@ -10,13 +10,12 @@ import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
-import com.jetbrains.pluginverifier.utils.DownloadUtils;
-import com.jetbrains.pluginverifier.utils.StringUtil;
 import com.jetbrains.pluginverifier.utils.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.List;
@@ -117,6 +116,8 @@ public class CheckPluginCommand extends VerifierCommand {
         }
 
         problems += problemSet.count();
+
+        myLastProblemSet = problemSet;
       }
       finally {
         block.close();
@@ -129,8 +130,14 @@ public class CheckPluginCommand extends VerifierCommand {
     if (hasProblems) {
       tc.buildStatus(problems > 1 ? problems + " problems" : "1 problem");
     }
+
     return hasProblems ? 2 : 0;
   }
 
+  private ProblemSet myLastProblemSet;
 
+  @TestOnly
+  public ProblemSet getLastProblemSet() {
+    return myLastProblemSet;
+  }
 }
