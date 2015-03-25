@@ -15,7 +15,7 @@ import java.io.File;
 import java.io.StringWriter;
 import java.util.*;
 
-public class IntegrationTests {
+public class IntegrationTest {
   @Test
   public void issue2() throws Exception {
     runCheck(
