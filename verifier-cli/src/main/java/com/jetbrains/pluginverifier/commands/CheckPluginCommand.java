@@ -1,6 +1,8 @@
 package com.jetbrains.pluginverifier.commands;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.io.Files;
 import com.jetbrains.pluginverifier.*;
 import com.jetbrains.pluginverifier.domain.Idea;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
@@ -18,6 +20,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -47,22 +52,7 @@ public class CheckPluginCommand extends VerifierCommand {
                       "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963");
     }
 
-    String pluginToTest = freeArgs.get(0);
-
-    if (pluginToTest.matches("[a-zA-Z0-9\\-]+") && !new File(pluginToTest).exists()) {
-      // Looks like user write unknown command. This command was called because it's default command.
-      throw Util.fail("Unknown command: " + pluginToTest + "\navailable commands: " + Joiner.on(", ").join(CommandHolder.getCommandMap().keySet()));
-    }
-
-    IdeaPlugin plugin;
-    if (pluginToTest.matches("\\#\\d+")) {
-      UpdateInfo updateInfo = RepositoryManager.getInstance().findUpdateById(Integer.parseInt(pluginToTest.substring(1)));
-      File update = RepositoryManager.getInstance().getOrLoadUpdate(updateInfo);
-      plugin = IdeaPlugin.createFromZip(update);
-    }
-    else {
-      plugin = JarDiscovery.createIdeaPlugin(new File(pluginToTest));
-    }
+    List<File> pluginFiles = loadPluginFiles(freeArgs.get(0));
 
     if (freeArgs.size() == 1) {
       throw Util.fail("You must specify IDE directory/directories, example:\n" +
@@ -90,37 +80,40 @@ public class CheckPluginCommand extends VerifierCommand {
 
       Idea idea = new Idea(ideaDirectory, jdk, getExternalClassPath(commandLine));
 
-      String message = "Verifying " + plugin.getId() + " against " + idea.getMoniker() + "... ";
-      System.out.print(message);
-      TeamCityLog.Block block = tc.blockOpen(message);
+      for (File pluginFile : pluginFiles) {
+        IdeaPlugin plugin = JarDiscovery.createIdeaPlugin(pluginFile);
+        String message = "Verifying " + plugin.getId() + " against " + idea.getMoniker() + "... ";
+        System.out.print(message);
+        TeamCityLog.Block block = tc.blockOpen(message);
 
-      try {
-        VerificationContextImpl ctx = new VerificationContextImpl(options, idea);
-        Verifiers.processAllVerifiers(plugin, ctx);
+        try {
+          VerificationContextImpl ctx = new VerificationContextImpl(options, idea);
+          Verifiers.processAllVerifiers(plugin, ctx);
 
-        ProblemSet problemSet = ctx.getProblems();
-        System.out.println(problemSet.isEmpty() ? "Ok" : problemSet.count() + " errors");
-        problemSet.printProblems(System.out, "");
-        for (Problem problem : problemSet.getAllProblems()) {
-          StringBuilder description = new StringBuilder(problem.getDescription());
-          Set<ProblemLocation> locations = problemSet.getLocations(problem);
-          if (!locations.isEmpty()) {
-            description.append(" at ").append(locations.iterator().next());
-            int remaining = locations.size() - 1;
-            if (remaining > 0) {
-              description.append(" and ").append(remaining).append(" more location");
-              if (remaining > 1) description.append("s");
+          ProblemSet problemSet = ctx.getProblems();
+          System.out.println(problemSet.isEmpty() ? "Ok" : problemSet.count() + " errors");
+          problemSet.printProblems(System.out, "");
+          for (Problem problem : problemSet.getAllProblems()) {
+            StringBuilder description = new StringBuilder(problem.getDescription());
+            Set<ProblemLocation> locations = problemSet.getLocations(problem);
+            if (!locations.isEmpty()) {
+              description.append(" at ").append(locations.iterator().next());
+              int remaining = locations.size() - 1;
+              if (remaining > 0) {
+                description.append(" and ").append(remaining).append(" more location");
+                if (remaining > 1) description.append("s");
+              }
             }
+            tc.buildProblem(description.toString());
           }
-          tc.buildProblem(description.toString());
+
+          problems += problemSet.count();
+
+          myLastProblemSet = problemSet;
         }
-
-        problems += problemSet.count();
-
-        myLastProblemSet = problemSet;
-      }
-      finally {
-        block.close();
+        finally {
+          block.close();
+        }
       }
     }
 
@@ -132,6 +125,46 @@ public class CheckPluginCommand extends VerifierCommand {
     }
 
     return hasProblems ? 2 : 0;
+  }
+
+  private static List<File> loadPluginFiles(String pluginToTestArg) {
+    if (pluginToTestArg.startsWith("@")) {
+      String path = pluginToTestArg.substring(1);
+      List<String> pluginPaths;
+      try {
+        pluginPaths = Files.readLines(new File(path), Charsets.UTF_8);
+      } catch (IOException e) {
+        throw Util.fail("Cannot load plugins from " + path + ": " + e.getMessage());
+      }
+      List<File> pluginsFiles = new ArrayList<File>();
+      for (String pluginPath : pluginPaths) {
+        File file = new File(pluginPath);
+        if (!file.exists()) {
+          throw Util.fail("Plugin file '" + pluginPath + "' specified in '" + path + "' doesn't exist");
+        }
+        pluginsFiles.add(file);
+      }
+      return pluginsFiles;
+    }
+    else if (pluginToTestArg.matches("#\\d+")) {
+      String pluginId = pluginToTestArg.substring(1);
+      try {
+        UpdateInfo updateInfo = RepositoryManager.getInstance().findUpdateById(Integer.parseInt(pluginId));
+        File update = RepositoryManager.getInstance().getOrLoadUpdate(updateInfo);
+        return Collections.singletonList(update);
+      }
+      catch (IOException e) {
+        throw Util.fail("Cannot load plugin '" + pluginId + "': " + e.getMessage());
+      }
+    }
+    else {
+      File file = new File(pluginToTestArg);
+      if (!file.exists()) {
+        // Looks like user write unknown command. This command was called because it's default command.
+        throw Util.fail("Unknown command: " + pluginToTestArg + "\navailable commands: " + Joiner.on(", ").join(CommandHolder.getCommandMap().keySet()));
+      }
+      return Collections.singletonList(file);
+    }
   }
 
   private ProblemSet myLastProblemSet;
