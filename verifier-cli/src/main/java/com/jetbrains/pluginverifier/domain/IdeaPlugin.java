@@ -23,9 +23,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.io.*;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -39,7 +37,9 @@ public class IdeaPlugin {
 
   private final String myId;
 
-  private final List<PluginDependency> myDependencies;
+  private final List<PluginDependency> myDependencies = new ArrayList<PluginDependency>();
+  private final List<PluginDependency> myModuleDependencies = new ArrayList<PluginDependency>();
+  private final Set<String> myDefinedModules;
 
   private final String myPluginName;
   private final String myVersion;
@@ -67,7 +67,8 @@ public class IdeaPlugin {
     myPluginName = name;
     myVersion = pluginXml.getRootElement().getChildTextTrim("version");
 
-    myDependencies = getPluginDependencies(pluginXml);
+    loadPluginDependencies(pluginXml);
+    myDefinedModules = loadModules(pluginXml);
 
     Element ideaVersion = pluginXml.getRootElement().getChild("idea-version");
     if (ideaVersion != null && ideaVersion.getAttributeValue("min") == null) { // min != null in legacy plugins.
@@ -97,6 +98,15 @@ public class IdeaPlugin {
 
 
     myAllClassesPool = ContainerClassPool.union(pluginDirectory, Arrays.asList(pluginClassPool, libraryClassPool));
+  }
+
+  private Set<String> loadModules(Document pluginXml) {
+    LinkedHashSet<String> modules = new LinkedHashSet<String>();
+    //noinspection unchecked
+    for (Element module : (Iterable<? extends Element>) pluginXml.getRootElement().getChildren("module")) {
+      modules.add(module.getAttributeValue("value"));
+    }
+    return modules;
   }
 
   @Nullable
@@ -285,22 +295,27 @@ public class IdeaPlugin {
     return id;
   }
 
-  private static List<PluginDependency> getPluginDependencies(Document pluginXml) {
+  private void loadPluginDependencies(Document pluginXml) {
     final List dependsElements = pluginXml.getRootElement().getChildren("depends");
 
-    List<PluginDependency> dependencies = new ArrayList<PluginDependency>();
     for (Object dependsObj : dependsElements) {
       Element dependsElement = (Element) dependsObj;
 
       final boolean optional = Boolean.parseBoolean(dependsElement.getAttributeValue("optional", "false"));
       final String pluginId = dependsElement.getTextTrim();
 
-      if (!pluginId.startsWith("com.intellij.modules.")) {
-        dependencies.add(new PluginDependency(pluginId, optional));
+      PluginDependency dependency = new PluginDependency(pluginId, optional);
+      if (pluginId.startsWith("com.intellij.modules.")) {
+        myModuleDependencies.add(dependency);
+      }
+      else {
+        myDependencies.add(dependency);
       }
     }
+  }
 
-    return dependencies;
+  public Set<String> getDefinedModules() {
+    return Collections.unmodifiableSet(myDefinedModules);
   }
 
   private static List<JarFile> getPluginJars(File pluginDirectory) throws IOException {
@@ -317,6 +332,10 @@ public class IdeaPlugin {
 
   public String getId() {
     return myId;
+  }
+
+  public List<PluginDependency> getModuleDependencies() {
+    return myModuleDependencies;
   }
 
   public List<PluginDependency> getDependencies() {

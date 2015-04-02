@@ -93,6 +93,12 @@ public class DependenciesCache {
       try {
         res = new HashSet<IdeaPlugin>();
 
+        for (PluginDependency dependency : plugin.getModuleDependencies()) {
+          IdeaPlugin depPlugin = ide.getPluginByModule(dependency.getId());
+          if (depPlugin != null && res.add(depPlugin)) {
+            res.addAll(getDependenciesWithTransitive(ide, depPlugin, pluginStack));
+          }
+        }
         for (PluginDependency pluginDependency : plugin.getDependencies()) {
           IdeaPlugin depPlugin = ide.getPlugin(pluginDependency.getId());
           if (depPlugin == null) {

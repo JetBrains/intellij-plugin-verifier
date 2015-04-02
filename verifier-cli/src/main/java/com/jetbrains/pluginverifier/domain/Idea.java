@@ -189,4 +189,18 @@ public class Idea {
 
     return myResolver;
   }
+
+  public IdeaPlugin getPluginByModule(String moduleId) {
+    for (IdeaPlugin plugin : myCustomPlugins) {
+      if (plugin.getDefinedModules().contains(moduleId)) {
+        return plugin;
+      }
+    }
+    for (IdeaPlugin plugin : myBundledPlugins) {
+      if (plugin.getDefinedModules().contains(moduleId)) {
+        return plugin;
+      }
+    }
+    return null;
+  }
 }
