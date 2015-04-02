@@ -11,29 +11,32 @@ import java.io.IOException;
 public class JarDiscovery {
 
   @NotNull
-  public static IdeaPlugin createIdeaPlugin(@NotNull final File pluginDir) throws IOException, BrokenPluginException {
-    if (!pluginDir.exists()) {
-      throw Util.fail("Plugin not found: " + pluginDir);
+  public static IdeaPlugin createIdeaPlugin(@NotNull final File pluginFile) throws IOException, BrokenPluginException {
+    if (!pluginFile.exists()) {
+      throw Util.fail("Plugin not found: " + pluginFile);
     }
 
-    if (pluginDir.isFile() && pluginDir.getName().endsWith(".zip")) {
-      return IdeaPlugin.createFromZip(pluginDir);
-    }
-    else if (!pluginDir.isDirectory()) {
-      throw Util.fail("Unknown input file: " + pluginDir);
+    if (pluginFile.isFile()) {
+      if (pluginFile.getName().endsWith(".zip")) {
+        return IdeaPlugin.createFromZip(pluginFile);
+      }
+      if (pluginFile.getName().endsWith(".jar")) {
+        return IdeaPlugin.createFromJar(pluginFile);
+      }
+      throw Util.fail("Unknown input file: " + pluginFile);
     }
 
-    final String[] topLevelList = pluginDir.list();
+    final String[] topLevelList = pluginFile.list();
     assert topLevelList != null;
 
     if (topLevelList.length == 0) {
-      throw Util.fail("Plugin root directory '" + pluginDir + "' is empty");
+      throw Util.fail("Plugin root directory '" + pluginFile + "' is empty");
     }
 
     if (topLevelList.length > 1) {
-      throw Util.fail("Plugin root directory '" + pluginDir + "' contains more than one child");
+      throw Util.fail("Plugin root directory '" + pluginFile + "' contains more than one child");
     }
 
-    return IdeaPlugin.createFromDirectory(new File(pluginDir, topLevelList[0]));
+    return IdeaPlugin.createFromDirectory(new File(pluginFile, topLevelList[0]));
   }
 }

@@ -132,8 +132,15 @@ public class IdeaPlugin {
   }
 
   public static IdeaPlugin createFromDirectory(File pluginDirectory) throws IOException, BrokenPluginException {
-    List<JarFile> jarFiles = getPluginJars(pluginDirectory);
+    return createFromJars(pluginDirectory.getPath(), getPluginJars(pluginDirectory));
+  }
 
+  public static IdeaPlugin createFromJar(File pluginJar) throws IOException, BrokenPluginException {
+    return createFromJars(pluginJar.getPath(), Collections.singletonList(new JarFile(pluginJar)));
+  }
+
+  @NotNull
+  private static IdeaPlugin createFromJars(String pluginPath, List<JarFile> jarFiles) throws BrokenPluginException, IOException {
     Document pluginXml = null;
 
     ClassPool pluginClassPool = null;
@@ -144,7 +151,7 @@ public class IdeaPlugin {
 
       if (pluginXmlEntry != null) {
         if (pluginClassPool != null) {
-          throw new BrokenPluginException("Plugin has more then one jar with plugin.xml : " + pluginDirectory);
+          throw new BrokenPluginException("Plugin has more then one jar with plugin.xml : " + pluginPath);
         }
 
         pluginClassPool = new JarClassPool(jar);
@@ -169,8 +176,7 @@ public class IdeaPlugin {
       }
     }
 
-    return new IdeaPlugin(pluginDirectory.getPath(), pluginClassPool, ContainerClassPool.union(pluginDirectory.getPath(),
-                                                                                               libraryPools), pluginXml);
+    return new IdeaPlugin(pluginPath, pluginClassPool, ContainerClassPool.union(pluginPath, libraryPools), pluginXml);
   }
 
   @NotNull
