@@ -84,9 +84,10 @@ public class CheckPluginCommand extends VerifierCommand {
         IdeaPlugin plugin = JarDiscovery.createIdeaPlugin(pluginFile);
         String message = "Verifying " + plugin.getId() + " against " + idea.getMoniker() + "... ";
         System.out.print(message);
-        TeamCityLog.Block block = tc.blockOpen(message);
+        TeamCityLog.Block block = tc.blockOpen(plugin.getId());
 
         try {
+          tc.message(message);
           VerificationContextImpl ctx = new VerificationContextImpl(options, idea);
           Verifiers.processAllVerifiers(plugin, ctx);
 
