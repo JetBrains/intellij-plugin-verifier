@@ -27,11 +27,11 @@ public class JarDiscovery {
     assert topLevelList != null;
 
     if (topLevelList.length == 0) {
-      throw Util.fail("Plugin root is empty");
+      throw Util.fail("Plugin root directory '" + pluginDir + "' is empty");
     }
 
     if (topLevelList.length > 1) {
-      throw Util.fail("Plugin root contains more than one element");
+      throw Util.fail("Plugin root directory '" + pluginDir + "' contains more than one child");
     }
 
     return IdeaPlugin.createFromDirectory(new File(pluginDir, topLevelList[0]));
