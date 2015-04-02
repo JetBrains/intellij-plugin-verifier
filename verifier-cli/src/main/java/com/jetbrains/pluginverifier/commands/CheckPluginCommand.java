@@ -110,6 +110,7 @@ public class CheckPluginCommand extends VerifierCommand {
           problems += problemSet.count();
 
           myLastProblemSet = problemSet;
+          idea.addCustomPlugin(plugin);
         }
         finally {
           block.close();

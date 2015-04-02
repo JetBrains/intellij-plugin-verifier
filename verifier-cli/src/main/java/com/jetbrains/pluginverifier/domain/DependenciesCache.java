@@ -94,7 +94,7 @@ public class DependenciesCache {
         res = new HashSet<IdeaPlugin>();
 
         for (PluginDependency pluginDependency : plugin.getDependencies()) {
-          IdeaPlugin depPlugin = ide.getBundledPlugin(pluginDependency.getId());
+          IdeaPlugin depPlugin = ide.getPlugin(pluginDependency.getId());
           if (depPlugin == null) {
             try {
               UpdateInfo updateInfo = RepositoryManager.getInstance().findPlugin(ide.getVersion(), pluginDependency.getId());

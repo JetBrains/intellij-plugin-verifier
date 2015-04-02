@@ -29,7 +29,8 @@ public class Idea {
   private final JDK myJdk;
   private final ClassPool myClassPool;
   private final ClassPool myExternalClasspath;
-  private final List<IdeaPlugin> myPlugins;
+  private final List<IdeaPlugin> myBundledPlugins;
+  private final List<IdeaPlugin> myCustomPlugins = new ArrayList<IdeaPlugin>();
   private Resolver myResolver;
 
   private String myVersion;
@@ -45,7 +46,7 @@ public class Idea {
 
     if (isSourceDir(ideaDir)) {
       myClassPool = getIdeaClassPoolFromSources(ideaDir);
-      myPlugins = Collections.emptyList();
+      myBundledPlugins = Collections.emptyList();
       File versionFile = new File(ideaDir, "build.txt");
       if (!versionFile.exists()) {
         versionFile = new File(ideaDir, "community/build.txt");
@@ -56,7 +57,7 @@ public class Idea {
     }
     else {
       myClassPool = getIdeaClassPoolFromLibraries(ideaDir);
-      myPlugins = getIdeaPlugins();
+      myBundledPlugins = getIdeaPlugins();
 
       myVersion = readBuildNumber(new File(ideaDir, "build.txt"));
     }
@@ -77,6 +78,10 @@ public class Idea {
 
   public void setVersion(String myVersion) {
     this.myVersion = myVersion;
+  }
+
+  public void addCustomPlugin(IdeaPlugin plugin) {
+    myCustomPlugins.add(plugin);
   }
 
   private List<IdeaPlugin> getIdeaPlugins() throws JDOMException, IOException {
@@ -146,16 +151,19 @@ public class Idea {
   }
 
   public List<IdeaPlugin> getBundledPlugins() {
-    return myPlugins;
+    return myBundledPlugins;
   }
 
-  public IdeaPlugin getBundledPlugin(String name)
-  {
-    for (IdeaPlugin plugin : myPlugins) {
+  public IdeaPlugin getPlugin(String name) {
+    for (IdeaPlugin plugin : myCustomPlugins) {
+      if (plugin.getId().equals(name)) {
+        return plugin;
+      }
+    }
+    for (IdeaPlugin plugin : myBundledPlugins) {
       if (plugin.getId().equals(name))
         return plugin;
     }
-
     return null;
   }
 
