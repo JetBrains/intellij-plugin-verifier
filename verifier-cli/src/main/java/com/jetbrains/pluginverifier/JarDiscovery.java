@@ -13,19 +13,17 @@ public class JarDiscovery {
   @NotNull
   public static IdeaPlugin createIdeaPlugin(@NotNull final File pluginDir) throws IOException, BrokenPluginException {
     if (!pluginDir.exists()) {
-      throw  Util.fail("Plugin not found: " + pluginDir);
+      throw Util.fail("Plugin not found: " + pluginDir);
     }
 
-    final File realDir;
     if (pluginDir.isFile() && pluginDir.getName().endsWith(".zip")) {
       return IdeaPlugin.createFromZip(pluginDir);
-    } else if (pluginDir.isDirectory()) {
-      realDir = pluginDir;
-    } else {
+    }
+    else if (!pluginDir.isDirectory()) {
       throw Util.fail("Unknown input file: " + pluginDir);
     }
 
-    final String[] topLevelList = realDir.list();
+    final String[] topLevelList = pluginDir.list();
     assert topLevelList != null;
 
     if (topLevelList.length == 0) {
@@ -36,6 +34,6 @@ public class JarDiscovery {
       throw Util.fail("Plugin root contains more than one element");
     }
 
-    return IdeaPlugin.createFromDirectory(new File(realDir, topLevelList[0]));
+    return IdeaPlugin.createFromDirectory(new File(pluginDir, topLevelList[0]));
   }
 }
