@@ -9,15 +9,15 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 public class VerifierUtil {
-  public static boolean classExists(PluginVerifierOptions opt, final Resolver resolver, final String className) {
+  public static boolean classExists(PluginVerifierOptions opt, final Resolver resolver, final @NotNull String className) {
     return classExists(opt, resolver, className, null);
   }
 
-  public static boolean classExists(PluginVerifierOptions opt, final Resolver resolver, final String className, final Boolean isInterface) {
+  public static boolean classExists(PluginVerifierOptions opt, final Resolver resolver, final @NotNull String className, final Boolean isInterface) {
     return isValidClassOrInterface(opt, resolver, className, isInterface);
   }
 
-  private static boolean isValidClassOrInterface(PluginVerifierOptions opt, final Resolver resolver, final String name, final Boolean isInterface) {
+  private static boolean isValidClassOrInterface(PluginVerifierOptions opt, final Resolver resolver, final @NotNull String name, final Boolean isInterface) {
     assert !name.startsWith("[");
     assert !name.endsWith(";");
 

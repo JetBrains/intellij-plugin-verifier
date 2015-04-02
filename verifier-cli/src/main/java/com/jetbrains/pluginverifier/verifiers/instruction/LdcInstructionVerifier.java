@@ -21,7 +21,7 @@ public class LdcInstructionVerifier implements InstructionVerifier {
     final String descriptor = ((Type) constant).getDescriptor();
     final String className = VerifierUtil.extractClassNameFromDescr(descriptor);
 
-    if (VerifierUtil.classExists(ctx.getOptions(), resolver, className)) return;
+    if (className == null || VerifierUtil.classExists(ctx.getOptions(), resolver, className)) return;
 
     ctx.registerProblem(new ClassNotFoundProblem(className), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));
   }
