@@ -131,18 +131,21 @@ public class CheckPluginCommand extends VerifierCommand {
 
   private static List<File> loadPluginFiles(String pluginToTestArg) {
     if (pluginToTestArg.startsWith("@")) {
-      String path = pluginToTestArg.substring(1);
+      File pluginListFile = new File(pluginToTestArg.substring(1));
       List<String> pluginPaths;
       try {
-        pluginPaths = Files.readLines(new File(path), Charsets.UTF_8);
+        pluginPaths = Files.readLines(pluginListFile, Charsets.UTF_8);
       } catch (IOException e) {
-        throw Util.fail("Cannot load plugins from " + path + ": " + e.getMessage());
+        throw Util.fail("Cannot load plugins from " + pluginListFile.getAbsolutePath() + ": " + e.getMessage());
       }
       List<File> pluginsFiles = new ArrayList<File>();
       for (String pluginPath : pluginPaths) {
         File file = new File(pluginPath);
+        if (!file.isAbsolute()) {
+          file = new File(pluginListFile.getParentFile(), pluginPath);
+        }
         if (!file.exists()) {
-          throw Util.fail("Plugin file '" + pluginPath + "' specified in '" + path + "' doesn't exist");
+          throw Util.fail("Plugin file '" + pluginPath + "' specified in '" + pluginListFile.getAbsolutePath() + "' doesn't exist");
         }
         pluginsFiles.add(file);
       }
