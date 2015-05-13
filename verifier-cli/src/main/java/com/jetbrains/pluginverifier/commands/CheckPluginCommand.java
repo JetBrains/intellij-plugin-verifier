@@ -21,10 +21,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Default command
@@ -52,7 +49,7 @@ public class CheckPluginCommand extends VerifierCommand {
                       "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963");
     }
 
-    List<File> pluginFiles = loadPluginFiles(freeArgs.get(0));
+    String pluginToTestArg = freeArgs.get(0);
 
     if (freeArgs.size() == 1) {
       throw Util.fail("You must specify IDE directory/directories, example:\n" +
@@ -80,6 +77,7 @@ public class CheckPluginCommand extends VerifierCommand {
 
       Idea idea = new Idea(ideaDirectory, jdk, getExternalClassPath(commandLine));
 
+      List<File> pluginFiles = loadPluginFiles(pluginToTestArg, idea.getVersion());
       for (File pluginFile : pluginFiles) {
         IdeaPlugin plugin = JarDiscovery.createIdeaPlugin(pluginFile);
         String message = "Verifying " + plugin.getId() + " against " + idea.getMoniker() + "... ";
@@ -129,7 +127,7 @@ public class CheckPluginCommand extends VerifierCommand {
     return hasProblems ? 2 : 0;
   }
 
-  private static List<File> loadPluginFiles(String pluginToTestArg) {
+  private static List<File> loadPluginFiles(String pluginToTestArg, String ideVersion) {
     if (pluginToTestArg.startsWith("@")) {
       File pluginListFile = new File(pluginToTestArg.substring(1));
       List<String> pluginPaths;
@@ -140,12 +138,19 @@ public class CheckPluginCommand extends VerifierCommand {
       }
       List<File> pluginsFiles = new ArrayList<File>();
       for (String pluginPath : pluginPaths) {
-        File file = new File(pluginPath);
-        if (!file.isAbsolute()) {
-          file = new File(pluginListFile.getParentFile(), pluginPath);
+        File file;
+        if (pluginPath.startsWith("id:")) {
+          String pluginId = pluginPath.substring("id:".length());
+          file = downloadPlugin(pluginId, ideVersion);
         }
-        if (!file.exists()) {
-          throw Util.fail("Plugin file '" + pluginPath + "' specified in '" + pluginListFile.getAbsolutePath() + "' doesn't exist");
+        else {
+          file = new File(pluginPath);
+          if (!file.isAbsolute()) {
+            file = new File(pluginListFile.getParentFile(), pluginPath);
+          }
+          if (!file.exists()) {
+            throw Util.fail("Plugin file '" + pluginPath + "' specified in '" + pluginListFile.getAbsolutePath() + "' doesn't exist");
+          }
         }
         pluginsFiles.add(file);
       }
@@ -169,6 +174,24 @@ public class CheckPluginCommand extends VerifierCommand {
         throw Util.fail("Unknown command: " + pluginToTestArg + "\navailable commands: " + Joiner.on(", ").join(CommandHolder.getCommandMap().keySet()));
       }
       return Collections.singletonList(file);
+    }
+  }
+
+  private static File downloadPlugin(String pluginId, String ideVersion) {
+    List<UpdateInfo> compatibleUpdatesForPlugins;
+    try {
+      compatibleUpdatesForPlugins = RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(ideVersion, Collections.singletonList(pluginId));
+    } catch (IOException e) {
+      throw Util.fail("Failed to fetch list of '" + pluginId + "' versions: " + e.getMessage());
+    }
+    if (compatibleUpdatesForPlugins.isEmpty()) {
+      throw Util.fail("No versions of '" + pluginId + "' compatible with '" + ideVersion + "' are found.");
+    }
+    UpdateInfo updateInfo = compatibleUpdatesForPlugins.get(0);
+    try {
+      return RepositoryManager.getInstance().getOrLoadUpdate(updateInfo);
+    } catch (IOException e) {
+      throw Util.fail("Cannot download '" + updateInfo + "': " + e.getMessage());
     }
   }
 
