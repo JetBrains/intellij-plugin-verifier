@@ -85,17 +85,20 @@ public class AbstractMethodVerifier implements ClassVerifier {
       }
 
       for (MethodNode method : (List<MethodNode>)i.methods) {
+        if (!VerifierUtil.isAbstract(method)) {
+          //method could be default interface method (Java 8)
+          continue;
+        }
         MethodSign sign = new MethodSign(method);
 
         while (!allSign.contains(sign) && p != null) {
-          for (MethodNode m : (List<MethodNode>)p.methods) {
+          for (MethodNode m : (List<MethodNode>) p.methods) {
             allSign.add(new MethodSign(m));
           }
 
           if (p.superName == null) {
             p = null;
-          }
-          else {
+          } else {
             p = resolver.findClass(p.superName);
             if (p == null) {
               return; // RETURN , don't check anymore because unknown class exists.
@@ -107,7 +110,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
           allSign.add(sign);
 
           ctx.registerProblem(new MethodNotImplementedProblem(i.name + '#' + method.name + method.desc),
-                              new ProblemLocation(clazz.name));
+                  new ProblemLocation(clazz.name));
         }
       }
     }
