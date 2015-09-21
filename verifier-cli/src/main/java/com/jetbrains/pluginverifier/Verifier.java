@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier;
 
-import com.jetbrains.pluginverifier.domain.IdeaPlugin;
+import com.intellij.structure.domain.IdeaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 /**

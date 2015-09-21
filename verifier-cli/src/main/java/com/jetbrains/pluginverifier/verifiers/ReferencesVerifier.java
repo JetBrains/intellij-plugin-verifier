@@ -1,14 +1,14 @@
 package com.jetbrains.pluginverifier.verifiers;
 
+import com.intellij.structure.domain.IdeaPlugin;
+import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.resolvers.CacheResolver;
+import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
-import com.jetbrains.pluginverifier.domain.DependenciesCache;
-import com.jetbrains.pluginverifier.domain.IdeaPlugin;
-import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.problems.FailedToReadClassProblem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
-import com.jetbrains.pluginverifier.resolvers.CacheResolver;
-import com.jetbrains.pluginverifier.resolvers.Resolver;
+import com.jetbrains.pluginverifier.utils.DependenciesCache;
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
 import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier;
 import com.jetbrains.pluginverifier.verifiers.instruction.InstructionVerifier;

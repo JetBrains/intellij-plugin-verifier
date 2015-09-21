@@ -1,11 +1,11 @@
 package com.jetbrains.pluginverifier.verifiers.instruction;
 
+import com.intellij.structure.pool.ResolverUtil;
+import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
-import com.jetbrains.pluginverifier.pool.ResolverUtil;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.MethodNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
-import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;

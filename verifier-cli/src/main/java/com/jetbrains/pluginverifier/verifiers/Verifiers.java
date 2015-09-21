@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers;
 
+import com.intellij.structure.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
-import com.jetbrains.pluginverifier.domain.IdeaPlugin;
 import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier;
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
 import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier;
@@ -20,6 +20,7 @@ import com.jetbrains.pluginverifier.verifiers.method.OverrideNonFinalVerifier;
  * @author Dennis.Ushakov
  */
 public class Verifiers {
+  public static final Verifier[] PLUGIN_VERIFIERS = new Verifier[]{new ReferencesVerifier()};
   // TODO: add dynamic loading
   private static final ClassVerifier[] CLASS_VERIFIERS = new ClassVerifier[] {new SuperClassVerifier(), new InterfacesVerifier(), new AbstractMethodVerifier()};
   private static final MethodVerifier[] METHOD_VERIFIERS = new MethodVerifier[] {new OverrideNonFinalVerifier()};
@@ -29,8 +30,6 @@ public class Verifiers {
       new TypeInstructionVerifier(),
       new LdcInstructionVerifier()
   };
-
-  public static final Verifier[] PLUGIN_VERIFIERS = new Verifier[]{new ReferencesVerifier()};
 
   public static ClassVerifier[] getClassVerifiers() {
     return CLASS_VERIFIERS;

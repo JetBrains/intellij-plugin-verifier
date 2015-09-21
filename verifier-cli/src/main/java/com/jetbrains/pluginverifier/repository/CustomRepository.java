@@ -3,8 +3,8 @@ package com.jetbrains.pluginverifier.repository;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Maps;
-import com.jetbrains.pluginverifier.domain.IdeaPlugin;
-import com.jetbrains.pluginverifier.domain.PluginCache;
+import com.intellij.structure.domain.IdeaPlugin;
+import com.intellij.structure.domain.PluginCache;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.utils.DownloadUtils;
 import org.apache.commons.io.IOUtils;
@@ -32,6 +32,17 @@ public class CustomRepository extends PluginRepository {
 
   public CustomRepository(URL url) {
     this.url = url;
+  }
+
+  private static String getPluginUrl(String pluginListUrl, String pluginUrl) {
+    if (pluginUrl.contains("://")) return pluginUrl;
+
+    int idx = pluginListUrl.lastIndexOf('/');
+    if (idx != -1) {
+      return pluginListUrl.substring(0, idx + 1) + pluginUrl;
+    }
+
+    return pluginUrl;
   }
 
   public Map<UpdateInfo, String> getRepositoriesMap() {
@@ -71,17 +82,6 @@ public class CustomRepository extends PluginRepository {
     }
 
     return res;
-  }
-
-  private static String getPluginUrl(String pluginListUrl, String pluginUrl) {
-    if (pluginUrl.contains("://")) return pluginUrl;
-
-    int idx = pluginListUrl.lastIndexOf('/');
-    if (idx != -1) {
-      return pluginListUrl.substring(0, idx + 1) + pluginUrl;
-    }
-
-    return pluginUrl;
   }
 
   private List<UpdateInfo> getUpdates(@NotNull String ideVersion, Predicate<UpdateInfo> predicate) throws IOException {

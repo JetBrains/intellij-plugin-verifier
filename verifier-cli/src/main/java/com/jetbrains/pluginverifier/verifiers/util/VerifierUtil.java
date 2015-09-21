@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.util;
 
+import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
-import com.jetbrains.pluginverifier.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;

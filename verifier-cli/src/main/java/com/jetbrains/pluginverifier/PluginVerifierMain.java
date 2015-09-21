@@ -16,7 +16,7 @@ public class PluginVerifierMain {
       commandLine = new GnuParser().parse(Util.CMD_OPTIONS, args);
     }
     catch (ParseException e) {
-      throw Util.fail(e.getLocalizedMessage());
+      throw com.intellij.structure.utils.Util.fail(e.getLocalizedMessage());
     }
 
     if (commandLine.hasOption('h')) {

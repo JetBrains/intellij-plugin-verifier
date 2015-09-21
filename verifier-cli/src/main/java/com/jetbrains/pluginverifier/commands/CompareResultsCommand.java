@@ -7,7 +7,10 @@ import com.google.common.collect.Sets;
 import com.jetbrains.pluginverifier.VerifierCommand;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
-import com.jetbrains.pluginverifier.utils.*;
+import com.jetbrains.pluginverifier.utils.MessageUtils;
+import com.jetbrains.pluginverifier.utils.ProblemUtils;
+import com.jetbrains.pluginverifier.utils.TeamCityLog;
+import com.jetbrains.pluginverifier.utils.TeamCityUtil;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +32,7 @@ public class CompareResultsCommand extends VerifierCommand {
   @Override
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.size() != 2) {
-      throw Util.fail("You have to specify two result files. For example: \"java -jar verifier.jar compare-results res_133.200.xml res_133.201.xml\"");
+      throw com.intellij.structure.utils.Util.fail("You have to specify two result files. For example: \"java -jar verifier.jar compare-results res_133.200.xml res_133.201.xml\"");
     }
 
     File previousBuildProblems = new File(freeArgs.get(0));

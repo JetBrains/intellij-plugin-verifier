@@ -4,13 +4,13 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
+import com.intellij.structure.domain.Idea;
+import com.intellij.structure.domain.IdeaPlugin;
+import com.intellij.structure.domain.JDK;
+import com.intellij.structure.pool.ClassPool;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.VerifierCommand;
-import com.jetbrains.pluginverifier.domain.Idea;
-import com.jetbrains.pluginverifier.domain.IdeaPlugin;
-import com.jetbrains.pluginverifier.domain.JDK;
-import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
@@ -76,7 +76,7 @@ public class CheckIdeCommand extends VerifierCommand {
         }
       }
       catch (IOException e) {
-        throw Util.fail("Failed to read plugins file " + pluginsFile + ": " + e.getLocalizedMessage());
+        throw com.intellij.structure.utils.Util.fail("Failed to read plugins file " + pluginsFile + ": " + e.getLocalizedMessage());
       }
     }
 
@@ -124,15 +124,67 @@ public class CheckIdeCommand extends VerifierCommand {
     }
   }
 
+  private static void printTeamCityProblems(TeamCityLog log, Map<UpdateInfo, ProblemSet> results, Predicate<UpdateInfo> updateFilter) {
+    if (log == TeamCityLog.NULL_LOG) return;
+
+    Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
+
+    for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
+      if (!updateFilter.apply(entry.getKey())) continue;
+
+      for (Problem problem : entry.getValue().getAllProblems()) {
+        problems.put(problem, entry.getKey());
+      }
+    }
+
+    TeamCityUtil.printTeamCityProblems(log, problems);
+  }
+
+  private static void dumbBrokenPluginsList(@NotNull String dumpBrokenPluginsFile, Collection<UpdateInfo> brokenUpdates)
+      throws IOException {
+    Multimap<String, String> m = TreeMultimap.create(Ordering.natural(), Ordering.natural().reverse());
+
+    for (UpdateInfo update : brokenUpdates) {
+      m.put(update.getPluginId(), update.getVersion());
+    }
+
+    PrintWriter out = new PrintWriter(dumpBrokenPluginsFile);
+    try {
+      out.println("// This file contains list of broken plugins.\n" +
+          "// Each line contains plugin ID and list of versions that are broken.\n" +
+          "// If plugin name or version contains a space you can quote it like in command line.\n");
+
+      for (Map.Entry<String, Collection<String>> entry : m.asMap().entrySet()) {
+
+        out.print(ParametersListUtil.join(Collections.singletonList(entry.getKey())));
+        out.print("    ");
+        out.println(ParametersListUtil.join(new ArrayList<String>(entry.getValue())));
+      }
+    } finally {
+      out.close();
+    }
+  }
+
+  private static void saveResultsToXml(@NotNull String xmlFile, String ideVersion, Map<UpdateInfo, ProblemSet> results)
+      throws IOException {
+    Map<UpdateInfo, Collection<Problem>> problems = new LinkedHashMap<UpdateInfo, Collection<Problem>>();
+
+    for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
+      problems.put(entry.getKey(), entry.getValue().getAllProblems());
+    }
+
+    ProblemUtils.saveProblems(new File(xmlFile), ideVersion, problems);
+  }
+
   @Override
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.isEmpty()) {
-      throw Util.fail("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"");
+      throw com.intellij.structure.utils.Util.fail("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"");
     }
 
     File ideToCheck = new File(freeArgs.get(0));
     if (!ideToCheck.isDirectory()) {
-      throw Util.fail("IDE home is not a directory: " + ideToCheck);
+      throw com.intellij.structure.utils.Util.fail("IDE home is not a directory: " + ideToCheck);
     }
 
     TeamCityLog tc = TeamCityLog.getInstance(commandLine);
@@ -283,58 +335,5 @@ public class CheckIdeCommand extends VerifierCommand {
     }
 
     return 0;
-  }
-
-  private static void printTeamCityProblems(TeamCityLog log, Map<UpdateInfo, ProblemSet> results, Predicate<UpdateInfo> updateFilter) {
-    if (log == TeamCityLog.NULL_LOG) return;
-
-    Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
-
-    for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
-      if (!updateFilter.apply(entry.getKey())) continue;
-
-      for (Problem problem : entry.getValue().getAllProblems()) {
-        problems.put(problem, entry.getKey());
-      }
-    }
-
-    TeamCityUtil.printTeamCityProblems(log, problems);
-  }
-
-  private static void dumbBrokenPluginsList(@NotNull String dumpBrokenPluginsFile, Collection<UpdateInfo> brokenUpdates)
-    throws IOException {
-    Multimap<String, String> m = TreeMultimap.create(Ordering.natural(), Ordering.natural().reverse());
-
-    for (UpdateInfo update : brokenUpdates) {
-      m.put(update.getPluginId(), update.getVersion());
-    }
-
-    PrintWriter out = new PrintWriter(dumpBrokenPluginsFile);
-    try {
-      out.println("// This file contains list of broken plugins.\n" +
-                  "// Each line contains plugin ID and list of versions that are broken.\n" +
-                  "// If plugin name or version contains a space you can quote it like in command line.\n");
-
-      for (Map.Entry<String, Collection<String>> entry : m.asMap().entrySet()) {
-
-        out.print(ParametersListUtil.join(Collections.singletonList(entry.getKey())));
-        out.print("    ");
-        out.println(ParametersListUtil.join(new ArrayList<String>(entry.getValue())));
-      }
-    }
-    finally {
-      out.close();
-    }
-  }
-
-  private static void saveResultsToXml(@NotNull String xmlFile, String ideVersion, Map<UpdateInfo, ProblemSet> results)
-    throws IOException {
-    Map<UpdateInfo, Collection<Problem>> problems = new LinkedHashMap<UpdateInfo, Collection<Problem>>();
-
-    for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
-      problems.put(entry.getKey(), entry.getValue().getAllProblems());
-    }
-
-    ProblemUtils.saveProblems(new File(xmlFile), ideVersion, problems);
   }
 }

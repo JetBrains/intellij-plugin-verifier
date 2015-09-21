@@ -25,15 +25,47 @@ public class NewProblemsCommand extends VerifierCommand {
     super("new-problems");
   }
 
+  private static List<String> findPreviousBuilds(String currentBuild) throws IOException {
+    List<String> resultsOnInPluginRepository = GlobalRepository.loadAvailableCheckResultsList();
+
+    String firstBuild = System.getProperty("firstBuild");
+    if (firstBuild != null) {
+      int idx = resultsOnInPluginRepository.indexOf(firstBuild);
+      if (idx != -1) {
+        resultsOnInPluginRepository = resultsOnInPluginRepository.subList(idx, resultsOnInPluginRepository.size());
+      }
+    }
+
+    Pair<String, Integer> parsedCurrentBuild = parseBuildNumber(currentBuild);
+
+    TreeMap<Integer, String> buildMap = new TreeMap<Integer, String>();
+
+    for (String build : resultsOnInPluginRepository) {
+      Pair<String, Integer> pair = parseBuildNumber(build);
+
+      if (parsedCurrentBuild.first.equals(pair.first) && parsedCurrentBuild.second > pair.second) {
+        buildMap.put(pair.second, build);
+      }
+    }
+
+    return new ArrayList<String>(buildMap.values());
+  }
+
+  private static Pair<String, Integer> parseBuildNumber(String buildNumber) {
+    int idx = buildNumber.lastIndexOf('.');
+
+    return Pair.create(buildNumber.substring(0, idx), Integer.parseInt(buildNumber.substring(idx + 1)));
+  }
+
   @Override
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.isEmpty()) {
-      throw Util.fail("You have to specify IDE to check. For example: \"java -jar verifier.jar new-problems report-133.439.xml\"");
+      throw com.intellij.structure.utils.Util.fail("You have to specify IDE to check. For example: \"java -jar verifier.jar new-problems report-133.439.xml\"");
     }
 
     File reportToCheck = new File(freeArgs.get(0));
     if (!reportToCheck.isFile()) {
-      throw Util.fail("Report not found: " + reportToCheck);
+      throw com.intellij.structure.utils.Util.fail("Report not found: " + reportToCheck);
     }
 
     ResultsElement checkResult = ProblemUtils.loadProblems(reportToCheck);
@@ -111,37 +143,5 @@ public class NewProblemsCommand extends VerifierCommand {
                                         previousCheckedBuild.get(previousCheckedBuild.size() - 1)));
 
     return 0;
-  }
-
-  private static List<String> findPreviousBuilds(String currentBuild) throws IOException {
-    List<String> resultsOnInPluginRepository = GlobalRepository.loadAvailableCheckResultsList();
-
-    String firstBuild = System.getProperty("firstBuild");
-    if (firstBuild != null) {
-      int idx = resultsOnInPluginRepository.indexOf(firstBuild);
-      if (idx != -1) {
-        resultsOnInPluginRepository = resultsOnInPluginRepository.subList(idx, resultsOnInPluginRepository.size());
-      }
-    }
-
-    Pair<String, Integer> parsedCurrentBuild = parseBuildNumber(currentBuild);
-
-    TreeMap<Integer, String> buildMap = new TreeMap<Integer, String>();
-
-    for (String build : resultsOnInPluginRepository) {
-      Pair<String, Integer> pair = parseBuildNumber(build);
-
-      if (parsedCurrentBuild.first.equals(pair.first) && parsedCurrentBuild.second > pair.second) {
-        buildMap.put(pair.second, build);
-      }
-    }
-
-    return new ArrayList<String>(buildMap.values());
-  }
-
-  private static Pair<String, Integer> parseBuildNumber(String buildNumber) {
-    int idx = buildNumber.lastIndexOf('.');
-
-    return Pair.create(buildNumber.substring(0, idx), Integer.parseInt(buildNumber.substring(idx + 1)));
   }
 }

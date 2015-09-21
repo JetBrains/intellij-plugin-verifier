@@ -1,18 +1,12 @@
 package com.jetbrains.pluginverifier.utils;
 
-import com.google.common.base.Predicate;
-import com.jetbrains.pluginverifier.pool.ClassPool;
-import com.jetbrains.pluginverifier.pool.ContainerClassPool;
-import com.jetbrains.pluginverifier.pool.JarClassPool;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.jar.JarFile;
 
 public class Util {
 
@@ -33,12 +27,6 @@ public class Util {
     .addOption("pluginsFile", "plugins-to-check-file", true, "The file that contains list of plugins to check.")
     .addOption("cp", "external-class-path", true, "External class path");
 
-  public static RuntimeException fail(String message) {
-    System.err.println(message);
-    System.exit(1);
-    return new RuntimeException();
-  }
-
   public static void printHelp() {
     new HelpFormatter().printHelp("java -jar verifier.jar <command> [<args>]", CMD_OPTIONS);
   }
@@ -54,39 +42,6 @@ public class Util {
     }
 
     return new File(getValidatorHome(), "cache");
-  }
-
-  public static List<JarFile> getJars(File directory, Predicate<File> filter) throws IOException {
-    File[] children = directory.listFiles();
-
-    if (children == null) {
-      throw new IOException("Failed to read jar directory: " + directory);
-    }
-
-    List<JarFile> jarFiles = new ArrayList<JarFile>();
-
-    for (File file : children) {
-      if (file.getName().toLowerCase().endsWith(".jar") && filter.apply(file)) {
-        try {
-          jarFiles.add(new JarFile(file, false));
-        }
-        catch (IOException e) {
-          System.out.println("Failed to open jar file: " + file + " , " + e.getMessage());
-        }
-      }
-    }
-
-    return jarFiles;
-  }
-
-  public static ClassPool makeClassPool(String moniker, List<JarFile> jars) throws IOException {
-    List<ClassPool> pool = new ArrayList<ClassPool>();
-
-    for (JarFile jar : jars) {
-      pool.add(new JarClassPool(jar));
-    }
-
-    return ContainerClassPool.union(moniker, pool);
   }
 
   public static <T> List<T> concat(Collection<T> first, Collection<T> second) {

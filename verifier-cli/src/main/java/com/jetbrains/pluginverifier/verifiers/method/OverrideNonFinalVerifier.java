@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.verifiers.method;
 
+import com.intellij.structure.pool.ResolverUtil;
+import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
-import com.jetbrains.pluginverifier.pool.ResolverUtil;
 import com.jetbrains.pluginverifier.problems.OverridingFinalMethodProblem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
-import com.jetbrains.pluginverifier.resolvers.Resolver;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
