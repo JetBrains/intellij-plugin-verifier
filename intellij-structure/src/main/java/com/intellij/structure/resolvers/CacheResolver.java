@@ -1,7 +1,7 @@
 package com.intellij.structure.resolvers;
 
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.tree.ClassNode;
+import org.jetbrains.org.objectweb.asm.tree.ClassNode;
 
 import java.util.HashMap;
 import java.util.Map;

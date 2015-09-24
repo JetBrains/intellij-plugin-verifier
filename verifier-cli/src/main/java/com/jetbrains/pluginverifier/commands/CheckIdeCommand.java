@@ -165,7 +165,7 @@ public class CheckIdeCommand extends VerifierCommand {
     }
   }
 
-  private static void saveResultsToXml(@NotNull String xmlFile, String ideVersion, Map<UpdateInfo, ProblemSet> results)
+  private static void saveResultsToXml(@NotNull String xmlFile, @NotNull String ideVersion, @NotNull Map<UpdateInfo, ProblemSet> results)
       throws IOException {
     Map<UpdateInfo, Collection<Problem>> problems = new LinkedHashMap<UpdateInfo, Collection<Problem>>();
 

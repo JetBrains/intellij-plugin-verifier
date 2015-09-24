@@ -2,7 +2,7 @@ package com.intellij.structure.resolvers;
 
 import com.intellij.structure.pool.ClassPool;
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.tree.ClassNode;
+import org.jetbrains.org.objectweb.asm.tree.ClassNode;
 
 import java.util.List;
 

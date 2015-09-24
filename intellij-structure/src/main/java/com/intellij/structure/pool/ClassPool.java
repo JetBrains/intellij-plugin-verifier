@@ -3,7 +3,7 @@ package com.intellij.structure.pool;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.tree.ClassNode;
+import org.jetbrains.org.objectweb.asm.tree.ClassNode;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +26,7 @@ public interface ClassPool extends Resolver {
     }
 
     @Override
+    @NotNull
     public Collection<String> getAllClasses() {
       return Collections.emptySet();
     }

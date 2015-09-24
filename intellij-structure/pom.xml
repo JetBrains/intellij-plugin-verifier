@@ -32,9 +32,9 @@
             <version>4.11</version>
         </dependency>
         <dependency>
-            <groupId>org.ow2.asm</groupId>
-            <artifactId>asm-all</artifactId>
-            <version>5.0.4</version>
+            <groupId>org.jetbrains.asms</groupId>
+            <artifactId>asm503</artifactId>
+            <version>5.0.3</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -47,6 +47,7 @@
             <version>2.3</version>
         </dependency>
     </dependencies>
+
 
     <build>
         <plugins>

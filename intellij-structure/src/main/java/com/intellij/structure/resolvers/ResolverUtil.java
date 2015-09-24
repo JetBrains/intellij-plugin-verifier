@@ -1,10 +1,9 @@
-package com.intellij.structure.pool;
+package com.intellij.structure.resolvers;
 
-import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
+import org.jetbrains.org.objectweb.asm.tree.ClassNode;
+import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 
 /**
  * @author Dennis.Ushakov

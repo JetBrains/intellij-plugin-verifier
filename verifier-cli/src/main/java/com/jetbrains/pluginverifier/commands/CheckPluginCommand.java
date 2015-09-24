@@ -6,6 +6,7 @@ import com.google.common.io.Files;
 import com.intellij.structure.domain.Idea;
 import com.intellij.structure.domain.IdeaPlugin;
 import com.intellij.structure.domain.JDK;
+import com.intellij.structure.utils.Util;
 import com.jetbrains.pluginverifier.CommandHolder;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
@@ -46,7 +47,7 @@ public class CheckPluginCommand extends VerifierCommand {
       try {
         pluginPaths = Files.readLines(pluginListFile, Charsets.UTF_8);
       } catch (IOException e) {
-        throw com.intellij.structure.utils.Util.fail("Cannot load plugins from " + pluginListFile.getAbsolutePath() + ": " + e.getMessage());
+        throw Util.fail("Cannot load plugins from " + pluginListFile.getAbsolutePath() + ": " + e.getMessage());
       }
       List<File> pluginsFiles = new ArrayList<File>();
       for (String pluginPath : pluginPaths) {
@@ -60,7 +61,7 @@ public class CheckPluginCommand extends VerifierCommand {
             file = new File(pluginListFile.getParentFile(), pluginPath);
           }
           if (!file.exists()) {
-            throw com.intellij.structure.utils.Util.fail("Plugin file '" + pluginPath + "' specified in '" + pluginListFile.getAbsolutePath() + "' doesn't exist");
+            throw Util.fail("Plugin file '" + pluginPath + "' specified in '" + pluginListFile.getAbsolutePath() + "' doesn't exist");
           }
         }
         pluginsFiles.add(file);
@@ -73,13 +74,13 @@ public class CheckPluginCommand extends VerifierCommand {
         File update = RepositoryManager.getInstance().getOrLoadUpdate(updateInfo);
         return Collections.singletonList(update);
       } catch (IOException e) {
-        throw com.intellij.structure.utils.Util.fail("Cannot load plugin '" + pluginId + "': " + e.getMessage());
+        throw Util.fail("Cannot load plugin '" + pluginId + "': " + e.getMessage());
       }
     } else {
       File file = new File(pluginToTestArg);
       if (!file.exists()) {
         // Looks like user write unknown command. This command was called because it's default command.
-        throw com.intellij.structure.utils.Util.fail("Unknown command: " + pluginToTestArg + "\navailable commands: " + Joiner.on(", ").join(CommandHolder.getCommandMap().keySet()));
+        throw Util.fail("Unknown command: " + pluginToTestArg + "\navailable commands: " + Joiner.on(", ").join(CommandHolder.getCommandMap().keySet()));
       }
       return Collections.singletonList(file);
     }
@@ -90,16 +91,16 @@ public class CheckPluginCommand extends VerifierCommand {
     try {
       compatibleUpdatesForPlugins = RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(ideVersion, Collections.singletonList(pluginId));
     } catch (IOException e) {
-      throw com.intellij.structure.utils.Util.fail("Failed to fetch list of '" + pluginId + "' versions: " + e.getMessage());
+      throw Util.fail("Failed to fetch list of '" + pluginId + "' versions: " + e.getMessage());
     }
     if (compatibleUpdatesForPlugins.isEmpty()) {
-      throw com.intellij.structure.utils.Util.fail("No versions of '" + pluginId + "' compatible with '" + ideVersion + "' are found.");
+      throw Util.fail("No versions of '" + pluginId + "' compatible with '" + ideVersion + "' are found.");
     }
     UpdateInfo updateInfo = compatibleUpdatesForPlugins.get(0);
     try {
       return RepositoryManager.getInstance().getOrLoadUpdate(updateInfo);
     } catch (IOException e) {
-      throw com.intellij.structure.utils.Util.fail("Cannot download '" + updateInfo + "': " + e.getMessage());
+      throw Util.fail("Cannot download '" + updateInfo + "': " + e.getMessage());
     }
   }
 
@@ -107,7 +108,7 @@ public class CheckPluginCommand extends VerifierCommand {
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (commandLine.getArgs().length == 0) {
       // it's default command. Looks like user start application without parameters
-      throw com.intellij.structure.utils.Util.fail("You must specify one of the commands: " + Joiner.on(", ").join(CommandHolder.getCommandMap().keySet()) + "\n" +
+      throw Util.fail("You must specify one of the commands: " + Joiner.on(", ").join(CommandHolder.getCommandMap().keySet()) + "\n" +
                       "Examples:\n" +
                       "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963 ~/EAPs/idea-IU-129.713 ~/EAPs/idea-IU-133.439\n" +
                       "java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439 -pl org.intellij.scala");
@@ -115,7 +116,7 @@ public class CheckPluginCommand extends VerifierCommand {
 
     if (freeArgs.isEmpty()) {
       // User run command 'check-plugin' without parameters
-      throw com.intellij.structure.utils.Util.fail("You must specify plugin to check and IDE, example:\n" +
+      throw Util.fail("You must specify plugin to check and IDE, example:\n" +
                       "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963\n" +
                       "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963");
     }
@@ -123,7 +124,7 @@ public class CheckPluginCommand extends VerifierCommand {
     String pluginToTestArg = freeArgs.get(0);
 
     if (freeArgs.size() == 1) {
-      throw com.intellij.structure.utils.Util.fail("You must specify IDE directory/directories, example:\n" +
+      throw Util.fail("You must specify IDE directory/directories, example:\n" +
                       "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963");
     }
 
@@ -139,11 +140,11 @@ public class CheckPluginCommand extends VerifierCommand {
       File ideaDirectory = new File(freeArgs.get(i));
 
       if (!ideaDirectory.exists()) {
-        throw com.intellij.structure.utils.Util.fail("IDE directory is not found: " + ideaDirectory);
+        throw Util.fail("IDE directory is not found: " + ideaDirectory);
       }
 
       if (!ideaDirectory.isDirectory()) {
-        throw com.intellij.structure.utils.Util.fail("IDE directory is not a directory: " + ideaDirectory);
+        throw Util.fail("IDE directory is not a directory: " + ideaDirectory);
       }
 
       Idea idea = new Idea(ideaDirectory, jdk, getExternalClassPath(commandLine));

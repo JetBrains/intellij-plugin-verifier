@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.util;
 
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.tree.MethodNode;
+import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 
 /**
  * @author Sergey Evdokimov

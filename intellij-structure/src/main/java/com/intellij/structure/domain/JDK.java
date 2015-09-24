@@ -19,16 +19,14 @@ public class JDK {
   private static final Set<String> JDK_JAR_NAMES = ImmutableSet.of("rt.jar", "tools.jar", "classes.jar", "jsse.jar", "javaws.jar",
                                                                    "jce.jar");
 
-  private final File myJdkDir;
   private final List<JarFile> myJars;
   private final ClassPool myPool;
 
   public JDK(final File jdkDir) throws IOException {
-    myJdkDir = jdkDir;
     myJars = new ArrayList<JarFile>();
 
     collectJars(jdkDir);
-    myPool = Util.makeClassPool(myJdkDir.getPath(), myJars);
+    myPool = Util.makeClassPool(jdkDir.getPath(), myJars);
   }
 
   private void collectJars(File dir) throws IOException {
@@ -42,8 +40,9 @@ public class JDK {
     myJars.addAll(jars);
 
     final File[] files = dir.listFiles();
-    if (files == null)
+    if (files == null) {
       return;
+    }
 
     for (File file : files) {
       if (file.isDirectory())

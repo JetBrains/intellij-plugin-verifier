@@ -3,7 +3,7 @@ package com.intellij.structure.resolvers;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.tree.ClassNode;
+import org.jetbrains.org.objectweb.asm.tree.ClassNode;
 
 /**
  * Provides access to byte-code of class by its name

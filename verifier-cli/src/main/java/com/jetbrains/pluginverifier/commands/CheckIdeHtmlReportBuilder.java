@@ -9,7 +9,9 @@ import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
-import com.jetbrains.pluginverifier.utils.*;
+import com.jetbrains.pluginverifier.utils.ProblemUtils;
+import com.jetbrains.pluginverifier.utils.StringUtil;
+import com.jetbrains.pluginverifier.utils.ToStringCachedComparator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -27,7 +29,8 @@ public class CheckIdeHtmlReportBuilder {
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   public static void build(@NotNull File report,
                            @NotNull String ideVersion,
-                           List<String> pluginIds, @NotNull Predicate<UpdateInfo> updateFilter,
+                           @NotNull List<String> pluginIds,
+                           @NotNull Predicate<UpdateInfo> updateFilter,
                            @NotNull Map<UpdateInfo, ProblemSet> results)
     throws IOException {
     Map<String, List<UpdateInfo>> pluginsMap = new TreeMap<String, List<UpdateInfo>>();

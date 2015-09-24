@@ -1,8 +1,8 @@
 package com.intellij.structure.pool;
 
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.tree.ClassNode;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.tree.ClassNode;
 
 import java.util.Collection;
 import java.util.Collections;

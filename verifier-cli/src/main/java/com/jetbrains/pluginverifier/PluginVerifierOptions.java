@@ -58,7 +58,7 @@ public class PluginVerifierOptions {
   }
 
   @NotNull
-  public static PluginVerifierOptions parseOpts(CommandLine commandLine) {
+  public static PluginVerifierOptions parseOpts(@NotNull CommandLine commandLine) {
     PluginVerifierOptions res = new PluginVerifierOptions();
 
     String[] prefixesToSkipForDuplicateClassesCheck = getOptionValuesSplit(commandLine, ":", "s");
