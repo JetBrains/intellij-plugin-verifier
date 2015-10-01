@@ -8,7 +8,7 @@
   <parent>
     <groupId>org.jetbrains.plugin-verifier</groupId>
     <artifactId>verifier-parent</artifactId>
-    <version>${verifier-version}</version>
+    <version>${intellij.plugin.verifier.version}</version>
   </parent>
 
   <artifactId>verifier-problems</artifactId>
