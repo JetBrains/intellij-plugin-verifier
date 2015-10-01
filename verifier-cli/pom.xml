@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.jetbrains.plugin-verifier</groupId>
         <artifactId>verifier-parent</artifactId>
-        <version>${verifier-version}</version>
+        <version>${intellij.plugin.verifier.version}</version>
     </parent>
 
     <artifactId>verifier-cli</artifactId>
@@ -18,7 +18,7 @@
         <dependency>
             <groupId>org.jetbrains.plugin-verifier</groupId>
             <artifactId>verifier-problems</artifactId>
-            <version>${verifier-version}</version>
+            <version>${intellij.plugin.verifier.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-cli</groupId>

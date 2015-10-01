@@ -7,7 +7,7 @@
 
     <groupId>org.jetbrains.plugin-verifier</groupId>
     <artifactId>verifier-parent</artifactId>
-    <version>${verifier-version}</version>
+    <version>${intellij.plugin.verifier.version}</version>
 
     <packaging>pom</packaging>
 
@@ -20,7 +20,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <verifier-version>2.0-SNAPSHOT</verifier-version>
+        <intellij.plugin.verifier.version>1.0</intellij.plugin.verifier.version>
         <jdk.version>1.6</jdk.version>
     </properties>
 
