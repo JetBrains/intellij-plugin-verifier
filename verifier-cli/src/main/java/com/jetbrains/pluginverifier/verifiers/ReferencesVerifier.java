@@ -14,7 +14,7 @@ import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier;
 import com.jetbrains.pluginverifier.verifiers.instruction.InstructionVerifier;
 import com.jetbrains.pluginverifier.verifiers.method.MethodVerifier;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.*;
 
 import java.util.Collection;
 import java.util.Iterator;

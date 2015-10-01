@@ -6,9 +6,9 @@ import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.problems.OverridingFinalMethodProblem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
-import org.jetbrains.org.objectweb.asm.Opcodes;
-import org.jetbrains.org.objectweb.asm.tree.ClassNode;
-import org.jetbrains.org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 /**
  * @author Dennis.Ushakov

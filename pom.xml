@@ -15,8 +15,8 @@
         <module>verifier-problems</module>
         <module>verifier-cli</module>
         <module>uploader</module>
-        <module>intellij-structure</module>
     </modules>
+
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -41,6 +41,37 @@
         </plugins>
     </build>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.jetbrains.intellij.structure</groupId>
+            <artifactId>intellij-structure</artifactId>
+            <version>1.0</version>
+        </dependency>
+    </dependencies>
+
+
+    <repositories>
+        <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>bintray-sergey-patrikeev-intellij.structure</id>
+            <name>bintray</name>
+            <url>http://dl.bintray.com/sergey-patrikeev/intellij.structure</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>bintray-sergey-patrikeev-intellij.structure</id>
+            <name>bintray-plugins</name>
+            <url>http://dl.bintray.com/sergey-patrikeev/intellij.structure</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -51,7 +82,7 @@
             <dependency>
                 <groupId>com.intellij</groupId>
                 <artifactId>annotations</artifactId>
-                <version>RELEASE</version>
+                <version>12.0</version>
             </dependency>
             <dependency>
                 <groupId>junit</groupId>
