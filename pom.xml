@@ -69,6 +69,11 @@
             <artifactId>intellij-structure</artifactId>
             <version>1.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-all</artifactId>
+            <version>5.0.4</version>
+        </dependency>
     </dependencies>
 
 
