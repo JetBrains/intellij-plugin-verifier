@@ -18,6 +18,7 @@
     </modules>
 
 
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <intellij.plugin.verifier.version>1.0</intellij.plugin.verifier.version>
@@ -120,12 +121,11 @@
         </dependencies>
     </dependencyManagement>
 
-
     <distributionManagement>
         <repository>
             <id>bintray</id>
-            <url>https://api.bintray.com/content/sergey-patrikeev/intellij-plugin-verifier/intellij-plugin-verifier
-            </url>
+            <url>https://api.bintray.com/content/sergey-patrikeev/plugin-verifier/verifier</url>
         </repository>
     </distributionManagement>
+
 </project>
