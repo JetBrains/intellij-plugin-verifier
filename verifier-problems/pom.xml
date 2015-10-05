@@ -4,6 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
+  <artifactId>verifier-problems</artifactId>
+  <packaging>jar</packaging>
 
   <parent>
     <groupId>org.jetbrains.plugin-verifier</groupId>
@@ -11,29 +13,8 @@
     <version>${intellij.plugin.verifier.version}</version>
   </parent>
 
-  <artifactId>verifier-problems</artifactId>
-
-  <scm>
-    <connection>scm:git:https://github.com/serejke/intellij-structure.git</connection>
-    <developerConnection>scm:git:https://github.com/serejke/intellij-structure.git</developerConnection>
-    <url>https://github.com/serejke/intellij-structure</url>
-    <tag>HEAD</tag>
-  </scm>
-
-
   <build>
     <plugins>
-      <plugin>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>2.5.2</version>
-        <configuration>
-          <useReleaseProfile>false</useReleaseProfile>
-          <releaseProfiles>release</releaseProfiles>
-          <autoVersionSubmodules>true</autoVersionSubmodules>
-        </configuration>
-      </plugin>
-
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
@@ -49,13 +30,5 @@
       </plugin>
     </plugins>
   </build>
-
-  <distributionManagement>
-    <repository>
-      <id>bintray</id>
-      <url>https://api.bintray.com/content/sergey-patrikeev/plugin-verifier/verifier</url>
-    </repository>
-  </distributionManagement>
-
 
 </project>

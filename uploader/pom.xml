@@ -3,16 +3,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <artifactId>uploader</artifactId>
+  <packaging>jar</packaging>
 
   <parent>
     <groupId>org.jetbrains.plugin-verifier</groupId>
     <artifactId>verifier-parent</artifactId>
     <version>${intellij.plugin.verifier.version}</version>
   </parent>
-
-  <artifactId>uploader</artifactId>
-
-  <packaging>jar</packaging>
 
   <dependencies>
     <dependency>
@@ -26,27 +24,5 @@
       <version>4.3.1</version>
     </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>2.5.2</version>
-        <configuration>
-          <useReleaseProfile>false</useReleaseProfile>
-          <releaseProfiles>release</releaseProfiles>
-          <autoVersionSubmodules>true</autoVersionSubmodules>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-
-  <distributionManagement>
-    <repository>
-      <id>bintray</id>
-      <url>https://api.bintray.com/content/sergey-patrikeev/plugin-verifier/verifier</url>
-    </repository>
-  </distributionManagement>
-
 
 </project>

@@ -5,19 +5,16 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.jetbrains.plugin-verifier</groupId>
-    <artifactId>verifier-parent</artifactId>
-    <version>${intellij.plugin.verifier.version}</version>
-
-    <packaging>pom</packaging>
-
     <modules>
         <module>verifier-problems</module>
         <module>verifier-cli</module>
         <module>uploader</module>
     </modules>
 
-
+    <groupId>org.jetbrains.plugin-verifier</groupId>
+    <artifactId>verifier-parent</artifactId>
+    <version>${intellij.plugin.verifier.version}</version>
+    <packaging>pom</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -25,7 +22,23 @@
         <jdk.version>1.6</jdk.version>
     </properties>
 
+
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.6</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>2.4</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <plugin>
                 <artifactId>maven-release-plugin</artifactId>
@@ -123,8 +136,8 @@
 
     <distributionManagement>
         <repository>
-            <id>bintray</id>
-            <url>https://api.bintray.com/content/sergey-patrikeev/plugin-verifier/verifier</url>
+            <id>bintray-repo-maven-sergey-patrikeev</id>
+            <url>https://api.bintray.com/maven/sergey-patrikeev/intellij-plugin-verifier/verifier-main/;publish=1</url>
         </repository>
     </distributionManagement>
 
