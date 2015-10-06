@@ -10,7 +10,7 @@
   <parent>
     <groupId>org.jetbrains.plugin-verifier</groupId>
     <artifactId>verifier-parent</artifactId>
-    <version>${intellij.plugin.verifier.version}</version>
+    <version>4.0</version>
   </parent>
 
   <build>

@@ -13,12 +13,11 @@
 
     <groupId>org.jetbrains.plugin-verifier</groupId>
     <artifactId>verifier-parent</artifactId>
-    <version>${intellij.plugin.verifier.version}</version>
+    <version>4.0</version>
     <packaging>pom</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <intellij.plugin.verifier.version>1.0</intellij.plugin.verifier.version>
         <jdk.version>1.6</jdk.version>
     </properties>
 
