@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.MethodNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.utils.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
@@ -21,15 +22,16 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       return;
 
     MethodInsnNode invoke = (MethodInsnNode) instr;
-    if (invoke.name.startsWith("access$"))
+    if (invoke.name.startsWith("access$")) //?
       return;
 
-    if (invoke.owner.startsWith("java/dyn/"))
+    if (invoke.owner.startsWith("java/dyn/")) //?
       return;
 
     String className = invoke.owner;
 
     if (className.startsWith("[")) return;
+
 
     if (ctx.getOptions().isExternalClass(className)) return;
 
@@ -38,7 +40,9 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       ctx.registerProblem(new ClassNotFoundProblem(className), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));
     }
     else {
-      if (ResolverUtil.findMethod(resolver, classNode, invoke.name, invoke.desc) == null) {
+      ResolverUtil.MethodLocation location = ResolverUtil.findMethod(resolver, classNode, invoke.name, invoke.desc);
+
+      if (location == null || isDefaultConstructorNotFound(invoke, className, location)) {
         String calledMethod = invoke.owner + '#' + invoke.name + invoke.desc;
 
         if (invoke.owner.equals(clazz.name)) {
@@ -54,5 +58,11 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
 
       //TODO: add access modifier check of invoked method
     }
+  }
+
+  private boolean isDefaultConstructorNotFound(@NotNull MethodInsnNode invoke,
+                                               @NotNull String className,
+                                               @NotNull ResolverUtil.MethodLocation location) {
+    return invoke.name.equals("<init>") && invoke.desc.equals("()V") && !location.getClassNode().name.equals(className);
   }
 }

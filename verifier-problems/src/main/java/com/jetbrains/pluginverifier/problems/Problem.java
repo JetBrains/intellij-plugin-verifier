@@ -1,8 +1,5 @@
 package com.jetbrains.pluginverifier.problems;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import javax.xml.bind.annotation.XmlTransient;
 
 /**

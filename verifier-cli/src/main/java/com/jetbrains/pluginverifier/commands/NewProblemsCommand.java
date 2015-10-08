@@ -162,7 +162,7 @@ public class NewProblemsCommand extends VerifierCommand {
       tc.buildProblem(tcMessages.get(i).first, tcMessages.get(i).second);
     }
 
-    //number of NEW' problems (compared to EARLIEST check)
+    //number of NEW' problems (compared to the EARLIEST check)
     final int newProblemsCount = currProblems.size();
 
     tc.buildStatusSuccess(String.format("Done, %d new problems found between (excluding) %s and %s. Current build is %s",
