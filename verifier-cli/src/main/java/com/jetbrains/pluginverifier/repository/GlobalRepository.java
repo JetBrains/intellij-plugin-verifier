@@ -30,6 +30,23 @@ public class GlobalRepository extends PluginRepository {
     this.url = url;
   }
 
+  /**
+   * Returns list of already checked IDEA builds (for which report was loaded)
+   */
+  public static List<String> loadAvailableCheckResultsList() throws IOException {
+    URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/problems/resultList?format=txt");
+
+    String text = IOUtils.toString(url);
+
+    List<String> res = new ArrayList<String>();
+
+    for (StringTokenizer st = new StringTokenizer(text, " ,"); st.hasMoreTokens(); ) {
+      res.add(st.nextToken());
+    }
+
+    return res;
+  }
+
   @Override
   public List<UpdateInfo> getAllCompatibleUpdates(@NotNull String ideVersion) throws IOException {
     System.out.println("Loading compatible plugins list... ");
@@ -80,20 +97,6 @@ public class GlobalRepository extends PluginRepository {
     assert update.getUpdateId() != null;
 
     return url + "/plugin/download/?noStatistic=true&updateId=" + update.getUpdateId();
-  }
-
-  public static List<String> loadAvailableCheckResultsList() throws IOException {
-    URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/problems/resultList?format=txt");
-
-    String text = IOUtils.toString(url);
-
-    List<String> res = new ArrayList<String>();
-
-    for (StringTokenizer st = new StringTokenizer(text, " ,"); st.hasMoreTokens(); ) {
-      res.add(st.nextToken());
-    }
-
-    return res;
   }
 
 }

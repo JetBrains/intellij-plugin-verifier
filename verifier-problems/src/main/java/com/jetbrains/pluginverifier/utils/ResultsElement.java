@@ -89,6 +89,7 @@ public class ResultsElement {
 
     StringWriter s = new StringWriter();
 
+    //for each problem its unique id
     LinkedHashMap<Problem, Integer> problemIndexMap = new LinkedHashMap<Problem, Integer>();
 
     int idx = 0;
@@ -97,6 +98,7 @@ public class ResultsElement {
       UpdateInfo update = entry.getKey();
       Collection<Problem> problemSet = entry.getValue();
 
+      //number of problems for this plugin
       s.append(String.valueOf(problemSet.size()));
 
       for (Problem problem : problemSet) {
@@ -107,6 +109,7 @@ public class ResultsElement {
           problemIndexMap.put(problem, problemIndex);
         }
 
+        //set of numbers of problems for this plugin
         s.append(' ').append(String.valueOf(problemIndex));
       }
 

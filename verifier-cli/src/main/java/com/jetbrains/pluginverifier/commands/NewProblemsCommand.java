@@ -25,11 +25,18 @@ public class NewProblemsCommand extends VerifierCommand {
     super("new-problems");
   }
 
+  /**
+   * @return list of IDEA builds for which check is already performed and
+   * its main-part equals to the given main-part (141 and 141)
+   * and the build number LESS than given build number.
+   * NOTE: in ascending order, i.e. 141.01, 141.05, 141.264...
+   */
   private static List<String> findPreviousBuilds(String currentBuild) throws IOException {
     List<String> resultsOnInPluginRepository = GlobalRepository.loadAvailableCheckResultsList();
 
     String firstBuild = System.getProperty("firstBuild");
     if (firstBuild != null) {
+      //filter builds so that only the firstBuild and older are kept
       int idx = resultsOnInPluginRepository.indexOf(firstBuild);
       if (idx != -1) {
         resultsOnInPluginRepository = resultsOnInPluginRepository.subList(idx, resultsOnInPluginRepository.size());
@@ -43,6 +50,7 @@ public class NewProblemsCommand extends VerifierCommand {
     for (String build : resultsOnInPluginRepository) {
       Pair<String, Integer> pair = parseBuildNumber(build);
 
+      //NOTE: compares only IDEAs of the same release! that is 141.* between each others
       if (parsedCurrentBuild.first.equals(pair.first) && parsedCurrentBuild.second > pair.second) {
         buildMap.put(pair.second, build);
       }
@@ -51,6 +59,9 @@ public class NewProblemsCommand extends VerifierCommand {
     return new ArrayList<String>(buildMap.values());
   }
 
+  /**
+   * e.g. IU-141.1532 -> < IU-141 , 1532>
+   */
   private static Pair<String, Integer> parseBuildNumber(String buildNumber) {
     int idx = buildNumber.lastIndexOf('.');
 
@@ -68,59 +79,73 @@ public class NewProblemsCommand extends VerifierCommand {
       throw com.intellij.structure.utils.Util.fail("Report not found: " + reportToCheck);
     }
 
-    ResultsElement checkResult = ProblemUtils.loadProblems(reportToCheck);
+    ResultsElement currentCheckResult = ProblemUtils.loadProblems(reportToCheck);
 
-    List<String> previousCheckedBuild = findPreviousBuilds(checkResult.getIde());
+    List<String> previousCheckedBuilds = findPreviousBuilds(currentCheckResult.getIde());
 
-    if (previousCheckedBuild.isEmpty()) {
+    if (previousCheckedBuilds.isEmpty()) {
       System.out.println("Plugin repository does not contain check result to compare.");
       return 0;
     }
 
-    Multimap<Problem, UpdateInfo> problemsToUpdates = ArrayListMultimap.create();
 
-    for (Map.Entry<UpdateInfo, Collection<Problem>> entry : checkResult.asMap().entrySet()) {
-      for (Problem problem : entry.getValue()) {
-        problemsToUpdates.put(problem, entry.getKey());
-      }
-    }
+    //---------------------------------------------------
 
-    Multimap<String, Problem> buildToProblems = ArrayListMultimap.create();
+    Multimap<Problem, UpdateInfo> currentProblemsToUpdates = rearrangeProblemsMap(currentCheckResult);
 
-    Set<Problem> problems = new HashSet<Problem>(problemsToUpdates.keySet());
 
-    String firstCheckedBuild = previousCheckedBuild.get(0);
-    ResultsElement firstBuildResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResult(firstCheckedBuild));
+    //Problems of this check
+    Set<Problem> currProblems = new HashSet<Problem>(currentProblemsToUpdates.keySet());
 
-    problems.removeAll(firstBuildResult.getProblems());
+    ResultsElement smallestCheckResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResultFile(previousCheckedBuilds.get(0)));
 
-    int newProblemsCount = problems.size();
+    //leave only NEW' problems of this check compared with the EARLIEST check
+    currProblems.removeAll(smallestCheckResult.getProblems());
 
-    for (int i = 1; i < previousCheckedBuild.size(); i++) {
-      String prevBuild = previousCheckedBuild.get(i);
-      ResultsElement prevBuildResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResult(prevBuild));
+    //Map: <Build Number -> List[Problem for which this problem occurred first]>
+    Multimap<String, Problem> firstOccurrenceBuildToProblems = ArrayListMultimap.create();
+
+    for (int i = 1; i < previousCheckedBuilds.size(); i++) {
+      String prevBuild = previousCheckedBuilds.get(i);
+
+      //check result in ascending order of builds
+      ResultsElement prevBuildResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResultFile(prevBuild));
 
       for (Problem problem : prevBuildResult.getProblems()) {
-        if (problems.remove(problem)) {
-          buildToProblems.put(prevBuild, problem);
+        if (currProblems.remove(problem)) {
+          firstOccurrenceBuildToProblems.put(prevBuild, problem);
         }
       }
     }
 
-    String currentBuildName = "#" + checkResult.getIde();
+    //currProblems == NEW (no more earlier) problems
+    //buildToProblems == UNRESOLVED problems with by the first occurrence
 
-    buildToProblems.putAll(currentBuildName, problems);
+    String currentBuildName = "#" + currentCheckResult.getIde();
+
+    //firstOccurrenceBuildToProblems = UNRESOLVED PROBLEMS: <IDEA-build -> ALL the problems of the this build (in which these problems were met first)>
+    firstOccurrenceBuildToProblems.putAll(currentBuildName, currProblems);
+
+    //---------------------------------------------------
+
 
     List<Pair<String, String>> tcMessages = new ArrayList<Pair<String, String>>();
 
-    for (String prevBuild : Iterables.concat(previousCheckedBuild.subList(1, previousCheckedBuild.size()), Collections.singleton(currentBuildName))) {
-      Collection<Problem> problemsInBuild = buildToProblems.get(prevBuild);
-      if (!problemsInBuild.isEmpty()) {
-        System.out.printf("\nIn %s found %d new problems:\n", prevBuild,problemsInBuild.size());
+    //ALL the builds (excluding the EARLIEST one) AND (including this one)
+    Iterable<String> allBuilds = Iterables.concat(previousCheckedBuilds.subList(1, previousCheckedBuilds.size()), Collections.singleton(currentBuildName));
 
+    for (String prevBuild : allBuilds) {
+      //UNRESOLVED problems since build #prevBuild
+      Collection<Problem> problemsInBuild = firstOccurrenceBuildToProblems.get(prevBuild);
+
+      //For the IDEA-build list of yet UNRESOLVED problems
+      if (!problemsInBuild.isEmpty()) {
+        System.out.printf("\nIn %s found %d new problems:\n", prevBuild, problemsInBuild.size());
+
+        //in sorted by problem-description order
         for (Problem problem : ProblemUtils.sort(problemsInBuild)) {
           CharSequence problemDescription = MessageUtils.cutCommonPackages(problem.getDescription());
-          Collection<UpdateInfo> affectedUpdates = problemsToUpdates.get(problem);
+          Collection<UpdateInfo> affectedUpdates = currentProblemsToUpdates.get(problem);
 
           System.out.print("    ");
           System.out.println(problemDescription);
@@ -137,11 +162,29 @@ public class NewProblemsCommand extends VerifierCommand {
       tc.buildProblem(tcMessages.get(i).first, tcMessages.get(i).second);
     }
 
-    tc.buildStatusSuccess(String.format("Done, %d new problems found between %s and %s",
-                                        newProblemsCount,
-                                        previousCheckedBuild.get(0),
-                                        previousCheckedBuild.get(previousCheckedBuild.size() - 1)));
+    //number of NEW' problems (compared to EARLIEST check)
+    final int newProblemsCount = currProblems.size();
+
+    tc.buildStatusSuccess(String.format("Done, %d new problems found between (excluding) %s and %s. Current build is %s",
+        newProblemsCount,
+        previousCheckedBuilds.get(0),
+        previousCheckedBuilds.get(previousCheckedBuilds.size() - 1),
+        currentCheckResult.getIde())
+    );
 
     return 0;
+  }
+
+  @NotNull
+  private Multimap<Problem, UpdateInfo> rearrangeProblemsMap(ResultsElement currentCheckResult) {
+    Multimap<Problem, UpdateInfo> currentProblemsToUpdates = ArrayListMultimap.create();
+
+    //rearrange existing map: Map<Problem -> [plugin ids]>
+    for (Map.Entry<UpdateInfo, Collection<Problem>> entry : currentCheckResult.asMap().entrySet()) {
+      for (Problem problem : entry.getValue()) {
+        currentProblemsToUpdates.put(problem, entry.getKey());
+      }
+    }
+    return currentProblemsToUpdates;
   }
 }

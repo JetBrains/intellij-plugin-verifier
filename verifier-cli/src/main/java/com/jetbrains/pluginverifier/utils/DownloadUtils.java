@@ -28,6 +28,7 @@ public class DownloadUtils {
     httpDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
 
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   public static File getOrCreateDownloadDir() {
     File downloadDir = Util.getPluginCacheDir();
     if (!downloadDir.isDirectory()) {
@@ -40,7 +41,8 @@ public class DownloadUtils {
     return downloadDir;
   }
 
-  public static File getCheckResult(String build) throws IOException {
+  @SuppressWarnings("ResultOfMethodCallIgnored")
+  public static File getCheckResultFile(String build) throws IOException {
     File downloadDir = getOrCreateDownloadDir();
 
     File checkResDir = new File(downloadDir, "checkResult");
@@ -53,6 +55,7 @@ public class DownloadUtils {
     return res;
   }
 
+  @SuppressWarnings({"ResultOfMethodCallIgnored", "StatementWithEmptyBody"})
   private static void updateFile(URL url, File file) throws IOException {
     long lastModified = file.lastModified();
 

@@ -51,6 +51,8 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
         ctx.registerProblem(new MethodNotFoundProblem(calledMethod),
                             new ProblemLocation(clazz.name, method.name + method.desc));
       }
+
+      //TODO: add access modifier check of invoked method
     }
   }
 }
