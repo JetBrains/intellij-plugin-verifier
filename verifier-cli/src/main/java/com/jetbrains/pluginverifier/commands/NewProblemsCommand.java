@@ -60,7 +60,7 @@ public class NewProblemsCommand extends VerifierCommand {
   }
 
   /**
-   * e.g. IU-141.1532 -> < IU-141 , 1532>
+   * e.g. IU-141.1532 -> < IU-141, 1532>
    */
   private static Pair<String, Integer> parseBuildNumber(String buildNumber) {
     int idx = buildNumber.lastIndexOf('.');
@@ -97,9 +97,8 @@ public class NewProblemsCommand extends VerifierCommand {
     //Problems of this check
     Set<Problem> currProblems = new HashSet<Problem>(currentProblemsToUpdates.keySet());
 
-    ResultsElement smallestCheckResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResultFile(previousCheckedBuilds.get(0)));
-
     //leave only NEW' problems of this check compared with the EARLIEST check
+    ResultsElement smallestCheckResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResultFile(previousCheckedBuilds.get(0)));
     currProblems.removeAll(smallestCheckResult.getProblems());
 
     //Map: <Build Number -> List[Problem for which this problem occurred first]>
@@ -118,12 +117,9 @@ public class NewProblemsCommand extends VerifierCommand {
       }
     }
 
-    //currProblems == NEW (no more earlier) problems
-    //buildToProblems == UNRESOLVED problems with by the first occurrence
+    final String currentBuildName = currentCheckResult.getIde();
 
-    String currentBuildName = "#" + currentCheckResult.getIde();
-
-    //firstOccurrenceBuildToProblems = UNRESOLVED PROBLEMS: <IDEA-build -> ALL the problems of the this build (in which these problems were met first)>
+    //UNRESOLVED PROBLEMS: <IDEA-build -> ALL the problems of the this build (in which these problems were met first)>
     firstOccurrenceBuildToProblems.putAll(currentBuildName, currProblems);
 
     //---------------------------------------------------
@@ -165,7 +161,7 @@ public class NewProblemsCommand extends VerifierCommand {
     //number of NEW' problems (compared to the EARLIEST check)
     final int newProblemsCount = currProblems.size();
 
-    tc.buildStatusSuccess(String.format("Done, %d new problems found between (excluding) %s and %s. Current build is %s",
+    tc.buildStatusSuccess(String.format("Done, %d new problems found between %s and %s. Current build is %s",
         newProblemsCount,
         previousCheckedBuilds.get(0),
         previousCheckedBuilds.get(previousCheckedBuilds.size() - 1),

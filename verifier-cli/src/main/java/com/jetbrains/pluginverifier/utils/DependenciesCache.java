@@ -71,6 +71,8 @@ public class DependenciesCache {
   }
 
   public Set<IdeaPlugin> getDependenciesWithTransitive(Idea ide, IdeaPlugin plugin, List<PluginDependenciesDescriptor> pluginStack) {
+    //TODO: add exception handling in case of non-found dependency
+
     PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
 
     Set<IdeaPlugin> res = descriptor.dependenciesWithTransitive;

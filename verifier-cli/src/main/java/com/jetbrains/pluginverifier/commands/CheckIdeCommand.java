@@ -28,6 +28,13 @@ import java.util.*;
  */
 public class CheckIdeCommand extends VerifierCommand {
 
+  /**
+   * List of IntelliJ plugins which has defined module inside
+   * (e.g. plugin "org.jetbrains.plugins.ruby" has a module "com.intellij.modules.ruby" inside)
+   */
+  private static final ImmutableList<String> INTELLIJ_MODULES_PLUGIN_IDS =
+      ImmutableList.of("org.jetbrains.plugins.ruby", "org.jetbrains.android");
+
   public CheckIdeCommand() {
     super("check-ide");
   }
@@ -176,6 +183,22 @@ public class CheckIdeCommand extends VerifierCommand {
     ProblemUtils.saveProblems(new File(xmlFile), ideVersion, problems);
   }
 
+  @NotNull
+  private Collection<UpdateInfo> prepareUpdates(@NotNull Collection<UpdateInfo> updates) {
+    Collection<UpdateInfo> important = new ArrayList<UpdateInfo>();
+    Collection<UpdateInfo> notImportant = new ArrayList<UpdateInfo>();
+    for (UpdateInfo update : updates) {
+      String pluginId = update.getPluginId();
+      if (INTELLIJ_MODULES_PLUGIN_IDS.contains(pluginId)) {
+        important.add(update);
+      } else {
+        notImportant.add(update);
+      }
+    }
+    important.addAll(notImportant);
+    return important;
+  }
+
   @Override
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.isEmpty()) {
@@ -242,6 +265,9 @@ public class CheckIdeCommand extends VerifierCommand {
 
     long time = System.currentTimeMillis();
 
+    //move important IntelliJ plugins to the beginning of check-list
+    updates = prepareUpdates(updates);
+
     for (UpdateInfo updateJson : updates) {
       TeamCityLog.Block block = tc.blockOpen(updateJson.toString());
 
@@ -288,6 +314,10 @@ public class CheckIdeCommand extends VerifierCommand {
           }
 
           ctx.getProblems().printProblems(System.out, "    ");
+        }
+
+        if (INTELLIJ_MODULES_PLUGIN_IDS.contains(plugin.getPluginId())) {
+          ide.addCustomPlugin(plugin);
         }
       }
       finally {
