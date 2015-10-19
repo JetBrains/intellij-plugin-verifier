@@ -319,8 +319,11 @@ public class CheckIdeCommand extends VerifierCommand {
         if (INTELLIJ_MODULES_PLUGIN_IDS.contains(plugin.getPluginId())) {
           ide.addCustomPlugin(plugin);
         }
-      }
-      finally {
+      } catch (Exception e) {
+        System.out.println("Failed to verify plugin " + updateJson);
+        tc.messageError("Failed to verify plugin " + e.getLocalizedMessage());
+        e.printStackTrace();
+      } finally {
         block.close();
       }
     }

@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
 import com.jetbrains.pluginverifier.problems.FailedToReadClassProblem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
+import com.jetbrains.pluginverifier.problems.VerificationError;
 import com.jetbrains.pluginverifier.utils.DependenciesCache;
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
 import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier;
@@ -26,7 +27,7 @@ import java.util.List;
 public class ReferencesVerifier implements Verifier {
 
   @Override
-  public void verify(@NotNull IdeaPlugin plugin, @NotNull VerificationContext ctx) {
+  public void verify(@NotNull IdeaPlugin plugin, @NotNull VerificationContext ctx) throws VerificationError {
     final ClassPool pluginPool = plugin.getPluginClassPool();
 
     Resolver cacheResolver = new CacheResolver(DependenciesCache.getInstance().getResolver(ctx.getIde(), plugin));
@@ -49,13 +50,15 @@ public class ReferencesVerifier implements Verifier {
       verifier.verify(node, resolver, ctx);
     }
 
-    for (MethodNode method : (List<MethodNode>)node.methods) {
+    @SuppressWarnings("unchecked")
+    List<MethodNode> methods = (List<MethodNode>) node.methods;
+    for (MethodNode method : methods) {
       for (MethodVerifier verifier : Verifiers.getMemberVerifiers()) {
         verifier.verify(node, method, resolver, ctx);
       }
 
       final InsnList instructions = method.instructions;
-      for (Iterator<AbstractInsnNode> i = instructions.iterator(); i.hasNext(); ) {
+      for (@SuppressWarnings("unchecked") Iterator<AbstractInsnNode> i = instructions.iterator(); i.hasNext(); ) {
         AbstractInsnNode instruction = i.next();
         for (InstructionVerifier verifier : Verifiers.getInstructionVerifiers()) {
           verifier.verify(node, method, instruction, resolver, ctx);
@@ -63,7 +66,10 @@ public class ReferencesVerifier implements Verifier {
       }
     }
 
-    for (FieldNode method : (List<FieldNode>)node.fields) {
+    @SuppressWarnings("unchecked")
+    List<FieldNode> fields = (List<FieldNode>) node.fields;
+
+    for (FieldNode method : fields) {
       for (FieldVerifier verifier : Verifiers.getFieldVerifiers()) {
         verifier.verify(node, method, resolver, ctx);
       }

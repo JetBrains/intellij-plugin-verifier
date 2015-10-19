@@ -5,11 +5,11 @@ import com.intellij.structure.domain.Idea;
 import com.intellij.structure.domain.IdeaPlugin;
 import com.intellij.structure.domain.PluginCache;
 import com.intellij.structure.domain.PluginDependency;
-import com.intellij.structure.errors.FatalError;
 import com.intellij.structure.pool.ClassPool;
 import com.intellij.structure.resolvers.CombiningResolver;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
+import com.jetbrains.pluginverifier.problems.VerificationError;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 
 import java.io.File;
@@ -44,7 +44,7 @@ public class DependenciesCache {
     return descr;
   }
 
-  public Resolver getResolver(Idea ide, IdeaPlugin plugin) {
+  public Resolver getResolver(Idea ide, IdeaPlugin plugin) throws VerificationError {
     PluginDependenciesDescriptor descr = getPluginDependenciesDescriptor(ide, plugin);
     if (descr.myResolver == null) {
       List<Resolver> resolvers = new ArrayList<Resolver>();
@@ -70,7 +70,7 @@ public class DependenciesCache {
     return descr.myResolver;
   }
 
-  public Set<IdeaPlugin> getDependenciesWithTransitive(Idea ide, IdeaPlugin plugin, List<PluginDependenciesDescriptor> pluginStack) {
+  public Set<IdeaPlugin> getDependenciesWithTransitive(Idea ide, IdeaPlugin plugin, List<PluginDependenciesDescriptor> pluginStack) throws VerificationError {
     //TODO: add exception handling in case of non-found dependency
 
     PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
@@ -79,7 +79,7 @@ public class DependenciesCache {
     if (res == DEP_CALC_MARKER) {
       if (Boolean.parseBoolean(Configuration.getInstance().getProperty("fail.on.cyclic.dependencies"))) {
         int idx = pluginStack.lastIndexOf(descriptor);
-        throw new FatalError("Cyclic plugin dependencies: " + Joiner.on(" -> ").join(pluginStack.subList(idx, pluginStack.size())) + " -> " + plugin);
+        throw new VerificationError("Cyclic plugin dependencies: " + Joiner.on(" -> ").join(pluginStack.subList(idx, pluginStack.size())) + " -> " + plugin);
       }
 
       for (int i = pluginStack.size() - 1; i >= 0; i--) {

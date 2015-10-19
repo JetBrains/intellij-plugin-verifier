@@ -182,8 +182,10 @@ public class CheckPluginCommand extends VerifierCommand {
 
           myLastProblemSet = problemSet;
           idea.addCustomPlugin(plugin);
-        }
-        finally {
+        } catch (Exception e) {
+          System.out.println("Failed to verify plugin " + plugin.getPluginId());
+          tc.messageError("Failed to verify plugin " + plugin.getPluginId() + " because " + e.getLocalizedMessage());
+        } finally {
           block.close();
         }
       }
