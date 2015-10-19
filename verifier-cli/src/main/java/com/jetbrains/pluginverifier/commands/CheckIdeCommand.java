@@ -14,6 +14,7 @@ import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.ProblemSet;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
+import com.jetbrains.pluginverifier.problems.VerificationError;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
@@ -237,6 +238,10 @@ public class CheckIdeCommand extends VerifierCommand {
 
           ctx.getProblems().printProblems(System.out, "    ");
         }
+      } catch (VerificationError e) {
+        System.out.println("Failed to verify plugin " + updateJson + " because " + e.getLocalizedMessage());
+        tc.messageWarn("Failed to verify plugin " + updateJson + " because " + e.getLocalizedMessage());
+        e.printStackTrace();
       }
       finally {
         block.close();

@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.verifiers;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
 import com.jetbrains.pluginverifier.domain.IdeaPlugin;
+import com.jetbrains.pluginverifier.problems.VerificationError;
 import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier;
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
 import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier;
@@ -48,7 +49,7 @@ public class Verifiers {
     return INSTRUCTION_VERIFIERS;
   }
 
-  public static void processAllVerifiers(IdeaPlugin plugin, VerificationContext ctx) {
+  public static void processAllVerifiers(IdeaPlugin plugin, VerificationContext ctx) throws VerificationError {
     for (Verifier verifier : PLUGIN_VERIFIERS) {
       verifier.verify(plugin, ctx);
     }

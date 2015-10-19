@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.domain;
 import com.google.common.base.Joiner;
 import com.jetbrains.pluginverifier.pool.ClassPool;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
+import com.jetbrains.pluginverifier.problems.VerificationError;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.resolvers.CombiningResolver;
 import com.jetbrains.pluginverifier.resolvers.Resolver;
@@ -42,7 +43,7 @@ public class DependenciesCache {
     return descr;
   }
 
-  public Resolver getResolver(Idea ide, IdeaPlugin plugin) {
+  public Resolver getResolver(Idea ide, IdeaPlugin plugin) throws VerificationError {
     PluginDependenciesDescriptor descr = getPluginDependenciesDescriptor(ide, plugin);
     if (descr.myResolver == null) {
       List<Resolver> resolvers = new ArrayList<Resolver>();
@@ -68,14 +69,14 @@ public class DependenciesCache {
     return descr.myResolver;
   }
 
-  public Set<IdeaPlugin> getDependenciesWithTransitive(Idea ide, IdeaPlugin plugin, List<PluginDependenciesDescriptor> pluginStack) {
+  public Set<IdeaPlugin> getDependenciesWithTransitive(Idea ide, IdeaPlugin plugin, List<PluginDependenciesDescriptor> pluginStack) throws VerificationError {
     PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
 
     Set<IdeaPlugin> res = descriptor.dependenciesWithTransitive;
     if (res == DEP_CALC_MARKER) {
       if (Boolean.parseBoolean(Configuration.getInstance().getProperty("fail.on.cyclic.dependencies"))) {
         int idx = pluginStack.lastIndexOf(descriptor);
-        throw new FatalError("Cyclic plugin dependencies: " + Joiner.on(" -> ").join(pluginStack.subList(idx, pluginStack.size())) + " -> " + plugin);
+        throw new VerificationError("Cyclic plugin dependencies: " + Joiner.on(" -> ").join(pluginStack.subList(idx, pluginStack.size())) + " -> " + plugin);
       }
 
       for (int i = pluginStack.size() - 1; i >= 0; i--) {

@@ -13,7 +13,7 @@ public class JarDiscovery {
   @NotNull
   public static IdeaPlugin createIdeaPlugin(@NotNull final File pluginFile) throws IOException, BrokenPluginException {
     if (!pluginFile.exists()) {
-      throw Util.fail("Plugin not found: " + pluginFile);
+      throw new IOException("Plugin not found: " + pluginFile);
     }
 
     if (pluginFile.isFile()) {
@@ -23,18 +23,18 @@ public class JarDiscovery {
       if (pluginFile.getName().endsWith(".jar")) {
         return IdeaPlugin.createFromJar(pluginFile);
       }
-      throw Util.fail("Unknown input file: " + pluginFile);
+      throw new IOException("Unknown input file: " + pluginFile);
     }
 
     final String[] topLevelList = pluginFile.list();
     assert topLevelList != null;
 
     if (topLevelList.length == 0) {
-      throw Util.fail("Plugin root directory '" + pluginFile + "' is empty");
+      throw new BrokenPluginException("Plugin root directory '" + pluginFile + "' is empty");
     }
 
     if (topLevelList.length > 1) {
-      throw Util.fail("Plugin root directory '" + pluginFile + "' contains more than one child");
+      throw new BrokenPluginException("Plugin root directory '" + pluginFile + "' contains more than one child");
     }
 
     return IdeaPlugin.createFromDirectory(new File(pluginFile, topLevelList[0]));
