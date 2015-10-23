@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
+import com.google.common.hash.*;
 import com.intellij.structure.domain.Idea;
 import com.intellij.structure.domain.IdeaPlugin;
 import com.intellij.structure.domain.JDK;
@@ -22,6 +23,7 @@ import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.*;
 
 /**
@@ -39,6 +41,7 @@ public class CheckIdeCommand extends VerifierCommand {
   public CheckIdeCommand() {
     super("check-ide");
   }
+
 
   private static Pair<List<String>, List<String>> extractPluginList(@NotNull CommandLine commandLine) {
     List<String> pluginsCheckAllBuilds = new ArrayList<String>();
@@ -96,9 +99,11 @@ public class CheckIdeCommand extends VerifierCommand {
   private static Predicate<UpdateInfo> getExcludedPluginsPredicate(@NotNull CommandLine commandLine) throws IOException {
     String epf = commandLine.getOptionValue("epf");
     if (epf == null) {
+      //no predicate specified
       return Predicates.alwaysTrue();
     }
 
+    //file containing list of broken plugins (e.g. IDEA-*/lib/resources.jar!/brokenPlugins.txt)
     BufferedReader br = new BufferedReader(new FileReader(new File(epf)));
     try {
       final SetMultimap<String, String> m = HashMultimap.create();
@@ -106,7 +111,7 @@ public class CheckIdeCommand extends VerifierCommand {
       String s;
       while ((s = br.readLine()) != null) {
         s = s.trim();
-        if (s.startsWith("//")) continue;
+        if (s.startsWith("//")) continue; //it is a comment
 
         List<String> tokens = ParametersListUtil.parse(s);
         if (tokens.isEmpty()) continue;
@@ -117,9 +122,10 @@ public class CheckIdeCommand extends VerifierCommand {
 
         String pluginId = tokens.get(0);
 
-        m.putAll(pluginId, tokens.subList(1, tokens.size()));
+        m.putAll(pluginId, tokens.subList(1, tokens.size())); //"plugin id" -> [all its builds]
       }
 
+      //filtering predicate: true if this plugin is NOT excluded
       return new Predicate<UpdateInfo>() {
         @Override
         public boolean apply(UpdateInfo json) {
@@ -132,24 +138,11 @@ public class CheckIdeCommand extends VerifierCommand {
     }
   }
 
-  private static void printTeamCityProblems(TeamCityLog log, Map<UpdateInfo, ProblemSet> results, Predicate<UpdateInfo> updateFilter) {
-    if (log == TeamCityLog.NULL_LOG) return;
 
-    Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
-
-    for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
-      if (!updateFilter.apply(entry.getKey())) continue;
-
-      for (Problem problem : entry.getValue().getAllProblems()) {
-        problems.put(problem, entry.getKey());
-      }
-    }
-
-    TeamCityUtil.printTeamCityProblems(log, problems);
-  }
 
   private static void dumbBrokenPluginsList(@NotNull String dumpBrokenPluginsFile, Collection<UpdateInfo> brokenUpdates)
       throws IOException {
+    //pluginId -> [list of its builds in DESC order]
     Multimap<String, String> m = TreeMultimap.create(Ordering.natural(), Ordering.natural().reverse());
 
     for (UpdateInfo update : brokenUpdates) {
@@ -222,9 +215,9 @@ public class CheckIdeCommand extends VerifierCommand {
     Idea ide = new Idea(ideToCheck, jdk, externalClassPath);
     updateIdeVersionFromCmd(ide, commandLine);
 
-    Pair<List<String>, List<String>> pluginIds = extractPluginList(commandLine);
-    List<String> pluginsCheckAllBuilds = pluginIds.first;
-    List<String> pluginsCheckLastBuilds = pluginIds.second;
+    Pair<List<String>, List<String>> pluginsIds = extractPluginList(commandLine);
+    List<String> pluginsCheckAllBuilds = pluginsIds.first;
+    List<String> pluginsCheckLastBuilds = pluginsIds.second;
 
     Collection<UpdateInfo> updates;
     if (pluginsCheckAllBuilds.isEmpty() && pluginsCheckLastBuilds.isEmpty()) {
@@ -242,6 +235,8 @@ public class CheckIdeCommand extends VerifierCommand {
 
         for (UpdateInfo info : RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(ide.getVersion(), pluginsCheckLastBuilds)) {
           UpdateInfo existsBuild = lastBuilds.get(info.getPluginId());
+
+          //choose last build
           if (existsBuild == null || existsBuild.getUpdateId() < info.getUpdateId()) {
             lastBuilds.put(info.getPluginId(), info);
           }
@@ -254,11 +249,13 @@ public class CheckIdeCommand extends VerifierCommand {
     String dumpBrokenPluginsFile = commandLine.getOptionValue("d");
     String reportFile = commandLine.getOptionValue("report");
 
+    //whether to check excluded build or not
     boolean checkExcludedBuilds = dumpBrokenPluginsFile != null || reportFile != null;
 
     Predicate<UpdateInfo> updateFilter = getExcludedPluginsPredicate(commandLine);
 
     if (!checkExcludedBuilds) {
+      //drop out excluded plugins and don't check them
       updates = Collections2.filter(updates, updateFilter);
     }
 
@@ -267,6 +264,7 @@ public class CheckIdeCommand extends VerifierCommand {
     long time = System.currentTimeMillis();
 
     //move important IntelliJ plugins to the beginning of check-list
+    //(those plugins which contain defined IntelliJ module inside)
     updates = prepareUpdates(updates);
 
     for (UpdateInfo updateJson : updates) {
@@ -316,7 +314,10 @@ public class CheckIdeCommand extends VerifierCommand {
 
           ctx.getProblems().printProblems(System.out, "    ");
         }
+
         if (INTELLIJ_MODULES_PLUGIN_IDS.contains(plugin.getPluginId())) {
+          //add plugin with defined IntelliJ module to IDEA
+          //it gives us a chance to refer to such plugins by their module-name (not plugin id)
           ide.addCustomPlugin(plugin);
         }
       } catch (VerificationError e) {
@@ -331,9 +332,11 @@ public class CheckIdeCommand extends VerifierCommand {
 
     System.out.println("Verification completed (" + ((System.currentTimeMillis() - time) / 1000) + "s)");
 
-    printTeamCityProblems(tc, results, updateFilter);
-
     if (checkExcludedBuilds) {
+      //initial list of plugins to be checked (some of them might be filtered and not actually checked)
+      List<String> initialPlugins = Util.concat(pluginsIds.first, pluginsIds.second);
+
+      printSomePluginsAreNotAvailable(tc, ide.getVersion(), initialPlugins, results);
 
       if (dumpBrokenPluginsFile != null) {
         System.out.println("Dumping list of broken plugins to " + dumpBrokenPluginsFile);
@@ -348,9 +351,12 @@ public class CheckIdeCommand extends VerifierCommand {
 
       if (reportFile != null) {
         System.out.println("Saving report to " + new File(reportFile).getAbsolutePath());
-        CheckIdeHtmlReportBuilder.build(new File(reportFile), ide.getVersion(), Util.concat(pluginIds.first, pluginIds.second), updateFilter, results);
+
+        CheckIdeHtmlReportBuilder.build(new File(reportFile), ide.getVersion(), initialPlugins, updateFilter, results);
       }
     }
+
+    printTeamCityProblems(tc, results, updateFilter);
 
     if (commandLine.hasOption("xr")) {
       saveResultsToXml(commandLine.getOptionValue("xr"), ide.getVersion(), results);
@@ -369,5 +375,48 @@ public class CheckIdeCommand extends VerifierCommand {
     }
 
     return 0;
+  }
+
+  /**
+   * Checks if for all the specified plugins to be checked there are
+   * a build compatible with a specified IDE in the Plugins Repository
+   */
+  private void printSomePluginsAreNotAvailable(@NotNull TeamCityLog tc,
+                                               @NotNull String ideVersion,
+                                               @NotNull List<String> initialPlugins,
+                                               @NotNull Map<UpdateInfo, ProblemSet> results) {
+    if (tc == TeamCityLog.NULL_LOG) return;
+    Map<String, List<UpdateInfo>> pluginsMap = CheckIdeHtmlReportBuilder.getCheckedPluginsMap(initialPlugins, results);
+    for (Map.Entry<String, List<UpdateInfo>> entry : pluginsMap.entrySet()) {
+      String pluginId = entry.getKey();
+      List<UpdateInfo> checkedBuilds = entry.getValue();
+
+      final String pluginName = checkedBuilds.isEmpty() ? pluginId : checkedBuilds.get(0).getPluginId();
+      if (checkedBuilds.isEmpty()) {
+        final String noUpdateProblem = "For " + pluginName + " there are no updates compatible with " + ideVersion + " in the Plugin Repository";
+        final String identity = Hashing.md5().hashString(noUpdateProblem, Charset.defaultCharset()).toString();
+        tc.buildProblem(noUpdateProblem, identity);
+      }
+    }
+
+  }
+
+  private static void printTeamCityProblems(@NotNull TeamCityLog log,
+                                            @NotNull Map<UpdateInfo, ProblemSet> results,
+                                            @NotNull Predicate<UpdateInfo> updateFilter) {
+    if (log == TeamCityLog.NULL_LOG) return;
+
+    //list of problems without their exact problem location (only affected plugin)
+    Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
+
+    for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
+      if (!updateFilter.apply(entry.getKey())) continue; //this is excluded plugin
+
+      for (Problem problem : entry.getValue().getAllProblems()) {
+        problems.put(problem, entry.getKey());
+      }
+    }
+
+    TeamCityUtil.printTeamCityProblems(log, problems);
   }
 }

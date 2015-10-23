@@ -31,24 +31,9 @@ public class CheckIdeHtmlReportBuilder {
                            @NotNull String ideVersion,
                            @NotNull List<String> pluginIds,
                            @NotNull Predicate<UpdateInfo> updateFilter,
-                           @NotNull Map<UpdateInfo, ProblemSet> results)
-    throws IOException {
-    Map<String, List<UpdateInfo>> pluginsMap = new TreeMap<String, List<UpdateInfo>>();
-
-    for (String pluginId : pluginIds) {
-      pluginsMap.put(pluginId, new ArrayList<UpdateInfo>());
-    }
-
-    for (UpdateInfo update : results.keySet()) {
-      List<UpdateInfo> updatesList = pluginsMap.get(update.getPluginId());
-      assert updatesList != null : "Invalid arguments, pluginIds doesn't contains " + update.getPluginId();
-
-      updatesList.add(update);
-    }
-
-    for (List<UpdateInfo> updateList : pluginsMap.values()) {
-      Collections.sort(updateList, Collections.reverseOrder(UpdatesComparator.INSTANCE));
-    }
+                           @NotNull Map<UpdateInfo, ProblemSet> results) throws IOException {
+    //pluginId -> [list of all its checked builds]
+    Map<String, List<UpdateInfo>> pluginsMap = getCheckedPluginsMap(pluginIds, results);
 
     PrintWriter out = new PrintWriter(report);
 
@@ -85,15 +70,16 @@ public class CheckIdeHtmlReportBuilder {
       }
       else {
         for (Map.Entry<String, List<UpdateInfo>> entry : pluginsMap.entrySet()) {
-          out.printf("<div class='plugin %s'>\n",
-                     pluginHasProblems(entry.getValue(), results, updateFilter) ? "pluginHasProblem" : "pluginOk");
-
           String pluginId = entry.getKey();
+          List<UpdateInfo> checkedBuilds = entry.getValue();
+
+          out.printf("<div class='plugin %s'>\n", pluginHasProblems(checkedBuilds, results, updateFilter) ? "pluginHasProblem" : "pluginOk");
+
 
           String pluginName = null;
 
-          if (!entry.getValue().isEmpty()) {
-            pluginName = entry.getValue().get(0).getPluginName();
+          if (!checkedBuilds.isEmpty()) {
+            pluginName = checkedBuilds.get(0).getPluginName();
           }
 
           if (StringUtil.isEmpty(pluginName)) {
@@ -103,11 +89,11 @@ public class CheckIdeHtmlReportBuilder {
           out.printf("  <h3><span class='pMarker'>   </span> %s</h3>\n", HtmlEscapers.htmlEscaper().escape(pluginName));
           out.printf("  <div>\n");
 
-          if (entry.getValue().isEmpty()) {
+          if (checkedBuilds.isEmpty()) {
             out.printf("There are no updates compatible with %s in the Plugin Repository\n", ideVersion);
           }
           else {
-            for (UpdateInfo update : entry.getValue()) {
+            for (UpdateInfo update : checkedBuilds) {
               ProblemSet problems = results.get(update);
 
               out.printf("<div class='update %s %s'>\n",
@@ -186,8 +172,42 @@ public class CheckIdeHtmlReportBuilder {
     }
   }
 
-  private static boolean pluginHasProblems(List<UpdateInfo> updates, Map<UpdateInfo, ProblemSet> results, Predicate<UpdateInfo> updateFilter) {
-    for (UpdateInfo update : updates) {
+  /**
+   * @return map from pluginId TO all its checked builds (in DESC order)
+   */
+  @NotNull
+  public static Map<String, List<UpdateInfo>> getCheckedPluginsMap(@NotNull List<String> pluginIds,
+                                                                   @NotNull Map<UpdateInfo, ProblemSet> results) {
+    Map<String, List<UpdateInfo>> pluginsMap = new TreeMap<String, List<UpdateInfo>>();
+
+    for (String pluginId : pluginIds) {
+      pluginsMap.put(pluginId, new ArrayList<UpdateInfo>());
+    }
+
+    for (UpdateInfo brokenUpdate : results.keySet()) {
+      List<UpdateInfo> updatesList = pluginsMap.get(brokenUpdate.getPluginId());
+      if (updatesList == null) {
+        throw new IllegalArgumentException("Invalid arguments, pluginIds doesn't contain " + brokenUpdate.getPluginId());
+      }
+
+      updatesList.add(brokenUpdate);
+    }
+
+    for (List<UpdateInfo> updateList : pluginsMap.values()) {
+      //sort ids in DESC order
+      Collections.sort(updateList, Collections.reverseOrder(UpdatesComparator.INSTANCE));
+    }
+
+    return pluginsMap;
+  }
+
+  /**
+   * @return true iff plugin was checked AND is not excluded AND has some problems
+   */
+  private static boolean pluginHasProblems(@NotNull List<UpdateInfo> checkedUpdates,
+                                           @NotNull Map<UpdateInfo, ProblemSet> results,
+                                           @NotNull Predicate<UpdateInfo> updateFilter) {
+    for (UpdateInfo update : checkedUpdates) {
       if (updateFilter.apply(update)) {
         if (!results.get(update).isEmpty()) return true;
       }

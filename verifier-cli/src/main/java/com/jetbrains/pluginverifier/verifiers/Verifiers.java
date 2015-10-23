@@ -22,7 +22,7 @@ import com.jetbrains.pluginverifier.verifiers.method.OverrideNonFinalVerifier;
  */
 public class Verifiers {
   public static final Verifier[] PLUGIN_VERIFIERS = new Verifier[]{new ReferencesVerifier()};
-  // TODO: add dynamic loading
+  // TODO: add dynamic loading ??
   private static final ClassVerifier[] CLASS_VERIFIERS = new ClassVerifier[] {new SuperClassVerifier(), new InterfacesVerifier(), new AbstractMethodVerifier()};
   private static final MethodVerifier[] METHOD_VERIFIERS = new MethodVerifier[] {new OverrideNonFinalVerifier()};
   private static final FieldVerifier[] FIELD_VERIFIERS = new FieldVerifier[] {new FieldTypeVerifier()};
