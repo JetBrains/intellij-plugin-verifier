@@ -13,7 +13,7 @@
 
     <groupId>org.jetbrains.plugin-verifier</groupId>
     <artifactId>verifier-parent</artifactId>
-    <version>4.0</version>
+    <version>5.0</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -136,7 +136,7 @@
 
     <distributionManagement>
         <repository>
-            <id>bintray-repo-maven-sergey-patrikeev</id>
+            <id>bintray</id>
             <url>https://api.bintray.com/maven/sergey-patrikeev/intellij-plugin-verifier/verifier-main/;publish=1</url>
         </repository>
     </distributionManagement>

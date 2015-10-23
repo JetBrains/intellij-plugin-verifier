@@ -9,14 +9,14 @@
     <parent>
         <groupId>org.jetbrains.plugin-verifier</groupId>
         <artifactId>verifier-parent</artifactId>
-        <version>4.0</version>
+        <version>5.0</version>
     </parent>
 
     <dependencies>
         <dependency>
             <groupId>org.jetbrains.plugin-verifier</groupId>
             <artifactId>verifier-problems</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.parent.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-cli</groupId>
