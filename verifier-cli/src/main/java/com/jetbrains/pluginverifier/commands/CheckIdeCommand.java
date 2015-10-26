@@ -332,11 +332,13 @@ public class CheckIdeCommand extends VerifierCommand {
 
     System.out.println("Verification completed (" + ((System.currentTimeMillis() - time) / 1000) + "s)");
 
+    int totalProblemsCnt = 0;
+
     if (checkExcludedBuilds) {
       //initial list of plugins to be checked (some of them might be filtered and not actually checked)
       List<String> initialPlugins = Util.concat(pluginsIds.first, pluginsIds.second);
 
-      printSomePluginsAreNotAvailable(tc, ide.getVersion(), initialPlugins, results);
+      totalProblemsCnt += printSomePluginsAreNotAvailable(tc, ide.getVersion(), initialPlugins, results);
 
       if (dumpBrokenPluginsFile != null) {
         System.out.println("Dumping list of broken plugins to " + dumpBrokenPluginsFile);
@@ -368,9 +370,11 @@ public class CheckIdeCommand extends VerifierCommand {
       allProblems.addAll(problemSet.getAllProblems());
     }
 
-    if (allProblems.size() > 0) {
-      tc.buildStatus(allProblems.size() + (allProblems.size() == 1 ? " problem" : " problems") );
-      System.out.printf("IDE has %d problems", allProblems.size());
+    totalProblemsCnt += allProblems.size();
+
+    if (totalProblemsCnt > 0) {
+      tc.buildStatus(totalProblemsCnt + (totalProblemsCnt == 1 ? " problem" : " problems") );
+      System.out.printf("IDE has %d problems", totalProblemsCnt);
       return 2;
     }
 
@@ -380,12 +384,15 @@ public class CheckIdeCommand extends VerifierCommand {
   /**
    * Checks if for all the specified plugins to be checked there are
    * a build compatible with a specified IDE in the Plugins Repository
+   *
+   * @return number of plugins which don't have any compatible version in the Repository
    */
-  private void printSomePluginsAreNotAvailable(@NotNull TeamCityLog tc,
+  private int printSomePluginsAreNotAvailable(@NotNull TeamCityLog tc,
                                                @NotNull String ideVersion,
                                                @NotNull List<String> initialPlugins,
                                                @NotNull Map<UpdateInfo, ProblemSet> results) {
-    if (tc == TeamCityLog.NULL_LOG) return;
+    if (tc == TeamCityLog.NULL_LOG) return 0;
+    int result = 0;
     Map<String, List<UpdateInfo>> pluginsMap = CheckIdeHtmlReportBuilder.getCheckedPluginsMap(initialPlugins, results);
     for (Map.Entry<String, List<UpdateInfo>> entry : pluginsMap.entrySet()) {
       String pluginId = entry.getKey();
@@ -396,9 +403,10 @@ public class CheckIdeCommand extends VerifierCommand {
         final String noUpdateProblem = "For " + pluginName + " there are no updates compatible with " + ideVersion + " in the Plugin Repository";
         final String identity = Hashing.md5().hashString(noUpdateProblem, Charset.defaultCharset()).toString();
         tc.buildProblem(noUpdateProblem, identity);
+        result++;
       }
     }
-
+    return result;
   }
 
   private static void printTeamCityProblems(@NotNull TeamCityLog log,
