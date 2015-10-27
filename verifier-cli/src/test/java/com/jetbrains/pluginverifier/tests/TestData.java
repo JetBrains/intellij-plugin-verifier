@@ -111,7 +111,7 @@ public class TestData {
   }
 
   private static File getFetchRoot() {
-    final File fetchRoot = new File(System.getProperty("java.io.tmpdir"), "plugin-verifier-test-data-cache");
+    final File fetchRoot = new File(System.getProperty("java.io.tmpdir"), "plugin-verifier-test-data-temp-cache");
     fetchRoot.mkdirs();
 
     return fetchRoot;

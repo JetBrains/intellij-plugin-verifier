@@ -82,7 +82,7 @@
         <dependency>
             <groupId>org.jetbrains.intellij.structure</groupId>
             <artifactId>intellij-structure</artifactId>
-            <version>6.0</version>
+            <version>9.0</version>
         </dependency>
         <dependency>
             <groupId>org.ow2.asm</groupId>
