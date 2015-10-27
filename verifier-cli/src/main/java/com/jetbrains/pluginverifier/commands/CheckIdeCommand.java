@@ -373,8 +373,8 @@ public class CheckIdeCommand extends VerifierCommand {
     totalProblemsCnt += allProblems.size();
 
     if (totalProblemsCnt > 0) {
-      tc.buildStatus(totalProblemsCnt + (totalProblemsCnt == 1 ? " problem" : " problems") );
-      System.out.printf("IDE has %d problems", totalProblemsCnt);
+      tc.buildStatus("IDE " + ide.getVersion() + " has " + totalProblemsCnt + (totalProblemsCnt == 1 ? " problem" : " problems") );
+      System.out.printf("IDE %s has %d problems", ide.getVersion(), totalProblemsCnt);
       return 2;
     }
 
