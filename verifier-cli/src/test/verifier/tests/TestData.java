@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.tests;
+package verifier.tests;
 
 import org.apache.commons.io.FileUtils;
 import org.codehaus.plexus.archiver.AbstractUnArchiver;

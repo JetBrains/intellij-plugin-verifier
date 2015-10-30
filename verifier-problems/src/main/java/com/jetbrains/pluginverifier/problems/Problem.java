@@ -19,4 +19,9 @@ public abstract class Problem {
   public int hashCode() {
     throw new UnsupportedOperationException("Children of com.jetbrains.pluginverifier.problems.Problem must override equals() and hashcode()");
   }
+
+  @Override
+  public String toString() {
+    return getDescription();
+  }
 }

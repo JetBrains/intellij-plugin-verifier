@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.tests;
+package verifier.tests;
 
 import com.jetbrains.pluginverifier.commands.CheckPluginCommand;
 import com.jetbrains.pluginverifier.problems.Problem;

@@ -1,0 +1,35 @@
+<idea-plugin version="2">
+    <id>org.some.company.plugin</id>
+    <name>Some plugin name</name>
+    <version>1.0</version>
+    <vendor email="nonono.com" url="http://www.HornsAndHooves.com">HornsAndHooves</vendor>
+
+    <description><![CDATA[
+      HornsAndHooves plugin
+    ]]></description>
+
+    <idea-version since-build="131"/>
+
+
+    <extensions defaultExtensionNs="com.intellij">
+        <projectService serviceInterface="com.intellij.mockapi.ide.TreeExpander"
+                        serviceImplementation="org.company.xmls.TreeExpanderImpl"/>
+
+        <!--It's okay that warning here-->
+        <!--suppress PluginXmlValidity -->
+        <completion.confidence
+                implementationClass="com.intellij.mockapi.codeInsight.completion.UnfocusedNameIdentifier"/>
+    </extensions>
+
+    <depends optional="true" config-file="optionalFeatures.xml">DevKit</depends>
+
+    <application-components>
+    </application-components>
+
+    <project-components>
+    </project-components>
+
+    <actions>
+    </actions>
+
+</idea-plugin>

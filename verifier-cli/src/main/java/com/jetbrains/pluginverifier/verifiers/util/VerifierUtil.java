@@ -17,6 +17,10 @@ public class VerifierUtil {
     return isValidClassOrInterface(opt, resolver, className, isInterface);
   }
 
+  public static boolean isInterface(@NotNull ClassNode classNode) {
+    return (classNode.access & Opcodes.ACC_INTERFACE) != 0;
+  }
+
   private static boolean isValidClassOrInterface(PluginVerifierOptions opt, final Resolver resolver, final @NotNull String name, final Boolean isInterface) {
     assert !name.startsWith("[");
     assert !name.endsWith(";");
@@ -26,7 +30,7 @@ public class VerifierUtil {
     }
 
     final ClassNode clazz = resolver.findClass(name);
-    return clazz != null && (isInterface == null || isInterface == ((clazz.access & Opcodes.ACC_INTERFACE) != 0));
+    return clazz != null && (isInterface == null || isInterface == isInterface(clazz));
   }
 
   public static String prepareArrayName(final String className) {
