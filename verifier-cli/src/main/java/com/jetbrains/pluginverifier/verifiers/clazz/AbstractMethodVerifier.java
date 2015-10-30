@@ -22,12 +22,8 @@ public class AbstractMethodVerifier implements ClassVerifier {
       return;
     }
 
-    //TODO: fix this
-    if (clazz.superName == null) return;
-
-
     ClassNode superClass = resolver.findClass(clazz.superName);
-    if (superClass == null) return;
+    if (superClass == null) return; //unknown class
 
     if (!VerifierUtil.isAbstract(superClass) && clazz.interfaces.isEmpty()) {
       return; // optimization
