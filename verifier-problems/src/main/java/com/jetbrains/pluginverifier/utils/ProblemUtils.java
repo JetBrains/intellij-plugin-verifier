@@ -20,15 +20,15 @@ public class ProblemUtils {
     try {
       //TODO: if necessary add problem here
       JAXB_CONTEXT = JAXBContext.newInstance(MethodNotFoundProblem.class,
-                                             ClassNotFoundProblem.class,
-                                             MethodNotImplementedProblem.class,
-                                             OverridingFinalMethodProblem.class,
-                                             DuplicateClassProblem.class,
-                                             ResultsElement.class,
-                                             UpdateInfo.class,
-                                             FailedToReadClassProblem.class);
-    }
-    catch (JAXBException e) {
+          ClassNotFoundProblem.class,
+          MethodNotImplementedProblem.class,
+          IllegalMethodAccessProblem.class,
+          OverridingFinalMethodProblem.class,
+          DuplicateClassProblem.class,
+          ResultsElement.class,
+          UpdateInfo.class,
+          FailedToReadClassProblem.class);
+    } catch (JAXBException e) {
       throw new RuntimeException(e);
     }
   }
@@ -36,8 +36,7 @@ public class ProblemUtils {
   public static Marshaller createMarshaller() {
     try {
       return JAXB_CONTEXT.createMarshaller();
-    }
-    catch (JAXBException e) {
+    } catch (JAXBException e) {
       throw new RuntimeException("Failed to create marshaller");
     }
   }
@@ -45,8 +44,7 @@ public class ProblemUtils {
   public static Unmarshaller createUnmarshaller() {
     try {
       return JAXB_CONTEXT.createUnmarshaller();
-    }
-    catch (JAXBException e) {
+    } catch (JAXBException e) {
       throw new RuntimeException("Failed to create unmarshaller");
     }
   }
@@ -66,8 +64,7 @@ public class ProblemUtils {
       marshaller.marshal(problem, writer);
 
       return writer.toString();
-    }
-    catch (JAXBException e) {
+    } catch (JAXBException e) {
       throw new RuntimeException(e);
     }
   }
@@ -77,14 +74,13 @@ public class ProblemUtils {
 
     try {
       return loadProblems(inputStream);
-    }
-    finally {
+    } finally {
       inputStream.close();
     }
   }
 
   public static void saveProblems(@NotNull File output, @NotNull String ide, @NotNull Map<UpdateInfo, Collection<Problem>> problems)
-    throws IOException {
+      throws IOException {
     ResultsElement resultsElement = new ResultsElement();
 
     resultsElement.setIde(ide);
@@ -94,7 +90,7 @@ public class ProblemUtils {
   }
 
   public static void saveProblems(@NotNull File output, ResultsElement resultsElement)
-    throws IOException {
+      throws IOException {
     Marshaller marshaller = createMarshaller();
 
     try {
@@ -102,8 +98,7 @@ public class ProblemUtils {
       marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 
       marshaller.marshal(resultsElement, output);
-    }
-    catch (JAXBException e) {
+    } catch (JAXBException e) {
       throw new IOException(e);
     }
   }
@@ -112,9 +107,8 @@ public class ProblemUtils {
     Unmarshaller unmarshaller = createUnmarshaller();
 
     try {
-      return (ResultsElement)unmarshaller.unmarshal(inputStream);
-    }
-    catch (JAXBException e) {
+      return (ResultsElement) unmarshaller.unmarshal(inputStream);
+    } catch (JAXBException e) {
       throw new IOException(e);
     }
   }

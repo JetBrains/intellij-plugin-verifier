@@ -4,9 +4,11 @@ import com.intellij.structure.resolvers.Resolver;
 import com.intellij.structure.resolvers.ResolverUtil;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
+import com.jetbrains.pluginverifier.problems.IllegalMethodAccessProblem;
 import com.jetbrains.pluginverifier.problems.MethodNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.utils.StringUtil;
+import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -54,9 +56,17 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
 
         ctx.registerProblem(new MethodNotFoundProblem(calledMethod),
                             new ProblemLocation(clazz.name, method.name + method.desc));
+      } else {
+        MethodNode invokedMethod = location.getMethodNode();
+
+        if (VerifierUtil.isPrivate(invokedMethod)) {
+          ctx.registerProblem(new IllegalMethodAccessProblem(location.getMethodDescr()), new ProblemLocation(clazz.name, method.name + method.desc));
+        }
+
+        //TODO: proceed protected case
       }
 
-      //TODO: add access modifier check of invoked method
+
     }
   }
 

@@ -40,6 +40,9 @@ public class VerifierTest {
           .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenMultiArray()V"))
           .put(new MethodNotFoundProblem("com/intellij/openapi/actionSystem/AnAction#nonExistingMethod()V"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenNonFoundMethod()V"))
           .put(new MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent#getState()Ljava/lang/Object;"), new ProblemLocation("mock/plugin/NotImplementedProblem"))
+          .put(new MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent#loadState(Ljava/lang/Object;)V"), new ProblemLocation("mock/plugin/NotImplementedProblem"))
+          .put(new OverridingFinalMethodProblem("com/intellij/openapi/actionSystem/AnAction#isEnabledInModalContext()Z"), ProblemLocation.fromMethod("mock/plugin/OverrideFinalMethodProblem", "isEnabledInModalContext()Z"))
+          .put(new IllegalMethodAccessProblem("com/intellij/openapi/diagnostic/LogUtil#<init>()V"), ProblemLocation.fromMethod("mock/plugin/AccessChangedProblem", "foo()V"))
           .build();
 
 
@@ -84,9 +87,9 @@ public class VerifierTest {
       Assert.assertTrue("problem " + problem + " should be found in the following location " + location, myProblems.get(problem).contains(location));
     }
 
-//    for (Map.Entry<Problem, Set<ProblemLocation>> entry : myProblems.entrySet()) {
-//      System.out.println(entry.getKey());
-//    }
+    for (Map.Entry<Problem, Set<ProblemLocation>> entry : myProblems.entrySet()) {
+      System.out.println(entry.getKey());
+    }
 
   }
 }

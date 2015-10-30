@@ -75,4 +75,12 @@ public class VerifierUtil {
   public static boolean isAbstract(@NotNull ClassNode clazz) {
     return (clazz.access & Opcodes.ACC_ABSTRACT) != 0;
   }
+
+  public static boolean isPrivate(@NotNull MethodNode method) {
+    return (method.access & Opcodes.ACC_PRIVATE) != 0;
+  }
+
+  public static boolean isProtected(@NotNull MethodNode method) {
+    return (method.access & Opcodes.ACC_PROTECTED) != 0;
+  }
 }
