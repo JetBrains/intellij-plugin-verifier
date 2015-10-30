@@ -6,7 +6,6 @@
     <artifactId>verifier-cli</artifactId>
     <packaging>pom</packaging>
     <modules>
-        <module>mock-idea</module>
         <module>mock-plugin</module>
     </modules>
 

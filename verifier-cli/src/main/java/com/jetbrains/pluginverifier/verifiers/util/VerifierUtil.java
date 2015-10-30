@@ -59,20 +59,17 @@ public class VerifierUtil {
     return descr;
   }
 
-  public static boolean isPrimitiveType(final String type) {
-    if (type.length() != 1)
-      return false;
-
+  public static boolean isPrimitiveType(@NotNull final String type) {
     return "Z".equals(type) || "I".equals(type) || "J".equals(type) || "B".equals(type) ||
-           "F".equals(type) || "S".equals(type) || "D".equals(type) || "C".equals(type);
+        "F".equals(type) || "S".equals(type) || "D".equals(type) || "C".equals(type);
   }
 
   public static boolean isFinal(final MethodNode superMethod) {
     return (superMethod.access & Opcodes.ACC_FINAL) != 0;
   }
 
-  public static boolean isAbstract(final MethodNode superMethod) {
-    return (superMethod.access & Opcodes.ACC_ABSTRACT) != 0;
+  public static boolean isAbstract(@NotNull final MethodNode method) {
+    return (method.access & Opcodes.ACC_ABSTRACT) != 0;
   }
 
   public static boolean isAbstract(@NotNull ClassNode clazz) {

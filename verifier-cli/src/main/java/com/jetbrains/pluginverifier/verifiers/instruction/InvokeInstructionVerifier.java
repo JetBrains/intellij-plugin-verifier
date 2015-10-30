@@ -22,10 +22,10 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       return;
 
     MethodInsnNode invoke = (MethodInsnNode) instr;
-    if (invoke.name.startsWith("access$")) //?
+    if (invoke.name.startsWith("access$"))
       return;
 
-    if (invoke.owner.startsWith("java/dyn/")) //?
+    if (invoke.owner.startsWith("java/dyn/"))
       return;
 
     String className = invoke.owner;
@@ -43,9 +43,9 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       ResolverUtil.MethodLocation location = ResolverUtil.findMethod(resolver, classNode, invoke.name, invoke.desc);
 
       if (location == null || isDefaultConstructorNotFound(invoke, className, location)) {
-        String calledMethod = invoke.owner + '#' + invoke.name + invoke.desc;
+        String calledMethod = className + '#' + invoke.name + invoke.desc;
 
-        if (invoke.owner.equals(clazz.name)) {
+        if (className.equals(clazz.name)) {
           // Looks like method was defined in some parent class
           if (StringUtil.isNotEmpty(classNode.superName) && classNode.interfaces.isEmpty()) {
             calledMethod = classNode.superName + '#' + invoke.name + invoke.desc;
@@ -60,6 +60,9 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
     }
   }
 
+  /**
+   * @return true if the default constructor is found in the super-class (but not in the direct owner)
+   */
   private boolean isDefaultConstructorNotFound(@NotNull MethodInsnNode invoke,
                                                @NotNull String className,
                                                @NotNull ResolverUtil.MethodLocation location) {

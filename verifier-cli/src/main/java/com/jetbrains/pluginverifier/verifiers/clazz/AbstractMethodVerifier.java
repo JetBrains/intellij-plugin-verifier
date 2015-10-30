@@ -6,7 +6,6 @@ import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem;
 import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.verifiers.util.MethodSign;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -16,13 +15,16 @@ import java.util.*;
  * @author Sergey Evdokimov
  */
 public class AbstractMethodVerifier implements ClassVerifier {
+  @SuppressWarnings("unchecked")
   @Override
   public void verify(ClassNode clazz, Resolver resolver, VerificationContext ctx) {
-    if ((clazz.access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE)) != 0) {
+    if (VerifierUtil.isAbstract(clazz) || VerifierUtil.isInterface(clazz)) {
       return;
     }
 
+    //TODO: fix this
     if (clazz.superName == null) return;
+
 
     ClassNode superClass = resolver.findClass(clazz.superName);
     if (superClass == null) return;
@@ -31,83 +33,86 @@ public class AbstractMethodVerifier implements ClassVerifier {
       return; // optimization
     }
 
-    Set<MethodSign> allSign = new HashSet<MethodSign>();
+    Set<MethodSign> allMethods = new HashSet<MethodSign>();
 
-    for (MethodNode methodNode : (List<MethodNode>)clazz.methods) {
-      allSign.add(new MethodSign(methodNode));
+    List<MethodNode> methods = (List<MethodNode>) clazz.methods;
+    for (MethodNode methodNode : methods) {
+      allMethods.add(new MethodSign(methodNode));
     }
 
-    ClassNode p = superClass;
+    ClassNode curNode = superClass;
 
-    Queue<String> queue = new LinkedList<String>((List<String>)clazz.interfaces);
+    Queue<String> parentInterfaces = new LinkedList<String>((List<String>) clazz.interfaces);
 
-    while (VerifierUtil.isAbstract(p)) {
-      queue.addAll((List<String>)p.interfaces);
+    //traverse abstract super-classes and collect all the defined interfaces
+    while (VerifierUtil.isAbstract(curNode)) {
+      parentInterfaces.addAll((List<String>) curNode.interfaces);
 
-      for (MethodNode methodNode : (List<MethodNode>)p.methods) {
-        if (allSign.add(new MethodSign(methodNode))) {
+      for (MethodNode methodNode : (List<MethodNode>) curNode.methods) {
+        if (allMethods.add(new MethodSign(methodNode))) {
+          //if it is an undefined method
           if (VerifierUtil.isAbstract(methodNode)) {
-            ctx.registerProblem(new MethodNotImplementedProblem(p.name + '#' + methodNode.name + methodNode.desc),
-                                new ProblemLocation(clazz.name));
+            //and it is abstract => undefined abstract => problem
+            ctx.registerProblem(new MethodNotImplementedProblem(curNode.name + '#' + methodNode.name + methodNode.desc),
+                new ProblemLocation(clazz.name));
           }
         }
       }
 
-      if (p.superName == null) {
-        p = null;
+      if (curNode.superName == null) { //java.lang.Object
+        curNode = null;
         break;
       }
 
-      p = resolver.findClass(p.superName);
-      if (p == null) {
+      curNode = resolver.findClass(curNode.superName);
+      if (curNode == null) {
         return; // RETURN , don't check anymore because unknown class exists.
       }
     }
 
     Set<String> processedInterfaces = new HashSet<String>();
 
-    while (!queue.isEmpty()) {
-      String iName = queue.remove();
+    while (!parentInterfaces.isEmpty()) {
+      String iName = parentInterfaces.remove();
 
-      if (!processedInterfaces.add(iName)) continue;
+      if (!processedInterfaces.add(iName)) continue; //if this interface is already visited
 
-      final ClassNode i = resolver.findClass(iName);
-      if (i == null) continue;
+      final ClassNode iNode = resolver.findClass(iName);
+      if (iNode == null) continue; //undefined class
 
-      if ((i.access & Opcodes.ACC_INTERFACE) == 0) {
+      if (!VerifierUtil.isInterface(iNode)) {
+        //TODO: it means that the interface is no more "interface", but regular "class"
         continue;
       }
 
-      for (String anInterface : (List<String>)i.interfaces) {
+      for (String anInterface : (List<String>) iNode.interfaces) {
         if (!processedInterfaces.contains(anInterface)) {
-          queue.add(anInterface);
+          parentInterfaces.add(anInterface); //add to the queue
         }
       }
 
-      for (MethodNode method : (List<MethodNode>)i.methods) {
-        MethodSign sign = new MethodSign(method);
+      for (MethodNode methodNode : (List<MethodNode>) iNode.methods) {
+        MethodSign method = new MethodSign(methodNode);
 
-        while (!allSign.contains(sign) && p != null) {
-          for (MethodNode m : (List<MethodNode>)p.methods) {
-            allSign.add(new MethodSign(m));
+        while (!allMethods.contains(method) && curNode != null) {
+          for (MethodNode m : (List<MethodNode>) curNode.methods) {
+            allMethods.add(new MethodSign(m));
           }
 
-          if (p.superName == null) {
-            p = null;
-          }
-          else {
-            p = resolver.findClass(p.superName);
-            if (p == null) {
+          if (curNode.superName == null) {
+            curNode = null;
+          } else {
+            curNode = resolver.findClass(curNode.superName);
+            if (curNode == null) {
               return; // RETURN , don't check anymore because unknown class exists.
             }
           }
         }
 
-        if (!allSign.contains(sign)) {
-          allSign.add(sign);
+        if (!allMethods.contains(method)) {
+          allMethods.add(method);
 
-          ctx.registerProblem(new MethodNotImplementedProblem(i.name + '#' + method.name + method.desc),
-                              new ProblemLocation(clazz.name));
+          ctx.registerProblem(new MethodNotImplementedProblem(iNode.name + '#' + methodNode.name + methodNode.desc), new ProblemLocation(clazz.name));
         }
       }
     }
