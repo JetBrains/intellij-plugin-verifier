@@ -23,51 +23,91 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
     if (!(instr instanceof MethodInsnNode))
       return;
 
-    MethodInsnNode invoke = (MethodInsnNode) instr;
-    if (invoke.name.startsWith("access$"))
+    MethodInsnNode invokedMethod = (MethodInsnNode) instr;
+    if (invokedMethod.name.startsWith("access$"))
       return;
 
-    if (invoke.owner.startsWith("java/dyn/"))
+    if (invokedMethod.owner.startsWith("java/dyn/"))
       return;
 
-    String className = invoke.owner;
+    String ownerClassName = invokedMethod.owner;
 
-    if (className.startsWith("[")) return;
+    if (ownerClassName.startsWith("[")) return;
 
+    if (ctx.getOptions().isExternalClass(ownerClassName)) return;
 
-    if (ctx.getOptions().isExternalClass(className)) return;
+    ClassNode ownerClass = resolver.findClass(ownerClassName);
+    if (ownerClass == null) {
+      ctx.registerProblem(new ClassNotFoundProblem(ownerClassName), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));
+    } else {
+      ResolverUtil.MethodLocation actualLocation = ResolverUtil.findMethod(resolver, ownerClass, invokedMethod.name, invokedMethod.desc);
 
-    ClassNode classNode = resolver.findClass(className);
-    if (classNode == null) {
-      ctx.registerProblem(new ClassNotFoundProblem(className), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));
-    }
-    else {
-      ResolverUtil.MethodLocation location = ResolverUtil.findMethod(resolver, classNode, invoke.name, invoke.desc);
+      if (actualLocation == null || isDefaultConstructorNotFound(invokedMethod, ownerClassName, actualLocation)) {
+        String calledMethod = ownerClassName + '#' + invokedMethod.name + invokedMethod.desc;
 
-      if (location == null || isDefaultConstructorNotFound(invoke, className, location)) {
-        String calledMethod = className + '#' + invoke.name + invoke.desc;
-
-        if (className.equals(clazz.name)) {
+        if (ownerClassName.equals(clazz.name)) {
           // Looks like method was defined in some parent class
-          if (StringUtil.isNotEmpty(classNode.superName) && classNode.interfaces.isEmpty()) {
-            calledMethod = classNode.superName + '#' + invoke.name + invoke.desc;
+          if (StringUtil.isNotEmpty(ownerClass.superName) && ownerClass.interfaces.isEmpty()) {
+            calledMethod = ownerClass.superName + '#' + invokedMethod.name + invokedMethod.desc;
           }
         }
 
-        ctx.registerProblem(new MethodNotFoundProblem(calledMethod),
-                            new ProblemLocation(clazz.name, method.name + method.desc));
+        ctx.registerProblem(new MethodNotFoundProblem(calledMethod), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));
       } else {
-        MethodNode invokedMethod = location.getMethodNode();
-
-        if (VerifierUtil.isPrivate(invokedMethod)) {
-          ctx.registerProblem(new IllegalMethodAccessProblem(location.getMethodDescr()), new ProblemLocation(clazz.name, method.name + method.desc));
-        }
-
-        //TODO: proceed protected case
+        checkAccessModifier(actualLocation, ctx, resolver, clazz, method);
       }
 
-
     }
+  }
+
+  private void checkAccessModifier(@NotNull ResolverUtil.MethodLocation actualLocation,
+                                   @NotNull VerificationContext ctx,
+                                   @NotNull Resolver resolver,
+                                   @NotNull ClassNode verifiedClass,
+                                   @NotNull MethodNode verifiedMethod) {
+    MethodNode actualMethod = actualLocation.getMethodNode();
+    ClassNode actualOwner = actualLocation.getClassNode();
+
+    boolean hasAccessProblem = false;
+
+    if (VerifierUtil.isPrivate(actualMethod)) {
+      if (!StringUtil.equals(verifiedClass.name, actualOwner.name)) {
+        //accessing to private method of the other class
+        hasAccessProblem = true;
+      }
+    } else if (VerifierUtil.isProtected(actualMethod)) {
+      if (!isAncestor(actualOwner, verifiedClass, resolver)) {
+        //accessing to the package-private method of the non-inherited class
+        hasAccessProblem = true;
+      }
+    } else if (VerifierUtil.isDefaultAccess(actualMethod)) {
+      if (!StringUtil.equals(extractPackage(verifiedClass.name), extractPackage(actualOwner.name))) {
+        //accessing to the method which is not available in the other package
+        hasAccessProblem = true;
+      }
+    }
+
+    if (hasAccessProblem) {
+      IllegalMethodAccessProblem problem = new IllegalMethodAccessProblem(actualOwner.name + "#" + actualMethod.name + actualMethod.desc);
+      ctx.registerProblem(problem, new ProblemLocation(verifiedClass.name, verifiedMethod.name + verifiedMethod.desc));
+    }
+  }
+
+  private boolean isAncestor(@NotNull ClassNode parent, ClassNode child, @NotNull Resolver resolver) {
+    while (child != null) {
+      if (StringUtil.equals(parent.name, child.name)) {
+        return true;
+      }
+      child = resolver.findClass(child.superName);
+    }
+    return false;
+  }
+
+  @NotNull
+  private String extractPackage(@NotNull String className) {
+    int slash = className.lastIndexOf('/');
+    if (slash == -1) return className;
+    return className.substring(0, slash);
   }
 
   /**

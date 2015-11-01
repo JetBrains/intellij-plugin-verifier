@@ -10,4 +10,6 @@ public class OverrideFinalMethodProblem extends AnAction {
   public boolean isEnabledInModalContext() {
     return super.isEnabledInModalContext();
   }
+
+  //actually here should be actionPerformed method
 }

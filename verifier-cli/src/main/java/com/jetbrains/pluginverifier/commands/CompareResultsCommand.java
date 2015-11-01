@@ -5,6 +5,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.jetbrains.pluginverifier.VerifierCommand;
+import com.jetbrains.pluginverifier.problems.FailUtil;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
@@ -32,7 +33,7 @@ public class CompareResultsCommand extends VerifierCommand {
   @Override
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.size() != 2) {
-      throw com.intellij.structure.utils.Util.fail("You have to specify two result files. For example: \"java -jar verifier.jar compare-results res_133.200.xml res_133.201.xml\"");
+      throw FailUtil.fail("You have to specify two result files. For example: \"java -jar verifier.jar compare-results res_133.200.xml res_133.201.xml\"");
     }
 
     File previousBuildProblems = new File(freeArgs.get(0));

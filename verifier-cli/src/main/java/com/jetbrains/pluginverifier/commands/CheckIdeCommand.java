@@ -4,7 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
-import com.google.common.hash.*;
+import com.google.common.hash.Hashing;
 import com.intellij.structure.domain.Idea;
 import com.intellij.structure.domain.IdeaPlugin;
 import com.intellij.structure.domain.JDK;
@@ -12,10 +12,7 @@ import com.intellij.structure.pool.ClassPool;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.VerifierCommand;
-import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.problems.ProblemSet;
-import com.jetbrains.pluginverifier.problems.UpdateInfo;
-import com.jetbrains.pluginverifier.problems.VerificationError;
+import com.jetbrains.pluginverifier.problems.*;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
@@ -87,7 +84,7 @@ public class CheckIdeCommand extends VerifierCommand {
         }
       }
       catch (IOException e) {
-        throw com.intellij.structure.utils.Util.fail("Failed to read plugins file " + pluginsFile + ": " + e.getLocalizedMessage());
+        throw FailUtil.fail("Failed to read plugins file " + pluginsFile + ": " + e.getLocalizedMessage(), e);
       }
     }
 
@@ -177,6 +174,25 @@ public class CheckIdeCommand extends VerifierCommand {
     ProblemUtils.saveProblems(new File(xmlFile), ideVersion, problems);
   }
 
+  private static void printTeamCityProblems(@NotNull TeamCityLog log,
+                                            @NotNull Map<UpdateInfo, ProblemSet> results,
+                                            @NotNull Predicate<UpdateInfo> updateFilter) {
+    if (log == TeamCityLog.NULL_LOG) return;
+
+    //list of problems without their exact problem location (only affected plugin)
+    Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
+
+    for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
+      if (!updateFilter.apply(entry.getKey())) continue; //this is excluded plugin
+
+      for (Problem problem : entry.getValue().getAllProblems()) {
+        problems.put(problem, entry.getKey());
+      }
+    }
+
+    TeamCityUtil.printTeamCityProblems(log, problems);
+  }
+
   @NotNull
   private Collection<UpdateInfo> prepareUpdates(@NotNull Collection<UpdateInfo> updates) {
     Collection<UpdateInfo> important = new ArrayList<UpdateInfo>();
@@ -196,12 +212,12 @@ public class CheckIdeCommand extends VerifierCommand {
   @Override
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.isEmpty()) {
-      throw com.intellij.structure.utils.Util.fail("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"");
+      throw FailUtil.fail("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"");
     }
 
     File ideToCheck = new File(freeArgs.get(0));
     if (!ideToCheck.isDirectory()) {
-      throw com.intellij.structure.utils.Util.fail("IDE home is not a directory: " + ideToCheck);
+      throw FailUtil.fail("IDE home is not a directory: " + ideToCheck);
     }
 
     TeamCityLog tc = TeamCityLog.getInstance(commandLine);
@@ -407,24 +423,5 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
     return result;
-  }
-
-  private static void printTeamCityProblems(@NotNull TeamCityLog log,
-                                            @NotNull Map<UpdateInfo, ProblemSet> results,
-                                            @NotNull Predicate<UpdateInfo> updateFilter) {
-    if (log == TeamCityLog.NULL_LOG) return;
-
-    //list of problems without their exact problem location (only affected plugin)
-    Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
-
-    for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
-      if (!updateFilter.apply(entry.getKey())) continue; //this is excluded plugin
-
-      for (Problem problem : entry.getValue().getAllProblems()) {
-        problems.put(problem, entry.getKey());
-      }
-    }
-
-    TeamCityUtil.printTeamCityProblems(log, problems);
   }
 }
