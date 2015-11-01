@@ -56,23 +56,14 @@
                     </executions>
                 </plugin>
 
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>versions-maven-plugin</artifactId>
+                    <version>2.2</version>
+                </plugin>
 
             </plugins>
         </pluginManagement>
-
-        <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>versions-maven-plugin</artifactId>
-                <version>2.2</version>
-                <configuration>
-                    <includes>
-                        <include>org.jetbrains.intellij.structure:*</include>
-                    </includes>
-                </configuration>
-            </plugin>
-
-        </plugins>
 
     </build>
 
