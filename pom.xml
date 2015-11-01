@@ -55,6 +55,8 @@
                         </execution>
                     </executions>
                 </plugin>
+
+
             </plugins>
         </pluginManagement>
 
@@ -69,7 +71,9 @@
                     </includes>
                 </configuration>
             </plugin>
+
         </plugins>
+
     </build>
 
     <dependencies>
@@ -138,7 +142,9 @@
     <distributionManagement>
         <repository>
             <id>bintray-sergey-patrikeev</id>
-            <url>https://api.bintray.com/maven/sergey-patrikeev/intellij-plugin-verifier/verifier-main/;publish=1</url>
+            <url>
+                https://api.bintray.com/maven/sergey-patrikeev/intellij-plugin-verifier/intellij-plugin-verifier/;publish=1
+            </url>
         </repository>
     </distributionManagement>
 
