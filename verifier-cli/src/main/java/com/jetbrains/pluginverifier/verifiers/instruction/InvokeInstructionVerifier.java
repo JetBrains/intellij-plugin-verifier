@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.problems.ProblemLocation;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
@@ -103,8 +104,9 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
     return false;
   }
 
-  @NotNull
-  private String extractPackage(@NotNull String className) {
+  @Nullable
+  private String extractPackage(@Nullable String className) {
+    if (className == null) return null;
     int slash = className.lastIndexOf('/');
     if (slash == -1) return className;
     return className.substring(0, slash);
