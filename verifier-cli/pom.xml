@@ -22,7 +22,7 @@
         <dependency>
             <groupId>mock-plugin</groupId>
             <artifactId>mock-plugin</artifactId> <!--Used for VerifierTest -->
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
             <scope>test</scope>
         </dependency>
 
