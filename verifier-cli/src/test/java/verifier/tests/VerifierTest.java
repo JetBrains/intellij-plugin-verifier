@@ -18,10 +18,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * @author Sergey Patrikeev
@@ -64,7 +66,7 @@ public class VerifierTest {
     }
 
     File jdkFile = new File(jdkPath);
-    File pluginFile = new File("../mock-plugin/target/mock-plugin-1.0.jar");
+    File pluginFile = findLatestPlugin();
 
     JDK jdk = new JDK(jdkFile);
 
@@ -79,6 +81,24 @@ public class VerifierTest {
 
     myProblemSet = ctx.getProblems();
     myProblems = myProblemSet.asMap();
+  }
+
+  private File findLatestPlugin() throws FileNotFoundException {
+    Pattern compile = Pattern.compile("mock-plugin-(\\d+\\.\\d+).jar");
+    File file = new File("../mock-plugin/target/");
+
+    File[] files = file.listFiles();
+
+    if (files != null) {
+      for (File f : files) {
+        String name = f.getName();
+        if (compile.matcher(name).matches()) {
+          return f;
+        }
+      }
+    }
+
+    throw new FileNotFoundException("Plugin for tests is not found");
   }
 
   @Test
