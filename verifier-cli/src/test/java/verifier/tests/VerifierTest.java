@@ -64,7 +64,7 @@ public class VerifierTest {
     }
 
     File jdkFile = new File(jdkPath);
-    File pluginFile = new File("../mock-plugin/target/mock-plugin-1.0-SNAPSHOT.jar");
+    File pluginFile = new File("../mock-plugin/target/mock-plugin-1.0.jar");
 
     JDK jdk = new JDK(jdkFile);
 
