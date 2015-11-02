@@ -19,7 +19,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,7 +44,6 @@ public class VerifierTest {
           .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenMultiArray()V"))
           .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenInvocation()V"))
           .put(new MethodNotFoundProblem("com/intellij/openapi/actionSystem/AnAction#nonExistingMethod()V"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenNonFoundMethod()V"))
-          .put(new MethodNotImplementedProblem("com/intellij/openapi/actionSystem/AnAction#actionPerformed(Lcom/intellij/openapi/actionSystem/AnActionEvent;)V"), new ProblemLocation("mock/plugin/OverrideFinalMethodProblem"))
           .put(new MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent#getState()Ljava/lang/Object;"), new ProblemLocation("mock/plugin/NotImplementedProblem"))
           .put(new MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent#loadState(Ljava/lang/Object;)V"), new ProblemLocation("mock/plugin/NotImplementedProblem"))
           .put(new OverridingFinalMethodProblem("com/intellij/openapi/actionSystem/AnAction#isEnabledInModalContext()Z"), ProblemLocation.fromMethod("mock/plugin/OverrideFinalMethodProblem", "isEnabledInModalContext()Z"))
@@ -73,7 +72,7 @@ public class VerifierTest {
     myIdea = new Idea(ideaFile, jdk);
     myPlugin = IdeaPlugin.createIdeaPlugin(pluginFile);
 
-    List<String> args = Collections.singletonList("");
+    List<String> args = Arrays.asList("-r", "/usr/lib/jvm/java-6-oracle/");
     final CommandLine commandLine = new GnuParser().parse(Util.CMD_OPTIONS, args.toArray(new String[args.size()]));
 
     VerificationContextImpl ctx = new VerificationContextImpl(PluginVerifierOptions.parseOpts(commandLine), myIdea);

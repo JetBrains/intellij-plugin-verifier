@@ -17,4 +17,6 @@ public abstract class AnAction {
     return false;
   }
 
+  protected abstract void actionPerformed(AnActionEvent e);
+
 }

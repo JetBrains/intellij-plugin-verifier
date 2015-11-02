@@ -1,6 +1,7 @@
 package mock.plugin;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 
 /**
  * @author Sergey Patrikeev
@@ -11,5 +12,10 @@ public class OverrideFinalMethodProblem extends AnAction {
     return super.isEnabledInModalContext();
   }
 
-  //actually here should be actionPerformed method
+  //problem shouldn't be found here
+  @Override
+  protected void actionPerformed(AnActionEvent e) {
+
+  }
+
 }

@@ -67,6 +67,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
                                    @NotNull ClassNode verifiedClass,
                                    @NotNull MethodNode verifiedMethod) {
     MethodNode actualMethod = actualLocation.getMethodNode();
+    actionPerfo
     ClassNode actualOwner = actualLocation.getClassNode();
 
     boolean hasAccessProblem = false;
