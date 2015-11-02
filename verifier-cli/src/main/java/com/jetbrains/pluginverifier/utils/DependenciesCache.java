@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.utils;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.intellij.structure.domain.Idea;
 import com.intellij.structure.domain.IdeaPlugin;
 import com.intellij.structure.domain.PluginCache;
@@ -19,6 +20,15 @@ import java.util.*;
 
 public class DependenciesCache {
   private static final Set<IdeaPlugin> DEP_CALC_MARKER = new HashSet<IdeaPlugin>();
+  private static final ImmutableList<String> IDEA_ULTIMATE_MODULES = ImmutableList.of(
+      "com.intellij.modules.platform",
+      "com.intellij.modules.lang",
+      "com.intellij.modules.vcs",
+      "com.intellij.modules.xml",
+      "com.intellij.modules.xdebugger",
+      "com.intellij.modules.java",
+      "com.intellij.modules.ultimate"
+  );
   private static DependenciesCache ourInstance = new DependenciesCache();
   private final WeakHashMap<Idea, WeakHashMap<IdeaPlugin, PluginDependenciesDescriptor>> map = new WeakHashMap<Idea, WeakHashMap<IdeaPlugin, PluginDependenciesDescriptor>>();
 
@@ -73,7 +83,9 @@ public class DependenciesCache {
 
 
   @NotNull
-  public Set<IdeaPlugin> getDependenciesWithTransitive(Idea ide, IdeaPlugin plugin, List<PluginDependenciesDescriptor> pluginStack) throws VerificationError {
+  private Set<IdeaPlugin> getDependenciesWithTransitive(@NotNull Idea ide,
+                                                        @NotNull IdeaPlugin plugin,
+                                                        @NotNull List<PluginDependenciesDescriptor> pluginStack) throws VerificationError {
     PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
 
     Set<IdeaPlugin> result = descriptor.dependenciesWithTransitive;
@@ -100,16 +112,22 @@ public class DependenciesCache {
 
         //iterate through IntelliJ module dependencies
         for (PluginDependency dependency : plugin.getModuleDependencies()) {
-          IdeaPlugin depPlugin = ide.getPluginByModule(dependency.getId());
+          //TODO: maybe rewrite this
+          final String moduleId = dependency.getId();
+          if (IDEA_ULTIMATE_MODULES.contains(moduleId)) {
+            continue;
+          }
+
+          IdeaPlugin depPlugin = ide.getPluginByModule(moduleId);
 
           //noinspection Duplicates
           if (depPlugin == null) {
-            final String message = "Plugin " + plugin.getPluginId() + " depends on module " + dependency.getId() + " which is not found in " + ide.getVersion();
+            final String message = "Plugin " + plugin.getPluginId() + " depends on module " + moduleId + " which is not found in " + ide.getVersion();
             if (!dependency.isOptional()) {
               //this is required plugin
               throw new VerificationError(message);
             } else {
-              System.err.println(message);
+              System.err.println("(optional dependency)" + message);
             }
           } else if (result.add(depPlugin)) {
             result.addAll(getDependenciesWithTransitive(ide, depPlugin, pluginStack));

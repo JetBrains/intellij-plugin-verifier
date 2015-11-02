@@ -109,9 +109,33 @@ public class DownloadUtils {
     }
   }
 
+  /**
+   * Performs necessary redirection
+   */
   @NotNull
-  public static File getOrLoadUpdate(UpdateInfo update, URL url) throws IOException {
+  private static URL getFinalUrl(@NotNull URL url) throws IOException {
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    connection.setInstanceFollowRedirects(false);
+
+    if (connection.getResponseCode() == HttpURLConnection.HTTP_ACCEPTED) {
+      return url;
+    }
+
+    if (connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP
+        || connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM) {
+      String location = connection.getHeaderField("Location");
+      if (location != null) {
+        return new URL(location);
+      }
+    }
+    return url;
+  }
+
+  @NotNull
+  public static File getOrLoadUpdate(@NotNull UpdateInfo update, @NotNull URL url) throws IOException {
     File downloadDir = DownloadUtils.getOrCreateDownloadDir();
+
+    url = getFinalUrl(url);
 
     File pluginInCache = new File(downloadDir, getCacheFileName(update));
 
@@ -128,15 +152,25 @@ public class DownloadUtils {
           throw new IOException("Broken zip archive");
         }
 
-        System.out.println("done");
+        System.out.println("downloading " + update + " done!");
         downloadFail = false;
-      }
-      finally {
+      } catch (IOException e) {
+        System.out.println("Error loading plugin " + update + " " + e.getLocalizedMessage());
+        e.printStackTrace();
+        throw e;
+
+      } finally {
         if (downloadFail) {
-          System.out.println("error");
+          if (currentDownload.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            currentDownload.delete();
+          }
         }
       }
-
+      if (pluginInCache.exists()) {
+        //noinspection ResultOfMethodCallIgnored
+        pluginInCache.delete();
+      }
       FileUtils.moveFile(currentDownload, pluginInCache);
     }
 

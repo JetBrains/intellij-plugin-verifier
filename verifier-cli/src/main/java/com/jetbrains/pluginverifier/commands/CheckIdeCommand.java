@@ -33,7 +33,7 @@ public class CheckIdeCommand extends VerifierCommand {
    * (e.g. plugin "org.jetbrains.plugins.ruby" has a module "com.intellij.modules.ruby" inside)
    */
   private static final ImmutableList<String> INTELLIJ_MODULES_PLUGIN_IDS =
-      ImmutableList.of("org.jetbrains.plugins.ruby", "org.jetbrains.android");
+      ImmutableList.of("org.jetbrains.plugins.ruby", "org.jetbrains.android", "com.jetbrains.php");
 
   public CheckIdeCommand() {
     super("check-ide");
@@ -283,6 +283,9 @@ public class CheckIdeCommand extends VerifierCommand {
     //(those plugins which contain defined IntelliJ module inside)
     updates = prepareUpdates(updates);
 
+    //list of plugins which were not checked due to some error (first = plugin; second = error message)
+    final List<Pair<UpdateInfo, String>> incorrectPlugins = new ArrayList<Pair<UpdateInfo, String>>();
+
     //TODO: do in parallel
     for (UpdateInfo updateJson : updates) {
       TeamCityLog.Block block = tc.blockOpen(updateJson.toString());
@@ -293,7 +296,11 @@ public class CheckIdeCommand extends VerifierCommand {
           update = RepositoryManager.getInstance().getOrLoadUpdate(updateJson);
         }
         catch (IOException e) {
-          System.out.println("failed to download: " + e.getMessage());
+          final String message = "failed to download plugin " + updateJson + " because " + e.getMessage();
+          incorrectPlugins.add(Pair.create(updateJson, message));
+
+          System.err.println(message);
+          e.printStackTrace();
           continue;
         }
 
@@ -302,30 +309,42 @@ public class CheckIdeCommand extends VerifierCommand {
           plugin = IdeaPlugin.createFromZip(update);
         }
         catch (Exception e) {
-          System.out.println("Plugin is broken: " + updateJson);
-          tc.messageWarn("Failed to read plugin: " + e.getLocalizedMessage());
+          final String message = "Failed to read plugin " + updateJson + " because " + e.getLocalizedMessage();
+          incorrectPlugins.add(Pair.create(updateJson, message));
+
+          System.err.println(message);
+          tc.messageWarn(message);
           e.printStackTrace();
           continue;
         }
 
-        System.out.print("testing " + updateJson + "... ");
+        System.out.println("Verifying plugin " + updateJson + "... ");
 
         VerificationContextImpl ctx = new VerificationContextImpl(options, ide);
-        Verifiers.processAllVerifiers(plugin, ctx);
+        try {
+          Verifiers.processAllVerifiers(plugin, ctx);
+        } catch (VerificationError e) {
+          final String message = "Failed to verify plugin " + updateJson + " because " + e.getLocalizedMessage();
+          System.err.println(message);
+          incorrectPlugins.add(Pair.create(updateJson, message));
+
+          tc.messageWarn(message);
+          e.printStackTrace();
+          continue;
+        }
 
         results.put(updateJson, ctx.getProblems());
 
         if (ctx.getProblems().isEmpty()) {
-          System.out.println("ok");
-          tc.message(updateJson + " ok");
+          System.out.println("plugin " + updateJson + " is OK");
+          tc.message(updateJson + " is OK");
         }
         else {
-          System.out.println(" has " + ctx.getProblems().count() + " problems");
+          System.out.println("has " + ctx.getProblems().count() + " problems");
 
           if (updateFilter.apply(updateJson)) {
             tc.messageError(updateJson + " has problems");
-          }
-          else {
+          } else {
             tc.message(updateJson + " has problems, but is excluded in brokenPlugins.json");
           }
 
@@ -338,11 +357,6 @@ public class CheckIdeCommand extends VerifierCommand {
           //it gives us a chance to refer to such plugins by their module-name (not plugin id)
           ide.addCustomPlugin(plugin);
         }
-      } catch (VerificationError e) {
-        System.out.println("Failed to verify plugin " + updateJson + " because " + e.getLocalizedMessage());
-        tc.messageWarn("Failed to verify plugin " + updateJson + " because " + e.getLocalizedMessage());
-        e.printStackTrace();
-        //TODO: collect such plugins and report in bulk in the error-page
       }
       finally {
           block.close();
@@ -379,6 +393,8 @@ public class CheckIdeCommand extends VerifierCommand {
 
     printTeamCityProblems(tc, results, updateFilter);
 
+    totalProblemsCnt += printIncorrectPluginsList(tc, incorrectPlugins);
+
     if (commandLine.hasOption("xr")) {
       saveResultsToXml(commandLine.getOptionValue("xr"), ide.getVersion(), results);
     }
@@ -400,6 +416,22 @@ public class CheckIdeCommand extends VerifierCommand {
     return 0;
   }
 
+  private int printIncorrectPluginsList(@NotNull TeamCityLog tc, @NotNull List<Pair<UpdateInfo, String>> incorrectPlugins) {
+    if (incorrectPlugins.isEmpty()) return 0;
+    tc.buildProblem("There are " + incorrectPlugins.size() + " plugins which were not checked due to some problems (see Build Log for details)");
+
+    final TeamCityLog.Block block = tc.blockOpen("Incorrect plugins and plugins which failed to be downloaded or some");
+    try {
+      for (Pair<UpdateInfo, String> pair : incorrectPlugins) {
+        tc.message("Plugin: " + pair.first + "; reason: " + pair.second);
+      }
+    } finally {
+      block.close();
+    }
+
+    return 1; //+1 to total number of problems
+  }
+
   /**
    * Checks if for all the specified plugins to be checked there are
    * a build compatible with a specified IDE in the Plugins Repository
@@ -410,8 +442,8 @@ public class CheckIdeCommand extends VerifierCommand {
                                                @NotNull String ideVersion,
                                                @NotNull List<String> initialPlugins,
                                                @NotNull Map<UpdateInfo, ProblemSet> results) {
-    if (tc == TeamCityLog.NULL_LOG) return 0;
     int result = 0;
+
     Map<String, List<UpdateInfo>> pluginsMap = CheckIdeHtmlReportBuilder.getCheckedPluginsMap(initialPlugins, results);
     for (Map.Entry<String, List<UpdateInfo>> entry : pluginsMap.entrySet()) {
       String pluginId = entry.getKey();
@@ -425,6 +457,7 @@ public class CheckIdeCommand extends VerifierCommand {
         result++;
       }
     }
+
     return result;
   }
 }
