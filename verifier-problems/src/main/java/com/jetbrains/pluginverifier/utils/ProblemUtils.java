@@ -18,8 +18,9 @@ public class ProblemUtils {
 
   static {
     try {
-      //TODO: if necessary add problem here
-      JAXB_CONTEXT = JAXBContext.newInstance(MethodNotFoundProblem.class,
+      //TODO: if necessary add problem here (and add default constructor for it)
+      JAXB_CONTEXT = JAXBContext.newInstance(
+          MethodNotFoundProblem.class,
           ClassNotFoundProblem.class,
           MethodNotImplementedProblem.class,
           IllegalMethodAccessProblem.class,
@@ -27,7 +28,8 @@ public class ProblemUtils {
           DuplicateClassProblem.class,
           ResultsElement.class,
           UpdateInfo.class,
-          FailedToReadClassProblem.class);
+          FailedToReadClassProblem.class
+      );
     } catch (JAXBException e) {
       throw new RuntimeException(e);
     }

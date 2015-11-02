@@ -1,6 +1,8 @@
 package verifier.tests;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 import com.intellij.structure.domain.Idea;
 import com.intellij.structure.domain.IdeaPlugin;
 import com.intellij.structure.domain.JDK;
@@ -16,10 +18,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * @author Sergey Patrikeev
@@ -38,7 +42,9 @@ public class VerifierTest {
           .put(new ClassNotFoundProblem("non/existing/NonExistingException"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenCatch()V"))
           .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenDotClass()V"))
           .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenMultiArray()V"))
+          .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenInvocation()V"))
           .put(new MethodNotFoundProblem("com/intellij/openapi/actionSystem/AnAction#nonExistingMethod()V"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenNonFoundMethod()V"))
+          .put(new MethodNotImplementedProblem("com/intellij/openapi/actionSystem/AnAction#actionPerformed(Lcom/intellij/openapi/actionSystem/AnActionEvent;)V"), new ProblemLocation("mock/plugin/OverrideFinalMethodProblem"))
           .put(new MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent#getState()Ljava/lang/Object;"), new ProblemLocation("mock/plugin/NotImplementedProblem"))
           .put(new MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent#loadState(Ljava/lang/Object;)V"), new ProblemLocation("mock/plugin/NotImplementedProblem"))
           .put(new OverridingFinalMethodProblem("com/intellij/openapi/actionSystem/AnAction#isEnabledInModalContext()Z"), ProblemLocation.fromMethod("mock/plugin/OverrideFinalMethodProblem", "isEnabledInModalContext()Z"))
@@ -60,7 +66,7 @@ public class VerifierTest {
     }
 
     File jdkFile = new File(jdkPath);
-    File pluginFile = new File("../classes/artifacts/mock_plugin/mock_plugin.jar");
+    File pluginFile = findLatestPlugin();
 
     JDK jdk = new JDK(jdkFile);
 
@@ -77,18 +83,49 @@ public class VerifierTest {
     myProblems = myProblemSet.asMap();
   }
 
+  private File findLatestPlugin() throws FileNotFoundException {
+    Pattern compile = Pattern.compile("mock-plugin-(\\d+\\.\\d+).jar");
+    File file = new File("../mock-plugin/target/");
+
+    File[] files = file.listFiles();
+
+    if (files != null) {
+      for (File f : files) {
+        String name = f.getName();
+        if (compile.matcher(name).matches()) {
+          return f;
+        }
+      }
+    }
+
+    throw new FileNotFoundException("Plugin for tests is not found");
+  }
+
   @Test
   public void testFoundProblems() throws Exception {
+
+    Multimap<Problem, ProblemLocation> redundantProblems = HashMultimap.create();
+    for (Map.Entry<Problem, Set<ProblemLocation>> entry : myProblems.entrySet()) {
+      for (ProblemLocation location : entry.getValue()) {
+        redundantProblems.put(entry.getKey(), location);
+      }
+    }
 
     for (Map.Entry<Problem, ProblemLocation> entry : ACTUAL_PROBLEMS.entries()) {
       Problem problem = entry.getKey();
       ProblemLocation location = entry.getValue();
       Assert.assertTrue("problem " + problem + " should be found, but it isn't", myProblems.containsKey(problem));
       Assert.assertTrue("problem " + problem + " should be found in the following location " + location, myProblems.get(problem).contains(location));
+      redundantProblems.remove(problem, location);
     }
 
-    for (Map.Entry<Problem, Set<ProblemLocation>> entry : myProblems.entrySet()) {
-      System.out.println(entry.getKey());
+
+    if (!redundantProblems.isEmpty()) {
+      StringBuilder builder = new StringBuilder();
+      for (Map.Entry<Problem, ProblemLocation> entry : redundantProblems.entries()) {
+        builder.append(entry.getKey()).append(" at ").append(entry.getValue()).append("\n");
+      }
+      Assert.fail("Found redundant problems which shouldn't be found:\n" + builder.toString());
     }
 
   }

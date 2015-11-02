@@ -20,7 +20,9 @@ public class MethodTryCatchVerifier implements MethodVerifier {
   public void verify(ClassNode clazz, MethodNode method, Resolver resolver, VerificationContext ctx) {
     List<TryCatchBlockNode> blocks = (List<TryCatchBlockNode>) method.tryCatchBlocks;
     for (TryCatchBlockNode block : blocks) {
-      String descr = VerifierUtil.extractClassNameFromDescr(block.type);
+      String catchException = block.type;
+      if (catchException == null) continue;
+      String descr = VerifierUtil.extractClassNameFromDescr(catchException);
       if (descr == null) continue;
       if (!VerifierUtil.classExists(ctx.getOptions(), resolver, descr)) {
         ctx.registerProblem(new ClassNotFoundProblem(descr), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));

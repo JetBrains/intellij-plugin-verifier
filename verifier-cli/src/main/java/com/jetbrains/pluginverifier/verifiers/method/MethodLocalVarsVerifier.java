@@ -19,11 +19,13 @@ public class MethodLocalVarsVerifier implements MethodVerifier {
   @Override
   public void verify(ClassNode clazz, MethodNode method, Resolver resolver, VerificationContext ctx) {
     List<LocalVariableNode> localVariables = (List<LocalVariableNode>) method.localVariables;
-    for (LocalVariableNode variable : localVariables) {
-      String descr = VerifierUtil.extractClassNameFromDescr(variable.desc);
-      if (descr == null) continue;
-      if (!VerifierUtil.classExists(ctx.getOptions(), resolver, descr)) {
-        ctx.registerProblem(new ClassNotFoundProblem(descr), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));
+    if (localVariables != null) {
+      for (LocalVariableNode variable : localVariables) {
+        String descr = VerifierUtil.extractClassNameFromDescr(variable.desc);
+        if (descr == null) continue;
+        if (!VerifierUtil.classExists(ctx.getOptions(), resolver, descr)) {
+          ctx.registerProblem(new ClassNotFoundProblem(descr), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));
+        }
       }
     }
 

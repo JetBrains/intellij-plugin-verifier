@@ -33,7 +33,7 @@ public class VerifierUtil {
     return clazz != null && (isInterface == null || isInterface == isInterface(clazz));
   }
 
-  public static String prepareArrayName(final String className) {
+  public static String prepareArrayName(@NotNull final String className) {
     if (className.startsWith("[")) {
       int i = 1;
       while (i < className.length() && className.charAt(i) == '[') {
@@ -47,7 +47,7 @@ public class VerifierUtil {
   }
 
   @Nullable // return null for primitive types
-  public static String extractClassNameFromDescr(String descr) {
+  public static String extractClassNameFromDescr(@NotNull String descr) {
     descr = prepareArrayName(descr);
 
     if (isPrimitiveType(descr)) return null;
@@ -68,16 +68,24 @@ public class VerifierUtil {
     return (superMethod.access & Opcodes.ACC_FINAL) != 0;
   }
 
-  public static boolean isAbstract(@NotNull final MethodNode method) {
-    return (method.access & Opcodes.ACC_ABSTRACT) != 0;
-  }
-
   public static boolean isAbstract(@NotNull ClassNode clazz) {
     return (clazz.access & Opcodes.ACC_ABSTRACT) != 0;
   }
 
   public static boolean isPrivate(@NotNull MethodNode method) {
     return (method.access & Opcodes.ACC_PRIVATE) != 0;
+  }
+
+  public static boolean isPublic(@NotNull MethodNode method) {
+    return (method.access & Opcodes.ACC_PUBLIC) != 0;
+  }
+
+  public static boolean isDefaultAccess(@NotNull MethodNode method) {
+    return !isPublic(method) && !isProtected(method) && !isPrivate(method);
+  }
+
+  public static boolean isAbstract(@NotNull MethodNode method) {
+    return (method.access & Opcodes.ACC_ABSTRACT) != 0;
   }
 
   public static boolean isProtected(@NotNull MethodNode method) {

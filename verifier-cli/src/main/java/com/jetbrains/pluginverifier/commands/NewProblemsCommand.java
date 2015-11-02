@@ -5,6 +5,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.jetbrains.pluginverifier.VerifierCommand;
+import com.jetbrains.pluginverifier.problems.FailUtil;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.repository.GlobalRepository;
@@ -71,12 +72,12 @@ public class NewProblemsCommand extends VerifierCommand {
   @Override
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.isEmpty()) {
-      throw com.intellij.structure.utils.Util.fail("You have to specify IDE to check. For example: \"java -jar verifier.jar new-problems report-133.439.xml\"");
+      throw FailUtil.fail("You have to specify IDE to check. For example: \"java -jar verifier.jar new-problems report-133.439.xml\"");
     }
 
     File reportToCheck = new File(freeArgs.get(0));
     if (!reportToCheck.isFile()) {
-      throw com.intellij.structure.utils.Util.fail("Report not found: " + reportToCheck);
+      throw FailUtil.fail("Report not found: " + reportToCheck);
     }
 
     ResultsElement currentCheckResult = ProblemUtils.loadProblems(reportToCheck);

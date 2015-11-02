@@ -10,6 +10,9 @@ public class IllegalMethodAccessProblem extends Problem {
 
   private String myMethod;
 
+  public IllegalMethodAccessProblem() {
+  }
+
   public IllegalMethodAccessProblem(String method) {
     myMethod = method;
   }
