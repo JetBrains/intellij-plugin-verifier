@@ -11,10 +11,6 @@ import com.jetbrains.pluginverifier.CommandHolder;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.VerifierCommand;
-import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.problems.ProblemLocation;
-import com.jetbrains.pluginverifier.problems.ProblemSet;
-import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.*;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.utils.TeamCityLog;
@@ -184,6 +180,7 @@ public class CheckPluginCommand extends VerifierCommand {
           myLastProblemSet = problemSet;
           idea.addCustomPlugin(plugin);
         } catch (VerificationError e) {
+
           System.out.println("Failed to verify plugin " + plugin.getPluginId() + " because " + e.getLocalizedMessage());
           tc.messageWarn("Failed to verify plugin " + plugin.getPluginId() + " because " + e.getLocalizedMessage());
           e.printStackTrace();

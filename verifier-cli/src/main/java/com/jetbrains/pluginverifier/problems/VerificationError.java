@@ -1,5 +1,8 @@
 package com.jetbrains.pluginverifier.problems;
 
+/**
+ * @author Sergey Patrikeev
+ */
 /*
 Checked because it's quite possibly that plugin is broken
 (e.g. plugin has circular module-dependencies)
