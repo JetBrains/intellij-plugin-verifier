@@ -283,6 +283,7 @@ public class CheckIdeCommand extends VerifierCommand {
     //(those plugins which contain defined IntelliJ module inside)
     updates = prepareUpdates(updates);
 
+    //TODO: do in parallel
     for (UpdateInfo updateJson : updates) {
       TeamCityLog.Block block = tc.blockOpen(updateJson.toString());
 
@@ -341,13 +342,14 @@ public class CheckIdeCommand extends VerifierCommand {
         System.out.println("Failed to verify plugin " + updateJson + " because " + e.getLocalizedMessage());
         tc.messageWarn("Failed to verify plugin " + updateJson + " because " + e.getLocalizedMessage());
         e.printStackTrace();
+        //TODO: collect such plugins and report in bulk in the error-page
       }
       finally {
           block.close();
       }
     }
 
-    System.out.println("Verification completed (" + ((System.currentTimeMillis() - time) / 1000) + "s)");
+    System.out.println("Verification completed (" + ((System.currentTimeMillis() - time) / 1000) + " seconds)");
 
     int totalProblemsCnt = 0;
 

@@ -11,6 +11,7 @@ import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.VerificationError;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -70,13 +71,13 @@ public class DependenciesCache {
     return descr.myResolver;
   }
 
-  public Set<IdeaPlugin> getDependenciesWithTransitive(Idea ide, IdeaPlugin plugin, List<PluginDependenciesDescriptor> pluginStack) throws VerificationError {
-    //TODO: add exception handling in case of non-found dependency
 
+  @NotNull
+  public Set<IdeaPlugin> getDependenciesWithTransitive(Idea ide, IdeaPlugin plugin, List<PluginDependenciesDescriptor> pluginStack) throws VerificationError {
     PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
 
-    Set<IdeaPlugin> res = descriptor.dependenciesWithTransitive;
-    if (res == DEP_CALC_MARKER) {
+    Set<IdeaPlugin> result = descriptor.dependenciesWithTransitive;
+    if (result == DEP_CALC_MARKER) {
       if (Boolean.parseBoolean(Configuration.getInstance().getProperty("fail.on.cyclic.dependencies"))) {
         int idx = pluginStack.lastIndexOf(descriptor);
         throw new VerificationError("Cyclic plugin dependencies: " + Joiner.on(" -> ").join(pluginStack.subList(idx, pluginStack.size())) + " -> " + plugin);
@@ -95,14 +96,27 @@ public class DependenciesCache {
       pluginStack.add(descriptor);
 
       try {
-        res = new HashSet<IdeaPlugin>();
+        result = new HashSet<IdeaPlugin>(); //compare IdeaPlugins by their identity
 
+        //iterate through IntelliJ module dependencies
         for (PluginDependency dependency : plugin.getModuleDependencies()) {
           IdeaPlugin depPlugin = ide.getPluginByModule(dependency.getId());
-          if (depPlugin != null && res.add(depPlugin)) {
-            res.addAll(getDependenciesWithTransitive(ide, depPlugin, pluginStack));
+
+          //noinspection Duplicates
+          if (depPlugin == null) {
+            final String message = "Plugin " + plugin.getPluginId() + " depends on module " + dependency.getId() + " which is not found in " + ide.getVersion();
+            if (!dependency.isOptional()) {
+              //this is required plugin
+              throw new VerificationError(message);
+            } else {
+              System.err.println(message);
+            }
+          } else if (result.add(depPlugin)) {
+            result.addAll(getDependenciesWithTransitive(ide, depPlugin, pluginStack));
           }
         }
+
+        //iterate through the other plugin dependencies
         for (PluginDependency pluginDependency : plugin.getDependencies()) {
           IdeaPlugin depPlugin = ide.getPlugin(pluginDependency.getId());
           if (depPlugin == null) {
@@ -115,11 +129,21 @@ public class DependenciesCache {
             }
             catch (IOException e) {
               e.printStackTrace();
+              System.err.println("Couldn't load plugin dependency for " + plugin.getPluginId());
             }
           }
 
-          if (depPlugin != null && res.add(depPlugin)) {
-            res.addAll(getDependenciesWithTransitive(ide, depPlugin, pluginStack));
+          //noinspection Duplicates
+          if (depPlugin == null) {
+            final String message = "Plugin " + plugin.getPluginId() + " depends on the other plugin " + pluginDependency.getId() + " which is not found in " + ide.getVersion();
+            if (!pluginDependency.isOptional()) {
+              //this is required plugin
+              throw new VerificationError(message);
+            } else {
+              System.err.println(message);
+            }
+          } else if (result.add(depPlugin)) {
+            result.addAll(getDependenciesWithTransitive(ide, depPlugin, pluginStack));
           }
         }
 
@@ -127,7 +151,7 @@ public class DependenciesCache {
           descriptor.dependenciesWithTransitive = null;
         }
         else {
-          descriptor.dependenciesWithTransitive = res;
+          descriptor.dependenciesWithTransitive = result;
         }
       }
       finally {
@@ -139,7 +163,7 @@ public class DependenciesCache {
       }
     }
 
-    return res;
+    return result;
   }
 
   private static class PluginDependenciesDescriptor {
