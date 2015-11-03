@@ -158,7 +158,7 @@ public class DependenciesCache {
               //this is required plugin
               throw new VerificationError(message);
             } else {
-              System.err.println(message);
+              System.err.println("(optional dependency)" + message);
             }
           } else if (result.add(depPlugin)) {
             result.addAll(getDependenciesWithTransitive(ide, depPlugin, pluginStack));

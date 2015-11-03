@@ -85,4 +85,29 @@ public class UpdateInfo {
 
     return "#" + updateId;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    UpdateInfo that = (UpdateInfo) o;
+
+    if (updateId != null ? !updateId.equals(that.updateId) : that.updateId != null) return false;
+    if (pluginId != null ? !pluginId.equals(that.pluginId) : that.pluginId != null) return false;
+    if (pluginName != null ? !pluginName.equals(that.pluginName) : that.pluginName != null) return false;
+    if (version != null ? !version.equals(that.version) : that.version != null) return false;
+    return !(cdate != null ? !cdate.equals(that.cdate) : that.cdate != null);
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = updateId != null ? updateId.hashCode() : 0;
+    result = 31 * result + (pluginId != null ? pluginId.hashCode() : 0);
+    result = 31 * result + (pluginName != null ? pluginName.hashCode() : 0);
+    result = 31 * result + (version != null ? version.hashCode() : 0);
+    result = 31 * result + (cdate != null ? cdate.hashCode() : 0);
+    return result;
+  }
 }
