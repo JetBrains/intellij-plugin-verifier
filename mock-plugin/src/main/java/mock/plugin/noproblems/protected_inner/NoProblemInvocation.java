@@ -1,4 +1,6 @@
-package mock.plugin;
+package mock.plugin.noproblems.protected_inner;
+
+import mock.plugin.OverrideFinalMethodProblem;
 
 /**
  * @author Sergey Patrikeev

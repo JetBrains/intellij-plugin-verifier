@@ -32,7 +32,7 @@ public class IntegrationTest {
     final File plugin = TestData.fetchResource(pluginId, false);
     final File ide = TestData.fetchResource(ideId, true);
 
-    List<String> args = Arrays.asList(plugin.getPath(), ide.getPath(), "-r", "/usr/lib/jvm/java-6-oracle");
+    List<String> args = Arrays.asList(plugin.getPath(), ide.getPath());
 
     final CommandLine commandLine = new GnuParser().parse(Util.CMD_OPTIONS, args.toArray(new String[args.size()]));
     final CheckPluginCommand checkPluginCommand = new CheckPluginCommand();

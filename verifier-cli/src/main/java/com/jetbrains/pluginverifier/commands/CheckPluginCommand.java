@@ -155,10 +155,17 @@ public class CheckPluginCommand extends VerifierCommand {
         try {
           tc.message(message);
           VerificationContextImpl ctx = new VerificationContextImpl(options, idea);
-          Verifiers.processAllVerifiers(plugin, ctx);
+
+          try {
+            Verifiers.processAllVerifiers(plugin, ctx);
+          } catch (VerificationError e) {
+            System.err.println("Failed to verify plugin " + plugin.getPluginId() + " because " + e.getLocalizedMessage());
+            tc.messageWarn("Failed to verify plugin " + plugin.getPluginId() + " because " + e.getLocalizedMessage());
+            e.printStackTrace();
+          }
 
           ProblemSet problemSet = ctx.getProblems();
-          System.out.println(problemSet.isEmpty() ? "Ok" : problemSet.count() + " errors");
+          System.out.println(problemSet.isEmpty() ? "is OK" : " has " + problemSet.count() + " errors");
           problemSet.printProblems(System.out, "");
           for (Problem problem : problemSet.getAllProblems()) {
             StringBuilder description = new StringBuilder(problem.getDescription());
@@ -178,11 +185,7 @@ public class CheckPluginCommand extends VerifierCommand {
 
           myLastProblemSet = problemSet;
           idea.addCustomPlugin(plugin);
-        } catch (VerificationError e) {
-          System.out.println("Failed to verify plugin " + plugin.getPluginId() + " because " + e.getLocalizedMessage());
-          tc.messageWarn("Failed to verify plugin " + plugin.getPluginId() + " because " + e.getLocalizedMessage());
-          e.printStackTrace();
-          //TODO: collect such plugins and report in bulk in the error-page
+
         } finally {
           block.close();
         }

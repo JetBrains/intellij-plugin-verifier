@@ -67,32 +67,35 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
                                    @NotNull ClassNode verifiedClass,
                                    @NotNull MethodNode verifiedMethod) {
     MethodNode actualMethod = actualLocation.getMethodNode();
-
     ClassNode actualOwner = actualLocation.getClassNode();
 
-    boolean hasAccessProblem = false;
+    IllegalMethodAccessProblem.MethodAccess accessProblem = null;
 
     if (VerifierUtil.isPrivate(actualMethod)) {
       if (!StringUtil.equals(verifiedClass.name, actualOwner.name)) {
         //accessing to private method of the other class
-        hasAccessProblem = true;
+        accessProblem = IllegalMethodAccessProblem.MethodAccess.PRIVATE;
       }
     } else if (VerifierUtil.isProtected(actualMethod)) {
-      if (!isAncestor(actualOwner, verifiedClass, resolver)) {
+      if (!isAncestor(actualOwner, verifiedClass, resolver) && !haveTheSamePackage(actualOwner, verifiedClass)) {
         //accessing to the package-private method of the non-inherited class
-        hasAccessProblem = true;
+        accessProblem = IllegalMethodAccessProblem.MethodAccess.PROTECTED;
       }
     } else if (VerifierUtil.isDefaultAccess(actualMethod)) {
-      if (!StringUtil.equals(extractPackage(verifiedClass.name), extractPackage(actualOwner.name))) {
+      if (!haveTheSamePackage(actualOwner, verifiedClass)) {
         //accessing to the method which is not available in the other package
-        hasAccessProblem = true;
+        accessProblem = IllegalMethodAccessProblem.MethodAccess.PACKAGE_PRIVATE;
       }
     }
 
-    if (hasAccessProblem) {
-      IllegalMethodAccessProblem problem = new IllegalMethodAccessProblem(actualOwner.name + "#" + actualMethod.name + actualMethod.desc);
+    if (accessProblem != null) {
+      IllegalMethodAccessProblem problem = new IllegalMethodAccessProblem(actualOwner.name + "#" + actualMethod.name + actualMethod.desc, accessProblem);
       ctx.registerProblem(problem, new ProblemLocation(verifiedClass.name, verifiedMethod.name + verifiedMethod.desc));
     }
+  }
+
+  private boolean haveTheSamePackage(@NotNull ClassNode first, @NotNull ClassNode second) {
+    return StringUtil.equals(extractPackage(first.name), extractPackage(second.name));
   }
 
   private boolean isAncestor(@NotNull ClassNode parent, ClassNode child, @NotNull Resolver resolver) {
