@@ -115,6 +115,7 @@ public class ProblemUtils {
     }
   }
 
+
   public static List<Problem> sort(Collection<Problem> problems) {
     List<Problem> res = new ArrayList<Problem>(problems);
     Collections.sort(res, new ToStringProblemComparator());
@@ -124,5 +125,18 @@ public class ProblemUtils {
   public static String hash(Problem problem) {
     String s = problemToString(problem, false);
     return Hashing.md5().hashString(s, Charset.defaultCharset()).toString();
+  }
+
+  /**
+   * In DESCENDING order of versions
+   */
+  public static Collection<UpdateInfo> sortUpdates(@NotNull List<UpdateInfo> updateInfos) {
+    Collections.sort(updateInfos, new Comparator<UpdateInfo>() {
+      @Override
+      public int compare(UpdateInfo o1, UpdateInfo o2) {
+        return VersionComparatorUtil.compare(o2.getVersion(), o1.getVersion());
+      }
+    });
+    return updateInfos;
   }
 }

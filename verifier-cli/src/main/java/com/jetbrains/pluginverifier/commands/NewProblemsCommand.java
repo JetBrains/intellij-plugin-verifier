@@ -29,7 +29,7 @@ public class NewProblemsCommand extends VerifierCommand {
   /**
    * @return list of IDEA builds for which check is already performed and
    * its main-part equals to the given main-part (141 and 141)
-   * and the build number LESS than given build number.
+   * and the build number is LESS than the given build number.
    * NOTE: in ascending order, i.e. 141.01, 141.05, 141.264...
    */
   private static List<String> findPreviousBuilds(String currentBuild) throws IOException {
@@ -98,7 +98,7 @@ public class NewProblemsCommand extends VerifierCommand {
     //Problems of this check
     Set<Problem> currProblems = new HashSet<Problem>(currentProblemsToUpdates.keySet());
 
-    //leave only NEW' problems of this check compared with the EARLIEST check
+    //leave only NEW' problems of this check compared to the EARLIEST check
     ResultsElement smallestCheckResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResultFile(previousCheckedBuilds.get(0)));
     currProblems.removeAll(smallestCheckResult.getProblems());
 
@@ -120,7 +120,7 @@ public class NewProblemsCommand extends VerifierCommand {
 
     final String currentBuildName = currentCheckResult.getIde();
 
-    //UNRESOLVED PROBLEMS: <IDEA-build -> ALL the problems of the this build (in which these problems were met first)>
+    //UNRESOLVED PROBLEMS: <IDEA-build -> ALL the problems of this build (in which these problems were met first)>
     firstOccurrenceBuildToProblems.putAll(currentBuildName, currProblems);
 
     //---------------------------------------------------
@@ -142,7 +142,7 @@ public class NewProblemsCommand extends VerifierCommand {
         //in sorted by problem-description order
         for (Problem problem : ProblemUtils.sort(problemsInBuild)) {
           CharSequence problemDescription = MessageUtils.cutCommonPackages(problem.getDescription());
-          Collection<UpdateInfo> affectedUpdates = currentProblemsToUpdates.get(problem);
+          Collection<UpdateInfo> affectedUpdates = ProblemUtils.sortUpdates(new ArrayList<UpdateInfo>(currentProblemsToUpdates.get(problem)));
 
           System.out.print("    ");
           System.out.println(problemDescription);
@@ -173,7 +173,7 @@ public class NewProblemsCommand extends VerifierCommand {
   }
 
   @NotNull
-  private Multimap<Problem, UpdateInfo> rearrangeProblemsMap(ResultsElement currentCheckResult) {
+  private Multimap<Problem, UpdateInfo> rearrangeProblemsMap(@NotNull ResultsElement currentCheckResult) {
     Multimap<Problem, UpdateInfo> currentProblemsToUpdates = ArrayListMultimap.create();
 
     //rearrange existing map: Map<Problem -> [plugin ids]>

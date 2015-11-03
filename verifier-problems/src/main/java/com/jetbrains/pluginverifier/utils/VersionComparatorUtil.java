@@ -134,13 +134,21 @@ public class VersionComparatorUtil {
     final int n2len = n2.length();
 
     if (n1len > n2len) {
-      n2 = StringUtil.repeatSymbol('0', n1len - n2len) + n2;
+      n2 = repeatSymbol('0', n1len - n2len) + n2;
     } else if (n2len > n1len) {
-      n1 = StringUtil.repeatSymbol('0', n2len - n1len) + n1;
+      n1 = repeatSymbol('0', n2len - n1len) + n1;
     }
 
     return n1.compareTo(n2);
   }
+
+  @NotNull
+  private static String repeatSymbol(final char aChar, final int count) {
+    char[] buffer = new char[count];
+    Arrays.fill(buffer, aChar);
+    return new String(buffer);
+  }
+
 
   private static void padWithNulls(final Collection<String> s1, final Collection<String> s2) {
     if (s1.size() != s2.size()) {
