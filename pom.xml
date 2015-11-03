@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.jetbrains.plugin-verifier</groupId>
     <artifactId>verifier-parent</artifactId>
-    <version>1.0</version>
+    <version>15.0</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -56,14 +56,17 @@
                     </executions>
                 </plugin>
 
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>versions-maven-plugin</artifactId>
-                    <version>2.2</version>
-                </plugin>
 
             </plugins>
         </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>2.2</version>
+            </plugin>
+        </plugins>
 
     </build>
 

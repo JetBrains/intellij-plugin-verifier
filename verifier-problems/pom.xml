@@ -10,7 +10,7 @@
   <parent>
     <groupId>org.jetbrains.plugin-verifier</groupId>
     <artifactId>verifier-parent</artifactId>
-    <version>1.0</version>
+    <version>15.0</version>
   </parent>
 
   <build>
