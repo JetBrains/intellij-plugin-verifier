@@ -28,10 +28,10 @@ public class Uploader {
     CloseableHttpClient httpclient = HttpClients.createDefault();
 
     try {
-      //0 - url
+      //0 - url to perform POST
       HttpPost httppost = new HttpPost(args[0]);
 
-      //1 - checkResults?
+      //1 - checkResults
       String filePartName = args[1];
 
       //2 - file to upload

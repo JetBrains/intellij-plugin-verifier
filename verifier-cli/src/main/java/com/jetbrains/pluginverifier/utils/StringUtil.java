@@ -3,7 +3,17 @@ package com.jetbrains.pluginverifier.utils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 public class StringUtil {
+
+  @NotNull
+  public static String repeatSymbol(final char aChar, final int count) {
+    char[] buffer = new char[count];
+    Arrays.fill(buffer, aChar);
+    return new String(buffer);
+  }
+
 
   public static boolean equals(@Nullable String s1, @Nullable String s2) {
     if (s1 == null ^ s2 == null) {

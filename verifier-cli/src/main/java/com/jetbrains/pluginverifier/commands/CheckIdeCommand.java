@@ -159,8 +159,9 @@ public class CheckIdeCommand extends VerifierCommand {
     }
   }
 
-  private static void saveResultsToXml(@NotNull String xmlFile, @NotNull String ideVersion, @NotNull Map<UpdateInfo, ProblemSet> results)
-      throws IOException {
+  private static void saveResultsToXml(@NotNull String xmlFile,
+                                       @NotNull String ideVersion,
+                                       @NotNull Map<UpdateInfo, ProblemSet> results) throws IOException {
     Map<UpdateInfo, Collection<Problem>> problems = new LinkedHashMap<UpdateInfo, Collection<Problem>>();
 
     for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
@@ -170,6 +171,9 @@ public class CheckIdeCommand extends VerifierCommand {
     ProblemUtils.saveProblems(new File(xmlFile), ideVersion, problems);
   }
 
+  /**
+   * Prints Build Problems in the Overview page
+   */
   private static void printTeamCityProblems(@NotNull TeamCityLog log,
                                             @NotNull Map<UpdateInfo, ProblemSet> results,
                                             @NotNull Predicate<UpdateInfo> updateFilter) {
@@ -177,6 +181,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     //list of problems without their exact problem location (only affected plugin)
     Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
+
 
     for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
       if (!updateFilter.apply(entry.getKey())) continue; //this is excluded plugin
@@ -388,6 +393,7 @@ public class CheckIdeCommand extends VerifierCommand {
         CheckIdeHtmlReportBuilder.build(new File(reportFile), ide.getVersion(), initialPlugins, updateFilter, results);
       }
     }
+
 
     printTeamCityProblems(tc, results, updateFilter);
 

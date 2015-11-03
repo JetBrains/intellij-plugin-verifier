@@ -26,6 +26,9 @@ public class FailUtil {
     if (log != null) {
       log.messageError("Fatal error " + message);
     }
+    if (cause != null) {
+      cause.printStackTrace();
+    }
     throw new RuntimeException(message, cause);
   }
 }
