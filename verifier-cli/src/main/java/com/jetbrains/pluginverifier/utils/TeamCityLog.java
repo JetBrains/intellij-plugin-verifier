@@ -25,6 +25,9 @@ public class TeamCityLog {
       replaceAll("\r", "|r");
   }
 
+  public static TeamCityLog getInstance(@NotNull CommandLine commandLine) {
+    return commandLine.hasOption("tc") ? new TeamCityLog(System.out) : TeamCityLog.NULL_LOG;
+  }
 
   public void messageError(@NotNull String text) {
     out.printf("##teamcity[message text='%s' status='ERROR']\n", escape(text));
@@ -58,13 +61,59 @@ public class TeamCityLog {
     out.printf("##teamcity[buildStatus status='SUCCESS' text='%s']\n", escape(text));
   }
 
-  public static TeamCityLog getInstance(@NotNull CommandLine commandLine) {
-    return commandLine.hasOption("tc") ? new TeamCityLog(System.out) : TeamCityLog.NULL_LOG;
+  public void testIgnored(@NotNull String testName, @NotNull String message) {
+    out.printf("##teamcity[testIgnored name='%s' message='%s']\n", escape(testName), escape(message));
+  }
+
+  public void testStdOut(@NotNull String className, @NotNull String outText) {
+    out.printf("##teamcity[testStdOut name='%s' out='%s']\n", escape(className), escape(outText));
+  }
+
+  public void testStdErr(@NotNull String className, @NotNull String errText) {
+    out.printf("##teamcity[testStdErr name='%s' out='%s']\n", escape(className), escape(errText));
+  }
+
+  public void testFailed(@NotNull String name, @NotNull String failureMessage, @NotNull String details) {
+    out.printf("##teamcity[testFailed name='%s' message='%s' details='%s']\n", escape(name), escape(failureMessage), escape(details));
   }
 
   public Block blockOpen(@NotNull String name) {
     out.printf("##teamcity[blockOpened name='%s']\n", escape(name));
     return new Block(name);
+  }
+
+  public TestSuite testSuiteStarted(@NotNull String suiteName) {
+    out.printf("##teamcity[testSuiteStarted name='%s']\n", escape(suiteName));
+    return new TestSuite(suiteName);
+  }
+
+  public Test testStarted(@NotNull String testName) {
+    out.printf("##teamcity[testStarted name='%s']\n", escape(testName));
+    return new Test(testName);
+  }
+
+  public class Test {
+    private String testName;
+
+    public Test(String testName) {
+      this.testName = testName;
+    }
+
+    public void close() {
+      out.printf("##teamcity[testFinished name='%s']\n", escape(testName));
+    }
+  }
+
+  public class TestSuite {
+    private String suiteName;
+
+    public TestSuite(String suiteName) {
+      this.suiteName = suiteName;
+    }
+
+    public void close() {
+      out.printf("##teamcity[testSuiteFinished name='%s']\n", escape(suiteName));
+    }
   }
 
   public class Block {

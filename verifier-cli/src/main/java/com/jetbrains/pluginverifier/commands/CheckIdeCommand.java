@@ -176,13 +176,14 @@ public class CheckIdeCommand extends VerifierCommand {
    */
   private static void printTeamCityProblems(@NotNull TeamCityLog log,
                                             @NotNull Map<UpdateInfo, ProblemSet> results,
-                                            @NotNull Predicate<UpdateInfo> updateFilter) {
+                                            @NotNull Predicate<UpdateInfo> updateFilter,
+                                            @NotNull TeamCityUtil.ReportGrouping reportGrouping) {
     if (log == TeamCityLog.NULL_LOG) return;
 
     //list of problems without their exact problem location (only affected plugin)
     Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
 
-
+    //fill problems map
     for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
       if (!updateFilter.apply(entry.getKey())) continue; //this is excluded plugin
 
@@ -191,7 +192,11 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
-    TeamCityUtil.printTeamCityProblems(log, problems);
+    if (reportGrouping.equals(TeamCityUtil.ReportGrouping.NONE)) {
+      TeamCityUtil.printTeamCityProblems(log, problems);
+    } else {
+      TeamCityUtil.printGroupedReport(log, problems, reportGrouping);
+    }
   }
 
   @NotNull
@@ -220,6 +225,8 @@ public class CheckIdeCommand extends VerifierCommand {
     if (!ideToCheck.isDirectory()) {
       throw FailUtil.fail("IDE home is not a directory: " + ideToCheck);
     }
+
+    TeamCityUtil.ReportGrouping reportGrouping = TeamCityUtil.ReportGrouping.parseGrouping(commandLine);
 
     TeamCityLog tc = TeamCityLog.getInstance(commandLine);
 
@@ -304,6 +311,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
           System.err.println(message);
           e.printStackTrace();
+          tc.messageError(message);
           continue;
         }
 
@@ -315,7 +323,7 @@ public class CheckIdeCommand extends VerifierCommand {
           incorrectPlugins.add(Pair.create(updateJson, message));
 
           System.err.println(message);
-          tc.messageWarn(message);
+          tc.messageError(message);
           e.printStackTrace();
           continue;
         }
@@ -330,7 +338,7 @@ public class CheckIdeCommand extends VerifierCommand {
           System.err.println(message);
           incorrectPlugins.add(Pair.create(updateJson, message));
 
-          tc.messageWarn(message);
+          tc.messageError(message);
           e.printStackTrace();
           continue;
         }
@@ -394,14 +402,15 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
-
-    printTeamCityProblems(tc, results, updateFilter);
-
-    totalProblemsCnt += printIncorrectPluginsList(tc, incorrectPlugins);
-
     if (commandLine.hasOption("xr")) {
       saveResultsToXml(commandLine.getOptionValue("xr"), ide.getVersion(), results);
     }
+
+
+    printTeamCityProblems(tc, results, updateFilter, reportGrouping);
+
+    totalProblemsCnt += printIncorrectPluginsList(tc, incorrectPlugins);
+
 
     Set<Problem> allProblems = new HashSet<Problem>();
 
@@ -410,6 +419,8 @@ public class CheckIdeCommand extends VerifierCommand {
     }
 
     totalProblemsCnt += allProblems.size();
+
+    //-----------------------------PRINT CHECK STATUS----------------------------------------
 
     if (totalProblemsCnt > 0) {
       tc.buildStatus("IDE " + ide.getVersion() + " has " + totalProblemsCnt + (totalProblemsCnt == 1 ? " problem" : " problems"));

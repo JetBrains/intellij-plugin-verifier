@@ -14,6 +14,7 @@ import java.util.*;
 /**
  * @author Sergey Evdokimov
  */
+//TODO: coverage tests
 public class AbstractMethodVerifier implements ClassVerifier {
   @SuppressWarnings("unchecked")
   @Override
@@ -38,11 +39,11 @@ public class AbstractMethodVerifier implements ClassVerifier {
 
     ClassNode curNode = superClass;
 
-    Queue<String> parentInterfaces = new LinkedList<String>((List<String>) clazz.interfaces);
+    Queue<String> implementedInterfaces = new LinkedList<String>((List<String>) clazz.interfaces);
 
     //traverse abstract super-classes and collect all the defined interfaces
     while (VerifierUtil.isAbstract(curNode)) {
-      parentInterfaces.addAll((List<String>) curNode.interfaces);
+      implementedInterfaces.addAll((List<String>) curNode.interfaces);
 
       for (MethodNode methodNode : (List<MethodNode>) curNode.methods) {
         if (allMethods.add(new MethodSign(methodNode))) {
@@ -62,18 +63,19 @@ public class AbstractMethodVerifier implements ClassVerifier {
 
       curNode = resolver.findClass(curNode.superName);
       if (curNode == null) {
+        //TODO: don't return silently
         return; // RETURN , don't check anymore because unknown class exists.
       }
     }
 
     Set<String> processedInterfaces = new HashSet<String>();
 
-    while (!parentInterfaces.isEmpty()) {
-      String iName = parentInterfaces.remove();
+    while (!implementedInterfaces.isEmpty()) {
+      String iface = implementedInterfaces.remove();
 
-      if (!processedInterfaces.add(iName)) continue; //if this interface is already visited
+      if (!processedInterfaces.add(iface)) continue; //if this interface is already visited
 
-      final ClassNode iNode = resolver.findClass(iName);
+      final ClassNode iNode = resolver.findClass(iface);
       if (iNode == null) continue; //undefined class
 
       if (!VerifierUtil.isInterface(iNode)) {
@@ -82,14 +84,15 @@ public class AbstractMethodVerifier implements ClassVerifier {
       }
 
       for (String anInterface : (List<String>) iNode.interfaces) {
-        if (!processedInterfaces.contains(anInterface)) {
-          parentInterfaces.add(anInterface); //add to the queue
+        if (!processedInterfaces.contains(anInterface)) { //if some transitive interface is not visited yet
+          implementedInterfaces.add(anInterface); //add to the queue
         }
       }
 
       for (MethodNode methodNode : (List<MethodNode>) iNode.methods) {
         MethodSign method = new MethodSign(methodNode);
 
+        //try to find this method in some ancestor class
         while (!allMethods.contains(method) && curNode != null) {
           for (MethodNode m : (List<MethodNode>) curNode.methods) {
             allMethods.add(new MethodSign(m));
@@ -100,12 +103,14 @@ public class AbstractMethodVerifier implements ClassVerifier {
           } else {
             curNode = resolver.findClass(curNode.superName);
             if (curNode == null) {
+              //TODO: don't return silently
               return; // RETURN , don't check anymore because unknown class exists.
             }
           }
         }
 
         if (!allMethods.contains(method)) {
+          //failed to find such a method in any ancestor => method is not implemented
           allMethods.add(method);
 
           ctx.registerProblem(new MethodNotImplementedProblem(iNode.name + '#' + methodNode.name + methodNode.desc), new ProblemLocation(clazz.name));

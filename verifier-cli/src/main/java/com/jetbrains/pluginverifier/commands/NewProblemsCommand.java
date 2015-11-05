@@ -69,6 +69,19 @@ public class NewProblemsCommand extends VerifierCommand {
     return Pair.create(buildNumber.substring(0, idx), Integer.parseInt(buildNumber.substring(idx + 1)));
   }
 
+  @NotNull
+  public static Multimap<Problem, UpdateInfo> rearrangeProblemsMap(@NotNull ResultsElement currentCheckResult) {
+    Multimap<Problem, UpdateInfo> currentProblemsToUpdates = ArrayListMultimap.create();
+
+    //rearrange existing map: Map<Problem -> [plugin ids]>
+    for (Map.Entry<UpdateInfo, Collection<Problem>> entry : currentCheckResult.asMap().entrySet()) {
+      for (Problem problem : entry.getValue()) {
+        currentProblemsToUpdates.put(problem, entry.getKey());
+      }
+    }
+    return currentProblemsToUpdates;
+  }
+
   @Override
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.isEmpty()) {
@@ -120,7 +133,7 @@ public class NewProblemsCommand extends VerifierCommand {
 
     final String currentBuildName = currentCheckResult.getIde();
 
-    //UNRESOLVED PROBLEMS: <IDEA-build -> ALL the problems of this build (in which these problems were met first)>
+    //map of UNRESOLVED problems: <IDEA-build -> ALL the problems of this build (in which these problems were met first)>
     firstOccurrenceBuildToProblems.putAll(currentBuildName, currProblems);
 
     //---------------------------------------------------
@@ -128,11 +141,12 @@ public class NewProblemsCommand extends VerifierCommand {
 
     List<Pair<String, String>> tcMessages = new ArrayList<Pair<String, String>>();
 
+    //TODO: somehow rewrite this
+
     //ALL the builds (excluding the EARLIEST one) AND (including this one)
     Iterable<String> allBuilds = Iterables.concat(previousCheckedBuilds.subList(1, previousCheckedBuilds.size()), Collections.singleton(currentBuildName));
 
     for (String prevBuild : allBuilds) {
-      //UNRESOLVED problems since build #prevBuild
       Collection<Problem> problemsInBuild = firstOccurrenceBuildToProblems.get(prevBuild);
 
       //For the IDEA-build list of yet UNRESOLVED problems
@@ -170,18 +184,5 @@ public class NewProblemsCommand extends VerifierCommand {
     );
 
     return 0;
-  }
-
-  @NotNull
-  private Multimap<Problem, UpdateInfo> rearrangeProblemsMap(@NotNull ResultsElement currentCheckResult) {
-    Multimap<Problem, UpdateInfo> currentProblemsToUpdates = ArrayListMultimap.create();
-
-    //rearrange existing map: Map<Problem -> [plugin ids]>
-    for (Map.Entry<UpdateInfo, Collection<Problem>> entry : currentCheckResult.asMap().entrySet()) {
-      for (Problem problem : entry.getValue()) {
-        currentProblemsToUpdates.put(problem, entry.getKey());
-      }
-    }
-    return currentProblemsToUpdates;
   }
 }

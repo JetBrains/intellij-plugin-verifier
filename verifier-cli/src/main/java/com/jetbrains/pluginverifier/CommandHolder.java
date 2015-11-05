@@ -1,9 +1,6 @@
 package com.jetbrains.pluginverifier;
 
-import com.jetbrains.pluginverifier.commands.CheckIdeCommand;
-import com.jetbrains.pluginverifier.commands.CheckPluginCommand;
-import com.jetbrains.pluginverifier.commands.CompareResultsCommand;
-import com.jetbrains.pluginverifier.commands.NewProblemsCommand;
+import com.jetbrains.pluginverifier.commands.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +13,7 @@ public class CommandHolder {
 
   private static final Map<String, VerifierCommand> COMMAND_MAP = new HashMap<String, VerifierCommand>();
   static {
-    for (VerifierCommand c : new VerifierCommand[]{new CheckIdeCommand(), new CompareResultsCommand(), new NewProblemsCommand()}) {
+    for (VerifierCommand c : new VerifierCommand[]{new CheckIdeCommand(), new CompareResultsCommand(), new NewProblemsCommand(), new ProblemsPrinter()}) {
       COMMAND_MAP.put(c.getName(), c);
     }
 

@@ -29,12 +29,12 @@ public class DownloadUtils {
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
-  public static File getOrCreateDownloadDir() {
+  private static File getOrCreateDownloadDir() throws IOException {
     File downloadDir = Util.getPluginCacheDir();
     if (!downloadDir.isDirectory()) {
       downloadDir.mkdirs();
       if (!downloadDir.isDirectory()) {
-        throw new RuntimeException("Failed to create temp directory: " + downloadDir);
+        throw new IOException("Failed to create temp directory: " + downloadDir);
       }
     }
 

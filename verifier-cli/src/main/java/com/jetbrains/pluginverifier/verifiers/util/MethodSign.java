@@ -6,6 +6,7 @@ import org.objectweb.asm.tree.MethodNode;
 /**
  * @author Sergey Evdokimov
  */
+//TODO: don't take return type into account
 public class MethodSign {
 
   private final String myName;
