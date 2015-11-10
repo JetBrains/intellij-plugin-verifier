@@ -32,7 +32,8 @@ public class NewProblemsCommand extends VerifierCommand {
    * and the build number is LESS than the given build number.
    * NOTE: in ascending order, i.e. 141.01, 141.05, 141.264...
    */
-  private static List<String> findPreviousBuilds(String currentBuild) throws IOException {
+  @NotNull
+  private static List<String> findPreviousBuilds(@NotNull String currentBuild) throws IOException {
     List<String> resultsOnInPluginRepository = GlobalRepository.loadAvailableCheckResultsList();
 
     String firstBuild = System.getProperty("firstBuild");
@@ -100,6 +101,8 @@ public class NewProblemsCommand extends VerifierCommand {
 
     //leave only NEW' problems of this check compared to the EARLIEST check
     ResultsElement smallestCheckResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResultFile(previousCheckedBuilds.get(0)));
+
+    //remove old API problems
     currProblems.removeAll(smallestCheckResult.getProblems());
 
     //Map: <Build Number -> List[Problem for which this problem occurred first]>
@@ -127,8 +130,6 @@ public class NewProblemsCommand extends VerifierCommand {
 
 
     List<Pair<String, String>> tcMessages = new ArrayList<Pair<String, String>>();
-
-    //TODO: somehow rewrite this
 
     //ALL the builds (excluding the EARLIEST one) AND (including this one)
     Iterable<String> allBuilds = Iterables.concat(previousCheckedBuilds.subList(1, previousCheckedBuilds.size()), Collections.singleton(currentBuildName));

@@ -34,7 +34,9 @@ public class GlobalRepository extends PluginRepository {
   /**
    * Returns list of already checked IDEA builds (for which report was loaded)
    */
+  @NotNull
   public static List<String> loadAvailableCheckResultsList() throws IOException {
+    System.out.print("Loading check results list...");
     URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/problems/resultList?format=txt");
 
     String text = IOUtils.toString(url);
@@ -45,6 +47,7 @@ public class GlobalRepository extends PluginRepository {
       res.add(st.nextToken());
     }
 
+    System.out.println("done");
     return res;
   }
 

@@ -42,7 +42,7 @@ public class DownloadUtils {
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
-  public static File getCheckResultFile(String build) throws IOException {
+  public static File getCheckResultFile(@NotNull String build) throws IOException {
     File downloadDir = getOrCreateDownloadDir();
 
     File checkResDir = new File(downloadDir, "checkResult");
@@ -50,7 +50,9 @@ public class DownloadUtils {
 
     File res = new File(checkResDir, build + ".xml");
 
+    System.out.print("Loading check results for " + build + "...");
     updateFile(new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/files/checkResults/" + build + ".xml"), res);
+    System.out.println("done");
 
     return res;
   }

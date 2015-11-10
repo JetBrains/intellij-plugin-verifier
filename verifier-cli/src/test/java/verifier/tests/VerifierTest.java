@@ -73,6 +73,8 @@ public class VerifierTest {
     File jdkFile = new File(jdkPath);
     File pluginFile = findLatestPlugin();
 //    File pluginFile = new File("../for_tests/ideavim-0.29.zip");
+//    File pluginFile = new File("../for_tests/Maven_Sync.zip");
+//    File pluginFile = new File("../for_tests/keymap.zip");
 
     JDK jdk = new JDK(jdkFile);
 

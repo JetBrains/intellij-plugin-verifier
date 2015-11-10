@@ -172,7 +172,7 @@ public class CheckIdeCommand extends VerifierCommand {
   }
 
   /**
-   * Prints Build Problems in the Overview page
+   * Prints Build Problems in the Overview page or as tests
    */
   private static void printTeamCityProblems(@NotNull TeamCityLog log,
                                             @NotNull Map<UpdateInfo, ProblemSet> results,
@@ -192,11 +192,7 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
-    if (reportGrouping.equals(TeamCityUtil.ReportGrouping.NONE)) {
-      TeamCityUtil.printTeamCityProblems(log, problems);
-    } else {
-      TeamCityUtil.printGroupedReport(log, problems, reportGrouping);
-    }
+    TeamCityUtil.printReport(log, problems, reportGrouping);
   }
 
   @NotNull

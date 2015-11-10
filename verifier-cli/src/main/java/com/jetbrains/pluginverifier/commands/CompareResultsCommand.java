@@ -73,7 +73,7 @@ public class CompareResultsCommand extends VerifierCommand {
     }
 
     TeamCityLog tc = TeamCityLog.getInstance(commandLine);
-    TeamCityUtil.printTeamCityProblems(tc, res);
+    TeamCityUtil.printReport(tc, res, TeamCityUtil.ReportGrouping.NONE);
 
     System.out.println("Done");
 
