@@ -2,10 +2,7 @@ package com.jetbrains.pluginverifier.repository;
 
 import com.google.common.base.Throwables;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
-import com.jetbrains.pluginverifier.utils.Configuration;
-import com.jetbrains.pluginverifier.utils.DownloadUtils;
-import com.jetbrains.pluginverifier.utils.Pair;
-import com.jetbrains.pluginverifier.utils.StringUtil;
+import com.jetbrains.pluginverifier.utils.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,7 +88,7 @@ public class RepositoryManager {
   @NotNull
   public File getOrLoadUpdate(UpdateInfo update) throws IOException {
     PluginRepository repository = update2repository.get(update);
-    assert repository != null : "Unknown update, update should be found by RepositorManager";
+    Assert.assertTrue(repository != null, "Unknown update, update should be found by RepositoryManager");
 
     return DownloadUtils.getOrLoadUpdate(update, new URL(repository.getUpdateUrl(update)));
   }

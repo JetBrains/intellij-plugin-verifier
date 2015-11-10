@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.util;
 
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
+import com.jetbrains.pluginverifier.utils.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
@@ -21,9 +22,9 @@ public class VerifierUtil {
     return (classNode.access & Opcodes.ACC_INTERFACE) != 0;
   }
 
-  private static boolean isValidClassOrInterface(PluginVerifierOptions opt, final Resolver resolver, final @NotNull String name, final Boolean isInterface) {
-    assert !name.startsWith("[");
-    assert !name.endsWith(";");
+  private static boolean isValidClassOrInterface(PluginVerifierOptions opt, final Resolver resolver, final @NotNull String name, final @Nullable Boolean isInterface) {
+    Assert.assertTrue(!name.startsWith("["), name);
+    Assert.assertTrue(!name.endsWith(";"), name);
 
     if (opt.isExternalClass(name)) {
       return true;

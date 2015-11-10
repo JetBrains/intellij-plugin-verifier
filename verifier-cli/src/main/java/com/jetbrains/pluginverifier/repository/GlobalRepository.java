@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.repository;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
+import com.jetbrains.pluginverifier.utils.Assert;
 import com.jetbrains.pluginverifier.utils.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +95,7 @@ public class GlobalRepository extends PluginRepository {
   @NotNull
   @Override
   public String getUpdateUrl(UpdateInfo update) {
-    assert update.getUpdateId() != null;
+    Assert.assertTrue(update.getUpdateId() != null, update.toString());
 
     return url + "/plugin/download/?noStatistic=true&updateId=" + update.getUpdateId();
   }

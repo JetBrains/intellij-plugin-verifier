@@ -13,7 +13,6 @@ public class OverrideFinalMethodProblem extends AnAction {
   }
 
   //problem shouldn't be found here
-  @Override
   protected void actionPerformed(AnActionEvent e) {
 
   }

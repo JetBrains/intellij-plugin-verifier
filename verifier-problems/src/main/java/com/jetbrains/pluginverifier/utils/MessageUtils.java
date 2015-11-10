@@ -122,7 +122,7 @@ public class MessageUtils {
     int methodNameIndex;
 
     if (className != null) {
-      assert methodDescr.indexOf('#') == -1;
+      Assert.assertTrue(methodDescr.indexOf('#') == -1);
       methodNameIndex = 0;
     }
     else {

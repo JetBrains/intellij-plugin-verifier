@@ -13,6 +13,7 @@ import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -44,9 +46,12 @@ public class VerifierTest {
           .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenMultiArray()V"))
           .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenMultiArray()V"))
           .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenInvocation()V"))
+          .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), new ProblemLocation("mock/plugin/ParentDoesntExist"))
+          .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/ParentDoesntExist", "<init>()V"))
           .put(new MethodNotFoundProblem("com/intellij/openapi/actionSystem/AnAction#nonExistingMethod()V"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenNonFoundMethod()V"))
           .put(new MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent#getState()Ljava/lang/Object;"), new ProblemLocation("mock/plugin/NotImplementedProblem"))
           .put(new MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent#loadState(Ljava/lang/Object;)V"), new ProblemLocation("mock/plugin/NotImplementedProblem"))
+          .put(new MethodNotImplementedProblem("com/intellij/psi/search/UseScopeEnlarger#getAdditionalUseScope(Lcom/intellij/psi/PsiElement;)Lcom/intellij/psi/search/SearchScope;"), new ProblemLocation("mock/plugin/abstrackt/NotImplementedAbstractMethod"))
           .put(new OverridingFinalMethodProblem("com/intellij/openapi/actionSystem/AnAction#isEnabledInModalContext()Z"), ProblemLocation.fromMethod("mock/plugin/OverrideFinalMethodProblem", "isEnabledInModalContext()Z"))
           .put(new IllegalMethodAccessProblem("com/intellij/openapi/diagnostic/LogUtil#<init>()V", IllegalMethodAccessProblem.MethodAccess.PRIVATE), ProblemLocation.fromMethod("mock/plugin/AccessChangedProblem", "foo()V"))
           .build();
@@ -83,22 +88,35 @@ public class VerifierTest {
     myProblems = myProblemSet.asMap();
   }
 
+  @NotNull
   private File findLatestPlugin() throws FileNotFoundException {
     Pattern compile = Pattern.compile("mock-plugin-(\\d+\\.\\d+).jar");
     File file = new File("../mock-plugin/target/");
 
     File[] files = file.listFiles();
 
+    File result = null;
+    double best = 0.0;
+
     if (files != null) {
       for (File f : files) {
         String name = f.getName();
-        if (compile.matcher(name).matches()) {
-          return f;
+        Matcher matcher = compile.matcher(name);
+        if (matcher.matches()) {
+          String group = matcher.group(1);
+          double cur = Double.parseDouble(group);
+          if (best < cur) {
+            best = cur;
+            result = f;
+          }
         }
       }
     }
 
-    throw new FileNotFoundException("Plugin for tests is not found");
+    if (result == null) {
+      throw new FileNotFoundException("Plugin for tests is not found");
+    }
+    return result;
   }
 
   @Test

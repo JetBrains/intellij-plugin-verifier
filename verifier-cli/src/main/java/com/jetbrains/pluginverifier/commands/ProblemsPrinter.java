@@ -15,6 +15,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static com.jetbrains.pluginverifier.utils.StringUtil.pluralize;
+
 /**
  * @author Sergey Patrikeev
  */
@@ -44,8 +46,54 @@ public class ProblemsPrinter extends VerifierCommand {
     Map<UpdateInfo, Collection<Problem>> map = currentCheckResult.asMap();
 
 
-    int totalProblems = 0;
+    final int totalProblems = currentCheckResult.getProblems().size();
 
+    for (Map.Entry<UpdateInfo, Collection<Problem>> entry : map.entrySet()) {
+      UpdateInfo updateInfo = entry.getKey();
+      Collection<Problem> problems = entry.getValue();
+
+      String testName = updateInfo.toString();
+      TeamCityLog.Test test = log.testStarted(testName);
+      try {
+        for (Problem problem : problems) {
+          log.testStdErr(testName, problem.getDescription());
+        }
+        log.testFailed(testName, updateInfo + " has " + problems.size() + pluralize("problem", problems.size()), "");
+      } finally {
+        test.close();
+      }
+    }
+
+    /*
+    for (Map.Entry<UpdateInfo, Collection<Problem>> entry : map.entrySet()) {
+      UpdateInfo updateInfo = entry.getKey();
+      Collection<Problem> problems = entry.getValue();
+
+      String plugin = updateInfo.toString();
+      TeamCityLog.TestSuite suite = log.testSuiteStarted(plugin);
+      try {
+        for (Problem problem : problems) {
+          String description = problem.getDescription();
+
+          String canonicalName = problem.getClass().getCanonicalName();
+
+          String testName = plugin + "." + description;
+
+          TeamCityLog.Test test =  log.testStarted(testName);
+          try {
+            log.testFailed(testName, "", description);
+          } finally {
+            test.close();
+          }
+        }
+      } finally {
+        suite.close();
+      }
+
+
+    }
+    */
+/*
     TeamCityLog.Test test = log.testStarted("someTest");
 
     try {
@@ -70,10 +118,11 @@ public class ProblemsPrinter extends VerifierCommand {
     } finally {
       test.close();
     }
+*/
 
-    log.buildProblem("someBuildProblem");
-
-    log.buildStatus("Total " + totalProblems + " found");
+    String description = "IDE " + currentCheckResult.getIde() + " has " + totalProblems + " " + pluralize("problem", totalProblems);
+    log.buildProblem(description);
+    log.buildStatus(description);
 
     return 0;
   }

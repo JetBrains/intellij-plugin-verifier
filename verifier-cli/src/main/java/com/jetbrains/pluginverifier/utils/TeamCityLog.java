@@ -73,8 +73,8 @@ public class TeamCityLog {
     out.printf("##teamcity[testStdErr name='%s' out='%s']\n", escape(className), escape(errText));
   }
 
-  public void testFailed(@NotNull String name, @NotNull String failureMessage, @NotNull String details) {
-    out.printf("##teamcity[testFailed name='%s' message='%s' details='%s']\n", escape(name), escape(failureMessage), escape(details));
+  public void testFailed(@NotNull String name, @NotNull String message, @NotNull String details) {
+    out.printf("##teamcity[testFailed name='%s' message='%s' details='%s']\n", escape(name), escape(message), escape(details));
   }
 
   public Block blockOpen(@NotNull String name) {

@@ -14,7 +14,6 @@ import java.util.*;
 /**
  * @author Sergey Evdokimov
  */
-//TODO: coverage tests
 public class AbstractMethodVerifier implements ClassVerifier {
   @SuppressWarnings("unchecked")
   @Override
@@ -23,8 +22,12 @@ public class AbstractMethodVerifier implements ClassVerifier {
       return;
     }
 
-    ClassNode superClass = resolver.findClass(clazz.superName);
-    if (superClass == null) return; //unknown class
+    String superName = clazz.superName == null ? "java/lang/Object" : clazz.superName;
+
+    ClassNode superClass = resolver.findClass(superName);
+    if (superClass == null) {
+      return; //unknown class
+    }
 
     if (!VerifierUtil.isAbstract(superClass) && clazz.interfaces.isEmpty()) {
       return; // optimization
@@ -39,11 +42,11 @@ public class AbstractMethodVerifier implements ClassVerifier {
 
     ClassNode curNode = superClass;
 
-    Queue<String> implementedInterfaces = new LinkedList<String>((List<String>) clazz.interfaces);
+    Queue<String> definedInterfaces = new LinkedList<String>((List<String>) clazz.interfaces);
 
     //traverse abstract super-classes and collect all the defined interfaces
     while (VerifierUtil.isAbstract(curNode)) {
-      implementedInterfaces.addAll((List<String>) curNode.interfaces);
+      definedInterfaces.addAll((List<String>) curNode.interfaces);
 
       for (MethodNode methodNode : (List<MethodNode>) curNode.methods) {
         if (allMethods.add(new MethodSign(methodNode))) {
@@ -70,8 +73,8 @@ public class AbstractMethodVerifier implements ClassVerifier {
 
     Set<String> processedInterfaces = new HashSet<String>();
 
-    while (!implementedInterfaces.isEmpty()) {
-      String iface = implementedInterfaces.remove();
+    while (!definedInterfaces.isEmpty()) {
+      String iface = definedInterfaces.remove();
 
       if (!processedInterfaces.add(iface)) continue; //if this interface is already visited
 
@@ -85,7 +88,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
 
       for (String anInterface : (List<String>) iNode.interfaces) {
         if (!processedInterfaces.contains(anInterface)) { //if some transitive interface is not visited yet
-          implementedInterfaces.add(anInterface); //add to the queue
+          definedInterfaces.add(anInterface); //add to the queue
         }
       }
 

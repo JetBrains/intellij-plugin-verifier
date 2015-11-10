@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.problems;
 
+import com.jetbrains.pluginverifier.utils.Assert;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,24 @@ public class ProblemLocation {
     this.className = className;
     this.methodDescr = methodDescr;
 
-    assert methodDescr == null || !methodDescr.contains("#");
+    Assert.assertTrue(methodDescr == null || !methodDescr.contains("#"));
+  }
+
+  public static ProblemLocation fromField(@NotNull String className, @NotNull String fieldName) {
+    ProblemLocation res = new ProblemLocation();
+    res.setClassName(className);
+    res.setFieldName(fieldName);
+    return res;
+  }
+
+  public static ProblemLocation fromMethod(@NotNull String className, @NotNull String methodDescr) {
+    ProblemLocation res = new ProblemLocation();
+    res.setClassName(className);
+
+    Assert.assertTrue(!methodDescr.contains("#"), methodDescr);
+    res.setMethodDescr(methodDescr);
+
+    return res;
   }
 
   @Nullable
@@ -61,23 +79,6 @@ public class ProblemLocation {
     this.fieldName = fieldName;
   }
 
-  public static ProblemLocation fromField(@NotNull String className, @NotNull String fieldName) {
-    ProblemLocation res = new ProblemLocation();
-    res.setClassName(className);
-    res.setFieldName(fieldName);
-    return res;
-  }
-
-  public static ProblemLocation fromMethod(@NotNull String className, @NotNull String methodDescr) {
-    ProblemLocation res = new ProblemLocation();
-    res.setClassName(className);
-
-    assert !methodDescr.contains("#") : methodDescr;
-    res.setMethodDescr(methodDescr);
-
-    return res;
-  }
-
   @Override
   public String toString() {
     if (className == null) {
@@ -95,6 +96,7 @@ public class ProblemLocation {
     return MessageUtils.convertMethodDescr(methodDescr, className);
   }
 
+  @SuppressWarnings("SimplifiableIfStatement")
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -104,9 +106,8 @@ public class ProblemLocation {
 
     if (className != null ? !className.equals(location.className) : location.className != null) return false;
     if (fieldName != null ? !fieldName.equals(location.fieldName) : location.fieldName != null) return false;
-    if (methodDescr != null ? !methodDescr.equals(location.methodDescr) : location.methodDescr != null) return false;
+    return !(methodDescr != null ? !methodDescr.equals(location.methodDescr) : location.methodDescr != null);
 
-    return true;
   }
 
   @Override

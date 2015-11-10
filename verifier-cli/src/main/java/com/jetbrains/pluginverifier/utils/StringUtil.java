@@ -14,6 +14,9 @@ public class StringUtil {
     return new String(buffer);
   }
 
+  public static String pluralize(@NotNull String s, int cnt) {
+    return s + (cnt > 0 ? "s" : "");
+  }
 
   public static boolean equals(@Nullable String s1, @Nullable String s2) {
     if (s1 == null ^ s2 == null) {
