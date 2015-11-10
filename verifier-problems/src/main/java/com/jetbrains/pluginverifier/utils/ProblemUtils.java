@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.utils;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.hash.Hashing;
 import com.jetbrains.pluginverifier.problems.*;
 import org.jetbrains.annotations.NotNull;
@@ -134,9 +136,27 @@ public class ProblemUtils {
     Collections.sort(updateInfos, new Comparator<UpdateInfo>() {
       @Override
       public int compare(UpdateInfo o1, UpdateInfo o2) {
+        String p1 = o1.getPluginId() != null ? o1.getPluginId() : "#" + o1.getUpdateId();
+        String p2 = o2.getPluginId() != null ? o2.getPluginId() : "#" + o2.getUpdateId();
+        if (!p1.equals(p2)) {
+          return p1.compareTo(p2); //compare lexicographically
+        }
         return VersionComparatorUtil.compare(o2.getVersion(), o1.getVersion());
       }
     });
     return updateInfos;
+  }
+
+  @NotNull
+  public static Multimap<Problem, UpdateInfo> rearrangeProblemsMap(@NotNull Map<UpdateInfo, Collection<Problem>> currentProblemsMap) {
+    Multimap<Problem, UpdateInfo> currentProblemsToUpdates = ArrayListMultimap.create();
+
+    //rearrange existing map: Map<Problem -> [plugin ids]>
+    for (Map.Entry<UpdateInfo, Collection<Problem>> entry : currentProblemsMap.entrySet()) {
+      for (Problem problem : entry.getValue()) {
+        currentProblemsToUpdates.put(problem, entry.getKey());
+      }
+    }
+    return currentProblemsToUpdates;
   }
 }

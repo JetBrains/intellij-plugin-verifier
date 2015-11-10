@@ -69,19 +69,6 @@ public class NewProblemsCommand extends VerifierCommand {
     return Pair.create(buildNumber.substring(0, idx), Integer.parseInt(buildNumber.substring(idx + 1)));
   }
 
-  @NotNull
-  public static Multimap<Problem, UpdateInfo> rearrangeProblemsMap(@NotNull ResultsElement currentCheckResult) {
-    Multimap<Problem, UpdateInfo> currentProblemsToUpdates = ArrayListMultimap.create();
-
-    //rearrange existing map: Map<Problem -> [plugin ids]>
-    for (Map.Entry<UpdateInfo, Collection<Problem>> entry : currentCheckResult.asMap().entrySet()) {
-      for (Problem problem : entry.getValue()) {
-        currentProblemsToUpdates.put(problem, entry.getKey());
-      }
-    }
-    return currentProblemsToUpdates;
-  }
-
   @Override
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.isEmpty()) {
@@ -105,7 +92,7 @@ public class NewProblemsCommand extends VerifierCommand {
 
     //---------------------------------------------------
 
-    Multimap<Problem, UpdateInfo> currentProblemsToUpdates = rearrangeProblemsMap(currentCheckResult);
+    Multimap<Problem, UpdateInfo> currentProblemsToUpdates = ProblemUtils.rearrangeProblemsMap(currentCheckResult.asMap());
 
 
     //Problems of this check

@@ -34,6 +34,11 @@ public class TeamCityUtil {
   public static void printGroupedReport(@NotNull TeamCityLog log,
                                         @NotNull Multimap<Problem, UpdateInfo> problems,
                                         @NotNull ReportGrouping reportGrouping) {
+    if (log == TeamCityLog.NULL_LOG) return;
+    if (problems.isEmpty()) return;
+
+
+
     //TODO
   }
 

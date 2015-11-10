@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.utils;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,30 @@ public class StringUtil {
 
   public static String pluralize(@NotNull String s, int cnt) {
     return s + (cnt > 1 ? "s" : "");
+  }
+
+  @NotNull
+  public static String trimStart(@NotNull String s, @NonNls @NotNull String prefix) {
+    if (s.startsWith(prefix)) {
+      return s.substring(prefix.length());
+    }
+    return s;
+  }
+
+  @NotNull
+  public static String commonPrefix(@NotNull String s1, @NotNull String s2) {
+    return s1.substring(0, commonPrefixLength(s1, s2));
+  }
+
+  public static int commonPrefixLength(@NotNull CharSequence s1, @NotNull CharSequence s2) {
+    int i;
+    int minLength = Math.min(s1.length(), s2.length());
+    for (i = 0; i < minLength; i++) {
+      if (s1.charAt(i) != s2.charAt(i)) {
+        break;
+      }
+    }
+    return i;
   }
 
   public static boolean equals(@Nullable String s1, @Nullable String s2) {
