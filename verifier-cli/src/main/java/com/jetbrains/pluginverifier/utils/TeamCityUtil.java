@@ -20,7 +20,7 @@ public class TeamCityUtil {
     if (log == TeamCityLog.NULL_LOG) return;
     if (problems.isEmpty()) return;
 
-    List<Problem> sortedProblems = ProblemUtils.sort(problems.keySet());
+    List<Problem> sortedProblems = ProblemUtils.sortProblems(problems.keySet());
 
     for (Problem problem : sortedProblems) {
       List<UpdateInfo> updates = new ArrayList<UpdateInfo>(problems.get(problem));

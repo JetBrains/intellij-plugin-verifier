@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.problems;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -14,14 +16,14 @@ public class IllegalMethodAccessProblem extends Problem {
   public IllegalMethodAccessProblem() {
   }
 
-  public IllegalMethodAccessProblem(String method, MethodAccess methodAccess) {
+  public IllegalMethodAccessProblem(@NotNull String method, @NotNull MethodAccess methodAccess) {
     myMethod = method;
     myMethodAccess = methodAccess;
   }
 
   @Override
   public String getDescription() {
-    return "illegal invocation of " + myMethodAccess.myDescription + " method " + myMethod;
+    return "illegal invocation of " + myMethodAccess.getDescription() + " method " + myMethod;
   }
 
   public String getMethod() {
@@ -40,6 +42,7 @@ public class IllegalMethodAccessProblem extends Problem {
     myMethodAccess = methodAccess;
   }
 
+  @SuppressWarnings("SimplifiableIfStatement")
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -68,8 +71,13 @@ public class IllegalMethodAccessProblem extends Problem {
 
     private final String myDescription;
 
-    MethodAccess(String description) {
+    MethodAccess(@NotNull String description) {
       myDescription = description;
+    }
+
+    @NotNull
+    public String getDescription() {
+      return myDescription;
     }
   }
 }

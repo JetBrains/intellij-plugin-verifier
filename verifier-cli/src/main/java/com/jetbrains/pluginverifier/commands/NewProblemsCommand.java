@@ -154,7 +154,7 @@ public class NewProblemsCommand extends VerifierCommand {
         System.out.printf("\nIn %s found %d new problems:\n", prevBuild, problemsInBuild.size());
 
         //in sorted by problem-description order
-        for (Problem problem : ProblemUtils.sort(problemsInBuild)) {
+        for (Problem problem : ProblemUtils.sortProblems(problemsInBuild)) {
           CharSequence problemDescription = MessageUtils.cutCommonPackages(problem.getDescription());
           Collection<UpdateInfo> affectedUpdates = ProblemUtils.sortUpdates(new ArrayList<UpdateInfo>(currentProblemsToUpdates.get(problem)));
 

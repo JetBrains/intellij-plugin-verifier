@@ -93,6 +93,11 @@ public class AbstractMethodVerifier implements ClassVerifier {
       }
 
       for (MethodNode methodNode : (List<MethodNode>) iNode.methods) {
+        if (!VerifierUtil.isAbstract(methodNode)) {
+          //method could be default interface method (Java 8)
+          continue;
+        }
+
         MethodSign method = new MethodSign(methodNode);
 
         //try to find this method in some ancestor class

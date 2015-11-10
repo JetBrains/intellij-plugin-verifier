@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.commands;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.jetbrains.pluginverifier.VerifierCommand;
 import com.jetbrains.pluginverifier.problems.FailUtil;
 import com.jetbrains.pluginverifier.problems.Problem;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -45,85 +47,55 @@ public class ProblemsPrinter extends VerifierCommand {
     ResultsElement currentCheckResult = ProblemUtils.loadProblems(reportToCheck);
     Map<UpdateInfo, Collection<Problem>> map = currentCheckResult.asMap();
 
+    ArrayListMultimap<String, UpdateInfo> idToUpdates = fillIdToUpdates(map);
 
-    final int totalProblems = currentCheckResult.getProblems().size();
+    final int totalProblems = new HashSet<Problem>(currentCheckResult.getProblems()).size(); //number of unique problems
 
-    for (Map.Entry<UpdateInfo, Collection<Problem>> entry : map.entrySet()) {
-      UpdateInfo updateInfo = entry.getKey();
-      Collection<Problem> problems = entry.getValue();
+    for (String pluginId : idToUpdates.keySet()) {
+      List<UpdateInfo> updateInfos = idToUpdates.get(pluginId);
+      ProblemUtils.sortUpdates(updateInfos);
 
-      String testName = updateInfo.toString();
-      TeamCityLog.Test test = log.testStarted(testName);
-      try {
-        for (Problem problem : problems) {
-          log.testStdErr(testName, problem.getDescription());
-        }
-        log.testFailed(testName, updateInfo + " has " + problems.size() + pluralize("problem", problems.size()), "");
-      } finally {
-        test.close();
-      }
-    }
+      TeamCityLog.TestSuite pluginSuite = log.testSuiteStarted(pluginId);
 
-    /*
-    for (Map.Entry<UpdateInfo, Collection<Problem>> entry : map.entrySet()) {
-      UpdateInfo updateInfo = entry.getKey();
-      Collection<Problem> problems = entry.getValue();
+      for (UpdateInfo updateInfo : updateInfos) {
 
-      String plugin = updateInfo.toString();
-      TeamCityLog.TestSuite suite = log.testSuiteStarted(plugin);
-      try {
-        for (Problem problem : problems) {
-          String description = problem.getDescription();
+        List<Problem> problems = ProblemUtils.sortProblems(map.get(updateInfo));
 
-          String canonicalName = problem.getClass().getCanonicalName();
+        if (!problems.isEmpty()) {
+          String version = updateInfo.getVersion() != null ? updateInfo.getVersion() : "#" + updateInfo.getUpdateId();
 
-          String testName = plugin + "." + description;
+          StringBuilder builder = new StringBuilder();
 
-          TeamCityLog.Test test =  log.testStarted(testName);
-          try {
-            log.testFailed(testName, "", description);
-          } finally {
-            test.close();
-          }
-        }
-      } finally {
-        suite.close();
-      }
-
-
-    }
-    */
-/*
-    TeamCityLog.Test test = log.testStarted("someTest");
-
-    try {
-
-      for (Map.Entry<UpdateInfo, Collection<Problem>> entry : map.entrySet()) {
-        UpdateInfo updateInfo = entry.getKey();
-        Collection<Problem> problems = entry.getValue();
-        totalProblems += problems.size();
-
-        TeamCityLog.TestSuite testSuite = log.testSuiteStarted("Plugin " + updateInfo.toString());
-        try {
           for (Problem problem : problems) {
-            log.testStdErr("verifierClassName.testName", problem.getDescription());
+            builder.append("#").append(problem.getDescription()).append("\n");
           }
-          log.testFailed("verifierClassName.testName", "plugin " + updateInfo + " has problems", problems.size() + " problems!");
 
-        } finally {
-          testSuite.close();
+          String testName = version.replace('.', ',');
+          TeamCityLog.Test test = log.testStarted(testName);
+          log.testStdErr(testName, builder.toString());
+          log.testFailed(testName, updateInfo + " has " + problems.size() + " " + pluralize("problem", problems.size()), "");
+          test.close();
+
         }
-
       }
-    } finally {
-      test.close();
+      pluginSuite.close();
     }
-*/
+
 
     String description = "IDE " + currentCheckResult.getIde() + " has " + totalProblems + " " + pluralize("problem", totalProblems);
     log.buildProblem(description);
     log.buildStatus(description);
 
     return 0;
+  }
+
+  @NotNull
+  private ArrayListMultimap<String, UpdateInfo> fillIdToUpdates(Map<UpdateInfo, Collection<Problem>> map) {
+    ArrayListMultimap<String, UpdateInfo> idToUpdates = ArrayListMultimap.create();
+    for (UpdateInfo updateInfo : map.keySet()) {
+      String pluginId = updateInfo.getPluginId() != null ? updateInfo.getPluginId() : "#" + updateInfo.getUpdateId();
+      idToUpdates.put(pluginId, updateInfo);
+    }
+    return idToUpdates;
   }
 }

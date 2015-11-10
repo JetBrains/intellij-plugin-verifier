@@ -113,7 +113,7 @@ public class CheckIdeHtmlReportBuilder {
                 out.printf("No problems.\n");
               }
               else {
-                List<Problem> problemList = ProblemUtils.sort(problems.getAllProblems());
+                List<Problem> problemList = ProblemUtils.sortProblems(problems.getAllProblems());
 
                 for (Problem problem : problemList) {
                   out.append("    <div class='errorDetails'>").append(HtmlEscapers.htmlEscaper().escape(problem.getDescription()))
