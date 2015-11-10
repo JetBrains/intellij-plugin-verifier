@@ -61,6 +61,11 @@ public class TeamCityLog {
     out.printf("##teamcity[buildStatus status='SUCCESS' text='%s']\n", escape(text));
   }
 
+  public void buildStatusFailure(@NotNull String text) {
+    out.printf("##teamcity[buildStatus status='FAILURE' text='%s']\n", escape(text));
+  }
+
+
   public void testIgnored(@NotNull String testName, @NotNull String message) {
     out.printf("##teamcity[testIgnored name='%s' message='%s']\n", escape(testName), escape(message));
   }

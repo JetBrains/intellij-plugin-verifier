@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.commands;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
@@ -76,6 +75,8 @@ public class NewProblemsCommand extends VerifierCommand {
       throw FailUtil.fail("You have to specify IDE to check. For example: \"java -jar verifier.jar new-problems report-133.439.xml\"");
     }
 
+    TeamCityUtil.ReportGrouping reportGrouping = TeamCityUtil.ReportGrouping.parseGrouping(commandLine);
+
     File reportToCheck = new File(freeArgs.get(0));
     if (!reportToCheck.isFile()) {
       throw FailUtil.fail("Report not found: " + reportToCheck);
@@ -134,10 +135,28 @@ public class NewProblemsCommand extends VerifierCommand {
     //ALL the builds (excluding the EARLIEST one) AND (including this one)
     Iterable<String> allBuilds = Iterables.concat(previousCheckedBuilds.subList(1, previousCheckedBuilds.size()), Collections.singleton(currentBuildName));
 
+    TeamCityLog tc = TeamCityLog.getInstance(commandLine);
+
     for (String prevBuild : allBuilds) {
       Collection<Problem> problemsInBuild = firstOccurrenceBuildToProblems.get(prevBuild);
 
+      TeamCityLog.TestSuite suite = tc.testSuiteStarted("since " + prevBuild);
+
+      if (!problemsInBuild.isEmpty()) {
+        System.out.printf("\nIn %s found %d new problems:\n", prevBuild, problemsInBuild.size());
+
+        ArrayListMultimap<Problem, UpdateInfo> prevBuildProblems = ArrayListMultimap.create();
+        for (Problem problem : problemsInBuild) {
+          prevBuildProblems.putAll(problem, currentProblemsToUpdates.get(problem));
+        }
+
+        TeamCityUtil.printReport(tc, prevBuildProblems, reportGrouping);
+      }
+
+      suite.close();
+
       //For the IDEA-build list of yet UNRESOLVED problems
+      /*
       if (!problemsInBuild.isEmpty()) {
         System.out.printf("\nIn %s found %d new problems:\n", prevBuild, problemsInBuild.size());
 
@@ -150,26 +169,29 @@ public class NewProblemsCommand extends VerifierCommand {
           System.out.println(problemDescription);
           System.out.println("        in " + Joiner.on(", ").join(affectedUpdates));
 
-          tcMessages.add(Pair.create("since " + prevBuild + "  " + problemDescription + " (in " + Joiner.on(", ").join(affectedUpdates) + ')', ProblemUtils.hash(problem)));
+
+
+
         }
       }
+      */
     }
 
-    TeamCityLog tc = TeamCityLog.getInstance(commandLine);
 
-    for (int i = tcMessages.size() - 1; i >= 0; i--) {
-      tc.buildProblem(tcMessages.get(i).first, tcMessages.get(i).second);
-    }
+//    for (int i = tcMessages.size() - 1; i >= 0; i--) {
+//      tc.buildProblem(tcMessages.get(i).first, tcMessages.get(i).second);
+//    }
 
     //number of NEW' problems (compared to the EARLIEST check)
     final int newProblemsCount = currProblems.size();
 
-    tc.buildStatusSuccess(String.format("Done, %d new problems found between %s and %s. Current build is %s",
+    final String text = String.format("Done, %d new problems found between %s and %s. Current build is %s",
         newProblemsCount,
         previousCheckedBuilds.get(0),
         previousCheckedBuilds.get(previousCheckedBuilds.size() - 1),
-        currentCheckResult.getIde())
-    );
+        currentCheckResult.getIde());
+
+    tc.buildStatusFailure(text);
 
     return 0;
   }
