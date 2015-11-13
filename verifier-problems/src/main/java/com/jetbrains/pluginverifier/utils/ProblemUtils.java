@@ -132,8 +132,8 @@ public class ProblemUtils {
   /**
    * In DESCENDING order of versions
    */
-  public static Collection<UpdateInfo> sortUpdates(@NotNull List<UpdateInfo> updateInfos) {
-    Collections.sort(updateInfos, new Comparator<UpdateInfo>() {
+  public static Collection<UpdateInfo> sortUpdates(@NotNull Collection<UpdateInfo> updateInfos) {
+    Collections.sort(new ArrayList<UpdateInfo>(updateInfos), new Comparator<UpdateInfo>() {
       @Override
       public int compare(UpdateInfo o1, UpdateInfo o2) {
         String p1 = o1.getPluginId() != null ? o1.getPluginId() : "#" + o1.getUpdateId();

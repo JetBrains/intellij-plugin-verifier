@@ -65,6 +65,7 @@ public class VerifierTest {
   @Before
   public void setUp() throws Exception {
     File ideaFile = TestData.fetchResource(IDEA_14_0_4, true);
+
     String jdkPath = System.getenv("JAVA_HOME");
     if (jdkPath == null) {
       jdkPath = "/usr/lib/jvm/java-6-oracle";

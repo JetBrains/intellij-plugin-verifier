@@ -9,7 +9,7 @@
   <parent>
     <groupId>org.jetbrains.plugin-verifier</groupId>
     <artifactId>verifier-parent</artifactId>
-    <version>16.0</version>
+    <version>19.0</version>
   </parent>
 
   <dependencies>
@@ -22,6 +22,16 @@
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpmime</artifactId>
       <version>4.3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.plugin-verifier</groupId>
+      <artifactId>verifier-problems</artifactId>
+      <version>19.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.plugin-verifier</groupId>
+      <artifactId>verifier-cli</artifactId>
+      <version>19.0</version>
     </dependency>
   </dependencies>
 

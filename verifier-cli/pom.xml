@@ -9,7 +9,7 @@
     <parent>
         <groupId>org.jetbrains.plugin-verifier</groupId>
         <artifactId>verifier-parent</artifactId>
-        <version>16.0</version>
+        <version>19.0</version>
     </parent>
 
     <dependencies>
@@ -22,7 +22,7 @@
         <dependency>
             <groupId>mock-plugin</groupId>
             <artifactId>mock-plugin</artifactId> <!--Used for VerifierTest -->
-            <version>16.0</version>
+            <version>19.0</version>
             <scope>test</scope>
         </dependency>
 

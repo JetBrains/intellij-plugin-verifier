@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.commands;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
@@ -32,7 +33,7 @@ public class NewProblemsCommand extends VerifierCommand {
    * NOTE: in ascending order, i.e. 141.01, 141.05, 141.264...
    */
   @NotNull
-  private static List<String> findPreviousBuilds(@NotNull String currentBuild) throws IOException {
+  public static List<String> findPreviousBuilds(@NotNull String currentBuild) throws IOException {
     List<String> resultsOnInPluginRepository = GlobalRepository.loadAvailableCheckResultsList();
 
     String firstBuild = System.getProperty("firstBuild");
@@ -94,11 +95,11 @@ public class NewProblemsCommand extends VerifierCommand {
 
     //---------------------------------------------------
 
-    Multimap<Problem, UpdateInfo> currentProblemsToUpdates = ProblemUtils.rearrangeProblemsMap(currentCheckResult.asMap());
+    Multimap<Problem, UpdateInfo> currentProblemsMap = ProblemUtils.rearrangeProblemsMap(currentCheckResult.asMap());
 
 
     //Problems of this check
-    Set<Problem> currProblems = new HashSet<Problem>(currentProblemsToUpdates.keySet());
+    Set<Problem> currProblems = new HashSet<Problem>(currentProblemsMap.keySet());
 
     //leave only NEW' problems of this check compared to the EARLIEST check
     ResultsElement smallestCheckResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResultFile(previousCheckedBuilds.get(0)));
@@ -132,7 +133,7 @@ public class NewProblemsCommand extends VerifierCommand {
 
     List<Pair<String, String>> tcMessages = new ArrayList<Pair<String, String>>();
 
-    //ALL the builds (excluding the EARLIEST one) AND (including this one)
+    //ALL the checked builds (excluding the EARLIEST one)
     Iterable<String> allBuilds = Iterables.concat(previousCheckedBuilds.subList(1, previousCheckedBuilds.size()), Collections.singleton(currentBuildName));
 
     TeamCityLog tc = TeamCityLog.getInstance(commandLine);
@@ -147,7 +148,15 @@ public class NewProblemsCommand extends VerifierCommand {
 
         ArrayListMultimap<Problem, UpdateInfo> prevBuildProblems = ArrayListMultimap.create();
         for (Problem problem : problemsInBuild) {
-          prevBuildProblems.putAll(problem, currentProblemsToUpdates.get(problem));
+          Collection<UpdateInfo> affectedUpdates = ProblemUtils.sortUpdates(currentProblemsMap.get(problem));
+          prevBuildProblems.putAll(problem, affectedUpdates);
+
+          CharSequence problemDescription = MessageUtils.cutCommonPackages(problem.getDescription());
+
+          System.out.print("    ");
+          System.out.println(problemDescription);
+          System.out.println("        in " + Joiner.on(", ").join(affectedUpdates));
+
         }
 
         TeamCityUtil.printReport(tc, prevBuildProblems, reportGrouping);
@@ -155,43 +164,24 @@ public class NewProblemsCommand extends VerifierCommand {
 
       suite.close();
 
-      //For the IDEA-build list of yet UNRESOLVED problems
-      /*
-      if (!problemsInBuild.isEmpty()) {
-        System.out.printf("\nIn %s found %d new problems:\n", prevBuild, problemsInBuild.size());
-
-        //in sorted by problem-description order
-        for (Problem problem : ProblemUtils.sortProblems(problemsInBuild)) {
-          CharSequence problemDescription = MessageUtils.cutCommonPackages(problem.getDescription());
-          Collection<UpdateInfo> affectedUpdates = ProblemUtils.sortUpdates(new ArrayList<UpdateInfo>(currentProblemsToUpdates.get(problem)));
-
-          System.out.print("    ");
-          System.out.println(problemDescription);
-          System.out.println("        in " + Joiner.on(", ").join(affectedUpdates));
-
-
-
-
-        }
-      }
-      */
     }
 
 
-//    for (int i = tcMessages.size() - 1; i >= 0; i--) {
-//      tc.buildProblem(tcMessages.get(i).first, tcMessages.get(i).second);
-//    }
-
-    //number of NEW' problems (compared to the EARLIEST check)
+    //number of NEW' problems (excluding the EARLIEST check)
     final int newProblemsCount = currProblems.size();
 
-    final String text = String.format("Done, %d new problems found between %s and %s. Current build is %s",
+    final String text = String.format("Done, %d new %s found between %s and %s. Current build is %s",
         newProblemsCount,
+        StringUtil.pluralize("problem", newProblemsCount),
         previousCheckedBuilds.get(0),
         previousCheckedBuilds.get(previousCheckedBuilds.size() - 1),
         currentCheckResult.getIde());
 
-    tc.buildStatusFailure(text);
+    if (newProblemsCount > 0) {
+      tc.buildStatusFailure(text);
+    } else {
+      tc.buildStatusSuccess(text);
+    }
 
     return 0;
   }

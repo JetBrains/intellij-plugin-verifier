@@ -17,10 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Sergey Evdokimov
@@ -56,12 +53,38 @@ public class CompareResultsCommand extends VerifierCommand {
     }
 
     if (res.isEmpty()) {
-      System.out.println("No problems!");
+      System.out.println("No problems appeared between two builds!");
     }
     else {
-      System.out.printf("Found %d new problems:\n", res.asMap().size());
+      Map<Problem, Collection<UpdateInfo>> collectionMap = res.asMap();
+      System.out.printf("Found %d new problems:\n", collectionMap.size());
 
-      for (Map.Entry<Problem, Collection<UpdateInfo>> entry : res.asMap().entrySet()) {
+      List<String> clazzNames = new ArrayList<String>();
+      for (Problem problem : collectionMap.keySet()) {
+        clazzNames.add(problem.getClass().getCanonicalName());
+      }
+      Map<String, Integer> typeCounter = countObjects(clazzNames);
+
+      Set<String> updateNames = new HashSet<String>();
+      for (Collection<UpdateInfo> updateInfos : collectionMap.values()) {
+        for (UpdateInfo updateInfo : updateInfos) {
+          updateNames.add(updateInfo.toString());
+        }
+      }
+
+      Map<String, Integer> updateCounter = countObjects(new ArrayList<String>(updateNames));
+
+      System.out.println("Number of problems by type: ");
+      for (Map.Entry<String, Integer> entry : typeCounter.entrySet()) {
+        System.out.println("    " + entry.getKey() + " " + entry.getValue() + " " + (String.format("%.2f%%", (double) entry.getValue() * 100 / collectionMap.size())));
+      }
+
+      System.out.println("Number of problems by plugin: ");
+      for (Map.Entry<String, Integer> entry : updateCounter.entrySet()) {
+        System.out.println("    " + entry.getKey() + " " + entry.getValue() + " " + (String.format("%.2f%%", (double) entry.getValue() * 100 / collectionMap.size())));
+      }
+
+      for (Map.Entry<Problem, Collection<UpdateInfo>> entry : collectionMap.entrySet()) {
         System.out.println(MessageUtils.cutCommonPackages(entry.getKey().getDescription()));
 
         Collection<UpdateInfo> updates = entry.getValue();
@@ -80,7 +103,22 @@ public class CompareResultsCommand extends VerifierCommand {
     return 0;
   }
 
-  private Set<Problem> getOldProblems(File previousResults) throws IOException {
+  @NotNull
+  private Map<String, Integer> countObjects(List<String> clazzNames) {
+    Map<String, Integer> typeCounter = new HashMap<String, Integer>();
+    for (String name : clazzNames) {
+      if (!typeCounter.containsKey(name)) {
+        typeCounter.put(name, 1);
+      } else {
+        Integer integer = typeCounter.get(name);
+        typeCounter.put(name, integer + 1);
+      }
+    }
+    return typeCounter;
+  }
+
+  @NotNull
+  private Set<Problem> getOldProblems(@NotNull File previousResults) throws IOException {
     Map<UpdateInfo, Collection<Problem>> previousProblemMap = ProblemUtils.loadProblems(previousResults).asMap();
 
     Set<Problem> oldProblems = Sets.newHashSet();
