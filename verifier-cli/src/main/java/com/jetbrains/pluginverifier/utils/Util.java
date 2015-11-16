@@ -2,8 +2,12 @@ package com.jetbrains.pluginverifier.utils;
 
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -32,6 +36,15 @@ public class Util {
   public static void printHelp() {
     new HelpFormatter().printHelp("java -jar verifier.jar <command> [<args>]", CMD_OPTIONS);
   }
+
+  @NotNull
+  public static String getStackTrace(@Nullable Throwable t) {
+    if (t == null) return "";
+    StringWriter sw = new StringWriter();
+    t.printStackTrace(new PrintWriter(sw));
+    return sw.toString();
+  }
+
 
   public static File getValidatorHome() {
     return new File(System.getProperty("user.home") + "/.pluginVerifier");

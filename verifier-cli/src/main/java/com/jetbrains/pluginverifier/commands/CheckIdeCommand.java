@@ -195,6 +195,35 @@ public class CheckIdeCommand extends VerifierCommand {
     TeamCityUtil.printReport(log, problems, reportGrouping);
   }
 
+  private static void printIncorrectPlugins(@NotNull TeamCityLog log,
+                                            @NotNull List<Trinity<UpdateInfo, String, ? extends Exception>> incorrectPlugins) {
+    if (log == TeamCityLog.NULL_LOG) return;
+
+    log.buildProblem("There are " + incorrectPlugins.size() + " " + StringUtil.pluralize("plugin", incorrectPlugins.size()) +
+        " which were not checked due to some problems (see Build Log for details)");
+
+    final TeamCityLog.Block block = log.blockOpen("Incorrect and broken plugins list");
+    try {
+      for (Trinity<UpdateInfo, String, ? extends Exception> triple : incorrectPlugins) {
+        TeamCityLog.Block pluginBlock = log.blockOpen(triple.first.toString());
+
+        log.messageError(triple.second, Util.getStackTrace(triple.getThird()));
+
+        pluginBlock.close();
+      }
+    } finally {
+      block.close();
+    }
+
+    Multimap<Problem, UpdateInfo> verificationProblems = ArrayListMultimap.create();
+    for (Trinity<UpdateInfo, String, ? extends Exception> pair : incorrectPlugins) {
+      verificationProblems.put(new VerificationProblem(pair.getSecond()), pair.getFirst());
+    }
+
+    TeamCityUtil.printReport(log, verificationProblems, TeamCityUtil.ReportGrouping.PLUGIN);
+
+  }
+
   @NotNull
   private Collection<UpdateInfo> prepareUpdates(@NotNull Collection<UpdateInfo> updates) {
     Collection<UpdateInfo> important = new ArrayList<UpdateInfo>();
@@ -288,12 +317,11 @@ public class CheckIdeCommand extends VerifierCommand {
 
     Set<UpdateInfo> importantUpdates = prepareImportantUpdates(updates);
 
-    //list of plugins which were not checked due to some error (first = plugin; second = error message)
-    final List<Pair<UpdateInfo, String>> incorrectPlugins = new ArrayList<Pair<UpdateInfo, String>>();
+    //list of plugins which were not checked due to some error (first = plugin; second = error message; third = caused exception)
+    final List<Trinity<UpdateInfo, String, ? extends Exception>> incorrectPlugins = new ArrayList<Trinity<UpdateInfo, String, ? extends Exception>>();
 
     //-----------------------------VERIFICATION---------------------------------------
 
-    //TODO: do in parallel
     for (UpdateInfo updateJson : updates) {
       TeamCityLog.Block block = tc.blockOpen(updateJson.toString());
 
@@ -303,7 +331,7 @@ public class CheckIdeCommand extends VerifierCommand {
           updateFile = RepositoryManager.getInstance().getOrLoadUpdate(updateJson);
         } catch (IOException e) {
           final String message = "Failed to download plugin " + updateJson + " because " + e.getMessage();
-          incorrectPlugins.add(Pair.create(updateJson, message));
+          incorrectPlugins.add(Trinity.create(updateJson, message, e));
 
           System.err.println(message);
           e.printStackTrace();
@@ -316,7 +344,7 @@ public class CheckIdeCommand extends VerifierCommand {
           plugin = IdeaPlugin.createFromZip(updateFile);
         } catch (Exception e) {
           final String message = "Failed to read plugin " + updateJson + " because " + e.getLocalizedMessage();
-          incorrectPlugins.add(Pair.create(updateJson, message));
+          incorrectPlugins.add(Trinity.create(updateJson, message, e));
 
           System.err.println(message);
           tc.messageError(message);
@@ -332,7 +360,7 @@ public class CheckIdeCommand extends VerifierCommand {
         } catch (VerificationError e) {
           final String message = "Failed to verify plugin " + updateJson + " because " + e.getLocalizedMessage();
           System.err.println(message);
-          incorrectPlugins.add(Pair.create(updateJson, message));
+          incorrectPlugins.add(Trinity.create(updateJson, message, e));
 
           tc.messageError(message);
           e.printStackTrace();
@@ -405,7 +433,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     printTeamCityProblems(tc, results, updateFilter, reportGrouping);
 
-    printIncorrectPluginsList(tc, incorrectPlugins);
+    printIncorrectPlugins(tc, incorrectPlugins);
 
 
     Set<Problem> allProblems = new HashSet<Problem>();
@@ -455,26 +483,6 @@ public class CheckIdeCommand extends VerifierCommand {
     }
 
     return result;
-  }
-
-  private void printIncorrectPluginsList(@NotNull TeamCityLog tc,
-                                         @NotNull List<Pair<UpdateInfo, String>> incorrectPlugins) {
-    tc.buildProblem("There are " + incorrectPlugins.size() + " " + StringUtil.pluralize("plugin", incorrectPlugins.size()) +
-        " which were not checked due to some problems (see the bottom of Build Log for details)");
-
-    final TeamCityLog.Block block = tc.blockOpen("Incorrect or broken plugins");
-    try {
-      for (Pair<UpdateInfo, String> pair : incorrectPlugins) {
-        TeamCityLog.Block pluginBlock = tc.blockOpen(pair.first.toString());
-
-        tc.messageError(pair.second);
-
-        pluginBlock.close();
-      }
-    } finally {
-      block.close();
-    }
-
   }
 
   /**
