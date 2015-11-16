@@ -459,14 +459,15 @@ public class CheckIdeCommand extends VerifierCommand {
 
   private void printIncorrectPluginsList(@NotNull TeamCityLog tc,
                                          @NotNull List<Pair<UpdateInfo, String>> incorrectPlugins) {
-    tc.buildProblem("There are " + incorrectPlugins.size() + " plugins which were not checked due to some problems (see Build Log for details)");
+    tc.buildProblem("There are " + incorrectPlugins.size() + " " + StringUtil.pluralize("plugin", incorrectPlugins.size()) +
+        " which were not checked due to some problems (see the bottom of Build Log for details)");
 
     final TeamCityLog.Block block = tc.blockOpen("Incorrect or broken plugins");
     try {
       for (Pair<UpdateInfo, String> pair : incorrectPlugins) {
         TeamCityLog.Block pluginBlock = tc.blockOpen(pair.first.toString());
 
-        tc.message(pair.second);
+        tc.messageError(pair.second);
 
         pluginBlock.close();
       }

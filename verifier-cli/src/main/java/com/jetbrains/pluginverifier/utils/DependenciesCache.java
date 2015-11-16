@@ -35,11 +35,13 @@ public class DependenciesCache {
   private DependenciesCache() {
   }
 
+  @NotNull
   public static DependenciesCache getInstance() {
     return ourInstance;
   }
 
-  private PluginDependenciesDescriptor getPluginDependenciesDescriptor(Idea ide, IdeaPlugin plugin) {
+  @NotNull
+  private PluginDependenciesDescriptor getPluginDependenciesDescriptor(@NotNull Idea ide, @NotNull IdeaPlugin plugin) {
     WeakHashMap<IdeaPlugin, PluginDependenciesDescriptor> m = map.get(ide);
     if (m == null) {
       m = new WeakHashMap<IdeaPlugin, PluginDependenciesDescriptor>();
@@ -48,16 +50,18 @@ public class DependenciesCache {
 
     PluginDependenciesDescriptor descr = m.get(plugin);
     if (descr == null) {
-      descr = new PluginDependenciesDescriptor(plugin.toString());
+      String pluginIdentifier = plugin.getPluginId().isEmpty() ? plugin.getPluginName() : plugin.getPluginId();
+      descr = new PluginDependenciesDescriptor(pluginIdentifier);
       m.put(plugin, descr);
     }
 
     return descr;
   }
 
-  public Resolver getResolver(Idea ide, IdeaPlugin plugin) throws VerificationError {
-    PluginDependenciesDescriptor descr = getPluginDependenciesDescriptor(ide, plugin);
-    if (descr.myResolver == null) {
+  @NotNull
+  public Resolver getResolver(@NotNull Idea ide, @NotNull IdeaPlugin plugin) throws VerificationError {
+    PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
+    if (descriptor.myResolver == null) {
       List<Resolver> resolvers = new ArrayList<Resolver>();
 
       resolvers.add(plugin.getCommonClassPool());
@@ -75,10 +79,10 @@ public class DependenciesCache {
         }
       }
 
-      descr.myResolver = CombiningResolver.union(resolvers);
+      descriptor.myResolver = CombiningResolver.union(resolvers);
     }
 
-    return descr.myResolver;
+    return descriptor.myResolver;
   }
 
 
@@ -91,7 +95,7 @@ public class DependenciesCache {
     Set<IdeaPlugin> result = descriptor.dependenciesWithTransitive;
     if (result == DEP_CALC_MARKER) {
       if (Boolean.parseBoolean(Configuration.getInstance().getProperty("fail.on.cyclic.dependencies"))) {
-        int idx = pluginStack.lastIndexOf(descriptor);
+        int idx = pluginStack.lastIndexOf(descriptor); //compare descriptors by their identity (default equals behavior)
         throw new VerificationError("Cyclic plugin dependencies: " + Joiner.on(" -> ").join(pluginStack.subList(idx, pluginStack.size())) + " -> " + plugin.getPluginId());
       }
 
@@ -108,11 +112,11 @@ public class DependenciesCache {
       pluginStack.add(descriptor);
 
       try {
-        result = new HashSet<IdeaPlugin>(); //compare IdeaPlugins by their identity
+        result = new HashSet<IdeaPlugin>(); //compare IdeaPlugins by their identity (default equals and hashCode behavior)
 
         //iterate through IntelliJ module dependencies
         for (PluginDependency dependency : plugin.getModuleDependencies()) {
-          //TODO: maybe rewrite this
+
           final String moduleId = dependency.getId();
           if (IDEA_ULTIMATE_MODULES.contains(moduleId)) {
             continue;
@@ -137,6 +141,8 @@ public class DependenciesCache {
         //iterate through the other plugin dependencies
         for (PluginDependency pluginDependency : plugin.getDependencies()) {
           IdeaPlugin depPlugin = ide.getPlugin(pluginDependency.getId());
+
+          Exception maybeException = null;
           if (depPlugin == null) {
             try {
               UpdateInfo updateInfo = RepositoryManager.getInstance().findPlugin(ide.getVersion(), pluginDependency.getId());
@@ -146,6 +152,7 @@ public class DependenciesCache {
               }
             }
             catch (IOException e) {
+              maybeException = e;
               e.printStackTrace();
               System.err.println("Couldn't load plugin dependency for " + plugin.getPluginId());
             }
@@ -153,12 +160,15 @@ public class DependenciesCache {
 
           //noinspection Duplicates
           if (depPlugin == null) {
-            final String message = "Plugin " + plugin.getPluginId() + " depends on the other plugin " + pluginDependency.getId() + " which is not found in " + ide.getVersion();
+            final String message = "Plugin " + plugin.getPluginId() + " depends on the other plugin " + pluginDependency.getId() + " which is not found for " + ide.getVersion();
             if (!pluginDependency.isOptional()) {
               //this is required plugin
-              throw new VerificationError(message);
+              throw new VerificationError(message, maybeException);
             } else {
               System.err.println("(optional dependency)" + message);
+              if (maybeException != null) {
+                maybeException.printStackTrace();
+              }
             }
           } else if (result.add(depPlugin)) {
             result.addAll(getDependenciesWithTransitive(ide, depPlugin, pluginStack));
@@ -193,7 +203,7 @@ public class DependenciesCache {
 
     public Set<IdeaPlugin> dependenciesWithTransitive;
 
-    private PluginDependenciesDescriptor(String pluginName) {
+    private PluginDependenciesDescriptor(@NotNull String pluginName) {
       this.pluginName = pluginName;
     }
 

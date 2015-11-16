@@ -39,36 +39,35 @@ public class CheckIdeHtmlReportBuilder {
 
     try {
       out.append("<html>\n" +
-                 "<head>\n" +
-                 "  <title>Result of checking " + ideVersion + "</title>\n" +
-                 "\n" +
-                 "  <link rel='stylesheet' href='http://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css'>\n" +
-                 "  <script src='http://code.jquery.com/jquery-1.9.1.js'></script>\n" +
-                 "  <script src='http://code.jquery.com/ui/1.10.4/jquery-ui.js'></script>\n" +
+          "<head>\n" +
+          "  <title>Result of checking " + ideVersion + "</title>\n" +
+          "\n" +
+          "  <link rel='stylesheet' href='http://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css'>\n" +
+          "  <script src='http://code.jquery.com/jquery-1.9.1.js'></script>\n" +
+          "  <script src='http://code.jquery.com/ui/1.10.4/jquery-ui.js'></script>\n" +
 
-                 "  <style type='text/css'>\n" +
-                 Resources.toString(CheckIdeHtmlReportBuilder.class.getResource("/reportCss.css"), Charset.forName("UTF-8")) +
-                 "  </style>\n" +
-                 "</head>\n" +
-                 "\n" +
-                 "<body>\n" +
-                 "\n" +
-                 "<h2>" + ideVersion + "</h2>\n" +
-                 "<label>\n" +
-                 "  <input id='problematicOnlyCB' type='checkbox' onchange=\"if ($('#problematicOnlyCB').is(':checked')) {$('body').addClass('problematicOnly')} else {$('body').removeClass('problematicOnly')} \">\n" +
-                 "  Show problematic plugins only\n" +
-                 "</label>\n");
+          "  <style type='text/css'>\n" +
+          Resources.toString(CheckIdeHtmlReportBuilder.class.getResource("/reportCss.css"), Charset.forName("UTF-8")) +
+          "  </style>\n" +
+          "</head>\n" +
+          "\n" +
+          "<body>\n" +
+          "\n" +
+          "<h2>" + ideVersion + "</h2>\n" +
+          "<label>\n" +
+          "  <input id='problematicOnlyCB' type='checkbox' onchange=\"if ($('#problematicOnlyCB').is(':checked')) {$('body').addClass('problematicOnly')} else {$('body').removeClass('problematicOnly')} \">\n" +
+          "  Show problematic plugins only\n" +
+          "</label>\n");
 
-                 //"<div id='tabs'>\n" +
-                 //"  <ul>\n" +
-                 //"    <li><a href='#tab-plugins'>Plugins</a></li>\n" +
-                 //"    <li><a href='#tab-problems'>Problems</a></li>\n" +
-                 //"  </ul>\n" +
-                 //"  <div id='tab-plugins'>\n");
+      //"<div id='tabs'>\n" +
+      //"  <ul>\n" +
+      //"    <li><a href='#tab-plugins'>Plugins</a></li>\n" +
+      //"    <li><a href='#tab-problems'>Problems</a></li>\n" +
+      //"  </ul>\n" +
+      //"  <div id='tab-plugins'>\n");
       if (pluginsMap.isEmpty()) {
         out.print("No plugins checked.\n");
-      }
-      else {
+      } else {
         for (Map.Entry<String, List<UpdateInfo>> entry : pluginsMap.entrySet()) {
           String pluginId = entry.getKey();
           List<UpdateInfo> checkedBuilds = entry.getValue();
@@ -91,34 +90,32 @@ public class CheckIdeHtmlReportBuilder {
 
           if (checkedBuilds.isEmpty()) {
             out.printf("There are no updates compatible with %s in the Plugin Repository\n", ideVersion);
-          }
-          else {
+          } else {
             for (UpdateInfo update : checkedBuilds) {
               ProblemSet problems = results.get(update);
 
               out.printf("<div class='update %s %s'>\n",
-                         problems.isEmpty() ? "updateOk" : "updateHasProblems",
-                         updateFilter.apply(update) ? "" : "excluded");
+                  problems.isEmpty() ? "updateOk" : "updateHasProblems",
+                  updateFilter.apply(update) ? "" : "excluded");
 
               out.printf("  <h3><span class='uMarker'>   </span> %s <small>(#%d%s)</small> %s</h3>\n",
-                         HtmlEscapers.htmlEscaper().escape(update.getVersion()),
-                         update.getUpdateId(),
-                         update.getCdate() == null ? "" : ", " + UPDATE_DATE_FORMAT.format(new Date(update.getCdate())),
-                         problems.isEmpty() ? "" : "<small>" + problems.count() + " problems found</small>"
+                  HtmlEscapers.htmlEscaper().escape(update.getVersion()),
+                  update.getUpdateId(),
+                  update.getCdate() == null ? "" : ", " + UPDATE_DATE_FORMAT.format(new Date(update.getCdate())),
+                  problems.isEmpty() ? "" : "<small>" + problems.count() + " problems found</small>"
               );
 
               out.printf("  <div>\n");
 
               if (problems.isEmpty()) {
                 out.printf("No problems.\n");
-              }
-              else {
+              } else {
                 List<Problem> problemList = ProblemUtils.sortProblems(problems.getAllProblems());
 
                 for (Problem problem : problemList) {
                   out.append("    <div class='errorDetails'>").append(HtmlEscapers.htmlEscaper().escape(problem.getDescription()))
-                    .append(' ')
-                    .append("<a href=\"#\" class='detailsLink'>details</a>\n");
+                      .append(' ')
+                      .append("<a href=\"#\" class='detailsLink'>details</a>\n");
 
 
                   out.append("<div class='errLoc'>");
@@ -130,8 +127,7 @@ public class CheckIdeHtmlReportBuilder {
                   for (ProblemLocation location : locationList) {
                     if (isFirst) {
                       isFirst = false;
-                    }
-                    else {
+                    } else {
                       out.append("<br>");
                     }
 
@@ -166,8 +162,7 @@ public class CheckIdeHtmlReportBuilder {
 
       out.append("</body>\n");
       out.append("</html>");
-    }
-    finally {
+    } finally {
       out.close();
     }
   }
@@ -184,13 +179,13 @@ public class CheckIdeHtmlReportBuilder {
       pluginsMap.put(pluginId, new ArrayList<UpdateInfo>());
     }
 
-    for (Map.Entry<UpdateInfo, ProblemSet> brokenUpdateEntry : results.entrySet()) {
-      UpdateInfo brokenUpdate = brokenUpdateEntry.getKey();
+    for (UpdateInfo brokenUpdate : results.keySet()) {
       List<UpdateInfo> updatesList = pluginsMap.get(brokenUpdate.getPluginId());
-
-      if (!brokenUpdateEntry.getValue().getAllProblems().isEmpty()) {
-        updatesList.add(brokenUpdate);
+      if (updatesList == null) {
+        throw new IllegalArgumentException("Invalid arguments, pluginIds doesn't contain " + brokenUpdate.getPluginId());
       }
+
+      updatesList.add(brokenUpdate);
     }
 
     for (List<UpdateInfo> updateList : pluginsMap.values()) {
@@ -225,10 +220,10 @@ public class CheckIdeHtmlReportBuilder {
       Ordering<Comparable> c = Ordering.natural().nullsLast();
 
       return ComparisonChain.start()
-        .compare(o1.getUpdateId(), o2.getUpdateId(), c)
-        .compare(o1.getPluginId(), o2.getPluginId(), c)
-        .compare(o1.getVersion(), o2.getVersion(), c)
-        .result();
+          .compare(o1.getUpdateId(), o2.getUpdateId(), c)
+          .compare(o1.getPluginId(), o2.getPluginId(), c)
+          .compare(o1.getVersion(), o2.getVersion(), c)
+          .result();
     }
   }
 }
