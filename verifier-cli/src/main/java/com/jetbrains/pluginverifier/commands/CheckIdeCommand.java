@@ -405,7 +405,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     printTeamCityProblems(tc, results, updateFilter, reportGrouping);
 
-    totalProblemsCnt += printIncorrectPluginsList(tc, incorrectPlugins);
+    printIncorrectPluginsList(tc, incorrectPlugins);
 
 
     Set<Problem> allProblems = new HashSet<Problem>();
@@ -457,20 +457,23 @@ public class CheckIdeCommand extends VerifierCommand {
     return result;
   }
 
-  private int printIncorrectPluginsList(@NotNull TeamCityLog tc, @NotNull List<Pair<UpdateInfo, String>> incorrectPlugins) {
-    if (incorrectPlugins.isEmpty()) return 0;
+  private void printIncorrectPluginsList(@NotNull TeamCityLog tc,
+                                         @NotNull List<Pair<UpdateInfo, String>> incorrectPlugins) {
     tc.buildProblem("There are " + incorrectPlugins.size() + " plugins which were not checked due to some problems (see Build Log for details)");
 
-    final TeamCityLog.Block block = tc.blockOpen("Incorrect plugins and plugins which failed to be downloaded or some");
+    final TeamCityLog.Block block = tc.blockOpen("Incorrect or broken plugins");
     try {
       for (Pair<UpdateInfo, String> pair : incorrectPlugins) {
-        tc.message("Plugin: " + pair.first + "; reason: " + pair.second);
+        TeamCityLog.Block pluginBlock = tc.blockOpen(pair.first.toString());
+
+        tc.message(pair.second);
+
+        pluginBlock.close();
       }
     } finally {
       block.close();
     }
 
-    return 1; //+1 to total number of problems
   }
 
   /**
