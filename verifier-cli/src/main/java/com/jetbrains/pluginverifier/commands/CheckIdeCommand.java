@@ -40,7 +40,8 @@ public class CheckIdeCommand extends VerifierCommand {
   }
 
 
-  private static Pair<List<String>, List<String>> extractPluginList(@NotNull CommandLine commandLine) {
+  @NotNull
+  private static Pair<List<String>, List<String>> extractPluginToCheckList(@NotNull CommandLine commandLine) {
     List<String> pluginsCheckAllBuilds = new ArrayList<String>();
     List<String> pluginsCheckLastBuilds = new ArrayList<String>();
 
@@ -91,6 +92,7 @@ public class CheckIdeCommand extends VerifierCommand {
     return Pair.create(pluginsCheckAllBuilds, pluginsCheckLastBuilds);
   }
 
+  @NotNull
   private static Predicate<UpdateInfo> getExcludedPluginsPredicate(@NotNull CommandLine commandLine) throws IOException {
     String epf = commandLine.getOptionValue("epf");
     if (epf == null) {
@@ -112,7 +114,7 @@ public class CheckIdeCommand extends VerifierCommand {
         if (tokens.isEmpty()) continue;
 
         if (tokens.size() == 1) {
-          throw new IOException(epf + " is broken. The line contains plugin name, but does not contains version: " + s);
+          throw new IOException(epf + " is broken. The line contains plugin name, but does not contain version: " + s);
         }
 
         String pluginId = tokens.get(0);
@@ -185,7 +187,9 @@ public class CheckIdeCommand extends VerifierCommand {
 
     //fill problems map
     for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
-      if (!updateFilter.apply(entry.getKey())) continue; //this is excluded plugin
+      if (!updateFilter.apply(entry.getKey())) {
+        continue; //this is excluded plugin
+      }
 
       for (Problem problem : entry.getValue().getAllProblems()) {
         problems.put(problem, entry.getKey());
@@ -264,7 +268,7 @@ public class CheckIdeCommand extends VerifierCommand {
     Idea ide = new Idea(ideToCheck, jdk, externalClassPath);
     updateIdeVersionFromCmd(ide, commandLine);
 
-    Pair<List<String>, List<String>> pluginsIds = extractPluginList(commandLine);
+    Pair<List<String>, List<String>> pluginsIds = extractPluginToCheckList(commandLine);
     List<String> pluginsCheckAllBuilds = pluginsIds.first;
     List<String> pluginsCheckLastBuilds = pluginsIds.second;
 

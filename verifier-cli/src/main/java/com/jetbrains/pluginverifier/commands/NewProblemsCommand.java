@@ -28,12 +28,14 @@ public class NewProblemsCommand extends VerifierCommand {
 
   /**
    * @return list of IDEA builds for which check is already performed and
-   * its main-part equals to the given main-part (141 and 141)
+   * its trunk number equals to the given trunk number (e.g. 141 and 141)
    * and the build number is LESS than the given build number.
    * NOTE: in ascending order, i.e. 141.01, 141.05, 141.264...
    */
   @NotNull
   public static List<String> findPreviousBuilds(@NotNull String currentBuild) throws IOException {
+    //for now method and repository support only "IU-X.Y" build's form
+
     List<String> resultsOnInPluginRepository = GlobalRepository.loadAvailableCheckResultsList();
 
     String firstBuild = System.getProperty("firstBuild");
@@ -64,8 +66,9 @@ public class NewProblemsCommand extends VerifierCommand {
   /**
    * e.g. IU-141.1532 -> < IU-141, 1532>
    */
+  @NotNull
   private static Pair<String, Integer> parseBuildNumber(String buildNumber) {
-    int idx = buildNumber.lastIndexOf('.');
+    int idx = buildNumber.indexOf('.');
 
     return Pair.create(buildNumber.substring(0, idx), Integer.parseInt(buildNumber.substring(idx + 1)));
   }
@@ -88,7 +91,7 @@ public class NewProblemsCommand extends VerifierCommand {
     List<String> previousCheckedBuilds = findPreviousBuilds(currentCheckResult.getIde());
 
     if (previousCheckedBuilds.isEmpty()) {
-      System.out.println("Plugin repository does not contain check result to compare.");
+      System.err.println("Plugin repository does not contain check result to compare.");
       return 0;
     }
 
@@ -131,8 +134,6 @@ public class NewProblemsCommand extends VerifierCommand {
     //---------------------------------------------------
 
 
-    List<Pair<String, String>> tcMessages = new ArrayList<Pair<String, String>>();
-
     //ALL the checked builds (excluding the EARLIEST one)
     Iterable<String> allBuilds = Iterables.concat(previousCheckedBuilds.subList(1, previousCheckedBuilds.size()), Collections.singleton(currentBuildName));
 
@@ -167,7 +168,7 @@ public class NewProblemsCommand extends VerifierCommand {
     }
 
 
-    //number of NEW' problems (excluding the EARLIEST check)
+    //number of NEW problems (excluding the EARLIEST check)
     final int newProblemsCount = currProblems.size();
 
     final String text = String.format("Done, %d new %s found between %s and %s. Current build is %s",
