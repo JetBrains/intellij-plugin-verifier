@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.problems;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -18,6 +20,15 @@ public class UpdateInfo {
   private String version;
 
   private Long cdate;
+
+  public UpdateInfo() {
+  }
+
+  public UpdateInfo(@NotNull String pluginId, @NotNull String pluginName, @NotNull String version) {
+    this.pluginId = pluginId;
+    this.pluginName = pluginName;
+    this.version = version;
+  }
 
   @XmlAttribute
   public Integer getUpdateId() {
@@ -86,6 +97,7 @@ public class UpdateInfo {
     return "#" + updateId;
   }
 
+  @SuppressWarnings("SimplifiableIfStatement")
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
