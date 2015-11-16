@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.util;
 
+import com.google.common.base.Preconditions;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.utils.Assert;
@@ -46,6 +47,14 @@ public class VerifierUtil {
 
     return className;
   }
+
+  @NotNull
+  private static String withoutReturnType(@NotNull String descriptor) {
+    int bracket = descriptor.lastIndexOf(')');
+    Preconditions.checkArgument(bracket != -1);
+    return descriptor.substring(0, bracket + 1);
+  }
+
 
   @Nullable // return null for primitive types
   public static String extractClassNameFromDescr(@NotNull String descr) {

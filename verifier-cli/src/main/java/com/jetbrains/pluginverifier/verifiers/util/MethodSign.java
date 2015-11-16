@@ -6,10 +6,15 @@ import org.objectweb.asm.tree.MethodNode;
 /**
  * @author Sergey Evdokimov
  */
-//TODO: don't take return type into account
 public class MethodSign {
 
   private final String myName;
+
+  /**
+   * We take return type of the method into account, although it's not necessary
+   * because method A overrides method B if they have the same name and parameters erasure.
+   * But JAVA works for us and generates bridge methods which match the parent ones.
+   */
   private final String myDescriptor;
 
   private int hashCode;
@@ -23,10 +28,12 @@ public class MethodSign {
     this(methodNode.name, methodNode.desc);
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
 
+  @NotNull
   public String getDescriptor() {
     return myDescriptor;
   }

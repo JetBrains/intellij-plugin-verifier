@@ -92,7 +92,7 @@ public class DependenciesCache {
     if (result == DEP_CALC_MARKER) {
       if (Boolean.parseBoolean(Configuration.getInstance().getProperty("fail.on.cyclic.dependencies"))) {
         int idx = pluginStack.lastIndexOf(descriptor);
-        throw new VerificationError("Cyclic plugin dependencies: " + Joiner.on(" -> ").join(pluginStack.subList(idx, pluginStack.size())) + " -> " + plugin);
+        throw new VerificationError("Cyclic plugin dependencies: " + Joiner.on(" -> ").join(pluginStack.subList(idx, pluginStack.size())) + " -> " + plugin.getPluginId());
       }
 
       for (int i = pluginStack.size() - 1; i >= 0; i--) {

@@ -184,13 +184,13 @@ public class CheckIdeHtmlReportBuilder {
       pluginsMap.put(pluginId, new ArrayList<UpdateInfo>());
     }
 
-    for (UpdateInfo brokenUpdate : results.keySet()) {
+    for (Map.Entry<UpdateInfo, ProblemSet> brokenUpdateEntry : results.entrySet()) {
+      UpdateInfo brokenUpdate = brokenUpdateEntry.getKey();
       List<UpdateInfo> updatesList = pluginsMap.get(brokenUpdate.getPluginId());
-      if (updatesList == null) {
-        throw new IllegalArgumentException("Invalid arguments, pluginIds doesn't contain " + brokenUpdate.getPluginId());
-      }
 
-      updatesList.add(brokenUpdate);
+      if (!brokenUpdateEntry.getValue().getAllProblems().isEmpty()) {
+        updatesList.add(brokenUpdate);
+      }
     }
 
     for (List<UpdateInfo> updateList : pluginsMap.values()) {
