@@ -14,6 +14,10 @@ import org.objectweb.asm.tree.MethodNode;
  * @author Dennis.Ushakov
  */
 public class OverrideNonFinalVerifier implements MethodVerifier {
+
+  //TODO: add the following use-case:
+  // static or private method overrides instance method (overriding abstract method is already processed in AbstractVerifier)
+
   public void verify(final ClassNode clazz, final MethodNode method, final Resolver resolver, final VerificationContext ctx) {
     if ((method.access & Opcodes.ACC_PRIVATE) != 0) return;
     final String superClass = clazz.superName;

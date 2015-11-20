@@ -19,6 +19,8 @@ import static com.jetbrains.pluginverifier.utils.StringUtil.pluralize;
  */
 public class TeamCityUtil {
 
+  public static final String REPOSITORY_PLUGIN_ID_BASE = "https://plugins.jetbrains.com/plugin/index?xmlId=";
+
   private static void notGrouped(@NotNull TeamCityLog log, @NotNull Multimap<Problem, UpdateInfo> problems) {
     List<Problem> sortedProblems = ProblemUtils.sortProblems(problems.keySet());
 
@@ -59,6 +61,10 @@ public class TeamCityUtil {
     return result;
   }
 
+  @NotNull
+  public static String getPluginUrl(@NotNull UpdateInfo updateInfo) {
+    return REPOSITORY_PLUGIN_ID_BASE + (updateInfo.getPluginId() != null ? updateInfo.getPluginId() : updateInfo.getPluginName());
+  }
 
   public static void groupByType(@NotNull TeamCityLog log, @NotNull Map<UpdateInfo, Collection<Problem>> map) {
     Multimap<Problem, UpdateInfo> problem2Updates = ProblemUtils.rearrangeProblemsMap(map);
@@ -77,7 +83,7 @@ public class TeamCityUtil {
       TeamCityLog.TestSuite problemTypeSuite = log.testSuiteStarted(commonPrefix);
 
       for (Problem problem : problems) {
-        String description = StringUtil.trimStart(problem.getDescription(), commonPrefix);
+        String description = StringUtil.trimStart(problem.getDescription(), commonPrefix).trim();
         Collection<UpdateInfo> updateInfos = problem2Updates.get(problem);
 
         TeamCityLog.TestSuite problemSuite = log.testSuiteStarted(description);
@@ -85,7 +91,8 @@ public class TeamCityUtil {
         for (UpdateInfo updateInfo : updateInfos) {
           String plugin = updateInfo.toString().replace('.', ',');
           TeamCityLog.Test test = log.testStarted(plugin);
-          log.testFailed(plugin, "Plugin " + updateInfo + " has the following problem", problem.getDescription());
+          String pluginUrl = getPluginUrl(updateInfo);
+          log.testFailed(plugin, pluginUrl + '\n' + updateInfo, problem.getDescription());
           test.close();
         }
 
@@ -147,7 +154,20 @@ public class TeamCityUtil {
       List<UpdateInfo> updateInfos = idToUpdates.get(pluginId);
       ProblemUtils.sortUpdates(updateInfos);
 
+      String pluginLink = REPOSITORY_PLUGIN_ID_BASE + pluginId;
       TeamCityLog.TestSuite pluginSuite = log.testSuiteStarted(pluginId);
+
+      boolean pluginHasProblems = false;
+      for (UpdateInfo updateInfo : updateInfos) {
+        pluginHasProblems |= !map.get(updateInfo).isEmpty();
+      }
+
+      if (pluginHasProblems) {
+        String linkTestName = "(link)";
+        TeamCityLog.Test linkTest = log.testStarted(linkTestName);
+        log.testFailed(linkTestName, pluginLink, pluginLink);
+        linkTest.close();
+      }
 
       for (UpdateInfo updateInfo : updateInfos) {
 
