@@ -101,4 +101,8 @@ public class VerifierUtil {
   public static boolean isProtected(@NotNull MethodNode method) {
     return (method.access & Opcodes.ACC_PROTECTED) != 0;
   }
+
+  public static boolean isStatic(@NotNull MethodNode method) {
+    return (method.access & Opcodes.ACC_STATIC) != 0;
+  }
 }

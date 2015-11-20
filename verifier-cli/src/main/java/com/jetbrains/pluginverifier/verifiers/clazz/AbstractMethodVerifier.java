@@ -33,11 +33,14 @@ public class AbstractMethodVerifier implements ClassVerifier {
       return; // optimization
     }
 
+    //all non-static and non-private methods which may be invoked on an instance of this class
     Set<MethodSign> allMethods = new HashSet<MethodSign>();
 
     List<MethodNode> methods = (List<MethodNode>) clazz.methods;
-    for (MethodNode methodNode : methods) {
-      allMethods.add(new MethodSign(methodNode));
+    for (MethodNode method : methods) {
+      if (!VerifierUtil.isStatic(method) && !VerifierUtil.isPrivate(method)) {
+        allMethods.add(new MethodSign(method));
+      }
     }
 
     ClassNode curNode = superClass;
@@ -48,13 +51,14 @@ public class AbstractMethodVerifier implements ClassVerifier {
     while (VerifierUtil.isAbstract(curNode)) {
       definedInterfaces.addAll((List<String>) curNode.interfaces);
 
-      for (MethodNode methodNode : (List<MethodNode>) curNode.methods) {
-        if (allMethods.add(new MethodSign(methodNode))) {
-          //if it is an undefined method
-          if (VerifierUtil.isAbstract(methodNode)) {
-            //and it is abstract => undefined abstract => problem
-            ctx.registerProblem(new MethodNotImplementedProblem(curNode.name + '#' + methodNode.name + methodNode.desc),
+      for (MethodNode method : (List<MethodNode>) curNode.methods) {
+
+        if (allMethods.add(new MethodSign(method))) {
+          if (VerifierUtil.isAbstract(method)) { //if method is abstract => it is neither static nor private
+            //undefined abstract => problem
+            ctx.registerProblem(new MethodNotImplementedProblem(curNode.name + '#' + method.name + method.desc),
                 new ProblemLocation(clazz.name));
+
           }
         }
       }
