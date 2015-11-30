@@ -9,8 +9,9 @@
   <parent>
     <groupId>org.jetbrains.plugin-verifier</groupId>
     <artifactId>verifier-parent</artifactId>
-    <version>19.0</version>
+    <version>20.0</version>
   </parent>
+
 
   <dependencies>
     <dependency>
@@ -26,13 +27,14 @@
     <dependency>
       <groupId>org.jetbrains.plugin-verifier</groupId>
       <artifactId>verifier-problems</artifactId>
-      <version>19.0</version>
+      <version>20.0</version>
     </dependency>
     <dependency>
       <groupId>org.jetbrains.plugin-verifier</groupId>
       <artifactId>verifier-cli</artifactId>
-      <version>19.0</version>
+      <version>20.0</version>
     </dependency>
   </dependencies>
+
 
 </project>

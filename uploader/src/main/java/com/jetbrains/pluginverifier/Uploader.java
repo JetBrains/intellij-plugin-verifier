@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,7 +31,11 @@ public class Uploader {
 
   //TODO: re-upload the first report with strange problems added
   public static void main(String[] args) throws IOException {
-    parseArgsAndUpload(args);
+//    parseArgsAndUpload(args);
+//    VerifierService.uploadFile(args[0], new File(args[2]));
+//    List<String> strings = VerifierService.requestFilesList(args[0]);
+    File aaa = new File(".", "aaa");
+    VerifierService.downloadFile(args[0], "buildToUpload.xml", aaa);
   }
 
   private static void parseArgsAndUpload(String[] args) throws IOException {
@@ -44,6 +49,8 @@ public class Uploader {
 
     uploadReport(postUrl, filePartName, fileToUpload, textBodies);
   }
+
+
 
 
   private static void uploadReport(@NotNull String postUrl,
@@ -78,11 +85,19 @@ public class Uploader {
         }
       }
       finally {
-        response.close();
+        try {
+          response.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
       }
     }
     finally {
-      httpclient.close();
+      try {
+        httpclient.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
     }
   }
 }

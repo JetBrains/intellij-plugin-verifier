@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.jetbrains.plugin-verifier</groupId>
     <artifactId>verifier-parent</artifactId>
-    <version>19.0</version>
+    <version>20.0</version>
     <packaging>pom</packaging>
 
     <modules>
