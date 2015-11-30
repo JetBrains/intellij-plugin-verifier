@@ -1,6 +1,6 @@
-.idea/
-*.iml
-target
+.idea/workspace.xml
+target/
 /lib/*.jar
 for_tests/*
 classes/*
+generated-sources/

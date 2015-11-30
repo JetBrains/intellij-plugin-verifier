@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/intellij-plugin-structure" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/mock-idea" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/mock-plugin" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/uploader" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/verifier-cli" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/verifier-problems" charset="UTF-8" />
+    <file url="PROJECT" charset="UTF-8" />
+  </component>
+</project>
