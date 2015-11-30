@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.jetbrains.plugin-verifier</groupId>
+    <groupId>org.jetbrains.intellij.plugins</groupId>
     <artifactId>verifier-parent</artifactId>
-    <version>20.0</version>
+    <version>1.0</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -60,6 +60,7 @@
             </plugins>
         </pluginManagement>
 
+        <!--Allows to update project version-->
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -70,19 +71,6 @@
 
     </build>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.jetbrains.intellij.structure</groupId>
-            <artifactId>intellij-structure</artifactId>
-            <version>3.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.ow2.asm</groupId>
-            <artifactId>asm-all</artifactId>
-            <version>5.0.4</version>
-        </dependency>
-    </dependencies>
-
 
     <repositories>
         <repository>
@@ -92,9 +80,9 @@
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
-            <id>bintray-sergey-patrikeev-intellij-structure</id>
+            <id>bintray-jetbrains-intellij-plugin-service</id>
             <name>bintray</name>
-            <url>http://dl.bintray.com/sergey-patrikeev/intellij-structure</url>
+            <url>http://dl.bintray.com/jetbrains/intellij-plugin-service</url>
         </repository>
     </repositories>
     <pluginRepositories>
@@ -105,25 +93,40 @@
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
-            <id>bintray-sergey-patrikeev-intellij-structure</id>
+            <id>bintray-jetbrains-intellij-plugin-service</id>
             <name>bintray-plugins</name>
-            <url>http://dl.bintray.com/sergey-patrikeev/intellij-structure</url>
+            <url>http://dl.bintray.com/jetbrains/intellij-plugin-service</url>
         </pluginRepository>
     </pluginRepositories>
 
 
+    <dependencies>
+        <dependency>
+            <groupId>com.intellij</groupId>
+            <artifactId>annotations</artifactId>
+            <version>12.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.intellij.plugins</groupId>
+            <artifactId>intellij-plugin-structure</artifactId>
+            <version>1.0</version>
+        </dependency>
+    </dependencies>
+
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-all</artifactId>
+                <version>5.0.4</version>
+            </dependency>
+
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>15.0</version>
             </dependency>
-            <dependency>
-                <groupId>com.intellij</groupId>
-                <artifactId>annotations</artifactId>
-                <version>12.0</version>
-            </dependency>
+
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
@@ -135,9 +138,10 @@
 
     <distributionManagement>
         <repository>
-            <id>bintray-sergey-patrikeev</id>
+            <!--https://bintray.com/jetbrains/intellij-plugin-service/intellij-plugin-verifier/view-->
+            <id>bintray</id>
             <url>
-                https://api.bintray.com/maven/sergey-patrikeev/intellij-plugin-verifier/intellij-plugin-verifier/;publish=1
+                https://api.bintray.com/maven/jetbrains/intellij-plugin-service/intellij-plugin-verifier/;publish=1
             </url>
         </repository>
     </distributionManagement>

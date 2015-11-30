@@ -5,27 +5,23 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>mock-plugin</artifactId>
-    <groupId>mock-plugin</groupId>
-    <version>20.0</version>
+    <version>1.0</version>
     <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
-            <groupId>mock-idea</groupId>
+            <groupId>org.jetbrains.intellij.plugins</groupId>
             <artifactId>mock-idea</artifactId>
-            <version>20.0</version>
+            <version>1.0</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
 
     <parent>
-        <groupId>org.jetbrains.plugin-verifier</groupId>
+        <groupId>org.jetbrains.intellij.plugins</groupId>
         <artifactId>verifier-parent</artifactId>
-        <version>20.0</version>
+        <version>1.0</version>
     </parent>
 
 

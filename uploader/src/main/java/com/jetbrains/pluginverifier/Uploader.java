@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier;
 
 import com.google.common.collect.ArrayListMultimap;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
@@ -12,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,13 +29,8 @@ public class Uploader {
   //6 ${pluginrobot.password}</argument>
 
 
-  //TODO: re-upload the first report with strange problems added
   public static void main(String[] args) throws IOException {
-//    parseArgsAndUpload(args);
-//    VerifierService.uploadFile(args[0], new File(args[2]));
-//    List<String> strings = VerifierService.requestFilesList(args[0]);
-    File aaa = new File(".", "aaa");
-    VerifierService.downloadFile(args[0], "buildToUpload.xml", aaa);
+    parseArgsAndUpload(args);
   }
 
   private static void parseArgsAndUpload(String[] args) throws IOException {
@@ -85,19 +80,11 @@ public class Uploader {
         }
       }
       finally {
-        try {
-          response.close();
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
+        IOUtils.closeQuietly(response);
       }
     }
     finally {
-      try {
-        httpclient.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+      IOUtils.closeQuietly(httpclient);
     }
   }
 }

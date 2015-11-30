@@ -28,6 +28,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * NOTE: this test should be run AFTER mock-plugin and mock-idea artifacts
+ * are generated.
+ * The best way to run this test is a Maven PACKAGE goal (because all
+ * the module artifact-dependencies will be resolved automatically)
+ *
  * @author Sergey Patrikeev
  */
 public class VerifierTest {

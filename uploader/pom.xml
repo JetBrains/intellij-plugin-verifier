@@ -7,9 +7,9 @@
   <packaging>jar</packaging>
 
   <parent>
-    <groupId>org.jetbrains.plugin-verifier</groupId>
+    <groupId>org.jetbrains.intellij.plugins</groupId>
     <artifactId>verifier-parent</artifactId>
-    <version>20.0</version>
+    <version>1.0</version>
   </parent>
 
 
@@ -24,15 +24,11 @@
       <artifactId>httpmime</artifactId>
       <version>4.3.1</version>
     </dependency>
+
     <dependency>
-      <groupId>org.jetbrains.plugin-verifier</groupId>
-      <artifactId>verifier-problems</artifactId>
-      <version>20.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.plugin-verifier</groupId>
+      <groupId>org.jetbrains.intellij.plugins</groupId>
       <artifactId>verifier-cli</artifactId>
-      <version>20.0</version>
+      <version>1.0</version>
     </dependency>
   </dependencies>
 

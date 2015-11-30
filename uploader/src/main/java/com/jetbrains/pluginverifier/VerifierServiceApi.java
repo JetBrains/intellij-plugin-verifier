@@ -21,9 +21,12 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 /**
+ * This is a dummy implementation of verifier-service (a web service which
+ * collects plugin breakages info) connection
+ *
  * @author Sergey Patrikeev
  */
-public class VerifierService {
+public class VerifierServiceApi {
 
   public static final String DEFAULT_SERVICE_URL = "http://localhost:7777/";
   public static final String UPLOAD_PATH = "/upload";

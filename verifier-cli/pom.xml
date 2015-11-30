@@ -7,22 +7,22 @@
     <packaging>jar</packaging>
 
     <parent>
-        <groupId>org.jetbrains.plugin-verifier</groupId>
+        <groupId>org.jetbrains.intellij.plugins</groupId>
         <artifactId>verifier-parent</artifactId>
-        <version>20.0</version>
+        <version>1.0</version>
     </parent>
 
     <dependencies>
         <dependency>
-            <groupId>org.jetbrains.plugin-verifier</groupId>
+            <groupId>org.jetbrains.intellij.plugins</groupId>
             <artifactId>verifier-problems</artifactId>
-            <version>${project.parent.version}</version>
+            <version>1.0</version>
         </dependency>
 
         <dependency>
-            <groupId>mock-plugin</groupId>
+            <groupId>org.jetbrains.intellij.plugins</groupId>
             <artifactId>mock-plugin</artifactId> <!--Used for VerifierTest -->
-            <version>20.0</version>
+            <version>1.0</version>
             <scope>test</scope>
         </dependency>
 

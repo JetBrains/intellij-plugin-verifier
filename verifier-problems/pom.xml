@@ -8,9 +8,9 @@
   <packaging>jar</packaging>
 
   <parent>
-    <groupId>org.jetbrains.plugin-verifier</groupId>
+    <groupId>org.jetbrains.intellij.plugins</groupId>
     <artifactId>verifier-parent</artifactId>
-    <version>20.0</version>
+    <version>1.0</version>
   </parent>
 
   <build>
