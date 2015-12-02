@@ -100,6 +100,13 @@ public class UpdateBuild {
     try {
       int x = Integer.parseInt(text);
 
+      // it's probably a baseline, not a build number
+      if (x <= 2000 ) {
+        branch = x;
+        build = 0;
+        return;
+      }
+
       if (x >= 10000) {
         branch = 90;
       }

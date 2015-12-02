@@ -61,4 +61,26 @@ public class UpdateBuildTest {
         Assert.assertEquals(false, updateBuild.isSnapshot());
         Assert.assertEquals(true, updateBuild.isOk());
     }
+
+    @Test
+    public void testOneNumberActualBuild() {
+        UpdateBuild updateBuild = new UpdateBuild("133");
+        Assert.assertEquals(133, updateBuild.getBranch());
+        Assert.assertEquals(0, updateBuild.getBuild());
+        Assert.assertEquals("", updateBuild.getProductCode());
+        Assert.assertNull(updateBuild.getProductName());
+        Assert.assertEquals(false, updateBuild.isSnapshot());
+        Assert.assertEquals(true, updateBuild.isOk());
+    }
+
+    @Test
+    public void testLegacyBuild() {
+        UpdateBuild updateBuild = new UpdateBuild("8987");
+        Assert.assertEquals(80, updateBuild.getBranch());
+        Assert.assertEquals(8987, updateBuild.getBuild());
+        Assert.assertEquals("", updateBuild.getProductCode());
+        Assert.assertNull(updateBuild.getProductName());
+        Assert.assertEquals(false, updateBuild.isSnapshot());
+        Assert.assertEquals(true, updateBuild.isOk());
+    }
 }
