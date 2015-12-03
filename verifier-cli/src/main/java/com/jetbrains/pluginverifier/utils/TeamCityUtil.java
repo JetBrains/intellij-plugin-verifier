@@ -89,7 +89,7 @@ public class TeamCityUtil {
         TeamCityLog.TestSuite problemSuite = log.testSuiteStarted(description);
 
         for (UpdateInfo updateInfo : updateInfos) {
-          String plugin = updateInfo.toString().replace('.', ',');
+          String plugin = updateInfo.getPluginId() + " (" + updateInfo.getVersion() + ")";
           TeamCityLog.Test test = log.testStarted(plugin);
           String pluginUrl = getPluginUrl(updateInfo);
           log.testFailed(plugin, pluginUrl + '\n' + updateInfo, problem.getDescription());
@@ -182,7 +182,7 @@ public class TeamCityUtil {
             builder.append("#").append(problem.getDescription()).append("\n");
           }
 
-          String testName = version.replace('.', ',');
+          String testName = "(" + version + ")";
           TeamCityLog.Test test = log.testStarted(testName);
           log.testStdErr(testName, builder.toString());
           log.testFailed(testName, updateInfo + " has " + problems.size() + " " + pluralize("problem", problems.size()), "");

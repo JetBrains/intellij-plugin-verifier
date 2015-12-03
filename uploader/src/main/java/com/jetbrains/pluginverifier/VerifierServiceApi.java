@@ -21,24 +21,26 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 /**
- * This is a dummy implementation of verifier-service (a web service which
- * collects plugin breakages info) connection
+ * This is a dummy implementation of verifier-service connection
+ * (a web service which collects plugin breakages info)
  *
  * @author Sergey Patrikeev
  */
 public class VerifierServiceApi {
 
   public static final String DEFAULT_SERVICE_URL = "http://localhost:7777/";
-  public static final String UPLOAD_PATH = "/upload";
-  public static final String FILES_LIST_PATH = "/filesList";
-  public static final String FILES = "/files";
+
+  public static final String UPLOAD_REPORT_PATH = "/uploadResult";
+  public static final String RESULTS = "/results";
+
   private static final Gson GSON = new Gson();
   private static final Type LIST_STRING_TYPE = new TypeToken<List<String>>() {
   }.getType();
 
+
   @NotNull
-  public static List<String> requestFilesList(@NotNull String verifierServiceUrl) throws IOException {
-    HttpGet httpGet = new HttpGet(verifierServiceUrl + FILES_LIST_PATH);
+  private static List<String> requestFilesList(@NotNull String filesListUrl) throws IOException {
+    HttpGet httpGet = new HttpGet(filesListUrl);
     CloseableHttpClient client = HttpClients.createDefault();
 
     try {
@@ -58,13 +60,12 @@ public class VerifierServiceApi {
       IOUtils.closeQuietly(client);
     }
 
-    throw new IOException("No files found on server " + verifierServiceUrl);
+    throw new IOException("No files found on server " + filesListUrl);
   }
 
-  public static void downloadFile(@NotNull String verifierServiceUrl,
-                                  @NotNull String fileName,
-                                  @NotNull File fileToSaveInto) throws IOException {
-    HttpGet httpGet = new HttpGet(verifierServiceUrl + FILES + "/" + fileName);
+  private static void downloadFile(@NotNull String downloadFileUrl,
+                                   @NotNull File fileToSaveInto) throws IOException {
+    HttpGet httpGet = new HttpGet(downloadFileUrl);
 
     CloseableHttpClient client = HttpClients.createDefault();
 
@@ -76,7 +77,7 @@ public class VerifierServiceApi {
           FileUtils.copyInputStreamToFile(entity.getContent(), fileToSaveInto);
           EntityUtils.consume(entity);
         } else {
-          throw new IOException("No files found on server " + verifierServiceUrl);
+          throw new IOException("No files found on server " + downloadFileUrl);
         }
       } finally {
         IOUtils.closeQuietly(response);
@@ -88,8 +89,8 @@ public class VerifierServiceApi {
   }
 
 
-  public static void uploadFile(@NotNull String verifierServiceUrl,
-                                @NotNull File fileToUpload) throws IOException {
+  private static void uploadFile(@NotNull String uploadUrl,
+                                 @NotNull File fileToUpload) throws IOException {
     CloseableHttpClient httpclient = HttpClients.createDefault();
 
     try {
@@ -97,7 +98,7 @@ public class VerifierServiceApi {
       MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
       entityBuilder.addPart("file", new FileBody(fileToUpload));
 
-      HttpPost httppost = new HttpPost(verifierServiceUrl + UPLOAD_PATH);
+      HttpPost httppost = new HttpPost(uploadUrl);
 
       httppost.setEntity(entityBuilder.build());
 
