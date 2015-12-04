@@ -5,11 +5,13 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.jetbrains.pluginverifier.VerifierCommand;
-import com.jetbrains.pluginverifier.problems.FailUtil;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
-import com.jetbrains.pluginverifier.repository.GlobalRepository;
+import com.jetbrains.pluginverifier.results.GlobalResultsRepository;
+import com.jetbrains.pluginverifier.results.ResultsRepository;
 import com.jetbrains.pluginverifier.utils.*;
+import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
+import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,17 +35,18 @@ public class NewProblemsCommand extends VerifierCommand {
    * NOTE: in ascending order, i.e. 141.01, 141.05, 141.264...
    */
   @NotNull
-  public static List<String> findPreviousBuilds(@NotNull String currentBuild) throws IOException {
+  public static List<String> findPreviousBuilds(@NotNull String currentBuild,
+                                                @NotNull ResultsRepository resultsRepository) throws IOException {
     //for now method and repository support only "IU-X.Y" build's form
 
-    List<String> resultsOnInPluginRepository = GlobalRepository.loadAvailableCheckResultsList();
+    List<String> resultsInPluginRepository = resultsRepository.getAvailableReportsList();
 
     String firstBuild = System.getProperty("firstBuild");
     if (firstBuild != null) {
       //filter builds so that only the firstBuild and older are kept
-      int idx = resultsOnInPluginRepository.indexOf(firstBuild);
+      int idx = resultsInPluginRepository.indexOf(firstBuild);
       if (idx != -1) {
-        resultsOnInPluginRepository = resultsOnInPluginRepository.subList(idx, resultsOnInPluginRepository.size());
+        resultsInPluginRepository = resultsInPluginRepository.subList(idx, resultsInPluginRepository.size());
       }
     }
 
@@ -51,7 +54,7 @@ public class NewProblemsCommand extends VerifierCommand {
 
     TreeMap<Integer, String> buildMap = new TreeMap<Integer, String>();
 
-    for (String build : resultsOnInPluginRepository) {
+    for (String build : resultsInPluginRepository) {
       Pair<String, Integer> pair = parseBuildNumber(build);
 
       //NOTE: compares only IDEAs of the same release! that is 141.* between each others
@@ -88,7 +91,9 @@ public class NewProblemsCommand extends VerifierCommand {
 
     ResultsElement currentCheckResult = ProblemUtils.loadProblems(reportToCheck);
 
-    List<String> previousCheckedBuilds = findPreviousBuilds(currentCheckResult.getIde());
+    ResultsRepository resultsRepository = new GlobalResultsRepository();
+
+    List<String> previousCheckedBuilds = findPreviousBuilds(currentCheckResult.getIde(), resultsRepository);
 
     if (previousCheckedBuilds.isEmpty()) {
       System.err.println("Plugin repository does not contain check result to compare.");
@@ -105,7 +110,7 @@ public class NewProblemsCommand extends VerifierCommand {
     Set<Problem> currProblems = new HashSet<Problem>(currentProblemsMap.keySet());
 
     //leave only NEW' problems of this check compared to the EARLIEST check
-    ResultsElement smallestCheckResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResultFile(previousCheckedBuilds.get(0)));
+    ResultsElement smallestCheckResult = ProblemUtils.loadProblems(resultsRepository.getReportFile(previousCheckedBuilds.get(0)));
 
     //remove old API problems
     currProblems.removeAll(smallestCheckResult.getProblems());
@@ -117,7 +122,7 @@ public class NewProblemsCommand extends VerifierCommand {
       String prevBuild = previousCheckedBuilds.get(i);
 
       //check result in ascending order of builds
-      ResultsElement prevBuildResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResultFile(prevBuild));
+      ResultsElement prevBuildResult = ProblemUtils.loadProblems(resultsRepository.getReportFile(prevBuild));
 
       for (Problem problem : prevBuildResult.getProblems()) {
         if (currProblems.remove(problem)) {

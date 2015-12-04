@@ -1,8 +1,12 @@
 package com.jetbrains.pluginverifier.repository;
 
 import com.google.common.base.Throwables;
+import com.jetbrains.pluginverifier.misc.DownloadUtils;
+import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
-import com.jetbrains.pluginverifier.utils.*;
+import com.jetbrains.pluginverifier.utils.Assert;
+import com.jetbrains.pluginverifier.utils.Pair;
+import com.jetbrains.pluginverifier.utils.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,12 +32,12 @@ public class RepositoryManager {
   private final Map<Pair<String, String>, UpdateInfo> plugin2updateId = new HashMap<Pair<String, String>, UpdateInfo>();
 
   private RepositoryManager() {
-    globalRepository = new GlobalRepository(Configuration.getInstance().getPluginRepositoryUrl());
+    globalRepository = new GlobalRepository(RepositoryConfiguration.getInstance().getPluginRepositoryUrl());
 
     repositories = new ArrayList<PluginRepository>();
     repositories.add(globalRepository);
 
-    String customRepositories = Configuration.getInstance().getCustomRepositories();
+    String customRepositories = RepositoryConfiguration.getInstance().getCustomRepositories();
     if (StringUtil.isNotEmpty(customRepositories)) {
       for (StringTokenizer tokenizer = new StringTokenizer(customRepositories, ", "); tokenizer.hasMoreTokens(); ) {
         String repositoryUrl = tokenizer.nextToken();
@@ -51,10 +55,12 @@ public class RepositoryManager {
     return INSTANCE;
   }
 
+  @NotNull
   public List<PluginRepository> getRepositories() {
     return repositories;
   }
 
+  @NotNull
   public List<UpdateInfo> getAllCompatibleUpdates(@NotNull String ideVersion) throws IOException {
     List<UpdateInfo> res = new ArrayList<UpdateInfo>();
 
@@ -70,6 +76,7 @@ public class RepositoryManager {
     return res;
   }
 
+  @NotNull
   public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull String ideVersion, @NotNull Collection<String> pluginIds) throws IOException {
     List<UpdateInfo> res = new ArrayList<UpdateInfo>();
 

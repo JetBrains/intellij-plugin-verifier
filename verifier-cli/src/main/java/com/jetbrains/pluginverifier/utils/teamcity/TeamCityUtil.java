@@ -1,12 +1,15 @@
-package com.jetbrains.pluginverifier.utils;
+package com.jetbrains.pluginverifier.utils.teamcity;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
-import com.jetbrains.pluginverifier.problems.FailUtil;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
+import com.jetbrains.pluginverifier.utils.FailUtil;
+import com.jetbrains.pluginverifier.utils.MessageUtils;
+import com.jetbrains.pluginverifier.utils.ProblemUtils;
+import com.jetbrains.pluginverifier.utils.StringUtil;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 

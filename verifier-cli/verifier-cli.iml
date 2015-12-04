@@ -15,6 +15,8 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="verifier-problems" />
+    <orderEntry type="module" module-name="repository" />
+    <orderEntry type="module" module-name="common-utils" />
     <orderEntry type="module" module-name="mock-plugin" scope="TEST" />
     <orderEntry type="library" name="Maven: commons-cli:commons-cli:1.2" level="project" />
     <orderEntry type="library" name="Maven: com.google.guava:guava:15.0" level="project" />

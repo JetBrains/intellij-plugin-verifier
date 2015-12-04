@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.utils;
+package com.jetbrains.pluginverifier.misc;
 
 import com.google.common.base.Throwables;
 import com.google.common.net.HttpHeaders;
@@ -29,8 +29,24 @@ public class DownloadUtils {
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
+  public static File getCheckResultFile(@NotNull String build) throws IOException {
+    File downloadDir = getOrCreateDownloadDir();
+
+    File checkResDir = new File(downloadDir, "checkResult");
+    checkResDir.mkdirs();
+
+    File res = new File(checkResDir, build + ".xml");
+
+    System.out.print("Loading check results for " + build + "...");
+    updateFile(new URL(RepositoryConfiguration.getInstance().getPluginRepositoryUrl() + "/files/checkResults/" + build + ".xml"), res);
+    System.out.println("done");
+
+    return res;
+  }
+
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   private static File getOrCreateDownloadDir() throws IOException {
-    File downloadDir = Util.getPluginCacheDir();
+    File downloadDir = RepositoryConfiguration.getInstance().getPluginCacheDir();
     if (!downloadDir.isDirectory()) {
       downloadDir.mkdirs();
       if (!downloadDir.isDirectory()) {
@@ -41,24 +57,8 @@ public class DownloadUtils {
     return downloadDir;
   }
 
-  @SuppressWarnings("ResultOfMethodCallIgnored")
-  public static File getCheckResultFile(@NotNull String build) throws IOException {
-    File downloadDir = getOrCreateDownloadDir();
-
-    File checkResDir = new File(downloadDir, "checkResult");
-    checkResDir.mkdirs();
-
-    File res = new File(checkResDir, build + ".xml");
-
-    System.out.print("Loading check results for " + build + "...");
-    updateFile(new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/files/checkResults/" + build + ".xml"), res);
-    System.out.println("done");
-
-    return res;
-  }
-
   @SuppressWarnings({"ResultOfMethodCallIgnored", "StatementWithEmptyBody"})
-  private static void updateFile(URL url, File file) throws IOException {
+  public static void updateFile(URL url, File file) throws IOException {
     long lastModified = file.lastModified();
 
     HttpURLConnection connection = (HttpURLConnection)url.openConnection();
@@ -101,6 +101,7 @@ public class DownloadUtils {
     }
   }
 
+  @NotNull
   private static String getCacheFileName(UpdateInfo update) {
     if (update.getUpdateId() != null) {
       return update.getUpdateId() + ".zip";

@@ -5,7 +5,6 @@ import org.apache.commons.cli.Options;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -45,19 +44,6 @@ public class Util {
     return sw.toString();
   }
 
-
-  public static File getValidatorHome() {
-    return new File(System.getProperty("user.home") + "/.pluginVerifier");
-  }
-
-  public static File getPluginCacheDir() {
-    String pluginCacheDir = Configuration.getInstance().getPluginCacheDir();
-    if (pluginCacheDir != null) {
-      return new File(pluginCacheDir);
-    }
-
-    return new File(getValidatorHome(), "cache");
-  }
 
   public static <T> List<T> concat(Collection<T> first, Collection<T> second) {
     List<T> res = new ArrayList<T>(first.size() + second.size());

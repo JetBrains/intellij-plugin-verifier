@@ -2,9 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/common-utils/common-utils.iml" filepath="$PROJECT_DIR$/common-utils/common-utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij-plugin-structure/intellij-plugin-structure.iml" filepath="$PROJECT_DIR$/intellij-plugin-structure/intellij-plugin-structure.iml" />
       <module fileurl="file://$PROJECT_DIR$/mock-idea/mock-idea.iml" filepath="$PROJECT_DIR$/mock-idea/mock-idea.iml" />
       <module fileurl="file://$PROJECT_DIR$/mock-plugin/mock-plugin.iml" filepath="$PROJECT_DIR$/mock-plugin/mock-plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/repository/repository.iml" filepath="$PROJECT_DIR$/repository/repository.iml" />
       <module fileurl="file://$PROJECT_DIR$/uploader/uploader.iml" filepath="$PROJECT_DIR$/uploader/uploader.iml" />
       <module fileurl="file://$PROJECT_DIR$/verifier-cli/verifier-cli.iml" filepath="$PROJECT_DIR$/verifier-cli/verifier-cli.iml" />
       <module fileurl="file://$PROJECT_DIR$/verifier-parent.iml" filepath="$PROJECT_DIR$/verifier-parent.iml" />

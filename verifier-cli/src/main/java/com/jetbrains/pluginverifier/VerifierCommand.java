@@ -5,7 +5,7 @@ import com.intellij.structure.domain.JDK;
 import com.intellij.structure.pool.ClassPool;
 import com.intellij.structure.pool.ContainerClassPool;
 import com.intellij.structure.pool.JarClassPool;
-import com.jetbrains.pluginverifier.problems.FailUtil;
+import com.jetbrains.pluginverifier.utils.FailUtil;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 

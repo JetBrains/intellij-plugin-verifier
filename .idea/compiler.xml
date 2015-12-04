@@ -66,11 +66,27 @@
         <processorPath useClasspath="true" />
         <module name="intellij-plugin-structure" />
       </profile>
+      <profile default="false" name="Annotation profile for repository" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
+        <module name="repository" />
+      </profile>
+      <profile default="false" name="Annotation profile for common-utils" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
+        <module name="common-utils" />
+      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="1.6">
+      <module name="common-utils" target="1.6" />
       <module name="intellij-plugin-structure" target="1.6" />
       <module name="mock-idea" target="1.6" />
       <module name="mock-plugin" target="1.6" />
+      <module name="repository" target="1.6" />
       <module name="uploader" target="1.6" />
       <module name="verifier-cli" target="1.6" />
       <module name="verifier-parent" target="1.5" />

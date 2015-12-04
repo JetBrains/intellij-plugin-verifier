@@ -15,8 +15,11 @@ import com.jetbrains.pluginverifier.VerifierCommand;
 import com.jetbrains.pluginverifier.problems.*;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.utils.*;
+import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
+import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -130,7 +133,7 @@ public class CheckIdeCommand extends VerifierCommand {
         }
       };
     } finally {
-      br.close();
+      IOUtils.closeQuietly(br);
     }
   }
 

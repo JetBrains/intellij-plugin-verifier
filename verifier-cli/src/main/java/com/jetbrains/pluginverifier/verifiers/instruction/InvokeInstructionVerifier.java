@@ -103,7 +103,11 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       if (StringUtil.equals(parent.name, child.name)) {
         return true;
       }
-      child = resolver.findClass(child.superName);
+      String superName = child.superName;
+      if (superName == null) {
+        return false;
+      }
+      child = resolver.findClass(superName);
     }
     return false;
   }

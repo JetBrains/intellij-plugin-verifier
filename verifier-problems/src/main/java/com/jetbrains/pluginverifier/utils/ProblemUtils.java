@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.hash.Hashing;
 import com.jetbrains.pluginverifier.problems.*;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.JAXBContext;
@@ -79,7 +80,7 @@ public class ProblemUtils {
     try {
       return loadProblems(inputStream);
     } finally {
-      inputStream.close();
+      IOUtils.closeQuietly(inputStream);
     }
   }
 

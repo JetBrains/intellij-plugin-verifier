@@ -1,13 +1,13 @@
 package com.jetbrains.pluginverifier.commands;
 
 import com.jetbrains.pluginverifier.VerifierCommand;
-import com.jetbrains.pluginverifier.problems.FailUtil;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
+import com.jetbrains.pluginverifier.utils.FailUtil;
 import com.jetbrains.pluginverifier.utils.ProblemUtils;
 import com.jetbrains.pluginverifier.utils.ResultsElement;
-import com.jetbrains.pluginverifier.utils.TeamCityLog;
-import com.jetbrains.pluginverifier.utils.TeamCityUtil;
+import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
+import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 

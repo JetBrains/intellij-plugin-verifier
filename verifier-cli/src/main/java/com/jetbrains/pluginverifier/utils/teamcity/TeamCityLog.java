@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.utils;
+package com.jetbrains.pluginverifier.utils.teamcity;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.io.output.NullOutputStream;

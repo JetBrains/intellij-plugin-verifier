@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier;
 
-import com.jetbrains.pluginverifier.utils.Configuration;
+import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
 import com.jetbrains.pluginverifier.utils.Util;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -23,7 +23,7 @@ public class PluginVerifierOptions {
     String cmdValue = commandLine.getOptionValue(shortKey);
     if (cmdValue != null) return cmdValue;
 
-    return Configuration.getInstance().getProperty(option.getLongOpt());
+    return RepositoryConfiguration.getInstance().getProperty(option.getLongOpt());
   }
 
   @NotNull
@@ -36,7 +36,7 @@ public class PluginVerifierOptions {
     }
 
     Option option = Util.CMD_OPTIONS.getOption(shortKey);
-    String cfgProperty = Configuration.getInstance().getProperty(option.getLongOpt());
+    String cfgProperty = RepositoryConfiguration.getInstance().getProperty(option.getLongOpt());
 
     if (cfgProperty != null) {
       res.add(cfgProperty);

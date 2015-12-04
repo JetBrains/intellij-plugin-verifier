@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier;
 
-import com.jetbrains.pluginverifier.problems.FailUtil;
+import com.jetbrains.pluginverifier.utils.FailUtil;
 import com.jetbrains.pluginverifier.utils.Util;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;

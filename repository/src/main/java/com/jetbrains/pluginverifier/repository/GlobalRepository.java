@@ -2,9 +2,9 @@ package com.jetbrains.pluginverifier.repository;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.utils.Assert;
-import com.jetbrains.pluginverifier.utils.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,49 +13,28 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.StringTokenizer;
 
 /**
  * @author Sergey Evdokimov
  */
 public class GlobalRepository extends PluginRepository {
 
-  public static final Type updateListType = new TypeToken<List<UpdateInfo>>() {}.getType();
+  public static final Type updateListType = new TypeToken<List<UpdateInfo>>() {
+  }.getType();
 
   private final String url;
 
-  public GlobalRepository(String url) {
+  public GlobalRepository(@NotNull String url) {
     this.url = url;
-  }
-
-  /**
-   * Returns list of already checked IDEA builds (for which report was loaded)
-   */
-  @NotNull
-  public static List<String> loadAvailableCheckResultsList() throws IOException {
-    System.out.print("Loading check results list...");
-    URL url = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/problems/resultList?format=txt");
-
-    String text = IOUtils.toString(url);
-
-    List<String> res = new ArrayList<String>();
-
-    for (StringTokenizer st = new StringTokenizer(text, " ,"); st.hasMoreTokens(); ) {
-      res.add(st.nextToken());
-    }
-
-    System.out.println("done");
-    return res;
   }
 
   @Override
   public List<UpdateInfo> getAllCompatibleUpdates(@NotNull String ideVersion) throws IOException {
     System.out.println("Loading compatible plugins list... ");
 
-    URL url1 = new URL(Configuration.getInstance().getPluginRepositoryUrl() + "/manager/allCompatibleUpdates/?build=" + ideVersion);
+    URL url1 = new URL(RepositoryConfiguration.getInstance().getPluginRepositoryUrl() + "/manager/allCompatibleUpdates/?build=" + ideVersion);
     String text = IOUtils.toString(url1);
 
     return new Gson().fromJson(text, updateListType);
@@ -82,8 +61,8 @@ public class GlobalRepository extends PluginRepository {
     System.out.println("Loading compatible plugins list... ");
 
     StringBuilder urlSb = new StringBuilder();
-    urlSb.append(Configuration.getInstance().getPluginRepositoryUrl())
-      .append("/manager/originalCompatibleUpdatesByPluginIds/?build=").append(ideVersion);
+    urlSb.append(RepositoryConfiguration.getInstance().getPluginRepositoryUrl())
+        .append("/manager/originalCompatibleUpdatesByPluginIds/?build=").append(ideVersion);
 
     for (String id : pluginIds) {
       urlSb.append("&pluginIds=").append(URLEncoder.encode(id, "UTF-8"));

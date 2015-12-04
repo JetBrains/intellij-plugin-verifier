@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.utils;
+package com.jetbrains.pluginverifier.misc;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -94,7 +94,7 @@ public class DependenciesCache {
 
     Set<IdeaPlugin> result = descriptor.dependenciesWithTransitive;
     if (result == DEP_CALC_MARKER) {
-      if (Boolean.parseBoolean(Configuration.getInstance().getProperty("fail.on.cyclic.dependencies"))) {
+      if (Boolean.parseBoolean(RepositoryConfiguration.getInstance().getProperty("fail.on.cyclic.dependencies"))) {
         int idx = pluginStack.lastIndexOf(descriptor); //compare descriptors by their identity (default equals behavior)
         throw new VerificationError("Cyclic plugin dependencies: " + Joiner.on(" -> ").join(pluginStack.subList(idx, pluginStack.size())) + " -> " + plugin.getPluginId());
       }

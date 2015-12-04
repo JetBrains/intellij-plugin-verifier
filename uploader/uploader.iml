@@ -18,6 +18,8 @@
     <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpmime:4.3.1" level="project" />
     <orderEntry type="module" module-name="verifier-cli" />
     <orderEntry type="module" module-name="verifier-problems" />
+    <orderEntry type="module" module-name="repository" />
+    <orderEntry type="module" module-name="common-utils" />
     <orderEntry type="library" name="Maven: commons-cli:commons-cli:1.2" level="project" />
     <orderEntry type="library" name="Maven: com.google.guava:guava:15.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.2.4" level="project" />
