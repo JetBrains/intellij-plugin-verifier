@@ -9,6 +9,9 @@ import java.io.PrintStream;
 import java.util.*;
 
 /**
+ * Describes problems of overlying plugin and
+ * their precise locations inside plugin
+ *
  * @author Sergey Evdokimov
  */
 public class ProblemSet {

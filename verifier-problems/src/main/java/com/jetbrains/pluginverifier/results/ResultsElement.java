@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.results;
 
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.Problem;
+import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElementRef;
@@ -83,7 +84,7 @@ public class ResultsElement {
     return res;
   }
 
-  public void initFromMap(Map<UpdateInfo, Collection<Problem>> map) {
+  public void initFromMap(@NotNull Map<UpdateInfo, Collection<Problem>> map) {
     problems.clear();
     updates.clear();
 

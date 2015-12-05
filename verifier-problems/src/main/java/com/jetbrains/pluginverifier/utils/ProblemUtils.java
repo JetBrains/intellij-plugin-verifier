@@ -23,7 +23,7 @@ public class ProblemUtils {
 
   static {
     try {
-      //TODO: if necessary add problem here (and add default constructor for it)
+      //if necessary add problem here (and add default constructor for it)
       JAXB_CONTEXT = JAXBContext.newInstance(
           MethodNotFoundProblem.class,
           ClassNotFoundProblem.class,
@@ -36,7 +36,7 @@ public class ProblemUtils {
           FailedToReadClassProblem.class
       );
     } catch (JAXBException e) {
-      throw new RuntimeException(e);
+      throw FailUtil.fail(e);
     }
   }
 
@@ -56,6 +56,7 @@ public class ProblemUtils {
     }
   }
 
+  @NotNull
   public static String problemToString(@NotNull Problem problem, boolean format) {
     try {
       Marshaller marshaller = JAXB_CONTEXT.createMarshaller();
@@ -76,7 +77,8 @@ public class ProblemUtils {
     }
   }
 
-  public static ResultsElement loadProblems(File xml) throws IOException {
+  @NotNull
+  public static ResultsElement loadProblems(@NotNull File xml) throws IOException {
     InputStream inputStream = new BufferedInputStream(new FileInputStream(xml));
 
     try {
@@ -86,7 +88,9 @@ public class ProblemUtils {
     }
   }
 
-  public static void saveProblems(@NotNull File output, @NotNull String ide, @NotNull Map<UpdateInfo, Collection<Problem>> problems)
+  public static void saveProblems(@NotNull File output,
+                                  @NotNull String ide,
+                                  @NotNull Map<UpdateInfo, Collection<Problem>> problems)
       throws IOException {
     ResultsElement resultsElement = new ResultsElement();
 
@@ -96,7 +100,7 @@ public class ProblemUtils {
     saveProblems(output, resultsElement);
   }
 
-  public static void saveProblems(@NotNull File output, ResultsElement resultsElement)
+  public static void saveProblems(@NotNull File output, @NotNull ResultsElement resultsElement)
       throws IOException {
     Marshaller marshaller = createMarshaller();
 
@@ -110,7 +114,8 @@ public class ProblemUtils {
     }
   }
 
-  public static ResultsElement loadProblems(InputStream inputStream) throws IOException {
+  @NotNull
+  public static ResultsElement loadProblems(@NotNull InputStream inputStream) throws IOException {
     Unmarshaller unmarshaller = createUnmarshaller();
 
     try {
@@ -121,13 +126,15 @@ public class ProblemUtils {
   }
 
 
-  public static List<Problem> sortProblems(Collection<Problem> problems) {
+  @NotNull
+  public static List<Problem> sortProblems(@NotNull Collection<Problem> problems) {
     List<Problem> res = new ArrayList<Problem>(problems);
     Collections.sort(res, new ToStringProblemComparator());
     return res;
   }
 
-  public static String hash(Problem problem) {
+  @NotNull
+  public static String hash(@NotNull Problem problem) {
     String s = problemToString(problem, false);
     return Hashing.md5().hashString(s, Charset.defaultCharset()).toString();
   }
@@ -150,6 +157,9 @@ public class ProblemUtils {
     return updateInfos;
   }
 
+  /**
+   * Transforms {@literal Map<Update -> [Problems]>  TO Multimap<Problem -> [Updates]>}
+   */
   @NotNull
   public static Multimap<Problem, UpdateInfo> rearrangeProblemsMap(@NotNull Map<UpdateInfo, Collection<Problem>> currentProblemsMap) {
     Multimap<Problem, UpdateInfo> currentProblemsToUpdates = ArrayListMultimap.create();

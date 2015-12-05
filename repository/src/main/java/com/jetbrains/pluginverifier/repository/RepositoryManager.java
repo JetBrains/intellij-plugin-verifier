@@ -77,7 +77,8 @@ public class RepositoryManager {
   }
 
   @NotNull
-  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull String ideVersion, @NotNull Collection<String> pluginIds) throws IOException {
+  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull String ideVersion,
+                                                         @NotNull Collection<String> pluginIds) throws IOException {
     List<UpdateInfo> res = new ArrayList<UpdateInfo>();
 
     for (PluginRepository repository : getRepositories()) {
@@ -93,14 +94,14 @@ public class RepositoryManager {
   }
 
   @NotNull
-  public File getOrLoadUpdate(UpdateInfo update) throws IOException {
+  public File getOrLoadUpdate(@NotNull UpdateInfo update) throws IOException {
     PluginRepository repository = update2repository.get(update);
     Assert.assertTrue(repository != null, "Unknown update, update should be found by RepositoryManager");
 
     return DownloadUtils.getOrLoadUpdate(update, new URL(repository.getUpdateUrl(update)));
   }
 
-  @Nullable
+  @NotNull
   public UpdateInfo findUpdateById(int updateId) throws IOException {
     UpdateInfo updateInfo = new UpdateInfo();
     updateInfo.setUpdateId(updateId);

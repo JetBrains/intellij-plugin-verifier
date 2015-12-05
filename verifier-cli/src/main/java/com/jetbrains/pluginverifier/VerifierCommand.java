@@ -8,6 +8,7 @@ import com.intellij.structure.pool.JarClassPool;
 import com.jetbrains.pluginverifier.utils.FailUtil;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,6 +61,7 @@ public abstract class VerifierCommand {
     return new JDK(runtimeDirectory);
   }
 
+  @Nullable
   protected ClassPool getExternalClassPath(CommandLine commandLine) throws IOException {
     String[] values = commandLine.getOptionValues("cp");
     if (values == null) {

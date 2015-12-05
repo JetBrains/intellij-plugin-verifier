@@ -32,10 +32,12 @@ public class VerificationContextImpl implements VerificationContext {
     problems.addProblem(problem, location);
   }
 
+  @NotNull
   public ProblemSet getProblems() {
     return problems;
   }
 
+  @NotNull
   public Idea getIde() {
     return ide;
   }
