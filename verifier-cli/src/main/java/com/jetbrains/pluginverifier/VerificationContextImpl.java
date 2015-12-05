@@ -2,8 +2,8 @@ package com.jetbrains.pluginverifier;
 
 import com.intellij.structure.domain.Idea;
 import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.problems.ProblemLocation;
-import com.jetbrains.pluginverifier.problems.ProblemSet;
+import com.jetbrains.pluginverifier.results.ProblemLocation;
+import com.jetbrains.pluginverifier.results.ProblemSet;
 import org.jetbrains.annotations.NotNull;
 
 /**

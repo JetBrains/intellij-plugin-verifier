@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.problems;
+package com.jetbrains.pluginverifier.format;
 
 import org.jetbrains.annotations.NotNull;
 

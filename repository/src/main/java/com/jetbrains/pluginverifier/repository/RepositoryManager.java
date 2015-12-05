@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.repository;
 
 import com.google.common.base.Throwables;
+import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.DownloadUtils;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
-import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.utils.Assert;
 import com.jetbrains.pluginverifier.utils.Pair;
 import com.jetbrains.pluginverifier.utils.StringUtil;

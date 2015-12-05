@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.repository;
 
-import com.jetbrains.pluginverifier.problems.UpdateInfo;
+import com.jetbrains.pluginverifier.format.UpdateInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

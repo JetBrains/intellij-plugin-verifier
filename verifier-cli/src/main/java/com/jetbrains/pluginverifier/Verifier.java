@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier;
 
 import com.intellij.structure.domain.IdeaPlugin;
-import com.jetbrains.pluginverifier.problems.VerificationError;
+import com.jetbrains.pluginverifier.error.VerificationError;
 import org.jetbrains.annotations.NotNull;
 
 /**

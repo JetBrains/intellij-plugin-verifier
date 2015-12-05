@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.problems;
+package com.jetbrains.pluginverifier.error;
 
 /**
  * Checked because it's quite possibly that plugin is broken

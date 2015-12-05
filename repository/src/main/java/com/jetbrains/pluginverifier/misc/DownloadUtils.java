@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.misc;
 
 import com.google.common.base.Throwables;
 import com.google.common.net.HttpHeaders;
-import com.jetbrains.pluginverifier.problems.UpdateInfo;
+import com.jetbrains.pluginverifier.format.UpdateInfo;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 

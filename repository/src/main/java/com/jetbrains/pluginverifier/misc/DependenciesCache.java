@@ -9,8 +9,8 @@ import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.pool.ClassPool;
 import com.intellij.structure.resolvers.CombiningResolver;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.problems.UpdateInfo;
-import com.jetbrains.pluginverifier.problems.VerificationError;
+import com.jetbrains.pluginverifier.error.VerificationError;
+import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import org.jetbrains.annotations.NotNull;
 

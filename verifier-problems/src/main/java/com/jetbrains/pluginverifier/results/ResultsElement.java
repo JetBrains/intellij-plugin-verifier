@@ -1,7 +1,7 @@
-package com.jetbrains.pluginverifier.utils;
+package com.jetbrains.pluginverifier.results;
 
+import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.problems.UpdateInfo;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElementRef;

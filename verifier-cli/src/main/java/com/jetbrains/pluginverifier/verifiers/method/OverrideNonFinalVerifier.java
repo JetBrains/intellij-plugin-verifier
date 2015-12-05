@@ -4,7 +4,7 @@ import com.intellij.structure.resolvers.Resolver;
 import com.intellij.structure.resolvers.ResolverUtil;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.problems.OverridingFinalMethodProblem;
-import com.jetbrains.pluginverifier.problems.ProblemLocation;
+import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;

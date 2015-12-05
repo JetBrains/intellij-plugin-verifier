@@ -1,5 +1,6 @@
-package com.jetbrains.pluginverifier.problems;
+package com.jetbrains.pluginverifier.results;
 
+import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +15,7 @@ public class ProblemSet {
 
   private Map<Problem, Set<ProblemLocation>> map;
 
+  @NotNull
   public Map<Problem, Set<ProblemLocation>> asMap() {
     return map == null ? Collections.<Problem, Set<ProblemLocation>>emptyMap() : map;
   }
@@ -53,11 +55,13 @@ public class ProblemSet {
     }
   }
 
+  @NotNull
   public Set<Problem> getAllProblems() {
     return asMap().keySet();
   }
 
-  public Set<ProblemLocation> getLocations(Problem problem) {
+  @NotNull
+  public Set<ProblemLocation> getLocations(@NotNull Problem problem) {
     return asMap().get(problem);
   }
 

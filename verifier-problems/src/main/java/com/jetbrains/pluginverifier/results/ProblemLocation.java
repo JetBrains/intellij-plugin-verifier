@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.problems;
+package com.jetbrains.pluginverifier.results;
 
 import com.jetbrains.pluginverifier.utils.Assert;
 import com.jetbrains.pluginverifier.utils.MessageUtils;

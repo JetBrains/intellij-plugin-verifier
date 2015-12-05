@@ -3,7 +3,9 @@ package com.jetbrains.pluginverifier.utils;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.hash.Hashing;
+import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.*;
+import com.jetbrains.pluginverifier.results.ResultsElement;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 

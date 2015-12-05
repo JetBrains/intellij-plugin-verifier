@@ -2,8 +2,8 @@ package com.jetbrains.pluginverifier.repository;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
-import com.jetbrains.pluginverifier.problems.UpdateInfo;
 import com.jetbrains.pluginverifier.utils.Assert;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
