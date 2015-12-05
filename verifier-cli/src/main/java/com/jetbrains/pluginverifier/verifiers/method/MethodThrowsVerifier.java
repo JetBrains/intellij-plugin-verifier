@@ -22,7 +22,7 @@ public class MethodThrowsVerifier implements MethodVerifier {
       String descr = VerifierUtil.extractClassNameFromDescr(exception);
       if (descr == null) continue;
       if (!VerifierUtil.classExists(ctx.getOptions(), resolver, descr)) {
-        ctx.registerProblem(new ClassNotFoundProblem(descr), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));
+        ctx.registerProblem(new ClassNotFoundProblem(descr), ProblemLocation.fromMethod(clazz.name, method));
       }
     }
   }

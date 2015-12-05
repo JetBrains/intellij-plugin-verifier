@@ -67,8 +67,5 @@ public class ResolverUtil {
       return methodNode;
     }
 
-    public String getMethodDescr() {
-      return classNode.name + '#' + methodNode.name + methodNode.desc;
-    }
   }
 }

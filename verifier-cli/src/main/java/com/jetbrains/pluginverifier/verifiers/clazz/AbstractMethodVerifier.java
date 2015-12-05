@@ -4,6 +4,7 @@ import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
+import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.verifiers.util.MethodSign;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.tree.ClassNode;
@@ -56,8 +57,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
         if (allMethods.add(new MethodSign(method))) {
           if (VerifierUtil.isAbstract(method)) { //if method is abstract => it is neither static nor private
             //undefined abstract => problem
-            ctx.registerProblem(new MethodNotImplementedProblem(curNode.name + '#' + method.name + method.desc),
-                new ProblemLocation(clazz.name));
+            ctx.registerProblem(new MethodNotImplementedProblem(LocationUtils.getMethodLocation(curNode, method)), ProblemLocation.fromClass(clazz.name));
 
           }
         }
@@ -125,7 +125,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
           //failed to find such a method in any ancestor => method is not implemented
           allMethods.add(method);
 
-          ctx.registerProblem(new MethodNotImplementedProblem(iNode.name + '#' + methodNode.name + methodNode.desc), new ProblemLocation(clazz.name));
+          ctx.registerProblem(new MethodNotImplementedProblem(LocationUtils.getMethodLocation(iNode, methodNode)), ProblemLocation.fromClass(clazz.name));
         }
       }
     }

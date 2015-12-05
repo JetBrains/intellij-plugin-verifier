@@ -14,9 +14,9 @@
     <orderEntry type="module" module-name="verifier-problems" />
     <orderEntry type="module" module-name="common-utils" />
     <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.2.4" level="project" />
+    <orderEntry type="library" name="Maven: org.ow2.asm:asm-all:5.0.4" level="project" />
     <orderEntry type="library" name="Maven: com.intellij:annotations:12.0" level="project" />
     <orderEntry type="module" module-name="intellij-plugin-structure" />
-    <orderEntry type="library" name="Maven: org.ow2.asm:asm-all:5.0.4" level="project" />
     <orderEntry type="library" name="Maven: org.jdom:jdom:1.1.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: junit:junit:4.11" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.hamcrest:hamcrest-core:1.3" level="project" />

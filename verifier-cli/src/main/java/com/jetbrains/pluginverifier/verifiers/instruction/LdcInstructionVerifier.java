@@ -23,6 +23,6 @@ public class LdcInstructionVerifier implements InstructionVerifier {
 
     if (className == null || VerifierUtil.classExists(ctx.getOptions(), resolver, className)) return;
 
-    ctx.registerProblem(new ClassNotFoundProblem(className), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));
+    ctx.registerProblem(new ClassNotFoundProblem(className), ProblemLocation.fromMethod(clazz.name, method));
   }
 }

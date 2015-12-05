@@ -16,7 +16,7 @@ public class SuperClassVerifier implements ClassVerifier {
   public void verify(final ClassNode clazz, final Resolver resolver, final VerificationContext ctx) {
     final String superClassName = clazz.superName == null ? "java/lang/Object" : clazz.superName;
     if(!VerifierUtil.classExists(ctx.getOptions(), resolver, superClassName, false)) {
-      ctx.registerProblem(new ClassNotFoundProblem(superClassName), new ProblemLocation(clazz.name));
+      ctx.registerProblem(new ClassNotFoundProblem(superClassName), ProblemLocation.fromClass(clazz.name));
     }
   }
 }

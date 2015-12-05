@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.commands;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Files;
 import com.intellij.structure.domain.Idea;
@@ -30,10 +30,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Default command
@@ -154,7 +151,8 @@ public class CheckPluginCommand extends VerifierCommand {
 
     long startTime = System.currentTimeMillis();
 
-    Multimap<Problem, UpdateInfo> allProblems = HashMultimap.create();
+    final Map<UpdateInfo, ProblemSet> results = new HashMap<UpdateInfo, ProblemSet>();
+
     TeamCityLog log = TeamCityLog.getInstance(commandLine);
 
 
@@ -172,9 +170,8 @@ public class CheckPluginCommand extends VerifierCommand {
           ProblemSet problemSet = verifyPlugin(idea, plugin, options, log);
 
           final UpdateInfo updateInfo = new UpdateInfo(plugin.getPluginId(), plugin.getPluginName(), plugin.getPluginVersion());
-          for (Problem problem : problemSet.getAllProblems()) {
-            allProblems.put(problem, updateInfo);
-          }
+
+          results.put(updateInfo, problemSet);
 
         } catch (Exception e) {
           System.err.println("Failed to verify plugin " + pluginFile.getName());
@@ -183,10 +180,12 @@ public class CheckPluginCommand extends VerifierCommand {
         }
       }
     }
+    System.out.println("Plugin verification took " + (System.currentTimeMillis() - startTime) + "ms");
+
+    Multimap<Problem, UpdateInfo> allProblems = dropOutLocations(results);
 
     TeamCityUtil.printReport(log, allProblems, TeamCityUtil.ReportGrouping.parseGrouping(commandLine));
 
-    System.out.println("Plugin verification took " + (System.currentTimeMillis() - startTime) + "ms");
     final int problemsCnt = allProblems.size();
     boolean hasProblems = problemsCnt > 0;
     System.out.println(hasProblems ? "FAILED" : "OK");
@@ -195,6 +194,20 @@ public class CheckPluginCommand extends VerifierCommand {
     }
 
     return hasProblems ? 2 : 0;
+  }
+
+  /**
+   * Returns map of problems without their exact location inside corresponding plugins
+   */
+  @NotNull
+  private Multimap<Problem, UpdateInfo> dropOutLocations(@NotNull Map<UpdateInfo, ProblemSet> results) {
+    Multimap<Problem, UpdateInfo> allProblems = ArrayListMultimap.create();
+    for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
+      for (Problem problem : entry.getValue().getAllProblems()) {
+        allProblems.put(problem, entry.getKey());
+      }
+    }
+    return allProblems;
   }
 
   /**

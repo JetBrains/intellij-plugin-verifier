@@ -104,6 +104,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-all</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.intellij</groupId>
             <artifactId>annotations</artifactId>
             <version>12.0</version>

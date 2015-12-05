@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.IllegalMethodAccessProblem;
 import com.jetbrains.pluginverifier.problems.MethodNotFoundProblem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
+import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,11 +26,13 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       return;
 
     MethodInsnNode invokedMethod = (MethodInsnNode) instr;
-    if (invokedMethod.name.startsWith("access$"))
+    if (invokedMethod.name.startsWith("access$")) {
       return;
+    }
 
-    if (invokedMethod.owner.startsWith("java/dyn/"))
+    if (invokedMethod.owner.startsWith("java/dyn/")) {
       return;
+    }
 
     String ownerClassName = invokedMethod.owner;
 
@@ -39,21 +42,21 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
 
     ClassNode ownerClass = resolver.findClass(ownerClassName);
     if (ownerClass == null) {
-      ctx.registerProblem(new ClassNotFoundProblem(ownerClassName), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));
+      ctx.registerProblem(new ClassNotFoundProblem(ownerClassName), ProblemLocation.fromMethod(clazz.name, method));
     } else {
       ResolverUtil.MethodLocation actualLocation = ResolverUtil.findMethod(resolver, ownerClass, invokedMethod.name, invokedMethod.desc);
 
       if (actualLocation == null || isDefaultConstructorNotFound(invokedMethod, ownerClassName, actualLocation)) {
-        String calledMethod = ownerClassName + '#' + invokedMethod.name + invokedMethod.desc;
+        String calledMethod = LocationUtils.getMethodLocation(ownerClassName, invokedMethod.name, invokedMethod.desc);
 
         if (ownerClassName.equals(clazz.name)) {
           // Looks like method was defined in some parent class
           if (StringUtil.isNotEmpty(ownerClass.superName) && ownerClass.interfaces.isEmpty()) {
-            calledMethod = ownerClass.superName + '#' + invokedMethod.name + invokedMethod.desc;
+            calledMethod = LocationUtils.getMethodLocation(ownerClassName, invokedMethod.name, invokedMethod.desc);
           }
         }
 
-        ctx.registerProblem(new MethodNotFoundProblem(calledMethod), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));
+        ctx.registerProblem(new MethodNotFoundProblem(calledMethod), ProblemLocation.fromMethod(clazz.name, method));
       } else {
         checkAccessModifier(actualLocation, ctx, resolver, clazz, method);
       }
@@ -90,7 +93,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
 
     if (accessProblem != null) {
       IllegalMethodAccessProblem problem = new IllegalMethodAccessProblem(actualOwner.name + "#" + actualMethod.name + actualMethod.desc, accessProblem);
-      ctx.registerProblem(problem, new ProblemLocation(verifiedClass.name, verifiedMethod.name + verifiedMethod.desc));
+      ctx.registerProblem(problem, ProblemLocation.fromMethod(verifiedClass.name, verifiedMethod));
     }
   }
 

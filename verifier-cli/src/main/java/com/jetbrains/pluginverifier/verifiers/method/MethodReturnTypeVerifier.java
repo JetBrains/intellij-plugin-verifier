@@ -25,7 +25,7 @@ public class MethodReturnTypeVerifier implements MethodVerifier {
     if (returnTypeDesc == null) return;
 
     if (!VerifierUtil.classExists(ctx.getOptions(), resolver, returnTypeDesc)) {
-      ctx.registerProblem(new ClassNotFoundProblem(returnTypeDesc), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));
+      ctx.registerProblem(new ClassNotFoundProblem(returnTypeDesc), ProblemLocation.fromMethod(clazz.name, method));
     }
 
   }

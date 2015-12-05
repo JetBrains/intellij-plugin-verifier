@@ -21,7 +21,7 @@ public class MultiANewArrayInstructionVerifier implements InstructionVerifier {
     String descr = VerifierUtil.extractClassNameFromDescr(newArrayInstruction.desc);
     if (descr == null) return;
     if (!VerifierUtil.classExists(ctx.getOptions(), resolver, descr)) {
-      ctx.registerProblem(new ClassNotFoundProblem(descr), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));
+      ctx.registerProblem(new ClassNotFoundProblem(descr), ProblemLocation.fromMethod(clazz.name, method));
     }
   }
 }

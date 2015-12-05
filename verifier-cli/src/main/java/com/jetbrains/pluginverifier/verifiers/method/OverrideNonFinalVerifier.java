@@ -10,6 +10,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import static com.jetbrains.pluginverifier.utils.LocationUtils.getMethodLocation;
+
 /**
  * @author Dennis.Ushakov
  */
@@ -23,8 +25,12 @@ public class OverrideNonFinalVerifier implements MethodVerifier {
     final String superClass = clazz.superName;
     final ResolverUtil.MethodLocation superMethod = ResolverUtil.findMethod(resolver, superClass, method.name, method.desc);
     if (superMethod == null) return;
-    if (VerifierUtil.isFinal(superMethod.getMethodNode()) && !VerifierUtil.isAbstract(superMethod.getMethodNode())) {
-      ctx.registerProblem(new OverridingFinalMethodProblem(superMethod.getMethodDescr()), new ProblemLocation(clazz.name, method.name + method.desc));
+
+    ClassNode classNode = superMethod.getClassNode();
+    MethodNode methodNode = superMethod.getMethodNode();
+
+    if (VerifierUtil.isFinal(methodNode) && !VerifierUtil.isAbstract(methodNode)) {
+      ctx.registerProblem(new OverridingFinalMethodProblem(getMethodLocation(classNode, methodNode)), ProblemLocation.fromMethod(clazz.name, method));
     }
   }
 }

@@ -4,6 +4,8 @@ import com.jetbrains.pluginverifier.utils.Assert;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.objectweb.asm.tree.MethodNode;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -22,35 +24,42 @@ public class ProblemLocation {
   private String fieldName;
 
   public ProblemLocation() {
-
+    //required empty-constructor for XML processing
   }
 
-  public ProblemLocation(@NotNull String className) {
-    this(className, null);
-  }
-
-  public ProblemLocation(@NotNull String className, @Nullable String methodDescr) {
+  private ProblemLocation(@NotNull String className, @Nullable String methodDescr, @Nullable String fieldName) {
+    Assert.assertTrue(methodDescr == null || !methodDescr.contains("#"), "Message descriptor " + methodDescr + " is malformed");
     this.className = className;
     this.methodDescr = methodDescr;
-
-    Assert.assertTrue(methodDescr == null || !methodDescr.contains("#"));
+    this.fieldName = fieldName;
   }
 
+  @NotNull
+  public static ProblemLocation fromClass(@NotNull String className) {
+    return new ProblemLocation(className, null, null);
+  }
+
+  @NotNull
   public static ProblemLocation fromField(@NotNull String className, @NotNull String fieldName) {
-    ProblemLocation res = new ProblemLocation();
-    res.setClassName(className);
-    res.setFieldName(fieldName);
-    return res;
+    return new ProblemLocation(className, null, fieldName);
   }
 
+  @NotNull
+  @TestOnly
   public static ProblemLocation fromMethod(@NotNull String className, @NotNull String methodDescr) {
-    ProblemLocation res = new ProblemLocation();
-    res.setClassName(className);
+    return new ProblemLocation(className, methodDescr, null);
+  }
 
-    Assert.assertTrue(!methodDescr.contains("#"), methodDescr);
-    res.setMethodDescr(methodDescr);
+  @NotNull
+  public static ProblemLocation fromMethod(@NotNull String className, @NotNull MethodNode methodNode) {
+    return new ProblemLocation(className, getMethodDescr(methodNode), null);
+  }
 
-    return res;
+  @NotNull
+  private static String getMethodDescr(@NotNull MethodNode methodNode) {
+    Assert.assertTrue(methodNode.name != null);
+    Assert.assertTrue(methodNode.desc != null);
+    return methodNode.name + methodNode.desc;
   }
 
   @Nullable
@@ -58,7 +67,7 @@ public class ProblemLocation {
     return methodDescr;
   }
 
-  public void setMethodDescr(String methodDescr) {
+  public void setMethodDescr(@NotNull String methodDescr) {
     this.methodDescr = methodDescr;
   }
 
@@ -67,15 +76,16 @@ public class ProblemLocation {
     return className;
   }
 
-  public void setClassName(String className) {
+  public void setClassName(@NotNull String className) {
     this.className = className;
   }
 
+  @Nullable
   public String getFieldName() {
     return fieldName;
   }
 
-  public void setFieldName(String fieldName) {
+  public void setFieldName(@NotNull String fieldName) {
     this.fieldName = fieldName;
   }
 

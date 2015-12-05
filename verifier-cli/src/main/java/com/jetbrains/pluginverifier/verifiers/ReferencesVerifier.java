@@ -37,7 +37,7 @@ public class ReferencesVerifier implements Verifier {
       final ClassNode node = pluginPool.findClass(className);
 
       if (node == null) {
-        ctx.registerProblem(FailedToReadClassProblem.INSTANCE, new ProblemLocation(className));
+        ctx.registerProblem(FailedToReadClassProblem.INSTANCE, ProblemLocation.fromClass(className));
         continue;
       }
 
