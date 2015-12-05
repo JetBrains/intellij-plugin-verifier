@@ -30,6 +30,7 @@ public class Util {
       .addOption("pluginsFile", "plugins-to-check-file", true, "The file that contains list of plugins to check.")
       .addOption("cp", "external-class-path", true, "External class path")
       .addOption("printFile", true, ".xml report file to be printed in TeamCity")
+      .addOption("pcr", "plugin-check-result", true, "File to dump result of checking plugin against IDEs") //TODO
       .addOption("g", "group", true, "Whether to group problems presentation (possible args are 'plugin' - group by plugin and 'type' - group by error-type)");
 
   public static void printHelp() {

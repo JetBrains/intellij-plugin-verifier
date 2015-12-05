@@ -89,7 +89,7 @@
       <module name="repository" target="1.6" />
       <module name="uploader" target="1.6" />
       <module name="verifier-cli" target="1.6" />
-      <module name="verifier-parent" target="1.5" />
+      <module name="verifier-parent" target="1.6" />
       <module name="verifier-problems" target="1.6" />
     </bytecodeTargetLevel>
   </component>

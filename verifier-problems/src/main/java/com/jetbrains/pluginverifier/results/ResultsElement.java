@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.problems.Problem;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.StringWriter;
@@ -23,6 +24,9 @@ public class ResultsElement {
   private List<UpdateInfo> updates = new ArrayList<UpdateInfo>();
 
   private String map = "";
+
+  public ResultsElement() {
+  }
 
   @XmlAttribute
   public String getIde() {
@@ -51,6 +55,7 @@ public class ResultsElement {
     this.updates = updates;
   }
 
+  @XmlElement
   public String getMap() {
     return map;
   }

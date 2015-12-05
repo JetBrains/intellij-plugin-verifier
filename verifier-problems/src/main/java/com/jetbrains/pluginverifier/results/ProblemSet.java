@@ -58,6 +58,11 @@ public class ProblemSet {
     }
   }
 
+  public void setMap(@NotNull Map<Problem, Set<ProblemLocation>> map) {
+    this.map = map;
+  }
+
+
   @NotNull
   public Set<Problem> getAllProblems() {
     return asMap().keySet();

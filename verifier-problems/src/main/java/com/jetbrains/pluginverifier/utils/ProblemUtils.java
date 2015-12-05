@@ -5,6 +5,8 @@ import com.google.common.collect.Multimap;
 import com.google.common.hash.Hashing;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.*;
+import com.jetbrains.pluginverifier.results.PluginCheckResult;
+import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.results.ResultsElement;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
@@ -25,22 +27,28 @@ public class ProblemUtils {
     try {
       //if necessary add problem here (and add default constructor for it)
       JAXB_CONTEXT = JAXBContext.newInstance(
-          MethodNotFoundProblem.class,
+          //--------PROBLEMS--------
           ClassNotFoundProblem.class,
-          MethodNotImplementedProblem.class,
-          IllegalMethodAccessProblem.class,
-          OverridingFinalMethodProblem.class,
           DuplicateClassProblem.class,
+          FailedToReadClassProblem.class,
+          IllegalMethodAccessProblem.class,
+          IncompatibleClassChangeProblem.class,
+          MethodNotFoundProblem.class,
+          MethodNotImplementedProblem.class,
+          OverridingFinalMethodProblem.class,
+
+          //--------RESULT-ELEMENTS--------
           ResultsElement.class,
           UpdateInfo.class,
-          FailedToReadClassProblem.class
+          PluginCheckResult.class,
+          ProblemSet.class
       );
     } catch (JAXBException e) {
       throw FailUtil.fail(e);
     }
   }
 
-  public static Marshaller createMarshaller() {
+  private static Marshaller createMarshaller() {
     try {
       return JAXB_CONTEXT.createMarshaller();
     } catch (JAXBException e) {
@@ -48,7 +56,7 @@ public class ProblemUtils {
     }
   }
 
-  public static Unmarshaller createUnmarshaller() {
+  private static Unmarshaller createUnmarshaller() {
     try {
       return JAXB_CONTEXT.createUnmarshaller();
     } catch (JAXBException e) {
@@ -57,7 +65,7 @@ public class ProblemUtils {
   }
 
   @NotNull
-  public static String problemToString(@NotNull Problem problem, boolean format) {
+  private static String problemToString(@NotNull Problem problem, boolean format) {
     try {
       Marshaller marshaller = JAXB_CONTEXT.createMarshaller();
 
@@ -97,10 +105,26 @@ public class ProblemUtils {
     resultsElement.setIde(ide);
     resultsElement.initFromMap(problems);
 
-    saveProblems(output, resultsElement);
+    saveObject(output, resultsElement);
   }
 
-  public static void saveProblems(@NotNull File output, @NotNull ResultsElement resultsElement)
+  public static void savePluginCheckResult(@NotNull File output,
+                                           @NotNull String ide,
+                                           @NotNull UpdateInfo updateInfo,
+                                           @NotNull ProblemSet problems)
+      throws IOException {
+    PluginCheckResult pluginCheckResult = new PluginCheckResult();
+
+
+    //TODO:
+//    pluginCheckResult.setIde(ide);
+//    pluginCheckResult.setUpdateInfo(updateInfo);
+//    pluginCheckResult.setProblems(problems);
+
+    saveObject(output, pluginCheckResult);
+  }
+
+  private static void saveObject(@NotNull File output, @NotNull Object o)
       throws IOException {
     Marshaller marshaller = createMarshaller();
 
@@ -108,7 +132,7 @@ public class ProblemUtils {
       marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
       marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 
-      marshaller.marshal(resultsElement, output);
+      marshaller.marshal(o, output);
     } catch (JAXBException e) {
       throw new IOException(e);
     }
