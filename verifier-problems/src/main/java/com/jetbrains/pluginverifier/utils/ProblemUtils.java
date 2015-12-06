@@ -5,9 +5,9 @@ import com.google.common.collect.Multimap;
 import com.google.common.hash.Hashing;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.*;
-import com.jetbrains.pluginverifier.results.PluginCheckResult;
 import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.results.ResultsElement;
+import com.jetbrains.pluginverifier.results.plugin.PluginCheckResult;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,10 +87,20 @@ public class ProblemUtils {
 
   @NotNull
   public static ResultsElement loadProblems(@NotNull File xml) throws IOException {
+    return (ResultsElement) loadFromFile(xml);
+  }
+
+  @NotNull
+  public static PluginCheckResult loadPluginCheckResults(@NotNull File xml) throws IOException {
+    return (PluginCheckResult) loadFromFile(xml);
+  }
+
+  @NotNull
+  private static Object loadFromFile(@NotNull File xml) throws IOException {
     InputStream inputStream = new BufferedInputStream(new FileInputStream(xml));
 
     try {
-      return loadProblems(inputStream);
+      return loadObject(inputStream);
     } finally {
       IOUtils.closeQuietly(inputStream);
     }
@@ -105,26 +115,21 @@ public class ProblemUtils {
     resultsElement.setIde(ide);
     resultsElement.initFromMap(problems);
 
-    saveObject(output, resultsElement);
+    marshallObject(output, resultsElement);
   }
 
   public static void savePluginCheckResult(@NotNull File output,
-                                           @NotNull String ide,
-                                           @NotNull UpdateInfo updateInfo,
-                                           @NotNull ProblemSet problems)
-      throws IOException {
-    PluginCheckResult pluginCheckResult = new PluginCheckResult();
-
-
-    //TODO:
-//    pluginCheckResult.setIde(ide);
-//    pluginCheckResult.setUpdateInfo(updateInfo);
-//    pluginCheckResult.setProblems(problems);
-
-    saveObject(output, pluginCheckResult);
+                                           @NotNull Map<String, ProblemSet> ideToProblems,
+                                           @NotNull UpdateInfo updateInfo) throws IOException {
+    savePluginCheckResult(output, new PluginCheckResult(updateInfo, ideToProblems));
   }
 
-  private static void saveObject(@NotNull File output, @NotNull Object o)
+  public static void savePluginCheckResult(@NotNull File output,
+                                           @NotNull PluginCheckResult pluginCheckResult) throws IOException {
+    marshallObject(output, pluginCheckResult);
+  }
+
+  private static void marshallObject(@NotNull File output, @NotNull Object o)
       throws IOException {
     Marshaller marshaller = createMarshaller();
 
@@ -139,11 +144,11 @@ public class ProblemUtils {
   }
 
   @NotNull
-  public static ResultsElement loadProblems(@NotNull InputStream inputStream) throws IOException {
+  private static Object loadObject(@NotNull InputStream inputStream) throws IOException {
     Unmarshaller unmarshaller = createUnmarshaller();
 
     try {
-      return (ResultsElement) unmarshaller.unmarshal(inputStream);
+      return unmarshaller.unmarshal(inputStream);
     } catch (JAXBException e) {
       throw new IOException(e);
     }

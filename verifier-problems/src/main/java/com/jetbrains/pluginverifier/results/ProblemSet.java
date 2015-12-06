@@ -18,6 +18,13 @@ public class ProblemSet {
 
   private Map<Problem, Set<ProblemLocation>> map;
 
+  public ProblemSet() {
+  }
+
+  public ProblemSet(Map<Problem, Set<ProblemLocation>> map) {
+    this.map = map;
+  }
+
   @NotNull
   public Map<Problem, Set<ProblemLocation>> asMap() {
     return map == null ? Collections.<Problem, Set<ProblemLocation>>emptyMap() : map;

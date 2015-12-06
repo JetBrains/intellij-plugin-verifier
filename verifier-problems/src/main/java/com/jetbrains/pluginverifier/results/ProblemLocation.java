@@ -63,11 +63,11 @@ public class ProblemLocation {
   }
 
   @Nullable
-  public String getMethodDescr() {
+  public String getMethodDescriptor() {
     return methodDescr;
   }
 
-  public void setMethodDescr(@NotNull String methodDescr) {
+  public void setMethodDescriptor(@NotNull String methodDescr) {
     this.methodDescr = methodDescr;
   }
 

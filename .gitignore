@@ -2,6 +2,6 @@
 .idea/inspectionProfiles
 target/
 /lib/*.jar
-for_tests/*
+/verifier-cli/for_tests/
 classes/*
 generated-sources/
