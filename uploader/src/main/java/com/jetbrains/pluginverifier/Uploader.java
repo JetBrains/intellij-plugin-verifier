@@ -33,7 +33,7 @@ public class Uploader {
     parseArgsAndUpload(args);
   }
 
-  private static void parseArgsAndUpload(String[] args) throws IOException {
+  private static void parseArgsAndUpload(@NotNull String[] args) throws IOException {
     String postUrl = args[0];
     String filePartName = args[1];
     File fileToUpload = new File(args[2]);
@@ -42,16 +42,14 @@ public class Uploader {
       textBodies.put(args[i], args[i + 1]);
     }
 
-    uploadReport(postUrl, filePartName, fileToUpload, textBodies);
+    uploadReportToGlobalRepo(postUrl, filePartName, fileToUpload, textBodies);
   }
 
 
-
-
-  private static void uploadReport(@NotNull String postUrl,
-                                   @NotNull String filePartName,
-                                   @NotNull File fileToUpload,
-                                   @NotNull ArrayListMultimap<String, String> textBodies) throws IOException {
+  private static void uploadReportToGlobalRepo(@NotNull String postUrl,
+                                               @NotNull String filePartName,
+                                               @NotNull File fileToUpload,
+                                               @NotNull ArrayListMultimap<String, String> textBodies) throws IOException {
     CloseableHttpClient httpclient = HttpClients.createDefault();
 
     try {
@@ -78,12 +76,10 @@ public class Uploader {
         if (response.getStatusLine().getStatusCode() != 200) {
           throw new RuntimeException("Unable to upload report, status code is " + response.getStatusLine().getStatusCode());
         }
-      }
-      finally {
+      } finally {
         IOUtils.closeQuietly(response);
       }
-    }
-    finally {
+    } finally {
       IOUtils.closeQuietly(httpclient);
     }
   }

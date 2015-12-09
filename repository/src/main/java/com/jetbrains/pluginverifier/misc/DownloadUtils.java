@@ -28,14 +28,9 @@ public class DownloadUtils {
     httpDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
 
-  @SuppressWarnings("ResultOfMethodCallIgnored")
+  @NotNull
   public static File getCheckResultFile(@NotNull String build) throws IOException {
-    File downloadDir = getOrCreateDownloadDir();
-
-    File checkResDir = new File(downloadDir, "checkResult");
-    checkResDir.mkdirs();
-
-    File res = new File(checkResDir, build + ".xml");
+    File res = createCheckResultFile(build);
 
     System.out.print("Loading check results for " + build + "...");
     updateFile(new URL(RepositoryConfiguration.getInstance().getPluginRepositoryUrl() + "/files/checkResults/" + build + ".xml"), res);
@@ -44,11 +39,21 @@ public class DownloadUtils {
     return res;
   }
 
-  @SuppressWarnings("ResultOfMethodCallIgnored")
+  @NotNull
+  public static File createCheckResultFile(@NotNull String build) throws IOException {
+    File downloadDir = getOrCreateDownloadDir();
+
+    File checkResDir = new File(downloadDir, "checkResult");
+    FileUtils.forceMkdir(checkResDir);
+
+    return new File(checkResDir, build + ".xml");
+  }
+
+  @NotNull
   private static File getOrCreateDownloadDir() throws IOException {
     File downloadDir = RepositoryConfiguration.getInstance().getPluginCacheDir();
     if (!downloadDir.isDirectory()) {
-      downloadDir.mkdirs();
+      FileUtils.forceMkdir(downloadDir);
       if (!downloadDir.isDirectory()) {
         throw new IOException("Failed to create temp directory: " + downloadDir);
       }
@@ -57,7 +62,6 @@ public class DownloadUtils {
     return downloadDir;
   }
 
-  @SuppressWarnings({"ResultOfMethodCallIgnored", "StatementWithEmptyBody"})
   public static void updateFile(URL url, File file) throws IOException {
     long lastModified = file.lastModified();
 
@@ -87,11 +91,12 @@ public class DownloadUtils {
         }
 
         FileUtils.copyInputStreamToFile(connection.getInputStream(), file);
+
+        //noinspection ResultOfMethodCallIgnored
         file.setLastModified(lastModifiedRes.getTime());
+
       }
-      else if (responseCode == 304) {
-        // Not modified
-      }
+//      else if (responseCode == 304) { /* Not modified */ }
       else {
         throw new IOException("Failed to download check result: " + responseCode);
       }

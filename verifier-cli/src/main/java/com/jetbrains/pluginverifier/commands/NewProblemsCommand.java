@@ -4,13 +4,18 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
+import com.intellij.structure.utils.ProductUpdateBuild;
 import com.jetbrains.pluginverifier.VerifierCommand;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.GlobalResultsRepository;
 import com.jetbrains.pluginverifier.results.ResultsElement;
 import com.jetbrains.pluginverifier.results.ResultsRepository;
-import com.jetbrains.pluginverifier.utils.*;
+import com.jetbrains.pluginverifier.results.VerifierServiceRepository;
+import com.jetbrains.pluginverifier.utils.FailUtil;
+import com.jetbrains.pluginverifier.utils.MessageUtils;
+import com.jetbrains.pluginverifier.utils.ProblemUtils;
+import com.jetbrains.pluginverifier.utils.StringUtil;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
 import org.apache.commons.cli.CommandLine;
@@ -21,6 +26,9 @@ import java.io.IOException;
 import java.util.*;
 
 /**
+ * Prints new problems of current plugins verifications compared to all
+ * the previous verifications of the same trunk builds (i.e. all IDEs 143.*)
+ *
  * @author Sergey Evdokimov
  */
 public class NewProblemsCommand extends VerifierCommand {
@@ -36,45 +44,97 @@ public class NewProblemsCommand extends VerifierCommand {
    * NOTE: in ascending order, i.e. 141.01, 141.05, 141.264...
    */
   @NotNull
-  public static List<String> findPreviousBuilds(@NotNull String currentBuild,
+  public static List<String> findPreviousBuilds(@NotNull String currentCheckBuild,
                                                 @NotNull ResultsRepository resultsRepository) throws IOException {
-    //for now method and repository support only "IU-X.Y" build's form
 
     List<String> resultsInPluginRepository = resultsRepository.getAvailableReportsList();
+    Collections.sort(resultsInPluginRepository, new Comparator<String>() {
+      @Override
+      public int compare(String o1, String o2) {
+        ProductUpdateBuild build1 = new ProductUpdateBuild(o1);
+        ProductUpdateBuild build2 = new ProductUpdateBuild(o2);
+        return ProductUpdateBuild.VERSION_COMPARATOR.compare(build1, build2);
+      }
+    });
 
-    String firstBuild = System.getProperty("firstBuild");
-    if (firstBuild != null) {
-      //filter builds so that only the firstBuild and older are kept
-      int idx = resultsInPluginRepository.indexOf(firstBuild);
+    String firstBuildProp = System.getProperty("firstBuild");
+    if (firstBuildProp != null) {
+      ProductUpdateBuild firstBuild = new ProductUpdateBuild(firstBuildProp);
+      int idx = -1;
+      for (int i = 0; i < resultsInPluginRepository.size(); i++) {
+        String build = resultsInPluginRepository.get(i);
+        if (ProductUpdateBuild.VERSION_COMPARATOR.compare(firstBuild, new ProductUpdateBuild(build)) == 0) {
+          idx = i;
+          break;
+        }
+      }
       if (idx != -1) {
         resultsInPluginRepository = resultsInPluginRepository.subList(idx, resultsInPluginRepository.size());
       }
     }
 
-    Pair<String, Integer> parsedCurrentBuild = parseBuildNumber(currentBuild);
+    ProductUpdateBuild currentBuild = new ProductUpdateBuild(currentCheckBuild);
 
-    TreeMap<Integer, String> buildMap = new TreeMap<Integer, String>();
+    List<String> result = new ArrayList<String>();
 
     for (String build : resultsInPluginRepository) {
-      Pair<String, Integer> pair = parseBuildNumber(build);
+      ProductUpdateBuild updateBuild = new ProductUpdateBuild(build);
 
-      //NOTE: compares only IDEAs of the same release! that is 141.* between each others
-      if (parsedCurrentBuild.first.equals(pair.first) && parsedCurrentBuild.second > pair.second) {
-        buildMap.put(pair.second, build);
+      //NOTE: compares only IDEAs of the same branch! that is 141.* between each others
+      if (updateBuild.getBranch() == currentBuild.getBranch() && ProductUpdateBuild.VERSION_COMPARATOR.compare(updateBuild, currentBuild) < 0) {
+        result.add(build);
       }
     }
 
-    return new ArrayList<String>(buildMap.values());
+    return result;
   }
 
-  /**
-   * e.g. IU-141.1532 -> < IU-141, 1532>
-   */
-  @NotNull
-  private static Pair<String, Integer> parseBuildNumber(String buildNumber) {
-    int idx = buildNumber.indexOf('.');
+  private static void printTcProblems(@NotNull Multimap<Problem, UpdateInfo> currentProblemsMap,
+                                      @NotNull Multimap<String, Problem> firstOccurrence,
+                                      @NotNull Iterable<String> allBuilds,
+                                      @NotNull TeamCityUtil.ReportGrouping reportGrouping,
+                                      @NotNull TeamCityLog tc) {
+    for (String prevBuild : allBuilds) {
+      Collection<Problem> problemsInBuild = firstOccurrence.get(prevBuild);
 
-    return Pair.create(buildNumber.substring(0, idx), Integer.parseInt(buildNumber.substring(idx + 1)));
+      TeamCityLog.TestSuite suite = tc.testSuiteStarted("since " + prevBuild);
+
+      if (!problemsInBuild.isEmpty()) {
+        System.out.printf("\nIn %s found %d new problems:\n", prevBuild, problemsInBuild.size());
+
+        ArrayListMultimap<Problem, UpdateInfo> prevBuildProblems = ArrayListMultimap.create();
+        for (Problem problem : problemsInBuild) {
+          Collection<UpdateInfo> affectedUpdates = ProblemUtils.sortUpdates(currentProblemsMap.get(problem));
+          prevBuildProblems.putAll(problem, affectedUpdates);
+
+          CharSequence problemDescription = MessageUtils.cutCommonPackages(problem.getDescription());
+
+          System.out.print("    ");
+          System.out.println(problemDescription);
+          System.out.println("        in " + Joiner.on(", ").join(affectedUpdates));
+
+        }
+
+        TeamCityUtil.printReport(tc, prevBuildProblems, reportGrouping);
+      }
+
+      suite.close();
+
+    }
+  }
+
+  @NotNull
+  private static ResultsRepository getResultsRepository(@NotNull CommandLine commandLine) {
+    ResultsRepository resultsRepository;
+    String repoUrl = commandLine.getOptionValue("repo");
+    if (repoUrl == null) {
+      System.out.println("Results repository set to global repository");
+      resultsRepository = new GlobalResultsRepository();
+    } else {
+      System.out.println("Results repository set to " + repoUrl);
+      resultsRepository = new VerifierServiceRepository(repoUrl);
+    }
+    return resultsRepository;
   }
 
   @Override
@@ -92,7 +152,7 @@ public class NewProblemsCommand extends VerifierCommand {
 
     ResultsElement currentCheckResult = ProblemUtils.loadProblems(reportToCheck);
 
-    ResultsRepository resultsRepository = new GlobalResultsRepository();
+    ResultsRepository resultsRepository = getResultsRepository(commandLine);
 
     List<String> previousCheckedBuilds = findPreviousBuilds(currentCheckResult.getIde(), resultsRepository);
 
@@ -145,33 +205,7 @@ public class NewProblemsCommand extends VerifierCommand {
 
     TeamCityLog tc = TeamCityLog.getInstance(commandLine);
 
-    for (String prevBuild : allBuilds) {
-      Collection<Problem> problemsInBuild = firstOccurrenceBuildToProblems.get(prevBuild);
-
-      TeamCityLog.TestSuite suite = tc.testSuiteStarted("since " + prevBuild);
-
-      if (!problemsInBuild.isEmpty()) {
-        System.out.printf("\nIn %s found %d new problems:\n", prevBuild, problemsInBuild.size());
-
-        ArrayListMultimap<Problem, UpdateInfo> prevBuildProblems = ArrayListMultimap.create();
-        for (Problem problem : problemsInBuild) {
-          Collection<UpdateInfo> affectedUpdates = ProblemUtils.sortUpdates(currentProblemsMap.get(problem));
-          prevBuildProblems.putAll(problem, affectedUpdates);
-
-          CharSequence problemDescription = MessageUtils.cutCommonPackages(problem.getDescription());
-
-          System.out.print("    ");
-          System.out.println(problemDescription);
-          System.out.println("        in " + Joiner.on(", ").join(affectedUpdates));
-
-        }
-
-        TeamCityUtil.printReport(tc, prevBuildProblems, reportGrouping);
-      }
-
-      suite.close();
-
-    }
+    printTcProblems(currentProblemsMap, firstOccurrenceBuildToProblems, allBuilds, reportGrouping, tc);
 
 
     //number of NEW problems (excluding the EARLIEST check)

@@ -1,7 +1,9 @@
-package com.jetbrains.pluginverifier;
+package com.jetbrains.pluginverifier.service;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.jetbrains.pluginverifier.misc.DownloadUtils;
+import com.jetbrains.pluginverifier.utils.StringUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -18,10 +20,11 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This is a dummy implementation of verifier-service connection
+ * Implementation of verifier-service connection
  * (a web service which collects plugin breakages info)
  *
  * @author Sergey Patrikeev
@@ -30,12 +33,15 @@ public class VerifierServiceApi {
 
   public static final String DEFAULT_SERVICE_URL = "http://localhost:7777/";
 
-  public static final String UPLOAD_REPORT_PATH = "/uploadResult";
-  public static final String RESULTS = "/results";
+  private static final String UPLOAD_REPORT_PATH = "/uploadResult";
+
+  private static final String RESULTS_PATH = "/results";
+  private static final String RESULTS_LIST_PATH = "/resultsList";
 
   private static final Gson GSON = new Gson();
   private static final Type LIST_STRING_TYPE = new TypeToken<List<String>>() {
   }.getType();
+  private static final String XML_EXTENSION = ".xml";
 
 
   @NotNull
@@ -121,5 +127,27 @@ public class VerifierServiceApi {
     } finally {
       IOUtils.closeQuietly(httpclient);
     }
+  }
+
+  @NotNull
+  public static List<String> requestAvailableReports(@NotNull String repositoryUrl) throws IOException {
+    List<String> files = requestFilesList(repositoryUrl + RESULTS_LIST_PATH);
+    List<String> builds = new ArrayList<String>();
+    for (String file : files) {
+      builds.add(StringUtil.trimEnd(file, XML_EXTENSION));
+    }
+    return builds;
+  }
+
+  @NotNull
+  public static File requestReportFile(@NotNull String repositoryUrl, @NotNull String build) throws IOException {
+    File resultFile = DownloadUtils.createCheckResultFile(build);
+    downloadFile(repositoryUrl + RESULTS_PATH + "/" + build + XML_EXTENSION, resultFile);
+    return resultFile;
+  }
+
+  public static void uploadReportFile(@NotNull String repositoryUrl,
+                                      @NotNull File fileToUpload) throws IOException {
+    uploadFile(repositoryUrl + UPLOAD_REPORT_PATH, fileToUpload);
   }
 }

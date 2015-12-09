@@ -2,7 +2,7 @@
   <configuration default="false" name="Check ALL plugins" type="Application" factoryName="Application">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
       <pattern>
-        <option name="PATTERN" value="com.jetbrains.pluginverifier.*" />
+        <option name="PATTERN" value="com.jetbrains.pluginverifier.service.*" />
         <option name="ENABLED" value="true" />
       </pattern>
     </extension>

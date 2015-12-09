@@ -11,6 +11,10 @@ import java.util.List;
  */
 public abstract class ResultsRepository {
 
+  /**
+   * Returns IDEA-builds which have corresponding check result files on server.
+   * (.xml extension is truncated)
+   */
   @NotNull
   public abstract List<String> getAvailableReportsList() throws IOException;
 
