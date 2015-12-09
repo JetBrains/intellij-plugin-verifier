@@ -92,19 +92,28 @@ public class ProblemUtils {
   }
 
   @NotNull
+  public static ResultsElement loadProblems(@NotNull InputStream inputStream) throws IOException {
+    return (ResultsElement) loadFromStream(inputStream);
+  }
+
+  @NotNull
   public static PluginCheckResult loadPluginCheckResults(@NotNull File xml) throws IOException {
     return (PluginCheckResult) loadFromFile(xml);
   }
 
   @NotNull
-  private static Object loadFromFile(@NotNull File xml) throws IOException {
-    InputStream inputStream = new BufferedInputStream(new FileInputStream(xml));
-
+  public static Object loadFromStream(@NotNull InputStream inputStream) throws IOException {
     try {
       return loadObject(inputStream);
     } finally {
       IOUtils.closeQuietly(inputStream);
     }
+  }
+
+  @NotNull
+  private static Object loadFromFile(@NotNull File xml) throws IOException {
+    InputStream inputStream = new BufferedInputStream(new FileInputStream(xml));
+    return loadFromStream(inputStream);
   }
 
   public static void saveProblems(@NotNull File output,
