@@ -20,6 +20,7 @@ import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.utils.FailUtil;
+import com.jetbrains.pluginverifier.utils.ProblemUtils;
 import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
@@ -138,7 +139,7 @@ public class CheckPluginCommand extends VerifierCommand {
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     verifyArgs(commandLine, freeArgs);
 
-    String pluginToTestArg = freeArgs.get(0);
+    String pluginsToTestArg = freeArgs.get(0);
 
     if (freeArgs.size() == 1) {
       throw FailUtil.fail("You must specify IDE directory/directories, example:\n" +
@@ -151,7 +152,8 @@ public class CheckPluginCommand extends VerifierCommand {
 
     long startTime = System.currentTimeMillis();
 
-    final Map<UpdateInfo, ProblemSet> results = new HashMap<UpdateInfo, ProblemSet>();
+    //updateInfo -> (IDEA-build -> Problems)
+    final Map<UpdateInfo, Map<String, ProblemSet>> results = new HashMap<UpdateInfo, Map<String, ProblemSet>>();
 
     TeamCityLog log = TeamCityLog.getInstance(commandLine);
 
@@ -161,7 +163,9 @@ public class CheckPluginCommand extends VerifierCommand {
       verifyIdeaDirectory(ideaDirectory);
 
       Idea idea = new Idea(ideaDirectory, jdk, getExternalClassPath(commandLine));
-      List<File> pluginFiles = loadPluginFiles(pluginToTestArg, idea.getVersion());
+
+
+      List<File> pluginFiles = loadPluginFiles(pluginsToTestArg, idea.getVersion());
 
       for (File pluginFile : pluginFiles) {
         try {
@@ -171,7 +175,14 @@ public class CheckPluginCommand extends VerifierCommand {
 
           final UpdateInfo updateInfo = new UpdateInfo(plugin.getPluginId(), plugin.getPluginName(), plugin.getPluginVersion());
 
-          results.put(updateInfo, problemSet);
+
+          Map<String, ProblemSet> ideaToProblems = results.get(updateInfo);
+          if (ideaToProblems == null) {
+            ideaToProblems = new HashMap<String, ProblemSet>();
+            results.put(updateInfo, ideaToProblems);
+          }
+
+          ideaToProblems.put(idea.getVersion(), problemSet);
 
         } catch (Exception e) {
           System.err.println("Failed to verify plugin " + pluginFile.getName());
@@ -179,16 +190,22 @@ public class CheckPluginCommand extends VerifierCommand {
           log.messageError("Failed to verify plugin " + pluginFile.getName(), Util.getStackTrace(e));
         }
       }
+
     }
+
     System.out.println("Plugin verification took " + (System.currentTimeMillis() - startTime) + "ms");
 
-    Multimap<Problem, UpdateInfo> allProblems = dropOutLocations(results);
+    saveReportToFile(commandLine, results);
 
-    TeamCityUtil.printReport(log, allProblems, TeamCityUtil.ReportGrouping.parseGrouping(commandLine));
 
-    final int problemsCnt = allProblems.size();
+    //map of problems without their exact locations inside corresponding plugins
+    Multimap<Problem, UpdateInfo> problemsWithoutLocations = dropOutLocations(results);
+
+    TeamCityUtil.printReport(log, problemsWithoutLocations, TeamCityUtil.ReportGrouping.parseGrouping(commandLine));
+
+    final int problemsCnt = problemsWithoutLocations.size();
     boolean hasProblems = problemsCnt > 0;
-    System.out.println(hasProblems ? "FAILED" : "OK");
+    System.out.println("Plugin compatibility " + (hasProblems ? "FAILED" : "OK"));
     if (hasProblems) {
       log.buildStatus(problemsCnt > 1 ? problemsCnt + " problems" : "1 problem");
     }
@@ -196,17 +213,40 @@ public class CheckPluginCommand extends VerifierCommand {
     return hasProblems ? 2 : 0;
   }
 
+  private void saveReportToFile(@NotNull CommandLine commandLine,
+                                @NotNull Map<UpdateInfo, Map<String, ProblemSet>> results) throws IOException {
+    if (results.size() != 1) {
+      //only one plugin can have report file
+      return;
+    }
+
+    String resultFile = commandLine.getOptionValue("pcr");
+    if (resultFile == null) {
+      //no output file specified
+      return;
+    }
+    File file = new File(resultFile);
+
+    UpdateInfo updateInfo = results.keySet().iterator().next();
+    Map<String, ProblemSet> problemsMap = results.get(updateInfo);
+
+    ProblemUtils.savePluginCheckResult(file, problemsMap, updateInfo);
+  }
+
   /**
    * Returns map of problems without their exact location inside corresponding plugins
    */
   @NotNull
-  private Multimap<Problem, UpdateInfo> dropOutLocations(@NotNull Map<UpdateInfo, ProblemSet> results) {
+  private Multimap<Problem, UpdateInfo> dropOutLocations(@NotNull Map<UpdateInfo, Map<String, ProblemSet>> results) {
     Multimap<Problem, UpdateInfo> allProblems = ArrayListMultimap.create();
-    for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
-      for (Problem problem : entry.getValue().getAllProblems()) {
-        allProblems.put(problem, entry.getKey());
+    for (Map.Entry<UpdateInfo, Map<String, ProblemSet>> entry : results.entrySet()) {
+      for (Map.Entry<String, ProblemSet> setEntry : entry.getValue().entrySet()) {
+        for (Problem problem : setEntry.getValue().getAllProblems()) {
+          allProblems.put(problem, entry.getKey());
+        }
       }
     }
+
     return allProblems;
   }
 

@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.utils;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.hash.Hashing;
+import com.google.common.io.Files;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.*;
 import com.jetbrains.pluginverifier.results.ProblemSet;
@@ -131,6 +132,8 @@ public class ProblemUtils {
 
   private static void marshallObject(@NotNull File output, @NotNull Object o)
       throws IOException {
+    Files.createParentDirs(output);
+
     Marshaller marshaller = createMarshaller();
 
     try {

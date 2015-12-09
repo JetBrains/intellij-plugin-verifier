@@ -24,6 +24,10 @@ public class UpdateInfo {
   public UpdateInfo() {
   }
 
+  public UpdateInfo(int updateId) {
+    this.updateId = updateId;
+  }
+
   public UpdateInfo(@NotNull String pluginId, @NotNull String pluginName, @NotNull String version) {
     this.pluginId = pluginId;
     this.pluginName = pluginName;
