@@ -333,6 +333,8 @@ public class CheckIdeCommand extends VerifierCommand {
 
     //-----------------------------VERIFICATION---------------------------------------
 
+    int updatesProcessed = 0;
+
     for (UpdateInfo updateJson : updates) {
       TeamCityLog.Block block = tc.blockOpen(updateJson.toString());
 
@@ -363,7 +365,7 @@ public class CheckIdeCommand extends VerifierCommand {
           continue;
         }
 
-        System.out.println("Verifying plugin " + updateJson + "... ");
+        System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProcessed), updates.size()));
 
         VerificationContextImpl ctx = new VerificationContextImpl(options, ide);
         try {

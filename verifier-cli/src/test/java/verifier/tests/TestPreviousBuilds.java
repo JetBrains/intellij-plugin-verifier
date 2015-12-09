@@ -40,10 +40,9 @@ public class TestPreviousBuilds {
 
       @NotNull
       @Override
+      //not to be invoked
       public File getReportFile(@NotNull String build) throws IOException {
-        //not to be invoked
-        //noinspection ConstantConditions
-        return null;
+        return new File(".");
       }
     };
 
