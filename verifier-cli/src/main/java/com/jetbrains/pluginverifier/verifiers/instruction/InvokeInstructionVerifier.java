@@ -3,9 +3,11 @@ package com.jetbrains.pluginverifier.verifiers.instruction;
 import com.intellij.structure.resolvers.Resolver;
 import com.intellij.structure.resolvers.ResolverUtil;
 import com.jetbrains.pluginverifier.VerificationContext;
+import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.IllegalMethodAccessProblem;
 import com.jetbrains.pluginverifier.problems.MethodNotFoundProblem;
+import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.utils.StringUtil;
@@ -16,6 +18,8 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+
+import java.util.Set;
 
 /**
  * @author Dennis.Ushakov
@@ -47,24 +51,27 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       ResolverUtil.MethodLocation actualLocation = ResolverUtil.findMethod(resolver, ownerClass, invokedMethod.name, invokedMethod.desc);
 
       if (actualLocation == null || isDefaultConstructorNotFound(invokedMethod, ownerClassName, actualLocation)) {
-        String calledMethod = LocationUtils.getMethodLocation(ownerClassName, invokedMethod.name, invokedMethod.desc);
+
+        String actualOwner = ownerClassName;
 
         if (ownerClassName.equals(clazz.name)) {
 
           // Looks like method was defined in some parent class
           if (StringUtil.isNotEmpty(ownerClass.superName) && ownerClass.interfaces.isEmpty()) {
             //the only possible method holder is a direct parent class
-            calledMethod = LocationUtils.getMethodLocation(ownerClass.superName, invokedMethod.name, invokedMethod.desc);
+            actualOwner = ownerClass.superName;
           }
-          /*
-            TODO: change naming of plugin-classes
-            there are multiple possible method-holders so it's necessary to use internal plugin class name for it
-            String shortcut = getShortcutOfPluginClass(ownerClassName);
-            calledMethod = LocationUtils.getMethodLocation(shortcut, invokedMethod.name, invokedMethod.desc);
-          */
         }
 
+        if (hasUnresolvedClass(actualOwner, resolver, ctx)) {
+          //actualOwner has some unresolved class => most likely that this class contains(-ed) the sought-for method
+          return;
+        }
+
+
+        String calledMethod = LocationUtils.getMethodLocation(ownerClassName, invokedMethod.name, invokedMethod.desc);
         ctx.registerProblem(new MethodNotFoundProblem(calledMethod), ProblemLocation.fromMethod(clazz.name, method));
+
       } else {
         checkAccessModifier(actualLocation, ctx, resolver, clazz, method);
       }
@@ -72,13 +79,28 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
     }
   }
 
-  @NotNull
-  private String getShortcutOfPluginClass(@NotNull String className) {
-    String[] words = className.split("/");
-    if (words.length <= 2) {
-      return className;
+  private boolean hasUnresolvedClass(@NotNull String actualOwner,
+                                     @NotNull Resolver resolver,
+                                     @NotNull VerificationContext ctx) {
+    if (resolver.findClass(actualOwner) == null) {
+      return true;
     }
-    return words[0] + "/.../" + words[words.length - 1];
+
+    Set<Problem> allProblems = ((VerificationContextImpl) ctx).getProblems().getAllProblems();
+
+    Set<String> unresolvedClasses = ResolverUtil.collectUnresolvedClasses(resolver, actualOwner);
+
+    for (Problem problem : allProblems) {
+      if (problem instanceof ClassNotFoundProblem) {
+        String unknownClass = ((ClassNotFoundProblem) problem).getUnknownClass();
+        if (unresolvedClasses.contains(unknownClass)) {
+          return true;
+        }
+      }
+    }
+
+
+    return false;
   }
 
   private void checkAccessModifier(@NotNull ResolverUtil.MethodLocation actualLocation,

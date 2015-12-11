@@ -47,4 +47,7 @@ public class MethodProblems {
   public void brokenNonFoundMethod() {
     AnAction.nonExistingMethod();
   }
+
+  public void nonExistingInvocation() {
+  }
 }

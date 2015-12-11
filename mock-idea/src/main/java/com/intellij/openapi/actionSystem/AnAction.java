@@ -10,9 +10,6 @@ public abstract class AnAction {
     return false;
   }
 
-  /**
-   * Override with true returned if your action has to display its text along with the icon when placed in the toolbar
-   */
   public boolean displayTextInToolbar() {
     return false;
   }

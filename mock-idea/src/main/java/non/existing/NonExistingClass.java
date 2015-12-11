@@ -7,4 +7,8 @@ public class NonExistingClass {
   public static void nonExistingMethod() {
 
   }
+
+  public void nonExistingInstanceMethod() {
+
+  }
 }

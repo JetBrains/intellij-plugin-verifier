@@ -1,9 +1,13 @@
 package com.intellij.structure.resolvers;
 
+import com.google.common.base.Predicates;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
+
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author Dennis.Ushakov
@@ -46,6 +50,16 @@ public class ResolverUtil {
 
     return null;
   }
+
+  @NotNull
+  public static Set<String> collectUnresolvedClasses(@NotNull Resolver resolver, @NotNull String className) {
+    ClassNode node = resolver.findClass(className);
+    if (node == null) {
+      return Collections.singleton(className);
+    }
+    return new ParentsVisitor(resolver).collectUnresolvedParents(className, Predicates.<String>alwaysFalse());
+  }
+
 
   public static class MethodLocation {
 
