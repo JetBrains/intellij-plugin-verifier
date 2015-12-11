@@ -1,9 +1,11 @@
 package com.jetbrains.pluginverifier.format;
 
+import com.jetbrains.pluginverifier.utils.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Comparator;
 
 /**
  * @author Sergey Evdokimov
@@ -11,14 +13,28 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "update")
 public class UpdateInfo {
 
+  public static final Comparator<UpdateInfo> UPDATE_NUMBER_COMPARATOR = new Comparator<UpdateInfo>() {
+    @Override
+    public int compare(@NotNull UpdateInfo o1, @NotNull UpdateInfo o2) {
+      Integer u1 = o1.getUpdateId();
+      Integer u2 = o2.getUpdateId();
+      if (u1 != null && u2 != null) {
+        return u1 - u2;
+      }
+      if (u1 != null) {
+        return -1;
+      }
+      if (u2 != null) {
+        return 1;
+      }
+      return VersionComparatorUtil.compare(o1.getVersion(), o2.getVersion());
+    }
+  };
+
   private Integer updateId;
-
   private String pluginId;
-
   private String pluginName;
-
   private String version;
-
   private Long cdate;
 
   public UpdateInfo() {
@@ -92,8 +108,7 @@ public class UpdateInfo {
     if (pluginId != null && !pluginId.isEmpty()) {
       if (version == null || version.isEmpty()) {
         return pluginId + (updateId == null ? "" : "#" + updateId);
-      }
-      else {
+      } else {
         return pluginId + ':' + version;
       }
     }

@@ -22,8 +22,13 @@ public class IllegalMethodAccessProblem extends Problem {
   }
 
   @Override
+  public String getDescriptionPrefix() {
+    return "illegal invocation of";
+  }
+
+  @Override
   public String getDescription() {
-    return "illegal invocation of " + myMethodAccess.getDescription() + " method " + myMethod;
+    return getDescriptionPrefix() + " " + myMethodAccess.getDescription() + " method " + myMethod;
   }
 
   public String getMethod() {

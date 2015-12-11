@@ -14,11 +14,16 @@ public class VerificationProblem extends Problem {
   private final String myDescription;
 
   public VerificationProblem() {
-    myDescription = "Unknown verification problem (see build log for details)";
+    myDescription = getDescriptionPrefix() + " (see build log for details)";
   }
 
   public VerificationProblem(@NotNull String description) {
     myDescription = description;
+  }
+
+  @Override
+  public String getDescriptionPrefix() {
+    return "Unknown verification problem";
   }
 
   @Override

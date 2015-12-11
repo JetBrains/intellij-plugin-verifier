@@ -203,7 +203,7 @@ public class ProblemUtils {
    * Transforms {@literal Map<Update -> [Problems]>  TO Multimap<Problem -> [Updates]>}
    */
   @NotNull
-  public static Multimap<Problem, UpdateInfo> rearrangeProblemsMap(@NotNull Map<UpdateInfo, Collection<Problem>> currentProblemsMap) {
+  public static Multimap<Problem, UpdateInfo> flipProblemsMap(@NotNull Map<UpdateInfo, Collection<Problem>> currentProblemsMap) {
     Multimap<Problem, UpdateInfo> currentProblemsToUpdates = ArrayListMultimap.create();
 
     //rearrange existing map: Map<Problem -> [plugin ids]>

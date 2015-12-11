@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.commands;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.intellij.structure.utils.ProductUpdateBuild;
 import com.jetbrains.pluginverifier.VerifierCommand;
@@ -26,7 +27,7 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * Prints new problems of current plugins verifications compared to all
+ * Prints new problems of current plugins verification compared to all
  * the previous verifications of the same trunk builds (i.e. all IDEs 143.*)
  *
  * @author Sergey Evdokimov
@@ -102,7 +103,7 @@ public class NewProblemsCommand extends VerifierCommand {
       if (!problemsInBuild.isEmpty()) {
         System.out.printf("\nIn %s found %d new problems:\n", prevBuild, problemsInBuild.size());
 
-        ArrayListMultimap<Problem, UpdateInfo> prevBuildProblems = ArrayListMultimap.create();
+        Multimap<Problem, UpdateInfo> prevBuildProblems = ArrayListMultimap.create();
         for (Problem problem : problemsInBuild) {
           Collection<UpdateInfo> affectedUpdates = ProblemUtils.sortUpdates(currentProblemsMap.get(problem));
           prevBuildProblems.putAll(problem, affectedUpdates);
@@ -150,62 +151,73 @@ public class NewProblemsCommand extends VerifierCommand {
       throw FailUtil.fail("Report not found: " + reportToCheck);
     }
 
-    ResultsElement currentCheckResult = ProblemUtils.loadProblems(reportToCheck);
+    ResultsElement checkResult = ProblemUtils.loadProblems(reportToCheck);
+
+    final Map<UpdateInfo, Collection<Problem>> updateToProblems = checkResult.asMap();
+    final String ideBuild = checkResult.getIde();
+
+
+    //--------------Load previous checks-------------------
 
     ResultsRepository resultsRepository = getResultsRepository(commandLine);
 
-    List<String> previousCheckedBuilds = findPreviousBuilds(currentCheckResult.getIde(), resultsRepository);
+    List<String> checkedBuilds;
+    try {
+      checkedBuilds = findPreviousBuilds(ideBuild, resultsRepository);
+    } catch (IOException e) {
+      throw FailUtil.fail("Couldn't get check results list from the server " + resultsRepository.getRepositoryUrl());
+    }
 
-    if (previousCheckedBuilds.isEmpty()) {
+    List<ResultsElement> checks = new ArrayList<ResultsElement>();
+    try {
+      for (String build : checkedBuilds) {
+        checks.add(ProblemUtils.loadProblems(resultsRepository.getReportFile(build)));
+      }
+    } catch (IOException e) {
+      throw FailUtil.fail("Couldn't get check from the server " + resultsRepository.getRepositoryUrl());
+    }
+
+    if (checks.isEmpty()) {
       System.err.println("Plugin repository does not contain check result to compare.");
       return 0;
     }
 
+    //--------------Drop out old API problems------------------
 
-    //---------------------------------------------------
+    dropUnrelatedProblems(updateToProblems, checks);
 
-    Multimap<Problem, UpdateInfo> currentProblemsMap = ProblemUtils.rearrangeProblemsMap(currentCheckResult.asMap());
-
+    Multimap<Problem, UpdateInfo> currentProblems = ProblemUtils.flipProblemsMap(updateToProblems);
 
     //Problems of this check
-    Set<Problem> currProblems = new HashSet<Problem>(currentProblemsMap.keySet());
-
-    //leave only NEW' problems of this check compared to the EARLIEST check
-    ResultsElement smallestCheckResult = ProblemUtils.loadProblems(resultsRepository.getReportFile(previousCheckedBuilds.get(0)));
+    Set<Problem> currProblems = new HashSet<Problem>(currentProblems.keySet());
 
     //remove old API problems
-    currProblems.removeAll(smallestCheckResult.getProblems());
+    currProblems.removeAll(checks.get(0).getProblems());
 
     //Map: <Build Number -> List[Problem for which this problem occurred first]>
-    Multimap<String, Problem> firstOccurrenceBuildToProblems = ArrayListMultimap.create();
+    Multimap<String, Problem> firstOccurrence = ArrayListMultimap.create();
 
-    for (int i = 1; i < previousCheckedBuilds.size(); i++) {
-      String prevBuild = previousCheckedBuilds.get(i);
+    for (int i = 1; i < checkedBuilds.size(); i++) {
+      String prevBuild = checkedBuilds.get(i);
 
-      //check result in ascending order of builds
-      ResultsElement prevBuildResult = ProblemUtils.loadProblems(resultsRepository.getReportFile(prevBuild));
-
-      for (Problem problem : prevBuildResult.getProblems()) {
+      for (Problem problem : checks.get(i).getProblems()) {
         if (currProblems.remove(problem)) {
-          firstOccurrenceBuildToProblems.put(prevBuild, problem);
+          firstOccurrence.put(prevBuild, problem);
         }
       }
     }
 
-    final String currentBuildName = currentCheckResult.getIde();
+    //map of unresolved problems: <IDEA-build -> All the problems of this build (in which these problems were met first)>
+    firstOccurrence.putAll(ideBuild, currProblems);
 
-    //map of UNRESOLVED problems: <IDEA-build -> ALL the problems of this build (in which these problems were met first)>
-    firstOccurrenceBuildToProblems.putAll(currentBuildName, currProblems);
-
-    //---------------------------------------------------
-
+    //---------------Print new API problems-------------------
 
     //ALL the checked builds (excluding the EARLIEST one)
-    Iterable<String> allBuilds = Iterables.concat(previousCheckedBuilds.subList(1, previousCheckedBuilds.size()), Collections.singleton(currentBuildName));
+    Iterable<String> allBuilds = Iterables.concat(checkedBuilds.subList(1, checkedBuilds.size()), Collections.singleton(ideBuild));
 
     TeamCityLog tc = TeamCityLog.getInstance(commandLine);
 
-    printTcProblems(currentProblemsMap, firstOccurrenceBuildToProblems, allBuilds, reportGrouping, tc);
+    printTcProblems(currentProblems, firstOccurrence, allBuilds, reportGrouping, tc);
 
 
     //number of NEW problems (excluding the EARLIEST check)
@@ -214,9 +226,10 @@ public class NewProblemsCommand extends VerifierCommand {
     final String text = String.format("Done, %d new %s found between %s and %s. Current build is %s",
         newProblemsCount,
         StringUtil.pluralize("problem", newProblemsCount),
-        previousCheckedBuilds.get(0),
-        previousCheckedBuilds.get(previousCheckedBuilds.size() - 1),
-        currentCheckResult.getIde());
+        checkedBuilds.get(0),
+        checkedBuilds.get(checkedBuilds.size() - 1),
+        ideBuild
+    );
 
     if (newProblemsCount > 0) {
       tc.buildStatusFailure(text);
@@ -226,4 +239,70 @@ public class NewProblemsCommand extends VerifierCommand {
 
     return 0;
   }
+
+  /**
+   * Drops out all the problems of plugins which were detected in
+   * the previous corresponding plugin-builds
+   * (because it's probably not the API breakage, but plugin severe incompatibility):
+   * e.g. plugin requires JDK 1.7 but check was performed against JDK 1.6 and some
+   * referenced classes (java.nio.file.Files etc.) were not found - so this is not a problem of the IntelliJ API
+   *
+   * @param updateToProblems current check result
+   * @param checks           all the previous checks
+   */
+  private void dropUnrelatedProblems(@NotNull Map<UpdateInfo, Collection<Problem>> updateToProblems,
+                                     @NotNull List<ResultsElement> checks) {
+    Multimap<String, UpdateInfo> idToUpdates = fillPluginIdToUpdates(updateToProblems, checks);
+
+    for (Map.Entry<UpdateInfo, Collection<Problem>> entry : updateToProblems.entrySet()) {
+      UpdateInfo update = entry.getKey();
+      Collection<Problem> problems = entry.getValue();
+
+      Collection<Problem> prevBuildProblems = getPreviousBuildProblems(update, idToUpdates, checks);
+
+      problems.removeAll(prevBuildProblems);
+    }
+  }
+
+  @NotNull
+  private Collection<Problem> getPreviousBuildProblems(@NotNull UpdateInfo curUpdate,
+                                                       @NotNull Multimap<String, UpdateInfo> idToUpdates,
+                                                       @NotNull List<ResultsElement> checks) {
+    List<UpdateInfo> allUpdates = new ArrayList<UpdateInfo>(idToUpdates.get(curUpdate.getPluginId()));
+    Collections.sort(allUpdates, UpdateInfo.UPDATE_NUMBER_COMPARATOR);
+
+    List<Problem> allProblems = new ArrayList<Problem>();
+
+    for (UpdateInfo update : Lists.reverse(allUpdates)) {
+      if (UpdateInfo.UPDATE_NUMBER_COMPARATOR.compare(update, curUpdate) < 0) {
+
+        for (ResultsElement check : checks) {
+          Collection<Problem> problems = check.asMap().get(update);
+          if (problems != null) {
+            allProblems.addAll(problems);
+          }
+        }
+      }
+    }
+
+    return allProblems;
+  }
+
+  @NotNull
+  private Multimap<String, UpdateInfo> fillPluginIdToUpdates(@NotNull Map<UpdateInfo, Collection<Problem>> updateToProblems,
+                                                             @NotNull List<ResultsElement> checks) {
+    Multimap<String, UpdateInfo> idToUpdates = ArrayListMultimap.create();
+
+    for (UpdateInfo updateInfo : updateToProblems.keySet()) {
+      idToUpdates.put(updateInfo.getPluginId(), updateInfo);
+    }
+
+    for (ResultsElement check : checks) {
+      for (UpdateInfo updateInfo : check.asMap().keySet()) {
+        idToUpdates.put(updateInfo.getPluginId(), updateInfo);
+      }
+    }
+    return idToUpdates;
+  }
+
 }

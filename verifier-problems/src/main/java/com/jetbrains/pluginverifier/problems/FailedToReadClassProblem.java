@@ -5,15 +5,24 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class FailedToReadClassProblem extends Problem {
 
-  public static final FailedToReadClassProblem INSTANCE = new FailedToReadClassProblem();
+  private String myClassName;
 
   public FailedToReadClassProblem() {
 
   }
 
+  public FailedToReadClassProblem(String className) {
+    myClassName = className;
+  }
+
+  @Override
+  public String getDescriptionPrefix() {
+    return "failed to read class";
+  }
+
   @Override
   public String getDescription() {
-    return "failed to read class";
+    return getDescriptionPrefix() + " " + myClassName;
   }
 
   @Override

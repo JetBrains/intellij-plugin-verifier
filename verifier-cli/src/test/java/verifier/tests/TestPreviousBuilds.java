@@ -44,6 +44,12 @@ public class TestPreviousBuilds {
       public File getReportFile(@NotNull String build) throws IOException {
         return new File(".");
       }
+
+      @NotNull
+      @Override
+      public String getRepositoryUrl() {
+        return "Dummy";
+      }
     };
 
     Assert.assertEquals(Arrays.asList("144.01", "IU-144.1901", "IU-144.1909"), NewProblemsCommand.findPreviousBuilds("144.1950", resultsRepository));

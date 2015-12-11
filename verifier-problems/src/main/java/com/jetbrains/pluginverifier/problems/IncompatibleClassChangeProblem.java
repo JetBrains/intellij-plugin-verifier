@@ -10,6 +10,11 @@ public class IncompatibleClassChangeProblem extends Problem {
   }
 
   @Override
+  public String getDescriptionPrefix() {
+    return null;
+  }
+
+  @Override
   public String getDescription() {
     return null;
   }

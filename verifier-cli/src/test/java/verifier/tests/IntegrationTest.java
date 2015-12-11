@@ -20,7 +20,7 @@ public class IntegrationTest {
   public void issue2() throws Exception {
     runCheck(
         "AWSCloudFormation-0.3.9.zip", "ideaIC-14.0.4.tar.gz",
-        "accessing to unknown class: com.intellij.json.JsonContextType\n  void com.intellij.aws.cloudformation.CloudFormationCodeContextType#<init>()");
+        "accessing to unknown class com.intellij.json.JsonContextType\n  void com.intellij.aws.cloudformation.CloudFormationCodeContextType#<init>()");
   }
 
   @Test

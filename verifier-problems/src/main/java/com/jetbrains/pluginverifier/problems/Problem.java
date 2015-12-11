@@ -7,6 +7,9 @@ import javax.xml.bind.annotation.XmlTransient;
  */
 public abstract class Problem {
 
+  @XmlTransient
+  public abstract String getDescriptionPrefix();
+
 
   @XmlTransient
   public abstract String getDescription();

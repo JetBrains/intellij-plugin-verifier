@@ -35,4 +35,10 @@ public class VerifierServiceRepository extends ResultsRepository {
   public void uploadReportFile(@NotNull File fileToUpload) throws IOException {
     VerifierServiceApi.uploadReportFile(myRepositoryUrl, fileToUpload);
   }
+
+  @NotNull
+  @Override
+  public String getRepositoryUrl() {
+    return myRepositoryUrl;
+  }
 }

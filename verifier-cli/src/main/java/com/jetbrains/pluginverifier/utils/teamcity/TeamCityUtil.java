@@ -70,9 +70,9 @@ public class TeamCityUtil {
   }
 
   public static void groupByType(@NotNull TeamCityLog log, @NotNull Map<UpdateInfo, Collection<Problem>> map) {
-    Multimap<Problem, UpdateInfo> problem2Updates = ProblemUtils.rearrangeProblemsMap(map);
+    Multimap<Problem, UpdateInfo> problem2Updates = ProblemUtils.flipProblemsMap(map);
 
-    ArrayListMultimap<String, Problem> problemType2Problem = ArrayListMultimap.create();
+    Multimap<String, Problem> problemType2Problem = ArrayListMultimap.create();
     for (Problem problem : problem2Updates.keySet()) {
       problemType2Problem.put(problem.getClass().getCanonicalName(), problem);
     }
@@ -82,20 +82,20 @@ public class TeamCityUtil {
 
       if (problems.isEmpty()) continue;
 
-      String commonPrefix = cutCommonPrefix(problems);
-      TeamCityLog.TestSuite problemTypeSuite = log.testSuiteStarted(commonPrefix);
+      String descriptionPrefix = problems.get(0).getDescriptionPrefix();
+      TeamCityLog.TestSuite problemTypeSuite = log.testSuiteStarted("\"" + descriptionPrefix + "\"");
 
       for (Problem problem : problems) {
-        String description = StringUtil.trimStart(problem.getDescription(), commonPrefix).trim();
+        String description = StringUtil.trimStart(problem.getDescription(), descriptionPrefix).trim();
         Collection<UpdateInfo> updateInfos = problem2Updates.get(problem);
 
-        TeamCityLog.TestSuite problemSuite = log.testSuiteStarted(description);
+        TeamCityLog.TestSuite problemSuite = log.testSuiteStarted("[" + description + "]");
 
         for (UpdateInfo updateInfo : updateInfos) {
-          String plugin = updateInfo.getPluginId() + " (" + updateInfo.getVersion() + ")";
+          String plugin = "(" + updateInfo.getPluginId() + "-" + updateInfo.getVersion() + ")";
           TeamCityLog.Test test = log.testStarted(plugin);
           String pluginUrl = getPluginUrl(updateInfo);
-          log.testFailed(plugin, pluginUrl + '\n' + updateInfo, problem.getDescription());
+          log.testFailed(plugin, "Plugin URL: " + pluginUrl + '\n' + "PluginId: " + updateInfo, problem.getDescription());
           test.close();
         }
 

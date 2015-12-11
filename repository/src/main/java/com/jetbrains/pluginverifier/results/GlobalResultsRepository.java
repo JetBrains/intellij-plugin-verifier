@@ -41,4 +41,10 @@ public class GlobalResultsRepository extends ResultsRepository {
     return DownloadUtils.getCheckResultFile(build);
   }
 
+  @NotNull
+  @Override
+  public String getRepositoryUrl() {
+    return RepositoryConfiguration.getInstance().getPluginRepositoryUrl();
+  }
+
 }

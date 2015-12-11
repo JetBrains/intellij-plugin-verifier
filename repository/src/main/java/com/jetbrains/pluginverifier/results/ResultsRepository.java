@@ -25,4 +25,6 @@ public abstract class ResultsRepository {
     //Default implementation does nothing
   }
 
+  @NotNull
+  public abstract String getRepositoryUrl();
 }
