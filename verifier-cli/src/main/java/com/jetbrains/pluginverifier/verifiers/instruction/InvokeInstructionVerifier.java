@@ -50,10 +50,18 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
         String calledMethod = LocationUtils.getMethodLocation(ownerClassName, invokedMethod.name, invokedMethod.desc);
 
         if (ownerClassName.equals(clazz.name)) {
+
           // Looks like method was defined in some parent class
           if (StringUtil.isNotEmpty(ownerClass.superName) && ownerClass.interfaces.isEmpty()) {
-            calledMethod = LocationUtils.getMethodLocation(ownerClassName, invokedMethod.name, invokedMethod.desc);
+            //the only possible method holder is a direct parent class
+            calledMethod = LocationUtils.getMethodLocation(ownerClass.superName, invokedMethod.name, invokedMethod.desc);
           }
+          /*
+            TODO: change naming of plugin-classes
+            there are multiple possible method-holders so it's necessary to use internal plugin class name for it
+            String shortcut = getShortcutOfPluginClass(ownerClassName);
+            calledMethod = LocationUtils.getMethodLocation(shortcut, invokedMethod.name, invokedMethod.desc);
+          */
         }
 
         ctx.registerProblem(new MethodNotFoundProblem(calledMethod), ProblemLocation.fromMethod(clazz.name, method));
@@ -62,6 +70,15 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       }
 
     }
+  }
+
+  @NotNull
+  private String getShortcutOfPluginClass(@NotNull String className) {
+    String[] words = className.split("/");
+    if (words.length <= 2) {
+      return className;
+    }
+    return words[0] + "/.../" + words[words.length - 1];
   }
 
   private void checkAccessModifier(@NotNull ResolverUtil.MethodLocation actualLocation,
