@@ -160,18 +160,6 @@ public class TeamCityUtil {
       String pluginLink = REPOSITORY_PLUGIN_ID_BASE + pluginId;
       TeamCityLog.TestSuite pluginSuite = log.testSuiteStarted(pluginId);
 
-      boolean pluginHasProblems = false;
-      for (UpdateInfo updateInfo : updateInfos) {
-        pluginHasProblems |= !map.get(updateInfo).isEmpty();
-      }
-
-      if (pluginHasProblems) {
-        String linkTestName = "(link)";
-        TeamCityLog.Test linkTest = log.testStarted(linkTestName);
-        log.testFailed(linkTestName, pluginLink, pluginLink);
-        linkTest.close();
-      }
-
       for (UpdateInfo updateInfo : updateInfos) {
 
         List<Problem> problems = ProblemUtils.sortProblems(map.get(updateInfo));
@@ -188,7 +176,7 @@ public class TeamCityUtil {
           String testName = "(" + version + ")";
           TeamCityLog.Test test = log.testStarted(testName);
           log.testStdErr(testName, builder.toString());
-          log.testFailed(testName, updateInfo + " has " + problems.size() + " " + pluralize("problem", problems.size()), "");
+          log.testFailed(testName, "Plugin URL: " + pluginLink + '\n' + updateInfo + " has " + problems.size() + " " + pluralize("problem", problems.size()), "");
           test.close();
 
         }
