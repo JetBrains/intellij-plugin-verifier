@@ -95,8 +95,11 @@ public class DownloadUtils {
         //noinspection ResultOfMethodCallIgnored
         file.setLastModified(lastModifiedRes.getTime());
 
+      } else
+        //noinspection StatementWithEmptyBody
+        if (responseCode == 304) { /* Not modified */
+
       }
-//      else if (responseCode == 304) { /* Not modified */ }
       else {
         throw new IOException("Failed to download check result: " + responseCode);
       }

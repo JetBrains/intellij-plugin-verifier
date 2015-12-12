@@ -471,6 +471,9 @@ public class CheckIdeCommand extends VerifierCommand {
     return 0;
   }
 
+  /**
+   * Drops out non-last builds of given plugins
+   */
   @NotNull
   private Set<UpdateInfo> prepareImportantUpdates(@NotNull Collection<UpdateInfo> updates) {
     Map<String, Integer> lastBuilds = new HashMap<String, Integer>();

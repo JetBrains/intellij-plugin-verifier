@@ -11,6 +11,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="common-utils" />
+    <orderEntry type="module" module-name="intellij-plugin-structure" />
     <orderEntry type="module" module-name="verifier-cli" />
     <orderEntry type="module" module-name="verifier-problems" />
     <orderEntry type="module" module-name="repository" />

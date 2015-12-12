@@ -165,7 +165,7 @@ public class NewProblemsCommand extends VerifierCommand {
     try {
       checkedBuilds = findPreviousBuilds(ideBuild, resultsRepository);
     } catch (IOException e) {
-      throw FailUtil.fail("Couldn't get check results list from the server " + resultsRepository.getRepositoryUrl());
+      throw FailUtil.fail("Couldn't get check results list from the server " + resultsRepository.getRepositoryUrl(), e);
     }
 
     List<ResultsElement> checks = new ArrayList<ResultsElement>();
@@ -174,7 +174,7 @@ public class NewProblemsCommand extends VerifierCommand {
         checks.add(ProblemUtils.loadProblems(resultsRepository.getReportFile(build)));
       }
     } catch (IOException e) {
-      throw FailUtil.fail("Couldn't get check from the server " + resultsRepository.getRepositoryUrl());
+      throw FailUtil.fail("Couldn't get check from the server " + resultsRepository.getRepositoryUrl(), e);
     }
 
     if (checks.isEmpty()) {
