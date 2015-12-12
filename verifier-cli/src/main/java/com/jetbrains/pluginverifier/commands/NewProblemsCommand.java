@@ -25,6 +25,38 @@ public class NewProblemsCommand extends VerifierCommand {
     super("new-problems");
   }
 
+  private static List<String> findPreviousBuilds(String currentBuild) throws IOException {
+    List<String> resultsOnInPluginRepository = GlobalRepository.loadAvailableCheckResultsList();
+
+    String firstBuild = System.getProperty("firstBuild");
+    if (firstBuild != null) {
+      int idx = resultsOnInPluginRepository.indexOf(firstBuild);
+      if (idx != -1) {
+        resultsOnInPluginRepository = resultsOnInPluginRepository.subList(idx, resultsOnInPluginRepository.size());
+      }
+    }
+
+    Pair<String, Integer> parsedCurrentBuild = parseBuildNumber(currentBuild);
+
+    TreeMap<Integer, String> buildMap = new TreeMap<Integer, String>();
+
+    for (String build : resultsOnInPluginRepository) {
+      Pair<String, Integer> pair = parseBuildNumber(build);
+
+      if (parsedCurrentBuild.first.equals(pair.first) && parsedCurrentBuild.second > pair.second) {
+        buildMap.put(pair.second, build);
+      }
+    }
+
+    return new ArrayList<String>(buildMap.values());
+  }
+
+  private static Pair<String, Integer> parseBuildNumber(String buildNumber) {
+    int idx = buildNumber.lastIndexOf('.');
+
+    return Pair.create(buildNumber.substring(0, idx), Integer.parseInt(buildNumber.substring(idx + 1)));
+  }
+
   @Override
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.isEmpty()) {
@@ -60,7 +92,7 @@ public class NewProblemsCommand extends VerifierCommand {
     String firstCheckedBuild = previousCheckedBuild.get(0);
     ResultsElement firstBuildResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResult(firstCheckedBuild));
 
-    problems.removeAll(firstBuildResult.getProblems());
+    problems.removeAll(firstBuildResult.getAllProblems());
 
     int newProblemsCount = problems.size();
 
@@ -68,7 +100,7 @@ public class NewProblemsCommand extends VerifierCommand {
       String prevBuild = previousCheckedBuild.get(i);
       ResultsElement prevBuildResult = ProblemUtils.loadProblems(DownloadUtils.getCheckResult(prevBuild));
 
-      for (Problem problem : prevBuildResult.getProblems()) {
+      for (Problem problem : prevBuildResult.getAllProblems()) {
         if (problems.remove(problem)) {
           buildToProblems.put(prevBuild, problem);
         }
@@ -111,37 +143,5 @@ public class NewProblemsCommand extends VerifierCommand {
                                         previousCheckedBuild.get(previousCheckedBuild.size() - 1)));
 
     return 0;
-  }
-
-  private static List<String> findPreviousBuilds(String currentBuild) throws IOException {
-    List<String> resultsOnInPluginRepository = GlobalRepository.loadAvailableCheckResultsList();
-
-    String firstBuild = System.getProperty("firstBuild");
-    if (firstBuild != null) {
-      int idx = resultsOnInPluginRepository.indexOf(firstBuild);
-      if (idx != -1) {
-        resultsOnInPluginRepository = resultsOnInPluginRepository.subList(idx, resultsOnInPluginRepository.size());
-      }
-    }
-
-    Pair<String, Integer> parsedCurrentBuild = parseBuildNumber(currentBuild);
-
-    TreeMap<Integer, String> buildMap = new TreeMap<Integer, String>();
-
-    for (String build : resultsOnInPluginRepository) {
-      Pair<String, Integer> pair = parseBuildNumber(build);
-
-      if (parsedCurrentBuild.first.equals(pair.first) && parsedCurrentBuild.second > pair.second) {
-        buildMap.put(pair.second, build);
-      }
-    }
-
-    return new ArrayList<String>(buildMap.values());
-  }
-
-  private static Pair<String, Integer> parseBuildNumber(String buildNumber) {
-    int idx = buildNumber.lastIndexOf('.');
-
-    return Pair.create(buildNumber.substring(0, idx), Integer.parseInt(buildNumber.substring(idx + 1)));
   }
 }

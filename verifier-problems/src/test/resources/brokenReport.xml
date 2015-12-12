@@ -1,0 +1,30 @@
+<results ide="IU-144.0000">
+    <map>9 0 1 2 3 4 5 6 7 8
+    </map>
+    <classNotFoundProblem>
+        <unknownClass>a</unknownClass>
+    </classNotFoundProblem>
+    <duplicateClassProblem>
+        <className>a</className>
+        <moniker>b</moniker>
+    </duplicateClassProblem>
+    <failedToReadClassProblem>
+        <className>a</className>
+    </failedToReadClassProblem>
+    <illegalMethodAccessProblem>
+        <method>a</method>
+        <methodAccess>PACKAGE_PRIVATE</methodAccess>
+    </illegalMethodAccessProblem>
+    <incompatibleClassChangeProblem/>
+    <methodNotFoundProblem>
+        <calledMethod>a</calledMethod>
+    </methodNotFoundProblem>
+    <methodNotImplementedProblem>
+        <method>a</method>
+    </methodNotImplementedProblem>
+    <overridingFinalMethodProblem>
+        <method>a</method>
+    </overridingFinalMethodProblem>
+    <verificationProblem/>
+    <update updateId="12345"/>
+</results>

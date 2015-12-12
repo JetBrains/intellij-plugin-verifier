@@ -2,7 +2,9 @@ package com.jetbrains.pluginverifier.utils;
 
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.UpdateInfo;
+import org.jetbrains.annotations.NotNull;
 
+import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -17,7 +19,7 @@ public class ResultsElement {
 
   private String ide;
 
-  private List<Problem> problems = new ArrayList<Problem>();
+  private List<Object> problems = new ArrayList<Object>();
 
   private List<UpdateInfo> updates = new ArrayList<UpdateInfo>();
 
@@ -32,13 +34,27 @@ public class ResultsElement {
     this.ide = ide;
   }
 
-  @XmlElementRef
-  public List<Problem> getProblems() {
+  @NotNull
+  public List<Problem> getAllProblems() {
+    List<Problem> result = new ArrayList<Problem>();
+    for (Object o : this.problems) {
+      if (o instanceof Problem) {
+        result.add((Problem) o);
+      }
+    }
+    return result;
+  }
+
+  /*
+  This annotation allows unmarshaller to treat unknown classes as an instance of javax.xml.bind.Element
+   */
+  @XmlAnyElement(lax = true)
+  public List<Object> getProblems() {
     return problems;
   }
 
-  public void setProblems(List<Problem> problems) {
-    this.problems = problems;
+  public void setProblems(List<Object> problems) {
+    this.problems = new ArrayList<Object>(problems);
   }
 
   @XmlElementRef
@@ -73,7 +89,15 @@ public class ResultsElement {
       else {
         problems = new ArrayList<Problem>(problemsCount);
         for (int i = 0; i < problemsCount; i++) {
-          problems.add(this.problems.get(sc.nextInt()));
+
+          //Problem class could be unknown to the JAXBContext.
+          //So due to @XmlAnyElement(lax=true) unmarshaller will treat
+          //this unknown problem as a DOM element (not a Problem class)
+
+          Object o = this.problems.get(sc.nextInt());
+          if (o instanceof Problem) {
+            problems.add((Problem) o);
+          }
         }
       }
 
