@@ -29,6 +29,7 @@ public class ProblemUtils {
       //if necessary add problem here (and add default constructor for it)
       JAXB_CONTEXT = JAXBContext.newInstance(
           //--------PROBLEMS--------
+          Problem.class,
           ClassNotFoundProblem.class,
           DuplicateClassProblem.class,
           FailedToReadClassProblem.class,
@@ -37,6 +38,7 @@ public class ProblemUtils {
           MethodNotFoundProblem.class,
           MethodNotImplementedProblem.class,
           OverridingFinalMethodProblem.class,
+          VerificationProblem.class,
 
           //--------RESULT-ELEMENTS--------
           ResultsElement.class,

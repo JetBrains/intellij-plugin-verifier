@@ -6,9 +6,12 @@ package com.jetbrains.pluginverifier.problems;
 
 import org.jetbrains.annotations.NotNull;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 /**
  * This problem is not saved to report-file: it's only shown on verification status page
  */
+@XmlRootElement
 public class VerificationProblem extends Problem {
 
   private final String myDescription;
@@ -35,7 +38,6 @@ public class VerificationProblem extends Problem {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
 
     VerificationProblem that = (VerificationProblem) o;
 

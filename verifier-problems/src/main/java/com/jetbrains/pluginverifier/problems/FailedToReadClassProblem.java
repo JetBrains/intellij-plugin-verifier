@@ -15,6 +15,14 @@ public class FailedToReadClassProblem extends Problem {
     myClassName = className;
   }
 
+  public String getClassName() {
+    return myClassName;
+  }
+
+  public void setClassName(String className) {
+    myClassName = className;
+  }
+
   @Override
   public String getDescriptionPrefix() {
     return "failed to read class";

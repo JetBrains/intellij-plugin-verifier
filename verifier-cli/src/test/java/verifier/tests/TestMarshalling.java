@@ -1,10 +1,7 @@
 package verifier.tests;
 
 import com.jetbrains.pluginverifier.format.UpdateInfo;
-import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
-import com.jetbrains.pluginverifier.problems.IllegalMethodAccessProblem;
-import com.jetbrains.pluginverifier.problems.MethodNotFoundProblem;
-import com.jetbrains.pluginverifier.problems.Problem;
+import com.jetbrains.pluginverifier.problems.*;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.results.plugin.PluginCheckResult;
@@ -12,12 +9,30 @@ import com.jetbrains.pluginverifier.utils.ProblemUtils;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
  * Created by Sergey.Patrikeev
  */
 public class TestMarshalling {
+
+  public static void main(String[] args) throws IOException {
+    Map<UpdateInfo, Collection<Problem>> map = new HashMap<UpdateInfo, Collection<Problem>>();
+    List<Problem> problems = new ArrayList<Problem>();
+    problems.add(new ClassNotFoundProblem("a"));
+    problems.add(new DuplicateClassProblem("a", "b"));
+    problems.add(new FailedToReadClassProblem("a"));
+    problems.add(new IllegalMethodAccessProblem("a", IllegalMethodAccessProblem.MethodAccess.PACKAGE_PRIVATE));
+    problems.add(new IncompatibleClassChangeProblem());
+    problems.add(new MethodNotFoundProblem("a"));
+    problems.add(new MethodNotImplementedProblem("a"));
+    problems.add(new OverridingFinalMethodProblem("a"));
+    problems.add(new VerificationProblem("a"));
+    map.put(new UpdateInfo(12345), problems);
+    ProblemUtils.saveProblems(new File("brokenReport.xml"), "IU-144.0000", map);
+
+  }
 
   @Test
   public void testMarshallUnmarshall() throws Exception {
