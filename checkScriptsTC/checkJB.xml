@@ -29,20 +29,11 @@
                         <argument>check-ide</argument>
                         <argument>idea-dist</argument>
 
-                        <!--
-                        Uncomment these two report files if you want
-                        to check ALL the builds of "brokenPlugins" content, because
-                        otherwise already broken plugins from the -epf parameter will not be checked.
-                        -->
-
-                        <!--
                         <argument>-d</argument>
                         <argument>brokenPlugins_actual.txt</argument>
 
-
                         <argument>-report</argument>
                         <argument>report.html</argument>
-                        -->
 
                         <argument>-epf</argument>
                         <argument>brokenPlugins.txt</argument>
@@ -55,7 +46,6 @@
 
                         <argument>-g</argument>
                         <argument>plugin</argument>
-
 
 
                         <argument>-r</argument>
@@ -72,7 +62,7 @@
                         </systemProperty>
                         <systemProperty>
                             <key>fail.on.cyclic.dependencies</key>
-                            <value>true</value>
+                            <value>false</value>
                         </systemProperty>
                         <systemProperty>
                             <key>exitCode0</key>

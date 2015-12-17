@@ -51,14 +51,14 @@ public class ReferencesVerifier implements Verifier {
       verifier.verify(node, resolver, ctx);
     }
 
-    @SuppressWarnings("unchecked") List<MethodNode> methods = (List<MethodNode>) node.methods;
+    List<MethodNode> methods = (List<MethodNode>) node.methods;
     for (MethodNode method : methods) {
       for (MethodVerifier verifier : Verifiers.getMemberVerifiers()) {
         verifier.verify(node, method, resolver, ctx);
       }
 
       final InsnList instructions = method.instructions;
-      for (@SuppressWarnings("unchecked") Iterator<AbstractInsnNode> i = instructions.iterator(); i.hasNext(); ) {
+      for (Iterator<AbstractInsnNode> i = instructions.iterator(); i.hasNext(); ) {
         AbstractInsnNode instruction = i.next();
         for (InstructionVerifier verifier : Verifiers.getInstructionVerifiers()) {
           verifier.verify(node, method, instruction, resolver, ctx);
@@ -66,7 +66,7 @@ public class ReferencesVerifier implements Verifier {
       }
     }
 
-    @SuppressWarnings("unchecked") List<FieldNode> fields = (List<FieldNode>) node.fields;
+    List<FieldNode> fields = (List<FieldNode>) node.fields;
     for (FieldNode field : fields) {
       for (FieldNode method : fields) {
         for (FieldVerifier verifier : Verifiers.getFieldVerifiers()) {

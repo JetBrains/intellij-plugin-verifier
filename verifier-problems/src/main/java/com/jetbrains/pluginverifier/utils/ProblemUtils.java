@@ -38,6 +38,7 @@ public class ProblemUtils {
           MethodNotFoundProblem.class,
           MethodNotImplementedProblem.class,
           OverridingFinalMethodProblem.class,
+          UnresolvedDependencyProblem.class,
 
           //--------RESULT-ELEMENTS--------
           ResultsElement.class,

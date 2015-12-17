@@ -213,14 +213,18 @@ public class CheckIdeCommand extends VerifierCommand {
                                                      @NotNull String version,
                                                      @NotNull List<String> toBeCheckedPluginIds,
                                                      @NotNull List<UpdateInfo> compatibleUpdates,
-                                                     @NotNull List<Trinity<UpdateInfo, String, ? extends Exception>> incorrectPlugins) {
+                                                     @NotNull List<Trinity<UpdateInfo, String, ? extends Exception>> incorrectPlugins,
+                                                     @NotNull Predicate<UpdateInfo> updateFilter) {
     if (tc == TeamCityLog.NULL_LOG) return 0;
 
     Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
 
     //fill verification problems
     for (Trinity<UpdateInfo, String, ? extends Exception> trinity : incorrectPlugins) {
-      problems.put(new VerificationProblem(trinity.getSecond(), Util.getStackTrace(trinity.getThird())), trinity.getFirst());
+      UpdateInfo updateInfo = trinity.getFirst();
+      if (updateFilter.apply(updateInfo)) {
+        problems.put(new VerificationProblem(trinity.getSecond(), Util.getStackTrace(trinity.getThird())), updateInfo);
+      }
     }
 
     //fill missing plugin problems
@@ -417,7 +421,6 @@ public class CheckIdeCommand extends VerifierCommand {
     }
 
 
-    //Is it a full check? (i.e. all the specified plugin builds were checked) => save report.html
     if (checkExcludedBuilds) {
 
       if (dumpBrokenPluginsFile != null) {
@@ -441,7 +444,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     printTeamCityProblems(tc, results, updateFilter, reportGrouping);
 
-    int totalProblemsCnt = printMissingAndIncorrectPlugins(tc, ide.getVersion(), toBeCheckedPluginIds, compatibleToBeCheckedUpdates, incorrectPlugins);
+    int totalProblemsCnt = printMissingAndIncorrectPlugins(tc, ide.getVersion(), toBeCheckedPluginIds, compatibleToBeCheckedUpdates, incorrectPlugins, updateFilter);
 
     Set<Problem> allProblems = new HashSet<Problem>();
 
