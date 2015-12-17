@@ -28,7 +28,7 @@ public class TestMarshalling {
     problems.add(new MethodNotFoundProblem("a"));
     problems.add(new MethodNotImplementedProblem("a"));
     problems.add(new OverridingFinalMethodProblem("a"));
-    problems.add(new VerificationProblem("a"));
+    problems.add(new VerificationProblem("a", "b"));
     map.put(new UpdateInfo(12345), problems);
     ProblemUtils.saveProblems(new File("brokenReport.xml"), "IU-144.0000", map);
 

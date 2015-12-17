@@ -28,7 +28,6 @@ public class FailedToReadClassProblem extends Problem {
     return "failed to read class";
   }
 
-  @Override
   public String getDescription() {
     return getDescriptionPrefix() + " " + myClassName;
   }

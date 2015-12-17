@@ -14,9 +14,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="repository" />
-    <orderEntry type="module" module-name="common-utils" />
-    <orderEntry type="module" module-name="intellij-plugin-structure" />
     <orderEntry type="module" module-name="verifier-problems" />
     <orderEntry type="module" module-name="repository" />
     <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpclient:4.3.1" level="project" />

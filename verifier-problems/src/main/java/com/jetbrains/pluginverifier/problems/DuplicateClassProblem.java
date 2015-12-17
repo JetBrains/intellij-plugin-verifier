@@ -41,7 +41,6 @@ public class DuplicateClassProblem extends Problem {
     return "duplicated class";
   }
 
-  @Override
   public String getDescription() {
     return getDescriptionPrefix() + " (className=" + MessageUtils.convertClassName(myClassName) + " location=" + myMoniker + ")";
   }

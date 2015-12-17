@@ -31,7 +31,6 @@ public class MethodNotImplementedProblem extends Problem {
     return "method isn't implemented";
   }
 
-  @Override
   public String getDescription() {
     return getDescriptionPrefix() + " " + MessageUtils.convertMethodDescr(myMethod);
   }

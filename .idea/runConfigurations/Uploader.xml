@@ -8,7 +8,7 @@
     </extension>
     <option name="MAIN_CLASS_NAME" value="com.jetbrains.pluginverifier.Uploader" />
     <option name="VM_PARAMETERS" value="" />
-    <option name="PROGRAM_PARAMETERS" value="http://plugins.jetbrains.com/problems/uploadResultsAPI checkResults for_tests/IU-143.631.xml userName pluginrobot password p8Xm4fiQz0Ypa32" />
+    <option name="PROGRAM_PARAMETERS" value="http://plugins.jetbrains.com/problems/uploadResultsAPI checkResults IU-144.1717.xml userName pluginrobot password" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
     <option name="ALTERNATIVE_JRE_PATH" />

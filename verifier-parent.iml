@@ -4,12 +4,12 @@
     <output url="file://$MODULE_DIR$/target/classes" />
     <output-test url="file://$MODULE_DIR$/target/test-classes" />
     <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/checkScriptsTC" type="java-resource" />
       <excludeFolder url="file://$MODULE_DIR$/for_tests" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij-plugin-structure" />
     <orderEntry type="library" name="Maven: org.ow2.asm:asm-all:5.0.4" level="project" />
     <orderEntry type="library" name="Maven: com.intellij:annotations:12.0" level="project" />
     <orderEntry type="module" module-name="intellij-plugin-structure" />

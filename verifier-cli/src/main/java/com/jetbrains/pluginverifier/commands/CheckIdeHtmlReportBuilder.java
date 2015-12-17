@@ -168,6 +168,9 @@ public class CheckIdeHtmlReportBuilder {
   }
 
   /**
+   * @param pluginIds initial list of all the pluginId to be checked
+   * @param results map of problems of this check
+   *
    * @return map from pluginId TO all its checked builds (in DESC order)
    */
   @NotNull

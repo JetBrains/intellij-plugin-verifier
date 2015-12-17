@@ -6,32 +6,35 @@ package com.jetbrains.pluginverifier.problems;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.xml.bind.annotation.XmlRootElement;
-
 /**
  * This problem is not saved to report-file: it's only shown on verification status page
  */
-@XmlRootElement
 public class VerificationProblem extends Problem {
 
-  private final String myDescription;
+  private String myDescription;
+  private String myDetails;
 
   public VerificationProblem() {
-    myDescription = getDescriptionPrefix() + " (see build log for details)";
+    myDescription = getDescriptionPrefix();
   }
 
-  public VerificationProblem(@NotNull String description) {
+  public VerificationProblem(@NotNull String description, @NotNull String details) {
     myDescription = description;
+    myDetails = details;
   }
 
   @Override
   public String getDescriptionPrefix() {
-    return "Unknown verification problem";
+    return myDescription;
   }
 
   @Override
   public String getDescription() {
-    return myDescription;
+    return getDescriptionPrefix();
+  }
+
+  public String getDetails() {
+    return myDetails;
   }
 
   @Override

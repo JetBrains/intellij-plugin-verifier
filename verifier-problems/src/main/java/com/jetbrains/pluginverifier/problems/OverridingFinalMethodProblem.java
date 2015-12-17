@@ -31,7 +31,6 @@ public class OverridingFinalMethodProblem extends Problem {
     return "overriding final method";
   }
 
-  @Override
   public String getDescription() {
     return getDescriptionPrefix() + " " + MessageUtils.convertMethodDescr(mySuperFinalMethod);
   }

@@ -27,7 +27,8 @@ public class DependenciesCache {
       "com.intellij.modules.xml",
       "com.intellij.modules.xdebugger",
       "com.intellij.modules.java",
-      "com.intellij.modules.ultimate"
+      "com.intellij.modules.ultimate",
+      "com.intellij.modules.all"
   );
   private static DependenciesCache ourInstance = new DependenciesCache();
   private final WeakHashMap<Idea, WeakHashMap<IdeaPlugin, PluginDependenciesDescriptor>> map = new WeakHashMap<Idea, WeakHashMap<IdeaPlugin, PluginDependenciesDescriptor>>();

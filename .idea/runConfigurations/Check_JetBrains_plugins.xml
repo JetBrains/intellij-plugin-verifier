@@ -3,7 +3,7 @@
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <option name="MAIN_CLASS_NAME" value="com.jetbrains.pluginverifier.PluginVerifierMain" />
     <option name="VM_PARAMETERS" value="-Xmx2024m" />
-    <option name="PROGRAM_PARAMETERS" value="check-ide for_tests/idea_144 -r /usr/lib/jvm/java-6-oracle -epf for_tests/brokenPlugins.txt -d for_tests/brokenPlugins_actual.txt --plugins-to-check-file for_tests/checkedPlugins.txt -xr build-report.xml -report for_tests/report.html -g plugin -tc" />
+    <option name="PROGRAM_PARAMETERS" value="check-ide for_tests/idea -r /usr/lib/jvm/java-6-oracle -epf for_tests/brokenPlugins.txt --plugins-to-check-file for_tests/checkedPlugins.txt -xr build-report.xml -g plugin -tc" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
     <option name="ALTERNATIVE_JRE_PATH" />

@@ -10,7 +10,7 @@ import java.util.*;
 
 /**
  * Describes problems of overlying plugin and
- * their precise locations inside plugin
+ * their precise locations inside a plugin
  *
  * @author Sergey Evdokimov
  */

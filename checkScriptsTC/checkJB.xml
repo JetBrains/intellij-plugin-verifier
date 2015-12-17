@@ -1,0 +1,123 @@
+<project name="Dummy" default="createPomXml" basedir=".">
+    <target name="createPomXml">
+
+        <echo file="pom.xml"><![CDATA[
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>dummy</groupId>
+    <artifactId>runPluginVerifier</artifactId>
+    <packaging>jar</packaging>
+
+    <version>1.0-SNAPSHOT</version>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.4.0</version>
+
+                <configuration>
+                    <executable>java</executable>
+                    <mainClass>com.jetbrains.pluginverifier.PluginVerifierMain</mainClass>
+
+                    <arguments>
+                        <argument>check-ide</argument>
+                        <argument>idea-dist</argument>
+
+                        <!--
+                        Uncomment these two report files if you want
+                        to check ALL the builds of "brokenPlugins" content, because
+                        otherwise already broken plugins from the -epf parameter will not be checked.
+                        -->
+
+                        <!--
+                        <argument>-d</argument>
+                        <argument>brokenPlugins_actual.txt</argument>
+
+
+                        <argument>-report</argument>
+                        <argument>report.html</argument>
+                        -->
+
+                        <argument>-epf</argument>
+                        <argument>brokenPlugins.txt</argument>
+
+                        <argument>-xr</argument>
+                        <argument>build-report.xml</argument>
+
+                        <argument>--plugins-to-check-file</argument>
+                        <argument>checkedPlugins.txt</argument>
+
+                        <argument>-g</argument>
+                        <argument>plugin</argument>
+
+
+
+                        <argument>-r</argument>
+                        <argument>${JDK_16}</argument>
+
+                        <argument>-tc</argument>
+                    </arguments>
+                    <systemProperties>
+                        <systemProperty>
+                            <key>plugin.custom.repositories</key>
+                            <value>
+                                %teamcity.serverUrl%/guestAuth/repository/download/Kotlin_MirrorForIdeaTrunk/forIdea.tcbuildtag/updatePlugins.xml
+                            </value>
+                        </systemProperty>
+                        <systemProperty>
+                            <key>fail.on.cyclic.dependencies</key>
+                            <value>true</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <key>exitCode0</key>
+                            <value>true</value>
+                        </systemProperty>
+                    </systemProperties>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jetbrains.intellij.plugins</groupId>
+            <artifactId>verifier-cli</artifactId>
+            <version>%verifier-version%</version>
+        </dependency>
+    </dependencies>
+
+
+    <repositories>
+        <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>bintray-jetbrains-intellij-plugin-service</id>
+            <name>bintray</name>
+            <url>http://dl.bintray.com/jetbrains/intellij-plugin-service</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>bintray-jetbrains-intellij-plugin-service</id>
+            <name>bintray-plugins</name>
+            <url>http://dl.bintray.com/jetbrains/intellij-plugin-service</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+</project>
+
+]]>
+        </echo>
+    </target>
+</project>

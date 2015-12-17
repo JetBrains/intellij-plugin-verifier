@@ -38,7 +38,6 @@ public class ProblemUtils {
           MethodNotFoundProblem.class,
           MethodNotImplementedProblem.class,
           OverridingFinalMethodProblem.class,
-          VerificationProblem.class,
 
           //--------RESULT-ELEMENTS--------
           ResultsElement.class,

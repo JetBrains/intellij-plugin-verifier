@@ -4,7 +4,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
-import com.google.common.hash.Hashing;
 import com.intellij.structure.domain.Idea;
 import com.intellij.structure.domain.IdeaPlugin;
 import com.intellij.structure.domain.JDK;
@@ -12,8 +11,8 @@ import com.intellij.structure.pool.ClassPool;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.VerifierCommand;
-import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
+import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.VerificationProblem;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
@@ -27,7 +26,6 @@ import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.util.*;
 
 /**
@@ -40,7 +38,7 @@ public class CheckIdeCommand extends VerifierCommand {
    * (e.g. plugin "org.jetbrains.plugins.ruby" has a module "com.intellij.modules.ruby" inside)
    */
   private static final ImmutableList<String> INTELLIJ_MODULES_PLUGIN_IDS =
-      ImmutableList.of("org.jetbrains.plugins.ruby", "org.jetbrains.android", "com.jetbrains.php");
+      ImmutableList.of("org.jetbrains.plugins.ruby", "com.jetbrains.php", "org.jetbrains.android", "Pythonid");
 
   public CheckIdeCommand() {
     super("check-ide");
@@ -129,7 +127,6 @@ public class CheckIdeCommand extends VerifierCommand {
         m.putAll(pluginId, tokens.subList(1, tokens.size())); //"plugin id" -> [all its builds]
       }
 
-      //filtering predicate: true if this plugin is NOT excluded
       return new Predicate<UpdateInfo>() {
         @Override
         public boolean apply(UpdateInfo json) {
@@ -206,33 +203,45 @@ public class CheckIdeCommand extends VerifierCommand {
     TeamCityUtil.printReport(log, problems, reportGrouping);
   }
 
-  private static void printIncorrectPlugins(@NotNull TeamCityLog log,
-                                            @NotNull List<Trinity<UpdateInfo, String, ? extends Exception>> incorrectPlugins) {
-    if (log == TeamCityLog.NULL_LOG) return;
+  /**
+   * Checks if for all the specified plugins to be checked there is
+   * a build compatible with a specified IDE in the Plugin Repository
+   */
+  private static void printMissingAndIncorrectPlugins(@NotNull TeamCityLog tc,
+                                                      @NotNull String version,
+                                                      @NotNull List<String> toBeCheckedPluginIds,
+                                                      @NotNull List<UpdateInfo> compatibleUpdates,
+                                                      List<Trinity<UpdateInfo, String, ? extends Exception>> incorrectPlugins) {
+    if (tc == TeamCityLog.NULL_LOG) return;
 
-    log.buildProblem("There are " + incorrectPlugins.size() + " " + StringUtil.pluralize("plugin", incorrectPlugins.size()) +
-        " which were not checked due to some problems (see Build Log for details)");
+    Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
 
-    final TeamCityLog.Block block = log.blockOpen("Incorrect and broken plugins list");
-    try {
-      for (Trinity<UpdateInfo, String, ? extends Exception> triple : incorrectPlugins) {
-        TeamCityLog.Block pluginBlock = log.blockOpen(triple.first.toString());
+    //fill verification problems
+    for (Trinity<UpdateInfo, String, ? extends Exception> trinity : incorrectPlugins) {
+      problems.put(new VerificationProblem(trinity.getSecond(), Util.getStackTrace(trinity.getThird())), trinity.getFirst());
+    }
 
-        log.messageError(triple.second, Util.getStackTrace(triple.getThird()));
-
-        pluginBlock.close();
+    //fill missing plugin problems
+    Set<String> missingPluginIds = new HashSet<String>();
+    for (String pluginId : new HashSet<String>(toBeCheckedPluginIds)) {
+      boolean hasCompatibleUpdate = false;
+      for (UpdateInfo update : compatibleUpdates) {
+        if (StringUtil.equals(pluginId, update.getPluginId())) {
+          hasCompatibleUpdate = true;
+          break;
+        }
       }
-    } finally {
-      block.close();
+      if (!hasCompatibleUpdate) {
+        missingPluginIds.add(pluginId);
+      }
     }
 
-    Multimap<Problem, UpdateInfo> verificationProblems = ArrayListMultimap.create();
-    for (Trinity<UpdateInfo, String, ? extends Exception> pair : incorrectPlugins) {
-      verificationProblems.put(new VerificationProblem(pair.getSecond()), pair.getFirst());
+    for (String missingPluginId : missingPluginIds) {
+      problems.put(new NoCompatibleUpdatesProblem(missingPluginId, version), new UpdateInfo(missingPluginId, missingPluginId, "no compatible update"));
     }
 
-    TeamCityUtil.printReport(log, verificationProblems, TeamCityUtil.ReportGrouping.PLUGIN);
 
+    TeamCityUtil.printReport(tc, problems, TeamCityUtil.ReportGrouping.PLUGIN);
   }
 
   @NotNull
@@ -305,10 +314,14 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
+    //preserve initial lists of plugins
+    List<String> toBeCheckedPluginIds = Util.concat(pluginsCheckAllBuilds, pluginsCheckLastBuilds);
+    List<UpdateInfo> compatibleToBeCheckedUpdates = new ArrayList<UpdateInfo>(updates);
+
     String dumpBrokenPluginsFile = commandLine.getOptionValue("d");
     String reportFile = commandLine.getOptionValue("report");
 
-    //whether to check excluded build or not
+    //whether to check excluded builds or not
     boolean checkExcludedBuilds = dumpBrokenPluginsFile != null || reportFile != null;
 
     Predicate<UpdateInfo> updateFilter = getExcludedPluginsPredicate(commandLine);
@@ -333,52 +346,20 @@ public class CheckIdeCommand extends VerifierCommand {
 
     //-----------------------------VERIFICATION---------------------------------------
 
-    int updatesProcessed = 0;
+    int updatesProceed = 0;
 
     for (UpdateInfo updateJson : updates) {
       TeamCityLog.Block block = tc.blockOpen(updateJson.toString());
 
       try {
-        File updateFile;
-        try {
-          updateFile = RepositoryManager.getInstance().getOrLoadUpdate(updateJson);
-        } catch (IOException e) {
-          final String message = "Failed to download plugin " + updateJson + " because " + e.getMessage();
-          incorrectPlugins.add(Trinity.create(updateJson, message, e));
+        File updateFile = RepositoryManager.getInstance().getOrLoadUpdate(updateJson);
 
-          System.err.println(message);
-          e.printStackTrace();
-          tc.messageError(message);
-          continue;
-        }
+        IdeaPlugin plugin = IdeaPlugin.createFromZip(updateFile);
 
-        IdeaPlugin plugin;
-        try {
-          plugin = IdeaPlugin.createFromZip(updateFile);
-        } catch (Exception e) {
-          final String message = "Failed to read plugin " + updateJson + " because " + e.getLocalizedMessage();
-          incorrectPlugins.add(Trinity.create(updateJson, message, e));
-
-          System.err.println(message);
-          tc.messageError(message);
-          e.printStackTrace();
-          continue;
-        }
-
-        System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProcessed), updates.size()));
+        System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), updates.size()));
 
         VerificationContextImpl ctx = new VerificationContextImpl(options, ide);
-        try {
-          Verifiers.processAllVerifiers(plugin, ctx);
-        } catch (VerificationError e) {
-          final String message = "Failed to verify plugin " + updateJson + " because " + e.getLocalizedMessage();
-          System.err.println(message);
-          incorrectPlugins.add(Trinity.create(updateJson, message, e));
-
-          tc.messageError(message);
-          e.printStackTrace();
-          continue;
-        }
+        Verifiers.processAllVerifiers(plugin, ctx);
 
         results.put(updateJson, ctx.getProblems());
 
@@ -400,26 +381,41 @@ public class CheckIdeCommand extends VerifierCommand {
 
 
         if (importantUpdates.contains(updateJson)) {
-          //add plugin with defined IntelliJ module to IDEA
-          //it gives us a chance to refer to such plugins by their module-name (not plugin id)
+          //add a plugin with defined IntelliJ module to IDEA
+          //it gives us a chance to refer to such plugins by their defined module-name
           ide.addCustomPlugin(plugin);
         }
+
+      } catch (Exception e) {
+        final String message;
+        if (e instanceof IOException) {
+          message = "Failed to read/download plugin " + updateJson + " because " + e.getLocalizedMessage();
+        } else {
+          message = "Failed to verify plugin " + updateJson + " because " + e.getLocalizedMessage();
+        }
+        incorrectPlugins.add(Trinity.create(updateJson, message, e));
+
+        System.err.println(message);
+        e.printStackTrace();
+        tc.messageError(message, Util.getStackTrace(e));
       } finally {
         block.close();
       }
+
     }
 
     //-----------------------------PRINT RESULTS----------------------------------------
 
     System.out.println("Verification completed (" + ((System.currentTimeMillis() - time) / 1000) + " seconds)");
 
-    int totalProblemsCnt = 0;
+    //Save results to XML if necessary
+    if (commandLine.hasOption("xr")) {
+      saveResultsToXml(commandLine.getOptionValue("xr"), ide.getVersion(), results);
+    }
 
+
+    //Is it a full check? (i.e. all the specified plugin builds were checked) => save report.html
     if (checkExcludedBuilds) {
-      //initial list of plugins to be checked (some of them might be filtered and not actually checked)
-      List<String> initialPlugins = Util.concat(pluginsIds.first, pluginsIds.second);
-
-      totalProblemsCnt += printSomePluginsAreNotAvailable(tc, ide.getVersion(), initialPlugins, results);
 
       if (dumpBrokenPluginsFile != null) {
         System.out.println("Dumping list of broken plugins to " + dumpBrokenPluginsFile);
@@ -436,25 +432,21 @@ public class CheckIdeCommand extends VerifierCommand {
         File file = new File(reportFile);
         System.out.println("Saving report to " + file.getAbsolutePath());
 
-        CheckIdeHtmlReportBuilder.build(file, ide.getVersion(), initialPlugins, updateFilter, results);
+        CheckIdeHtmlReportBuilder.build(file, ide.getVersion(), toBeCheckedPluginIds, updateFilter, results);
       }
     }
 
-    if (commandLine.hasOption("xr")) {
-      saveResultsToXml(commandLine.getOptionValue("xr"), ide.getVersion(), results);
-    }
-
-
     printTeamCityProblems(tc, results, updateFilter, reportGrouping);
 
-    printIncorrectPlugins(tc, incorrectPlugins);
-
+    printMissingAndIncorrectPlugins(tc, ide.getVersion(), toBeCheckedPluginIds, compatibleToBeCheckedUpdates, incorrectPlugins);
 
     Set<Problem> allProblems = new HashSet<Problem>();
 
     for (ProblemSet problemSet : Maps.filterKeys(results, updateFilter).values()) {
       allProblems.addAll(problemSet.getAllProblems());
     }
+
+    int totalProblemsCnt = 0;
 
     totalProblemsCnt += allProblems.size();
 
@@ -472,7 +464,8 @@ public class CheckIdeCommand extends VerifierCommand {
   }
 
   /**
-   * Drops out non-last builds of given plugins
+   * Drops out non-last builds of IntelliJ plugins
+   * IntelliJ plugin is a plugin which defines intellij-module in its plugin.xml
    */
   @NotNull
   private Set<UpdateInfo> prepareImportantUpdates(@NotNull Collection<UpdateInfo> updates) {
@@ -496,35 +489,6 @@ public class CheckIdeCommand extends VerifierCommand {
 
       if (lastBuilds.containsKey(pluginId) && lastBuilds.get(pluginId).equals(updateId)) {
         result.add(update);
-      }
-    }
-
-    return result;
-  }
-
-  /**
-   * Checks if for all the specified plugins to be checked there are
-   * a build compatible with a specified IDE in the Plugins Repository
-   *
-   * @return number of plugins which don't have any compatible version in the Repository
-   */
-  private int printSomePluginsAreNotAvailable(@NotNull TeamCityLog tc,
-                                              @NotNull String ideVersion,
-                                              @NotNull List<String> initialPlugins,
-                                              @NotNull Map<UpdateInfo, ProblemSet> results) {
-    int result = 0;
-
-    Map<String, List<UpdateInfo>> pluginsMap = CheckIdeHtmlReportBuilder.getCheckedPluginsMap(initialPlugins, results);
-    for (Map.Entry<String, List<UpdateInfo>> entry : pluginsMap.entrySet()) {
-      String pluginId = entry.getKey();
-      List<UpdateInfo> checkedBuilds = entry.getValue();
-
-      final String pluginName = checkedBuilds.isEmpty() ? pluginId : checkedBuilds.get(0).getPluginId();
-      if (checkedBuilds.isEmpty()) {
-        final String noUpdateProblem = "For " + pluginName + " there are no updates compatible with " + ideVersion + " in the Plugin Repository";
-        final String identity = Hashing.md5().hashString(noUpdateProblem, Charset.defaultCharset()).toString();
-        tc.buildProblem(noUpdateProblem, identity);
-        result++;
       }
     }
 

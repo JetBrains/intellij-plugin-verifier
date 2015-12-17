@@ -23,7 +23,6 @@ public class IncompatibleClassChangeProblem extends Problem {
     return null;
   }
 
-  @Override
   public String getDescription() {
     return null;
   }

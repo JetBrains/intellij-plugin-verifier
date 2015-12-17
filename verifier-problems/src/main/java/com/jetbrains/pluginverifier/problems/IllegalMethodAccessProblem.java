@@ -26,7 +26,6 @@ public class IllegalMethodAccessProblem extends Problem {
     return "illegal invocation of";
   }
 
-  @Override
   public String getDescription() {
     return getDescriptionPrefix() + " " + myMethodAccess.getDescription() + " method " + myMethod;
   }
