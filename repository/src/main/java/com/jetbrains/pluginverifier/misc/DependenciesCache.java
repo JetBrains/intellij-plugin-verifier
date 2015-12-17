@@ -87,6 +87,7 @@ public class DependenciesCache {
   }
 
 
+  //TODO: collect missing optional dependencies and print them in the TC-log
   @NotNull
   private Set<IdeaPlugin> getDependenciesWithTransitive(@NotNull Idea ide,
                                                         @NotNull IdeaPlugin plugin,
@@ -95,7 +96,7 @@ public class DependenciesCache {
 
     Set<IdeaPlugin> result = descriptor.dependenciesWithTransitive;
     if (result == DEP_CALC_MARKER) {
-      if (Boolean.parseBoolean(RepositoryConfiguration.getInstance().getProperty("fail.on.cyclic.dependencies"))) {
+      if (failOnCyclicDependency()) {
         int idx = pluginStack.lastIndexOf(descriptor); //compare descriptors by their identity (default equals behavior)
         throw new VerificationError("Cyclic plugin dependencies: " + Joiner.on(" -> ").join(pluginStack.subList(idx, pluginStack.size())) + " -> " + plugin.getPluginId());
       }
@@ -125,7 +126,6 @@ public class DependenciesCache {
 
           IdeaPlugin depPlugin = ide.getPluginByModule(moduleId);
 
-          //noinspection Duplicates
           if (depPlugin == null) {
             final String message = "Plugin " + plugin.getPluginId() + " depends on module " + moduleId + " which is not found in " + ide.getVersion();
             if (!dependency.isOptional()) {
@@ -193,6 +193,10 @@ public class DependenciesCache {
     }
 
     return result;
+  }
+
+  private boolean failOnCyclicDependency() {
+    return Boolean.parseBoolean(RepositoryConfiguration.getInstance().getProperty("fail.on.cyclic.dependencies"));
   }
 
   private static class PluginDependenciesDescriptor {
