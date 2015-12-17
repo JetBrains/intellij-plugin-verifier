@@ -206,13 +206,15 @@ public class CheckIdeCommand extends VerifierCommand {
   /**
    * Checks if for all the specified plugins to be checked there is
    * a build compatible with a specified IDE in the Plugin Repository
+   *
+   * @return number of "missing update" and "broken plugin" problems
    */
-  private static void printMissingAndIncorrectPlugins(@NotNull TeamCityLog tc,
-                                                      @NotNull String version,
-                                                      @NotNull List<String> toBeCheckedPluginIds,
-                                                      @NotNull List<UpdateInfo> compatibleUpdates,
-                                                      List<Trinity<UpdateInfo, String, ? extends Exception>> incorrectPlugins) {
-    if (tc == TeamCityLog.NULL_LOG) return;
+  private static int printMissingAndIncorrectPlugins(@NotNull TeamCityLog tc,
+                                                     @NotNull String version,
+                                                     @NotNull List<String> toBeCheckedPluginIds,
+                                                     @NotNull List<UpdateInfo> compatibleUpdates,
+                                                     @NotNull List<Trinity<UpdateInfo, String, ? extends Exception>> incorrectPlugins) {
+    if (tc == TeamCityLog.NULL_LOG) return 0;
 
     Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
 
@@ -242,6 +244,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
 
     TeamCityUtil.printReport(tc, problems, TeamCityUtil.ReportGrouping.PLUGIN);
+    return problems.size();
   }
 
   @NotNull
@@ -438,7 +441,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     printTeamCityProblems(tc, results, updateFilter, reportGrouping);
 
-    printMissingAndIncorrectPlugins(tc, ide.getVersion(), toBeCheckedPluginIds, compatibleToBeCheckedUpdates, incorrectPlugins);
+    int totalProblemsCnt = printMissingAndIncorrectPlugins(tc, ide.getVersion(), toBeCheckedPluginIds, compatibleToBeCheckedUpdates, incorrectPlugins);
 
     Set<Problem> allProblems = new HashSet<Problem>();
 
@@ -446,7 +449,6 @@ public class CheckIdeCommand extends VerifierCommand {
       allProblems.addAll(problemSet.getAllProblems());
     }
 
-    int totalProblemsCnt = 0;
 
     totalProblemsCnt += allProblems.size();
 
