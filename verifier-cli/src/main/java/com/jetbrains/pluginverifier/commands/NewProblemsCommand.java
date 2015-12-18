@@ -220,15 +220,19 @@ public class NewProblemsCommand extends VerifierCommand {
     printTcProblems(currentProblems, firstOccurrence, allBuilds, reportGrouping, tc);
 
 
-    //number of NEW problems (excluding the EARLIEST check)
+    //number of problems appeared in the trunk (e.g. in 144.* builds)
+    final int totalTrunkProblems = firstOccurrence.values().size();
+
+    //number of the newest problems (of the last IDEA build)
     final int newProblemsCount = currProblems.size();
 
-    final String text = String.format("Done, %d new %s found between %s and %s. Current build is %s",
+    final String text = String.format("Done, %d new %s in %s; %d problems between %s and %s",
         newProblemsCount,
         StringUtil.pluralize("problem", newProblemsCount),
+        ideBuild,
+        totalTrunkProblems,
         checkedBuilds.get(0),
-        checkedBuilds.get(checkedBuilds.size() - 1),
-        ideBuild
+        checkedBuilds.get(checkedBuilds.size() - 1)
     );
 
     if (newProblemsCount > 0) {
