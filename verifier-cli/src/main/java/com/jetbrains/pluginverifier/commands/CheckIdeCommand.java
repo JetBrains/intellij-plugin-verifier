@@ -213,17 +213,17 @@ public class CheckIdeCommand extends VerifierCommand {
                                                      @NotNull String version,
                                                      @NotNull List<String> toBeCheckedPluginIds,
                                                      @NotNull List<UpdateInfo> compatibleUpdates,
-                                                     @NotNull List<Trinity<UpdateInfo, String, ? extends Exception>> incorrectPlugins,
+                                                     @NotNull List<Pair<UpdateInfo, ? extends Problem>> incorrectPlugins,
                                                      @NotNull Predicate<UpdateInfo> updateFilter) {
     if (tc == TeamCityLog.NULL_LOG) return 0;
 
     Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
 
     //fill verification problems
-    for (Trinity<UpdateInfo, String, ? extends Exception> trinity : incorrectPlugins) {
-      UpdateInfo updateInfo = trinity.getFirst();
+    for (Pair<UpdateInfo, ? extends Problem> incorrectPlugin : incorrectPlugins) {
+      UpdateInfo updateInfo = incorrectPlugin.getFirst();
       if (updateFilter.apply(updateInfo)) {
-        problems.put(new VerificationProblem(trinity.getSecond(), Util.getStackTrace(trinity.getThird())), updateInfo);
+        problems.put(incorrectPlugin.getSecond(), incorrectPlugin.getFirst());
       }
     }
 
@@ -349,7 +349,7 @@ public class CheckIdeCommand extends VerifierCommand {
     Set<UpdateInfo> importantUpdates = prepareImportantUpdates(updates);
 
     //list of plugins which were not checked due to some error (first = plugin; second = error message; third = caused exception)
-    final List<Trinity<UpdateInfo, String, ? extends Exception>> incorrectPlugins = new ArrayList<Trinity<UpdateInfo, String, ? extends Exception>>();
+    List<Pair<UpdateInfo, ? extends Problem>> incorrectPlugins = new ArrayList<Pair<UpdateInfo, ? extends Problem>>();
 
     //-----------------------------VERIFICATION---------------------------------------
 
@@ -400,7 +400,7 @@ public class CheckIdeCommand extends VerifierCommand {
         } else {
           message = "Failed to verify plugin " + updateJson + " because " + e.getLocalizedMessage();
         }
-        incorrectPlugins.add(Trinity.create(updateJson, message, e));
+        incorrectPlugins.add(Pair.create(updateJson, new VerificationProblem(e.getLocalizedMessage(), updateJson.toString())));
 
         System.err.println(message);
         e.printStackTrace();

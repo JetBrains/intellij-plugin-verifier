@@ -16,10 +16,12 @@ import com.jetbrains.pluginverifier.VerifierCommand;
 import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.Problem;
+import com.jetbrains.pluginverifier.problems.VerificationProblem;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.utils.FailUtil;
+import com.jetbrains.pluginverifier.utils.Pair;
 import com.jetbrains.pluginverifier.utils.ProblemUtils;
 import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
@@ -47,7 +49,7 @@ public class CheckPluginCommand extends VerifierCommand {
   }
 
   @NotNull
-  private static List<File> loadPluginFiles(@NotNull String pluginToTestArg, @NotNull String ideVersion) {
+  private static List<Pair<UpdateInfo, File>> loadPluginFiles(@NotNull String pluginToTestArg, @NotNull String ideVersion) {
     if (pluginToTestArg.startsWith("@")) {
       File pluginListFile = new File(pluginToTestArg.substring(1));
       List<String> pluginPaths;
@@ -61,9 +63,10 @@ public class CheckPluginCommand extends VerifierCommand {
     } else if (pluginToTestArg.matches("#\\d+")) {
       String pluginId = pluginToTestArg.substring(1);
       try {
-        UpdateInfo updateInfo = RepositoryManager.getInstance().findUpdateById(Integer.parseInt(pluginId));
+        int updateId = Integer.parseInt(pluginId);
+        UpdateInfo updateInfo = RepositoryManager.getInstance().findUpdateById(updateId);
         File update = RepositoryManager.getInstance().getOrLoadUpdate(updateInfo);
-        return Collections.singletonList(update);
+        return Collections.singletonList(Pair.create(new UpdateInfo(updateId), update));
       } catch (IOException e) {
         throw FailUtil.fail("Cannot load plugin #" + pluginId, e);
       }
@@ -73,13 +76,13 @@ public class CheckPluginCommand extends VerifierCommand {
         // Looks like user write unknown command. This command was called because it's default command.
         throw FailUtil.fail("Unknown command: " + pluginToTestArg + "\navailable commands: " + Joiner.on(", ").join(CommandHolder.getCommandMap().keySet()));
       }
-      return Collections.singletonList(file);
+      return Collections.singletonList(Pair.create(updateInfoByFile(file), file));
     }
   }
 
   @NotNull
-  private static List<File> fetchPlugins(@NotNull String ideVersion, @NotNull File pluginListFile, @NotNull List<String> pluginPaths) {
-    List<File> pluginsFiles = new ArrayList<File>();
+  private static List<Pair<UpdateInfo, File>> fetchPlugins(@NotNull String ideVersion, @NotNull File pluginListFile, @NotNull List<String> pluginPaths) {
+    List<Pair<UpdateInfo, File>> pluginsFiles = new ArrayList<Pair<UpdateInfo, File>>();
 
     for (String pluginPath : pluginPaths) {
       pluginPath = pluginPath.trim();
@@ -89,7 +92,7 @@ public class CheckPluginCommand extends VerifierCommand {
         //single plugin by plugin build number
 
         String pluginId = pluginPath.substring("id:".length());
-        List<File> pluginBuilds = downloadPluginBuilds(pluginId, ideVersion);
+        List<Pair<UpdateInfo, File>> pluginBuilds = downloadPluginBuilds(pluginId, ideVersion);
         if (!pluginBuilds.isEmpty()) {
           pluginsFiles.add(pluginBuilds.get(0));
         }
@@ -108,7 +111,8 @@ public class CheckPluginCommand extends VerifierCommand {
         if (!file.exists()) {
           throw FailUtil.fail("Plugin file '" + pluginPath + "' specified in '" + pluginListFile.getAbsolutePath() + "' doesn't exist");
         }
-        pluginsFiles.add(file);
+
+        pluginsFiles.add(Pair.create(updateInfoByFile(file), file));
       }
     }
 
@@ -116,7 +120,17 @@ public class CheckPluginCommand extends VerifierCommand {
   }
 
   @NotNull
-  private static List<File> downloadPluginBuilds(@NotNull String pluginId, @NotNull String ideVersion) {
+  private static UpdateInfo updateInfoByFile(@NotNull File file) {
+    String name = file.getName();
+    name = name.substring(0, name.lastIndexOf('.'));
+    if (name.matches("\\d+")) {
+      return new UpdateInfo(Integer.parseInt(name));
+    }
+    return new UpdateInfo(name, name, "?");
+  }
+
+  @NotNull
+  private static List<Pair<UpdateInfo, File>> downloadPluginBuilds(@NotNull String pluginId, @NotNull String ideVersion) {
     List<UpdateInfo> compatibleUpdatesForPlugins;
     try {
       compatibleUpdatesForPlugins = RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(ideVersion, Collections.singletonList(pluginId));
@@ -124,10 +138,10 @@ public class CheckPluginCommand extends VerifierCommand {
       throw FailUtil.fail("Failed to fetch list of " + pluginId + " versions", e);
     }
 
-    List<File> result = new ArrayList<File>();
+    List<Pair<UpdateInfo, File>> result = new ArrayList<Pair<UpdateInfo, File>>();
     for (UpdateInfo updateInfo : compatibleUpdatesForPlugins) {
       try {
-        result.add(RepositoryManager.getInstance().getOrLoadUpdate(updateInfo));
+        result.add(Pair.create(updateInfo, RepositoryManager.getInstance().getOrLoadUpdate(updateInfo)));
       } catch (IOException e) {
         throw FailUtil.fail("Cannot download '" + updateInfo, e);
       }
@@ -158,6 +172,8 @@ public class CheckPluginCommand extends VerifierCommand {
     TeamCityLog log = TeamCityLog.getInstance(commandLine);
 
 
+    List<Pair<UpdateInfo, ? extends Problem>> brokenPlugins = new ArrayList<Pair<UpdateInfo, ? extends Problem>>();
+
     for (int i = 1; i < freeArgs.size(); i++) {
       File ideaDirectory = new File(freeArgs.get(i));
       verifyIdeaDirectory(ideaDirectory);
@@ -165,11 +181,11 @@ public class CheckPluginCommand extends VerifierCommand {
       Idea idea = new Idea(ideaDirectory, jdk, getExternalClassPath(commandLine));
 
 
-      List<File> pluginFiles = loadPluginFiles(pluginsToTestArg, idea.getVersion());
+      List<Pair<UpdateInfo, File>> pluginFiles = loadPluginFiles(pluginsToTestArg, idea.getVersion());
 
-      for (File pluginFile : pluginFiles) {
+      for (Pair<UpdateInfo, File> pluginFile : pluginFiles) {
         try {
-          IdeaPlugin plugin = IdeaPlugin.createIdeaPlugin(pluginFile);
+          IdeaPlugin plugin = IdeaPlugin.createIdeaPlugin(pluginFile.getSecond());
 
           ProblemSet problemSet = verifyPlugin(idea, plugin, options, log);
 
@@ -185,9 +201,12 @@ public class CheckPluginCommand extends VerifierCommand {
           ideaToProblems.put(idea.getVersion(), problemSet);
 
         } catch (Exception e) {
-          System.err.println("Failed to verify plugin " + pluginFile.getName());
-          e.printStackTrace();
-          log.messageError("Failed to verify plugin " + pluginFile.getName(), Util.getStackTrace(e));
+          final String message = "failed to verify plugin " + pluginFile.getFirst();
+
+          brokenPlugins.add(Pair.create(pluginFile.getFirst(), new VerificationProblem(e.getLocalizedMessage(), pluginFile.getFirst().toString())));
+
+          System.err.println(message);
+          log.messageError(message, Util.getStackTrace(e));
         }
       }
 
@@ -201,6 +220,8 @@ public class CheckPluginCommand extends VerifierCommand {
     //map of problems without their exact locations inside corresponding plugins
     Multimap<Problem, UpdateInfo> problemsWithoutLocations = dropOutLocations(results);
 
+    appendBrokenPluginProblems(problemsWithoutLocations, brokenPlugins);
+
     TeamCityUtil.printReport(log, problemsWithoutLocations, TeamCityUtil.ReportGrouping.parseGrouping(commandLine));
 
     final int problemsCnt = problemsWithoutLocations.size();
@@ -211,6 +232,13 @@ public class CheckPluginCommand extends VerifierCommand {
     }
 
     return hasProblems ? 2 : 0;
+  }
+
+  private void appendBrokenPluginProblems(@NotNull Multimap<Problem, UpdateInfo> problemsWithoutLocations,
+                                          @NotNull List<Pair<UpdateInfo, ? extends Problem>> brokenPlugins) {
+    for (Pair<UpdateInfo, ? extends Problem> brokenPlugin : brokenPlugins) {
+      problemsWithoutLocations.put(brokenPlugin.getSecond(), brokenPlugin.getFirst());
+    }
   }
 
   private void saveReportToFile(@NotNull CommandLine commandLine,
@@ -259,7 +287,7 @@ public class CheckPluginCommand extends VerifierCommand {
                                   @NotNull PluginVerifierOptions options,
                                   @NotNull TeamCityLog log) throws IOException, BrokenPluginException, VerificationError {
 
-    String message = "Verifying " + plugin.getPluginId() + " against " + idea.getMoniker() + "... ";
+    String message = "Verifying " + plugin.getPluginId() + ":" + plugin.getPluginVersion() + " against " + idea.getVersion() + "... ";
     System.out.print(message);
     log.message(message);
 
@@ -274,7 +302,7 @@ public class CheckPluginCommand extends VerifierCommand {
 
       ProblemSet problemSet = ctx.getProblems();
 
-      printProblemsOnStdout(log, problemSet);
+      printProblemsOnStdout(problemSet);
 
       //for test only purposes
       myLastProblemSet = problemSet;
@@ -287,7 +315,7 @@ public class CheckPluginCommand extends VerifierCommand {
     }
   }
 
-  private void printProblemsOnStdout(@NotNull TeamCityLog log, ProblemSet problemSet) {
+  private void printProblemsOnStdout(ProblemSet problemSet) {
     System.out.println(problemSet.isEmpty() ? "is OK" : " has " + problemSet.count() + " errors");
     problemSet.printProblems(System.out, "");
 
@@ -304,7 +332,7 @@ public class CheckPluginCommand extends VerifierCommand {
           if (remaining > 1) description.append("s");
         }
       }
-      log.buildProblem(description.toString());
+      System.err.println(description);
     }
   }
 
