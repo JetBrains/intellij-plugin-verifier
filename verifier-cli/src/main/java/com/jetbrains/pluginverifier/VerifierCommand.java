@@ -1,10 +1,11 @@
 package com.jetbrains.pluginverifier;
 
-import com.intellij.structure.domain.Idea;
-import com.intellij.structure.domain.JDK;
+import com.intellij.structure.domain.Ide;
+import com.intellij.structure.domain.IdeRuntime;
+import com.intellij.structure.domain.IdeRuntimeManager;
+import com.intellij.structure.impl.pool.ContainerClassPool;
+import com.intellij.structure.impl.pool.JarClassPool;
 import com.intellij.structure.pool.ClassPool;
-import com.intellij.structure.pool.ContainerClassPool;
-import com.intellij.structure.pool.JarClassPool;
 import com.jetbrains.pluginverifier.utils.FailUtil;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ public abstract class VerifierCommand {
   public abstract int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception;
 
   @NotNull
-  protected JDK createJdk(@NotNull CommandLine commandLine) throws IOException {
+  protected IdeRuntime createJdk(@NotNull CommandLine commandLine) throws IOException {
     File runtimeDirectory;
 
     if (commandLine.hasOption('r')) {
@@ -58,7 +59,7 @@ public abstract class VerifierCommand {
       }
     }
 
-    return new JDK(runtimeDirectory);
+    return IdeRuntimeManager.getInstance().createRuntime(runtimeDirectory);
   }
 
   @Nullable
@@ -77,10 +78,10 @@ public abstract class VerifierCommand {
     return ContainerClassPool.getUnion("external_class_path", pools);
   }
 
-  protected void updateIdeVersionFromCmd(@NotNull Idea ide, @NotNull CommandLine commandLine) throws IOException {
+  protected void updateIdeVersionFromCmd(@NotNull Ide ide, @NotNull CommandLine commandLine) throws IOException {
     String build = commandLine.getOptionValue("iv");
     if (build != null && !build.isEmpty()) {
-      ide.setVersion(build);
+      ide.updateVersion(build);
     }
   }
 

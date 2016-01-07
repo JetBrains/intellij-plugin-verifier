@@ -1,6 +1,7 @@
 package com.intellij.structure.resolvers;
 
 import com.google.common.base.Predicates;
+import com.intellij.structure.impl.resolvers.ParentsVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;

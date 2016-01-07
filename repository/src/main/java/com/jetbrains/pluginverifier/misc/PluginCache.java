@@ -1,5 +1,7 @@
-package com.intellij.structure.domain;
+package com.jetbrains.pluginverifier.misc;
 
+import com.intellij.structure.domain.Plugin;
+import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.errors.BrokenPluginException;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,32 +15,32 @@ import java.util.Map;
  * @author Sergey Evdokimov
  */
 public class PluginCache {
-  private static final Map<File, SoftReference<IdeaPlugin>> pluginsMap = new HashMap<File, SoftReference<IdeaPlugin>>();
-  private static PluginCache ourInstance = new PluginCache();
+  private static final Map<File, SoftReference<Plugin>> pluginsMap = new HashMap<File, SoftReference<Plugin>>();
+  private static final PluginCache INSTANCE = new PluginCache();
 
   private PluginCache() {
   }
 
   public static PluginCache getInstance() {
-    return ourInstance;
+    return INSTANCE;
   }
 
   @Nullable
-  public IdeaPlugin getPlugin(File pluginZip) {
-    SoftReference<IdeaPlugin> softReference = pluginsMap.get(pluginZip);
+  public Plugin getPlugin(File pluginZip) {
+    SoftReference<Plugin> softReference = pluginsMap.get(pluginZip);
 
     if (softReference == null && pluginsMap.containsKey(pluginZip)) {
       return null; // means failed to download plugin or plugin is broken
     }
 
-    IdeaPlugin res = softReference == null ? null : softReference.get();
+    Plugin res = softReference == null ? null : softReference.get();
 
     if (res == null) {
-      SoftReference<IdeaPlugin> ref = null;
+      SoftReference<Plugin> ref = null;
 
       try {
-        res = IdeaPlugin.createFromZip(pluginZip);
-        ref = new SoftReference<IdeaPlugin>(res);
+        res = PluginManager.getInstance().createPlugin(pluginZip);
+        ref = new SoftReference<Plugin>(res);
       } catch (IOException e) {
         System.out.println("Plugin is broken: " + pluginZip);
         e.printStackTrace();

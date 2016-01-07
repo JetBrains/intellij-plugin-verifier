@@ -1,7 +1,8 @@
-package com.intellij.structure.domain;
+package com.intellij.structure.impl.domain;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
+import com.intellij.structure.domain.IdeRuntime;
 import com.intellij.structure.pool.ClassPool;
 import com.intellij.structure.resolvers.Resolver;
 import com.intellij.structure.utils.Util;
@@ -14,22 +15,21 @@ import java.util.List;
 import java.util.Set;
 import java.util.jar.JarFile;
 
-public class JDK {
+class Jdk implements IdeRuntime {
 
-  private static final Set<String> JDK_JAR_NAMES = ImmutableSet.of("rt.jar", "tools.jar", "classes.jar", "jsse.jar", "javaws.jar",
-      "jce.jar");
+  private static final Set<String> JDK_JAR_NAMES = ImmutableSet.of("rt.jar", "tools.jar", "classes.jar", "jsse.jar", "javaws.jar", "jce.jar");
 
   private final List<JarFile> myJars;
   private final ClassPool myPool;
 
-  public JDK(final File jdkDir) throws IOException {
+  Jdk(@NotNull File jdkDir) throws IOException {
     myJars = new ArrayList<JarFile>();
 
     collectJars(jdkDir);
     myPool = Util.makeClassPool(jdkDir.getPath(), myJars);
   }
 
-  private void collectJars(File dir) throws IOException {
+  private void collectJars(@NotNull File dir) throws IOException {
     final List<JarFile> jars = Util.getJars(dir, new Predicate<File>() {
       @Override
       public boolean apply(File file) {
@@ -50,6 +50,7 @@ public class JDK {
     }
   }
 
+  @Override
   @NotNull
   public Resolver getResolver() {
     return myPool;

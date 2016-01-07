@@ -1,4 +1,4 @@
-package com.intellij.structure.utils;
+package com.intellij.structure.domain;
 
 import com.google.common.collect.ImmutableBiMap;
 import org.jetbrains.annotations.Nullable;
@@ -12,12 +12,12 @@ import java.util.regex.Pattern;
 /**
  * @author Sergey Evdokimov
  */
-public class ProductUpdateBuild {
+public class IdeVersion {
 
   public static final Pattern PATTERN = Pattern.compile("(?:(IC|IU|RM|WS|PS|PY|PC|OC|MPS|AI|DB|CL)-)?(\\d{1,8})\\.(?:(\\d{1,10})(?:\\.(\\d{1,10}))?|SNAPSHOT)");
-  public static final Comparator<ProductUpdateBuild> VERSION_COMPARATOR = new Comparator<ProductUpdateBuild>() {
+  public static final Comparator<IdeVersion> VERSION_COMPARATOR = new Comparator<IdeVersion>() {
     @Override
-    public int compare(ProductUpdateBuild o1, ProductUpdateBuild o2) {
+    public int compare(IdeVersion o1, IdeVersion o2) {
       if (o1.getBranch() > o2.getBranch()) return 1;
       if (o1.getBranch() < o2.getBranch()) return -1;
 
@@ -56,7 +56,7 @@ public class ProductUpdateBuild {
   private boolean isOk;
   private boolean isSnapshot;
 
-  public ProductUpdateBuild(@Nullable String text) {
+  public IdeVersion(@Nullable String text) {
     if (text == null) return;
 
     text = text.trim();

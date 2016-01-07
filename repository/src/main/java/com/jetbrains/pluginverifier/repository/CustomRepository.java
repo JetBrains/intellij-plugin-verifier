@@ -3,10 +3,10 @@ package com.jetbrains.pluginverifier.repository;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Maps;
-import com.intellij.structure.domain.IdeaPlugin;
-import com.intellij.structure.domain.PluginCache;
+import com.intellij.structure.domain.Plugin;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.DownloadUtils;
+import com.jetbrains.pluginverifier.misc.PluginCache;
 import org.apache.commons.io.IOUtils;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -93,7 +93,7 @@ public class CustomRepository extends PluginRepository {
 
     for (Map.Entry<UpdateInfo, String> entry : Maps.filterKeys(getRepositoriesMap(), predicate).entrySet()) {
       File update = DownloadUtils.getOrLoadUpdate(entry.getKey(), new URL(entry.getValue()));
-      IdeaPlugin ideaPlugin = PluginCache.getInstance().getPlugin(update);
+      Plugin ideaPlugin = PluginCache.getInstance().getPlugin(update);
       if (ideaPlugin != null && ideaPlugin.isCompatibleWithIde(ideVersion)) {
         res.add(entry.getKey());
       }

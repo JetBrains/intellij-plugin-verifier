@@ -1,5 +1,7 @@
-package com.intellij.structure.pool;
+package com.intellij.structure.impl.pool;
 
+import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.pool.EmptyClassPool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -34,7 +36,7 @@ public class ContainerClassPool implements ClassPool {
       }
     }
     if (someNonEmptyPool == null) {
-      return ClassPool.EMPTY_POOL;
+      return EmptyClassPool.INSTANCE;
     }
     return someNonEmptyPool;
   }

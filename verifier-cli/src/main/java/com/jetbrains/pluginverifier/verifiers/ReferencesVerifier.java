@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers;
 
-import com.intellij.structure.domain.IdeaPlugin;
+import com.intellij.structure.domain.Plugin;
+import com.intellij.structure.impl.resolvers.CacheResolver;
 import com.intellij.structure.pool.ClassPool;
-import com.intellij.structure.resolvers.CacheResolver;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
@@ -27,7 +27,7 @@ import java.util.List;
 public class ReferencesVerifier implements Verifier {
 
   @Override
-  public void verify(@NotNull IdeaPlugin plugin, @NotNull VerificationContext ctx) throws VerificationError {
+  public void verify(@NotNull Plugin plugin, @NotNull VerificationContext ctx) throws VerificationError {
     final ClassPool pluginPool = plugin.getPluginClassPool();
 
     Resolver cacheResolver = new CacheResolver(DependenciesCache.getInstance().getResolver(ctx.getIde(), plugin));

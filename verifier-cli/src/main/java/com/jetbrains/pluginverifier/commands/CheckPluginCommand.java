@@ -5,9 +5,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Files;
-import com.intellij.structure.domain.Idea;
-import com.intellij.structure.domain.IdeaPlugin;
-import com.intellij.structure.domain.JDK;
+import com.intellij.structure.domain.*;
 import com.intellij.structure.errors.BrokenPluginException;
 import com.jetbrains.pluginverifier.CommandHolder;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
@@ -160,7 +158,7 @@ public class CheckPluginCommand extends VerifierCommand {
           "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963");
     }
 
-    JDK jdk = createJdk(commandLine);
+    IdeRuntime javaRuntime = createJdk(commandLine);
 
     PluginVerifierOptions options = PluginVerifierOptions.parseOpts(commandLine);
 
@@ -178,16 +176,16 @@ public class CheckPluginCommand extends VerifierCommand {
       File ideaDirectory = new File(freeArgs.get(i));
       verifyIdeaDirectory(ideaDirectory);
 
-      Idea idea = new Idea(ideaDirectory, jdk, getExternalClassPath(commandLine));
+      Ide ide = IdeManager.getInstance().createIde(ideaDirectory, javaRuntime, getExternalClassPath(commandLine));
 
 
-      List<Pair<UpdateInfo, File>> pluginFiles = loadPluginFiles(pluginsToTestArg, idea.getVersion());
+      List<Pair<UpdateInfo, File>> pluginFiles = loadPluginFiles(pluginsToTestArg, ide.getVersion());
 
       for (Pair<UpdateInfo, File> pluginFile : pluginFiles) {
         try {
-          IdeaPlugin plugin = IdeaPlugin.createIdeaPlugin(pluginFile.getSecond());
+          Plugin plugin = PluginManager.getInstance().createPlugin(pluginFile.getSecond());
 
-          ProblemSet problemSet = verifyPlugin(idea, plugin, options, log);
+          ProblemSet problemSet = verifyPlugin(ide, plugin, options, log);
 
           final UpdateInfo updateInfo = new UpdateInfo(plugin.getPluginId(), plugin.getPluginName(), plugin.getPluginVersion());
 
@@ -198,7 +196,7 @@ public class CheckPluginCommand extends VerifierCommand {
             results.put(updateInfo, ideaToProblems);
           }
 
-          ideaToProblems.put(idea.getVersion(), problemSet);
+          ideaToProblems.put(ide.getVersion(), problemSet);
 
         } catch (Exception e) {
           final String message = "failed to verify plugin " + pluginFile.getFirst();
@@ -282,16 +280,16 @@ public class CheckPluginCommand extends VerifierCommand {
    * @return problems of plugin against specified IDEA
    */
   @NotNull
-  private ProblemSet verifyPlugin(@NotNull Idea idea,
-                                  @NotNull IdeaPlugin plugin,
+  private ProblemSet verifyPlugin(@NotNull Ide ide,
+                                  @NotNull Plugin plugin,
                                   @NotNull PluginVerifierOptions options,
                                   @NotNull TeamCityLog log) throws IOException, BrokenPluginException, VerificationError {
 
-    String message = "Verifying " + plugin.getPluginId() + ":" + plugin.getPluginVersion() + " against " + idea.getVersion() + "... ";
+    String message = "Verifying " + plugin.getPluginId() + ":" + plugin.getPluginVersion() + " against " + ide.getVersion() + "... ";
     System.out.print(message);
     log.message(message);
 
-    VerificationContextImpl ctx = new VerificationContextImpl(options, idea);
+    VerificationContextImpl ctx = new VerificationContextImpl(options, ide);
 
     TeamCityLog.Block block = log.blockOpen(plugin.getPluginId());
 
@@ -306,7 +304,7 @@ public class CheckPluginCommand extends VerifierCommand {
 
       //for test only purposes
       myLastProblemSet = problemSet;
-      idea.addCustomPlugin(plugin);
+      ide.addCustomPlugin(plugin);
 
       return problemSet;
 

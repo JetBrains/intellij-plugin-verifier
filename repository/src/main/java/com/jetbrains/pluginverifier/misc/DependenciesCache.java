@@ -2,12 +2,11 @@ package com.jetbrains.pluginverifier.misc;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import com.intellij.structure.domain.Idea;
-import com.intellij.structure.domain.IdeaPlugin;
-import com.intellij.structure.domain.PluginCache;
+import com.intellij.structure.domain.Ide;
+import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
+import com.intellij.structure.impl.resolvers.CombiningResolver;
 import com.intellij.structure.pool.ClassPool;
-import com.intellij.structure.resolvers.CombiningResolver;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
@@ -19,7 +18,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class DependenciesCache {
-  private static final Set<IdeaPlugin> DEP_CALC_MARKER = new HashSet<IdeaPlugin>();
+  private static final Set<Plugin> DEP_CALC_MARKER = new HashSet<Plugin>();
   private static final ImmutableList<String> IDEA_ULTIMATE_MODULES = ImmutableList.of(
       "com.intellij.modules.platform",
       "com.intellij.modules.lang",
@@ -31,7 +30,7 @@ public class DependenciesCache {
       "com.intellij.modules.all"
   );
   private static DependenciesCache ourInstance = new DependenciesCache();
-  private final WeakHashMap<Idea, WeakHashMap<IdeaPlugin, PluginDependenciesDescriptor>> map = new WeakHashMap<Idea, WeakHashMap<IdeaPlugin, PluginDependenciesDescriptor>>();
+  private final WeakHashMap<Ide, WeakHashMap<Plugin, PluginDependenciesDescriptor>> map = new WeakHashMap<Ide, WeakHashMap<Plugin, PluginDependenciesDescriptor>>();
 
   private DependenciesCache() {
   }
@@ -42,10 +41,10 @@ public class DependenciesCache {
   }
 
   @NotNull
-  private PluginDependenciesDescriptor getPluginDependenciesDescriptor(@NotNull Idea ide, @NotNull IdeaPlugin plugin) {
-    WeakHashMap<IdeaPlugin, PluginDependenciesDescriptor> m = map.get(ide);
+  private PluginDependenciesDescriptor getPluginDependenciesDescriptor(@NotNull Ide ide, @NotNull Plugin plugin) {
+    WeakHashMap<Plugin, PluginDependenciesDescriptor> m = map.get(ide);
     if (m == null) {
-      m = new WeakHashMap<IdeaPlugin, PluginDependenciesDescriptor>();
+      m = new WeakHashMap<Plugin, PluginDependenciesDescriptor>();
       map.put(ide, m);
     }
 
@@ -60,15 +59,15 @@ public class DependenciesCache {
   }
 
   @NotNull
-  public Resolver getResolver(@NotNull Idea ide, @NotNull IdeaPlugin plugin) throws VerificationError {
+  public Resolver getResolver(@NotNull Ide ide, @NotNull Plugin plugin) throws VerificationError {
     PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
     if (descriptor.myResolver == null) {
       List<Resolver> resolvers = new ArrayList<Resolver>();
 
-      resolvers.add(plugin.getCommonClassPool());
+      resolvers.add(plugin.getAllClassesPool());
       resolvers.add(ide.getResolver());
 
-      for (IdeaPlugin dep : getDependenciesWithTransitive(ide, plugin, new ArrayList<PluginDependenciesDescriptor>())) {
+      for (Plugin dep : getDependenciesWithTransitive(ide, plugin, new ArrayList<PluginDependenciesDescriptor>())) {
         ClassPool pluginClassPool = dep.getPluginClassPool();
         if (!pluginClassPool.isEmpty()) {
           resolvers.add(pluginClassPool);
@@ -89,12 +88,12 @@ public class DependenciesCache {
 
   //TODO: collect missing optional dependencies and print them in the TC-log
   @NotNull
-  private Set<IdeaPlugin> getDependenciesWithTransitive(@NotNull Idea ide,
-                                                        @NotNull IdeaPlugin plugin,
-                                                        @NotNull List<PluginDependenciesDescriptor> pluginStack) throws VerificationError {
+  private Set<Plugin> getDependenciesWithTransitive(@NotNull Ide ide,
+                                                    @NotNull Plugin plugin,
+                                                    @NotNull List<PluginDependenciesDescriptor> pluginStack) throws VerificationError {
     PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
 
-    Set<IdeaPlugin> result = descriptor.dependenciesWithTransitive;
+    Set<Plugin> result = descriptor.dependenciesWithTransitive;
     if (result == DEP_CALC_MARKER) {
       if (failOnCyclicDependency()) {
         int idx = pluginStack.lastIndexOf(descriptor); //compare descriptors by their identity (default equals behavior)
@@ -114,7 +113,7 @@ public class DependenciesCache {
       pluginStack.add(descriptor);
 
       try {
-        result = new HashSet<IdeaPlugin>(); //compare IdeaPlugins by their identity (default equals and hashCode behavior)
+        result = new HashSet<Plugin>(); //compare IdeaPlugins by their identity (default equals and hashCode behavior)
 
         //iterate through IntelliJ module dependencies
         for (PluginDependency dependency : plugin.getModuleDependencies()) {
@@ -124,7 +123,7 @@ public class DependenciesCache {
             continue;
           }
 
-          IdeaPlugin depPlugin = ide.getPluginByModule(moduleId);
+          Plugin depPlugin = ide.getPluginByModule(moduleId);
 
           if (depPlugin == null) {
             final String message = "Plugin " + plugin.getPluginId() + " depends on module " + moduleId + " which is not found in " + ide.getVersion();
@@ -141,7 +140,7 @@ public class DependenciesCache {
 
         //iterate through the other plugin dependencies
         for (PluginDependency pluginDependency : plugin.getDependencies()) {
-          IdeaPlugin depPlugin = ide.getPlugin(pluginDependency.getId());
+          Plugin depPlugin = ide.getPluginById(pluginDependency.getId());
 
           Exception maybeException = null;
           if (depPlugin == null) {
@@ -206,7 +205,7 @@ public class DependenciesCache {
 
     public boolean isCyclic;
 
-    public Set<IdeaPlugin> dependenciesWithTransitive;
+    public Set<Plugin> dependenciesWithTransitive;
 
     private PluginDependenciesDescriptor(@NotNull String pluginName) {
       this.pluginName = pluginName;

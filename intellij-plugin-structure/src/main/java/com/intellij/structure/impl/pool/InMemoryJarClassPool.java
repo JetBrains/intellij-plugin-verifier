@@ -1,5 +1,6 @@
-package com.intellij.structure.pool;
+package com.intellij.structure.impl.pool;
 
+import com.intellij.structure.pool.ClassPool;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;

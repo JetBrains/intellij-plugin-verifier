@@ -1,5 +1,6 @@
-package com.intellij.structure.pool;
+package com.intellij.structure.impl.pool;
 
+import com.intellij.structure.pool.ClassPool;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

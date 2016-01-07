@@ -1,6 +1,7 @@
 package com.intellij.structure.tests;
 
-import com.intellij.structure.domain.IdeaPlugin;
+import com.intellij.structure.domain.Plugin;
+import com.intellij.structure.domain.PluginManager;
 import org.apache.commons.io.FileUtils;
 import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
@@ -68,8 +69,8 @@ public class DependsTest {
       }
       System.out.println("Verifying...");
 
-      IdeaPlugin ideaPlugin = IdeaPlugin.createIdeaPlugin(destination);
-      Map<String, Document> xmlDocumentsInRoot = ideaPlugin.getXmlDocumentsInRoot();
+      Plugin ideaPlugin = PluginManager.getInstance().createPlugin(destination);
+      Map<String, Document> xmlDocumentsInRoot = ideaPlugin.getAllXmlInRoot();
       int size = xmlDocumentsInRoot.size();
 
       Assert.assertEquals((int) entry.getValue(), size);

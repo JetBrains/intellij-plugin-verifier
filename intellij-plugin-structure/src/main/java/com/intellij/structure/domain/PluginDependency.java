@@ -1,21 +1,24 @@
 package com.intellij.structure.domain;
 
 import com.google.common.base.Strings;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PluginDependency {
   private final String myId;
-  private final Boolean myIsOptional;
+  private final boolean myIsOptional;
 
-  public PluginDependency(final String id, final Boolean isOptional) {
+  public PluginDependency(@NotNull String id, @Nullable final Boolean isOptional) {
     myId = id;
-    myIsOptional = isOptional;
+    myIsOptional = isOptional == null ? false : isOptional;
   }
 
+  @NotNull
   public String getId() {
     return myId;
   }
 
-  public Boolean isOptional() {
+  public boolean isOptional() {
     return myIsOptional;
   }
 

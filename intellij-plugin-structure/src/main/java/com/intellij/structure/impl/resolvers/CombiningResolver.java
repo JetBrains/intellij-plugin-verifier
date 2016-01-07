@@ -1,6 +1,7 @@
-package com.intellij.structure.resolvers;
+package com.intellij.structure.impl.resolvers;
 
-import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.pool.EmptyClassPool;
+import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -15,7 +16,7 @@ public class CombiningResolver implements Resolver {
 
   public static Resolver union(List<Resolver> resolvers) {
     if (resolvers.isEmpty()) {
-      return ClassPool.EMPTY_POOL;
+      return EmptyClassPool.INSTANCE;
     }
 
     if (resolvers.size() == 1) {

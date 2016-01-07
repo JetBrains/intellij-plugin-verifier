@@ -5,7 +5,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.intellij.structure.utils.ProductUpdateBuild;
+import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.VerifierCommand;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.Problem;
@@ -52,19 +52,19 @@ public class NewProblemsCommand extends VerifierCommand {
     Collections.sort(resultsInPluginRepository, new Comparator<String>() {
       @Override
       public int compare(String o1, String o2) {
-        ProductUpdateBuild build1 = new ProductUpdateBuild(o1);
-        ProductUpdateBuild build2 = new ProductUpdateBuild(o2);
-        return ProductUpdateBuild.VERSION_COMPARATOR.compare(build1, build2);
+        IdeVersion build1 = new IdeVersion(o1);
+        IdeVersion build2 = new IdeVersion(o2);
+        return IdeVersion.VERSION_COMPARATOR.compare(build1, build2);
       }
     });
 
     String firstBuildProp = System.getProperty("firstBuild");
     if (firstBuildProp != null) {
-      ProductUpdateBuild firstBuild = new ProductUpdateBuild(firstBuildProp);
+      IdeVersion firstBuild = new IdeVersion(firstBuildProp);
       int idx = -1;
       for (int i = 0; i < resultsInPluginRepository.size(); i++) {
         String build = resultsInPluginRepository.get(i);
-        if (ProductUpdateBuild.VERSION_COMPARATOR.compare(firstBuild, new ProductUpdateBuild(build)) == 0) {
+        if (IdeVersion.VERSION_COMPARATOR.compare(firstBuild, new IdeVersion(build)) == 0) {
           idx = i;
           break;
         }
@@ -74,15 +74,15 @@ public class NewProblemsCommand extends VerifierCommand {
       }
     }
 
-    ProductUpdateBuild currentBuild = new ProductUpdateBuild(currentCheckBuild);
+    IdeVersion currentBuild = new IdeVersion(currentCheckBuild);
 
     List<String> result = new ArrayList<String>();
 
     for (String build : resultsInPluginRepository) {
-      ProductUpdateBuild updateBuild = new ProductUpdateBuild(build);
+      IdeVersion updateBuild = new IdeVersion(build);
 
       //NOTE: compares only IDEAs of the same branch! that is 141.* between each others
-      if (updateBuild.getBranch() == currentBuild.getBranch() && ProductUpdateBuild.VERSION_COMPARATOR.compare(updateBuild, currentBuild) < 0) {
+      if (updateBuild.getBranch() == currentBuild.getBranch() && IdeVersion.VERSION_COMPARATOR.compare(updateBuild, currentBuild) < 0) {
         result.add(build);
       }
     }

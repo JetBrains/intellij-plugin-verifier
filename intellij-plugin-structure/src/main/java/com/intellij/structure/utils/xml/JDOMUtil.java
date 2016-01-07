@@ -15,7 +15,6 @@
  */
 package com.intellij.structure.utils.xml;
 
-import com.intellij.structure.utils.ArrayUtil;
 import com.intellij.structure.utils.Comparing;
 import org.apache.commons.io.IOUtils;
 import org.jdom.*;
@@ -42,6 +41,7 @@ import java.util.List;
 public class JDOMUtil {
   private static final ThreadLocal<SoftReference<SAXBuilder>> ourSaxBuilder = new ThreadLocal<SoftReference<SAXBuilder>>();
   private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
+  private static final char[] EMPTY_CHAR_ARRAY = new char[0];
 
   private JDOMUtil() {
   }
@@ -106,7 +106,7 @@ public class JDOMUtil {
         @Override
         @NotNull
         public InputSource resolveEntity(String publicId, String systemId) {
-          return new InputSource(new CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY));
+          return new InputSource(new CharArrayReader(EMPTY_CHAR_ARRAY));
         }
       });
 

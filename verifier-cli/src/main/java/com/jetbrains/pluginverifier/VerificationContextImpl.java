@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier;
 
-import com.intellij.structure.domain.Idea;
+import com.intellij.structure.domain.Ide;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.results.ProblemSet;
@@ -15,9 +15,9 @@ public class VerificationContextImpl implements VerificationContext {
 
   private final ProblemSet problems = new ProblemSet();
 
-  private final Idea ide;
+  private final Ide ide;
 
-  public VerificationContextImpl(PluginVerifierOptions options, Idea ide) {
+  public VerificationContextImpl(PluginVerifierOptions options, Ide ide) {
     this.options = options;
     this.ide = ide;
   }
@@ -38,7 +38,7 @@ public class VerificationContextImpl implements VerificationContext {
   }
 
   @NotNull
-  public Idea getIde() {
+  public Ide getIde() {
     return ide;
   }
 }

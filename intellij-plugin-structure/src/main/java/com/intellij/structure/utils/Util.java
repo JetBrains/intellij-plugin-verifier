@@ -1,9 +1,9 @@
 package com.intellij.structure.utils;
 
 import com.google.common.base.Predicate;
+import com.intellij.structure.impl.pool.ContainerClassPool;
+import com.intellij.structure.impl.pool.JarClassPool;
 import com.intellij.structure.pool.ClassPool;
-import com.intellij.structure.pool.ContainerClassPool;
-import com.intellij.structure.pool.JarClassPool;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,9 +45,4 @@ public class Util {
     return ContainerClassPool.getUnion(moniker, pool);
   }
 
-  public static RuntimeException fail(String message) {
-    System.err.println(message);
-    System.exit(1);
-    return new RuntimeException();
-  }
 }

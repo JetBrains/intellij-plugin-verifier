@@ -1,16 +1,21 @@
-package com.intellij.structure.domain;
+package com.intellij.structure.impl.domain;
 
 import com.google.common.base.Predicate;
 import com.google.common.io.Files;
+import com.intellij.structure.domain.Ide;
+import com.intellij.structure.domain.IdeRuntime;
+import com.intellij.structure.domain.Plugin;
+import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.errors.BrokenPluginException;
+import com.intellij.structure.impl.pool.CompileOutputPool;
+import com.intellij.structure.impl.pool.ContainerClassPool;
+import com.intellij.structure.impl.resolvers.CacheResolver;
+import com.intellij.structure.impl.resolvers.CombiningResolver;
 import com.intellij.structure.pool.ClassPool;
-import com.intellij.structure.pool.CompileOutputPool;
-import com.intellij.structure.pool.ContainerClassPool;
-import com.intellij.structure.resolvers.CacheResolver;
-import com.intellij.structure.resolvers.CombiningResolver;
 import com.intellij.structure.resolvers.Resolver;
 import com.intellij.structure.utils.Util;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -24,30 +29,29 @@ import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Idea {
+class Idea implements Ide {
   private static final Pattern BUILD_NUMBER_PATTERN = Pattern.compile("([^\\.]+\\.\\d+)\\.\\d+");
   private final File myIdeaDir;
-  private final JDK myJdk;
+  private final IdeRuntime myJavaRuntime;
   private final ClassPool myClassPool;
   private final ClassPool myExternalClasspath;
-  private final List<IdeaPlugin> myBundledPlugins;
-  private final List<IdeaPlugin> myCustomPlugins = new ArrayList<IdeaPlugin>();
+  private final List<Plugin> myBundledPlugins = new ArrayList<Plugin>();
+  private final List<Plugin> myCustomPlugins = new ArrayList<Plugin>();
   private Resolver myResolver;
 
   private String myVersion;
 
-  public Idea(final File ideaDir, JDK jdk) throws IOException, JDOMException {
-    this(ideaDir, jdk, null);
+  Idea(@NotNull File ideaDir, @NotNull IdeRuntime javaRuntime) throws IOException, JDOMException {
+    this(ideaDir, javaRuntime, null);
   }
 
-  public Idea(final File ideaDir, JDK jdk, @Nullable ClassPool classpath) throws IOException, JDOMException {
+  Idea(@NotNull File ideaDir, @NotNull IdeRuntime javaRuntime, @Nullable ClassPool classpath) throws IOException, JDOMException {
     myIdeaDir = ideaDir;
-    myJdk = jdk;
+    myJavaRuntime = javaRuntime;
     myExternalClasspath = classpath;
 
     if (isSourceDir(ideaDir)) {
       myClassPool = getIdeaClassPoolFromSources(ideaDir);
-      myBundledPlugins = Collections.emptyList();
       File versionFile = new File(ideaDir, "build.txt");
       if (!versionFile.exists()) {
         versionFile = new File(ideaDir, "community/build.txt");
@@ -57,8 +61,7 @@ public class Idea {
       }
     } else {
       myClassPool = getIdeaClassPoolFromLibraries(ideaDir);
-      myBundledPlugins = getIdeaPlugins();
-
+      myBundledPlugins.addAll(getIdeaPlugins(myIdeaDir));
       myVersion = readBuildNumber(new File(ideaDir, "build.txt"));
     }
   }
@@ -105,33 +108,22 @@ public class Idea {
         && new File(dir, ".git").isDirectory();
   }
 
-  public String getVersion() {
-    return myVersion;
-  }
-
-  public void setVersion(String myVersion) {
-    this.myVersion = myVersion;
-  }
-
-  public void addCustomPlugin(IdeaPlugin plugin) {
-    myCustomPlugins.add(plugin);
-  }
-
-  private List<IdeaPlugin> getIdeaPlugins() throws JDOMException, IOException {
-    final File pluginsDir = new File(myIdeaDir, "plugins");
+  @NotNull
+  private static List<Plugin> getIdeaPlugins(File ideaDir) throws JDOMException, IOException {
+    final File pluginsDir = new File(ideaDir, "plugins");
 
     final File[] files = pluginsDir.listFiles();
     if (files == null)
       return Collections.emptyList();
 
-    List<IdeaPlugin> plugins = new ArrayList<IdeaPlugin>();
+    List<Plugin> plugins = new ArrayList<Plugin>();
 
     for (File file : files) {
       if (!file.isDirectory())
         continue;
 
       try {
-        plugins.add(IdeaPlugin.createFromDirectory(file));
+        plugins.add(PluginManager.getInstance().createPlugin(file));
       } catch (BrokenPluginException e) {
         System.out.println("Failed to read plugin " + file + ": " + e.getMessage());
       }
@@ -140,26 +132,48 @@ public class Idea {
     return plugins;
   }
 
-  public ClassPool getClassPool() {
+  @Override
+  @NotNull
+  public String getVersion() {
+    return myVersion;
+  }
+
+  @Override
+  public void updateVersion(@NotNull String newVersion) {
+    myVersion = newVersion;
+  }
+
+  @Override
+  public void addCustomPlugin(@NotNull Plugin plugin) {
+    myCustomPlugins.add(plugin);
+  }
+
+  private ClassPool getClassPool() {
     return myClassPool;
   }
 
-  public String getMoniker() {
-    return myIdeaDir.getPath();
+  @Override
+  @NotNull
+  public List<Plugin> getCustomPlugins() {
+    return myCustomPlugins;
   }
 
-  public List<IdeaPlugin> getBundledPlugins() {
+  @Override
+  @NotNull
+  public List<Plugin> getBundledPlugins() {
     return myBundledPlugins;
   }
 
-  public IdeaPlugin getPlugin(String name) {
-    for (IdeaPlugin plugin : myCustomPlugins) {
-      if (plugin.getPluginId().equals(name)) {
+  @Override
+  @Nullable
+  public Plugin getPluginById(@NotNull String pluginId) {
+    for (Plugin plugin : myCustomPlugins) {
+      if (plugin.getPluginId().equals(pluginId)) {
         return plugin;
       }
     }
-    for (IdeaPlugin plugin : myBundledPlugins) {
-      if (plugin.getPluginId().equals(name))
+    for (Plugin plugin : myBundledPlugins) {
+      if (plugin.getPluginId().equals(pluginId))
         return plugin;
     }
     return null;
@@ -169,16 +183,18 @@ public class Idea {
     return myIdeaDir;
   }
 
+  @Override
+  @NotNull
   public Resolver getResolver() {
     if (myResolver == null) {
 
       List<Resolver> resolverList;
       if (myExternalClasspath != null) {
         resolverList = Arrays.asList(getClassPool(),
-            myJdk.getResolver(),
+            myJavaRuntime.getResolver(),
             myExternalClasspath);
       } else {
-        resolverList = Arrays.asList(getClassPool(), myJdk.getResolver());
+        resolverList = Arrays.asList(getClassPool(), myJavaRuntime.getResolver());
       }
 
       myResolver = new CacheResolver(CombiningResolver.union(resolverList));
@@ -187,13 +203,15 @@ public class Idea {
     return myResolver;
   }
 
-  public IdeaPlugin getPluginByModule(String moduleId) {
-    for (IdeaPlugin plugin : myCustomPlugins) {
+  @Override
+  @Nullable
+  public Plugin getPluginByModule(@NotNull String moduleId) {
+    for (Plugin plugin : myCustomPlugins) {
       if (plugin.getDefinedModules().contains(moduleId)) {
         return plugin;
       }
     }
-    for (IdeaPlugin plugin : myBundledPlugins) {
+    for (Plugin plugin : myBundledPlugins) {
       if (plugin.getDefinedModules().contains(moduleId)) {
         return plugin;
       }

@@ -4,10 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
-import com.intellij.structure.domain.Idea;
-import com.intellij.structure.domain.IdeaPlugin;
-import com.intellij.structure.domain.JDK;
-import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.domain.*;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.VerifierCommand;
@@ -282,13 +279,11 @@ public class CheckIdeCommand extends VerifierCommand {
 
     TeamCityLog tc = TeamCityLog.getInstance(commandLine);
 
-    JDK jdk = createJdk(commandLine);
+    IdeRuntime javaRuntime = createJdk(commandLine);
 
     PluginVerifierOptions options = PluginVerifierOptions.parseOpts(commandLine);
 
-    ClassPool externalClassPath = getExternalClassPath(commandLine);
-
-    Idea ide = new Idea(ideToCheck, jdk, externalClassPath);
+    Ide ide = IdeManager.getInstance().createIde(ideToCheck, javaRuntime, getExternalClassPath(commandLine));
     updateIdeVersionFromCmd(ide, commandLine);
 
     Pair<List<String>, List<String>> pluginsIds = extractPluginToCheckList(commandLine);
@@ -361,7 +356,7 @@ public class CheckIdeCommand extends VerifierCommand {
       try {
         File updateFile = RepositoryManager.getInstance().getOrLoadUpdate(updateJson);
 
-        IdeaPlugin plugin = IdeaPlugin.createFromZip(updateFile);
+        Plugin plugin = PluginManager.getInstance().createPlugin(updateFile);
 
         System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), updates.size()));
 

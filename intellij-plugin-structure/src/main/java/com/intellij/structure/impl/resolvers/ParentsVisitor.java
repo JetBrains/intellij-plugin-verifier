@@ -1,6 +1,7 @@
-package com.intellij.structure.resolvers;
+package com.intellij.structure.impl.resolvers;
 
 import com.google.common.base.Predicate;
+import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.ClassNode;
 

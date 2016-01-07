@@ -3,9 +3,7 @@ package verifier.tests;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import com.intellij.structure.domain.Idea;
-import com.intellij.structure.domain.IdeaPlugin;
-import com.intellij.structure.domain.JDK;
+import com.intellij.structure.domain.*;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.problems.*;
@@ -72,8 +70,8 @@ public class VerifierTest {
           .build();
 
 
-  private Idea myIdea;
-  private IdeaPlugin myPlugin;
+  private Ide myIde;
+  private Plugin myPlugin;
   private ProblemSet myProblemSet;
   private Map<Problem, Set<ProblemLocation>> myProblems;
 
@@ -92,15 +90,15 @@ public class VerifierTest {
 //    File pluginFile = new File("../for_tests/Maven_Sync.zip");
 //    File pluginFile = new File("../for_tests/keymap.zip");
 
-    JDK jdk = new JDK(jdkFile);
+    IdeRuntime javaRuntime = IdeRuntimeManager.getInstance().createRuntime(jdkFile);
 
-    myIdea = new Idea(ideaFile, jdk);
-    myPlugin = IdeaPlugin.createIdeaPlugin(pluginFile);
+    myIde = IdeManager.getInstance().createIde(ideaFile, javaRuntime);
+    myPlugin = PluginManager.getInstance().createPlugin(pluginFile);
 
     List<String> args = Collections.singletonList("");
     final CommandLine commandLine = new GnuParser().parse(Util.CMD_OPTIONS, args.toArray(new String[args.size()]));
 
-    VerificationContextImpl ctx = new VerificationContextImpl(PluginVerifierOptions.parseOpts(commandLine), myIdea);
+    VerificationContextImpl ctx = new VerificationContextImpl(PluginVerifierOptions.parseOpts(commandLine), myIde);
     Verifiers.processAllVerifiers(myPlugin, ctx);
 
     myProblemSet = ctx.getProblems();
