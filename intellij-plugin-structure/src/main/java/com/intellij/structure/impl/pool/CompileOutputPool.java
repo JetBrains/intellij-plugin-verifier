@@ -1,11 +1,10 @@
 package com.intellij.structure.impl.pool;
 
+import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.pool.ClassPool;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.tree.ClassNode;
 
 import java.io.*;
 import java.util.*;
@@ -18,7 +17,7 @@ public class CompileOutputPool implements ClassPool {
   private String moniker;
 
   private Map<String, PackageDescriptor> packageMap = new HashMap<String, PackageDescriptor>();
-  private Map<String, ClassNode> classesMap = new HashMap<String, ClassNode>();
+  private Map<String, ClassFile> classesMap = new HashMap<String, ClassFile>();
 
   public CompileOutputPool(File dir) {
     this.moniker = dir.getPath();
@@ -39,8 +38,8 @@ public class CompileOutputPool implements ClassPool {
 
   @Nullable
   @Override
-  public ClassNode findClass(@NotNull String className) {
-    ClassNode res = classesMap.get(className);
+  public ClassFile findClass(@NotNull String className) {
+    ClassFile res = classesMap.get(className);
 
     if (res == null) {
       if (classesMap.containsKey(className)) return null;
@@ -59,10 +58,7 @@ public class CompileOutputPool implements ClassPool {
           try {
             InputStream in = new BufferedInputStream(new FileInputStream(classFile));
             try {
-              ClassNode node = new ClassNode();
-              new ClassReader(in).accept(node, 0);
-
-              res = node;
+              res = new ClassFile(in);
               break;
             } finally {
               IOUtils.closeQuietly(in);

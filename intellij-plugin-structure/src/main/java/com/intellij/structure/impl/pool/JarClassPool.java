@@ -1,10 +1,10 @@
 package com.intellij.structure.impl.pool;
 
+import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.pool.ClassPool;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +24,7 @@ public class JarClassPool implements ClassPool {
   private final JarFile myJarFile;
   private final String myMoniker;
 
-  private final Map<String, SoftReference<ClassNode>> myClassesCache = new HashMap<String, SoftReference<ClassNode>>();
+  private final Map<String, SoftReference<ClassFile>> myClassesCache = new HashMap<String, SoftReference<ClassFile>>();
 
   public JarClassPool(@NotNull JarFile jarFile) throws IOException {
     myMoniker = jarFile.getName();
@@ -61,30 +61,31 @@ public class JarClassPool implements ClassPool {
   }
 
   @Override
-  public ClassNode findClass(@NotNull String className) {
+  public ClassFile findClass(@NotNull String className) {
     if (!myClassesCache.containsKey(className)) {
       return null;
     }
-    SoftReference<ClassNode> reference = myClassesCache.get(className);
-    ClassNode classNode = reference == null ? null : reference.get();
-    if (classNode == null) {
-      classNode = evaluateNode(className);
-      myClassesCache.put(className, new SoftReference<ClassNode>(classNode));
+    SoftReference<ClassFile> reference = myClassesCache.get(className);
+    ClassFile classFile = reference == null ? null : reference.get();
+    if (classFile == null) {
+      classFile = evaluateNode(className);
+      myClassesCache.put(className, new SoftReference<ClassFile>(classFile));
     }
-    return classNode;
+    return classFile;
   }
 
   @Nullable
-  private ClassNode evaluateNode(@NotNull String className) {
+  private ClassFile evaluateNode(@NotNull String className) {
+    final ZipEntry entry = myJarFile.getEntry(className + CLASS_SUFFIX);
+    InputStream inputStream = null;
     try {
-      final ZipEntry entry = myJarFile.getEntry(className + CLASS_SUFFIX);
-      final InputStream inputStream = myJarFile.getInputStream(entry);
-      final ClassNode classNode = new ClassNode();
-      new ClassReader(inputStream).accept(classNode, 0);
-      inputStream.close();
-      return classNode;
+      inputStream = myJarFile.getInputStream(entry);
+      return new ClassFile(inputStream);
     } catch (IOException e) {
+      //TODO: proceed exception
       return null;
+    } finally {
+      IOUtils.closeQuietly(inputStream);
     }
   }
 

@@ -1,8 +1,8 @@
 package com.intellij.structure.pool;
 
+import com.intellij.structure.bytecode.ClassFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.tree.ClassNode;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -16,7 +16,7 @@ public class EmptyClassPool implements ClassPool {
 
   @Nullable
   @Override
-  public ClassNode findClass(@NotNull String className) {
+  public ClassFile findClass(@NotNull String className) {
     return null;
   }
 

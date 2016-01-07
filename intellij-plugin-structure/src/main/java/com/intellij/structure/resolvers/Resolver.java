@@ -1,9 +1,9 @@
 package com.intellij.structure.resolvers;
 
 
+import com.intellij.structure.bytecode.ClassFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.tree.ClassNode;
 
 /**
  * Provides access to byte-code of class by its name
@@ -18,7 +18,7 @@ public interface Resolver {
    * @return byte-code accessor
    */
   @Nullable
-  ClassNode findClass(@NotNull String className);
+  ClassFile findClass(@NotNull String className);
 
   /**
    * Returns moniker of class within its containing plugin. It may be name of .jar file

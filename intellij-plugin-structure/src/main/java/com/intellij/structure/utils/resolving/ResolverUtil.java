@@ -1,7 +1,9 @@
-package com.intellij.structure.resolvers;
+package com.intellij.structure.utils.resolving;
 
 import com.google.common.base.Predicates;
-import com.intellij.structure.impl.resolvers.ParentsVisitor;
+import com.intellij.structure.bytecode.AsmBytecode;
+import com.intellij.structure.bytecode.ClassFile;
+import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -22,12 +24,13 @@ public class ResolverUtil {
       return null;
     }
 
-    final ClassNode clazz = resolver.findClass(className);
-    if (clazz == null) {
+    final ClassFile classFile = resolver.findClass(className);
+    if (classFile == null) {
       return null;
     }
+    ClassNode node = AsmBytecode.convertToAsmNode(classFile);
 
-    return findMethod(resolver, clazz, methodName, methodDesc);
+    return findMethod(resolver, node, methodName, methodDesc);
   }
 
   @Nullable
@@ -54,7 +57,7 @@ public class ResolverUtil {
 
   @NotNull
   public static Set<String> collectUnresolvedClasses(@NotNull Resolver resolver, @NotNull String className) {
-    ClassNode node = resolver.findClass(className);
+    ClassFile node = resolver.findClass(className);
     if (node == null) {
       return Collections.singleton(className);
     }

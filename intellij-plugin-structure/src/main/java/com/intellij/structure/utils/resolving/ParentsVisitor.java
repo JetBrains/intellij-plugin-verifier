@@ -1,6 +1,8 @@
-package com.intellij.structure.impl.resolvers;
+package com.intellij.structure.utils.resolving;
 
 import com.google.common.base.Predicate;
+import com.intellij.structure.bytecode.AsmBytecode;
+import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.ClassNode;
@@ -33,10 +35,11 @@ public class ParentsVisitor {
   @NotNull
   public Set<String> collectUnresolvedParents(@NotNull String className,
                                               @NotNull Predicate<String> excludedPredicate) throws IllegalArgumentException {
-    ClassNode classNode = myResolver.findClass(className);
-    if (classNode == null) {
+    ClassFile aClass = myResolver.findClass(className);
+    if (aClass == null) {
       throw new IllegalArgumentException(className + " should be found in the resolver " + myResolver);
     }
+    ClassNode classNode = AsmBytecode.convertToAsmNode(aClass);
 
     if (myParentsCache.containsKey(className)) {
       return myParentsCache.get(className);

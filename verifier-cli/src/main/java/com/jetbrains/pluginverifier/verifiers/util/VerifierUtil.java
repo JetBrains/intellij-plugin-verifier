@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.util;
 
 import com.google.common.base.Preconditions;
+import com.intellij.structure.bytecode.AsmBytecode;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.utils.Assert;
@@ -31,7 +32,7 @@ public class VerifierUtil {
       return true;
     }
 
-    final ClassNode clazz = resolver.findClass(name);
+    final ClassNode clazz = AsmBytecode.convertToAsmNode(resolver.findClass(name));
     return clazz != null && (isInterface == null || isInterface == isInterface(clazz));
   }
 

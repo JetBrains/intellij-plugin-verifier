@@ -1,8 +1,9 @@
 package com.intellij.structure.impl.pool;
 
+import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.utils.ClassFileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.util.Collection;
@@ -32,8 +33,9 @@ public class InMemoryJarClassPool implements ClassPool {
     myInMemoryClasses.put(className, classNode);
   }
 
-  public void addClass(@NotNull ClassNode node) {
-    myInMemoryClasses.put(node.name, node);
+  public void addClass(@NotNull ClassFile classFile) {
+    String className = ClassFileUtil.extractClassName(classFile);
+    myInMemoryClasses.put(className, classFile);
   }
 
   @NotNull
@@ -53,23 +55,21 @@ public class InMemoryJarClassPool implements ClassPool {
   }
 
   @Override
-  public ClassNode findClass(@NotNull String className) {
+  public ClassFile findClass(@NotNull String className) {
     Object obj = myInMemoryClasses.get(className);
 
     if (obj == null) return null;
 
-    if (obj instanceof ClassNode) {
-      return (ClassNode) obj;
+    if (obj instanceof ClassFile) {
+      return (ClassFile) obj;
     }
 
     byte[] classContent = (byte[]) obj;
+    ClassFile classFile = new ClassFile(classContent);
 
-    ClassNode node = new ClassNode();
-    new ClassReader(classContent).accept(node, 0);
+    myInMemoryClasses.put(className, classFile);
 
-    myInMemoryClasses.put(className, node);
-
-    return node;
+    return classFile;
   }
 
   @Override

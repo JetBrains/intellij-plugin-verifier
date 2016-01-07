@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers;
 
+import com.intellij.structure.bytecode.AsmBytecode;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.impl.resolvers.CacheResolver;
 import com.intellij.structure.pool.ClassPool;
@@ -34,7 +35,7 @@ public class ReferencesVerifier implements Verifier {
 
     final Collection<String> classes = pluginPool.getAllClasses();
     for (String className : classes) {
-      final ClassNode node = pluginPool.findClass(className);
+      final ClassNode node = AsmBytecode.convertToAsmNode(pluginPool.findClass(className));
 
       if (node == null) {
         ctx.registerProblem(new FailedToReadClassProblem(className), ProblemLocation.fromClass(className));

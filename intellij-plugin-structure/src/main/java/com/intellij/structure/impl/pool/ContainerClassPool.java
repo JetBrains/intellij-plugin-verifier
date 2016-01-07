@@ -1,10 +1,10 @@
 package com.intellij.structure.impl.pool;
 
+import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.pool.ClassPool;
 import com.intellij.structure.pool.EmptyClassPool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.tree.ClassNode;
 
 import java.util.*;
 
@@ -69,9 +69,9 @@ public class ContainerClassPool implements ClassPool {
 
   @Override
   @Nullable
-  public ClassNode findClass(@NotNull String className) {
+  public ClassFile findClass(@NotNull String className) {
     for (ClassPool pool : myClassPools) {
-      ClassNode node = pool.findClass(className);
+      ClassFile node = pool.findClass(className);
       if (node != null) {
         return node;
       }

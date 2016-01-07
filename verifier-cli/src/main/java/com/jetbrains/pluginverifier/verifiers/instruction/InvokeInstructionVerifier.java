@@ -1,7 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers.instruction;
 
+import com.intellij.structure.bytecode.AsmBytecode;
 import com.intellij.structure.resolvers.Resolver;
-import com.intellij.structure.resolvers.ResolverUtil;
+import com.intellij.structure.utils.resolving.ResolverUtil;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
@@ -44,7 +45,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
 
     if (ctx.getOptions().isExternalClass(ownerClassName)) return;
 
-    ClassNode ownerClass = resolver.findClass(ownerClassName);
+    ClassNode ownerClass = AsmBytecode.convertToAsmNode(resolver.findClass(ownerClassName));
     if (ownerClass == null) {
       ctx.registerProblem(new ClassNotFoundProblem(ownerClassName), ProblemLocation.fromMethod(clazz.name, method));
     } else {
@@ -149,7 +150,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       if (superName == null) {
         return false;
       }
-      child = resolver.findClass(superName);
+      child = AsmBytecode.convertToAsmNode(resolver.findClass(superName));
     }
     return false;
   }

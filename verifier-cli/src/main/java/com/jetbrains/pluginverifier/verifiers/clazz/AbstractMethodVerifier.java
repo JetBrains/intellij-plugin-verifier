@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.clazz;
 
+import com.intellij.structure.bytecode.AsmBytecode;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem;
@@ -25,7 +26,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
 
     String superName = clazz.superName == null ? "java/lang/Object" : clazz.superName;
 
-    ClassNode superClass = resolver.findClass(superName);
+    ClassNode superClass = AsmBytecode.convertToAsmNode(resolver.findClass(superName));
     if (superClass == null) {
       return; //unknown class
     }
@@ -68,7 +69,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
         break;
       }
 
-      curNode = resolver.findClass(curNode.superName);
+      curNode = AsmBytecode.convertToAsmNode(resolver.findClass(curNode.superName));
       if (curNode == null) {
         //TODO: don't return silently
         return; // RETURN , don't check anymore because unknown class exists.
@@ -82,7 +83,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
 
       if (!processedInterfaces.add(iface)) continue; //if this interface is already visited
 
-      final ClassNode iNode = resolver.findClass(iface);
+      final ClassNode iNode = AsmBytecode.convertToAsmNode(resolver.findClass(iface));
       if (iNode == null) continue; //undefined class
 
       if (!VerifierUtil.isInterface(iNode)) {
@@ -113,7 +114,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
           if (curNode.superName == null) {
             curNode = null;
           } else {
-            curNode = resolver.findClass(curNode.superName);
+            curNode = AsmBytecode.convertToAsmNode(resolver.findClass(curNode.superName));
             if (curNode == null) {
               //TODO: don't return silently
               return; // RETURN , don't check anymore because unknown class exists.

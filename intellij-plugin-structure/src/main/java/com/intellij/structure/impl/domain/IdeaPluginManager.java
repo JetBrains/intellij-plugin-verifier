@@ -2,6 +2,7 @@ package com.intellij.structure.impl.domain;
 
 import com.google.common.base.Predicates;
 import com.google.common.io.ByteStreams;
+import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.errors.BrokenPluginException;
@@ -18,8 +19,6 @@ import org.apache.commons.io.IOUtils;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.tree.ClassNode;
 
 import java.io.*;
 import java.net.URL;
@@ -60,9 +59,8 @@ public class IdeaPluginManager extends PluginManager {
 
         if (entryName.endsWith(CLASS_SUFFIX)) {
           //simply .class-file
-          ClassNode node = new ClassNode();
-          new ClassReader(zipInputStream).accept(node, 0);
-          zipRootPool.addClass(node);
+          ClassFile classFile = new ClassFile(zipInputStream);
+          zipRootPool.addClass(classFile);
 
         } else if (isXmlInRoot(entryName)) {
           //some *.xml file (maybe META-INF/plugin.xml)

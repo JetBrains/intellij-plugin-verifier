@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.method;
 
 import com.intellij.structure.resolvers.Resolver;
-import com.intellij.structure.resolvers.ResolverUtil;
+import com.intellij.structure.utils.resolving.ResolverUtil;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.problems.OverridingFinalMethodProblem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;

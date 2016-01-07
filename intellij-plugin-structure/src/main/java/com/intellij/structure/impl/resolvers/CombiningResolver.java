@@ -1,9 +1,9 @@
 package com.intellij.structure.impl.resolvers;
 
+import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.pool.EmptyClassPool;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.tree.ClassNode;
 
 import java.util.List;
 
@@ -27,9 +27,9 @@ public class CombiningResolver implements Resolver {
   }
 
   @Override
-  public ClassNode findClass(@NotNull final String className) {
+  public ClassFile findClass(@NotNull final String className) {
     for (Resolver resolver : myResolvers) {
-      ClassNode klass = resolver.findClass(className);
+      ClassFile klass = resolver.findClass(className);
       if (klass != null)
         return klass;
     }
