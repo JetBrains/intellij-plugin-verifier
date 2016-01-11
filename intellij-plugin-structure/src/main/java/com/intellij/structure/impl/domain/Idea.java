@@ -29,7 +29,6 @@ import java.util.regex.Pattern;
 
 class Idea implements Ide {
   private static final Pattern BUILD_NUMBER_PATTERN = Pattern.compile("([^\\.]+\\.\\d+)\\.\\d+");
-  private final File myIdeaDir;
   private final IdeRuntime myJavaRuntime;
   private final ClassPool myClassPool;
   private final ClassPool myExternalClasspath;
@@ -44,7 +43,6 @@ class Idea implements Ide {
   }
 
   Idea(@NotNull File ideaDir, @NotNull IdeRuntime javaRuntime, @Nullable ClassPool classpath) throws IOException, IncorrectPluginException {
-    myIdeaDir = ideaDir;
     myJavaRuntime = javaRuntime;
     myExternalClasspath = classpath;
 
@@ -59,7 +57,7 @@ class Idea implements Ide {
       }
     } else {
       myClassPool = getIdeaClassPoolFromLibraries(ideaDir);
-      myBundledPlugins.addAll(getIdeaPlugins(myIdeaDir));
+      myBundledPlugins.addAll(getIdeaPlugins(ideaDir));
       myVersion = readBuildNumber(new File(ideaDir, "build.txt"));
     }
   }
@@ -195,7 +193,7 @@ class Idea implements Ide {
         resolverList = Arrays.asList(getClassPool(), myJavaRuntime.getResolver());
       }
 
-      myResolver = new CacheResolver(CombiningResolver.union(resolverList));
+      myResolver = CacheResolver.createCacheResolver(CombiningResolver.union(resolverList));
     }
 
     return myResolver;

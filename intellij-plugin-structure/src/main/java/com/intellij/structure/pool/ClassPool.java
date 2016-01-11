@@ -17,5 +17,4 @@ public interface ClassPool extends Resolver {
   Collection<String> getAllClasses();
 
   boolean isEmpty();
-
 }

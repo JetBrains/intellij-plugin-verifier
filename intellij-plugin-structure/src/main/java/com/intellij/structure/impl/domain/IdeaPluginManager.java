@@ -167,7 +167,7 @@ public class IdeaPluginManager extends PluginManager {
       }
     }
 
-    return new IdeaPlugin(zipFile, pluginClassPool, ContainerClassPool.getUnion(zipFile.getPath(), libraryPool), pluginXml, allXmlInRoot);
+    return new IdeaPlugin(zipFile.getAbsolutePath(), pluginClassPool, ContainerClassPool.getUnion(zipFile.getPath(), libraryPool), pluginXml, allXmlInRoot);
   }
 
   private static void tryAddXmlInRoot(@NotNull Map<String, Document> container,
@@ -211,7 +211,7 @@ public class IdeaPluginManager extends PluginManager {
           throw new MultiplePluginXmlException("Plugin has more than one .jar with plugin.xml " + pluginFile);
         }
 
-        pluginClassPool = new JarClassPool(jar);
+        pluginClassPool = JarClassPool.createJarClassPool(jar);
         URL jarURL = new URL(
             "jar:" + StringUtil.replace(new File(jar.getName()).toURI().toASCIIString(), "!", "%21") + "!/META-INF/plugin.xml"
         );
@@ -225,7 +225,7 @@ public class IdeaPluginManager extends PluginManager {
           throw new IncorrectPluginXmlException("Failed to read plugin.xml", e);
         }
       } else {
-        libraryPools.add(new JarClassPool(jar));
+        libraryPools.add(JarClassPool.createJarClassPool(jar));
       }
     }
 
@@ -265,7 +265,7 @@ public class IdeaPluginManager extends PluginManager {
     }
 
     ClassPool libraryPoolsUnion = ContainerClassPool.getUnion(pluginFile.toString(), libraryPools);
-    return new IdeaPlugin(pluginFile, pluginClassPool, libraryPoolsUnion, pluginXml, xmlDocumentsInRoot);
+    return new IdeaPlugin(pluginFile.getAbsolutePath(), pluginClassPool, libraryPoolsUnion, pluginXml, xmlDocumentsInRoot);
   }
 
   @NotNull

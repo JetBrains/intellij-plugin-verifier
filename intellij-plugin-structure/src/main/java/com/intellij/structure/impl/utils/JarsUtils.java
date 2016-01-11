@@ -42,7 +42,7 @@ public class JarsUtils {
     List<ClassPool> pool = new ArrayList<ClassPool>();
 
     for (JarFile jar : jars) {
-      pool.add(new JarClassPool(jar));
+      pool.add(JarClassPool.createJarClassPool(jar));
     }
 
     return ContainerClassPool.getUnion(moniker, pool);

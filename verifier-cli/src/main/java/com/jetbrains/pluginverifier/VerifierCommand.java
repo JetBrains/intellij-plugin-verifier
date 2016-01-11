@@ -72,7 +72,7 @@ public abstract class VerifierCommand {
     List<ClassPool> pools = new ArrayList<ClassPool>(values.length);
 
     for (String value : values) {
-      pools.add(new JarClassPool(new JarFile(value)));
+      pools.add(JarClassPool.createJarClassPool(new JarFile(value)));
     }
 
     return ContainerClassPool.getUnion("external_class_path", pools);

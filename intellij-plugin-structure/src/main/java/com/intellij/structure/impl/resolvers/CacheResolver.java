@@ -17,8 +17,12 @@ public class CacheResolver implements Resolver {
 
   private final Map<String, ClassFile> myCache = new HashMap<String, ClassFile>();
 
-  public CacheResolver(Resolver delegate) {
+  private CacheResolver(Resolver delegate) {
     myDelegate = delegate;
+  }
+
+  public static CacheResolver createCacheResolver(Resolver delegate) {
+    return new CacheResolver(delegate);
   }
 
   @Override

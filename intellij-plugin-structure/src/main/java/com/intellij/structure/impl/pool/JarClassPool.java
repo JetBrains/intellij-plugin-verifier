@@ -27,10 +27,14 @@ public class JarClassPool implements ClassPool {
 
   private final Map<String, SoftReference<ClassFile>> myClassesCache = new HashMap<String, SoftReference<ClassFile>>();
 
-  public JarClassPool(@NotNull JarFile jarFile) throws IOException {
+  private JarClassPool(@NotNull JarFile jarFile) throws IOException {
     myMoniker = jarFile.getName();
     myJarFile = jarFile;
     preloadClassMap();
+  }
+
+  public static JarClassPool createJarClassPool(@NotNull JarFile jarFile) throws IOException {
+    return new JarClassPool(jarFile);
   }
 
   private void preloadClassMap() throws IOException {

@@ -14,7 +14,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 
 class IdeaPlugin implements Plugin {
@@ -36,7 +35,7 @@ class IdeaPlugin implements Plugin {
   private IdeVersion mySinceBuild;
   private IdeVersion myUntilBuild;
 
-  IdeaPlugin(@NotNull File pluginFile,
+  IdeaPlugin(@NotNull String pluginMoniker,
              @NotNull ClassPool pluginClassPool,
              @NotNull ClassPool libraryClassPool,
              @NotNull Document pluginXml,
@@ -45,11 +44,11 @@ class IdeaPlugin implements Plugin {
     myXmlDocumentsInRoot = xmlDocumentsInRoot;
     myPluginClassPool = pluginClassPool;
     myLibraryClassPool = libraryClassPool;
-    myAllClassesClassPool = ContainerClassPool.getUnion(pluginFile.getAbsolutePath(), Arrays.asList(pluginClassPool, libraryClassPool));
+    myAllClassesClassPool = ContainerClassPool.getUnion(pluginMoniker, Arrays.asList(pluginClassPool, libraryClassPool));
 
     myPluginId = getPluginId(pluginXml);
     if (myPluginId == null) {
-      throw new MissingPluginIdException("No id or name in META-INF/plugin.xml for plugin " + pluginFile);
+      throw new MissingPluginIdException("No id or name in META-INF/plugin.xml for plugin " + pluginMoniker);
     }
 
     String name = pluginXml.getRootElement().getChildTextTrim("name");
