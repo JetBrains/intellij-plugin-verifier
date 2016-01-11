@@ -2,6 +2,7 @@ package com.intellij.structure.impl.pool;
 
 import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +59,7 @@ public class CompileOutputPool implements ClassPool {
           try {
             InputStream in = new BufferedInputStream(new FileInputStream(classFile));
             try {
-              res = new ClassFile(in);
+              res = new ClassFile(className, in);
               break;
             } finally {
               IOUtils.closeQuietly(in);
@@ -103,9 +104,9 @@ public class CompileOutputPool implements ClassPool {
 
   @Nullable
   @Override
-  public String getClassLocationMoniker(@NotNull String className) {
+  public Resolver getClassLocation(@NotNull String className) {
     if (findClass(className) != null) {
-      return getMoniker();
+      return this;
     }
 
     return null;

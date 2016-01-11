@@ -4,6 +4,7 @@ import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.pool.EmptyClassPool;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -38,13 +39,19 @@ public class CombiningResolver implements Resolver {
   }
 
   @Override
-  public String getClassLocationMoniker(@NotNull final String className) {
+  public Resolver getClassLocation(@NotNull final String className) {
     for (Resolver resolver : myResolvers) {
-      String moniker = resolver.getClassLocationMoniker(className);
-      if (moniker != null)
-        return moniker;
+      Resolver inner = resolver.getClassLocation(className);
+      if (inner != null)
+        return inner;
     }
 
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getMoniker() {
     return null;
   }
 }

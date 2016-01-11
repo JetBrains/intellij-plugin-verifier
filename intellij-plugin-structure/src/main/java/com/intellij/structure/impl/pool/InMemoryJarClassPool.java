@@ -2,9 +2,8 @@ package com.intellij.structure.impl.pool;
 
 import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.pool.ClassPool;
-import com.intellij.structure.utils.ClassFileUtil;
+import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.tree.ClassNode;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -29,13 +28,8 @@ public class InMemoryJarClassPool implements ClassPool {
     myInMemoryClasses.put(name, code);
   }
 
-  public void addClass(@NotNull String className, @NotNull ClassNode classNode) {
-    myInMemoryClasses.put(className, classNode);
-  }
-
   public void addClass(@NotNull ClassFile classFile) {
-    String className = ClassFileUtil.extractClassName(classFile);
-    myInMemoryClasses.put(className, classFile);
+    myInMemoryClasses.put(classFile.getClassName(), classFile);
   }
 
   @NotNull
@@ -65,7 +59,7 @@ public class InMemoryJarClassPool implements ClassPool {
     }
 
     byte[] classContent = (byte[]) obj;
-    ClassFile classFile = new ClassFile(classContent);
+    ClassFile classFile = new ClassFile(className, classContent);
 
     myInMemoryClasses.put(className, classFile);
 
@@ -73,9 +67,9 @@ public class InMemoryJarClassPool implements ClassPool {
   }
 
   @Override
-  public String getClassLocationMoniker(@NotNull String className) {
+  public Resolver getClassLocation(@NotNull String className) {
     if (myInMemoryClasses.containsKey(className)) {
-      return myMoniker;
+      return this;
     }
     return null;
   }

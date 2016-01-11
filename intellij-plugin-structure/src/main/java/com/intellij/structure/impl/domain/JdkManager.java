@@ -11,6 +11,17 @@ import java.io.IOException;
  * @author Sergey Patrikeev
  */
 public class JdkManager extends IdeRuntimeManager {
+
+  private static IdeRuntimeManager INSTANCE = new JdkManager();
+
+  private JdkManager() {
+  }
+
+  @NotNull
+  public static IdeRuntimeManager getInstance() {
+    return INSTANCE;
+  }
+
   @NotNull
   @Override
   public IdeRuntime createRuntime(@NotNull File runtimeDir) throws IOException {

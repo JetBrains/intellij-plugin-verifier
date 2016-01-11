@@ -135,7 +135,7 @@ class IdeaPlugin implements Plugin {
 
   @Override
   public boolean isCompatibleWithIde(@NotNull String ideVersion) {
-    IdeVersion ide = new IdeVersion(ideVersion);
+    IdeVersion ide = IdeVersion.createIdeVersion(ideVersion);
     if (!ide.isOk()) {
       return false;
     }
@@ -192,7 +192,7 @@ class IdeaPlugin implements Plugin {
     Element ideaVersion = pluginXml.getRootElement().getChild("idea-version");
     if (ideaVersion != null && ideaVersion.getAttributeValue("min") == null) { // min != null in legacy plugins.
       String sinceBuildString = ideaVersion.getAttributeValue("since-build");
-      mySinceBuild = new IdeVersion(sinceBuildString);
+      mySinceBuild = IdeVersion.createIdeVersion(sinceBuildString);
       if (!mySinceBuild.isOk()) {
         throw new BrokenPluginException("<idea version since-build = /> attribute has incorrect value: " + sinceBuildString);
       }
@@ -204,7 +204,7 @@ class IdeaPlugin implements Plugin {
           untilBuildString = untilBuildString.substring(0, idx + 1) + Integer.MAX_VALUE;
         }
 
-        myUntilBuild = new IdeVersion(untilBuildString);
+        myUntilBuild = IdeVersion.createIdeVersion(untilBuildString);
         if (!myUntilBuild.isOk()) {
           throw new BrokenPluginException("<idea-version until-build= /> attribute has incorrect value: " + untilBuildString);
         }

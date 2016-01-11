@@ -1,20 +1,20 @@
 package com.intellij.structure.domain;
 
 import com.google.common.collect.ImmutableBiMap;
+import com.intellij.structure.impl.domain.IdeVersionImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @author Sergey Evdokimov
+ * @author Sergey Patrikeev
  */
-public class IdeVersion {
+public abstract class IdeVersion {
 
-  public static final Pattern PATTERN = Pattern.compile("(?:(IC|IU|RM|WS|PS|PY|PC|OC|MPS|AI|DB|CL)-)?(\\d{1,8})\\.(?:(\\d{1,10})(?:\\.(\\d{1,10}))?|SNAPSHOT)");
   public static final Comparator<IdeVersion> VERSION_COMPARATOR = new Comparator<IdeVersion>() {
     @Override
     public int compare(IdeVersion o1, IdeVersion o2) {
@@ -29,6 +29,8 @@ public class IdeVersion {
       return 0;
     }
   };
+  protected static final Pattern PATTERN = Pattern.compile("(?:(IC|IU|RM|WS|PS|PY|PC|OC|MPS|AI|DB|CL)-)?(\\d{1,8})\\.(?:(\\d{1,10})(?:\\.(\\d{1,10}))?|SNAPSHOT)");
+
   private static final Map<String, String> PRODUCT_MAP = new HashMap<String, String>();
   private static final Map<String, String> PRODUCT_ID_TO_CODE;
 
@@ -49,93 +51,7 @@ public class IdeVersion {
     PRODUCT_ID_TO_CODE = ImmutableBiMap.copyOf(PRODUCT_MAP).inverse();
   }
 
-  private String productCode;
-  private int branch;
-  private int build;
-  private int attempt;
-  private boolean isOk;
-  private boolean isSnapshot;
-
-  public IdeVersion(@Nullable String text) {
-    if (text == null) return;
-
-    text = text.trim();
-
-    if (text.length() == 0) return;
-
-    isOk = true;
-
-    Matcher matcher = PATTERN.matcher(text);
-    if (matcher.matches()) {
-      productCode = matcher.group(1);
-      branch = Integer.parseInt(matcher.group(2));
-      if (matcher.group(3) != null) {
-        try {
-          build = Integer.parseInt(matcher.group(3));
-        } catch (NumberFormatException e) {
-          build = 0;
-          isOk = false;
-        }
-
-        assert build >= 0;
-      } else {
-        build = Integer.MAX_VALUE;
-        isSnapshot = true;
-      }
-      if (matcher.group(4) != null) {
-        try {
-          attempt = Integer.parseInt(matcher.group(4));
-        } catch (NumberFormatException e) {
-          isOk = false;
-        }
-      }
-
-      return;
-    }
-
-    try {
-      int x = Integer.parseInt(text);
-
-      // it's probably a baseline, not a build number
-      if (x <= 2000) {
-        branch = x;
-        build = 0;
-        return;
-      }
-
-      if (x >= 10000) {
-        branch = 90;
-      } else if (x >= 9500) {
-        branch = 85;
-      } else if (x >= 9100) {
-        branch = 81;
-      } else if (x >= 8000) {
-        branch = 80;
-      } else if (x >= 7500) {
-        branch = 75;
-      } else if (x >= 7200) {
-        branch = 72;
-      } else if (x >= 6900) {
-        branch = 69;
-      } else if (x >= 6000) {
-        branch = 60;
-      } else if (x >= 5000) {
-        branch = 55;
-      } else if (x >= 4000) {
-        branch = 50;
-      } else {
-        branch = 40;
-      }
-
-      build = x;
-
-      if (build < 0) {
-        build = 0;
-        isOk = false;
-      }
-    } catch (NumberFormatException ignored) {
-      isOk = false;
-    }
+  protected IdeVersion() {
   }
 
   public static String getProductIdByCode(String code) {
@@ -146,96 +62,22 @@ public class IdeVersion {
     return PRODUCT_ID_TO_CODE.get(productId);
   }
 
-  public String getProductCode() {
-    return productCode == null ? "" : productCode;
+  @NotNull
+  public static IdeVersion createIdeVersion(@Nullable String text) {
+    return new IdeVersionImpl(text);
   }
 
-  public String getProductName() {
-    return getProductIdByCode(productCode);
-  }
+  public abstract String getProductCode();
 
-  public int getBranch() {
-    return branch;
-  }
+  public abstract String getProductName();
 
-  public int getBuild() {
-    return build;
-  }
+  public abstract int getBranch();
 
-  public int getAttempt() {
-    return attempt;
-  }
+  public abstract int getBuild();
 
-  public boolean isOk() {
-    return isOk;
-  }
+  public abstract int getAttempt();
 
-  public boolean isSnapshot() {
-    return isSnapshot;
-  }
+  public abstract boolean isOk();
 
-  public Map<String, Object> getLegacyBranchBuild() {
-    Object min = "";
-    Object max = "";
-
-    if (isOk) {
-      switch (branch) {
-        case 90:
-          min = 10000;
-          max = 10000 + build;
-          break;
-        case 85:
-          min = 9500;
-          max = 9999;
-          break;
-        case 81:
-          min = 9100;
-          max = 9499;
-          break;
-        case 80:
-          min = 8000;
-          max = 9099;
-          break;
-        case 75:
-          min = 7500;
-          max = 7999;
-          break;
-        case 72:
-          min = 7200;
-          max = 7499;
-          break;
-        case 69:
-          min = 6900;
-          max = 7199;
-          break;
-        case 65:
-          min = 6500;
-          max = 6899;
-          break;
-        case 60:
-          min = 6000;
-          max = 6499;
-          break;
-        case 55:
-          min = 5000;
-          max = 5999;
-          break;
-        case 50:
-          min = 4000;
-          max = 4999;
-          break;
-        default:
-          min = 0;
-          max = 3999;
-          break;
-      }
-    }
-
-    Map<String, Object> res = new HashMap<String, Object>();
-    res.put("min", min);
-    res.put("max", max);
-
-    return res;
-  }
-
+  public abstract boolean isSnapshot();
 }

@@ -52,19 +52,19 @@ public class NewProblemsCommand extends VerifierCommand {
     Collections.sort(resultsInPluginRepository, new Comparator<String>() {
       @Override
       public int compare(String o1, String o2) {
-        IdeVersion build1 = new IdeVersion(o1);
-        IdeVersion build2 = new IdeVersion(o2);
+        IdeVersion build1 = IdeVersion.createIdeVersion(o1);
+        IdeVersion build2 = IdeVersion.createIdeVersion(o2);
         return IdeVersion.VERSION_COMPARATOR.compare(build1, build2);
       }
     });
 
     String firstBuildProp = System.getProperty("firstBuild");
     if (firstBuildProp != null) {
-      IdeVersion firstBuild = new IdeVersion(firstBuildProp);
+      IdeVersion firstBuild = IdeVersion.createIdeVersion(firstBuildProp);
       int idx = -1;
       for (int i = 0; i < resultsInPluginRepository.size(); i++) {
         String build = resultsInPluginRepository.get(i);
-        if (IdeVersion.VERSION_COMPARATOR.compare(firstBuild, new IdeVersion(build)) == 0) {
+        if (IdeVersion.VERSION_COMPARATOR.compare(firstBuild, IdeVersion.createIdeVersion(build)) == 0) {
           idx = i;
           break;
         }
@@ -74,12 +74,12 @@ public class NewProblemsCommand extends VerifierCommand {
       }
     }
 
-    IdeVersion currentBuild = new IdeVersion(currentCheckBuild);
+    IdeVersion currentBuild = IdeVersion.createIdeVersion(currentCheckBuild);
 
     List<String> result = new ArrayList<String>();
 
     for (String build : resultsInPluginRepository) {
-      IdeVersion updateBuild = new IdeVersion(build);
+      IdeVersion updateBuild = IdeVersion.createIdeVersion(build);
 
       //NOTE: compares only IDEAs of the same branch! that is 141.* between each others
       if (updateBuild.getBranch() == currentBuild.getBranch() && IdeVersion.VERSION_COMPARATOR.compare(updateBuild, currentBuild) < 0) {

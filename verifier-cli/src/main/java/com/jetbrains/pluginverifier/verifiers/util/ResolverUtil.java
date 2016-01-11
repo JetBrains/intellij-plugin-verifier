@@ -1,9 +1,9 @@
-package com.intellij.structure.utils.resolving;
+package com.jetbrains.pluginverifier.verifiers.util;
 
 import com.google.common.base.Predicates;
-import com.intellij.structure.bytecode.AsmBytecode;
 import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.verifiers.util.bytecode.AsmConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -18,7 +18,7 @@ import java.util.Set;
 public class ResolverUtil {
 
   @Nullable
-  public static MethodLocation findMethod(final Resolver resolver, final String className, final String methodName, final String methodDesc) {
+  public static MethodLocation findMethod(@NotNull Resolver resolver, @NotNull String className, @NotNull String methodName, @NotNull String methodDesc) {
     if (className.startsWith("[")) {
       // so a receiver is an array, just assume it does exist =)
       return null;
@@ -28,7 +28,10 @@ public class ResolverUtil {
     if (classFile == null) {
       return null;
     }
-    ClassNode node = AsmBytecode.convertToAsmNode(classFile);
+    final ClassNode node = AsmConverter.convertToAsmNode(classFile);
+    if (node == null) {
+      return null;
+    }
 
     return findMethod(resolver, node, methodName, methodDesc);
   }
@@ -44,12 +47,16 @@ public class ResolverUtil {
 
     if (clazz.superName != null) {
       MethodLocation res = findMethod(resolver, clazz.superName, methodName, methodDesc);
-      if (res != null) return res;
+      if (res != null) {
+        return res;
+      }
     }
 
     for (Object anInterface : clazz.interfaces) {
       final MethodLocation res = findMethod(resolver, (String) anInterface, methodName, methodDesc);
-      if (res != null) return res;
+      if (res != null) {
+        return res;
+      }
     }
 
     return null;

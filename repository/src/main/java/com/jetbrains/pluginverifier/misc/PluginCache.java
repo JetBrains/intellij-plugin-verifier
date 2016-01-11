@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.misc;
 
 import com.intellij.structure.domain.Plugin;
-import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.errors.BrokenPluginException;
+import com.intellij.structure.impl.domain.IdeaPluginManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -39,7 +39,7 @@ public class PluginCache {
       SoftReference<Plugin> ref = null;
 
       try {
-        res = PluginManager.getInstance().createPlugin(pluginZip);
+        res = IdeaPluginManager.getInstance().createPlugin(pluginZip);
         ref = new SoftReference<Plugin>(res);
       } catch (IOException e) {
         System.out.println("Plugin is broken: " + pluginZip);

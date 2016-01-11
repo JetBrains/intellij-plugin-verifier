@@ -2,6 +2,7 @@ package com.intellij.structure.impl.pool;
 
 import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +62,7 @@ public class JarClassPool implements ClassPool {
   }
 
   @Override
+  @Nullable
   public ClassFile findClass(@NotNull String className) {
     if (!myClassesCache.containsKey(className)) {
       return null;
@@ -80,9 +82,8 @@ public class JarClassPool implements ClassPool {
     InputStream inputStream = null;
     try {
       inputStream = myJarFile.getInputStream(entry);
-      return new ClassFile(inputStream);
+      return new ClassFile(className, inputStream);
     } catch (IOException e) {
-      //TODO: proceed exception
       return null;
     } finally {
       IOUtils.closeQuietly(inputStream);
@@ -90,9 +91,9 @@ public class JarClassPool implements ClassPool {
   }
 
   @Override
-  public String getClassLocationMoniker(@NotNull String className) {
+  public Resolver getClassLocation(@NotNull String className) {
     if (myClassesCache.containsKey(className)) {
-      return myMoniker;
+      return this;
     }
     return null;
   }

@@ -3,6 +3,7 @@ package com.intellij.structure.impl.pool;
 import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.pool.ClassPool;
 import com.intellij.structure.pool.EmptyClassPool;
+import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,11 +82,11 @@ public class ContainerClassPool implements ClassPool {
 
   @Override
   @Nullable
-  public String getClassLocationMoniker(@NotNull String className) {
+  public Resolver getClassLocation(@NotNull String className) {
     for (ClassPool pool : myClassPools) {
-      String moniker = pool.getClassLocationMoniker(className);
-      if (moniker != null) {
-        return moniker;
+      Resolver inner = pool.getClassLocation(className);
+      if (inner != null) {
+        return inner;
       }
     }
     return null;

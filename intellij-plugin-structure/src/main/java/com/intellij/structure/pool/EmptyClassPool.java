@@ -1,6 +1,7 @@
 package com.intellij.structure.pool;
 
 import com.intellij.structure.bytecode.ClassFile;
+import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +23,7 @@ public class EmptyClassPool implements ClassPool {
 
   @Nullable
   @Override
-  public String getClassLocationMoniker(@NotNull String className) {
+  public Resolver getClassLocation(@NotNull String className) {
     return null;
   }
 

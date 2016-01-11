@@ -1,8 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.instruction;
 
-import com.intellij.structure.bytecode.AsmBytecode;
 import com.intellij.structure.resolvers.Resolver;
-import com.intellij.structure.utils.resolving.ResolverUtil;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
@@ -12,7 +10,9 @@ import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.utils.StringUtil;
+import com.jetbrains.pluginverifier.verifiers.util.ResolverUtil;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
+import com.jetbrains.pluginverifier.verifiers.util.bytecode.AsmConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -45,7 +45,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
 
     if (ctx.getOptions().isExternalClass(ownerClassName)) return;
 
-    ClassNode ownerClass = AsmBytecode.convertToAsmNode(resolver.findClass(ownerClassName));
+    ClassNode ownerClass = AsmConverter.convertToAsmNode(resolver.findClass(ownerClassName));
     if (ownerClass == null) {
       ctx.registerProblem(new ClassNotFoundProblem(ownerClassName), ProblemLocation.fromMethod(clazz.name, method));
     } else {
@@ -150,7 +150,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       if (superName == null) {
         return false;
       }
-      child = AsmBytecode.convertToAsmNode(resolver.findClass(superName));
+      child = AsmConverter.convertToAsmNode(resolver.findClass(superName));
     }
     return false;
   }

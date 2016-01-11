@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.structure.utils.xml;
+package com.intellij.structure.impl.utils.xml;
 
 import org.apache.commons.io.IOUtils;
 import org.jdom.*;

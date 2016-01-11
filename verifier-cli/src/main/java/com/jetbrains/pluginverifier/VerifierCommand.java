@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier;
 
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeRuntime;
-import com.intellij.structure.domain.IdeRuntimeManager;
+import com.intellij.structure.impl.domain.JdkManager;
 import com.intellij.structure.impl.pool.ContainerClassPool;
 import com.intellij.structure.impl.pool.JarClassPool;
 import com.intellij.structure.pool.ClassPool;
@@ -59,7 +59,7 @@ public abstract class VerifierCommand {
       }
     }
 
-    return IdeRuntimeManager.getInstance().createRuntime(runtimeDirectory);
+    return JdkManager.getInstance().createRuntime(runtimeDirectory);
   }
 
   @Nullable

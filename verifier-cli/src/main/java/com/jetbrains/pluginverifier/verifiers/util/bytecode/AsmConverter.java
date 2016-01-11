@@ -1,5 +1,6 @@
-package com.intellij.structure.bytecode;
+package com.jetbrains.pluginverifier.verifiers.util.bytecode;
 
+import com.intellij.structure.bytecode.ClassFile;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
@@ -7,7 +8,7 @@ import org.objectweb.asm.tree.ClassNode;
 /**
  * @author Sergey Patrikeev
  */
-public class AsmBytecode {
+public class AsmConverter {
 
   @Nullable
   public static ClassNode convertToAsmNode(@Nullable ClassFile classFile) {

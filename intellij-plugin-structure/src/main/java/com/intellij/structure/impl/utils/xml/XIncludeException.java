@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.structure.utils.xml;
+package com.intellij.structure.impl.utils.xml;
 
 public class XIncludeException extends RuntimeException {
 

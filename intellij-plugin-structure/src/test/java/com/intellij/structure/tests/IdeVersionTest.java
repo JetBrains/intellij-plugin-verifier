@@ -8,7 +8,7 @@ import org.junit.Test;
 public class IdeVersionTest {
   @Test
   public void testTypicalBuild() {
-    IdeVersion ideVersion = new IdeVersion("IU-138.1042");
+    IdeVersion ideVersion = IdeVersion.createIdeVersion("IU-138.1042");
     Assert.assertEquals(138, ideVersion.getBranch());
     Assert.assertEquals(1042, ideVersion.getBuild());
     Assert.assertEquals(0, ideVersion.getAttempt());
@@ -20,7 +20,7 @@ public class IdeVersionTest {
 
   @Test
   public void testBuildWithAttempt() {
-    IdeVersion ideVersion = new IdeVersion("IU-138.1042.1");
+    IdeVersion ideVersion = IdeVersion.createIdeVersion("IU-138.1042.1");
     Assert.assertEquals(138, ideVersion.getBranch());
     Assert.assertEquals(1042, ideVersion.getBuild());
     Assert.assertEquals(1, ideVersion.getAttempt());
@@ -32,7 +32,7 @@ public class IdeVersionTest {
 
   @Test
   public void testSnapshotBuild() {
-    IdeVersion ideVersion = new IdeVersion("PS-136.SNAPSHOT");
+    IdeVersion ideVersion = IdeVersion.createIdeVersion("PS-136.SNAPSHOT");
     Assert.assertEquals(136, ideVersion.getBranch());
     Assert.assertEquals(Integer.MAX_VALUE, ideVersion.getBuild());
     Assert.assertEquals(0, ideVersion.getAttempt());
@@ -44,7 +44,7 @@ public class IdeVersionTest {
 
   @Test
   public void testUnsupportedProduct() {
-    IdeVersion ideVersion = new IdeVersion("XX-138.SNAPSHOT");
+    IdeVersion ideVersion = IdeVersion.createIdeVersion("XX-138.SNAPSHOT");
     Assert.assertEquals(0, ideVersion.getBranch());
     Assert.assertEquals(0, ideVersion.getBuild());
     Assert.assertEquals("", ideVersion.getProductCode());
@@ -55,7 +55,7 @@ public class IdeVersionTest {
 
   @Test
   public void testCLionTypicalBuild() {
-    IdeVersion ideVersion = new IdeVersion("CL-140.1197");
+    IdeVersion ideVersion = IdeVersion.createIdeVersion("CL-140.1197");
     Assert.assertEquals(140, ideVersion.getBranch());
     Assert.assertEquals(1197, ideVersion.getBuild());
     Assert.assertEquals("CL", ideVersion.getProductCode());
@@ -66,7 +66,7 @@ public class IdeVersionTest {
 
   @Test
   public void testOneNumberActualBuild() {
-    IdeVersion updateBuild = new IdeVersion("133");
+    IdeVersion updateBuild = IdeVersion.createIdeVersion("133");
     Assert.assertEquals(133, updateBuild.getBranch());
     Assert.assertEquals(0, updateBuild.getBuild());
     Assert.assertEquals("", updateBuild.getProductCode());
@@ -77,7 +77,7 @@ public class IdeVersionTest {
 
   @Test
   public void testLegacyBuild() {
-    IdeVersion updateBuild = new IdeVersion("8987");
+    IdeVersion updateBuild = IdeVersion.createIdeVersion("8987");
     Assert.assertEquals(80, updateBuild.getBranch());
     Assert.assertEquals(8987, updateBuild.getBuild());
     Assert.assertEquals("", updateBuild.getProductCode());

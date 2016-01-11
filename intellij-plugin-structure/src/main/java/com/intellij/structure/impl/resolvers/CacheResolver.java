@@ -3,6 +3,7 @@ package com.intellij.structure.impl.resolvers;
 import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +32,13 @@ public class CacheResolver implements Resolver {
   }
 
   @Override
-  public String getClassLocationMoniker(@NotNull String className) {
-    return myDelegate.getClassLocationMoniker(className);
+  public Resolver getClassLocation(@NotNull String className) {
+    return myDelegate.getClassLocation(className);
+  }
+
+  @Nullable
+  @Override
+  public String getMoniker() {
+    return myDelegate.getMoniker();
   }
 }

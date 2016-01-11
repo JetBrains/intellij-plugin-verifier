@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers.clazz;
 
-import com.intellij.structure.bytecode.AsmBytecode;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem;
@@ -8,6 +7,7 @@ import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.verifiers.util.MethodSign;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
+import com.jetbrains.pluginverifier.verifiers.util.bytecode.AsmConverter;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -26,7 +26,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
 
     String superName = clazz.superName == null ? "java/lang/Object" : clazz.superName;
 
-    ClassNode superClass = AsmBytecode.convertToAsmNode(resolver.findClass(superName));
+    ClassNode superClass = AsmConverter.convertToAsmNode(resolver.findClass(superName));
     if (superClass == null) {
       return; //unknown class
     }
@@ -69,7 +69,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
         break;
       }
 
-      curNode = AsmBytecode.convertToAsmNode(resolver.findClass(curNode.superName));
+      curNode = AsmConverter.convertToAsmNode(resolver.findClass(curNode.superName));
       if (curNode == null) {
         //TODO: don't return silently
         return; // RETURN , don't check anymore because unknown class exists.
@@ -83,7 +83,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
 
       if (!processedInterfaces.add(iface)) continue; //if this interface is already visited
 
-      final ClassNode iNode = AsmBytecode.convertToAsmNode(resolver.findClass(iface));
+      final ClassNode iNode = AsmConverter.convertToAsmNode(resolver.findClass(iface));
       if (iNode == null) continue; //undefined class
 
       if (!VerifierUtil.isInterface(iNode)) {
@@ -114,7 +114,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
           if (curNode.superName == null) {
             curNode = null;
           } else {
-            curNode = AsmBytecode.convertToAsmNode(resolver.findClass(curNode.superName));
+            curNode = AsmConverter.convertToAsmNode(resolver.findClass(curNode.superName));
             if (curNode == null) {
               //TODO: don't return silently
               return; // RETURN , don't check anymore because unknown class exists.

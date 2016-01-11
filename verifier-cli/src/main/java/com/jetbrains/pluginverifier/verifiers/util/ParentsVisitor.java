@@ -1,9 +1,8 @@
-package com.intellij.structure.utils.resolving;
+package com.jetbrains.pluginverifier.verifiers.util;
 
 import com.google.common.base.Predicate;
-import com.intellij.structure.bytecode.AsmBytecode;
-import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.verifiers.util.bytecode.AsmConverter;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -13,13 +12,13 @@ import java.util.*;
 /**
  * @author Sergey Patrikeev
  */
-public class ParentsVisitor {
+class ParentsVisitor {
 
   private final Map<String, Set<String>> myParentsCache = new HashMap<String, Set<String>>();
 
   private final Resolver myResolver;
 
-  public ParentsVisitor(@NotNull Resolver resolver) {
+  ParentsVisitor(@NotNull Resolver resolver) {
     myResolver = resolver;
   }
 
@@ -33,13 +32,12 @@ public class ParentsVisitor {
    * @throws IllegalArgumentException in case starting class is not found in the {@link #myResolver resolver}
    */
   @NotNull
-  public Set<String> collectUnresolvedParents(@NotNull String className,
-                                              @NotNull Predicate<String> excludedPredicate) throws IllegalArgumentException {
-    ClassFile aClass = myResolver.findClass(className);
-    if (aClass == null) {
+  Set<String> collectUnresolvedParents(@NotNull String className,
+                                       @NotNull Predicate<String> excludedPredicate) throws IllegalArgumentException {
+    ClassNode classNode = AsmConverter.convertToAsmNode(myResolver.findClass(className));
+    if (classNode == null) {
       throw new IllegalArgumentException(className + " should be found in the resolver " + myResolver);
     }
-    ClassNode classNode = AsmBytecode.convertToAsmNode(aClass);
 
     if (myParentsCache.containsKey(className)) {
       return myParentsCache.get(className);

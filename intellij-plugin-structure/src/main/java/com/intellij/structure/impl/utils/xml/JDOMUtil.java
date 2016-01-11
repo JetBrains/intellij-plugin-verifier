@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.structure.utils.xml;
+package com.intellij.structure.impl.utils.xml;
 
-import com.intellij.structure.utils.Comparing;
+import com.intellij.structure.impl.utils.StringUtil;
 import org.apache.commons.io.IOUtils;
 import org.jdom.*;
 import org.jdom.filter.Filter;
@@ -51,7 +51,7 @@ public class JDOMUtil {
     //noinspection SimplifiableIfStatement
     if (e1 == null || e2 == null) return false;
 
-    return Comparing.equal(e1.getName(), e2.getName())
+    return StringUtil.equal(e1.getName(), e2.getName())
         && attListsEqual(e1.getAttributes(), e2.getAttributes())
         && contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER));
   }

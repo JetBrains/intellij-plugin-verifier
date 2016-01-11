@@ -2,7 +2,6 @@ package com.intellij.structure.pool;
 
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -16,12 +15,6 @@ public interface ClassPool extends Resolver {
    */
   @NotNull
   Collection<String> getAllClasses();
-
-  /**
-   * @return moniker of this class-pool. It may be for example name of containing .jar-file
-   */
-  @Nullable
-  String getMoniker();
 
   boolean isEmpty();
 

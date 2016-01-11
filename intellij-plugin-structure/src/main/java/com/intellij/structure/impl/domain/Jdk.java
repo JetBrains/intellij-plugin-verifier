@@ -3,9 +3,9 @@ package com.intellij.structure.impl.domain;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.structure.domain.IdeRuntime;
+import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.pool.ClassPool;
 import com.intellij.structure.resolvers.Resolver;
-import com.intellij.structure.utils.Util;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -26,11 +26,11 @@ class Jdk implements IdeRuntime {
     myJars = new ArrayList<JarFile>();
 
     collectJars(jdkDir);
-    myPool = Util.makeClassPool(jdkDir.getPath(), myJars);
+    myPool = JarsUtils.makeClassPool(jdkDir.getPath(), myJars);
   }
 
   private void collectJars(@NotNull File dir) throws IOException {
-    final List<JarFile> jars = Util.getJars(dir, new Predicate<File>() {
+    final List<JarFile> jars = JarsUtils.getJars(dir, new Predicate<File>() {
       @Override
       public boolean apply(File file) {
         return JDK_JAR_NAMES.contains(file.getName().toLowerCase());

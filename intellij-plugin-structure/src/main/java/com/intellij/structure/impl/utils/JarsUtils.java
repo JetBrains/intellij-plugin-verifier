@@ -1,9 +1,10 @@
-package com.intellij.structure.utils;
+package com.intellij.structure.impl.utils;
 
 import com.google.common.base.Predicate;
 import com.intellij.structure.impl.pool.ContainerClassPool;
 import com.intellij.structure.impl.pool.JarClassPool;
 import com.intellij.structure.pool.ClassPool;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,9 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarFile;
 
-public class Util {
+public class JarsUtils {
 
-  public static List<JarFile> getJars(File directory, Predicate<File> filter) throws IOException {
+  @NotNull
+  public static List<JarFile> getJars(@NotNull File directory, @NotNull Predicate<File> filter) throws IOException {
     File[] children = directory.listFiles();
 
     if (children == null) {
@@ -35,7 +37,8 @@ public class Util {
     return jarFiles;
   }
 
-  public static ClassPool makeClassPool(String moniker, List<JarFile> jars) throws IOException {
+  @NotNull
+  public static ClassPool makeClassPool(@NotNull String moniker, @NotNull List<JarFile> jars) throws IOException {
     List<ClassPool> pool = new ArrayList<ClassPool>();
 
     for (JarFile jar : jars) {

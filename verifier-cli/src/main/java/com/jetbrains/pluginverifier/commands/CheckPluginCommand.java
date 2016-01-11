@@ -5,8 +5,12 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Files;
-import com.intellij.structure.domain.*;
+import com.intellij.structure.domain.Ide;
+import com.intellij.structure.domain.IdeRuntime;
+import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.errors.BrokenPluginException;
+import com.intellij.structure.impl.domain.IdeaManager;
+import com.intellij.structure.impl.domain.IdeaPluginManager;
 import com.jetbrains.pluginverifier.CommandHolder;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
@@ -176,14 +180,14 @@ public class CheckPluginCommand extends VerifierCommand {
       File ideaDirectory = new File(freeArgs.get(i));
       verifyIdeaDirectory(ideaDirectory);
 
-      Ide ide = IdeManager.getInstance().createIde(ideaDirectory, javaRuntime, getExternalClassPath(commandLine));
+      Ide ide = IdeaManager.getInstance().createIde(ideaDirectory, javaRuntime, getExternalClassPath(commandLine));
 
 
       List<Pair<UpdateInfo, File>> pluginFiles = loadPluginFiles(pluginsToTestArg, ide.getVersion());
 
       for (Pair<UpdateInfo, File> pluginFile : pluginFiles) {
         try {
-          Plugin plugin = PluginManager.getInstance().createPlugin(pluginFile.getSecond());
+          Plugin plugin = IdeaPluginManager.getInstance().createPlugin(pluginFile.getSecond());
 
           ProblemSet problemSet = verifyPlugin(ide, plugin, options, log);
 

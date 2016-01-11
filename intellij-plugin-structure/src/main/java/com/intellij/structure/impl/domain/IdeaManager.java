@@ -16,6 +16,15 @@ import java.io.IOException;
  */
 public class IdeaManager extends IdeManager {
 
+  private static final IdeaManager INSTANCE = new IdeaManager();
+
+  private IdeaManager() {
+  }
+
+  public static IdeaManager getInstance() {
+    return INSTANCE;
+  }
+
   @NotNull
   @Override
   public Ide createIde(@NotNull File idePath, @NotNull IdeRuntime javaRuntime) throws IOException, JDOMException {

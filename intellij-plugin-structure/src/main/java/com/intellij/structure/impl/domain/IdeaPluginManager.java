@@ -9,12 +9,12 @@ import com.intellij.structure.errors.BrokenPluginException;
 import com.intellij.structure.impl.pool.ContainerClassPool;
 import com.intellij.structure.impl.pool.InMemoryJarClassPool;
 import com.intellij.structure.impl.pool.JarClassPool;
+import com.intellij.structure.impl.utils.JarsUtils;
+import com.intellij.structure.impl.utils.StringUtil;
+import com.intellij.structure.impl.utils.xml.JDOMUtil;
+import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
+import com.intellij.structure.impl.utils.xml.XIncludeException;
 import com.intellij.structure.pool.ClassPool;
-import com.intellij.structure.utils.StringUtil;
-import com.intellij.structure.utils.Util;
-import com.intellij.structure.utils.xml.JDOMUtil;
-import com.intellij.structure.utils.xml.JDOMXIncluder;
-import com.intellij.structure.utils.xml.XIncludeException;
 import org.apache.commons.io.IOUtils;
 import org.jdom.Document;
 import org.jdom.JDOMException;
@@ -33,10 +33,20 @@ import java.util.zip.ZipInputStream;
  * @author Sergey Patrikeev
  */
 public class IdeaPluginManager extends PluginManager {
+
+  private static final PluginManager INSTANCE = new IdeaPluginManager();
   private static final String META_INF_ENTRY = "META-INF/";
   private static final String PLUGIN_XML_ENTRY_NAME = META_INF_ENTRY + "plugin.xml";
   private static final String CLASS_SUFFIX = ".class";
   private static final Pattern XML_IN_ROOT_PATTERN = Pattern.compile("([^/]*/)?META-INF/.+\\.xml");
+
+  private IdeaPluginManager() {
+  }
+
+  @NotNull
+  public static PluginManager getInstance() {
+    return INSTANCE;
+  }
 
   @NotNull
   private static IdeaPlugin createFromZip(@NotNull File zipFile) throws IOException, BrokenPluginException {
@@ -59,7 +69,8 @@ public class IdeaPluginManager extends PluginManager {
 
         if (entryName.endsWith(CLASS_SUFFIX)) {
           //simply .class-file
-          ClassFile classFile = new ClassFile(zipInputStream);
+          String className = StringUtil.trimEnd(entryName, CLASS_SUFFIX);
+          ClassFile classFile = new ClassFile(className, zipInputStream);
           zipRootPool.addClass(classFile);
 
         } else if (isXmlInRoot(entryName)) {
@@ -268,7 +279,7 @@ public class IdeaPluginManager extends PluginManager {
       throw new BrokenPluginException("Plugin lib is not found: " + lib);
     }
 
-    final List<JarFile> jars = Util.getJars(lib, Predicates.<File>alwaysTrue());
+    final List<JarFile> jars = JarsUtils.getJars(lib, Predicates.<File>alwaysTrue());
     if (jars.size() == 0) {
       throw new BrokenPluginException("No jar files found under " + lib);
     }

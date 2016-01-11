@@ -1,9 +1,22 @@
-package com.intellij.structure.utils;
+package com.intellij.structure.impl.utils;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class StringUtil {
+
+  @NotNull
+  public static String trimEnd(@NotNull String s, @NonNls @NotNull String suffix) {
+    if (s.endsWith(suffix)) {
+      return s.substring(0, s.length() - suffix.length());
+    }
+    return s;
+  }
+
+  public static boolean equal(@Nullable String arg1, @Nullable String arg2) {
+    return arg1 == null ? arg2 == null : arg1.equals(arg2);
+  }
 
   @NotNull
   public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @NotNull String newS) {
@@ -11,7 +24,7 @@ public class StringUtil {
   }
 
   @NotNull
-  public static String replace(@NotNull final String text, @NotNull final String oldS, @NotNull final String newS, boolean ignoreCase) {
+  private static String replace(@NotNull String text, @NotNull String oldS, @NotNull String newS, boolean ignoreCase) {
     if (text.length() < oldS.length()) return text;
 
     final String text1 = ignoreCase ? text.toLowerCase() : text;
@@ -34,5 +47,4 @@ public class StringUtil {
     }
     return newText != null ? newText.toString() : "";
   }
-
 }

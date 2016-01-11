@@ -5,15 +5,14 @@ import com.google.common.io.Files;
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeRuntime;
 import com.intellij.structure.domain.Plugin;
-import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.errors.BrokenPluginException;
 import com.intellij.structure.impl.pool.CompileOutputPool;
 import com.intellij.structure.impl.pool.ContainerClassPool;
 import com.intellij.structure.impl.resolvers.CacheResolver;
 import com.intellij.structure.impl.resolvers.CombiningResolver;
+import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.pool.ClassPool;
 import com.intellij.structure.resolvers.Resolver;
-import com.intellij.structure.utils.Util;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,14 +76,14 @@ class Idea implements Ide {
 
   private static ClassPool getIdeaClassPoolFromLibraries(File ideaDir) throws IOException {
     final File lib = new File(ideaDir, "lib");
-    final List<JarFile> jars = Util.getJars(lib, new Predicate<File>() {
+    final List<JarFile> jars = JarsUtils.getJars(lib, new Predicate<File>() {
       @Override
       public boolean apply(File file) {
         return !file.getName().endsWith("javac2.jar");
       }
     });
 
-    return Util.makeClassPool(ideaDir.getPath(), jars);
+    return JarsUtils.makeClassPool(ideaDir.getPath(), jars);
   }
 
   private static ClassPool getIdeaClassPoolFromSources(File ideaDir) throws IOException {
@@ -123,7 +122,7 @@ class Idea implements Ide {
         continue;
 
       try {
-        plugins.add(PluginManager.getInstance().createPlugin(file));
+        plugins.add(IdeaPluginManager.getInstance().createPlugin(file));
       } catch (BrokenPluginException e) {
         System.out.println("Failed to read plugin " + file + ": " + e.getMessage());
       }
