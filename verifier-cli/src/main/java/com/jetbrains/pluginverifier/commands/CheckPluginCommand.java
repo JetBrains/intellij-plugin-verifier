@@ -8,7 +8,6 @@ import com.google.common.io.Files;
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeRuntime;
 import com.intellij.structure.domain.Plugin;
-import com.intellij.structure.errors.BrokenPluginException;
 import com.intellij.structure.impl.domain.IdeaManager;
 import com.intellij.structure.impl.domain.IdeaPluginManager;
 import com.jetbrains.pluginverifier.CommandHolder;
@@ -287,7 +286,7 @@ public class CheckPluginCommand extends VerifierCommand {
   private ProblemSet verifyPlugin(@NotNull Ide ide,
                                   @NotNull Plugin plugin,
                                   @NotNull PluginVerifierOptions options,
-                                  @NotNull TeamCityLog log) throws IOException, BrokenPluginException, VerificationError {
+                                  @NotNull TeamCityLog log) throws IOException, VerificationError {
 
     String message = "Verifying " + plugin.getPluginId() + ":" + plugin.getPluginVersion() + " against " + ide.getVersion() + "... ";
     System.out.print(message);

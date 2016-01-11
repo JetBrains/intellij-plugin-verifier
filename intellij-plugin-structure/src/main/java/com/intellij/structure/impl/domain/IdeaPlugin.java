@@ -4,7 +4,9 @@ import com.google.common.base.Strings;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
-import com.intellij.structure.errors.BrokenPluginException;
+import com.intellij.structure.errors.IncorrectCompatibleBuildsException;
+import com.intellij.structure.errors.IncorrectPluginException;
+import com.intellij.structure.errors.MissingPluginIdException;
 import com.intellij.structure.impl.pool.ContainerClassPool;
 import com.intellij.structure.pool.ClassPool;
 import org.jdom.Document;
@@ -39,7 +41,7 @@ class IdeaPlugin implements Plugin {
              @NotNull ClassPool pluginClassPool,
              @NotNull ClassPool libraryClassPool,
              @NotNull Document pluginXml,
-             @NotNull Map<String, Document> xmlDocumentsInRoot) throws BrokenPluginException {
+             @NotNull Map<String, Document> xmlDocumentsInRoot) throws IncorrectPluginException {
     myPluginXml = pluginXml;
     myXmlDocumentsInRoot = xmlDocumentsInRoot;
     myPluginClassPool = pluginClassPool;
@@ -48,7 +50,7 @@ class IdeaPlugin implements Plugin {
 
     myPluginId = getPluginId(pluginXml);
     if (myPluginId == null) {
-      throw new BrokenPluginException("No id or name in plugin.xml for plugin: " + pluginFile);
+      throw new MissingPluginIdException("No id or name in META-INF/plugin.xml for plugin " + pluginFile);
     }
 
     String name = pluginXml.getRootElement().getChildTextTrim("name");
@@ -188,13 +190,13 @@ class IdeaPlugin implements Plugin {
     return Collections.unmodifiableSet(myDefinedModules);
   }
 
-  private void getIdeaVersion(@NotNull Document pluginXml) throws BrokenPluginException {
+  private void getIdeaVersion(@NotNull Document pluginXml) throws IncorrectCompatibleBuildsException {
     Element ideaVersion = pluginXml.getRootElement().getChild("idea-version");
     if (ideaVersion != null && ideaVersion.getAttributeValue("min") == null) { // min != null in legacy plugins.
       String sinceBuildString = ideaVersion.getAttributeValue("since-build");
       mySinceBuild = IdeVersion.createIdeVersion(sinceBuildString);
       if (!mySinceBuild.isOk()) {
-        throw new BrokenPluginException("<idea version since-build = /> attribute has incorrect value: " + sinceBuildString);
+        throw new IncorrectCompatibleBuildsException("<idea version since-build = /> attribute has incorrect value: " + sinceBuildString);
       }
 
       String untilBuildString = ideaVersion.getAttributeValue("until-build");
@@ -206,7 +208,7 @@ class IdeaPlugin implements Plugin {
 
         myUntilBuild = IdeVersion.createIdeVersion(untilBuildString);
         if (!myUntilBuild.isOk()) {
-          throw new BrokenPluginException("<idea-version until-build= /> attribute has incorrect value: " + untilBuildString);
+          throw new IncorrectCompatibleBuildsException("<idea-version until-build= /> attribute has incorrect value: " + untilBuildString);
         }
       }
     }

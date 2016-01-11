@@ -5,7 +5,7 @@ import com.google.common.io.Files;
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeRuntime;
 import com.intellij.structure.domain.Plugin;
-import com.intellij.structure.errors.BrokenPluginException;
+import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.pool.CompileOutputPool;
 import com.intellij.structure.impl.pool.ContainerClassPool;
 import com.intellij.structure.impl.resolvers.CacheResolver;
@@ -13,7 +13,6 @@ import com.intellij.structure.impl.resolvers.CombiningResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.pool.ClassPool;
 import com.intellij.structure.resolvers.Resolver;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,11 +39,11 @@ class Idea implements Ide {
 
   private String myVersion;
 
-  Idea(@NotNull File ideaDir, @NotNull IdeRuntime javaRuntime) throws IOException, JDOMException {
+  Idea(@NotNull File ideaDir, @NotNull IdeRuntime javaRuntime) throws IOException, IncorrectPluginException {
     this(ideaDir, javaRuntime, null);
   }
 
-  Idea(@NotNull File ideaDir, @NotNull IdeRuntime javaRuntime, @Nullable ClassPool classpath) throws IOException, JDOMException {
+  Idea(@NotNull File ideaDir, @NotNull IdeRuntime javaRuntime, @Nullable ClassPool classpath) throws IOException, IncorrectPluginException {
     myIdeaDir = ideaDir;
     myJavaRuntime = javaRuntime;
     myExternalClasspath = classpath;
@@ -108,12 +107,13 @@ class Idea implements Ide {
   }
 
   @NotNull
-  private static List<Plugin> getIdeaPlugins(File ideaDir) throws JDOMException, IOException {
+  private static List<Plugin> getIdeaPlugins(File ideaDir) throws IOException, IncorrectPluginException {
     final File pluginsDir = new File(ideaDir, "plugins");
 
     final File[] files = pluginsDir.listFiles();
-    if (files == null)
+    if (files == null) {
       return Collections.emptyList();
+    }
 
     List<Plugin> plugins = new ArrayList<Plugin>();
 
@@ -123,7 +123,9 @@ class Idea implements Ide {
 
       try {
         plugins.add(IdeaPluginManager.getInstance().createPlugin(file));
-      } catch (BrokenPluginException e) {
+      } catch (IncorrectPluginException e) {
+        System.out.println("Failed to read plugin " + file + ": " + e.getMessage());
+      } catch (IOException e) {
         System.out.println("Failed to read plugin " + file + ": " + e.getMessage());
       }
     }
@@ -178,10 +180,6 @@ class Idea implements Ide {
     return null;
   }
 
-  public File getIdeaDir() {
-    return myIdeaDir;
-  }
-
   @Override
   @NotNull
   public Resolver getResolver() {
@@ -191,7 +189,8 @@ class Idea implements Ide {
       if (myExternalClasspath != null) {
         resolverList = Arrays.asList(getClassPool(),
             myJavaRuntime.getResolver(),
-            myExternalClasspath);
+            myExternalClasspath
+        );
       } else {
         resolverList = Arrays.asList(getClassPool(), myJavaRuntime.getResolver());
       }

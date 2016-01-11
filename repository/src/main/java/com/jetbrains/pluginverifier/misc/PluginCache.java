@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.misc;
 
 import com.intellij.structure.domain.Plugin;
-import com.intellij.structure.errors.BrokenPluginException;
+import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.domain.IdeaPluginManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +44,7 @@ public class PluginCache {
       } catch (IOException e) {
         System.out.println("Plugin is broken: " + pluginZip);
         e.printStackTrace();
-      } catch (BrokenPluginException e) {
+      } catch (IncorrectPluginException e) {
         System.out.println("Plugin is broken: " + pluginZip);
         e.printStackTrace();
       } finally {

@@ -41,6 +41,7 @@ public interface Resolver {
    * Get <i>moniker</i> of this resolver
    * <p>
    * It may be for example a name of containing .jar-file
+   * or some other string useful for debugging
    *
    * @return moniker
    */
