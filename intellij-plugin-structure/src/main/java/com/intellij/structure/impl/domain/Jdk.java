@@ -5,7 +5,6 @@ import com.google.common.collect.ImmutableSet;
 import com.intellij.structure.domain.IdeRuntime;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.pool.ClassPool;
-import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -52,7 +51,7 @@ class Jdk implements IdeRuntime {
 
   @Override
   @NotNull
-  public Resolver getResolver() {
+  public ClassPool getClassPool() {
     return myPool;
   }
 }

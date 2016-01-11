@@ -25,13 +25,13 @@ import java.util.List;
 /**
  * @author Dennis.Ushakov
  */
-public class ReferencesVerifier implements Verifier {
+class ReferencesVerifier implements Verifier {
 
   @Override
   public void verify(@NotNull Plugin plugin, @NotNull VerificationContext ctx) throws VerificationError {
     final ClassPool pluginPool = plugin.getPluginClassPool();
 
-    Resolver cacheResolver = CacheResolver.createCacheResolver(DependenciesCache.getInstance().getResolver(ctx.getIde(), plugin));
+    Resolver cacheResolver = CacheResolver.createCacheResolver(DependenciesCache.getInstance().getResolver(plugin, ctx.getIde(), ctx.getIdeRuntime(), ctx.getExternalClassPath()));
 
     final Collection<String> classes = pluginPool.getAllClasses();
     for (String className : classes) {

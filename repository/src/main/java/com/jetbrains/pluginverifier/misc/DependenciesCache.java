@@ -3,8 +3,10 @@ package com.jetbrains.pluginverifier.misc;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.intellij.structure.domain.Ide;
+import com.intellij.structure.domain.IdeRuntime;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
+import com.intellij.structure.impl.resolvers.CacheResolver;
 import com.intellij.structure.impl.resolvers.CombiningResolver;
 import com.intellij.structure.pool.ClassPool;
 import com.intellij.structure.resolvers.Resolver;
@@ -12,6 +14,7 @@ import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +33,10 @@ public class DependenciesCache {
       "com.intellij.modules.all"
   );
   private static DependenciesCache ourInstance = new DependenciesCache();
+
   private final WeakHashMap<Ide, WeakHashMap<Plugin, PluginDependenciesDescriptor>> map = new WeakHashMap<Ide, WeakHashMap<Plugin, PluginDependenciesDescriptor>>();
+
+  private final WeakHashMap<Ide, Resolver> myIdeResolvers = new WeakHashMap<Ide, Resolver>();
 
   private DependenciesCache() {
   }
@@ -59,13 +65,31 @@ public class DependenciesCache {
   }
 
   @NotNull
-  public Resolver getResolver(@NotNull Ide ide, @NotNull Plugin plugin) throws VerificationError {
+  private Resolver getResolverForIde(@NotNull Ide ide, @NotNull IdeRuntime ideRuntime, @Nullable ClassPool externalClassPath) {
+    Resolver resolver = myIdeResolvers.get(ide);
+    if (resolver == null) {
+      List<Resolver> resolvers = new ArrayList<Resolver>();
+      resolvers.add(ide.getClassPool());
+      resolvers.add(ideRuntime.getClassPool());
+      if (externalClassPath != null) {
+        resolvers.add(externalClassPath);
+      }
+      resolver = CacheResolver.createCacheResolver(CombiningResolver.union(resolvers));
+      myIdeResolvers.put(ide, resolver);
+    }
+    return resolver;
+  }
+
+
+  @NotNull
+  public Resolver getResolver(@NotNull Plugin plugin, @NotNull Ide ide, @NotNull IdeRuntime ideRuntime, @Nullable ClassPool externalClassPath) throws VerificationError {
     PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
     if (descriptor.myResolver == null) {
       List<Resolver> resolvers = new ArrayList<Resolver>();
 
       resolvers.add(plugin.getAllClassesPool());
-      resolvers.add(ide.getResolver());
+
+      resolvers.add(getResolverForIde(ide, ideRuntime, externalClassPath));
 
       for (Plugin dep : getDependenciesWithTransitive(ide, plugin, new ArrayList<PluginDependenciesDescriptor>())) {
         ClassPool pluginClassPool = dep.getPluginClassPool();
@@ -199,13 +223,13 @@ public class DependenciesCache {
   }
 
   private static class PluginDependenciesDescriptor {
-    public final String pluginName;
+    final String pluginName;
 
-    public Resolver myResolver;
+    Resolver myResolver;
 
-    public boolean isCyclic;
+    boolean isCyclic;
 
-    public Set<Plugin> dependenciesWithTransitive;
+    Set<Plugin> dependenciesWithTransitive;
 
     private PluginDependenciesDescriptor(@NotNull String pluginName) {
       this.pluginName = pluginName;

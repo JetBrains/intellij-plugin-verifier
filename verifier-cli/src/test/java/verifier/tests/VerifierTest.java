@@ -97,16 +97,16 @@ public class VerifierTest {
 
     IdeRuntime javaRuntime = JdkManager.getInstance().createRuntime(jdkFile);
 
-    myIde = IdeaManager.getInstance().createIde(ideaFile, javaRuntime);
+    myIde = IdeaManager.getInstance().createIde(ideaFile);
     myPlugin = IdeaPluginManager.getInstance().createPlugin(pluginFile);
 
     List<String> args = Collections.singletonList("");
     final CommandLine commandLine = new GnuParser().parse(Util.CMD_OPTIONS, args.toArray(new String[args.size()]));
 
-    VerificationContextImpl ctx = new VerificationContextImpl(PluginVerifierOptions.parseOpts(commandLine), myIde);
+    VerificationContextImpl ctx = new VerificationContextImpl(PluginVerifierOptions.parseOpts(commandLine), myIde, javaRuntime, null);
     Verifiers.processAllVerifiers(myPlugin, ctx);
 
-    myProblemSet = ctx.getProblems();
+    myProblemSet = ctx.getProblemSet();
     myProblems = myProblemSet.asMap();
   }
 

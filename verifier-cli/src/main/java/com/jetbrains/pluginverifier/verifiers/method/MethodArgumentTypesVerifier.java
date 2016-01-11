@@ -20,7 +20,7 @@ public class MethodArgumentTypesVerifier implements MethodVerifier {
     for (Type type : argumentTypes) {
       String argDescr = VerifierUtil.extractClassNameFromDescr(type.getDescriptor());
       if (argDescr == null) continue;
-      if (!VerifierUtil.classExists(ctx.getOptions(), resolver, argDescr)) {
+      if (!VerifierUtil.classExists(ctx.getVerifierOptions(), resolver, argDescr)) {
         ctx.registerProblem(new ClassNotFoundProblem(argDescr), ProblemLocation.fromMethod(clazz.name, method));
       }
     }

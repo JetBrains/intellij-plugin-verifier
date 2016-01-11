@@ -2,11 +2,8 @@ package com.intellij.structure.impl.domain;
 
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeManager;
-import com.intellij.structure.domain.IdeRuntime;
 import com.intellij.structure.errors.IncorrectPluginException;
-import com.intellij.structure.pool.ClassPool;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,16 +22,10 @@ public class IdeaManager extends IdeManager {
     return INSTANCE;
   }
 
-  @NotNull
-  @Override
-  public Ide createIde(@NotNull File idePath, @NotNull IdeRuntime javaRuntime) throws IOException, IncorrectPluginException {
-    return new Idea(idePath, javaRuntime);
-  }
 
   @NotNull
   @Override
-  public Ide createIde(@NotNull File idePath, @NotNull IdeRuntime ideRuntime, @Nullable ClassPool externalClasspath) throws IOException, IncorrectPluginException {
-    return new Idea(idePath, ideRuntime, externalClasspath);
+  public Ide createIde(@NotNull File idePath) throws IOException, IncorrectPluginException {
+    return new Idea(idePath);
   }
-
 }

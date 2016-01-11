@@ -20,12 +20,13 @@ import static org.junit.Assert.*;
  */
 public class PluginTest_PHP {
 
-  private Plugin plugin;
+  private static Plugin plugin;
 
   @Before
   public void setUp() throws Exception {
-    File pluginFile = TestUtils.getFileForDownload("PHP_143.1184.87.zip");
-    TestUtils.downloadFile("https://plugins.jetbrains.com/plugin/download?pr=&updateId=22827", pluginFile);
+    if (plugin != null) return;
+
+    File pluginFile = TestUtils.downloadPlugin(TestUtils.PHP_URL, "php-plugin.zip");
 
     plugin = IdeaPluginManager.getInstance().createPlugin(pluginFile);
   }

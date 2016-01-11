@@ -3,13 +3,10 @@ package com.intellij.structure.impl.domain;
 import com.google.common.base.Predicate;
 import com.google.common.io.Files;
 import com.intellij.structure.domain.Ide;
-import com.intellij.structure.domain.IdeRuntime;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.pool.CompileOutputPool;
 import com.intellij.structure.impl.pool.ContainerClassPool;
-import com.intellij.structure.impl.resolvers.CacheResolver;
-import com.intellij.structure.impl.resolvers.CombiningResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.pool.ClassPool;
 import com.intellij.structure.resolvers.Resolver;
@@ -20,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.jar.JarFile;
@@ -29,23 +25,14 @@ import java.util.regex.Pattern;
 
 class Idea implements Ide {
   private static final Pattern BUILD_NUMBER_PATTERN = Pattern.compile("([^\\.]+\\.\\d+)\\.\\d+");
-  private final IdeRuntime myJavaRuntime;
   private final ClassPool myClassPool;
-  private final ClassPool myExternalClasspath;
   private final List<Plugin> myBundledPlugins = new ArrayList<Plugin>();
   private final List<Plugin> myCustomPlugins = new ArrayList<Plugin>();
   private Resolver myResolver;
 
   private String myVersion;
 
-  Idea(@NotNull File ideaDir, @NotNull IdeRuntime javaRuntime) throws IOException, IncorrectPluginException {
-    this(ideaDir, javaRuntime, null);
-  }
-
-  Idea(@NotNull File ideaDir, @NotNull IdeRuntime javaRuntime, @Nullable ClassPool classpath) throws IOException, IncorrectPluginException {
-    myJavaRuntime = javaRuntime;
-    myExternalClasspath = classpath;
-
+  Idea(@NotNull File ideaDir) throws IOException, IncorrectPluginException {
     if (isSourceDir(ideaDir)) {
       myClassPool = getIdeaClassPoolFromSources(ideaDir);
       File versionFile = new File(ideaDir, "build.txt");
@@ -147,10 +134,6 @@ class Idea implements Ide {
     myCustomPlugins.add(plugin);
   }
 
-  private ClassPool getClassPool() {
-    return myClassPool;
-  }
-
   @Override
   @NotNull
   public List<Plugin> getCustomPlugins() {
@@ -178,25 +161,11 @@ class Idea implements Ide {
     return null;
   }
 
-  @Override
+
   @NotNull
-  public Resolver getResolver() {
-    if (myResolver == null) {
-
-      List<Resolver> resolverList;
-      if (myExternalClasspath != null) {
-        resolverList = Arrays.asList(getClassPool(),
-            myJavaRuntime.getResolver(),
-            myExternalClasspath
-        );
-      } else {
-        resolverList = Arrays.asList(getClassPool(), myJavaRuntime.getResolver());
-      }
-
-      myResolver = CacheResolver.createCacheResolver(CombiningResolver.union(resolverList));
-    }
-
-    return myResolver;
+  @Override
+  public ClassPool getClassPool() {
+    return myClassPool;
   }
 
   @Override

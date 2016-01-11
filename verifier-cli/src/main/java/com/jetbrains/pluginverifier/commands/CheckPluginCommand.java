@@ -10,6 +10,7 @@ import com.intellij.structure.domain.IdeRuntime;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.impl.domain.IdeaManager;
 import com.intellij.structure.impl.domain.IdeaPluginManager;
+import com.intellij.structure.pool.ClassPool;
 import com.jetbrains.pluginverifier.CommandHolder;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
@@ -30,6 +31,7 @@ import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
@@ -179,7 +181,7 @@ public class CheckPluginCommand extends VerifierCommand {
       File ideaDirectory = new File(freeArgs.get(i));
       verifyIdeaDirectory(ideaDirectory);
 
-      Ide ide = IdeaManager.getInstance().createIde(ideaDirectory, javaRuntime, getExternalClassPath(commandLine));
+      Ide ide = IdeaManager.getInstance().createIde(ideaDirectory);
 
 
       List<Pair<UpdateInfo, File>> pluginFiles = loadPluginFiles(pluginsToTestArg, ide.getVersion());
@@ -188,7 +190,7 @@ public class CheckPluginCommand extends VerifierCommand {
         try {
           Plugin plugin = IdeaPluginManager.getInstance().createPlugin(pluginFile.getSecond());
 
-          ProblemSet problemSet = verifyPlugin(ide, plugin, options, log);
+          ProblemSet problemSet = verifyPlugin(ide, javaRuntime, getExternalClassPath(commandLine), plugin, options, log);
 
           final UpdateInfo updateInfo = new UpdateInfo(plugin.getPluginId(), plugin.getPluginName(), plugin.getPluginVersion());
 
@@ -284,6 +286,8 @@ public class CheckPluginCommand extends VerifierCommand {
    */
   @NotNull
   private ProblemSet verifyPlugin(@NotNull Ide ide,
+                                  @NotNull IdeRuntime ideRuntime,
+                                  @Nullable ClassPool externalClassPath,
                                   @NotNull Plugin plugin,
                                   @NotNull PluginVerifierOptions options,
                                   @NotNull TeamCityLog log) throws IOException, VerificationError {
@@ -292,7 +296,7 @@ public class CheckPluginCommand extends VerifierCommand {
     System.out.print(message);
     log.message(message);
 
-    VerificationContextImpl ctx = new VerificationContextImpl(options, ide);
+    VerificationContextImpl ctx = new VerificationContextImpl(options, ide, ideRuntime, externalClassPath);
 
     TeamCityLog.Block block = log.blockOpen(plugin.getPluginId());
 
@@ -301,7 +305,7 @@ public class CheckPluginCommand extends VerifierCommand {
       //may throw VerificationError
       Verifiers.processAllVerifiers(plugin, ctx);
 
-      ProblemSet problemSet = ctx.getProblems();
+      ProblemSet problemSet = ctx.getProblemSet();
 
       printProblemsOnStdout(problemSet);
 

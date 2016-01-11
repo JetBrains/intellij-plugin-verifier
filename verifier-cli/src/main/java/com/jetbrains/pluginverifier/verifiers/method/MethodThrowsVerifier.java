@@ -21,7 +21,7 @@ public class MethodThrowsVerifier implements MethodVerifier {
     for (String exception : exceptions) {
       String descr = VerifierUtil.extractClassNameFromDescr(exception);
       if (descr == null) continue;
-      if (!VerifierUtil.classExists(ctx.getOptions(), resolver, descr)) {
+      if (!VerifierUtil.classExists(ctx.getVerifierOptions(), resolver, descr)) {
         ctx.registerProblem(new ClassNotFoundProblem(descr), ProblemLocation.fromMethod(clazz.name, method));
       }
     }

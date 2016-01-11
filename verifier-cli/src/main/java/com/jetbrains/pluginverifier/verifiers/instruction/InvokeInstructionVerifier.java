@@ -43,7 +43,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
 
     if (ownerClassName.startsWith("[")) return;
 
-    if (ctx.getOptions().isExternalClass(ownerClassName)) return;
+    if (ctx.getVerifierOptions().isExternalClass(ownerClassName)) return;
 
     ClassNode ownerClass = AsmConverter.convertToAsmNode(resolver.findClass(ownerClassName));
     if (ownerClass == null) {
@@ -87,7 +87,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       return true;
     }
 
-    Set<Problem> allProblems = ((VerificationContextImpl) ctx).getProblems().getAllProblems();
+    Set<Problem> allProblems = ((VerificationContextImpl) ctx).getProblemSet().getAllProblems();
 
     Set<String> unresolvedClasses = ResolverUtil.collectUnresolvedClasses(resolver, actualOwner);
 

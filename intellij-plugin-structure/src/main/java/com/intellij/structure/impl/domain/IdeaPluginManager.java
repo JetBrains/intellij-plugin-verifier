@@ -310,9 +310,11 @@ public class IdeaPluginManager extends PluginManager {
     if (pluginRootFiles == null || pluginRootFiles.length == 0) {
       throw new IncorrectStructureException("Plugin root directory " + pluginFile + " is empty");
     }
+/*
     if (pluginRootFiles.length > 1) {
       throw new IncorrectStructureException("Plugin root directory " + pluginFile + " contains more than one child \"lib\"");
     }
+*/
     return createFromDirectory(pluginFile);
   }
 }

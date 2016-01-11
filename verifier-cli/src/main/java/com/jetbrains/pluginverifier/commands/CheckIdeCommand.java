@@ -287,8 +287,11 @@ public class CheckIdeCommand extends VerifierCommand {
 
     PluginVerifierOptions options = PluginVerifierOptions.parseOpts(commandLine);
 
-    Ide ide = IdeaManager.getInstance().createIde(ideToCheck, javaRuntime, getExternalClassPath(commandLine));
+    Ide ide = IdeaManager.getInstance().createIde(ideToCheck);
     updateIdeVersionFromCmd(ide, commandLine);
+
+    VerificationContextImpl ctx = new VerificationContextImpl(options, ide, javaRuntime, getExternalClassPath(commandLine));
+
 
     Pair<List<String>, List<String>> pluginsIds = extractPluginToCheckList(commandLine);
     List<String> pluginsCheckAllBuilds = pluginsIds.first;
@@ -364,16 +367,15 @@ public class CheckIdeCommand extends VerifierCommand {
 
         System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), updates.size()));
 
-        VerificationContextImpl ctx = new VerificationContextImpl(options, ide);
         Verifiers.processAllVerifiers(plugin, ctx);
 
-        results.put(updateJson, ctx.getProblems());
+        results.put(updateJson, ctx.getProblemSet());
 
-        if (ctx.getProblems().isEmpty()) {
+        if (ctx.getProblemSet().isEmpty()) {
           System.out.println("plugin " + updateJson + " is OK");
           tc.message(updateJson + " is OK");
         } else {
-          int count = ctx.getProblems().count();
+          int count = ctx.getProblemSet().count();
           System.out.println("has " + count + " problems");
 
           if (updateFilter.apply(updateJson)) {
@@ -382,7 +384,7 @@ public class CheckIdeCommand extends VerifierCommand {
             tc.message(updateJson + " has problems, but is excluded in brokenPlugins.json");
           }
 
-          ctx.getProblems().printProblems(System.out, "    ");
+          ctx.getProblemSet().printProblems(System.out, "    ");
         }
 
 

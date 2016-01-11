@@ -15,6 +15,9 @@ import java.util.Set;
  * @author Sergey Patrikeev
  */
 public class TestUtils {
+  public static final String PHP_URL = "https://plugins.jetbrains.com/plugin/download?pr=&updateId=22827";
+  public static final String RUBY_URL = "https://plugins.jetbrains.com/plugin/download?pr=idea&updateId=22893";
+
   @NotNull
   private static URL getFinalUrl(@NotNull String startUrl) throws IOException {
     URL url = new URL(startUrl);
@@ -64,5 +67,12 @@ public class TestUtils {
     fetchRoot.mkdirs();
 
     return fetchRoot;
+  }
+
+  @NotNull
+  public static File downloadPlugin(String pluginUrl, String pluginFileName) throws IOException {
+    File pluginFile = getFileForDownload(pluginFileName);
+    downloadFile(pluginUrl, pluginFile);
+    return pluginFile;
   }
 }

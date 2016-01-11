@@ -1,6 +1,6 @@
 package com.intellij.structure.domain;
 
-import com.intellij.structure.resolvers.Resolver;
+import com.intellij.structure.pool.ClassPool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,5 +30,5 @@ public interface Ide {
   Plugin getPluginByModule(@NotNull String moduleId);
 
   @NotNull
-  Resolver getResolver();
+  ClassPool getClassPool();
 }
