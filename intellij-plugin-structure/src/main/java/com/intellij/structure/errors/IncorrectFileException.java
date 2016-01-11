@@ -3,19 +3,20 @@ package com.intellij.structure.errors;
 /**
  * @author Sergey Patrikeev
  */
-public class IncorrectFileException extends IncorrectPluginException {
-  public IncorrectFileException() {
-  }
+class IncorrectFileException extends IncorrectPluginException {
 
-  public IncorrectFileException(String message) {
+  IncorrectFileException(String message) {
     super(message);
   }
 
-  public IncorrectFileException(String message, Throwable cause) {
-    super(message, cause);
+  IncorrectFileException() {
   }
 
-  public IncorrectFileException(Throwable cause) {
-    super(cause);
+  IncorrectFileException(String message, Throwable cause) {
+
+  }
+
+  IncorrectFileException(Throwable cause) {
+
   }
 }

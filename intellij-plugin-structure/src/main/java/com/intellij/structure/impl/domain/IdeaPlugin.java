@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-//TODO: exception handling
 class IdeaPlugin implements Plugin {
 
   private final ClassPool myPluginClassPool;
