@@ -57,14 +57,15 @@ public class PluginTest_PHP {
     assertNull(plugin.getUntilBuild());
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void isCompatibleWithIde() throws Exception {
-    assertTrue(plugin.isCompatibleWithIde("142.5068"));
-    assertTrue(plugin.isCompatibleWithIde("142.5069"));
-    assertTrue(plugin.isCompatibleWithIde("143.5069"));
-    assertTrue(plugin.isCompatibleWithIde("144.5069"));
-    assertTrue(plugin.isCompatibleWithIde("145.5069"));
-    assertFalse(plugin.isCompatibleWithIde("142.5067"));
+    assertTrue(plugin.isCompatibleWithIde(IdeVersion.createIdeVersion("142.5068")));
+    assertTrue(plugin.isCompatibleWithIde(IdeVersion.createIdeVersion("142.5069")));
+    assertTrue(plugin.isCompatibleWithIde(IdeVersion.createIdeVersion("143.5069")));
+    assertTrue(plugin.isCompatibleWithIde(IdeVersion.createIdeVersion("144.5069")));
+    assertTrue(plugin.isCompatibleWithIde(IdeVersion.createIdeVersion("145.5069")));
+    assertFalse(plugin.isCompatibleWithIde(IdeVersion.createIdeVersion("142.5067")));
+    assertFalse(plugin.isCompatibleWithIde(IdeVersion.createIdeVersion("BAD_VERSION")));
   }
 
   @Test
@@ -124,9 +125,4 @@ public class PluginTest_PHP {
     assertEquals(226, allClasses.size());
   }
 
-  @Test
-  public void getAllClassesPool() throws Exception {
-    assertEquals(3497 + 226, plugin.getAllClassesPool().getAllClasses().size());
-
-  }
 }

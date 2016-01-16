@@ -25,7 +25,7 @@ public interface Plugin {
   @Nullable
   IdeVersion getUntilBuild();
 
-  boolean isCompatibleWithIde(@NotNull String ideVersion);
+  boolean isCompatibleWithIde(@NotNull IdeVersion ideVersion);
 
   @NotNull
   List<PluginDependency> getDependencies();
@@ -54,6 +54,4 @@ public interface Plugin {
   @NotNull
   ClassPool getLibraryClassPool();
 
-  @NotNull
-  ClassPool getAllClassesPool();
 }

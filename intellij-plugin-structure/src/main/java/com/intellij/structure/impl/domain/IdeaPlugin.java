@@ -7,7 +7,6 @@ import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.errors.IncorrectCompatibleBuildsException;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.errors.MissingPluginIdException;
-import com.intellij.structure.impl.pool.ContainerClassPool;
 import com.intellij.structure.pool.ClassPool;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -20,7 +19,6 @@ class IdeaPlugin implements Plugin {
 
   private final ClassPool myPluginClassPool;
   private final ClassPool myLibraryClassPool;
-  private final ClassPool myAllClassesClassPool;
 
   private final String myPluginName;
   private final String myPluginVersion;
@@ -44,7 +42,6 @@ class IdeaPlugin implements Plugin {
     myXmlDocumentsInRoot = xmlDocumentsInRoot;
     myPluginClassPool = pluginClassPool;
     myLibraryClassPool = libraryClassPool;
-    myAllClassesClassPool = ContainerClassPool.getUnion(pluginMoniker, Arrays.asList(pluginClassPool, libraryClassPool));
 
     myPluginId = getPluginId(pluginXml);
     if (myPluginId == null) {
@@ -134,19 +131,12 @@ class IdeaPlugin implements Plugin {
   }
 
   @Override
-  public boolean isCompatibleWithIde(@NotNull String ideVersion) {
-    IdeVersion ide;
-    try {
-      ide = IdeVersion.createIdeVersion(ideVersion);
-    } catch (IllegalArgumentException e) {
-      return false;
-    }
-
+  public boolean isCompatibleWithIde(@NotNull IdeVersion ideVersion) {
     //noinspection SimplifiableIfStatement
     if (mySinceBuild == null) return true;
 
-    return IdeVersion.VERSION_COMPARATOR.compare(mySinceBuild, ide) <= 0
-        && (myUntilBuild == null || IdeVersion.VERSION_COMPARATOR.compare(ide, myUntilBuild) <= 0);
+    return IdeVersion.VERSION_COMPARATOR.compare(mySinceBuild, ideVersion) <= 0
+        && (myUntilBuild == null || IdeVersion.VERSION_COMPARATOR.compare(ideVersion, myUntilBuild) <= 0);
   }
 
   @NotNull
@@ -228,9 +218,4 @@ class IdeaPlugin implements Plugin {
     return myLibraryClassPool;
   }
 
-  @Override
-  @NotNull
-  public ClassPool getAllClassesPool() {
-    return myAllClassesClassPool;
-  }
 }

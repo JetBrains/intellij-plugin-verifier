@@ -6,6 +6,7 @@ import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeRuntime;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
+import com.intellij.structure.impl.pool.ContainerClassPool;
 import com.intellij.structure.impl.resolvers.CacheResolver;
 import com.intellij.structure.impl.resolvers.CombiningResolver;
 import com.intellij.structure.pool.ClassPool;
@@ -87,7 +88,7 @@ public class DependenciesCache {
     if (descriptor.myResolver == null) {
       List<Resolver> resolvers = new ArrayList<Resolver>();
 
-      resolvers.add(plugin.getAllClassesPool());
+      resolvers.add(ContainerClassPool.getUnion(plugin.getPluginId(), Arrays.asList(plugin.getPluginClassPool(), plugin.getLibraryClassPool())));
 
       resolvers.add(getResolverForIde(ide, ideRuntime, externalClassPath));
 

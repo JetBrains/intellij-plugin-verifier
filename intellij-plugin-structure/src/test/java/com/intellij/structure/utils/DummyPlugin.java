@@ -41,7 +41,7 @@ public class DummyPlugin implements Plugin {
   }
 
   @Override
-  public boolean isCompatibleWithIde(@NotNull String ideVersion) {
+  public boolean isCompatibleWithIde(@NotNull IdeVersion ideVersion) {
     return false;
   }
 
@@ -99,9 +99,4 @@ public class DummyPlugin implements Plugin {
     return null;
   }
 
-  @NotNull
-  @Override
-  public ClassPool getAllClassesPool() {
-    return null;
-  }
 }
