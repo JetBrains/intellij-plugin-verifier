@@ -105,4 +105,10 @@ public class IdeVersionTest {
     Assert.assertNotEquals(ic1.hashCode(), iu1.hashCode());
     Assert.assertNotEquals(ic1, iu1);
   }
+
+  @Test
+  public void isCorrectVersion() throws Exception {
+    Assert.assertTrue(IdeVersion.isCorrectVersion("IC-144.123.11"));
+
+  }
 }

@@ -1,6 +1,7 @@
 package com.intellij.structure.domain;
 
 import com.google.common.collect.ImmutableBiMap;
+import com.intellij.structure.impl.domain.EmptyIdeVersion;
 import com.intellij.structure.impl.domain.IdeVersionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,12 +46,21 @@ public abstract class IdeVersion {
     return PRODUCT_MAP.get(code);
   }
 
+  @NotNull
+  public static IdeVersion getDefaultVersion() {
+    return EmptyIdeVersion.INSTANCE;
+  }
+
   /**
    * @throws IllegalArgumentException if specified {@code text} doesn't represent correct {@code IdeVersion}
    */
   @NotNull
   public static IdeVersion createIdeVersion(@NotNull String text) throws IllegalArgumentException {
     return new IdeVersionImpl(text);
+  }
+
+  public static boolean isCorrectVersion(@NotNull String text) {
+    return PATTERN.matcher(text).matches();
   }
 
   @Override

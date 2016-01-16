@@ -1,124 +1,35 @@
 package com.intellij.structure.impl.domain;
 
-import com.google.common.base.Predicate;
-import com.google.common.io.Files;
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.errors.IncorrectPluginException;
-import com.intellij.structure.impl.resolvers.CompileOutputResolver;
-import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.jar.JarFile;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 class Idea implements Ide {
-  private static final Pattern BUILD_NUMBER_PATTERN = Pattern.compile("([^\\.]+\\.\\d+)\\.\\d+");
   private final Resolver myResolver;
-  private final List<Plugin> myBundledPlugins = new ArrayList<Plugin>();
-  private final List<Plugin> myCustomPlugins = new ArrayList<Plugin>();
+  private final List<Plugin> myBundledPlugins;
+  private final List<Plugin> myCustomPlugins;
 
   private IdeVersion myVersion;
 
-  Idea(@NotNull File ideaDir) throws IOException, IncorrectPluginException {
-    if (isSourceDir(ideaDir)) {
-      myResolver = getIdeaClassPoolFromSources(ideaDir);
-      File versionFile = new File(ideaDir, "build.txt");
-      if (!versionFile.exists()) {
-        versionFile = new File(ideaDir, "community/build.txt");
-      }
-      if (versionFile.exists()) {
-        myVersion = readBuildNumber(versionFile);
-      }
-    } else {
-      myResolver = getIdeaClassPoolFromLibraries(ideaDir);
-      myBundledPlugins.addAll(getIdeaPlugins(ideaDir));
-      myVersion = readBuildNumber(new File(ideaDir, "build.txt"));
-    }
+  Idea(@Nullable IdeVersion version,
+       @NotNull Resolver resolver,
+       @NotNull List<Plugin> bundledPlugins) throws IOException, IncorrectPluginException {
+    myVersion = version;
+    myResolver = resolver;
+    myBundledPlugins = bundledPlugins;
+    myCustomPlugins = new ArrayList<Plugin>();
   }
 
   @NotNull
-  private static IdeVersion readBuildNumber(File versionFile) throws IOException {
-    String buildNumberString = Files.toString(versionFile, Charset.defaultCharset()).trim();
-    Matcher matcher = BUILD_NUMBER_PATTERN.matcher(buildNumberString);
-    if (matcher.matches()) {
-      return IdeVersion.createIdeVersion(matcher.group(1));
-    }
-    return IdeVersion.createIdeVersion(buildNumberString);
-  }
-
-  private static Resolver getIdeaClassPoolFromLibraries(File ideaDir) throws IOException {
-    final File lib = new File(ideaDir, "lib");
-    final List<JarFile> jars = JarsUtils.getJars(lib, new Predicate<File>() {
-      @Override
-      public boolean apply(File file) {
-        return !file.getName().endsWith("javac2.jar");
-      }
-    });
-
-    return JarsUtils.makeClassPool(ideaDir.getPath(), jars);
-  }
-
-  private static Resolver getIdeaClassPoolFromSources(File ideaDir) throws IOException {
-    List<Resolver> pools = new ArrayList<Resolver>();
-
-    pools.add(getIdeaClassPoolFromLibraries(ideaDir));
-
-    if (new File(ideaDir, "community/.idea").isDirectory()) {
-      pools.add(new CompileOutputResolver(new File(ideaDir, "out/classes/production")));
-      pools.add(getIdeaClassPoolFromLibraries(new File(ideaDir, "community")));
-    } else {
-      pools.add(new CompileOutputResolver(new File(ideaDir, "out/production")));
-    }
-
-    return Resolver.getUnion(ideaDir.getPath(), pools);
-  }
-
-  private static boolean isSourceDir(File dir) {
-    return new File(dir, "build").isDirectory()
-        && new File(dir, "out").isDirectory()
-        && new File(dir, ".git").isDirectory();
-  }
-
-  @NotNull
-  private static List<Plugin> getIdeaPlugins(File ideaDir) throws IOException, IncorrectPluginException {
-    final File pluginsDir = new File(ideaDir, "plugins");
-
-    final File[] files = pluginsDir.listFiles();
-    if (files == null) {
-      return Collections.emptyList();
-    }
-
-    List<Plugin> plugins = new ArrayList<Plugin>();
-
-    for (File file : files) {
-      if (!file.isDirectory())
-        continue;
-
-      try {
-        plugins.add(IdeaPluginManager.getInstance().createPlugin(file));
-      } catch (IncorrectPluginException e) {
-        System.out.println("Failed to read plugin " + file + ": " + e.getMessage());
-      } catch (IOException e) {
-        System.out.println("Failed to read plugin " + file + ": " + e.getMessage());
-      }
-    }
-
-    return plugins;
-  }
-
   @Override
-  @NotNull
   public IdeVersion getVersion() {
     return myVersion;
   }
