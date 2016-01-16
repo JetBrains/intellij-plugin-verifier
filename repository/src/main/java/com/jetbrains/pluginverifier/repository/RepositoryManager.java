@@ -56,10 +56,11 @@ public class RepositoryManager {
   }
 
   @NotNull
-  public List<PluginRepository> getRepositories() {
+  private List<PluginRepository> getRepositories() {
     return repositories;
   }
 
+  //TODO: replace String of IDE-version by IdeVersion instance where possible
   @NotNull
   public List<UpdateInfo> getAllCompatibleUpdates(@NotNull String ideVersion) throws IOException {
     List<UpdateInfo> res = new ArrayList<UpdateInfo>();

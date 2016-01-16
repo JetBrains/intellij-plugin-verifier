@@ -1,10 +1,9 @@
 package com.intellij.structure.impl.domain;
 
 import com.intellij.structure.domain.IdeVersion;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 
 /**
@@ -16,28 +15,34 @@ public class IdeVersionImpl extends IdeVersion {
   private int branch;
   private int build;
   private int attempt;
-  private boolean isOk;
   private boolean isSnapshot;
+  private String productName;
 
-  public IdeVersionImpl(@Nullable String text) {
-    if (text == null) return;
-
+  public IdeVersionImpl(@NotNull String text) throws IllegalArgumentException {
     text = text.trim();
 
-    if (text.length() == 0) return;
-
-    isOk = true;
+    if (text.isEmpty()) {
+      throw new IllegalArgumentException("Empty string is not a correct IdeVersion");
+    }
 
     Matcher matcher = PATTERN.matcher(text);
     if (matcher.matches()) {
       productCode = matcher.group(1);
+      if (productCode != null) {
+        productName = getProductIdByCode(productCode);
+        if (productName == null) {
+          throw new IllegalArgumentException("Unknown product code " + text);
+        }
+      }
+
+
       branch = Integer.parseInt(matcher.group(2));
       if (matcher.group(3) != null) {
         try {
           build = Integer.parseInt(matcher.group(3));
         } catch (NumberFormatException e) {
           build = 0;
-          isOk = false;
+          throw new IllegalArgumentException("Couldn't parse build number " + text);
         }
 
         if (build < 0) {
@@ -51,7 +56,7 @@ public class IdeVersionImpl extends IdeVersion {
         try {
           attempt = Integer.parseInt(matcher.group(4));
         } catch (NumberFormatException e) {
-          isOk = false;
+          throw new IllegalArgumentException("Couldn't parse attempt number " + text);
         }
       }
 
@@ -96,21 +101,23 @@ public class IdeVersionImpl extends IdeVersion {
 
       if (build < 0) {
         build = 0;
-        isOk = false;
+        throw new IllegalArgumentException("Version build number should be non-negative " + text);
       }
     } catch (NumberFormatException ignored) {
-      isOk = false;
+      throw new IllegalArgumentException("Couldn't parse version " + text);
     }
   }
 
   @Override
+  @NotNull
   public String getProductCode() {
     return productCode == null ? "" : productCode;
   }
 
   @Override
+  @Nullable
   public String getProductName() {
-    return getProductIdByCode(productCode);
+    return productName == null ? "" : productName;
   }
 
   @Override
@@ -129,77 +136,8 @@ public class IdeVersionImpl extends IdeVersion {
   }
 
   @Override
-  public boolean isOk() {
-    return isOk;
-  }
-
-  @Override
   public boolean isSnapshot() {
     return isSnapshot;
-  }
-
-  public Map<String, Object> getLegacyBranchBuild() {
-    Object min = "";
-    Object max = "";
-
-    if (isOk) {
-      switch (branch) {
-        case 90:
-          min = 10000;
-          max = 10000 + build;
-          break;
-        case 85:
-          min = 9500;
-          max = 9999;
-          break;
-        case 81:
-          min = 9100;
-          max = 9499;
-          break;
-        case 80:
-          min = 8000;
-          max = 9099;
-          break;
-        case 75:
-          min = 7500;
-          max = 7999;
-          break;
-        case 72:
-          min = 7200;
-          max = 7499;
-          break;
-        case 69:
-          min = 6900;
-          max = 7199;
-          break;
-        case 65:
-          min = 6500;
-          max = 6899;
-          break;
-        case 60:
-          min = 6000;
-          max = 6499;
-          break;
-        case 55:
-          min = 5000;
-          max = 5999;
-          break;
-        case 50:
-          min = 4000;
-          max = 4999;
-          break;
-        default:
-          min = 0;
-          max = 3999;
-          break;
-      }
-    }
-
-    Map<String, Object> res = new HashMap<String, Object>();
-    res.put("min", min);
-    res.put("max", max);
-
-    return res;
   }
 
 }

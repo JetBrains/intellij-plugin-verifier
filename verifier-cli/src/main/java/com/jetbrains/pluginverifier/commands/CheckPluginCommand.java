@@ -184,7 +184,7 @@ public class CheckPluginCommand extends VerifierCommand {
       Ide ide = IdeaManager.getInstance().createIde(ideaDirectory);
 
 
-      List<Pair<UpdateInfo, File>> pluginFiles = loadPluginFiles(pluginsToTestArg, ide.getVersion());
+      List<Pair<UpdateInfo, File>> pluginFiles = loadPluginFiles(pluginsToTestArg, ide.getVersion().toString());
 
       for (Pair<UpdateInfo, File> pluginFile : pluginFiles) {
         try {
@@ -201,7 +201,7 @@ public class CheckPluginCommand extends VerifierCommand {
             results.put(updateInfo, ideaToProblems);
           }
 
-          ideaToProblems.put(ide.getVersion(), problemSet);
+          ideaToProblems.put(ide.getVersion().toString(), problemSet);
 
         } catch (Exception e) {
           final String message = "failed to verify plugin " + pluginFile.getFirst();

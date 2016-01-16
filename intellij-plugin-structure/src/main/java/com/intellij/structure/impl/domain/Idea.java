@@ -3,13 +3,13 @@ package com.intellij.structure.impl.domain;
 import com.google.common.base.Predicate;
 import com.google.common.io.Files;
 import com.intellij.structure.domain.Ide;
+import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.pool.CompileOutputPool;
 import com.intellij.structure.impl.pool.ContainerClassPool;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.pool.ClassPool;
-import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,9 +28,8 @@ class Idea implements Ide {
   private final ClassPool myClassPool;
   private final List<Plugin> myBundledPlugins = new ArrayList<Plugin>();
   private final List<Plugin> myCustomPlugins = new ArrayList<Plugin>();
-  private Resolver myResolver;
 
-  private String myVersion;
+  private IdeVersion myVersion;
 
   Idea(@NotNull File ideaDir) throws IOException, IncorrectPluginException {
     if (isSourceDir(ideaDir)) {
@@ -49,13 +48,13 @@ class Idea implements Ide {
     }
   }
 
-  private static String readBuildNumber(File versionFile) throws IOException {
+  private static IdeVersion readBuildNumber(File versionFile) throws IOException {
     String buildNumberString = Files.toString(versionFile, Charset.defaultCharset()).trim();
     Matcher matcher = BUILD_NUMBER_PATTERN.matcher(buildNumberString);
     if (matcher.matches()) {
-      return matcher.group(1);
+      return IdeVersion.createIdeVersion(matcher.group(1));
     }
-    return buildNumberString;
+    return IdeVersion.createIdeVersion(buildNumberString);
   }
 
   private static ClassPool getIdeaClassPoolFromLibraries(File ideaDir) throws IOException {
@@ -120,12 +119,12 @@ class Idea implements Ide {
 
   @Override
   @NotNull
-  public String getVersion() {
+  public IdeVersion getVersion() {
     return myVersion;
   }
 
   @Override
-  public void updateVersion(@NotNull String newVersion) {
+  public void updateVersion(@NotNull IdeVersion newVersion) {
     myVersion = newVersion;
   }
 

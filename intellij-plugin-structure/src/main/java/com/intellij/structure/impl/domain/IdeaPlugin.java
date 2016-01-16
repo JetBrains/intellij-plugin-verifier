@@ -135,8 +135,10 @@ class IdeaPlugin implements Plugin {
 
   @Override
   public boolean isCompatibleWithIde(@NotNull String ideVersion) {
-    IdeVersion ide = IdeVersion.createIdeVersion(ideVersion);
-    if (!ide.isOk()) {
+    IdeVersion ide;
+    try {
+      ide = IdeVersion.createIdeVersion(ideVersion);
+    } catch (IllegalArgumentException e) {
       return false;
     }
 
@@ -191,22 +193,24 @@ class IdeaPlugin implements Plugin {
   private void getIdeaVersion(@NotNull Document pluginXml) throws IncorrectCompatibleBuildsException {
     Element ideaVersion = pluginXml.getRootElement().getChild("idea-version");
     if (ideaVersion != null && ideaVersion.getAttributeValue("min") == null) { // min != null in legacy plugins.
-      String sinceBuildString = ideaVersion.getAttributeValue("since-build");
-      mySinceBuild = IdeVersion.createIdeVersion(sinceBuildString);
-      if (!mySinceBuild.isOk()) {
-        throw new IncorrectCompatibleBuildsException("<idea version since-build = /> attribute has incorrect value: " + sinceBuildString);
+      String sb = ideaVersion.getAttributeValue("since-build");
+      try {
+        mySinceBuild = IdeVersion.createIdeVersion(sb);
+      } catch (IllegalArgumentException e) {
+        throw new IncorrectCompatibleBuildsException("<idea version since-build = /> attribute has incorrect value: " + sb);
       }
 
-      String untilBuildString = ideaVersion.getAttributeValue("until-build");
-      if (!Strings.isNullOrEmpty(untilBuildString)) {
-        if (untilBuildString.endsWith(".*") || untilBuildString.endsWith(".999") || untilBuildString.endsWith(".9999") || untilBuildString.endsWith(".99999")) {
-          int idx = untilBuildString.lastIndexOf('.');
-          untilBuildString = untilBuildString.substring(0, idx + 1) + Integer.MAX_VALUE;
+      String ub = ideaVersion.getAttributeValue("until-build");
+      if (!Strings.isNullOrEmpty(ub)) {
+        if (ub.endsWith(".*") || ub.endsWith(".999") || ub.endsWith(".9999") || ub.endsWith(".99999")) {
+          int idx = ub.lastIndexOf('.');
+          ub = ub.substring(0, idx + 1) + Integer.MAX_VALUE;
         }
 
-        myUntilBuild = IdeVersion.createIdeVersion(untilBuildString);
-        if (!myUntilBuild.isOk()) {
-          throw new IncorrectCompatibleBuildsException("<idea-version until-build= /> attribute has incorrect value: " + untilBuildString);
+        try {
+          myUntilBuild = IdeVersion.createIdeVersion(ub);
+        } catch (IllegalArgumentException e) {
+          throw new IncorrectCompatibleBuildsException("<idea-version until-build= /> attribute has incorrect value: " + ub);
         }
       }
     }

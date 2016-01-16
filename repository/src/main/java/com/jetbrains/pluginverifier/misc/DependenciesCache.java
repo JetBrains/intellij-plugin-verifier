@@ -169,7 +169,7 @@ public class DependenciesCache {
           Exception maybeException = null;
           if (depPlugin == null) {
             try {
-              UpdateInfo updateInfo = RepositoryManager.getInstance().findPlugin(ide.getVersion(), pluginDependency.getId());
+              UpdateInfo updateInfo = RepositoryManager.getInstance().findPlugin(ide.getVersion().toString(), pluginDependency.getId());
               if (updateInfo != null) {
                 File pluginZip = RepositoryManager.getInstance().getOrLoadUpdate(updateInfo);
                 depPlugin = PluginCache.getInstance().getPlugin(pluginZip);

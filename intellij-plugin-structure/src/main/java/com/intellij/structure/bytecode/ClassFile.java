@@ -11,21 +11,21 @@ import java.io.InputStream;
  */
 public class ClassFile {
   private final String myClassName;
-  private final byte[] myBytes;
+  private final byte[] myBytecode;
 
-  public ClassFile(@NotNull String className, @NotNull byte[] bytes) {
+  public ClassFile(@NotNull String className, @NotNull byte[] bytecode) {
     myClassName = className;
-    myBytes = bytes;
+    myBytecode = bytecode;
   }
 
   public ClassFile(@NotNull String className, @NotNull InputStream inputStream) throws IOException {
     myClassName = className;
-    myBytes = ByteStreams.toByteArray(inputStream);
+    myBytecode = ByteStreams.toByteArray(inputStream);
   }
 
   @NotNull
-  public byte[] getBytes() {
-    return myBytes;
+  public byte[] getBytecode() {
+    return myBytecode;
   }
 
   @NotNull

@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier;
 
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeRuntime;
+import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.impl.domain.JdkManager;
 import com.intellij.structure.impl.pool.ContainerClassPool;
 import com.intellij.structure.impl.pool.JarClassPool;
@@ -81,7 +82,14 @@ public abstract class VerifierCommand {
   protected void updateIdeVersionFromCmd(@NotNull Ide ide, @NotNull CommandLine commandLine) throws IOException {
     String build = commandLine.getOptionValue("iv");
     if (build != null && !build.isEmpty()) {
-      ide.updateVersion(build);
+      IdeVersion version;
+      try {
+        version = IdeVersion.createIdeVersion(build);
+      } catch (IllegalArgumentException e) {
+        throw FailUtil.fail("Incorrect update IDE-version has been specified " + build, e);
+      }
+
+      ide.updateVersion(version);
     }
   }
 

@@ -61,16 +61,19 @@ public class IdeTest_IDEA_144_2608_2 {
 
   @Test
   public void getVersion() throws Exception {
-    assertEquals("IU-144.2608", ide.getVersion());
+    assertEquals("IU-144.2608", ide.getVersion().toString());
   }
 
   @Test
   public void updateVersion() throws Exception {
-    String v = ide.getVersion();
-    ide.updateVersion("IU-140.40.40");
-    assertEquals("IU-140.40.40", ide.getVersion());
-    ide.updateVersion(v);
-    assertEquals(v, ide.getVersion());
+    IdeVersion old = ide.getVersion();
+    assertEquals("IU-144.2608", old.toString());
+
+    IdeVersion newVersion = IdeVersion.createIdeVersion("IU-140.40.40");
+    ide.updateVersion(newVersion);
+    assertEquals("IU-140.40.40", ide.getVersion().toString());
+    ide.updateVersion(old);
+    assertEquals(old, ide.getVersion());
   }
 
   @Test
@@ -123,8 +126,8 @@ public class IdeTest_IDEA_144_2608_2 {
       ClassFile classFile = classPool.findClass(aClass);
       assertNotNull(classFile);
       assertEquals(aClass, classFile.getClassName());
-      assertNotNull(classFile.getBytes());
-      assertFalse(classFile.getBytes().length == 0);
+      assertNotNull(classFile.getBytecode());
+      assertFalse(classFile.getBytecode().length == 0);
     }
 
   }

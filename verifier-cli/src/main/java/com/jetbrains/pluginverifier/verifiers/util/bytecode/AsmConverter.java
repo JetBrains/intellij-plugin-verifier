@@ -13,7 +13,7 @@ public class AsmConverter {
   @Nullable
   public static ClassNode convertToAsmNode(@Nullable ClassFile classFile) {
     if (classFile != null) {
-      byte[] bytes = classFile.getBytes();
+      byte[] bytes = classFile.getBytecode();
       ClassNode node = new ClassNode();
       new ClassReader(bytes).accept(node, 0);
       return node;

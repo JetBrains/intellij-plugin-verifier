@@ -11,9 +11,9 @@ import java.util.List;
  */
 public interface Ide {
   @NotNull
-  String getVersion();
+  IdeVersion getVersion();
 
-  void updateVersion(@NotNull String newVersion);
+  void updateVersion(@NotNull IdeVersion newVersion);
 
   void addCustomPlugin(@NotNull Plugin plugin);
 

@@ -299,18 +299,18 @@ public class CheckIdeCommand extends VerifierCommand {
 
     Collection<UpdateInfo> updates;
     if (pluginsCheckAllBuilds.isEmpty() && pluginsCheckLastBuilds.isEmpty()) {
-      updates = RepositoryManager.getInstance().getAllCompatibleUpdates(ide.getVersion());
+      updates = RepositoryManager.getInstance().getAllCompatibleUpdates(ide.getVersion().toString());
     } else {
       updates = new ArrayList<UpdateInfo>();
 
       if (pluginsCheckAllBuilds.size() > 0) {
-        updates.addAll(RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(ide.getVersion(), pluginsCheckAllBuilds));
+        updates.addAll(RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(ide.getVersion().toString(), pluginsCheckAllBuilds));
       }
 
       if (pluginsCheckLastBuilds.size() > 0) {
         Map<String, UpdateInfo> lastBuilds = new HashMap<String, UpdateInfo>();
 
-        for (UpdateInfo info : RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(ide.getVersion(), pluginsCheckLastBuilds)) {
+        for (UpdateInfo info : RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(ide.getVersion().toString(), pluginsCheckLastBuilds)) {
           UpdateInfo existsBuild = lastBuilds.get(info.getPluginId());
 
           //choose last build
@@ -418,7 +418,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     //Save results to XML if necessary
     if (commandLine.hasOption("xr")) {
-      saveResultsToXml(commandLine.getOptionValue("xr"), ide.getVersion(), results);
+      saveResultsToXml(commandLine.getOptionValue("xr"), ide.getVersion().toString(), results);
     }
 
 
@@ -439,13 +439,13 @@ public class CheckIdeCommand extends VerifierCommand {
         File file = new File(reportFile);
         System.out.println("Saving report to " + file.getAbsolutePath());
 
-        CheckIdeHtmlReportBuilder.build(file, ide.getVersion(), toBeCheckedPluginIds, updateFilter, results);
+        CheckIdeHtmlReportBuilder.build(file, ide.getVersion().toString(), toBeCheckedPluginIds, updateFilter, results);
       }
     }
 
     printTeamCityProblems(tc, results, updateFilter, reportGrouping);
 
-    int totalProblemsCnt = printMissingAndIncorrectPlugins(tc, ide.getVersion(), toBeCheckedPluginIds, compatibleToBeCheckedUpdates, incorrectPlugins, updateFilter);
+    int totalProblemsCnt = printMissingAndIncorrectPlugins(tc, ide.getVersion().toString(), toBeCheckedPluginIds, compatibleToBeCheckedUpdates, incorrectPlugins, updateFilter);
 
     Set<Problem> allProblems = new HashSet<Problem>();
 

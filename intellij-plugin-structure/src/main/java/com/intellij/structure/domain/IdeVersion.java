@@ -16,10 +16,9 @@ public abstract class IdeVersion {
 
   public static final Comparator<IdeVersion> VERSION_COMPARATOR = new IdeVersionComparator();
 
-  protected static final Pattern PATTERN = Pattern.compile("(?:(IC|IU|RM|WS|PS|PY|PC|OC|MPS|AI|DB|CL)-)?(\\d{1,8})\\.(?:(\\d{1,10})(?:\\.(\\d{1,10}))?|SNAPSHOT)");
+  protected static final Pattern PATTERN = Pattern.compile("(?:([A-Z]{1,10})-)?(\\d{1,8})\\.(?:(\\d{1,10})(?:\\.(\\d{1,10}))?|SNAPSHOT)");
 
   private static final Map<String, String> PRODUCT_MAP;
-  private static final Map<String, String> PRODUCT_ID_TO_CODE;
 
   static {
     PRODUCT_MAP = ImmutableBiMap.<String, String>builder()
@@ -36,28 +35,63 @@ public abstract class IdeVersion {
         .put("DB", "dbe")
         .put("CL", "clion")
         .build();
-
-    PRODUCT_ID_TO_CODE = ImmutableBiMap.copyOf(PRODUCT_MAP).inverse();
   }
 
   protected IdeVersion() {
   }
 
-  protected static String getProductIdByCode(String code) {
+  @Nullable
+  protected static String getProductIdByCode(@NotNull String code) {
     return PRODUCT_MAP.get(code);
   }
 
-  public static String getCodeByProductId(String productId) {
-    return PRODUCT_ID_TO_CODE.get(productId);
-  }
-
+  /**
+   * @throws IllegalArgumentException if specified {@code text} doesn't represent correct {@code IdeVersion}
+   */
   @NotNull
-  public static IdeVersion createIdeVersion(@Nullable String text) {
+  public static IdeVersion createIdeVersion(@NotNull String text) throws IllegalArgumentException {
     return new IdeVersionImpl(text);
   }
 
+  @Override
+  public String toString() {
+    if (!isSnapshot() && getProductCode().isEmpty() && getBuild() == 0 && getAttempt() == 0) {
+      //it's a baseline (e.g. "134")
+      return Integer.toString(getBranch());
+    }
+    String code = getProductCode().isEmpty() ? "" : getProductCode() + "-";
+    String notSnapshot = getBuild() + (getAttempt() == 0 ? "" : "." + getAttempt());
+    return code + getBranch() + "." + (isSnapshot() ? "SNAPSHOT" : notSnapshot);
+  }
+
+
+  @Override
+  public int hashCode() {
+    int hc = getProductCode().hashCode();
+    hc += getBranch();
+    hc += getBuild();
+    hc += getAttempt();
+    hc *= isSnapshot() ? 1 : -1;
+    return hc;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof IdeVersion)) {
+      return false;
+    }
+    IdeVersion o = (IdeVersion) obj;
+    return getProductCode().equals(o.getProductCode())
+        && getBranch() == o.getBranch()
+        && getBuild() == o.getBuild()
+        && getAttempt() == o.getAttempt()
+        && isSnapshot() == o.isSnapshot();
+  }
+
+  @NotNull
   public abstract String getProductCode();
 
+  @Nullable
   public abstract String getProductName();
 
   public abstract int getBranch();
@@ -65,8 +99,6 @@ public abstract class IdeVersion {
   public abstract int getBuild();
 
   public abstract int getAttempt();
-
-  public abstract boolean isOk();
 
   public abstract boolean isSnapshot();
 
