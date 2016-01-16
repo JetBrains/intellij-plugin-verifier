@@ -1,7 +1,6 @@
-package com.intellij.structure.impl.pool;
+package com.intellij.structure.impl.resolvers;
 
 import com.intellij.structure.bytecode.ClassFile;
-import com.intellij.structure.pool.ClassPool;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
@@ -13,15 +12,14 @@ import java.util.*;
 /**
  * @author Sergey Evdokimov
  */
-public class CompileOutputPool implements ClassPool {
+public class CompileOutputResolver extends Resolver {
 
-  private String moniker;
+  private final String moniker;
+  private final Map<String, PackageDescriptor> packageMap = new HashMap<String, PackageDescriptor>();
+  private final Map<String, ClassFile> classesMap = new HashMap<String, ClassFile>();
 
-  private Map<String, PackageDescriptor> packageMap = new HashMap<String, PackageDescriptor>();
-  private Map<String, ClassFile> classesMap = new HashMap<String, ClassFile>();
-
-  public CompileOutputPool(File dir) {
-    this.moniker = dir.getPath();
+  public CompileOutputResolver(@NotNull File dir) {
+    moniker = dir.getPath();
 
     List<DirDescriptor> dirs = new ArrayList<DirDescriptor>();
 
@@ -139,7 +137,7 @@ public class CompileOutputPool implements ClassPool {
       this.dirs = dirs;
     }
 
-    public List<DirDescriptor> getDirectories() {
+    List<DirDescriptor> getDirectories() {
       return dirs;
     }
 
@@ -153,11 +151,11 @@ public class CompileOutputPool implements ClassPool {
 
     private Map<String, File> fileMap;
 
-    public DirDescriptor(File dir) {
+    DirDescriptor(File dir) {
       this.dir = dir;
     }
 
-    public File findChild(String name) {
+    File findChild(String name) {
       Map<String, File> map = fileMap;
       if (map == null) {
         map = new HashMap<String, File>();

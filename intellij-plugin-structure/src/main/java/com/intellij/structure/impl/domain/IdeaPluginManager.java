@@ -5,16 +5,15 @@ import com.google.common.io.ByteStreams;
 import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginManager;
-import com.intellij.structure.errors.*;
-import com.intellij.structure.impl.pool.ContainerClassPool;
-import com.intellij.structure.impl.pool.InMemoryJarClassPool;
-import com.intellij.structure.impl.pool.JarClassPool;
+import com.intellij.structure.errors.IncorrectPluginException;
+import com.intellij.structure.impl.errors.*;
+import com.intellij.structure.impl.resolvers.InMemoryJarResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.impl.utils.xml.XIncludeException;
-import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.IOUtils;
 import org.jdom.Document;
 import org.jdom.JDOMException;
@@ -51,12 +50,12 @@ public class IdeaPluginManager extends PluginManager {
   @NotNull
   private static IdeaPlugin createFromZip(@NotNull File zipFile) throws IOException {
     byte[] pluginXmlBytes = null;
-    ClassPool pluginClassPool = null;
-    List<ClassPool> libraryPool = new ArrayList<ClassPool>();
+    Resolver pluginResolver = null;
+    List<Resolver> libraryPool = new ArrayList<Resolver>();
     URL pluginXmlUrl = null;
     Map<String, Document> allXmlInRoot = new HashMap<String, Document>();
 
-    InMemoryJarClassPool zipRootPool = new InMemoryJarClassPool("Plugin root file: " + zipFile.getAbsolutePath());
+    InMemoryJarResolver zipRootPool = new InMemoryJarResolver("Plugin root file: " + zipFile.getAbsolutePath());
 
     final ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(zipFile)));
 
@@ -90,7 +89,7 @@ public class IdeaPluginManager extends PluginManager {
               throw new MultiplePluginXmlException("Plugin has more than one jars with plugin.xml");
             }
             pluginXmlBytes = data;
-            pluginClassPool = zipRootPool;
+            pluginResolver = zipRootPool;
             pluginXmlUrl = xmlUrl;
           }
 
@@ -100,7 +99,7 @@ public class IdeaPluginManager extends PluginManager {
         } else if (entryName.matches("([^/]+/)?lib/[^/]+\\.jar")) {
           ZipInputStream innerJar = new ZipInputStream(zipInputStream);
 
-          final InMemoryJarClassPool innerPool = new InMemoryJarClassPool(entryName);
+          final InMemoryJarResolver innerPool = new InMemoryJarResolver(entryName);
           final Map<String, Document> innerDocuments = new HashMap<String, Document>();
 
           ZipEntry innerEntry;
@@ -122,7 +121,7 @@ public class IdeaPluginManager extends PluginManager {
                 }
 
                 pluginXmlBytes = data; //the main plugin.xml
-                pluginClassPool = innerPool; //pluginPool is in this .jar exactly
+                pluginResolver = innerPool; //pluginPool is in this .jar exactly
                 allXmlInRoot = innerDocuments; //and documents are based on this META-INF/* directory
 
                 pluginXmlUrl = xmlUrl;
@@ -136,7 +135,7 @@ public class IdeaPluginManager extends PluginManager {
             }
           }
 
-          if (innerPool != pluginClassPool) {
+          if (innerPool != pluginResolver) {
             libraryPool.add(innerPool);
           }
         }
@@ -162,12 +161,12 @@ public class IdeaPluginManager extends PluginManager {
     }
 
     if (!zipRootPool.isEmpty()) {
-      if (pluginClassPool != zipRootPool) {
+      if (pluginResolver != zipRootPool) {
         throw new MissingPluginXmlException("Plugin contains .class files in the root, but has no META-INF/plugin.xml");
       }
     }
 
-    return new IdeaPlugin(zipFile.getAbsolutePath(), pluginClassPool, ContainerClassPool.getUnion(zipFile.getPath(), libraryPool), pluginXml, allXmlInRoot);
+    return new IdeaPlugin(zipFile.getAbsolutePath(), pluginResolver, Resolver.getUnion(zipFile.getPath(), libraryPool), pluginXml, allXmlInRoot);
   }
 
   private static void tryAddXmlInRoot(@NotNull Map<String, Document> container,
@@ -201,17 +200,17 @@ public class IdeaPluginManager extends PluginManager {
   private static Plugin createFromJars(@NotNull File pluginFile,
                                        @NotNull List<JarFile> jarFiles) throws IOException, IncorrectPluginException {
     Document pluginXml = null;
-    ClassPool pluginClassPool = null;
-    List<ClassPool> libraryPools = new ArrayList<ClassPool>();
+    Resolver pluginResolver = null;
+    List<Resolver> libraryPools = new ArrayList<Resolver>();
 
     for (JarFile jar : jarFiles) {
       ZipEntry pluginXmlEntry = jar.getEntry(PLUGIN_XML_ENTRY_NAME);
       if (pluginXmlEntry != null) {
-        if (pluginClassPool != null) {
+        if (pluginResolver != null) {
           throw new MultiplePluginXmlException("Plugin has more than one .jar with plugin.xml " + pluginFile);
         }
 
-        pluginClassPool = JarClassPool.createJarClassPool(jar);
+        pluginResolver = Resolver.createJarClassPool(jar);
         URL jarURL = new URL(
             "jar:" + StringUtil.replace(new File(jar.getName()).toURI().toASCIIString(), "!", "%21") + "!/META-INF/plugin.xml"
         );
@@ -225,7 +224,7 @@ public class IdeaPluginManager extends PluginManager {
           throw new IncorrectPluginXmlException("Failed to read plugin.xml", e);
         }
       } else {
-        libraryPools.add(JarClassPool.createJarClassPool(jar));
+        libraryPools.add(Resolver.createJarClassPool(jar));
       }
     }
 
@@ -264,8 +263,8 @@ public class IdeaPluginManager extends PluginManager {
       }
     }
 
-    ClassPool libraryPoolsUnion = ContainerClassPool.getUnion(pluginFile.toString(), libraryPools);
-    return new IdeaPlugin(pluginFile.getAbsolutePath(), pluginClassPool, libraryPoolsUnion, pluginXml, xmlDocumentsInRoot);
+    Resolver libraryPoolsUnion = Resolver.getUnion(pluginFile.toString(), libraryPools);
+    return new IdeaPlugin(pluginFile.getAbsolutePath(), pluginResolver, libraryPoolsUnion, pluginXml, xmlDocumentsInRoot);
   }
 
   @NotNull
@@ -311,6 +310,7 @@ public class IdeaPluginManager extends PluginManager {
       throw new IncorrectStructureException("Plugin root directory " + pluginFile + " is empty");
     }
 /*
+    TODO: should be proceed?
     if (pluginRootFiles.length > 1) {
       throw new IncorrectStructureException("Plugin root directory " + pluginFile + " contains more than one child \"lib\"");
     }

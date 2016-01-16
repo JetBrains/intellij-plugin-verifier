@@ -1,7 +1,6 @@
-package com.intellij.structure.impl.pool;
+package com.intellij.structure.impl.resolvers;
 
 import com.intellij.structure.bytecode.ClassFile;
-import com.intellij.structure.pool.ClassPool;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,18 +12,17 @@ import java.util.Map;
 /**
  * @author Sergey Evdokimov
  */
-public class InMemoryJarClassPool implements ClassPool {
-
+public class InMemoryJarResolver extends Resolver {
 
   private final Map<String, Object> myInMemoryClasses = new HashMap<String, Object>();
 
   private final String myMoniker;
 
-  public InMemoryJarClassPool(@NotNull String moniker) {
+  public InMemoryJarResolver(@NotNull String moniker) {
     myMoniker = moniker;
   }
 
-  public void addClass(String name, byte[] code) {
+  public void addClass(@NotNull String name, @NotNull byte[] code) {
     myInMemoryClasses.put(name, code);
   }
 

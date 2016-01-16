@@ -6,10 +6,9 @@ import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.errors.IncorrectPluginException;
-import com.intellij.structure.impl.pool.CompileOutputPool;
-import com.intellij.structure.impl.pool.ContainerClassPool;
+import com.intellij.structure.impl.resolvers.CompileOutputResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
-import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +24,7 @@ import java.util.regex.Pattern;
 
 class Idea implements Ide {
   private static final Pattern BUILD_NUMBER_PATTERN = Pattern.compile("([^\\.]+\\.\\d+)\\.\\d+");
-  private final ClassPool myClassPool;
+  private final Resolver myResolver;
   private final List<Plugin> myBundledPlugins = new ArrayList<Plugin>();
   private final List<Plugin> myCustomPlugins = new ArrayList<Plugin>();
 
@@ -33,7 +32,7 @@ class Idea implements Ide {
 
   Idea(@NotNull File ideaDir) throws IOException, IncorrectPluginException {
     if (isSourceDir(ideaDir)) {
-      myClassPool = getIdeaClassPoolFromSources(ideaDir);
+      myResolver = getIdeaClassPoolFromSources(ideaDir);
       File versionFile = new File(ideaDir, "build.txt");
       if (!versionFile.exists()) {
         versionFile = new File(ideaDir, "community/build.txt");
@@ -42,12 +41,13 @@ class Idea implements Ide {
         myVersion = readBuildNumber(versionFile);
       }
     } else {
-      myClassPool = getIdeaClassPoolFromLibraries(ideaDir);
+      myResolver = getIdeaClassPoolFromLibraries(ideaDir);
       myBundledPlugins.addAll(getIdeaPlugins(ideaDir));
       myVersion = readBuildNumber(new File(ideaDir, "build.txt"));
     }
   }
 
+  @NotNull
   private static IdeVersion readBuildNumber(File versionFile) throws IOException {
     String buildNumberString = Files.toString(versionFile, Charset.defaultCharset()).trim();
     Matcher matcher = BUILD_NUMBER_PATTERN.matcher(buildNumberString);
@@ -57,7 +57,7 @@ class Idea implements Ide {
     return IdeVersion.createIdeVersion(buildNumberString);
   }
 
-  private static ClassPool getIdeaClassPoolFromLibraries(File ideaDir) throws IOException {
+  private static Resolver getIdeaClassPoolFromLibraries(File ideaDir) throws IOException {
     final File lib = new File(ideaDir, "lib");
     final List<JarFile> jars = JarsUtils.getJars(lib, new Predicate<File>() {
       @Override
@@ -69,19 +69,19 @@ class Idea implements Ide {
     return JarsUtils.makeClassPool(ideaDir.getPath(), jars);
   }
 
-  private static ClassPool getIdeaClassPoolFromSources(File ideaDir) throws IOException {
-    List<ClassPool> pools = new ArrayList<ClassPool>();
+  private static Resolver getIdeaClassPoolFromSources(File ideaDir) throws IOException {
+    List<Resolver> pools = new ArrayList<Resolver>();
 
     pools.add(getIdeaClassPoolFromLibraries(ideaDir));
 
     if (new File(ideaDir, "community/.idea").isDirectory()) {
-      pools.add(new CompileOutputPool(new File(ideaDir, "out/classes/production")));
+      pools.add(new CompileOutputResolver(new File(ideaDir, "out/classes/production")));
       pools.add(getIdeaClassPoolFromLibraries(new File(ideaDir, "community")));
     } else {
-      pools.add(new CompileOutputPool(new File(ideaDir, "out/production")));
+      pools.add(new CompileOutputResolver(new File(ideaDir, "out/production")));
     }
 
-    return ContainerClassPool.getUnion(ideaDir.getPath(), pools);
+    return Resolver.getUnion(ideaDir.getPath(), pools);
   }
 
   private static boolean isSourceDir(File dir) {
@@ -163,8 +163,8 @@ class Idea implements Ide {
 
   @NotNull
   @Override
-  public ClassPool getClassPool() {
-    return myClassPool;
+  public Resolver getClassPool() {
+    return myResolver;
   }
 
   @Override

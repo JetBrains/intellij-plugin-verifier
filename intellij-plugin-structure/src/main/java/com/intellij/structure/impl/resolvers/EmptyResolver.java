@@ -1,4 +1,4 @@
-package com.intellij.structure.pool;
+package com.intellij.structure.impl.resolvers;
 
 import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.resolvers.Resolver;
@@ -11,9 +11,9 @@ import java.util.Collections;
 /**
  * @author Sergey Patrikeev
  */
-public class EmptyClassPool implements ClassPool {
+public class EmptyResolver extends Resolver {
 
-  public static final ClassPool INSTANCE = new EmptyClassPool();
+  public static final Resolver INSTANCE = new EmptyResolver();
 
   @Nullable
   @Override
@@ -36,7 +36,7 @@ public class EmptyClassPool implements ClassPool {
   @NotNull
   @Override
   public String getMoniker() {
-    return "EmptyClassPool";
+    return "EmptyResolver";
   }
 
   @Override

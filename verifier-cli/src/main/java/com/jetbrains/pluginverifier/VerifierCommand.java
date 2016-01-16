@@ -4,9 +4,7 @@ import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeRuntime;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.impl.domain.JdkManager;
-import com.intellij.structure.impl.pool.ContainerClassPool;
-import com.intellij.structure.impl.pool.JarClassPool;
-import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.utils.FailUtil;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
@@ -64,19 +62,19 @@ public abstract class VerifierCommand {
   }
 
   @Nullable
-  protected ClassPool getExternalClassPath(CommandLine commandLine) throws IOException {
+  protected Resolver getExternalClassPath(CommandLine commandLine) throws IOException {
     String[] values = commandLine.getOptionValues("cp");
     if (values == null) {
       return null;
     }
 
-    List<ClassPool> pools = new ArrayList<ClassPool>(values.length);
+    List<Resolver> pools = new ArrayList<Resolver>(values.length);
 
     for (String value : values) {
-      pools.add(JarClassPool.createJarClassPool(new JarFile(value)));
+      pools.add(Resolver.createJarClassPool(new JarFile(value)));
     }
 
-    return ContainerClassPool.getUnion("external_class_path", pools);
+    return Resolver.getUnion("external_class_path", pools);
   }
 
   protected void updateIdeVersionFromCmd(@NotNull Ide ide, @NotNull CommandLine commandLine) throws IOException {

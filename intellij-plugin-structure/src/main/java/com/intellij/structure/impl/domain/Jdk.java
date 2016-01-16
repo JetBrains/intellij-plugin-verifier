@@ -4,7 +4,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.structure.domain.IdeRuntime;
 import com.intellij.structure.impl.utils.JarsUtils;
-import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -19,7 +19,7 @@ class Jdk implements IdeRuntime {
   private static final Set<String> JDK_JAR_NAMES = ImmutableSet.of("rt.jar", "tools.jar", "classes.jar", "jsse.jar", "javaws.jar", "jce.jar");
 
   private final List<JarFile> myJars;
-  private final ClassPool myPool;
+  private final Resolver myPool;
 
   Jdk(@NotNull File jdkDir) throws IOException {
     myJars = new ArrayList<JarFile>();
@@ -51,7 +51,13 @@ class Jdk implements IdeRuntime {
 
   @Override
   @NotNull
-  public ClassPool getClassPool() {
+  public Resolver getClassPool() {
     return myPool;
+  }
+
+  @NotNull
+  @Override
+  public String getMoniker() {
+    return myPool.getMoniker();
   }
 }

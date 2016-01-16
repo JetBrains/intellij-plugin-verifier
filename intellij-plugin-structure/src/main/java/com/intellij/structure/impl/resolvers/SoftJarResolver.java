@@ -1,7 +1,6 @@
-package com.intellij.structure.impl.pool;
+package com.intellij.structure.impl.resolvers;
 
 import com.intellij.structure.bytecode.ClassFile;
-import com.intellij.structure.pool.ClassPool;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +17,7 @@ import java.util.zip.ZipEntry;
 /**
  * @author Dennis.Ushakov
  */
-public class JarClassPool implements ClassPool {
+public class SoftJarResolver extends Resolver {
 
   private static final String CLASS_SUFFIX = ".class";
 
@@ -27,14 +26,10 @@ public class JarClassPool implements ClassPool {
 
   private final Map<String, SoftReference<ClassFile>> myClassesCache = new HashMap<String, SoftReference<ClassFile>>();
 
-  private JarClassPool(@NotNull JarFile jarFile) throws IOException {
+  public SoftJarResolver(@NotNull JarFile jarFile) throws IOException {
     myMoniker = jarFile.getName();
     myJarFile = jarFile;
     preloadClassMap();
-  }
-
-  public static JarClassPool createJarClassPool(@NotNull JarFile jarFile) throws IOException {
-    return new JarClassPool(jarFile);
   }
 
   private void preloadClassMap() throws IOException {

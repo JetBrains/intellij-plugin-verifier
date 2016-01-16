@@ -1,4 +1,6 @@
-package com.intellij.structure.errors;
+package com.intellij.structure.impl.errors;
+
+import com.intellij.structure.errors.IncorrectPluginException;
 
 /**
  * @author Sergey Patrikeev

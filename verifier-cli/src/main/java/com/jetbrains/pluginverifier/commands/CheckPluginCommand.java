@@ -10,7 +10,7 @@ import com.intellij.structure.domain.IdeRuntime;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.impl.domain.IdeaManager;
 import com.intellij.structure.impl.domain.IdeaPluginManager;
-import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.CommandHolder;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
@@ -287,7 +287,7 @@ public class CheckPluginCommand extends VerifierCommand {
   @NotNull
   private ProblemSet verifyPlugin(@NotNull Ide ide,
                                   @NotNull IdeRuntime ideRuntime,
-                                  @Nullable ClassPool externalClassPath,
+                                  @Nullable Resolver externalClassPath,
                                   @NotNull Plugin plugin,
                                   @NotNull PluginVerifierOptions options,
                                   @NotNull TeamCityLog log) throws IOException, VerificationError {

@@ -1,8 +1,6 @@
-package com.intellij.structure.impl.pool;
+package com.intellij.structure.impl.resolvers;
 
 import com.intellij.structure.bytecode.ClassFile;
-import com.intellij.structure.pool.ClassPool;
-import com.intellij.structure.pool.EmptyClassPool;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,41 +10,23 @@ import java.util.*;
 /**
  * @author Dennis.Ushakov
  */
-public class ContainerClassPool implements ClassPool {
+public class ContainerResolver extends Resolver {
 
-  private final List<ClassPool> myClassPools = new ArrayList<ClassPool>();
+  private final List<Resolver> myResolvers = new ArrayList<Resolver>();
 
   private final String myMoniker;
 
-  private ContainerClassPool(@NotNull String moniker,
-                             @NotNull List<ClassPool> classPools) {
+  public ContainerResolver(@NotNull String moniker,
+                           @NotNull List<Resolver> resolvers) {
     myMoniker = moniker;
-    myClassPools.addAll(classPools);
-  }
-
-  public static ClassPool getUnion(@NotNull String moniker,
-                                   @NotNull List<ClassPool> classPools) {
-    ClassPool someNonEmptyPool = null;
-    for (ClassPool pool : classPools) {
-      if (!pool.isEmpty()) {
-        if (someNonEmptyPool == null) {
-          someNonEmptyPool = pool;
-        } else {
-          return new ContainerClassPool(moniker, classPools);
-        }
-      }
-    }
-    if (someNonEmptyPool == null) {
-      return EmptyClassPool.INSTANCE;
-    }
-    return someNonEmptyPool;
+    myResolvers.addAll(resolvers);
   }
 
   @NotNull
   @Override
   public Collection<String> getAllClasses() {
     Set<String> result = new HashSet<String>();
-    for (ClassPool pool : myClassPools) {
+    for (Resolver pool : myResolvers) {
       result.addAll(pool.getAllClasses());
     }
     return result;
@@ -60,7 +40,7 @@ public class ContainerClassPool implements ClassPool {
 
   @Override
   public boolean isEmpty() {
-    for (ClassPool pool : myClassPools) {
+    for (Resolver pool : myResolvers) {
       if (!pool.isEmpty()) {
         return false;
       }
@@ -71,7 +51,7 @@ public class ContainerClassPool implements ClassPool {
   @Override
   @Nullable
   public ClassFile findClass(@NotNull String className) {
-    for (ClassPool pool : myClassPools) {
+    for (Resolver pool : myResolvers) {
       ClassFile node = pool.findClass(className);
       if (node != null) {
         return node;
@@ -83,7 +63,7 @@ public class ContainerClassPool implements ClassPool {
   @Override
   @Nullable
   public Resolver getClassLocation(@NotNull String className) {
-    for (ClassPool pool : myClassPools) {
+    for (Resolver pool : myResolvers) {
       Resolver inner = pool.getClassLocation(className);
       if (inner != null) {
         return inner;

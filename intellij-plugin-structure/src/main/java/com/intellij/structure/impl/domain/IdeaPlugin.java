@@ -4,10 +4,10 @@ import com.google.common.base.Strings;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
-import com.intellij.structure.errors.IncorrectCompatibleBuildsException;
 import com.intellij.structure.errors.IncorrectPluginException;
-import com.intellij.structure.errors.MissingPluginIdException;
-import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.impl.errors.IncorrectCompatibleBuildsException;
+import com.intellij.structure.impl.errors.MissingPluginIdException;
+import com.intellij.structure.resolvers.Resolver;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -17,8 +17,8 @@ import java.util.*;
 
 class IdeaPlugin implements Plugin {
 
-  private final ClassPool myPluginClassPool;
-  private final ClassPool myLibraryClassPool;
+  private final Resolver myPluginResolver;
+  private final Resolver myLibraryResolver;
 
   private final String myPluginName;
   private final String myPluginVersion;
@@ -34,14 +34,14 @@ class IdeaPlugin implements Plugin {
   private IdeVersion myUntilBuild;
 
   IdeaPlugin(@NotNull String pluginMoniker,
-             @NotNull ClassPool pluginClassPool,
-             @NotNull ClassPool libraryClassPool,
+             @NotNull Resolver pluginResolver,
+             @NotNull Resolver libraryResolver,
              @NotNull Document pluginXml,
              @NotNull Map<String, Document> xmlDocumentsInRoot) throws IncorrectPluginException {
     myPluginXml = pluginXml;
     myXmlDocumentsInRoot = xmlDocumentsInRoot;
-    myPluginClassPool = pluginClassPool;
-    myLibraryClassPool = libraryClassPool;
+    myPluginResolver = pluginResolver;
+    myLibraryResolver = libraryResolver;
 
     myPluginId = getPluginId(pluginXml);
     if (myPluginId == null) {
@@ -208,14 +208,14 @@ class IdeaPlugin implements Plugin {
 
   @Override
   @NotNull
-  public ClassPool getPluginClassPool() {
-    return myPluginClassPool;
+  public Resolver getPluginClassPool() {
+    return myPluginResolver;
   }
 
   @Override
   @NotNull
-  public ClassPool getLibraryClassPool() {
-    return myLibraryClassPool;
+  public Resolver getLibraryClassPool() {
+    return myLibraryResolver;
   }
 
 }

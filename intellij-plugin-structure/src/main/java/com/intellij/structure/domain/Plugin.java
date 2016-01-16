@@ -1,6 +1,6 @@
 package com.intellij.structure.domain;
 
-import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.resolvers.Resolver;
 import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,9 +49,9 @@ public interface Plugin {
   Set<String> getDefinedModules();
 
   @NotNull
-  ClassPool getPluginClassPool();
+  Resolver getPluginClassPool();
 
   @NotNull
-  ClassPool getLibraryClassPool();
+  Resolver getLibraryClassPool();
 
 }

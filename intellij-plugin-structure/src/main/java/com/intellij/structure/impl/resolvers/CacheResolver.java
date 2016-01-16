@@ -3,26 +3,22 @@ package com.intellij.structure.impl.resolvers;
 import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Sergey Evdokimov
  */
-public class CacheResolver implements Resolver {
+public class CacheResolver extends Resolver {
 
   private final Resolver myDelegate;
 
   private final Map<String, ClassFile> myCache = new HashMap<String, ClassFile>();
 
-  private CacheResolver(Resolver delegate) {
+  public CacheResolver(@NotNull Resolver delegate) {
     myDelegate = delegate;
-  }
-
-  public static CacheResolver createCacheResolver(Resolver delegate) {
-    return new CacheResolver(delegate);
   }
 
   @Override
@@ -40,9 +36,20 @@ public class CacheResolver implements Resolver {
     return myDelegate.getClassLocation(className);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getMoniker() {
     return myDelegate.getMoniker();
+  }
+
+  @NotNull
+  @Override
+  public Collection<String> getAllClasses() {
+    return myDelegate.getAllClasses();
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return myDelegate.isEmpty();
   }
 }

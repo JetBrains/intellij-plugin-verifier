@@ -4,7 +4,7 @@ import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.impl.domain.IdeaManager;
 import com.intellij.structure.impl.domain.IdeaPluginManager;
 import com.intellij.structure.impl.domain.JdkManager;
-import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.resolvers.Resolver;
 import com.intellij.structure.utils.TestUtils;
 import org.codehaus.plexus.archiver.zip.ZipUnArchiver;
 import org.codehaus.plexus.logging.Logger;
@@ -58,6 +58,13 @@ public class IdeTest_IDEA_144_2608_2 {
     ide = IdeaManager.getInstance().createIde(ideaDir);
   }
 
+  @Test
+  public void testRuntime() throws Exception {
+    Resolver classPool = runtime.getClassPool();
+    assertTrue(!classPool.getAllClasses().isEmpty());
+
+
+  }
 
   @Test
   public void getVersion() throws Exception {
@@ -119,11 +126,11 @@ public class IdeTest_IDEA_144_2608_2 {
 
   @Test
   public void getResolver() throws Exception {
-    ClassPool classPool = ide.getClassPool();
-    Collection<String> allClasses = classPool.getAllClasses();
+    Resolver resolver = ide.getClassPool();
+    Collection<String> allClasses = resolver.getAllClasses();
 
     for (String aClass : allClasses) {
-      ClassFile classFile = classPool.findClass(aClass);
+      ClassFile classFile = resolver.findClass(aClass);
       assertNotNull(classFile);
       assertEquals(aClass, classFile.getClassName());
       assertNotNull(classFile.getBytecode());

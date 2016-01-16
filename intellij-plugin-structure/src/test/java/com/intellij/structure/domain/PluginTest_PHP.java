@@ -1,7 +1,7 @@
 package com.intellij.structure.domain;
 
 import com.intellij.structure.impl.domain.IdeaPluginManager;
-import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.resolvers.Resolver;
 import com.intellij.structure.utils.TestUtils;
 import org.jdom.Document;
 import org.junit.Before;
@@ -105,8 +105,8 @@ public class PluginTest_PHP {
 
   @Test
   public void getPluginClassPool() throws Exception {
-    ClassPool pluginClassPool = plugin.getPluginClassPool();
-    Collection<String> allClasses = pluginClassPool.getAllClasses();
+    Resolver pluginResolver = plugin.getPluginClassPool();
+    Collection<String> allClasses = pluginResolver.getAllClasses();
 
     assertTrue(allClasses.contains("com/intellij/structuralsearch/PhpStructuralSearchProfile"));
     assertTrue(allClasses.contains("com/jetbrains/php/PhpClassHierarchyUtils$8"));
@@ -119,8 +119,8 @@ public class PluginTest_PHP {
   @Test
   public void getLibraryClassPool() throws Exception {
 
-    ClassPool libraryClassPool = plugin.getLibraryClassPool();
-    Collection<String> allClasses = libraryClassPool.getAllClasses();
+    Resolver libraryResolver = plugin.getLibraryClassPool();
+    Collection<String> allClasses = libraryResolver.getAllClasses();
 
     assertEquals(226, allClasses.size());
   }

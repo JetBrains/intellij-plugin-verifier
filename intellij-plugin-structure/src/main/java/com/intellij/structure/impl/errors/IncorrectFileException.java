@@ -1,4 +1,6 @@
-package com.intellij.structure.errors;
+package com.intellij.structure.impl.errors;
+
+import com.intellij.structure.errors.IncorrectPluginException;
 
 /**
  * @author Sergey Patrikeev
@@ -9,14 +11,8 @@ class IncorrectFileException extends IncorrectPluginException {
     super(message);
   }
 
-  IncorrectFileException() {
-  }
-
   IncorrectFileException(String message, Throwable cause) {
-
+    super(message, cause);
   }
 
-  IncorrectFileException(Throwable cause) {
-
-  }
 }

@@ -1,6 +1,6 @@
 package com.intellij.structure.domain;
 
-import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,12 +11,20 @@ import org.jetbrains.annotations.NotNull;
 public interface IdeRuntime {
 
   /**
-   * Returns class pool of this ide runtime (JDK) instance, i.e.
-   * all its class-files accessor
+   * Returns class pool of this ide runtime (JDK) instance, i.e. all its class-files accessor
    *
-   * @return class pool for accessing containing classes
+   * @return class-files accessor
    */
   @NotNull
-  ClassPool getClassPool();
+  Resolver getClassPool();
+
+  /**
+   * Returns moniker of this IDE-runtime (it may be for example path to the runtime classes or other string useful for
+   * debugging)
+   *
+   * @return moniker
+   */
+  @NotNull
+  String getMoniker();
 
 }

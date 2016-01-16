@@ -6,10 +6,6 @@ import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeRuntime;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
-import com.intellij.structure.impl.pool.ContainerClassPool;
-import com.intellij.structure.impl.resolvers.CacheResolver;
-import com.intellij.structure.impl.resolvers.CombiningResolver;
-import com.intellij.structure.pool.ClassPool;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
@@ -66,7 +62,7 @@ public class DependenciesCache {
   }
 
   @NotNull
-  private Resolver getResolverForIde(@NotNull Ide ide, @NotNull IdeRuntime ideRuntime, @Nullable ClassPool externalClassPath) {
+  private Resolver getResolverForIde(@NotNull Ide ide, @NotNull IdeRuntime ideRuntime, @Nullable Resolver externalClassPath) {
     Resolver resolver = myIdeResolvers.get(ide);
     if (resolver == null) {
       List<Resolver> resolvers = new ArrayList<Resolver>();
@@ -75,7 +71,8 @@ public class DependenciesCache {
       if (externalClassPath != null) {
         resolvers.add(externalClassPath);
       }
-      resolver = CacheResolver.createCacheResolver(CombiningResolver.union(resolvers));
+      String moniker = String.format("Ide-%s+Jdk-%s-resolver", ide.getVersion(), ideRuntime.getMoniker());
+      resolver = Resolver.createCacheResolver(Resolver.getUnion(moniker, resolvers));
       myIdeResolvers.put(ide, resolver);
     }
     return resolver;
@@ -83,28 +80,29 @@ public class DependenciesCache {
 
 
   @NotNull
-  public Resolver getResolver(@NotNull Plugin plugin, @NotNull Ide ide, @NotNull IdeRuntime ideRuntime, @Nullable ClassPool externalClassPath) throws VerificationError {
+  public Resolver getResolver(@NotNull Plugin plugin, @NotNull Ide ide, @NotNull IdeRuntime ideRuntime, @Nullable Resolver externalClassPath) throws VerificationError {
     PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
     if (descriptor.myResolver == null) {
       List<Resolver> resolvers = new ArrayList<Resolver>();
 
-      resolvers.add(ContainerClassPool.getUnion(plugin.getPluginId(), Arrays.asList(plugin.getPluginClassPool(), plugin.getLibraryClassPool())));
+      resolvers.add(Resolver.getUnion(plugin.getPluginId(), Arrays.asList(plugin.getPluginClassPool(), plugin.getLibraryClassPool())));
 
       resolvers.add(getResolverForIde(ide, ideRuntime, externalClassPath));
 
       for (Plugin dep : getDependenciesWithTransitive(ide, plugin, new ArrayList<PluginDependenciesDescriptor>())) {
-        ClassPool pluginClassPool = dep.getPluginClassPool();
-        if (!pluginClassPool.isEmpty()) {
-          resolvers.add(pluginClassPool);
+        Resolver pluginResolver = dep.getPluginClassPool();
+        if (!pluginResolver.isEmpty()) {
+          resolvers.add(pluginResolver);
         }
 
-        ClassPool libraryClassPool = dep.getLibraryClassPool();
-        if (!libraryClassPool.isEmpty()) {
-          resolvers.add(libraryClassPool);
+        Resolver libraryResolver = dep.getLibraryClassPool();
+        if (!libraryResolver.isEmpty()) {
+          resolvers.add(libraryResolver);
         }
       }
 
-      descriptor.myResolver = CombiningResolver.union(resolvers);
+      String moniker = String.format("Plugin-%s+Ide-%s+Jdk-%s", plugin.getPluginId(), ide.getVersion(), ideRuntime.getMoniker());
+      descriptor.myResolver = Resolver.getUnion(moniker, resolvers);
     }
 
     return descriptor.myResolver;

@@ -1,13 +1,11 @@
-package com.intellij.structure.errors;
+package com.intellij.structure.impl.errors;
 
 /**
  * @author Sergey Patrikeev
  */
 public class IncorrectPluginXmlException extends IncorrectFileException {
-  public IncorrectPluginXmlException() {
-  }
 
-  public IncorrectPluginXmlException(String message) {
+  IncorrectPluginXmlException(String message) {
     super(message);
   }
 
@@ -15,7 +13,4 @@ public class IncorrectPluginXmlException extends IncorrectFileException {
     super(message, cause);
   }
 
-  public IncorrectPluginXmlException(Throwable cause) {
-    super(cause);
-  }
 }

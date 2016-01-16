@@ -3,7 +3,7 @@ package com.intellij.structure.utils;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
-import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.resolvers.Resolver;
 import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +15,7 @@ import java.util.Set;
 /**
  * @author Sergey Patrikeev
  */
+@SuppressWarnings("ConstantConditions")
 public class DummyPlugin implements Plugin {
   @NotNull
   @Override
@@ -89,13 +90,13 @@ public class DummyPlugin implements Plugin {
 
   @NotNull
   @Override
-  public ClassPool getPluginClassPool() {
+  public Resolver getPluginClassPool() {
     return null;
   }
 
   @NotNull
   @Override
-  public ClassPool getLibraryClassPool() {
+  public Resolver getLibraryClassPool() {
     return null;
   }
 

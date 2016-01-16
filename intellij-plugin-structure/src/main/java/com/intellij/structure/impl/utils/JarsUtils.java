@@ -1,9 +1,7 @@
 package com.intellij.structure.impl.utils;
 
 import com.google.common.base.Predicate;
-import com.intellij.structure.impl.pool.ContainerClassPool;
-import com.intellij.structure.impl.pool.JarClassPool;
-import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -38,14 +36,14 @@ public class JarsUtils {
   }
 
   @NotNull
-  public static ClassPool makeClassPool(@NotNull String moniker, @NotNull List<JarFile> jars) throws IOException {
-    List<ClassPool> pool = new ArrayList<ClassPool>();
+  public static Resolver makeClassPool(@NotNull String moniker, @NotNull List<JarFile> jars) throws IOException {
+    List<Resolver> pool = new ArrayList<Resolver>();
 
     for (JarFile jar : jars) {
-      pool.add(JarClassPool.createJarClassPool(jar));
+      pool.add(Resolver.createJarClassPool(jar));
     }
 
-    return ContainerClassPool.getUnion(moniker, pool);
+    return Resolver.getUnion(moniker, pool);
   }
 
 }

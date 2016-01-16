@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier;
 
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeRuntime;
-import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.results.ProblemSet;
@@ -18,12 +18,12 @@ public class VerificationContextImpl implements VerificationContext {
   private final PluginVerifierOptions myVerifierOptions;
   private final Ide myIde;
   private final IdeRuntime myIdeRuntime;
-  private final ClassPool myExternalClassPath;
+  private final Resolver myExternalClassPath;
 
   public VerificationContextImpl(@NotNull PluginVerifierOptions verifierOptions,
                                  @NotNull Ide ide,
                                  @NotNull IdeRuntime ideRuntime,
-                                 @Nullable ClassPool externalClassPath) {
+                                 @Nullable Resolver externalClassPath) {
     myVerifierOptions = verifierOptions;
     myIde = ide;
     myIdeRuntime = ideRuntime;
@@ -55,7 +55,7 @@ public class VerificationContextImpl implements VerificationContext {
   }
 
   @Override
-  public ClassPool getExternalClassPath() {
+  public Resolver getExternalClassPath() {
     return myExternalClassPath;
   }
 }

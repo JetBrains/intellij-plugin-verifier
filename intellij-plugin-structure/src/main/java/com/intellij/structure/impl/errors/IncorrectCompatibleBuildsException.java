@@ -1,4 +1,4 @@
-package com.intellij.structure.errors;
+package com.intellij.structure.impl.errors;
 
 /**
  * @author Sergey Patrikeev
