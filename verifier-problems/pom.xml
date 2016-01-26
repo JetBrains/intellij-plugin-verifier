@@ -10,7 +10,7 @@
     <parent>
         <groupId>org.jetbrains.intellij.plugins</groupId>
         <artifactId>verifier-parent</artifactId>
-        <version>5.0</version>
+        <version>7.0</version>
     </parent>
 
     <build>
@@ -27,7 +27,7 @@
         <dependency>
             <groupId>org.jetbrains.intellij.plugins</groupId>
             <artifactId>common-utils</artifactId>
-            <version>5.0</version>
+            <version>7.0</version>
         </dependency>
     </dependencies>
 

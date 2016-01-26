@@ -1,5 +1,6 @@
 .idea/workspace.xml
 .idea/inspectionProfiles
+.idea/codeStyleSettings.xml
 target/
 /lib/*.jar
 **/for_tests/

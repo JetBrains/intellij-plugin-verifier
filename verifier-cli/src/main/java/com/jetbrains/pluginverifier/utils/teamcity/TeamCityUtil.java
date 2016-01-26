@@ -6,6 +6,8 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.Problem;
+import com.jetbrains.pluginverifier.results.ProblemLocation;
+import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.utils.FailUtil;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
 import com.jetbrains.pluginverifier.utils.ProblemUtils;
@@ -22,18 +24,24 @@ import static com.jetbrains.pluginverifier.utils.StringUtil.pluralize;
  */
 public class TeamCityUtil {
 
-  public static final String REPOSITORY_PLUGIN_ID_BASE = "https://plugins.jetbrains.com/plugin/index?xmlId=";
+  private static final String REPOSITORY_PLUGIN_ID_BASE = "https://plugins.jetbrains.com/plugin/index?xmlId=";
 
   private static void notGrouped(@NotNull TeamCityLog log, @NotNull Multimap<Problem, UpdateInfo> problems) {
     List<Problem> sortedProblems = ProblemUtils.sortProblems(problems.keySet());
 
     for (Problem problem : sortedProblems) {
-      List<UpdateInfo> updates = new ArrayList<UpdateInfo>(problems.get(problem));
-
-      ProblemUtils.sortUpdates(updates);
+      List<UpdateInfo> updates = ProblemUtils.sortUpdates(problems.get(problem));
 
       log.buildProblem(MessageUtils.cutCommonPackages(problem.getDescription()) + " (in " + Joiner.on(", ").join(updates) + ')');
     }
+  }
+
+  public static void printReportWithLocations(@NotNull TeamCityLog log,
+                                              @NotNull Map<UpdateInfo, ProblemSet> results) {
+    if (log == TeamCityLog.NULL_LOG) return;
+    if (results.isEmpty()) return;
+
+    groupByPlugin(log, results);
   }
 
   public static void printReport(@NotNull TeamCityLog log,
@@ -49,12 +57,30 @@ public class TeamCityUtil {
         notGrouped(log, problems);
         break;
       case PLUGIN:
-        groupByPlugin(log, inverted.asMap());
+        groupByPlugin(log, fillWithEmptyLocations(inverted.asMap()));
         break;
       case PROBLEM_TYPE:
         groupByType(log, inverted.asMap());
         break;
     }
+  }
+
+  @NotNull
+  public static Map<UpdateInfo, ProblemSet> fillWithEmptyLocations(@NotNull Map<UpdateInfo, Collection<Problem>> map) {
+    Map<UpdateInfo, ProblemSet> result = new HashMap<UpdateInfo, ProblemSet>();
+
+    final Set<ProblemLocation> emptySet = Collections.emptySet();
+
+    for (Map.Entry<UpdateInfo, Collection<Problem>> entry : map.entrySet()) {
+      Map<Problem, Set<ProblemLocation>> problemMap = new HashMap<Problem, Set<ProblemLocation>>();
+
+      for (Problem problem : entry.getValue()) {
+        problemMap.put(problem, emptySet);
+      }
+      result.put(entry.getKey(), new ProblemSet(problemMap));
+
+    }
+    return result;
   }
 
   @NotNull
@@ -65,7 +91,7 @@ public class TeamCityUtil {
   }
 
   @NotNull
-  public static String getPluginUrl(@NotNull UpdateInfo updateInfo) {
+  private static String getPluginUrl(@NotNull UpdateInfo updateInfo) {
     return REPOSITORY_PLUGIN_ID_BASE + (updateInfo.getPluginId() != null ? updateInfo.getPluginId() : updateInfo.getPluginName());
   }
 
@@ -109,8 +135,8 @@ public class TeamCityUtil {
 
 
   @NotNull
-  private static ArrayListMultimap<String, UpdateInfo> fillIdToUpdates(@NotNull Map<UpdateInfo, Collection<Problem>> map) {
-    ArrayListMultimap<String, UpdateInfo> idToUpdates = ArrayListMultimap.create();
+  private static Multimap<String, UpdateInfo> fillIdToUpdates(@NotNull Map<UpdateInfo, ProblemSet> map) {
+    Multimap<String, UpdateInfo> idToUpdates = ArrayListMultimap.create();
     for (UpdateInfo updateInfo : map.keySet()) {
       String pluginId = updateInfo.getPluginId() != null ? updateInfo.getPluginId() : "#" + updateInfo.getUpdateId();
       idToUpdates.put(pluginId, updateInfo);
@@ -118,51 +144,21 @@ public class TeamCityUtil {
     return idToUpdates;
   }
 
-  @NotNull
-  private static String cutCommonPrefix(@NotNull List<Problem> problems) {
-    return Joiner.on(" ").join(commonPrefix(problems));
-  }
+  public static void groupByPlugin(@NotNull TeamCityLog log, @NotNull Map<UpdateInfo, ProblemSet> map) {
 
-  @NotNull
-  private static String[] commonPrefix(@NotNull List<Problem> problems) {
-    if (problems.isEmpty()) return new String[0];
-    String[] prefix = problems.get(0).getDescription().split(" ");
-    for (Problem problem : problems) {
-      prefix = commonPrefix(prefix, problem.getDescription().split(" "));
-    }
-    return prefix;
-  }
-
-  @NotNull
-  private static String[] commonPrefix(@NotNull String a[], @NotNull String b[]) {
-    return Arrays.copyOf(a, commonPrefixLength(a, b));
-  }
-
-  public static int commonPrefixLength(@NotNull String a[], @NotNull String b[]) {
-    int i;
-    int minLength = Math.min(a.length, b.length);
-    for (i = 0; i < minLength; i++) {
-      if (!StringUtil.equals(a[i], b[i])) {
-        break;
-      }
-    }
-    return i;
-  }
-
-  public static void groupByPlugin(@NotNull TeamCityLog log, @NotNull Map<UpdateInfo, Collection<Problem>> map) {
-
-    ArrayListMultimap<String, UpdateInfo> idToUpdates = fillIdToUpdates(map);
+    Multimap<String, UpdateInfo> idToUpdates = fillIdToUpdates(map);
 
     for (String pluginId : idToUpdates.keySet()) {
-      List<UpdateInfo> updateInfos = idToUpdates.get(pluginId);
-      ProblemUtils.sortUpdates(updateInfos);
+      List<UpdateInfo> updateInfos = ProblemUtils.sortUpdates(idToUpdates.get(pluginId));
 
       String pluginLink = REPOSITORY_PLUGIN_ID_BASE + pluginId;
       TeamCityLog.TestSuite pluginSuite = log.testSuiteStarted(pluginId);
 
       for (UpdateInfo updateInfo : updateInfos) {
 
-        List<Problem> problems = ProblemUtils.sortProblems(map.get(updateInfo));
+        Map<Problem, Set<ProblemLocation>> problemToLocations = map.get(updateInfo).asMap();
+
+        List<Problem> problems = ProblemUtils.sortProblems(problemToLocations.keySet());
 
         if (!problems.isEmpty()) {
           String version = updateInfo.getVersion() != null ? updateInfo.getVersion() : "#" + updateInfo.getUpdateId();
@@ -171,6 +167,10 @@ public class TeamCityUtil {
 
           for (Problem problem : problems) {
             builder.append("#").append(problem.getDescription()).append("\n");
+
+            for (ProblemLocation location : problemToLocations.get(problem)) {
+              builder.append("    at ").append(location).append("\n");
+            }
           }
 
           String testName = "(" + version + ")";
@@ -187,22 +187,28 @@ public class TeamCityUtil {
 
 
   public enum ReportGrouping {
-    PLUGIN,
-    PROBLEM_TYPE,
-    NONE;
+    PLUGIN("plugin"),
+    PROBLEM_TYPE("type"),
+    NONE(""),
+    PLUGIN_WITH_LOCATION("plugin_with_location");
+
+    private final String myText;
+
+    ReportGrouping(String s) {
+      myText = s;
+    }
 
     @NotNull
     public static ReportGrouping parseGrouping(@NotNull CommandLine commandLine) {
       ReportGrouping grouping = ReportGrouping.NONE;
       String groupValue = commandLine.getOptionValue("g");
       if (groupValue != null) {
-        if ("plugin".equals(groupValue)) {
-          grouping = ReportGrouping.PLUGIN;
-        } else if ("type".equals(groupValue)) {
-          grouping = ReportGrouping.PROBLEM_TYPE;
-        } else {
-          throw FailUtil.fail("Grouping argument should be one of 'plugin' or 'type' or not set at all.");
+        for (ReportGrouping report : ReportGrouping.values()) {
+          if (report.myText.equals(groupValue)) {
+            return report;
+          }
         }
+        throw FailUtil.fail("Grouping argument should be one of 'plugin', 'type', 'plugin_with_location' or not set at all.");
       }
       return grouping;
     }
