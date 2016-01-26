@@ -1,14 +1,12 @@
 package com.intellij.structure.domain;
 
 import com.intellij.structure.bytecode.ClassFile;
-import com.intellij.structure.impl.domain.IdeaManager;
-import com.intellij.structure.impl.domain.IdeaPluginManager;
-import com.intellij.structure.impl.domain.JdkManager;
 import com.intellij.structure.resolvers.Resolver;
 import com.intellij.structure.utils.TestUtils;
 import org.codehaus.plexus.archiver.zip.ZipUnArchiver;
 import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.logging.console.ConsoleLogger;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -48,20 +46,28 @@ public class IdeTest_IDEA_144_2608_2 {
       archiver.extract();
     }
 
+    String jdkPath = getJdkPath();
+
+
+    runtime = IdeRuntimeManager.getJdkManager().createRuntime(new File(jdkPath));
+    ide = IdeManager.getIdeaManager().createIde(ideaDir);
+  }
+
+  @NotNull
+  private String getJdkPath() {
     String jdkPath = System.getenv("JAVA_HOME");
     if (jdkPath == null) {
       jdkPath = "/usr/lib/jvm/java-6-oracle";
     }
-
-
-    runtime = JdkManager.getInstance().createRuntime(new File(jdkPath));
-    ide = IdeaManager.getInstance().createIde(ideaDir);
+    return jdkPath;
   }
 
   @Test
   public void testRuntime() throws Exception {
     Resolver classPool = runtime.getClassPool();
     assertTrue(!classPool.getAllClasses().isEmpty());
+    String moniker = runtime.getMoniker();
+    assertEquals(getJdkPath(), moniker);
 
 
   }
@@ -105,7 +111,7 @@ public class IdeTest_IDEA_144_2608_2 {
   public void addCustomPlugin() throws Exception {
     //Download ruby and add as custom plugin to idea
     File rubyPluginFile = TestUtils.downloadPlugin(TestUtils.RUBY_URL, "ruby-plugin.zip");
-    Plugin rubyPlugin = IdeaPluginManager.getInstance().createPlugin(rubyPluginFile);
+    Plugin rubyPlugin = PluginManager.getIdeaPluginManager().createPlugin(rubyPluginFile);
 
     Set<String> definedModules = rubyPlugin.getDefinedModules();
     assertTrue(definedModules.size() == 1);

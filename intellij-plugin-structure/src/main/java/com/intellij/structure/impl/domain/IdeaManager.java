@@ -2,10 +2,7 @@ package com.intellij.structure.impl.domain;
 
 import com.google.common.base.Predicate;
 import com.google.common.io.Files;
-import com.intellij.structure.domain.Ide;
-import com.intellij.structure.domain.IdeManager;
-import com.intellij.structure.domain.IdeVersion;
-import com.intellij.structure.domain.Plugin;
+import com.intellij.structure.domain.*;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.resolvers.CompileOutputResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
@@ -27,16 +24,7 @@ import java.util.regex.Pattern;
  */
 public class IdeaManager extends IdeManager {
 
-  private static final IdeaManager INSTANCE = new IdeaManager();
-
   private static final Pattern BUILD_NUMBER_PATTERN = Pattern.compile("([^\\.]+\\.\\d+)\\.\\d+");
-
-  private IdeaManager() {
-  }
-
-  public static IdeaManager getInstance() {
-    return INSTANCE;
-  }
 
   @NotNull
   private static IdeVersion readBuildNumber(@NotNull File versionFile) throws IOException {
@@ -99,7 +87,7 @@ public class IdeaManager extends IdeManager {
         continue;
 
       try {
-        plugins.add(IdeaPluginManager.getInstance().createPlugin(file));
+        plugins.add(PluginManager.getIdeaPluginManager().createPlugin(file));
       } catch (IncorrectPluginException e) {
         System.out.println("Failed to read plugin " + file + ": " + e.getMessage());
       } catch (IOException e) {

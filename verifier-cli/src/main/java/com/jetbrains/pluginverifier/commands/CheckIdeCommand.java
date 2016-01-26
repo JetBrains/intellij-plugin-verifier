@@ -4,11 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
-import com.intellij.structure.domain.Ide;
-import com.intellij.structure.domain.IdeRuntime;
-import com.intellij.structure.domain.Plugin;
-import com.intellij.structure.impl.domain.IdeaManager;
-import com.intellij.structure.impl.domain.IdeaPluginManager;
+import com.intellij.structure.domain.*;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.VerifierCommand;
@@ -287,7 +283,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     PluginVerifierOptions options = PluginVerifierOptions.parseOpts(commandLine);
 
-    Ide ide = IdeaManager.getInstance().createIde(ideToCheck);
+    Ide ide = IdeManager.getIdeaManager().createIde(ideToCheck);
     updateIdeVersionFromCmd(ide, commandLine);
 
     VerificationContextImpl ctx = new VerificationContextImpl(options, ide, javaRuntime, getExternalClassPath(commandLine));
@@ -363,7 +359,7 @@ public class CheckIdeCommand extends VerifierCommand {
       try {
         File updateFile = RepositoryManager.getInstance().getOrLoadUpdate(updateJson);
 
-        Plugin plugin = IdeaPluginManager.getInstance().createPlugin(updateFile);
+        Plugin plugin = PluginManager.getIdeaPluginManager().createPlugin(updateFile);
 
         System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), updates.size()));
 

@@ -3,12 +3,7 @@ package verifier.tests;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import com.intellij.structure.domain.Ide;
-import com.intellij.structure.domain.IdeRuntime;
-import com.intellij.structure.domain.Plugin;
-import com.intellij.structure.impl.domain.IdeaManager;
-import com.intellij.structure.impl.domain.IdeaPluginManager;
-import com.intellij.structure.impl.domain.JdkManager;
+import com.intellij.structure.domain.*;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.problems.*;
@@ -95,10 +90,10 @@ public class VerifierTest {
 //    File pluginFile = new File("../for_tests/Maven_Sync.zip");
 //    File pluginFile = new File("../for_tests/keymap.zip");
 
-    IdeRuntime javaRuntime = JdkManager.getInstance().createRuntime(jdkFile);
+    IdeRuntime javaRuntime = IdeRuntimeManager.getJdkManager().createRuntime(jdkFile);
 
-    myIde = IdeaManager.getInstance().createIde(ideaFile);
-    myPlugin = IdeaPluginManager.getInstance().createPlugin(pluginFile);
+    myIde = IdeManager.getIdeaManager().createIde(ideaFile);
+    myPlugin = PluginManager.getIdeaPluginManager().createPlugin(pluginFile);
 
     List<String> args = Collections.singletonList("");
     final CommandLine commandLine = new GnuParser().parse(Util.CMD_OPTIONS, args.toArray(new String[args.size()]));

@@ -1,6 +1,5 @@
 package com.intellij.structure.domain;
 
-import com.intellij.structure.impl.domain.IdeaPluginManager;
 import com.intellij.structure.resolvers.Resolver;
 import com.intellij.structure.utils.TestUtils;
 import org.jdom.Document;
@@ -28,7 +27,7 @@ public class PluginTest_PHP {
 
     File pluginFile = TestUtils.downloadPlugin(TestUtils.PHP_URL, "php-plugin.zip");
 
-    plugin = IdeaPluginManager.getInstance().createPlugin(pluginFile);
+    plugin = PluginManager.getIdeaPluginManager().createPlugin(pluginFile);
   }
 
   @Test
@@ -70,12 +69,17 @@ public class PluginTest_PHP {
 
   @Test
   public void getDependencies() throws Exception {
-    assertTrue(TestUtils.toStrings(plugin.getDependencies()).containsAll(Arrays.asList("com.intellij.css", "com.intellij.java-i18n", "com.intellij.diagram", "Coverage", "com.jetbrains.plugins.webDeployment", "org.intellij.intelliLang", "com.intellij.plugins.html.instantEditing")));
+    List<String> list = Arrays.asList("com.intellij.css", "com.intellij.java-i18n", "com.intellij.diagram", "Coverage", "com.jetbrains.plugins.webDeployment", "org.intellij.intelliLang", "com.intellij.plugins.html.instantEditing");
+    List<String> list2 = Arrays.asList("com.intellij.diagram", "Coverage", "com.jetbrains.plugins.webDeployment", "org.intellij.intelliLang", "com.intellij.plugins.html.instantEditing");
+    for (PluginDependency dependency : plugin.getDependencies()) {
+      assertTrue(list.contains(dependency.getId()));
+      assertEquals(list2.contains(dependency.getId()), dependency.isOptional());
+    }
   }
 
   @Test
   public void getModuleDependencies() throws Exception {
-    assertTrue(TestUtils.toStrings(plugin.getModuleDependencies()).containsAll(Arrays.asList("com.intellij.modules.xml", "com.intellij.modules.ultimate", "com.intellij.modules.coverage")));
+    assertTrue(TestUtils.toStrings(plugin.getModuleDependencies()).containsAll(Arrays.asList("com.intellij.modules.xml", "com.intellij.modules.ultimate", "com.intellij.modules.coverage (optional)")));
   }
 
   @Test

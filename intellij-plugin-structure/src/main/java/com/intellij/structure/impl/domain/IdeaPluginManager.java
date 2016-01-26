@@ -33,19 +33,10 @@ import java.util.zip.ZipInputStream;
  */
 public class IdeaPluginManager extends PluginManager {
 
-  private static final PluginManager INSTANCE = new IdeaPluginManager();
   private static final String META_INF_ENTRY = "META-INF/";
   private static final String PLUGIN_XML_ENTRY_NAME = META_INF_ENTRY + "plugin.xml";
   private static final String CLASS_SUFFIX = ".class";
   private static final Pattern XML_IN_ROOT_PATTERN = Pattern.compile("([^/]*/)?META-INF/.+\\.xml");
-
-  private IdeaPluginManager() {
-  }
-
-  @NotNull
-  public static PluginManager getInstance() {
-    return INSTANCE;
-  }
 
   @NotNull
   private static IdeaPlugin createFromZip(@NotNull File zipFile) throws IOException {

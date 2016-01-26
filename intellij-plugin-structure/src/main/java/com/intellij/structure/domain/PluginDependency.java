@@ -1,6 +1,5 @@
 package com.intellij.structure.domain;
 
-import com.google.common.base.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +23,6 @@ public class PluginDependency {
 
   @Override
   public String toString() {
-    return Strings.nullToEmpty(myId);
+    return myId + (myIsOptional ? " (optional)" : "");
   }
 }
