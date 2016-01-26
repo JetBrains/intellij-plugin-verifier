@@ -2,11 +2,9 @@ package com.jetbrains.pluginverifier.verifiers.instruction;
 
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
-import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.IllegalMethodAccessProblem;
 import com.jetbrains.pluginverifier.problems.MethodNotFoundProblem;
-import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.utils.StringUtil;
@@ -64,7 +62,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
           }
         }
 
-        if (hasUnresolvedClass(actualOwner, resolver, ctx)) {
+        if (hasUnresolvedClass(actualOwner, resolver)) {
           //actualOwner has some unresolved class => most likely that this class contains(-ed) the sought-for method
           return;
         }
@@ -81,27 +79,13 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
   }
 
   private boolean hasUnresolvedClass(@NotNull String actualOwner,
-                                     @NotNull Resolver resolver,
-                                     @NotNull VerificationContext ctx) {
+                                     @NotNull Resolver resolver) {
     if (resolver.findClass(actualOwner) == null) {
       return true;
     }
 
-    Set<Problem> allProblems = ((VerificationContextImpl) ctx).getProblemSet().getAllProblems();
-
     Set<String> unresolvedClasses = ResolverUtil.collectUnresolvedClasses(resolver, actualOwner);
-
-    for (Problem problem : allProblems) {
-      if (problem instanceof ClassNotFoundProblem) {
-        String unknownClass = ((ClassNotFoundProblem) problem).getUnknownClass();
-        if (unresolvedClasses.contains(unknownClass)) {
-          return true;
-        }
-      }
-    }
-
-
-    return false;
+    return !unresolvedClasses.isEmpty();
   }
 
   private void checkAccessModifier(@NotNull ResolverUtil.MethodLocation actualLocation,
