@@ -31,8 +31,8 @@ import java.util.*;
 public class CheckIdeCommand extends VerifierCommand {
 
   /**
-   * List of IntelliJ plugins which has defined module inside
-   * (e.g. plugin "org.jetbrains.plugins.ruby" has a module "com.intellij.modules.ruby" inside)
+   * List of IntelliJ plugins which has defined module inside (e.g. plugin "org.jetbrains.plugins.ruby" has a module
+   * "com.intellij.modules.ruby" inside)
    */
   private static final ImmutableList<String> INTELLIJ_MODULES_PLUGIN_IDS =
       ImmutableList.of("org.jetbrains.plugins.ruby", "com.jetbrains.php", "org.jetbrains.android", "Pythonid");
@@ -45,8 +45,8 @@ public class CheckIdeCommand extends VerifierCommand {
   private List<String> myCheckAllBuilds;
   private List<String> myCheckLastBuilds;
   private Collection<UpdateInfo> myUpdatesToCheck;
-  private List<String> myToBeCheckedPluginIds;
-  private List<UpdateInfo> myCompatibleToBeCheckedUpdates;
+  private List<String> myCheckedIds;
+  private List<UpdateInfo> myCompatibleUpdates;
   private String myDumpBrokenPluginsFile;
   private String myReportFile;
   private boolean myCheckExcludedBuilds;
@@ -104,34 +104,30 @@ public class CheckIdeCommand extends VerifierCommand {
   }
 
   /**
-   * Checks if for all the specified plugins to be checked there is
-   * a build compatible with a specified IDE in the Plugin Repository
+   * Checks if for all the specified plugins to be checked there is a build compatible with a specified IDE in the
+   * Plugin Repository
    *
    * @return number of "missing update" and "broken plugin" problems
    */
-  private static int printMissingAndIncorrectPlugins(@NotNull TeamCityLog tc,
-                                                     @NotNull String version,
-                                                     @NotNull List<String> toBeCheckedPluginIds,
-                                                     @NotNull List<UpdateInfo> compatibleUpdates,
-                                                     @NotNull List<Pair<UpdateInfo, ? extends Problem>> incorrectPlugins,
-                                                     @NotNull Predicate<UpdateInfo> updateFilter) {
-    if (tc == TeamCityLog.NULL_LOG) return 0;
+  private int printMissingAndIncorrectPlugins() {
+    if (myTc == TeamCityLog.NULL_LOG) return 0;
 
     Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
 
     //fill verification problems
-    for (Pair<UpdateInfo, ? extends Problem> incorrectPlugin : incorrectPlugins) {
+    for (Pair<UpdateInfo, ? extends Problem> incorrectPlugin : myIncorrectPlugins) {
       UpdateInfo updateInfo = incorrectPlugin.getFirst();
-      if (updateFilter.apply(updateInfo)) {
-        problems.put(incorrectPlugin.getSecond(), incorrectPlugin.getFirst());
+      if (myExcludedUpdatesFilter.apply(updateInfo)) {
+        problems.put(incorrectPlugin.getSecond(), incorrectPlugin.getFirst()); //some problem during verification
       }
     }
 
     //fill missing plugin problems
     Set<String> missingPluginIds = new HashSet<String>();
-    for (String pluginId : new HashSet<String>(toBeCheckedPluginIds)) {
+    for (String pluginId : new HashSet<String>(myCheckedIds)) { //plugins from checkedPlugins.txt. for them check that compatible version is present
       boolean hasCompatibleUpdate = false;
-      for (UpdateInfo update : compatibleUpdates) {
+      for (UpdateInfo update : myCompatibleUpdates) {
+
         if (StringUtil.equals(pluginId, update.getPluginId())) {
           hasCompatibleUpdate = true;
           break;
@@ -143,11 +139,11 @@ public class CheckIdeCommand extends VerifierCommand {
     }
 
     for (String missingPluginId : missingPluginIds) {
-      problems.put(new NoCompatibleUpdatesProblem(missingPluginId, version), new UpdateInfo(missingPluginId, missingPluginId, "no compatible update"));
+      problems.put(new NoCompatibleUpdatesProblem(missingPluginId, myIde.getVersion().toString()), new UpdateInfo(missingPluginId, missingPluginId, "no compatible update"));
     }
 
 
-    TeamCityUtil.printReport(tc, problems, TeamCityUtil.ReportGrouping.PLUGIN);
+    TeamCityUtil.printReport(myTc, problems, TeamCityUtil.ReportGrouping.PLUGIN);
     return problems.size();
   }
 
@@ -204,8 +200,8 @@ public class CheckIdeCommand extends VerifierCommand {
     }
 
     //preserve initial lists of plugins
-    myToBeCheckedPluginIds = Util.concat(myCheckAllBuilds, myCheckLastBuilds);
-    myCompatibleToBeCheckedUpdates = new ArrayList<UpdateInfo>(myUpdatesToCheck);
+    myCheckedIds = Util.concat(myCheckAllBuilds, myCheckLastBuilds);
+    myCompatibleUpdates = new ArrayList<UpdateInfo>(myUpdatesToCheck);
 
     myDumpBrokenPluginsFile = commandLine.getOptionValue("d");
     myReportFile = commandLine.getOptionValue("report");
@@ -350,13 +346,13 @@ public class CheckIdeCommand extends VerifierCommand {
         File file = new File(myReportFile);
         System.out.println("Saving report to " + file.getAbsolutePath());
 
-        CheckIdeHtmlReportBuilder.build(file, myIde.getVersion().toString(), myToBeCheckedPluginIds, myExcludedUpdatesFilter, myResults);
+        CheckIdeHtmlReportBuilder.build(file, myIde.getVersion().toString(), myCheckedIds, myExcludedUpdatesFilter, myResults);
       }
     }
 
     printTeamCityProblems(myTc, myResults, myExcludedUpdatesFilter, myGrouping);
 
-    int totalProblemsCnt = printMissingAndIncorrectPlugins(myTc, myIde.getVersion().toString(), myToBeCheckedPluginIds, myCompatibleToBeCheckedUpdates, myIncorrectPlugins, myExcludedUpdatesFilter);
+    int totalProblemsCnt = printMissingAndIncorrectPlugins();
 
     Set<Problem> allProblems = new HashSet<Problem>();
 
@@ -381,8 +377,8 @@ public class CheckIdeCommand extends VerifierCommand {
   }
 
   /**
-   * Drops out non-last builds of IntelliJ plugins
-   * IntelliJ plugin is a plugin which defines intellij-module in its plugin.xml
+   * Drops out non-last builds of IntelliJ plugins IntelliJ plugin is a plugin which defines intellij-module in its
+   * plugin.xml
    */
   @NotNull
   private Set<UpdateInfo> prepareImportantUpdates(@NotNull Collection<UpdateInfo> updates) {

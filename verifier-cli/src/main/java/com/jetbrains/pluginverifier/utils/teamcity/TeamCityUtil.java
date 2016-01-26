@@ -169,7 +169,7 @@ public class TeamCityUtil {
             builder.append("#").append(problem.getDescription()).append("\n");
 
             for (ProblemLocation location : problemToLocations.get(problem)) {
-              builder.append("    at ").append(location).append("\n");
+              builder.append("      at ").append(location).append("\n");
             }
           }
 
