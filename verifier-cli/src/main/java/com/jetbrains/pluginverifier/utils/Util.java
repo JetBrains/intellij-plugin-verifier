@@ -1,15 +1,17 @@
 package com.jetbrains.pluginverifier.utils;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.*;
+import com.jetbrains.pluginverifier.format.UpdateInfo;
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 public class Util {
 
@@ -52,5 +54,120 @@ public class Util {
     res.addAll(first);
     res.addAll(second);
     return res;
+  }
+
+  @NotNull
+  public static Pair<List<String>, List<String>> extractPluginToCheckList(@NotNull CommandLine commandLine) {
+    List<String> pluginsCheckAllBuilds = new ArrayList<String>();
+    List<String> pluginsCheckLastBuilds = new ArrayList<String>();
+
+    String[] pluginIdsCheckAllBuilds = commandLine.getOptionValues('p'); //plugin-to-check
+    if (pluginIdsCheckAllBuilds != null) {
+      pluginsCheckAllBuilds.addAll(Arrays.asList(pluginIdsCheckAllBuilds));
+    }
+
+    String[] pluginIdsCheckLastBuilds = commandLine.getOptionValues('u'); //update-to-check
+    if (pluginIdsCheckLastBuilds != null) {
+      pluginsCheckLastBuilds.addAll(Arrays.asList(pluginIdsCheckLastBuilds));
+    }
+
+    String pluginsFile = commandLine.getOptionValue("pluginsFile"); //plugins-to-check-file (usually checkedPlugins.txt)
+    if (pluginsFile != null) {
+      try {
+        BufferedReader reader = new BufferedReader(new FileReader(pluginsFile));
+        String s;
+        while ((s = reader.readLine()) != null) {
+          s = s.trim();
+          if (s.isEmpty() || s.startsWith("//")) continue;
+
+          boolean checkAllBuilds = true;
+          if (s.endsWith("$")) {
+            s = s.substring(0, s.length() - 1).trim();
+            checkAllBuilds = false;
+          }
+          if (s.startsWith("$")) {
+            s = s.substring(1).trim();
+            checkAllBuilds = false;
+          }
+
+          if (checkAllBuilds) {
+            pluginsCheckAllBuilds.add(s);
+          } else {
+            if (s.isEmpty()) continue;
+
+            pluginsCheckLastBuilds.add(s);
+          }
+        }
+      } catch (IOException e) {
+        throw FailUtil.fail("Failed to read plugins file " + pluginsFile + ": " + e.getLocalizedMessage(), e);
+      }
+    }
+
+    System.out.println("List of plugins to check: " + Joiner.on(", ").join(Iterables.concat(pluginsCheckAllBuilds, pluginsCheckLastBuilds)));
+
+    return Pair.create(pluginsCheckAllBuilds, pluginsCheckLastBuilds);
+  }
+
+  @NotNull
+  public static Multimap<String, String> getExcludedPlugins(@NotNull CommandLine commandLine) throws IOException {
+    String epf = commandLine.getOptionValue("epf"); //excluded-plugin-file (usually brokenPlugins.txt)
+    if (epf == null) {
+      //no predicate specified
+      return ArrayListMultimap.create();
+    }
+
+    //file containing list of broken plugins (e.g. IDEA-*/lib/resources.jar!/brokenPlugins.txt)
+    BufferedReader br = new BufferedReader(new FileReader(new File(epf)));
+    try {
+      final SetMultimap<String, String> m = HashMultimap.create();
+
+      String s;
+      while ((s = br.readLine()) != null) {
+        s = s.trim();
+        if (s.startsWith("//")) continue; //it is a comment
+
+        List<String> tokens = ParametersListUtil.parse(s);
+        if (tokens.isEmpty()) continue;
+
+        if (tokens.size() == 1) {
+          throw new IOException(epf + " is broken. The line contains plugin name, but does not contain version: " + s);
+        }
+
+        String pluginId = tokens.get(0);
+
+        m.putAll(pluginId, tokens.subList(1, tokens.size())); //"plugin id" -> [all its builds]
+      }
+
+      return m;
+
+    } finally {
+      IOUtils.closeQuietly(br);
+    }
+  }
+
+  public static void dumbBrokenPluginsList(@NotNull String dumpBrokenPluginsFile, @NotNull Collection<UpdateInfo> brokenUpdates)
+      throws IOException {
+    //pluginId -> [list of its builds in DESC order]
+    Multimap<String, String> m = TreeMultimap.create(Ordering.natural(), Ordering.natural().reverse());
+
+    for (UpdateInfo update : brokenUpdates) {
+      m.put(update.getPluginId(), update.getVersion());
+    }
+
+    PrintWriter out = new PrintWriter(dumpBrokenPluginsFile);
+    try {
+      out.println("// This file contains list of broken plugins.\n" +
+          "// Each line contains plugin ID and list of versions that are broken.\n" +
+          "// If plugin name or version contains a space you can quote it like in command line.\n");
+
+      for (Map.Entry<String, Collection<String>> entry : m.asMap().entrySet()) {
+
+        out.print(ParametersListUtil.join(Collections.singletonList(entry.getKey())));
+        out.print("    ");
+        out.println(ParametersListUtil.join(new ArrayList<String>(entry.getValue())));
+      }
+    } finally {
+      out.close();
+    }
   }
 }
