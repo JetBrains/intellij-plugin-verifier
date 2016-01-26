@@ -54,7 +54,7 @@ public class ProblemsPrinter extends VerifierCommand {
       case NONE:
         break;
       case PLUGIN:
-        TeamCityUtil.groupByPlugin(log, map);
+        TeamCityUtil.groupByPlugin(log, TeamCityUtil.fillWithEmptyLocations(map));
         break;
       case PROBLEM_TYPE:
         TeamCityUtil.groupByType(log, map);

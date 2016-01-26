@@ -198,7 +198,11 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
-    TeamCityUtil.printReport(log, problems, reportGrouping);
+    if (reportGrouping.equals(TeamCityUtil.ReportGrouping.PLUGIN_WITH_LOCATION)) {
+      TeamCityUtil.printReportWithLocations(log, Maps.filterKeys(results, updateFilter));
+    } else {
+      TeamCityUtil.printReport(log, problems, reportGrouping);
+    }
   }
 
   /**

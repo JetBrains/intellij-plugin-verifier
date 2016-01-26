@@ -192,7 +192,7 @@ public class ProblemUtils {
   /**
    * In DESCENDING order of versions
    */
-  public static Collection<UpdateInfo> sortUpdates(@NotNull Collection<UpdateInfo> updateInfos) {
+  public static List<UpdateInfo> sortUpdates(@NotNull Collection<UpdateInfo> updateInfos) {
     List<UpdateInfo> sorted = new ArrayList<UpdateInfo>(updateInfos);
     Collections.sort(sorted, new Comparator<UpdateInfo>() {
       @Override
