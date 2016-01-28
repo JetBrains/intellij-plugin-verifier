@@ -106,8 +106,10 @@ public class AbstractMethodVerifier implements ClassVerifier {
         if (!allSign.contains(sign)) {
           allSign.add(sign);
 
-          ctx.registerProblem(new MethodNotImplementedProblem(i.name + '#' + method.name + method.desc),
-                              new ProblemLocation(clazz.name));
+          if (VerifierUtil.isAbstract(method)) {
+            ctx.registerProblem(new MethodNotImplementedProblem(i.name + '#' + method.name + method.desc),
+                new ProblemLocation(clazz.name));
+          }
         }
       }
     }
