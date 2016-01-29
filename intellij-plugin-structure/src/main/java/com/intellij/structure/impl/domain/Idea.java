@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 class Idea implements Ide {
@@ -47,13 +48,13 @@ class Idea implements Ide {
   @Override
   @NotNull
   public List<Plugin> getCustomPlugins() {
-    return myCustomPlugins;
+    return Collections.unmodifiableList(myCustomPlugins);
   }
 
   @Override
   @NotNull
   public List<Plugin> getBundledPlugins() {
-    return myBundledPlugins;
+    return Collections.unmodifiableList(myBundledPlugins);
   }
 
   @Override

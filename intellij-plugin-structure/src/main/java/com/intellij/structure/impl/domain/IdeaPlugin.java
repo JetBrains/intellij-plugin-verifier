@@ -79,7 +79,12 @@ class IdeaPlugin implements Plugin {
   @Override
   @NotNull
   public Map<String, Document> getAllXmlInRoot() {
-    return myXmlDocumentsInRoot;
+    //to pretend modification
+    Map<String, Document> copy = new HashMap<String, Document>();
+    for (Map.Entry<String, Document> entry : myXmlDocumentsInRoot.entrySet()) {
+      copy.put(entry.getKey(), (Document) entry.getValue().clone());
+    }
+    return copy;
   }
 
   @Override
@@ -97,7 +102,7 @@ class IdeaPlugin implements Plugin {
   @Override
   @NotNull
   public Document getPluginXml() {
-    return myPluginXml;
+    return (Document) myPluginXml.clone();
   }
 
   @Override
