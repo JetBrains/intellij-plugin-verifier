@@ -46,13 +46,18 @@ public abstract class Resolver {
   }
 
   @NotNull
-  public static Resolver createCacheResolver(Resolver delegate) {
+  public static Resolver createCacheResolver(@NotNull Resolver delegate) {
     return new CacheResolver(delegate);
   }
 
   @NotNull
   public static Resolver createJarClassPool(@NotNull JarFile jarFile) throws IOException {
     return new SoftJarResolver(jarFile);
+  }
+
+  @NotNull
+  public static Resolver getEmptyResolver() {
+    return EmptyResolver.INSTANCE;
   }
 
   /**

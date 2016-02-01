@@ -25,6 +25,9 @@ public class PluginCache {
     return INSTANCE;
   }
 
+  /**
+   * @return null if plugin is not found in the cache
+   */
   @Nullable
   public Plugin getPlugin(File pluginZip) {
     SoftReference<Plugin> softReference = pluginsMap.get(pluginZip);

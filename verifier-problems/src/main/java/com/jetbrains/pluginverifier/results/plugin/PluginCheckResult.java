@@ -74,7 +74,7 @@ public class PluginCheckResult {
         problems.put(descriptor.getProblem(), new HashSet<ProblemLocation>(descriptor.getProblemLocations()));
       }
 
-      ProblemSet problemSet = new ProblemSet(problems);
+      ideToProblems.put(ide, new ProblemSet(problems));
 
     }
 

@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.Verifier;
 import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.misc.DependenciesCache;
 import com.jetbrains.pluginverifier.problems.FailedToReadClassProblem;
+import com.jetbrains.pluginverifier.problems.MissingDependencyProblem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
 import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier;
@@ -19,6 +20,7 @@ import org.objectweb.asm.tree.*;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dennis.Ushakov
@@ -29,7 +31,10 @@ class ReferencesVerifier implements Verifier {
   public void verify(@NotNull Plugin plugin, @NotNull VerificationContext ctx) throws VerificationError {
     final Resolver pluginPool = plugin.getPluginClassPool();
 
-    Resolver cacheResolver = Resolver.createCacheResolver(DependenciesCache.getInstance().getResolver(plugin, ctx.getIde(), ctx.getIdeRuntime(), ctx.getExternalClassPath()));
+    DependenciesCache.PluginDependenciesDescriptor descriptor = DependenciesCache.getInstance().getResolver(plugin, ctx.getIde(), ctx.getIdeRuntime(), ctx.getExternalClassPath());
+    Resolver cacheResolver = Resolver.createCacheResolver(descriptor.getResolver());
+
+    processMissingDependencies(descriptor, ctx);
 
     final Collection<String> classes = pluginPool.getAllClasses();
     for (String className : classes) {
@@ -42,6 +47,18 @@ class ReferencesVerifier implements Verifier {
 
       verifyClass(cacheResolver, node, ctx);
     }
+  }
+
+  private void processMissingDependencies(@NotNull DependenciesCache.PluginDependenciesDescriptor descriptor, @NotNull VerificationContext ctx) {
+    String pluginName = descriptor.getPluginName();
+    Map<String, String> missingDependencies = descriptor.getMissingDependencies().get(pluginName);
+    if (missingDependencies != null) {
+      for (Map.Entry<String, String> entry : missingDependencies.entrySet()) {
+        ctx.registerProblem(new MissingDependencyProblem(entry.getKey(), entry.getValue()), ProblemLocation.fromPlugin(pluginName));
+      }
+    }
+
+
   }
 
   @SuppressWarnings("unchecked")

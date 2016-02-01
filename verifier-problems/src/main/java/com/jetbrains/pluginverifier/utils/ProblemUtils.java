@@ -6,8 +6,8 @@ import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.*;
-import com.jetbrains.pluginverifier.results.ProblemSet;
-import com.jetbrains.pluginverifier.results.ResultsElement;
+import com.jetbrains.pluginverifier.results.*;
+import com.jetbrains.pluginverifier.results.plugin.IdeProblemsDescriptor;
 import com.jetbrains.pluginverifier.results.plugin.PluginCheckResult;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
@@ -38,12 +38,19 @@ public class ProblemUtils {
           MethodNotFoundProblem.class,
           MethodNotImplementedProblem.class,
           OverridingFinalMethodProblem.class,
-          UnresolvedDependencyProblem.class,
+          MissingDependencyProblem.class,
+
+
+          ProblemLocation.class,
+          CodeLocation.class,
+          PluginLocation.class,
 
           //--------RESULT-ELEMENTS--------
+          IdeProblemsDescriptor.class,
+          PluginCheckResult.class,
+
           ResultsElement.class,
           UpdateInfo.class,
-          PluginCheckResult.class,
           ProblemSet.class
       );
     } catch (JAXBException e) {
