@@ -19,6 +19,8 @@ import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.structure.domain.IdeVersion.getDefaultVersion;
+
 /**
  * @author Sergey Patrikeev
  */
@@ -31,9 +33,10 @@ public class IdeaManager extends IdeManager {
     String buildNumberString = Files.toString(versionFile, Charset.defaultCharset()).trim();
     Matcher matcher = BUILD_NUMBER_PATTERN.matcher(buildNumberString);
     if (matcher.matches()) {
+      //IU-144.1532.23 -->> IU-144.1532 (without build number)
       return IdeVersion.createIdeVersion(matcher.group(1));
     }
-    return IdeVersion.getDefaultVersion();
+    return IdeVersion.createIdeVersion(buildNumberString);
   }
 
   @NotNull
@@ -72,7 +75,7 @@ public class IdeaManager extends IdeManager {
   }
 
   @NotNull
-  private static List<Plugin> getIdeaPlugins(File ideaDir) throws IOException, IncorrectPluginException {
+  private static List<Plugin> getIdeaPlugins(File ideaDir) throws IOException {
     final File pluginsDir = new File(ideaDir, "plugins");
 
     final File[] files = pluginsDir.listFiles();
@@ -101,9 +104,9 @@ public class IdeaManager extends IdeManager {
 
   @NotNull
   @Override
-  public Ide createIde(@NotNull File ideaDir) throws IOException, IncorrectPluginException {
+  public Ide createIde(@NotNull File ideaDir) throws IOException {
     Resolver resolver;
-    IdeVersion version = IdeVersion.getDefaultVersion();
+    IdeVersion version = getDefaultVersion();
     List<Plugin> bundled = new ArrayList<Plugin>();
 
     if (isSourceDir(ideaDir)) {

@@ -1,6 +1,5 @@
 package com.intellij.structure.domain;
 
-import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.domain.IdeaManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +17,6 @@ public abstract class IdeManager {
   }
 
   @NotNull
-  public abstract Ide createIde(@NotNull File idePath) throws IOException, IncorrectPluginException;
+  public abstract Ide createIde(@NotNull File idePath) throws IOException;
 
 }
