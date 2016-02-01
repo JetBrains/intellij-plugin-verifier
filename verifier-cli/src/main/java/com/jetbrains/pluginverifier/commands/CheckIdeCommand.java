@@ -5,6 +5,7 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
 import com.intellij.structure.domain.*;
+import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.VerifierCommand;
@@ -286,7 +287,7 @@ public class CheckIdeCommand extends VerifierCommand {
     Ide ide = IdeManager.getIdeaManager().createIde(ideToCheck);
     updateIdeVersionFromCmd(ide, commandLine);
 
-    VerificationContextImpl ctx = new VerificationContextImpl(options, ide, javaRuntime, getExternalClassPath(commandLine));
+    Resolver externalClassPath = getExternalClassPath(commandLine);
 
 
     Pair<List<String>, List<String>> pluginsIds = extractPluginToCheckList(commandLine);
@@ -362,6 +363,8 @@ public class CheckIdeCommand extends VerifierCommand {
         Plugin plugin = PluginManager.getIdeaPluginManager().createPlugin(updateFile);
 
         System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), updates.size()));
+
+        VerificationContextImpl ctx = new VerificationContextImpl(options, ide, javaRuntime, externalClassPath);
 
         Verifiers.processAllVerifiers(plugin, ctx);
 
