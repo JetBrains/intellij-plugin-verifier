@@ -11,7 +11,7 @@
         <dependency>
             <groupId>org.jetbrains.intellij.plugins</groupId>
             <artifactId>mock-idea</artifactId>
-            <version>8.0</version>
+            <version>1.1</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -20,7 +20,7 @@
     <parent>
         <groupId>org.jetbrains.intellij.plugins</groupId>
         <artifactId>verifier-parent</artifactId>
-        <version>8.0</version>
+        <version>1.1</version>
     </parent>
 
 
