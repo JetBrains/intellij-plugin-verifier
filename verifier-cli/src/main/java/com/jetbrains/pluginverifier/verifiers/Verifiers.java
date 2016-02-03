@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers;
 
-import com.intellij.structure.domain.IdeaPlugin;
+import com.intellij.structure.domain.Plugin;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
 import com.jetbrains.pluginverifier.error.VerificationError;
@@ -59,7 +59,7 @@ public class Verifiers {
     return INSTRUCTION_VERIFIERS;
   }
 
-  public static void processAllVerifiers(IdeaPlugin plugin, VerificationContext ctx) throws VerificationError {
+  public static void processAllVerifiers(Plugin plugin, VerificationContext ctx) throws VerificationError {
     for (Verifier verifier : PLUGIN_VERIFIERS) {
       verifier.verify(plugin, ctx);
     }

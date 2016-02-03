@@ -25,7 +25,7 @@ public class FieldAccessInstructionVerifier implements InstructionVerifier {
 
     fieldOwner = VerifierUtil.extractClassNameFromDescr(fieldOwner);
     if (fieldOwner == null) return;
-    if (!VerifierUtil.classExists(ctx.getOptions(), resolver, fieldOwner)) {
+    if (!VerifierUtil.classExists(ctx.getVerifierOptions(), resolver, fieldOwner)) {
       ctx.registerProblem(new ClassNotFoundProblem(fieldOwner), ProblemLocation.fromMethod(clazz.name, method));
       return;
     }

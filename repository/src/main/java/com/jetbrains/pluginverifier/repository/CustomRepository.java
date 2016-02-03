@@ -3,10 +3,11 @@ package com.jetbrains.pluginverifier.repository;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Maps;
-import com.intellij.structure.domain.IdeaPlugin;
-import com.intellij.structure.domain.PluginCache;
+import com.intellij.structure.domain.IdeVersion;
+import com.intellij.structure.domain.Plugin;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.DownloadUtils;
+import com.jetbrains.pluginverifier.misc.PluginCache;
 import org.apache.commons.io.IOUtils;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -89,12 +90,20 @@ public class CustomRepository extends PluginRepository {
   }
 
   private List<UpdateInfo> getUpdates(@NotNull String ideVersion, Predicate<UpdateInfo> predicate) throws IOException {
+    IdeVersion version;
+    //TODO: replace it
+    try {
+      version = IdeVersion.createIdeVersion(ideVersion);
+    } catch (IllegalArgumentException e) {
+      return Collections.emptyList();
+    }
+
     List<UpdateInfo> res = new ArrayList<UpdateInfo>();
 
     for (Map.Entry<UpdateInfo, String> entry : Maps.filterKeys(getRepositoriesMap(), predicate).entrySet()) {
       File update = DownloadUtils.getOrLoadUpdate(entry.getKey(), new URL(entry.getValue()));
-      IdeaPlugin ideaPlugin = PluginCache.getInstance().getPlugin(update);
-      if (ideaPlugin != null && ideaPlugin.isCompatibleWithIde(ideVersion)) {
+      Plugin ideaPlugin = PluginCache.getInstance().getPlugin(update);
+      if (ideaPlugin != null && ideaPlugin.isCompatibleWithIde(version)) {
         res.add(entry.getKey());
       }
     }

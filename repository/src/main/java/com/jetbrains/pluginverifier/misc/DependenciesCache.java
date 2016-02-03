@@ -2,24 +2,25 @@ package com.jetbrains.pluginverifier.misc;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import com.intellij.structure.domain.Idea;
-import com.intellij.structure.domain.IdeaPlugin;
-import com.intellij.structure.domain.PluginCache;
+import com.intellij.structure.domain.Ide;
+import com.intellij.structure.domain.IdeRuntime;
+import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
-import com.intellij.structure.pool.ClassPool;
-import com.intellij.structure.resolvers.CombiningResolver;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
+import com.jetbrains.pluginverifier.utils.FailUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
 public class DependenciesCache {
-  private static final Set<IdeaPlugin> DEP_CALC_MARKER = new HashSet<IdeaPlugin>();
+  private static final Set<Plugin> DEP_CALC_MARKER = new HashSet<Plugin>();
+
   private static final ImmutableList<String> IDEA_ULTIMATE_MODULES = ImmutableList.of(
       "com.intellij.modules.platform",
       "com.intellij.modules.lang",
@@ -31,7 +32,10 @@ public class DependenciesCache {
       "com.intellij.modules.all"
   );
   private static DependenciesCache ourInstance = new DependenciesCache();
-  private final WeakHashMap<Idea, WeakHashMap<IdeaPlugin, PluginDependenciesDescriptor>> map = new WeakHashMap<Idea, WeakHashMap<IdeaPlugin, PluginDependenciesDescriptor>>();
+
+  private final WeakHashMap<Ide, WeakHashMap<Plugin, PluginDependenciesDescriptor>> map = new WeakHashMap<Ide, WeakHashMap<Plugin, PluginDependenciesDescriptor>>();
+
+  private final WeakHashMap<Ide, Resolver> myIdeResolvers = new WeakHashMap<Ide, Resolver>();
 
   private DependenciesCache() {
   }
@@ -42,17 +46,17 @@ public class DependenciesCache {
   }
 
   @NotNull
-  private PluginDependenciesDescriptor getPluginDependenciesDescriptor(@NotNull Idea ide, @NotNull IdeaPlugin plugin) {
-    WeakHashMap<IdeaPlugin, PluginDependenciesDescriptor> m = map.get(ide);
+  private PluginDependenciesDescriptor getPluginDependenciesDescriptor(@NotNull Ide ide, @NotNull Plugin plugin) {
+    WeakHashMap<Plugin, PluginDependenciesDescriptor> m = map.get(ide);
     if (m == null) {
-      m = new WeakHashMap<IdeaPlugin, PluginDependenciesDescriptor>();
+      m = new WeakHashMap<Plugin, PluginDependenciesDescriptor>();
       map.put(ide, m);
     }
 
     PluginDependenciesDescriptor descr = m.get(plugin);
     if (descr == null) {
       String pluginIdentifier = plugin.getPluginId().isEmpty() ? plugin.getPluginName() : plugin.getPluginId();
-      descr = new PluginDependenciesDescriptor(pluginIdentifier);
+      descr = new PluginDependenciesDescriptor(pluginIdentifier, false);
       m.put(plugin, descr);
     }
 
@@ -60,71 +64,97 @@ public class DependenciesCache {
   }
 
   @NotNull
-  public Resolver getResolver(@NotNull Idea ide, @NotNull IdeaPlugin plugin) throws VerificationError {
-    PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
-    if (descriptor.myResolver == null) {
+  private Resolver getResolverForIde(@NotNull Ide ide, @NotNull IdeRuntime ideRuntime, @Nullable Resolver externalClassPath) {
+    Resolver resolver = myIdeResolvers.get(ide);
+    if (resolver == null) {
       List<Resolver> resolvers = new ArrayList<Resolver>();
-
-      resolvers.add(plugin.getCommonClassPool());
-      resolvers.add(ide.getResolver());
-
-      for (IdeaPlugin dep : getDependenciesWithTransitive(ide, plugin, new ArrayList<PluginDependenciesDescriptor>())) {
-        ClassPool pluginClassPool = dep.getPluginClassPool();
-        if (!pluginClassPool.isEmpty()) {
-          resolvers.add(pluginClassPool);
-        }
-
-        ClassPool libraryClassPool = dep.getLibraryClassPool();
-        if (!libraryClassPool.isEmpty()) {
-          resolvers.add(libraryClassPool);
-        }
+      resolvers.add(ide.getClassPool());
+      resolvers.add(ideRuntime.getClassPool());
+      if (externalClassPath != null) {
+        resolvers.add(externalClassPath);
       }
-
-      descriptor.myResolver = CombiningResolver.union(resolvers);
+      String moniker = String.format("Ide-%s+Jdk-%s-resolver", ide.getVersion(), ideRuntime.getMoniker());
+      resolver = Resolver.createCacheResolver(Resolver.getUnion(moniker, resolvers));
+      myIdeResolvers.put(ide, resolver);
     }
-
-    return descriptor.myResolver;
+    return resolver;
   }
 
 
-  //TODO: collect missing optional dependencies and print them in the TC-log
   @NotNull
-  private Set<IdeaPlugin> getDependenciesWithTransitive(@NotNull Idea ide,
-                                                        @NotNull IdeaPlugin plugin,
-                                                        @NotNull List<PluginDependenciesDescriptor> pluginStack) throws VerificationError {
+  public PluginDependenciesDescriptor getResolver(@NotNull Plugin plugin, @NotNull Ide ide, @NotNull IdeRuntime ideRuntime, @Nullable Resolver externalClassPath) throws VerificationError {
+    PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
+    if (descriptor.myResolver == null) {
+      //not calculated yet
+
+      final PluginDependenciesDescriptor all = getDependenciesWithTransitive(ide, plugin, new ArrayList<PluginDependenciesDescriptor>());
+
+      List<Resolver> resolvers = new ArrayList<Resolver>();
+
+      resolvers.add(Resolver.getUnion(plugin.getPluginId(), Arrays.asList(plugin.getPluginClassPool(), plugin.getLibraryClassPool())));
+
+      resolvers.add(getResolverForIde(ide, ideRuntime, externalClassPath));
+
+      for (Plugin dep : all.getDependencies()) {
+        Resolver pluginResolver = dep.getPluginClassPool();
+        if (!pluginResolver.isEmpty()) {
+          resolvers.add(pluginResolver);
+        }
+
+        Resolver libraryResolver = dep.getLibraryClassPool();
+        if (!libraryResolver.isEmpty()) {
+          resolvers.add(libraryResolver);
+        }
+      }
+
+      String moniker = String.format("Plugin-%s+Ide-%s+Jdk-%s", plugin.getPluginId(), ide.getVersion(), ideRuntime.getMoniker());
+      descriptor.myResolver = Resolver.getUnion(moniker, resolvers);
+    }
+
+    return descriptor;
+  }
+
+
+  @NotNull
+  private PluginDependenciesDescriptor getDependenciesWithTransitive(@NotNull Ide ide,
+                                                                     @NotNull Plugin plugin,
+                                                                     @NotNull List<PluginDependenciesDescriptor> pluginStack) throws VerificationError {
     PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
 
-    Set<IdeaPlugin> result = descriptor.dependenciesWithTransitive;
-    if (result == DEP_CALC_MARKER) {
+    Set<Plugin> dependencies = descriptor.myDependencies;
+    if (dependencies == DEP_CALC_MARKER) {
       if (failOnCyclicDependency()) {
         int idx = pluginStack.lastIndexOf(descriptor); //compare descriptors by their identity (default equals behavior)
         throw new VerificationError("Cyclic plugin dependencies: " + Joiner.on(" -> ").join(pluginStack.subList(idx, pluginStack.size())) + " -> " + plugin.getPluginId());
       }
 
       for (int i = pluginStack.size() - 1; i >= 0; i--) {
-        pluginStack.get(i).isCyclic = true;
+        pluginStack.get(i).myIsCyclic = true;
         if (pluginStack.get(i) == descriptor) break;
       }
 
-      return Collections.emptySet();
+      return new PluginDependenciesDescriptor(descriptor.getPluginName(), true);
     }
 
-    if (descriptor.dependenciesWithTransitive == null) {
-      descriptor.dependenciesWithTransitive = DEP_CALC_MARKER;
+    if (dependencies == null) {
+      //not calculated yet
+      dependencies = new HashSet<Plugin>();
+
+      descriptor.myDependencies = DEP_CALC_MARKER;
       pluginStack.add(descriptor);
 
       try {
-        result = new HashSet<IdeaPlugin>(); //compare IdeaPlugins by their identity (default equals and hashCode behavior)
 
         //iterate through IntelliJ module dependencies
         for (PluginDependency dependency : plugin.getModuleDependencies()) {
 
           final String moduleId = dependency.getId();
           if (IDEA_ULTIMATE_MODULES.contains(moduleId)) {
+            //by default IDEA Ultimate contains this module
             continue;
           }
 
-          IdeaPlugin depPlugin = ide.getPluginByModule(moduleId);
+          Plugin depPlugin = ide.getPluginByModule(moduleId);
 
           if (depPlugin == null) {
             final String message = "Plugin " + plugin.getPluginId() + " depends on module " + moduleId + " which is not found in " + ide.getVersion();
@@ -132,89 +162,148 @@ public class DependenciesCache {
               //this is required plugin
               throw new VerificationError(message);
             } else {
-              System.err.println("(optional dependency)" + message);
+              descriptor.addMissingDependency(descriptor.getPluginName(), moduleId, message);
             }
-          } else if (result.add(depPlugin)) {
-            result.addAll(getDependenciesWithTransitive(ide, depPlugin, pluginStack));
+          } else if (dependencies.add(depPlugin)) {
+            descriptor.combine(getDependenciesWithTransitive(ide, depPlugin, pluginStack));
           }
         }
 
         //iterate through the other plugin dependencies
         for (PluginDependency pluginDependency : plugin.getDependencies()) {
-          IdeaPlugin depPlugin = ide.getPlugin(pluginDependency.getId());
+          Plugin depPlugin = ide.getPluginById(pluginDependency.getId());
 
           Exception maybeException = null;
           if (depPlugin == null) {
+            UpdateInfo updateInfo;
             try {
-              UpdateInfo updateInfo = RepositoryManager.getInstance().findPlugin(ide.getVersion(), pluginDependency.getId());
-              if (updateInfo != null) {
+              updateInfo = RepositoryManager.getInstance().findPlugin(ide.getVersion().toString(), pluginDependency.getId());
+            } catch (IOException e) {
+              throw FailUtil.fail("Couldn't get dependency update from the Repository (IDE = " + ide.getVersion() + " plugin = " + plugin.getPluginId() + ")", e);
+            }
+
+            if (updateInfo != null) {
+              try {
                 File pluginZip = RepositoryManager.getInstance().getOrLoadUpdate(updateInfo);
                 depPlugin = PluginCache.getInstance().getPlugin(pluginZip);
+              } catch (IOException e) {
+                maybeException = e;
+                System.err.println("Couldn't load plugin dependency for " + plugin.getPluginId());
+                e.printStackTrace();
               }
-            }
-            catch (IOException e) {
-              maybeException = e;
-              e.printStackTrace();
-              System.err.println("Couldn't load plugin dependency for " + plugin.getPluginId());
             }
           }
 
-          //noinspection Duplicates
           if (depPlugin == null) {
             final String message = "Plugin " + plugin.getPluginId() + " depends on the other plugin " + pluginDependency.getId() + " which is not found for " + ide.getVersion();
             if (!pluginDependency.isOptional()) {
               //this is required plugin
               throw new VerificationError(message, maybeException);
             } else {
-              System.err.println("(optional dependency)" + message);
-              if (maybeException != null) {
-                maybeException.printStackTrace();
-              }
+              descriptor.addMissingDependency(descriptor.getPluginName(), pluginDependency.getId(), message);
             }
-          } else if (result.add(depPlugin)) {
-            result.addAll(getDependenciesWithTransitive(ide, depPlugin, pluginStack));
+          } else if (dependencies.add(depPlugin)) {
+            descriptor.combine(getDependenciesWithTransitive(ide, depPlugin, pluginStack));
           }
         }
 
-        if (descriptor.isCyclic) {
-          descriptor.dependenciesWithTransitive = null;
+        if (descriptor.myIsCyclic) {
+          descriptor.myDependencies = null;
         }
         else {
-          descriptor.dependenciesWithTransitive = result;
+          descriptor.myDependencies = dependencies;
         }
       }
       finally {
         pluginStack.remove(pluginStack.size() - 1);
 
-        if (descriptor.dependenciesWithTransitive == DEP_CALC_MARKER) {
-          descriptor.dependenciesWithTransitive = null;
+        if (descriptor.myDependencies == DEP_CALC_MARKER) {
+          descriptor.myDependencies = null;
         }
       }
     }
 
-    return result;
+    return descriptor;
   }
 
   private boolean failOnCyclicDependency() {
     return Boolean.parseBoolean(RepositoryConfiguration.getInstance().getProperty("fail.on.cyclic.dependencies"));
   }
 
-  private static class PluginDependenciesDescriptor {
-    public final String pluginName;
+  public static class PluginDependenciesDescriptor {
+    final String myPluginName;
 
-    public Resolver myResolver;
+    Resolver myResolver;
 
-    public boolean isCyclic;
+    boolean myIsCyclic;
 
-    public Set<IdeaPlugin> dependenciesWithTransitive;
+    Set<Plugin> myDependencies;
 
-    private PluginDependenciesDescriptor(@NotNull String pluginName) {
-      this.pluginName = pluginName;
+    /**
+     * pluginId -> (missingPluginId -> description)
+     */
+    Map<String, Map<String, String>> myMissingDependencies = new HashMap<String, Map<String, String>>();
+
+    PluginDependenciesDescriptor(@NotNull String pluginName, boolean isEmpty) {
+      this.myPluginName = pluginName;
+      if (isEmpty) {
+        myResolver = Resolver.getEmptyResolver();
+        myIsCyclic = true;
+        myDependencies = Collections.emptySet();
+      }
+    }
+
+    Set<Plugin> getDependencies() {
+      return myDependencies;
+    }
+
+
+    public Resolver getResolver() {
+      return myResolver;
+    }
+
+    public Map<String, Map<String, String>> getMissingDependencies() {
+      return myMissingDependencies;
+    }
+
+    public String getPluginName() {
+      return myPluginName;
+    }
+
+    void addMissingDependency(@NotNull String pluginId, @NotNull String missingId, @NotNull String message) {
+      Map<String, String> map = myMissingDependencies.get(pluginId);
+      if (map == null) {
+        map = new HashMap<String, String>();
+        myMissingDependencies.put(pluginId, map);
+      }
+      map.put(missingId, message);
+    }
+
+    void combine(PluginDependenciesDescriptor other) {
+      combineDependencies(other);
+      combineMissing(other);
+    }
+
+    private void combineDependencies(PluginDependenciesDescriptor other) {
+      if (other.getDependencies() != null) {
+        myDependencies.addAll(other.getDependencies());
+      }
+    }
+
+    private void combineMissing(PluginDependenciesDescriptor other) {
+      Map<String, Map<String, String>> map = other.getMissingDependencies();
+      if (map != null) {
+        for (Map.Entry<String, Map<String, String>> entry : map.entrySet()) {
+          for (Map.Entry<String, String> missEntry : entry.getValue().entrySet()) {
+            addMissingDependency(entry.getKey(), missEntry.getKey(), missEntry.getValue());
+          }
+        }
+      }
     }
 
     @Override
     public String toString() {
-      return pluginName;
+      return myPluginName;
     }
   }
 }

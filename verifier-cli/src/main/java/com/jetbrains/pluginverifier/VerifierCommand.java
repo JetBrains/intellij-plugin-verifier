@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier;
 
-import com.intellij.structure.domain.Idea;
-import com.intellij.structure.domain.JDK;
-import com.intellij.structure.pool.ClassPool;
-import com.intellij.structure.pool.ContainerClassPool;
-import com.intellij.structure.pool.JarClassPool;
+import com.intellij.structure.domain.Ide;
+import com.intellij.structure.domain.IdeRuntime;
+import com.intellij.structure.domain.IdeRuntimeManager;
+import com.intellij.structure.domain.IdeVersion;
+import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.utils.FailUtil;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ public abstract class VerifierCommand {
   public abstract int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception;
 
   @NotNull
-  protected JDK createJdk(@NotNull CommandLine commandLine) throws IOException {
+  protected IdeRuntime createJdk(@NotNull CommandLine commandLine) throws IOException {
     File runtimeDirectory;
 
     if (commandLine.hasOption('r')) {
@@ -58,29 +58,36 @@ public abstract class VerifierCommand {
       }
     }
 
-    return new JDK(runtimeDirectory);
+    return IdeRuntimeManager.getJdkManager().createRuntime(runtimeDirectory);
   }
 
   @Nullable
-  protected ClassPool getExternalClassPath(CommandLine commandLine) throws IOException {
+  protected Resolver getExternalClassPath(CommandLine commandLine) throws IOException {
     String[] values = commandLine.getOptionValues("cp");
     if (values == null) {
       return null;
     }
 
-    List<ClassPool> pools = new ArrayList<ClassPool>(values.length);
+    List<Resolver> pools = new ArrayList<Resolver>(values.length);
 
     for (String value : values) {
-      pools.add(new JarClassPool(new JarFile(value)));
+      pools.add(Resolver.createJarClassPool(new JarFile(value)));
     }
 
-    return ContainerClassPool.getUnion("external_class_path", pools);
+    return Resolver.getUnion("external_class_path", pools);
   }
 
-  protected void updateIdeVersionFromCmd(@NotNull Idea ide, @NotNull CommandLine commandLine) throws IOException {
+  protected void updateIdeVersionFromCmd(@NotNull Ide ide, @NotNull CommandLine commandLine) throws IOException {
     String build = commandLine.getOptionValue("iv");
     if (build != null && !build.isEmpty()) {
-      ide.setVersion(build);
+      IdeVersion version;
+      try {
+        version = IdeVersion.createIdeVersion(build);
+      } catch (IllegalArgumentException e) {
+        throw FailUtil.fail("Incorrect update IDE-version has been specified " + build, e);
+      }
+
+      ide.updateVersion(version);
     }
   }
 

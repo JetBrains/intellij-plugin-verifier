@@ -28,7 +28,7 @@ public class TestMarshalling {
     problems.add(new MethodNotFoundProblem("a"));
     problems.add(new MethodNotImplementedProblem("a"));
     problems.add(new OverridingFinalMethodProblem("a"));
-    problems.add(new VerificationProblem("b", "a"));
+    problems.add(new MissingDependencyProblem("aa", "bb"));
     map.put(new UpdateInfo(12345), problems);
     ProblemUtils.saveProblems(new File("brokenReport.xml"), "IU-144.0000", map);
 
@@ -42,6 +42,7 @@ public class TestMarshalling {
     HashMap<Problem, Set<ProblemLocation>> problemSetHashMap = new HashMap<Problem, Set<ProblemLocation>>();
     problemSetHashMap.put(new ClassNotFoundProblem("com.jetbrains.AnAction"), new HashSet<ProblemLocation>(Arrays.asList(ProblemLocation.fromClass("location #1"), ProblemLocation.fromClass("location #2"))));
     problemSetHashMap.put(new MethodNotFoundProblem("class#invokeMethod()"), new HashSet<ProblemLocation>(Arrays.asList(ProblemLocation.fromClass("location #3"), ProblemLocation.fromClass("location #4"))));
+    problemSetHashMap.put(new MissingDependencyProblem("missingId", "description"), new HashSet<ProblemLocation>(Arrays.asList(ProblemLocation.fromPlugin("pluginId#1"), ProblemLocation.fromClass("location #4"))));
 
     expectedIdeToProblems.put("IDEA-IU-143", new ProblemSet(problemSetHashMap));
 
@@ -66,7 +67,6 @@ public class TestMarshalling {
 
     Map<String, ProblemSet> actualIdeToProblems = pluginCheckResult.getIdeToProblems();
 
-    //TODO: check equivalence
 
   }
 }

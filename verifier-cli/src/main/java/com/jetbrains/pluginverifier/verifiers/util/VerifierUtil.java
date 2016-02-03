@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.utils.Assert;
+import com.jetbrains.pluginverifier.verifiers.util.bytecode.AsmConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
@@ -31,7 +32,7 @@ public class VerifierUtil {
       return true;
     }
 
-    final ClassNode clazz = resolver.findClass(name);
+    final ClassNode clazz = AsmConverter.convertToAsmNode(resolver.findClass(name));
     return clazz != null && (isInterface == null || isInterface == isInterface(clazz));
   }
 

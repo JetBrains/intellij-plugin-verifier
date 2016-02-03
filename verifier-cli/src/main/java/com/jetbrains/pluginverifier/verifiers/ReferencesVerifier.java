@@ -1,40 +1,44 @@
 package com.jetbrains.pluginverifier.verifiers;
 
-import com.intellij.structure.domain.IdeaPlugin;
-import com.intellij.structure.pool.ClassPool;
-import com.intellij.structure.resolvers.CacheResolver;
+import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
 import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.misc.DependenciesCache;
 import com.jetbrains.pluginverifier.problems.FailedToReadClassProblem;
+import com.jetbrains.pluginverifier.problems.MissingDependencyProblem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
 import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier;
 import com.jetbrains.pluginverifier.verifiers.instruction.InstructionVerifier;
 import com.jetbrains.pluginverifier.verifiers.method.MethodVerifier;
+import com.jetbrains.pluginverifier.verifiers.util.bytecode.AsmConverter;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.*;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dennis.Ushakov
  */
-public class ReferencesVerifier implements Verifier {
+class ReferencesVerifier implements Verifier {
 
   @Override
-  public void verify(@NotNull IdeaPlugin plugin, @NotNull VerificationContext ctx) throws VerificationError {
-    final ClassPool pluginPool = plugin.getPluginClassPool();
+  public void verify(@NotNull Plugin plugin, @NotNull VerificationContext ctx) throws VerificationError {
+    final Resolver pluginPool = plugin.getPluginClassPool();
 
-    Resolver cacheResolver = new CacheResolver(DependenciesCache.getInstance().getResolver(ctx.getIde(), plugin));
+    DependenciesCache.PluginDependenciesDescriptor descriptor = DependenciesCache.getInstance().getResolver(plugin, ctx.getIde(), ctx.getIdeRuntime(), ctx.getExternalClassPath());
+    Resolver cacheResolver = Resolver.createCacheResolver(descriptor.getResolver());
+
+    processMissingDependencies(descriptor, ctx);
 
     final Collection<String> classes = pluginPool.getAllClasses();
     for (String className : classes) {
-      final ClassNode node = pluginPool.findClass(className);
+      final ClassNode node = AsmConverter.convertToAsmNode(pluginPool.findClass(className));
 
       if (node == null) {
         ctx.registerProblem(new FailedToReadClassProblem(className), ProblemLocation.fromClass(className));
@@ -43,6 +47,18 @@ public class ReferencesVerifier implements Verifier {
 
       verifyClass(cacheResolver, node, ctx);
     }
+  }
+
+  private void processMissingDependencies(@NotNull DependenciesCache.PluginDependenciesDescriptor descriptor, @NotNull VerificationContext ctx) {
+    String pluginName = descriptor.getPluginName();
+    Map<String, String> missingDependencies = descriptor.getMissingDependencies().get(pluginName);
+    if (missingDependencies != null) {
+      for (Map.Entry<String, String> entry : missingDependencies.entrySet()) {
+        ctx.registerProblem(new MissingDependencyProblem(entry.getKey(), entry.getValue()), ProblemLocation.fromPlugin(pluginName));
+      }
+    }
+
+
   }
 
   @SuppressWarnings("unchecked")

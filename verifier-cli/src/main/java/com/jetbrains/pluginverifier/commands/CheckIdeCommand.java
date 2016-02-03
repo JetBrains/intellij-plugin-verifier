@@ -2,10 +2,8 @@ package com.jetbrains.pluginverifier.commands;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.*;
-import com.intellij.structure.domain.Idea;
-import com.intellij.structure.domain.IdeaPlugin;
-import com.intellij.structure.domain.JDK;
-import com.intellij.structure.pool.ClassPool;
+import com.intellij.structure.domain.*;
+import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.VerifierCommand;
@@ -40,10 +38,10 @@ public class CheckIdeCommand extends VerifierCommand {
       ImmutableList.of("org.jetbrains.plugins.ruby", "com.jetbrains.php", "org.jetbrains.android", "Pythonid");
   private TeamCityUtil.ReportGrouping myGrouping;
   private TeamCityLog myTc;
-  private JDK myJdk;
+  private IdeRuntime myIdeRuntime;
   private PluginVerifierOptions myVerifierOptions;
-  private ClassPool myExternalClassPath;
-  private Idea myIde;
+  private Resolver myExternalClassPath;
+  private Ide myIde;
   private List<String> myCheckAllBuilds;
   private List<String> myCheckLastBuilds;
   private Collection<UpdateInfo> myUpdatesToCheck;
@@ -141,7 +139,7 @@ public class CheckIdeCommand extends VerifierCommand {
     }
 
     for (String missingPluginId : missingPluginIds) {
-      problems.put(new NoCompatibleUpdatesProblem(missingPluginId, myIde.getVersion()), new UpdateInfo(missingPluginId, missingPluginId, "no compatible update"));
+      problems.put(new NoCompatibleUpdatesProblem(missingPluginId, myIde.getVersion().toString()), new UpdateInfo(missingPluginId, missingPluginId, "no compatible update"));
     }
 
 
@@ -163,13 +161,13 @@ public class CheckIdeCommand extends VerifierCommand {
 
     myTc = TeamCityLog.getInstance(commandLine);
 
-    myJdk = createJdk(commandLine);
+    myIdeRuntime = createJdk(commandLine);
 
     myVerifierOptions = PluginVerifierOptions.parseOpts(commandLine);
 
     myExternalClassPath = getExternalClassPath(commandLine);
 
-    myIde = new Idea(ideToCheck, myJdk, myExternalClassPath);
+    myIde = IdeManager.getIdeaManager().createIde(ideToCheck);
     updateIdeVersionFromCmd(myIde, commandLine);
 
     Pair<List<String>, List<String>> pluginsIds = Util.extractPluginToCheckList(commandLine);
@@ -177,18 +175,18 @@ public class CheckIdeCommand extends VerifierCommand {
     myCheckLastBuilds = pluginsIds.second;
 
     if (myCheckAllBuilds.isEmpty() && myCheckLastBuilds.isEmpty()) {
-      myUpdatesToCheck = RepositoryManager.getInstance().getAllCompatibleUpdates(myIde.getVersion());
+      myUpdatesToCheck = RepositoryManager.getInstance().getAllCompatibleUpdates(myIde.getVersion().toString());
     } else {
       myUpdatesToCheck = new ArrayList<UpdateInfo>();
 
       if (myCheckAllBuilds.size() > 0) {
-        myUpdatesToCheck.addAll(RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(myIde.getVersion(), myCheckAllBuilds));
+        myUpdatesToCheck.addAll(RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(myIde.getVersion().toString(), myCheckAllBuilds));
       }
 
       if (myCheckLastBuilds.size() > 0) {
         Map<String, UpdateInfo> lastBuilds = new HashMap<String, UpdateInfo>();
 
-        for (UpdateInfo info : RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(myIde.getVersion(), myCheckLastBuilds)) {
+        for (UpdateInfo info : RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(myIde.getVersion().toString(), myCheckLastBuilds)) {
           UpdateInfo existsBuild = lastBuilds.get(info.getPluginId());
 
           //choose last build
@@ -270,20 +268,20 @@ public class CheckIdeCommand extends VerifierCommand {
       try {
         File updateFile = RepositoryManager.getInstance().getOrLoadUpdate(updateJson);
 
-        IdeaPlugin plugin = IdeaPlugin.createFromZip(updateFile);
+        Plugin plugin = PluginManager.getIdeaPluginManager().createPlugin(updateFile);
 
         System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), myUpdatesToCheck.size()));
 
-        VerificationContextImpl ctx = new VerificationContextImpl(myVerifierOptions, myIde);
+        VerificationContextImpl ctx = new VerificationContextImpl(myVerifierOptions, myIde, myIdeRuntime, myExternalClassPath);
         Verifiers.processAllVerifiers(plugin, ctx);
 
-        myResults.put(updateJson, ctx.getProblems());
+        myResults.put(updateJson, ctx.getProblemSet());
 
-        if (ctx.getProblems().isEmpty()) {
+        if (ctx.getProblemSet().isEmpty()) {
           System.out.println("plugin " + updateJson + " is OK");
           myTc.message(updateJson + " is OK");
         } else {
-          int count = ctx.getProblems().count();
+          int count = ctx.getProblemSet().count();
           System.out.println("has " + count + " problems");
 
           if (myExcludedUpdatesFilter.apply(updateJson)) {
@@ -292,7 +290,7 @@ public class CheckIdeCommand extends VerifierCommand {
             myTc.message(updateJson + " has problems, but is excluded in brokenPlugins.json");
           }
 
-          ctx.getProblems().printProblems(System.out, "    ");
+          ctx.getProblemSet().printProblems(System.out, "    ");
         }
 
 
@@ -326,7 +324,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     //Save results to XML if necessary
     if (commandLine.hasOption("xr")) {
-      saveResultsToXml(commandLine.getOptionValue("xr"), myIde.getVersion(), myResults);
+      saveResultsToXml(commandLine.getOptionValue("xr"), myIde.getVersion().toString(), myResults);
     }
 
 
@@ -348,7 +346,7 @@ public class CheckIdeCommand extends VerifierCommand {
         File file = new File(myReportFile);
         System.out.println("Saving report to " + file.getAbsolutePath());
 
-        CheckIdeHtmlReportBuilder.build(file, myIde.getVersion(), myCheckedIds, myExcludedUpdatesFilter, myResults);
+        CheckIdeHtmlReportBuilder.build(file, myIde.getVersion().toString(), myCheckedIds, myExcludedUpdatesFilter, myResults);
       }
     }
 

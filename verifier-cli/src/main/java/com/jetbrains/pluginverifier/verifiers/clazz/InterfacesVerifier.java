@@ -16,7 +16,7 @@ public class InterfacesVerifier implements ClassVerifier {
   public void verify(final ClassNode clazz, final Resolver resolver, final VerificationContext ctx) {
     for (Object o : clazz.interfaces) {
       final String iface = (String)o;
-      if(!VerifierUtil.classExists(ctx.getOptions(), resolver, iface, true)) {
+      if (!VerifierUtil.classExists(ctx.getVerifierOptions(), resolver, iface, true)) {
         ctx.registerProblem(new ClassNotFoundProblem(iface), ProblemLocation.fromClass(clazz.name));
         return;
       }

@@ -24,7 +24,7 @@ public class MethodTryCatchVerifier implements MethodVerifier {
       if (catchException == null) continue;
       String descr = VerifierUtil.extractClassNameFromDescr(catchException);
       if (descr == null) continue;
-      if (!VerifierUtil.classExists(ctx.getOptions(), resolver, descr)) {
+      if (!VerifierUtil.classExists(ctx.getVerifierOptions(), resolver, descr)) {
         ctx.registerProblem(new ClassNotFoundProblem(descr), ProblemLocation.fromMethod(clazz.name, method));
       }
     }

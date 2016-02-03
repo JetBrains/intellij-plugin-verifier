@@ -22,7 +22,7 @@ public class TypeInstructionVerifier implements InstructionVerifier {
       className = VerifierUtil.extractClassNameFromDescr(className);
     }
 
-    if(className == null || VerifierUtil.classExists(ctx.getOptions(), resolver, className)) return;
+    if (className == null || VerifierUtil.classExists(ctx.getVerifierOptions(), resolver, className)) return;
 
     ctx.registerProblem(new ClassNotFoundProblem(className), ProblemLocation.fromMethod(clazz.name, method));
   }

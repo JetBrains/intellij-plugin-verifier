@@ -15,7 +15,7 @@ public class FieldTypeVerifier implements FieldVerifier {
   public void verify(final ClassNode clazz, final FieldNode field, final Resolver resolver, final VerificationContext ctx) {
     final String className = VerifierUtil.extractClassNameFromDescr(field.desc);
 
-    if(className == null || VerifierUtil.classExists(ctx.getOptions(), resolver, className)) {
+    if (className == null || VerifierUtil.classExists(ctx.getVerifierOptions(), resolver, className)) {
       return;
     }
 

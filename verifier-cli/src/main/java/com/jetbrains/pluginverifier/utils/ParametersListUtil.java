@@ -18,7 +18,6 @@ package com.jetbrains.pluginverifier.utils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -39,7 +38,7 @@ public class ParametersListUtil {
   //};
 
   /**
-   * <p>Joins list of parameters into single string, which may be then parsed back into list by {@link #parseToArray(String)}.</p>
+   * <p>Joins list of parameters into single string, which may be then parsed back into list by parseToArray(String).</p>
    * <p/>
    * <p>
    * <strong>Conversion rules:</strong>
@@ -94,7 +93,7 @@ public class ParametersListUtil {
   }
 
   @NotNull
-  public static List<String> parse(@NotNull String parameterString, boolean keepQuotes) {
+  private static List<String> parse(@NotNull String parameterString, boolean keepQuotes) {
     parameterString = parameterString.trim();
 
     final ArrayList<String> params = new ArrayList<String>();

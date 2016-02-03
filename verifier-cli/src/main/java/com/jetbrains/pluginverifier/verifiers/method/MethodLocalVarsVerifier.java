@@ -23,7 +23,7 @@ public class MethodLocalVarsVerifier implements MethodVerifier {
       for (LocalVariableNode variable : localVariables) {
         String descr = VerifierUtil.extractClassNameFromDescr(variable.desc);
         if (descr == null) continue;
-        if (!VerifierUtil.classExists(ctx.getOptions(), resolver, descr)) {
+        if (!VerifierUtil.classExists(ctx.getVerifierOptions(), resolver, descr)) {
           ctx.registerProblem(new ClassNotFoundProblem(descr), ProblemLocation.fromMethod(clazz.name, method));
         }
       }

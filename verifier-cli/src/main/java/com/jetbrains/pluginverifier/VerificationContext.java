@@ -1,6 +1,8 @@
 package com.jetbrains.pluginverifier;
 
-import com.intellij.structure.domain.Idea;
+import com.intellij.structure.domain.Ide;
+import com.intellij.structure.domain.IdeRuntime;
+import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import org.jetbrains.annotations.NotNull;
@@ -9,9 +11,13 @@ import org.jetbrains.annotations.NotNull;
  * @author Sergey Evdokimov
  */
 public interface VerificationContext {
-  PluginVerifierOptions getOptions();
+  PluginVerifierOptions getVerifierOptions();
 
   void registerProblem(@NotNull Problem problem, @NotNull ProblemLocation location);
 
-  Idea getIde();
+  Ide getIde();
+
+  IdeRuntime getIdeRuntime();
+
+  Resolver getExternalClassPath();
 }
