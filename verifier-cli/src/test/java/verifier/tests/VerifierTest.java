@@ -8,7 +8,6 @@ import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.problems.*;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
-import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
@@ -20,8 +19,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -38,7 +35,7 @@ import java.util.regex.Pattern;
 public class VerifierTest {
 
   private static final String IDEA_14_0_4 = "ideaIC-14.0.4.tar.gz";
-  private static final ImmutableMultimap<Problem, ProblemLocation> ACTUAL_PROBLEMS =
+  private final ImmutableMultimap<Problem, ProblemLocation> MY_ACTUAL_PROBLEMS =
       ImmutableMultimap.<Problem, ProblemLocation>builder()
           .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromField("mock/plugin/FieldTypeNotFound", "myNonExistingClass"))
           .put(new ClassNotFoundProblem("non/existing/NonExistingInterface"), ProblemLocation.fromClass("mock/plugin/NotFoundInterface"))
@@ -69,40 +66,71 @@ public class VerifierTest {
           .put(new IllegalMethodAccessProblem("com/intellij/openapi/diagnostic/LogUtil#<init>()V", IllegalMethodAccessProblem.MethodAccess.PRIVATE), ProblemLocation.fromMethod("mock/plugin/AccessChangedProblem", "foo()V"))
           .build();
 
+  private final ImmutableMultimap<Problem, ProblemLocation> RUBY_ACTUAL_PROBLEMS =
+      ImmutableMultimap.<Problem, ProblemLocation>builder()
+          .put(new MethodNotFoundProblem("com/intellij/util/ui/ReloadableComboBoxPanel#setDataProvider(Lcom/intellij/util/ui/ReloadableComboBoxPanel$DataProvider;)V"), ProblemLocation.fromMethod("org/jetbrains/plugins/ruby/rails/facet/ui/wizard/ui/tabs/RailsAppSampleConfigurableTab", "createUIComponents()V"))
+          .put(new ClassNotFoundProblem("com/intellij/util/ui/ReloadableComboBoxPanel$DataProvider"), ProblemLocation.fromClass("org/jetbrains/plugins/ruby/rails/facet/ui/wizard/ui/tabs/RailsAppSampleProvider"))
+          .build();
+
 
   private Ide myIde;
   private Plugin myPlugin;
-  private ProblemSet myProblemSet;
-  private Map<Problem, Set<ProblemLocation>> myProblems;
+  private IdeRuntime myJavaRuntime;
+
+  private static void testFoundProblems(Map<Problem, Set<ProblemLocation>> foundProblems, Multimap<Problem, ProblemLocation> actualProblems) throws Exception {
+
+    Multimap<Problem, ProblemLocation> redundantProblems = HashMultimap.create();
+    for (Map.Entry<Problem, Set<ProblemLocation>> entry : foundProblems.entrySet()) {
+      for (ProblemLocation location : entry.getValue()) {
+        redundantProblems.put(entry.getKey(), location);
+      }
+    }
+
+    for (Map.Entry<Problem, ProblemLocation> entry : actualProblems.entries()) {
+      Problem problem = entry.getKey();
+      ProblemLocation location = entry.getValue();
+      Assert.assertTrue("problem " + problem + " should be found, but it isn't", foundProblems.containsKey(problem));
+      Assert.assertTrue("problem " + problem + " should be found in the following location " + location, foundProblems.get(problem).contains(location));
+      redundantProblems.remove(problem, location);
+    }
+
+
+    if (!redundantProblems.isEmpty()) {
+      StringBuilder builder = new StringBuilder();
+      for (Map.Entry<Problem, ProblemLocation> entry : redundantProblems.entries()) {
+//        CodeLocation loc = (CodeLocation) entry.getValue();
+//        System.out.println("xxxxxxx|" + loc.getClassName() + " " + loc.getMethodDescriptor() + " " + loc.getFieldName() + "||||");
+
+        builder.append(entry.getKey()).append(" at ").append(entry.getValue()).append("\n");
+      }
+      Assert.fail("Found redundant problems which shouldn't be found:\n" + builder.toString());
+    }
+
+  }
 
   @Before
   public void setUp() throws Exception {
-    File ideaFile = TestData.fetchResource(IDEA_14_0_4, true);
-
     String jdkPath = System.getenv("JAVA_HOME");
     if (jdkPath == null) {
       jdkPath = "/usr/lib/jvm/java-6-oracle";
     }
+    myJavaRuntime = IdeRuntimeManager.getJdkManager().createRuntime(new File(jdkPath));
 
-    File jdkFile = new File(jdkPath);
+
+  }
+
+  @Test
+  public void testRuby20160127() throws Exception {
+    File idea = TestData.fetchResource("ideaIU-144.3600.7.zip", true);
+    File rubyPlugin = TestData.fetchResource("ruby-8.0.0.20160127.zip", false);
+    testFoundProblems(idea, rubyPlugin, RUBY_ACTUAL_PROBLEMS);
+  }
+
+  @Test
+  public void testMyPlugin() throws Exception {
+    File ideaFile = TestData.fetchResource(IDEA_14_0_4, true);
     File pluginFile = findLatestPlugin();
-//    File pluginFile = new File("../for_tests/ideavim-0.29.zip");
-//    File pluginFile = new File("../for_tests/Maven_Sync.zip");
-//    File pluginFile = new File("../for_tests/keymap.zip");
-
-    IdeRuntime javaRuntime = IdeRuntimeManager.getJdkManager().createRuntime(jdkFile);
-
-    myIde = IdeManager.getIdeaManager().createIde(ideaFile);
-    myPlugin = PluginManager.getIdeaPluginManager().createPlugin(pluginFile);
-
-    List<String> args = Collections.singletonList("");
-    final CommandLine commandLine = new GnuParser().parse(Util.CMD_OPTIONS, args.toArray(new String[args.size()]));
-
-    VerificationContextImpl ctx = new VerificationContextImpl(PluginVerifierOptions.parseOpts(commandLine), myIde, javaRuntime, null);
-    Verifiers.processAllVerifiers(myPlugin, ctx);
-
-    myProblemSet = ctx.getProblemSet();
-    myProblems = myProblemSet.asMap();
+    testFoundProblems(ideaFile, pluginFile, MY_ACTUAL_PROBLEMS);
   }
 
 
@@ -137,32 +165,15 @@ public class VerifierTest {
     return result;
   }
 
-  @Test
-  public void testFoundProblems() throws Exception {
+  private void testFoundProblems(File ideaFile, File pluginFile, ImmutableMultimap<Problem, ProblemLocation> actualProblems) throws Exception {
+    myIde = IdeManager.getIdeaManager().createIde(ideaFile);
+    myPlugin = PluginManager.getIdeaPluginManager().createPlugin(pluginFile);
 
-    Multimap<Problem, ProblemLocation> redundantProblems = HashMultimap.create();
-    for (Map.Entry<Problem, Set<ProblemLocation>> entry : myProblems.entrySet()) {
-      for (ProblemLocation location : entry.getValue()) {
-        redundantProblems.put(entry.getKey(), location);
-      }
-    }
+    final CommandLine commandLine = new GnuParser().parse(Util.CMD_OPTIONS, new String[]{});
 
-    for (Map.Entry<Problem, ProblemLocation> entry : ACTUAL_PROBLEMS.entries()) {
-      Problem problem = entry.getKey();
-      ProblemLocation location = entry.getValue();
-      Assert.assertTrue("problem " + problem + " should be found, but it isn't", myProblems.containsKey(problem));
-      Assert.assertTrue("problem " + problem + " should be found in the following location " + location, myProblems.get(problem).contains(location));
-      redundantProblems.remove(problem, location);
-    }
+    VerificationContextImpl ctx = new VerificationContextImpl(PluginVerifierOptions.parseOpts(commandLine), myIde, myJavaRuntime, null);
+    Verifiers.processAllVerifiers(myPlugin, ctx);
 
-
-    if (!redundantProblems.isEmpty()) {
-      StringBuilder builder = new StringBuilder();
-      for (Map.Entry<Problem, ProblemLocation> entry : redundantProblems.entries()) {
-        builder.append(entry.getKey()).append(" at ").append(entry.getValue()).append("\n");
-      }
-      Assert.fail("Found redundant problems which shouldn't be found:\n" + builder.toString());
-    }
-
+    testFoundProblems(ctx.getProblemSet().asMap(), actualProblems);
   }
 }
