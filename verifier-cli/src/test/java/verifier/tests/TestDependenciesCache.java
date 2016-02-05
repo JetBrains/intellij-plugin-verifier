@@ -39,8 +39,7 @@ public class TestDependenciesCache {
     for (String s : dependencies) {
       boolean found = false;
       for (Plugin dep : deps) {
-        String s1 = dep.getPluginId() + ":" + (dep.getPluginVersion().isEmpty() ? "null" : dep.getPluginVersion());
-        if (StringUtil.equal(s, s1)) {
+        if (StringUtil.equal(s.split(":")[0], dep.getPluginId())) {
           found = true;
         }
       }
