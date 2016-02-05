@@ -200,8 +200,6 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
-    dumpUpdatesToCheck(myUpdatesToCheck);
-
     //preserve initial lists of plugins
     myCheckedIds = Util.concat(myCheckAllBuilds, myCheckLastBuilds);
     myCompatibleUpdates = new ArrayList<UpdateInfo>(myUpdatesToCheck);
@@ -222,10 +220,12 @@ public class CheckIdeCommand extends VerifierCommand {
     myCheckExcludedBuilds = myDumpBrokenPluginsFile != null || myReportFile != null;
 
 
-    if (!myCheckExcludedBuilds) {
+    if (!myCheckExcludedBuilds || commandLine.hasOption("dce")) {
       //drop out excluded plugins and don't check them
       myUpdatesToCheck = Collections2.filter(myUpdatesToCheck, myExcludedUpdatesFilter);
     }
+
+    dumpUpdatesToCheck(myUpdatesToCheck);
 
     //move important IntelliJ plugins to the beginning of check-list
     //(those plugins which contain defined IntelliJ module inside)
