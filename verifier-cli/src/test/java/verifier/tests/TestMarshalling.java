@@ -1,9 +1,12 @@
 package verifier.tests;
 
+import com.jetbrains.pluginverifier.commands.NewProblemsCommand;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.*;
+import com.jetbrains.pluginverifier.results.GlobalResultsRepository;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.results.ProblemSet;
+import com.jetbrains.pluginverifier.results.ResultsElement;
 import com.jetbrains.pluginverifier.results.plugin.PluginCheckResult;
 import com.jetbrains.pluginverifier.utils.ProblemUtils;
 import org.junit.Test;
@@ -32,6 +35,19 @@ public class TestMarshalling {
     map.put(new UpdateInfo(12345), problems);
     ProblemUtils.saveProblems(new File("brokenReport.xml"), "IU-144.0000", map);
 
+  }
+
+  private void loadAndOpenAllPluginResults() throws IOException {
+    GlobalResultsRepository repository = new GlobalResultsRepository();
+    for (int i = 143; i < 145; i++) {
+      List<String> builds = NewProblemsCommand.findPreviousBuilds("IU-" + i + ".9999", repository);
+      for (String build : builds) {
+        File file = repository.getReportFile(build);
+        System.out.println(build + " at " + file);
+        ResultsElement element = ProblemUtils.loadProblems(file);
+        Map<UpdateInfo, Collection<Problem>> map = element.asMap();
+      }
+    }
   }
 
   @Test
