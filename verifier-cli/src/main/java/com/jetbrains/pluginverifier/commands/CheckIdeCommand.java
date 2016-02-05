@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.commands;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.collect.*;
 import com.intellij.structure.domain.*;
@@ -199,6 +200,8 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
+    dumpUpdatesToCheck(myUpdatesToCheck);
+
     //preserve initial lists of plugins
     myCheckedIds = Util.concat(myCheckAllBuilds, myCheckLastBuilds);
     myCompatibleUpdates = new ArrayList<UpdateInfo>(myUpdatesToCheck);
@@ -234,6 +237,11 @@ public class CheckIdeCommand extends VerifierCommand {
 
     //list of plugins which were not checked due to some error (first = plugin; second = error message; third = caused exception)
     myIncorrectPlugins = new ArrayList<Pair<UpdateInfo, ? extends Problem>>();
+  }
+
+  private void dumpUpdatesToCheck(Collection<UpdateInfo> updatesToCheck) {
+    System.out.println("The following updates will be checked: ");
+    System.out.println(Joiner.on(", ").join(updatesToCheck));
   }
 
   @NotNull

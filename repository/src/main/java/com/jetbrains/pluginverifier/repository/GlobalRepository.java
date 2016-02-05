@@ -13,9 +13,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -60,6 +58,7 @@ public class GlobalRepository extends PluginRepository {
 
   @Override
   public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull String ideVersion, @NotNull Collection<String> pluginIds) throws IOException {
+    /*
     pluginIds = new HashSet<String>(pluginIds);
 
     List<UpdateInfo> result = new ArrayList<UpdateInfo>();
@@ -70,9 +69,10 @@ public class GlobalRepository extends PluginRepository {
       }
     }
     return result;
+    */
 
 
-    /*System.out.println("Loading compatible plugins list... ");
+    System.out.println("Loading compatible plugins list... ");
 
     StringBuilder urlSb = new StringBuilder();
     urlSb.append(RepositoryConfiguration.getInstance().getPluginRepositoryUrl())
@@ -86,7 +86,6 @@ public class GlobalRepository extends PluginRepository {
     String text = IOUtils.toString(url1);
 
     return new Gson().fromJson(text, updateListType);
-    */
   }
 
   @NotNull
