@@ -7,6 +7,7 @@ import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.errors.IncorrectCompatibleBuildsException;
 import com.intellij.structure.impl.errors.MissingPluginIdException;
+import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.resolvers.Resolver;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -53,8 +54,8 @@ class IdeaPlugin implements Plugin {
       name = myPluginId;
     }
     myPluginName = name;
-    myPluginVersion = pluginXml.getRootElement().getChildTextTrim("version");
-    myPluginVendor = pluginXml.getRootElement().getChildTextTrim("vendor");
+    myPluginVersion = StringUtil.notNullize(pluginXml.getRootElement().getChildTextTrim("version"));
+    myPluginVendor = StringUtil.notNullize(pluginXml.getRootElement().getChildTextTrim("vendor"));
 
     loadPluginDependencies(pluginXml);
     myDefinedModules = loadModules(pluginXml);

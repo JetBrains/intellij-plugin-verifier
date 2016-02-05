@@ -17,48 +17,6 @@
       <profile default="true" name="Default" enabled="false">
         <processorPath useClasspath="true" />
       </profile>
-      <profile default="false" name="Annotation profile for uploader" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="true" />
-        <module name="uploader" />
-      </profile>
-      <profile default="false" name="Annotation profile for verifier-cli" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="true" />
-        <module name="verifier-cli" />
-      </profile>
-      <profile default="false" name="Annotation profile for verifier-problems" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="true" />
-        <module name="verifier-problems" />
-      </profile>
-      <profile default="false" name="Annotation profile for mock-plugin" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="true" />
-        <module name="mock-plugin" />
-      </profile>
-      <profile default="false" name="Annotation profile for mock-idea" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="true" />
-        <module name="mock-idea" />
-      </profile>
-      <profile default="false" name="Annotation profile for intellij-plugin-structure" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="true" />
-        <module name="intellij-plugin-structure" />
-      </profile>
       <profile default="false" name="Annotation profile for repository" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
@@ -66,12 +24,18 @@
         <processorPath useClasspath="true" />
         <module name="repository" />
       </profile>
-      <profile default="false" name="Annotation profile for common-utils" enabled="true">
+      <profile default="false" name="Maven default annotation processors profile" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
         <module name="common-utils" />
+        <module name="intellij-plugin-structure" />
+        <module name="mock-idea" />
+        <module name="mock-plugin" />
+        <module name="uploader" />
+        <module name="verifier-cli" />
+        <module name="verifier-problems" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="1.6">

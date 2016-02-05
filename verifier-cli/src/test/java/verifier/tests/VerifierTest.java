@@ -105,6 +105,7 @@ public class VerifierTest {
     myProblems = myProblemSet.asMap();
   }
 
+
   @NotNull
   private File findLatestPlugin() throws FileNotFoundException {
     Pattern compile = Pattern.compile("mock-plugin-(\\d+\\.\\d+).jar");

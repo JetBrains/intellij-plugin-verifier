@@ -7,6 +7,11 @@ import org.jetbrains.annotations.Nullable;
 public class StringUtil {
 
   @NotNull
+  public static String notNullize(@Nullable String s) {
+    return s == null ? "" : s;
+  }
+
+  @NotNull
   public static String trimEnd(@NotNull String s, @NonNls @NotNull String suffix) {
     if (s.endsWith(suffix)) {
       return s.substring(0, s.length() - suffix.length());

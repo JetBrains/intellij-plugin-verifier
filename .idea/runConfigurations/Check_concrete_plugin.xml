@@ -3,7 +3,7 @@
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <option name="MAIN_CLASS_NAME" value="com.jetbrains.pluginverifier.PluginVerifierMain" />
     <option name="VM_PARAMETERS" value="" />
-    <option name="PROGRAM_PARAMETERS" value="check-plugin #20965 $USER_HOME$/.verifier-service/extractedIdeas/ideaIU-14.1.zip.d/ $USER_HOME$/.verifier-service/extractedIdeas/ideaIU-143.1015.7.zip.d $USER_HOME$/.verifier-service/extractedIdeas/ideaIU-15.0.zip.d/ -r /usr/lib/jvm/java-6-oracle -pcr for_tests/angularJsResult.xml" />
+    <option name="PROGRAM_PARAMETERS" value="check-plugin #23753 for_tests/idea-144 -r /usr/lib/jvm/java-6-oracle" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
     <option name="ALTERNATIVE_JRE_PATH" />

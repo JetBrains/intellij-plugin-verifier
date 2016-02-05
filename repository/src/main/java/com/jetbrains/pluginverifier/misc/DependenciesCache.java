@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class DependenciesCache {
-  private static final Set<Plugin> DEP_CALC_MARKER = new HashSet<Plugin>();
+  private static final Set<Plugin> DEP_CALC_MARKER = Collections.emptySet();
 
   private static final ImmutableList<String> IDEA_ULTIMATE_MODULES = ImmutableList.of(
       "com.intellij.modules.platform",
@@ -116,13 +116,12 @@ public class DependenciesCache {
 
 
   @NotNull
-  private PluginDependenciesDescriptor getDependenciesWithTransitive(@NotNull Ide ide,
-                                                                     @NotNull Plugin plugin,
-                                                                     @NotNull List<PluginDependenciesDescriptor> pluginStack) throws VerificationError {
+  public PluginDependenciesDescriptor getDependenciesWithTransitive(@NotNull Ide ide,
+                                                                    @NotNull Plugin plugin,
+                                                                    @NotNull List<PluginDependenciesDescriptor> pluginStack) throws VerificationError {
     PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
 
-    Set<Plugin> dependencies = descriptor.myDependencies;
-    if (dependencies == DEP_CALC_MARKER) {
+    if (descriptor.myDependencies == DEP_CALC_MARKER) {
       if (failOnCyclicDependency()) {
         int idx = pluginStack.lastIndexOf(descriptor); //compare descriptors by their identity (default equals behavior)
         throw new VerificationError("Cyclic plugin dependencies: " + Joiner.on(" -> ").join(pluginStack.subList(idx, pluginStack.size())) + " -> " + plugin.getPluginId());
@@ -136,9 +135,9 @@ public class DependenciesCache {
       return new PluginDependenciesDescriptor(descriptor.getPluginName(), true);
     }
 
-    if (dependencies == null) {
+    if (descriptor.myDependencies == null) {
       //not calculated yet
-      dependencies = new HashSet<Plugin>();
+      Set<Plugin> calc = new HashSet<Plugin>();
 
       descriptor.myDependencies = DEP_CALC_MARKER;
       pluginStack.add(descriptor);
@@ -164,8 +163,12 @@ public class DependenciesCache {
             } else {
               descriptor.addMissingDependency(descriptor.getPluginName(), moduleId, message);
             }
-          } else if (dependencies.add(depPlugin)) {
-            descriptor.combine(getDependenciesWithTransitive(ide, depPlugin, pluginStack));
+          } else if (calc.add(depPlugin)) {
+            PluginDependenciesDescriptor transitive = getDependenciesWithTransitive(ide, depPlugin, pluginStack);
+            descriptor.combineMissing(transitive);
+            if (transitive.getDependencies() != null) {
+              calc.addAll(transitive.getDependencies());
+            }
           }
         }
 
@@ -202,16 +205,17 @@ public class DependenciesCache {
             } else {
               descriptor.addMissingDependency(descriptor.getPluginName(), pluginDependency.getId(), message);
             }
-          } else if (dependencies.add(depPlugin)) {
-            descriptor.combine(getDependenciesWithTransitive(ide, depPlugin, pluginStack));
+          } else if (calc.add(depPlugin)) {
+            PluginDependenciesDescriptor transitive = getDependenciesWithTransitive(ide, depPlugin, pluginStack);
+            descriptor.combineMissing(transitive);
+            calc.addAll(transitive.getDependencies());
           }
         }
 
         if (descriptor.myIsCyclic) {
           descriptor.myDependencies = null;
-        }
-        else {
-          descriptor.myDependencies = dependencies;
+        } else {
+          descriptor.myDependencies = calc;
         }
       }
       finally {
@@ -253,7 +257,7 @@ public class DependenciesCache {
       }
     }
 
-    Set<Plugin> getDependencies() {
+    public Set<Plugin> getDependencies() {
       return myDependencies;
     }
 
@@ -290,7 +294,7 @@ public class DependenciesCache {
       }
     }
 
-    private void combineMissing(PluginDependenciesDescriptor other) {
+    public void combineMissing(PluginDependenciesDescriptor other) {
       Map<String, Map<String, String>> map = other.getMissingDependencies();
       if (map != null) {
         for (Map.Entry<String, Map<String, String>> entry : map.entrySet()) {
