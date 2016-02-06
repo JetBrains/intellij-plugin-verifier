@@ -1,6 +1,8 @@
 package com.intellij.structure.bytecode;
 
 import com.google.common.io.ByteStreams;
+import com.intellij.structure.impl.utils.ClassFileUtil;
+import com.intellij.structure.impl.utils.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -21,6 +23,11 @@ public class ClassFile {
   public ClassFile(@NotNull String className, @NotNull InputStream inputStream) throws IOException {
     myClassName = className;
     myBytecode = ByteStreams.toByteArray(inputStream);
+  }
+
+  public ClassFile(@NotNull InputStream inputStream) throws IOException {
+    myBytecode = ByteStreams.toByteArray(inputStream);
+    myClassName = StringUtil.notNullize(ClassFileUtil.extractFromBytes(myBytecode));
   }
 
   @NotNull

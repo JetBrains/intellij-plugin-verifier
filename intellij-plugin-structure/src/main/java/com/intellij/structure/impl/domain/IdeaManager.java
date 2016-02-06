@@ -42,6 +42,10 @@ public class IdeaManager extends IdeManager {
   @NotNull
   private static Resolver getIdeaClassPoolFromLibraries(File ideaDir) throws IOException {
     final File lib = new File(ideaDir, "lib");
+    if (!lib.isDirectory()) {
+      throw new IOException("Directory \"lib\" is not found (should be found at " + lib + ")");
+    }
+
     final List<JarFile> jars = JarsUtils.getJars(lib, new Predicate<File>() {
       @Override
       public boolean apply(File file) {

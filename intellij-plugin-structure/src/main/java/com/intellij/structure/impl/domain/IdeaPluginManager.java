@@ -59,9 +59,7 @@ public class IdeaPluginManager extends PluginManager {
 
         if (entryName.endsWith(CLASS_SUFFIX)) {
           //simply .class-file
-          String className = StringUtil.trimEnd(entryName, CLASS_SUFFIX);
-          ClassFile classFile = new ClassFile(className, zipInputStream);
-          zipRootPool.addClass(classFile);
+          zipRootPool.addClass(new ClassFile(zipInputStream));
 
         } else if (isXmlInRoot(entryName)) {
           //some *.xml file (maybe META-INF/plugin.xml)
