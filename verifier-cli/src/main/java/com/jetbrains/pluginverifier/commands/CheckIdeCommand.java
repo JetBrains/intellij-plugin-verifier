@@ -128,10 +128,11 @@ public class CheckIdeCommand extends VerifierCommand {
     for (String pluginId : new HashSet<String>(myCheckedIds)) { //plugins from checkedPlugins.txt. for them check that compatible version is present
       boolean hasCompatibleUpdate = false;
       for (UpdateInfo update : myCompatibleUpdates) {
-
-        if (StringUtil.equals(pluginId, update.getPluginId())) {
-          hasCompatibleUpdate = true;
-          break;
+        if (myExcludedUpdatesFilter.apply(update)) {
+          if (StringUtil.equals(pluginId, update.getPluginId())) {
+            hasCompatibleUpdate = true;
+            break;
+          }
         }
       }
       if (!hasCompatibleUpdate) {
