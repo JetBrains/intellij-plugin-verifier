@@ -8,6 +8,7 @@ import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -97,6 +98,12 @@ public class DummyPlugin implements Plugin {
   @NotNull
   @Override
   public Resolver getLibraryClassPool() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public InputStream getResourceFile(@NotNull String relativePath) {
     return null;
   }
 

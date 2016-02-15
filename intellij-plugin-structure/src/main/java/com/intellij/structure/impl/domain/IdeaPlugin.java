@@ -8,12 +8,17 @@ import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.errors.IncorrectCompatibleBuildsException;
 import com.intellij.structure.impl.errors.MissingPluginIdException;
 import com.intellij.structure.impl.utils.StringUtil;
+import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.resolvers.Resolver;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 class IdeaPlugin implements Plugin {
@@ -29,16 +34,19 @@ class IdeaPlugin implements Plugin {
   private final List<PluginDependency> myDependencies = new ArrayList<PluginDependency>();
   private final List<PluginDependency> myModuleDependencies = new ArrayList<PluginDependency>();
   private final Set<String> myDefinedModules;
+  private final URL myMainJarUrl;
   private final Document myPluginXml;
   private final Map<String, Document> myXmlDocumentsInRoot;
   private IdeVersion mySinceBuild;
   private IdeVersion myUntilBuild;
 
-  IdeaPlugin(@NotNull String pluginMoniker,
+  IdeaPlugin(@NotNull URL mainJarUrl,
+             @NotNull String pluginMoniker,
              @NotNull Resolver pluginResolver,
              @NotNull Resolver libraryResolver,
              @NotNull Document pluginXml,
              @NotNull Map<String, Document> xmlDocumentsInRoot) throws IncorrectPluginException {
+    myMainJarUrl = mainJarUrl;
     myPluginXml = pluginXml;
     myXmlDocumentsInRoot = xmlDocumentsInRoot;
     myPluginResolver = pluginResolver;
@@ -222,6 +230,24 @@ class IdeaPlugin implements Plugin {
   @NotNull
   public Resolver getLibraryClassPool() {
     return myLibraryResolver;
+  }
+
+  @Nullable
+  @Override
+  public InputStream getResourceFile(@NotNull String relativePath) {
+    relativePath = StringUtil.trimStart(relativePath, "/");
+    URL url;
+    try {
+      url = new URL(myMainJarUrl.toExternalForm() + "!/" + relativePath);
+    } catch (MalformedURLException e) {
+      throw new IllegalArgumentException("File path is invalid " + relativePath);
+    }
+    try {
+      return URLUtil.openStream(url);
+    } catch (IOException e) {
+      //consider it doesn't exist
+      return null;
+    }
   }
 
 }

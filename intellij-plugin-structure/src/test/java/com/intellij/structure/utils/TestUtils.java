@@ -18,6 +18,7 @@ public class TestUtils {
   public static final String PHP_URL = "https://plugins.jetbrains.com/plugin/download?pr=&updateId=22827";
   public static final String RUBY_URL = "https://plugins.jetbrains.com/plugin/download?pr=idea&updateId=22893";
   public static final String GO_URL = "https://plugins.jetbrains.com/plugin/download?pr=&updateId=23807";
+  public static final String SCALA_URL = "https://plugins.jetbrains.com/plugin/download?pr=idea&updateId=23664";
 
   @NotNull
   private static URL getFinalUrl(@NotNull String startUrl) throws IOException {

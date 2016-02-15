@@ -44,6 +44,7 @@ public class IdeaPluginManager extends PluginManager {
     Resolver pluginResolver = null;
     List<Resolver> libraryPool = new ArrayList<Resolver>();
     URL pluginXmlUrl = null;
+    URL mainJarUrl = null;
     Map<String, Document> allXmlInRoot = new HashMap<String, Document>();
 
     InMemoryJarResolver zipRootPool = new InMemoryJarResolver("Plugin root file: " + zipFile.getAbsolutePath());
@@ -65,14 +66,18 @@ public class IdeaPluginManager extends PluginManager {
           //some *.xml file (maybe META-INF/plugin.xml)
 
           final byte[] data = ByteStreams.toByteArray(zipInputStream);
+
+          final String jarPath = "jar:" + StringUtil.replace(zipFile.toURI().toASCIIString(), "!", "%21");
+
           final URL xmlUrl = new URL(
-              "jar:" + StringUtil.replace(zipFile.toURI().toASCIIString(), "!", "%21") + "!/" + entryName
+              jarPath + "!/" + entryName
           );
 
           boolean isPluginXml = entryName.endsWith(PLUGIN_XML_ENTRY_NAME);
 
           if (isPluginXml) {
             //this is the main plugin.xml i.e. META-INF/plugin.xml
+            mainJarUrl = new URL(jarPath);
 
             if (pluginXmlBytes != null && !Arrays.equals(data, pluginXmlBytes)) {
               throw new MultiplePluginXmlException("Plugin has more than one jars with plugin.xml");
@@ -99,8 +104,11 @@ public class IdeaPluginManager extends PluginManager {
               //some .xml (maybe META-INF/plugin.xml
 
               final byte[] data = ByteStreams.toByteArray(innerJar);
+
+              final String mainJarPath = "jar:" + StringUtil.replace(zipFile.toURI().toASCIIString(), "!", "%21") + "!/" + entryName;
+
               final URL xmlUrl = new URL(
-                  "jar:" + StringUtil.replace(zipFile.toURI().toASCIIString(), "!", "%21") + "!/" + entryName + "!/" + name
+                  mainJarPath + "!/" + name
               );
 
               boolean isPluginXml = name.endsWith(PLUGIN_XML_ENTRY_NAME);
@@ -108,6 +116,8 @@ public class IdeaPluginManager extends PluginManager {
                 if (pluginXmlBytes != null && !Arrays.equals(data, pluginXmlBytes)) {
                   throw new MultiplePluginXmlException("Plugin has more than one jars with plugin.xml");
                 }
+
+                mainJarUrl = new URL(mainJarPath);
 
                 pluginXmlBytes = data; //the main plugin.xml
                 pluginResolver = innerPool; //pluginPool is in this .jar exactly
@@ -155,7 +165,7 @@ public class IdeaPluginManager extends PluginManager {
       }
     }
 
-    return new IdeaPlugin(zipFile.getAbsolutePath(), pluginResolver, Resolver.getUnion(zipFile.getPath(), libraryPool), pluginXml, allXmlInRoot);
+    return new IdeaPlugin(mainJarUrl, zipFile.getAbsolutePath(), pluginResolver, Resolver.getUnion(zipFile.getPath(), libraryPool), pluginXml, allXmlInRoot);
   }
 
   private static void tryAddXmlInRoot(@NotNull Map<String, Document> container,
@@ -191,6 +201,7 @@ public class IdeaPluginManager extends PluginManager {
     Document pluginXml = null;
     Resolver pluginResolver = null;
     List<Resolver> libraryPools = new ArrayList<Resolver>();
+    URL mainJarUrl = null;
 
     for (JarFile jar : jarFiles) {
       ZipEntry pluginXmlEntry = jar.getEntry(PLUGIN_XML_ENTRY_NAME);
@@ -200,13 +211,18 @@ public class IdeaPluginManager extends PluginManager {
         }
 
         pluginResolver = Resolver.createJarClassPool(jar);
-        URL jarURL = new URL(
-            "jar:" + StringUtil.replace(new File(jar.getName()).toURI().toASCIIString(), "!", "%21") + "!/META-INF/plugin.xml"
+
+        final String jarPath = "jar:" + StringUtil.replace(new File(jar.getName()).toURI().toASCIIString(), "!", "%21");
+
+        mainJarUrl = new URL(jarPath);
+
+        URL pluginXmlUrl = new URL(
+            jarPath + "!/META-INF/plugin.xml"
         );
 
         try {
-          pluginXml = JDOMUtil.loadDocument(jarURL);
-          pluginXml = JDOMXIncluder.resolve(pluginXml, jarURL.toExternalForm());
+          pluginXml = JDOMUtil.loadDocument(pluginXmlUrl);
+          pluginXml = JDOMXIncluder.resolve(pluginXml, pluginXmlUrl.toExternalForm());
         } catch (JDOMException e) {
           throw new IncorrectPluginXmlException("Invalid plugin.xml", e);
         } catch (XIncludeException e) {
@@ -253,7 +269,7 @@ public class IdeaPluginManager extends PluginManager {
     }
 
     Resolver libraryPoolsUnion = Resolver.getUnion(pluginFile.toString(), libraryPools);
-    return new IdeaPlugin(pluginFile.getAbsolutePath(), pluginResolver, libraryPoolsUnion, pluginXml, xmlDocumentsInRoot);
+    return new IdeaPlugin(mainJarUrl, pluginFile.getAbsolutePath(), pluginResolver, libraryPoolsUnion, pluginXml, xmlDocumentsInRoot);
   }
 
   @NotNull
