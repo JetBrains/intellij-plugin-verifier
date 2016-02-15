@@ -109,6 +109,7 @@ public class IdeVersionTest {
   @Test
   public void isCorrectVersion() throws Exception {
     Assert.assertTrue(IdeVersion.isCorrectVersion("IC-144.123.11"));
-
+    Assert.assertTrue(IdeVersion.isCorrectVersion("2031"));
+    Assert.assertFalse(IdeVersion.isCorrectVersion("ABACABA"));
   }
 }

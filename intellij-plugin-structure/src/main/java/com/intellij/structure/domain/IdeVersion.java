@@ -60,7 +60,12 @@ public abstract class IdeVersion {
   }
 
   public static boolean isCorrectVersion(@NotNull String text) {
-    return PATTERN.matcher(text).matches();
+    try {
+      new IdeVersionImpl(text);
+      return true;
+    } catch (IllegalArgumentException e) {
+      return false;
+    }
   }
 
   @Override
