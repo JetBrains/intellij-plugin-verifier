@@ -121,7 +121,10 @@ public class CheckPluginCommand extends VerifierCommand {
   @NotNull
   private static UpdateInfo updateInfoByFile(@NotNull File file) {
     String name = file.getName();
-    name = name.substring(0, name.lastIndexOf('.'));
+    int idx = name.lastIndexOf('.');
+    if (idx != -1) {
+      name = name.substring(0, idx);
+    }
     if (name.matches("\\d+")) {
       return new UpdateInfo(Integer.parseInt(name));
     }
