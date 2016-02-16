@@ -63,6 +63,11 @@
             <artifactId>asm-all</artifactId>
             <version>5.0.4</version>
         </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.8.3</version>
+        </dependency>
     </dependencies>
 
     <build>

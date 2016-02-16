@@ -6,6 +6,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class StringUtil {
 
+  public static boolean isNullOrEmpty(@Nullable String s) {
+    return s == null || s.isEmpty();
+  }
+
   @NotNull
   public static String notNullize(@Nullable String s) {
     return s == null ? "" : s;

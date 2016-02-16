@@ -130,7 +130,7 @@ public class IdeManagerImpl extends IdeManager {
         }
       }
       if (version == null) {
-        throw new IllegalArgumentException("Unable to find IDE version file (build.txt or community/build.txt)");
+        throw new IncorrectPluginException("Unable to find IDE version file (build.txt or community/build.txt)");
       }
     } else {
       resolver = getIdeClassPoolFromLibraries(idePath);

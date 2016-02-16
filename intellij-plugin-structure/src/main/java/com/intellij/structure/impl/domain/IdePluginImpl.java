@@ -12,6 +12,8 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Whitelist;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,25 +23,31 @@ import java.util.*;
 
 class IdePluginImpl implements Plugin {
 
+  private static final Whitelist WHITELIST = Whitelist.basicWithImages();
+  private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules.";
   private final Resolver myPluginResolver;
   private final Resolver myLibraryResolver;
-
-  private final String myPluginName;
-  private final String myPluginVersion;
-  private final String myPluginId;
-  private final String myPluginVendor;
-
+  private final Set<String> myDefinedModules = new HashSet<String>();
   private final List<PluginDependency> myDependencies = new ArrayList<PluginDependency>();
   private final List<PluginDependency> myModuleDependencies = new ArrayList<PluginDependency>();
-  private final Set<String> myDefinedModules;
   private final URL myMainJarUrl;
   private final Document myPluginXml;
   private final Map<String, Document> myXmlDocumentsInRoot;
+  private String myPluginName;
+  private String myPluginVersion;
+  private String myPluginId;
+  private String myPluginVendor;
+  private String myVendorEmail;
+  private String myVendorUrl;
+  private String myVendorLogoPath;
+  private String myDescription;
+  private String myUrl;
+  private String myNotes;
   private IdeVersion mySinceBuild;
   private IdeVersion myUntilBuild;
 
+
   IdePluginImpl(@NotNull URL mainJarUrl,
-                @NotNull String pluginMoniker,
                 @NotNull Resolver pluginResolver,
                 @NotNull Resolver libraryResolver,
                 @NotNull Document pluginXml,
@@ -50,36 +58,76 @@ class IdePluginImpl implements Plugin {
     myPluginResolver = pluginResolver;
     myLibraryResolver = libraryResolver;
 
-    myPluginId = getPluginId(pluginXml);
-    if (myPluginId == null) {
-      throw new IncorrectPluginException("No id or name in META-INF/plugin.xml for plugin " + pluginMoniker);
-    }
-
-    String name = pluginXml.getRootElement().getChildTextTrim("name");
-    if (Strings.isNullOrEmpty(name)) {
-      name = myPluginId;
-    }
-    myPluginName = name;
-    myPluginVersion = StringUtil.notNullize(pluginXml.getRootElement().getChildTextTrim("version"));
-    myPluginVendor = StringUtil.notNullize(pluginXml.getRootElement().getChildTextTrim("vendor"));
-
-    loadPluginDependencies(pluginXml);
-    myDefinedModules = loadModules(pluginXml);
-
-    getIdeaVersion(pluginXml);
+    setEntries(pluginXml);
   }
 
-  @Nullable
-  private static String getPluginId(@NotNull Document pluginXml) {
-    String id = pluginXml.getRootElement().getChildText("id");
-    if (id == null || id.isEmpty()) {
-      String name = pluginXml.getRootElement().getChildText("name");
-      if (name == null || name.isEmpty()) {
-        return null;
-      }
-      return name;
+  private void setEntries(@NotNull Document pluginXml) {
+    Element rootElement = pluginXml.getRootElement();
+    if (rootElement == null) {
+      throw new IncorrectPluginException("Failed to parse plugin.xml: root element not found");
     }
-    return id;
+
+    if (!"idea-plugin".equals(rootElement.getName())) {
+      throw new IncorrectPluginException("Invalid plugin.xml: root element must be 'idea-plugin'");
+    }
+
+    myPluginName = rootElement.getChildTextTrim("name");
+    if (Strings.isNullOrEmpty(myPluginName)) {
+      throw new IncorrectPluginException("Invalid plugin.xml: 'name' is not specified");
+    }
+
+    myPluginId = rootElement.getChildText("id");
+    if (myPluginId == null) {
+      myPluginId = myPluginName;
+    }
+
+    myUrl = StringUtil.notNullize(rootElement.getAttributeValue("url"));
+
+    Element vendorElement = rootElement.getChild("vendor");
+    if (vendorElement == null) {
+      throw new IncorrectPluginException("Invalid plugin.xml: element 'vendor' not found");
+    }
+
+    myPluginVendor = vendorElement.getTextTrim();
+    myVendorEmail = StringUtil.notNullize(vendorElement.getAttributeValue("email"));
+    myVendorUrl = StringUtil.notNullize(vendorElement.getAttributeValue("url"));
+    myVendorLogoPath = vendorElement.getAttributeValue("logo");
+
+    myPluginVersion = rootElement.getChildTextTrim("version");
+    if (myPluginVersion == null) {
+      throw new IncorrectPluginException("Invalid plugin.xml: version is not specified");
+    }
+
+    Element ideaVersionElement = rootElement.getChild("idea-version");
+    if (ideaVersionElement == null) {
+      throw new IncorrectPluginException("Invalid plugin.xml: element 'idea-version' not found");
+    }
+    setSinceUntilBuilds(ideaVersionElement);
+
+    setPluginDependencies(rootElement);
+
+    setDefinedModules(pluginXml);
+
+
+    String description = rootElement.getChildTextTrim("description");
+    if (StringUtil.isNullOrEmpty(description)) {
+      throw new IncorrectPluginException("Invalid plugin.xml: description is empty");
+    } else {
+      myDescription = Jsoup.clean(description, WHITELIST);
+    }
+
+    List changeNotes = rootElement.getChildren("change-notes");
+    if (changeNotes != null && changeNotes.size() > 0) {
+      Object o = changeNotes.get(0);
+      if (o instanceof Element) {
+        Element currentNote = (Element) o;
+        String textTrim = currentNote.getTextTrim();
+        if (!StringUtil.isNullOrEmpty(textTrim)) {
+          myNotes = Jsoup.clean(textTrim, WHITELIST);
+        }
+      }
+    }
+
   }
 
 
@@ -124,8 +172,8 @@ class IdePluginImpl implements Plugin {
     return myUntilBuild;
   }
 
-  private void loadPluginDependencies(@NotNull Document pluginXml) {
-    final List dependsElements = pluginXml.getRootElement().getChildren("depends");
+  private void setPluginDependencies(@NotNull Element rootElement) {
+    final List dependsElements = rootElement.getChildren("depends");
 
     for (Object dependsObj : dependsElements) {
       Element dependsElement = (Element) dependsObj;
@@ -133,8 +181,12 @@ class IdePluginImpl implements Plugin {
       final boolean optional = Boolean.parseBoolean(dependsElement.getAttributeValue("optional", "false"));
       final String pluginId = dependsElement.getTextTrim();
 
+      if (pluginId == null) {
+        throw new IncorrectPluginException("Invalid plugin.xml: invalid dependency tag");
+      }
+
       PluginDependency dependency = new PluginDependency(pluginId, optional);
-      if (pluginId.startsWith("com.intellij.modules.")) {
+      if (pluginId.startsWith(INTELLIJ_MODULES_PREFIX)) {
         myModuleDependencies.add(dependency);
       } else {
         myDependencies.add(dependency);
@@ -149,17 +201,6 @@ class IdePluginImpl implements Plugin {
 
     return IdeVersion.VERSION_COMPARATOR.compare(mySinceBuild, ideVersion) <= 0
         && (myUntilBuild == null || IdeVersion.VERSION_COMPARATOR.compare(ideVersion, myUntilBuild) <= 0);
-  }
-
-  @NotNull
-  private Set<String> loadModules(@NotNull Document pluginXml) {
-    LinkedHashSet<String> modules = new LinkedHashSet<String>();
-    @SuppressWarnings("unchecked")
-    Iterable<? extends Element> children = (Iterable<? extends Element>) pluginXml.getRootElement().getChildren("module");
-    for (Element module : children) {
-      modules.add(module.getAttributeValue("value"));
-    }
-    return modules;
   }
 
   @Override
@@ -182,7 +223,7 @@ class IdePluginImpl implements Plugin {
 
   @Override
   @NotNull
-  public String getPluginVendor() {
+  public String getVendor() {
     return myPluginVendor;
   }
 
@@ -192,9 +233,16 @@ class IdePluginImpl implements Plugin {
     return Collections.unmodifiableSet(myDefinedModules);
   }
 
-  private void getIdeaVersion(@NotNull Document pluginXml) throws IncorrectPluginException {
-    Element ideaVersion = pluginXml.getRootElement().getChild("idea-version");
-    if (ideaVersion != null && ideaVersion.getAttributeValue("min") == null) { // min != null in legacy plugins.
+  private void setDefinedModules(@NotNull Document pluginXml) {
+    @SuppressWarnings("unchecked")
+    Iterable<? extends Element> children = (Iterable<? extends Element>) pluginXml.getRootElement().getChildren("module");
+    for (Element module : children) {
+      myDefinedModules.add(module.getAttributeValue("value"));
+    }
+  }
+
+  private void setSinceUntilBuilds(@NotNull Element ideaVersion) throws IncorrectPluginException {
+    if (ideaVersion.getAttributeValue("min") == null) { // min != null in legacy plugins.
       String sb = ideaVersion.getAttributeValue("since-build");
       try {
         mySinceBuild = IdeVersion.createIdeVersion(sb);
@@ -232,13 +280,19 @@ class IdePluginImpl implements Plugin {
 
   @Nullable
   @Override
+  public String getDescription() {
+    return myDescription;
+  }
+
+  @Nullable
+  @Override
   public InputStream getResourceFile(@NotNull String relativePath) {
     relativePath = StringUtil.trimStart(relativePath, "/");
     URL url;
     try {
       url = new URL(myMainJarUrl.toExternalForm() + relativePath);
     } catch (MalformedURLException e) {
-      throw new IllegalArgumentException("File path is invalid " + relativePath);
+      throw new IncorrectPluginException("File path is invalid " + relativePath);
     }
     try {
       return URLUtil.openStream(url);
@@ -248,4 +302,28 @@ class IdePluginImpl implements Plugin {
     }
   }
 
+  @Override
+  public String getVendorEmail() {
+    return myVendorEmail;
+  }
+
+  @Override
+  public String getVendorUrl() {
+    return myVendorUrl;
+  }
+
+  @Override
+  public String getVendorLogoPath() {
+    return myVendorLogoPath;
+  }
+
+  @Override
+  public String getUrl() {
+    return myUrl;
+  }
+
+  @Override
+  public String getNotes() {
+    return myNotes;
+  }
 }

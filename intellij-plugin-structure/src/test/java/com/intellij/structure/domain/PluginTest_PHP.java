@@ -99,7 +99,7 @@ public class PluginTest_PHP {
 
   @Test
   public void getPluginVendor() throws Exception {
-    assertEquals("JetBrains", plugin.getPluginVendor());
+    assertEquals("JetBrains", plugin.getVendor());
   }
 
   @Test
@@ -129,4 +129,10 @@ public class PluginTest_PHP {
     assertEquals(226, allClasses.size());
   }
 
+  @Test
+  public void testOtherProperties() throws Exception {
+    assertEquals("PHP 5.3-7 editing and debugging, PHPUnit, Smarty, Twig and various frameworks support", plugin.getDescription());
+    assertEquals("https://www.jetbrains.com/phpstorm", plugin.getVendorUrl());
+    assertEquals("JetBrains", plugin.getVendor());
+  }
 }

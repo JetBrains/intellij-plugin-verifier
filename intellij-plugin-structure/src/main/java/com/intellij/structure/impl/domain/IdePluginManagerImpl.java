@@ -195,7 +195,7 @@ public class IdePluginManagerImpl extends PluginManager {
       }
     }
 
-    return new IdePluginImpl(mainJarUrl, zipFile.getAbsolutePath(), pluginResolver, Resolver.getUnion(zipFile.getPath(), libraryPool), pluginXml, allXmlInRoot);
+    return new IdePluginImpl(mainJarUrl, pluginResolver, Resolver.getUnion(zipFile.getPath(), libraryPool), pluginXml, allXmlInRoot);
   }
 
   private static void tryAddXmlInRoot(@NotNull Map<String, Document> container,
@@ -303,7 +303,7 @@ public class IdePluginManagerImpl extends PluginManager {
     }
 
     Resolver libraryPoolsUnion = Resolver.getUnion(pluginFile.toString(), libraryPools);
-    return new IdePluginImpl(mainJarUrl, pluginFile.getAbsolutePath(), pluginResolver, libraryPoolsUnion, pluginXml, xmlDocumentsInRoot);
+    return new IdePluginImpl(mainJarUrl, pluginResolver, libraryPoolsUnion, pluginXml, xmlDocumentsInRoot);
   }
 
   @NotNull
