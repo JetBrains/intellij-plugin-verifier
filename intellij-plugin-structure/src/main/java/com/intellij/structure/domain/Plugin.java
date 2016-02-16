@@ -21,8 +21,7 @@ public interface Plugin {
    * Returns all the .xml-files under the <i>META-INF/</i> subdirectory.<p> <i>META-INF/</i> is a directory containing
    * the mandatory <i>META-INF/plugin.xml</i> entry with plugin info.<p>
    *
-   * @return all the .xml files under <i>META-INF</i> in form: (relative path to the xml-entry) <b>-></b>
-   * (<i>content</i>)
+   * @return all the .xml files under <i>META-INF</i> in form: (relative path to the xml-entry) <b>TO</b> (<i>its content</i>)
    */
   @NotNull
   Map<String, Document> getAllXmlInRoot();
