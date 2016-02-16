@@ -161,7 +161,7 @@ public class CheckPluginCommand extends VerifierCommand {
           "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963");
     }
 
-    IdeRuntime javaRuntime = createJdk(commandLine);
+    Jdk javaRuntime = createJdk(commandLine);
 
     PluginVerifierOptions options = PluginVerifierOptions.parseOpts(commandLine);
 
@@ -307,7 +307,7 @@ public class CheckPluginCommand extends VerifierCommand {
    */
   @NotNull
   private ProblemSet verifyPlugin(@NotNull Ide ide,
-                                  @NotNull IdeRuntime ideRuntime,
+                                  @NotNull Jdk jdk,
                                   @Nullable Resolver externalClassPath,
                                   @NotNull Plugin plugin,
                                   @NotNull PluginVerifierOptions options,
@@ -317,7 +317,7 @@ public class CheckPluginCommand extends VerifierCommand {
     System.out.print(message);
     log.message(message);
 
-    VerificationContextImpl ctx = new VerificationContextImpl(options, ide, ideRuntime, externalClassPath);
+    VerificationContextImpl ctx = new VerificationContextImpl(options, ide, jdk, externalClassPath);
 
     TeamCityLog.Block block = log.blockOpen(plugin.getPluginId());
 

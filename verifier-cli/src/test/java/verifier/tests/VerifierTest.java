@@ -75,7 +75,7 @@ public class VerifierTest {
 
   private Ide myIde;
   private Plugin myPlugin;
-  private IdeRuntime myJavaRuntime;
+  private Jdk myJavaRuntime;
 
   private static void testFoundProblems(Map<Problem, Set<ProblemLocation>> foundProblems, Multimap<Problem, ProblemLocation> actualProblems) throws Exception {
 

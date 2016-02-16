@@ -86,15 +86,6 @@ public abstract class Resolver {
   public abstract Resolver getClassLocation(@NotNull String className);
 
   /**
-   * Returns <i>moniker</i> of this resolver (it may be for example a name of containing .jar-file or some other string
-   * useful for debugging)
-   *
-   * @return moniker
-   */
-  @NotNull
-  public abstract String getMoniker();
-
-  /**
    * Returns list of names of all containing classes. Names are present in binary form.
    *
    * @return list of all the classes

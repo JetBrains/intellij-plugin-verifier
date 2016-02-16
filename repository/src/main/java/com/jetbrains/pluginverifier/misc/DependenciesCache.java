@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.misc;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.intellij.structure.domain.Ide;
-import com.intellij.structure.domain.IdeRuntime;
+import com.intellij.structure.domain.Jdk;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.resolvers.Resolver;
@@ -64,16 +64,16 @@ public class DependenciesCache {
   }
 
   @NotNull
-  private Resolver getResolverForIde(@NotNull Ide ide, @NotNull IdeRuntime ideRuntime, @Nullable Resolver externalClassPath) {
+  private Resolver getResolverForIde(@NotNull Ide ide, @NotNull Jdk jdk, @Nullable Resolver externalClassPath) {
     Resolver resolver = myIdeResolvers.get(ide);
     if (resolver == null) {
       List<Resolver> resolvers = new ArrayList<Resolver>();
       resolvers.add(ide.getClassPool());
-      resolvers.add(ideRuntime.getClassPool());
+      resolvers.add(jdk.getResolver());
       if (externalClassPath != null) {
         resolvers.add(externalClassPath);
       }
-      String moniker = String.format("Ide-%s+Jdk-%s-resolver", ide.getVersion(), ideRuntime.getMoniker());
+      String moniker = String.format("Ide-%s+Jdk-%s-resolver", ide.getVersion(), jdk.toString());
       resolver = Resolver.createCacheResolver(Resolver.getUnion(moniker, resolvers));
       myIdeResolvers.put(ide, resolver);
     }
@@ -82,7 +82,7 @@ public class DependenciesCache {
 
 
   @NotNull
-  public PluginDependenciesDescriptor getResolver(@NotNull Plugin plugin, @NotNull Ide ide, @NotNull IdeRuntime ideRuntime, @Nullable Resolver externalClassPath) throws VerificationError {
+  public PluginDependenciesDescriptor getResolver(@NotNull Plugin plugin, @NotNull Ide ide, @NotNull Jdk jdk, @Nullable Resolver externalClassPath) throws VerificationError {
     PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
     if (descriptor.myResolver == null) {
       //not calculated yet
@@ -93,7 +93,7 @@ public class DependenciesCache {
 
       resolvers.add(Resolver.getUnion(plugin.getPluginId(), Arrays.asList(plugin.getPluginClassPool(), plugin.getLibraryClassPool())));
 
-      resolvers.add(getResolverForIde(ide, ideRuntime, externalClassPath));
+      resolvers.add(getResolverForIde(ide, jdk, externalClassPath));
 
       for (Plugin dep : all.getDependencies()) {
         Resolver pluginResolver = dep.getPluginClassPool();
@@ -107,7 +107,7 @@ public class DependenciesCache {
         }
       }
 
-      String moniker = String.format("Plugin-%s+Ide-%s+Jdk-%s", plugin.getPluginId(), ide.getVersion(), ideRuntime.getMoniker());
+      String moniker = String.format("Plugin-%s+Ide-%s+Jdk-%s", plugin.getPluginId(), ide.getVersion(), jdk.toString());
       descriptor.myResolver = Resolver.getUnion(moniker, resolvers);
     }
 
@@ -288,13 +288,13 @@ public class DependenciesCache {
       combineMissing(other);
     }
 
-    private void combineDependencies(PluginDependenciesDescriptor other) {
+    void combineDependencies(PluginDependenciesDescriptor other) {
       if (other.getDependencies() != null) {
         myDependencies.addAll(other.getDependencies());
       }
     }
 
-    public void combineMissing(PluginDependenciesDescriptor other) {
+    void combineMissing(PluginDependenciesDescriptor other) {
       Map<String, Map<String, String>> map = other.getMissingDependencies();
       if (map != null) {
         for (Map.Entry<String, Map<String, String>> entry : map.entrySet()) {

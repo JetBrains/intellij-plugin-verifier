@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier;
 
 import com.intellij.structure.domain.Ide;
-import com.intellij.structure.domain.IdeRuntime;
+import com.intellij.structure.domain.Jdk;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
@@ -17,7 +17,7 @@ public interface VerificationContext {
 
   Ide getIde();
 
-  IdeRuntime getIdeRuntime();
+  Jdk getJdk();
 
   Resolver getExternalClassPath();
 }

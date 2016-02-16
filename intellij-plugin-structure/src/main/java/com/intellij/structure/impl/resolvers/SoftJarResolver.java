@@ -49,9 +49,8 @@ public class SoftJarResolver extends Resolver {
     return Collections.unmodifiableSet(myClassesCache.keySet());
   }
 
-  @NotNull
   @Override
-  public String getMoniker() {
+  public String toString() {
     return myMoniker;
   }
 

@@ -116,9 +116,8 @@ public class CompileOutputResolver extends Resolver {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public String getMoniker() {
+  public String toString() {
     return moniker;
   }
 

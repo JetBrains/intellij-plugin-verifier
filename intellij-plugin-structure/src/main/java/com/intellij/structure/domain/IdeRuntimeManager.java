@@ -17,6 +17,6 @@ public abstract class IdeRuntimeManager {
   }
 
   @NotNull
-  public abstract IdeRuntime createRuntime(@NotNull File runtimeDir) throws IOException;
+  public abstract Jdk createRuntime(@NotNull File runtimeDir) throws IOException;
 
 }

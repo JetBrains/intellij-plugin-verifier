@@ -32,9 +32,8 @@ public class ContainerResolver extends Resolver {
     return result;
   }
 
-  @NotNull
   @Override
-  public String getMoniker() {
+  public String toString() {
     return myMoniker;
   }
 

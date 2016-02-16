@@ -33,12 +33,6 @@ public class EmptyResolver extends Resolver {
     return Collections.emptySet();
   }
 
-  @NotNull
-  @Override
-  public String getMoniker() {
-    return "EmptyResolver";
-  }
-
   @Override
   public boolean isEmpty() {
     return true;
@@ -46,6 +40,6 @@ public class EmptyResolver extends Resolver {
 
   @Override
   public String toString() {
-    return getMoniker();
+    return "EmptyResolver";
   }
 }

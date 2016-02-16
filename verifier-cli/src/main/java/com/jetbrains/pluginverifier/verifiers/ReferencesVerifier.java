@@ -31,7 +31,7 @@ class ReferencesVerifier implements Verifier {
   public void verify(@NotNull Plugin plugin, @NotNull VerificationContext ctx) throws VerificationError {
     final Resolver pluginPool = plugin.getPluginClassPool();
 
-    DependenciesCache.PluginDependenciesDescriptor descriptor = DependenciesCache.getInstance().getResolver(plugin, ctx.getIde(), ctx.getIdeRuntime(), ctx.getExternalClassPath());
+    DependenciesCache.PluginDependenciesDescriptor descriptor = DependenciesCache.getInstance().getResolver(plugin, ctx.getIde(), ctx.getJdk(), ctx.getExternalClassPath());
     Resolver cacheResolver = Resolver.createCacheResolver(descriptor.getResolver());
 
     processMissingDependencies(descriptor, ctx);

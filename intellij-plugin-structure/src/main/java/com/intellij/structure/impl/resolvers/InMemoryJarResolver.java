@@ -36,11 +36,6 @@ public class InMemoryJarResolver extends Resolver {
     return Collections.unmodifiableCollection(myInMemoryClasses.keySet());
   }
 
-  @NotNull
-  @Override
-  public String getMoniker() {
-    return myMoniker;
-  }
 
   public boolean isEmpty() {
     return myInMemoryClasses.isEmpty();
@@ -74,7 +69,7 @@ public class InMemoryJarResolver extends Resolver {
 
   @Override
   public String toString() {
-    return getMoniker();
+    return myMoniker;
   }
 
 }

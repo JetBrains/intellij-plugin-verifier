@@ -39,7 +39,7 @@ public class CheckIdeCommand extends VerifierCommand {
       ImmutableList.of("org.jetbrains.plugins.ruby", "com.jetbrains.php", "org.jetbrains.android", "Pythonid");
   private TeamCityUtil.ReportGrouping myGrouping;
   private TeamCityLog myTc;
-  private IdeRuntime myIdeRuntime;
+  private Jdk myJdk;
   private PluginVerifierOptions myVerifierOptions;
   private Resolver myExternalClassPath;
   private Ide myIde;
@@ -133,7 +133,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     myTc = TeamCityLog.getInstance(commandLine);
 
-    myIdeRuntime = createJdk(commandLine);
+    myJdk = createJdk(commandLine);
 
     myVerifierOptions = PluginVerifierOptions.parseOpts(commandLine);
 
@@ -251,7 +251,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
         System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), myUpdatesToCheck.size()));
 
-        VerificationContextImpl ctx = new VerificationContextImpl(myVerifierOptions, myIde, myIdeRuntime, myExternalClassPath);
+        VerificationContextImpl ctx = new VerificationContextImpl(myVerifierOptions, myIde, myJdk, myExternalClassPath);
         Verifiers.processAllVerifiers(plugin, ctx);
 
         myResults.put(updateJson, ctx.getProblemSet());

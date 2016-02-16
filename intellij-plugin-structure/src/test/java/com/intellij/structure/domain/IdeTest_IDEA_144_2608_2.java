@@ -25,7 +25,7 @@ public class IdeTest_IDEA_144_2608_2 {
 
   private static final String IDEA_144_LOAD_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/144.2608.2/ideaIU-144.2608.2.zip";
   private static Ide ide;
-  private static IdeRuntime runtime;
+  private static Jdk runtime;
 
   @Before
   public void setUp() throws Exception {
@@ -64,12 +64,8 @@ public class IdeTest_IDEA_144_2608_2 {
 
   @Test
   public void testRuntime() throws Exception {
-    Resolver classPool = runtime.getClassPool();
+    Resolver classPool = runtime.getResolver();
     assertTrue(!classPool.getAllClasses().isEmpty());
-    String moniker = runtime.getMoniker();
-    assertEquals(getJdkPath(), moniker);
-
-
   }
 
   @Test

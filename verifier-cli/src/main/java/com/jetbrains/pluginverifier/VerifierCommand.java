@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier;
 
 import com.intellij.structure.domain.Ide;
-import com.intellij.structure.domain.IdeRuntime;
 import com.intellij.structure.domain.IdeRuntimeManager;
 import com.intellij.structure.domain.IdeVersion;
+import com.intellij.structure.domain.Jdk;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.utils.FailUtil;
 import org.apache.commons.cli.CommandLine;
@@ -37,7 +37,7 @@ public abstract class VerifierCommand {
   public abstract int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception;
 
   @NotNull
-  protected IdeRuntime createJdk(@NotNull CommandLine commandLine) throws IOException {
+  protected Jdk createJdk(@NotNull CommandLine commandLine) throws IOException {
     File runtimeDirectory;
 
     if (commandLine.hasOption('r')) {

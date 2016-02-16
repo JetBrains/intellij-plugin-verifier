@@ -36,10 +36,9 @@ public class CacheResolver extends Resolver {
     return myDelegate.getClassLocation(className);
   }
 
-  @NotNull
   @Override
-  public String getMoniker() {
-    return myDelegate.getMoniker();
+  public String toString() {
+    return myDelegate.toString();
   }
 
   @NotNull

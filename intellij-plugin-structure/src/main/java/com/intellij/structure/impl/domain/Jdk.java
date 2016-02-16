@@ -2,7 +2,6 @@ package com.intellij.structure.impl.domain;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
-import com.intellij.structure.domain.IdeRuntime;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.jar.JarFile;
 
-class Jdk implements IdeRuntime {
+class Jdk implements com.intellij.structure.domain.Jdk {
 
   private static final Set<String> JDK_JAR_NAMES = ImmutableSet.of("rt.jar", "tools.jar", "classes.jar", "jsse.jar", "javaws.jar", "jce.jar");
 
@@ -51,13 +50,12 @@ class Jdk implements IdeRuntime {
 
   @Override
   @NotNull
-  public Resolver getClassPool() {
+  public Resolver getResolver() {
     return myPool;
   }
 
-  @NotNull
   @Override
-  public String getMoniker() {
-    return myPool.getMoniker();
+  public String toString() {
+    return myPool.toString();
   }
 }

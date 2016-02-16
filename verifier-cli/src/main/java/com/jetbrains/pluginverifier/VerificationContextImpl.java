@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier;
 
 import com.intellij.structure.domain.Ide;
-import com.intellij.structure.domain.IdeRuntime;
+import com.intellij.structure.domain.Jdk;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
@@ -17,16 +17,16 @@ public class VerificationContextImpl implements VerificationContext {
   private final ProblemSet myProblemSet = new ProblemSet();
   private final PluginVerifierOptions myVerifierOptions;
   private final Ide myIde;
-  private final IdeRuntime myIdeRuntime;
+  private final Jdk myJdk;
   private final Resolver myExternalClassPath;
 
   public VerificationContextImpl(@NotNull PluginVerifierOptions verifierOptions,
                                  @NotNull Ide ide,
-                                 @NotNull IdeRuntime ideRuntime,
+                                 @NotNull Jdk jdk,
                                  @Nullable Resolver externalClassPath) {
     myVerifierOptions = verifierOptions;
     myIde = ide;
-    myIdeRuntime = ideRuntime;
+    myJdk = jdk;
     myExternalClassPath = externalClassPath;
   }
 
@@ -49,9 +49,8 @@ public class VerificationContextImpl implements VerificationContext {
     return myIde;
   }
 
-  @Override
-  public IdeRuntime getIdeRuntime() {
-    return myIdeRuntime;
+  public Jdk getJdk() {
+    return myJdk;
   }
 
   @Override
