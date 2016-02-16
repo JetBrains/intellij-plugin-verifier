@@ -5,7 +5,6 @@ import com.google.common.io.ByteStreams;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.errors.IncorrectPluginException;
-import com.intellij.structure.impl.errors.*;
 import com.intellij.structure.impl.resolvers.InMemoryJarResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.impl.utils.StringUtil;
@@ -103,11 +102,11 @@ public class IdePluginManagerImpl extends PluginManager {
               subDirectory = StringUtil.trimEnd(subDirectory, "/");
               mainJarUrl = new URL(jarPath + (subDirectory.isEmpty() ? "" : subDirectory + "/"));
             } catch (MalformedURLException e) {
-              throw new IncorrectStructureException("Plugin main .jar (containing a META-INF/plugin.xml) is broken", e);
+              throw new IncorrectPluginException("Plugin main .jar (containing a META-INF/plugin.xml) is broken", e);
             }
 
             if (pluginXmlBytes != null && !Arrays.equals(data, pluginXmlBytes)) {
-              throw new MultiplePluginXmlException("Plugin has more than one jars with plugin.xml");
+              throw new IncorrectPluginException("Plugin has more than one jars with plugin.xml");
             }
             pluginXmlBytes = data;
             pluginResolver = zipRootPool;
@@ -141,13 +140,13 @@ public class IdePluginManagerImpl extends PluginManager {
               boolean isPluginXml = name.endsWith(PLUGIN_XML_ENTRY_NAME);
               if (isPluginXml) {
                 if (pluginXmlBytes != null && !Arrays.equals(data, pluginXmlBytes)) {
-                  throw new MultiplePluginXmlException("Plugin has more than one jars with plugin.xml");
+                  throw new IncorrectPluginException("Plugin has more than one jars with plugin.xml");
                 }
 
                 try {
                   mainJarUrl = new URL(mainJarPath);
                 } catch (MalformedURLException e) {
-                  throw new IncorrectStructureException("Plugin main .jar (containing a META-INF/plugin.xml) is broken", e);
+                  throw new IncorrectPluginException("Plugin main .jar (containing a META-INF/plugin.xml) is broken", e);
                 }
 
                 pluginXmlBytes = data; //the main plugin.xml
@@ -175,7 +174,7 @@ public class IdePluginManagerImpl extends PluginManager {
     }
 
     if (pluginXmlBytes == null) {
-      throw new MissingPluginXmlException("No META-INF/plugin.xml found for plugin " + zipFile.getPath());
+      throw new IncorrectPluginException("No META-INF/plugin.xml found for plugin " + zipFile.getPath());
     }
     //pluginXmlUrl is also not null
 
@@ -185,14 +184,14 @@ public class IdePluginManagerImpl extends PluginManager {
       pluginXml = JDOMUtil.loadDocument(new ByteArrayInputStream(pluginXmlBytes));
       pluginXml = JDOMXIncluder.resolve(pluginXml, pluginXmlUrl.toExternalForm());
     } catch (JDOMException e) {
-      throw new IncorrectPluginXmlException("Invalid META-INF/plugin.xml", e);
+      throw new IncorrectPluginException("Invalid META-INF/plugin.xml", e);
     } catch (XIncludeException e) {
-      throw new IncorrectPluginXmlException("Failed to read META-INF/plugin.xml", e);
+      throw new IncorrectPluginException("Failed to read META-INF/plugin.xml", e);
     }
 
     if (!zipRootPool.isEmpty()) {
       if (pluginResolver != zipRootPool) {
-        throw new MissingPluginXmlException("Plugin contains .class files in the root, but has no META-INF/plugin.xml");
+        throw new IncorrectPluginException("Plugin contains .class files in the root, but has no META-INF/plugin.xml");
       }
     }
 
@@ -211,7 +210,7 @@ public class IdePluginManagerImpl extends PluginManager {
     } catch (Exception e) {
       if (isPluginXml) {
         //plugin.xml should be correct!
-        throw new IncorrectPluginXmlException("Failed to read and parse META-INF/plugin.xml", e);
+        throw new IncorrectPluginException("Failed to read and parse META-INF/plugin.xml", e);
       }
       //for non-main .xml it's not critical
 //      System.err.println("Couldn't parse " + entryName);
@@ -238,7 +237,7 @@ public class IdePluginManagerImpl extends PluginManager {
       ZipEntry pluginXmlEntry = jar.getEntry(PLUGIN_XML_ENTRY_NAME);
       if (pluginXmlEntry != null) {
         if (pluginResolver != null) {
-          throw new MultiplePluginXmlException("Plugin has more than one .jar with plugin.xml " + pluginFile);
+          throw new IncorrectPluginException("Plugin has more than one .jar with plugin.xml " + pluginFile);
         }
 
         pluginResolver = Resolver.createJarClassPool(jar);
@@ -248,7 +247,7 @@ public class IdePluginManagerImpl extends PluginManager {
         try {
           mainJarUrl = new URL(jarPath);
         } catch (MalformedURLException e) {
-          throw new IncorrectStructureException("Plugin main .jar (containing a META-INF/plugin.xml) is broken", e);
+          throw new IncorrectPluginException("Plugin main .jar (containing a META-INF/plugin.xml) is broken", e);
         }
 
         URL pluginXmlUrl = new URL(
@@ -259,9 +258,9 @@ public class IdePluginManagerImpl extends PluginManager {
           pluginXml = JDOMUtil.loadDocument(pluginXmlUrl);
           pluginXml = JDOMXIncluder.resolve(pluginXml, pluginXmlUrl.toExternalForm());
         } catch (JDOMException e) {
-          throw new IncorrectPluginXmlException("Invalid plugin.xml", e);
+          throw new IncorrectPluginException("Invalid plugin.xml", e);
         } catch (XIncludeException e) {
-          throw new IncorrectPluginXmlException("Failed to read plugin.xml", e);
+          throw new IncorrectPluginException("Failed to read plugin.xml", e);
         }
       } else {
         libraryPools.add(Resolver.createJarClassPool(jar));
@@ -269,7 +268,7 @@ public class IdePluginManagerImpl extends PluginManager {
     }
 
     if (pluginXml == null) {
-      throw new MissingPluginXmlException("No META-INF/plugin.xml found for plugin " + pluginFile);
+      throw new IncorrectPluginException("No META-INF/plugin.xml found for plugin " + pluginFile);
     }
 
     final Map<String, Document> xmlDocumentsInRoot = new HashMap<String, Document>();
@@ -316,12 +315,12 @@ public class IdePluginManagerImpl extends PluginManager {
   private static List<JarFile> getPluginJars(@NotNull File pluginDirectory) throws IOException, IncorrectPluginException {
     final File lib = new File(pluginDirectory, "lib");
     if (!lib.isDirectory()) {
-      throw new IncorrectStructureException("Plugin \"lib\" directory is not found (should be " + lib + ")");
+      throw new IncorrectPluginException("Plugin \"lib\" directory is not found (should be " + lib + ")");
     }
 
     final List<JarFile> jars = JarsUtils.getJars(lib, Predicates.<File>alwaysTrue());
     if (jars.size() == 0) {
-      throw new EmptyLibDirectoryException("No jar files found under \"lib\" directory" + "(should be under " + lib + ")");
+      throw new IncorrectPluginException("No jar files found under \"lib\" directory" + "(should be under " + lib + ")");
     }
 
     return jars;
@@ -342,12 +341,12 @@ public class IdePluginManagerImpl extends PluginManager {
       if (fileName.endsWith(".jar")) {
         return createFromJar(pluginFile);
       }
-      throw new IncorrectPluginFileTypeException("Incorrect plugin file type " + pluginFile + ". Should be one of .zip or .jar archives");
+      throw new IncorrectPluginException("Incorrect plugin file type " + pluginFile + ". Should be one of .zip or .jar archives");
     }
 
     File[] pluginRootFiles = pluginFile.listFiles();
     if (pluginRootFiles == null || pluginRootFiles.length == 0) {
-      throw new IncorrectStructureException("Plugin root directory " + pluginFile + " is empty");
+      throw new IncorrectPluginException("Plugin root directory " + pluginFile + " is empty");
     }
 /*
     TODO: should be proceed?

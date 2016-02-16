@@ -3,19 +3,14 @@ package com.intellij.structure.errors;
 /**
  * @author Sergey Patrikeev
  */
-public abstract class IncorrectPluginException extends RuntimeException {
-  protected IncorrectPluginException() {
-  }
+public class IncorrectPluginException extends RuntimeException {
 
-  protected IncorrectPluginException(String message) {
+  public IncorrectPluginException(String message) {
     super(message);
   }
 
-  protected IncorrectPluginException(String message, Throwable cause) {
+  public IncorrectPluginException(String message, Throwable cause) {
     super(message, cause);
   }
 
-  protected IncorrectPluginException(Throwable cause) {
-    super(cause);
-  }
 }

@@ -5,8 +5,6 @@ import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.errors.IncorrectPluginException;
-import com.intellij.structure.impl.errors.IncorrectCompatibleBuildsException;
-import com.intellij.structure.impl.errors.MissingPluginIdException;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.resolvers.Resolver;
@@ -54,7 +52,7 @@ class IdePluginImpl implements Plugin {
 
     myPluginId = getPluginId(pluginXml);
     if (myPluginId == null) {
-      throw new MissingPluginIdException("No id or name in META-INF/plugin.xml for plugin " + pluginMoniker);
+      throw new IncorrectPluginException("No id or name in META-INF/plugin.xml for plugin " + pluginMoniker);
     }
 
     String name = pluginXml.getRootElement().getChildTextTrim("name");
@@ -194,14 +192,14 @@ class IdePluginImpl implements Plugin {
     return Collections.unmodifiableSet(myDefinedModules);
   }
 
-  private void getIdeaVersion(@NotNull Document pluginXml) throws IncorrectCompatibleBuildsException {
+  private void getIdeaVersion(@NotNull Document pluginXml) throws IncorrectPluginException {
     Element ideaVersion = pluginXml.getRootElement().getChild("idea-version");
     if (ideaVersion != null && ideaVersion.getAttributeValue("min") == null) { // min != null in legacy plugins.
       String sb = ideaVersion.getAttributeValue("since-build");
       try {
         mySinceBuild = IdeVersion.createIdeVersion(sb);
       } catch (IllegalArgumentException e) {
-        throw new IncorrectCompatibleBuildsException("<idea version since-build = /> attribute has incorrect value: " + sb);
+        throw new IncorrectPluginException("<idea version since-build = /> attribute has incorrect value: " + sb);
       }
 
       String ub = ideaVersion.getAttributeValue("until-build");
@@ -214,7 +212,7 @@ class IdePluginImpl implements Plugin {
         try {
           myUntilBuild = IdeVersion.createIdeVersion(ub);
         } catch (IllegalArgumentException e) {
-          throw new IncorrectCompatibleBuildsException("<idea-version until-build= /> attribute has incorrect value: " + ub);
+          throw new IncorrectPluginException("<idea-version until-build= /> attribute has incorrect value: " + ub);
         }
       }
     }
