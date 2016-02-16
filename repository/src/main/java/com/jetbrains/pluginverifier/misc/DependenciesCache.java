@@ -73,7 +73,7 @@ public class DependenciesCache {
       if (externalClassPath != null) {
         resolvers.add(externalClassPath);
       }
-      String moniker = String.format("Ide-%s+Jdk-%s-resolver", ide.getVersion(), jdk.toString());
+      String moniker = String.format("Ide-%s+Jdk-%s-resolver", ide.getVersion(), jdk);
       resolver = Resolver.createCacheResolver(Resolver.getUnion(moniker, resolvers));
       myIdeResolvers.put(ide, resolver);
     }
@@ -180,7 +180,7 @@ public class DependenciesCache {
           if (depPlugin == null) {
             UpdateInfo updateInfo;
             try {
-              updateInfo = RepositoryManager.getInstance().findPlugin(ide.getVersion().toString(), pluginDependency.getId());
+              updateInfo = RepositoryManager.getInstance().findPlugin(ide.getVersion().getFullPresentation(), pluginDependency.getId());
             } catch (IOException e) {
               throw FailUtil.fail("Couldn't get dependency update from the Repository (IDE = " + ide.getVersion() + " plugin = " + plugin.getPluginId() + ")", e);
             }

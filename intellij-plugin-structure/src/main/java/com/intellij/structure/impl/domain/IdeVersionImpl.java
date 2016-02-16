@@ -1,22 +1,46 @@
 package com.intellij.structure.impl.domain;
 
+import com.google.common.collect.ImmutableBiMap;
 import com.intellij.structure.domain.IdeVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Sergey Evdokimov
  */
 public class IdeVersionImpl extends IdeVersion {
 
+  private static final Map<String, String> PRODUCT_MAP;
+  private static final Pattern PATTERN = Pattern.compile("(?:([A-Z]{1,10})-)?(\\d{1,8})\\.(?:(\\d{1,10})(?:\\.(\\d{1,10}))?|SNAPSHOT)");
+
+  static {
+    PRODUCT_MAP = ImmutableBiMap.<String, String>builder()
+        .put("IC", "idea_ce")
+        .put("IU", "idea")
+        .put("RM", "ruby")
+        .put("WS", "webStorm")
+        .put("PS", "phpStorm")
+        .put("PY", "pycharm")
+        .put("PC", "pycharm_ce")
+        .put("OC", "objc")
+        .put("MPS", "mps")
+        .put("AI", "androidstudio")
+        .put("DB", "dbe")
+        .put("CL", "clion")
+        .build();
+  }
   private String productCode;
   private int branch;
   private int build;
   private int attempt;
   private boolean isSnapshot;
   private String productName;
+  private Integer baselineNumber;
+
 
   public IdeVersionImpl(@NotNull String text) throws IllegalArgumentException {
     text = text.trim();
@@ -27,6 +51,8 @@ public class IdeVersionImpl extends IdeVersion {
 
     Matcher matcher = PATTERN.matcher(text);
     if (matcher.matches()) {
+      baselineNumber = null;
+
       productCode = matcher.group(1);
       if (productCode != null) {
         productName = getProductIdByCode(productCode);
@@ -65,6 +91,7 @@ public class IdeVersionImpl extends IdeVersion {
 
     try {
       int x = Integer.parseInt(text);
+      baselineNumber = x;
 
       // it's probably a baseline, not a build number
       if (x <= 2000) {
@@ -108,14 +135,35 @@ public class IdeVersionImpl extends IdeVersion {
     }
   }
 
+
+  @Nullable
+  private static String getProductIdByCode(@NotNull String code) {
+    return PRODUCT_MAP.get(code);
+  }
+
+  @Override
+  public String getFullPresentation() {
+    if (baselineNumber != null) {
+      return baselineNumber.toString();
+    }
+    String code = getProductCode().isEmpty() ? "" : getProductCode() + "-";
+    String notSnapshot = getBuild() + (getAttempt() == 0 ? "" : "." + getAttempt());
+    return code + getBranch() + "." + (isSnapshot() ? "SNAPSHOT" : notSnapshot);
+  }
+
+  @Override
+  public String toString() {
+    return getFullPresentation();
+  }
+
   @Override
   @NotNull
   public String getProductCode() {
     return productCode == null ? "" : productCode;
   }
 
+  @NotNull
   @Override
-  @Nullable
   public String getProductName() {
     return productName == null ? "" : productName;
   }
@@ -138,6 +186,29 @@ public class IdeVersionImpl extends IdeVersion {
   @Override
   public boolean isSnapshot() {
     return isSnapshot;
+  }
+
+  @Override
+  public int hashCode() {
+    int hc = getProductCode().hashCode();
+    hc += getBranch();
+    hc += getBuild();
+    hc += getAttempt();
+    hc *= isSnapshot() ? 1 : -1;
+    return hc;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof IdeVersion)) {
+      return false;
+    }
+    IdeVersion o = (IdeVersion) obj;
+    return getProductCode().equals(o.getProductCode())
+        && getBranch() == o.getBranch()
+        && getBuild() == o.getBuild()
+        && getAttempt() == o.getAttempt()
+        && isSnapshot() == o.isSnapshot();
   }
 
 }

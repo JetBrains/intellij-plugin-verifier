@@ -9,12 +9,10 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Sergey Patrikeev
@@ -32,8 +30,9 @@ public class ClassFileUtilTest {
   @Test
   public void extractFromBytes() throws Exception {
     File goPluginFile = TestUtils.downloadPlugin(TestUtils.GO_URL, "go-plugin.zip");
-    Plugin plugin = PluginManager.getIdeaPluginManager().createPlugin(goPluginFile);
+    Plugin plugin = PluginManager.getPluginManager().createPlugin(goPluginFile);
     Collection<String> allClasses = plugin.getPluginClassPool().getAllClasses();
+    assertTrue(allClasses.size() == 951);
 
     Set<String> foundNames = new HashSet<String>();
 
@@ -43,12 +42,10 @@ public class ClassFileUtilTest {
       foundNames.add(node.name);
     }
 
-    Set<String> needNames = loadAllGoClassNames();
-
-    assertEquals(foundNames.size(), needNames.size());
+    Set<String> needNames = new HashSet<String>(Arrays.asList("com/goide/runconfig/testing/coverage/GoCoverageRunner$1$1", "com/goide/psi/impl/GoRangeClauseImpl"));
 
     needNames.removeAll(foundNames);
 
-    assertTrue(needNames.isEmpty());
+    assertTrue("not found names" + needNames, needNames.isEmpty());
   }
 }

@@ -35,22 +35,22 @@ public class IdeTest_IDEA_144_2608_2 {
     TestUtils.downloadFile(IDEA_144_LOAD_URL, fileForDownload);
 
 
-    File ideaDir = new File(TestUtils.getTempRoot(), "Idea144.2608.2");
-    if (!ideaDir.isDirectory()) {
+    File ideDir = new File(TestUtils.getTempRoot(), "Idea144.2608.2");
+    if (!ideDir.isDirectory()) {
       //noinspection ResultOfMethodCallIgnored
-      ideaDir.mkdirs();
+      ideDir.mkdirs();
 
       ZipUnArchiver archiver = new ZipUnArchiver(fileForDownload);
       archiver.enableLogging(new ConsoleLogger(Logger.LEVEL_WARN, ""));
-      archiver.setDestDirectory(ideaDir);
+      archiver.setDestDirectory(ideDir);
       archiver.extract();
     }
 
     String jdkPath = getJdkPath();
 
 
-    runtime = IdeRuntimeManager.getJdkManager().createRuntime(new File(jdkPath));
-    ide = IdeManager.getIdeaManager().createIde(ideaDir);
+    runtime = Jdk.createJdk(new File(jdkPath));
+    ide = IdeManager.getInstance().createIde(ideDir);
   }
 
   @NotNull
@@ -70,17 +70,17 @@ public class IdeTest_IDEA_144_2608_2 {
 
   @Test
   public void getVersion() throws Exception {
-    assertEquals("IU-144.2608", ide.getVersion().toString());
+    assertEquals("IU-144.2608", ide.getVersion().getFullPresentation());
   }
 
   @Test
   public void updateVersion() throws Exception {
     IdeVersion old = ide.getVersion();
-    assertEquals("IU-144.2608", old.toString());
+    assertEquals("IU-144.2608", old.getFullPresentation());
 
     IdeVersion newVersion = IdeVersion.createIdeVersion("IU-140.40.40");
     ide.updateVersion(newVersion);
-    assertEquals("IU-140.40.40", ide.getVersion().toString());
+    assertEquals("IU-140.40.40", ide.getVersion().getFullPresentation());
     ide.updateVersion(old);
     assertEquals(old, ide.getVersion());
   }
@@ -107,7 +107,7 @@ public class IdeTest_IDEA_144_2608_2 {
   public void addCustomPlugin() throws Exception {
     //Download ruby and add as custom plugin to idea
     File rubyPluginFile = TestUtils.downloadPlugin(TestUtils.RUBY_URL, "ruby-plugin.zip");
-    Plugin rubyPlugin = PluginManager.getIdeaPluginManager().createPlugin(rubyPluginFile);
+    Plugin rubyPlugin = PluginManager.getPluginManager().createPlugin(rubyPluginFile);
 
     Set<String> definedModules = rubyPlugin.getDefinedModules();
     assertTrue(definedModules.size() == 1);

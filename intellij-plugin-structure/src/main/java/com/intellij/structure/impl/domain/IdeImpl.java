@@ -13,16 +13,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-class Idea implements Ide {
+class IdeImpl implements Ide {
   private final Resolver myResolver;
   private final List<Plugin> myBundledPlugins;
   private final List<Plugin> myCustomPlugins;
 
   private IdeVersion myVersion;
 
-  Idea(@Nullable IdeVersion version,
-       @NotNull Resolver resolver,
-       @NotNull List<Plugin> bundledPlugins) throws IOException, IncorrectPluginException {
+  IdeImpl(@NotNull IdeVersion version,
+          @NotNull Resolver resolver,
+          @NotNull List<Plugin> bundledPlugins) throws IOException, IncorrectPluginException {
     myVersion = version;
     myResolver = resolver;
     myBundledPlugins = bundledPlugins;

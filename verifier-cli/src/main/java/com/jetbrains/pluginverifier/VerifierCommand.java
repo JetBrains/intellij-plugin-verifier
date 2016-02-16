@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier;
 
 import com.intellij.structure.domain.Ide;
-import com.intellij.structure.domain.IdeRuntimeManager;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Jdk;
 import com.intellij.structure.resolvers.Resolver;
@@ -58,7 +57,7 @@ public abstract class VerifierCommand {
       }
     }
 
-    return IdeRuntimeManager.getJdkManager().createRuntime(runtimeDirectory);
+    return Jdk.createJdk(runtimeDirectory);
   }
 
   @Nullable

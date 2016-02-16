@@ -33,7 +33,7 @@ import java.util.zip.ZipInputStream;
 /**
  * @author Sergey Patrikeev
  */
-public class IdeaPluginManager extends PluginManager {
+public class IdePluginManagerImpl extends PluginManager {
 
   private static final String META_INF_ENTRY = "META-INF/";
   private static final String PLUGIN_XML_ENTRY_NAME = META_INF_ENTRY + "plugin.xml";
@@ -41,7 +41,7 @@ public class IdeaPluginManager extends PluginManager {
   private static final Pattern XML_IN_ROOT_PATTERN = Pattern.compile("([^/]*/)?META-INF/.+\\.xml");
 
   @NotNull
-  private static IdeaPlugin createFromZip(@NotNull File zipFile) throws IOException {
+  private static IdePluginImpl createFromZip(@NotNull File zipFile) throws IOException {
     byte[] pluginXmlBytes = null;
     Resolver pluginResolver = null;
     List<Resolver> libraryPool = new ArrayList<Resolver>();
@@ -196,7 +196,7 @@ public class IdeaPluginManager extends PluginManager {
       }
     }
 
-    return new IdeaPlugin(mainJarUrl, zipFile.getAbsolutePath(), pluginResolver, Resolver.getUnion(zipFile.getPath(), libraryPool), pluginXml, allXmlInRoot);
+    return new IdePluginImpl(mainJarUrl, zipFile.getAbsolutePath(), pluginResolver, Resolver.getUnion(zipFile.getPath(), libraryPool), pluginXml, allXmlInRoot);
   }
 
   private static void tryAddXmlInRoot(@NotNull Map<String, Document> container,
@@ -304,7 +304,7 @@ public class IdeaPluginManager extends PluginManager {
     }
 
     Resolver libraryPoolsUnion = Resolver.getUnion(pluginFile.toString(), libraryPools);
-    return new IdeaPlugin(mainJarUrl, pluginFile.getAbsolutePath(), pluginResolver, libraryPoolsUnion, pluginXml, xmlDocumentsInRoot);
+    return new IdePluginImpl(mainJarUrl, pluginFile.getAbsolutePath(), pluginResolver, libraryPoolsUnion, pluginXml, xmlDocumentsInRoot);
   }
 
   @NotNull

@@ -114,7 +114,7 @@ public class VerifierTest {
     if (jdkPath == null) {
       jdkPath = "/usr/lib/jvm/java-6-oracle";
     }
-    myJavaRuntime = IdeRuntimeManager.getJdkManager().createRuntime(new File(jdkPath));
+    myJavaRuntime = Jdk.createJdk(new File(jdkPath));
 
 
   }
@@ -166,8 +166,8 @@ public class VerifierTest {
   }
 
   private void testFoundProblems(File ideaFile, File pluginFile, ImmutableMultimap<Problem, ProblemLocation> actualProblems) throws Exception {
-    myIde = IdeManager.getIdeaManager().createIde(ideaFile);
-    myPlugin = PluginManager.getIdeaPluginManager().createPlugin(pluginFile);
+    myIde = IdeManager.getInstance().createIde(ideaFile);
+    myPlugin = PluginManager.getPluginManager().createPlugin(pluginFile);
 
     final CommandLine commandLine = new GnuParser().parse(Util.CMD_OPTIONS, new String[]{});
 

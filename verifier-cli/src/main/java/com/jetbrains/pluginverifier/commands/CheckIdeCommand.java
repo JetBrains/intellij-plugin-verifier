@@ -111,7 +111,7 @@ public class CheckIdeCommand extends VerifierCommand {
     }
 
     for (String missingPluginId : missingPluginIds) {
-      problems.put(new NoCompatibleUpdatesProblem(missingPluginId, myIde.getVersion().toString()), new UpdateInfo(missingPluginId, missingPluginId, "no compatible update"));
+      problems.put(new NoCompatibleUpdatesProblem(missingPluginId, myIde.getVersion().getFullPresentation()), new UpdateInfo(missingPluginId, missingPluginId, "no compatible update"));
     }
 
 
@@ -139,7 +139,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     myExternalClassPath = getExternalClassPath(commandLine);
 
-    myIde = IdeManager.getIdeaManager().createIde(ideToCheck);
+    myIde = IdeManager.getInstance().createIde(ideToCheck);
     updateIdeVersionFromCmd(myIde, commandLine);
 
     Pair<List<String>, List<String>> pluginsIds = Util.extractPluginToCheckList(commandLine);
@@ -147,18 +147,18 @@ public class CheckIdeCommand extends VerifierCommand {
     myCheckLastBuilds = pluginsIds.second;
 
     if (myCheckAllBuilds.isEmpty() && myCheckLastBuilds.isEmpty()) {
-      myUpdatesToCheck = RepositoryManager.getInstance().getAllCompatibleUpdates(myIde.getVersion().toString());
+      myUpdatesToCheck = RepositoryManager.getInstance().getAllCompatibleUpdates(myIde.getVersion().getFullPresentation());
     } else {
       myUpdatesToCheck = new ArrayList<UpdateInfo>();
 
       if (myCheckAllBuilds.size() > 0) {
-        myUpdatesToCheck.addAll(RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(myIde.getVersion().toString(), myCheckAllBuilds));
+        myUpdatesToCheck.addAll(RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(myIde.getVersion().getFullPresentation(), myCheckAllBuilds));
       }
 
       if (myCheckLastBuilds.size() > 0) {
         Map<String, UpdateInfo> lastBuilds = new HashMap<String, UpdateInfo>();
 
-        for (UpdateInfo info : RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(myIde.getVersion().toString(), myCheckLastBuilds)) {
+        for (UpdateInfo info : RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(myIde.getVersion().getFullPresentation(), myCheckLastBuilds)) {
           UpdateInfo existsBuild = lastBuilds.get(info.getPluginId());
 
           //choose last build
@@ -247,7 +247,7 @@ public class CheckIdeCommand extends VerifierCommand {
       try {
         File updateFile = RepositoryManager.getInstance().getOrLoadUpdate(updateJson);
 
-        Plugin plugin = PluginManager.getIdeaPluginManager().createPlugin(updateFile);
+        Plugin plugin = PluginManager.getPluginManager().createPlugin(updateFile);
 
         System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), myUpdatesToCheck.size()));
 
@@ -325,7 +325,7 @@ public class CheckIdeCommand extends VerifierCommand {
         File file = new File(myReportFile);
         System.out.println("Saving report to " + file.getAbsolutePath());
 
-        CheckIdeHtmlReportBuilder.build(file, myIde.getVersion().toString(), myCheckedIds, myExcludedUpdatesFilter, myResults);
+        CheckIdeHtmlReportBuilder.build(file, myIde.getVersion().getFullPresentation(), myCheckedIds, myExcludedUpdatesFilter, myResults);
       }
     }
 

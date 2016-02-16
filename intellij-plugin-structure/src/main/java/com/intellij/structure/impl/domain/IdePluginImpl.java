@@ -21,7 +21,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-class IdeaPlugin implements Plugin {
+class IdePluginImpl implements Plugin {
 
   private final Resolver myPluginResolver;
   private final Resolver myLibraryResolver;
@@ -40,12 +40,12 @@ class IdeaPlugin implements Plugin {
   private IdeVersion mySinceBuild;
   private IdeVersion myUntilBuild;
 
-  IdeaPlugin(@NotNull URL mainJarUrl,
-             @NotNull String pluginMoniker,
-             @NotNull Resolver pluginResolver,
-             @NotNull Resolver libraryResolver,
-             @NotNull Document pluginXml,
-             @NotNull Map<String, Document> xmlDocumentsInRoot) throws IncorrectPluginException {
+  IdePluginImpl(@NotNull URL mainJarUrl,
+                @NotNull String pluginMoniker,
+                @NotNull Resolver pluginResolver,
+                @NotNull Resolver libraryResolver,
+                @NotNull Document pluginXml,
+                @NotNull Map<String, Document> xmlDocumentsInRoot) throws IncorrectPluginException {
     myMainJarUrl = mainJarUrl;
     myPluginXml = pluginXml;
     myXmlDocumentsInRoot = xmlDocumentsInRoot;

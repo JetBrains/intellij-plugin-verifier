@@ -24,7 +24,7 @@ public class Go_0_11_1113 {
 
     File pluginFile = TestUtils.downloadPlugin(TestUtils.GO_URL, "go-plugin.zip");
 
-    plugin = PluginManager.getIdeaPluginManager().createPlugin(pluginFile);
+    plugin = PluginManager.getPluginManager().createPlugin(pluginFile);
   }
 
   @Test

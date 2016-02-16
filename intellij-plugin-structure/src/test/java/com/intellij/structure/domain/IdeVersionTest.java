@@ -25,7 +25,7 @@ public class IdeVersionTest {
     Assert.assertEquals("IU", ideVersion.getProductCode());
     Assert.assertEquals("idea", ideVersion.getProductName());
     Assert.assertEquals(false, ideVersion.isSnapshot());
-    Assert.assertEquals("IU-138.1042", ideVersion.toString());
+    Assert.assertEquals("IU-138.1042", ideVersion.getFullPresentation());
   }
 
   @Test
@@ -37,7 +37,7 @@ public class IdeVersionTest {
     Assert.assertEquals("IU", ideVersion.getProductCode());
     Assert.assertEquals("idea", ideVersion.getProductName());
     Assert.assertEquals(false, ideVersion.isSnapshot());
-    Assert.assertEquals("IU-138.1042.1", ideVersion.toString());
+    Assert.assertEquals("IU-138.1042.1", ideVersion.getFullPresentation());
   }
 
   @Test
@@ -49,7 +49,7 @@ public class IdeVersionTest {
     Assert.assertEquals("PS", ideVersion.getProductCode());
     Assert.assertEquals("phpStorm", ideVersion.getProductName());
     Assert.assertEquals(true, ideVersion.isSnapshot());
-    Assert.assertEquals("PS-136.SNAPSHOT", ideVersion.toString());
+    Assert.assertEquals("PS-136.SNAPSHOT", ideVersion.getFullPresentation());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -65,7 +65,7 @@ public class IdeVersionTest {
     Assert.assertEquals("CL", ideVersion.getProductCode());
     Assert.assertEquals("clion", ideVersion.getProductName());
     Assert.assertEquals(false, ideVersion.isSnapshot());
-    Assert.assertEquals("CL-140.1197", ideVersion.toString());
+    Assert.assertEquals("CL-140.1197", ideVersion.getFullPresentation());
   }
 
   @Test
@@ -76,7 +76,7 @@ public class IdeVersionTest {
     Assert.assertEquals("", updateBuild.getProductCode());
     Assert.assertEquals("", updateBuild.getProductName());
     Assert.assertEquals(false, updateBuild.isSnapshot());
-    Assert.assertEquals("133", updateBuild.toString());
+    Assert.assertEquals("133", updateBuild.getFullPresentation());
   }
 
   @Test
@@ -87,12 +87,7 @@ public class IdeVersionTest {
     Assert.assertEquals("", updateBuild.getProductCode());
     Assert.assertEquals("", updateBuild.getProductName());
     Assert.assertEquals(false, updateBuild.isSnapshot());
-    Assert.assertEquals("80.8987", updateBuild.toString());
-  }
-
-  @Test
-  public void getProductIdByCode() throws Exception {
-    Assert.assertEquals("idea", IdeVersion.getProductIdByCode("IU"));
+    Assert.assertEquals("8987", updateBuild.getFullPresentation());
   }
 
   @Test
@@ -106,10 +101,4 @@ public class IdeVersionTest {
     Assert.assertNotEquals(ic1, iu1);
   }
 
-  @Test
-  public void isCorrectVersion() throws Exception {
-    Assert.assertTrue(IdeVersion.isCorrectVersion("IC-144.123.11"));
-    Assert.assertTrue(IdeVersion.isCorrectVersion("2031"));
-    Assert.assertFalse(IdeVersion.isCorrectVersion("ABACABA"));
-  }
 }

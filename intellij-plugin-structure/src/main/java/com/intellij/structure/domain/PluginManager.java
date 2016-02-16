@@ -1,7 +1,7 @@
 package com.intellij.structure.domain;
 
 import com.intellij.structure.errors.IncorrectPluginException;
-import com.intellij.structure.impl.domain.IdeaPluginManager;
+import com.intellij.structure.impl.domain.IdePluginManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -13,8 +13,8 @@ import java.io.IOException;
 public abstract class PluginManager {
 
   @NotNull
-  public static PluginManager getIdeaPluginManager() {
-    return new IdeaPluginManager();
+  public static PluginManager getPluginManager() {
+    return new IdePluginManagerImpl();
   }
 
   @NotNull

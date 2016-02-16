@@ -19,12 +19,11 @@ import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.structure.domain.IdeVersion.getDefaultVersion;
 
 /**
  * @author Sergey Patrikeev
  */
-public class IdeaManager extends IdeManager {
+public class IdeManagerImpl extends IdeManager {
 
   private static final Pattern BUILD_NUMBER_PATTERN = Pattern.compile("([^\\.]+\\.\\d+)\\.\\d+");
 
@@ -40,8 +39,8 @@ public class IdeaManager extends IdeManager {
   }
 
   @NotNull
-  private static Resolver getIdeaClassPoolFromLibraries(File ideaDir) throws IOException {
-    final File lib = new File(ideaDir, "lib");
+  private static Resolver getIdeClassPoolFromLibraries(File ideDir) throws IOException {
+    final File lib = new File(ideDir, "lib");
     if (!lib.isDirectory()) {
       throw new IOException("Directory \"lib\" is not found (should be found at " + lib + ")");
     }
@@ -53,23 +52,23 @@ public class IdeaManager extends IdeManager {
       }
     });
 
-    return JarsUtils.makeClassPool(ideaDir.getPath(), jars);
+    return JarsUtils.makeClassPool(ideDir.getPath(), jars);
   }
 
   @NotNull
-  private static Resolver getIdeaClassPoolFromSources(File ideaDir) throws IOException {
+  private static Resolver getIdeaClassPoolFromSources(File ideDir) throws IOException {
     List<Resolver> pools = new ArrayList<Resolver>();
 
-    pools.add(getIdeaClassPoolFromLibraries(ideaDir));
+    pools.add(getIdeClassPoolFromLibraries(ideDir));
 
-    if (new File(ideaDir, "community/.idea").isDirectory()) {
-      pools.add(new CompileOutputResolver(new File(ideaDir, "out/classes/production")));
-      pools.add(getIdeaClassPoolFromLibraries(new File(ideaDir, "community")));
+    if (new File(ideDir, "community/.idea").isDirectory()) {
+      pools.add(new CompileOutputResolver(new File(ideDir, "out/classes/production")));
+      pools.add(getIdeClassPoolFromLibraries(new File(ideDir, "community")));
     } else {
-      pools.add(new CompileOutputResolver(new File(ideaDir, "out/production")));
+      pools.add(new CompileOutputResolver(new File(ideDir, "out/production")));
     }
 
-    return Resolver.getUnion(ideaDir.getPath(), pools);
+    return Resolver.getUnion(ideDir.getPath(), pools);
   }
 
   private static boolean isSourceDir(File dir) {
@@ -79,8 +78,8 @@ public class IdeaManager extends IdeManager {
   }
 
   @NotNull
-  private static List<Plugin> getIdeaPlugins(File ideaDir) throws IOException {
-    final File pluginsDir = new File(ideaDir, "plugins");
+  private static List<Plugin> getIdePlugins(File ideDir) throws IOException {
+    final File pluginsDir = new File(ideDir, "plugins");
 
     final File[] files = pluginsDir.listFiles();
     if (files == null) {
@@ -94,7 +93,7 @@ public class IdeaManager extends IdeManager {
         continue;
 
       try {
-        plugins.add(PluginManager.getIdeaPluginManager().createPlugin(file));
+        plugins.add(PluginManager.getPluginManager().createPlugin(file));
       } catch (IncorrectPluginException e) {
         System.out.println("Failed to read plugin " + file + ": " + e.getMessage());
       } catch (IOException e) {
@@ -108,26 +107,42 @@ public class IdeaManager extends IdeManager {
 
   @NotNull
   @Override
-  public Ide createIde(@NotNull File ideaDir) throws IOException {
+  public Ide createIde(@NotNull File ideDir) throws IOException {
     Resolver resolver;
-    IdeVersion version = getDefaultVersion();
+    IdeVersion version = null;
     List<Plugin> bundled = new ArrayList<Plugin>();
 
-    if (isSourceDir(ideaDir)) {
-      resolver = getIdeaClassPoolFromSources(ideaDir);
-      File versionFile = new File(ideaDir, "build.txt");
+    if (isSourceDir(ideDir)) {
+      resolver = getIdeaClassPoolFromSources(ideDir);
+      File versionFile = new File(ideDir, "build.txt");
       if (!versionFile.exists()) {
-        versionFile = new File(ideaDir, "community/build.txt");
+        versionFile = new File(ideDir, "community/build.txt");
       }
       if (versionFile.exists()) {
-        version = readBuildNumber(versionFile);
+        version = readIdeVersion(versionFile);
+      }
+      if (version == null) {
+        throw new IllegalArgumentException("Unable to find IDE version file (build.txt or community/build.txt)");
       }
     } else {
-      resolver = getIdeaClassPoolFromLibraries(ideaDir);
-      bundled.addAll(getIdeaPlugins(ideaDir));
-      version = readBuildNumber(new File(ideaDir, "build.txt"));
+      resolver = getIdeClassPoolFromLibraries(ideDir);
+      bundled.addAll(getIdePlugins(ideDir));
+      version = readIdeVersion(new File(ideDir, "build.txt"));
     }
 
-    return new Idea(version, resolver, bundled);
+    return new IdeImpl(version, resolver, bundled);
+  }
+
+  @NotNull
+  private IdeVersion readIdeVersion(@NotNull File versionFile) {
+    IdeVersion version;
+    try {
+      version = readBuildNumber(versionFile);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("IDE version is invalid", e);
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Unable to read IDE version", e);
+    }
+    return version;
   }
 }
