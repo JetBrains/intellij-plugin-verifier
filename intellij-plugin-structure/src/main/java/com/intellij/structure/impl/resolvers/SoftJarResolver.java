@@ -1,10 +1,11 @@
 package com.intellij.structure.impl.resolvers;
 
-import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +25,7 @@ public class SoftJarResolver extends Resolver {
   private final JarFile myJarFile;
   private final String myMoniker;
 
-  private final Map<String, SoftReference<ClassFile>> myClassesCache = new HashMap<String, SoftReference<ClassFile>>();
+  private final Map<String, SoftReference<ClassNode>> myClassesCache = new HashMap<String, SoftReference<ClassNode>>();
 
   public SoftJarResolver(@NotNull JarFile jarFile) throws IOException {
     myMoniker = jarFile.getName();
@@ -61,26 +62,30 @@ public class SoftJarResolver extends Resolver {
 
   @Override
   @Nullable
-  public ClassFile findClass(@NotNull String className) {
+  public ClassNode findClass(@NotNull String className) {
     if (!myClassesCache.containsKey(className)) {
       return null;
     }
-    SoftReference<ClassFile> reference = myClassesCache.get(className);
-    ClassFile classFile = reference == null ? null : reference.get();
+    SoftReference<ClassNode> reference = myClassesCache.get(className);
+    ClassNode classFile = reference == null ? null : reference.get();
     if (classFile == null) {
       classFile = evaluateNode(className);
-      myClassesCache.put(className, new SoftReference<ClassFile>(classFile));
+      myClassesCache.put(className, new SoftReference<ClassNode>(classFile));
     }
     return classFile;
   }
 
   @Nullable
-  private ClassFile evaluateNode(@NotNull String className) {
+  private ClassNode evaluateNode(@NotNull String className) {
     final ZipEntry entry = myJarFile.getEntry(className + CLASS_SUFFIX);
     InputStream inputStream = null;
     try {
       inputStream = myJarFile.getInputStream(entry);
-      return new ClassFile(className, inputStream);
+
+      ClassNode node = new ClassNode();
+      new ClassReader(inputStream).accept(node, 0);
+
+      return node;
     } catch (IOException e) {
       return null;
     } finally {

@@ -1,9 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.util;
 
 import com.google.common.base.Predicates;
-import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.verifiers.util.bytecode.AsmConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -24,16 +22,12 @@ public class ResolverUtil {
       return null;
     }
 
-    final ClassFile classFile = resolver.findClass(className);
+    final ClassNode classFile = resolver.findClass(className);
     if (classFile == null) {
       return null;
     }
-    final ClassNode node = AsmConverter.convertToAsmNode(classFile);
-    if (node == null) {
-      return null;
-    }
 
-    return findMethod(resolver, node, methodName, methodDesc);
+    return findMethod(resolver, classFile, methodName, methodDesc);
   }
 
   @Nullable
@@ -64,7 +58,7 @@ public class ResolverUtil {
 
   @NotNull
   public static Set<String> collectUnresolvedClasses(@NotNull Resolver resolver, @NotNull String className) {
-    ClassFile node = resolver.findClass(className);
+    ClassNode node = resolver.findClass(className);
     if (node == null) {
       return Collections.singleton(className);
     }
@@ -77,7 +71,7 @@ public class ResolverUtil {
     private final ClassNode classNode;
     private final MethodNode methodNode;
 
-    public MethodLocation(@NotNull ClassNode classNode, @NotNull MethodNode methodNode) {
+    MethodLocation(@NotNull ClassNode classNode, @NotNull MethodNode methodNode) {
       this.classNode = classNode;
       this.methodNode = methodNode;
     }

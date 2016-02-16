@@ -1,9 +1,9 @@
 package com.intellij.structure.impl.resolvers;
 
-import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.tree.ClassNode;
 
 import java.util.*;
 
@@ -49,9 +49,9 @@ public class ContainerResolver extends Resolver {
 
   @Override
   @Nullable
-  public ClassFile findClass(@NotNull String className) {
+  public ClassNode findClass(@NotNull String className) {
     for (Resolver pool : myResolvers) {
-      ClassFile node = pool.findClass(className);
+      ClassNode node = pool.findClass(className);
       if (node != null) {
         return node;
       }

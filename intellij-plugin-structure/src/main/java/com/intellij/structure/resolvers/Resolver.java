@@ -1,13 +1,13 @@
 package com.intellij.structure.resolvers;
 
 
-import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.impl.resolvers.CacheResolver;
 import com.intellij.structure.impl.resolvers.ContainerResolver;
 import com.intellij.structure.impl.resolvers.EmptyResolver;
 import com.intellij.structure.impl.resolvers.SoftJarResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -68,7 +68,7 @@ public abstract class Resolver {
    * @return class-file for accessing bytecode
    */
   @Nullable
-  public abstract ClassFile findClass(@NotNull String className);
+  public abstract ClassNode findClass(@NotNull String className);
 
   /**
    * Returns actual class holder which contains a specified class.

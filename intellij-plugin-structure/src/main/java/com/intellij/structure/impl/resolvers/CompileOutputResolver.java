@@ -1,10 +1,11 @@
 package com.intellij.structure.impl.resolvers;
 
-import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.tree.ClassNode;
 
 import java.io.*;
 import java.util.*;
@@ -16,7 +17,7 @@ public class CompileOutputResolver extends Resolver {
 
   private final String moniker;
   private final Map<String, PackageDescriptor> packageMap = new HashMap<String, PackageDescriptor>();
-  private final Map<String, ClassFile> classesMap = new HashMap<String, ClassFile>();
+  private final Map<String, ClassNode> classesMap = new HashMap<String, ClassNode>();
 
   public CompileOutputResolver(@NotNull File dir) {
     moniker = dir.getPath();
@@ -37,8 +38,8 @@ public class CompileOutputResolver extends Resolver {
 
   @Nullable
   @Override
-  public ClassFile findClass(@NotNull String className) {
-    ClassFile res = classesMap.get(className);
+  public ClassNode findClass(@NotNull String className) {
+    ClassNode res = classesMap.get(className);
 
     if (res == null) {
       if (classesMap.containsKey(className)) return null;
@@ -57,7 +58,9 @@ public class CompileOutputResolver extends Resolver {
           try {
             InputStream in = new BufferedInputStream(new FileInputStream(classFile));
             try {
-              res = new ClassFile(className, in);
+              ClassNode classNode = new ClassNode();
+              new ClassReader(in).accept(classNode, 0);
+              res = classNode;
               break;
             } finally {
               IOUtils.closeQuietly(in);

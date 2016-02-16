@@ -1,11 +1,10 @@
 package com.intellij.structure.utils;
 
-import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginManager;
-import com.intellij.structure.impl.utils.ClassFileUtil;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
+import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,9 +38,9 @@ public class ClassFileUtilTest {
     Set<String> foundNames = new HashSet<String>();
 
     for (String name : allClasses) {
-      ClassFile file = plugin.getPluginClassPool().findClass(name);
-      assertNotNull(file);
-      foundNames.add(ClassFileUtil.extractFromBytes(file.getBytecode()));
+      ClassNode node = plugin.getPluginClassPool().findClass(name);
+      assertNotNull(node);
+      foundNames.add(node.name);
     }
 
     Set<String> needNames = loadAllGoClassNames();

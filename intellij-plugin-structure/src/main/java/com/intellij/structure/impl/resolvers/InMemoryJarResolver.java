@@ -1,8 +1,9 @@
 package com.intellij.structure.impl.resolvers;
 
-import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.tree.ClassNode;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -26,8 +27,8 @@ public class InMemoryJarResolver extends Resolver {
     myInMemoryClasses.put(name, code);
   }
 
-  public void addClass(@NotNull ClassFile classFile) {
-    myInMemoryClasses.put(classFile.getClassName(), classFile);
+  public void addClass(@NotNull ClassNode classNode) {
+    myInMemoryClasses.put(classNode.name, classNode);
   }
 
   @NotNull
@@ -42,21 +43,23 @@ public class InMemoryJarResolver extends Resolver {
   }
 
   @Override
-  public ClassFile findClass(@NotNull String className) {
+  public ClassNode findClass(@NotNull String className) {
     Object obj = myInMemoryClasses.get(className);
 
     if (obj == null) return null;
 
-    if (obj instanceof ClassFile) {
-      return (ClassFile) obj;
+    if (obj instanceof ClassNode) {
+      return (ClassNode) obj;
     }
 
     byte[] classContent = (byte[]) obj;
-    ClassFile classFile = new ClassFile(className, classContent);
 
-    myInMemoryClasses.put(className, classFile);
+    ClassNode node = new ClassNode();
+    new ClassReader(classContent).accept(node, 0);
 
-    return classFile;
+    myInMemoryClasses.put(className, node);
+
+    return node;
   }
 
   @Override

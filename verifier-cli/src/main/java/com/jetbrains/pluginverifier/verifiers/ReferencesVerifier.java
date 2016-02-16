@@ -13,7 +13,6 @@ import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
 import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier;
 import com.jetbrains.pluginverifier.verifiers.instruction.InstructionVerifier;
 import com.jetbrains.pluginverifier.verifiers.method.MethodVerifier;
-import com.jetbrains.pluginverifier.verifiers.util.bytecode.AsmConverter;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.*;
 
@@ -38,7 +37,7 @@ class ReferencesVerifier implements Verifier {
 
     final Collection<String> classes = pluginPool.getAllClasses();
     for (String className : classes) {
-      final ClassNode node = AsmConverter.convertToAsmNode(pluginPool.findClass(className));
+      final ClassNode node = pluginPool.findClass(className);
 
       if (node == null) {
         ctx.registerProblem(new FailedToReadClassProblem(className), ProblemLocation.fromClass(className));

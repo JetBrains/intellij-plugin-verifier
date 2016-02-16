@@ -1,9 +1,9 @@
 package com.intellij.structure.impl.resolvers;
 
-import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.tree.ClassNode;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -17,7 +17,7 @@ public class EmptyResolver extends Resolver {
 
   @Nullable
   @Override
-  public ClassFile findClass(@NotNull String className) {
+  public ClassNode findClass(@NotNull String className) {
     return null;
   }
 

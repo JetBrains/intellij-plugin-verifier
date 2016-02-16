@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.verifiers.util;
 
 import com.google.common.base.Predicate;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.verifiers.util.bytecode.AsmConverter;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -34,7 +33,7 @@ class ParentsVisitor {
   @NotNull
   Set<String> collectUnresolvedParents(@NotNull String className,
                                        @NotNull Predicate<String> excludedPredicate) throws IllegalArgumentException {
-    ClassNode classNode = AsmConverter.convertToAsmNode(myResolver.findClass(className));
+    ClassNode classNode = myResolver.findClass(className);
     if (classNode == null) {
       throw new IllegalArgumentException(className + " should be found in the resolver " + myResolver);
     }

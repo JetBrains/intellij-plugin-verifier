@@ -4,7 +4,6 @@ import com.google.common.base.Preconditions;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.utils.Assert;
-import com.jetbrains.pluginverifier.verifiers.util.bytecode.AsmConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
@@ -32,11 +31,11 @@ public class VerifierUtil {
       return true;
     }
 
-    final ClassNode clazz = AsmConverter.convertToAsmNode(resolver.findClass(name));
+    final ClassNode clazz = resolver.findClass(name);
     return clazz != null && (isInterface == null || isInterface == isInterface(clazz));
   }
 
-  public static String prepareArrayName(@NotNull final String className) {
+  private static String prepareArrayName(@NotNull final String className) {
     if (className.startsWith("[")) {
       int i = 1;
       while (i < className.length() && className.charAt(i) == '[') {
@@ -70,7 +69,7 @@ public class VerifierUtil {
     return descr;
   }
 
-  public static boolean isPrimitiveType(@NotNull final String type) {
+  private static boolean isPrimitiveType(@NotNull final String type) {
     return "Z".equals(type) || "I".equals(type) || "J".equals(type) || "B".equals(type) ||
         "F".equals(type) || "S".equals(type) || "D".equals(type) || "C".equals(type);
   }
@@ -87,7 +86,7 @@ public class VerifierUtil {
     return (method.access & Opcodes.ACC_PRIVATE) != 0;
   }
 
-  public static boolean isPublic(@NotNull MethodNode method) {
+  private static boolean isPublic(@NotNull MethodNode method) {
     return (method.access & Opcodes.ACC_PUBLIC) != 0;
   }
 

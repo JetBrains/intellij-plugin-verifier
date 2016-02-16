@@ -10,7 +10,6 @@ import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import com.jetbrains.pluginverifier.verifiers.util.ResolverUtil;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
-import com.jetbrains.pluginverifier.verifiers.util.bytecode.AsmConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -43,7 +42,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
 
     if (ctx.getVerifierOptions().isExternalClass(ownerClassName)) return;
 
-    ClassNode ownerClass = AsmConverter.convertToAsmNode(resolver.findClass(ownerClassName));
+    ClassNode ownerClass = resolver.findClass(ownerClassName);
     if (ownerClass == null) {
       ctx.registerProblem(new ClassNotFoundProblem(ownerClassName), ProblemLocation.fromMethod(clazz.name, method));
     } else {
@@ -134,7 +133,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       if (superName == null) {
         return false;
       }
-      child = AsmConverter.convertToAsmNode(resolver.findClass(superName));
+      child = resolver.findClass(superName);
     }
     return false;
   }

@@ -1,6 +1,5 @@
 package com.intellij.structure.domain;
 
-import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.resolvers.Resolver;
 import com.intellij.structure.utils.TestUtils;
 import org.codehaus.plexus.archiver.zip.ZipUnArchiver;
@@ -9,6 +8,7 @@ import org.codehaus.plexus.logging.console.ConsoleLogger;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
+import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
 import java.util.Collection;
@@ -132,11 +132,9 @@ public class IdeTest_IDEA_144_2608_2 {
     Collection<String> allClasses = resolver.getAllClasses();
 
     for (String aClass : allClasses) {
-      ClassFile classFile = resolver.findClass(aClass);
+      ClassNode classFile = resolver.findClass(aClass);
       assertNotNull(classFile);
-      assertEquals(aClass, classFile.getClassName());
-      assertNotNull(classFile.getBytecode());
-      assertFalse(classFile.getBytecode().length == 0);
+      assertEquals(aClass, classFile.name);
     }
 
   }

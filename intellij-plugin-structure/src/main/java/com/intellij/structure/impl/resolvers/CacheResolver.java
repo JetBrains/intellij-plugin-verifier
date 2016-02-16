@@ -1,8 +1,8 @@
 package com.intellij.structure.impl.resolvers;
 
-import com.intellij.structure.bytecode.ClassFile;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
+import org.objectweb.asm.tree.ClassNode;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -15,15 +15,15 @@ public class CacheResolver extends Resolver {
 
   private final Resolver myDelegate;
 
-  private final Map<String, ClassFile> myCache = new HashMap<String, ClassFile>();
+  private final Map<String, ClassNode> myCache = new HashMap<String, ClassNode>();
 
   public CacheResolver(@NotNull Resolver delegate) {
     myDelegate = delegate;
   }
 
   @Override
-  public ClassFile findClass(@NotNull String className) {
-    ClassFile res = myCache.get(className);
+  public ClassNode findClass(@NotNull String className) {
+    ClassNode res = myCache.get(className);
     if (res == null) {
       res = myDelegate.findClass(className);
       myCache.put(className, res);
