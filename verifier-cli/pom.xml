@@ -9,32 +9,32 @@
     <parent>
         <groupId>org.jetbrains.intellij.plugins</groupId>
         <artifactId>verifier-parent</artifactId>
-        <version>1.5</version>
+        <version>1.6</version>
     </parent>
 
     <dependencies>
         <dependency>
             <groupId>org.jetbrains.intellij.plugins</groupId>
             <artifactId>verifier-problems</artifactId>
-            <version>1.5</version>
+            <version>1.6</version>
         </dependency>
 
         <dependency>
             <groupId>org.jetbrains.intellij.plugins</groupId>
             <artifactId>repository</artifactId>
-            <version>1.5</version>
+            <version>1.6</version>
         </dependency>
 
         <dependency>
             <groupId>org.jetbrains.intellij.plugins</groupId>
             <artifactId>common-utils</artifactId>
-            <version>1.5</version>
+            <version>1.6</version>
         </dependency>
 
         <dependency>
             <groupId>org.jetbrains.intellij.plugins</groupId>
             <artifactId>mock-plugin</artifactId> <!--Used for VerifierTest -->
-            <version>1.5</version>
+            <version>1.6</version>
             <scope>test</scope>
         </dependency>
 

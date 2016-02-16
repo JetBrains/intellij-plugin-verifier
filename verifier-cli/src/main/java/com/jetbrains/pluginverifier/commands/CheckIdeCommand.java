@@ -75,36 +75,6 @@ public class CheckIdeCommand extends VerifierCommand {
   }
 
   /**
-   * Prints Build Problems in the Overview page or as tests
-   */
-  private static void printTeamCityProblems(@NotNull TeamCityLog log,
-                                            @NotNull Map<UpdateInfo, ProblemSet> results,
-                                            @NotNull Predicate<UpdateInfo> updateFilter,
-                                            @NotNull TeamCityUtil.ReportGrouping reportGrouping) {
-    if (log == TeamCityLog.NULL_LOG) return;
-
-    //list of problems without their exact problem location (only affected plugin)
-    Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
-
-    //fill problems map
-    for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
-      if (!updateFilter.apply(entry.getKey())) {
-        continue; //this is excluded plugin
-      }
-
-      for (Problem problem : entry.getValue().getAllProblems()) {
-        problems.put(problem, entry.getKey());
-      }
-    }
-
-    if (reportGrouping.equals(TeamCityUtil.ReportGrouping.PLUGIN_WITH_LOCATION)) {
-      TeamCityUtil.printReportWithLocations(log, Maps.filterKeys(results, updateFilter));
-    } else {
-      TeamCityUtil.printReport(log, problems, reportGrouping);
-    }
-  }
-
-  /**
    * Checks if for all the specified plugins to be checked there is a build compatible with a specified IDE in the
    * Plugin Repository
    *
@@ -359,7 +329,7 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
-    printTeamCityProblems(myTc, myResults, myExcludedUpdatesFilter, myGrouping);
+    TeamCityUtil.printTeamCityProblems(myTc, myResults, myExcludedUpdatesFilter, myGrouping);
 
     int totalProblemsCnt = printMissingAndIncorrectPlugins();
 

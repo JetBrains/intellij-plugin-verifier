@@ -2,8 +2,7 @@ package com.jetbrains.pluginverifier.commands;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.base.Predicates;
 import com.google.common.io.Files;
 import com.intellij.structure.domain.*;
 import com.intellij.structure.resolvers.Resolver;
@@ -219,14 +218,13 @@ public class CheckPluginCommand extends VerifierCommand {
     saveReportToFile(commandLine, results);
 
 
-    //map of problems without their exact locations inside corresponding plugins
-    Multimap<Problem, UpdateInfo> problemsWithoutLocations = dropOutLocations(results);
+    Map<UpdateInfo, ProblemSet> pluginsProblems = mergeIdeResults(results);
+    appendBrokenPluginProblems(pluginsProblems, brokenPlugins);
 
-    appendBrokenPluginProblems(problemsWithoutLocations, brokenPlugins);
+    TeamCityUtil.printTeamCityProblems(log, pluginsProblems, Predicates.<UpdateInfo>alwaysTrue(), TeamCityUtil.ReportGrouping.parseGrouping(commandLine));
 
-    TeamCityUtil.printReport(log, problemsWithoutLocations, TeamCityUtil.ReportGrouping.parseGrouping(commandLine));
+    final int problemsCnt = countTotalProblems(pluginsProblems);
 
-    final int problemsCnt = problemsWithoutLocations.size();
     boolean hasProblems = problemsCnt > 0;
     System.out.println("Plugin compatibility " + (hasProblems ? "FAILED" : "OK"));
     if (hasProblems) {
@@ -236,10 +234,49 @@ public class CheckPluginCommand extends VerifierCommand {
     return hasProblems ? 2 : 0;
   }
 
-  private void appendBrokenPluginProblems(@NotNull Multimap<Problem, UpdateInfo> problemsWithoutLocations,
+  private int countTotalProblems(Map<UpdateInfo, ProblemSet> problems) {
+    Set<Problem> set = new HashSet<Problem>();
+    for (ProblemSet problemSet : problems.values()) {
+      set.addAll(problemSet.getAllProblems());
+    }
+    return set.size();
+  }
+
+  @NotNull
+  private Map<UpdateInfo, ProblemSet> mergeIdeResults(@NotNull Map<UpdateInfo, Map<String, ProblemSet>> idesResults) {
+    Map<UpdateInfo, ProblemSet> result = new HashMap<UpdateInfo, ProblemSet>();
+
+    //update --> (idea --> problems) ===> (update --> merged problems)
+    for (Map.Entry<UpdateInfo, Map<String, ProblemSet>> entry : idesResults.entrySet()) {
+      UpdateInfo info = entry.getKey();
+
+      ProblemSet set = result.get(info);
+      if (set == null) {
+        set = new ProblemSet();
+        result.put(info, set);
+      }
+
+      for (Map.Entry<String, ProblemSet> setEntry : entry.getValue().entrySet()) {
+        set.appendProblems(setEntry.getValue());
+      }
+    }
+    return result;
+  }
+
+  private void appendBrokenPluginProblems(@NotNull Map<UpdateInfo, ProblemSet> problems,
                                           @NotNull List<Pair<UpdateInfo, ? extends Problem>> brokenPlugins) {
     for (Pair<UpdateInfo, ? extends Problem> brokenPlugin : brokenPlugins) {
-      problemsWithoutLocations.put(brokenPlugin.getSecond(), brokenPlugin.getFirst());
+      ProblemSet set = problems.get(brokenPlugin.getFirst());
+      if (set == null) {
+        set = new ProblemSet();
+        problems.put(brokenPlugin.getFirst(), set);
+      }
+
+      String id = brokenPlugin.getFirst().getPluginId();
+      if (id == null) {
+        id = brokenPlugin.getFirst().getPluginName();
+      }
+      set.addProblem(brokenPlugin.getSecond(), ProblemLocation.fromPlugin(id));
     }
   }
 
@@ -263,22 +300,7 @@ public class CheckPluginCommand extends VerifierCommand {
     ProblemUtils.savePluginCheckResult(file, problemsMap, updateInfo);
   }
 
-  /**
-   * Returns map of problems without their exact location inside corresponding plugins
-   */
-  @NotNull
-  private Multimap<Problem, UpdateInfo> dropOutLocations(@NotNull Map<UpdateInfo, Map<String, ProblemSet>> results) {
-    Multimap<Problem, UpdateInfo> allProblems = ArrayListMultimap.create();
-    for (Map.Entry<UpdateInfo, Map<String, ProblemSet>> entry : results.entrySet()) {
-      for (Map.Entry<String, ProblemSet> setEntry : entry.getValue().entrySet()) {
-        for (Problem problem : setEntry.getValue().getAllProblems()) {
-          allProblems.put(problem, entry.getKey());
-        }
-      }
-    }
 
-    return allProblems;
-  }
 
   /**
    * @return problems of plugin against specified IDEA

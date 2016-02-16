@@ -16,7 +16,7 @@ import java.util.*;
  */
 public class ProblemSet {
 
-  private Map<Problem, Set<ProblemLocation>> map;
+  private Map<Problem, Set<ProblemLocation>> map = new HashMap<Problem, Set<ProblemLocation>>();
 
   public ProblemSet() {
   }
@@ -28,6 +28,15 @@ public class ProblemSet {
   @NotNull
   public Map<Problem, Set<ProblemLocation>> asMap() {
     return map == null ? Collections.<Problem, Set<ProblemLocation>>emptyMap() : map;
+  }
+
+  public void appendProblems(@NotNull ProblemSet otherSet) {
+    Map<Problem, Set<ProblemLocation>> map = otherSet.asMap();
+    for (Map.Entry<Problem, Set<ProblemLocation>> entry : map.entrySet()) {
+      for (ProblemLocation location : entry.getValue()) {
+        addProblem(entry.getKey(), location);
+      }
+    }
   }
 
   public void addProblem(@NotNull Problem problem, @NotNull ProblemLocation location) {

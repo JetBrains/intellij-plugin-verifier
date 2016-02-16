@@ -1,7 +1,9 @@
 package com.jetbrains.pluginverifier.utils.teamcity;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
@@ -182,6 +184,36 @@ public class TeamCityUtil {
         }
       }
       pluginSuite.close();
+    }
+  }
+
+  /**
+   * Prints Build Problems in the Overview page or as tests
+   */
+  public static void printTeamCityProblems(@NotNull TeamCityLog log,
+                                           @NotNull Map<UpdateInfo, ProblemSet> results,
+                                           @NotNull Predicate<UpdateInfo> updateFilter,
+                                           @NotNull ReportGrouping reportGrouping) {
+    if (log == TeamCityLog.NULL_LOG) return;
+
+    //list of problems without their exact problem location (only affected plugin)
+    Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
+
+    //fill problems map
+    for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
+      if (!updateFilter.apply(entry.getKey())) {
+        continue; //this is excluded plugin
+      }
+
+      for (Problem problem : entry.getValue().getAllProblems()) {
+        problems.put(problem, entry.getKey());
+      }
+    }
+
+    if (reportGrouping.equals(ReportGrouping.PLUGIN_WITH_LOCATION)) {
+      printReportWithLocations(log, Maps.filterKeys(results, updateFilter));
+    } else {
+      printReport(log, problems, reportGrouping);
     }
   }
 
