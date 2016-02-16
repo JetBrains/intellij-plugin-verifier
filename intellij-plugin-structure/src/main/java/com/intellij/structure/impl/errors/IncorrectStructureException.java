@@ -11,4 +11,7 @@ public class IncorrectStructureException extends IncorrectPluginException {
     super(message);
   }
 
+  public IncorrectStructureException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

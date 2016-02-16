@@ -20,6 +20,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.jar.JarEntry;
@@ -67,17 +68,39 @@ public class IdeaPluginManager extends PluginManager {
 
           final byte[] data = ByteStreams.toByteArray(zipInputStream);
 
-          final String jarPath = "jar:" + StringUtil.replace(zipFile.toURI().toASCIIString(), "!", "%21");
+          final String jarPath = "jar:" + StringUtil.replace(zipFile.toURI().toASCIIString(), "!", "%21") + "!/";
 
           final URL xmlUrl = new URL(
-              jarPath + "!/" + entryName
+              jarPath + entryName
           );
 
           boolean isPluginXml = entryName.endsWith(PLUGIN_XML_ENTRY_NAME);
 
           if (isPluginXml) {
             //this is the main plugin.xml i.e. META-INF/plugin.xml
-            mainJarUrl = new URL(jarPath);
+            try {
+              /*This is for those plugins which are structured as follows (e.g. Go plugin):
+              .IntelliJIDEAx0
+                  plugins
+                      Sample
+                          lib
+                              libfoo.jar
+                              libbar.jar
+                          classes
+                              com/foo/.....
+                          ...
+                          META-INF
+                              plugin.xml
+
+                'entryName' would be Sample/META-INF/plugin.xml instead of META-INF/plugin.xml for correct plugins
+                 so let's consider a 'Sample' directory as a "root" of the plugin
+              */
+              String subDirectory = StringUtil.trimEnd(entryName, PLUGIN_XML_ENTRY_NAME);
+              subDirectory = StringUtil.trimEnd(subDirectory, "/");
+              mainJarUrl = new URL(jarPath + (subDirectory.isEmpty() ? "" : subDirectory + "/"));
+            } catch (MalformedURLException e) {
+              throw new IncorrectStructureException("Plugin main .jar (containing a META-INF/plugin.xml) is broken", e);
+            }
 
             if (pluginXmlBytes != null && !Arrays.equals(data, pluginXmlBytes)) {
               throw new MultiplePluginXmlException("Plugin has more than one jars with plugin.xml");
@@ -105,10 +128,10 @@ public class IdeaPluginManager extends PluginManager {
 
               final byte[] data = ByteStreams.toByteArray(innerJar);
 
-              final String mainJarPath = "jar:" + StringUtil.replace(zipFile.toURI().toASCIIString(), "!", "%21") + "!/" + entryName;
+              final String mainJarPath = "jar:" + StringUtil.replace(zipFile.toURI().toASCIIString(), "!", "%21") + "!/" + entryName + "!/";
 
               final URL xmlUrl = new URL(
-                  mainJarPath + "!/" + name
+                  mainJarPath + name
               );
 
               boolean isPluginXml = name.endsWith(PLUGIN_XML_ENTRY_NAME);
@@ -117,7 +140,11 @@ public class IdeaPluginManager extends PluginManager {
                   throw new MultiplePluginXmlException("Plugin has more than one jars with plugin.xml");
                 }
 
-                mainJarUrl = new URL(mainJarPath);
+                try {
+                  mainJarUrl = new URL(mainJarPath);
+                } catch (MalformedURLException e) {
+                  throw new IncorrectStructureException("Plugin main .jar (containing a META-INF/plugin.xml) is broken", e);
+                }
 
                 pluginXmlBytes = data; //the main plugin.xml
                 pluginResolver = innerPool; //pluginPool is in this .jar exactly
@@ -212,12 +239,16 @@ public class IdeaPluginManager extends PluginManager {
 
         pluginResolver = Resolver.createJarClassPool(jar);
 
-        final String jarPath = "jar:" + StringUtil.replace(new File(jar.getName()).toURI().toASCIIString(), "!", "%21");
+        final String jarPath = "jar:" + StringUtil.replace(new File(jar.getName()).toURI().toASCIIString(), "!", "%21") + "!/";
 
-        mainJarUrl = new URL(jarPath);
+        try {
+          mainJarUrl = new URL(jarPath);
+        } catch (MalformedURLException e) {
+          throw new IncorrectStructureException("Plugin main .jar (containing a META-INF/plugin.xml) is broken", e);
+        }
 
         URL pluginXmlUrl = new URL(
-            jarPath + "!/META-INF/plugin.xml"
+            jarPath + "META-INF/plugin.xml"
         );
 
         try {

@@ -238,7 +238,7 @@ class IdeaPlugin implements Plugin {
     relativePath = StringUtil.trimStart(relativePath, "/");
     URL url;
     try {
-      url = new URL(myMainJarUrl.toExternalForm() + "!/" + relativePath);
+      url = new URL(myMainJarUrl.toExternalForm() + relativePath);
     } catch (MalformedURLException e) {
       throw new IllegalArgumentException("File path is invalid " + relativePath);
     }
