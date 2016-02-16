@@ -18,7 +18,7 @@ class IdeImpl implements Ide {
   private final List<Plugin> myBundledPlugins;
   private final List<Plugin> myCustomPlugins;
 
-  private IdeVersion myVersion;
+  private final IdeVersion myVersion;
 
   IdeImpl(@NotNull IdeVersion version,
           @NotNull Resolver resolver,
@@ -33,11 +33,6 @@ class IdeImpl implements Ide {
   @Override
   public IdeVersion getVersion() {
     return myVersion;
-  }
-
-  @Override
-  public void updateVersion(@NotNull IdeVersion newVersion) {
-    myVersion = newVersion;
   }
 
   @Override

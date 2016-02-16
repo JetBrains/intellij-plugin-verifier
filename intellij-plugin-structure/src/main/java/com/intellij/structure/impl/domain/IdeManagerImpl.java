@@ -8,6 +8,7 @@ import com.intellij.structure.impl.resolvers.CompileOutputResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -108,26 +109,35 @@ public class IdeManagerImpl extends IdeManager {
   @NotNull
   @Override
   public Ide createIde(@NotNull File ideDir) throws IOException {
+    return createIde(ideDir, null);
+  }
+
+  @NotNull
+  @Override
+  public Ide createIde(@NotNull File idePath, @Nullable IdeVersion version) throws IOException {
     Resolver resolver;
-    IdeVersion version = null;
     List<Plugin> bundled = new ArrayList<Plugin>();
 
-    if (isSourceDir(ideDir)) {
-      resolver = getIdeaClassPoolFromSources(ideDir);
-      File versionFile = new File(ideDir, "build.txt");
+    if (isSourceDir(idePath)) {
+      resolver = getIdeaClassPoolFromSources(idePath);
+      File versionFile = new File(idePath, "build.txt");
       if (!versionFile.exists()) {
-        versionFile = new File(ideDir, "community/build.txt");
+        versionFile = new File(idePath, "community/build.txt");
       }
       if (versionFile.exists()) {
-        version = readIdeVersion(versionFile);
+        if (version == null) {
+          version = readIdeVersion(versionFile);
+        }
       }
       if (version == null) {
         throw new IllegalArgumentException("Unable to find IDE version file (build.txt or community/build.txt)");
       }
     } else {
-      resolver = getIdeClassPoolFromLibraries(ideDir);
-      bundled.addAll(getIdePlugins(ideDir));
-      version = readIdeVersion(new File(ideDir, "build.txt"));
+      resolver = getIdeClassPoolFromLibraries(idePath);
+      bundled.addAll(getIdePlugins(idePath));
+      if (version == null) {
+        version = readIdeVersion(new File(idePath, "build.txt"));
+      }
     }
 
     return new IdeImpl(version, resolver, bundled);

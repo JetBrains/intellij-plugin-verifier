@@ -139,8 +139,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     myExternalClassPath = getExternalClassPath(commandLine);
 
-    myIde = IdeManager.getInstance().createIde(ideToCheck);
-    updateIdeVersionFromCmd(myIde, commandLine);
+    myIde = createIde(ideToCheck, commandLine);
 
     Pair<List<String>, List<String>> pluginsIds = Util.extractPluginToCheckList(commandLine);
     myCheckAllBuilds = pluginsIds.first;
@@ -208,6 +207,11 @@ public class CheckIdeCommand extends VerifierCommand {
 
     //list of plugins which were not checked due to some error (first = plugin; second = error message; third = caused exception)
     myIncorrectPlugins = new ArrayList<Pair<UpdateInfo, ? extends Problem>>();
+  }
+
+  @NotNull
+  private Ide createIde(@NotNull File ideToCheck, @NotNull CommandLine commandLine) throws IOException {
+    return IdeManager.getInstance().createIde(ideToCheck, takeVersionFromCmd(commandLine));
   }
 
   private void dumpUpdatesToCheck(Collection<UpdateInfo> updatesToCheck) {

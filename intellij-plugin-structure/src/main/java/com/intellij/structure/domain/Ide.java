@@ -13,8 +13,6 @@ public interface Ide {
   @NotNull
   IdeVersion getVersion();
 
-  void updateVersion(@NotNull IdeVersion newVersion);
-
   void addCustomPlugin(@NotNull Plugin plugin);
 
   @NotNull

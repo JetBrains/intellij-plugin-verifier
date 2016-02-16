@@ -74,18 +74,6 @@ public class IdeTest_IDEA_144_2608_2 {
   }
 
   @Test
-  public void updateVersion() throws Exception {
-    IdeVersion old = ide.getVersion();
-    assertEquals("IU-144.2608", old.getFullPresentation());
-
-    IdeVersion newVersion = IdeVersion.createIdeVersion("IU-140.40.40");
-    ide.updateVersion(newVersion);
-    assertEquals("IU-140.40.40", ide.getVersion().getFullPresentation());
-    ide.updateVersion(old);
-    assertEquals(old, ide.getVersion());
-  }
-
-  @Test
   public void getBundledPlugins() throws Exception {
     assertEquals(125, ide.getBundledPlugins().size());
   }
