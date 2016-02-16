@@ -9,11 +9,11 @@ import org.jetbrains.annotations.Nullable;
 public class FailUtil {
 
   public static RuntimeException fail(@NotNull Throwable cause) {
-    throw fail(cause.getLocalizedMessage(), cause);
+    return fail(cause.getLocalizedMessage(), cause);
   }
 
   public static RuntimeException fail(@NotNull String message) {
-    throw fail(message, null);
+    return fail(message, null);
   }
 
   public static RuntimeException fail(@NotNull String message, @Nullable Throwable cause) {
@@ -21,7 +21,16 @@ public class FailUtil {
     if (cause != null) {
       cause.printStackTrace();
     }
-    throw new RuntimeException(message, cause);
+    return new RuntimeException(message, cause);
   }
 
+  public static void assertTrue(boolean condition, @NotNull String errorMessage) {
+    if (!condition) {
+      throw new RuntimeException(errorMessage);
+    }
+  }
+
+  public static void assertTrue(boolean condition) {
+    assertTrue(condition, "assertion failed");
+  }
 }

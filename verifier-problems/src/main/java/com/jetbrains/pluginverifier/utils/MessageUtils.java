@@ -108,7 +108,7 @@ public class MessageUtils {
     return convertMethodDescr0(methodDescr, className);
   }
 
-  public static String convertMethodDescr0(String methodDescr, @Nullable String className) {
+  private static String convertMethodDescr0(String methodDescr, @Nullable String className) {
     int closeBracketIndex = methodDescr.lastIndexOf(')');
 
     int openBracketIndex = methodDescr.indexOf('(');
@@ -122,7 +122,7 @@ public class MessageUtils {
     int methodNameIndex;
 
     if (className != null) {
-      Assert.assertTrue(methodDescr.indexOf('#') == -1);
+      FailUtil.assertTrue(methodDescr.indexOf('#') == -1);
       methodNameIndex = 0;
     }
     else {

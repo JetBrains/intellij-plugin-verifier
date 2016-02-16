@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
-import com.jetbrains.pluginverifier.utils.Assert;
+import com.jetbrains.pluginverifier.utils.FailUtil;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,14 +19,14 @@ import java.util.List;
 /**
  * @author Sergey Evdokimov
  */
-public class GlobalRepository extends PluginRepository {
+class GlobalRepository extends PluginRepository {
 
   private static final Type updateListType = new TypeToken<List<UpdateInfo>>() {
   }.getType();
 
   private final String url;
 
-  public GlobalRepository(@NotNull String url) {
+  GlobalRepository(@NotNull String url) {
     this.url = url;
   }
 
@@ -91,7 +91,7 @@ public class GlobalRepository extends PluginRepository {
   @NotNull
   @Override
   public String getUpdateUrl(UpdateInfo update) {
-    Assert.assertTrue(update.getUpdateId() != null, update.toString());
+    FailUtil.assertTrue(update.getUpdateId() != null, update.toString());
 
     return url + "/plugin/download/?noStatistic=true&updateId=" + update.getUpdateId();
   }

@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.results;
 
-import com.jetbrains.pluginverifier.utils.Assert;
+import com.jetbrains.pluginverifier.utils.FailUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.objectweb.asm.tree.MethodNode;
@@ -38,8 +38,8 @@ public abstract class ProblemLocation {
 
   @NotNull
   private static String getMethodDescr(@NotNull MethodNode methodNode) {
-    Assert.assertTrue(methodNode.name != null);
-    Assert.assertTrue(methodNode.desc != null);
+    FailUtil.assertTrue(methodNode.name != null);
+    FailUtil.assertTrue(methodNode.desc != null);
     return methodNode.name + methodNode.desc;
   }
 

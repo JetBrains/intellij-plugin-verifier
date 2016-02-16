@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.results;
 
-import com.jetbrains.pluginverifier.utils.Assert;
+import com.jetbrains.pluginverifier.utils.FailUtil;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +26,7 @@ public class CodeLocation extends ProblemLocation {
   }
 
   CodeLocation(@NotNull String className, @Nullable String methodDescr, @Nullable String fieldName) {
-    Assert.assertTrue(methodDescr == null || !methodDescr.contains("#"), "Message descriptor " + methodDescr + " is malformed");
+    FailUtil.assertTrue(methodDescr == null || !methodDescr.contains("#"), "Message descriptor " + methodDescr + " is malformed");
     this.className = className;
     this.methodDescr = methodDescr;
     this.fieldName = fieldName;
