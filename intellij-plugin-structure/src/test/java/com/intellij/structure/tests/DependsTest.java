@@ -34,7 +34,7 @@ public class DependsTest {
 
       System.out.println("Verifying...");
 
-      Plugin ideaPlugin = PluginManager.getPluginManager().createPlugin(destination);
+      Plugin ideaPlugin = PluginManager.getInstance().createPlugin(destination);
       Map<String, Document> xmlDocumentsInRoot = ideaPlugin.getAllXmlInRoot();
       int size = xmlDocumentsInRoot.size();
 

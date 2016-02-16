@@ -16,7 +16,7 @@ import static org.junit.Assert.assertNotNull;
 public class GetResourceTest {
 
   private Plugin getPlugin(String s, String n) throws IOException {
-    return PluginManager.getPluginManager().createPlugin(TestUtils.downloadPlugin(s, n));
+    return PluginManager.getInstance().createPlugin(TestUtils.downloadPlugin(s, n));
   }
 
   @Test

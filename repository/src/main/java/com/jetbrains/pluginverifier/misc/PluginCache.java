@@ -42,7 +42,7 @@ public class PluginCache {
       SoftReference<Plugin> ref = null;
 
       try {
-        res = PluginManager.getPluginManager().createPlugin(pluginZip);
+        res = PluginManager.getInstance().createPlugin(pluginZip);
         ref = new SoftReference<Plugin>(res);
       } catch (IOException e) {
         System.out.println("Plugin is broken: " + pluginZip);

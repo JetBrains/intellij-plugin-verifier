@@ -13,7 +13,7 @@ import java.io.IOException;
 public abstract class PluginManager {
 
   @NotNull
-  public static PluginManager getPluginManager() {
+  public static PluginManager getInstance() {
     return new IdePluginManagerImpl();
   }
 

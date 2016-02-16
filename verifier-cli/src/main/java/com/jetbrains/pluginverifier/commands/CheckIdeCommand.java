@@ -251,7 +251,7 @@ public class CheckIdeCommand extends VerifierCommand {
       try {
         File updateFile = RepositoryManager.getInstance().getOrLoadUpdate(updateJson);
 
-        Plugin plugin = PluginManager.getPluginManager().createPlugin(updateFile);
+        Plugin plugin = PluginManager.getInstance().createPlugin(updateFile);
 
         System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), myUpdatesToCheck.size()));
 
@@ -280,7 +280,7 @@ public class CheckIdeCommand extends VerifierCommand {
         if (myImportantUpdates.contains(updateJson)) {
           //add a plugin with defined IntelliJ module to IDEA
           //it gives us a chance to refer to such plugins by their defined module-name
-          myIde.addCustomPlugin(plugin);
+          myIde = myIde.expandedIde(plugin);
         }
 
       } catch (Exception e) {

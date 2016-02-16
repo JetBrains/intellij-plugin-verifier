@@ -95,7 +95,7 @@ public class IdeTest_IDEA_144_2608_2 {
   public void addCustomPlugin() throws Exception {
     //Download ruby and add as custom plugin to idea
     File rubyPluginFile = TestUtils.downloadPlugin(TestUtils.RUBY_URL, "ruby-plugin.zip");
-    Plugin rubyPlugin = PluginManager.getPluginManager().createPlugin(rubyPluginFile);
+    Plugin rubyPlugin = PluginManager.getInstance().createPlugin(rubyPluginFile);
 
     Set<String> definedModules = rubyPlugin.getDefinedModules();
     assertTrue(definedModules.size() == 1);
@@ -103,7 +103,8 @@ public class IdeTest_IDEA_144_2608_2 {
     assertEquals("com.intellij.modules.ruby", module);
 
     assertTrue(ide.getCustomPlugins().isEmpty());
-    ide.addCustomPlugin(rubyPlugin);
+
+    ide = ide.expandedIde(rubyPlugin);
     assertTrue(!ide.getCustomPlugins().isEmpty());
     assertTrue(ide.getCustomPlugins().get(0) == rubyPlugin);
 

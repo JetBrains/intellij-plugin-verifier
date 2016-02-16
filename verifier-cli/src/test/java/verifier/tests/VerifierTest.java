@@ -167,7 +167,7 @@ public class VerifierTest {
 
   private void testFoundProblems(File ideaFile, File pluginFile, ImmutableMultimap<Problem, ProblemLocation> actualProblems) throws Exception {
     myIde = IdeManager.getInstance().createIde(ideaFile);
-    myPlugin = PluginManager.getPluginManager().createPlugin(pluginFile);
+    myPlugin = PluginManager.getInstance().createPlugin(pluginFile);
 
     final CommandLine commandLine = new GnuParser().parse(Util.CMD_OPTIONS, new String[]{});
 

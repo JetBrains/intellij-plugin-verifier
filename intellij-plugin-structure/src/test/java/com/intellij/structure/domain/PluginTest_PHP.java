@@ -27,7 +27,7 @@ public class PluginTest_PHP {
 
     File pluginFile = TestUtils.downloadPlugin(TestUtils.PHP_URL, "php-plugin.zip");
 
-    plugin = PluginManager.getPluginManager().createPlugin(pluginFile);
+    plugin = PluginManager.getInstance().createPlugin(pluginFile);
   }
 
   @Test

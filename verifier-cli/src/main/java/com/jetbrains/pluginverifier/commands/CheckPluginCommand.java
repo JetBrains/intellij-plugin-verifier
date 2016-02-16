@@ -186,7 +186,7 @@ public class CheckPluginCommand extends VerifierCommand {
 
       for (Pair<UpdateInfo, File> pluginFile : pluginFiles) {
         try {
-          Plugin plugin = PluginManager.getPluginManager().createPlugin(pluginFile.getSecond());
+          Plugin plugin = PluginManager.getInstance().createPlugin(pluginFile.getSecond());
 
           ProblemSet problemSet = verifyPlugin(ide, javaRuntime, getExternalClassPath(commandLine), plugin, options, log);
 
@@ -200,6 +200,8 @@ public class CheckPluginCommand extends VerifierCommand {
           }
 
           ideaToProblems.put(ide.getVersion().getFullPresentation(), problemSet);
+
+          ide = ide.expandedIde(plugin);
 
         } catch (Exception e) {
           final String message = "failed to verify plugin " + pluginFile.getFirst();
@@ -332,7 +334,6 @@ public class CheckPluginCommand extends VerifierCommand {
 
       //for test only purposes
       myLastProblemSet = problemSet;
-      ide.addCustomPlugin(plugin);
 
       return problemSet;
 

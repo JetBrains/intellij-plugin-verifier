@@ -94,7 +94,7 @@ public class IdeManagerImpl extends IdeManager {
         continue;
 
       try {
-        plugins.add(PluginManager.getPluginManager().createPlugin(file));
+        plugins.add(PluginManager.getInstance().createPlugin(file));
       } catch (IncorrectPluginException e) {
         System.out.println("Failed to read plugin " + file + ": " + e.getMessage());
       } catch (IOException e) {

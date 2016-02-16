@@ -29,15 +29,25 @@ class IdeImpl implements Ide {
     myCustomPlugins = new ArrayList<Plugin>();
   }
 
+  private IdeImpl(Resolver resolver, List<Plugin> bundledPlugins, List<Plugin> customPlugins, IdeVersion version) {
+    myResolver = resolver;
+    myBundledPlugins = bundledPlugins;
+    myCustomPlugins = customPlugins;
+    myVersion = version;
+  }
+
   @NotNull
   @Override
   public IdeVersion getVersion() {
     return myVersion;
   }
 
+  @NotNull
   @Override
-  public void addCustomPlugin(@NotNull Plugin plugin) {
-    myCustomPlugins.add(plugin);
+  public Ide expandedIde(@NotNull Plugin plugin) {
+    List<Plugin> newCustoms = new ArrayList<Plugin>(myCustomPlugins);
+    newCustoms.add(plugin);
+    return new IdeImpl(myResolver, myBundledPlugins, newCustoms, myVersion);
   }
 
   @Override
