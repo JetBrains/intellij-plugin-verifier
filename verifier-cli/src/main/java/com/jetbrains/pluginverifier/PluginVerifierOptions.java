@@ -7,14 +7,18 @@ import org.apache.commons.cli.Option;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class PluginVerifierOptions {
-  private String[] myPrefixesToSkipForDuplicateClassesCheck = new String[0];
+  private final String[] myPrefixesToSkipForDuplicateClassesCheck;
+  private final String[] externalClassPrefixes;
+  private final Set<String> myOptionalDependenciesIdsToIgnoreIfMissing;
 
-  private String[] externalClassPrefixes = new String[0];
+  private PluginVerifierOptions(String[] prefixesToSkipForDuplicateClassesCheck, String[] externalClassPrefixes, String[] optionalDependenciesIdsToIgnoreIfMissing) {
+    myPrefixesToSkipForDuplicateClassesCheck = prefixesToSkipForDuplicateClassesCheck;
+    this.externalClassPrefixes = externalClassPrefixes;
+    myOptionalDependenciesIdsToIgnoreIfMissing = new HashSet<String>(Arrays.asList(optionalDependenciesIdsToIgnoreIfMissing));
+  }
 
   @Nullable
   private static String getOption(CommandLine commandLine, String shortKey) {
@@ -59,22 +63,22 @@ public class PluginVerifierOptions {
 
   @NotNull
   public static PluginVerifierOptions parseOpts(@NotNull CommandLine commandLine) {
-    PluginVerifierOptions res = new PluginVerifierOptions();
-
     String[] prefixesToSkipForDuplicateClassesCheck = getOptionValuesSplit(commandLine, ":", "s");
     for (int i = 0; i < prefixesToSkipForDuplicateClassesCheck.length; i++) {
       prefixesToSkipForDuplicateClassesCheck[i] = prefixesToSkipForDuplicateClassesCheck[i].replace('.', '/');
     }
-    res.setPrefixesToSkipForDuplicateClassesCheck(prefixesToSkipForDuplicateClassesCheck);
-
 
     String[] externalClasses = getOptionValuesSplit(commandLine, ":", "e");
     for (int i = 0; i < externalClasses.length; i++) {
       externalClasses[i] = externalClasses[i].replace('.', '/');
     }
-    res.setExternalClassPrefixes(externalClasses);
+    String[] optionalDependenciesIdsToIgnoreIfMissing = getOptionValuesSplit(commandLine, ",", "imod");
 
-    return res;
+    return new PluginVerifierOptions(prefixesToSkipForDuplicateClassesCheck, externalClasses, optionalDependenciesIdsToIgnoreIfMissing);
+  }
+
+  public boolean isIgnoreMissingOptionalDependency(@NotNull String pluginId) {
+    return myOptionalDependenciesIdsToIgnoreIfMissing.contains(pluginId);
   }
 
   @NotNull
@@ -82,17 +86,9 @@ public class PluginVerifierOptions {
     return myPrefixesToSkipForDuplicateClassesCheck;
   }
 
-  public void setPrefixesToSkipForDuplicateClassesCheck(@NotNull String[] prefixesToSkipForDuplicateClassesCheck) {
-    myPrefixesToSkipForDuplicateClassesCheck = prefixesToSkipForDuplicateClassesCheck;
-  }
-
   @NotNull
   public String[] getExternalClassPrefixes() {
     return externalClassPrefixes;
-  }
-
-  public void setExternalClassPrefixes(@NotNull String[] externalClassPrefixes) {
-    this.externalClassPrefixes = externalClassPrefixes;
   }
 
   public boolean isExternalClass(@NotNull String className) {

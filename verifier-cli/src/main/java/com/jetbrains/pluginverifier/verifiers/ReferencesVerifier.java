@@ -53,7 +53,10 @@ class ReferencesVerifier implements Verifier {
     Map<String, String> missingDependencies = descriptor.getMissingDependencies().get(pluginName);
     if (missingDependencies != null) {
       for (Map.Entry<String, String> entry : missingDependencies.entrySet()) {
-        ctx.registerProblem(new MissingDependencyProblem(entry.getKey(), entry.getValue()), ProblemLocation.fromPlugin(pluginName));
+        String missingId = entry.getKey();
+        if (!ctx.getVerifierOptions().isIgnoreMissingOptionalDependency(missingId)) {
+          ctx.registerProblem(new MissingDependencyProblem(missingId, entry.getValue()), ProblemLocation.fromPlugin(pluginName));
+        }
       }
     }
 
@@ -83,10 +86,8 @@ class ReferencesVerifier implements Verifier {
 
     List<FieldNode> fields = (List<FieldNode>) node.fields;
     for (FieldNode field : fields) {
-      for (FieldNode method : fields) {
-        for (FieldVerifier verifier : Verifiers.getFieldVerifiers()) {
-          verifier.verify(node, field, resolver, ctx);
-        }
+      for (FieldVerifier verifier : Verifiers.getFieldVerifiers()) {
+        verifier.verify(node, field, resolver, ctx);
       }
     }
   }
