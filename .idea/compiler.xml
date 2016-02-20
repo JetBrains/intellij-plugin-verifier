@@ -22,68 +22,76 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
-        <module name="repository" />
       </profile>
       <profile default="false" name="Annotation profile for verifier-cli" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
-        <module name="verifier-cli" />
       </profile>
       <profile default="false" name="Annotation profile for intellij-plugin-structure" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
-        <module name="intellij-plugin-structure" />
       </profile>
       <profile default="false" name="Annotation profile for uploader" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
-        <module name="uploader" />
       </profile>
       <profile default="false" name="Annotation profile for mock-idea" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
-        <module name="mock-idea" />
       </profile>
       <profile default="false" name="Annotation profile for mock-plugin" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
-        <module name="mock-plugin" />
       </profile>
       <profile default="false" name="Annotation profile for common-utils" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
-        <module name="common-utils" />
       </profile>
       <profile default="false" name="Annotation profile for verifier-problems" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
-        <module name="verifier-problems" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="1.6">
       <module name="common-utils" target="1.6" />
+      <module name="common_utils_main" target="1.6" />
       <module name="intellij-plugin-structure" target="1.6" />
+      <module name="intellij_plugin_structure_main" target="1.6" />
+      <module name="intellij_plugin_structure_test" target="1.6" />
       <module name="mock-idea" target="1.6" />
       <module name="mock-plugin" target="1.6" />
+      <module name="mock_idea_main" target="1.6" />
+      <module name="mock_plugin1_main" target="1.6" />
+      <module name="mock_plugin1_test" target="1.6" />
+      <module name="mock_plugin_main" target="1.6" />
       <module name="repository" target="1.6" />
+      <module name="repository_main" target="1.6" />
+      <module name="repository_test" target="1.6" />
       <module name="uploader" target="1.6" />
+      <module name="uploader_main" target="1.6" />
+      <module name="uploader_test" target="1.6" />
       <module name="verifier-cli" target="1.6" />
       <module name="verifier-parent" target="1.6" />
       <module name="verifier-problems" target="1.6" />
+      <module name="verifier_cli_main" target="1.6" />
+      <module name="verifier_cli_test" target="1.6" />
+      <module name="verifier_parent_main" target="1.6" />
+      <module name="verifier_problems_main" target="1.6" />
+      <module name="verifier_problems_test" target="1.6" />
     </bytecodeTargetLevel>
   </component>
 </project>

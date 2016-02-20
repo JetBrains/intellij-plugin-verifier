@@ -323,7 +323,7 @@ class IdePluginImpl implements Plugin {
   }
 
   @Override
-  public String getNotes() {
+  public String getChangeNotes() {
     return myNotes;
   }
 }

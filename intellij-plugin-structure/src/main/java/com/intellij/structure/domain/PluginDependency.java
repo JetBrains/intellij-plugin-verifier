@@ -25,4 +25,22 @@ public class PluginDependency {
   public String toString() {
     return myId + (myIsOptional ? " (optional)" : "");
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    PluginDependency that = (PluginDependency) o;
+
+    return myIsOptional == that.myIsOptional && myId.equals(that.myId);
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myId.hashCode();
+    result = 31 * result + (myIsOptional ? 1 : 0);
+    return result;
+  }
 }

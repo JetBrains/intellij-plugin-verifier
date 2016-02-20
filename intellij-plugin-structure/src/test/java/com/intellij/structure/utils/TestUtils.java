@@ -2,6 +2,7 @@ package com.intellij.structure.utils;
 
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -76,5 +77,12 @@ public class TestUtils {
     File pluginFile = getFileForDownload(pluginFileName);
     downloadFile(pluginUrl, pluginFile);
     return pluginFile;
+  }
+
+  @NotNull
+  public static File getMockPlugin(int mockNumber) {
+    File file = new File("build/mocks/mock-plugin" + mockNumber + "-1.0.jar");
+    Assert.assertTrue("mock plugin " + mockNumber + " is not found in " + file, file.exists());
+    return file;
   }
 }

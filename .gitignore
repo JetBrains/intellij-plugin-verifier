@@ -1,5 +1,9 @@
+/.gradle
+/intellij-plugin-structure/.gradle
 .idea/dictionaries
 .idea/workspace.xml
+.idea/libraries
+.idea/tasks.xml
 .idea/inspectionProfiles
 .idea/codeStyleSettings.xml
 target/

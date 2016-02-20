@@ -1,0 +1,68 @@
+<idea-plugin version="format_version_attr" url="my_url_attr" use-idea-classloader="true">
+    <name>Mock name 1</name>
+    <version>1.0</version>
+    <id>org.mock.plugin1</id>
+    <vendor email="nonono.com" url="http://www.HornsAndHooves.com" logo="logo_path">Vendor</vendor>
+
+    <description><![CDATA[description]]></description>
+
+    <idea-version since-build="131" until-build="999"/>
+
+    <change-notes><![CDATA[change_notes]]></change-notes>
+
+    <category>my_category</category>
+
+    <!--dependencies-->
+    <depends>dependent.id</depends>
+    <depends optional="true" config-file="opt.xml">opt.dependent.id</depends>
+    <depends>com.intellij.modules.moduledependency</depends>
+
+
+    <resource-bundle>my_resourceBundle</resource-bundle>
+
+    <module value="one_module"/>
+    <module value="two_module"/>
+
+    <helpset file="help_file" path="help_path"></helpset>
+
+    <!--extensions-->
+    <extensions defaultExtensionNs="com.intellij">
+        <extension>
+
+        </extension>
+    </extensions>
+
+    <extensionPoints>
+        <extensionPoint>
+            <with></with>
+        </extensionPoint>
+    </extensionPoints>
+
+    <!--app components-->
+    <application-components>
+        <component>
+            <implementation-class/>
+        </component>
+    </application-components>
+
+    <!--project components-->
+    <project-components>
+        <component>
+            <implementation-class/>
+        </component>
+    </project-components>
+
+    <!--module components-->
+    <module-components>
+        <component>
+            <implementation-class>impl-class</implementation-class>
+        </component>
+    </module-components>
+
+    <!--actions-->
+    <actions>
+        <action class="one" id="two"/>
+    </actions>
+
+
+</idea-plugin>

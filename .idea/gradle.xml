@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleHome" value="$USER_HOME$/packages/gradle-2.11" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/common-utils" />
+            <option value="$PROJECT_DIR$/mock-idea" />
+            <option value="$PROJECT_DIR$/mock-plugin" />
+            <option value="$PROJECT_DIR$/repository" />
+            <option value="$PROJECT_DIR$/uploader" />
+            <option value="$PROJECT_DIR$/verifier-cli" />
+            <option value="$PROJECT_DIR$/verifier-problems" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/intellij-plugin-structure" />
+        <option name="gradleHome" value="$USER_HOME$/packages/gradle-2.11" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/intellij-plugin-structure" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/mock-plugin1" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>

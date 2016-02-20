@@ -110,5 +110,9 @@ public interface Plugin {
 
   String getUrl();
 
-  String getNotes();
+  String getChangeNotes();
+
+  //File getPath(); TODO:
+
+  //String getResourceBundleBaseName();
 }

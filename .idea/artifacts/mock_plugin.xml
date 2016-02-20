@@ -5,7 +5,7 @@
       <element id="directory" name="META-INF">
         <element id="dir-copy" path="$PROJECT_DIR$/verifier-cli/mock-plugin/META-INF" />
       </element>
-      <element id="module-output" name="mock-plugin" />
+      <element id="module-output" name="mock_plugin_main" />
     </root>
   </artifact>
 </component>

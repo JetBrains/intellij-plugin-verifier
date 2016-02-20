@@ -1,0 +1,18 @@
+version = 1.0
+
+dependencies {
+  //for verifier tests
+  testCompile project(':mock-plugin')
+  testCompile group: 'junit', name: 'junit', version: '4.11'
+  testCompile group: 'org.codehaus.plexus', name: 'plexus-archiver', version: '2.3'
+
+  compile project(':verifier-problems')
+  compile project(':repository')
+  compile project(':common-utils')
+  compile group: 'commons-cli', name: 'commons-cli', version: '1.2'
+  compile group: 'com.google.guava', name: 'guava', version: '15.0'
+  compile group: 'com.google.code.gson', name: 'gson', version: '2.2.4'
+  compile group: 'commons-io', name: 'commons-io', version: '2.3'
+  compile group: 'org.jdom', name: 'jdom', version: '1.1.3'
+}
+
