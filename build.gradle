@@ -1,8 +1,8 @@
 allprojects {
   apply plugin: 'java'
 
-//    group = 'org.jetbrains.intellij.plugins'
-//    version = '1.7'
+  group = 'org.jetbrains.intellij.plugins'
+  version = '1.7'
 
   sourceCompatibility = 1.6
   targetCompatibility = 1.6
@@ -13,9 +13,8 @@ allprojects {
     compile group: 'org.ow2.asm', name: 'asm-all', version: '5.0.4'
     compile group: 'com.google.guava', name: 'guava', version: '15.0'
     compile group: 'commons-io', name: 'commons-io', version: '2.3'
-    compile project(':intellij-plugin-structure')
 
-//    compile group: 'org.jetbrains.intellij.plugins', name: 'intellij-plugin-structure', version: '1.4'
+    compile group: 'org.jetbrains.intellij.plugins', name: 'intellij-plugin-structure', version: '1.4'
   }
 
 }
@@ -30,10 +29,9 @@ subprojects {
   artifacts.archives packageSources
 
   repositories {
-    mavenLocal()
-
-//    maven { url "http://dl.bintray.com/jetbrains/intellij-plugin-service" }
-    maven { url "http://repo.maven.apache.org/maven2" }
+    mavenCentral()
+//    maven { url 'http://repo.grails.org/grails/repo' }
+    maven { url "http://dl.bintray.com/jetbrains/intellij-plugin-service" }
   }
 
 }

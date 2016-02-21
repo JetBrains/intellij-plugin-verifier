@@ -6,6 +6,3 @@ include 'mock-idea'
 include 'mock-plugin'
 include 'repository'
 include 'common-utils'
-
-include 'intellij-plugin-structure'
-project(':intellij-plugin-structure').projectDir = new File('$projectDir/../intellij-plugin-structure')

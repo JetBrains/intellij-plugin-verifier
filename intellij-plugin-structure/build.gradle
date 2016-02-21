@@ -1,8 +1,9 @@
+version = '1.5'
+
 allprojects {
   apply plugin: 'java'
 
   group = 'org.jetbrains.intellij.plugins'
-  version = '1.4'
 
   sourceCompatibility = 1.6
   targetCompatibility = 1.6
