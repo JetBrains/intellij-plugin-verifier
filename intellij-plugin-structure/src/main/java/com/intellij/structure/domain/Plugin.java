@@ -43,7 +43,7 @@ public interface Plugin {
   @NotNull
   String getPluginName();
 
-  @NotNull
+  @Nullable
   String getPluginVersion();
 
   @NotNull

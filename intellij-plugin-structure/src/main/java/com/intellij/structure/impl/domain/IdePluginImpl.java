@@ -94,15 +94,23 @@ class IdePluginImpl implements Plugin {
     myVendorLogoPath = vendorElement.getAttributeValue("logo");
 
     myPluginVersion = rootElement.getChildTextTrim("version");
+/*
+    In idea bundled plugins it may be null (consider throwing an exception)
     if (myPluginVersion == null) {
       throw new IncorrectPluginException("Invalid plugin.xml: version is not specified");
     }
+*/
 
     Element ideaVersionElement = rootElement.getChild("idea-version");
+/*
+    In idea bundled plugins it may be null
     if (ideaVersionElement == null) {
       throw new IncorrectPluginException("Invalid plugin.xml: element 'idea-version' not found");
     }
-    setSinceUntilBuilds(ideaVersionElement);
+*/
+    if (ideaVersionElement != null) {
+      setSinceUntilBuilds(ideaVersionElement);
+    }
 
     setPluginDependencies(rootElement);
 
@@ -110,9 +118,9 @@ class IdePluginImpl implements Plugin {
 
 
     String description = rootElement.getChildTextTrim("description");
-    if (StringUtil.isNullOrEmpty(description)) {
-      throw new IncorrectPluginException("Invalid plugin.xml: description is empty");
-    } else {
+//  In idea bundled plugins it may be null
+//  throw new IncorrectPluginException("Invalid plugin.xml: description is empty");
+    if (!StringUtil.isNullOrEmpty(description)) {
       myDescription = Jsoup.clean(description, WHITELIST);
     }
 
@@ -210,7 +218,7 @@ class IdePluginImpl implements Plugin {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public String getPluginVersion() {
     return myPluginVersion;
   }

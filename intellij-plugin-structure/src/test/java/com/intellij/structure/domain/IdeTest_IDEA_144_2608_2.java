@@ -75,6 +75,8 @@ public class IdeTest_IDEA_144_2608_2 {
 
   @Test
   public void getBundledPlugins() throws Exception {
+    //TODO: how to process duplicates plugin (it's without plugin.xml at all)
+
     assertEquals(125, ide.getBundledPlugins().size());
   }
 
