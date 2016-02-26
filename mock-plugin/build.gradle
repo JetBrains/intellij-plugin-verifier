@@ -1,5 +1,0 @@
-version = 1.0
-
-dependencies {
-  compile project(':mock-idea')
-}

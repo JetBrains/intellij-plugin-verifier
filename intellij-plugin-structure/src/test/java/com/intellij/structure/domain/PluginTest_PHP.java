@@ -2,7 +2,6 @@ package com.intellij.structure.domain;
 
 import com.intellij.structure.resolvers.Resolver;
 import com.intellij.structure.utils.TestUtils;
-import org.jdom.Document;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -10,7 +9,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -30,18 +28,14 @@ public class PluginTest_PHP {
     plugin = PluginManager.getInstance().createPlugin(pluginFile);
   }
 
-  @Test
-  public void getPluginXml() throws Exception {
-    Document pluginXml = plugin.getPluginXml();
-    assertNotNull(pluginXml);
-  }
-
+/*
   @Test
   public void getAllXmlInRoot() throws Exception {
     Map<String, Document> allXmlInRoot = plugin.getAllXmlInRoot();
     List<String> list = Arrays.asList("META-INF/uml-support.xml", "META-INF/php-deployment-aware.xml", "META-INF/php-coverage.xml", "META-INF/plugin.xml", "META-INF/liveEdit-support.xml", "META-INF/intellilang-php-support.xml");
     assertTrue(allXmlInRoot.keySet().containsAll(list));
   }
+*/
 
   @Test
   public void getSinceBuild() throws Exception {
@@ -108,8 +102,8 @@ public class PluginTest_PHP {
   }
 
   @Test
-  public void getPluginClassPool() throws Exception {
-    Resolver pluginResolver = plugin.getPluginClassPool();
+  public void getPluginResolver() throws Exception {
+    Resolver pluginResolver = plugin.getPluginResolver();
     Collection<String> allClasses = pluginResolver.getAllClasses();
 
     assertTrue(allClasses.contains("com/intellij/structuralsearch/PhpStructuralSearchProfile"));
@@ -121,9 +115,9 @@ public class PluginTest_PHP {
   }
 
   @Test
-  public void getLibraryClassPool() throws Exception {
+  public void getLibraryResolver() throws Exception {
 
-    Resolver libraryResolver = plugin.getLibraryClassPool();
+    Resolver libraryResolver = plugin.getLibraryResolver();
     Collection<String> allClasses = libraryResolver.getAllClasses();
 
     assertEquals(226, allClasses.size());

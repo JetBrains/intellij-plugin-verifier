@@ -69,7 +69,7 @@ public abstract class VerifierCommand {
     List<Resolver> pools = new ArrayList<Resolver>(values.length);
 
     for (String value : values) {
-      pools.add(Resolver.createJarClassPool(new JarFile(value)));
+      pools.add(Resolver.createJarResolver(new JarFile(value)));
     }
 
     return Resolver.getUnion("external_class_path", pools);

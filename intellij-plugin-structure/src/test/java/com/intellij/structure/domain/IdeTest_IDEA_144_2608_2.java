@@ -64,8 +64,8 @@ public class IdeTest_IDEA_144_2608_2 {
 
   @Test
   public void testRuntime() throws Exception {
-    Resolver classPool = runtime.getResolver();
-    assertTrue(!classPool.getAllClasses().isEmpty());
+    Resolver resolver = runtime.getResolver();
+    assertTrue(!resolver.getAllClasses().isEmpty());
   }
 
   @Test
@@ -119,7 +119,7 @@ public class IdeTest_IDEA_144_2608_2 {
 
   @Test
   public void getResolver() throws Exception {
-    Resolver resolver = ide.getClassPool();
+    Resolver resolver = ide.getResolver();
     Collection<String> allClasses = resolver.getAllClasses();
 
     for (String aClass : allClasses) {

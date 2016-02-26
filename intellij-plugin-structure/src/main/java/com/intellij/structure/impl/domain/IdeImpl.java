@@ -29,7 +29,7 @@ class IdeImpl implements Ide {
     myCustomPlugins = new ArrayList<Plugin>();
   }
 
-  private IdeImpl(Resolver resolver, List<Plugin> bundledPlugins, List<Plugin> customPlugins, IdeVersion version) {
+  private IdeImpl(@NotNull Resolver resolver, @NotNull List<Plugin> bundledPlugins, @NotNull List<Plugin> customPlugins, @NotNull IdeVersion version) {
     myResolver = resolver;
     myBundledPlugins = bundledPlugins;
     myCustomPlugins = customPlugins;
@@ -80,7 +80,7 @@ class IdeImpl implements Ide {
 
   @NotNull
   @Override
-  public Resolver getClassPool() {
+  public Resolver getResolver() {
     return myResolver;
   }
 

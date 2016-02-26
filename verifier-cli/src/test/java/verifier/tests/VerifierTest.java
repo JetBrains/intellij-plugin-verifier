@@ -129,7 +129,7 @@ public class VerifierTest {
   @Test
   public void testMyPlugin() throws Exception {
     File ideaFile = TestData.fetchResource(IDEA_14_0_4, true);
-    File pluginFile = findLatestPlugin();
+    File pluginFile = new File("build/mocks/mock-plugin-1.0.jar");
     testFoundProblems(ideaFile, pluginFile, MY_ACTUAL_PROBLEMS);
   }
 

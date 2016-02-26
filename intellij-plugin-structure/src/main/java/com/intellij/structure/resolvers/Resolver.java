@@ -51,7 +51,7 @@ public abstract class Resolver {
   }
 
   @NotNull
-  public static Resolver createJarClassPool(@NotNull JarFile jarFile) throws IOException {
+  public static Resolver createJarResolver(@NotNull JarFile jarFile) throws IOException {
     return new SoftJarResolver(jarFile);
   }
 

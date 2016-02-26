@@ -36,11 +36,11 @@ public class JarsUtils {
   }
 
   @NotNull
-  public static Resolver makeClassPool(@NotNull String moniker, @NotNull List<JarFile> jars) throws IOException {
+  public static Resolver makeResolver(@NotNull String moniker, @NotNull List<JarFile> jars) throws IOException {
     List<Resolver> pool = new ArrayList<Resolver>();
 
     for (JarFile jar : jars) {
-      pool.add(Resolver.createJarClassPool(jar));
+      pool.add(Resolver.createJarResolver(jar));
     }
 
     return Resolver.getUnion(moniker, pool);

@@ -32,13 +32,13 @@ public class Go_0_11_1113 {
 
   @Test
   public void testClassesFound() throws Exception {
-    Collection<String> allClasses = plugin.getPluginClassPool().getAllClasses();
+    Collection<String> allClasses = plugin.getPluginResolver().getAllClasses();
     assertTrue(allClasses.size() == 951);
 
     Set<String> foundNames = new HashSet<String>();
 
     for (String name : allClasses) {
-      ClassNode node = plugin.getPluginClassPool().findClass(name);
+      ClassNode node = plugin.getPluginResolver().findClass(name);
       assertNotNull(node);
       foundNames.add(node.name);
     }

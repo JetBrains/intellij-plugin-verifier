@@ -68,7 +68,7 @@ public class DependenciesCache {
     Resolver resolver = myIdeResolvers.get(ide);
     if (resolver == null) {
       List<Resolver> resolvers = new ArrayList<Resolver>();
-      resolvers.add(ide.getClassPool());
+      resolvers.add(ide.getResolver());
       resolvers.add(jdk.getResolver());
       if (externalClassPath != null) {
         resolvers.add(externalClassPath);
@@ -91,17 +91,17 @@ public class DependenciesCache {
 
       List<Resolver> resolvers = new ArrayList<Resolver>();
 
-      resolvers.add(Resolver.getUnion(plugin.getPluginId(), Arrays.asList(plugin.getPluginClassPool(), plugin.getLibraryClassPool())));
+      resolvers.add(Resolver.getUnion(plugin.getPluginId(), Arrays.asList(plugin.getPluginResolver(), plugin.getLibraryResolver())));
 
       resolvers.add(getResolverForIde(ide, jdk, externalClassPath));
 
       for (Plugin dep : all.getDependencies()) {
-        Resolver pluginResolver = dep.getPluginClassPool();
+        Resolver pluginResolver = dep.getPluginResolver();
         if (!pluginResolver.isEmpty()) {
           resolvers.add(pluginResolver);
         }
 
-        Resolver libraryResolver = dep.getLibraryClassPool();
+        Resolver libraryResolver = dep.getLibraryResolver();
         if (!libraryResolver.isEmpty()) {
           resolvers.add(libraryResolver);
         }

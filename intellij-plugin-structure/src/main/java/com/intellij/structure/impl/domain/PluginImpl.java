@@ -15,13 +15,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-class IdePluginImpl implements Plugin {
+class PluginImpl implements Plugin {
 
   private static final Whitelist WHITELIST = Whitelist.basicWithImages();
   private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules.";
@@ -30,6 +31,7 @@ class IdePluginImpl implements Plugin {
   private final Set<String> myDefinedModules = new HashSet<String>();
   private final List<PluginDependency> myDependencies = new ArrayList<PluginDependency>();
   private final List<PluginDependency> myModuleDependencies = new ArrayList<PluginDependency>();
+  private final File myPluginPath;
   private final URL myMainJarUrl;
   private final Document myPluginXml;
   private final Map<String, Document> myXmlDocumentsInRoot;
@@ -47,11 +49,13 @@ class IdePluginImpl implements Plugin {
   private IdeVersion myUntilBuild;
 
 
-  IdePluginImpl(@NotNull URL mainJarUrl,
-                @NotNull Resolver pluginResolver,
-                @NotNull Resolver libraryResolver,
-                @NotNull Document pluginXml,
-                @NotNull Map<String, Document> xmlDocumentsInRoot) throws IncorrectPluginException {
+  PluginImpl(@NotNull File pluginPath,
+             @NotNull URL mainJarUrl,
+             @NotNull Resolver pluginResolver,
+             @NotNull Resolver libraryResolver,
+             @NotNull Document pluginXml,
+             @NotNull Map<String, Document> xmlDocumentsInRoot) throws IncorrectPluginException {
+    myPluginPath = pluginPath;
     myMainJarUrl = mainJarUrl;
     myPluginXml = pluginXml;
     myXmlDocumentsInRoot = xmlDocumentsInRoot;
@@ -141,17 +145,6 @@ class IdePluginImpl implements Plugin {
 
   @Override
   @NotNull
-  public Map<String, Document> getAllXmlInRoot() {
-    //to pretend modification
-    Map<String, Document> copy = new HashMap<String, Document>();
-    for (Map.Entry<String, Document> entry : myXmlDocumentsInRoot.entrySet()) {
-      copy.put(entry.getKey(), (Document) entry.getValue().clone());
-    }
-    return copy;
-  }
-
-  @Override
-  @NotNull
   public List<PluginDependency> getDependencies() {
     return myDependencies;
   }
@@ -160,12 +153,6 @@ class IdePluginImpl implements Plugin {
   @NotNull
   public List<PluginDependency> getModuleDependencies() {
     return myModuleDependencies;
-  }
-
-  @Override
-  @NotNull
-  public Document getPluginXml() {
-    return (Document) myPluginXml.clone();
   }
 
   @Override
@@ -276,13 +263,13 @@ class IdePluginImpl implements Plugin {
 
   @Override
   @NotNull
-  public Resolver getPluginClassPool() {
+  public Resolver getPluginResolver() {
     return myPluginResolver;
   }
 
   @Override
   @NotNull
-  public Resolver getLibraryClassPool() {
+  public Resolver getLibraryResolver() {
     return myLibraryResolver;
   }
 
@@ -293,7 +280,6 @@ class IdePluginImpl implements Plugin {
   }
 
   @Nullable
-  @Override
   public InputStream getResourceFile(@NotNull String relativePath) {
     relativePath = StringUtil.trimStart(relativePath, "/");
     URL url;
@@ -320,10 +306,12 @@ class IdePluginImpl implements Plugin {
     return myVendorUrl;
   }
 
-  @Override
+/*
+  TODO: change with InputStream
   public String getVendorLogoPath() {
     return myVendorLogoPath;
   }
+*/
 
   @Override
   public String getUrl() {
@@ -333,5 +321,10 @@ class IdePluginImpl implements Plugin {
   @Override
   public String getChangeNotes() {
     return myNotes;
+  }
+
+  @Override
+  public File getPluginPath() {
+    return myPluginPath;
   }
 }

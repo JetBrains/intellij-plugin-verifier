@@ -40,7 +40,7 @@ public class IdePluginManagerImpl extends PluginManager {
   private static final Pattern XML_IN_ROOT_PATTERN = Pattern.compile("([^/]*/)?META-INF/.+\\.xml");
 
   @NotNull
-  private static IdePluginImpl createFromZip(@NotNull File zipFile) throws IOException {
+  private static PluginImpl createFromZip(@NotNull File zipFile) throws IOException {
     byte[] pluginXmlBytes = null;
     Resolver pluginResolver = null;
     List<Resolver> libraryPool = new ArrayList<Resolver>();
@@ -195,7 +195,7 @@ public class IdePluginManagerImpl extends PluginManager {
       }
     }
 
-    return new IdePluginImpl(mainJarUrl, pluginResolver, Resolver.getUnion(zipFile.getPath(), libraryPool), pluginXml, allXmlInRoot);
+    return new PluginImpl(zipFile, mainJarUrl, pluginResolver, Resolver.getUnion(zipFile.getPath(), libraryPool), pluginXml, allXmlInRoot);
   }
 
   private static void tryAddXmlInRoot(@NotNull Map<String, Document> container,
@@ -240,7 +240,7 @@ public class IdePluginManagerImpl extends PluginManager {
           throw new IncorrectPluginException("Plugin has more than one .jar with plugin.xml " + pluginFile);
         }
 
-        pluginResolver = Resolver.createJarClassPool(jar);
+        pluginResolver = Resolver.createJarResolver(jar);
 
         final String jarPath = "jar:" + StringUtil.replace(new File(jar.getName()).toURI().toASCIIString(), "!", "%21") + "!/";
 
@@ -263,7 +263,7 @@ public class IdePluginManagerImpl extends PluginManager {
           throw new IncorrectPluginException("Failed to read plugin.xml", e);
         }
       } else {
-        libraryPools.add(Resolver.createJarClassPool(jar));
+        libraryPools.add(Resolver.createJarResolver(jar));
       }
     }
 
@@ -303,7 +303,7 @@ public class IdePluginManagerImpl extends PluginManager {
     }
 
     Resolver libraryPoolsUnion = Resolver.getUnion(pluginFile.toString(), libraryPools);
-    return new IdePluginImpl(mainJarUrl, pluginResolver, libraryPoolsUnion, pluginXml, xmlDocumentsInRoot);
+    return new PluginImpl(pluginFile, mainJarUrl, pluginResolver, libraryPoolsUnion, pluginXml, xmlDocumentsInRoot);
   }
 
   @NotNull

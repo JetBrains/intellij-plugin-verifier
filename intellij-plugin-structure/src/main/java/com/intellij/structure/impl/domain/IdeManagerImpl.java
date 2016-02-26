@@ -49,7 +49,7 @@ public class IdeManagerImpl extends IdeManager {
   }
 
   @NotNull
-  private static Resolver getIdeaClassPoolFromLibraries(File ideaDir) throws IOException {
+  private static Resolver getIdeaResolverFromLibraries(File ideaDir) throws IOException {
     final File lib = new File(ideaDir, "lib");
     if (!lib.isDirectory()) {
       throw new IOException("Directory \"lib\" is not found (should be found at " + lib + ")");
@@ -62,18 +62,18 @@ public class IdeManagerImpl extends IdeManager {
       }
     });
 
-    return JarsUtils.makeClassPool(ideaDir.getPath(), jars);
+    return JarsUtils.makeResolver(ideaDir.getPath(), jars);
   }
 
   @NotNull
-  private static Resolver getIdeaClassPoolFromSources(File ideaDir) throws IOException {
+  private static Resolver getIdeaResolverFromSources(File ideaDir) throws IOException {
     List<Resolver> pools = new ArrayList<Resolver>();
 
-    pools.add(getIdeaClassPoolFromLibraries(ideaDir));
+    pools.add(getIdeaResolverFromLibraries(ideaDir));
 
     if (isUltimate(ideaDir)) {
       pools.add(new CompileOutputResolver(getUltimateClassesRoot(ideaDir)));
-      pools.add(getIdeaClassPoolFromLibraries(new File(ideaDir, "community")));
+      pools.add(getIdeaResolverFromLibraries(new File(ideaDir, "community")));
     } else {
       pools.add(new CompileOutputResolver(getCommunityClassesRoot(ideaDir)));
     }
@@ -121,7 +121,7 @@ public class IdeManagerImpl extends IdeManager {
 
         Plugin plugin;
         try {
-          plugin = new IdePluginImpl(file.toURI().toURL(), Resolver.getEmptyResolver(), Resolver.getEmptyResolver(), xml, Collections.<String, Document>emptyMap());
+          plugin = new PluginImpl(file, file.toURI().toURL(), Resolver.getEmptyResolver(), Resolver.getEmptyResolver(), xml, Collections.<String, Document>emptyMap());
         } catch (IncorrectPluginException e) {
           continue;
         } catch (IllegalArgumentException e) {
@@ -187,7 +187,7 @@ public class IdeManagerImpl extends IdeManager {
     List<Plugin> bundled = new ArrayList<Plugin>();
 
     if (isSourceDir(idePath)) {
-      resolver = getIdeaClassPoolFromSources(idePath);
+      resolver = getIdeaResolverFromSources(idePath);
       File versionFile = new File(idePath, "build.txt");
       if (!versionFile.exists()) {
         versionFile = new File(idePath, "community/build.txt");
@@ -200,7 +200,7 @@ public class IdeManagerImpl extends IdeManager {
       }
       bundled.addAll(getDummyPluginsFromSources(idePath));
     } else {
-      resolver = getIdeaClassPoolFromLibraries(idePath);
+      resolver = getIdeaResolverFromLibraries(idePath);
       bundled.addAll(getIdeaPlugins(idePath));
       version = readBuildNumber(new File(idePath, "build.txt"));
     }

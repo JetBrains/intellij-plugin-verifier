@@ -1,8 +1,12 @@
 rootProject.name = 'verifier-parent'
 include 'verifier-problems'
-include 'verifier-cli'
 include 'uploader'
-include 'mock-idea'
-include 'mock-plugin'
 include 'repository'
 include 'common-utils'
+
+include 'verifier-cli'
+include 'verifier-cli:mock-idea'
+include 'verifier-cli:mock-plugin'
+
+include 'intellij-plugin-structure'
+include 'intellij-plugin-structure:mock-plugin1'

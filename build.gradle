@@ -13,11 +13,15 @@ allprojects {
     compile group: 'org.ow2.asm', name: 'asm-all', version: '5.0.4'
     compile group: 'com.google.guava', name: 'guava', version: '15.0'
     compile group: 'commons-io', name: 'commons-io', version: '2.3'
+  }
 
-    compile group: 'org.jetbrains.intellij.plugins', name: 'intellij-plugin-structure', version: '1.4'
+  repositories {
+    mavenCentral()
+//    maven { url "http://dl.bintray.com/jetbrains/intellij-plugin-service" }
   }
 
 }
+
 
 subprojects {
 
@@ -27,11 +31,4 @@ subprojects {
   }
 
   artifacts.archives packageSources
-
-  repositories {
-    mavenCentral()
-//    maven { url 'http://repo.grails.org/grails/repo' }
-    maven { url "http://dl.bintray.com/jetbrains/intellij-plugin-service" }
-  }
-
 }

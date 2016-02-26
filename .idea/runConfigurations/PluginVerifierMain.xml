@@ -1,12 +1,12 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Uploader" type="Application" factoryName="Application" nameIsGenerated="true">
+  <configuration default="false" name="PluginVerifierMain" type="Application" factoryName="Application" nameIsGenerated="true">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
       <pattern>
         <option name="PATTERN" value="com.jetbrains.pluginverifier.service.*" />
         <option name="ENABLED" value="true" />
       </pattern>
     </extension>
-    <option name="MAIN_CLASS_NAME" value="com.jetbrains.pluginverifier.Uploader" />
+    <option name="MAIN_CLASS_NAME" value="com.jetbrains.pluginverifier.PluginVerifierMain" />
     <option name="VM_PARAMETERS" value="" />
     <option name="PROGRAM_PARAMETERS" value="http://plugins.jetbrains.com/problems/uploadResultsAPI checkResults IU-144.1717.xml userName pluginrobot password" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
@@ -15,7 +15,7 @@
     <option name="ENABLE_SWING_INSPECTOR" value="false" />
     <option name="ENV_VARIABLES" />
     <option name="PASS_PARENT_ENVS" value="true" />
-    <module name="uploader" />
+    <module name="verifier_cli_main" />
     <envs />
     <method />
   </configuration>

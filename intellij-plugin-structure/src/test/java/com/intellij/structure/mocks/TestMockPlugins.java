@@ -24,6 +24,7 @@ public class TestMockPlugins {
   public void test1() throws Exception {
     File file = TestUtils.getMockPlugin(1);
     Plugin plugin = PluginManager.getInstance().createPlugin(file);
+    assertEquals(file, plugin.getPluginPath());
 
 //    assertEquals("format_version_attr", plugin.getFormatVersion());
 //    assertEquals("true", plugin.useIdeaClassLoader());
@@ -34,7 +35,7 @@ public class TestMockPlugins {
 
     assertEquals("nonono.com", plugin.getVendorEmail());
     assertEquals("http://www.HornsAndHooves.com", plugin.getVendorUrl());
-    assertEquals("logo_path", plugin.getVendorLogoPath());
+//    assertEquals("logo_path", plugin.getVendorLogoPath()); //TODO: change with InputStream
     assertEquals("Vendor", plugin.getVendor());
 
     assertEquals("description", plugin.getDescription());
