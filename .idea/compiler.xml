@@ -18,7 +18,7 @@
         <processorPath useClasspath="true" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
+    <bytecodeTargetLevel target="1.6">
       <module name="common_utils_main" target="1.6" />
       <module name="common_utils_test" target="1.6" />
       <module name="intellij_plugin_structure_main" target="1.6" />

@@ -1,8 +1,20 @@
-plugins {
-  id "com.jfrog.bintray" version "1.6"
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
+  }
 }
 
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+
 version = '1.5'
+if (project.hasProperty("myVersion")) {
+  version = project.myVersion;
+}
 
 allprojects {
   apply plugin: 'java'
@@ -12,7 +24,6 @@ allprojects {
   sourceCompatibility = 1.6
   targetCompatibility = 1.6
 }
-apply plugin: 'maven-publish'
 
 //build .jar with sources
 task sourcesJar(type: Jar, dependsOn: classes) {
@@ -58,6 +69,7 @@ task prepareTests(type: Copy) {
 }
 
 test.dependsOn prepareTests
+install.dependsOn test
 
 
 dependencies {
@@ -78,9 +90,6 @@ bintray {
   user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
   key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
 
-  if (!user || !key) {
-    throw new StopExecutionException("You must specify (bintrayUser, bintrayApiKey) or (BINTRAY_USER, BINTRAY_API_KEY) properties")
-  }
 
   publish = true
   publications = ['MyPublication']
@@ -99,5 +108,13 @@ bintray {
 }
 
 bintrayUpload.doFirst {
+
+  if (!bintray.user || !bintray.key) {
+    throw new StopExecutionException("You must specify (bintrayUser, bintrayApiKey) or (BINTRAY_USER, BINTRAY_API_KEY) properties")
+  }
+
   println('Uploading IntelliJ structure ' + project.version + ' to bintray')
 }
+
+//run tests before deploying
+bintrayUpload.dependsOn test

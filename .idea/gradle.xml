@@ -11,8 +11,6 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/common-utils" />
-            <option value="$PROJECT_DIR$/intellij-plugin-structure" />
-            <option value="$PROJECT_DIR$/intellij-plugin-structure/mock-plugin1" />
             <option value="$PROJECT_DIR$/repository" />
             <option value="$PROJECT_DIR$/uploader" />
             <option value="$PROJECT_DIR$/verifier-cli" />

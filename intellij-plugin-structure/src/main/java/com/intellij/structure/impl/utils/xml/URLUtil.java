@@ -43,6 +43,9 @@ public class URLUtil {
    * Opens a url stream. The semantics is the sames as {@link URL#openStream()}. The
    * separate method is needed, since jar URLs open jars via JarFactory and thus keep them
    * mapped into memory.
+   * @param url url
+   * @return input stream
+   * @throws IOException if problems
    */
   @NotNull
   public static InputStream openStream(@NotNull URL url) throws IOException {

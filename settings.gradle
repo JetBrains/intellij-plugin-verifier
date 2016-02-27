@@ -7,6 +7,3 @@ include 'common-utils'
 include 'verifier-cli'
 include 'verifier-cli:mock-idea'
 include 'verifier-cli:mock-plugin'
-
-include 'intellij-plugin-structure'
-include 'intellij-plugin-structure:mock-plugin1'

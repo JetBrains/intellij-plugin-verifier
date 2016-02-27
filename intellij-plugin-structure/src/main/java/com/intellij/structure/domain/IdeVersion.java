@@ -14,6 +14,10 @@ public abstract class IdeVersion {
   public static final Comparator<IdeVersion> VERSION_COMPARATOR = new IdeVersionComparator();
 
   /**
+   * Tries to parse specified text as an Ide-version
+   *
+   * @param version a string presentation of version to be parsed
+   * @return an instance of IdeVersion
    * @throws IllegalArgumentException if specified {@code version} doesn't represent correct {@code IdeVersion}
    */
   @NotNull

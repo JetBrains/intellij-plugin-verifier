@@ -1,7 +1,4 @@
-version = 1.0
-
 dependencies {
-  compile project(':intellij-plugin-structure')
   compile project(':verifier-problems')
   compile project(':common-utils')
   compile group: 'com.google.code.gson', name: 'gson', version: '2.2.4'

@@ -129,15 +129,14 @@ public class VerifierTest {
   @Test
   public void testMyPlugin() throws Exception {
     File ideaFile = TestData.fetchResource(IDEA_14_0_4, true);
-    File pluginFile = new File("build/mocks/mock-plugin-1.0.jar");
+    File pluginFile = findLatestPlugin(new File("build/mocks"));
     testFoundProblems(ideaFile, pluginFile, MY_ACTUAL_PROBLEMS);
   }
 
 
   @NotNull
-  private File findLatestPlugin() throws FileNotFoundException {
+  private File findLatestPlugin(File file) throws FileNotFoundException {
     Pattern compile = Pattern.compile("mock-plugin-(\\d+\\.\\d+).jar");
-    File file = new File("../mock-plugin/target/");
 
     File[] files = file.listFiles();
 
