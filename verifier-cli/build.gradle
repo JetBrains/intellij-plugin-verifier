@@ -2,7 +2,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 
 dependencies {
   //for verifier tests
-  testCompile project('mock-plugin')
+  testRuntime project('mock-plugin')
   testCompile group: 'junit', name: 'junit', version: '4.11'
   testCompile group: 'org.codehaus.plexus', name: 'plexus-archiver', version: '2.3'
 

@@ -5,6 +5,7 @@
     <content url="file://$MODULE_DIR$/../../../verifier-cli">
       <excludeFolder url="file://$MODULE_DIR$/../../../verifier-cli/.gradle" />
       <excludeFolder url="file://$MODULE_DIR$/../../../verifier-cli/build" />
+      <excludeFolder url="file://$MODULE_DIR$/../../../verifier-cli/for_tests" />
       <excludeFolder url="file://$MODULE_DIR$/../../../verifier-cli/target" />
     </content>
     <orderEntry type="inheritedJdk" />
