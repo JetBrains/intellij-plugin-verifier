@@ -94,7 +94,8 @@ bintray {
 
 
   publish = true
-  publications = ['VerifierPublication']
+  publications = ['CommonUtilsPublication', 'VerifierCliPublication', 'RepositoryPublication',
+                  'UploaderPublication', 'ProblemsPublication']
 
   pkg {
     repo = 'intellij-plugin-service'
