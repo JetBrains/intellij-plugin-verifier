@@ -8,13 +8,14 @@ buildscript {
 }
 
 apply plugin: 'com.jfrog.bintray'
-apply plugin: 'maven'
 apply plugin: 'maven-publish'
 
 version = '1.5'
 if (project.hasProperty("myVersion")) {
   version = project.myVersion;
 }
+
+
 
 allprojects {
   apply plugin: 'java'
@@ -69,7 +70,7 @@ task prepareTests(type: Copy) {
 }
 
 test.dependsOn prepareTests
-install.dependsOn test
+publishToMavenLocal.dependsOn test
 
 
 dependencies {
