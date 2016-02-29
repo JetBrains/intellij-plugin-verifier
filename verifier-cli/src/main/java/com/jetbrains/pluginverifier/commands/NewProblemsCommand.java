@@ -54,7 +54,7 @@ public class NewProblemsCommand extends VerifierCommand {
       public int compare(String o1, String o2) {
         IdeVersion build1 = IdeVersion.createIdeVersion(o1);
         IdeVersion build2 = IdeVersion.createIdeVersion(o2);
-        return IdeVersion.VERSION_COMPARATOR.compare(build1, build2);
+        return build1.compareTo(build2);
       }
     });
 
@@ -64,7 +64,7 @@ public class NewProblemsCommand extends VerifierCommand {
       int idx = -1;
       for (int i = 0; i < resultsInPluginRepository.size(); i++) {
         String build = resultsInPluginRepository.get(i);
-        if (IdeVersion.VERSION_COMPARATOR.compare(firstBuild, IdeVersion.createIdeVersion(build)) == 0) {
+        if (firstBuild.compareTo(IdeVersion.createIdeVersion(build)) == 0) {
           idx = i;
           break;
         }
@@ -82,7 +82,7 @@ public class NewProblemsCommand extends VerifierCommand {
       IdeVersion updateBuild = IdeVersion.createIdeVersion(build);
 
       //NOTE: compares only IDEAs of the same branch! that is 141.* between each others
-      if (updateBuild.getBranch() == currentBuild.getBranch() && IdeVersion.VERSION_COMPARATOR.compare(updateBuild, currentBuild) < 0) {
+      if (updateBuild.getBranch() == currentBuild.getBranch() && updateBuild.compareTo(currentBuild) < 0) {
         result.add(build);
       }
     }

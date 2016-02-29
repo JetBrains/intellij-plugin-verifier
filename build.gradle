@@ -28,7 +28,7 @@ configure(allprojects) {
   dependencies {
 
     //plugin structure API
-    compile group: 'org.jetbrains.intellij.plugins', name: 'intellij-plugin-structure', version: '1.5'
+    compile group: 'org.jetbrains.intellij.plugins', name: 'intellij-plugin-structure', version: '1.6'
 
     compile group: 'com.intellij', name: 'annotations', version: '12.0'
     compile group: 'org.ow2.asm', name: 'asm-all', version: '5.0.4'
