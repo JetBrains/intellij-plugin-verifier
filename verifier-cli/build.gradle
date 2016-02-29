@@ -38,7 +38,7 @@ shadowJar {
   relocate('org.jdom', internalPrefix + 'jdom') {}
   relocate('org.intellij.lang.annotations', internalPrefix + 'intellijannotations') {}
   relocate('org.jetbrains.annotations', internalPrefix + 'jetbrainsannotation') {}
-  relocate('org.apache.http', internalPrefix + 'jetbrainsannotation') {}
+  relocate('org.apache.http', internalPrefix + 'apachehttp') {}
 }
 
 jar.finalizedBy(shadowJar)

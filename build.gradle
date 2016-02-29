@@ -80,7 +80,7 @@ publishing {
     CommonUtilsPublication(MavenPublication) { configurePublication(it, ':common-utils', false) }
     VerifierCliPublication(MavenPublication) { configurePublication(it, ':verifier-cli', true) }
     RepositoryPublication(MavenPublication) { configurePublication(it, ':repository', false) }
-    UploaderPublication(MavenPublication) { configurePublication(it, ':uploader', false) }
+    UploaderPublication(MavenPublication) { configurePublication(it, ':uploader', true) }
     ProblemsPublication(MavenPublication) { configurePublication(it, ':verifier-problems', false) }
   }
 }
