@@ -121,7 +121,7 @@ public class IdeManagerImpl extends IdeManager {
 
         Plugin plugin;
         try {
-          plugin = new PluginImpl(file, file.toURI().toURL(), Resolver.getEmptyResolver(), Resolver.getEmptyResolver(), xml, Collections.<String, Document>emptyMap());
+          plugin = new PluginImpl(file, file.toURI().toURL(), Resolver.getEmptyResolver(), Resolver.getEmptyResolver(), xml);
         } catch (IncorrectPluginException e) {
           continue;
         } catch (IllegalArgumentException e) {

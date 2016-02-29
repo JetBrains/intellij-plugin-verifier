@@ -32,7 +32,7 @@ import java.util.zip.ZipInputStream;
 /**
  * @author Sergey Patrikeev
  */
-public class IdePluginManagerImpl extends PluginManager {
+public class PluginManagerImpl extends PluginManager {
 
   private static final String META_INF_ENTRY = "META-INF/";
   private static final String PLUGIN_XML_ENTRY_NAME = META_INF_ENTRY + "plugin.xml";
@@ -195,7 +195,7 @@ public class IdePluginManagerImpl extends PluginManager {
       }
     }
 
-    return new PluginImpl(zipFile, mainJarUrl, pluginResolver, Resolver.getUnion(zipFile.getPath(), libraryPool), pluginXml, allXmlInRoot);
+    return new PluginImpl(zipFile, mainJarUrl, pluginResolver, Resolver.getUnion(zipFile.getPath(), libraryPool), pluginXml);
   }
 
   private static void tryAddXmlInRoot(@NotNull Map<String, Document> container,
@@ -303,7 +303,7 @@ public class IdePluginManagerImpl extends PluginManager {
     }
 
     Resolver libraryPoolsUnion = Resolver.getUnion(pluginFile.toString(), libraryPools);
-    return new PluginImpl(pluginFile, mainJarUrl, pluginResolver, libraryPoolsUnion, pluginXml, xmlDocumentsInRoot);
+    return new PluginImpl(pluginFile, mainJarUrl, pluginResolver, libraryPoolsUnion, pluginXml);
   }
 
   @NotNull

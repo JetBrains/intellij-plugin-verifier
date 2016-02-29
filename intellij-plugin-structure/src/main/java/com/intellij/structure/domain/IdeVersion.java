@@ -1,17 +1,12 @@
 package com.intellij.structure.domain;
 
-import com.intellij.structure.impl.domain.IdeVersionComparator;
 import com.intellij.structure.impl.domain.IdeVersionImpl;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Comparator;
 
 /**
  * @author Sergey Patrikeev
  */
-public abstract class IdeVersion {
-
-  public static final Comparator<IdeVersion> VERSION_COMPARATOR = new IdeVersionComparator();
+public abstract class IdeVersion implements Comparable<IdeVersion> {
 
   /**
    * Tries to parse specified text as an Ide-version
@@ -60,4 +55,14 @@ public abstract class IdeVersion {
 
   public abstract boolean isSnapshot();
 
+  @Override
+  public int compareTo(@NotNull IdeVersion v2) {
+    if (getBranch() > v2.getBranch()) return 1;
+    if (getBranch() < v2.getBranch()) return -1;
+    if (getBuild() > v2.getBuild()) return 1;
+    if (getBuild() < v2.getBuild()) return -1;
+    if (getAttempt() > v2.getAttempt()) return 1;
+    if (getAttempt() < v2.getAttempt()) return -1;
+    return 0;
+  }
 }

@@ -25,7 +25,7 @@ import java.util.*;
 class PluginImpl implements Plugin {
 
   private static final Whitelist WHITELIST = Whitelist.basicWithImages();
-  private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules.";
+  private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules";
   private final Resolver myPluginResolver;
   private final Resolver myLibraryResolver;
   private final Set<String> myDefinedModules = new HashSet<String>();
@@ -33,8 +33,6 @@ class PluginImpl implements Plugin {
   private final List<PluginDependency> myModuleDependencies = new ArrayList<PluginDependency>();
   private final File myPluginPath;
   private final URL myMainJarUrl;
-  private final Document myPluginXml;
-  private final Map<String, Document> myXmlDocumentsInRoot;
   private String myPluginName;
   private String myPluginVersion;
   private String myPluginId;
@@ -47,18 +45,16 @@ class PluginImpl implements Plugin {
   private String myNotes;
   private IdeVersion mySinceBuild;
   private IdeVersion myUntilBuild;
+  private String myResourceBundleBaseName;
 
 
   PluginImpl(@NotNull File pluginPath,
              @NotNull URL mainJarUrl,
              @NotNull Resolver pluginResolver,
              @NotNull Resolver libraryResolver,
-             @NotNull Document pluginXml,
-             @NotNull Map<String, Document> xmlDocumentsInRoot) throws IncorrectPluginException {
+             @NotNull Document pluginXml) throws IncorrectPluginException {
     myPluginPath = pluginPath;
     myMainJarUrl = mainJarUrl;
-    myPluginXml = pluginXml;
-    myXmlDocumentsInRoot = xmlDocumentsInRoot;
     myPluginResolver = pluginResolver;
     myLibraryResolver = libraryResolver;
 
@@ -180,7 +176,7 @@ class PluginImpl implements Plugin {
         throw new IncorrectPluginException("Invalid plugin.xml: invalid dependency tag");
       }
 
-      PluginDependency dependency = new PluginDependency(pluginId, optional);
+      PluginDependency dependency = new PluginDependencyImpl(pluginId, optional);
       if (pluginId.startsWith(INTELLIJ_MODULES_PREFIX)) {
         myModuleDependencies.add(dependency);
       } else {
@@ -194,8 +190,7 @@ class PluginImpl implements Plugin {
     //noinspection SimplifiableIfStatement
     if (mySinceBuild == null) return true;
 
-    return IdeVersion.VERSION_COMPARATOR.compare(mySinceBuild, ideVersion) <= 0
-        && (myUntilBuild == null || IdeVersion.VERSION_COMPARATOR.compare(ideVersion, myUntilBuild) <= 0);
+    return mySinceBuild.compareTo(ideVersion) <= 0 && (myUntilBuild == null || ideVersion.compareTo(myUntilBuild) <= 0);
   }
 
   @Override
@@ -306,12 +301,20 @@ class PluginImpl implements Plugin {
     return myVendorUrl;
   }
 
-/*
-  TODO: change with InputStream
-  public String getVendorLogoPath() {
-    return myVendorLogoPath;
+  @Nullable
+  @Override
+  public String getResourceBundleBaseName() {
+    //TODO: implement
+    return myResourceBundleBaseName;
   }
-*/
+
+  @Nullable
+  @Override
+  public InputStream getVendorLogo() {
+    //TODO: implement
+    return null;
+  }
+
 
   @Override
   public String getUrl() {
@@ -323,6 +326,7 @@ class PluginImpl implements Plugin {
     return myNotes;
   }
 
+  @NotNull
   @Override
   public File getPluginPath() {
     return myPluginPath;

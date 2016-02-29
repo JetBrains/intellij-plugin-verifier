@@ -23,18 +23,19 @@
     <module value="one_module"/>
     <module value="two_module"/>
 
-    <helpset file="help_file" path="help_path"></helpset>
+    <helpset file="help_file" path="help_path"/>
 
     <!--extensions-->
     <extensions defaultExtensionNs="com.intellij">
-        <extension>
-
-        </extension>
+        <some point="extensiblePoint"/>
+        <extension id="id" order="order">abracadabra</extension>
+        <someExtensibleClass implementation="someExtensibleClassImpl"/>
     </extensions>
 
     <extensionPoints>
-        <extensionPoint>
-            <with></with>
+        <extensionPoint name="name" beanClass="beanClass" area="area" interface="interface" qualifiedName="qualName">
+            <with tag="tag" attribute="instance"
+                  implements="com.intellij.profile.codeInspection.ui.ErrorOptionsProvider"/>
         </extensionPoint>
     </extensionPoints>
 

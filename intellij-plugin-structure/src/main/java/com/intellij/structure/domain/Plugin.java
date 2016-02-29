@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
@@ -51,16 +52,25 @@ public interface Plugin {
   @Nullable
   String getDescription();
 
+  @Nullable
   String getVendorEmail();
 
+  @Nullable
   String getVendorUrl();
 
-//  String getVendorLogoPath(); //TODO: change it with InputStream
+  @Nullable
+  String getResourceBundleBaseName();
 
+  @Nullable
+  InputStream getVendorLogo();
+
+  @Nullable
   String getUrl();
 
+  @Nullable
   String getChangeNotes();
 
+  @NotNull
   File getPluginPath();
 
 }
