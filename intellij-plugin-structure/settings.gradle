@@ -1,2 +1,5 @@
 rootProject.name = 'intellij-plugin-structure'
 include 'mock-plugin1'
+include 'mock-plugin2'
+include 'mock-plugin3'
+

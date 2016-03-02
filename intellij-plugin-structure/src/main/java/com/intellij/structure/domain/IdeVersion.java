@@ -39,6 +39,9 @@ public abstract class IdeVersion implements Comparable<IdeVersion> {
    *    <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html">
    *    <i>IntelliJ Build Number Ranges</i></a>
    * </blockquote>
+   *
+   * @param includeProductCode whether to append product code
+   * @param withBuildAttempt   whether to append build attempt number
    * @return presentation
    */
   public abstract String asString(boolean includeProductCode, boolean withBuildAttempt);

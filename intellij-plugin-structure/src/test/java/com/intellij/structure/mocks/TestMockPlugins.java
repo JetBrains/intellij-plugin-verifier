@@ -4,7 +4,8 @@ import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.impl.domain.PluginDependencyImpl;
-import com.intellij.structure.utils.TestUtils;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
@@ -20,9 +21,21 @@ import static org.junit.Assert.assertEquals;
  */
 public class TestMockPlugins {
 
+  @NotNull
+  private static File getMocksDir() {
+    return new File("build" + File.separator + "mocks");
+  }
+
+  @NotNull
+  private static File getMockPlugin(String mockName) {
+    File file = new File(getMocksDir(), mockName);
+    Assert.assertTrue("mock plugin " + mockName + " is not found in " + file, file.exists());
+    return file;
+  }
+
   @Test
-  public void test1() throws Exception {
-    File file = TestUtils.getMockPlugin(1);
+  public void testMock1() throws Exception {
+    File file = getMockPlugin("mock-plugin1-1.0.jar");
     Plugin plugin = PluginManager.getInstance().createPlugin(file);
     assertEquals(file, plugin.getPluginPath());
 
@@ -53,4 +66,10 @@ public class TestMockPlugins {
 
   }
 
+  @Test
+  public void testMock2() throws Exception {
+    File file = getMockPlugin("mock-plugin2");
+    Plugin plugin = PluginManager.getInstance().createPlugin(file);
+    assertEquals(4, plugin.getPluginResolver().getAllClasses().size());
+  }
 }
