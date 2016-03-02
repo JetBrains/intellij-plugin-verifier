@@ -65,4 +65,8 @@ public class StringUtil {
     }
     return newText != null ? newText.toString() : "";
   }
+
+  public static boolean isEmpty(@Nullable String s) {
+    return s == null || s.isEmpty();
+  }
 }

@@ -41,7 +41,7 @@ public class PluginTest_PHP {
   public void getSinceBuild() throws Exception {
     IdeVersion sinceBuild = plugin.getSinceBuild();
     assertNotNull(sinceBuild);
-    assertEquals(142, sinceBuild.getBranch());
+    assertEquals(142, sinceBuild.getBaselineVersion());
     assertEquals(5068, sinceBuild.getBuild());
   }
 

@@ -70,7 +70,7 @@ public class IdeTest_IDEA_144_2608_2 {
 
   @Test
   public void getVersion() throws Exception {
-    assertEquals("IU-144.2608", ide.getVersion().getFullPresentation());
+    assertEquals("IU-144.2608", ide.getVersion().asString());
   }
 
   @Test

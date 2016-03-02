@@ -2,6 +2,7 @@ package com.intellij.structure.domain;
 
 import com.intellij.structure.impl.domain.IdeVersionImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey Patrikeev
@@ -17,7 +18,7 @@ public abstract class IdeVersion implements Comparable<IdeVersion> {
    */
   @NotNull
   public static IdeVersion createIdeVersion(@NotNull String version) throws IllegalArgumentException {
-    return new IdeVersionImpl(version);
+    return IdeVersionImpl.fromString(version);
   }
 
   /**
@@ -30,6 +31,7 @@ public abstract class IdeVersion implements Comparable<IdeVersion> {
    *     <li>IU-143.1532.SNAPSHOT</li>
    *     <li>143.1532</li>
    *     <li>7341</li>
+   *     <li>IU-7341</li>
    *   </ul>
    *
    * @see
@@ -39,30 +41,33 @@ public abstract class IdeVersion implements Comparable<IdeVersion> {
    * </blockquote>
    * @return presentation
    */
-  public abstract String getFullPresentation();
+  public abstract String asString(boolean includeProductCode, boolean withBuildAttempt);
+
+  /**
+   * @return Returns presentation with product code and without build attempt
+   */
+  public String asString() {
+    return asString(true, false);
+  }
 
   @NotNull
   public abstract String getProductCode();
 
-  @NotNull
-  public abstract String getProductName();
-
-  public abstract int getBranch();
+  public abstract int getBaselineVersion();
 
   public abstract int getBuild();
 
-  public abstract int getAttempt();
+  @Nullable
+  public abstract String getAttempt();
 
   public abstract boolean isSnapshot();
 
   @Override
   public int compareTo(@NotNull IdeVersion v2) {
-    if (getBranch() > v2.getBranch()) return 1;
-    if (getBranch() < v2.getBranch()) return -1;
+    if (getBaselineVersion() > v2.getBaselineVersion()) return 1;
+    if (getBaselineVersion() < v2.getBaselineVersion()) return -1;
     if (getBuild() > v2.getBuild()) return 1;
     if (getBuild() < v2.getBuild()) return -1;
-    if (getAttempt() > v2.getAttempt()) return 1;
-    if (getAttempt() < v2.getAttempt()) return -1;
     return 0;
   }
 }
