@@ -10,7 +10,7 @@ buildscript {
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
 
-version = '1.5'
+version = '1.6'
 if (project.hasProperty("myVersion")) {
   version = project.myVersion;
 }
@@ -79,17 +79,26 @@ task prepareMock2(type: Copy) {
   }
 }
 
-//doFirst { println("Creating structure for mock-plugin3 in ${mocksPath}")}
-/*
 task prepareMock3(type: Copy) {
-  project(":mock-plugin3") {
-    from tasks.withType(Jar)
-  }
-  into mocksPath + separator + "mock-plugin3" + separator + "classes"
-}
-*/
+  doFirst { println("Creating structure for mock-plugin3 in ${mocksPath}") }
 
-test.dependsOn prepareMock1, prepareMock2
+  into mocksPath + separator + "mock-plugin3"
+
+  def classesSpec = copySpec {
+    from project(":mock-plugin3").sourceSets.main.output.classesDir
+    into "classes"
+  }
+
+  def pluginXmlSpec = copySpec {
+    from project(":mock-plugin3").sourceSets.main.output.resourcesDir
+    into "."
+  }
+
+  with classesSpec, pluginXmlSpec
+}
+prepareMock3.dependsOn project(":mock-plugin3").classes
+
+test.dependsOn prepareMock1, prepareMock2, prepareMock3
 publishToMavenLocal.dependsOn test
 
 

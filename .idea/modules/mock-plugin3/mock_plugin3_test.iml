@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module external.linked.project.id=":mock-plugin3:test" external.linked.project.path="$MODULE_DIR$/../../../intellij-plugin-structure/mock-plugin3" external.root.project.path="$MODULE_DIR$/../../../intellij-plugin-structure" external.system.id="GRADLE" external.system.module.group="org.jetbrains.intellij.plugins" external.system.module.type="sourceSet" external.system.module.version="1.0" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_5" inherit-compiler-output="false">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_6" inherit-compiler-output="false">
     <output-test url="file://$MODULE_DIR$/../../../intellij-plugin-structure/mock-plugin3/build/classes/test" />
     <exclude-output />
     <content url="file://$MODULE_DIR$/../../../intellij-plugin-structure/mock-plugin3/src/test">
@@ -10,8 +10,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="mock_plugin3_main" />
-    <orderEntry type="library" name="Gradle: junit:junit:4.11" level="project" />
-    <orderEntry type="library" name="Gradle: org.hamcrest:hamcrest-core:1.3" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="mock-plugin3_main" />
 </module>

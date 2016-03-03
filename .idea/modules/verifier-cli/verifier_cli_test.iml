@@ -33,8 +33,8 @@
     <orderEntry type="library" name="Gradle: org.apache.httpcomponents:httpcore:4.3" level="project" />
     <orderEntry type="library" name="Gradle: commons-logging:commons-logging:1.1.3" level="project" />
     <orderEntry type="library" name="Gradle: commons-codec:commons-codec:1.6" level="project" />
-    <orderEntry type="module" module-name="mock_idea_main" scope="RUNTIME" />
     <orderEntry type="library" name="Gradle: classworlds:classworlds:1.1-alpha-2" level="project" />
+    <orderEntry type="module" module-name="mock_idea_main" scope="RUNTIME" />
     <orderEntry type="library" name="Gradle: com.google.guava:guava:18.0" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="verifier-cli_main" />
