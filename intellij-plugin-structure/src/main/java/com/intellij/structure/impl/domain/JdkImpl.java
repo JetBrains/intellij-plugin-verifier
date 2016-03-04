@@ -16,7 +16,7 @@ import java.util.jar.JarFile;
 
 public class JdkImpl extends Jdk {
 
-  private static final Set<String> JDK_JAR_NAMES = ImmutableSet.of("rt.jar", "tools.jar", "classes.jar", "jsse.jar", "javaws.jar", "jce.jar");
+  private static final Set<String> JDK_JAR_NAMES = ImmutableSet.of("rt.jar", "tools.jar", "classes.jar", "jsse.jar", "javaws.jar", "jce.jar", "jfxrt.jar", "plugin.jar");
 
   private final List<JarFile> myJars;
   private final Resolver myPool;

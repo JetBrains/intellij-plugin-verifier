@@ -12,7 +12,7 @@ configure(allprojects) {
   apply plugin: 'java'
 
   group = 'org.jetbrains.intellij.plugins'
-  version = '1.8'
+  version = '1.9'
 
   //check if updated from command line
   if (project.hasProperty("myVersion")) {
