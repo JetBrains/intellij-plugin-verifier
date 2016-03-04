@@ -1,12 +1,9 @@
 package com.intellij.structure.impl.domain;
 
-import com.google.common.collect.ImmutableBiMap;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.impl.utils.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * @author Sergey Evdokimov
@@ -29,6 +26,7 @@ public class IdeVersionImpl extends IdeVersion {
     myAttemptInfo = StringUtil.isEmpty(attemptInfo) ? null : attemptInfo;
   }
 
+  @NotNull
   public static IdeVersionImpl fromString(@NotNull String version) throws IllegalArgumentException {
     if (BUILD_NUMBER.equals(version)) {
       return new IdeVersionImpl("", Holder.TOP_BASELINE_VERSION, Integer.MAX_VALUE, null);
@@ -52,7 +50,9 @@ public class IdeVersionImpl extends IdeVersion {
     if (baselineVersionSeparator > 0) {
       try {
         String baselineVersionString = code.substring(0, baselineVersionSeparator);
-        if (baselineVersionString.trim().isEmpty()) return null;
+        if (baselineVersionString.trim().isEmpty()) {
+          throw new IllegalArgumentException("Invalid version number: " + version);
+        }
         baselineVersion = Integer.parseInt(baselineVersionString);
         code = code.substring(baselineVersionSeparator + 1);
       } catch (NumberFormatException e) {
