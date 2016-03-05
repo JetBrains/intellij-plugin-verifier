@@ -6,20 +6,15 @@ import com.intellij.structure.domain.*;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.resolvers.CompileOutputResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
-import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import org.jdom.Document;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -109,32 +104,11 @@ public class IdeManagerImpl extends IdeManager {
     List<Plugin> result = new ArrayList<Plugin>();
     Collection<File> files = FileUtils.listFiles(root, new WildcardFileFilter("plugin.xml"), TrueFileFilter.TRUE);
     for (File file : files) {
-      InputStream is;
       try {
-        is = FileUtils.openInputStream(file);
-      } catch (IOException e) {
-        continue;
-      }
-
-      try {
-        Document xml = JDOMUtil.loadDocument(is);
-
-        Plugin plugin;
-        try {
-          plugin = new PluginImpl(file, file.toURI().toURL(), Resolver.getEmptyResolver(), Resolver.getEmptyResolver(), xml);
-        } catch (IncorrectPluginException e) {
-          continue;
-        } catch (IllegalArgumentException e) {
-          continue;
-        }
-
+        PluginImpl plugin = new PluginImpl(file);
+        plugin.readExternal(file.toURI().toURL());
         result.add(plugin);
-
-      } catch (JDOMException ignored) {
       } catch (MalformedURLException ignored) {
-      } catch (IOException ignored) {
-      } finally {
-        IOUtils.closeQuietly(is);
       }
     }
     return result;

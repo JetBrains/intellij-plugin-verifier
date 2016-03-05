@@ -46,9 +46,6 @@ public interface Plugin {
   @NotNull
   Resolver getPluginResolver();
 
-  @NotNull
-  Resolver getLibraryResolver();
-
   @Nullable
   String getDescription();
 

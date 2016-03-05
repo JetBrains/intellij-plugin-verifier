@@ -4,6 +4,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static java.lang.Character.toLowerCase;
+import static java.lang.Character.toUpperCase;
+
 public class StringUtil {
 
   public static boolean isNullOrEmpty(@Nullable String s) {
@@ -13,6 +16,41 @@ public class StringUtil {
   @NotNull
   public static String notNullize(@Nullable String s) {
     return s == null ? "" : s;
+  }
+
+  public static int countChars(@NotNull CharSequence text, char c) {
+    return countChars(text, c, 0, false);
+  }
+
+  public static int countChars(@NotNull CharSequence text, char c, int offset, boolean continuous) {
+    int count = 0;
+    for (int i = offset; i < text.length(); ++i) {
+      if (text.charAt(i) == c) {
+        count++;
+      } else if (continuous) {
+        break;
+      }
+    }
+    return count;
+  }
+
+  public static boolean endsWithIgnoreCase(@NonNls @NotNull String text, @NonNls @NotNull String suffix) {
+    int l1 = text.length();
+    int l2 = suffix.length();
+    if (l1 < l2) return false;
+
+    for (int i = l1 - 1; i >= l1 - l2; i--) {
+      if (!charsEqualIgnoreCase(text.charAt(i), suffix.charAt(i + l2 - l1))) {
+        return false;
+      }
+    }
+
+    return true;
+
+  }
+
+  private static boolean charsEqualIgnoreCase(char a, char b) {
+    return a == b || toUpperCase(a) == toUpperCase(b) || toLowerCase(a) == toLowerCase(b);
   }
 
   @NotNull

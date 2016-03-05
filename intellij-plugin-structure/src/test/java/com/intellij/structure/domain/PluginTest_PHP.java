@@ -111,16 +111,7 @@ public class PluginTest_PHP {
     assertTrue(allClasses.contains("com/jetbrains/php/config/sdk/PhpLocalScriptRunner$2$1"));
     assertTrue(allClasses.contains("com/jetbrains/php/config/interpreters/PhpConfigurationFilePanelGenerator$PhpExpandableConfigurationFilePanel$1"));
 
-    assertEquals(3497, allClasses.size());
-  }
-
-  @Test
-  public void getLibraryResolver() throws Exception {
-
-    Resolver libraryResolver = plugin.getLibraryResolver();
-    Collection<String> allClasses = libraryResolver.getAllClasses();
-
-    assertEquals(226, allClasses.size());
+    assertEquals(3497 + 226, allClasses.size());
   }
 
   @Test

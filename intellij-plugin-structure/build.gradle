@@ -106,7 +106,7 @@ dependencies {
   //mock plugins are used in tests
   testRuntime project("mock-plugin1")
 
-  compile group: 'org.jdom', name: 'jdom', version: '1.1.3'
+  compile group: 'org.jdom', name: 'jdom', version: '2.0.2'
   compile group: 'com.google.guava', name: 'guava', version: '18.0'
   compile group: 'commons-io', name: 'commons-io', version: '2.3'
   compile group: 'com.intellij', name: 'annotations', version: '12.0'
