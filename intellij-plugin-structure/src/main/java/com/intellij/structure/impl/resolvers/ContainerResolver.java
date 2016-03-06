@@ -1,5 +1,6 @@
 package com.intellij.structure.impl.resolvers;
 
+import com.google.common.base.Joiner;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,11 +15,7 @@ public class ContainerResolver extends Resolver {
 
   private final List<Resolver> myResolvers = new ArrayList<Resolver>();
 
-  private final String myMoniker;
-
-  public ContainerResolver(@NotNull String moniker,
-                           @NotNull List<Resolver> resolvers) {
-    myMoniker = moniker;
+  public ContainerResolver(@NotNull List<Resolver> resolvers) {
     myResolvers.addAll(resolvers);
   }
 
@@ -34,7 +31,7 @@ public class ContainerResolver extends Resolver {
 
   @Override
   public String toString() {
-    return myMoniker;
+    return Joiner.on(", ").join(myResolvers);
   }
 
   @Override

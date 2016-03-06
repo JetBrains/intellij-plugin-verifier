@@ -4,7 +4,6 @@ import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
@@ -67,7 +66,5 @@ public interface Plugin {
   @Nullable
   String getChangeNotes();
 
-  @NotNull
-  File getPluginPath();
 
 }

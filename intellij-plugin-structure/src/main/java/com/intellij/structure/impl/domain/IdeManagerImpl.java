@@ -21,9 +21,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipFile;
 
 /**
  * @author Sergey Patrikeev
@@ -50,14 +50,14 @@ public class IdeManagerImpl extends IdeManager {
       throw new IOException("Directory \"lib\" is not found (should be found at " + lib + ")");
     }
 
-    final List<JarFile> jars = JarsUtils.getJars(lib, new Predicate<File>() {
+    final List<ZipFile> jars = JarsUtils.collectJarsRecursively(lib, new Predicate<File>() {
       @Override
       public boolean apply(File file) {
         return !file.getName().endsWith("javac2.jar");
       }
     });
 
-    return JarsUtils.makeResolver(ideaDir.getPath(), jars);
+    return JarsUtils.makeResolver(jars);
   }
 
   @NotNull
@@ -73,7 +73,7 @@ public class IdeManagerImpl extends IdeManager {
       pools.add(new CompileOutputResolver(getCommunityClassesRoot(ideaDir)));
     }
 
-    return Resolver.getUnion(ideaDir.getPath(), pools);
+    return Resolver.createUnionResolver(pools);
   }
 
   @NotNull
@@ -105,7 +105,7 @@ public class IdeManagerImpl extends IdeManager {
     Collection<File> files = FileUtils.listFiles(root, new WildcardFileFilter("plugin.xml"), TrueFileFilter.TRUE);
     for (File file : files) {
       try {
-        PluginImpl plugin = new PluginImpl(file);
+        PluginImpl plugin = new PluginImpl();
         plugin.readExternal(file.toURI().toURL());
         result.add(plugin);
       } catch (MalformedURLException ignored) {

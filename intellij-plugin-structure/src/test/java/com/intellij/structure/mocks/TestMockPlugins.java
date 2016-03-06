@@ -37,7 +37,7 @@ public class TestMockPlugins {
   public void testMock1() throws Exception {
     File file = getMockPlugin("mock-plugin1-1.0.jar");
     Plugin plugin = PluginManager.getInstance().createPlugin(file);
-    assertEquals(file, plugin.getPluginPath());
+//    assertEquals(file, plugin.getPluginPath());
 
 //    assertEquals("format_version_attr", plugin.getFormatVersion());
 //    assertEquals("true", plugin.useIdeaClassLoader());

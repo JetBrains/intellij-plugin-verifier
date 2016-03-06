@@ -11,9 +11,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * @author Dennis.Ushakov
@@ -22,21 +21,21 @@ public class SoftJarResolver extends Resolver {
 
   private static final String CLASS_SUFFIX = ".class";
 
-  private final JarFile myJarFile;
+  private final ZipFile myJarFile;
   private final String myMoniker;
 
   private final Map<String, SoftReference<ClassNode>> myClassesCache = new HashMap<String, SoftReference<ClassNode>>();
 
-  public SoftJarResolver(@NotNull JarFile jarFile) throws IOException {
+  public SoftJarResolver(@NotNull ZipFile jarFile) throws IOException {
     myMoniker = jarFile.getName();
     myJarFile = jarFile;
     preloadClassMap();
   }
 
   private void preloadClassMap() throws IOException {
-    Enumeration<JarEntry> entries = myJarFile.entries();
+    Enumeration<? extends ZipEntry> entries = myJarFile.entries();
     while (entries.hasMoreElements()) {
-      JarEntry entry = entries.nextElement();
+      ZipEntry entry = entries.nextElement();
       String name = entry.getName();
       if (name.endsWith(CLASS_SUFFIX)) {
         myClassesCache.put(name.substring(0, name.indexOf(CLASS_SUFFIX)), null);

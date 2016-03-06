@@ -17,10 +17,10 @@ public class InMemoryJarResolver extends Resolver {
 
   private final Map<String, Object> myInMemoryClasses = new HashMap<String, Object>();
 
-  private final String myMoniker;
+  private final String myPresentableName;
 
-  public InMemoryJarResolver(@NotNull String moniker) {
-    myMoniker = moniker;
+  public InMemoryJarResolver(@NotNull String presentableName) {
+    myPresentableName = presentableName;
   }
 
   public void addClass(@NotNull String name, @NotNull byte[] code) {
@@ -72,7 +72,7 @@ public class InMemoryJarResolver extends Resolver {
 
   @Override
   public String toString() {
-    return myMoniker;
+    return myPresentableName;
   }
 
 }

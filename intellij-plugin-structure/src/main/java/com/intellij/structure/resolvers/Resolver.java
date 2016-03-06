@@ -12,7 +12,7 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.jar.JarFile;
+import java.util.zip.ZipFile;
 
 /**
  * Provides access to byte-code of class by its name
@@ -22,20 +22,18 @@ public abstract class Resolver {
   /**
    * Returns resolver which combines given list of resolvers
    *
-   * @param moniker   moniker of the resulting resolver
    * @param resolvers list of resolvers
    * @return combining resolver
    */
   @NotNull
-  public static Resolver getUnion(@NotNull String moniker,
-                                  @NotNull List<Resolver> resolvers) {
+  public static Resolver createUnionResolver(@NotNull List<Resolver> resolvers) {
     Resolver someNonEmptyPool = null;
     for (Resolver pool : resolvers) {
       if (!pool.isEmpty()) {
         if (someNonEmptyPool == null) {
           someNonEmptyPool = pool;
         } else {
-          return new ContainerResolver(moniker, resolvers);
+          return new ContainerResolver(resolvers);
         }
       }
     }
@@ -51,7 +49,7 @@ public abstract class Resolver {
   }
 
   @NotNull
-  public static Resolver createJarResolver(@NotNull JarFile jarFile) throws IOException {
+  public static Resolver createJarResolver(@NotNull ZipFile jarFile) throws IOException {
     return new SoftJarResolver(jarFile);
   }
 
