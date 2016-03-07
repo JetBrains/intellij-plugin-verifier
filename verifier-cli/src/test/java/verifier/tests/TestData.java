@@ -28,6 +28,8 @@ public class TestData {
     wellKnownResources.put("ideaIC-14.0.4.tar.gz", "http://download.jetbrains.com/idea/ideaIC-14.0.4.tar.gz");
     wellKnownResources.put("ideaIU-144.3600.7.zip", "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/144.3600.7/ideaIU-144.3600.7.zip");
     wellKnownResources.put("ruby-8.0.0.20160127.zip", "https://plugins.jetbrains.com/plugin/download?pr=idea&updateId=23753");
+    wellKnownResources.put("KotlinIJ141-17.zip", "https://plugins.jetbrains.com/plugin/download?pr=idea_ce&updateId=21835");
+    wellKnownResources.put("Scala1_9_4.zip", "https://plugins.jetbrains.com/plugin/download?pr=idea_ce&updateId=21782");
   }
 
   public static File fetchResource(String id, boolean extract) throws NoSuchArchiverException, IOException {

@@ -73,6 +73,7 @@ public class DependenciesCache {
       if (externalClassPath != null) {
         resolvers.add(externalClassPath);
       }
+      String moniker = String.format("Ide-%s+Jdk-%s-resolver", ide.getVersion(), jdk);
       resolver = Resolver.createCacheResolver(Resolver.createUnionResolver(resolvers));
       myIdeResolvers.put(ide, resolver);
     }
@@ -276,17 +277,6 @@ public class DependenciesCache {
         myMissingDependencies.put(pluginId, map);
       }
       map.put(missingId, message);
-    }
-
-    void combine(PluginDependenciesDescriptor other) {
-      combineDependencies(other);
-      combineMissing(other);
-    }
-
-    void combineDependencies(PluginDependenciesDescriptor other) {
-      if (other.getDependencies() != null) {
-        myDependencies.addAll(other.getDependencies());
-      }
     }
 
     void combineMissing(PluginDependenciesDescriptor other) {

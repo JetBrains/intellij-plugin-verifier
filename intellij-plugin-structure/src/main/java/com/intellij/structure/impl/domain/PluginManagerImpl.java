@@ -321,7 +321,7 @@ public class PluginManagerImpl extends PluginManager {
     List<Resolver> resolvers = new ArrayList<Resolver>();
 
     InMemoryJarResolver inMemoryJarResolver = new InMemoryJarResolver("Resolver for " + descriptor.getPluginId());
-    resolvers.add(inMemoryJarResolver);
+
 
     ZipEntry entry;
     while ((entry = zipStream.getNextEntry()) != null) {
@@ -332,6 +332,10 @@ public class PluginManagerImpl extends PluginManager {
         ZipInputStream innerJar = new ZipInputStream(zipStream);
         resolvers.add(createResolverForZipStream(innerJar, descriptor));
       }
+    }
+
+    if (!inMemoryJarResolver.isEmpty()) {
+      resolvers.add(inMemoryJarResolver);
     }
 
     return Resolver.createUnionResolver(resolvers);
@@ -357,7 +361,9 @@ public class PluginManagerImpl extends PluginManager {
           IOUtils.closeQuietly(is);
         }
       }
-      resolvers.add(rootResolver);
+      if (!rootResolver.isEmpty()) {
+        resolvers.add(rootResolver);
+      }
     }
 
     try {
