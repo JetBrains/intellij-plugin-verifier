@@ -82,7 +82,7 @@ public class NewProblemsCommand extends VerifierCommand {
       IdeVersion updateBuild = IdeVersion.createIdeVersion(build);
 
       //NOTE: compares only IDEAs of the same branch! that is 141.* between each others
-      if (updateBuild.getBranch() == currentBuild.getBranch() && updateBuild.compareTo(currentBuild) < 0) {
+      if (updateBuild.getBaselineVersion() == currentBuild.getBaselineVersion() && updateBuild.compareTo(currentBuild) < 0) {
         result.add(build);
       }
     }

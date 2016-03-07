@@ -72,7 +72,7 @@ public abstract class VerifierCommand {
       pools.add(Resolver.createJarResolver(new JarFile(value)));
     }
 
-    return Resolver.getUnion("external_class_path", pools);
+    return Resolver.createUnionResolver(pools);
   }
 
   @Nullable

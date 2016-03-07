@@ -5,10 +5,10 @@ import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Sergey Evdokimov
@@ -23,18 +23,14 @@ public class InMemoryJarResolver extends Resolver {
     myPresentableName = presentableName;
   }
 
-  public void addClass(@NotNull String name, @NotNull byte[] code) {
-    myInMemoryClasses.put(name, code);
-  }
-
   public void addClass(@NotNull ClassNode classNode) {
     myInMemoryClasses.put(classNode.name, classNode);
   }
 
   @NotNull
   @Override
-  public Collection<String> getAllClasses() {
-    return Collections.unmodifiableCollection(myInMemoryClasses.keySet());
+  public Set<String> getAllClasses() {
+    return Collections.unmodifiableSet(myInMemoryClasses.keySet());
   }
 
 

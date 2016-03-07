@@ -9,10 +9,10 @@ import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.DownloadUtils;
 import com.jetbrains.pluginverifier.misc.PluginCache;
 import org.apache.commons.io.IOUtils;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +26,6 @@ import java.util.*;
  * @author Sergey Evdokimov
  */
 
-/**
- * TODO: why %teamcity.serverUrl%/guestAuth/repository/download/Kotlin_MirrorForIdeaTrunk/forIdea.tcbuildtag/updatePlugins.xml ?
- */
 public class CustomRepository extends PluginRepository {
 
   private final URL url;
@@ -62,7 +59,7 @@ public class CustomRepository extends PluginRepository {
         SAXBuilder builder = new SAXBuilder();
         Document document = builder.build(new StringReader(pluginListXml));
 
-        @SuppressWarnings("unchecked") List<Element> pluginList = document.getRootElement().getChildren("plugin");
+        List<Element> pluginList = document.getRootElement().getChildren("plugin");
 
         for (Element element : pluginList) {
           UpdateInfo update = new UpdateInfo();

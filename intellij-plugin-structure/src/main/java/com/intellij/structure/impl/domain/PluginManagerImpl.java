@@ -60,13 +60,14 @@ public class PluginManagerImpl extends PluginManager {
       throw new IncorrectPluginException("Incorrect plugin file type " + file + ". Should be one of .zip or .jar archives");
     }
 
-    //TODO:
 /*
+
+    TODO: is it necessary to load optional dependencies?
     if (descriptor != null) {
       resolveOptionalDescriptors(fileName, descriptor, new Function<String, PluginImpl>() {
         @Override
         public PluginImpl apply(String optionalDescriptorName) {
-          PluginImpl optionalDescriptor = loadDescriptor(file, optionalDescriptorName);
+          Plugin optionalDescriptor = loadDescriptor(file, optionalDescriptorName);
           if (optionalDescriptor == null && !isJarOrZip(file)) {
             for (URL url : getClassLoaderUrls()) {
               if ("file".equals(url.getProtocol())) {
@@ -84,38 +85,44 @@ public class PluginManagerImpl extends PluginManager {
 */
 
     if (descriptor == null) {
-      throw new IncorrectPluginException("META-INF/plugin.xml is not found");
+      throw new IncorrectPluginException("META-INF/" + fileName + " is not found");
     }
 
     return descriptor;
   }
 
-    /*private static void resolveOptionalDescriptors(@NotNull String fileName,
+  /*private void resolveOptionalDescriptors(@NotNull String fileName,
                                                  @NotNull PluginImpl descriptor,
-                                                 @NotNull Function<String, PluginImpl> optionalDescriptorLoader) {
-    Map<String, String> optionalConfigs = descriptor.getOptionalConfigs();
-    if (optionalConfigs != null && !optionalConfigs.isEmpty()) {
-      Map<String, PluginImpl> descriptors = new HashMap<String, PluginImpl>(optionalConfigs.size());
-      for (Map.Entry<String, String> entry : optionalConfigs.entrySet()) {
-        String optionalDescriptorName = entry.getValue();
-        assert !StringUtil.equal(fileName, optionalDescriptorName) : "recursive dependency: " + fileName;
+                                                 @NotNull Function<String, PluginImpl> optionalDescriptorLoader) throws IncorrectPluginException {
+    Map<PluginDependency, String> optionalConfigs = descriptor.getOptionalDepConfigFiles();
+    if (!optionalConfigs.isEmpty()) {
+      Map<String, Plugin> descriptors = new HashMap<String, Plugin>();
 
-        PluginImpl optionalDescriptor = optionalDescriptorLoader.apply(optionalDescriptorName);
+      for (Map.Entry<PluginDependency, String> entry : optionalConfigs.entrySet()) {
+        String optName = entry.getValue();
 
-        if (optionalDescriptor == null) {
-        } else {
-          descriptors.put(entry.getKey(), optionalDescriptor);
+        if (StringUtil.equal(fileName, optName)) {
+          throw new IncorrectPluginException("Plugin has recursive config dependencies for descriptor " + fileName);
         }
+
+        PluginImpl optDescriptor = optionalDescriptorLoader.apply(optName);
+
+        if (optDescriptor != null) {
+          descriptors.put(entry.getKey(), optDescriptor);
+        }
+        //maybe report about missing optional descriptor???
       }
+
       descriptor.setOptionalDescriptors(descriptors);
     }
   }*/
 
   @Nullable
-  private Plugin checkEntry(@NotNull String urlPath,
-                            @NotNull String fileName,
-                            @NotNull InputStream is,
-                            @NotNull ZipEntry entry) throws IncorrectPluginException {
+  private Plugin checkIfSearchableEntry(@NotNull ZipEntry entry,
+                                        @NotNull String fileName,
+                                        @NotNull String urlPath,
+                                        @NotNull InputStream is,
+                                        boolean exception) throws IncorrectPluginException {
     Matcher xmlMatcher = XML_IN_ROOT_PATTERN.matcher(entry.getName());
     if (xmlMatcher.matches()) {
       String name = xmlMatcher.group(2);
@@ -126,7 +133,7 @@ public class PluginManagerImpl extends PluginManager {
           url = new URL(urlPath + "META-INF/" + fileName);
           document = JDOMUtil.loadDocument(URLUtil.copyInputStream(is));
         } catch (Exception e) {
-          throw new IncorrectPluginException("Unable to read META-INF/" + fileName, e);
+          return nullOrException(exception, "Unable to read META-INF/" + fileName, e);
         }
         PluginImpl descriptor = new PluginImpl();
         descriptor.readExternal(document, url);
@@ -152,7 +159,7 @@ public class PluginManagerImpl extends PluginManager {
         }
 
         //firstly check xml in root (e.g. Sample.zip/Sample/META-INF/plugin.xml)
-        Plugin inRoot = checkEntry(urlPath, fileName, zipStream, entry);
+        Plugin inRoot = checkIfSearchableEntry(entry, fileName, urlPath, zipStream, exception);
         if (inRoot != null) {
           if (descriptorRoot != null && exception) {
             throw new IncorrectPluginException("Multiple META-INF/" + fileName + " found");
@@ -339,11 +346,15 @@ public class PluginManagerImpl extends PluginManager {
       Collection<File> classFiles = FileUtils.listFiles(classesDir, new String[]{"class"}, true);
       InMemoryJarResolver rootResolver = new InMemoryJarResolver("Plugin root classes of " + descriptor.getPluginId());
       for (File file : classFiles) {
+        InputStream is = null;
         try {
-          ClassNode node = getClassNodeFromInputStream(FileUtils.openInputStream(file));
+          is = FileUtils.openInputStream(file);
+          ClassNode node = getClassNodeFromInputStream(is);
           rootResolver.addClass(node);
         } catch (IOException e) {
           throw new IncorrectPluginException("Unable to read class file " + file, e);
+        } finally {
+          IOUtils.closeQuietly(is);
         }
       }
       resolvers.add(rootResolver);
@@ -357,9 +368,8 @@ public class PluginManagerImpl extends PluginManager {
         resolvers.add(libResolver);
       }
     } catch (IOException e) {
-      throw new IncorrectPluginException("Unable to read jar files", e);
+      throw new IncorrectPluginException("Unable to read `lib` directory", e);
     }
-
 
     descriptor.setResolver(Resolver.createUnionResolver(resolvers));
   }

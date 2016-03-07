@@ -45,7 +45,11 @@ public class JarsUtils {
     List<Resolver> pool = new ArrayList<Resolver>();
 
     for (ZipFile jar : jars) {
-      pool.add(Resolver.createJarResolver(jar));
+      try {
+        pool.add(Resolver.createJarResolver(jar));
+      } catch (IOException e) {
+        throw new IOException("Unable to create resolver for " + jar.getName(), e);
+      }
     }
 
     return Resolver.createUnionResolver(pool);

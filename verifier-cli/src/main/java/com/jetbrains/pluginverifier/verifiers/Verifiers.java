@@ -18,7 +18,6 @@ import com.jetbrains.pluginverifier.verifiers.method.*;
  */
 public class Verifiers {
   public static final Verifier[] PLUGIN_VERIFIERS = new Verifier[]{new ReferencesVerifier()};
-  // TODO: add dynamic loading ??
   private static final FieldVerifier[] FIELD_VERIFIERS = new FieldVerifier[]{new FieldTypeVerifier()};
 
   private static final ClassVerifier[] CLASS_VERIFIERS = new ClassVerifier[]{

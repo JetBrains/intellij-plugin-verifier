@@ -5,8 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author Sergey Patrikeev
@@ -29,7 +29,7 @@ public class EmptyResolver extends Resolver {
 
   @Override
   @NotNull
-  public Collection<String> getAllClasses() {
+  public Set<String> getAllClasses() {
     return Collections.emptySet();
   }
 

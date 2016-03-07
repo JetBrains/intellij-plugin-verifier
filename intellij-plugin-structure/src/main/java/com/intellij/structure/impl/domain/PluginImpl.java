@@ -19,46 +19,43 @@ import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
 
 class PluginImpl implements Plugin {
 
   private static final Whitelist WHITELIST = Whitelist.basicWithImages();
-  private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules";
+  private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules.";
   private final Set<String> myDefinedModules = new HashSet<String>();
   private final List<PluginDependency> myDependencies = new ArrayList<PluginDependency>();
   private final List<PluginDependency> myModuleDependencies = new ArrayList<PluginDependency>();
-  @Nullable private Resolver myPluginResolver;
-  @Nullable private String myPluginName;
-  @Nullable private String myPluginVersion;
-  @Nullable private String myPluginId;
-  @Nullable private String myPluginVendor;
-  @Nullable private String myVendorEmail;
-  @Nullable private String myVendorUrl;
-  @Nullable private String myVendorLogoPath;
-  @Nullable private String myDescription;
-  @Nullable private String myUrl;
-  @Nullable private String myNotes;
-  @Nullable private IdeVersion mySinceBuild;
-  @Nullable private IdeVersion myUntilBuild;
-  @Nullable private String myResourceBundleBaseName;
-  @Nullable private Map<String, String> myOptionalConfigs;
-  @Nullable private Map<String, PluginImpl> myOptionalDescriptors;
+  private Map<PluginDependency, String> myOptionalConfigs = new HashMap<PluginDependency, String>();
+  private Resolver myPluginResolver;
+  private String myPluginName;
+  private String myPluginVersion;
+  private String myPluginId;
+  private String myPluginVendor;
+  private String myVendorEmail;
+  private String myVendorUrl;
+  private String myDescription;
+  private String myUrl;
+  private String myNotes;
+  private IdeVersion mySinceBuild;
+  private IdeVersion myUntilBuild;
+  private Map<String, Plugin> myOptionalDescriptors;
 
 
   PluginImpl() throws IncorrectPluginException {
   }
 
 
-  private void setEntries(@Nullable Element rootElement) throws IncorrectPluginException {
+  private void checkAndSetInfo(@Nullable Element rootElement) throws IncorrectPluginException {
     if (rootElement == null) {
-      throw new IncorrectPluginException("Failed to parse plugin.xml: root element not found");
+      throw new IncorrectPluginException("Failed to parse plugin.xml: root element <idea-plugin> is not found");
     }
 
     if (!"idea-plugin".equals(rootElement.getName())) {
-      throw new IncorrectPluginException("Invalid plugin.xml: root element must be 'idea-plugin'");
+      throw new IncorrectPluginException("Invalid plugin.xml: root element must be <idea-plugin>, but it is " + rootElement.getName());
     }
 
     myPluginName = rootElement.getChildTextTrim("name");
@@ -75,13 +72,13 @@ class PluginImpl implements Plugin {
 
     Element vendorElement = rootElement.getChild("vendor");
     if (vendorElement == null) {
-      throw new IncorrectPluginException("Invalid plugin.xml: element 'vendor' not found");
+      throw new IncorrectPluginException("Invalid plugin.xml: element 'vendor' is not found");
     }
 
     myPluginVendor = vendorElement.getTextTrim();
     myVendorEmail = StringUtil.notNullize(vendorElement.getAttributeValue("email"));
     myVendorUrl = StringUtil.notNullize(vendorElement.getAttributeValue("url"));
-    myVendorLogoPath = vendorElement.getAttributeValue("logo");
+//    myVendorLogoPath = vendorElement.getAttributeValue("logo");
 
     myPluginVersion = rootElement.getChildTextTrim("version");
 /*
@@ -114,12 +111,11 @@ class PluginImpl implements Plugin {
       myDescription = Jsoup.clean(description, WHITELIST);
     }
 
-    List changeNotes = rootElement.getChildren("change-notes");
+    List<Element> changeNotes = rootElement.getChildren("change-notes");
     if (changeNotes != null && changeNotes.size() > 0) {
-      Object o = changeNotes.get(0);
-      if (o instanceof Element) {
-        Element currentNote = (Element) o;
-        String textTrim = currentNote.getTextTrim();
+      Element o = changeNotes.get(0);
+      if (o != null) {
+        String textTrim = o.getTextTrim();
         if (!StringUtil.isNullOrEmpty(textTrim)) {
           myNotes = Jsoup.clean(textTrim, WHITELIST);
         }
@@ -154,16 +150,14 @@ class PluginImpl implements Plugin {
   }
 
   private void setPluginDependencies(@NotNull Element rootElement) {
-    final List dependsElements = rootElement.getChildren("depends");
+    final List<Element> dependsElements = rootElement.getChildren("depends");
 
-    for (Object dependsObj : dependsElements) {
-      Element dependsElement = (Element) dependsObj;
-
+    for (Element dependsElement : dependsElements) {
       final boolean optional = Boolean.parseBoolean(dependsElement.getAttributeValue("optional", "false"));
       final String pluginId = dependsElement.getTextTrim();
 
       if (pluginId == null) {
-        throw new IncorrectPluginException("Invalid plugin.xml: invalid dependency tag");
+        throw new IncorrectPluginException("Invalid plugin.xml: invalid dependency tag " + dependsElement);
       }
 
       PluginDependency dependency = new PluginDependencyImpl(pluginId, optional);
@@ -172,6 +166,15 @@ class PluginImpl implements Plugin {
       } else {
         myDependencies.add(dependency);
       }
+
+      if (optional) {
+        String configFile = dependsElement.getAttributeValue("config-file");
+        if (configFile != null) {
+          myOptionalConfigs.put(dependency, configFile);
+        }
+      }
+
+
     }
   }
 
@@ -214,8 +217,7 @@ class PluginImpl implements Plugin {
   }
 
   private void setDefinedModules(@NotNull Element rootElement) {
-    @SuppressWarnings("unchecked")
-    Iterable<? extends Element> children = rootElement.getChildren("module");
+    List<Element> children = rootElement.getChildren("module");
     for (Element module : children) {
       myDefinedModules.add(module.getAttributeValue("value"));
     }
@@ -249,7 +251,7 @@ class PluginImpl implements Plugin {
   @Override
   @NotNull
   public Resolver getPluginResolver() {
-    return myPluginResolver;
+    return myPluginResolver == null ? Resolver.getEmptyResolver() : myPluginResolver;
   }
 
   @Nullable
@@ -259,36 +261,26 @@ class PluginImpl implements Plugin {
   }
 
   @Override
+  @Nullable
   public String getVendorEmail() {
     return myVendorEmail;
   }
 
   @Override
+  @Nullable
   public String getVendorUrl() {
     return myVendorUrl;
   }
 
+
+  @Override
   @Nullable
-  @Override
-  public String getResourceBundleBaseName() {
-    //TODO: implement
-    return myResourceBundleBaseName;
-  }
-
-  @Nullable
-  @Override
-  public InputStream getVendorLogo() {
-    //TODO: implement
-    return null;
-  }
-
-
-  @Override
   public String getUrl() {
     return myUrl;
   }
 
   @Override
+  @Nullable
   public String getChangeNotes() {
     return myNotes;
   }
@@ -310,18 +302,21 @@ class PluginImpl implements Plugin {
     try {
       document = JDOMXIncluder.resolve(document, url.toExternalForm());
     } catch (XIncludeException e) {
-      throw new IncorrectPluginException("Unable to read " + url, e);
+      throw new IncorrectPluginException("Unable to read resolve " + url.getFile(), e);
     }
-    setEntries(document.getRootElement());
+    checkAndSetInfo(document.getRootElement());
   }
 
-  Map<String, String> getOptionalConfigs() {
+/*
+  @NotNull
+  Map<PluginDependency, String> getOptionalDepConfigFiles() {
     return myOptionalConfigs;
   }
 
-  void setOptionalDescriptors(Map<String, PluginImpl> optionalDescriptors) {
+  void setOptionalDescriptors(@NotNull Map<String, PluginImpl> optionalDescriptors) {
     myOptionalDescriptors = optionalDescriptors;
   }
+*/
 
 
   void setResolver(@NotNull Resolver resolver) {

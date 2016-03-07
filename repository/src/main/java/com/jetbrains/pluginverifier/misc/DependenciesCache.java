@@ -73,8 +73,7 @@ public class DependenciesCache {
       if (externalClassPath != null) {
         resolvers.add(externalClassPath);
       }
-      String moniker = String.format("Ide-%s+Jdk-%s-resolver", ide.getVersion(), jdk);
-      resolver = Resolver.createCacheResolver(Resolver.getUnion(moniker, resolvers));
+      resolver = Resolver.createCacheResolver(Resolver.createUnionResolver(resolvers));
       myIdeResolvers.put(ide, resolver);
     }
     return resolver;
@@ -91,7 +90,7 @@ public class DependenciesCache {
 
       List<Resolver> resolvers = new ArrayList<Resolver>();
 
-      resolvers.add(Resolver.getUnion(plugin.getPluginId(), Arrays.asList(plugin.getPluginResolver(), plugin.getLibraryResolver())));
+      resolvers.add(plugin.getPluginResolver());
 
       resolvers.add(getResolverForIde(ide, jdk, externalClassPath));
 
@@ -101,14 +100,10 @@ public class DependenciesCache {
           resolvers.add(pluginResolver);
         }
 
-        Resolver libraryResolver = dep.getLibraryResolver();
-        if (!libraryResolver.isEmpty()) {
-          resolvers.add(libraryResolver);
-        }
       }
 
       String moniker = String.format("Plugin-%s+Ide-%s+Jdk-%s", plugin.getPluginId(), ide.getVersion(), jdk.toString());
-      descriptor.myResolver = Resolver.getUnion(moniker, resolvers);
+      descriptor.myResolver = Resolver.createUnionResolver(resolvers);
     }
 
     return descriptor;
@@ -180,7 +175,7 @@ public class DependenciesCache {
           if (depPlugin == null) {
             UpdateInfo updateInfo;
             try {
-              updateInfo = RepositoryManager.getInstance().findPlugin(ide.getVersion().getFullPresentation(), pluginDependency.getId());
+              updateInfo = RepositoryManager.getInstance().findPlugin(ide.getVersion().asString(), pluginDependency.getId());
             } catch (IOException e) {
               throw FailUtil.fail("Couldn't get dependency update from the Repository (IDE = " + ide.getVersion() + " plugin = " + plugin.getPluginId() + ")", e);
             }

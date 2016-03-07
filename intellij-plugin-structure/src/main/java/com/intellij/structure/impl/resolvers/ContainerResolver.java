@@ -6,7 +6,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dennis.Ushakov
@@ -15,13 +18,31 @@ public class ContainerResolver extends Resolver {
 
   private final List<Resolver> myResolvers = new ArrayList<Resolver>();
 
-  public ContainerResolver(@NotNull List<Resolver> resolvers) {
+  private ContainerResolver(@NotNull List<Resolver> resolvers) {
     myResolvers.addAll(resolvers);
   }
 
   @NotNull
+  public static Resolver createFromList(@NotNull List<Resolver> resolvers) {
+    Resolver nonEmpty = null;
+    for (Resolver pool : resolvers) {
+      if (!pool.isEmpty()) {
+        if (nonEmpty == null) {
+          nonEmpty = pool;
+        } else {
+          return new ContainerResolver(resolvers);
+        }
+      }
+    }
+    if (nonEmpty == null) {
+      return EmptyResolver.INSTANCE;
+    }
+    return nonEmpty;
+  }
+
+  @NotNull
   @Override
-  public Collection<String> getAllClasses() {
+  public Set<String> getAllClasses() {
     Set<String> result = new HashSet<String>();
     for (Resolver pool : myResolvers) {
       result.addAll(pool.getAllClasses());
@@ -67,5 +88,4 @@ public class ContainerResolver extends Resolver {
     }
     return null;
   }
-
 }

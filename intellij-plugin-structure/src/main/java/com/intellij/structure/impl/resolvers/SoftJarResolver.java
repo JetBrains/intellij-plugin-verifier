@@ -1,5 +1,6 @@
 package com.intellij.structure.impl.resolvers;
 
+import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
@@ -22,12 +23,10 @@ public class SoftJarResolver extends Resolver {
   private static final String CLASS_SUFFIX = ".class";
 
   private final ZipFile myJarFile;
-  private final String myMoniker;
 
   private final Map<String, SoftReference<ClassNode>> myClassesCache = new HashMap<String, SoftReference<ClassNode>>();
 
   public SoftJarResolver(@NotNull ZipFile jarFile) throws IOException {
-    myMoniker = jarFile.getName();
     myJarFile = jarFile;
     preloadClassMap();
   }
@@ -38,20 +37,20 @@ public class SoftJarResolver extends Resolver {
       ZipEntry entry = entries.nextElement();
       String name = entry.getName();
       if (name.endsWith(CLASS_SUFFIX)) {
-        myClassesCache.put(name.substring(0, name.indexOf(CLASS_SUFFIX)), null);
+        myClassesCache.put(StringUtil.trimEnd(name, CLASS_SUFFIX), null);
       }
     }
   }
 
   @NotNull
   @Override
-  public Collection<String> getAllClasses() {
+  public Set<String> getAllClasses() {
     return Collections.unmodifiableSet(myClassesCache.keySet());
   }
 
   @Override
   public String toString() {
-    return myMoniker;
+    return myJarFile.getName();
   }
 
   @Override

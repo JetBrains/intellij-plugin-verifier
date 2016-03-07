@@ -135,14 +135,24 @@ public class URLUtil {
     return decoded.toString();
   }
 
+  /**
+   * Opens a .zip- (or .jar-) file stream which may be in some other .zip<p>
+   * e.g. <i>jar:jar:file:/home/user/Documents/a.zip!/lib/b.jar!/META-INF/plugin.xml</i>
+   * returns an input stream for plugin.xml
+   *
+   * @param url and url which represents a path to a zip, or to a .zip inside the other .zip
+   * @return input stream of the resource
+   * @throws IOException if URL is malformed or unable to open a stream
+   */
   @NotNull
   public static InputStream openRecursiveJarStream(@NotNull URL url) throws IOException {
     String[] paths = splitUrl(url.toExternalForm());
     if (paths.length <= 1) {
       throw new MalformedURLException(url.toExternalForm());
     }
-    ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(unquote(paths[0]))));
+    ZipInputStream zipInputStream = null;
     try {
+      zipInputStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(unquote(paths[0]))));
       return openRecursiveJarStream(zipInputStream, paths, 1);
     } finally {
       IOUtils.closeQuietly(zipInputStream);
