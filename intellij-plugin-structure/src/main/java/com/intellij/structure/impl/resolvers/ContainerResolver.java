@@ -1,6 +1,5 @@
 package com.intellij.structure.impl.resolvers;
 
-import com.google.common.base.Joiner;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,20 +16,22 @@ import java.util.Set;
 public class ContainerResolver extends Resolver {
 
   private final List<Resolver> myResolvers = new ArrayList<Resolver>();
+  private final String myPresentableName;
 
-  private ContainerResolver(@NotNull List<Resolver> resolvers) {
+  private ContainerResolver(@NotNull String presentableName, @NotNull List<Resolver> resolvers) {
+    myPresentableName = presentableName;
     myResolvers.addAll(resolvers);
   }
 
   @NotNull
-  public static Resolver createFromList(@NotNull List<Resolver> resolvers) {
+  public static Resolver createFromList(@NotNull String presentableName, @NotNull List<Resolver> resolvers) {
     Resolver nonEmpty = null;
     for (Resolver pool : resolvers) {
       if (!pool.isEmpty()) {
         if (nonEmpty == null) {
           nonEmpty = pool;
         } else {
-          return new ContainerResolver(resolvers);
+          return new ContainerResolver(presentableName, resolvers);
         }
       }
     }
@@ -52,7 +53,7 @@ public class ContainerResolver extends Resolver {
 
   @Override
   public String toString() {
-    return Joiner.on(", ").join(myResolvers);
+    return myPresentableName;
   }
 
   @Override

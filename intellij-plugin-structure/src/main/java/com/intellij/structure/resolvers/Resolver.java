@@ -22,12 +22,14 @@ public abstract class Resolver {
   /**
    * Returns resolver which combines given list of resolvers
    *
+   *
+   * @param presentableName presentableName
    * @param resolvers list of resolvers
    * @return combining resolver
    */
   @NotNull
-  public static Resolver createUnionResolver(@NotNull List<Resolver> resolvers) {
-    return ContainerResolver.createFromList(resolvers);
+  public static Resolver createUnionResolver(@NotNull String presentableName, @NotNull List<Resolver> resolvers) {
+    return ContainerResolver.createFromList(presentableName, resolvers);
   }
 
   @NotNull

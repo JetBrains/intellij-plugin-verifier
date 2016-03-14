@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarFile;
 
@@ -72,7 +73,7 @@ public abstract class VerifierCommand {
       pools.add(Resolver.createJarResolver(new JarFile(value)));
     }
 
-    return Resolver.createUnionResolver(pools);
+    return Resolver.createUnionResolver("External classpath resolver: " + Arrays.toString(values), pools);
   }
 
   @Nullable

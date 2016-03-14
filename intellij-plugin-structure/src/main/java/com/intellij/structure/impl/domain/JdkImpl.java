@@ -25,7 +25,7 @@ public class JdkImpl extends Jdk {
     myJars = new ArrayList<ZipFile>();
 
     collectJars(jdkDir);
-    myPool = JarsUtils.makeResolver(myJars);
+    myPool = JarsUtils.makeResolver("Jdk resolver " + jdkDir.getCanonicalPath(), myJars);
   }
 
   private void collectJars(@NotNull File dir) throws IOException {

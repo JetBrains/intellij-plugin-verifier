@@ -35,7 +35,7 @@ import java.util.zip.ZipInputStream;
 public class PluginManagerImpl extends PluginManager {
 
   private static final String PLUGIN_XML = "plugin.xml";
-  private static final String LIB_JAR_REGEX = "([^/]+/)?lib/[^/]+\\.(jar|zip)";
+  private static final Pattern LIB_JAR_REGEX = Pattern.compile("([^/]+/)?lib/([^/]+\\.(jar|zip))");
   private static final String META_INF = "META-INF";
   private static final Pattern XML_IN_ROOT_PATTERN = Pattern.compile("([^/]*/)?META-INF/((\\w|\\-)+\\.xml)");
 
@@ -118,11 +118,11 @@ public class PluginManagerImpl extends PluginManager {
   }*/
 
   @Nullable
-  private Plugin checkIfSearchableEntry(@NotNull ZipEntry entry,
-                                        @NotNull String fileName,
-                                        @NotNull String urlPath,
-                                        @NotNull InputStream is,
-                                        boolean exception) throws IncorrectPluginException {
+  private Plugin checkFileInRoot(@NotNull ZipEntry entry,
+                                 @NotNull String fileName,
+                                 @NotNull String urlPath,
+                                 @NotNull InputStream is,
+                                 boolean exception) throws IncorrectPluginException {
     Matcher xmlMatcher = XML_IN_ROOT_PATTERN.matcher(entry.getName());
     if (xmlMatcher.matches()) {
       String name = xmlMatcher.group(2);
@@ -159,7 +159,7 @@ public class PluginManagerImpl extends PluginManager {
         }
 
         //firstly check xml in root (e.g. Sample.zip/Sample/META-INF/plugin.xml)
-        Plugin inRoot = checkIfSearchableEntry(entry, fileName, urlPath, zipStream, exception);
+        Plugin inRoot = checkFileInRoot(entry, fileName, urlPath, zipStream, exception);
         if (inRoot != null) {
           if (descriptorRoot != null && exception) {
             throw new IncorrectPluginException("Multiple META-INF/" + fileName + " found");
@@ -169,7 +169,7 @@ public class PluginManagerImpl extends PluginManager {
         }
 
         //secondly check .jar or .zip in lib folder (e.g. Sample/lib/Sample.jar/!...)
-        if (entry.getName().matches(LIB_JAR_REGEX)) {
+        if (LIB_JAR_REGEX.matcher(entry.getName()).matches()) {
           ZipInputStream inner = new ZipInputStream(zipStream);
           Plugin dinner = loadFromZipStream(inner, "jar:" + urlPath + entry.getName() + "!/", fileName, false);
           if (dinner != null) {
@@ -307,7 +307,7 @@ public class PluginManagerImpl extends PluginManager {
     ZipInputStream zipInputStream = null;
     try {
       zipInputStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)));
-      Resolver resolver = createResolverForZipStream(zipInputStream, descriptor);
+      Resolver resolver = createResolverForZipStream(zipInputStream, file.getCanonicalPath());
       descriptor.setResolver(resolver);
     } catch (IOException e) {
       throw new IncorrectPluginException("Unable to read file " + file, e);
@@ -317,10 +317,10 @@ public class PluginManagerImpl extends PluginManager {
   }
 
   @NotNull
-  private Resolver createResolverForZipStream(@NotNull ZipInputStream zipStream, @NotNull PluginImpl descriptor) throws IOException {
+  private Resolver createResolverForZipStream(@NotNull ZipInputStream zipStream, @NotNull String resolverName) throws IOException {
     List<Resolver> resolvers = new ArrayList<Resolver>();
 
-    InMemoryJarResolver inMemoryJarResolver = new InMemoryJarResolver("Resolver for " + descriptor.getPluginId());
+    InMemoryJarResolver inMemoryJarResolver = new InMemoryJarResolver("root of " + resolverName);
 
 
     ZipEntry entry;
@@ -328,9 +328,15 @@ public class PluginManagerImpl extends PluginManager {
       if (entry.getName().endsWith(".class")) {
         ClassNode node = getClassNodeFromInputStream(zipStream);
         inMemoryJarResolver.addClass(node);
-      } else if (entry.getName().matches(LIB_JAR_REGEX)) {
-        ZipInputStream innerJar = new ZipInputStream(zipStream);
-        resolvers.add(createResolverForZipStream(innerJar, descriptor));
+      } else {
+        Matcher matcher = LIB_JAR_REGEX.matcher(entry.getName());
+        if (matcher.matches()) {
+          String innerName = matcher.group(2);
+          if (innerName != null) {
+            ZipInputStream innerJar = new ZipInputStream(zipStream);
+            resolvers.add(createResolverForZipStream(innerJar, innerName));
+          }
+        }
       }
     }
 
@@ -338,7 +344,7 @@ public class PluginManagerImpl extends PluginManager {
       resolvers.add(inMemoryJarResolver);
     }
 
-    return Resolver.createUnionResolver(resolvers);
+    return Resolver.createUnionResolver(resolverName, resolvers);
   }
 
   private void loadClassesFromDir(@NotNull File dir, @NotNull PluginImpl descriptor) throws IncorrectPluginException {
@@ -370,14 +376,14 @@ public class PluginManagerImpl extends PluginManager {
       File lib = new File(dir, "lib");
       if (lib.isDirectory()) {
         List<ZipFile> jars = JarsUtils.collectJarsRecursively(lib, Predicates.<File>alwaysTrue());
-        Resolver libResolver = JarsUtils.makeResolver(jars);
+        Resolver libResolver = JarsUtils.makeResolver("Plugin `lib` jars: " + lib.getCanonicalPath(), jars);
         resolvers.add(libResolver);
       }
     } catch (IOException e) {
       throw new IncorrectPluginException("Unable to read `lib` directory", e);
     }
 
-    descriptor.setResolver(Resolver.createUnionResolver(resolvers));
+    descriptor.setResolver(Resolver.createUnionResolver("Plugin resolver " + descriptor.getPluginId(), resolvers));
   }
 
   @NotNull

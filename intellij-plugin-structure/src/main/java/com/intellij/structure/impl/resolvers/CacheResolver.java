@@ -16,6 +16,7 @@ public class CacheResolver extends Resolver {
 
   private final Resolver myDelegate;
 
+  //TODO: WeakHashMap
   private final Map<String, ClassNode> myCache = new HashMap<String, ClassNode>();
 
   public CacheResolver(@NotNull Resolver delegate) {

@@ -41,7 +41,7 @@ public class JarsUtils {
   }
 
   @NotNull
-  public static Resolver makeResolver(@NotNull List<ZipFile> jars) throws IOException {
+  public static Resolver makeResolver(@NotNull String presentableName, @NotNull List<ZipFile> jars) throws IOException {
     List<Resolver> pool = new ArrayList<Resolver>();
 
     for (ZipFile jar : jars) {
@@ -52,7 +52,7 @@ public class JarsUtils {
       }
     }
 
-    return Resolver.createUnionResolver(pool);
+    return Resolver.createUnionResolver(presentableName, pool);
   }
 
 }

@@ -57,7 +57,7 @@ public class IdeManagerImpl extends IdeManager {
       }
     });
 
-    return JarsUtils.makeResolver(jars);
+    return JarsUtils.makeResolver("Idea `lib` dir: " + lib.getCanonicalPath(), jars);
   }
 
   @NotNull
@@ -73,7 +73,7 @@ public class IdeManagerImpl extends IdeManager {
       pools.add(new CompileOutputResolver(getCommunityClassesRoot(ideaDir)));
     }
 
-    return Resolver.createUnionResolver(pools);
+    return Resolver.createUnionResolver("Idea dir: " + ideaDir.getCanonicalPath(), pools);
   }
 
   @NotNull

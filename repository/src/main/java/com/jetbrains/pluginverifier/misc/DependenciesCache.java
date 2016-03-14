@@ -73,8 +73,7 @@ public class DependenciesCache {
       if (externalClassPath != null) {
         resolvers.add(externalClassPath);
       }
-      String moniker = String.format("Ide-%s+Jdk-%s-resolver", ide.getVersion(), jdk);
-      resolver = Resolver.createCacheResolver(Resolver.createUnionResolver(resolvers));
+      resolver = Resolver.createUnionResolver("Ide resolver for " + ide.getVersion() + " and jdk " + jdk, resolvers);
       myIdeResolvers.put(ide, resolver);
     }
     return resolver;
@@ -103,8 +102,7 @@ public class DependenciesCache {
 
       }
 
-      String moniker = String.format("Plugin-%s+Ide-%s+Jdk-%s", plugin.getPluginId(), ide.getVersion(), jdk.toString());
-      descriptor.myResolver = Resolver.createUnionResolver(resolvers);
+      descriptor.myResolver = Resolver.createUnionResolver("Resolver for plugin " + plugin.getPluginId() + " with transitive dependencies", resolvers);
     }
 
     return descriptor;
