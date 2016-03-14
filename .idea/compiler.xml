@@ -19,10 +19,24 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="1.6">
+      <module name="common-utils_main" target="1.6" />
+      <module name="common-utils_test" target="1.6" />
       <module name="common_utils_main" target="1.6" />
       <module name="common_utils_test" target="1.6" />
+      <module name="intellij-plugin-structure_main" target="1.6" />
+      <module name="intellij-plugin-structure_test" target="1.6" />
       <module name="intellij_plugin_structure_main" target="1.6" />
       <module name="intellij_plugin_structure_test" target="1.6" />
+      <module name="mock-idea_main" target="1.6" />
+      <module name="mock-idea_test" target="1.6" />
+      <module name="mock-plugin1_main" target="1.6" />
+      <module name="mock-plugin1_test" target="1.6" />
+      <module name="mock-plugin2_main" target="1.6" />
+      <module name="mock-plugin2_test" target="1.6" />
+      <module name="mock-plugin3_main" target="1.6" />
+      <module name="mock-plugin3_test" target="1.6" />
+      <module name="mock-plugin_main" target="1.6" />
+      <module name="mock-plugin_test" target="1.6" />
       <module name="mock_idea_main" target="1.6" />
       <module name="mock_idea_test" target="1.6" />
       <module name="mock_plugin1_main" target="1.6" />
@@ -37,6 +51,12 @@
       <module name="repository_test" target="1.6" />
       <module name="uploader_main" target="1.6" />
       <module name="uploader_test" target="1.6" />
+      <module name="verifier-cli_main" target="1.6" />
+      <module name="verifier-cli_test" target="1.6" />
+      <module name="verifier-parent_main" target="1.6" />
+      <module name="verifier-parent_test" target="1.6" />
+      <module name="verifier-problems_main" target="1.6" />
+      <module name="verifier-problems_test" target="1.6" />
       <module name="verifier_cli_main" target="1.6" />
       <module name="verifier_cli_test" target="1.6" />
       <module name="verifier_parent_main" target="1.6" />

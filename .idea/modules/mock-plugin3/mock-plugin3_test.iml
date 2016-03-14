@@ -9,6 +9,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="mock-plugin3_main" />
   </component>
   <component name="TestModuleProperties" production-module="mock-plugin3_main" />
 </module>
