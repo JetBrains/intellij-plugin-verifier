@@ -1,6 +1,8 @@
 package com.intellij.structure.impl.domain;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
@@ -38,7 +40,9 @@ class PluginImpl implements Plugin {
   private final Map<PluginDependency, String> myOptionalConfigFiles = new HashMap<PluginDependency, String>();
   private final Map<String, PluginImpl> myOptionalDescriptors = new HashMap<String, PluginImpl>();
   private final Set<String> myReferencedClasses = new HashSet<String>();
+  private final Multimap<String, Element> myExtensions = ArrayListMultimap.create();
   @Nullable private byte[] myLogoContent;
+  @Nullable private String myLogoUrl;
   @Nullable private Resolver myPluginResolver;
   @Nullable private String myPluginName;
   @Nullable private String myPluginVersion;
@@ -55,6 +59,36 @@ class PluginImpl implements Plugin {
   PluginImpl() throws IncorrectPluginException {
   }
 
+  private static String extractEPName(final Element extensionElement) {
+    String epName = extensionElement.getAttributeValue("point");
+
+    if (epName == null) {
+      final Element parentElement = extensionElement.getParentElement();
+      final String ns = parentElement != null ? parentElement.getAttributeValue("defaultExtensionNs") : null;
+
+      if (ns != null) {
+        epName = ns + '.' + extensionElement.getName();
+      } else {
+        Namespace namespace = extensionElement.getNamespace();
+        epName = namespace.getURI() + '.' + extensionElement.getName();
+      }
+    }
+    return epName;
+  }
+
+  @Override
+  @NotNull
+  public Multimap<String, Element> getExtensions() {
+    return myExtensions;
+  }
+
+  private void setExtensions(Element rootElement) {
+    for (Element extensionsRoot : rootElement.getChildren("extensions")) {
+      for (Element element : extensionsRoot.getChildren()) {
+        myExtensions.put(extractEPName(element), element);
+      }
+    }
+  }
 
   private void checkAndSetEntries(@NotNull URL url, @Nullable Element rootElement, boolean checkValidity) throws IncorrectPluginException {
     if (rootElement == null) {
@@ -135,11 +169,11 @@ class PluginImpl implements Plugin {
   }
 
   private void setLogoContent(@NotNull URL url, Element vendorElement) {
-    String logoPath = vendorElement.getAttributeValue("logo");
-    if (logoPath != null) {
+    myLogoUrl = vendorElement.getAttributeValue("logo");
+    if (myLogoUrl != null && !myLogoUrl.startsWith("http://") && !myLogoUrl.startsWith("https://")) {
       InputStream input = null;
       try {
-        URL logoUrl = new URL(url, logoPath);
+        URL logoUrl = new URL(url, myLogoUrl);
         input = URLUtil.openStream(logoUrl);
         myLogoContent = IOUtils.toByteArray(input);
       } catch (Exception ignored) {
@@ -151,9 +185,9 @@ class PluginImpl implements Plugin {
 
   private void setComponents(@NotNull Element rootElement) {
     processReferencedClasses(rootElement);
+    setExtensions(rootElement);
     /*
     implement these if necessary
-    setExtensions(rootElement);
     setExtensionPoints(rootElement);
     setActions(rootElement);
     setAppComponents(rootElement);
@@ -309,7 +343,9 @@ class PluginImpl implements Plugin {
       try {
         mySinceBuild = IdeVersion.createIdeVersion(sb);
       } catch (IllegalArgumentException e) {
-        throw new IncorrectPluginException("<idea version since-build = /> attribute has incorrect value: " + sb);
+        throw new IncorrectPluginException("'since-build' attribute in <idea-version> has incorrect value: " + sb +
+            ". You can see specification of build numbers <a target='_blank' " +
+            "href='http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges'>hire</a>");
       }
 
       String ub = ideaVersion.getAttributeValue("until-build");
@@ -381,6 +417,11 @@ class PluginImpl implements Plugin {
     return myLogoContent;
   }
 
+  @Nullable
+  @Override
+  public String getVendorLogoUrl() {
+    return myLogoUrl;
+  }
 
   void readExternal(@NotNull URL url, boolean checkValidity) throws IncorrectPluginException {
     try {

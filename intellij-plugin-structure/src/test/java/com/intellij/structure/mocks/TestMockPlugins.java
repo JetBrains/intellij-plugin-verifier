@@ -1,9 +1,11 @@
 package com.intellij.structure.mocks;
 
+import com.google.common.collect.Multimap;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.impl.domain.PluginDependencyImpl;
+import org.jdom2.Element;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
@@ -12,6 +14,7 @@ import java.io.File;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 
 /**
@@ -85,6 +88,10 @@ public class TestMockPlugins {
     assertContains(set, "org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator".replace('.', '/'));
     assertContains(set, "org.jetbrains.kotlin.js.resolve.diagnostics.DefaultErrorMessagesJs".replace('.', '/'));
     assertContains(set, "org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.UnfoldReturnToWhenIntention".replace('.', '/'));
+
+
+    Multimap<String, Element> extensions = plugin.getExtensions();
+    assertTrue(extensions.containsKey("com.intellij.referenceImporter"));
   }
 
   private <T> void assertContains(Collection<T> collection, T elem) {

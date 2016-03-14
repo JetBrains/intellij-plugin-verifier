@@ -1,6 +1,8 @@
 package com.intellij.structure.domain;
 
+import com.google.common.collect.Multimap;
 import com.intellij.structure.resolvers.Resolver;
+import org.jdom2.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +21,9 @@ public interface Plugin {
   IdeVersion getUntilBuild();
 
   boolean isCompatibleWithIde(@NotNull IdeVersion ideVersion);
+
+  @NotNull
+  Multimap<String, Element> getExtensions();
 
   @NotNull
   List<PluginDependency> getDependencies();
@@ -60,5 +65,8 @@ public interface Plugin {
   Set<String> getAllClassesReferencedFromXml();
 
   byte[] getVendorLogo();
+
+  @Nullable
+  String getVendorLogoUrl();
 
 }
