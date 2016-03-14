@@ -115,7 +115,7 @@ public class CompileOutputResolver extends Resolver {
 
   @NotNull
   @Override
-  public Collection<String> getAllClasses() {
+  public Set<String> getAllClasses() {
     throw new UnsupportedOperationException();
   }
 

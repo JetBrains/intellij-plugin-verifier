@@ -17,9 +17,9 @@ package com.intellij.structure.impl.utils.xml;
 
 import com.intellij.structure.impl.utils.StringUtil;
 import org.apache.commons.io.IOUtils;
-import org.jdom.*;
-import org.jdom.filter.Filter;
-import org.jdom.input.SAXBuilder;
+import org.jdom2.*;
+import org.jdom2.filter.AbstractFilter;
+import org.jdom2.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
@@ -28,7 +28,6 @@ import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Iterator;
@@ -39,14 +38,13 @@ import java.util.List;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMUtil {
-  private static final ThreadLocal<SoftReference<SAXBuilder>> ourSaxBuilder = new ThreadLocal<SoftReference<SAXBuilder>>();
   private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
   private static final char[] EMPTY_CHAR_ARRAY = new char[0];
 
   private JDOMUtil() {
   }
 
-  public static boolean areElementsEqual(Element e1, Element e2) {
+  private static boolean areElementsEqual(Element e1, Element e2) {
     if (e1 == null && e2 == null) return true;
     //noinspection SimplifiableIfStatement
     if (e1 == null || e2 == null) return false;
@@ -117,7 +115,7 @@ public class JDOMUtil {
   }
 
   @NotNull
-  public static Document loadResourceDocument(URL url) throws JDOMException, IOException {
+  static Document loadResourceDocument(URL url) throws JDOMException, IOException {
     return loadDocument(URLUtil.openResourceStream(url));
   }
 
@@ -125,10 +123,13 @@ public class JDOMUtil {
     return element.getAttributes().isEmpty() && element.getContent().isEmpty();
   }
 
-  private static class EmptyTextFilter implements Filter {
+  private static class EmptyTextFilter extends AbstractFilter {
     @Override
-    public boolean matches(Object obj) {
-      return !(obj instanceof Text) || !((Text) obj).getText().trim().isEmpty();
+    public Object filter(Object obj) {
+      if (!(obj instanceof Text) || !((Text) obj).getText().trim().isEmpty()) {
+        return obj;
+      }
+      return null;
     }
   }
 }

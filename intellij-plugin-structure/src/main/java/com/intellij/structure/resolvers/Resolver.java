@@ -10,9 +10,9 @@ import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
-import java.util.jar.JarFile;
+import java.util.Set;
+import java.util.zip.ZipFile;
 
 /**
  * Provides access to byte-code of class by its name
@@ -22,27 +22,14 @@ public abstract class Resolver {
   /**
    * Returns resolver which combines given list of resolvers
    *
-   * @param moniker   moniker of the resulting resolver
+   *
+   * @param presentableName presentableName
    * @param resolvers list of resolvers
    * @return combining resolver
    */
   @NotNull
-  public static Resolver getUnion(@NotNull String moniker,
-                                  @NotNull List<Resolver> resolvers) {
-    Resolver someNonEmptyPool = null;
-    for (Resolver pool : resolvers) {
-      if (!pool.isEmpty()) {
-        if (someNonEmptyPool == null) {
-          someNonEmptyPool = pool;
-        } else {
-          return new ContainerResolver(moniker, resolvers);
-        }
-      }
-    }
-    if (someNonEmptyPool == null) {
-      return EmptyResolver.INSTANCE;
-    }
-    return someNonEmptyPool;
+  public static Resolver createUnionResolver(@NotNull String presentableName, @NotNull List<Resolver> resolvers) {
+    return ContainerResolver.createFromList(presentableName, resolvers);
   }
 
   @NotNull
@@ -51,7 +38,7 @@ public abstract class Resolver {
   }
 
   @NotNull
-  public static Resolver createJarResolver(@NotNull JarFile jarFile) throws IOException {
+  public static Resolver createJarResolver(@NotNull ZipFile jarFile) throws IOException {
     return new SoftJarResolver(jarFile);
   }
 
@@ -61,10 +48,9 @@ public abstract class Resolver {
   }
 
   /**
-   * Returns class-file node
+   * Returns a class-file node
    *
-   * @param className class name in <i>binary</i> form (that is '.' replaced with '/') and some other applied rules for
-   *                  naming of anonymous and inner classes
+   * @param className class name in <i>binary</i> form (see JVM specification)
    * @return class-file for accessing bytecode
    */
   @Nullable
@@ -86,12 +72,12 @@ public abstract class Resolver {
   public abstract Resolver getClassLocation(@NotNull String className);
 
   /**
-   * Returns list of names of all containing classes. Names are present in binary form.
+   * Returns <i>binary</i> names of all containing classes
    *
-   * @return list of all the classes
+   * @return all classes
    */
   @NotNull
-  public abstract Collection<String> getAllClasses();
+  public abstract Set<String> getAllClasses();
 
 
   /**

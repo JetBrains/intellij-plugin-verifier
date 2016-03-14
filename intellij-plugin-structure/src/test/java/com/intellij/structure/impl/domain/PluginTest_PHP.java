@@ -1,5 +1,9 @@
-package com.intellij.structure.domain;
+package com.intellij.structure.impl.domain;
 
+import com.intellij.structure.domain.IdeVersion;
+import com.intellij.structure.domain.Plugin;
+import com.intellij.structure.domain.PluginDependency;
+import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.resolvers.Resolver;
 import com.intellij.structure.utils.TestUtils;
 import org.junit.Before;
@@ -9,6 +13,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -28,20 +33,27 @@ public class PluginTest_PHP {
     plugin = PluginManager.getInstance().createPlugin(pluginFile);
   }
 
-/*
-  @Test
+  /*@Test
   public void getAllXmlInRoot() throws Exception {
     Map<String, Document> allXmlInRoot = plugin.getAllXmlInRoot();
+
     List<String> list = Arrays.asList("META-INF/uml-support.xml", "META-INF/php-deployment-aware.xml", "META-INF/php-coverage.xml", "META-INF/plugin.xml", "META-INF/liveEdit-support.xml", "META-INF/intellilang-php-support.xml");
     assertTrue(allXmlInRoot.keySet().containsAll(list));
+  }*/
+
+  @Test
+  public void testOptionalDependenciesConfigs() throws Exception {
+    PluginImpl plugin = (PluginImpl) PluginTest_PHP.plugin;
+    Map<PluginDependency, String> files = plugin.getOptionalDependenciesConfigFiles();
+    assertEquals(6, files.size());
+
   }
-*/
 
   @Test
   public void getSinceBuild() throws Exception {
     IdeVersion sinceBuild = plugin.getSinceBuild();
     assertNotNull(sinceBuild);
-    assertEquals(142, sinceBuild.getBranch());
+    assertEquals(142, sinceBuild.getBaselineVersion());
     assertEquals(5068, sinceBuild.getBuild());
   }
 
@@ -111,16 +123,7 @@ public class PluginTest_PHP {
     assertTrue(allClasses.contains("com/jetbrains/php/config/sdk/PhpLocalScriptRunner$2$1"));
     assertTrue(allClasses.contains("com/jetbrains/php/config/interpreters/PhpConfigurationFilePanelGenerator$PhpExpandableConfigurationFilePanel$1"));
 
-    assertEquals(3497, allClasses.size());
-  }
-
-  @Test
-  public void getLibraryResolver() throws Exception {
-
-    Resolver libraryResolver = plugin.getLibraryResolver();
-    Collection<String> allClasses = libraryResolver.getAllClasses();
-
-    assertEquals(226, allClasses.size());
+    assertEquals(3497 + 226, allClasses.size());
   }
 
   @Test

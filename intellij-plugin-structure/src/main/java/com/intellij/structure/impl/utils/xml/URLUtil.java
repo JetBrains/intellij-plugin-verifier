@@ -15,6 +15,9 @@
  */
 package com.intellij.structure.impl.utils.xml;
 
+import com.google.common.io.ByteStreams;
+import com.intellij.structure.impl.utils.StringUtil;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +27,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -50,7 +54,7 @@ public class URLUtil {
   @NotNull
   public static InputStream openStream(@NotNull URL url) throws IOException {
     @NonNls String protocol = url.getProtocol();
-    return protocol.equals(JAR_PROTOCOL) ? openJarStream(url) : url.openStream();
+    return protocol.equals(JAR_PROTOCOL) ? openRecursiveJarStream(url) : url.openStream();
   }
 
   @NotNull
@@ -131,6 +135,60 @@ public class URLUtil {
     return decoded.toString();
   }
 
+  /**
+   * Opens a .zip- (or .jar-) file stream which may be in some other .zip<p>
+   * e.g. <i>jar:jar:file:/home/user/Documents/a.zip!/lib/b.jar!/META-INF/plugin.xml</i>
+   * returns an input stream for plugin.xml
+   *
+   * @param url and url which represents a path to a zip, or to a .zip inside the other .zip
+   * @return input stream of the resource
+   * @throws IOException if URL is malformed or unable to open a stream
+   */
+  @NotNull
+  public static InputStream openRecursiveJarStream(@NotNull URL url) throws IOException {
+    String[] paths = splitUrl(url.toExternalForm());
+    if (paths.length <= 1) {
+      throw new MalformedURLException(url.toExternalForm());
+    }
+    ZipInputStream zipInputStream = null;
+    try {
+      zipInputStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(unquote(paths[0]))));
+      return openRecursiveJarStream(zipInputStream, paths, 1);
+    } finally {
+      IOUtils.closeQuietly(zipInputStream);
+    }
+  }
+
+  @NotNull
+  private static InputStream openRecursiveJarStream(@NotNull final ZipInputStream zipStream, String[] entries, int pos) throws IOException {
+    final String entry = entries[pos];
+
+    ZipEntry zipEntry;
+    while ((zipEntry = zipStream.getNextEntry()) != null) {
+      if (StringUtil.equal(zipEntry.getName(), entry)) {
+
+        if (pos == entries.length - 1) {
+          return copyInputStream(zipStream);
+        }
+
+        return openRecursiveJarStream(new ZipInputStream(zipStream), entries, pos + 1);
+      }
+    }
+
+    throw new FileNotFoundException("Entry " + Arrays.toString(entries) + " is not found");
+  }
+
+  @NotNull
+  public static String[] splitUrl(@NotNull String path) {
+    while (path.startsWith("jar:")) {
+      path = StringUtil.trimStart(path, "jar:");
+    }
+    while (path.startsWith("file:")) {
+      path = StringUtil.trimStart(path, "file:");
+    }
+    return path.split("\\!/");
+  }
+
   @NotNull
   private static InputStream openJarStream(@NotNull URL url) throws IOException {
     String[] paths = splitJarUrl(url.getFile());
@@ -185,4 +243,8 @@ public class URLUtil {
     return path.split("\\!/");
   }
 
+  @NotNull
+  public static InputStream copyInputStream(@NotNull InputStream is) throws IOException {
+    return new ByteArrayInputStream(ByteStreams.toByteArray(is));
+  }
 }

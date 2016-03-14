@@ -1,21 +1,19 @@
 package com.intellij.structure.impl.domain;
 
+import com.google.common.base.Function;
 import com.google.common.base.Predicates;
-import com.google.common.io.ByteStreams;
 import com.intellij.structure.domain.Plugin;
+import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.resolvers.InMemoryJarResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.impl.utils.StringUtil;
-import com.intellij.structure.impl.utils.xml.JDOMUtil;
-import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
-import com.intellij.structure.impl.utils.xml.XIncludeException;
 import com.intellij.structure.resolvers.Resolver;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.jdom.Document;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -23,337 +21,365 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
+
 
 /**
  * @author Sergey Patrikeev
  */
 public class PluginManagerImpl extends PluginManager {
 
-  private static final String META_INF_ENTRY = "META-INF/";
-  private static final String PLUGIN_XML_ENTRY_NAME = META_INF_ENTRY + "plugin.xml";
-  private static final String CLASS_SUFFIX = ".class";
-  private static final Pattern XML_IN_ROOT_PATTERN = Pattern.compile("([^/]*/)?META-INF/.+\\.xml");
+  private static final String PLUGIN_XML = "plugin.xml";
+  private static final Pattern LIB_JAR_REGEX = Pattern.compile("([^/]+/)?lib/([^/]+\\.(jar|zip))");
+  private static final String META_INF = "META-INF";
+  private static final Pattern XML_IN_ROOT_PATTERN = Pattern.compile("([^/]*/)?META-INF/((\\w|\\-)+\\.xml)");
+
+  private static boolean isJarOrZip(@NotNull File file) {
+    if (file.isDirectory()) {
+      return false;
+    }
+    final String name = file.getName();
+    return StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip");
+  }
+
 
   @NotNull
-  private static PluginImpl createFromZip(@NotNull File zipFile) throws IOException {
-    byte[] pluginXmlBytes = null;
-    Resolver pluginResolver = null;
-    List<Resolver> libraryPool = new ArrayList<Resolver>();
-    URL pluginXmlUrl = null;
-    URL mainJarUrl = null;
-    Map<String, Document> allXmlInRoot = new HashMap<String, Document>();
+  private Plugin loadDescriptor(@NotNull final File file, @NotNull String fileName) throws IncorrectPluginException {
+    Plugin descriptor;
 
-    InMemoryJarResolver zipRootPool = new InMemoryJarResolver("Plugin root file: " + zipFile.getAbsolutePath());
+    if (file.isDirectory()) {
+      descriptor = loadDescriptorFromDir(file, fileName, true);
+    } else if (file.exists() && isJarOrZip(file)) {
+      descriptor = loadDescriptorFromZip(file, fileName, true);
+    } else {
+      throw new IncorrectPluginException("Incorrect plugin file type " + file + ". Should be one of .zip or .jar archives");
+    }
 
-    final ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(zipFile)));
+    if (descriptor != null) {
+      resolveOptionalDescriptors(fileName, (PluginImpl) descriptor, new Function<String, PluginImpl>() {
+        @Override
+        @Nullable
+        public PluginImpl apply(@Nullable String optionalDescriptorName) throws IncorrectPluginException {
+          if (optionalDescriptorName != null) {
+            return (PluginImpl) loadDescriptor(file, optionalDescriptorName);
+          }
+          return null;
+        }
+      });
+    }
+
+    if (descriptor == null) {
+      throw new IncorrectPluginException("META-INF/" + fileName + " is not found");
+    }
+
+    return descriptor;
+  }
+
+  private void resolveOptionalDescriptors(@NotNull String fileName,
+                                          @NotNull PluginImpl descriptor,
+                                          @NotNull Function<String, PluginImpl> optionalDescriptorLoader) throws IncorrectPluginException {
+    Map<PluginDependency, String> optionalConfigs = descriptor.getOptionalDependenciesConfigFiles();
+    if (!optionalConfigs.isEmpty()) {
+      Map<String, PluginImpl> descriptors = new HashMap<String, PluginImpl>();
+
+      for (Map.Entry<PluginDependency, String> entry : optionalConfigs.entrySet()) {
+        String optFileName = entry.getValue();
+
+        if (StringUtil.equal(fileName, optFileName)) {
+          throw new IncorrectPluginException("Plugin has recursive config dependencies for descriptor " + fileName);
+        }
+
+        PluginImpl optDescriptor;
+        try {
+          optDescriptor = optionalDescriptorLoader.apply(optFileName);
+        } catch (IncorrectPluginException e) {
+          //maybe log somehow?
+          continue;
+        }
+
+        if (optDescriptor != null) {
+          descriptors.put(optFileName, optDescriptor);
+        }
+      }
+
+      descriptor.setOptionalDescriptors(descriptors);
+    }
+  }
+
+  @Nullable
+  private Plugin checkFileInRoot(@NotNull ZipEntry entry,
+                                 @NotNull String fileName,
+                                 @NotNull String urlPath,
+                                 boolean exception) throws IncorrectPluginException {
+    Matcher xmlMatcher = XML_IN_ROOT_PATTERN.matcher(entry.getName());
+    if (xmlMatcher.matches()) {
+      String name = xmlMatcher.group(2);
+      if (StringUtil.equal(name, fileName)) {
+        PluginImpl descriptor = new PluginImpl();
+        try {
+          URL url = new URL(urlPath + entry.getName());
+          descriptor.readExternal(url, exception);
+        } catch (Exception e) {
+          return nullOrException(exception, "Unable to read META-INF/" + fileName, e);
+        }
+        return descriptor;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private Plugin loadFromZipStream(@NotNull ZipInputStream zipStream,
+                                   @NotNull String urlPath,
+                                   @NotNull String fileName,
+                                   boolean exception) throws IncorrectPluginException {
+    Plugin descriptorRoot = null;
+    Plugin descriptorInner = null;
 
     try {
       ZipEntry entry;
-      while ((entry = zipInputStream.getNextEntry()) != null) {
-        if (entry.isDirectory()) continue;
+      while ((entry = zipStream.getNextEntry()) != null) {
+        if (entry.isDirectory()) {
+          continue;
+        }
 
-        String entryName = entry.getName();
-
-        if (entryName.endsWith(CLASS_SUFFIX)) {
-          //simply .class-file
-          ClassNode node = new ClassNode();
-          new ClassReader(zipInputStream).accept(node, 0);
-
-          zipRootPool.addClass(node);
-
-        } else if (isXmlInRoot(entryName)) {
-          //some *.xml file (maybe META-INF/plugin.xml)
-
-          final byte[] data = ByteStreams.toByteArray(zipInputStream);
-
-          final String jarPath = "jar:" + StringUtil.replace(zipFile.toURI().toASCIIString(), "!", "%21") + "!/";
-
-          final URL xmlUrl = new URL(
-              jarPath + entryName
-          );
-
-          boolean isPluginXml = entryName.endsWith(PLUGIN_XML_ENTRY_NAME);
-
-          if (isPluginXml) {
-            //this is the main plugin.xml i.e. META-INF/plugin.xml
-            try {
-              /*This is for those plugins which are structured as follows (e.g. Go plugin):
-              .IntelliJIDEAx0
-                  plugins
-                      Sample
-                          lib
-                              libfoo.jar
-                              libbar.jar
-                          classes
-                              com/foo/.....
-                          ...
-                          META-INF
-                              plugin.xml
-
-                'entryName' would be Sample/META-INF/plugin.xml instead of META-INF/plugin.xml for correct plugins
-                 so let's consider a 'Sample' directory as a "root" of the plugin
-              */
-              String subDirectory = StringUtil.trimEnd(entryName, PLUGIN_XML_ENTRY_NAME);
-              subDirectory = StringUtil.trimEnd(subDirectory, "/");
-              mainJarUrl = new URL(jarPath + (subDirectory.isEmpty() ? "" : subDirectory + "/"));
-            } catch (MalformedURLException e) {
-              throw new IncorrectPluginException("Plugin main .jar (containing a META-INF/plugin.xml) is broken", e);
-            }
-
-            if (pluginXmlBytes != null && !Arrays.equals(data, pluginXmlBytes)) {
-              throw new IncorrectPluginException("Plugin has more than one jars with plugin.xml");
-            }
-            pluginXmlBytes = data;
-            pluginResolver = zipRootPool;
-            pluginXmlUrl = xmlUrl;
+        //firstly check xml in root (e.g. Sample.zip/Sample/META-INF/plugin.xml)
+        Plugin inRoot = checkFileInRoot(entry, fileName, urlPath, exception);
+        if (inRoot != null) {
+          if (descriptorRoot != null && exception) {
+            throw new IncorrectPluginException("Multiple META-INF/" + fileName + " found");
           }
+          descriptorRoot = inRoot;
+          continue;
+        }
 
-          //if it is the first .xml-file
-          tryAddXmlInRoot(allXmlInRoot, entryName, data, xmlUrl, isPluginXml);
-
-        } else if (entryName.matches("([^/]+/)?lib/[^/]+\\.jar")) {
-          ZipInputStream innerJar = new ZipInputStream(zipInputStream);
-
-          final InMemoryJarResolver innerPool = new InMemoryJarResolver(entryName);
-          final Map<String, Document> innerDocuments = new HashMap<String, Document>();
-
-          ZipEntry innerEntry;
-          while ((innerEntry = innerJar.getNextEntry()) != null) {
-            String name = innerEntry.getName();
-
-            if (name.startsWith(META_INF_ENTRY) && name.endsWith(".xml")) {
-              //some .xml (maybe META-INF/plugin.xml
-
-              final byte[] data = ByteStreams.toByteArray(innerJar);
-
-              final String mainJarPath = "jar:" + StringUtil.replace(zipFile.toURI().toASCIIString(), "!", "%21") + "!/" + entryName + "!/";
-
-              final URL xmlUrl = new URL(
-                  mainJarPath + name
-              );
-
-              boolean isPluginXml = name.endsWith(PLUGIN_XML_ENTRY_NAME);
-              if (isPluginXml) {
-                if (pluginXmlBytes != null && !Arrays.equals(data, pluginXmlBytes)) {
-                  throw new IncorrectPluginException("Plugin has more than one jars with plugin.xml");
-                }
-
-                try {
-                  mainJarUrl = new URL(mainJarPath);
-                } catch (MalformedURLException e) {
-                  throw new IncorrectPluginException("Plugin main .jar (containing a META-INF/plugin.xml) is broken", e);
-                }
-
-                pluginXmlBytes = data; //the main plugin.xml
-                pluginResolver = innerPool; //pluginPool is in this .jar exactly
-                allXmlInRoot = innerDocuments; //and documents are based on this META-INF/* directory
-
-                pluginXmlUrl = xmlUrl;
-              }
-
-              //parse a document and add to list of all xml-s
-              tryAddXmlInRoot(innerDocuments, name, data, xmlUrl, isPluginXml);
-
-            } else if (name.endsWith(CLASS_SUFFIX)) {
-              innerPool.addClass(name.substring(0, name.length() - CLASS_SUFFIX.length()), ByteStreams.toByteArray(innerJar));
-            }
-          }
-
-          if (innerPool != pluginResolver) {
-            libraryPool.add(innerPool);
+        //secondly check .jar or .zip in lib folder (e.g. Sample/lib/Sample.jar/!...)
+        if (LIB_JAR_REGEX.matcher(entry.getName()).matches()) {
+          ZipInputStream inner = new ZipInputStream(zipStream);
+          Plugin dinner = loadFromZipStream(inner, "jar:" + urlPath + entry.getName() + "!/", fileName, false);
+          if (dinner != null) {
+            descriptorInner = dinner;
           }
         }
       }
+
+    } catch (IOException e) {
+      return nullOrException(exception, "Unable to load META-INF/" + fileName, e);
+    }
+
+    if (exception && descriptorRoot != null && descriptorInner != null) {
+      throw new IncorrectPluginException("Multiple META-INF/" + fileName + " found");
+    }
+
+    if (descriptorRoot != null) {
+      return descriptorRoot;
+    }
+
+    if (descriptorInner != null) {
+      return descriptorInner;
+    }
+
+    if (exception) {
+      throw new IncorrectPluginException("META-INF/" + fileName + " is not found");
+    }
+    return null;
+  }
+
+  @Nullable
+  private Plugin loadDescriptorFromZip(@NotNull File file, @NotNull String fileName, boolean exception) throws IncorrectPluginException {
+    ZipInputStream zipInputStream = null;
+    try {
+      zipInputStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)));
+      String urlPath = "jar:" + StringUtil.replace(file.toURI().toASCIIString(), "!", "%21") + "!/";
+      return loadFromZipStream(zipInputStream, urlPath, fileName, exception);
+    } catch (IOException e) {
+      throw new IncorrectPluginException("Unable to read file " + file, e);
     } finally {
       IOUtils.closeQuietly(zipInputStream);
     }
+  }
 
-    if (pluginXmlBytes == null) {
-      throw new IncorrectPluginException("No META-INF/plugin.xml found for plugin " + zipFile.getPath());
+  @Nullable
+  private Plugin nullOrException(boolean exception, @NotNull String text) {
+    return nullOrException(exception, text, null);
+  }
+
+  @Nullable
+  private Plugin nullOrException(boolean exception, String text, @Nullable Exception cause) {
+    if (exception) {
+      throw new IncorrectPluginException(text, cause);
     }
-    //pluginXmlUrl is also not null
+    return null;
+  }
 
-    Document pluginXml;
-
-    try {
-      pluginXml = JDOMUtil.loadDocument(new ByteArrayInputStream(pluginXmlBytes));
-      pluginXml = JDOMXIncluder.resolve(pluginXml, pluginXmlUrl.toExternalForm());
-    } catch (JDOMException e) {
-      throw new IncorrectPluginException("Invalid META-INF/plugin.xml", e);
-    } catch (XIncludeException e) {
-      throw new IncorrectPluginException("Failed to read META-INF/plugin.xml", e);
-    }
-
-    if (!zipRootPool.isEmpty()) {
-      if (pluginResolver != zipRootPool) {
-        throw new IncorrectPluginException("Plugin contains .class files in the root, but has no META-INF/plugin.xml");
+  @Nullable
+  private Plugin loadDescriptorFromDir(@NotNull final File dir, @NotNull String fileName, boolean exception) throws IncorrectPluginException {
+    File descriptorFile = new File(dir, META_INF + File.separator + fileName);
+    if (descriptorFile.exists()) {
+      PluginImpl descriptor = new PluginImpl();
+      try {
+        descriptor.readExternal(descriptorFile.toURI().toURL(), true);
+      } catch (MalformedURLException e) {
+        return nullOrException(exception, "File " + dir + " contains invalid plugin descriptor", e);
       }
+      return descriptor;
     }
-
-    return new PluginImpl(zipFile, mainJarUrl, pluginResolver, Resolver.getUnion(zipFile.getPath(), libraryPool), pluginXml);
+    return loadDescriptorFromLibDir(dir, fileName, exception);
   }
 
-  private static void tryAddXmlInRoot(@NotNull Map<String, Document> container,
-                                      @NotNull String entryName,
-                                      @NotNull byte[] data,
-                                      @NotNull URL xmlUrl,
-                                      boolean isPluginXml) throws IncorrectPluginException {
-    try {
-      Document document = JDOMUtil.loadDocument(new ByteArrayInputStream(data));
-      document = JDOMXIncluder.resolve(document, xmlUrl.toExternalForm());
-      container.put(entryName, document);
-    } catch (Exception e) {
-      if (isPluginXml) {
-        //plugin.xml should be correct!
-        throw new IncorrectPluginException("Failed to read and parse META-INF/plugin.xml", e);
+  @Nullable
+  private Plugin loadDescriptorFromLibDir(@NotNull final File dir, @NotNull String fileName, boolean exception) {
+    File libDir = new File(dir, "lib");
+    if (!libDir.isDirectory()) {
+      return nullOrException(exception, "Plugin `lib` directory is not found");
+    }
+
+    final File[] files = libDir.listFiles();
+    if (files == null || files.length == 0) {
+      return nullOrException(exception, "Plugin `lib` directory is empty");
+    }
+    //move plugin-jar to the beginning: Sample.jar goes first (if Sample is a plugin name)
+    Arrays.sort(files, new Comparator<File>() {
+      @Override
+      public int compare(@NotNull File o1, @NotNull File o2) {
+        if (o2.getName().startsWith(dir.getName())) return Integer.MAX_VALUE;
+        if (o1.getName().startsWith(dir.getName())) return -Integer.MAX_VALUE;
+        if (o2.getName().startsWith("resources")) return -Integer.MAX_VALUE;
+        if (o1.getName().startsWith("resources")) return Integer.MAX_VALUE;
+        return 0;
       }
-      //for non-main .xml it's not critical
-//      System.err.println("Couldn't parse " + entryName);
-    }
-  }
+    });
 
-  private static boolean isXmlInRoot(@NotNull String entryName) {
-    return XML_IN_ROOT_PATTERN.matcher(entryName).matches();
-  }
+    Plugin descriptor = null;
 
-  @NotNull
-  private static Plugin createFromJar(@NotNull File jarFile) throws IOException {
-    return createFromJars(jarFile, Collections.singletonList(new JarFile(jarFile)));
-  }
-
-  private static Plugin createFromJars(@NotNull File pluginFile,
-                                       @NotNull List<JarFile> jarFiles) throws IOException, IncorrectPluginException {
-    Document pluginXml = null;
-    Resolver pluginResolver = null;
-    List<Resolver> libraryPools = new ArrayList<Resolver>();
-    URL mainJarUrl = null;
-
-    for (JarFile jar : jarFiles) {
-      ZipEntry pluginXmlEntry = jar.getEntry(PLUGIN_XML_ENTRY_NAME);
-      if (pluginXmlEntry != null) {
-        if (pluginResolver != null) {
-          throw new IncorrectPluginException("Plugin has more than one .jar with plugin.xml " + pluginFile);
+    for (final File f : files) {
+      if (isJarOrZip(f)) {
+        descriptor = loadDescriptorFromZip(f, fileName, false);
+        if (descriptor != null) {
+          break;
         }
-
-        pluginResolver = Resolver.createJarResolver(jar);
-
-        final String jarPath = "jar:" + StringUtil.replace(new File(jar.getName()).toURI().toASCIIString(), "!", "%21") + "!/";
-
-        try {
-          mainJarUrl = new URL(jarPath);
-        } catch (MalformedURLException e) {
-          throw new IncorrectPluginException("Plugin main .jar (containing a META-INF/plugin.xml) is broken", e);
-        }
-
-        URL pluginXmlUrl = new URL(
-            jarPath + "META-INF/plugin.xml"
-        );
-
-        try {
-          pluginXml = JDOMUtil.loadDocument(pluginXmlUrl);
-          pluginXml = JDOMXIncluder.resolve(pluginXml, pluginXmlUrl.toExternalForm());
-        } catch (JDOMException e) {
-          throw new IncorrectPluginException("Invalid plugin.xml", e);
-        } catch (XIncludeException e) {
-          throw new IncorrectPluginException("Failed to read plugin.xml", e);
-        }
-      } else {
-        libraryPools.add(Resolver.createJarResolver(jar));
-      }
-    }
-
-    if (pluginXml == null) {
-      throw new IncorrectPluginException("No META-INF/plugin.xml found for plugin " + pluginFile);
-    }
-
-    final Map<String, Document> xmlDocumentsInRoot = new HashMap<String, Document>();
-    //this is a correct plugin (and only one META-INF/plugin.xml) found for it
-    for (JarFile jarFile : jarFiles) {
-      ZipEntry pluginXmlEntry = jarFile.getEntry(PLUGIN_XML_ENTRY_NAME);
-      if (pluginXmlEntry != null) {
-        //this is the very JAR for which META-INF/plugin.xml found so let's take the other .xml-s
-
-        for (JarEntry jarEntry : Collections.list(jarFile.entries())) {
-          String name = jarEntry.getName();
-          if (name.startsWith(META_INF_ENTRY) && name.endsWith(".xml")) {
-            try {
-              URL url = new URL(
-                  "jar:" + StringUtil.replace(new File(jarFile.getName()).toURI().toASCIIString(), "!", "%21") + "!/" + name
-              );
-
-              Document document = JDOMUtil.loadDocument(url);
-              document = JDOMXIncluder.resolve(document, url.toExternalForm());
-
-              xmlDocumentsInRoot.put(name, document);
-            } catch (JDOMException e) {
-              //this is not so important for minor XML-s
-//              System.err.println("Cannot load .xml document " + name);
-            } catch (IOException e) {
-              //this is not so important for minor XML-s
-//              System.err.println("Cannot load .xml document " + name);
-            }
+      } else if (f.isDirectory()) {
+        Plugin descriptor1 = loadDescriptorFromDir(f, fileName, false);
+        if (descriptor1 != null) {
+          if (descriptor != null) {
+            throw new IncorrectPluginException("Two or more META-INF/plugin.xml's detected");
           }
+          descriptor = descriptor1;
         }
       }
     }
 
-    Resolver libraryPoolsUnion = Resolver.getUnion(pluginFile.toString(), libraryPools);
-    return new PluginImpl(pluginFile, mainJarUrl, pluginResolver, libraryPoolsUnion, pluginXml);
-  }
-
-  @NotNull
-  private static Plugin createFromDirectory(@NotNull File directoryPath) throws IOException, IncorrectPluginException {
-    return createFromJars(directoryPath, getPluginJars(directoryPath));
-  }
-
-  @NotNull
-  private static List<JarFile> getPluginJars(@NotNull File pluginDirectory) throws IOException, IncorrectPluginException {
-    final File lib = new File(pluginDirectory, "lib");
-    if (!lib.isDirectory()) {
-      throw new IncorrectPluginException("Plugin \"lib\" directory is not found (should be " + lib + ")");
-    }
-
-    final List<JarFile> jars = JarsUtils.getJars(lib, Predicates.<File>alwaysTrue());
-    if (jars.size() == 0) {
-      throw new IncorrectPluginException("No jar files found under \"lib\" directory" + "(should be under " + lib + ")");
-    }
-
-    return jars;
+    return descriptor;
   }
 
   @NotNull
   @Override
   public Plugin createPlugin(@NotNull File pluginFile) throws IOException, IncorrectPluginException {
-    if (!pluginFile.exists()) {
-      throw new IOException("Plugin is not found: " + pluginFile);
-    }
-
-    if (pluginFile.isFile()) {
-      String fileName = pluginFile.getName();
-      if (fileName.endsWith(".zip")) {
-        return createFromZip(pluginFile);
-      }
-      if (fileName.endsWith(".jar")) {
-        return createFromJar(pluginFile);
-      }
-      throw new IncorrectPluginException("Incorrect plugin file type " + pluginFile + ". Should be one of .zip or .jar archives");
-    }
-
-    File[] pluginRootFiles = pluginFile.listFiles();
-    if (pluginRootFiles == null || pluginRootFiles.length == 0) {
-      throw new IncorrectPluginException("Plugin root directory " + pluginFile + " is empty");
-    }
-/*
-    TODO: should be proceed?
-    if (pluginRootFiles.length > 1) {
-      throw new IncorrectStructureException("Plugin root directory " + pluginFile + " contains more than one child \"lib\"");
-    }
-*/
-    return createFromDirectory(pluginFile);
+    PluginImpl descriptor = (PluginImpl) loadDescriptor(pluginFile, PLUGIN_XML);
+    loadClasses(pluginFile, descriptor);
+    return descriptor;
   }
+
+  private void loadClasses(@NotNull File file, @NotNull PluginImpl descriptor) {
+    if (file.isDirectory()) {
+      loadClassesFromDir(file, descriptor);
+    } else if (file.exists() && isJarOrZip(file)) {
+      loadClassesFromZip(file, descriptor);
+    }
+  }
+
+  private void loadClassesFromZip(@NotNull File file, @NotNull PluginImpl descriptor) {
+    ZipInputStream zipInputStream = null;
+    try {
+      zipInputStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)));
+      Resolver resolver = createResolverForZipStream(zipInputStream, file.getCanonicalPath());
+      descriptor.setResolver(resolver);
+    } catch (IOException e) {
+      throw new IncorrectPluginException("Unable to read file " + file, e);
+    } finally {
+      IOUtils.closeQuietly(zipInputStream);
+    }
+  }
+
+  @NotNull
+  private Resolver createResolverForZipStream(@NotNull ZipInputStream zipStream, @NotNull String resolverName) throws IOException {
+    List<Resolver> resolvers = new ArrayList<Resolver>();
+
+    InMemoryJarResolver inMemoryJarResolver = new InMemoryJarResolver("root of " + resolverName);
+
+
+    ZipEntry entry;
+    while ((entry = zipStream.getNextEntry()) != null) {
+      if (entry.getName().endsWith(".class")) {
+        ClassNode node = getClassNodeFromInputStream(zipStream);
+        inMemoryJarResolver.addClass(node);
+      } else {
+        Matcher matcher = LIB_JAR_REGEX.matcher(entry.getName());
+        if (matcher.matches()) {
+          String innerName = matcher.group(2);
+          if (innerName != null) {
+            ZipInputStream innerJar = new ZipInputStream(zipStream);
+            resolvers.add(createResolverForZipStream(innerJar, innerName));
+          }
+        }
+      }
+    }
+
+    if (!inMemoryJarResolver.isEmpty()) {
+      resolvers.add(inMemoryJarResolver);
+    }
+
+    return Resolver.createUnionResolver(resolverName, resolvers);
+  }
+
+  private void loadClassesFromDir(@NotNull File dir, @NotNull PluginImpl descriptor) throws IncorrectPluginException {
+    File classesDir = new File(dir, "classes");
+
+    List<Resolver> resolvers = new ArrayList<Resolver>();
+
+    if (classesDir.exists()) {
+      Collection<File> classFiles = FileUtils.listFiles(classesDir, new String[]{"class"}, true);
+      InMemoryJarResolver rootResolver = new InMemoryJarResolver("Plugin root classes of " + descriptor.getPluginId());
+      for (File file : classFiles) {
+        InputStream is = null;
+        try {
+          is = FileUtils.openInputStream(file);
+          ClassNode node = getClassNodeFromInputStream(is);
+          rootResolver.addClass(node);
+        } catch (IOException e) {
+          throw new IncorrectPluginException("Unable to read class file " + file, e);
+        } finally {
+          IOUtils.closeQuietly(is);
+        }
+      }
+      if (!rootResolver.isEmpty()) {
+        resolvers.add(rootResolver);
+      }
+    }
+
+    try {
+      File lib = new File(dir, "lib");
+      if (lib.isDirectory()) {
+        List<ZipFile> jars = JarsUtils.collectJarsRecursively(lib, Predicates.<File>alwaysTrue());
+        Resolver libResolver = JarsUtils.makeResolver("Plugin `lib` jars: " + lib.getCanonicalPath(), jars);
+        resolvers.add(libResolver);
+      }
+    } catch (IOException e) {
+      throw new IncorrectPluginException("Unable to read `lib` directory", e);
+    }
+
+    descriptor.setResolver(Resolver.createUnionResolver("Plugin resolver " + descriptor.getPluginId(), resolvers));
+  }
+
+  @NotNull
+  private ClassNode getClassNodeFromInputStream(@NotNull InputStream is) throws IOException {
+    ClassNode node = new ClassNode();
+    new ClassReader(is).accept(node, 0);
+    return node;
+  }
+
 }

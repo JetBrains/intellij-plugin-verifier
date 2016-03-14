@@ -79,10 +79,4 @@ public class TestUtils {
     return pluginFile;
   }
 
-  @NotNull
-  public static File getMockPlugin(int mockNumber) {
-    File file = new File("build/mocks/mock-plugin" + mockNumber + "-1.0.jar");
-    Assert.assertTrue("mock plugin " + mockNumber + " is not found in " + file, file.exists());
-    return file;
-  }
 }

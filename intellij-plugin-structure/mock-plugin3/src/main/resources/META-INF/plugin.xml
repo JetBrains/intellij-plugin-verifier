@@ -1,0 +1,93 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" version="2" url="http://kotlinlang.org"
+             allow-bundled-update="true">
+    <id>org.jetbrains.kotlin</id>
+
+    <name>Kotlin</name>
+    <description>Kotlin language support</description>
+    <version>1.0.0-beta-1038-IJ141-17</version>
+    <vendor url="http://www.jetbrains.com">JetBrains s.r.o.</vendor>
+
+    <idea-version since-build="141.1009.5" until-build="141.9999999"/>
+
+    <depends optional="true" config-file="junit.xml">JUnit</depends>
+
+    <project-components>
+        <component>
+            <implementation-class>org.jetbrains.kotlin.idea.compiler.JetCompilerManager</implementation-class>
+        </component>
+        <component>
+            <implementation-class>org.jetbrains.kotlin.idea.completion.LookupCancelWatcher</implementation-class>
+        </component>
+    </project-components>
+
+    <application-components>
+        <component>
+            <implementation-class>org.jetbrains.kotlin.idea.PluginStartupComponent</implementation-class>
+        </component>
+    </application-components>
+
+    <actions>
+        <action id="ShowKotlinExpressionType" class="org.jetbrains.kotlin.idea.actions.ShowExpressionTypeAction"
+                text="Show Expression Type">
+            <keyboard-shortcut keymap="$default" first-keystroke="alt EQUALS"/>
+
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="control shift P"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt EQUALS" remove="true"/>
+
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control shift P"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="alt EQUALS" remove="true"/>
+            <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
+        </action>
+
+        <group id="KotlinGenerateGroup">
+            <action id="KotlinGenerateSetUpMethod"
+                    class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateTestSupportActionBase$SetUp"
+                    text="SetUp Function"/>
+            <add-to-group group-id="GenerateGroup" anchor="first"/>
+        </group>
+    </actions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceInterface="org.jetbrains.kotlin.psi.stubs.elements.StubIndexService"
+                            serviceImplementation="org.jetbrains.kotlin.idea.stubindex.IdeStubIndexService"/>
+        <projectService serviceInterface="org.jetbrains.kotlin.console.KotlinConsoleKeeper"
+                        serviceImplementation="org.jetbrains.kotlin.console.KotlinConsoleKeeper"/>
+        <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+
+        <intentionAction>
+            <className>
+                org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.UnfoldReturnToWhenIntention
+            </className>
+            <category>Kotlin</category>
+        </intentionAction>
+
+        <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.EqualsOrHashCodeInspection"
+                         displayName="equals() and hashCode() not paired"
+                         groupName="Kotlin"
+                         enabledByDefault="true"
+                         level="WARNING"/>
+
+        <referenceImporter implementation="org.jetbrains.kotlin.idea.quickfix.KotlinReferenceImporter"/>
+
+        <fileType.fileViewProviderFactory filetype="KJSM"
+                                          implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
+
+        <filetype.stubBuilder filetype="KJSM"
+                              implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>
+
+        <filetype.decompiler filetype="KJSM" implementationClass="com.intellij.psi.impl.compiled.ClassFileDecompiler"/>
+
+        <pathMacroExpandableProtocol protocol="kotlin-js-meta"/>
+    </extensions>
+
+    <xi:include href="extensions/ide.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <extensionPoints>
+        <xi:include href="extensions/common.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+    </extensionPoints>
+
+    <extensions defaultExtensionNs="org.jetbrains.kotlin">
+        <xi:include href="extensions/kotlin2jvm.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+    </extensions>
+
+</idea-plugin>

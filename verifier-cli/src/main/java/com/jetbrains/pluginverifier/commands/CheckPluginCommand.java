@@ -182,7 +182,7 @@ public class CheckPluginCommand extends VerifierCommand {
       Ide ide = IdeManager.getInstance().createIde(ideaDirectory);
 
 
-      List<Pair<UpdateInfo, File>> pluginFiles = loadPluginFiles(pluginsToTestArg, ide.getVersion().getFullPresentation());
+      List<Pair<UpdateInfo, File>> pluginFiles = loadPluginFiles(pluginsToTestArg, ide.getVersion().asString());
 
       for (Pair<UpdateInfo, File> pluginFile : pluginFiles) {
         try {
@@ -199,7 +199,7 @@ public class CheckPluginCommand extends VerifierCommand {
             results.put(updateInfo, ideaToProblems);
           }
 
-          ideaToProblems.put(ide.getVersion().getFullPresentation(), problemSet);
+          ideaToProblems.put(ide.getVersion().asString(), problemSet);
 
           ide = ide.expandedIde(plugin);
 

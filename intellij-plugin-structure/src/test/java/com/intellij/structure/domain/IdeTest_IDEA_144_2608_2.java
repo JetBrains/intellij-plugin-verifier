@@ -70,13 +70,11 @@ public class IdeTest_IDEA_144_2608_2 {
 
   @Test
   public void getVersion() throws Exception {
-    assertEquals("IU-144.2608", ide.getVersion().getFullPresentation());
+    assertEquals("IU-144.2608", ide.getVersion().asString());
   }
 
   @Test
   public void getBundledPlugins() throws Exception {
-    //TODO: how to process duplicates plugin (it's without plugin.xml at all)
-
     assertEquals(125, ide.getBundledPlugins().size());
   }
 
@@ -122,7 +120,17 @@ public class IdeTest_IDEA_144_2608_2 {
     Resolver resolver = ide.getResolver();
     Collection<String> allClasses = resolver.getAllClasses();
 
+    int parts = 10;
+    int done = 0;
+    int doneLast = 0;
     for (String aClass : allClasses) {
+      doneLast++;
+      if (doneLast > allClasses.size() / parts) {
+        done++;
+        System.out.println(String.format("Done %d out of %d parts", done, parts));
+        doneLast = 0;
+      }
+
       ClassNode classFile = resolver.findClass(aClass);
       assertNotNull(classFile);
       assertEquals(aClass, classFile.name);

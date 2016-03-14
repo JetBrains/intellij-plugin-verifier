@@ -1,5 +1,6 @@
 package com.intellij.structure.impl.resolvers;
 
+import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
@@ -11,9 +12,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * @author Dennis.Ushakov
@@ -22,37 +22,35 @@ public class SoftJarResolver extends Resolver {
 
   private static final String CLASS_SUFFIX = ".class";
 
-  private final JarFile myJarFile;
-  private final String myMoniker;
+  private final ZipFile myJarFile;
 
   private final Map<String, SoftReference<ClassNode>> myClassesCache = new HashMap<String, SoftReference<ClassNode>>();
 
-  public SoftJarResolver(@NotNull JarFile jarFile) throws IOException {
-    myMoniker = jarFile.getName();
+  public SoftJarResolver(@NotNull ZipFile jarFile) throws IOException {
     myJarFile = jarFile;
     preloadClassMap();
   }
 
   private void preloadClassMap() throws IOException {
-    Enumeration<JarEntry> entries = myJarFile.entries();
+    Enumeration<? extends ZipEntry> entries = myJarFile.entries();
     while (entries.hasMoreElements()) {
-      JarEntry entry = entries.nextElement();
+      ZipEntry entry = entries.nextElement();
       String name = entry.getName();
       if (name.endsWith(CLASS_SUFFIX)) {
-        myClassesCache.put(name.substring(0, name.indexOf(CLASS_SUFFIX)), null);
+        myClassesCache.put(StringUtil.trimEnd(name, CLASS_SUFFIX), null);
       }
     }
   }
 
   @NotNull
   @Override
-  public Collection<String> getAllClasses() {
+  public Set<String> getAllClasses() {
     return Collections.unmodifiableSet(myClassesCache.keySet());
   }
 
   @Override
   public String toString() {
-    return myMoniker;
+    return myJarFile.getName();
   }
 
   @Override

@@ -8,11 +8,16 @@ buildscript {
   }
 }
 
+def verifierVersion = '1.9'
+def intellijStructureVersion = '1.7'
+
+
 configure(allprojects) {
   apply plugin: 'java'
 
   group = 'org.jetbrains.intellij.plugins'
-  version = '1.9'
+
+  version = verifierVersion
 
   //check if updated from command line
   if (project.hasProperty("myVersion")) {
@@ -28,7 +33,7 @@ configure(allprojects) {
   dependencies {
 
     //plugin structure API
-    compile group: 'org.jetbrains.intellij.plugins', name: 'intellij-plugin-structure', version: '1.6'
+    compile group: 'org.jetbrains.intellij.plugins', name: 'intellij-plugin-structure', version: intellijStructureVersion
 
     compile group: 'com.intellij', name: 'annotations', version: '12.0'
     compile group: 'org.ow2.asm', name: 'asm-all', version: '5.0.4'

@@ -5,7 +5,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dennis.Ushakov
@@ -13,18 +16,34 @@ import java.util.*;
 public class ContainerResolver extends Resolver {
 
   private final List<Resolver> myResolvers = new ArrayList<Resolver>();
+  private final String myPresentableName;
 
-  private final String myMoniker;
-
-  public ContainerResolver(@NotNull String moniker,
-                           @NotNull List<Resolver> resolvers) {
-    myMoniker = moniker;
+  private ContainerResolver(@NotNull String presentableName, @NotNull List<Resolver> resolvers) {
+    myPresentableName = presentableName;
     myResolvers.addAll(resolvers);
   }
 
   @NotNull
+  public static Resolver createFromList(@NotNull String presentableName, @NotNull List<Resolver> resolvers) {
+    Resolver nonEmpty = null;
+    for (Resolver pool : resolvers) {
+      if (!pool.isEmpty()) {
+        if (nonEmpty == null) {
+          nonEmpty = pool;
+        } else {
+          return new ContainerResolver(presentableName, resolvers);
+        }
+      }
+    }
+    if (nonEmpty == null) {
+      return EmptyResolver.INSTANCE;
+    }
+    return nonEmpty;
+  }
+
+  @NotNull
   @Override
-  public Collection<String> getAllClasses() {
+  public Set<String> getAllClasses() {
     Set<String> result = new HashSet<String>();
     for (Resolver pool : myResolvers) {
       result.addAll(pool.getAllClasses());
@@ -34,7 +53,7 @@ public class ContainerResolver extends Resolver {
 
   @Override
   public String toString() {
-    return myMoniker;
+    return myPresentableName;
   }
 
   @Override
@@ -70,5 +89,4 @@ public class ContainerResolver extends Resolver {
     }
     return null;
   }
-
 }

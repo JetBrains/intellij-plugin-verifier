@@ -2,11 +2,12 @@ package com.intellij.structure.impl.resolvers;
 
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Sergey Evdokimov
@@ -15,6 +16,7 @@ public class CacheResolver extends Resolver {
 
   private final Resolver myDelegate;
 
+  //TODO: WeakHashMap
   private final Map<String, ClassNode> myCache = new HashMap<String, ClassNode>();
 
   public CacheResolver(@NotNull Resolver delegate) {
@@ -22,6 +24,7 @@ public class CacheResolver extends Resolver {
   }
 
   @Override
+  @Nullable
   public ClassNode findClass(@NotNull String className) {
     ClassNode res = myCache.get(className);
     if (res == null) {
@@ -43,7 +46,7 @@ public class CacheResolver extends Resolver {
 
   @NotNull
   @Override
-  public Collection<String> getAllClasses() {
+  public Set<String> getAllClasses() {
     return myDelegate.getAllClasses();
   }
 

@@ -10,7 +10,7 @@ buildscript {
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
 
-version = '1.6'
+version = '1.7'
 if (project.hasProperty("myVersion")) {
   version = project.myVersion;
 }
@@ -60,16 +60,45 @@ publishing {
   }
 }
 
-task prepareTests(type: Copy) {
-  def path = "$buildDir/mocks"
-  doFirst { println("Copying mock plugins .jar-s to the ${path}") }
-  into path
-  subprojects {
+def separator = File.separator
+def mocksPath = "$buildDir" + separator + "mocks"
+
+task prepareMock1(type: Copy) {
+  doFirst { println("Copying mock plugin 1 .jar to the ${mocksPath}") }
+  into mocksPath
+  project(":mock-plugin1") {
     from tasks.withType(Jar)
   }
 }
 
-test.dependsOn prepareTests
+task prepareMock2(type: Copy) {
+  doFirst { println("Creating structure for mock-plugin2 in ${mocksPath}") }
+  into mocksPath + separator + "mock-plugin2" + separator + "lib"
+  project(":mock-plugin2") {
+    from tasks.withType(Jar)
+  }
+}
+
+task prepareMock3(type: Copy) {
+  doFirst { println("Creating structure for mock-plugin3 in ${mocksPath}") }
+
+  into mocksPath + separator + "mock-plugin3"
+
+  def classesSpec = copySpec {
+    from project(":mock-plugin3").sourceSets.main.output.classesDir
+    into "classes"
+  }
+
+  def pluginXmlSpec = copySpec {
+    from project(":mock-plugin3").sourceSets.main.output.resourcesDir
+    into "."
+  }
+
+  with classesSpec, pluginXmlSpec
+}
+prepareMock3.dependsOn project(":mock-plugin3").classes
+
+test.dependsOn prepareMock1, prepareMock2, prepareMock3
 publishToMavenLocal.dependsOn test
 
 
@@ -77,7 +106,7 @@ dependencies {
   //mock plugins are used in tests
   testRuntime project("mock-plugin1")
 
-  compile group: 'org.jdom', name: 'jdom', version: '1.1.3'
+  compile group: 'org.jdom', name: 'jdom', version: '2.0.2'
   compile group: 'com.google.guava', name: 'guava', version: '18.0'
   compile group: 'commons-io', name: 'commons-io', version: '2.3'
   compile group: 'com.intellij', name: 'annotations', version: '12.0'

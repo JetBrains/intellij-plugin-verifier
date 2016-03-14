@@ -11,8 +11,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Sergey Patrikeev
@@ -33,7 +32,8 @@ public class Go_0_11_1113 {
   @Test
   public void testClassesFound() throws Exception {
     Collection<String> allClasses = plugin.getPluginResolver().getAllClasses();
-    assertTrue(allClasses.size() == 951);
+    assertEquals(allClasses.size(), new HashSet<String>(allClasses).size()); //no duplicates?
+    assertEquals(1004, allClasses.size());
 
     Set<String> foundNames = new HashSet<String>();
 

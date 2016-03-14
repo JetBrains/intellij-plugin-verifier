@@ -1,11 +1,11 @@
 package com.intellij.structure.domain;
 
+import com.google.common.collect.Multimap;
 import com.intellij.structure.resolvers.Resolver;
+import org.jdom2.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
@@ -23,21 +23,21 @@ public interface Plugin {
   boolean isCompatibleWithIde(@NotNull IdeVersion ideVersion);
 
   @NotNull
+  Multimap<String, Element> getExtensions();
+
+  @NotNull
   List<PluginDependency> getDependencies();
 
   @NotNull
   List<PluginDependency> getModuleDependencies();
 
-  @NotNull
   String getPluginName();
 
   @Nullable
   String getPluginVersion();
 
-  @NotNull
   String getPluginId();
 
-  @NotNull
   String getVendor();
 
   @NotNull
@@ -45,9 +45,6 @@ public interface Plugin {
 
   @NotNull
   Resolver getPluginResolver();
-
-  @NotNull
-  Resolver getLibraryResolver();
 
   @Nullable
   String getDescription();
@@ -59,18 +56,17 @@ public interface Plugin {
   String getVendorUrl();
 
   @Nullable
-  String getResourceBundleBaseName();
-
-  @Nullable
-  InputStream getVendorLogo();
-
-  @Nullable
   String getUrl();
 
   @Nullable
   String getChangeNotes();
 
   @NotNull
-  File getPluginPath();
+  Set<String> getAllClassesReferencedFromXml();
+
+  byte[] getVendorLogo();
+
+  @Nullable
+  String getVendorLogoUrl();
 
 }

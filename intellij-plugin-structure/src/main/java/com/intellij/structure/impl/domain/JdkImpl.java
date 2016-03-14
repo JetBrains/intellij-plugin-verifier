@@ -12,24 +12,24 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.jar.JarFile;
+import java.util.zip.ZipFile;
 
 public class JdkImpl extends Jdk {
 
   private static final Set<String> JDK_JAR_NAMES = ImmutableSet.of("rt.jar", "tools.jar", "classes.jar", "jsse.jar", "javaws.jar", "jce.jar", "jfxrt.jar", "plugin.jar");
 
-  private final List<JarFile> myJars;
+  private final List<ZipFile> myJars;
   private final Resolver myPool;
 
   public JdkImpl(@NotNull File jdkDir) throws IOException {
-    myJars = new ArrayList<JarFile>();
+    myJars = new ArrayList<ZipFile>();
 
     collectJars(jdkDir);
-    myPool = JarsUtils.makeResolver(jdkDir.getPath(), myJars);
+    myPool = JarsUtils.makeResolver("Jdk resolver " + jdkDir.getCanonicalPath(), myJars);
   }
 
   private void collectJars(@NotNull File dir) throws IOException {
-    final List<JarFile> jars = JarsUtils.getJars(dir, new Predicate<File>() {
+    final List<ZipFile> jars = JarsUtils.collectJarsRecursively(dir, new Predicate<File>() {
       @Override
       public boolean apply(File file) {
         return JDK_JAR_NAMES.contains(file.getName().toLowerCase());

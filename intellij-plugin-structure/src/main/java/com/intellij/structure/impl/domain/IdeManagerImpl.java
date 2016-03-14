@@ -6,29 +6,24 @@ import com.intellij.structure.domain.*;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.resolvers.CompileOutputResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
-import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import org.jdom.Document;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipFile;
 
 /**
  * @author Sergey Patrikeev
@@ -55,14 +50,14 @@ public class IdeManagerImpl extends IdeManager {
       throw new IOException("Directory \"lib\" is not found (should be found at " + lib + ")");
     }
 
-    final List<JarFile> jars = JarsUtils.getJars(lib, new Predicate<File>() {
+    final List<ZipFile> jars = JarsUtils.collectJarsRecursively(lib, new Predicate<File>() {
       @Override
       public boolean apply(File file) {
         return !file.getName().endsWith("javac2.jar");
       }
     });
 
-    return JarsUtils.makeResolver(ideaDir.getPath(), jars);
+    return JarsUtils.makeResolver("Idea `lib` dir: " + lib.getCanonicalPath(), jars);
   }
 
   @NotNull
@@ -78,7 +73,7 @@ public class IdeManagerImpl extends IdeManager {
       pools.add(new CompileOutputResolver(getCommunityClassesRoot(ideaDir)));
     }
 
-    return Resolver.getUnion(ideaDir.getPath(), pools);
+    return Resolver.createUnionResolver("Idea dir: " + ideaDir.getCanonicalPath(), pools);
   }
 
   @NotNull
@@ -109,32 +104,12 @@ public class IdeManagerImpl extends IdeManager {
     List<Plugin> result = new ArrayList<Plugin>();
     Collection<File> files = FileUtils.listFiles(root, new WildcardFileFilter("plugin.xml"), TrueFileFilter.TRUE);
     for (File file : files) {
-      InputStream is;
       try {
-        is = FileUtils.openInputStream(file);
-      } catch (IOException e) {
-        continue;
-      }
-
-      try {
-        Document xml = JDOMUtil.loadDocument(is);
-
-        Plugin plugin;
-        try {
-          plugin = new PluginImpl(file, file.toURI().toURL(), Resolver.getEmptyResolver(), Resolver.getEmptyResolver(), xml);
-        } catch (IncorrectPluginException e) {
-          continue;
-        } catch (IllegalArgumentException e) {
-          continue;
-        }
-
+        PluginImpl plugin = new PluginImpl();
+        plugin.readExternal(file.toURI().toURL(), false);
         result.add(plugin);
-
-      } catch (JDOMException ignored) {
       } catch (MalformedURLException ignored) {
-      } catch (IOException ignored) {
-      } finally {
-        IOUtils.closeQuietly(is);
+      } catch (IncorrectPluginException ignored) {
       }
     }
     return result;

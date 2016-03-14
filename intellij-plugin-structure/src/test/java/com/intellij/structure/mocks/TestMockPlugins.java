@@ -1,18 +1,20 @@
 package com.intellij.structure.mocks;
 
+import com.google.common.collect.Multimap;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.impl.domain.PluginDependencyImpl;
-import com.intellij.structure.utils.TestUtils;
+import org.jdom2.Element;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 
 /**
@@ -20,11 +22,24 @@ import static org.junit.Assert.assertEquals;
  */
 public class TestMockPlugins {
 
+  @NotNull
+  private static File getMocksDir() {
+    return new File("build" + File.separator + "mocks");
+  }
+
+  @NotNull
+  private static File getMockPlugin(String mockName) {
+    File file = new File(getMocksDir(), mockName);
+    Assert.assertTrue("mock plugin " + mockName + " is not found in " + file, file.exists());
+    return file;
+  }
+
+  //test simple .jar structure
   @Test
-  public void test1() throws Exception {
-    File file = TestUtils.getMockPlugin(1);
+  public void testMock1() throws Exception {
+    File file = getMockPlugin("mock-plugin1-1.0.jar");
     Plugin plugin = PluginManager.getInstance().createPlugin(file);
-    assertEquals(file, plugin.getPluginPath());
+//    assertEquals(file, plugin.getPluginPath());
 
 //    assertEquals("format_version_attr", plugin.getFormatVersion());
 //    assertEquals("true", plugin.useIdeaClassLoader());
@@ -53,4 +68,36 @@ public class TestMockPlugins {
 
   }
 
+  //test folder/lib/a.jar structure
+  @Test
+  public void testMock2() throws Exception {
+    File file = getMockPlugin("mock-plugin2");
+    Plugin plugin = PluginManager.getInstance().createPlugin(file);
+    assertEquals(4, plugin.getPluginResolver().getAllClasses().size());
+    assertEquals("http://icons.com/icon.png", plugin.getVendorLogoUrl());
+  }
+
+  //test folder/classes structure
+  @Test
+  public void testMock3() throws Exception {
+    File file = getMockPlugin("mock-plugin3");
+    Plugin plugin = PluginManager.getInstance().createPlugin(file);
+    assertEquals(4, plugin.getPluginResolver().getAllClasses().size());
+    Set<String> set = plugin.getAllClassesReferencedFromXml();
+    assertContains(set, "org.jetbrains.kotlin.idea.compiler.JetCompilerManager".replace('.', '/'));
+    assertContains(set, "org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages$Extension".replace('.', '/'));
+    assertContains(set, "org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator".replace('.', '/'));
+    assertContains(set, "org.jetbrains.kotlin.js.resolve.diagnostics.DefaultErrorMessagesJs".replace('.', '/'));
+    assertContains(set, "org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.UnfoldReturnToWhenIntention".replace('.', '/'));
+
+
+    Multimap<String, Element> extensions = plugin.getExtensions();
+    assertTrue(extensions.containsKey("com.intellij.referenceImporter"));
+  }
+
+  private <T> void assertContains(Collection<T> collection, T elem) {
+    if (!collection.contains(elem)) {
+      throw new AssertionError("Collection must contain an element " + elem);
+    }
+  }
 }
