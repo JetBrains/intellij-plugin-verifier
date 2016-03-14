@@ -8,8 +8,10 @@ import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
+import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.impl.utils.xml.XIncludeException;
 import com.intellij.structure.resolvers.Resolver;
+import org.apache.commons.io.IOUtils;
 import org.jdom2.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +19,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -35,6 +38,7 @@ class PluginImpl implements Plugin {
   private final Map<PluginDependency, String> myOptionalConfigFiles = new HashMap<PluginDependency, String>();
   private final Map<String, PluginImpl> myOptionalDescriptors = new HashMap<String, PluginImpl>();
   private final Set<String> myReferencedClasses = new HashSet<String>();
+  @Nullable private byte[] myLogoContent;
   @Nullable private Resolver myPluginResolver;
   @Nullable private String myPluginName;
   @Nullable private String myPluginVersion;
@@ -48,12 +52,11 @@ class PluginImpl implements Plugin {
   @Nullable private IdeVersion mySinceBuild;
   @Nullable private IdeVersion myUntilBuild;
 
-
   PluginImpl() throws IncorrectPluginException {
   }
 
 
-  private void checkAndSetEntries(@Nullable Element rootElement, boolean checkValidity) throws IncorrectPluginException {
+  private void checkAndSetEntries(@NotNull URL url, @Nullable Element rootElement, boolean checkValidity) throws IncorrectPluginException {
     if (rootElement == null) {
       throw new IncorrectPluginException("Failed to parse plugin.xml: root element <idea-plugin> is not found");
     }
@@ -85,7 +88,7 @@ class PluginImpl implements Plugin {
       myPluginVendor = vendorElement.getTextTrim();
       myVendorEmail = StringUtil.notNullize(vendorElement.getAttributeValue("email"));
       myVendorUrl = StringUtil.notNullize(vendorElement.getAttributeValue("url"));
-//    myVendorLogoPath = vendorElement.getAttributeValue("logo");
+      setLogoContent(url, vendorElement);
     }
 
     myPluginVersion = rootElement.getChildTextTrim("version");
@@ -127,6 +130,21 @@ class PluginImpl implements Plugin {
         if (!StringUtil.isNullOrEmpty(textTrim)) {
           myNotes = Jsoup.clean(textTrim, WHITELIST);
         }
+      }
+    }
+  }
+
+  private void setLogoContent(@NotNull URL url, Element vendorElement) {
+    String logoPath = vendorElement.getAttributeValue("logo");
+    if (logoPath != null) {
+      InputStream input = null;
+      try {
+        URL logoUrl = new URL(url, logoPath);
+        input = URLUtil.openStream(logoUrl);
+        myLogoContent = IOUtils.toByteArray(input);
+      } catch (Exception ignored) {
+      } finally {
+        IOUtils.closeQuietly(input);
       }
     }
   }
@@ -358,6 +376,11 @@ class PluginImpl implements Plugin {
     return result;
   }
 
+  @Override
+  public byte[] getVendorLogo() {
+    return myLogoContent;
+  }
+
 
   void readExternal(@NotNull URL url, boolean checkValidity) throws IncorrectPluginException {
     try {
@@ -377,7 +400,7 @@ class PluginImpl implements Plugin {
     } catch (XIncludeException e) {
       throw new IncorrectPluginException("Unable to read resolve " + url.getFile(), e);
     }
-    checkAndSetEntries(document.getRootElement(), checkValidity);
+    checkAndSetEntries(url, document.getRootElement(), checkValidity);
   }
 
   @NotNull
