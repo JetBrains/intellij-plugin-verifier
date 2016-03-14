@@ -1,18 +1,17 @@
 package com.intellij.structure.impl.domain;
 
+import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.intellij.structure.domain.Plugin;
+import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.resolvers.InMemoryJarResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.impl.utils.StringUtil;
-import com.intellij.structure.impl.utils.xml.JDOMUtil;
-import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.jdom2.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
@@ -60,29 +59,18 @@ public class PluginManagerImpl extends PluginManager {
       throw new IncorrectPluginException("Incorrect plugin file type " + file + ". Should be one of .zip or .jar archives");
     }
 
-/*
-
-    TODO: is it necessary to load optional dependencies?
     if (descriptor != null) {
-      resolveOptionalDescriptors(fileName, descriptor, new Function<String, PluginImpl>() {
+      resolveOptionalDescriptors(fileName, (PluginImpl) descriptor, new Function<String, PluginImpl>() {
         @Override
-        public PluginImpl apply(String optionalDescriptorName) {
-          Plugin optionalDescriptor = loadDescriptor(file, optionalDescriptorName);
-          if (optionalDescriptor == null && !isJarOrZip(file)) {
-            for (URL url : getClassLoaderUrls()) {
-              if ("file".equals(url.getProtocol())) {
-                optionalDescriptor = loadDescriptor(new File(decodeUrl(url.getFile())), optionalDescriptorName);
-                if (optionalDescriptor != null) {
-                  break;
-                }
-              }
-            }
+        @Nullable
+        public PluginImpl apply(@Nullable String optionalDescriptorName) throws IncorrectPluginException {
+          if (optionalDescriptorName != null) {
+            return (PluginImpl) loadDescriptor(file, optionalDescriptorName);
           }
           return null;
         }
       });
     }
-*/
 
     if (descriptor == null) {
       throw new IncorrectPluginException("META-INF/" + fileName + " is not found");
@@ -91,52 +79,53 @@ public class PluginManagerImpl extends PluginManager {
     return descriptor;
   }
 
-  /*private void resolveOptionalDescriptors(@NotNull String fileName,
-                                                 @NotNull PluginImpl descriptor,
-                                                 @NotNull Function<String, PluginImpl> optionalDescriptorLoader) throws IncorrectPluginException {
-    Map<PluginDependency, String> optionalConfigs = descriptor.getOptionalDepConfigFiles();
+  private void resolveOptionalDescriptors(@NotNull String fileName,
+                                          @NotNull PluginImpl descriptor,
+                                          @NotNull Function<String, PluginImpl> optionalDescriptorLoader) throws IncorrectPluginException {
+    Map<PluginDependency, String> optionalConfigs = descriptor.getOptionalDependenciesConfigFiles();
     if (!optionalConfigs.isEmpty()) {
-      Map<String, Plugin> descriptors = new HashMap<String, Plugin>();
+      Map<String, PluginImpl> descriptors = new HashMap<String, PluginImpl>();
 
       for (Map.Entry<PluginDependency, String> entry : optionalConfigs.entrySet()) {
-        String optName = entry.getValue();
+        String optFileName = entry.getValue();
 
-        if (StringUtil.equal(fileName, optName)) {
+        if (StringUtil.equal(fileName, optFileName)) {
           throw new IncorrectPluginException("Plugin has recursive config dependencies for descriptor " + fileName);
         }
 
-        PluginImpl optDescriptor = optionalDescriptorLoader.apply(optName);
+        PluginImpl optDescriptor;
+        try {
+          optDescriptor = optionalDescriptorLoader.apply(optFileName);
+        } catch (IncorrectPluginException e) {
+          //maybe log somehow?
+          continue;
+        }
 
         if (optDescriptor != null) {
-          descriptors.put(entry.getKey(), optDescriptor);
+          descriptors.put(optFileName, optDescriptor);
         }
-        //maybe report about missing optional descriptor???
       }
 
       descriptor.setOptionalDescriptors(descriptors);
     }
-  }*/
+  }
 
   @Nullable
   private Plugin checkFileInRoot(@NotNull ZipEntry entry,
                                  @NotNull String fileName,
                                  @NotNull String urlPath,
-                                 @NotNull InputStream is,
                                  boolean exception) throws IncorrectPluginException {
     Matcher xmlMatcher = XML_IN_ROOT_PATTERN.matcher(entry.getName());
     if (xmlMatcher.matches()) {
       String name = xmlMatcher.group(2);
       if (StringUtil.equal(name, fileName)) {
-        URL url;
-        Document document;
+        PluginImpl descriptor = new PluginImpl();
         try {
-          url = new URL(urlPath + "META-INF/" + fileName);
-          document = JDOMUtil.loadDocument(URLUtil.copyInputStream(is));
+          URL url = new URL(urlPath + entry.getName());
+          descriptor.readExternal(url, exception);
         } catch (Exception e) {
           return nullOrException(exception, "Unable to read META-INF/" + fileName, e);
         }
-        PluginImpl descriptor = new PluginImpl();
-        descriptor.readExternal(document, url);
         return descriptor;
       }
     }
@@ -159,7 +148,7 @@ public class PluginManagerImpl extends PluginManager {
         }
 
         //firstly check xml in root (e.g. Sample.zip/Sample/META-INF/plugin.xml)
-        Plugin inRoot = checkFileInRoot(entry, fileName, urlPath, zipStream, exception);
+        Plugin inRoot = checkFileInRoot(entry, fileName, urlPath, exception);
         if (inRoot != null) {
           if (descriptorRoot != null && exception) {
             throw new IncorrectPluginException("Multiple META-INF/" + fileName + " found");
@@ -233,7 +222,7 @@ public class PluginManagerImpl extends PluginManager {
     if (descriptorFile.exists()) {
       PluginImpl descriptor = new PluginImpl();
       try {
-        descriptor.readExternal(descriptorFile.toURI().toURL());
+        descriptor.readExternal(descriptorFile.toURI().toURL(), true);
       } catch (MalformedURLException e) {
         return nullOrException(exception, "File " + dir + " contains invalid plugin descriptor", e);
       }

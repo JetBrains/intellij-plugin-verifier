@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
@@ -16,10 +18,10 @@ import com.jetbrains.pluginverifier.verifiers.method.MethodVerifier;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.*;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Dennis.Ushakov
@@ -34,10 +36,10 @@ class ReferencesVerifier implements Verifier {
 
     processMissingDependencies(descriptor, ctx);
 
-    final Resolver pluginPool = plugin.getPluginResolver();
-    final Collection<String> classes = pluginPool.getAllClasses();
-    for (String className : classes) {
-      final ClassNode node = pluginPool.findClass(className);
+    final Resolver resolverForCheck = getResolverForCheck(plugin);
+
+    for (String className : resolverForCheck.getAllClasses()) {
+      final ClassNode node = resolverForCheck.findClass(className);
 
       if (node == null) {
         ctx.registerProblem(new FailedToReadClassProblem(className), ProblemLocation.fromClass(className));
@@ -46,6 +48,27 @@ class ReferencesVerifier implements Verifier {
 
       verifyClass(cacheResolver, node, ctx);
     }
+  }
+
+  @NotNull
+  private Resolver getResolverForCheck(@NotNull Plugin plugin) {
+    final Resolver commonResolver = plugin.getPluginResolver();
+
+    Set<Resolver> usedResolvers = Sets.newIdentityHashSet();
+
+    Set<String> referencedFromXml = plugin.getAllClassesReferencedFromXml();
+    for (String aClass : referencedFromXml) {
+      Resolver location = commonResolver.getClassLocation(aClass);
+      if (location != null) {
+        usedResolvers.add(location);
+      }
+    }
+
+    if (usedResolvers.isEmpty()) {
+      return commonResolver;
+    }
+
+    return Resolver.createUnionResolver("Plugin classes for check", Lists.newArrayList(usedResolvers));
   }
 
   private void processMissingDependencies(@NotNull DependenciesCache.PluginDependenciesDescriptor descriptor, @NotNull VerificationContext ctx) {

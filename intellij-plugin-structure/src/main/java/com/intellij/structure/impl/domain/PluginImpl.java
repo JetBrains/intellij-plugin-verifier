@@ -10,9 +10,7 @@ import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.impl.utils.xml.XIncludeException;
 import com.intellij.structure.resolvers.Resolver;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.JDOMException;
+import org.jdom2.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
@@ -21,35 +19,41 @@ import org.jsoup.safety.Whitelist;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 class PluginImpl implements Plugin {
+
+  private static final Pattern JAVA_CLASS_PATTERN = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*");
+  private static final String INTERESTING_STRINGS[] = new String[]{"class", "interface", "implementation", "instance", "group", "key"};
 
   private static final Whitelist WHITELIST = Whitelist.basicWithImages();
   private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules.";
   private final Set<String> myDefinedModules = new HashSet<String>();
   private final List<PluginDependency> myDependencies = new ArrayList<PluginDependency>();
   private final List<PluginDependency> myModuleDependencies = new ArrayList<PluginDependency>();
-  private Map<PluginDependency, String> myOptionalConfigs = new HashMap<PluginDependency, String>();
-  private Resolver myPluginResolver;
-  private String myPluginName;
-  private String myPluginVersion;
-  private String myPluginId;
-  private String myPluginVendor;
-  private String myVendorEmail;
-  private String myVendorUrl;
-  private String myDescription;
-  private String myUrl;
-  private String myNotes;
-  private IdeVersion mySinceBuild;
-  private IdeVersion myUntilBuild;
-  private Map<String, Plugin> myOptionalDescriptors;
+  private final Map<PluginDependency, String> myOptionalConfigFiles = new HashMap<PluginDependency, String>();
+  private final Map<String, PluginImpl> myOptionalDescriptors = new HashMap<String, PluginImpl>();
+  private final Set<String> myReferencedClasses = new HashSet<String>();
+  @Nullable private Resolver myPluginResolver;
+  @Nullable private String myPluginName;
+  @Nullable private String myPluginVersion;
+  @Nullable private String myPluginId;
+  @Nullable private String myPluginVendor;
+  @Nullable private String myVendorEmail;
+  @Nullable private String myVendorUrl;
+  @Nullable private String myDescription;
+  @Nullable private String myUrl;
+  @Nullable private String myNotes;
+  @Nullable private IdeVersion mySinceBuild;
+  @Nullable private IdeVersion myUntilBuild;
 
 
   PluginImpl() throws IncorrectPluginException {
   }
 
 
-  private void checkAndSetInfo(@Nullable Element rootElement) throws IncorrectPluginException {
+  private void checkAndSetEntries(@Nullable Element rootElement, boolean checkValidity) throws IncorrectPluginException {
     if (rootElement == null) {
       throw new IncorrectPluginException("Failed to parse plugin.xml: root element <idea-plugin> is not found");
     }
@@ -60,7 +64,9 @@ class PluginImpl implements Plugin {
 
     myPluginName = rootElement.getChildTextTrim("name");
     if (Strings.isNullOrEmpty(myPluginName)) {
-      throw new IncorrectPluginException("Invalid plugin.xml: 'name' is not specified");
+      if (checkValidity) {
+        throw new IncorrectPluginException("Invalid plugin.xml: 'name' is not specified");
+      }
     }
 
     myPluginId = rootElement.getChildText("id");
@@ -72,42 +78,44 @@ class PluginImpl implements Plugin {
 
     Element vendorElement = rootElement.getChild("vendor");
     if (vendorElement == null) {
-      throw new IncorrectPluginException("Invalid plugin.xml: element 'vendor' is not found");
-    }
-
-    myPluginVendor = vendorElement.getTextTrim();
-    myVendorEmail = StringUtil.notNullize(vendorElement.getAttributeValue("email"));
-    myVendorUrl = StringUtil.notNullize(vendorElement.getAttributeValue("url"));
+      if (checkValidity) {
+        throw new IncorrectPluginException("Invalid plugin.xml: element 'vendor' is not found");
+      }
+    } else {
+      myPluginVendor = vendorElement.getTextTrim();
+      myVendorEmail = StringUtil.notNullize(vendorElement.getAttributeValue("email"));
+      myVendorUrl = StringUtil.notNullize(vendorElement.getAttributeValue("url"));
 //    myVendorLogoPath = vendorElement.getAttributeValue("logo");
+    }
 
     myPluginVersion = rootElement.getChildTextTrim("version");
-/*
-    In idea bundled plugins it may be null (consider throwing an exception)
     if (myPluginVersion == null) {
-      throw new IncorrectPluginException("Invalid plugin.xml: version is not specified");
+      if (checkValidity) {
+        throw new IncorrectPluginException("Invalid plugin.xml: version is not specified");
+      }
     }
-*/
 
     Element ideaVersionElement = rootElement.getChild("idea-version");
-/*
-    In idea bundled plugins it may be null
     if (ideaVersionElement == null) {
-      throw new IncorrectPluginException("Invalid plugin.xml: element 'idea-version' not found");
-    }
-*/
-    if (ideaVersionElement != null) {
+      if (checkValidity) {
+        throw new IncorrectPluginException("Invalid plugin.xml: element 'idea-version' not found");
+      }
+    } else {
       setSinceUntilBuilds(ideaVersionElement);
     }
+
+    setComponents(rootElement);
 
     setPluginDependencies(rootElement);
 
     setDefinedModules(rootElement);
 
-
     String description = rootElement.getChildTextTrim("description");
-//  In idea bundled plugins it may be null
-//  throw new IncorrectPluginException("Invalid plugin.xml: description is empty");
-    if (!StringUtil.isNullOrEmpty(description)) {
+    if (StringUtil.isNullOrEmpty(description)) {
+      if (checkValidity) {
+        throw new IncorrectPluginException("Invalid plugin.xml: description is empty");
+      }
+    } else {
       myDescription = Jsoup.clean(description, WHITELIST);
     }
 
@@ -121,7 +129,59 @@ class PluginImpl implements Plugin {
         }
       }
     }
+  }
 
+  private void setComponents(@NotNull Element rootElement) {
+    processReferencedClasses(rootElement);
+    /*
+    implement these if necessary
+    setExtensions(rootElement);
+    setExtensionPoints(rootElement);
+    setActions(rootElement);
+    setAppComponents(rootElement);
+    setProjectComponents(rootElement);
+    setModulesComponents(rootElement);
+    */
+  }
+
+  private void processReferencedClasses(@NotNull Element rootElement) throws IncorrectPluginException {
+    Iterator<Content> descendants = rootElement.getDescendants();
+    while (descendants.hasNext()) {
+      Content next = descendants.next();
+      if (next instanceof Element) {
+        Element element = (Element) next;
+
+        if (isInterestingName(element.getName())) {
+          checkIfClass(element.getTextNormalize());
+        }
+
+        for (Attribute attribute : element.getAttributes()) {
+          if (isInterestingName(attribute.getName())) {
+            checkIfClass(attribute.getValue().trim());
+          }
+        }
+      }
+      if (next instanceof Text) {
+        Text text = (Text) next;
+        checkIfClass(text.getTextTrim());
+      }
+    }
+  }
+
+  private void checkIfClass(@NotNull String text) {
+    Matcher matcher = JAVA_CLASS_PATTERN.matcher(text);
+    while (matcher.find()) {
+      myReferencedClasses.add(matcher.group().replace('.', '/'));
+    }
+  }
+
+  private boolean isInterestingName(@NotNull String label) {
+    for (String string : INTERESTING_STRINGS) {
+      if (StringUtil.containsIgnoreCase(label, string)) {
+        return true;
+      }
+    }
+    return false;
   }
 
 
@@ -149,7 +209,7 @@ class PluginImpl implements Plugin {
     return myUntilBuild;
   }
 
-  private void setPluginDependencies(@NotNull Element rootElement) {
+  private void setPluginDependencies(@NotNull Element rootElement) throws IncorrectPluginException {
     final List<Element> dependsElements = rootElement.getChildren("depends");
 
     for (Element dependsElement : dependsElements) {
@@ -170,10 +230,9 @@ class PluginImpl implements Plugin {
       if (optional) {
         String configFile = dependsElement.getAttributeValue("config-file");
         if (configFile != null) {
-          myOptionalConfigs.put(dependency, configFile);
+          myOptionalConfigFiles.put(dependency, configFile);
         }
       }
-
 
     }
   }
@@ -186,8 +245,8 @@ class PluginImpl implements Plugin {
     return mySinceBuild.compareTo(ideVersion) <= 0 && (myUntilBuild == null || ideVersion.compareTo(myUntilBuild) <= 0);
   }
 
+  @Nullable
   @Override
-  @NotNull
   public String getPluginName() {
     return myPluginName;
   }
@@ -198,14 +257,13 @@ class PluginImpl implements Plugin {
     return myPluginVersion;
   }
 
+  @Nullable
   @Override
-  @NotNull
   public String getPluginId() {
     return myPluginId;
   }
 
   @Override
-  @NotNull
   public String getVendor() {
     return myPluginVendor;
   }
@@ -285,11 +343,22 @@ class PluginImpl implements Plugin {
     return myNotes;
   }
 
+  @NotNull
+  @Override
+  public Set<String> getAllClassesReferencedFromXml() {
+    Set<String> result = new HashSet<String>();
+    result.addAll(myReferencedClasses);
+    for (PluginImpl plugin : myOptionalDescriptors.values()) {
+      result.addAll(plugin.myReferencedClasses);
+    }
+    return result;
+  }
 
-  void readExternal(@NotNull URL url) throws IncorrectPluginException {
+
+  void readExternal(@NotNull URL url, boolean checkValidity) throws IncorrectPluginException {
     try {
       Document document = JDOMUtil.loadDocument(url);
-      readExternal(document, url);
+      readExternal(document, url, checkValidity);
     } catch (JDOMException e) {
       throw new IncorrectPluginException("Unable to read " + url.getFile(), e);
     } catch (IOException e) {
@@ -298,26 +367,27 @@ class PluginImpl implements Plugin {
   }
 
 
-  void readExternal(@NotNull Document document, @NotNull URL url) throws IncorrectPluginException {
+  private void readExternal(@NotNull Document document, @NotNull URL url, boolean checkValidity) throws IncorrectPluginException {
     try {
       document = JDOMXIncluder.resolve(document, url.toExternalForm());
     } catch (XIncludeException e) {
       throw new IncorrectPluginException("Unable to read resolve " + url.getFile(), e);
     }
-    checkAndSetInfo(document.getRootElement());
+    checkAndSetEntries(document.getRootElement(), checkValidity);
   }
 
-/*
   @NotNull
-  Map<PluginDependency, String> getOptionalDepConfigFiles() {
-    return myOptionalConfigs;
+  Map<PluginDependency, String> getOptionalDependenciesConfigFiles() {
+    return myOptionalConfigFiles;
   }
 
+  /**
+   * @param optionalDescriptors map of (optional file name) to (optional descriptor)
+   */
   void setOptionalDescriptors(@NotNull Map<String, PluginImpl> optionalDescriptors) {
-    myOptionalDescriptors = optionalDescriptors;
+    myOptionalDescriptors.clear();
+    myOptionalDescriptors.putAll(optionalDescriptors);
   }
-*/
-
 
   void setResolver(@NotNull Resolver resolver) {
     myPluginResolver = resolver;

@@ -61,6 +61,50 @@ public class StringUtil {
     return s;
   }
 
+  public static boolean containsIgnoreCase(@NotNull String where, @NotNull String what) {
+    return indexOfIgnoreCase(where, what, 0) >= 0;
+  }
+
+  private static int indexOfIgnoreCase(@NotNull String where, @NotNull String what, int fromIndex) {
+    int targetCount = what.length();
+    int sourceCount = where.length();
+
+    if (fromIndex >= sourceCount) {
+      return targetCount == 0 ? sourceCount : -1;
+    }
+
+    if (fromIndex < 0) {
+      fromIndex = 0;
+    }
+
+    if (targetCount == 0) {
+      return fromIndex;
+    }
+
+    char first = what.charAt(0);
+    int max = sourceCount - targetCount;
+
+    for (int i = fromIndex; i <= max; i++) {
+      /* Look for first character. */
+      if (!charsEqualIgnoreCase(where.charAt(i), first)) {
+        while (++i <= max && !charsEqualIgnoreCase(where.charAt(i), first)) ;
+      }
+
+      /* Found first character, now look at the rest of v2 */
+      if (i <= max) {
+        int j = i + 1;
+        int end = j + targetCount - 1;
+        for (int k = 1; j < end && charsEqualIgnoreCase(where.charAt(j), what.charAt(k)); j++, k++) ;
+
+        if (j == end) {
+          /* Found whole string. */
+          return i;
+        }
+      }
+    }
+
+    return -1;
+  }
 
   @NotNull
   public static String trimEnd(@NotNull String s, @NonNls @NotNull String suffix) {

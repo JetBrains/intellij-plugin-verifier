@@ -73,12 +73,10 @@ public class TestMockPlugins {
     assertEquals(4, plugin.getPluginResolver().getAllClasses().size());
   }
 
-/*
   @Test
   public void testMock3() throws Exception {
     File file = getMockPlugin("mock-plugin3");
     Plugin plugin = PluginManager.getInstance().createPlugin(file);
     assertEquals(4, plugin.getPluginResolver().getAllClasses().size());
   }
-*/
 }

@@ -26,16 +26,13 @@ public interface Plugin {
   @NotNull
   List<PluginDependency> getModuleDependencies();
 
-  @NotNull
   String getPluginName();
 
   @Nullable
   String getPluginVersion();
 
-  @NotNull
   String getPluginId();
 
-  @NotNull
   String getVendor();
 
   @NotNull
@@ -59,5 +56,7 @@ public interface Plugin {
   @Nullable
   String getChangeNotes();
 
+  @NotNull
+  Set<String> getAllClassesReferencedFromXml();
 
 }

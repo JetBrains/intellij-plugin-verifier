@@ -106,9 +106,10 @@ public class IdeManagerImpl extends IdeManager {
     for (File file : files) {
       try {
         PluginImpl plugin = new PluginImpl();
-        plugin.readExternal(file.toURI().toURL());
+        plugin.readExternal(file.toURI().toURL(), false);
         result.add(plugin);
       } catch (MalformedURLException ignored) {
+      } catch (IncorrectPluginException ignored) {
       }
     }
     return result;
