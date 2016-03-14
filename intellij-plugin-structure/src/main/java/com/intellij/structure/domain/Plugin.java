@@ -64,6 +64,7 @@ public interface Plugin {
   @NotNull
   Set<String> getAllClassesReferencedFromXml();
 
+  @Nullable
   byte[] getVendorLogo();
 
   @Nullable

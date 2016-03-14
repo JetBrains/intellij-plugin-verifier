@@ -414,6 +414,7 @@ class PluginImpl implements Plugin {
   }
 
   @Override
+  @Nullable
   public byte[] getVendorLogo() {
     return myLogoContent;
   }
