@@ -176,6 +176,7 @@ class PluginImpl implements Plugin {
         URL logoUrl = new URL(url, myLogoUrl);
         input = URLUtil.openStream(logoUrl);
         myLogoContent = IOUtils.toByteArray(input);
+        myLogoUrl = null;
       } catch (Exception ignored) {
       } finally {
         IOUtils.closeQuietly(input);

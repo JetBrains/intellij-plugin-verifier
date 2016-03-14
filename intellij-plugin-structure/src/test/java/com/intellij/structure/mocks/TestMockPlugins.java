@@ -74,6 +74,7 @@ public class TestMockPlugins {
     File file = getMockPlugin("mock-plugin2");
     Plugin plugin = PluginManager.getInstance().createPlugin(file);
     assertEquals(4, plugin.getPluginResolver().getAllClasses().size());
+    assertEquals("http://icons.com/icon.png", plugin.getVendorLogoUrl());
   }
 
   //test folder/classes structure

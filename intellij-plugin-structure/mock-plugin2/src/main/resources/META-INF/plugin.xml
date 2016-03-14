@@ -25,7 +25,8 @@
          The optional "email" attribute specifies the e-mail address of the vendor.
          The optional "logo" attribute specifies the path within the plugin JAR
          to a 16x16 icon to be displayed next to the plugin name in the welcome screen.   -->
-    <vendor url="http://www.jetbrains.com" email="support@jetbrains.com" logo="icons/plugin.png">Foo Inc.</vendor>
+    <vendor url="http://www.jetbrains.com" email="support@jetbrains.com" logo="http://icons.com/icon.png">Foo Inc.
+    </vendor>
 
     <!-- The unique identifiers of the plugins on which this plugin depends. -->
     <depends>MyFirstPlugin</depends>
