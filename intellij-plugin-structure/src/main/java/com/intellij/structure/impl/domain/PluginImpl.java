@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 class PluginImpl implements Plugin {
 
   private static final Pattern JAVA_CLASS_PATTERN = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*");
-  private static final String INTERESTING_STRINGS[] = new String[]{"class", "interface", "implementation", "instance", "group", "key"};
+  private static final String INTERESTING_STRINGS[] = new String[]{"class", "interface", "implementation", "instance"};
 
   private static final Whitelist WHITELIST = Whitelist.basicWithImages();
   private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules.";
@@ -162,8 +162,12 @@ class PluginImpl implements Plugin {
         }
       }
       if (next instanceof Text) {
-        Text text = (Text) next;
-        checkIfClass(text.getTextTrim());
+        Parent parent = next.getParent();
+        if (parent instanceof Element) {
+          if (isInterestingName(((Element) parent).getName())) {
+            checkIfClass(((Text) next).getTextTrim());
+          }
+        }
       }
     }
   }
