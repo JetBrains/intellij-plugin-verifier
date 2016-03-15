@@ -63,6 +63,17 @@ public class UpdateBuildTest {
     }
 
     @Test
+    public void testRiderTypicalBuild() {
+        UpdateBuild updateBuild = new UpdateBuild("RS-144.4713");
+        Assert.assertEquals(144, updateBuild.getBranch());
+        Assert.assertEquals(4713, updateBuild.getBuild());
+        Assert.assertEquals("RS", updateBuild.getProductCode());
+        Assert.assertEquals("rider", updateBuild.getProductName());
+        Assert.assertEquals(false, updateBuild.isSnapshot());
+        Assert.assertEquals(true, updateBuild.isOk());
+    }
+
+    @Test
     public void testOneNumberActualBuild() {
         UpdateBuild updateBuild = new UpdateBuild("133");
         Assert.assertEquals(133, updateBuild.getBranch());
