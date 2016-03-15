@@ -15,6 +15,7 @@ import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
 import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier;
 import com.jetbrains.pluginverifier.verifiers.instruction.InstructionVerifier;
 import com.jetbrains.pluginverifier.verifiers.method.MethodVerifier;
+import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.*;
 
@@ -39,7 +40,7 @@ class ReferencesVerifier implements Verifier {
     final Resolver resolverForCheck = getResolverForCheck(plugin);
 
     for (String className : resolverForCheck.getAllClasses()) {
-      final ClassNode node = resolverForCheck.findClass(className);
+      ClassNode node = VerifierUtil.findClass(resolverForCheck, className);
 
       if (node == null) {
         ctx.registerProblem(new FailedToReadClassProblem(className), ProblemLocation.fromClass(className));
@@ -87,7 +88,7 @@ class ReferencesVerifier implements Verifier {
   }
 
   @SuppressWarnings("unchecked")
-  private void verifyClass(@NotNull Resolver resolver, @NotNull ClassNode node, @NotNull VerificationContext ctx) {
+  private void verifyClass(@NotNull Resolver resolver, @NotNull ClassNode node, @NotNull VerificationContext ctx) throws VerificationError {
     for (ClassVerifier verifier : Verifiers.getClassVerifiers()) {
       verifier.verify(node, resolver, ctx);
     }

@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.verifiers.util;
 import com.google.common.base.Preconditions;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
+import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.utils.FailUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,12 +11,14 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import java.io.IOException;
+
 public class VerifierUtil {
-  public static boolean classExists(PluginVerifierOptions opt, final Resolver resolver, final @NotNull String className) {
+  public static boolean classExists(PluginVerifierOptions opt, final Resolver resolver, final @NotNull String className) throws VerificationError {
     return classExists(opt, resolver, className, null);
   }
 
-  public static boolean classExists(PluginVerifierOptions opt, final Resolver resolver, final @NotNull String className, final Boolean isInterface) {
+  public static boolean classExists(PluginVerifierOptions opt, final Resolver resolver, final @NotNull String className, final Boolean isInterface) throws VerificationError {
     return isValidClassOrInterface(opt, resolver, className, isInterface);
   }
 
@@ -23,7 +26,7 @@ public class VerifierUtil {
     return (classNode.access & Opcodes.ACC_INTERFACE) != 0;
   }
 
-  private static boolean isValidClassOrInterface(PluginVerifierOptions opt, final Resolver resolver, final @NotNull String name, final @Nullable Boolean isInterface) {
+  private static boolean isValidClassOrInterface(PluginVerifierOptions opt, final Resolver resolver, final @NotNull String name, final @Nullable Boolean isInterface) throws VerificationError {
     FailUtil.assertTrue(!name.startsWith("["), name);
     FailUtil.assertTrue(!name.endsWith(";"), name);
 
@@ -31,7 +34,7 @@ public class VerifierUtil {
       return true;
     }
 
-    final ClassNode clazz = resolver.findClass(name);
+    final ClassNode clazz = VerifierUtil.findClass(resolver, name);
     return clazz != null && (isInterface == null || isInterface == isInterface(clazz));
   }
 
@@ -46,6 +49,15 @@ public class VerifierUtil {
     }
 
     return className;
+  }
+
+  @Nullable
+  public static ClassNode findClass(@NotNull Resolver resolver, @NotNull String className) throws VerificationError {
+    try {
+      return resolver.findClass(className);
+    } catch (IOException e) {
+      throw new VerificationError("Unable to find class " + className + " in resolver " + resolver, e);
+    }
   }
 
   @NotNull

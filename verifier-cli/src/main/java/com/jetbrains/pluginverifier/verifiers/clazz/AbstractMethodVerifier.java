@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.clazz;
 
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
+import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.utils.LocationUtils;
@@ -18,14 +19,14 @@ import java.util.*;
 public class AbstractMethodVerifier implements ClassVerifier {
   @SuppressWarnings("unchecked")
   @Override
-  public void verify(ClassNode clazz, Resolver resolver, VerificationContext ctx) {
+  public void verify(ClassNode clazz, Resolver resolver, VerificationContext ctx) throws VerificationError {
     if (VerifierUtil.isAbstract(clazz) || VerifierUtil.isInterface(clazz)) {
       return;
     }
 
     String superName = clazz.superName == null ? "java/lang/Object" : clazz.superName;
 
-    ClassNode superClass = resolver.findClass(superName);
+    ClassNode superClass = VerifierUtil.findClass(resolver, superName);
     if (superClass == null) {
       return; //unknown class
     }
@@ -68,7 +69,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
         break;
       }
 
-      curNode = resolver.findClass(curNode.superName);
+      curNode = VerifierUtil.findClass(resolver, superName);
       if (curNode == null) {
         //TODO: don't return silently
         return; // RETURN , don't check anymore because unknown class exists.
@@ -82,7 +83,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
 
       if (!processedInterfaces.add(iface)) continue; //if this interface is already visited
 
-      final ClassNode iNode = resolver.findClass(iface);
+      ClassNode iNode = VerifierUtil.findClass(resolver, iface);
       if (iNode == null) continue; //undefined class
 
       if (!VerifierUtil.isInterface(iNode)) {
@@ -113,7 +114,8 @@ public class AbstractMethodVerifier implements ClassVerifier {
           if (curNode.superName == null) {
             curNode = null;
           } else {
-            curNode = resolver.findClass(curNode.superName);
+            curNode = VerifierUtil.findClass(resolver, curNode.superName);
+
             if (curNode == null) {
               //TODO: don't return silently
               return; // RETURN , don't check anymore because unknown class exists.

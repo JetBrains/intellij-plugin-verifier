@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.instruction;
 
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
+import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.IllegalMethodAccessProblem;
 import com.jetbrains.pluginverifier.problems.MethodNotFoundProblem;
@@ -23,7 +24,7 @@ import java.util.Set;
  * @author Dennis.Ushakov
  */
 public class InvokeInstructionVerifier implements InstructionVerifier {
-  public void verify(final ClassNode clazz, final MethodNode method, final AbstractInsnNode instr, final Resolver resolver, final VerificationContext ctx) {
+  public void verify(final ClassNode clazz, final MethodNode method, final AbstractInsnNode instr, final Resolver resolver, final VerificationContext ctx) throws VerificationError {
     if (!(instr instanceof MethodInsnNode))
       return;
 
@@ -42,7 +43,8 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
 
     if (ctx.getVerifierOptions().isExternalClass(ownerClassName)) return;
 
-    ClassNode ownerClass = resolver.findClass(ownerClassName);
+    ClassNode ownerClass = VerifierUtil.findClass(resolver, ownerClassName);
+
     if (ownerClass == null) {
       ctx.registerProblem(new ClassNotFoundProblem(ownerClassName), ProblemLocation.fromMethod(clazz.name, method));
     } else {
@@ -78,8 +80,9 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
   }
 
   private boolean hasUnresolvedClass(@NotNull String actualOwner,
-                                     @NotNull Resolver resolver) {
-    if (resolver.findClass(actualOwner) == null) {
+                                     @NotNull Resolver resolver) throws VerificationError {
+    ClassNode aClass = VerifierUtil.findClass(resolver, actualOwner);
+    if (aClass == null) {
       return true;
     }
 
@@ -91,7 +94,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
                                    @NotNull VerificationContext ctx,
                                    @NotNull Resolver resolver,
                                    @NotNull ClassNode verifiedClass,
-                                   @NotNull MethodNode verifiedMethod) {
+                                   @NotNull MethodNode verifiedMethod) throws VerificationError {
     MethodNode actualMethod = actualLocation.getMethodNode();
     ClassNode actualOwner = actualLocation.getClassNode();
 
@@ -124,7 +127,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
     return StringUtil.equals(extractPackage(first.name), extractPackage(second.name));
   }
 
-  private boolean isAncestor(@NotNull ClassNode parent, ClassNode child, @NotNull Resolver resolver) {
+  private boolean isAncestor(@NotNull ClassNode parent, ClassNode child, @NotNull Resolver resolver) throws VerificationError {
     while (child != null) {
       if (StringUtil.equals(parent.name, child.name)) {
         return true;
@@ -133,7 +136,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       if (superName == null) {
         return false;
       }
-      child = resolver.findClass(superName);
+      child = VerifierUtil.findClass(resolver, superName);
     }
     return false;
   }

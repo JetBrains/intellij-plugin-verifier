@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.field;
 
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
+import com.jetbrains.pluginverifier.error.VerificationError;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 
@@ -9,5 +10,5 @@ import org.objectweb.asm.tree.FieldNode;
  * @author Dennis.Ushakov
  */
 public interface FieldVerifier {
-  void verify(ClassNode clazz, FieldNode field, Resolver resolver, VerificationContext ctx);
+  void verify(ClassNode clazz, FieldNode field, Resolver resolver, VerificationContext ctx) throws VerificationError;
 }

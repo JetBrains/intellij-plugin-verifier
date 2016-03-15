@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.instruction;
 
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
+import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
@@ -15,7 +16,7 @@ import org.objectweb.asm.tree.MultiANewArrayInsnNode;
  */
 public class MultiANewArrayInstructionVerifier implements InstructionVerifier {
   @Override
-  public void verify(ClassNode clazz, MethodNode method, AbstractInsnNode instr, Resolver resolver, VerificationContext ctx) {
+  public void verify(ClassNode clazz, MethodNode method, AbstractInsnNode instr, Resolver resolver, VerificationContext ctx) throws VerificationError {
     if (!(instr instanceof MultiANewArrayInsnNode)) return;
     MultiANewArrayInsnNode newArrayInstruction = (MultiANewArrayInsnNode) instr;
     String descr = VerifierUtil.extractClassNameFromDescr(newArrayInstruction.desc);

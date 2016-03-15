@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.method;
 
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
+import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
@@ -17,7 +18,7 @@ import java.util.List;
 public class MethodLocalVarsVerifier implements MethodVerifier {
   @SuppressWarnings("unchecked")
   @Override
-  public void verify(ClassNode clazz, MethodNode method, Resolver resolver, VerificationContext ctx) {
+  public void verify(ClassNode clazz, MethodNode method, Resolver resolver, VerificationContext ctx) throws VerificationError {
     List<LocalVariableNode> localVariables = (List<LocalVariableNode>) method.localVariables;
     if (localVariables != null) {
       for (LocalVariableNode variable : localVariables) {

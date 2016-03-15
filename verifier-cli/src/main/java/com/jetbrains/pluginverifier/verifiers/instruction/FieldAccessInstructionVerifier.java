@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.instruction;
 
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
+import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
@@ -16,7 +17,7 @@ import org.objectweb.asm.tree.MethodNode;
  */
 public class FieldAccessInstructionVerifier implements InstructionVerifier {
   @Override
-  public void verify(ClassNode clazz, MethodNode method, AbstractInsnNode instr, Resolver resolver, VerificationContext ctx) {
+  public void verify(ClassNode clazz, MethodNode method, AbstractInsnNode instr, Resolver resolver, VerificationContext ctx) throws VerificationError {
     if (!(instr instanceof FieldInsnNode)) return;
     FieldInsnNode node = (FieldInsnNode) instr;
 
