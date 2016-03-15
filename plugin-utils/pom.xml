@@ -11,6 +11,7 @@
   </parent>
 
   <artifactId>plugin-utils</artifactId>
+  <version>1.0.1</version>
 
   <packaging>jar</packaging>
 
