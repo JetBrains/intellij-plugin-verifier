@@ -75,6 +75,7 @@ public class SoftJarResolver extends Resolver {
 
   @Nullable
   private ClassNode evaluateNode(@NotNull String className) {
+    //TODO: who will close zipFile???
     final ZipEntry entry = myJarFile.getEntry(className + CLASS_SUFFIX);
     InputStream inputStream = null;
     try {

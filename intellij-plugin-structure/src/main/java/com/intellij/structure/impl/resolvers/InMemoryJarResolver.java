@@ -2,7 +2,7 @@ package com.intellij.structure.impl.resolvers;
 
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.ClassReader;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.util.Collections;
@@ -15,7 +15,7 @@ import java.util.Set;
  */
 public class InMemoryJarResolver extends Resolver {
 
-  private final Map<String, Object> myInMemoryClasses = new HashMap<String, Object>();
+  private final Map<String, ClassNode> myInMemoryClasses = new HashMap<String, ClassNode>();
 
   private final String myPresentableName;
 
@@ -39,23 +39,9 @@ public class InMemoryJarResolver extends Resolver {
   }
 
   @Override
+  @Nullable
   public ClassNode findClass(@NotNull String className) {
-    Object obj = myInMemoryClasses.get(className);
-
-    if (obj == null) return null;
-
-    if (obj instanceof ClassNode) {
-      return (ClassNode) obj;
-    }
-
-    byte[] classContent = (byte[]) obj;
-
-    ClassNode node = new ClassNode();
-    new ClassReader(classContent).accept(node, 0);
-
-    myInMemoryClasses.put(className, node);
-
-    return node;
+    return myInMemoryClasses.get(className);
   }
 
   @Override
