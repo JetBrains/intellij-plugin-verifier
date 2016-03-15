@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -68,7 +69,7 @@ public class ContainerResolver extends Resolver {
 
   @Override
   @Nullable
-  public ClassNode findClass(@NotNull String className) {
+  public ClassNode findClass(@NotNull String className) throws IOException {
     for (Resolver pool : myResolvers) {
       ClassNode node = pool.findClass(className);
       if (node != null) {

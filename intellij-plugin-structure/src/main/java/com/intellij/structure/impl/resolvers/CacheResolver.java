@@ -5,6 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.io.IOException;
+import java.lang.ref.SoftReference;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -16,8 +18,7 @@ public class CacheResolver extends Resolver {
 
   private final Resolver myDelegate;
 
-  //TODO: WeakHashMap
-  private final Map<String, ClassNode> myCache = new HashMap<String, ClassNode>();
+  private final Map<String, SoftReference<ClassNode>> myCache = new HashMap<String, SoftReference<ClassNode>>();
 
   public CacheResolver(@NotNull Resolver delegate) {
     myDelegate = delegate;
@@ -25,13 +26,14 @@ public class CacheResolver extends Resolver {
 
   @Override
   @Nullable
-  public ClassNode findClass(@NotNull String className) {
-    ClassNode res = myCache.get(className);
-    if (res == null) {
-      res = myDelegate.findClass(className);
-      myCache.put(className, res);
+  public ClassNode findClass(@NotNull String className) throws IOException {
+    SoftReference<ClassNode> reference = myCache.get(className);
+    ClassNode node = reference == null ? null : reference.get();
+    if (node == null) {
+      node = myDelegate.findClass(className);
+      myCache.put(className, new SoftReference<ClassNode>(node));
     }
-    return res;
+    return node;
   }
 
   @Override

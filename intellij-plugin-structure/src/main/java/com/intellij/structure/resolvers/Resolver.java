@@ -51,10 +51,11 @@ public abstract class Resolver {
    * Returns a class-file node
    *
    * @param className class name in <i>binary</i> form (see JVM specification)
-   * @return class-file for accessing bytecode
+   * @return bytecode accessor
+   * @throws IOException if IO error occurs, e.g. file .class-file was deleted
    */
   @Nullable
-  public abstract ClassNode findClass(@NotNull String className);
+  public abstract ClassNode findClass(@NotNull String className) throws IOException;
 
   /**
    * Returns actual class holder which contains a specified class.

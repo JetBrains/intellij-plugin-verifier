@@ -6,7 +6,8 @@ import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.errors.IncorrectPluginException;
-import com.intellij.structure.impl.resolvers.InMemoryJarResolver;
+import com.intellij.structure.impl.resolvers.FilesResolver;
+import com.intellij.structure.impl.resolvers.ZipResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.resolvers.Resolver;
@@ -14,10 +15,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.tree.ClassNode;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -296,7 +298,8 @@ public class PluginManagerImpl extends PluginManager {
     ZipInputStream zipInputStream = null;
     try {
       zipInputStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)));
-      Resolver resolver = createResolverForZipStream(zipInputStream, file.getCanonicalPath());
+      String urlPath = StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
+      Resolver resolver = createResolverForZipStream(zipInputStream, urlPath, file.getCanonicalPath());
       descriptor.setResolver(resolver);
     } catch (IOException e) {
       throw new IncorrectPluginException("Unable to read file " + file, e);
@@ -306,31 +309,28 @@ public class PluginManagerImpl extends PluginManager {
   }
 
   @NotNull
-  private Resolver createResolverForZipStream(@NotNull ZipInputStream zipStream, @NotNull String resolverName) throws IOException {
+  private Resolver createResolverForZipStream(@NotNull ZipInputStream zipStream,
+                                              @NotNull String urlPath,
+                                              @NotNull String resolverName) throws IOException {
     List<Resolver> resolvers = new ArrayList<Resolver>();
 
-    InMemoryJarResolver inMemoryJarResolver = new InMemoryJarResolver("root of " + resolverName);
-
+    Resolver rootResolver = new ZipResolver(resolverName, urlPath);
 
     ZipEntry entry;
     while ((entry = zipStream.getNextEntry()) != null) {
-      if (entry.getName().endsWith(".class")) {
-        ClassNode node = getClassNodeFromInputStream(zipStream);
-        inMemoryJarResolver.addClass(node);
-      } else {
         Matcher matcher = LIB_JAR_REGEX.matcher(entry.getName());
         if (matcher.matches()) {
           String innerName = matcher.group(2);
           if (innerName != null) {
             ZipInputStream innerJar = new ZipInputStream(zipStream);
-            resolvers.add(createResolverForZipStream(innerJar, innerName));
+            String innerJarUrl = "jar:" + urlPath + "!/" + StringUtil.trimStart(entry.getName(), "/");
+            resolvers.add(createResolverForZipStream(innerJar, innerJarUrl, innerName));
           }
         }
-      }
     }
 
-    if (!inMemoryJarResolver.isEmpty()) {
-      resolvers.add(inMemoryJarResolver);
+    if (!rootResolver.isEmpty()) {
+      resolvers.add(rootResolver);
     }
 
     return Resolver.createUnionResolver(resolverName, resolvers);
@@ -343,19 +343,13 @@ public class PluginManagerImpl extends PluginManager {
 
     if (classesDir.exists()) {
       Collection<File> classFiles = FileUtils.listFiles(classesDir, new String[]{"class"}, true);
-      InMemoryJarResolver rootResolver = new InMemoryJarResolver("Plugin root classes of " + descriptor.getPluginId());
-      for (File file : classFiles) {
-        InputStream is = null;
-        try {
-          is = FileUtils.openInputStream(file);
-          ClassNode node = getClassNodeFromInputStream(is);
-          rootResolver.addClass(node);
-        } catch (IOException e) {
-          throw new IncorrectPluginException("Unable to read class file " + file, e);
-        } finally {
-          IOUtils.closeQuietly(is);
-        }
+      Resolver rootResolver;
+      try {
+        rootResolver = new FilesResolver("Plugin `classes` directory of " + descriptor.getPluginId(), classFiles);
+      } catch (IOException e) {
+        throw new IncorrectPluginException("Unable to read `classes` directory classes", e);
       }
+
       if (!rootResolver.isEmpty()) {
         resolvers.add(rootResolver);
       }
@@ -375,11 +369,5 @@ public class PluginManagerImpl extends PluginManager {
     descriptor.setResolver(Resolver.createUnionResolver("Plugin resolver " + descriptor.getPluginId(), resolvers));
   }
 
-  @NotNull
-  private ClassNode getClassNodeFromInputStream(@NotNull InputStream is) throws IOException {
-    ClassNode node = new ClassNode();
-    new ClassReader(is).accept(node, 0);
-    return node;
-  }
 
 }

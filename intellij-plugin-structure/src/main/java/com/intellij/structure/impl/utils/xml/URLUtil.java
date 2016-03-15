@@ -17,10 +17,9 @@ package com.intellij.structure.impl.utils.xml;
 
 import com.google.common.io.ByteStreams;
 import com.intellij.structure.impl.utils.StringUtil;
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -30,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 public class URLUtil {
@@ -47,6 +45,7 @@ public class URLUtil {
    * Opens a url stream. The semantics is the sames as {@link URL#openStream()}. The
    * separate method is needed, since jar URLs open jars via JarFactory and thus keep them
    * mapped into memory.
+   *
    * @param url url
    * @return input stream
    * @throws IOException if problems
@@ -145,22 +144,26 @@ public class URLUtil {
    * @throws IOException if URL is malformed or unable to open a stream
    */
   @NotNull
-  public static InputStream openRecursiveJarStream(@NotNull URL url) throws IOException {
+  public static ZipInputStream openRecursiveJarStream(@NotNull URL url) throws IOException {
     String[] paths = splitUrl(url.toExternalForm());
-    if (paths.length <= 1) {
+    if (paths.length == 0) {
       throw new MalformedURLException(url.toExternalForm());
     }
-    ZipInputStream zipInputStream = null;
+    FileInputStream in;
     try {
-      zipInputStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(unquote(paths[0]))));
-      return openRecursiveJarStream(zipInputStream, paths, 1);
-    } finally {
-      IOUtils.closeQuietly(zipInputStream);
+      in = FileUtils.openInputStream(new File(unquote(paths[0])));
+    } catch (FileNotFoundException e) {
+      throw new MalformedURLException(url.toExternalForm());
     }
+    ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(in));
+    if (paths.length == 1) {
+      return zipInputStream;
+    }
+    return openRecursiveJarStream(zipInputStream, paths, 1);
   }
 
   @NotNull
-  private static InputStream openRecursiveJarStream(@NotNull final ZipInputStream zipStream, String[] entries, int pos) throws IOException {
+  private static ZipInputStream openRecursiveJarStream(@NotNull final ZipInputStream zipStream, String[] entries, int pos) throws IOException {
     final String entry = entries[pos];
 
     ZipEntry zipEntry;
@@ -168,7 +171,10 @@ public class URLUtil {
       if (StringUtil.equal(zipEntry.getName(), entry)) {
 
         if (pos == entries.length - 1) {
-          return copyInputStream(zipStream);
+          if (StringUtil.endsWithIgnoreCase(entry, ".jar") || StringUtil.endsWithIgnoreCase(entry, ".zip")) {
+            return new ZipInputStream(zipStream);
+          }
+          return zipStream;
         }
 
         return openRecursiveJarStream(new ZipInputStream(zipStream), entries, pos + 1);
@@ -186,60 +192,6 @@ public class URLUtil {
     while (path.startsWith("file:")) {
       path = StringUtil.trimStart(path, "file:");
     }
-    return path.split("\\!/");
-  }
-
-  @NotNull
-  private static InputStream openJarStream(@NotNull URL url) throws IOException {
-    String[] paths = splitJarUrl(url.getFile());
-    if (paths == null || paths.length == 1 || paths.length > 3) {
-      throw new MalformedURLException(url.getFile());
-    }
-
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    final ZipFile zipFile = new ZipFile(unquote(paths[0]));
-    ZipEntry zipEntry = zipFile.getEntry(paths[1]);
-    if (zipEntry == null) {
-      zipFile.close();
-      throw new FileNotFoundException("Entry " + paths[1] + " not found in " + paths[0]);
-    }
-
-    InputStream in = null;
-
-    if (paths.length == 2) {
-      in = zipFile.getInputStream(zipEntry);
-    } else {
-      ZipInputStream innerJar = new ZipInputStream(zipFile.getInputStream(zipEntry));
-
-      ZipEntry innerEntry;
-      while ((innerEntry = innerJar.getNextEntry()) != null) {
-        if (paths[2].equals(innerEntry.getName())) {
-          in = innerJar;
-          break;
-        }
-      }
-
-      if (in == null) {
-        zipFile.close();
-        throw new FileNotFoundException("Entry " + paths[2] + " not found in " + paths[0] + "!/" + paths[1]);
-      }
-    }
-
-    return new FilterInputStream(in) {
-      @Override
-      public void close() throws IOException {
-        super.close();
-        zipFile.close();
-      }
-    };
-  }
-
-  @Nullable
-  public static String[] splitJarUrl(@NotNull String fullPath) {
-    if (!fullPath.startsWith(FILE_PROTOCOL + ":")) return null;
-
-    String path = fullPath.substring(FILE_PROTOCOL.length() + 1);
-
     return path.split("\\!/");
   }
 
