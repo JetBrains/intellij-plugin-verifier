@@ -32,11 +32,11 @@ public class ZipResolver extends Resolver {
   public ZipResolver(@NotNull String presentableName, @NotNull String zipUrl) throws IOException {
     myPresentableName = presentableName;
     myZipUrl = zipUrl;
-    updateCacheAndFindClass(null);
+    updateCacheAndFindClass(null, true);
   }
 
   @Nullable
-  private ClassNode updateCacheAndFindClass(@Nullable String findClass) throws IOException {
+  private ClassNode updateCacheAndFindClass(@Nullable String findClass, boolean firstUpdate) throws IOException {
     ClassNode result = null;
 
     ZipInputStream zipInputStream = null;
@@ -51,7 +51,7 @@ public class ZipResolver extends Resolver {
           if (StringUtil.equal(className, findClass)) {
             result = node;
           }
-          myClassesCache.put(className, new SoftReference<ClassNode>(node));
+          myClassesCache.put(className, firstUpdate ? null : new SoftReference<ClassNode>(node));
         }
       }
     } finally {
@@ -78,7 +78,7 @@ public class ZipResolver extends Resolver {
     SoftReference<ClassNode> reference = myClassesCache.get(className);
     ClassNode node = reference == null ? null : reference.get();
     if (node == null) {
-      node = updateCacheAndFindClass(className);
+      node = updateCacheAndFindClass(className, false);
     }
     return node;
   }
