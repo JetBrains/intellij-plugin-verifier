@@ -63,7 +63,7 @@ public abstract class Resolver {
    * e.g.: if {@code this} is a containing-resolver (it has inner resolvers), then the method will return the innermost
    * resolver which really contains a class
    * <p>
-   * it is meant to use in the following use-case: given some über-jar we may request the very .jar-file resolver from
+   * it is meant to use in the following use-case: given some uber-jar we may request the very .jar-file resolver from
    * which this class occurred
    *
    * @param className class name for which resolver should be found (in <i>binary</i> form)
