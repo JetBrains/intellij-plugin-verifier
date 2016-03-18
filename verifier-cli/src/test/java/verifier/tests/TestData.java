@@ -20,12 +20,13 @@ import java.util.Map;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class TestData {
+  public static final String IDEA_IC_14_0_4_ZIP = "ideaIC-14.0.4.zip";
   private static Map<String, String> wellKnownResources = new HashMap<String, String>();
 
   static {
     wellKnownResources.put("AWSCloudFormation-0.3.9.zip", "https://plugins.jetbrains.com/plugin/download?pr=idea&updateId=17907");
     wellKnownResources.put("AWSCloudFormation-0.3.16.zip", "https://plugins.jetbrains.com/plugin/download?pr=&updateId=19088");
-    wellKnownResources.put("ideaIC-14.0.4.tar.gz", "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/14.0.4/ideaIC-14.0.4.zip");
+    wellKnownResources.put(IDEA_IC_14_0_4_ZIP, "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/14.0.4/ideaIC-14.0.4.zip");
     wellKnownResources.put("ideaIU-144.3600.7.zip", "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/144.3600.7/ideaIU-144.3600.7.zip");
     wellKnownResources.put("ruby-8.0.0.20160127.zip", "https://plugins.jetbrains.com/plugin/download?pr=idea&updateId=23753");
     wellKnownResources.put("KotlinIJ141-17.zip", "https://plugins.jetbrains.com/plugin/download?pr=idea_ce&updateId=21835");
