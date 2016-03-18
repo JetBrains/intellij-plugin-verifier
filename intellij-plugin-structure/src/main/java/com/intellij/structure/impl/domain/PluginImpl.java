@@ -41,9 +41,9 @@ class PluginImpl implements Plugin {
   private final Map<String, PluginImpl> myOptionalDescriptors = new HashMap<String, PluginImpl>();
   private final Set<String> myReferencedClasses = new HashSet<String>();
   private final Multimap<String, Element> myExtensions = ArrayListMultimap.create();
+  @Nullable private Resolver myPluginResolver = Resolver.getEmptyResolver();
   @Nullable private byte[] myLogoContent;
   @Nullable private String myLogoUrl;
-  @Nullable private Resolver myPluginResolver;
   @Nullable private String myPluginName;
   @Nullable private String myPluginVersion;
   @Nullable private String myPluginId;

@@ -281,9 +281,22 @@ public class PluginManagerImpl extends PluginManager {
   @NotNull
   @Override
   public Plugin createPlugin(@NotNull File pluginFile) throws IOException, IncorrectPluginException {
+    return createPlugin(pluginFile, true);
+  }
+
+  @NotNull
+  private Plugin createPlugin(@NotNull File pluginFile, boolean readClasses) {
     PluginImpl descriptor = (PluginImpl) loadDescriptor(pluginFile, PLUGIN_XML);
-    loadClasses(pluginFile, descriptor);
+    if (readClasses) {
+      loadClasses(pluginFile, descriptor);
+    }
     return descriptor;
+  }
+
+  @NotNull
+  @Override
+  public Plugin createPluginWithEmptyResolver(@NotNull File pluginFile) throws IOException, IncorrectPluginException {
+    return createPlugin(pluginFile, false);
   }
 
   private void loadClasses(@NotNull File file, @NotNull PluginImpl descriptor) {
