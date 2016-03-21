@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 public class URLUtil {
@@ -149,17 +150,28 @@ public class URLUtil {
     if (paths.length == 0) {
       throw new MalformedURLException(url.toExternalForm());
     }
-    FileInputStream in;
-    try {
-      in = FileUtils.openInputStream(new File(unquote(paths[0])));
-    } catch (FileNotFoundException e) {
-      throw new MalformedURLException(url.toExternalForm());
-    }
-    ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(in));
     if (paths.length == 1) {
+      try {
+        return new ZipInputStream(new BufferedInputStream(FileUtils.openInputStream(new File(unquote(paths[0])))));
+      } catch (FileNotFoundException e) {
+        throw new MalformedURLException(url.toExternalForm());
+      }
+    }
+    ZipFile zipFile = new ZipFile(unquote(paths[0]));
+    ZipEntry entry = zipFile.getEntry(paths[1]);
+    if (entry == null) {
+      throw new FileNotFoundException("Entry " + Arrays.toString(paths) + " is not found");
+    }
+
+    if (!StringUtil.endsWithIgnoreCase(entry.getName(), ".jar") && !StringUtil.endsWithIgnoreCase(entry.getName(), ".zip")) {
+      throw new IOException("Entry " + entry.getName() + " inside " + paths[0] + " is not a .zip nor .jar archive.");
+    }
+
+    ZipInputStream zipInputStream = new ZipInputStream(zipFile.getInputStream(entry));
+    if (paths.length == 2) {
       return zipInputStream;
     }
-    return openRecursiveJarStream(zipInputStream, paths, 1);
+    return openRecursiveJarStream(zipInputStream, paths, 2);
   }
 
   @NotNull
