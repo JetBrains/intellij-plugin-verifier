@@ -20,4 +20,7 @@ public abstract class PluginManager {
   @NotNull
   public abstract Plugin createPlugin(@NotNull File pluginFile) throws IOException, IncorrectPluginException;
 
+  @NotNull
+  public abstract Plugin createPluginWithEmptyResolver(@NotNull File pluginFile) throws IOException, IncorrectPluginException;
+
 }

@@ -37,7 +37,7 @@ public class ZipResolver extends Resolver {
 
   @Nullable
   private ClassNode updateCacheAndFindClass(@Nullable String findClass, boolean firstUpdate) throws IOException {
-    ClassNode result = null;
+    ClassNode result = null; //strong reference on result
 
     ZipInputStream zipInputStream = null;
     try {
@@ -58,7 +58,6 @@ public class ZipResolver extends Resolver {
       IOUtils.closeQuietly(zipInputStream);
     }
 
-    //this is a strong reference to a ClassNode, so it's more reliable than myClassesCache.get(className).get()
     return result;
   }
 

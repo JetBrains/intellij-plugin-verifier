@@ -19,13 +19,13 @@ public class IntegrationTest {
   @Test
   public void issue2() throws Exception {
     runCheck(
-        "AWSCloudFormation-0.3.9.zip", "ideaIC-14.0.4.tar.gz",
+        "AWSCloudFormation-0.3.9.zip", TestData.IDEA_IC_14_0_4_ZIP,
         "accessing to unknown class com.intellij.json.JsonContextType\n  void com.intellij.aws.cloudformation.CloudFormationCodeContextType#<init>()");
   }
 
   @Test
   public void issue2_fixed_plugin() throws Exception {
-    runCheck("AWSCloudFormation-0.3.16.zip", "ideaIC-14.0.4.tar.gz", "");
+    runCheck("AWSCloudFormation-0.3.16.zip", TestData.IDEA_IC_14_0_4_ZIP, "");
   }
 
   private void runCheck(String pluginId, String ideId, String expectedProblems) throws Exception {

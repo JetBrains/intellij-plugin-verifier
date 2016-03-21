@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipFile;
@@ -18,35 +17,21 @@ public class JdkImpl extends Jdk {
 
   private static final Set<String> JDK_JAR_NAMES = ImmutableSet.of("rt.jar", "tools.jar", "classes.jar", "jsse.jar", "javaws.jar", "jce.jar", "jfxrt.jar", "plugin.jar");
 
-  private final List<ZipFile> myJars;
   private final Resolver myPool;
 
   public JdkImpl(@NotNull File jdkDir) throws IOException {
-    myJars = new ArrayList<ZipFile>();
-
-    collectJars(jdkDir);
-    myPool = JarsUtils.makeResolver("Jdk resolver " + jdkDir.getCanonicalPath(), myJars);
+    List<ZipFile> jars = collectJars(jdkDir);
+    myPool = JarsUtils.makeResolver("Jdk resolver " + jdkDir.getCanonicalPath(), jars);
   }
 
-  private void collectJars(@NotNull File dir) throws IOException {
-    final List<ZipFile> jars = JarsUtils.collectJarsRecursively(dir, new Predicate<File>() {
+  @NotNull
+  private List<ZipFile> collectJars(@NotNull File dir) throws IOException {
+    return JarsUtils.collectJarsRecursively(dir, new Predicate<File>() {
       @Override
       public boolean apply(File file) {
         return JDK_JAR_NAMES.contains(file.getName().toLowerCase());
       }
     });
-
-    myJars.addAll(jars);
-
-    final File[] files = dir.listFiles();
-    if (files == null) {
-      return;
-    }
-
-    for (File file : files) {
-      if (file.isDirectory())
-        collectJars(file);
-    }
   }
 
   @Override

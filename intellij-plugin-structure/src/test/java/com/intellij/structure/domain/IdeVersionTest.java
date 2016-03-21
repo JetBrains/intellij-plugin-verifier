@@ -39,6 +39,16 @@ public class IdeVersionTest {
   }
 
   @Test
+  public void testRiderTypicalBuild() {
+    IdeVersion updateBuild = IdeVersion.createIdeVersion("RS-144.4713");
+    Assert.assertEquals(144, updateBuild.getBaselineVersion());
+    Assert.assertEquals(4713, updateBuild.getBuild());
+    Assert.assertEquals("RS", updateBuild.getProductCode());
+//    Assert.assertEquals("rider", updateBuild.getProductName());
+    Assert.assertEquals(false, updateBuild.isSnapshot());
+  }
+
+  @Test
   public void testSnapshotBuild() {
     IdeVersion ideVersion = IdeVersion.createIdeVersion("PS-136.SNAPSHOT");
     Assert.assertEquals(136, ideVersion.getBaselineVersion());

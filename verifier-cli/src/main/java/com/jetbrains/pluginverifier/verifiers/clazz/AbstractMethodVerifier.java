@@ -69,10 +69,10 @@ public class AbstractMethodVerifier implements ClassVerifier {
         break;
       }
 
-      curNode = VerifierUtil.findClass(resolver, superName);
+      curNode = VerifierUtil.findClass(resolver, curNode.superName);
       if (curNode == null) {
         //TODO: don't return silently
-        return; // RETURN , don't check anymore because unknown class exists.
+        return;
       }
     }
 

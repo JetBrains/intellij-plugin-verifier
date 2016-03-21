@@ -11,7 +11,6 @@ import org.junit.Test;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -20,10 +19,10 @@ import static org.junit.Assert.*;
 /**
  * @author Sergey Patrikeev
  */
-public class IdeTest_IDEA_144_2608_2 {
+public class IdeTest_IDEA_144_3600_7 {
 
 
-  private static final String IDEA_144_LOAD_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/144.2608.2/ideaIU-144.2608.2.zip";
+  private static final String IDEA_IU_144_3600_7_ZIP = "ideaIU-144.3600.7.zip";
   private static Ide ide;
   private static Jdk runtime;
 
@@ -31,11 +30,11 @@ public class IdeTest_IDEA_144_2608_2 {
   public void setUp() throws Exception {
     if (ide != null) return;
 
-    File fileForDownload = TestUtils.getFileForDownload("Idea144.2608.2.zip");
-    TestUtils.downloadFile(IDEA_144_LOAD_URL, fileForDownload);
+    File fileForDownload = TestUtils.getFileForDownload(IDEA_IU_144_3600_7_ZIP);
+    TestUtils.downloadFile(TestUtils.IDEA_144_3600, fileForDownload);
 
 
-    File ideDir = new File(TestUtils.getTempRoot(), "Idea144.2608.2");
+    File ideDir = new File(TestUtils.getTempRoot(), IDEA_IU_144_3600_7_ZIP + ".d");
     if (!ideDir.isDirectory()) {
       //noinspection ResultOfMethodCallIgnored
       ideDir.mkdirs();
@@ -70,7 +69,7 @@ public class IdeTest_IDEA_144_2608_2 {
 
   @Test
   public void getVersion() throws Exception {
-    assertEquals("IU-144.2608", ide.getVersion().asString());
+    assertEquals("IU-144.3600", ide.getVersion().asString());
   }
 
   @Test
@@ -118,7 +117,9 @@ public class IdeTest_IDEA_144_2608_2 {
   @Test
   public void getResolver() throws Exception {
     Resolver resolver = ide.getResolver();
-    Collection<String> allClasses = resolver.getAllClasses();
+    Set<String> allClasses = resolver.getAllClasses();
+
+    assertEquals(86693, allClasses.size());
 
     int parts = 10;
     int done = 0;
