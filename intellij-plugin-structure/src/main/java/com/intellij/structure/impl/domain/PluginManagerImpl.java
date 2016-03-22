@@ -1,7 +1,7 @@
 package com.intellij.structure.impl.domain;
 
-import com.google.common.base.Function;
 import com.google.common.base.Predicates;
+import com.google.common.base.Supplier;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.domain.PluginManager;
@@ -9,20 +9,20 @@ import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.resolvers.FilesResolver;
 import com.intellij.structure.impl.resolvers.ZipResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
+import com.intellij.structure.impl.utils.Pair;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.validators.OptionalXmlValidator;
 import com.intellij.structure.impl.utils.validators.PluginXmlValidator;
 import com.intellij.structure.impl.utils.validators.Validator;
+import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.jdom2.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -43,6 +43,8 @@ public class PluginManagerImpl extends PluginManager {
   private static final String META_INF = "META-INF";
   private static final Pattern XML_IN_ROOT_PATTERN = Pattern.compile("([^/]*/)?META-INF/((\\w|\\-)+\\.xml)");
 
+  private final Map<String, Pair<String, Document>> myOptionalConfigDocuments = new HashMap<String, Pair<String, Document>>();
+
   private static boolean isJarOrZip(@NotNull File file) {
     if (file.isDirectory()) {
       return false;
@@ -51,6 +53,10 @@ public class PluginManagerImpl extends PluginManager {
     return StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip");
   }
 
+  @NotNull
+  private static String getFileEscapedUri(@NotNull File file) {
+    return StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
+  }
 
   @Nullable
   private Plugin loadDescriptor(@NotNull final File file, @NotNull String fileName, @NotNull Validator validator) throws IncorrectPluginException {
@@ -61,21 +67,16 @@ public class PluginManagerImpl extends PluginManager {
     } else if (file.exists() && isJarOrZip(file)) {
       descriptor = loadDescriptorFromZipFile(file, fileName, validator);
     } else {
-      validator.onIncorrectStructure("Incorrect plugin file type " + file + ". Should be a .zip or .jar archive or a directory.");
+      if (!file.exists()) {
+        validator.onIncorrectStructure("Plugin file is not found " + file);
+      } else {
+        validator.onIncorrectStructure("Incorrect plugin file type " + file + ". Should be a .zip or .jar archive or a directory.");
+      }
       return null;
     }
 
     if (descriptor != null) {
-      resolveOptionalDescriptors(fileName, (PluginImpl) descriptor, validator, new Function<String, PluginImpl>() {
-        @Override
-        @Nullable
-        public PluginImpl apply(@Nullable String optionalDescriptorName) throws IncorrectPluginException {
-          if (optionalDescriptorName != null) {
-            return (PluginImpl) loadDescriptor(file, optionalDescriptorName, new OptionalXmlValidator());
-          }
-          return null;
-        }
-      });
+      resolveOptionalDescriptors(fileName, (PluginImpl) descriptor, new OptionalXmlValidator());
     }
 
     if (descriptor == null) {
@@ -87,8 +88,7 @@ public class PluginManagerImpl extends PluginManager {
 
   private void resolveOptionalDescriptors(@NotNull String fileName,
                                           @NotNull PluginImpl descriptor,
-                                          @NotNull Validator validator,
-                                          @NotNull Function<String, PluginImpl> optionalDescriptorLoader) throws IncorrectPluginException {
+                                          @NotNull Validator validator) throws IncorrectPluginException {
 
     Map<PluginDependency, String> optionalConfigs = descriptor.getOptionalDependenciesConfigFiles();
     if (!optionalConfigs.isEmpty()) {
@@ -101,16 +101,19 @@ public class PluginManagerImpl extends PluginManager {
           validator.onIncorrectStructure("Plugin has recursive config dependencies for descriptor " + fileName);
         }
 
-        PluginImpl optDescriptor;
-        try {
-          optDescriptor = optionalDescriptorLoader.apply(optFileName);
-        } catch (IncorrectPluginException e) {
-          //maybe log somehow?
-          continue;
-        }
-
-        if (optDescriptor != null) {
-          descriptors.put(optFileName, optDescriptor);
+        Pair<String, Document> xmlPair = myOptionalConfigDocuments.get(optFileName);
+        if (xmlPair != null) {
+          try {
+            URL url = new URL(xmlPair.getFirst());
+            Document document = xmlPair.getSecond();
+            PluginImpl optDescriptor = new PluginImpl();
+            optDescriptor.readExternal(document, url, new OptionalXmlValidator());
+            descriptors.put(optFileName, optDescriptor);
+          } catch (Exception e) {
+            validator.onCheckedException("Unable to read META-INF/" + fileName, e);
+          }
+        } else {
+          validator.onMissingFile("Optional descriptor META-INF/" + fileName + " is not found");
         }
       }
 
@@ -122,27 +125,40 @@ public class PluginManagerImpl extends PluginManager {
   private Plugin checkFileInRoot(@NotNull ZipEntry entry,
                                  @NotNull String fileName,
                                  @NotNull String urlPath,
-                                 @NotNull Validator validator) throws IncorrectPluginException {
+                                 @NotNull Validator validator,
+                                 @NotNull Supplier<InputStream> entryStreamSupplier) throws IncorrectPluginException {
     Matcher xmlMatcher = XML_IN_ROOT_PATTERN.matcher(entry.getName());
     if (xmlMatcher.matches()) {
+      final String xmlUrl = urlPath + entry.getName();
       String name = xmlMatcher.group(2);
-      if (StringUtil.equal(name, fileName)) {
-        PluginImpl descriptor = new PluginImpl();
-        try {
-          URL url = new URL(urlPath + entry.getName());
-          descriptor.readExternal(url, validator);
-        } catch (Exception e) {
-          validator.onCheckedException("Unable to read META-INF/" + fileName, e);
+
+      Document document;
+      URL url;
+      try {
+        InputStream stream = entryStreamSupplier.get();
+        if (stream == null) {
           return null;
         }
+        document = JDOMUtil.loadDocument(stream);
+        url = new URL(xmlUrl);
+      } catch (Exception e) {
+        validator.onCheckedException("Unable to read META-INF/" + fileName, e);
+        return null;
+      }
+
+      if (StringUtil.equal(name, fileName)) {
+        PluginImpl descriptor = new PluginImpl();
+        descriptor.readExternal(document, url, validator);
         return descriptor;
+      } else {
+        myOptionalConfigDocuments.put(name, Pair.create(xmlUrl, document));
       }
     }
     return null;
   }
 
   @Nullable
-  private Plugin loadFromZipStream(@NotNull ZipInputStream zipStream,
+  private Plugin loadFromZipStream(@NotNull final ZipInputStream zipStream,
                                    @NotNull String zipRootUrl,
                                    @NotNull String fileName,
                                    @NotNull Validator validator) throws IncorrectPluginException {
@@ -155,7 +171,13 @@ public class PluginManagerImpl extends PluginManager {
           continue;
         }
 
-        Plugin inRoot = checkFileInRoot(entry, fileName, zipRootUrl, validator);
+        Plugin inRoot = checkFileInRoot(entry, fileName, zipRootUrl, validator, new Supplier<InputStream>() {
+          @Override
+          public InputStream get() {
+            return zipStream;
+          }
+        });
+
         if (inRoot != null) {
           if (descriptor != null) {
             validator.onIncorrectStructure("Multiple META-INF/" + fileName + " found");
@@ -177,8 +199,8 @@ public class PluginManagerImpl extends PluginManager {
   }
 
   @Nullable
-  private Plugin loadDescriptorFromZipFile(@NotNull File file, @NotNull String fileName, @NotNull Validator validator) throws IncorrectPluginException {
-    final String zipRootUrl = "jar:" + StringUtil.replace(file.toURI().toASCIIString(), "!", "%21") + "!/";
+  private Plugin loadDescriptorFromZipFile(@NotNull final File file, @NotNull final String fileName, @NotNull final Validator validator) throws IncorrectPluginException {
+    final String zipRootUrl = "jar:" + getFileEscapedUri(file) + "!/";
 
     Plugin descriptorRoot = null;
     Plugin descriptorInner = null;
@@ -188,12 +210,24 @@ public class PluginManagerImpl extends PluginManager {
       zipFile = new ZipFile(file);
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
       while (entries.hasMoreElements()) {
-        ZipEntry entry = entries.nextElement();
+        final ZipEntry entry = entries.nextElement();
         if (entry.isDirectory()) {
           continue;
         }
 
-        Plugin inRoot = checkFileInRoot(entry, fileName, zipRootUrl, validator.getMissingFileIgnoringValidator());
+        final ZipFile finalZipFile = zipFile;
+        Plugin inRoot = checkFileInRoot(entry, fileName, zipRootUrl, validator.getMissingFileIgnoringValidator(), new Supplier<InputStream>() {
+          @Override
+          public InputStream get() {
+            try {
+              return finalZipFile.getInputStream(entry);
+            } catch (IOException e) {
+              validator.onCheckedException("Unable to read META-INF/" + fileName, e);
+              return null;
+            }
+          }
+        });
+
         if (inRoot != null) {
           if (descriptorRoot != null) {
             validator.onIncorrectStructure("Multiple META-INF/" + fileName + " found");
@@ -239,6 +273,22 @@ public class PluginManagerImpl extends PluginManager {
   private Plugin loadDescriptorFromDir(@NotNull final File dir, @NotNull String fileName, @NotNull Validator validator) throws IncorrectPluginException {
     File descriptorFile = new File(dir, META_INF + File.separator + fileName);
     if (descriptorFile.exists()) {
+
+      Collection<File> allXmlInRoot = FileUtils.listFiles(descriptorFile.getParentFile(), new String[]{"xml"}, false);
+      for (File xml : allXmlInRoot) {
+        InputStream inputStream = null;
+        try {
+          inputStream = FileUtils.openInputStream(xml);
+          Document document = JDOMUtil.loadDocument(inputStream);
+          String uri = getFileEscapedUri(xml);
+          myOptionalConfigDocuments.put(xml.getName(), Pair.create(uri, document));
+        } catch (Exception e) {
+          validator.onCheckedException("Unable to read xml-file: " + xml, e);
+        } finally {
+          IOUtils.closeQuietly(inputStream);
+        }
+      }
+
       PluginImpl descriptor = new PluginImpl();
       try {
         descriptor.readExternal(descriptorFile.toURI().toURL(), validator);
@@ -341,7 +391,7 @@ public class PluginManagerImpl extends PluginManager {
     ZipInputStream zipInputStream = null;
     try {
       zipInputStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)));
-      String urlPath = StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
+      String urlPath = getFileEscapedUri(file);
       Resolver resolver = createResolverForZipStream(zipInputStream, urlPath, file.getCanonicalPath());
       descriptor.setResolver(resolver);
     } catch (IOException e) {

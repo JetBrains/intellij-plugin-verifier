@@ -15,6 +15,7 @@
  */
 package com.intellij.structure.impl.utils.xml;
 
+import com.google.common.io.ByteStreams;
 import com.intellij.structure.impl.utils.StringUtil;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.*;
@@ -24,10 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 
-import java.io.CharArrayReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Iterator;
@@ -95,9 +93,17 @@ public class JDOMUtil {
     return loadDocument(URLUtil.openStream(url));
   }
 
+  /**
+   * Warning! This method closes the supplied stream.
+   *
+   * @param stream stream
+   * @return document
+   * @throws JDOMException if error
+   * @throws IOException   if error
+   */
   @NotNull
   public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
-    InputStreamReader reader = new InputStreamReader(stream, Charset.forName("UTF-8"));
+    InputStreamReader reader = new InputStreamReader(copyInputStream(stream), Charset.forName("UTF-8"));
     try {
       SAXBuilder saxBuilder = new SAXBuilder();
       saxBuilder.setEntityResolver(new EntityResolver() {
@@ -121,6 +127,11 @@ public class JDOMUtil {
 
   public static boolean isEmpty(@NotNull Element element) {
     return element.getAttributes().isEmpty() && element.getContent().isEmpty();
+  }
+
+  @NotNull
+  private static InputStream copyInputStream(@NotNull InputStream is) throws IOException {
+    return new ByteArrayInputStream(ByteStreams.toByteArray(is));
   }
 
   private static class EmptyTextFilter extends AbstractFilter {

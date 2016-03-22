@@ -15,7 +15,6 @@
  */
 package com.intellij.structure.impl.utils.xml;
 
-import com.google.common.io.ByteStreams;
 import com.intellij.structure.impl.utils.StringUtil;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NonNls;
@@ -217,8 +216,4 @@ public class URLUtil {
     return path.split("\\!/");
   }
 
-  @NotNull
-  public static InputStream copyInputStream(@NotNull InputStream is) throws IOException {
-    return new ByteArrayInputStream(ByteStreams.toByteArray(is));
-  }
 }

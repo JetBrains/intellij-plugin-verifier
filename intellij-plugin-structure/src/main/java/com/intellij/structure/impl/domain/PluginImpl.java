@@ -91,17 +91,18 @@ class PluginImpl implements Plugin {
   }
 
   private void checkAndSetEntries(@NotNull URL url, @Nullable Element rootElement, @NotNull Validator validator) throws IncorrectPluginException {
+    final String fileName = calcFileName(url);
     if (rootElement == null) {
-      throw new IncorrectPluginException("Failed to parse plugin.xml: root element <idea-plugin> is not found");
+      throw new IncorrectPluginException("Failed to parse " + fileName + ": root element <idea-plugin> is not found");
     }
 
     if (!"idea-plugin".equals(rootElement.getName())) {
-      throw new IncorrectPluginException("Invalid plugin.xml: root element must be <idea-plugin>, but it is " + rootElement.getName());
+      throw new IncorrectPluginException("Invalid " + fileName + ": root element must be <idea-plugin>, but it is " + rootElement.getName());
     }
 
     myPluginName = rootElement.getChildTextTrim("name");
     if (Strings.isNullOrEmpty(myPluginName)) {
-      validator.onIncorrectStructure("Invalid plugin.xml: 'name' is not specified");
+      validator.onIncorrectStructure("Invalid " + fileName + ": 'name' is not specified");
     }
 
     myPluginId = rootElement.getChildText("id");
@@ -113,7 +114,7 @@ class PluginImpl implements Plugin {
 
     Element vendorElement = rootElement.getChild("vendor");
     if (vendorElement == null) {
-      validator.onIncorrectStructure("Invalid plugin.xml: element 'vendor' is not found");
+      validator.onIncorrectStructure("Invalid " + fileName + ": element 'vendor' is not found");
     } else {
       myPluginVendor = vendorElement.getTextTrim();
       myVendorEmail = StringUtil.notNullize(vendorElement.getAttributeValue("email"));
@@ -123,12 +124,12 @@ class PluginImpl implements Plugin {
 
     myPluginVersion = rootElement.getChildTextTrim("version");
     if (myPluginVersion == null) {
-      validator.onIncorrectStructure("Invalid plugin.xml: version is not specified");
+      validator.onIncorrectStructure("Invalid " + fileName + ": version is not specified");
     }
 
     Element ideaVersionElement = rootElement.getChild("idea-version");
     if (ideaVersionElement == null) {
-      validator.onIncorrectStructure("Invalid plugin.xml: element 'idea-version' not found");
+      validator.onIncorrectStructure("Invalid " + fileName + ": element 'idea-version' not found");
     } else {
       setSinceUntilBuilds(ideaVersionElement);
     }
@@ -141,7 +142,7 @@ class PluginImpl implements Plugin {
 
     String description = rootElement.getChildTextTrim("description");
     if (StringUtil.isNullOrEmpty(description)) {
-      validator.onIncorrectStructure("Invalid plugin.xml: description is empty");
+      validator.onIncorrectStructure("Invalid " + fileName + ": description is empty");
     } else {
       myDescription = Jsoup.clean(description, WHITELIST);
     }
@@ -156,6 +157,15 @@ class PluginImpl implements Plugin {
         }
       }
     }
+  }
+
+  @NotNull
+  private String calcFileName(@NotNull URL url) {
+    final String path = url.getFile();
+    if (path.contains("META-INF/")) {
+      return "META-INF/" + StringUtil.substringAfter(path, "META-INF/");
+    }
+    return path;
   }
 
   private void setLogoContent(@NotNull URL url, Element vendorElement) {
@@ -425,7 +435,7 @@ class PluginImpl implements Plugin {
   }
 
 
-  private void readExternal(@NotNull Document document, @NotNull URL url, Validator validator) throws IncorrectPluginException {
+  void readExternal(@NotNull Document document, @NotNull URL url, Validator validator) throws IncorrectPluginException {
     try {
       document = JDOMXIncluder.resolve(document, url.toExternalForm());
     } catch (XIncludeException e) {

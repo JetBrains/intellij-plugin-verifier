@@ -13,6 +13,14 @@ public class StringUtil {
     return s == null || s.isEmpty();
   }
 
+  @Nullable
+  public static String substringAfter(@NotNull String text, @NotNull String subString) {
+    int i = text.indexOf(subString);
+    if (i == -1) return null;
+    return text.substring(i + subString.length());
+  }
+
+
   @NotNull
   public static String notNullize(@Nullable String s) {
     return s == null ? "" : s;
