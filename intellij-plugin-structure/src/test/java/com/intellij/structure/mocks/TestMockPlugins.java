@@ -27,13 +27,15 @@ public class TestMockPlugins {
     return new File("build" + File.separator + "mocks");
   }
 
-  /*@Test
+/*
+  @Test
   public void name() throws Exception {
-    File file = new File("/home/sergey/Documents/work/intellij-plugin-verifier/for_tests/kotlin.zip");
+    File file = new File("/home/user/Documents/intellij-plugin-verifier/for_tests/kotlinR.zip");
     Plugin plugin = PluginManager.getInstance().createPlugin(file);
     Set<String> allClassesReferencedFromXml = plugin.getAllClassesReferencedFromXml();
     System.out.println(allClassesReferencedFromXml);
-  }*/
+  }
+*/
 
   @NotNull
   private static File getMockPlugin(String mockName) {

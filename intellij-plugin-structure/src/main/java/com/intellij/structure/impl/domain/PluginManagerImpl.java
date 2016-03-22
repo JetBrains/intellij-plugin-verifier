@@ -259,12 +259,12 @@ public class PluginManagerImpl extends PluginManager {
 
     for (final File f : files) {
       if (isJarOrZip(f)) {
-        descriptor = loadDescriptorFromZip(f, fileName, false);
+        descriptor = loadDescriptorFromZip(f, fileName, validate);
         if (descriptor != null) {
           break;
         }
       } else if (f.isDirectory()) {
-        Plugin descriptor1 = loadDescriptorFromDir(f, fileName, false);
+        Plugin descriptor1 = loadDescriptorFromDir(f, fileName, validate);
         if (descriptor1 != null) {
           if (descriptor != null) {
             throw new IncorrectPluginException("Two or more META-INF/plugin.xml's detected");
