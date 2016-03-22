@@ -21,7 +21,7 @@ public interface Ide {
    * @return copy of this Ide with added {@code plugin}
    */
   @NotNull
-  Ide expandedIde(@NotNull Plugin plugin);
+  Ide getExpandedIde(@NotNull Plugin plugin);
 
   @NotNull
   List<Plugin> getCustomPlugins();

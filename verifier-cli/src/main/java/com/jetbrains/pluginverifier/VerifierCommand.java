@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.jar.JarFile;
 
 /**
  * @author Sergey Evdokimov
@@ -70,7 +69,7 @@ public abstract class VerifierCommand {
     List<Resolver> pools = new ArrayList<Resolver>(values.length);
 
     for (String value : values) {
-      pools.add(Resolver.createJarResolver(new JarFile(value)));
+      pools.add(Resolver.createJarResolver(new File(value)));
     }
 
     return Resolver.createUnionResolver("External classpath resolver: " + Arrays.toString(values), pools);

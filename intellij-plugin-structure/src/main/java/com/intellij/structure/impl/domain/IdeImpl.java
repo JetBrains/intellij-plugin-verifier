@@ -44,7 +44,7 @@ class IdeImpl implements Ide {
 
   @NotNull
   @Override
-  public Ide expandedIde(@NotNull Plugin plugin) {
+  public Ide getExpandedIde(@NotNull Plugin plugin) {
     List<Plugin> newCustoms = new ArrayList<Plugin>(myCustomPlugins);
     newCustoms.add(plugin);
     return new IdeImpl(myResolver, myBundledPlugins, newCustoms, myVersion);

@@ -103,7 +103,7 @@ public class IdeTest_IDEA_144_3600_7 {
 
     assertTrue(ide.getCustomPlugins().isEmpty());
 
-    ide = ide.expandedIde(rubyPlugin);
+    ide = ide.getExpandedIde(rubyPlugin);
     assertTrue(!ide.getCustomPlugins().isEmpty());
     assertTrue(ide.getCustomPlugins().get(0) == rubyPlugin);
 
