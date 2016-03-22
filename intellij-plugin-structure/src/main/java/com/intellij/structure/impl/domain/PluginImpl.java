@@ -90,7 +90,7 @@ class PluginImpl implements Plugin {
     }
   }
 
-  private void checkAndSetEntries(@NotNull URL url, @Nullable Element rootElement, boolean checkValidity) throws IncorrectPluginException {
+  private void checkAndSetEntries(@NotNull URL url, @Nullable Element rootElement, boolean validate) throws IncorrectPluginException {
     if (rootElement == null) {
       throw new IncorrectPluginException("Failed to parse plugin.xml: root element <idea-plugin> is not found");
     }
@@ -101,7 +101,7 @@ class PluginImpl implements Plugin {
 
     myPluginName = rootElement.getChildTextTrim("name");
     if (Strings.isNullOrEmpty(myPluginName)) {
-      if (checkValidity) {
+      if (validate) {
         throw new IncorrectPluginException("Invalid plugin.xml: 'name' is not specified");
       }
     }
@@ -115,7 +115,7 @@ class PluginImpl implements Plugin {
 
     Element vendorElement = rootElement.getChild("vendor");
     if (vendorElement == null) {
-      if (checkValidity) {
+      if (validate) {
         throw new IncorrectPluginException("Invalid plugin.xml: element 'vendor' is not found");
       }
     } else {
@@ -127,14 +127,14 @@ class PluginImpl implements Plugin {
 
     myPluginVersion = rootElement.getChildTextTrim("version");
     if (myPluginVersion == null) {
-      if (checkValidity) {
+      if (validate) {
         throw new IncorrectPluginException("Invalid plugin.xml: version is not specified");
       }
     }
 
     Element ideaVersionElement = rootElement.getChild("idea-version");
     if (ideaVersionElement == null) {
-      if (checkValidity) {
+      if (validate) {
         throw new IncorrectPluginException("Invalid plugin.xml: element 'idea-version' not found");
       }
     } else {
@@ -149,7 +149,7 @@ class PluginImpl implements Plugin {
 
     String description = rootElement.getChildTextTrim("description");
     if (StringUtil.isNullOrEmpty(description)) {
-      if (checkValidity) {
+      if (validate) {
         throw new IncorrectPluginException("Invalid plugin.xml: description is empty");
       }
     } else {
@@ -425,10 +425,10 @@ class PluginImpl implements Plugin {
     return myLogoUrl;
   }
 
-  void readExternal(@NotNull URL url, boolean checkValidity) throws IncorrectPluginException {
+  void readExternal(@NotNull URL url, boolean verify) throws IncorrectPluginException {
     try {
       Document document = JDOMUtil.loadDocument(url);
-      readExternal(document, url, checkValidity);
+      readExternal(document, url, verify);
     } catch (JDOMException e) {
       throw new IncorrectPluginException("Unable to read " + url.getFile(), e);
     } catch (IOException e) {
@@ -437,13 +437,13 @@ class PluginImpl implements Plugin {
   }
 
 
-  private void readExternal(@NotNull Document document, @NotNull URL url, boolean checkValidity) throws IncorrectPluginException {
+  private void readExternal(@NotNull Document document, @NotNull URL url, boolean verify) throws IncorrectPluginException {
     try {
       document = JDOMXIncluder.resolve(document, url.toExternalForm());
     } catch (XIncludeException e) {
       throw new IncorrectPluginException("Unable to read resolve " + url.getFile(), e);
     }
-    checkAndSetEntries(url, document.getRootElement(), checkValidity);
+    checkAndSetEntries(url, document.getRootElement(), verify);
   }
 
   @NotNull
@@ -457,6 +457,13 @@ class PluginImpl implements Plugin {
   void setOptionalDescriptors(@NotNull Map<String, PluginImpl> optionalDescriptors) {
     myOptionalDescriptors.clear();
     myOptionalDescriptors.putAll(optionalDescriptors);
+    for (PluginImpl optDescriptor : optionalDescriptors.values()) {
+      mergeOptionalConfig(optDescriptor);
+    }
+  }
+
+  private void mergeOptionalConfig(@NotNull PluginImpl optDescriptor) {
+    myExtensions.putAll(optDescriptor.getExtensions());
   }
 
   void setResolver(@NotNull Resolver resolver) {

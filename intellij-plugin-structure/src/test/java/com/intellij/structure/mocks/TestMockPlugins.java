@@ -101,6 +101,7 @@ public class TestMockPlugins {
 
     Multimap<String, Element> extensions = plugin.getExtensions();
     assertTrue(extensions.containsKey("com.intellij.referenceImporter"));
+    assertTrue(extensions.containsKey("org.intellij.scala.scalaTestDefaultWorkingDirectoryProvider"));
   }
 
   private <T> void assertContains(Collection<T> collection, T elem) {
