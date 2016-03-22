@@ -14,10 +14,8 @@ import java.util.Set;
  */
 public interface Plugin {
 
-  @Nullable
   IdeVersion getSinceBuild();
 
-  @Nullable
   IdeVersion getUntilBuild();
 
   boolean isCompatibleWithIde(@NotNull IdeVersion ideVersion);
@@ -33,7 +31,6 @@ public interface Plugin {
 
   String getPluginName();
 
-  @Nullable
   String getPluginVersion();
 
   String getPluginId();

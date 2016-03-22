@@ -27,21 +27,19 @@ public class TestMockPlugins {
     return new File("build" + File.separator + "mocks");
   }
 
-/*
+  @NotNull
+  private static File getMockPlugin(String mockName) {
+    File file = new File(getMocksDir(), mockName);
+    Assert.assertTrue("mock plugin " + mockName + " is not found in " + file, file.exists());
+    return file;
+  }
+
   @Test
   public void name() throws Exception {
     File file = new File("/home/user/Documents/intellij-plugin-verifier/for_tests/kotlinR.zip");
     Plugin plugin = PluginManager.getInstance().createPlugin(file);
     Set<String> allClassesReferencedFromXml = plugin.getAllClassesReferencedFromXml();
     System.out.println(allClassesReferencedFromXml);
-  }
-*/
-
-  @NotNull
-  private static File getMockPlugin(String mockName) {
-    File file = new File(getMocksDir(), mockName);
-    Assert.assertTrue("mock plugin " + mockName + " is not found in " + file, file.exists());
-    return file;
   }
 
   //test simple .jar structure

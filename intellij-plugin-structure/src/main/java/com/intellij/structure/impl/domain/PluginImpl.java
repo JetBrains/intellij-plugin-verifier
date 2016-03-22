@@ -8,6 +8,7 @@ import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.utils.StringUtil;
+import com.intellij.structure.impl.utils.validators.Validator;
 import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.impl.utils.xml.URLUtil;
@@ -20,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
@@ -90,7 +90,7 @@ class PluginImpl implements Plugin {
     }
   }
 
-  private void checkAndSetEntries(@NotNull URL url, @Nullable Element rootElement, boolean validate) throws IncorrectPluginException {
+  private void checkAndSetEntries(@NotNull URL url, @Nullable Element rootElement, @NotNull Validator validator) throws IncorrectPluginException {
     if (rootElement == null) {
       throw new IncorrectPluginException("Failed to parse plugin.xml: root element <idea-plugin> is not found");
     }
@@ -101,9 +101,7 @@ class PluginImpl implements Plugin {
 
     myPluginName = rootElement.getChildTextTrim("name");
     if (Strings.isNullOrEmpty(myPluginName)) {
-      if (validate) {
-        throw new IncorrectPluginException("Invalid plugin.xml: 'name' is not specified");
-      }
+      validator.onIncorrectStructure("Invalid plugin.xml: 'name' is not specified");
     }
 
     myPluginId = rootElement.getChildText("id");
@@ -115,9 +113,7 @@ class PluginImpl implements Plugin {
 
     Element vendorElement = rootElement.getChild("vendor");
     if (vendorElement == null) {
-      if (validate) {
-        throw new IncorrectPluginException("Invalid plugin.xml: element 'vendor' is not found");
-      }
+      validator.onIncorrectStructure("Invalid plugin.xml: element 'vendor' is not found");
     } else {
       myPluginVendor = vendorElement.getTextTrim();
       myVendorEmail = StringUtil.notNullize(vendorElement.getAttributeValue("email"));
@@ -127,16 +123,12 @@ class PluginImpl implements Plugin {
 
     myPluginVersion = rootElement.getChildTextTrim("version");
     if (myPluginVersion == null) {
-      if (validate) {
-        throw new IncorrectPluginException("Invalid plugin.xml: version is not specified");
-      }
+      validator.onIncorrectStructure("Invalid plugin.xml: version is not specified");
     }
 
     Element ideaVersionElement = rootElement.getChild("idea-version");
     if (ideaVersionElement == null) {
-      if (validate) {
-        throw new IncorrectPluginException("Invalid plugin.xml: element 'idea-version' not found");
-      }
+      validator.onIncorrectStructure("Invalid plugin.xml: element 'idea-version' not found");
     } else {
       setSinceUntilBuilds(ideaVersionElement);
     }
@@ -149,9 +141,7 @@ class PluginImpl implements Plugin {
 
     String description = rootElement.getChildTextTrim("description");
     if (StringUtil.isNullOrEmpty(description)) {
-      if (validate) {
-        throw new IncorrectPluginException("Invalid plugin.xml: description is empty");
-      }
+      validator.onIncorrectStructure("Invalid plugin.xml: description is empty");
     } else {
       myDescription = Jsoup.clean(description, WHITELIST);
     }
@@ -425,25 +415,23 @@ class PluginImpl implements Plugin {
     return myLogoUrl;
   }
 
-  void readExternal(@NotNull URL url, boolean verify) throws IncorrectPluginException {
+  void readExternal(@NotNull URL url, @NotNull Validator validator) throws IncorrectPluginException {
     try {
       Document document = JDOMUtil.loadDocument(url);
-      readExternal(document, url, verify);
-    } catch (JDOMException e) {
-      throw new IncorrectPluginException("Unable to read " + url.getFile(), e);
-    } catch (IOException e) {
-      throw new IncorrectPluginException("Unable to read " + url.getFile(), e);
+      readExternal(document, url, validator);
+    } catch (Exception e) {
+      validator.onCheckedException("Unable to read " + url, e);
     }
   }
 
 
-  private void readExternal(@NotNull Document document, @NotNull URL url, boolean verify) throws IncorrectPluginException {
+  private void readExternal(@NotNull Document document, @NotNull URL url, Validator validator) throws IncorrectPluginException {
     try {
       document = JDOMXIncluder.resolve(document, url.toExternalForm());
     } catch (XIncludeException e) {
       throw new IncorrectPluginException("Unable to read resolve " + url.getFile(), e);
     }
-    checkAndSetEntries(url, document.getRootElement(), verify);
+    checkAndSetEntries(url, document.getRootElement(), validator);
   }
 
   @NotNull

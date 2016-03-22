@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -105,11 +104,11 @@ public class IdeManagerImpl extends IdeManager {
     Collection<File> files = FileUtils.listFiles(root, new WildcardFileFilter("plugin.xml"), TrueFileFilter.TRUE);
     for (File file : files) {
       try {
-        PluginImpl plugin = new PluginImpl();
-        plugin.readExternal(file.toURI().toURL(), false);
+        Plugin plugin = PluginManager.getInstance().createPlugin(file);
         result.add(plugin);
-      } catch (MalformedURLException ignored) {
-      } catch (IncorrectPluginException ignored) {
+      } catch (Exception e) {
+        System.err.println("Unable to load dummy plugin from " + file);
+        e.printStackTrace();
       }
     }
     return result;
