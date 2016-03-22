@@ -8,7 +8,6 @@ import org.codehaus.plexus.logging.console.ConsoleLogger;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
-import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
 import java.util.List;
@@ -121,6 +120,7 @@ public class IdeTest_IDEA_144_3600_7 {
 
     assertEquals(86693, allClasses.size());
 
+/*
     int parts = 10;
     int done = 0;
     int doneLast = 0;
@@ -136,6 +136,7 @@ public class IdeTest_IDEA_144_3600_7 {
       assertNotNull(classFile);
       assertEquals(aClass, classFile.name);
     }
+*/
 
   }
 }

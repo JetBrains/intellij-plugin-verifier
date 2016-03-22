@@ -13,8 +13,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.util.*;
-import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * @author Dennis.Ushakov
@@ -23,55 +23,24 @@ public class JarFileResolver extends Resolver {
 
   private static final String CLASS_SUFFIX = ".class";
 
-  private final File myFile;
+  private final ZipFile myJarFile;
 
   private final Map<String, SoftReference<ClassNode>> myClassesCache = new HashMap<String, SoftReference<ClassNode>>();
 
   public JarFileResolver(@NotNull File jarFile) throws IOException {
-    if (!jarFile.getName().endsWith(".jar")) {
-      throw new IllegalArgumentException("File should be a .jar archive");
-    }
-    myFile = jarFile;
-    updateCacheAndFindClass(false, null);
+    myJarFile = new ZipFile(jarFile);
+    preloadClassMap();
   }
 
-  @Nullable
-  private ClassNode updateCacheAndFindClass(boolean loadClasses, @Nullable String findClass) throws IOException {
-    ClassNode result = null;
-
-    JarFile jarFile = null;
-    try {
-      jarFile = new JarFile(myFile);
-
-      Enumeration<? extends ZipEntry> entries = jarFile.entries();
-      while (entries.hasMoreElements()) {
-        ZipEntry entry = entries.nextElement();
-        String entryName = entry.getName();
-        if (entryName.endsWith(CLASS_SUFFIX)) {
-          String className = StringUtil.trimEnd(entryName, CLASS_SUFFIX);
-          ClassNode classNode = null;
-          if (loadClasses) {
-            classNode = getClassNodeFromInputStream(jarFile.getInputStream(entry));
-
-            if (StringUtil.equal(className, findClass)) {
-              result = classNode;
-            }
-          }
-          myClassesCache.put(className, classNode == null ? null : new SoftReference<ClassNode>(classNode));
-        }
+  private void preloadClassMap() throws IOException {
+    Enumeration<? extends ZipEntry> entries = myJarFile.entries();
+    while (entries.hasMoreElements()) {
+      ZipEntry entry = entries.nextElement();
+      String name = entry.getName();
+      if (name.endsWith(CLASS_SUFFIX)) {
+        myClassesCache.put(StringUtil.trimEnd(name, CLASS_SUFFIX), null);
       }
-    } finally {
-      IOUtils.closeQuietly(jarFile);
     }
-
-    return result;
-  }
-
-  @NotNull
-  private ClassNode getClassNodeFromInputStream(@NotNull InputStream is) throws IOException {
-    ClassNode node = new ClassNode();
-    new ClassReader(is).accept(node, 0);
-    return node;
   }
 
   @NotNull
@@ -82,7 +51,7 @@ public class JarFileResolver extends Resolver {
 
   @Override
   public String toString() {
-    return myFile.getName();
+    return myJarFile.getName();
   }
 
   @Override
@@ -92,16 +61,35 @@ public class JarFileResolver extends Resolver {
 
   @Override
   @Nullable
-  public ClassNode findClass(@NotNull String className) throws IOException {
+  public ClassNode findClass(@NotNull String className) {
     if (!myClassesCache.containsKey(className)) {
       return null;
     }
     SoftReference<ClassNode> reference = myClassesCache.get(className);
     ClassNode classFile = reference == null ? null : reference.get();
     if (classFile == null) {
-      classFile = updateCacheAndFindClass(true, className);
+      classFile = evaluateNode(className);
+      myClassesCache.put(className, new SoftReference<ClassNode>(classFile));
     }
     return classFile;
+  }
+
+  @Nullable
+  private ClassNode evaluateNode(@NotNull String className) {
+    final ZipEntry entry = myJarFile.getEntry(className + CLASS_SUFFIX);
+    InputStream inputStream = null;
+    try {
+      inputStream = myJarFile.getInputStream(entry);
+
+      ClassNode node = new ClassNode();
+      new ClassReader(inputStream).accept(node, 0);
+
+      return node;
+    } catch (IOException e) {
+      return null;
+    } finally {
+      IOUtils.closeQuietly(inputStream);
+    }
   }
 
   @Override
