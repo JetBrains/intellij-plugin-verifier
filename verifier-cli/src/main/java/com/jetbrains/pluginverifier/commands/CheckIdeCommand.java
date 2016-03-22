@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.commands;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.collect.*;
-import com.intellij.structure.domain.*;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
@@ -280,7 +279,7 @@ public class CheckIdeCommand extends VerifierCommand {
         if (myImportantUpdates.contains(updateJson)) {
           //add a plugin with defined IntelliJ module to IDEA
           //it gives us a chance to refer to such plugins by their defined module-name
-          myIde = myIde.expandedIde(plugin);
+          myIde = myIde.getExpandedIde(plugin);
         }
 
       } catch (Exception e) {
