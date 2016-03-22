@@ -39,9 +39,14 @@ public class ZipResolver extends Resolver {
   private ClassNode updateCacheAndFindClass(@Nullable String findClass, boolean firstUpdate) throws IOException {
     ClassNode result = null; //strong reference on result
 
-    ZipInputStream zipInputStream = null;
+    InputStream inputStream = null;
+
     try {
-      zipInputStream = URLUtil.openRecursiveJarStream(new URL(myZipUrl));
+      inputStream = URLUtil.openRecursiveJarStream(new URL(myZipUrl));
+      if (!(inputStream instanceof ZipInputStream)) {
+        throw new IOException("Supplied input stream is not a stream for .zip of .jar archive");
+      }
+      ZipInputStream zipInputStream = (ZipInputStream) inputStream;
 
       ZipEntry entry;
       while ((entry = zipInputStream.getNextEntry()) != null) {
@@ -55,7 +60,7 @@ public class ZipResolver extends Resolver {
         }
       }
     } finally {
-      IOUtils.closeQuietly(zipInputStream);
+      IOUtils.closeQuietly(inputStream);
     }
 
     return result;

@@ -145,7 +145,7 @@ public class URLUtil {
    * @throws IOException if URL is malformed or unable to open a stream
    */
   @NotNull
-  public static ZipInputStream openRecursiveJarStream(@NotNull URL url) throws IOException {
+  public static InputStream openRecursiveJarStream(@NotNull URL url) throws IOException {
     String[] paths = splitUrl(url.toExternalForm());
     if (paths.length == 0) {
       throw new MalformedURLException(url.toExternalForm());
@@ -157,25 +157,31 @@ public class URLUtil {
         throw new MalformedURLException(url.toExternalForm());
       }
     }
+
     ZipFile zipFile = new ZipFile(unquote(paths[0]));
     ZipEntry entry = zipFile.getEntry(paths[1]);
     if (entry == null) {
       throw new FileNotFoundException("Entry " + Arrays.toString(paths) + " is not found");
     }
 
-    if (!StringUtil.endsWithIgnoreCase(entry.getName(), ".jar") && !StringUtil.endsWithIgnoreCase(entry.getName(), ".zip")) {
+    InputStream inputStream = zipFile.getInputStream(entry);
+    if (isJarOrZipEntry(entry.getName())) {
+      inputStream = new ZipInputStream(inputStream);
+    }
+
+    if (paths.length == 2) {
+      return inputStream;
+    }
+
+    if (!isJarOrZipEntry(entry.getName())) {
       throw new IOException("Entry " + entry.getName() + " inside " + paths[0] + " is not a .zip nor .jar archive.");
     }
 
-    ZipInputStream zipInputStream = new ZipInputStream(zipFile.getInputStream(entry));
-    if (paths.length == 2) {
-      return zipInputStream;
-    }
-    return openRecursiveJarStream(zipInputStream, paths, 2);
+    return openRecursiveJarStream((ZipInputStream) inputStream, paths, 2);
   }
 
   @NotNull
-  private static ZipInputStream openRecursiveJarStream(@NotNull final ZipInputStream zipStream, String[] entries, int pos) throws IOException {
+  private static InputStream openRecursiveJarStream(@NotNull final ZipInputStream zipStream, String[] entries, int pos) throws IOException {
     final String entry = entries[pos];
 
     ZipEntry zipEntry;
@@ -183,7 +189,7 @@ public class URLUtil {
       if (StringUtil.equal(zipEntry.getName(), entry)) {
 
         if (pos == entries.length - 1) {
-          if (StringUtil.endsWithIgnoreCase(entry, ".jar") || StringUtil.endsWithIgnoreCase(entry, ".zip")) {
+          if (isJarOrZipEntry(entry)) {
             return new ZipInputStream(zipStream);
           }
           return zipStream;
@@ -194,6 +200,10 @@ public class URLUtil {
     }
 
     throw new FileNotFoundException("Entry " + Arrays.toString(entries) + " is not found");
+  }
+
+  private static boolean isJarOrZipEntry(String entry) {
+    return StringUtil.endsWithIgnoreCase(entry, ".jar") || StringUtil.endsWithIgnoreCase(entry, ".zip");
   }
 
   @NotNull

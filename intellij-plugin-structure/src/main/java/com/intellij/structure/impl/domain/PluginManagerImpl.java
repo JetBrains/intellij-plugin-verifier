@@ -84,6 +84,7 @@ public class PluginManagerImpl extends PluginManager {
   private void resolveOptionalDescriptors(@NotNull String fileName,
                                           @NotNull PluginImpl descriptor,
                                           @NotNull Function<String, PluginImpl> optionalDescriptorLoader) throws IncorrectPluginException {
+
     Map<PluginDependency, String> optionalConfigs = descriptor.getOptionalDependenciesConfigFiles();
     if (!optionalConfigs.isEmpty()) {
       Map<String, PluginImpl> descriptors = new HashMap<String, PluginImpl>();
