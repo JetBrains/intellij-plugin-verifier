@@ -1,5 +1,6 @@
 package com.intellij.structure.impl.utils.validators;
 
+import com.intellij.structure.impl.utils.BiFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,33 +9,62 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class Validator {
 
-  public void onIncorrectStructure(@NotNull String message) throws RuntimeException {
-    onIncorrectStructure(message, null);
+  Validator() {
   }
 
-  public abstract void onMissingFile(@NotNull String message) throws RuntimeException;
+  private void performAction(@NotNull Event event, @NotNull String message, @Nullable Throwable cause) {
+    BiFunction<String, Throwable, Void> function = supplyAction(event);
+    if (function != null) {
+      function.apply(message, cause);
+    }
+  }
 
-  public abstract void onIncorrectStructure(@NotNull String message, @Nullable Throwable cause) throws RuntimeException;
+  public void onMissingConfigElement(@NotNull String message) throws RuntimeException {
+    performAction(Event.MISSING_CONFIG_ELEMENT, message, null);
+  }
 
-  public abstract void onCheckedException(@NotNull String message, @NotNull Exception cause) throws RuntimeException;
+  public void onMissingFile(@NotNull String message) throws RuntimeException {
+    performAction(Event.MISSING_FILE, message, null);
+  }
 
-  public Validator getMissingFileIgnoringValidator() {
+  final public void onIncorrectStructure(@NotNull String message) throws RuntimeException {
+    performAction(Event.INCORRECT_STRUCTURE, message, null);
+  }
+
+  public void onCheckedException(@NotNull String message, @NotNull Exception cause) throws RuntimeException {
+    performAction(Event.CHECKED_EXCEPTION, message, cause);
+  }
+
+  @Nullable
+  protected abstract BiFunction<String, Throwable, Void> supplyAction(@NotNull Event event);
+
+  private Validator createIgnoringValidator(@NotNull final Event ignoredEvent) {
     return new Validator() {
+      @Nullable
       @Override
-      public void onMissingFile(@NotNull String message) throws RuntimeException {
-        //do nothing
-      }
-
-      @Override
-      public void onIncorrectStructure(@NotNull String message, @Nullable Throwable cause) throws RuntimeException {
-        Validator.this.onIncorrectStructure(message, cause);
-      }
-
-      @Override
-      public void onCheckedException(@NotNull String message, @NotNull Exception cause) throws RuntimeException {
-        Validator.this.onCheckedException(message, cause);
+      protected BiFunction<String, Throwable, Void> supplyAction(@NotNull Event event) {
+        if (event == ignoredEvent) {
+          return null;
+        }
+        return Validator.this.supplyAction(event);
       }
     };
+  }
+
+  public Validator getMissingFileIgnoringValidator() {
+    return createIgnoringValidator(Event.MISSING_FILE);
+  }
+
+  public Validator getMissingConfigElementIgnoringValidator() {
+    return createIgnoringValidator(Event.MISSING_CONFIG_ELEMENT);
+  }
+
+
+  enum Event {
+    MISSING_FILE,
+    INCORRECT_STRUCTURE,
+    CHECKED_EXCEPTION,
+    MISSING_CONFIG_ELEMENT
   }
 
 }

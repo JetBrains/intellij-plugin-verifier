@@ -34,18 +34,18 @@ public class TestMockPlugins {
     return file;
   }
 
-  @Test
+  /*@Test
   public void name() throws Exception {
     File file = new File("/home/user/Documents/intellij-plugin-verifier/for_tests/scalarR.zip");
     Plugin plugin = PluginManager.getInstance().createPlugin(file);
     Set<String> allClassesReferencedFromXml = plugin.getAllClassesReferencedFromXml();
     System.out.println(allClassesReferencedFromXml);
-  }
+  }*/
 
   //test simple .jar structure
   @Test
   public void testMock1() throws Exception {
-    File file = getMockPlugin("mock-plugin1-1.0.jar");
+    File file = getMockPlugin("mock-plugin1.jar");
     Plugin plugin = PluginManager.getInstance().createPlugin(file);
 //    assertEquals(file, plugin.getPluginPath());
 

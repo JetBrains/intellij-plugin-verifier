@@ -1,5 +1,6 @@
 package com.intellij.structure.impl.utils.validators;
 
+import com.intellij.structure.impl.utils.BiFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,23 +9,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public class OptionalXmlValidator extends Validator {
 
+  @Nullable
   @Override
-  public void onMissingFile(@NotNull String message) throws RuntimeException {
-    onIncorrectStructure(message);
-  }
-
-  @Override
-  public void onIncorrectStructure(@NotNull String message, @Nullable Throwable cause) {
-    System.err.println(message);
-    if (cause != null) {
-      cause.printStackTrace();
-    }
-  }
-
-  @Override
-  public void onCheckedException(@NotNull String message, @NotNull Exception cause) {
-    System.err.println(message);
-    cause.printStackTrace();
+  protected BiFunction<String, Throwable, Void> supplyAction(@NotNull Event event) {
+    return new BiFunction<String, Throwable, Void>() {
+      @Override
+      public Void apply(String s, Throwable throwable) {
+        System.err.println(s);
+        if (throwable != null) {
+          throwable.printStackTrace();
+        }
+        return null;
+      }
+    };
   }
 
 }

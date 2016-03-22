@@ -338,7 +338,7 @@ public class PluginManagerImpl extends PluginManager {
         Plugin descriptor1 = loadDescriptorFromDir(f, fileName, validator.getMissingFileIgnoringValidator());
         if (descriptor1 != null) {
           if (descriptor != null) {
-            validator.onIncorrectStructure("Two or more META-INF/" + fileName + " detected");
+            validator.onIncorrectStructure("Multiple META-INF/" + fileName + " found");
             return null;
           }
           descriptor = descriptor1;
@@ -355,13 +355,12 @@ public class PluginManagerImpl extends PluginManager {
 
   @NotNull
   @Override
-  public Plugin createPlugin(@NotNull File pluginFile) throws IncorrectPluginException {
-    return createPlugin(pluginFile, true);
-  }
-
-  @NotNull
-  private Plugin createPlugin(@NotNull File pluginFile, boolean loadClasses) throws IncorrectPluginException {
+  public Plugin createPlugin(@NotNull File pluginFile, boolean validatePluginXml, boolean loadClasses) throws IncorrectPluginException {
     Validator validator = new PluginXmlValidator();
+    if (!validatePluginXml) {
+      validator = validator.getMissingConfigElementIgnoringValidator();
+    }
+
     PluginImpl descriptor = (PluginImpl) loadDescriptor(pluginFile, PLUGIN_XML, validator);
     if (descriptor != null) {
       if (loadClasses) {
@@ -371,12 +370,6 @@ public class PluginManagerImpl extends PluginManager {
     }
     //assert that PluginXmlValidator has thrown an appropriate exception
     throw new AssertionError("Unable to create plugin from " + pluginFile);
-  }
-
-  @NotNull
-  @Override
-  public Plugin createPluginWithEmptyResolver(@NotNull File pluginFile) throws IOException, IncorrectPluginException {
-    return createPlugin(pluginFile, false);
   }
 
   private void loadClasses(@NotNull File file, @NotNull PluginImpl descriptor, @NotNull Validator validator) {

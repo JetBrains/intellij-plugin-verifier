@@ -1,6 +1,7 @@
 package com.intellij.structure.impl.utils.validators;
 
 import com.intellij.structure.errors.IncorrectPluginException;
+import com.intellij.structure.impl.utils.BiFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,18 +10,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PluginXmlValidator extends Validator {
 
+  @Nullable
   @Override
-  public void onMissingFile(@NotNull String message) throws RuntimeException {
-    throw new IncorrectPluginException(message);
+  protected BiFunction<String, Throwable, Void> supplyAction(@NotNull Event event) {
+    return new BiFunction<String, Throwable, Void>() {
+      @Override
+      public Void apply(String s, Throwable throwable) {
+        //always throw an IncorrectPluginException
+        throw new IncorrectPluginException(s, throwable);
+      }
+    };
   }
 
-  @Override
-  public void onIncorrectStructure(@NotNull String message, @Nullable Throwable cause) {
-    throw new IncorrectPluginException(message, cause);
-  }
-
-  @Override
-  public void onCheckedException(@NotNull String message, @NotNull Exception cause) {
-    throw new IncorrectPluginException(message, cause);
-  }
 }

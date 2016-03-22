@@ -103,7 +103,7 @@ public class IdeManagerImpl extends IdeManager {
     Collection<File> files = FileUtils.listFiles(root, new WildcardFileFilter("plugin.xml"), TrueFileFilter.TRUE);
     for (File file : files) {
       try {
-        Plugin plugin = PluginManager.getInstance().createPlugin(file);
+        Plugin plugin = PluginManager.getInstance().createPlugin(file, false, true);
         result.add(plugin);
       } catch (Exception e) {
         System.err.println("Unable to load dummy plugin from " + file);
@@ -135,7 +135,7 @@ public class IdeManagerImpl extends IdeManager {
         continue;
 
       try {
-        plugins.add(PluginManager.getInstance().createPlugin(file));
+        plugins.add(PluginManager.getInstance().createPlugin(file, false, true));
       } catch (IncorrectPluginException e) {
         System.out.println("Failed to read plugin " + file + ": " + e.getMessage());
       } catch (IOException e) {
