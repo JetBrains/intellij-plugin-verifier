@@ -12,39 +12,24 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.jar.JarFile;
-import java.util.zip.ZipFile;
 
 public class JarsUtils {
 
   @NotNull
-  public static List<ZipFile> collectJarsRecursively(@NotNull File directory, @NotNull final Predicate<File> filter) throws IOException {
-
-    Collection<File> allJars = FileUtils.listFiles(directory, new AbstractFileFilter() {
+  public static Collection<File> collectJarsRecursively(@NotNull File directory, @NotNull final Predicate<File> filter) throws IOException {
+    return FileUtils.listFiles(directory, new AbstractFileFilter() {
       @Override
       public boolean accept(File file) {
         return StringUtil.endsWithIgnoreCase(file.getName(), ".jar") && filter.apply(file);
       }
     }, TrueFileFilter.INSTANCE);
-
-    List<ZipFile> jarFiles = new ArrayList<ZipFile>();
-
-    for (File jar : allJars) {
-      try {
-        jarFiles.add(new JarFile(jar, false));
-      } catch (IOException e) {
-        throw new IOException("Failed to open jar file " + jar, e);
-      }
-    }
-
-    return jarFiles;
   }
 
   @NotNull
-  public static Resolver makeResolver(@NotNull String presentableName, @NotNull List<ZipFile> jars) throws IOException {
+  public static Resolver makeResolver(@NotNull String presentableName, @NotNull Collection<File> jars) throws IOException {
     List<Resolver> pool = new ArrayList<Resolver>();
 
-    for (ZipFile jar : jars) {
+    for (File jar : jars) {
       try {
         pool.add(Resolver.createJarResolver(jar));
       } catch (IOException e) {

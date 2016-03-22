@@ -25,6 +25,7 @@ import java.util.zip.ZipInputStream;
  */
 public class ZipResolver extends Resolver {
 
+  private static final String CLASS_SUFFIX = ".class";
   private final Map<String, SoftReference<ClassNode>> myClassesCache = new HashMap<String, SoftReference<ClassNode>>();
   private final String myPresentableName;
   private final String myZipUrl;
@@ -32,11 +33,11 @@ public class ZipResolver extends Resolver {
   public ZipResolver(@NotNull String presentableName, @NotNull String zipUrl) throws IOException {
     myPresentableName = presentableName;
     myZipUrl = zipUrl;
-    updateCacheAndFindClass(null, true);
+    updateCacheAndFindClass(null, false);
   }
 
   @Nullable
-  private ClassNode updateCacheAndFindClass(@Nullable String findClass, boolean firstUpdate) throws IOException {
+  private ClassNode updateCacheAndFindClass(@Nullable String findClass, boolean loadClasses) throws IOException {
     ClassNode result = null; //strong reference on result
 
     InputStream inputStream = null;
@@ -50,13 +51,20 @@ public class ZipResolver extends Resolver {
 
       ZipEntry entry;
       while ((entry = zipInputStream.getNextEntry()) != null) {
-        if (entry.getName().endsWith(".class")) {
-          ClassNode node = getClassNodeFromInputStream(zipInputStream);
-          String className = node.name;
-          if (StringUtil.equal(className, findClass)) {
-            result = node;
+        String entryName = entry.getName();
+        if (entryName.endsWith(CLASS_SUFFIX)) {
+          String className = StringUtil.trimEnd(entryName, CLASS_SUFFIX);
+
+          ClassNode classNode = null;
+          if (loadClasses) {
+            classNode = getClassNodeFromInputStream(zipInputStream);
+
+            if (StringUtil.equal(className, findClass)) {
+              result = classNode;
+            }
           }
-          myClassesCache.put(className, firstUpdate ? null : new SoftReference<ClassNode>(node));
+
+          myClassesCache.put(className, classNode == null ? null : new SoftReference<ClassNode>(classNode));
         }
       }
     } finally {
@@ -82,7 +90,7 @@ public class ZipResolver extends Resolver {
     SoftReference<ClassNode> reference = myClassesCache.get(className);
     ClassNode node = reference == null ? null : reference.get();
     if (node == null) {
-      node = updateCacheAndFindClass(className, false);
+      node = updateCacheAndFindClass(className, true);
     }
     return node;
   }

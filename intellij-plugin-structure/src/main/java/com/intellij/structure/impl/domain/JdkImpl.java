@@ -9,9 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
-import java.util.zip.ZipFile;
 
 public class JdkImpl extends Jdk {
 
@@ -20,18 +19,14 @@ public class JdkImpl extends Jdk {
   private final Resolver myPool;
 
   public JdkImpl(@NotNull File jdkDir) throws IOException {
-    List<ZipFile> jars = collectJars(jdkDir);
-    myPool = JarsUtils.makeResolver("Jdk resolver " + jdkDir.getCanonicalPath(), jars);
-  }
-
-  @NotNull
-  private List<ZipFile> collectJars(@NotNull File dir) throws IOException {
-    return JarsUtils.collectJarsRecursively(dir, new Predicate<File>() {
+    Collection<File> jars = JarsUtils.collectJarsRecursively(jdkDir, new Predicate<File>() {
       @Override
       public boolean apply(File file) {
         return JDK_JAR_NAMES.contains(file.getName().toLowerCase());
       }
     });
+
+    myPool = JarsUtils.makeResolver("Jdk resolver " + jdkDir.getCanonicalPath(), jars);
   }
 
   @Override

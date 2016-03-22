@@ -4,15 +4,15 @@ package com.intellij.structure.resolvers;
 import com.intellij.structure.impl.resolvers.CacheResolver;
 import com.intellij.structure.impl.resolvers.ContainerResolver;
 import com.intellij.structure.impl.resolvers.EmptyResolver;
-import com.intellij.structure.impl.resolvers.SoftJarResolver;
+import com.intellij.structure.impl.resolvers.JarFileResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
-import java.util.zip.ZipFile;
 
 /**
  * Provides access to byte-code of class by its name
@@ -37,9 +37,17 @@ public abstract class Resolver {
     return new CacheResolver(delegate);
   }
 
+  /**
+   * Creates a resolver from the given File
+   *
+   * @param jarFile file - should be a .jar archive
+   * @return Resolver for the given .jar file
+   * @throws IOException              if io-error occurs
+   * @throws IllegalArgumentException if supplied file doesn't exist or is not a .jar archive
+   */
   @NotNull
-  public static Resolver createJarResolver(@NotNull ZipFile jarFile) throws IOException {
-    return new SoftJarResolver(jarFile);
+  public static Resolver createJarResolver(@NotNull File jarFile) throws IOException {
+    return new JarFileResolver(jarFile);
   }
 
   @NotNull

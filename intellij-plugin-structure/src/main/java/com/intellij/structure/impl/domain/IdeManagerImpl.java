@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipFile;
 
 /**
  * @author Sergey Patrikeev
@@ -49,7 +48,7 @@ public class IdeManagerImpl extends IdeManager {
       throw new IOException("Directory \"lib\" is not found (should be found at " + lib + ")");
     }
 
-    final List<ZipFile> jars = JarsUtils.collectJarsRecursively(lib, new Predicate<File>() {
+    final Collection<File> jars = JarsUtils.collectJarsRecursively(lib, new Predicate<File>() {
       @Override
       public boolean apply(File file) {
         return !file.getName().endsWith("javac2.jar");
