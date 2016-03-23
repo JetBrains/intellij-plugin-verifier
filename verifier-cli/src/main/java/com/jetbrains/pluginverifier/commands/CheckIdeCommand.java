@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.commands;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.collect.*;
+import com.intellij.structure.domain.*;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;

@@ -4,6 +4,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;
 import com.google.common.io.Files;
+import com.intellij.structure.domain.*;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.CommandHolder;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;

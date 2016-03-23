@@ -3,10 +3,14 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-utils/common-utils.iml" filepath="$PROJECT_DIR$/.idea/modules/common-utils/common-utils.iml" group="common-utils" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-utils/common-utils_main.iml" filepath="$PROJECT_DIR$/.idea/modules/common-utils/common-utils_main.iml" group="common-utils" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-utils/common-utils_test.iml" filepath="$PROJECT_DIR$/.idea/modules/common-utils/common-utils_test.iml" group="common-utils" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-plugin-structure.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-plugin-structure.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_main.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_main.iml" group="intellij-plugin-structure" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_test.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_test.iml" group="intellij-plugin-structure" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/mock-idea/mock-idea.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/mock-idea/mock-idea.iml" group="verifier-cli/mock-idea" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/mock-idea/mock-idea_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/mock-idea/mock-idea_main.iml" group="verifier-cli/mock-idea" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/mock-idea/mock-idea_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/mock-idea/mock-idea_test.iml" group="verifier-cli/mock-idea" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin.iml" group="verifier-cli/mock-plugin" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin1/mock-plugin1.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin1/mock-plugin1.iml" group="mock-plugin1" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin1/mock-plugin1_main.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin1/mock-plugin1_main.iml" group="mock-plugin1" />
@@ -17,11 +21,23 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3.iml" group="mock-plugin3" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3_main.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3_main.iml" group="mock-plugin3" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3_test.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3_test.iml" group="mock-plugin3" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin_main.iml" group="verifier-cli/mock-plugin" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin_test.iml" group="verifier-cli/mock-plugin" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/repository/repository.iml" filepath="$PROJECT_DIR$/.idea/modules/repository/repository.iml" group="repository" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/repository/repository_main.iml" filepath="$PROJECT_DIR$/.idea/modules/repository/repository_main.iml" group="repository" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/repository/repository_test.iml" filepath="$PROJECT_DIR$/.idea/modules/repository/repository_test.iml" group="repository" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/uploader/uploader.iml" filepath="$PROJECT_DIR$/.idea/modules/uploader/uploader.iml" group="uploader" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/uploader/uploader_main.iml" filepath="$PROJECT_DIR$/.idea/modules/uploader/uploader_main.iml" group="uploader" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/uploader/uploader_test.iml" filepath="$PROJECT_DIR$/.idea/modules/uploader/uploader_test.iml" group="uploader" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli.iml" group="verifier-cli" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_main.iml" group="verifier-cli" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_test.iml" group="verifier-cli" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-parent.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-parent.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-parent_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-parent_main.iml" group="verifier-parent" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-parent_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-parent_test.iml" group="verifier-parent" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-problems/verifier-problems.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-problems/verifier-problems.iml" group="verifier-problems" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-problems/verifier-problems_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-problems/verifier-problems_main.iml" group="verifier-problems" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-problems/verifier-problems_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-problems/verifier-problems_test.iml" group="verifier-problems" />
     </modules>
   </component>
 </project>
