@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module external.linked.project.id=":mock-plugin1" external.linked.project.path="$MODULE_DIR$/../../../intellij-plugin-structure/mock-plugin1" external.root.project.path="$MODULE_DIR$/../../../intellij-plugin-structure" external.system.id="GRADLE" external.system.module.group="org.jetbrains.intellij.plugins" external.system.module.version="unspecified" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
+    <output url="file://$MODULE_DIR$/../../../intellij-plugin-structure/mock-plugin1/build/classes/main" />
+    <output-test url="file://$MODULE_DIR$/../../../intellij-plugin-structure/mock-plugin1/build/classes/test" />
     <exclude-output />
     <content url="file://$MODULE_DIR$/../../../intellij-plugin-structure/mock-plugin1">
+      <sourceFolder url="file://$MODULE_DIR$/../../../intellij-plugin-structure/mock-plugin1/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../intellij-plugin-structure/mock-plugin1/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../intellij-plugin-structure/mock-plugin1/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../intellij-plugin-structure/mock-plugin1/src/test/resources" type="java-test-resource" />
       <excludeFolder url="file://$MODULE_DIR$/../../../intellij-plugin-structure/mock-plugin1/.gradle" />
       <excludeFolder url="file://$MODULE_DIR$/../../../intellij-plugin-structure/mock-plugin1/build" />
     </content>

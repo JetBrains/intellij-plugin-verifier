@@ -99,6 +99,7 @@ class PluginImpl implements Plugin {
 
     if (!"idea-plugin".equals(rootElement.getName())) {
       validator.onIncorrectStructure("Invalid " + fileName + ": root element must be <idea-plugin>, but it is " + rootElement.getName());
+      return;
     }
 
     myPluginName = rootElement.getChildTextTrim("name");
@@ -132,14 +133,14 @@ class PluginImpl implements Plugin {
     if (ideaVersionElement == null) {
       validator.onMissingConfigElement("Invalid " + fileName + ": element 'idea-version' not found");
     } else {
-      setSinceUntilBuilds(ideaVersionElement);
+      setSinceUntilBuilds(ideaVersionElement, validator);
     }
 
     setComponents(rootElement);
 
-    setPluginDependencies(rootElement);
+    setPluginDependencies(rootElement, validator);
 
-    setDefinedModules(rootElement);
+    setDefinedModules(rootElement, validator);
 
     String description = rootElement.getChildTextTrim("description");
     if (StringUtil.isNullOrEmpty(description)) {
@@ -267,7 +268,7 @@ class PluginImpl implements Plugin {
     return myUntilBuild;
   }
 
-  private void setPluginDependencies(@NotNull Element rootElement) throws IncorrectPluginException {
+  private void setPluginDependencies(@NotNull Element rootElement, @NotNull Validator validator) throws IncorrectPluginException {
     final List<Element> dependsElements = rootElement.getChildren("depends");
 
     for (Element dependsElement : dependsElements) {
@@ -275,7 +276,8 @@ class PluginImpl implements Plugin {
       final String pluginId = dependsElement.getTextTrim();
 
       if (pluginId == null) {
-        throw new IncorrectPluginException("Invalid plugin.xml: invalid dependency tag " + dependsElement);
+        validator.onIncorrectStructure("Invalid plugin.xml: invalid dependency tag " + dependsElement);
+        continue;
       }
 
       PluginDependency dependency = new PluginDependencyImpl(pluginId, optional);
@@ -332,20 +334,25 @@ class PluginImpl implements Plugin {
     return Collections.unmodifiableSet(myDefinedModules);
   }
 
-  private void setDefinedModules(@NotNull Element rootElement) {
+  private void setDefinedModules(@NotNull Element rootElement, @NotNull Validator validator) {
     List<Element> children = rootElement.getChildren("module");
     for (Element module : children) {
-      myDefinedModules.add(module.getAttributeValue("value"));
+      String value = module.getAttributeValue("value");
+      if (value == null) {
+        validator.onIncorrectStructure("Invalid <module> tag: value is not specified");
+        continue;
+      }
+      myDefinedModules.add(value);
     }
   }
 
-  private void setSinceUntilBuilds(@NotNull Element ideaVersion) throws IncorrectPluginException {
+  private void setSinceUntilBuilds(@NotNull Element ideaVersion, @NotNull Validator validator) throws IncorrectPluginException {
     if (ideaVersion.getAttributeValue("min") == null) { // min != null in legacy plugins.
       String sb = ideaVersion.getAttributeValue("since-build");
       try {
         mySinceBuild = IdeVersion.createIdeVersion(sb);
       } catch (IllegalArgumentException e) {
-        throw new IncorrectPluginException("'since-build' attribute in <idea-version> has incorrect value: " + sb +
+        validator.onIncorrectStructure("'since-build' attribute in <idea-version> has incorrect value: " + sb +
             ". You can see specification of build numbers <a target='_blank' " +
             "href='http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges'>hire</a>");
       }
@@ -360,7 +367,7 @@ class PluginImpl implements Plugin {
         try {
           myUntilBuild = IdeVersion.createIdeVersion(ub);
         } catch (IllegalArgumentException e) {
-          throw new IncorrectPluginException("<idea-version until-build= /> attribute has incorrect value: " + ub);
+          validator.onIncorrectStructure("<idea-version until-build= /> attribute has incorrect value: " + ub);
         }
       }
     }

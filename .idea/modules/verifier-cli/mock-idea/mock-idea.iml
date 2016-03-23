@@ -1,12 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id=":verifier-cli:mock-idea" external.linked.project.path="$MODULE_DIR$/../../../../verifier-cli/mock-idea" external.root.project.path="$MODULE_DIR$/../../../.." external.system.id="GRADLE" external.system.module.group="org.jetbrains.intellij.plugins" external.system.module.version="1.10" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
+<module external.linked.project.id=":verifier-cli:mock-idea" external.linked.project.path="$MODULE_DIR$/../../../../verifier-cli/mock-idea" external.root.project.path="$MODULE_DIR$/../../../.." external.system.id="GRADLE" external.system.module.group="org.jetbrains.intellij.plugins" external.system.module.version="1.11" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
+    <output url="file://$MODULE_DIR$/../../../../verifier-cli/mock-idea/build/classes/main" />
+    <output-test url="file://$MODULE_DIR$/../../../../verifier-cli/mock-idea/build/classes/test" />
     <exclude-output />
     <content url="file://$MODULE_DIR$/../../../../verifier-cli/mock-idea">
+      <sourceFolder url="file://$MODULE_DIR$/../../../../verifier-cli/mock-idea/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../../verifier-cli/mock-idea/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../../verifier-cli/mock-idea/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../../verifier-cli/mock-idea/src/test/resources" type="java-test-resource" />
       <excludeFolder url="file://$MODULE_DIR$/../../../../verifier-cli/mock-idea/.gradle" />
       <excludeFolder url="file://$MODULE_DIR$/../../../../verifier-cli/mock-idea/build" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Gradle: com.intellij:annotations:12.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.ow2.asm:asm-all:5.0.4" level="project" />
+    <orderEntry type="library" name="Gradle: com.google.guava:guava:15.0" level="project" />
+    <orderEntry type="library" name="Gradle: commons-io:commons-io:2.3" level="project" />
   </component>
 </module>

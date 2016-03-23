@@ -19,12 +19,32 @@
             <option value="$PROJECT_DIR$/verifier-problems" />
           </set>
         </option>
+        <option name="myModules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/common-utils" />
+            <option value="$PROJECT_DIR$/repository" />
+            <option value="$PROJECT_DIR$/uploader" />
+            <option value="$PROJECT_DIR$/verifier-cli" />
+            <option value="$PROJECT_DIR$/verifier-cli/mock-idea" />
+            <option value="$PROJECT_DIR$/verifier-cli/mock-plugin" />
+            <option value="$PROJECT_DIR$/verifier-problems" />
+          </set>
+        </option>
       </GradleProjectSettings>
       <GradleProjectSettings>
         <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/intellij-plugin-structure" />
         <option name="gradleHome" value="$USER_HOME$/opt/gradle" />
         <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/intellij-plugin-structure" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/mock-plugin1" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/mock-plugin2" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/mock-plugin3" />
+          </set>
+        </option>
+        <option name="myModules">
           <set>
             <option value="$PROJECT_DIR$/intellij-plugin-structure" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/mock-plugin1" />
