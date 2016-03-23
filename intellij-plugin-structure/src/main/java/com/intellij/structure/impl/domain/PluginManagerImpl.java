@@ -249,7 +249,12 @@ public class PluginManagerImpl extends PluginManager {
       validator.onCheckedException("Unable to read file " + file, e);
       return null;
     } finally {
-      IOUtils.closeQuietly(zipFile);
+      try {
+        if (zipFile != null) {
+          zipFile.close();
+        }
+      } catch (IOException ignored) {
+      }
     }
 
     if (descriptorRoot != null && descriptorInner != null) {
