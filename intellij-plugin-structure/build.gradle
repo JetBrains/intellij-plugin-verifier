@@ -81,6 +81,13 @@ task prepareZipMock1(type: Zip, dependsOn: prepareMock1) {
   archiveName = "mock-plugin1.zip"
 }
 
+task prepareMock1asZip(type: Zip, dependsOn: prepareMock1) {
+  doFirst { println("Creating .zip (not .jar) form of mock1 in ${mocksPath}") }
+  from zipTree(mocksPath + separator + "mock-plugin1.jar")
+  destinationDir = new File(mocksPath)
+  archiveName = "mock-plugin1jarAsZip.zip"
+}
+
 task prepareMock2(type: Copy) {
   doFirst { println("Creating structure for mock-plugin2 in ${mocksPath}") }
   into mocksPath + separator + "mock-plugin2" + separator + "lib"
@@ -123,7 +130,7 @@ task prepareZipMock3(type: Zip, dependsOn: prepareMock3) {
   archiveName = "mock-plugin3.zip"
 }
 
-test.dependsOn prepareZipMock1, prepareZipMock2, prepareZipMock3
+test.dependsOn prepareZipMock1, prepareMock1asZip, prepareZipMock2, prepareZipMock3
 publishToMavenLocal.dependsOn test
 
 

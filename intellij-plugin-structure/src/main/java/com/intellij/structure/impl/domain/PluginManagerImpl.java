@@ -7,7 +7,6 @@ import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.resolvers.FilesResolver;
-import com.intellij.structure.impl.resolvers.JarFileResolver;
 import com.intellij.structure.impl.resolvers.ZipResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.impl.utils.Pair;
@@ -60,10 +59,6 @@ public class PluginManagerImpl extends PluginManager {
   @NotNull
   private static String getFileEscapedUri(@NotNull File file) {
     return StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
-  }
-
-  private boolean isJar(@NotNull File file) {
-    return !file.isDirectory() && StringUtil.endsWithIgnoreCase(file.getName(), ".jar");
   }
 
   @Nullable
@@ -398,17 +393,7 @@ public class PluginManagerImpl extends PluginManager {
 
     List<Resolver> resolvers = new ArrayList<Resolver>();
 
-    if (isJar(file)) {
-      try {
-        Resolver jarResolver = new JarFileResolver(file);
-        if (!jarResolver.isEmpty()) {
-          resolvers.add(jarResolver);
-        }
-      } catch (IOException e) {
-        validator.onCheckedException("Unable to read plugin file " + file.getName(), e);
-        return;
-      }
-    }
+    Resolver classesDirResolver = null;
 
     ZipFile zipFile = null;
     try {
@@ -421,15 +406,14 @@ public class PluginManagerImpl extends PluginManager {
         Matcher classesDirMatcher = CLASSES_DIR_REGEX.matcher(entry.getName());
         if (classesDirMatcher.matches()) {
           String rootDir = entry.getName();
-          ZipResolver zipResolver;
           try {
-            zipResolver = new ZipResolver("Plugin classes directory", zipUrl, rootDir);
+            classesDirResolver = new ZipResolver("Plugin classes directory", zipUrl, rootDir);
           } catch (IOException e) {
             validator.onCheckedException("Unable to read plugin classes from " + rootDir, e);
             return;
           }
-          if (!zipResolver.isEmpty()) {
-            resolvers.add(zipResolver);
+          if (!classesDirResolver.isEmpty()) {
+            resolvers.add(classesDirResolver);
           }
         }
 
@@ -463,6 +447,19 @@ public class PluginManagerImpl extends PluginManager {
         }
       }
     }
+
+    //check if this zip archive is actually a .jar archive (someone has changed its extension from .jar to .zip)
+    if (classesDirResolver == null) {
+      try {
+        ZipResolver rootResolver = new ZipResolver(file.getName(), zipUrl, ".");
+        if (!rootResolver.isEmpty()) {
+          resolvers.add(rootResolver);
+        }
+      } catch (IOException e) {
+        validator.onCheckedException("Unable to read plugin classes from " + file.getName(), e);
+      }
+    }
+
 
     descriptor.setResolver(Resolver.createUnionResolver("Plugin resolver " + descriptor.getPluginId(), resolvers));
   }

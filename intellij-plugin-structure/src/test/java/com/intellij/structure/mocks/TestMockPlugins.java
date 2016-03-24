@@ -47,6 +47,7 @@ public class TestMockPlugins {
   public void testMock1() throws Exception {
     testMock1(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin1.jar")));
     testMock1(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin1.zip")));
+    testMock1(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin1jarAsZip.zip")));
   }
 
   private void testMock1(Plugin plugin) {
