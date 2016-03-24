@@ -11,8 +11,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import java.io.IOException;
-
 public class VerifierUtil {
   public static boolean classExists(PluginVerifierOptions opt, final Resolver resolver, final @NotNull String className) throws VerificationError {
     return classExists(opt, resolver, className, null);
@@ -55,7 +53,7 @@ public class VerifierUtil {
   public static ClassNode findClass(@NotNull Resolver resolver, @NotNull String className) throws VerificationError {
     try {
       return resolver.findClass(className);
-    } catch (IOException e) {
+    } catch (Exception e) {
       throw new VerificationError("Unable to find class " + className + " in resolver " + resolver, e);
     }
   }
