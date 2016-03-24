@@ -1,3 +1,5 @@
+package packagename;
+
 /**
  * @author Sergey Patrikeev
  */

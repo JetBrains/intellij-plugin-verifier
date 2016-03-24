@@ -34,20 +34,23 @@ public class TestMockPlugins {
     return file;
   }
 
-  /*@Test
+  @Test
   public void name() throws Exception {
     File file = new File("/home/user/Documents/intellij-plugin-verifier/for_tests/scalarR.zip");
     Plugin plugin = PluginManager.getInstance().createPlugin(file);
     Set<String> allClassesReferencedFromXml = plugin.getAllClassesReferencedFromXml();
     System.out.println(allClassesReferencedFromXml);
-  }*/
+  }
 
   //test simple .jar structure
   @Test
   public void testMock1() throws Exception {
-    File file = getMockPlugin("mock-plugin1.jar");
-    Plugin plugin = PluginManager.getInstance().createPlugin(file);
-//    assertEquals(file, plugin.getPluginPath());
+    testMock1(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin1.jar")));
+    testMock1(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin1.zip")));
+  }
+
+  private void testMock1(Plugin plugin) {
+    //    assertEquals(file, plugin.getPluginPath());
 
 //    assertEquals("format_version_attr", plugin.getFormatVersion());
 //    assertEquals("true", plugin.useIdeaClassLoader());
@@ -74,22 +77,33 @@ public class TestMockPlugins {
 //    assertEquals("my_resourceBundle", plugin.getResourceBundle());
     assertEquals(new HashSet<String>(Arrays.asList("one_module", "two_module")), plugin.getDefinedModules());
 
+    Set<String> allClasses = plugin.getPluginResolver().getAllClasses();
+    assertContains(allClasses, "org/mock/One");
+    assertEquals(1, allClasses.size());
   }
 
   //test folder/lib/a.jar structure
   @Test
   public void testMock2() throws Exception {
-    File file = getMockPlugin("mock-plugin2");
-    Plugin plugin = PluginManager.getInstance().createPlugin(file);
-    assertEquals(4, plugin.getPluginResolver().getAllClasses().size());
+    testMock2(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin2")));
+    testMock2(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin2.zip")));
+  }
+
+  private void testMock2(Plugin plugin) {
+    Set<String> allClasses = plugin.getPluginResolver().getAllClasses();
+    assertEquals(4, allClasses.size());
+    assertContains(allClasses, "packagename/InFileClassOne", "packagename/ClassOne$ClassOneInnerStatic", "packagename/ClassOne$ClassOneInner", "packagename/InFileClassOne");
     assertEquals("http://icons.com/icon.png", plugin.getVendorLogoUrl());
   }
 
   //test folder/classes structure
   @Test
   public void testMock3() throws Exception {
-    File file = getMockPlugin("mock-plugin3");
-    Plugin plugin = PluginManager.getInstance().createPlugin(file);
+    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3")));
+    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3.zip")));
+  }
+
+  private void testMock3(Plugin plugin) {
     assertEquals(4, plugin.getPluginResolver().getAllClasses().size());
     Set<String> set = plugin.getAllClassesReferencedFromXml();
     assertContains(set, "org.jetbrains.kotlin.idea.compiler.JetCompilerManager".replace('.', '/'));
@@ -98,15 +112,22 @@ public class TestMockPlugins {
     assertContains(set, "org.jetbrains.kotlin.js.resolve.diagnostics.DefaultErrorMessagesJs".replace('.', '/'));
     assertContains(set, "org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.UnfoldReturnToWhenIntention".replace('.', '/'));
 
-
     Multimap<String, Element> extensions = plugin.getExtensions();
     assertTrue(extensions.containsKey("com.intellij.referenceImporter"));
     assertTrue(extensions.containsKey("org.intellij.scala.scalaTestDefaultWorkingDirectoryProvider"));
+
+    Set<String> allClasses = plugin.getPluginResolver().getAllClasses();
+    assertEquals(4, allClasses.size());
+    assertContains(allClasses, "packagename/InFileClassOne", "packagename/ClassOne$ClassOneInnerStatic", "packagename/ClassOne$ClassOneInner", "packagename/InFileClassOne");
   }
 
-  private <T> void assertContains(Collection<T> collection, T elem) {
-    if (!collection.contains(elem)) {
-      throw new AssertionError("Collection must contain an element " + elem);
+  private <T> void assertContains(Collection<T> collection, T... elem) {
+    for (T t : elem) {
+      if (!collection.contains(t)) {
+        System.out.println(collection);
+        throw new AssertionError("Collection must contain an element " + t);
+      }
     }
+
   }
 }

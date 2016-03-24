@@ -71,12 +71,29 @@ task prepareMock1(type: Copy) {
   }
 }
 
+task prepareZipMock1(type: Zip, dependsOn: prepareMock1) {
+  doFirst { println("Creating .zip form of mock1 in ${mocksPath}") }
+  project(":mock-plugin1") {
+    from tasks.withType(Jar)
+  }
+  into "lib"
+  destinationDir = new File(mocksPath)
+  archiveName = "mock-plugin1.zip"
+}
+
 task prepareMock2(type: Copy) {
   doFirst { println("Creating structure for mock-plugin2 in ${mocksPath}") }
   into mocksPath + separator + "mock-plugin2" + separator + "lib"
   project(":mock-plugin2") {
     from tasks.withType(Jar)
   }
+}
+
+task prepareZipMock2(type: Zip, dependsOn: prepareMock2) {
+  doFirst { println("Creating .zip form of mock2 in ${mocksPath}") }
+  from mocksPath + separator + "mock-plugin2" + separator
+  destinationDir = new File(mocksPath)
+  archiveName = "mock-plugin2.zip"
 }
 
 task prepareMock3(type: Copy) {
@@ -98,7 +115,15 @@ task prepareMock3(type: Copy) {
 }
 prepareMock3.dependsOn project(":mock-plugin3").classes
 
-test.dependsOn prepareMock1, prepareMock2, prepareMock3
+task prepareZipMock3(type: Zip, dependsOn: prepareMock3) {
+  doFirst { println("Creating .zip form of mock3 in ${mocksPath}") }
+  from mocksPath + separator + "mock-plugin3" + separator
+  into "mock-plugin3"
+  destinationDir = new File(mocksPath)
+  archiveName = "mock-plugin3.zip"
+}
+
+test.dependsOn prepareZipMock1, prepareZipMock2, prepareZipMock3
 publishToMavenLocal.dependsOn test
 
 

@@ -29,10 +29,16 @@ public class ZipResolver extends Resolver {
   private final Map<String, SoftReference<ClassNode>> myClassesCache = new HashMap<String, SoftReference<ClassNode>>();
   private final String myPresentableName;
   private final String myZipUrl;
+  private final String myRootDirectoryPrefix;
 
-  public ZipResolver(@NotNull String presentableName, @NotNull String zipUrl) throws IOException {
+  public ZipResolver(@NotNull String presentableName, @NotNull String zipUrl, @NotNull String rootDirectory) throws IOException {
     myPresentableName = presentableName;
     myZipUrl = zipUrl;
+    if (rootDirectory.isEmpty() || rootDirectory.equals(".")) {
+      myRootDirectoryPrefix = "";
+    } else {
+      myRootDirectoryPrefix = StringUtil.trimEnd(rootDirectory, "/") + "/";
+    }
     updateCacheAndFindClass(null, false);
   }
 
@@ -51,9 +57,11 @@ public class ZipResolver extends Resolver {
 
       ZipEntry entry;
       while ((entry = zipInputStream.getNextEntry()) != null) {
+        if (entry.isDirectory()) continue;
+
         String entryName = entry.getName();
-        if (entryName.endsWith(CLASS_SUFFIX)) {
-          String className = StringUtil.trimEnd(entryName, CLASS_SUFFIX);
+        if (entryName.startsWith(myRootDirectoryPrefix) && entryName.endsWith(CLASS_SUFFIX)) {
+          String className = StringUtil.trimStart(StringUtil.trimEnd(entryName, CLASS_SUFFIX), myRootDirectoryPrefix);
 
           ClassNode classNode = null;
           if (loadClasses) {

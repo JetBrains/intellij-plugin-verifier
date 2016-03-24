@@ -7,6 +7,7 @@ import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.resolvers.FilesResolver;
+import com.intellij.structure.impl.resolvers.JarFileResolver;
 import com.intellij.structure.impl.resolvers.ZipResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.impl.utils.Pair;
@@ -22,7 +23,9 @@ import org.jdom2.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -40,6 +43,7 @@ public class PluginManagerImpl extends PluginManager {
 
   private static final String PLUGIN_XML = "plugin.xml";
   private static final Pattern LIB_JAR_REGEX = Pattern.compile("([^/]+/)?lib/([^/]+\\.(jar|zip))");
+  private static final Pattern CLASSES_DIR_REGEX = Pattern.compile("([^/]+/)?classes/");
   private static final String META_INF = "META-INF";
   private static final Pattern XML_IN_ROOT_PATTERN = Pattern.compile("([^/]*/)?META-INF/((\\w|\\-)+\\.xml)");
 
@@ -56,6 +60,10 @@ public class PluginManagerImpl extends PluginManager {
   @NotNull
   private static String getFileEscapedUri(@NotNull File file) {
     return StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
+  }
+
+  private boolean isJar(@NotNull File file) {
+    return !file.isDirectory() && StringUtil.endsWithIgnoreCase(file.getName(), ".jar");
   }
 
   @Nullable
@@ -386,45 +394,77 @@ public class PluginManagerImpl extends PluginManager {
   }
 
   private void loadClassesFromZip(@NotNull File file, @NotNull PluginImpl descriptor, @NotNull Validator validator) {
-    ZipInputStream zipInputStream = null;
-    try {
-      zipInputStream = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)));
-      String urlPath = getFileEscapedUri(file);
-      Resolver resolver = createResolverForZipStream(zipInputStream, urlPath, file.getCanonicalPath());
-      descriptor.setResolver(resolver);
-    } catch (IOException e) {
-      validator.onCheckedException("Unable to read file " + file, e);
-    } finally {
-      IOUtils.closeQuietly(zipInputStream);
-    }
-  }
+    String zipUrl = getFileEscapedUri(file);
 
-  @NotNull
-  private Resolver createResolverForZipStream(@NotNull ZipInputStream zipStream,
-                                              @NotNull String urlPath,
-                                              @NotNull String resolverName) throws IOException {
     List<Resolver> resolvers = new ArrayList<Resolver>();
 
-    Resolver rootResolver = new ZipResolver(resolverName, urlPath);
+    if (isJar(file)) {
+      try {
+        Resolver jarResolver = new JarFileResolver(file);
+        if (!jarResolver.isEmpty()) {
+          resolvers.add(jarResolver);
+        }
+      } catch (IOException e) {
+        validator.onCheckedException("Unable to read plugin file " + file.getName(), e);
+        return;
+      }
+    }
 
-    ZipEntry entry;
-    while ((entry = zipStream.getNextEntry()) != null) {
-        Matcher matcher = LIB_JAR_REGEX.matcher(entry.getName());
-        if (matcher.matches()) {
-          String innerName = matcher.group(2);
-          if (innerName != null) {
-            ZipInputStream innerJar = new ZipInputStream(zipStream);
-            String innerJarUrl = "jar:" + urlPath + "!/" + StringUtil.trimStart(entry.getName(), "/");
-            resolvers.add(createResolverForZipStream(innerJar, innerJarUrl, innerName));
+    ZipFile zipFile = null;
+    try {
+      zipFile = new ZipFile(file);
+      Enumeration<? extends ZipEntry> entries = zipFile.entries();
+      while (entries.hasMoreElements()) {
+        ZipEntry entry = entries.nextElement();
+
+        //check if classes directory
+        Matcher classesDirMatcher = CLASSES_DIR_REGEX.matcher(entry.getName());
+        if (classesDirMatcher.matches()) {
+          String rootDir = entry.getName();
+          ZipResolver zipResolver;
+          try {
+            zipResolver = new ZipResolver("Plugin classes directory", zipUrl, rootDir);
+          } catch (IOException e) {
+            validator.onCheckedException("Unable to read plugin classes from " + rootDir, e);
+            return;
+          }
+          if (!zipResolver.isEmpty()) {
+            resolvers.add(zipResolver);
           }
         }
+
+        //check if jar in lib/ directory
+        Matcher libDirMatcher = LIB_JAR_REGEX.matcher(entry.getName());
+        if (libDirMatcher.matches()) {
+          String innerName = libDirMatcher.group(2);
+          if (innerName != null) {
+            String innerJarUrl = "jar:" + zipUrl + "!/" + StringUtil.trimStart(entry.getName(), "/");
+            ZipResolver innerResolver;
+            try {
+              innerResolver = new ZipResolver(innerName, innerJarUrl, ".");
+            } catch (IOException e) {
+              validator.onCheckedException("Unable to read plugin classes from " + entry.getName(), e);
+              return;
+            }
+            if (!innerResolver.isEmpty()) {
+              resolvers.add(innerResolver);
+            }
+          }
+        }
+      }
+    } catch (IOException e) {
+      validator.onCheckedException("Unable to read plugin classes from " + file.getName(), e);
+      return;
+    } finally {
+      if (zipFile != null) {
+        try {
+          zipFile.close();
+        } catch (IOException ignored) {
+        }
+      }
     }
 
-    if (!rootResolver.isEmpty()) {
-      resolvers.add(rootResolver);
-    }
-
-    return Resolver.createUnionResolver(resolverName, resolvers);
+    descriptor.setResolver(Resolver.createUnionResolver("Plugin resolver " + descriptor.getPluginId(), resolvers));
   }
 
   private void loadClassesFromDir(@NotNull File dir, @NotNull PluginImpl descriptor, @NotNull Validator validator) throws IncorrectPluginException {
@@ -456,6 +496,7 @@ public class PluginManagerImpl extends PluginManager {
       }
     } catch (IOException e) {
       validator.onCheckedException("Unable to read `lib` directory", e);
+      return;
     }
 
     descriptor.setResolver(Resolver.createUnionResolver("Plugin resolver " + descriptor.getPluginId(), resolvers));
