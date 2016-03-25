@@ -4,6 +4,7 @@ import com.google.common.base.Predicate;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.AbstractFileFilter;
+import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,13 +17,13 @@ import java.util.List;
 public class JarsUtils {
 
   @NotNull
-  public static Collection<File> collectJarsRecursively(@NotNull File directory, @NotNull final Predicate<File> filter) throws IOException {
+  public static Collection<File> collectJars(@NotNull File directory, @NotNull final Predicate<File> filter, boolean recursively) throws IOException {
     return FileUtils.listFiles(directory, new AbstractFileFilter() {
       @Override
       public boolean accept(File file) {
         return StringUtil.endsWithIgnoreCase(file.getName(), ".jar") && filter.apply(file);
       }
-    }, TrueFileFilter.INSTANCE);
+    }, recursively ? TrueFileFilter.INSTANCE : FalseFileFilter.FALSE);
   }
 
   @NotNull

@@ -35,8 +35,6 @@ public class DependenciesCache {
 
   private final WeakHashMap<Ide, WeakHashMap<Plugin, PluginDependenciesDescriptor>> map = new WeakHashMap<Ide, WeakHashMap<Plugin, PluginDependenciesDescriptor>>();
 
-  private final WeakHashMap<Ide, Resolver> myIdeResolvers = new WeakHashMap<Ide, Resolver>();
-
   private DependenciesCache() {
   }
 
@@ -64,23 +62,6 @@ public class DependenciesCache {
   }
 
   @NotNull
-  private Resolver getResolverForIde(@NotNull Ide ide, @NotNull Jdk jdk, @Nullable Resolver externalClassPath) {
-    Resolver resolver = myIdeResolvers.get(ide);
-    if (resolver == null) {
-      List<Resolver> resolvers = new ArrayList<Resolver>();
-      resolvers.add(ide.getResolver());
-      resolvers.add(jdk.getResolver());
-      if (externalClassPath != null) {
-        resolvers.add(externalClassPath);
-      }
-      resolver = Resolver.createUnionResolver("Ide resolver for " + ide.getVersion() + " and jdk " + jdk, resolvers);
-      myIdeResolvers.put(ide, resolver);
-    }
-    return resolver;
-  }
-
-
-  @NotNull
   public PluginDependenciesDescriptor getResolver(@NotNull Plugin plugin, @NotNull Ide ide, @NotNull Jdk jdk, @Nullable Resolver externalClassPath) throws VerificationError {
     PluginDependenciesDescriptor descriptor = getPluginDependenciesDescriptor(ide, plugin);
     if (descriptor.myResolver == null) {
@@ -90,9 +71,16 @@ public class DependenciesCache {
 
       List<Resolver> resolvers = new ArrayList<Resolver>();
 
-      resolvers.add(plugin.getPluginResolver());
+      //JDK classes go first in classpath
+      resolvers.add(jdk.getResolver());
 
-      resolvers.add(getResolverForIde(ide, jdk, externalClassPath));
+      if (externalClassPath != null) {
+        resolvers.add(externalClassPath);
+      }
+
+      resolvers.add(ide.getResolver());
+
+      resolvers.add(plugin.getPluginResolver());
 
       for (Plugin dep : all.getDependencies()) {
         Resolver pluginResolver = dep.getPluginResolver();
@@ -102,7 +90,7 @@ public class DependenciesCache {
 
       }
 
-      descriptor.myResolver = Resolver.createUnionResolver("Resolver for plugin " + plugin.getPluginId() + " with transitive dependencies", resolvers);
+      descriptor.myResolver = Resolver.createUnionResolver("plugin " + plugin.getPluginId() + " with transitive dependencies; ide " + ide.getVersion() + " jdk " + jdk, resolvers);
     }
 
     return descriptor;

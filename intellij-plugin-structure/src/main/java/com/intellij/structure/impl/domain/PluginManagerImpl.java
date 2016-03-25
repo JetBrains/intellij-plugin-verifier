@@ -487,7 +487,7 @@ public class PluginManagerImpl extends PluginManager {
     try {
       File lib = new File(dir, "lib");
       if (lib.isDirectory()) {
-        Collection<File> jars = JarsUtils.collectJarsRecursively(lib, Predicates.<File>alwaysTrue());
+        Collection<File> jars = JarsUtils.collectJars(lib, Predicates.<File>alwaysTrue(), true);
         Resolver libResolver = JarsUtils.makeResolver("Plugin `lib` jars: " + lib.getCanonicalPath(), jars);
         resolvers.add(libResolver);
       }

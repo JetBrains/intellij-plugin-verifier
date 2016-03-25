@@ -48,12 +48,12 @@ public class IdeManagerImpl extends IdeManager {
       throw new IOException("Directory \"lib\" is not found (should be found at " + lib + ")");
     }
 
-    final Collection<File> jars = JarsUtils.collectJarsRecursively(lib, new Predicate<File>() {
+    final Collection<File> jars = JarsUtils.collectJars(lib, new Predicate<File>() {
       @Override
       public boolean apply(File file) {
         return !file.getName().endsWith("javac2.jar");
       }
-    });
+    }, false);
 
     return JarsUtils.makeResolver("Idea `lib` dir: " + lib.getCanonicalPath(), jars);
   }
