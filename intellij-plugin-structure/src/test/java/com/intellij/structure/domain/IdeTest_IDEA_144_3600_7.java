@@ -118,7 +118,7 @@ public class IdeTest_IDEA_144_3600_7 {
     Resolver resolver = ide.getResolver();
     Set<String> allClasses = resolver.getAllClasses();
 
-    assertEquals(86693, allClasses.size());
+    assertEquals(83872, allClasses.size());
 
 /*
     int parts = 10;

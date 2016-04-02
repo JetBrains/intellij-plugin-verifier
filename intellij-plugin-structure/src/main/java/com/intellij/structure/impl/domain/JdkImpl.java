@@ -19,12 +19,12 @@ public class JdkImpl extends Jdk {
   private final Resolver myPool;
 
   public JdkImpl(@NotNull File jdkDir) throws IOException {
-    Collection<File> jars = JarsUtils.collectJarsRecursively(jdkDir, new Predicate<File>() {
+    Collection<File> jars = JarsUtils.collectJars(jdkDir, new Predicate<File>() {
       @Override
       public boolean apply(File file) {
         return JDK_JAR_NAMES.contains(file.getName().toLowerCase());
       }
-    });
+    }, true);
 
     myPool = JarsUtils.makeResolver("Jdk resolver " + jdkDir.getCanonicalPath(), jars);
   }
