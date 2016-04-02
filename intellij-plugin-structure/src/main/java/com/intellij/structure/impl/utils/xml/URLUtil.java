@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -93,6 +94,19 @@ public class URLUtil {
     if ((c >= 'A') && (c <= 'F'))
       return c - 'A' + 10;
     return -1;
+  }
+
+  @NotNull
+  public static File urlToFile(@NotNull URL url) throws URISyntaxException, MalformedURLException {
+    try {
+      return new File(url.toURI());
+    } catch (URISyntaxException e) {
+      String str = url.toString();
+      if (str.indexOf(' ') > 0) {
+        return new File(new URL(StringUtil.replace(str, " ", "%20")).toURI());
+      }
+      throw e;
+    }
   }
 
   @NotNull

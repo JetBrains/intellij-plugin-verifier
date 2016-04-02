@@ -4,14 +4,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+
 import static java.lang.Character.toLowerCase;
 import static java.lang.Character.toUpperCase;
 
 public class StringUtil {
-
-  public static boolean isNullOrEmpty(@Nullable String s) {
-    return s == null || s.isEmpty();
-  }
 
   @Nullable
   public static String substringAfter(@NotNull String text, @NotNull String subString) {
@@ -20,6 +18,24 @@ public class StringUtil {
     return text.substring(i + subString.length());
   }
 
+  @NotNull
+  public static String getFileName(@NotNull String path) {
+    if (path.length() == 0) return "";
+    char c = path.charAt(path.length() - 1);
+    int end = c == '/' || c == '\\' ? path.length() - 1 : path.length();
+    int start = Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1)) + 1;
+    return path.substring(start, end);
+  }
+
+  @NotNull
+  public static String toSystemIndependentName(@NonNls @NotNull String fileName) {
+    return fileName.replace('\\', '/');
+  }
+
+  @NotNull
+  public static String toSystemDependentName(@NonNls @NotNull String fileName) {
+    return fileName.replace('/', File.separatorChar).replace('\\', File.separatorChar);
+  }
 
   @NotNull
   public static String notNullize(@Nullable String s) {
@@ -30,7 +46,7 @@ public class StringUtil {
     return countChars(text, c, 0, false);
   }
 
-  public static int countChars(@NotNull CharSequence text, char c, int offset, boolean continuous) {
+  private static int countChars(@NotNull CharSequence text, char c, int offset, boolean continuous) {
     int count = 0;
     for (int i = offset; i < text.length(); ++i) {
       if (text.charAt(i) == c) {

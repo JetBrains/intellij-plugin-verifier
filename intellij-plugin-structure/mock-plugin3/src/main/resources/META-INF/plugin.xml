@@ -5,11 +5,23 @@
     <name>Kotlin</name>
     <description>Kotlin language support</description>
     <version>1.0.0-beta-1038-IJ141-17</version>
-    <vendor url="http://www.jetbrains.com">JetBrains s.r.o.</vendor>
+    <vendor logo="http://icons.com/icon.png" email="vendor_email" url="http://www.jetbrains.com">JetBrains s.r.o.
+    </vendor>
 
     <idea-version since-build="141.1009.5" until-build="141.9999999"/>
 
     <depends optional="true" config-file="extension.xml">JUnit</depends>
+    <depends optional="true" config-file="optionals/optional.xml">optionalDependency</depends>
+    <depends optional="true" config-file="../optionalsDir/otherDirOptional.xml">otherDirOptionalDependency</depends>
+
+    <depends>mandatoryDependency</depends>
+    <depends>com.intellij.modules.mandatoryDependency</depends>
+
+    <module value="one_module"/>
+    <module value="two_module"/>
+
+    <change-notes>change_notes</change-notes>
+
 
     <project-components>
         <component>

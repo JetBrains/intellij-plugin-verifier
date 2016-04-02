@@ -2,11 +2,13 @@ package com.intellij.structure.domain;
 
 import com.google.common.collect.Multimap;
 import com.intellij.structure.resolvers.Resolver;
+import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -66,5 +68,11 @@ public interface Plugin {
 
   @Nullable
   String getVendorLogoUrl();
+
+  @NotNull
+  Map<String, Plugin> getOptionalDescriptors();
+
+  @NotNull
+  Document getUnderlyingDocument();
 
 }

@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class Validator {
 
-  Validator() {
-  }
-
   private void performAction(@NotNull Event event, @NotNull String message, @Nullable Throwable cause) {
     BiFunction<String, Throwable, Void> function = supplyAction(event);
     if (function != null) {
@@ -27,7 +24,7 @@ public abstract class Validator {
     performAction(Event.MISSING_FILE, message, null);
   }
 
-  final public void onIncorrectStructure(@NotNull String message) throws RuntimeException {
+  public void onIncorrectStructure(@NotNull String message) throws RuntimeException {
     performAction(Event.INCORRECT_STRUCTURE, message, null);
   }
 
@@ -51,11 +48,11 @@ public abstract class Validator {
     };
   }
 
-  public Validator getMissingFileIgnoringValidator() {
+  public Validator ignoreMissingFile() {
     return createIgnoringValidator(Event.MISSING_FILE);
   }
 
-  public Validator getMissingConfigElementIgnoringValidator() {
+  public Validator ignoreMissingConfigElement() {
     return createIgnoringValidator(Event.MISSING_CONFIG_ELEMENT);
   }
 

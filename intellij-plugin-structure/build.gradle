@@ -10,7 +10,7 @@ buildscript {
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
 
-version = '1.8'
+version = '1.11'
 if (project.hasProperty("myVersion")) {
   version = project.myVersion;
 }
@@ -63,50 +63,42 @@ publishing {
 def separator = File.separator
 def mocksPath = "$buildDir" + separator + "mocks"
 
-task prepareMock1(type: Copy) {
-  doFirst { println("Copying mock plugin 1 .jar to the ${mocksPath}") }
+task prepareMock3asJar(type: Copy) {
+  //creates mock-plugin3.jar file
   into mocksPath
-  project(":mock-plugin1") {
+  project(":mock-plugin3") {
     from tasks.withType(Jar)
   }
 }
 
-task prepareZipMock1(type: Zip, dependsOn: prepareMock1) {
-  doFirst { println("Creating .zip form of mock1 in ${mocksPath}") }
-  project(":mock-plugin1") {
+task prepareMock3jarAsZip(type: Zip, dependsOn: prepareMock3asJar) {
+  //creates mock-plugin3jarAsZip.zip which is equivalent to mock-plugin3.jar
+  from zipTree(mocksPath + separator + "mock-plugin3.jar")
+  destinationDir = new File(mocksPath)
+  archiveName = "mock-plugin3jarAsZip.zip"
+}
+
+task prepareMock3asDir(type: Copy) {
+  //create mock-plugin3-dir/ which contains /lib/mock-plugin3.jar inside
+  into mocksPath + separator + "mock-plugin3-dir" + separator + "lib"
+  project(":mock-plugin3") {
+    from tasks.withType(Jar)
+  }
+}
+
+task prepareZipLibMock3(type: Zip, dependsOn: prepareMock3asJar) {
+  //create mock-plugin3-lib.zip which contains /lib/mock-plugin3.jar inside
+  project(":mock-plugin3") {
     from tasks.withType(Jar)
   }
   into "lib"
   destinationDir = new File(mocksPath)
-  archiveName = "mock-plugin1.zip"
+  archiveName = "mock-plugin3-lib.zip"
 }
 
-task prepareMock1asZip(type: Zip, dependsOn: prepareMock1) {
-  doFirst { println("Creating .zip (not .jar) form of mock1 in ${mocksPath}") }
-  from zipTree(mocksPath + separator + "mock-plugin1.jar")
-  destinationDir = new File(mocksPath)
-  archiveName = "mock-plugin1jarAsZip.zip"
-}
-
-task prepareMock2(type: Copy) {
-  doFirst { println("Creating structure for mock-plugin2 in ${mocksPath}") }
-  into mocksPath + separator + "mock-plugin2" + separator + "lib"
-  project(":mock-plugin2") {
-    from tasks.withType(Jar)
-  }
-}
-
-task prepareZipMock2(type: Zip, dependsOn: prepareMock2) {
-  doFirst { println("Creating .zip form of mock2 in ${mocksPath}") }
-  from mocksPath + separator + "mock-plugin2" + separator
-  destinationDir = new File(mocksPath)
-  archiveName = "mock-plugin2.zip"
-}
-
-task prepareMock3(type: Copy) {
-  doFirst { println("Creating structure for mock-plugin3 in ${mocksPath}") }
-
-  into mocksPath + separator + "mock-plugin3"
+task prepareMock3classes(type: Copy) {
+  //create mock-plugin3-classes/ with /classes/ dir and /META-INF/ dir inside
+  into mocksPath + separator + "mock-plugin3-classes"
 
   def classesSpec = copySpec {
     from project(":mock-plugin3").sourceSets.main.output.classesDir
@@ -120,23 +112,23 @@ task prepareMock3(type: Copy) {
 
   with classesSpec, pluginXmlSpec
 }
-prepareMock3.dependsOn project(":mock-plugin3").classes
+prepareMock3classes.dependsOn project(":mock-plugin3").classes
 
-task prepareZipMock3(type: Zip, dependsOn: prepareMock3) {
-  doFirst { println("Creating .zip form of mock3 in ${mocksPath}") }
-  from mocksPath + separator + "mock-plugin3" + separator
+task prepareZipMock3classesAsZip(type: Zip, dependsOn: prepareMock3classes) {
+  //create mock-plugin3-classes.zip/ which is equivalent to prepareMock3classes but in the .zip
+  from mocksPath + separator + "mock-plugin3-classes" + separator
   into "mock-plugin3"
   destinationDir = new File(mocksPath)
-  archiveName = "mock-plugin3.zip"
+  archiveName = "mock-plugin3-classes-zip.zip"
 }
 
-test.dependsOn prepareZipMock1, prepareMock1asZip, prepareZipMock2, prepareZipMock3
+test.dependsOn prepareMock3asJar, prepareMock3jarAsZip, prepareMock3asDir, prepareZipLibMock3, prepareMock3classes, prepareZipMock3classesAsZip
 publishToMavenLocal.dependsOn test
 
 
 dependencies {
   //mock plugins are used in tests
-  testRuntime project("mock-plugin1")
+  testRuntime project("mock-plugin1"), project("mock-plugin2"), project("mock-plugin3")
 
   compile group: 'org.jdom', name: 'jdom', version: '2.0.2'
   compile group: 'com.google.guava', name: 'guava', version: '18.0'

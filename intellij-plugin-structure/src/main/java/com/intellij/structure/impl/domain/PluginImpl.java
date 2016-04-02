@@ -3,6 +3,7 @@ package com.intellij.structure.impl.domain;
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
@@ -34,14 +35,17 @@ class PluginImpl implements Plugin {
 
   private static final Whitelist WHITELIST = Whitelist.basicWithImages();
   private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules.";
+  private static final Document EMPTY_DOCUMENT = new Document();
   private final Set<String> myDefinedModules = new HashSet<String>();
   private final List<PluginDependency> myDependencies = new ArrayList<PluginDependency>();
   private final List<PluginDependency> myModuleDependencies = new ArrayList<PluginDependency>();
   private final Map<PluginDependency, String> myOptionalConfigFiles = new HashMap<PluginDependency, String>();
-  private final Map<String, PluginImpl> myOptionalDescriptors = new HashMap<String, PluginImpl>();
+  private final Map<String, Plugin> myOptionalDescriptors = new HashMap<String, Plugin>();
   private final Set<String> myReferencedClasses = new HashSet<String>();
   private final Multimap<String, Element> myExtensions = ArrayListMultimap.create();
-  @Nullable private Resolver myPluginResolver = Resolver.getEmptyResolver();
+  @NotNull private Document myUnderlyingDocument = EMPTY_DOCUMENT;
+  @NotNull private Resolver myPluginResolver = Resolver.getEmptyResolver();
+  @NotNull private String myFileName = "(unknown)";
   @Nullable private byte[] myLogoContent;
   @Nullable private String myLogoUrl;
   @Nullable private String myPluginName;
@@ -79,7 +83,7 @@ class PluginImpl implements Plugin {
   @Override
   @NotNull
   public Multimap<String, Element> getExtensions() {
-    return myExtensions;
+    return Multimaps.unmodifiableMultimap(myExtensions);
   }
 
   private void setExtensions(Element rootElement) {
@@ -90,21 +94,25 @@ class PluginImpl implements Plugin {
     }
   }
 
-  private void checkAndSetEntries(@NotNull URL url, @Nullable Element rootElement, @NotNull Validator validator) throws IncorrectPluginException {
-    final String fileName = calcFileName(url);
+  private void checkAndSetEntries(@NotNull URL descriptorUrl, @NotNull Document document, @NotNull Validator validator) throws IncorrectPluginException {
+    myUnderlyingDocument = document;
+    myFileName = calcDescriptorName(descriptorUrl);
+
+    Element rootElement = document.getRootElement();
+
     if (rootElement == null) {
-      validator.onIncorrectStructure("Failed to parse " + fileName + ": root element <idea-plugin> is not found");
+      validator.onIncorrectStructure("Failed to parse " + myFileName + ": root element <idea-plugin> is not found");
       return;
     }
 
     if (!"idea-plugin".equals(rootElement.getName())) {
-      validator.onIncorrectStructure("Invalid " + fileName + ": root element must be <idea-plugin>, but it is " + rootElement.getName());
+      validator.onIncorrectStructure("Invalid " + myFileName + ": root element must be <idea-plugin>, but it is " + rootElement.getName());
       return;
     }
 
     myPluginName = rootElement.getChildTextTrim("name");
     if (Strings.isNullOrEmpty(myPluginName)) {
-      validator.onMissingConfigElement("Invalid " + fileName + ": 'name' is not specified");
+      validator.onMissingConfigElement("Invalid " + myFileName + ": 'name' is not specified");
     }
 
     myPluginId = rootElement.getChildText("id");
@@ -116,22 +124,22 @@ class PluginImpl implements Plugin {
 
     Element vendorElement = rootElement.getChild("vendor");
     if (vendorElement == null) {
-      validator.onMissingConfigElement("Invalid " + fileName + ": element 'vendor' is not found");
+      validator.onMissingConfigElement("Invalid " + myFileName + ": element 'vendor' is not found");
     } else {
       myPluginVendor = vendorElement.getTextTrim();
       myVendorEmail = StringUtil.notNullize(vendorElement.getAttributeValue("email"));
       myVendorUrl = StringUtil.notNullize(vendorElement.getAttributeValue("url"));
-      setLogoContent(url, vendorElement);
+      setLogoContent(descriptorUrl, vendorElement);
     }
 
     myPluginVersion = rootElement.getChildTextTrim("version");
     if (myPluginVersion == null) {
-      validator.onMissingConfigElement("Invalid " + fileName + ": version is not specified");
+      validator.onMissingConfigElement("Invalid " + myFileName + ": version is not specified");
     }
 
     Element ideaVersionElement = rootElement.getChild("idea-version");
     if (ideaVersionElement == null) {
-      validator.onMissingConfigElement("Invalid " + fileName + ": element 'idea-version' not found");
+      validator.onMissingConfigElement("Invalid " + myFileName + ": element 'idea-version' not found");
     } else {
       setSinceUntilBuilds(ideaVersionElement, validator);
     }
@@ -143,8 +151,8 @@ class PluginImpl implements Plugin {
     setDefinedModules(rootElement, validator);
 
     String description = rootElement.getChildTextTrim("description");
-    if (StringUtil.isNullOrEmpty(description)) {
-      validator.onMissingConfigElement("Invalid " + fileName + ": description is empty");
+    if (StringUtil.isEmpty(description)) {
+      validator.onMissingConfigElement("Invalid " + myFileName + ": description is empty");
     } else {
       myDescription = Jsoup.clean(description, WHITELIST);
     }
@@ -154,7 +162,7 @@ class PluginImpl implements Plugin {
       Element o = changeNotes.get(0);
       if (o != null) {
         String textTrim = o.getTextTrim();
-        if (!StringUtil.isNullOrEmpty(textTrim)) {
+        if (!StringUtil.isEmpty(textTrim)) {
           myNotes = Jsoup.clean(textTrim, WHITELIST);
         }
       }
@@ -162,7 +170,7 @@ class PluginImpl implements Plugin {
   }
 
   @NotNull
-  private String calcFileName(@NotNull URL url) {
+  private String calcDescriptorName(@NotNull URL url) {
     final String path = url.getFile();
     if (path.contains("META-INF/")) {
       return "META-INF/" + StringUtil.substringAfter(path, "META-INF/");
@@ -247,13 +255,13 @@ class PluginImpl implements Plugin {
   @Override
   @NotNull
   public List<PluginDependency> getDependencies() {
-    return myDependencies;
+    return Collections.unmodifiableList(myDependencies);
   }
 
   @Override
   @NotNull
   public List<PluginDependency> getModuleDependencies() {
-    return myModuleDependencies;
+    return Collections.unmodifiableList(myModuleDependencies);
   }
 
   @Override
@@ -376,7 +384,7 @@ class PluginImpl implements Plugin {
   @Override
   @NotNull
   public Resolver getPluginResolver() {
-    return myPluginResolver == null ? Resolver.getEmptyResolver() : myPluginResolver;
+    return myPluginResolver;
   }
 
   @Nullable
@@ -413,48 +421,13 @@ class PluginImpl implements Plugin {
   @NotNull
   @Override
   public Set<String> getAllClassesReferencedFromXml() {
-    Set<String> result = new HashSet<String>();
-    result.addAll(myReferencedClasses);
-    for (PluginImpl plugin : myOptionalDescriptors.values()) {
-      result.addAll(plugin.myReferencedClasses);
-    }
-    return result;
-  }
-
-  @Override
-  @Nullable
-  public byte[] getVendorLogo() {
-    return myLogoContent;
-  }
-
-  @Nullable
-  @Override
-  public String getVendorLogoUrl() {
-    return myLogoUrl;
-  }
-
-  void readExternal(@NotNull URL url, @NotNull Validator validator) throws IncorrectPluginException {
-    try {
-      Document document = JDOMUtil.loadDocument(url);
-      readExternal(document, url, validator);
-    } catch (Exception e) {
-      validator.onCheckedException("Unable to read " + url, e);
-    }
-  }
-
-
-  void readExternal(@NotNull Document document, @NotNull URL url, Validator validator) throws IncorrectPluginException {
-    try {
-      document = JDOMXIncluder.resolve(document, url.toExternalForm());
-    } catch (XIncludeException e) {
-      throw new IncorrectPluginException("Unable to read resolve " + url.getFile(), e);
-    }
-    checkAndSetEntries(url, document.getRootElement(), validator);
+    return Collections.unmodifiableSet(myReferencedClasses);
   }
 
   @NotNull
-  Map<PluginDependency, String> getOptionalDependenciesConfigFiles() {
-    return myOptionalConfigFiles;
+  @Override
+  public Map<String, Plugin> getOptionalDescriptors() {
+    return Collections.unmodifiableMap(myOptionalDescriptors);
   }
 
   /**
@@ -468,11 +441,67 @@ class PluginImpl implements Plugin {
     }
   }
 
+  @Override
+  @Nullable
+  public byte[] getVendorLogo() {
+    return myLogoContent == null ? null : myLogoContent.clone();
+  }
+
+  @Nullable
+  @Override
+  public String getVendorLogoUrl() {
+    return myLogoUrl;
+  }
+
+  @NotNull
+  @Override
+  public Document getUnderlyingDocument() {
+    return myUnderlyingDocument.clone();
+  }
+
+  void readExternal(@NotNull URL url, @NotNull Validator validator) throws IncorrectPluginException {
+    try {
+      Document document = JDOMUtil.loadDocument(url);
+      readExternal(document, url, validator);
+    } catch (Exception e) {
+      validator.onCheckedException("Unable to read " + url, e);
+    }
+  }
+
+  void readExternal(@NotNull Document document, @NotNull URL url, Validator validator) throws IncorrectPluginException {
+    try {
+      document = JDOMXIncluder.resolve(document, url.toExternalForm());
+    } catch (XIncludeException e) {
+      throw new IncorrectPluginException("Unable to read resolve " + url.getFile(), e);
+    }
+    checkAndSetEntries(url, document, validator);
+  }
+
+  @NotNull
+  Map<PluginDependency, String> getOptionalDependenciesConfigFiles() {
+    return Collections.unmodifiableMap(myOptionalConfigFiles);
+  }
+
   private void mergeOptionalConfig(@NotNull PluginImpl optDescriptor) {
     myExtensions.putAll(optDescriptor.getExtensions());
   }
 
   void setResolver(@NotNull Resolver resolver) {
     myPluginResolver = resolver;
+  }
+
+  @Override
+  public String toString() {
+    String id = myPluginId;
+    if (StringUtil.isEmpty(id)) {
+      id = myPluginName;
+    }
+    if (StringUtil.isEmpty(id)) {
+      id = myUrl;
+    }
+    if (StringUtil.isEmpty(id)) {
+      id = myFileName;
+    }
+    return id + (getPluginVersion() != null ? ":" + getPluginVersion() : "");
   }
 }
