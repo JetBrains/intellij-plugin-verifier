@@ -117,7 +117,7 @@ public class PluginVerifierOptions {
         String s;
         while ((s = br.readLine()) != null) {
           s = s.trim();
-          if (s.startsWith("//")) continue; //it is a comment
+          if (s.isEmpty() || s.startsWith("//")) continue; //it is a comment
 
           String[] tokens = s.split(":");
 
