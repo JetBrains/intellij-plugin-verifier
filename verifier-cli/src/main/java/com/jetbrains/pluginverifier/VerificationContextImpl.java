@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier;
 
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.Jdk;
+import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
@@ -15,15 +16,14 @@ import org.jetbrains.annotations.Nullable;
 public class VerificationContextImpl implements VerificationContext {
 
   private final ProblemSet myProblemSet = new ProblemSet();
+  private final Plugin myPlugin;
   private final PluginVerifierOptions myVerifierOptions;
   private final Ide myIde;
   private final Jdk myJdk;
   private final Resolver myExternalClassPath;
 
-  public VerificationContextImpl(@NotNull PluginVerifierOptions verifierOptions,
-                                 @NotNull Ide ide,
-                                 @NotNull Jdk jdk,
-                                 @Nullable Resolver externalClassPath) {
+  public VerificationContextImpl(@NotNull Plugin plugin, @NotNull Ide ide, @NotNull Jdk jdk, @Nullable Resolver externalClassPath, @NotNull PluginVerifierOptions verifierOptions) {
+    myPlugin = plugin;
     myVerifierOptions = verifierOptions;
     myIde = ide;
     myJdk = jdk;
@@ -36,7 +36,14 @@ public class VerificationContextImpl implements VerificationContext {
 
   @Override
   public void registerProblem(@NotNull Problem problem, @NotNull ProblemLocation location) {
-    myProblemSet.addProblem(problem, location);
+    if (!myVerifierOptions.isIgnoredProblem(myPlugin, problem)) {
+      myProblemSet.addProblem(problem, location);
+    }
+  }
+
+  @Override
+  public Plugin getPlugin() {
+    return myPlugin;
   }
 
   @NotNull

@@ -170,8 +170,8 @@ public class VerifierTest {
 
     final CommandLine commandLine = new GnuParser().parse(Util.CMD_OPTIONS, new String[]{});
 
-    VerificationContextImpl ctx = new VerificationContextImpl(PluginVerifierOptions.parseOpts(commandLine), myIde, myJavaRuntime, null);
-    Verifiers.processAllVerifiers(myPlugin, ctx);
+    VerificationContextImpl ctx = new VerificationContextImpl(myPlugin, myIde, myJavaRuntime, null, PluginVerifierOptions.parseOpts(commandLine));
+    Verifiers.processAllVerifiers(ctx);
 
     testFoundProblems(ctx.getProblemSet().asMap(), actualProblems);
   }

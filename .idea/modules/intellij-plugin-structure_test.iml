@@ -20,10 +20,10 @@
     <orderEntry type="library" name="Gradle: org.codehaus.plexus:plexus-archiver:2.3" level="project" />
     <orderEntry type="library" name="Gradle: org.hamcrest:hamcrest-core:1.3" level="project" />
     <orderEntry type="library" name="Gradle: org.codehaus.plexus:plexus-container-default:1.0-alpha-9-stable-1" level="project" />
-    <orderEntry type="library" name="Gradle: org.codehaus.plexus:plexus-utils:3.0.10" level="project" />
     <orderEntry type="module" module-name="mock-plugin1_main" scope="RUNTIME" />
-    <orderEntry type="module" module-name="mock-plugin2_main" scope="RUNTIME" />
+    <orderEntry type="library" name="Gradle: org.codehaus.plexus:plexus-utils:3.0.10" level="project" />
     <orderEntry type="library" name="Gradle: org.codehaus.plexus:plexus-io:2.0.6" level="project" />
+    <orderEntry type="module" module-name="mock-plugin2_main" scope="RUNTIME" />
     <orderEntry type="module" module-name="mock-plugin3_main" scope="RUNTIME" />
     <orderEntry type="library" name="Gradle: classworlds:classworlds:1.1-alpha-2" level="project" />
   </component>

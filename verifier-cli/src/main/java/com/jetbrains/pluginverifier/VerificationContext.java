@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier;
 
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.Jdk;
+import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
@@ -14,6 +15,8 @@ public interface VerificationContext {
   PluginVerifierOptions getVerifierOptions();
 
   void registerProblem(@NotNull Problem problem, @NotNull ProblemLocation location);
+
+  Plugin getPlugin();
 
   Ide getIde();
 

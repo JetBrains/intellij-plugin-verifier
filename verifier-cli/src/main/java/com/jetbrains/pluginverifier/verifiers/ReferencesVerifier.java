@@ -19,10 +19,7 @@ import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.*;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Dennis.Ushakov
@@ -30,7 +27,8 @@ import java.util.Set;
 class ReferencesVerifier implements Verifier {
 
   @Override
-  public void verify(@NotNull Plugin plugin, @NotNull VerificationContext ctx) throws VerificationError {
+  public void verify(@NotNull VerificationContext ctx) throws VerificationError {
+    Plugin plugin = ctx.getPlugin();
 
     DependenciesCache.PluginDependenciesDescriptor descriptor = DependenciesCache.getInstance().getResolver(plugin, ctx.getIde(), ctx.getJdk(), ctx.getExternalClassPath());
     Resolver cacheResolver = Resolver.createCacheResolver(descriptor.getResolver());
@@ -57,7 +55,11 @@ class ReferencesVerifier implements Verifier {
 
     Set<Resolver> usedResolvers = Sets.newIdentityHashSet();
 
-    Set<String> referencedFromXml = plugin.getAllClassesReferencedFromXml();
+    Set<String> referencedFromXml = new HashSet<String>(plugin.getAllClassesReferencedFromXml());
+    for (Map.Entry<String, Plugin> entry : plugin.getOptionalDescriptors().entrySet()) {
+      referencedFromXml.addAll(entry.getValue().getAllClassesReferencedFromXml());
+    }
+
     for (String aClass : referencedFromXml) {
       Resolver location = commonResolver.getClassLocation(aClass);
       if (location != null) {

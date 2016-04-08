@@ -8,22 +8,22 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class MethodNotFoundProblem extends Problem {
 
-  private String myCalledMethod;
+  private String myMethodDescriptor;
 
   public MethodNotFoundProblem() {
 
   }
 
-  public MethodNotFoundProblem(@NotNull String calledMethod) {
-    myCalledMethod = calledMethod;
+  public MethodNotFoundProblem(@NotNull String methodDescriptor) {
+    myMethodDescriptor = methodDescriptor;
   }
 
-  public String getCalledMethod() {
-    return myCalledMethod;
+  public String getMethodDescriptor() {
+    return myMethodDescriptor;
   }
 
-  public void setCalledMethod(String calledMethod) {
-    myCalledMethod = calledMethod;
+  public void setMethodDescriptor(String methodDescriptor) {
+    myMethodDescriptor = methodDescriptor;
   }
 
   @Override
@@ -32,7 +32,7 @@ public class MethodNotFoundProblem extends Problem {
   }
 
   public String getDescription() {
-    return getDescriptionPrefix() + " " + MessageUtils.convertMethodDescr(myCalledMethod);
+    return getDescriptionPrefix() + " " + MessageUtils.convertMethodDescr(myMethodDescriptor);
   }
 
   @Override
@@ -42,11 +42,11 @@ public class MethodNotFoundProblem extends Problem {
 
     MethodNotFoundProblem problem = (MethodNotFoundProblem)o;
 
-    return !(myCalledMethod != null ? !myCalledMethod.equals(problem.myCalledMethod) : problem.myCalledMethod != null);
+    return !(myMethodDescriptor != null ? !myMethodDescriptor.equals(problem.myMethodDescriptor) : problem.myMethodDescriptor != null);
   }
 
   @Override
   public int hashCode() {
-    return 130807 + (myCalledMethod != null ? myCalledMethod.hashCode() : 0);
+    return 130807 + (myMethodDescriptor != null ? myMethodDescriptor.hashCode() : 0);
   }
 }

@@ -204,10 +204,11 @@ public class CheckPluginCommand extends VerifierCommand {
           ide = ide.getExpandedIde(plugin);
 
         } catch (Exception e) {
+
+          String localizedMessage = e.getLocalizedMessage() != null ? e.getLocalizedMessage() : e.getClass().getName();
+          brokenPlugins.add(Pair.create(pluginFile.getFirst(), new VerificationProblem(localizedMessage, pluginFile.getFirst().toString())));
+
           final String message = "failed to verify plugin " + pluginFile.getFirst();
-
-          brokenPlugins.add(Pair.create(pluginFile.getFirst(), new VerificationProblem(e.getLocalizedMessage(), pluginFile.getFirst().toString())));
-
           System.err.println(message);
           log.messageError(message, Util.getStackTrace(e));
         }
@@ -319,14 +320,14 @@ public class CheckPluginCommand extends VerifierCommand {
     System.out.print(message);
     log.message(message);
 
-    VerificationContextImpl ctx = new VerificationContextImpl(options, ide, jdk, externalClassPath);
+    VerificationContextImpl ctx = new VerificationContextImpl(plugin, ide, jdk, externalClassPath, options);
 
     TeamCityLog.Block block = log.blockOpen(plugin.getPluginId());
 
     try {
 
       //may throw VerificationError
-      Verifiers.processAllVerifiers(plugin, ctx);
+      Verifiers.processAllVerifiers(ctx);
 
       ProblemSet problemSet = ctx.getProblemSet();
 

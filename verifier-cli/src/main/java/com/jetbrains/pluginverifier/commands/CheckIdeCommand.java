@@ -255,8 +255,8 @@ public class CheckIdeCommand extends VerifierCommand {
 
         System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), myUpdatesToCheck.size()));
 
-        VerificationContextImpl ctx = new VerificationContextImpl(myVerifierOptions, myIde, myJdk, myExternalClassPath);
-        Verifiers.processAllVerifiers(plugin, ctx);
+        VerificationContextImpl ctx = new VerificationContextImpl(plugin, myIde, myJdk, myExternalClassPath, myVerifierOptions);
+        Verifiers.processAllVerifiers(ctx);
 
         myResults.put(updateJson, ctx.getProblemSet());
 
@@ -285,12 +285,13 @@ public class CheckIdeCommand extends VerifierCommand {
 
       } catch (Exception e) {
         final String message;
+        String details = e.getLocalizedMessage() != null ? e.getLocalizedMessage() : e.getClass().getName();
         if (e instanceof IOException) {
-          message = "Failed to read/download plugin " + updateJson + " because " + e.getLocalizedMessage();
+          message = "Failed to read/download plugin " + updateJson + " because " + details;
         } else {
-          message = "Failed to verify plugin " + updateJson + " because " + e.getLocalizedMessage();
+          message = "Failed to verify plugin " + updateJson + " because " + details;
         }
-        myIncorrectPlugins.add(Pair.create(updateJson, new VerificationProblem(e.getLocalizedMessage(), updateJson.toString())));
+        myIncorrectPlugins.add(Pair.create(updateJson, new VerificationProblem(details, updateJson.toString())));
 
         System.err.println(message);
         e.printStackTrace();

@@ -36,7 +36,8 @@ public class Util {
       .addOption("pcr", "plugin-check-result", true, "File to dump result of checking plugin against IDEs")
       .addOption("g", "group", true, "Whether to group problems presentation (possible args are 'plugin' - group by plugin and 'type' - group by error-type)")
       .addOption("dce", "dont-check-excluded", false, "If specified no plugins from -epf will be checked at all")
-      .addOption("imod", "ignore-missing-optional-dependencies", true, "Missing optional dependencies on the plugin IDs specified in this parameter will be ignored");
+      .addOption("imod", "ignore-missing-optional-dependencies", true, "Missing optional dependencies on the plugin IDs specified in this parameter will be ignored")
+      .addOption("ip", "ignore-problems", true, "Problems specified in this file will be ignored. File must contain lines in form <plugin_xml_id>:<plugin_version>:<problem_type>:<problem_details>");
 
   public static void printHelp() {
     new HelpFormatter().printHelp("java -jar verifier.jar <command> [<args>]", CMD_OPTIONS);
