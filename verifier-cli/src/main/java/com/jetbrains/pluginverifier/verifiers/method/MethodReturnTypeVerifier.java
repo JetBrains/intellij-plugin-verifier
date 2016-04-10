@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.verifiers.method;
 
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
-import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
@@ -15,7 +14,7 @@ import org.objectweb.asm.tree.MethodNode;
  */
 public class MethodReturnTypeVerifier implements MethodVerifier {
   @Override
-  public void verify(ClassNode clazz, MethodNode method, Resolver resolver, VerificationContext ctx) throws VerificationError {
+  public void verify(ClassNode clazz, MethodNode method, Resolver resolver, VerificationContext ctx) {
     Type methodType = Type.getType(method.desc);
     Type returnType = methodType.getReturnType();
 
@@ -25,7 +24,7 @@ public class MethodReturnTypeVerifier implements MethodVerifier {
     String returnTypeDesc = VerifierUtil.extractClassNameFromDescr(descriptor);
     if (returnTypeDesc == null) return;
 
-    if (!VerifierUtil.classExists(ctx.getVerifierOptions(), resolver, returnTypeDesc)) {
+    if (!VerifierUtil.classExistsOrExternal(ctx, resolver, returnTypeDesc)) {
       ctx.registerProblem(new ClassNotFoundProblem(returnTypeDesc), ProblemLocation.fromMethod(clazz.name, method));
     }
 

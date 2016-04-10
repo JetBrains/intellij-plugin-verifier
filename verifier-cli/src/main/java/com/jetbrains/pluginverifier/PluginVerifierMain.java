@@ -15,8 +15,7 @@ public class PluginVerifierMain {
     CommandLine commandLine;
     try {
       commandLine = new GnuParser().parse(Util.CMD_OPTIONS, args);
-    }
-    catch (ParseException e) {
+    } catch (ParseException e) {
       throw FailUtil.fail(e);
     }
 
@@ -30,13 +29,11 @@ public class PluginVerifierMain {
     VerifierCommand command;
     if (freeArgs.isEmpty()) {
       command = CommandHolder.getDefaultCommand();
-    }
-    else {
+    } else {
       command = CommandHolder.getCommand(freeArgs.get(0));
       if (command == null) {
         command = CommandHolder.getDefaultCommand();
-      }
-      else {
+      } else {
         freeArgs = freeArgs.subList(1, freeArgs.size());
       }
     }

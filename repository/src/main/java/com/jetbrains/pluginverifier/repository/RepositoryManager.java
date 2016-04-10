@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.repository;
 
 import com.google.common.base.Throwables;
+import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.DownloadUtils;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
@@ -60,9 +61,8 @@ public class RepositoryManager {
     return repositories;
   }
 
-  //TODO: replace String of IDE-version by IdeVersion instance where possible
   @NotNull
-  public List<UpdateInfo> getAllCompatibleUpdates(@NotNull String ideVersion) throws IOException {
+  public List<UpdateInfo> getAllCompatibleUpdates(@NotNull IdeVersion ideVersion) throws IOException {
     List<UpdateInfo> res = new ArrayList<UpdateInfo>();
 
     for (PluginRepository repository : getRepositories()) {
@@ -78,7 +78,7 @@ public class RepositoryManager {
   }
 
   @NotNull
-  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull String ideVersion,
+  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull IdeVersion ideVersion,
                                                          @NotNull Collection<String> pluginIds) throws IOException {
     List<UpdateInfo> res = new ArrayList<UpdateInfo>();
 

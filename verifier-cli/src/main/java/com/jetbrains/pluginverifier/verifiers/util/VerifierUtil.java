@@ -2,8 +2,9 @@ package com.jetbrains.pluginverifier.verifiers.util;
 
 import com.google.common.base.Preconditions;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.PluginVerifierOptions;
-import com.jetbrains.pluginverifier.error.VerificationError;
+import com.jetbrains.pluginverifier.VerificationContext;
+import com.jetbrains.pluginverifier.problems.FailedToReadClassProblem;
+import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.utils.FailUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,29 +12,18 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
-public class VerifierUtil {
-  public static boolean classExists(PluginVerifierOptions opt, final Resolver resolver, final @NotNull String className) throws VerificationError {
-    return classExists(opt, resolver, className, null);
-  }
+import java.io.IOException;
 
-  public static boolean classExists(PluginVerifierOptions opt, final Resolver resolver, final @NotNull String className, final Boolean isInterface) throws VerificationError {
-    return isValidClassOrInterface(opt, resolver, className, isInterface);
+public class VerifierUtil {
+  public static boolean classExistsOrExternal(VerificationContext ctx, final Resolver resolver, final @NotNull String className) {
+    FailUtil.assertTrue(!className.startsWith("["), className);
+    FailUtil.assertTrue(!className.endsWith(";"), className);
+
+    return ctx.getVerifierOptions().isExternalClass(className) || VerifierUtil.findClass(resolver, className, ctx) != null;
   }
 
   public static boolean isInterface(@NotNull ClassNode classNode) {
     return (classNode.access & Opcodes.ACC_INTERFACE) != 0;
-  }
-
-  private static boolean isValidClassOrInterface(PluginVerifierOptions opt, final Resolver resolver, final @NotNull String name, final @Nullable Boolean isInterface) throws VerificationError {
-    FailUtil.assertTrue(!name.startsWith("["), name);
-    FailUtil.assertTrue(!name.endsWith(";"), name);
-
-    if (opt.isExternalClass(name)) {
-      return true;
-    }
-
-    final ClassNode clazz = VerifierUtil.findClass(resolver, name);
-    return clazz != null && (isInterface == null || isInterface == isInterface(clazz));
   }
 
   private static String prepareArrayName(@NotNull final String className) {
@@ -49,12 +39,21 @@ public class VerifierUtil {
     return className;
   }
 
+  /**
+   * Finds a class with the given name in the given resolver
+   *
+   * @param resolver  resolver to search in
+   * @param className className in binary form
+   * @param ctx       context to report a problem of missing class to
+   * @return null if not found or exception occurs (in the last case FailedToReadClassProblem is reported)
+   */
   @Nullable
-  public static ClassNode findClass(@NotNull Resolver resolver, @NotNull String className) throws VerificationError {
+  public static ClassNode findClass(@NotNull Resolver resolver, @NotNull String className, @NotNull VerificationContext ctx) {
     try {
       return resolver.findClass(className);
-    } catch (Exception e) {
-      throw new VerificationError("Unable to find class " + className + " in resolver " + resolver, e);
+    } catch (IOException e) {
+      ctx.registerProblem(new FailedToReadClassProblem(className, e.getLocalizedMessage()), ProblemLocation.fromPlugin(ctx.getPlugin().toString()));
+      return null;
     }
   }
 

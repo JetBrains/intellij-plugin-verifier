@@ -10,7 +10,6 @@ import com.jetbrains.pluginverifier.CommandHolder;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.VerifierCommand;
-import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.VerificationProblem;
@@ -47,7 +46,7 @@ public class CheckPluginCommand extends VerifierCommand {
   }
 
   @NotNull
-  private static List<Pair<UpdateInfo, File>> loadPluginFiles(@NotNull String pluginToTestArg, @NotNull String ideVersion) {
+  private static List<Pair<UpdateInfo, File>> loadPluginFiles(@NotNull String pluginToTestArg, @NotNull IdeVersion ideVersion) {
     if (pluginToTestArg.startsWith("@")) {
       File pluginListFile = new File(pluginToTestArg.substring(1));
       List<String> pluginPaths;
@@ -79,7 +78,7 @@ public class CheckPluginCommand extends VerifierCommand {
   }
 
   @NotNull
-  private static List<Pair<UpdateInfo, File>> fetchPlugins(@NotNull String ideVersion, @NotNull File pluginListFile, @NotNull List<String> pluginPaths) {
+  private static List<Pair<UpdateInfo, File>> fetchPlugins(@NotNull IdeVersion ideVersion, @NotNull File pluginListFile, @NotNull List<String> pluginPaths) {
     List<Pair<UpdateInfo, File>> pluginsFiles = new ArrayList<Pair<UpdateInfo, File>>();
 
     for (String pluginPath : pluginPaths) {
@@ -131,7 +130,7 @@ public class CheckPluginCommand extends VerifierCommand {
   }
 
   @NotNull
-  private static List<Pair<UpdateInfo, File>> downloadPluginBuilds(@NotNull String pluginId, @NotNull String ideVersion) {
+  private static List<Pair<UpdateInfo, File>> downloadPluginBuilds(@NotNull String pluginId, @NotNull IdeVersion ideVersion) {
     List<UpdateInfo> compatibleUpdatesForPlugins;
     try {
       compatibleUpdatesForPlugins = RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(ideVersion, Collections.singletonList(pluginId));
@@ -182,7 +181,7 @@ public class CheckPluginCommand extends VerifierCommand {
       Ide ide = IdeManager.getInstance().createIde(ideaDirectory);
 
 
-      List<Pair<UpdateInfo, File>> pluginFiles = loadPluginFiles(pluginsToTestArg, ide.getVersion().asString());
+      List<Pair<UpdateInfo, File>> pluginFiles = loadPluginFiles(pluginsToTestArg, ide.getVersion());
 
       for (Pair<UpdateInfo, File> pluginFile : pluginFiles) {
         try {
@@ -210,6 +209,7 @@ public class CheckPluginCommand extends VerifierCommand {
 
           final String message = "failed to verify plugin " + pluginFile.getFirst();
           System.err.println(message);
+          e.printStackTrace();
           log.messageError(message, Util.getStackTrace(e));
         }
       }
@@ -314,7 +314,7 @@ public class CheckPluginCommand extends VerifierCommand {
                                   @Nullable Resolver externalClassPath,
                                   @NotNull Plugin plugin,
                                   @NotNull PluginVerifierOptions options,
-                                  @NotNull TeamCityLog log) throws IOException, VerificationError {
+                                  @NotNull TeamCityLog log) throws IOException {
 
     String message = "Verifying " + plugin.getPluginId() + ":" + plugin.getPluginVersion() + " against " + ide.getVersion() + "... ";
     System.out.print(message);
@@ -326,7 +326,6 @@ public class CheckPluginCommand extends VerifierCommand {
 
     try {
 
-      //may throw VerificationError
       Verifiers.processAllVerifiers(ctx);
 
       ProblemSet problemSet = ctx.getProblemSet();

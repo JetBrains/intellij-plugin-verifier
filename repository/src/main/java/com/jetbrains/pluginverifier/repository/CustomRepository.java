@@ -5,6 +5,7 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Maps;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
+import com.intellij.structure.errors.IncorrectPluginException;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.DownloadUtils;
 import com.jetbrains.pluginverifier.misc.PluginCache;
@@ -86,21 +87,21 @@ public class CustomRepository extends PluginRepository {
     return res;
   }
 
-  private List<UpdateInfo> getUpdates(@NotNull String ideVersion, Predicate<UpdateInfo> predicate) throws IOException {
-    IdeVersion version;
-    //TODO: replace it
-    try {
-      version = IdeVersion.createIdeVersion(ideVersion);
-    } catch (IllegalArgumentException e) {
-      return Collections.emptyList();
-    }
-
+  private List<UpdateInfo> getUpdates(@NotNull IdeVersion ideVersion, Predicate<UpdateInfo> predicate) throws IOException {
     List<UpdateInfo> res = new ArrayList<UpdateInfo>();
 
     for (Map.Entry<UpdateInfo, String> entry : Maps.filterKeys(getRepositoriesMap(), predicate).entrySet()) {
       File update = DownloadUtils.getOrLoadUpdate(entry.getKey(), new URL(entry.getValue()));
-      Plugin ideaPlugin = PluginCache.getInstance().getPlugin(update);
-      if (ideaPlugin != null && ideaPlugin.isCompatibleWithIde(version)) {
+
+      Plugin ideaPlugin;
+      try {
+        ideaPlugin = PluginCache.getInstance().createPlugin(update, false);
+      } catch (IncorrectPluginException e) {
+        //TODO: add log
+        continue;
+      }
+
+      if (ideaPlugin.isCompatibleWithIde(ideVersion)) {
         res.add(entry.getKey());
       }
     }
@@ -109,7 +110,7 @@ public class CustomRepository extends PluginRepository {
   }
 
   @Override
-  public List<UpdateInfo> getAllCompatibleUpdates(@NotNull String ideVersion) throws IOException {
+  public List<UpdateInfo> getAllCompatibleUpdates(@NotNull IdeVersion ideVersion) throws IOException {
     return getUpdates(ideVersion, Predicates.<UpdateInfo>alwaysTrue());
   }
 
@@ -120,7 +121,7 @@ public class CustomRepository extends PluginRepository {
   }
 
   @Override
-  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull String ideVersion, final Collection<String> pluginIds) throws IOException {
+  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull IdeVersion ideVersion, final Collection<String> pluginIds) throws IOException {
     return getUpdates(ideVersion, new Predicate<UpdateInfo>() {
       @Override
       public boolean apply(UpdateInfo input) {

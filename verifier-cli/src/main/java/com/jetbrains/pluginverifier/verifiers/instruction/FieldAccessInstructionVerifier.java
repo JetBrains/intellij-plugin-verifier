@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.verifiers.instruction;
 
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
-import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
@@ -17,16 +16,15 @@ import org.objectweb.asm.tree.MethodNode;
  */
 public class FieldAccessInstructionVerifier implements InstructionVerifier {
   @Override
-  public void verify(ClassNode clazz, MethodNode method, AbstractInsnNode instr, Resolver resolver, VerificationContext ctx) throws VerificationError {
+  public void verify(ClassNode clazz, MethodNode method, AbstractInsnNode instr, Resolver resolver, VerificationContext ctx) {
     if (!(instr instanceof FieldInsnNode)) return;
     FieldInsnNode node = (FieldInsnNode) instr;
 
-    String fieldName = node.name;
     String fieldOwner = node.owner;
 
     fieldOwner = VerifierUtil.extractClassNameFromDescr(fieldOwner);
     if (fieldOwner == null) return;
-    if (!VerifierUtil.classExists(ctx.getVerifierOptions(), resolver, fieldOwner)) {
+    if (!VerifierUtil.classExistsOrExternal(ctx, resolver, fieldOwner)) {
       ctx.registerProblem(new ClassNotFoundProblem(fieldOwner), ProblemLocation.fromMethod(clazz.name, method));
       return;
     }

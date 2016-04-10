@@ -43,8 +43,7 @@ public abstract class VerifierCommand {
       if (!runtimeDirectory.isDirectory()) {
         throw FailUtil.fail("Specified runtime directory is not a directory: " + commandLine.getOptionValue('r'));
       }
-    }
-    else {
+    } else {
       String javaHome = System.getenv("JAVA_HOME");
       if (javaHome == null) {
         throw FailUtil.fail("JAVA_HOME is not specified");

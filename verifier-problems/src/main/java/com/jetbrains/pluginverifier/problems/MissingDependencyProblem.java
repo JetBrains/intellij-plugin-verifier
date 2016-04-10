@@ -7,13 +7,15 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class MissingDependencyProblem extends Problem {
 
+  private String myPlugin;
   private String myMissingId;
   private String myMissDescription;
 
   public MissingDependencyProblem() {
   }
 
-  public MissingDependencyProblem(@NotNull String missingId, @NotNull String missDescription) {
+  public MissingDependencyProblem(String plugin, @NotNull String missingId, @NotNull String missDescription) {
+    myPlugin = plugin;
     myMissingId = missingId;
     myMissDescription = missDescription;
   }
@@ -41,7 +43,7 @@ public class MissingDependencyProblem extends Problem {
 
   @Override
   public String getDescription() {
-    return getDescriptionPrefix() + " (" + myMissDescription + ")";
+    return getDescriptionPrefix() + " of a plugin " + myPlugin + " (" + myMissDescription + ")";
   }
 
   @Override
@@ -62,5 +64,13 @@ public class MissingDependencyProblem extends Problem {
     result = 31 * result + (myMissingId != null ? myMissingId.hashCode() : 0);
     result = 31 * result + (myMissDescription != null ? myMissDescription.hashCode() : 0);
     return result;
+  }
+
+  public String getPlugin() {
+    return myPlugin;
+  }
+
+  public void setPlugin(String plugin) {
+    myPlugin = plugin;
   }
 }

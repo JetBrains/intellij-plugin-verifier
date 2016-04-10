@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.verifiers.instruction;
 
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
-import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.IllegalMethodAccessProblem;
 import com.jetbrains.pluginverifier.problems.MethodNotFoundProblem;
@@ -24,7 +23,7 @@ import java.util.Set;
  * @author Dennis.Ushakov
  */
 public class InvokeInstructionVerifier implements InstructionVerifier {
-  public void verify(final ClassNode clazz, final MethodNode method, final AbstractInsnNode instr, final Resolver resolver, final VerificationContext ctx) throws VerificationError {
+  public void verify(final ClassNode clazz, final MethodNode method, final AbstractInsnNode instr, final Resolver resolver, final VerificationContext ctx) {
     if (!(instr instanceof MethodInsnNode))
       return;
 
@@ -43,12 +42,12 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
 
     if (ctx.getVerifierOptions().isExternalClass(ownerClassName)) return;
 
-    ClassNode ownerClass = VerifierUtil.findClass(resolver, ownerClassName);
+    ClassNode ownerClass = VerifierUtil.findClass(resolver, ownerClassName, ctx);
 
     if (ownerClass == null) {
       ctx.registerProblem(new ClassNotFoundProblem(ownerClassName), ProblemLocation.fromMethod(clazz.name, method));
     } else {
-      ResolverUtil.MethodLocation actualLocation = ResolverUtil.findMethod(resolver, ownerClass, invokedMethod.name, invokedMethod.desc);
+      ResolverUtil.MethodLocation actualLocation = ResolverUtil.findMethod(resolver, ownerClass, invokedMethod.name, invokedMethod.desc, ctx);
 
       if (actualLocation == null || isDefaultConstructorNotFound(invokedMethod, ownerClassName, actualLocation)) {
 
@@ -63,7 +62,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
           }
         }
 
-        if (hasUnresolvedClass(actualOwner, resolver)) {
+        if (hasUnresolvedClass(actualOwner, resolver, ctx)) {
           //actualOwner has some unresolved class => most likely that this class contains(-ed) the sought-for method
           return;
         }
@@ -80,13 +79,14 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
   }
 
   private boolean hasUnresolvedClass(@NotNull String actualOwner,
-                                     @NotNull Resolver resolver) throws VerificationError {
-    ClassNode aClass = VerifierUtil.findClass(resolver, actualOwner);
+                                     @NotNull Resolver resolver,
+                                     @NotNull VerificationContext ctx) {
+    ClassNode aClass = VerifierUtil.findClass(resolver, actualOwner, ctx);
     if (aClass == null) {
       return true;
     }
 
-    Set<String> unresolvedClasses = ResolverUtil.collectUnresolvedClasses(resolver, actualOwner);
+    Set<String> unresolvedClasses = ResolverUtil.collectUnresolvedClasses(resolver, actualOwner, ctx);
     return !unresolvedClasses.isEmpty();
   }
 
@@ -94,7 +94,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
                                    @NotNull VerificationContext ctx,
                                    @NotNull Resolver resolver,
                                    @NotNull ClassNode verifiedClass,
-                                   @NotNull MethodNode verifiedMethod) throws VerificationError {
+                                   @NotNull MethodNode verifiedMethod) {
     MethodNode actualMethod = actualLocation.getMethodNode();
     ClassNode actualOwner = actualLocation.getClassNode();
 
@@ -106,7 +106,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
         accessProblem = IllegalMethodAccessProblem.MethodAccess.PRIVATE;
       }
     } else if (VerifierUtil.isProtected(actualMethod)) {
-      if (!isAncestor(actualOwner, verifiedClass, resolver) && !haveTheSamePackage(actualOwner, verifiedClass)) {
+      if (!isAncestor(actualOwner, verifiedClass, resolver, ctx) && !haveTheSamePackage(actualOwner, verifiedClass)) {
         //accessing to the package-private method of the non-inherited class
         accessProblem = IllegalMethodAccessProblem.MethodAccess.PROTECTED;
       }
@@ -127,7 +127,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
     return StringUtil.equals(extractPackage(first.name), extractPackage(second.name));
   }
 
-  private boolean isAncestor(@NotNull ClassNode parent, ClassNode child, @NotNull Resolver resolver) throws VerificationError {
+  private boolean isAncestor(@NotNull ClassNode parent, ClassNode child, @NotNull Resolver resolver, @NotNull VerificationContext ctx) {
     while (child != null) {
       if (StringUtil.equals(parent.name, child.name)) {
         return true;
@@ -136,7 +136,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       if (superName == null) {
         return false;
       }
-      child = VerifierUtil.findClass(resolver, superName);
+      child = VerifierUtil.findClass(resolver, superName, ctx);
     }
     return false;
   }

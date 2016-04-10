@@ -146,18 +146,18 @@ public class CheckIdeCommand extends VerifierCommand {
     myCheckLastBuilds = pluginsIds.second;
 
     if (myCheckAllBuilds.isEmpty() && myCheckLastBuilds.isEmpty()) {
-      myUpdatesToCheck = RepositoryManager.getInstance().getAllCompatibleUpdates(myIde.getVersion().asString());
+      myUpdatesToCheck = RepositoryManager.getInstance().getAllCompatibleUpdates(myIde.getVersion());
     } else {
       myUpdatesToCheck = new ArrayList<UpdateInfo>();
 
       if (myCheckAllBuilds.size() > 0) {
-        myUpdatesToCheck.addAll(RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(myIde.getVersion().asString(), myCheckAllBuilds));
+        myUpdatesToCheck.addAll(RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(myIde.getVersion(), myCheckAllBuilds));
       }
 
       if (myCheckLastBuilds.size() > 0) {
         Map<String, UpdateInfo> lastBuilds = new HashMap<String, UpdateInfo>();
 
-        for (UpdateInfo info : RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(myIde.getVersion().asString(), myCheckLastBuilds)) {
+        for (UpdateInfo info : RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(myIde.getVersion(), myCheckLastBuilds)) {
           UpdateInfo existsBuild = lastBuilds.get(info.getPluginId());
 
           //choose last build

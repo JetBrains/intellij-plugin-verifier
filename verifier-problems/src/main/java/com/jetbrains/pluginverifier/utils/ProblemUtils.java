@@ -31,6 +31,7 @@ public class ProblemUtils {
           //--------PROBLEMS--------
           Problem.class,
           ClassNotFoundProblem.class,
+          CyclicDependenciesProblem.class,
           DuplicateClassProblem.class,
           FailedToReadClassProblem.class,
           IllegalMethodAccessProblem.class,

@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.repository;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
 import com.jetbrains.pluginverifier.utils.FailUtil;
@@ -31,7 +32,7 @@ class GlobalRepository extends PluginRepository {
   }
 
   @Override
-  public List<UpdateInfo> getAllCompatibleUpdates(@NotNull String ideVersion) throws IOException {
+  public List<UpdateInfo> getAllCompatibleUpdates(@NotNull IdeVersion ideVersion) throws IOException {
     System.out.println("Loading compatible plugins list... ");
 
     URL url1 = new URL(RepositoryConfiguration.getInstance().getPluginRepositoryUrl() + "/manager/allCompatibleUpdates/?build=" + ideVersion);
@@ -57,7 +58,7 @@ class GlobalRepository extends PluginRepository {
   }
 
   @Override
-  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull String ideVersion, @NotNull Collection<String> pluginIds) throws IOException {
+  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull IdeVersion ideVersion, @NotNull Collection<String> pluginIds) throws IOException {
     /*
     pluginIds = new HashSet<String>(pluginIds);
 

@@ -8,6 +8,7 @@ import javax.xml.bind.annotation.XmlTransient;
 public abstract class Problem {
 
   @XmlTransient
+  //TODO: write a renderer for TC and others instead of prefix
   public abstract String getDescriptionPrefix();
 
 

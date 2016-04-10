@@ -12,6 +12,7 @@ public class CommandHolder {
   private static final VerifierCommand defaultCommand = new CheckPluginCommand();
 
   private static final Map<String, VerifierCommand> COMMAND_MAP = new HashMap<String, VerifierCommand>();
+
   static {
     for (VerifierCommand c : new VerifierCommand[]{new CheckIdeCommand(), new CompareResultsCommand(), new NewProblemsCommand(), new ProblemsPrinter()}) {
       COMMAND_MAP.put(c.getName(), c);

@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.verifiers;
 
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
-import com.jetbrains.pluginverifier.error.VerificationError;
 import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier;
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
 import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier;
@@ -57,7 +56,7 @@ public class Verifiers {
     return INSTRUCTION_VERIFIERS;
   }
 
-  public static void processAllVerifiers(VerificationContext ctx) throws VerificationError {
+  public static void processAllVerifiers(VerificationContext ctx) {
     for (Verifier verifier : PLUGIN_VERIFIERS) {
       verifier.verify(ctx);
     }

@@ -5,26 +5,38 @@ import javax.xml.bind.annotation.XmlRootElement;
 /**
  * @author Sergey Patrikeev
  */
-//TODO: implement this (e.g. in case of class -> interface, or backward)
 @XmlRootElement
 public class IncompatibleClassChangeProblem extends Problem {
 
   private String myClassName;
+  private Change myChange;
 
   public IncompatibleClassChangeProblem() {
   }
 
-  public IncompatibleClassChangeProblem(String className) {
+  public IncompatibleClassChangeProblem(String className, Change change) {
     myClassName = className;
+    myChange = change;
   }
 
   @Override
   public String getDescriptionPrefix() {
-    return null;
+    return "incompatible change problem";
   }
 
   public String getDescription() {
-    return null;
+    String s = null;
+    if (myChange != null) {
+      switch (myChange) {
+        case CLASS_TO_INTERFACE:
+          s = "(expected a class but found an interface)";
+          break;
+        case INTERFACE_TO_CLASS:
+          s = "(expected an interface but found a class)";
+          break;
+      }
+    }
+    return getDescriptionPrefix() + " of class " + myClassName + (s != null ? " " + s : "");
   }
 
   public String getClassName() {
@@ -35,6 +47,13 @@ public class IncompatibleClassChangeProblem extends Problem {
     myClassName = className;
   }
 
+  public Change getChange() {
+    return myChange;
+  }
+
+  public void setChange(Change change) {
+    myChange = change;
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -43,14 +62,22 @@ public class IncompatibleClassChangeProblem extends Problem {
 
     IncompatibleClassChangeProblem that = (IncompatibleClassChangeProblem) o;
 
-    return myClassName != null ? myClassName.equals(that.myClassName) : that.myClassName == null;
+    if (myClassName != null ? !myClassName.equals(that.myClassName) : that.myClassName != null) return false;
+    return myChange == that.myChange;
 
   }
 
   @Override
   public int hashCode() {
-    int result = 12345;
+    int result = 105032;
     result = 31 * result + (myClassName != null ? myClassName.hashCode() : 0);
+    result = 31 * result + (myChange != null ? myChange.hashCode() : 0);
     return result;
   }
+
+  public enum Change {
+    CLASS_TO_INTERFACE,
+    INTERFACE_TO_CLASS
+  }
+
 }

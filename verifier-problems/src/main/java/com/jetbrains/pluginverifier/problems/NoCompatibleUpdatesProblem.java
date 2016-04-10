@@ -6,9 +6,9 @@ package com.jetbrains.pluginverifier.problems;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * This problem is not saved to report-file: it's only shown on verification status page
- */
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement
 public class NoCompatibleUpdatesProblem extends Problem {
 
   private String myPlugin;
@@ -37,6 +37,14 @@ public class NoCompatibleUpdatesProblem extends Problem {
     return myIdeVersion;
   }
 
+  public void setIdeVersion(String ideVersion) {
+    myIdeVersion = ideVersion;
+  }
+
+  public void setPlugin(String plugin) {
+    myPlugin = plugin;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -44,12 +52,16 @@ public class NoCompatibleUpdatesProblem extends Problem {
 
     NoCompatibleUpdatesProblem that = (NoCompatibleUpdatesProblem) o;
 
-    return myPlugin.equals(that.myPlugin);
+    if (myPlugin != null ? !myPlugin.equals(that.myPlugin) : that.myPlugin != null) return false;
+    return myIdeVersion != null ? myIdeVersion.equals(that.myIdeVersion) : that.myIdeVersion == null;
 
   }
 
   @Override
   public int hashCode() {
-    return myPlugin.hashCode();
+    int result = 1;
+    result = 31 * result + (myPlugin != null ? myPlugin.hashCode() : 0);
+    result = 31 * result + (myIdeVersion != null ? myIdeVersion.hashCode() : 0);
+    return result;
   }
 }

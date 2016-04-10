@@ -6,9 +6,8 @@ import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.Verifier;
-import com.jetbrains.pluginverifier.error.VerificationError;
-import com.jetbrains.pluginverifier.misc.DependenciesCache;
-import com.jetbrains.pluginverifier.problems.FailedToReadClassProblem;
+import com.jetbrains.pluginverifier.dependencies.*;
+import com.jetbrains.pluginverifier.problems.CyclicDependenciesProblem;
 import com.jetbrains.pluginverifier.problems.MissingDependencyProblem;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
@@ -27,25 +26,39 @@ import java.util.*;
 class ReferencesVerifier implements Verifier {
 
   @Override
-  public void verify(@NotNull VerificationContext ctx) throws VerificationError {
+  public void verify(@NotNull VerificationContext ctx) {
     Plugin plugin = ctx.getPlugin();
 
-    DependenciesCache.PluginDependenciesDescriptor descriptor = DependenciesCache.getInstance().getResolver(plugin, ctx.getIde(), ctx.getJdk(), ctx.getExternalClassPath());
-    Resolver cacheResolver = Resolver.createCacheResolver(descriptor.getResolver());
+    PluginDependenciesDescriptor descriptor;
+    try {
+      descriptor = DependenciesCache.getInstance().getDependenciesDescriptor(ctx.getPlugin(), ctx.getIde(), ctx.getJdk(), ctx.getExternalClassPath());
+    } catch (DependenciesError dependenciesError) {
+      if (dependenciesError instanceof CyclicDependencyError) {
+        CyclicDependenciesProblem problem = new CyclicDependenciesProblem(((CyclicDependencyError) dependenciesError).getCycle());
+        ctx.registerProblem(problem, ProblemLocation.fromPlugin(ctx.getPlugin().toString()));
+      } else if (dependenciesError instanceof MissingDependenciesError) {
+        MissingDependenciesError error = (MissingDependenciesError) dependenciesError;
+        MissingDependencyProblem problem = new MissingDependencyProblem(error.getPlugin(), error.getMissedPlugin(), error.getDescription());
+        ctx.registerProblem(problem, ProblemLocation.fromPlugin(ctx.getPlugin().toString()));
+      } else {
+        throw new AssertionError("Forgotten case");
+      }
+      //we have a missing dependency so unable to verify a plugin fully
+      return;
+    }
 
-    processMissingDependencies(descriptor, ctx);
+    Resolver commonResolver = Resolver.createCacheResolver(descriptor.getResolver());
+
+    processOptionalMissingDependencies(descriptor, ctx);
 
     final Resolver resolverForCheck = getResolverForCheck(plugin);
 
     for (String className : resolverForCheck.getAllClasses()) {
-      ClassNode node = VerifierUtil.findClass(resolverForCheck, className);
+      ClassNode node = VerifierUtil.findClass(resolverForCheck, className, ctx);
 
-      if (node == null) {
-        ctx.registerProblem(new FailedToReadClassProblem(className), ProblemLocation.fromClass(className));
-        continue;
+      if (node != null) {
+        verifyClass(commonResolver, node, ctx);
       }
-
-      verifyClass(cacheResolver, node, ctx);
     }
   }
 
@@ -74,14 +87,15 @@ class ReferencesVerifier implements Verifier {
     return Resolver.createUnionResolver("Plugin classes for check", Lists.newArrayList(usedResolvers));
   }
 
-  private void processMissingDependencies(@NotNull DependenciesCache.PluginDependenciesDescriptor descriptor, @NotNull VerificationContext ctx) {
+  private void processOptionalMissingDependencies(@NotNull PluginDependenciesDescriptor descriptor, @NotNull VerificationContext ctx) {
     String pluginName = descriptor.getPluginName();
-    Map<String, String> missingDependencies = descriptor.getMissingDependencies().get(pluginName);
+    Map<String, String> missingDependencies = descriptor.getMissingOptionalDependencies().get(pluginName);
     if (missingDependencies != null) {
       for (Map.Entry<String, String> entry : missingDependencies.entrySet()) {
         String missingId = entry.getKey();
+        String description = entry.getValue();
         if (!ctx.getVerifierOptions().isIgnoreMissingOptionalDependency(missingId)) {
-          ctx.registerProblem(new MissingDependencyProblem(missingId, entry.getValue()), ProblemLocation.fromPlugin(pluginName));
+          ctx.registerProblem(new MissingDependencyProblem(pluginName, missingId, description), ProblemLocation.fromPlugin(pluginName));
         }
       }
     }
@@ -90,7 +104,7 @@ class ReferencesVerifier implements Verifier {
   }
 
   @SuppressWarnings("unchecked")
-  private void verifyClass(@NotNull Resolver resolver, @NotNull ClassNode node, @NotNull VerificationContext ctx) throws VerificationError {
+  private void verifyClass(@NotNull Resolver resolver, @NotNull ClassNode node, @NotNull VerificationContext ctx) {
     for (ClassVerifier verifier : Verifiers.getClassVerifiers()) {
       verifier.verify(node, resolver, ctx);
     }
