@@ -105,7 +105,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
         UpdateInfo missingUpdate = new UpdateInfo(pluginId, pluginId, "no compatible update");
 
-        UpdateInfo buildForCommunity = updateCompatibleWithCommunityEdition(pluginId);
+        UpdateInfo buildForCommunity = getUpdateCompatibleWithCommunityEdition(pluginId);
         if (buildForCommunity != null) {
           String details = "\nNote: there is an update (#" + buildForCommunity.getUpdateId() + ") compatible with IDEA Community Edition, " +
               "\nbut the Plugin repository does not offer to install it if you run the IDEA Ultimate" +
@@ -124,13 +124,27 @@ public class CheckIdeCommand extends VerifierCommand {
   }
 
   @Nullable
-  private UpdateInfo updateCompatibleWithCommunityEdition(@NotNull String pluginId) {
+  private UpdateInfo getUpdateCompatibleWithCommunityEdition(@NotNull String pluginId) {
     String ideVersion = myIde.getVersion().asString();
     if (ideVersion.startsWith("IU-")) {
       ideVersion = "IC-" + StringUtil.trimStart(ideVersion, "IU-");
       try {
-        return RepositoryManager.getInstance().findPlugin(IdeVersion.createIdeVersion(ideVersion), pluginId);
-      } catch (IOException e) {
+        UpdateInfo communityBuild = RepositoryManager.getInstance().findPlugin(IdeVersion.createIdeVersion(ideVersion), pluginId);
+        if (communityBuild == null) {
+          return null;
+        }
+
+        List<UpdateInfo> list = RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(IdeVersion.createIdeVersion(ideVersion), Collections.singleton(pluginId));
+        if (list.isEmpty()) {
+          return null;
+        }
+
+        //copy pluginId, version and so on...
+        UpdateInfo result = list.get(0);
+        result.setUpdateId(communityBuild.getUpdateId());
+
+        return result;
+      } catch (Exception e) {
         return null;
       }
     }
