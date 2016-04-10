@@ -17,7 +17,7 @@ public abstract class PluginRepository {
   public abstract List<UpdateInfo> getAllCompatibleUpdates(@NotNull IdeVersion ideVersion) throws IOException;
 
   @Nullable
-  public abstract UpdateInfo findPlugin(@NotNull String ideVersion, @NotNull String pluginId) throws IOException;
+  public abstract UpdateInfo findPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException;
 
   public abstract List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull IdeVersion ideVersion, Collection<String> pluginIds) throws IOException;
 

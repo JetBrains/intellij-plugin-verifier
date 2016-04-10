@@ -116,7 +116,7 @@ public class CustomRepository extends PluginRepository {
 
   @Nullable
   @Override
-  public UpdateInfo findPlugin(@NotNull String ideVersion, @NotNull String pluginId) throws IOException {
+  public UpdateInfo findPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException {
     return null;
   }
 

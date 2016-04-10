@@ -21,6 +21,7 @@ import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
 import org.jdom2.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +37,7 @@ public class CheckIdeCommand extends VerifierCommand {
    * "com.intellij.modules.ruby" inside)
    */
   private static final ImmutableList<String> INTELLIJ_MODULES_PLUGIN_IDS =
-      ImmutableList.of("org.jetbrains.plugins.ruby", "com.jetbrains.php", "org.jetbrains.android", "Pythonid");
+      ImmutableList.of("org.jetbrains.plugins.ruby", "com.jetbrains.php", "org.jetbrains.android", "Pythonid", "PythonCore");
   private TeamCityUtil.ReportGrouping myGrouping;
   private TeamCityLog myTc;
   private Jdk myJdk;
@@ -111,12 +112,35 @@ public class CheckIdeCommand extends VerifierCommand {
     }
 
     for (String missingPluginId : missingPluginIds) {
-      problems.put(new NoCompatibleUpdatesProblem(missingPluginId, myIde.getVersion().asString()), new UpdateInfo(missingPluginId, missingPluginId, "no compatible update"));
-    }
+      UpdateInfo updateInfo = new UpdateInfo(missingPluginId, missingPluginId, "no compatible update");
 
+      UpdateInfo infoCE = updateCompatibleWithCommunityEdition(missingPluginId);
+      if (infoCE != null) {
+        String details = "\nNote: there is a build compatible with IDEA Community Edition, " +
+            "\nbut the Plugin repository does not offer to install it if you run the IDEA Ultimate" +
+            "\nThis update (#" + infoCE.getUpdateId() + ")" + " has not been checked on API compatibility problems.";
+        problems.put(new NoCompatibleUpdatesProblem(missingPluginId, myIde.getVersion().asString(), details), updateInfo);
+      } else {
+        problems.put(new NoCompatibleUpdatesProblem(missingPluginId, myIde.getVersion().asString(), ""), updateInfo);
+      }
+    }
 
     TeamCityUtil.printReport(myTc, problems, TeamCityUtil.ReportGrouping.PLUGIN);
     return problems.size();
+  }
+
+  @Nullable
+  private UpdateInfo updateCompatibleWithCommunityEdition(@NotNull String pluginId) {
+    String ideVersion = myIde.getVersion().asString();
+    if (ideVersion.startsWith("IU-")) {
+      ideVersion = "IC-" + StringUtil.trimStart(ideVersion, "IU-");
+      try {
+        return RepositoryManager.getInstance().findPlugin(IdeVersion.createIdeVersion(ideVersion), pluginId);
+      } catch (IOException e) {
+        return null;
+      }
+    }
+    return null;
   }
 
   private void fillArguments(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws IOException, JDOMException {

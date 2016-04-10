@@ -13,19 +13,25 @@ public class NoCompatibleUpdatesProblem extends Problem {
 
   private String myPlugin;
   private String myIdeVersion;
+  private String myDetails;
 
   public NoCompatibleUpdatesProblem() {
 
   }
 
   public NoCompatibleUpdatesProblem(@NotNull String plugin, @NotNull String ideVersion) {
+    this(plugin, ideVersion, null);
+  }
+
+  public NoCompatibleUpdatesProblem(@NotNull String plugin, @NotNull String ideVersion, String details) {
     myPlugin = plugin;
     myIdeVersion = ideVersion;
+    myDetails = details;
   }
 
   @Override
   public String getDescriptionPrefix() {
-    return "For " + myPlugin + " there are no updates compatible with " + myIdeVersion + " in the Plugin Repository";
+    return "For " + myPlugin + " there are no updates compatible with " + myIdeVersion + " in the Plugin Repository" + (myDetails != null ? " " + myDetails : "");
   }
 
   @Override
@@ -63,5 +69,13 @@ public class NoCompatibleUpdatesProblem extends Problem {
     result = 31 * result + (myPlugin != null ? myPlugin.hashCode() : 0);
     result = 31 * result + (myIdeVersion != null ? myIdeVersion.hashCode() : 0);
     return result;
+  }
+
+  public String getDetails() {
+    return myDetails;
+  }
+
+  public void setDetails(String details) {
+    myDetails = details;
   }
 }

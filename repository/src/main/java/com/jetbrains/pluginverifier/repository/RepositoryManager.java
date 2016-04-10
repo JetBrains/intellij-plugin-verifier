@@ -30,7 +30,7 @@ public class RepositoryManager {
 
   private final WeakHashMap<UpdateInfo, PluginRepository> update2repository = new WeakHashMap<UpdateInfo, PluginRepository>();
 
-  private final Map<Pair<String, String>, UpdateInfo> plugin2updateId = new HashMap<Pair<String, String>, UpdateInfo>();
+  private final Map<Pair<IdeVersion, String>, UpdateInfo> plugin2updateId = new HashMap<Pair<IdeVersion, String>, UpdateInfo>();
 
   private RepositoryManager() {
     globalRepository = new GlobalRepository(RepositoryConfiguration.getInstance().getPluginRepositoryUrl());
@@ -114,8 +114,8 @@ public class RepositoryManager {
 
 
   @Nullable
-  public UpdateInfo findPlugin(@NotNull String ideVersion, @NotNull String pluginId) throws IOException {
-    Pair<String, String> pair = Pair.create(ideVersion, pluginId);
+  public UpdateInfo findPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException {
+    Pair<IdeVersion, String> pair = Pair.create(ideVersion, pluginId);
 
     UpdateInfo res = plugin2updateId.get(pair);
 

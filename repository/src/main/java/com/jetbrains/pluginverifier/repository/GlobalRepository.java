@@ -43,7 +43,7 @@ class GlobalRepository extends PluginRepository {
 
   @Nullable
   @Override
-  public UpdateInfo findPlugin(@NotNull String ideVersion, @NotNull String pluginId) throws IOException {
+  public UpdateInfo findPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException {
     URL u = new URL(url + "/manager/getCompatibleUpdateId/?build=" + ideVersion + "&pluginId=" + URLEncoder.encode(pluginId, "UTF-8"));
 
     int updateId = Integer.parseInt(IOUtils.toString(u));

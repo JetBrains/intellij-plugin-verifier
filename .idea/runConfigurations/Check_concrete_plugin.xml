@@ -3,7 +3,7 @@
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <option name="MAIN_CLASS_NAME" value="com.jetbrains.pluginverifier.PluginVerifierMain" />
     <option name="VM_PARAMETERS" value="" />
-    <option name="PROGRAM_PARAMETERS" value="check-plugin for_tests/KAnnotator for_tests/idea -r /usr/lib/jvm/java-8-oracle -ip for_tests/ignoreProblems.txt" />
+    <option name="PROGRAM_PARAMETERS" value="check-plugin for_tests/python-CE.zip for_tests/idea -r /usr/lib/jvm/java-8-oracle -ip for_tests/ignoreProblems.txt" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
     <option name="ALTERNATIVE_JRE_PATH" />

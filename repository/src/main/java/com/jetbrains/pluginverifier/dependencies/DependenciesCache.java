@@ -96,11 +96,16 @@ public class DependenciesCache {
   private List<Resolver> createPluginWithAllResolvers(@NotNull Plugin plugin, @NotNull Ide ide, @NotNull Jdk jdk, @Nullable Resolver externalClassPath, PluginDependenciesDescriptor transitives) {
     List<Resolver> resolvers = new ArrayList<Resolver>();
 
+    //TODO: check the class-path sequence
+
     //JDK classes go first in classpath
     resolvers.add(jdk.getResolver());
 
     //then do plugin classes
     resolvers.add(plugin.getPluginResolver());
+
+    //then do IDE classes
+    resolvers.add(ide.getResolver());
 
     //then do dependencies
     for (Plugin dep : transitives.getDependencies()) {
@@ -109,9 +114,6 @@ public class DependenciesCache {
         resolvers.add(pluginResolver);
       }
     }
-
-    //then do IDE classes
-    resolvers.add(ide.getResolver());
 
     if (externalClassPath != null) {
       resolvers.add(externalClassPath);
@@ -201,7 +203,7 @@ public class DependenciesCache {
           if (depPlugin == null) {
             UpdateInfo updateInfo;
             try {
-              updateInfo = RepositoryManager.getInstance().findPlugin(ide.getVersion().asString(), pluginDependency.getId());
+              updateInfo = RepositoryManager.getInstance().findPlugin(ide.getVersion(), pluginDependency.getId());
             } catch (IOException e) {
               //repository problem
               throw FailUtil.fail("Couldn't get dependency update from the Repository (IDE = " + ide.getVersion() + " plugin = " + id + ")", e);
