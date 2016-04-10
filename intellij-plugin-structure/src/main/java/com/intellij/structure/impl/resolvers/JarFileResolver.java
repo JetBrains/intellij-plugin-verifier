@@ -1,11 +1,11 @@
 package com.intellij.structure.impl.resolvers;
 
+import com.intellij.structure.impl.utils.AsmUtil;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
@@ -61,7 +61,7 @@ public class JarFileResolver extends Resolver {
 
   @Override
   @Nullable
-  public ClassNode findClass(@NotNull String className) {
+  public ClassNode findClass(@NotNull String className) throws IOException {
     if (!myClassesCache.containsKey(className)) {
       return null;
     }
@@ -75,18 +75,12 @@ public class JarFileResolver extends Resolver {
   }
 
   @Nullable
-  private ClassNode evaluateNode(@NotNull String className) {
+  private ClassNode evaluateNode(@NotNull String className) throws IOException {
     final ZipEntry entry = myJarFile.getEntry(className + CLASS_SUFFIX);
     InputStream inputStream = null;
     try {
       inputStream = myJarFile.getInputStream(entry);
-
-      ClassNode node = new ClassNode();
-      new ClassReader(inputStream).accept(node, 0);
-
-      return node;
-    } catch (IOException e) {
-      return null;
+      return AsmUtil.readClassNode(className, inputStream);
     } finally {
       IOUtils.closeQuietly(inputStream);
     }

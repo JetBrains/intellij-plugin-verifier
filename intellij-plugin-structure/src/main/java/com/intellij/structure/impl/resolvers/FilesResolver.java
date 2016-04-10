@@ -1,11 +1,12 @@
 package com.intellij.structure.impl.resolvers;
 
+import com.google.common.io.Files;
+import com.intellij.structure.impl.utils.AsmUtil;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
@@ -35,18 +36,12 @@ public class FilesResolver extends Resolver {
   }
 
   @NotNull
-  private ClassNode getClassNodeFromInputStream(@NotNull InputStream is) throws IOException {
-    ClassNode node = new ClassNode();
-    new ClassReader(is).accept(node, 0);
-    return node;
-  }
-
-  @NotNull
   private ClassNode evaluateNode(@NotNull File classFile) throws IOException {
     InputStream is = null;
     try {
       is = FileUtils.openInputStream(classFile);
-      return getClassNodeFromInputStream(is);
+      String className = Files.getNameWithoutExtension(classFile.getName());
+      return AsmUtil.readClassNode(className, is);
     } finally {
       IOUtils.closeQuietly(is);
     }

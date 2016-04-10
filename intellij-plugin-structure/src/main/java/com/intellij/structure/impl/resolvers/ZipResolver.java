@@ -1,12 +1,12 @@
 package com.intellij.structure.impl.resolvers;
 
+import com.intellij.structure.impl.utils.AsmUtil;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
@@ -53,40 +53,49 @@ public class ZipResolver extends Resolver {
       if (!(inputStream instanceof ZipInputStream)) {
         throw new IOException("Supplied input stream is not a stream for .zip of .jar archive");
       }
-      ZipInputStream zipInputStream = (ZipInputStream) inputStream;
+      ZipInputStream zipInputStream = null;
 
-      ZipEntry entry;
-      while ((entry = zipInputStream.getNextEntry()) != null) {
-        if (entry.isDirectory()) continue;
+      try {
+        zipInputStream = (ZipInputStream) inputStream;
 
-        String entryName = entry.getName();
-        if (entryName.startsWith(myRootDirectoryPrefix) && entryName.endsWith(CLASS_SUFFIX)) {
-          String className = StringUtil.trimStart(StringUtil.trimEnd(entryName, CLASS_SUFFIX), myRootDirectoryPrefix);
+        ZipEntry entry;
+        while ((entry = zipInputStream.getNextEntry()) != null) {
+          if (entry.isDirectory()) continue;
 
-          ClassNode classNode = null;
-          if (loadClasses) {
-            classNode = getClassNodeFromInputStream(zipInputStream);
+          String entryName = entry.getName();
+          if (entryName.startsWith(myRootDirectoryPrefix) && entryName.endsWith(CLASS_SUFFIX)) {
+            String className = StringUtil.trimStart(StringUtil.trimEnd(entryName, CLASS_SUFFIX), myRootDirectoryPrefix);
 
-            if (StringUtil.equal(className, findClass)) {
-              result = classNode;
+            ClassNode classNode = null;
+            if (loadClasses) {
+              try {
+                classNode = AsmUtil.readClassNode(className, zipInputStream);
+
+                if (StringUtil.equal(className, findClass)) {
+                  result = classNode;
+                }
+
+              } catch (IOException e) {
+                if (StringUtil.equal(className, findClass)) {
+                  //we are searching this class => throw exception
+                  throw e;
+                }
+                //it might be some unrelated broken classfile => ignore it
+              }
             }
-          }
 
-          myClassesCache.put(className, classNode == null ? null : new SoftReference<ClassNode>(classNode));
+            myClassesCache.put(className, classNode == null ? null : new SoftReference<ClassNode>(classNode));
+          }
         }
+      } finally {
+        IOUtils.closeQuietly(zipInputStream);
       }
+
     } finally {
       IOUtils.closeQuietly(inputStream);
     }
 
     return result;
-  }
-
-  @NotNull
-  private ClassNode getClassNodeFromInputStream(@NotNull InputStream is) throws IOException {
-    ClassNode node = new ClassNode();
-    new ClassReader(is).accept(node, 0);
-    return node;
   }
 
   @Nullable

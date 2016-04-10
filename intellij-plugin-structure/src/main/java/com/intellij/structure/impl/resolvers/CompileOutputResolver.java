@@ -1,10 +1,10 @@
 package com.intellij.structure.impl.resolvers;
 
+import com.intellij.structure.impl.utils.AsmUtil;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.*;
@@ -56,11 +56,10 @@ public class CompileOutputResolver extends Resolver {
         File classFile = descriptor.findChild(classFileName);
         if (classFile != null) {
           try {
-            InputStream in = new BufferedInputStream(new FileInputStream(classFile));
+            InputStream in = null;
             try {
-              ClassNode classNode = new ClassNode();
-              new ClassReader(in).accept(classNode, 0);
-              res = classNode;
+              in = new BufferedInputStream(new FileInputStream(classFile));
+              res = AsmUtil.readClassNode(classFileName, in);
               break;
             } finally {
               IOUtils.closeQuietly(in);
