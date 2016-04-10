@@ -48,15 +48,15 @@ public class CheckIdeCommand extends VerifierCommand {
   private List<String> myCheckLastBuilds;
   private Collection<UpdateInfo> myUpdatesToCheck;
   private List<String> myCheckedIds;
-  private List<UpdateInfo> myCompatibleUpdates;
   private String myDumpBrokenPluginsFile;
   private String myReportFile;
   private boolean myCheckExcludedBuilds;
   private Predicate<UpdateInfo> myExcludedUpdatesFilter;
   private Map<UpdateInfo, ProblemSet> myResults;
   private Set<UpdateInfo> myImportantUpdates;
-  private List<Pair<UpdateInfo, ? extends Problem>> myIncorrectPlugins;
   private Multimap<String, String> myExcludedPlugins;
+  private Multimap<Problem, UpdateInfo> myBrokenPluginsProblems = ArrayListMultimap.create();
+  private Multimap<Problem, UpdateInfo> myMissingUpdatesProblems = ArrayListMultimap.create();
 
   public CheckIdeCommand() {
     super("check-ide");
@@ -83,22 +83,15 @@ public class CheckIdeCommand extends VerifierCommand {
    */
   private int printMissingAndIncorrectPlugins() {
     if (myTc == TeamCityLog.NULL_LOG) return 0;
+    TeamCityUtil.printReport(myTc, myBrokenPluginsProblems, TeamCityUtil.ReportGrouping.PLUGIN);
+    TeamCityUtil.printReport(myTc, myMissingUpdatesProblems, TeamCityUtil.ReportGrouping.PLUGIN);
+    return myBrokenPluginsProblems.size() + myMissingUpdatesProblems.size();
+  }
 
-    Multimap<Problem, UpdateInfo> problems = ArrayListMultimap.create();
-
-    //fill verification problems
-    for (Pair<UpdateInfo, ? extends Problem> incorrectPlugin : myIncorrectPlugins) {
-      UpdateInfo updateInfo = incorrectPlugin.getFirst();
-      if (myExcludedUpdatesFilter.apply(updateInfo)) {
-        problems.put(incorrectPlugin.getSecond(), incorrectPlugin.getFirst()); //some problem during verification
-      }
-    }
-
-    //fill missing plugin problems
-    Set<String> missingPluginIds = new HashSet<String>();
+  private void fillMissingPluginProblems() {
     for (String pluginId : new HashSet<String>(myCheckedIds)) { //plugins from checkedPlugins.txt. for them check that compatible version is present
       boolean hasCompatibleUpdate = false;
-      for (UpdateInfo update : myCompatibleUpdates) {
+      for (UpdateInfo update : myUpdatesToCheck) {
         if (myExcludedUpdatesFilter.apply(update)) {
           if (StringUtil.equals(pluginId, update.getPluginId())) {
             hasCompatibleUpdate = true;
@@ -106,27 +99,28 @@ public class CheckIdeCommand extends VerifierCommand {
           }
         }
       }
+
       if (!hasCompatibleUpdate) {
-        missingPluginIds.add(pluginId);
+        //try to find this update in the compatible updates of IDEA Community
+
+        UpdateInfo missingUpdate = new UpdateInfo(pluginId, pluginId, "no compatible update");
+
+        UpdateInfo buildForCommunity = updateCompatibleWithCommunityEdition(pluginId);
+        if (buildForCommunity != null) {
+          String details = "\nNote: there is an update (#" + buildForCommunity.getUpdateId() + ") compatible with IDEA Community Edition, " +
+              "\nbut the Plugin repository does not offer to install it if you run the IDEA Ultimate" +
+              "\nThis update has been checked on API compatibility problems too. The present problems (if any) are about it.";
+          myMissingUpdatesProblems.put(new NoCompatibleUpdatesProblem(pluginId, myIde.getVersion().asString(), details), missingUpdate);
+
+          //check the community build instead
+          myUpdatesToCheck.add(buildForCommunity);
+
+        } else {
+          myMissingUpdatesProblems.put(new NoCompatibleUpdatesProblem(pluginId, myIde.getVersion().asString(), ""), missingUpdate);
+        }
+
       }
     }
-
-    for (String missingPluginId : missingPluginIds) {
-      UpdateInfo updateInfo = new UpdateInfo(missingPluginId, missingPluginId, "no compatible update");
-
-      UpdateInfo infoCE = updateCompatibleWithCommunityEdition(missingPluginId);
-      if (infoCE != null) {
-        String details = "\nNote: there is a build compatible with IDEA Community Edition, " +
-            "\nbut the Plugin repository does not offer to install it if you run the IDEA Ultimate" +
-            "\nThis update (#" + infoCE.getUpdateId() + ")" + " has not been checked on API compatibility problems.";
-        problems.put(new NoCompatibleUpdatesProblem(missingPluginId, myIde.getVersion().asString(), details), updateInfo);
-      } else {
-        problems.put(new NoCompatibleUpdatesProblem(missingPluginId, myIde.getVersion().asString(), ""), updateInfo);
-      }
-    }
-
-    TeamCityUtil.printReport(myTc, problems, TeamCityUtil.ReportGrouping.PLUGIN);
-    return problems.size();
   }
 
   @Nullable
@@ -196,7 +190,6 @@ public class CheckIdeCommand extends VerifierCommand {
 
     //preserve initial lists of plugins
     myCheckedIds = Util.concat(myCheckAllBuilds, myCheckLastBuilds);
-    myCompatibleUpdates = new ArrayList<UpdateInfo>(myUpdatesToCheck);
 
     myDumpBrokenPluginsFile = commandLine.getOptionValue("d");
     myReportFile = commandLine.getOptionValue("report");
@@ -209,6 +202,8 @@ public class CheckIdeCommand extends VerifierCommand {
         return !myExcludedPlugins.containsEntry(input.getPluginId(), input.getVersion());
       }
     };
+
+    fillMissingPluginProblems();
 
     //whether to check excluded builds or not
     myCheckExcludedBuilds = myDumpBrokenPluginsFile != null || myReportFile != null;
@@ -228,9 +223,6 @@ public class CheckIdeCommand extends VerifierCommand {
     myImportantUpdates = prepareImportantUpdates(myUpdatesToCheck);
 
     myResults = new HashMap<UpdateInfo, ProblemSet>();
-
-    //list of plugins which were not checked due to some error (first = plugin; second = error message; third = caused exception)
-    myIncorrectPlugins = new ArrayList<Pair<UpdateInfo, ? extends Problem>>();
   }
 
   @NotNull
@@ -315,7 +307,9 @@ public class CheckIdeCommand extends VerifierCommand {
         } else {
           message = "Failed to verify plugin " + updateJson + " because " + details;
         }
-        myIncorrectPlugins.add(Pair.create(updateJson, new VerificationProblem(details, updateJson.toString())));
+        if (myExcludedUpdatesFilter.apply(updateJson)) {
+          myBrokenPluginsProblems.put(new VerificationProblem(details, updateJson.toString()), updateJson);
+        }
 
         System.err.println(message);
         e.printStackTrace();
