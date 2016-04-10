@@ -23,6 +23,7 @@ public class PluginDependenciesDescriptor {
 
   boolean myInitialized;
 
+  //TODO: add mandatory missing plugins as map (not exception)
   /**
    * pluginId -> (missingPluginId -> description)
    */

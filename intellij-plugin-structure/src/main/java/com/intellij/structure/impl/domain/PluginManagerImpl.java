@@ -326,7 +326,7 @@ public class PluginManagerImpl extends PluginManager {
         }
       }
     } catch (IOException e) {
-      validator.onCheckedException("Unable to read file " + file, e);
+      validator.onCheckedException("Unable to read plugin file " + file, e);
       return null;
     } finally {
       try {

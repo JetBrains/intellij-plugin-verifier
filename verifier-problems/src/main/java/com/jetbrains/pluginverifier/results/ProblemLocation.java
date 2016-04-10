@@ -10,6 +10,8 @@ import org.objectweb.asm.tree.MethodNode;
  */
 public abstract class ProblemLocation {
 
+  //TODO: add more detailed location, e.g. superclass, field of a class, interface, throws list and so on
+
   @NotNull
   public static ProblemLocation fromPlugin(@NotNull String pluginId) {
     return new PluginLocation(pluginId);

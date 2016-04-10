@@ -53,6 +53,7 @@ class ReferencesVerifier implements Verifier {
 
     final Resolver resolverForCheck = getResolverForCheck(plugin);
 
+    //TODO: consider traversing all the checked classes in some order which avoids random accessing inner .jar-files
     for (String className : resolverForCheck.getAllClasses()) {
       ClassNode node = VerifierUtil.findClass(resolverForCheck, className, ctx);
 

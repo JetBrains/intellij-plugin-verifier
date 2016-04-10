@@ -150,7 +150,7 @@ public class DownloadUtils {
 
     File pluginInCache = new File(downloadDir, getCacheFileName(update));
 
-    if (!pluginInCache.exists()) {
+    if (!pluginInCache.exists() || pluginInCache.length() < 200) {
       File currentDownload = File.createTempFile("currentDownload", ".zip", downloadDir);
 
       System.out.println("Downloading " + update + "... ");
@@ -179,8 +179,7 @@ public class DownloadUtils {
         }
       }
       if (pluginInCache.exists()) {
-        //noinspection ResultOfMethodCallIgnored
-        pluginInCache.delete();
+        FileUtils.deleteQuietly(pluginInCache);
       }
       FileUtils.moveFile(currentDownload, pluginInCache);
     }
