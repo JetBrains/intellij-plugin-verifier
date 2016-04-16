@@ -44,8 +44,6 @@ public class CheckIdeCommand extends VerifierCommand {
   private PluginVerifierOptions myVerifierOptions;
   private Resolver myExternalClassPath;
   private Ide myIde;
-  private List<String> myCheckAllBuilds;
-  private List<String> myCheckLastBuilds;
   private Collection<UpdateInfo> myUpdatesToCheck;
   private List<String> myCheckedIds;
   private String myDumpBrokenPluginsFile;
@@ -127,23 +125,9 @@ public class CheckIdeCommand extends VerifierCommand {
   private UpdateInfo getUpdateCompatibleWithCommunityEdition(@NotNull String pluginId) {
     String ideVersion = myIde.getVersion().asString();
     if (ideVersion.startsWith("IU-")) {
-      ideVersion = "IC-" + StringUtil.trimStart(ideVersion, "IU-");
+      final String communityVersion = "IC-" + StringUtil.trimStart(ideVersion, "IU-");
       try {
-        UpdateInfo communityBuild = RepositoryManager.getInstance().findPlugin(IdeVersion.createIdeVersion(ideVersion), pluginId);
-        if (communityBuild == null) {
-          return null;
-        }
-
-        List<UpdateInfo> list = RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(IdeVersion.createIdeVersion(ideVersion), Collections.singleton(pluginId));
-        if (list.isEmpty()) {
-          return null;
-        }
-
-        //copy pluginId, version and so on...
-        UpdateInfo result = list.get(0);
-        result.setUpdateId(communityBuild.getUpdateId());
-
-        return result;
+        return RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(IdeVersion.createIdeVersion(communityVersion), pluginId);
       } catch (Exception e) {
         return null;
       }
@@ -174,26 +158,33 @@ public class CheckIdeCommand extends VerifierCommand {
     myIde = createIde(ideToCheck, commandLine);
 
     Pair<List<String>, List<String>> pluginsIds = Util.extractPluginToCheckList(commandLine);
-    myCheckAllBuilds = pluginsIds.first;
-    myCheckLastBuilds = pluginsIds.second;
+    List<String> checkAllBuilds = pluginsIds.first;
+    List<String> checkLastBuilds = pluginsIds.second;
 
-    if (myCheckAllBuilds.isEmpty() && myCheckLastBuilds.isEmpty()) {
-      myUpdatesToCheck = RepositoryManager.getInstance().getAllCompatibleUpdates(myIde.getVersion());
+    if (checkAllBuilds.isEmpty() && checkLastBuilds.isEmpty()) {
+      myUpdatesToCheck = RepositoryManager.getInstance().getLastCompatibleUpdates(myIde.getVersion());
     } else {
       myUpdatesToCheck = new ArrayList<UpdateInfo>();
 
-      if (myCheckAllBuilds.size() > 0) {
-        myUpdatesToCheck.addAll(RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(myIde.getVersion(), myCheckAllBuilds));
+      if (checkAllBuilds.size() > 0) {
+        for (String build : checkAllBuilds) {
+          myUpdatesToCheck.addAll(RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(myIde.getVersion(), build));
+        }
       }
 
-      if (myCheckLastBuilds.size() > 0) {
+      if (checkLastBuilds.size() > 0) {
         Map<String, UpdateInfo> lastBuilds = new HashMap<String, UpdateInfo>();
 
-        for (UpdateInfo info : RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(myIde.getVersion(), myCheckLastBuilds)) {
-          UpdateInfo existsBuild = lastBuilds.get(info.getPluginId());
+        List<UpdateInfo> list = new ArrayList<UpdateInfo>();
+        for (String build : checkLastBuilds) {
+          list.addAll(RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(myIde.getVersion(), build));
+        }
+
+        for (UpdateInfo info : list) {
+          UpdateInfo currentBuild = lastBuilds.get(info.getPluginId());
 
           //choose last build
-          if (existsBuild == null || existsBuild.getUpdateId() < info.getUpdateId()) {
+          if (currentBuild == null || (currentBuild.getUpdateId() != null && info.getUpdateId() != null && currentBuild.getUpdateId() < info.getUpdateId())) {
             lastBuilds.put(info.getPluginId(), info);
           }
         }
@@ -203,7 +194,7 @@ public class CheckIdeCommand extends VerifierCommand {
     }
 
     //preserve initial lists of plugins
-    myCheckedIds = Util.concat(myCheckAllBuilds, myCheckLastBuilds);
+    myCheckedIds = Util.concat(checkAllBuilds, checkLastBuilds);
 
     myDumpBrokenPluginsFile = commandLine.getOptionValue("d");
     myReportFile = commandLine.getOptionValue("report");
@@ -279,8 +270,7 @@ public class CheckIdeCommand extends VerifierCommand {
       TeamCityLog.Block block = myTc.blockOpen(updateJson.toString());
 
       try {
-        File updateFile = RepositoryManager.getInstance().getOrLoadUpdate(updateJson);
-
+        File updateFile = RepositoryManager.getInstance().getPluginFile(updateJson);
         Plugin plugin = PluginManager.getInstance().createPlugin(updateFile);
 
         System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), myUpdatesToCheck.size()));

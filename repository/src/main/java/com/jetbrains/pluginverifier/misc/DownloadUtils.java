@@ -4,10 +4,12 @@ import com.google.common.base.Throwables;
 import com.google.common.net.HttpHeaders;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.DateFormat;
@@ -22,7 +24,9 @@ import java.util.TimeZone;
  */
 public class DownloadUtils {
 
+  public static final int BROKEN_ZIP_THRESHOLD = 200;
   private static final DateFormat httpDateFormat;
+
   static {
     httpDateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
     httpDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
@@ -75,7 +79,7 @@ public class DownloadUtils {
     int responseCode = connection.getResponseCode();
 
     try {
-      if (responseCode == 200) {
+      if (responseCode == BROKEN_ZIP_THRESHOLD) {
         String lastModifiedResStr = connection.getHeaderField(HttpHeaders.LAST_MODIFIED);
         if (lastModifiedResStr == null) {
           throw new IOException(HttpHeaders.LAST_MODIFIED + " header can not be null");
@@ -142,6 +146,27 @@ public class DownloadUtils {
     return url;
   }
 
+  public static boolean doesUpdateExist(@NotNull UpdateInfo updateInfo, @NotNull URL url) throws IOException {
+    File cachedFile = new File(getOrCreateDownloadDir(), getCacheFileName(updateInfo));
+    if (cachedFile.exists() && cachedFile.length() > BROKEN_ZIP_THRESHOLD) {
+      //file exists in the cache
+      return true;
+    }
+
+    url = getFinalUrl(url);
+    try {
+      InputStream stream = null;
+      try {
+        stream = url.openStream();
+        return stream.read() != -1;
+      } finally {
+        IOUtils.closeQuietly(stream);
+      }
+    } catch (IOException e) {
+      return false;
+    }
+  }
+
   @NotNull
   public static File getOrLoadUpdate(@NotNull UpdateInfo update, @NotNull URL url) throws IOException {
     File downloadDir = DownloadUtils.getOrCreateDownloadDir();
@@ -150,7 +175,7 @@ public class DownloadUtils {
 
     File pluginInCache = new File(downloadDir, getCacheFileName(update));
 
-    if (!pluginInCache.exists() || pluginInCache.length() < 200) {
+    if (!pluginInCache.exists() || pluginInCache.length() < BROKEN_ZIP_THRESHOLD) {
       File currentDownload = File.createTempFile("currentDownload", ".zip", downloadDir);
 
       System.out.println("Downloading " + update + "... ");
@@ -159,7 +184,7 @@ public class DownloadUtils {
       try {
         FileUtils.copyURLToFile(url, currentDownload);
 
-        if (currentDownload.length() < 200) {
+        if (currentDownload.length() < BROKEN_ZIP_THRESHOLD) {
           throw new IOException("Broken zip archive");
         }
 

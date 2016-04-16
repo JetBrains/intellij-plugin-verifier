@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.format;
 
 import com.jetbrains.pluginverifier.utils.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -51,6 +52,7 @@ public class UpdateInfo {
   }
 
   @XmlAttribute
+  @Nullable
   public Integer getUpdateId() {
     return updateId;
   }
@@ -60,6 +62,7 @@ public class UpdateInfo {
   }
 
   @XmlAttribute
+  @Nullable
   public String getPluginId() {
     return pluginId;
   }
@@ -69,6 +72,7 @@ public class UpdateInfo {
   }
 
   @XmlAttribute
+  @Nullable
   public String getVersion() {
     return version;
   }
@@ -78,6 +82,7 @@ public class UpdateInfo {
   }
 
   @XmlAttribute
+  @Nullable
   public String getPluginName() {
     return pluginName;
   }
@@ -87,20 +92,13 @@ public class UpdateInfo {
   }
 
   @XmlAttribute
+  @Nullable
   public Long getCdate() {
     return cdate;
   }
 
   public void setCdate(Long cdate) {
     this.cdate = cdate;
-  }
-
-  public String getDisplayName() {
-    return pluginName == null || pluginName.isEmpty() ? pluginId : pluginName;
-  }
-
-  public boolean validate() {
-    return updateId != null || (pluginId != null && !pluginId.isEmpty() && version != null && !version.isEmpty());
   }
 
   @Override
@@ -112,7 +110,9 @@ public class UpdateInfo {
         return pluginId + ':' + version;
       }
     }
-
+    if (updateId == null) {
+      return null;
+    }
     return "#" + updateId;
   }
 

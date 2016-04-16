@@ -3,10 +3,8 @@ package com.jetbrains.pluginverifier.repository;
 import com.google.common.base.Throwables;
 import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
-import com.jetbrains.pluginverifier.misc.DownloadUtils;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
 import com.jetbrains.pluginverifier.utils.FailUtil;
-import com.jetbrains.pluginverifier.utils.Pair;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,28 +13,26 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
+import java.util.WeakHashMap;
 
 /**
  * @author Sergey Evdokimov
  */
-public class RepositoryManager {
+public class RepositoryManager implements PluginRepository {
 
   private static final RepositoryManager INSTANCE = new RepositoryManager();
-
-  private final GlobalRepository globalRepository;
 
   private final List<PluginRepository> repositories;
 
   private final WeakHashMap<UpdateInfo, PluginRepository> update2repository = new WeakHashMap<UpdateInfo, PluginRepository>();
 
-  private final Map<Pair<IdeVersion, String>, UpdateInfo> plugin2updateId = new HashMap<Pair<IdeVersion, String>, UpdateInfo>();
-
   private RepositoryManager() {
-    globalRepository = new GlobalRepository(RepositoryConfiguration.getInstance().getPluginRepositoryUrl());
 
     repositories = new ArrayList<PluginRepository>();
-    repositories.add(globalRepository);
+    repositories.add(new GlobalRepository(RepositoryConfiguration.getInstance().getPluginRepositoryUrl()));
 
     String customRepositories = RepositoryConfiguration.getInstance().getCustomRepositories();
     if (StringUtil.isNotEmpty(customRepositories)) {
@@ -57,16 +53,11 @@ public class RepositoryManager {
   }
 
   @NotNull
-  private List<PluginRepository> getRepositories() {
-    return repositories;
-  }
-
-  @NotNull
-  public List<UpdateInfo> getAllCompatibleUpdates(@NotNull IdeVersion ideVersion) throws IOException {
+  public List<UpdateInfo> getLastCompatibleUpdates(@NotNull IdeVersion ideVersion) throws IOException {
     List<UpdateInfo> res = new ArrayList<UpdateInfo>();
 
-    for (PluginRepository repository : getRepositories()) {
-      List<UpdateInfo> updates = repository.getAllCompatibleUpdates(ideVersion);
+    for (PluginRepository repository : repositories) {
+      List<UpdateInfo> updates = repository.getLastCompatibleUpdates(ideVersion);
       for (UpdateInfo update : updates) {
         update2repository.put(update, repository);
       }
@@ -78,12 +69,12 @@ public class RepositoryManager {
   }
 
   @NotNull
-  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull IdeVersion ideVersion,
-                                                         @NotNull Collection<String> pluginIds) throws IOException {
+  @Override
+  public List<UpdateInfo> getAllCompatibleUpdatesOfPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException {
     List<UpdateInfo> res = new ArrayList<UpdateInfo>();
 
-    for (PluginRepository repository : getRepositories()) {
-      List<UpdateInfo> updates = repository.getCompatibleUpdatesForPlugins(ideVersion, pluginIds);
+    for (PluginRepository repository : repositories) {
+      List<UpdateInfo> updates = repository.getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId);
       for (UpdateInfo update : updates) {
         update2repository.put(update, repository);
       }
@@ -94,44 +85,40 @@ public class RepositoryManager {
     return res;
   }
 
-  @NotNull
-  public File getOrLoadUpdate(@NotNull UpdateInfo update) throws IOException {
+
+  @Override
+  @Nullable
+  public File getPluginFile(@NotNull UpdateInfo update) throws IOException {
     PluginRepository repository = update2repository.get(update);
     FailUtil.assertTrue(repository != null, "Unknown update, update should be found by RepositoryManager");
-
-    return DownloadUtils.getOrLoadUpdate(update, new URL(repository.getUpdateUrl(update)));
-  }
-
-  @NotNull
-  public UpdateInfo findUpdateById(int updateId) throws IOException {
-    UpdateInfo updateInfo = new UpdateInfo();
-    updateInfo.setUpdateId(updateId);
-
-    update2repository.put(updateInfo, globalRepository);
-
-    return updateInfo;
+    return repository.getPluginFile(update);
   }
 
 
+  @Override
   @Nullable
-  public UpdateInfo findPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException {
-    Pair<IdeVersion, String> pair = Pair.create(ideVersion, pluginId);
-
-    UpdateInfo res = plugin2updateId.get(pair);
-
-    if (res == null) {
-      for (PluginRepository repository : getRepositories()) {
-        res = repository.findPlugin(ideVersion, pluginId);
-        if (res != null) {
-          update2repository.put(res, repository);
-          plugin2updateId.put(pair, res);
-          break;
-        }
+  public UpdateInfo findUpdateById(int updateId) throws IOException {
+    for (PluginRepository repository : repositories) {
+      UpdateInfo update = repository.findUpdateById(updateId);
+      if (update != null) {
+        update2repository.put(update, repository);
+        return update;
       }
     }
-
-    return res;
+    return null;
   }
 
+  @Nullable
+  @Override
+  public UpdateInfo getLastCompatibleUpdateOfPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException {
+    for (PluginRepository repository : repositories) {
+      UpdateInfo update = repository.getLastCompatibleUpdateOfPlugin(ideVersion, pluginId);
+      if (update != null) {
+        update2repository.put(update, repository);
+        return update;
+      }
+    }
+    return null;
+  }
 
 }

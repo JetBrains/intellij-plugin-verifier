@@ -62,7 +62,7 @@ public class CheckPluginCommand extends VerifierCommand {
       try {
         int updateId = Integer.parseInt(pluginId);
         UpdateInfo updateInfo = RepositoryManager.getInstance().findUpdateById(updateId);
-        File update = RepositoryManager.getInstance().getOrLoadUpdate(updateInfo);
+        File update = RepositoryManager.getInstance().getPluginFile(updateInfo);
         return Collections.singletonList(Pair.create(new UpdateInfo(updateId), update));
       } catch (IOException e) {
         throw FailUtil.fail("Cannot load plugin #" + pluginId, e);
@@ -133,7 +133,7 @@ public class CheckPluginCommand extends VerifierCommand {
   private static List<Pair<UpdateInfo, File>> downloadPluginBuilds(@NotNull String pluginId, @NotNull IdeVersion ideVersion) {
     List<UpdateInfo> compatibleUpdatesForPlugins;
     try {
-      compatibleUpdatesForPlugins = RepositoryManager.getInstance().getCompatibleUpdatesForPlugins(ideVersion, Collections.singletonList(pluginId));
+      compatibleUpdatesForPlugins = RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId);
     } catch (IOException e) {
       throw FailUtil.fail("Failed to fetch list of " + pluginId + " versions", e);
     }
@@ -141,7 +141,7 @@ public class CheckPluginCommand extends VerifierCommand {
     List<Pair<UpdateInfo, File>> result = new ArrayList<Pair<UpdateInfo, File>>();
     for (UpdateInfo updateInfo : compatibleUpdatesForPlugins) {
       try {
-        result.add(Pair.create(updateInfo, RepositoryManager.getInstance().getOrLoadUpdate(updateInfo)));
+        result.add(Pair.create(updateInfo, RepositoryManager.getInstance().getPluginFile(updateInfo)));
       } catch (IOException e) {
         throw FailUtil.fail("Cannot download '" + updateInfo, e);
       }

@@ -163,7 +163,7 @@ public class DependenciesCache {
           if (depPlugin == null) {
             UpdateInfo updateInfo;
             try {
-              updateInfo = RepositoryManager.getInstance().findPlugin(ide.getVersion(), pluginDependency.getId());
+              updateInfo = RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(ide.getVersion(), pluginDependency.getId());
             } catch (IOException e) {
               //repository problem
               throw FailUtil.fail("Couldn't get dependency update from the Repository (IDE = " + ide.getVersion() + " plugin = " + id + ")", e);
@@ -173,7 +173,7 @@ public class DependenciesCache {
               //update does really exist in the repo
               File pluginZip;
               try {
-                pluginZip = RepositoryManager.getInstance().getOrLoadUpdate(updateInfo);
+                pluginZip = RepositoryManager.getInstance().getPluginFile(updateInfo);
               } catch (IOException e) {
                 throw FailUtil.fail("Couldn't get dependency update from the Repository (IDE = " + ide.getVersion() + " plugin = " + id + ")", e);
               }

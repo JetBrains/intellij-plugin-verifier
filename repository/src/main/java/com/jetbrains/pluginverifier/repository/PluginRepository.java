@@ -5,23 +5,28 @@ import com.jetbrains.pluginverifier.format.UpdateInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 
 /**
  * @author Sergey Evdokimov
  */
-public abstract class PluginRepository {
-
-  public abstract List<UpdateInfo> getAllCompatibleUpdates(@NotNull IdeVersion ideVersion) throws IOException;
-
-  @Nullable
-  public abstract UpdateInfo findPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException;
-
-  public abstract List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull IdeVersion ideVersion, Collection<String> pluginIds) throws IOException;
+interface PluginRepository {
 
   @NotNull
-  public abstract String getUpdateUrl(UpdateInfo update);
+  List<UpdateInfo> getLastCompatibleUpdates(@NotNull IdeVersion ideVersion) throws IOException;
+
+  @Nullable
+  UpdateInfo getLastCompatibleUpdateOfPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException;
+
+  @NotNull
+  List<UpdateInfo> getAllCompatibleUpdatesOfPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException;
+
+  @Nullable
+  UpdateInfo findUpdateById(int updateId) throws IOException;
+
+  @Nullable
+  File getPluginFile(@NotNull UpdateInfo update) throws IOException;
 
 }

@@ -21,19 +21,22 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Sergey Evdokimov
  */
 
-public class CustomRepository extends PluginRepository {
+class CustomRepository implements PluginRepository {
 
   private final URL url;
 
   private Map<UpdateInfo, String> repositoriesMap;
 
-  public CustomRepository(URL url) {
+  CustomRepository(URL url) {
     this.url = url;
   }
 
@@ -48,7 +51,7 @@ public class CustomRepository extends PluginRepository {
     return pluginUrl;
   }
 
-  public Map<UpdateInfo, String> getRepositoriesMap() {
+  private Map<UpdateInfo, String> getRepositoriesMap() {
     Map<UpdateInfo, String> res = repositoriesMap;
 
     if (res == null) {
@@ -67,7 +70,12 @@ public class CustomRepository extends PluginRepository {
 
           update.setPluginId(element.getAttributeValue("id"));
           update.setVersion(element.getAttributeValue("version"));
-          if (!update.validate()) continue;
+
+          boolean valid = update.getUpdateId() != null || (update.getPluginId() != null && !update.getPluginId().isEmpty() && update.getVersion() != null && !update.getVersion().isEmpty());
+
+          if (!valid) {
+            continue;
+          }
 
           String pluginUrl = getPluginUrl(url.toExternalForm(), element.getAttributeValue("url"));
 
@@ -109,30 +117,55 @@ public class CustomRepository extends PluginRepository {
     return res;
   }
 
+  @NotNull
   @Override
-  public List<UpdateInfo> getAllCompatibleUpdates(@NotNull IdeVersion ideVersion) throws IOException {
+  public List<UpdateInfo> getLastCompatibleUpdates(@NotNull IdeVersion ideVersion) throws IOException {
     return getUpdates(ideVersion, Predicates.<UpdateInfo>alwaysTrue());
   }
 
   @Nullable
   @Override
-  public UpdateInfo findPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException {
-    return null;
-  }
+  public UpdateInfo getLastCompatibleUpdateOfPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException {
+    List<UpdateInfo> list = getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId);
+    if (list.isEmpty()) {
+      return null;
+    }
 
-  @Override
-  public List<UpdateInfo> getCompatibleUpdatesForPlugins(@NotNull IdeVersion ideVersion, final Collection<String> pluginIds) throws IOException {
-    return getUpdates(ideVersion, new Predicate<UpdateInfo>() {
-      @Override
-      public boolean apply(UpdateInfo input) {
-        return pluginIds.contains(input.getPluginId());
+    UpdateInfo res = list.get(0);
+    for (UpdateInfo info : list) {
+      if (UpdateInfo.UPDATE_NUMBER_COMPARATOR.compare(res, info) < 0) {
+        res = info;
       }
-    });
+    }
+
+    return res;
   }
 
   @NotNull
   @Override
-  public String getUpdateUrl(UpdateInfo update) {
-    return getRepositoriesMap().get(update);
+  public List<UpdateInfo> getAllCompatibleUpdatesOfPlugin(@NotNull IdeVersion ideVersion, @NotNull final String pluginId) throws IOException {
+    return getUpdates(ideVersion, new Predicate<UpdateInfo>() {
+      @Override
+      public boolean apply(UpdateInfo input) {
+        return pluginId.equals(input.getPluginId());
+      }
+    });
   }
+
+  @Override
+  @Nullable
+  public File getPluginFile(@NotNull UpdateInfo update) throws IOException {
+    String url = getRepositoriesMap().get(update);
+    if (url == null) {
+      return null;
+    }
+    return DownloadUtils.getOrLoadUpdate(update, new URL(url));
+  }
+
+  @Nullable
+  @Override
+  public UpdateInfo findUpdateById(int updateId) throws IOException {
+    return null;
+  }
+
 }
