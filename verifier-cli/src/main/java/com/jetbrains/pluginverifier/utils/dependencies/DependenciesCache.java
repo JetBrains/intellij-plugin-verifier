@@ -4,18 +4,15 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.intellij.structure.domain.Ide;
-import com.intellij.structure.domain.Jdk;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.impl.utils.StringUtil;
-import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.PluginCache;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.utils.FailUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
@@ -75,51 +72,14 @@ public class DependenciesCache {
   }
 
   @NotNull
-  public PluginDependenciesDescriptor getDependenciesDescriptor(@NotNull Plugin plugin, @NotNull Ide ide, @NotNull Jdk jdk, @Nullable Resolver externalClassPath) throws DependenciesError {
+  public PluginDependenciesDescriptor getDependenciesDescriptor(@NotNull Plugin plugin, @NotNull Ide ide) throws DependenciesError {
     PluginDependenciesDescriptor descriptor = createDependenciesDescriptor(ide, plugin);
     if (!descriptor.myInitialized) {
       //not calculated yet
-
-      final PluginDependenciesDescriptor all = calcDependenciesWithTransitive(ide, plugin, new ArrayList<PluginDependenciesDescriptor>());
-
-      List<Resolver> resolvers = createPluginWithAllResolvers(plugin, ide, jdk, externalClassPath, all);
-
-      String name = "Common resolver for plugin " + plugin.getPluginId() + " with transitive dependencies; ide " + ide.getVersion() + "; jdk " + jdk;
-      descriptor.myResolver = Resolver.createUnionResolver(name, resolvers);
+      calcDependenciesWithTransitive(ide, plugin, new ArrayList<PluginDependenciesDescriptor>());
       descriptor.myInitialized = true;
     }
-
     return descriptor;
-  }
-
-  @NotNull
-  private List<Resolver> createPluginWithAllResolvers(@NotNull Plugin plugin, @NotNull Ide ide, @NotNull Jdk jdk, @Nullable Resolver externalClassPath, PluginDependenciesDescriptor transitives) {
-    List<Resolver> resolvers = new ArrayList<Resolver>();
-
-    //TODO: check the class-path sequence
-
-    //then do plugin classes
-    resolvers.add(plugin.getPluginResolver());
-
-    //JDK classes go first in classpath
-    resolvers.add(jdk.getResolver());
-
-    //then do IDE classes
-    resolvers.add(ide.getResolver());
-
-    //then do dependencies
-    for (Plugin dep : transitives.getDependencies()) {
-      Resolver pluginResolver = dep.getPluginResolver();
-      if (!pluginResolver.isEmpty()) {
-        resolvers.add(pluginResolver);
-      }
-    }
-
-    if (externalClassPath != null) {
-      resolvers.add(externalClassPath);
-    }
-
-    return resolvers;
   }
 
 

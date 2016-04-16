@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.utils.dependencies;
 
 import com.intellij.structure.domain.Plugin;
-import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -14,8 +13,6 @@ import java.util.Set;
  */
 public class PluginDependenciesDescriptor {
   private final String myPluginName;
-
-  Resolver myResolver;
 
   boolean myIsCyclic;
 
@@ -32,7 +29,6 @@ public class PluginDependenciesDescriptor {
   PluginDependenciesDescriptor(@NotNull String pluginName, boolean isCyclic) {
     this.myPluginName = pluginName;
     if (isCyclic) {
-      myResolver = Resolver.getEmptyResolver();
       myIsCyclic = true;
       myDependencies = Collections.emptySet();
     }
@@ -42,10 +38,6 @@ public class PluginDependenciesDescriptor {
     return myDependencies;
   }
 
-
-  public Resolver getResolver() {
-    return myResolver;
-  }
 
   public Map<String, Map<String, String>> getMissingOptionalDependencies() {
     return myMissingOptionalDependencies;
