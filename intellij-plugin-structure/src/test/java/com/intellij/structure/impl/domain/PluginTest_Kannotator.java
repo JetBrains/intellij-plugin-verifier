@@ -28,7 +28,7 @@ public class PluginTest_Kannotator {
     File pluginFile = TestUtils.downloadPlugin(TestUtils.KANNOTATOR, "kannotator.zip");
     Plugin plugin = PluginManager.getInstance().createPlugin(pluginFile);
 
-    Resolver pluginResolver = plugin.getPluginResolver();
+    Resolver pluginResolver = Resolver.createCacheResolver(plugin.getPluginResolver());
 
     List<Exception> exceptions = new ArrayList<Exception>();
     Set<String> brokenClasses = new HashSet<String>();

@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.dependencies;
+package com.jetbrains.pluginverifier.utils.dependencies;
 
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;

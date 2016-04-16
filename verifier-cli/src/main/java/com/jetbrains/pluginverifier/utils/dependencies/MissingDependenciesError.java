@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.dependencies;
+package com.jetbrains.pluginverifier.utils.dependencies;
 
 /**
  * @author Sergey Patrikeev

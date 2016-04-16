@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.dependencies;
+package com.jetbrains.pluginverifier.utils.dependencies;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -98,11 +98,11 @@ public class DependenciesCache {
 
     //TODO: check the class-path sequence
 
-    //JDK classes go first in classpath
-    resolvers.add(jdk.getResolver());
-
     //then do plugin classes
     resolvers.add(plugin.getPluginResolver());
+
+    //JDK classes go first in classpath
+    resolvers.add(jdk.getResolver());
 
     //then do IDE classes
     resolvers.add(ide.getResolver());

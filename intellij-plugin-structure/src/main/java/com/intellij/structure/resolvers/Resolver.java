@@ -15,30 +15,38 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Provides access to byte-code of class by its name
+ * Provides an access to the byte-code of a class by its name via the {@link #findClass(String)}.
+ * Note that the way of constructing the {@code Resolver} affects the searching order
+ * (it is similar to the Java <i>class-path</i> setting).
  */
 public abstract class Resolver {
 
   /**
-   * Returns resolver which combines given list of resolvers
+   * Creates a resolver which combines the specified list of resolvers similar to the <i>Java class-path</i> setting.
+   * During the class search attempt the list will be searched in the left-to-right order until the class is found.
    *
-   *
-   * @param presentableName presentableName
-   * @param resolvers list of resolvers
-   * @return combining resolver
+   * @param presentableName some name determining the union resolver name (it can be obtained via the {@link #toString()})
+   * @param resolvers list of the resolvers according to the class-path order
+   * @return a combining resolver
    */
   @NotNull
   public static Resolver createUnionResolver(@NotNull String presentableName, @NotNull List<Resolver> resolvers) {
     return ContainerResolver.createFromList(presentableName, resolvers);
   }
 
+  /**
+   * Creates a resolver designated to cache the sought-for classes. It may be used for performance reasons.
+   *
+   * @param delegate a resolver to which class search attempts will be delegated
+   * @return a caching resolver
+   */
   @NotNull
   public static Resolver createCacheResolver(@NotNull Resolver delegate) {
     return new CacheResolver(delegate);
   }
 
   /**
-   * Creates a resolver from the given File
+   * Creates a resolver for the given jar-file (a .jar archive containing the class-files)
    *
    * @param jarFile file - should be a .jar archive
    * @return Resolver for the given .jar file
@@ -50,29 +58,31 @@ public abstract class Resolver {
     return new JarFileResolver(jarFile);
   }
 
+  /**
+   * Returns the resolver which doesn't contain any class.
+   *
+   * @return an empty resolver
+   */
   @NotNull
   public static Resolver getEmptyResolver() {
     return EmptyResolver.INSTANCE;
   }
 
   /**
-   * Returns a class-file node
+   * Returns a class-file node with the specified name. If {@code this} resolver contains multiple
+   * instances of classes with the same name the first one in the <i>class-path</i> order will be returned.
    *
    * @param className class name in <i>binary</i> form (see JVM specification)
-   * @return bytecode accessor
+   * @return a class-node for accessing the bytecode
    * @throws IOException if IO error occurs, e.g. file .class-file was deleted
    */
   @Nullable
   public abstract ClassNode findClass(@NotNull String className) throws IOException;
 
   /**
-   * Returns actual class holder which contains a specified class.
-   * <p>
-   * e.g.: if {@code this} is a containing-resolver (it has inner resolvers), then the method will return the innermost
-   * resolver which really contains a class
-   * <p>
-   * it is meant to use in the following use-case: given some uber-jar we may request the very .jar-file resolver from
-   * which this class occurred
+   * Returns the resolver which contains the given class: invocation of {@link #findClass(String)} on the
+   * resulting {@code Resolver} returns the same instance of the class-node as an invocation of {@link #findClass(String)}
+   * on {@code this} instance.
    *
    * @param className class name for which resolver should be found (in <i>binary</i> form)
    * @return actual class resolver or {@code null} if {@code this} resolver doesn't contain a specified class
@@ -81,16 +91,16 @@ public abstract class Resolver {
   public abstract Resolver getClassLocation(@NotNull String className);
 
   /**
-   * Returns <i>binary</i> names of all containing classes
+   * Returns the <i>binary</i> names of all the contained classes.
    *
-   * @return all classes
+   * @return all the classes names in the <i>binary</i> form.
    */
   @NotNull
   public abstract Set<String> getAllClasses();
 
 
   /**
-   * Checks whether this resolver contains any class. Classes can be obtained through {@link #getAllClasses()}
+   * Checks whether this resolver contains any class. Classes can be obtained through {@link #getAllClasses()}.
    *
    * @return true if this resolver is not empty, false otherwise
    */
