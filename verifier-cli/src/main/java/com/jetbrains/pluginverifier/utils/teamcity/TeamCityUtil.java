@@ -38,8 +38,8 @@ public class TeamCityUtil {
     }
   }
 
-  public static void printReportWithLocations(@NotNull TeamCityLog log,
-                                              @NotNull Map<UpdateInfo, ProblemSet> results) {
+  private static void printReportWithLocations(@NotNull TeamCityLog log,
+                                               @NotNull Map<UpdateInfo, ProblemSet> results) {
     if (log == TeamCityLog.NULL_LOG) return;
     if (results.isEmpty()) return;
 
@@ -68,7 +68,7 @@ public class TeamCityUtil {
   }
 
   @NotNull
-  public static Map<UpdateInfo, ProblemSet> fillWithEmptyLocations(@NotNull Map<UpdateInfo, Collection<Problem>> map) {
+  private static Map<UpdateInfo, ProblemSet> fillWithEmptyLocations(@NotNull Map<UpdateInfo, Collection<Problem>> map) {
     Map<UpdateInfo, ProblemSet> result = new HashMap<UpdateInfo, ProblemSet>();
 
     final Set<ProblemLocation> emptySet = Collections.emptySet();
@@ -97,7 +97,7 @@ public class TeamCityUtil {
     return REPOSITORY_PLUGIN_ID_BASE + (updateInfo.getPluginId() != null ? updateInfo.getPluginId() : updateInfo.getPluginName());
   }
 
-  public static void groupByType(@NotNull TeamCityLog log, @NotNull Map<UpdateInfo, Collection<Problem>> map) {
+  private static void groupByType(@NotNull TeamCityLog log, @NotNull Map<UpdateInfo, Collection<Problem>> map) {
     Multimap<Problem, UpdateInfo> problem2Updates = ProblemUtils.flipProblemsMap(map);
 
     Multimap<String, Problem> problemType2Problem = ArrayListMultimap.create();
@@ -146,7 +146,7 @@ public class TeamCityUtil {
     return idToUpdates;
   }
 
-  public static void groupByPlugin(@NotNull TeamCityLog log, @NotNull Map<UpdateInfo, ProblemSet> map) {
+  private static void groupByPlugin(@NotNull TeamCityLog log, @NotNull Map<UpdateInfo, ProblemSet> map) {
 
     Multimap<String, UpdateInfo> idToUpdates = fillIdToUpdates(map);
 

@@ -28,8 +28,6 @@ class GlobalRepository implements PluginRepository {
 
   private final String url;
 
-  //TODO: write a cache
-
   GlobalRepository(@NotNull String url) {
     this.url = url;
   }
