@@ -1,4 +1,4 @@
-package synthetic;
+package com.synthetic;
 
 import java.util.LinkedList;
 import java.util.List;

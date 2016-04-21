@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
  */
 public class VerifierTest {
 
+  public static final IdeVersion DUMMY_IDE_VERSION = IdeVersion.createIdeVersion("IU-145.500");
   private static final String IDEA_14_0_4 = TestData.IDEA_IC_14_0_4_ZIP;
   private final ImmutableMultimap<Problem, ProblemLocation> MY_ACTUAL_PROBLEMS =
       ImmutableMultimap.<Problem, ProblemLocation>builder()
@@ -64,6 +65,12 @@ public class VerifierTest {
           .put(new OverridingFinalMethodProblem("com/intellij/openapi/actionSystem/AnAction#isEnabledInModalContext()Z"), ProblemLocation.fromMethod("mock/plugin/OverrideFinalMethodProblem", "isEnabledInModalContext()Z"))
 
           .put(new IllegalMethodAccessProblem("com/intellij/openapi/diagnostic/LogUtil#<init>()V", IllegalMethodAccessProblem.MethodAccess.PRIVATE), ProblemLocation.fromMethod("mock/plugin/AccessChangedProblem", "foo()V"))
+
+          .put(new InvokeVirtualOnStaticMethodProblem("com/intellij/lang/SmartEnterProcessor#commit()V"), ProblemLocation.fromMethod("mock/plugin/invokeVirtualOnStatic/SmartEnterProcessorUser", "main()V"))
+          .put(new InvokeStaticOnInstanceMethodProblem("invocation/InvocationProblems#wasStatic()V"), ProblemLocation.fromMethod("mock/plugin/invokeStaticOnInstance/InvocationProblemsUser", "foo()V"))
+
+          .put(new MissingDependencyProblem("org.some.company.plugin", "DevKit", "Plugin org.some.company.plugin depends on the other plugin DevKit which has not a compatible build with IU-145.500"), ProblemLocation.fromPlugin("org.some.company.plugin"))
+
           .build();
 
   private final ImmutableMultimap<Problem, ProblemLocation> RUBY_ACTUAL_PROBLEMS =
@@ -123,22 +130,22 @@ public class VerifierTest {
   public void testRuby20160127() throws Exception {
     File idea = TestData.fetchResource("ideaIU-144.3600.7.zip", true);
     File rubyPlugin = TestData.fetchResource("ruby-8.0.0.20160127.zip", false);
-    testFoundProblems(idea, rubyPlugin, RUBY_ACTUAL_PROBLEMS);
+    testFoundProblems(idea, rubyPlugin, RUBY_ACTUAL_PROBLEMS, false);
   }
 
   @Test
   public void testMyPlugin() throws Exception {
-    File ideaFile = TestData.fetchResource(IDEA_14_0_4, true);
-    File pluginFile = findLatestPlugin(new File("build/mocks"));
-    testFoundProblems(ideaFile, pluginFile, MY_ACTUAL_PROBLEMS);
+    File ideaFile = new File("build/mocks/after-idea");
+    File pluginFile = findLatestFile(new File("build/mocks"), "mock-plugin");
+    testFoundProblems(ideaFile, pluginFile, MY_ACTUAL_PROBLEMS, true);
   }
 
 
   @NotNull
-  private File findLatestPlugin(File file) throws FileNotFoundException {
-    Pattern compile = Pattern.compile("mock-plugin-(\\d+\\.\\d+).jar");
+  private File findLatestFile(File dir, final String fileName) throws FileNotFoundException {
+    Pattern compile = Pattern.compile(fileName + "-(\\d+\\.\\d+).jar");
 
-    File[] files = file.listFiles();
+    File[] files = dir.listFiles();
 
     File result = null;
     double best = 0.0;
@@ -164,8 +171,13 @@ public class VerifierTest {
     return result;
   }
 
-  private void testFoundProblems(File ideaFile, File pluginFile, ImmutableMultimap<Problem, ProblemLocation> actualProblems) throws Exception {
-    myIde = IdeManager.getInstance().createIde(ideaFile);
+  private void testFoundProblems(File ideaFile, File pluginFile, ImmutableMultimap<Problem, ProblemLocation> actualProblems, boolean dummyIdeVersion) throws Exception {
+    if (dummyIdeVersion) {
+      myIde = IdeManager.getInstance().createIde(ideaFile, DUMMY_IDE_VERSION);
+    } else {
+      myIde = IdeManager.getInstance().createIde(ideaFile);
+    }
+
     myPlugin = PluginManager.getInstance().createPlugin(pluginFile);
 
     final CommandLine commandLine = new GnuParser().parse(Util.CMD_OPTIONS, new String[]{});

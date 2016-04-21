@@ -1,4 +1,4 @@
-package synthetic;
+package com.synthetic;
 
 public class SyntheticMethodTest1 {
   private A aObj = new A();

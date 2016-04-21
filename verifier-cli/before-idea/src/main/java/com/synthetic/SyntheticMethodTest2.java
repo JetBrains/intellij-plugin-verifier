@@ -1,4 +1,4 @@
-package synthetic;
+package com.synthetic;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;

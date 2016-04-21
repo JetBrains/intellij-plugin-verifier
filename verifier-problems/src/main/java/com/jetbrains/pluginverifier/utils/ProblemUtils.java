@@ -41,6 +41,11 @@ public class ProblemUtils {
           OverridingFinalMethodProblem.class,
           MissingDependencyProblem.class,
 
+          InvokeInterfaceOnPrivateMethodProblem.class,
+          InvokeInterfaceOnStaticMethodProblem.class,
+          InvokeSpecialOnStaticMethodProblem.class,
+          InvokeStaticOnInstanceMethodProblem.class,
+          InvokeVirtualOnStaticMethodProblem.class,
 
           ProblemLocation.class,
           CodeLocation.class,

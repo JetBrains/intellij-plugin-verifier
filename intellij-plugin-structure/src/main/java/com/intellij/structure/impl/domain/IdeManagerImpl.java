@@ -32,6 +32,9 @@ public class IdeManagerImpl extends IdeManager {
 
   @NotNull
   private static IdeVersion readBuildNumber(@NotNull File versionFile) throws IOException {
+    if (!versionFile.exists()) {
+      throw new IllegalArgumentException(versionFile + " is not found");
+    }
     String buildNumberString = Files.toString(versionFile, Charset.defaultCharset()).trim();
     Matcher matcher = BUILD_NUMBER_PATTERN.matcher(buildNumberString);
     if (matcher.matches()) {
@@ -161,21 +164,25 @@ public class IdeManagerImpl extends IdeManager {
 
     if (isSourceDir(idePath)) {
       resolver = getIdeaResolverFromSources(idePath);
-      File versionFile = new File(idePath, "build.txt");
-      if (!versionFile.exists()) {
-        versionFile = new File(idePath, "community/build.txt");
-      }
-      if (versionFile.exists()) {
-        version = readBuildNumber(versionFile);
-      }
-      if (version == null) {
-        throw new IncorrectPluginException("Unable to find IDE version file (build.txt or community/build.txt)");
-      }
       bundled.addAll(getDummyPluginsFromSources(idePath));
+      if (version == null) {
+        File versionFile = new File(idePath, "build.txt");
+        if (!versionFile.exists()) {
+          versionFile = new File(idePath, "community/build.txt");
+        }
+        if (versionFile.exists()) {
+          version = readBuildNumber(versionFile);
+        }
+        if (version == null) {
+          throw new IncorrectPluginException("Unable to find IDE version file (build.txt or community/build.txt)");
+        }
+      }
     } else {
       resolver = getIdeaResolverFromLibraries(idePath);
       bundled.addAll(getIdeaPlugins(idePath));
-      version = readBuildNumber(new File(idePath, "build.txt"));
+      if (version == null) {
+        version = readBuildNumber(new File(idePath, "build.txt"));
+      }
     }
 
     return new IdeImpl(version, resolver, bundled);

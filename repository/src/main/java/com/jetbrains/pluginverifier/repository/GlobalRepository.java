@@ -69,7 +69,7 @@ class GlobalRepository implements PluginRepository {
   @NotNull
   @Override
   public List<UpdateInfo> getAllCompatibleUpdatesOfPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException {
-    System.out.println("Loading all compatible updates (ide = " + ideVersion + " of plugin " + pluginId + "... ");
+    System.out.println("Loading all compatible updates ide " + ideVersion + " of plugin " + pluginId);
 
     String urlSb = url + "/manager/originalCompatibleUpdatesByPluginIds/?build=" + ideVersion +
         "&pluginIds=" + URLEncoder.encode(pluginId, "UTF-8");

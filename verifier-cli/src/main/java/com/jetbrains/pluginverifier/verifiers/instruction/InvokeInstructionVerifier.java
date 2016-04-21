@@ -2,9 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.instruction;
 
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VerificationContext;
-import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
-import com.jetbrains.pluginverifier.problems.IllegalMethodAccessProblem;
-import com.jetbrains.pluginverifier.problems.MethodNotFoundProblem;
+import com.jetbrains.pluginverifier.problems.*;
 import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.utils.StringUtil;
@@ -12,6 +10,7 @@ import com.jetbrains.pluginverifier.verifiers.util.ResolverUtil;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
@@ -73,9 +72,55 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
 
       } else {
         checkAccessModifier(actualLocation, ctx, resolver, clazz, method);
+
+        checkInvocationType(actualLocation, ctx, clazz, method, invokedMethod);
+
+        //TODO: check that invoked method is not abstract
       }
 
     }
+  }
+
+  private void checkInvocationType(@NotNull ResolverUtil.MethodLocation actualLocation,
+                                   @NotNull VerificationContext ctx,
+                                   @NotNull ClassNode clazz,
+                                   @NotNull MethodNode method,
+                                   @NotNull MethodInsnNode invokeInsn) {
+    String calledMethod = LocationUtils.getMethodLocation(actualLocation.getClassNode(), actualLocation.getMethodNode());
+    ProblemLocation location = ProblemLocation.fromMethod(clazz.name, method);
+    if (invokeInsn.getOpcode() == Opcodes.INVOKEVIRTUAL) {
+      if (VerifierUtil.isStatic(actualLocation.getMethodNode())) {
+        //attempt to invokevirtual on static method => IncompatibleClassChangeError at runtime
+
+        ctx.registerProblem(new InvokeVirtualOnStaticMethodProblem(calledMethod), location);
+      }
+    }
+
+    if (invokeInsn.getOpcode() == Opcodes.INVOKESTATIC) {
+      if (!VerifierUtil.isStatic(actualLocation.getMethodNode())) {
+        //attempt to invokestatic on an instance method => IncompatibleClassChangeError at runtime
+
+        ctx.registerProblem(new InvokeStaticOnInstanceMethodProblem(calledMethod), location);
+      }
+    }
+
+    if (invokeInsn.getOpcode() == Opcodes.INVOKEINTERFACE) {
+      if (VerifierUtil.isStatic(actualLocation.getMethodNode())) {
+        ctx.registerProblem(new InvokeInterfaceOnStaticMethodProblem(calledMethod), location);
+      }
+
+      if (VerifierUtil.isPrivate(actualLocation.getMethodNode())) {
+        ctx.registerProblem(new InvokeInterfaceOnPrivateMethodProblem(calledMethod), location);
+      }
+    }
+
+    if (invokeInsn.getOpcode() == Opcodes.INVOKESPECIAL) {
+      if (VerifierUtil.isStatic(actualLocation.getMethodNode())) {
+        ctx.registerProblem(new InvokeSpecialOnStaticMethodProblem(calledMethod), location);
+      }
+    }
+
+
   }
 
   private boolean hasUnresolvedClass(@NotNull String actualOwner,
