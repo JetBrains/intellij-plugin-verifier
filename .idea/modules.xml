@@ -15,12 +15,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_main.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_main.iml" group="intellij-plugin-structure" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_test.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_test.iml" group="intellij-plugin-structure" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin.iml" group="verifier-cli/mock-plugin" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin1/mock-plugin1.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin1/mock-plugin1.iml" group="mock-plugin1" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin1/mock-plugin1_main.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin1/mock-plugin1_main.iml" group="mock-plugin1" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin1/mock-plugin1_test.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin1/mock-plugin1_test.iml" group="mock-plugin1" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin2/mock-plugin2.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin2/mock-plugin2.iml" group="mock-plugin2" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin2/mock-plugin2_main.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin2/mock-plugin2_main.iml" group="mock-plugin2" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin2/mock-plugin2_test.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin2/mock-plugin2_test.iml" group="mock-plugin2" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3.iml" group="mock-plugin3" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3_main.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3_main.iml" group="mock-plugin3" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3_test.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3_test.iml" group="mock-plugin3" />
