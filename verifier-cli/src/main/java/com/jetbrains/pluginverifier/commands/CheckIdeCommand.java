@@ -4,11 +4,13 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.collect.*;
 import com.intellij.structure.domain.*;
+import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
 import com.jetbrains.pluginverifier.VerifierCommand;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
+import com.jetbrains.pluginverifier.problems.BrokenPluginProblem;
 import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.VerificationProblem;
@@ -270,8 +272,28 @@ public class CheckIdeCommand extends VerifierCommand {
       TeamCityLog.Block block = myTc.blockOpen(updateJson.toString());
 
       try {
-        File updateFile = RepositoryManager.getInstance().getPluginFile(updateJson);
-        Plugin plugin = PluginManager.getInstance().createPlugin(updateFile);
+        File updateFile;
+        try {
+          updateFile = RepositoryManager.getInstance().getPluginFile(updateJson);
+        } catch (IOException e) {
+          System.err.println("Failed to download plugin " + updateJson);
+          e.printStackTrace();
+          continue;
+        }
+
+        if (updateFile == null) {
+          throw FailUtil.fail("Plugin " + updateJson + " is not found in the repository");
+        }
+
+        Plugin plugin;
+        try {
+          plugin = PluginManager.getInstance().createPlugin(updateFile);
+        } catch (IncorrectPluginException e) {
+          myBrokenPluginsProblems.put(new BrokenPluginProblem(e.getLocalizedMessage()), updateJson);
+          System.err.println("Broken plugin " + updateJson);
+          e.printStackTrace();
+          continue;
+        }
 
         System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), myUpdatesToCheck.size()));
 
@@ -304,20 +326,14 @@ public class CheckIdeCommand extends VerifierCommand {
         }
 
       } catch (Exception e) {
-        final String message;
         String details = e.getLocalizedMessage() != null ? e.getLocalizedMessage() : e.getClass().getName();
-        if (e instanceof IOException) {
-          message = "Failed to read/download plugin " + updateJson + " because " + details;
-        } else {
-          message = "Failed to verify plugin " + updateJson + " because " + details;
-        }
         if (myExcludedUpdatesFilter.apply(updateJson)) {
           myBrokenPluginsProblems.put(new VerificationProblem(details, updateJson.toString()), updateJson);
         }
 
-        System.err.println(message);
+        System.err.println("Failed to verify plugin " + updateJson + " because " + details);
         e.printStackTrace();
-        myTc.messageError(message, Util.getStackTrace(e));
+        myTc.messageError("Failed to verify plugin " + updateJson + " because " + details, Util.getStackTrace(e));
       } finally {
         block.close();
       }

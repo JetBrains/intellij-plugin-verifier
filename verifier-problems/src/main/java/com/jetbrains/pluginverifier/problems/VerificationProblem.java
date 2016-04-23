@@ -31,7 +31,7 @@ public class VerificationProblem extends Problem {
 
   @Override
   public String getDescription() {
-    return String.format("%s%s: %s", getDescriptionPrefix(), (myPlugin != null ? myPlugin : ""), myDetails);
+    return String.format("%s %s: %s", getDescriptionPrefix(), (myPlugin != null ? myPlugin : ""), myDetails);
   }
 
   @Override
