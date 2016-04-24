@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.commands;
+package com.jetbrains.pluginverifier.utils;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.ComparisonChain;
@@ -6,12 +6,9 @@ import com.google.common.collect.Ordering;
 import com.google.common.html.HtmlEscapers;
 import com.google.common.io.Resources;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
+import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.results.ProblemSet;
-import com.jetbrains.pluginverifier.utils.ProblemUtils;
-import com.jetbrains.pluginverifier.utils.StringUtil;
-import com.jetbrains.pluginverifier.utils.ToStringCachedComparator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -174,8 +171,8 @@ public class CheckIdeHtmlReportBuilder {
    * @return map from pluginId TO all its checked builds (in DESC order)
    */
   @NotNull
-  public static Map<String, List<UpdateInfo>> getCheckedPluginsMap(@NotNull List<String> pluginIds,
-                                                                   @NotNull Map<UpdateInfo, ProblemSet> results) {
+  private static Map<String, List<UpdateInfo>> getCheckedPluginsMap(@NotNull List<String> pluginIds,
+                                                                    @NotNull Map<UpdateInfo, ProblemSet> results) {
     Map<String, List<UpdateInfo>> pluginsMap = new TreeMap<String, List<UpdateInfo>>();
 
     for (String pluginId : pluginIds) {

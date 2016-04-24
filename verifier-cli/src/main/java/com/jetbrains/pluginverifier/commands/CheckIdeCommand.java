@@ -8,7 +8,6 @@ import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
-import com.jetbrains.pluginverifier.VerifierCommand;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.BrokenPluginProblem;
 import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem;

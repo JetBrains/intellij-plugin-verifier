@@ -4,8 +4,8 @@ import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.Jdk;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.results.ProblemLocation;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.results.plugin;
 
 import com.jetbrains.pluginverifier.format.UpdateInfo;
+import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.results.ProblemSet;
 
 import javax.xml.bind.annotation.XmlElement;

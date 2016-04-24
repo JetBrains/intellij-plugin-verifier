@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier;
+package com.jetbrains.pluginverifier.commands;
 
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Jdk;

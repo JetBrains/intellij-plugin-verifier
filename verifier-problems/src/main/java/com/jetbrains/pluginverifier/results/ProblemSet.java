@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.results;
 
+import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;

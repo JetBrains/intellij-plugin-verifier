@@ -1,8 +1,8 @@
 package verifier.tests;
 
 import com.jetbrains.pluginverifier.commands.CheckPluginCommand;
+import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.utils.ToStringCachedComparator;
 import com.jetbrains.pluginverifier.utils.Util;

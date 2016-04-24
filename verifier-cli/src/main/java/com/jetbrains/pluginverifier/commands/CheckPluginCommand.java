@@ -9,12 +9,11 @@ import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.CommandHolder;
 import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.VerificationContextImpl;
-import com.jetbrains.pluginverifier.VerifierCommand;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
+import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.VerificationProblem;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
-import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.utils.FailUtil;
 import com.jetbrains.pluginverifier.utils.Pair;
@@ -224,7 +223,7 @@ public class CheckPluginCommand extends VerifierCommand {
     Map<UpdateInfo, ProblemSet> pluginsProblems = mergeIdeResults(results);
     appendBrokenPluginProblems(pluginsProblems, brokenPlugins);
 
-    TeamCityUtil.printTeamCityProblems(log, pluginsProblems, Predicates.<UpdateInfo>alwaysTrue(), TeamCityUtil.ReportGrouping.parseGrouping(commandLine));
+    TeamCityUtil.printTeamCityProblems(log, pluginsProblems, Predicates.alwaysTrue(), TeamCityUtil.ReportGrouping.parseGrouping(commandLine));
 
     final int problemsCnt = countTotalProblems(pluginsProblems);
 

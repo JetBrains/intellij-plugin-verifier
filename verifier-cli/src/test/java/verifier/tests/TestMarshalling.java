@@ -2,9 +2,9 @@ package verifier.tests;
 
 import com.jetbrains.pluginverifier.commands.NewProblemsCommand;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
+import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.*;
 import com.jetbrains.pluginverifier.results.GlobalResultsRepository;
-import com.jetbrains.pluginverifier.results.ProblemLocation;
 import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.results.ResultsElement;
 import com.jetbrains.pluginverifier.results.plugin.PluginCheckResult;

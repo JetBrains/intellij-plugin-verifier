@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.results;
+package com.jetbrains.pluginverifier.location;
 
 import org.jetbrains.annotations.NotNull;
 

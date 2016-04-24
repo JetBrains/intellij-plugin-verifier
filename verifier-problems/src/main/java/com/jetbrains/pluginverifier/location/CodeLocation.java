@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.results;
+package com.jetbrains.pluginverifier.location;
 
 import com.jetbrains.pluginverifier.utils.FailUtil;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
