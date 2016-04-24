@@ -8,6 +8,7 @@ import com.intellij.structure.domain.*;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
+import com.jetbrains.pluginverifier.misc.PluginCache;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.problems.VerificationProblem;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
@@ -180,7 +181,7 @@ public class CheckPluginCommand extends VerifierCommand {
 
       for (Pair<UpdateInfo, File> pluginFile : pluginFiles) {
         try {
-          Plugin plugin = PluginManager.getInstance().createPlugin(pluginFile.getSecond());
+          Plugin plugin = PluginCache.getInstance().createPlugin(pluginFile.getSecond());
 
           ProblemSet problemSet = verifyPlugin(ide, javaRuntime, getExternalClassPath(commandLine), plugin, options, log);
 

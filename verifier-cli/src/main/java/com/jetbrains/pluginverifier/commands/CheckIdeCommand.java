@@ -7,6 +7,7 @@ import com.intellij.structure.domain.*;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
+import com.jetbrains.pluginverifier.misc.PluginCache;
 import com.jetbrains.pluginverifier.problems.BrokenPluginProblem;
 import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem;
 import com.jetbrains.pluginverifier.problems.Problem;
@@ -286,7 +287,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
         Plugin plugin;
         try {
-          plugin = PluginManager.getInstance().createPlugin(updateFile);
+          plugin = PluginCache.getInstance().createPlugin(updateFile);
         } catch (IncorrectPluginException e) {
           myBrokenPluginsProblems.put(new BrokenPluginProblem(e.getLocalizedMessage()), updateJson);
           System.err.println("Broken plugin " + updateJson);

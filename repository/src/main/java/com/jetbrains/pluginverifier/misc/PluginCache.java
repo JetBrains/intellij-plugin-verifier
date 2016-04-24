@@ -15,7 +15,7 @@ import java.util.Map;
  * @author Sergey Evdokimov
  */
 public class PluginCache {
-  private static final Map<File, SoftReference<Plugin>> pluginsMap = new HashMap<File, SoftReference<Plugin>>();
+  private static final Map<File, SoftReference<Plugin>> myPluginsCache = new HashMap<File, SoftReference<Plugin>>();
   private static final PluginCache INSTANCE = new PluginCache();
 
   private PluginCache() {
@@ -25,32 +25,37 @@ public class PluginCache {
     return INSTANCE;
   }
 
+  @NotNull
+  public synchronized Plugin createPlugin(File pluginFile) throws IOException, IncorrectPluginException {
+    return createPlugin(pluginFile, true);
+  }
+
   /**
    * Returns a plugin from cache or creates it from the specified file
    *
-   * @param pluginZip file of a plugin
+   * @param pluginFile file of a plugin
    * @param readClasses whether to try to load plugin classes or just read the <i>plugin.xml</i>
    * @return null if plugin is not found in the cache
    * @throws IOException if IO error occurs during attempt to create a plugin
    * @throws IncorrectPluginException if the given plugin file is incorrect
    */
   @NotNull
-  public Plugin createPlugin(File pluginZip, boolean readClasses) throws IOException, IncorrectPluginException {
-    if (!pluginZip.exists()) {
-      throw new IOException("Plugin file does not exist: " + pluginZip.getAbsoluteFile());
+  public synchronized Plugin createPlugin(File pluginFile, boolean readClasses) throws IOException, IncorrectPluginException {
+    if (!pluginFile.exists()) {
+      throw new IOException("Plugin file does not exist: " + pluginFile.getAbsoluteFile());
     }
 
-    SoftReference<Plugin> softReference = pluginsMap.get(pluginZip);
+    SoftReference<Plugin> softReference = myPluginsCache.get(pluginFile);
 
     Plugin res = softReference == null ? null : softReference.get();
 
     if (res == null) {
       if (readClasses) {
-        res = PluginManager.getInstance().createPlugin(pluginZip);
+        res = PluginManager.getInstance().createPlugin(pluginFile);
       } else {
-        res = PluginManager.getInstance().createPluginWithEmptyResolver(pluginZip);
+        res = PluginManager.getInstance().createPluginWithEmptyResolver(pluginFile);
       }
-      pluginsMap.put(pluginZip, new SoftReference<Plugin>(res));
+      myPluginsCache.put(pluginFile, new SoftReference<Plugin>(res));
     }
 
     return res;

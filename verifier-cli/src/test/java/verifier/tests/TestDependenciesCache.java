@@ -5,6 +5,7 @@ import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.impl.domain.IdeManagerImpl;
 import com.intellij.structure.impl.utils.StringUtil;
+import com.jetbrains.pluginverifier.misc.PluginCache;
 import com.jetbrains.pluginverifier.utils.dependencies.DependenciesCache;
 import com.jetbrains.pluginverifier.utils.dependencies.PluginDependenciesDescriptor;
 import org.junit.Test;
@@ -30,7 +31,7 @@ public class TestDependenciesCache {
     File pluginFile = TestData.fetchResource("ruby-8.0.0.20160127.zip", false);
 
     Ide ide = IdeManagerImpl.getInstance().createIde(idea144_3600);
-    Plugin plugin = PluginManager.getInstance().createPlugin(pluginFile);
+    Plugin plugin = PluginCache.getInstance().createPlugin(pluginFile);
 
     PluginDependenciesDescriptor descriptor = DependenciesCache.getInstance().calcDependenciesWithTransitive(ide, plugin, new ArrayList<PluginDependenciesDescriptor>());
     Set<Plugin> deps = descriptor.getDependencies();

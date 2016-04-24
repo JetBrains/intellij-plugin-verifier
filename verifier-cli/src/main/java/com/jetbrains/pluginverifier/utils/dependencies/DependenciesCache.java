@@ -179,7 +179,7 @@ public class DependenciesCache {
               }
 
               try {
-                depPlugin = PluginCache.getInstance().createPlugin(pluginZip, true);
+                depPlugin = PluginCache.getInstance().createPlugin(pluginZip);
               } catch (Exception e) {
                 final String message = "Plugin " + id + " depends on the other plugin " + pluginDependency.getId() + " which is incorrect";
                 if (!pluginDependency.isOptional()) {
