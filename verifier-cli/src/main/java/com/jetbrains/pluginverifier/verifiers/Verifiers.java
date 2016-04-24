@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers;
 
-import com.jetbrains.pluginverifier.VerificationContext;
-import com.jetbrains.pluginverifier.Verifier;
 import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier;
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
 import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier;

@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.verifiers.clazz;
 
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.IncompatibleClassChangeProblem;
+import com.jetbrains.pluginverifier.verifiers.VerificationContext;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.tree.ClassNode;
 

@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier;
+package com.jetbrains.pluginverifier.utils;
 
 import com.jetbrains.pluginverifier.commands.*;
 import org.jetbrains.annotations.NotNull;

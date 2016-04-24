@@ -6,8 +6,6 @@ import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.Jdk;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.VerificationContext;
-import com.jetbrains.pluginverifier.Verifier;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.CyclicDependenciesProblem;
 import com.jetbrains.pluginverifier.problems.MissingDependencyProblem;

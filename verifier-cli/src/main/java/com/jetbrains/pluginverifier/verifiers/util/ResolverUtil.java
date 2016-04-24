@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.util;
 
 import com.google.common.base.Predicates;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.VerificationContext;
+import com.jetbrains.pluginverifier.verifiers.VerificationContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -63,7 +63,7 @@ public class ResolverUtil {
     if (node == null) {
       return Collections.singleton(className);
     }
-    return new ParentsVisitor(resolver, ctx).collectUnresolvedParents(className, Predicates.<String>alwaysFalse());
+    return new ParentsVisitor(resolver, ctx).collectUnresolvedParents(className, Predicates.alwaysFalse());
   }
 
 

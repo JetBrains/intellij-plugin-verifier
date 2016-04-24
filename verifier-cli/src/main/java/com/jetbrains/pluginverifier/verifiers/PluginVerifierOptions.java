@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier;
+package com.jetbrains.pluginverifier.verifiers;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;

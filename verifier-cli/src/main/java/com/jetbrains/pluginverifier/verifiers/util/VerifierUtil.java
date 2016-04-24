@@ -2,10 +2,10 @@ package com.jetbrains.pluginverifier.verifiers.util;
 
 import com.google.common.base.Preconditions;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.VerificationContext;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.FailedToReadClassProblem;
 import com.jetbrains.pluginverifier.utils.FailUtil;
+import com.jetbrains.pluginverifier.verifiers.VerificationContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;

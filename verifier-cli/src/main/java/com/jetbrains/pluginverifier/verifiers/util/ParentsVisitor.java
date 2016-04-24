@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.util;
 
 import com.google.common.base.Predicate;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.VerificationContext;
+import com.jetbrains.pluginverifier.verifiers.VerificationContext;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.ClassNode;
 

@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier;
+package com.jetbrains.pluginverifier.verifiers;
 
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.Jdk;
