@@ -6,7 +6,11 @@ import com.intellij.structure.domain.*;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.resolvers.CompileOutputResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
+import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.validators.PluginXmlValidator;
+import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
+import com.intellij.structure.impl.utils.xml.URLUtil;
+import com.intellij.structure.impl.utils.xml.XIncludeException;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
@@ -16,11 +20,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -104,15 +107,28 @@ public class IdeManagerImpl extends IdeManager {
   @NotNull
   private static List<Plugin> getDummyPlugins(@NotNull File root) {
     List<Plugin> result = new ArrayList<Plugin>();
-    Collection<File> files = FileUtils.listFiles(root, new WildcardFileFilter("plugin.xml"), TrueFileFilter.TRUE);
+    Collection<File> files = FileUtils.listFiles(root, new WildcardFileFilter("*.xml"), TrueFileFilter.TRUE);
+
+    final Map<String, File> descriptors = new HashMap<String, File>();
     for (File file : files) {
-      try {
-        PluginImpl plugin = new PluginImpl();
-        plugin.readExternal(file.toURI().toURL(), new PluginXmlValidator());
-        result.add(plugin);
-      } catch (Exception e) {
-        System.err.println("Unable to load dummy plugin from " + file);
-        e.printStackTrace();
+      String after = StringUtil.substringAfter(file.getAbsolutePath(), "/META-INF/");
+      if (after != null) {
+        descriptors.put("/META-INF/" + after, file);
+      }
+    }
+
+    JDOMXIncluder.PathResolver resolver = new PluginFromSourcePathResolver(descriptors);
+
+    for (File file : files) {
+      if (file.getName().equals("plugin.xml")) {
+        try {
+          PluginImpl plugin = new PluginImpl();
+          plugin.readExternalFromIdeSources(file.toURI().toURL(), new PluginXmlValidator().ignoreMissingConfigElement().ignoreMissingFile(), resolver);
+          result.add(plugin);
+        } catch (Exception e) {
+          System.err.println("Unable to load dummy plugin from " + file);
+          e.printStackTrace();
+        }
       }
     }
     return result;
@@ -188,5 +204,39 @@ public class IdeManagerImpl extends IdeManager {
     }
 
     return new IdeImpl(version, resolver, bundled);
+  }
+
+  private static class PluginFromSourcePathResolver extends JDOMXIncluder.DefaultPathResolver {
+    private final Map<String, File> myDescriptors;
+
+    public PluginFromSourcePathResolver(Map<String, File> descriptors) {
+      myDescriptors = descriptors;
+    }
+
+    @NotNull
+    @Override
+    public URL resolvePath(@NotNull String relativePath, @Nullable String base) {
+      try {
+        URL res = super.resolvePath(relativePath, base);
+        URLUtil.openStream(res);
+        return res;
+      } catch (IOException e) {
+        if (relativePath.startsWith("./")) {
+          relativePath = "/META-INF/" + StringUtil.substringAfter(relativePath, "./");
+        }
+
+        if (relativePath.startsWith("/META-INF/")) {
+          File file = myDescriptors.get(relativePath);
+          if (file != null) {
+            try {
+              return file.toURI().toURL();
+            } catch (MalformedURLException exc) {
+              throw new XIncludeException(exc);
+            }
+          }
+        }
+      }
+      throw new XIncludeException("Unknown path " + relativePath);
+    }
   }
 }

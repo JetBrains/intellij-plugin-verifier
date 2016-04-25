@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -24,6 +25,10 @@ public class IdeTest_IDEA_144_3600_7 {
   private static final String IDEA_IU_144_3600_7_ZIP = "ideaIU-144.3600.7.zip";
   private static Ide ide;
   private static Jdk runtime;
+
+  public static void main(String[] args) throws IOException {
+    Ide ide = IdeManager.getInstance().createIde(new File("/home/user/Documents/ultimate"));
+  }
 
   @Before
   public void setUp() throws Exception {

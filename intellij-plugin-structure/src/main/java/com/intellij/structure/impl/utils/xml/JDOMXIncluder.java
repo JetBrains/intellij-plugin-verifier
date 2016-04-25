@@ -31,22 +31,7 @@ import java.util.regex.Pattern;
 
 public class JDOMXIncluder {
 
-  private static final PathResolver DEFAULT_PATH_RESOLVER = new PathResolver() {
-    @NotNull
-    @Override
-    public URL resolvePath(@NotNull String relativePath, @Nullable String base) {
-      try {
-        if (base != null) {
-          return new URL(new URL(base), relativePath);
-        } else {
-          return new URL(relativePath);
-        }
-      } catch (MalformedURLException ex) {
-        throw new XIncludeException(ex);
-      }
-    }
-  };
-
+  public static final PathResolver DEFAULT_PATH_RESOLVER = new DefaultPathResolver();
 
   @NonNls
   private static final String HTTP_WWW_W3_ORG_2001_XINCLUDE = "http://www.w3.org/2001/XInclude";
@@ -86,11 +71,11 @@ public class JDOMXIncluder {
     return resolve(original, base, false);
   }
 
-  private static Document resolve(Document original, String base, boolean ignoreMissing) throws XIncludeException {
+  public static Document resolve(Document original, String base, boolean ignoreMissing) throws XIncludeException {
     return resolve(original, base, ignoreMissing, DEFAULT_PATH_RESOLVER);
   }
 
-  private static Document resolve(Document original, String base, boolean ignoreMissing, PathResolver pathResolver) throws XIncludeException {
+  public static Document resolve(Document original, String base, boolean ignoreMissing, PathResolver pathResolver) throws XIncludeException {
     return new JDOMXIncluder(ignoreMissing, pathResolver).doResolve(original, base);
   }
 
@@ -354,8 +339,24 @@ public class JDOMXIncluder {
     return result;
   }
 
-  private interface PathResolver {
+  public interface PathResolver {
     @NotNull
     URL resolvePath(@NotNull String relativePath, @Nullable String base);
+  }
+
+  public static class DefaultPathResolver implements PathResolver {
+    @NotNull
+    @Override
+    public URL resolvePath(@NotNull String relativePath, @Nullable String base) {
+      try {
+        if (base != null) {
+          return new URL(new URL(base), relativePath);
+        } else {
+          return new URL(relativePath);
+        }
+      } catch (MalformedURLException ex) {
+        throw new XIncludeException(ex);
+      }
+    }
   }
 }

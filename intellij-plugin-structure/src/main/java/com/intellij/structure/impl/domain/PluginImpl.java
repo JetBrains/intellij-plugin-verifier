@@ -459,6 +459,16 @@ class PluginImpl implements Plugin {
     return myUnderlyingDocument.clone();
   }
 
+  void readExternalFromIdeSources(@NotNull URL url, @NotNull Validator validator, @NotNull JDOMXIncluder.PathResolver pathResolver) throws IncorrectPluginException {
+    try {
+      Document document = JDOMUtil.loadDocument(url);
+      document = JDOMXIncluder.resolve(document, url.toExternalForm(), false, pathResolver);
+      checkAndSetEntries(url, document, validator);
+    } catch (Exception e) {
+      validator.onCheckedException("Unable to read external from sources " + url, e);
+    }
+  }
+
   void readExternal(@NotNull URL url, @NotNull Validator validator) throws IncorrectPluginException {
     try {
       Document document = JDOMUtil.loadDocument(url);
