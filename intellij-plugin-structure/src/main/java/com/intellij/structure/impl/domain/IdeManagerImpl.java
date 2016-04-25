@@ -6,6 +6,7 @@ import com.intellij.structure.domain.*;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.resolvers.CompileOutputResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
+import com.intellij.structure.impl.utils.validators.PluginXmlValidator;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
@@ -106,7 +107,8 @@ public class IdeManagerImpl extends IdeManager {
     Collection<File> files = FileUtils.listFiles(root, new WildcardFileFilter("plugin.xml"), TrueFileFilter.TRUE);
     for (File file : files) {
       try {
-        Plugin plugin = PluginManager.getInstance().createPlugin(file, false, true);
+        PluginImpl plugin = new PluginImpl();
+        plugin.readExternal(file.toURI().toURL(), new PluginXmlValidator());
         result.add(plugin);
       } catch (Exception e) {
         System.err.println("Unable to load dummy plugin from " + file);
