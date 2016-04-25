@@ -4,6 +4,7 @@ import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.errors.IncorrectPluginException;
+import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,12 +67,14 @@ class IdeImpl implements Ide {
   @Nullable
   public Plugin getPluginById(@NotNull String pluginId) {
     for (Plugin plugin : myCustomPlugins) {
-      if (plugin.getPluginId().equals(pluginId)) {
+      String id = plugin.getPluginId() != null ? plugin.getPluginId() : plugin.getPluginName();
+      if (StringUtil.equal(id, pluginId)) {
         return plugin;
       }
     }
     for (Plugin plugin : myBundledPlugins) {
-      if (plugin.getPluginId().equals(pluginId))
+      String id = plugin.getPluginId() != null ? plugin.getPluginId() : plugin.getPluginName();
+      if (StringUtil.equal(id, pluginId))
         return plugin;
     }
     return null;

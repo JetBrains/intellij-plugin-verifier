@@ -460,13 +460,20 @@ class PluginImpl implements Plugin {
   }
 
   void readExternalFromIdeSources(@NotNull URL url, @NotNull Validator validator, @NotNull JDOMXIncluder.PathResolver pathResolver) throws IncorrectPluginException {
+    Document document;
     try {
-      Document document = JDOMUtil.loadDocument(url);
-      document = JDOMXIncluder.resolve(document, url.toExternalForm(), false, pathResolver);
-      checkAndSetEntries(url, document, validator);
+      document = JDOMUtil.loadDocument(url);
     } catch (Exception e) {
-      validator.onCheckedException("Unable to read external from sources " + url, e);
+      validator.onCheckedException("Unable to read XML document by url " + url.toExternalForm(), e);
+      return;
     }
+    try {
+      document = JDOMXIncluder.resolve(document, url.toExternalForm(), false, pathResolver);
+    } catch (Exception e) {
+      System.err.println("Unable to resolve xinclude elements");
+      e.printStackTrace();
+    }
+    checkAndSetEntries(url, document, validator);
   }
 
   void readExternal(@NotNull URL url, @NotNull Validator validator) throws IncorrectPluginException {

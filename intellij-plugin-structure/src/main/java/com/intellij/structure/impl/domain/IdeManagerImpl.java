@@ -1,6 +1,7 @@
 package com.intellij.structure.impl.domain;
 
 import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.io.Files;
 import com.intellij.structure.domain.*;
 import com.intellij.structure.errors.IncorrectPluginException;
@@ -8,6 +9,7 @@ import com.intellij.structure.impl.resolvers.CompileOutputResolver;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.validators.PluginXmlValidator;
+import com.intellij.structure.impl.utils.validators.Validator;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.impl.utils.xml.XIncludeException;
@@ -33,6 +35,7 @@ import java.util.regex.Pattern;
 public class IdeManagerImpl extends IdeManager {
 
   private static final Pattern BUILD_NUMBER_PATTERN = Pattern.compile("([^\\.]+\\.\\d+)\\.\\d+");
+  private static final String[] HARD_CODED_LIB_FOLDERS = new String[]{"community/android/android/lib"};
 
   @NotNull
   private static IdeVersion readBuildNumber(@NotNull File versionFile) throws IOException {
@@ -74,11 +77,28 @@ public class IdeManagerImpl extends IdeManager {
     if (isUltimate(ideaDir)) {
       pools.add(new CompileOutputResolver(getUltimateClassesRoot(ideaDir)));
       pools.add(getIdeaResolverFromLibraries(new File(ideaDir, "community")));
+      pools.add(hardCodedUltimateLibraries(ideaDir));
     } else {
       pools.add(new CompileOutputResolver(getCommunityClassesRoot(ideaDir)));
     }
 
     return Resolver.createUnionResolver("Idea dir: " + ideaDir.getCanonicalPath(), pools);
+  }
+
+  @NotNull
+  private static Resolver hardCodedUltimateLibraries(File ideaDir) {
+    for (String libFolder : HARD_CODED_LIB_FOLDERS) {
+      File libDir = new File(ideaDir, libFolder);
+      if (libDir.isDirectory()) {
+        try {
+          return JarsUtils.makeResolver(libDir.getName() + " `lib` dir", JarsUtils.collectJars(libDir, Predicates.<File>alwaysTrue(), false));
+        } catch (IOException e) {
+          System.err.println("Unable to read libraries from " + libDir);
+          e.printStackTrace();
+        }
+      }
+    }
+    return Resolver.getEmptyResolver();
   }
 
   @NotNull
@@ -109,21 +129,26 @@ public class IdeManagerImpl extends IdeManager {
     List<Plugin> result = new ArrayList<Plugin>();
     Collection<File> files = FileUtils.listFiles(root, new WildcardFileFilter("*.xml"), TrueFileFilter.TRUE);
 
-    final Map<String, File> descriptors = new HashMap<String, File>();
+    final Map<String, File> xmlDescriptors = new HashMap<String, File>();
     for (File file : files) {
-      String after = StringUtil.substringAfter(file.getAbsolutePath(), "/META-INF/");
-      if (after != null) {
-        descriptors.put("/META-INF/" + after, file);
+      String path = file.getAbsolutePath();
+      String[] parts = path.split("/");
+      if (parts.length >= 2) {
+        String key = "/" + parts[parts.length - 2] + "/" + parts[parts.length - 1];
+        xmlDescriptors.put(key, file);
       }
     }
 
-    JDOMXIncluder.PathResolver resolver = new PluginFromSourcePathResolver(descriptors);
+    JDOMXIncluder.PathResolver pathResolver = new PluginFromSourcePathResolver(xmlDescriptors);
+
+    Validator dummyValidator = new PluginXmlValidator().ignoreMissingConfigElement().ignoreMissingFile();
 
     for (File file : files) {
       if (file.getName().equals("plugin.xml")) {
         try {
           PluginImpl plugin = new PluginImpl();
-          plugin.readExternalFromIdeSources(file.toURI().toURL(), new PluginXmlValidator().ignoreMissingConfigElement().ignoreMissingFile(), resolver);
+          URL xmlUrl = file.toURI().toURL();
+          plugin.readExternalFromIdeSources(xmlUrl, dummyValidator, pathResolver);
           result.add(plugin);
         } catch (Exception e) {
           System.err.println("Unable to load dummy plugin from " + file);
@@ -209,7 +234,7 @@ public class IdeManagerImpl extends IdeManager {
   private static class PluginFromSourcePathResolver extends JDOMXIncluder.DefaultPathResolver {
     private final Map<String, File> myDescriptors;
 
-    public PluginFromSourcePathResolver(Map<String, File> descriptors) {
+    PluginFromSourcePathResolver(Map<String, File> descriptors) {
       myDescriptors = descriptors;
     }
 
@@ -218,6 +243,7 @@ public class IdeManagerImpl extends IdeManager {
     public URL resolvePath(@NotNull String relativePath, @Nullable String base) {
       try {
         URL res = super.resolvePath(relativePath, base);
+        //try the parent resolver
         URLUtil.openStream(res);
         return res;
       } catch (IOException e) {
@@ -225,18 +251,16 @@ public class IdeManagerImpl extends IdeManager {
           relativePath = "/META-INF/" + StringUtil.substringAfter(relativePath, "./");
         }
 
-        if (relativePath.startsWith("/META-INF/")) {
-          File file = myDescriptors.get(relativePath);
-          if (file != null) {
-            try {
-              return file.toURI().toURL();
-            } catch (MalformedURLException exc) {
-              throw new XIncludeException(exc);
-            }
+        File file = myDescriptors.get(relativePath);
+        if (file != null) {
+          try {
+            return file.toURI().toURL();
+          } catch (MalformedURLException exc) {
+            throw new XIncludeException("File " + file + " has an invalid URL presentation ", exc);
           }
         }
       }
-      throw new XIncludeException("Unknown path " + relativePath);
+      throw new XIncludeException("Unable to resolve " + relativePath + (base != null ? " against " + base : ""));
     }
   }
 }
