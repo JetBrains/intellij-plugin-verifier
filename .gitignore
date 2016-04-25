@@ -8,6 +8,6 @@
 .idea/codeStyleSettings.xml
 target/
 /lib/*.jar
-**/for_tests/
+**/for_tests/*
 classes/*
 generated-sources/

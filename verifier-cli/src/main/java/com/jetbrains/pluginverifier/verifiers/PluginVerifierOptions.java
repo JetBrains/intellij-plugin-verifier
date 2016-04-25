@@ -5,9 +5,7 @@ import com.google.common.collect.Multimap;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
-import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
-import com.jetbrains.pluginverifier.problems.MethodNotFoundProblem;
-import com.jetbrains.pluginverifier.problems.Problem;
+import com.jetbrains.pluginverifier.problems.*;
 import com.jetbrains.pluginverifier.utils.Pair;
 import com.jetbrains.pluginverifier.utils.Util;
 import org.apache.commons.cli.CommandLine;
@@ -23,11 +21,12 @@ import java.io.IOException;
 import java.util.*;
 
 public class PluginVerifierOptions {
+  public static final String METHOD_DESCRIPTOR_REGEX = "[\\w$/]+#[^#]+\\([^#]*\\)[^#]+";
   private final String[] myPrefixesToSkipForDuplicateClassesCheck;
   private final String[] externalClassPrefixes;
   private final Set<String> myOptionalDependenciesIdsToIgnoreIfMissing;
   /**
-   * Map of pluginDescriptor -> [problem] pluginDescriptor := pluginXmlId and pluginVersion
+   * Map of pluginDescriptor -> [problem] where pluginDescriptor := pluginXmlId and pluginVersion
    */
   private final Multimap<Pair<String, String>, Problem> myProblemsToIgnore;
 
@@ -133,15 +132,30 @@ public class PluginVerifierOptions {
           String problemType = tokens[2];
           String problemDescription = tokens[3];
 
-          if (problemType.equals("unknown_class")) {
-            m.put(Pair.create(pluginId, pluginVersion), new ClassNotFoundProblem(problemDescription));
-          } else if (problemType.equals("unknown_method")) {
-            if (!problemDescription.matches("[\\w$/]+#[^#]+\\([^#]*\\)[^#]+")) {
-              throw new IllegalArgumentException("Incorrect ignoring method descriptor " + problemDescription);
-            }
-            m.put(Pair.create(pluginId, pluginVersion), new MethodNotFoundProblem(problemDescription));
-          } else {
-            throw new IllegalArgumentException("Unsupported ignore problem type " + problemType);
+          switch (problemType) {
+            case "unknown_class":
+              m.put(Pair.create(pluginId, pluginVersion), new ClassNotFoundProblem(problemDescription));
+              break;
+            case "unknown_method":
+              if (!problemDescription.matches(METHOD_DESCRIPTOR_REGEX)) {
+                throw new IllegalArgumentException("Incorrect ignoring method descriptor " + problemDescription);
+              }
+              m.put(Pair.create(pluginId, pluginVersion), new MethodNotFoundProblem(problemDescription));
+              break;
+            case "not_implemented_method":
+              if (!problemDescription.matches(METHOD_DESCRIPTOR_REGEX)) {
+                throw new IllegalArgumentException("Incorrect ignoring method descriptor " + problemDescription);
+              }
+              m.put(Pair.create(pluginId, pluginVersion), new MethodNotImplementedProblem(problemDescription));
+              break;
+            case "incompatible_class_to_interface_change":
+              m.put(Pair.create(pluginId, pluginVersion), new IncompatibleClassChangeProblem(problemDescription, IncompatibleClassChangeProblem.Change.CLASS_TO_INTERFACE));
+              break;
+            case "incomptaible_interface_to_class_change":
+              m.put(Pair.create(pluginId, pluginVersion), new IncompatibleClassChangeProblem(problemDescription, IncompatibleClassChangeProblem.Change.INTERFACE_TO_CLASS));
+              break;
+            default:
+              throw new IllegalArgumentException("Unsupported ignore problem type " + problemType);
           }
         }
 
