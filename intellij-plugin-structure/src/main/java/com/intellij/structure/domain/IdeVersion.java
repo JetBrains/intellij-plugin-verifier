@@ -2,7 +2,6 @@ package com.intellij.structure.domain;
 
 import com.intellij.structure.impl.domain.IdeVersionImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey Patrikeev
@@ -22,35 +21,40 @@ public abstract class IdeVersion implements Comparable<IdeVersion> {
   }
 
   /**
-   * Returns a string presentation of this version in the form:<p>
-   * <b> {@literal [<product_code>-]<branch #>.<build #>[.<SNAPSHOT>|.<attempt #>]}</b> <p>
-   * If the version represents a baseline (an integer number, e.g 9567) this number is returned<p>
+   * Returns a string presentation of {@code this} version.
+   * For the details of the presentation form refer to
+   * <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html">
+   * <i>IntelliJ Build Number Ranges</i></a>.
+   * <p>
    * Examples are:
-   *   <ul>
-   *     <li>IU-143.1532.7</li>
-   *     <li>IU-143.1532.SNAPSHOT</li>
-   *     <li>143.1532</li>
-   *     <li>7341</li>
-   *     <li>IU-7341</li>
-   *   </ul>
-   *
-   * @see
-   * <blockquote>
-   *    <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html">
-   *    <i>IntelliJ Build Number Ranges</i></a>
-   * </blockquote>
+   * <ul>
+   *   <li>IU-143.1532.7</li>
+   *   <li>IU-143.1532.SNAPSHOT</li>
+   *   <li>143.1532</li>
+   *   <li>7341 (for historical builds)</li>
+   *   <li>IU-7341</li>
+   *   <li>IU-162.94.11.256.42</li>
+   * </ul>
    *
    * @param includeProductCode whether to append product code
-   * @param withBuildAttempt   whether to append build attempt number
-   * @return presentation
+   * @param includeSnapshotMarker whether to append <i>SNAPSHOT</i> marker (if present)
+   * @return string presentation of the ide version
    */
-  public abstract String asString(boolean includeProductCode, boolean withBuildAttempt);
+  public abstract String asString(boolean includeProductCode, boolean includeSnapshotMarker);
 
   /**
-   * @return Returns presentation with product code and without build attempt
+   * @return Returns a presentation with the product code and <i>SNAPSHOT</i> marker (if present)
    */
   public String asString() {
-    return asString(true, false);
+    return asString(true, true);
+  }
+
+  public String asStringWithoutProductCode() {
+    return asString(false, true);
+  }
+
+  public String asStringWithoutProductCodeAndSnapshot() {
+    return asString(false, false);
   }
 
   @NotNull
@@ -60,17 +64,6 @@ public abstract class IdeVersion implements Comparable<IdeVersion> {
 
   public abstract int getBuild();
 
-  @Nullable
-  public abstract String getAttempt();
-
   public abstract boolean isSnapshot();
 
-  @Override
-  public int compareTo(@NotNull IdeVersion v2) {
-    if (getBaselineVersion() > v2.getBaselineVersion()) return 1;
-    if (getBaselineVersion() < v2.getBaselineVersion()) return -1;
-    if (getBuild() > v2.getBuild()) return 1;
-    if (getBuild() < v2.getBuild()) return -1;
-    return 0;
-  }
 }

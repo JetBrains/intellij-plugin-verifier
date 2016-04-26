@@ -5,6 +5,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static java.lang.Character.toLowerCase;
 import static java.lang.Character.toUpperCase;
@@ -26,6 +29,82 @@ public class StringUtil {
     int start = Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1)) + 1;
     return path.substring(start, end);
   }
+
+  public static boolean isEmptyOrSpaces(@Nullable String s) {
+    if (StringUtil.isEmpty(s)) {
+      return true;
+    }
+    for (int i = 0; i < s.length(); i++) {
+      if (s.charAt(i) > ' ') {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @NotNull
+  public static List<String> split(@NotNull String s, @NotNull String separator) {
+    return split(s, separator, true);
+  }
+
+  @NotNull
+  public static List<String> split(@NotNull String s, @NotNull String separator,
+                                   boolean excludeSeparator) {
+    return split(s, separator, excludeSeparator, true);
+  }
+
+  @SuppressWarnings("unchecked")
+  @NotNull
+  public static List<String> split(@NotNull String s, @NotNull String separator,
+                                   boolean excludeSeparator, boolean excludeEmptyStrings) {
+    return (List) split((CharSequence) s, separator, excludeSeparator, excludeEmptyStrings);
+  }
+
+  @NotNull
+  public static List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator,
+                                         boolean excludeSeparator, boolean excludeEmptyStrings) {
+    if (separator.length() == 0) {
+      return Collections.singletonList(s);
+    }
+    List<CharSequence> result = new ArrayList<CharSequence>();
+    int pos = 0;
+    while (true) {
+      int index = indexOf(s, separator, pos);
+      if (index == -1) break;
+      final int nextPos = index + separator.length();
+      CharSequence token = s.subSequence(pos, excludeSeparator ? index : nextPos);
+      if (token.length() != 0 || !excludeEmptyStrings) {
+        result.add(token);
+      }
+      pos = nextPos;
+    }
+    if (pos < s.length() || !excludeEmptyStrings && pos == s.length()) {
+      result.add(s.subSequence(pos, s.length()));
+    }
+    return result;
+  }
+
+  public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix, int start) {
+    for (int i = start; i <= sequence.length() - infix.length(); i++) {
+      if (startsWith(sequence, i, infix)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  public static boolean startsWith(@NotNull CharSequence text, int startIndex, @NotNull CharSequence prefix) {
+    int l1 = text.length() - startIndex;
+    int l2 = prefix.length();
+    if (l1 < l2) return false;
+
+    for (int i = 0; i < l2; i++) {
+      if (text.charAt(i + startIndex) != prefix.charAt(i)) return false;
+    }
+
+    return true;
+  }
+
 
   @NotNull
   public static String toSystemIndependentName(@NonNls @NotNull String fileName) {

@@ -3,7 +3,10 @@ package com.intellij.structure.impl.domain;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.impl.utils.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Sergey Evdokimov
@@ -14,22 +17,29 @@ public class IdeVersionImpl extends IdeVersion {
   private static final String STAR = "*";
   private static final String SNAPSHOT = "SNAPSHOT";
   private static final String FALLBACK_VERSION = "999.SNAPSHOT";
-  private final String myProductCode;
-  private final int myBaselineVersion;
-  private final int myBuildNumber;
-  private final String myAttemptInfo;
+  private static final int SNAPSHOT_VALUE = Integer.MAX_VALUE;
 
-  private IdeVersionImpl(@NotNull String productCode, int baselineVersion, int buildNumber, @Nullable String attemptInfo) {
+  private final String myProductCode;
+  private final int[] myComponents;
+
+  private IdeVersionImpl(@NotNull String productCode, int baselineVersion, int buildNumber) {
+    this(productCode, new int[]{baselineVersion, buildNumber});
+  }
+
+  private IdeVersionImpl(@NotNull String productCode, int... components) {
     myProductCode = productCode;
-    myBaselineVersion = baselineVersion;
-    myBuildNumber = buildNumber;
-    myAttemptInfo = StringUtil.isEmpty(attemptInfo) ? null : attemptInfo;
+    myComponents = components;
   }
 
   @NotNull
   public static IdeVersionImpl fromString(@NotNull String version) throws IllegalArgumentException {
-    if (BUILD_NUMBER.equals(version)) {
-      return new IdeVersionImpl("", Holder.TOP_BASELINE_VERSION, Integer.MAX_VALUE, null);
+    if (StringUtil.isEmptyOrSpaces(version)) {
+      throw new IllegalArgumentException("Ide-version string must not be empty");
+    }
+
+    if (BUILD_NUMBER.equals(version) || SNAPSHOT.equals(version)) {
+      IdeVersionImpl fallback = IdeVersionImpl.fromString(FALLBACK_VERSION);
+      return new IdeVersionImpl("", fallback.myComponents);
     }
 
     String code = version;
@@ -45,43 +55,46 @@ public class IdeVersionImpl extends IdeVersion {
     int baselineVersionSeparator = code.indexOf('.');
     int baselineVersion;
     int buildNumber;
-    String attemptInfo = null;
 
     if (baselineVersionSeparator > 0) {
-      try {
-        String baselineVersionString = code.substring(0, baselineVersionSeparator);
-        if (baselineVersionString.trim().isEmpty()) {
-          throw new IllegalArgumentException("Invalid version number: " + version);
-        }
-        baselineVersion = Integer.parseInt(baselineVersionString);
-        code = code.substring(baselineVersionSeparator + 1);
-      } catch (NumberFormatException e) {
+      String baselineVersionString = code.substring(0, baselineVersionSeparator);
+      if (baselineVersionString.trim().isEmpty()) {
         throw new IllegalArgumentException("Invalid version number: " + version);
       }
 
-      int minorBuildSeparator = code.indexOf('.'); // allow <BuildNumber>.<BuildAttemptNumber> skipping BuildAttemptNumber
-      if (minorBuildSeparator > 0) {
-        attemptInfo = code.substring(minorBuildSeparator + 1);
-        code = code.substring(0, minorBuildSeparator);
+      List<String> components = StringUtil.split(code, ".");
+      List<Integer> intComponentsList = new ArrayList<Integer>();
+
+      for (String component : components) {
+        int comp = parseBuildNumber(version, component);
+        intComponentsList.add(comp);
+        if (comp == SNAPSHOT_VALUE) break;
       }
-      buildNumber = parseBuildNumber(version, code);
+
+      int[] intComponents = new int[intComponentsList.size()];
+      for (int i = 0; i < intComponentsList.size(); i++) {
+        intComponents[i] = intComponentsList.get(i);
+      }
+
+      return new IdeVersionImpl(productCode, intComponents);
+
     } else {
       buildNumber = parseBuildNumber(version, code);
 
       if (buildNumber <= 2000) {
         // it's probably a baseline, not a build number
-        return new IdeVersionImpl(productCode, buildNumber, 0, null);
+        return new IdeVersionImpl(productCode, buildNumber, 0);
       }
 
       baselineVersion = getBaseLineForHistoricBuilds(buildNumber);
+      return new IdeVersionImpl(productCode, baselineVersion, buildNumber);
     }
 
-    return new IdeVersionImpl(productCode, baselineVersion, buildNumber, attemptInfo);
   }
 
   private static int parseBuildNumber(String version, String code) {
     if (SNAPSHOT.equals(code) || STAR.equals(code) || BUILD_NUMBER.equals(code)) {
-      return Integer.MAX_VALUE;
+      return SNAPSHOT_VALUE;
     }
     try {
       return Integer.parseInt(code);
@@ -92,10 +105,6 @@ public class IdeVersionImpl extends IdeVersion {
 
   // See http://www.jetbrains.net/confluence/display/IDEADEV/Build+Number+Ranges for historic build ranges
   private static int getBaseLineForHistoricBuilds(int bn) {
-    if (bn == Integer.MAX_VALUE) {
-      return Holder.TOP_BASELINE_VERSION; // SNAPSHOTS
-    }
-
     if (bn >= 10000) {
       return 88; // Maia, 9x builds
     }
@@ -144,32 +153,63 @@ public class IdeVersionImpl extends IdeVersion {
   }
 
   @Override
-  public String asString(boolean withProductCode, boolean withBuildAttempt) {
+  public int compareTo(@NotNull IdeVersion o) {
+    if (!(o instanceof IdeVersionImpl)) {
+      if (getBaselineVersion() != o.getBaselineVersion()) {
+        return getBaselineVersion() - o.getBaselineVersion();
+      }
+      if (getBuild() != o.getBuild()) {
+        return getBuild() - o.getBuild();
+      }
+      if (isSnapshot() != o.isSnapshot()) {
+        return isSnapshot() ? 1 : -1;
+      }
+      return 0;
+    }
+
+    int[] c1 = myComponents;
+    int[] c2 = ((IdeVersionImpl) o).myComponents;
+
+    for (int i = 0; i < Math.min(c1.length, c2.length); i++) {
+      if (c1[i] == c2[i] && c1[i] == SNAPSHOT_VALUE) return 0;
+      if (c1[i] == SNAPSHOT_VALUE) return 1;
+      if (c2[i] == SNAPSHOT_VALUE) return -1;
+
+      int result = c1[i] - c2[i];
+      if (result != 0) return result;
+    }
+    return c1.length - c2.length;
+  }
+
+  @Override
+  public String asString(boolean includeProductCode, boolean includeSnapshotMarker) {
     StringBuilder builder = new StringBuilder();
 
-    if (withProductCode && !StringUtil.isEmpty(myProductCode)) {
+    if (includeProductCode && !StringUtil.isEmpty(myProductCode)) {
       builder.append(myProductCode).append('-');
     }
 
-    builder.append(myBaselineVersion).append('.');
-
-    if (myBuildNumber != Integer.MAX_VALUE) {
-      builder.append(myBuildNumber);
-    } else {
-      builder.append(SNAPSHOT);
-    }
-
-    if (withBuildAttempt && myAttemptInfo != null) {
-      builder.append('.').append(myAttemptInfo);
+    builder.append(myComponents[0]);
+    for (int i = 1; i < myComponents.length; i++) {
+      if (myComponents[i] != SNAPSHOT_VALUE) {
+        builder.append('.').append(myComponents[i]);
+      } else if (includeSnapshotMarker) {
+        builder.append('.').append(SNAPSHOT);
+      }
     }
 
     return builder.toString();
   }
 
   @Override
+  public int getBaselineVersion() {
+    return myComponents[0];
+  }
+
+  @Override
   @NotNull
   public String getProductCode() {
-    return myProductCode == null ? "" : myProductCode;
+    return StringUtil.notNullize(myProductCode);
   }
 
   @Override
@@ -178,23 +218,16 @@ public class IdeVersionImpl extends IdeVersion {
   }
 
   @Override
-  public int getBaselineVersion() {
-    return myBaselineVersion;
-  }
-
-  @Override
   public int getBuild() {
-    return myBuildNumber;
-  }
-
-  @Override
-  public String getAttempt() {
-    return myAttemptInfo;
+    return myComponents[1];
   }
 
   @Override
   public boolean isSnapshot() {
-    return myBuildNumber == Integer.MAX_VALUE;
+    for (int each : myComponents) {
+      if (each == SNAPSHOT_VALUE) return true;
+    }
+    return false;
   }
 
   @Override
@@ -204,24 +237,15 @@ public class IdeVersionImpl extends IdeVersion {
 
     IdeVersionImpl that = (IdeVersionImpl) o;
 
-    if (myBaselineVersion != that.myBaselineVersion) return false;
-    if (myBuildNumber != that.myBuildNumber) return false;
-    if (!myProductCode.equals(that.myProductCode)) return false;
-    return StringUtil.equal(myAttemptInfo, that.myAttemptInfo);
+    return myProductCode.equals(that.myProductCode) && Arrays.equals(myComponents, that.myComponents);
 
   }
 
   @Override
   public int hashCode() {
     int result = myProductCode.hashCode();
-    result = 31 * result + myBaselineVersion;
-    result = 31 * result + myBuildNumber;
-    if (myAttemptInfo != null) result = 31 * result + myAttemptInfo.hashCode();
+    result = 31 * result + Arrays.hashCode(myComponents);
     return result;
-  }
-
-  private static class Holder {
-    private static final int TOP_BASELINE_VERSION = fromString(FALLBACK_VERSION).getBaselineVersion();
   }
 
 

@@ -4,7 +4,15 @@ package com.intellij.structure.domain;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.junit.Assert.*;
+
 public class IdeVersionTest {
+
+  private static void assertParsed(IdeVersion n, int expectedBaseline, int expectedBuildNumber, String asString) {
+    assertEquals(expectedBaseline, n.getBaselineVersion());
+    assertEquals(expectedBuildNumber, n.getBuild());
+    assertEquals(asString, n.asString());
+  }
 
   @Test
   public void testWithoutProductCode() {
@@ -21,7 +29,6 @@ public class IdeVersionTest {
     IdeVersion ideVersion = IdeVersion.createIdeVersion("IU-138.1042");
     Assert.assertEquals(138, ideVersion.getBaselineVersion());
     Assert.assertEquals(1042, ideVersion.getBuild());
-    Assert.assertNull(ideVersion.getAttempt());
     Assert.assertEquals("IU", ideVersion.getProductCode());
     Assert.assertEquals(false, ideVersion.isSnapshot());
     Assert.assertEquals("IU-138.1042", ideVersion.asString());
@@ -32,7 +39,6 @@ public class IdeVersionTest {
     IdeVersion ideVersion = IdeVersion.createIdeVersion("IU-138.1042.1");
     Assert.assertEquals(138, ideVersion.getBaselineVersion());
     Assert.assertEquals(1042, ideVersion.getBuild());
-    Assert.assertEquals("1", ideVersion.getAttempt());
     Assert.assertEquals("IU", ideVersion.getProductCode());
     Assert.assertEquals(false, ideVersion.isSnapshot());
     Assert.assertEquals("IU-138.1042.1", ideVersion.asString(true, true));
@@ -48,21 +54,23 @@ public class IdeVersionTest {
     Assert.assertEquals(false, updateBuild.isSnapshot());
   }
 
+  /*@Test(expected = IllegalArgumentException.class)
+  public void testUnsupportedProduct() {
+    IdeVersion.createIdeVersion("XX-138.SNAPSHOT");
+  }*/
+
   @Test
   public void testSnapshotBuild() {
     IdeVersion ideVersion = IdeVersion.createIdeVersion("PS-136.SNAPSHOT");
     Assert.assertEquals(136, ideVersion.getBaselineVersion());
     Assert.assertEquals(Integer.MAX_VALUE, ideVersion.getBuild());
-    Assert.assertNull(ideVersion.getAttempt());
     Assert.assertEquals("PS", ideVersion.getProductCode());
     Assert.assertEquals(true, ideVersion.isSnapshot());
     Assert.assertEquals("PS-136.SNAPSHOT", ideVersion.asString());
-  }
+    Assert.assertEquals("136.SNAPSHOT", ideVersion.asStringWithoutProductCode());
+    Assert.assertEquals("136", ideVersion.asStringWithoutProductCodeAndSnapshot());
 
-  /*@Test(expected = IllegalArgumentException.class)
-  public void testUnsupportedProduct() {
-    IdeVersion.createIdeVersion("XX-138.SNAPSHOT");
-  }*/
+  }
 
   @Test
   public void testCLionTypicalBuild() {
@@ -103,6 +111,116 @@ public class IdeVersionTest {
     Assert.assertEquals(ic1, ic2);
     Assert.assertNotEquals(ic1.hashCode(), iu1.hashCode());
     Assert.assertNotEquals(ic1, iu1);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void empty() {
+    IdeVersion.createIdeVersion(" ");
+  }
+
+  @Test
+  public void historicBuild() {
+    assertEquals("75.7512", IdeVersion.createIdeVersion("7512").asString());
+  }
+
+  @Test
+  public void branchBasedBuild() throws Exception {
+    assertParsed(IdeVersion.createIdeVersion("145"), 145, 0, "145.0");
+    assertParsed(IdeVersion.createIdeVersion("145.1"), 145, 1, "145.1");
+    assertParsed(IdeVersion.createIdeVersion("145.1.2"), 145, 1, "145.1.2");
+    assertParsed(IdeVersion.createIdeVersion("IU-145.1.2"), 145, 1, "IU-145.1.2");
+    assertParsed(IdeVersion.createIdeVersion("IU-145.*"), 145, Integer.MAX_VALUE, "IU-145.SNAPSHOT");
+    assertParsed(IdeVersion.createIdeVersion("IU-145.SNAPSHOT"), 145, Integer.MAX_VALUE, "IU-145.SNAPSHOT");
+    assertParsed(IdeVersion.createIdeVersion("IU-145.1.*"), 145, 1, "IU-145.1.SNAPSHOT");
+    assertParsed(IdeVersion.createIdeVersion("IU-145.1.SNAPSHOT"), 145, 1, "IU-145.1.SNAPSHOT");
+
+    assertParsed(IdeVersion.createIdeVersion("IU-145.1.2.3.4"), 145, 1, "IU-145.1.2.3.4");
+    assertParsed(IdeVersion.createIdeVersion("IU-145.1000.2000.3000.4000"), 145, 1000, "IU-145.1000.2000.3000.4000");
+  }
+
+  @Test
+  public void comparingVersion() throws Exception {
+    assertTrue(IdeVersion.createIdeVersion("145.1").compareTo(IdeVersion.createIdeVersion("145.*")) < 0);
+    assertTrue(IdeVersion.createIdeVersion("145.1.1").compareTo(IdeVersion.createIdeVersion("145.*")) < 0);
+    assertTrue(IdeVersion.createIdeVersion("145.1.1.1.1").compareTo(IdeVersion.createIdeVersion("145.*")) < 0);
+    assertTrue(IdeVersion.createIdeVersion("145.1").compareTo(IdeVersion.createIdeVersion("146.*")) < 0);
+    assertTrue(IdeVersion.createIdeVersion("145.1").compareTo(IdeVersion.createIdeVersion("144.*")) > 0);
+    assertTrue(IdeVersion.createIdeVersion("145.1.1.1").compareTo(IdeVersion.createIdeVersion("145.1.1.1.1")) < 0);
+    assertTrue(IdeVersion.createIdeVersion("145.1.1.2").compareTo(IdeVersion.createIdeVersion("145.1.1.1.1")) > 0);
+    assertTrue(IdeVersion.createIdeVersion("145.2.2.2.2").compareTo(IdeVersion.createIdeVersion("145.2.*")) < 0);
+    assertTrue(IdeVersion.createIdeVersion("145.2.*").compareTo(IdeVersion.createIdeVersion("145.2.2.2.2")) > 0);
+
+  }
+
+  @Test
+  public void isSnapshot() {
+    assertTrue(IdeVersion.createIdeVersion("SNAPSHOT").isSnapshot());
+    assertTrue(IdeVersion.createIdeVersion("__BUILD_NUMBER__").isSnapshot());
+    assertTrue(IdeVersion.createIdeVersion("IU-90.SNAPSHOT").isSnapshot());
+    assertTrue(IdeVersion.createIdeVersion("IU-145.1.2.3.4.SNAPSHOT").isSnapshot());
+    assertFalse(IdeVersion.createIdeVersion("IU-145.1.2.3.4").isSnapshot());
+
+    assertTrue(IdeVersion.createIdeVersion("IC-90.*").isSnapshot());
+    assertFalse(IdeVersion.createIdeVersion("90.9999999").isSnapshot());
+  }
+
+  @Test
+  public void devSnapshotVersion() throws Exception {
+    IdeVersion b = IdeVersion.createIdeVersion("__BUILD_NUMBER__");
+    assertTrue(b.asString(), b.getBaselineVersion() >= 145 && b.getBaselineVersion() <= 3000);
+    assertTrue(b.isSnapshot());
+
+    assertEquals(IdeVersion.createIdeVersion("__BUILD_NUMBER__"), IdeVersion.createIdeVersion("SNAPSHOT"));
+  }
+
+  @Test
+  public void snapshotDomination() {
+    assertTrue(IdeVersion.createIdeVersion("90.SNAPSHOT").compareTo(IdeVersion.createIdeVersion("90.12345")) > 0);
+    assertTrue(IdeVersion.createIdeVersion("IU-90.SNAPSHOT").compareTo(IdeVersion.createIdeVersion("RM-90.12345")) > 0);
+    assertTrue(IdeVersion.createIdeVersion("IU-90.SNAPSHOT").compareTo(IdeVersion.createIdeVersion("RM-100.12345")) < 0);
+    assertTrue(IdeVersion.createIdeVersion("IU-90.SNAPSHOT").compareTo(IdeVersion.createIdeVersion("RM-100.SNAPSHOT")) < 0);
+    assertTrue(IdeVersion.createIdeVersion("IU-90.SNAPSHOT").compareTo(IdeVersion.createIdeVersion("RM-90.SNAPSHOT")) == 0);
+
+    assertTrue(IdeVersion.createIdeVersion("145.SNAPSHOT").compareTo(IdeVersion.createIdeVersion("145.1")) > 0);
+    assertTrue(IdeVersion.createIdeVersion("145.1").compareTo(IdeVersion.createIdeVersion("145.SNAPSHOT")) < 0);
+
+    assertTrue(IdeVersion.createIdeVersion("145.SNAPSHOT").compareTo(IdeVersion.createIdeVersion("145.*")) == 0);
+    assertTrue(IdeVersion.createIdeVersion("145.*").compareTo(IdeVersion.createIdeVersion("145.SNAPSHOT")) == 0);
+
+    assertTrue(IdeVersion.createIdeVersion("145.SNAPSHOT").compareTo(IdeVersion.createIdeVersion("145.1.*")) > 0);
+    assertTrue(IdeVersion.createIdeVersion("145.1.*").compareTo(IdeVersion.createIdeVersion("145.SNAPSHOT")) < 0);
+
+    assertTrue(IdeVersion.createIdeVersion("145.SNAPSHOT").compareTo(IdeVersion.createIdeVersion("145.SNAPSHOT")) == 0);
+
+    assertTrue(IdeVersion.createIdeVersion("145.1.SNAPSHOT").compareTo(IdeVersion.createIdeVersion("145.1.*")) == 0);
+    assertTrue(IdeVersion.createIdeVersion("145.1.*").compareTo(IdeVersion.createIdeVersion("145.1.SNAPSHOT")) == 0);
+
+    assertTrue(IdeVersion.createIdeVersion("145.1.SNAPSHOT").compareTo(IdeVersion.createIdeVersion("145.*")) < 0);
+    assertTrue(IdeVersion.createIdeVersion("145.*").compareTo(IdeVersion.createIdeVersion("145.1.SNAPSHOT")) > 0);
+
+    assertTrue(IdeVersion.createIdeVersion("145.1.SNAPSHOT").compareTo(IdeVersion.createIdeVersion("145.1.1")) > 0);
+    assertTrue(IdeVersion.createIdeVersion("145.1.1").compareTo(IdeVersion.createIdeVersion("145.1.SNAPSHOT")) < 0);
+
+    assertTrue(IdeVersion.createIdeVersion("145.1.SNAPSHOT").compareTo(IdeVersion.createIdeVersion("145.1.SNAPSHOT")) == 0);
+
+    assertTrue(IdeVersion.createIdeVersion("145.SNAPSHOT.1").compareTo(IdeVersion.createIdeVersion("145.1.1")) > 0);
+    assertTrue(IdeVersion.createIdeVersion("145.1.1").compareTo(IdeVersion.createIdeVersion("145.SNAPSHOT.1")) < 0);
+
+    assertTrue(IdeVersion.createIdeVersion("145.SNAPSHOT.1").compareTo(IdeVersion.createIdeVersion("145.1.SNAPSHOT")) > 0);
+    assertTrue(IdeVersion.createIdeVersion("145.1.SNAPSHOT").compareTo(IdeVersion.createIdeVersion("145.SNAPSHOT.1")) < 0);
+
+    assertTrue(IdeVersion.createIdeVersion("145.SNAPSHOT.1").compareTo(IdeVersion.createIdeVersion("145.SNAPSHOT.SNAPSHOT")) == 0);
+    assertTrue(IdeVersion.createIdeVersion("145.SNAPSHOT.SNAPSHOT").compareTo(IdeVersion.createIdeVersion("145.SNAPSHOT.1")) == 0);
+  }
+
+  @Test
+  public void currentVersion() throws Exception {
+    IdeVersion current = IdeVersion.createIdeVersion("IU-146.SNAPSHOT");
+    assertTrue(current.isSnapshot());
+
+    assertTrue(current.compareTo(IdeVersion.createIdeVersion("7512")) > 0);
+    assertTrue(current.compareTo(IdeVersion.createIdeVersion("145")) > 0);
+    assertTrue(current.compareTo(IdeVersion.createIdeVersion("145.12")) > 0);
   }
 
 }
