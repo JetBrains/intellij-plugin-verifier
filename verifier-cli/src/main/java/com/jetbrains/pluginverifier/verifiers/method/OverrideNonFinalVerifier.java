@@ -6,7 +6,6 @@ import com.jetbrains.pluginverifier.problems.OverridingFinalMethodProblem;
 import com.jetbrains.pluginverifier.verifiers.VerificationContext;
 import com.jetbrains.pluginverifier.verifiers.util.ResolverUtil;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -21,10 +20,17 @@ public class OverrideNonFinalVerifier implements MethodVerifier {
   // static or private method overrides instance method (overriding abstract method is already processed in AbstractVerifier)
 
   public void verify(final ClassNode clazz, final MethodNode method, final Resolver resolver, final VerificationContext ctx) {
-    if ((method.access & Opcodes.ACC_PRIVATE) != 0) return;
+    if (VerifierUtil.isPrivate(method)) return;
     final String superClass = clazz.superName;
-    final ResolverUtil.MethodLocation superMethod = ResolverUtil.findMethod(resolver, superClass, method.name, method.desc, ctx);
-    if (superMethod == null) return;
+
+    if (superClass == null) {
+      return;
+    }
+
+    ResolverUtil.MethodLocation superMethod = ResolverUtil.findMethod(resolver, superClass, method.name, method.desc, ctx, clazz.name);
+    if (superMethod == null) {
+      return;
+    }
 
     ClassNode classNode = superMethod.getClassNode();
     MethodNode methodNode = superMethod.getMethodNode();
