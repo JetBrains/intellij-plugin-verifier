@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.location.CodeLocation;
 import com.jetbrains.pluginverifier.location.PluginLocation;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.*;
+import com.jetbrains.pluginverifier.problems.fields.ChangeFinalFieldProblem;
 import com.jetbrains.pluginverifier.problems.statics.*;
 import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.results.ResultsElement;
@@ -47,6 +48,7 @@ public class ProblemUtils {
           MethodNotImplementedProblem.class,
           OverridingFinalMethodProblem.class,
           MissingDependencyProblem.class,
+          ChangeFinalFieldProblem.class,
 
           InstanceAccessOfStaticFieldProblem.class,
           StaticAccessOfInstanceFieldProblem.class,
