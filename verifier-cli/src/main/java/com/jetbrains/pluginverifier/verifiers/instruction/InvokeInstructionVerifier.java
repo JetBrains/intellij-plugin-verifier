@@ -41,7 +41,10 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
 
     String ownerClassName = invokedMethod.owner;
 
-    if (ownerClassName.startsWith("[")) return;
+    if (ownerClassName.startsWith("[")) {
+      //it's an array class => assume that method exists
+      return;
+    }
 
     if (ctx.getVerifierOptions().isExternalClass(ownerClassName)) return;
 
