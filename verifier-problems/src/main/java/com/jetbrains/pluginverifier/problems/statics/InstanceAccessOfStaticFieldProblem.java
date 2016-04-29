@@ -47,6 +47,25 @@ public class InstanceAccessOfStaticFieldProblem extends Problem {
     return getDescriptionPrefix() + " " + myField;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    InstanceAccessOfStaticFieldProblem that = (InstanceAccessOfStaticFieldProblem) o;
+
+    return myField != null ? myField.equals(that.myField) : that.myField == null && myInstruction == that.myInstruction;
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = -123;
+    result = 31 * result + (myField != null ? myField.hashCode() : 0);
+    result = 31 * result + (myInstruction != null ? myInstruction.hashCode() : 0);
+    return result;
+  }
+
   public enum Instruction {
     PUT_FIELD("putfield"),
     GET_FIELD("getfield");

@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.location.CodeLocation;
 import com.jetbrains.pluginverifier.location.PluginLocation;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.*;
+import com.jetbrains.pluginverifier.problems.statics.*;
 import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.results.ResultsElement;
 import com.jetbrains.pluginverifier.results.plugin.IdeProblemsDescriptor;
@@ -39,11 +40,16 @@ public class ProblemUtils {
           DuplicateClassProblem.class,
           FailedToReadClassProblem.class,
           IllegalMethodAccessProblem.class,
+          IllegalFieldAccessProblem.class,
           IncompatibleClassChangeProblem.class,
           MethodNotFoundProblem.class,
+          FieldNotFoundProblem.class,
           MethodNotImplementedProblem.class,
           OverridingFinalMethodProblem.class,
           MissingDependencyProblem.class,
+
+          InstanceAccessOfStaticFieldProblem.class,
+          StaticAccessOfInstanceFieldProblem.class,
 
           InvokeInterfaceOnPrivateMethodProblem.class,
           InvokeInterfaceOnStaticMethodProblem.class,
