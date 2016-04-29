@@ -1,4 +1,6 @@
-package com.jetbrains.pluginverifier.problems;
+package com.jetbrains.pluginverifier.problems.statics;
+
+import com.jetbrains.pluginverifier.problems.Problem;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -6,20 +8,20 @@ import javax.xml.bind.annotation.XmlRootElement;
  * Created by Sergey Patrikeev
  */
 @XmlRootElement
-public class InvokeStaticOnInstanceMethodProblem extends Problem {
+public class InvokeSpecialOnStaticMethodProblem extends Problem {
 
   private String myMethod;
 
-  public InvokeStaticOnInstanceMethodProblem() {
+  public InvokeSpecialOnStaticMethodProblem() {
   }
 
-  public InvokeStaticOnInstanceMethodProblem(String method) {
+  public InvokeSpecialOnStaticMethodProblem(String method) {
     myMethod = method;
   }
 
   @Override
   public String getDescriptionPrefix() {
-    return "attempt to perform 'invokestatic' on an instance method";
+    return "attempt to perform 'invokespecial' on static method";
   }
 
   public String getMethod() {
@@ -39,7 +41,7 @@ public class InvokeStaticOnInstanceMethodProblem extends Problem {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    InvokeStaticOnInstanceMethodProblem that = (InvokeStaticOnInstanceMethodProblem) o;
+    InvokeSpecialOnStaticMethodProblem that = (InvokeSpecialOnStaticMethodProblem) o;
 
     return myMethod != null ? myMethod.equals(that.myMethod) : that.myMethod == null;
 
@@ -47,7 +49,7 @@ public class InvokeStaticOnInstanceMethodProblem extends Problem {
 
   @Override
   public int hashCode() {
-    int result = 32145;
+    int result = 321;
     result = 31 * result + (myMethod != null ? myMethod.hashCode() : 0);
     return result;
   }
