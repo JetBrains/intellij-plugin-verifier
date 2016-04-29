@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.method;
 
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
+import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.OverridingFinalMethodProblem;
 import com.jetbrains.pluginverifier.verifiers.VerificationContext;
 import com.jetbrains.pluginverifier.verifiers.util.ResolverUtil;
@@ -23,11 +24,17 @@ public class OverrideNonFinalVerifier implements MethodVerifier {
     if (VerifierUtil.isPrivate(method)) return;
     final String superClass = clazz.superName;
 
-    if (superClass == null) {
+    if (superClass == null || superClass.startsWith("[") || ctx.getVerifierOptions().isExternalClass(superClass)) {
       return;
     }
 
-    ResolverUtil.MethodLocation superMethod = ResolverUtil.findMethod(resolver, superClass, method.name, method.desc, ctx, clazz.name);
+    ClassNode superNode = VerifierUtil.findClass(resolver, superClass, ctx);
+    if (superNode == null) {
+      ctx.registerProblem(new ClassNotFoundProblem(superClass), ProblemLocation.fromMethod(clazz.name, method));
+      return;
+    }
+
+    ResolverUtil.MethodLocation superMethod = ResolverUtil.findMethod(resolver, superNode, method.name, method.desc, ctx);
     if (superMethod == null) {
       return;
     }

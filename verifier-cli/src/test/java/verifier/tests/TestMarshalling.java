@@ -26,7 +26,7 @@ public class TestMarshalling {
     problems.add(new ClassNotFoundProblem("a"));
     problems.add(new DuplicateClassProblem("a", "b"));
     problems.add(new FailedToReadClassProblem("a", ""));
-    problems.add(new IllegalMethodAccessProblem("a", IllegalMethodAccessProblem.MethodAccess.PACKAGE_PRIVATE));
+    problems.add(new IllegalMethodAccessProblem("a", AccessType.PACKAGE_PRIVATE));
     problems.add(new IncompatibleClassChangeProblem());
     problems.add(new MethodNotFoundProblem("a"));
     problems.add(new MethodNotImplementedProblem("a"));
@@ -62,7 +62,7 @@ public class TestMarshalling {
 
     expectedIdeToProblems.put("IDEA-IU-143", new ProblemSet(problemSetHashMap));
 
-    problemSetHashMap.put(new IllegalMethodAccessProblem("illegal", IllegalMethodAccessProblem.MethodAccess.PACKAGE_PRIVATE), new HashSet<ProblemLocation>(Collections.singletonList(ProblemLocation.fromClass("location #5"))));
+    problemSetHashMap.put(new IllegalMethodAccessProblem("illegal", AccessType.PACKAGE_PRIVATE), new HashSet<ProblemLocation>(Collections.singletonList(ProblemLocation.fromClass("location #5"))));
 
     expectedIdeToProblems.put("IDEA-IU-144", new ProblemSet(problemSetHashMap));
 

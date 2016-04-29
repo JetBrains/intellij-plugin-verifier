@@ -94,6 +94,10 @@ public class VerifierUtil {
     return (superMethod.access & Opcodes.ACC_FINAL) != 0;
   }
 
+  public static boolean isFinal(final FieldNode fieldNode) {
+    return (fieldNode.access & Opcodes.ACC_FINAL) != 0;
+  }
+
   public static boolean isAbstract(@NotNull ClassNode clazz) {
     return (clazz.access & Opcodes.ACC_ABSTRACT) != 0;
   }

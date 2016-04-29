@@ -8,22 +8,22 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class OverridingFinalMethodProblem extends Problem {
 
-  private String mySuperFinalMethod;
+  private String myMethod;
 
   public OverridingFinalMethodProblem() {
 
   }
 
-  public OverridingFinalMethodProblem(@NotNull String superFinalMethod) {
-    mySuperFinalMethod = superFinalMethod;
+  public OverridingFinalMethodProblem(@NotNull String method) {
+    myMethod = method;
   }
 
   public String getMethod() {
-    return mySuperFinalMethod;
+    return myMethod;
   }
 
   public void setMethod(String method) {
-    mySuperFinalMethod = method;
+    myMethod = method;
   }
 
   @Override
@@ -32,7 +32,7 @@ public class OverridingFinalMethodProblem extends Problem {
   }
 
   public String getDescription() {
-    return getDescriptionPrefix() + " " + MessageUtils.convertMethodDescr(mySuperFinalMethod);
+    return getDescriptionPrefix() + " " + MessageUtils.convertMethodDescr(myMethod);
   }
 
   @Override
@@ -42,11 +42,11 @@ public class OverridingFinalMethodProblem extends Problem {
 
     OverridingFinalMethodProblem problem = (OverridingFinalMethodProblem)o;
 
-    return !(mySuperFinalMethod != null ? !mySuperFinalMethod.equals(problem.mySuperFinalMethod) : problem.mySuperFinalMethod != null);
+    return !(myMethod != null ? !myMethod.equals(problem.myMethod) : problem.myMethod != null);
   }
 
   @Override
   public int hashCode() {
-    return mySuperFinalMethod != null ? mySuperFinalMethod.hashCode() : 0;
+    return myMethod != null ? myMethod.hashCode() : 0;
   }
 }
