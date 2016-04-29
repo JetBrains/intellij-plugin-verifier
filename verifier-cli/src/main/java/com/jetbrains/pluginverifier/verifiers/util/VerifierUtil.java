@@ -72,7 +72,7 @@ public class VerifierUtil {
    * @param descr full descriptor (may be an array type or a primitive type)
    * @return null for primitive types and the innermost type for array types
    */
-  @Nullable // return null for primitive types
+  @Nullable
   public static String extractClassNameFromDescr(@NotNull String descr) {
     descr = prepareArrayName(descr);
 

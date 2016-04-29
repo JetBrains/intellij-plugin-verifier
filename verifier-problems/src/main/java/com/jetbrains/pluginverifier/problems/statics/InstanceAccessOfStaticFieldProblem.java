@@ -11,29 +11,18 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class InstanceAccessOfStaticFieldProblem extends Problem {
 
   private String myField;
-  private Instruction myInstruction;
 
   public InstanceAccessOfStaticFieldProblem() {
   }
 
-  public InstanceAccessOfStaticFieldProblem(String field, Instruction instruction) {
+  public InstanceAccessOfStaticFieldProblem(String field) {
     myField = field;
-    myInstruction = instruction;
   }
 
   @Override
   public String getDescriptionPrefix() {
-    return "attempt to perform '" + myInstruction.getName() + "' on a static field";
+    return "attempt to perform instance access on a static field";
   }
-
-  public Instruction getInstruction() {
-    return myInstruction;
-  }
-
-  public void setInstruction(Instruction instruction) {
-    myInstruction = instruction;
-  }
-
   public String getField() {
     return myField;
   }
@@ -54,30 +43,14 @@ public class InstanceAccessOfStaticFieldProblem extends Problem {
 
     InstanceAccessOfStaticFieldProblem that = (InstanceAccessOfStaticFieldProblem) o;
 
-    return myField != null ? myField.equals(that.myField) : that.myField == null && myInstruction == that.myInstruction;
+    return myField != null ? myField.equals(that.myField) : that.myField == null;
 
   }
 
   @Override
   public int hashCode() {
-    int result = -123;
+    int result = -1;
     result = 31 * result + (myField != null ? myField.hashCode() : 0);
-    result = 31 * result + (myInstruction != null ? myInstruction.hashCode() : 0);
     return result;
-  }
-
-  public enum Instruction {
-    PUT_FIELD("putfield"),
-    GET_FIELD("getfield");
-
-    private final String myName;
-
-    Instruction(String name) {
-      myName = name;
-    }
-
-    public String getName() {
-      return myName;
-    }
   }
 }

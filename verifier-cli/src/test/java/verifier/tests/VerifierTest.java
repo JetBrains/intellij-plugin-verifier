@@ -6,8 +6,11 @@ import com.google.common.collect.Multimap;
 import com.intellij.structure.domain.*;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.*;
+import com.jetbrains.pluginverifier.problems.fields.ChangeFinalFieldProblem;
+import com.jetbrains.pluginverifier.problems.statics.InstanceAccessOfStaticFieldProblem;
 import com.jetbrains.pluginverifier.problems.statics.InvokeStaticOnInstanceMethodProblem;
 import com.jetbrains.pluginverifier.problems.statics.InvokeVirtualOnStaticMethodProblem;
+import com.jetbrains.pluginverifier.problems.statics.StaticAccessOfInstanceFieldProblem;
 import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.verifiers.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.verifiers.VerificationContextImpl;
@@ -73,6 +76,17 @@ public class VerifierTest {
 
           .put(new MissingDependencyProblem("org.some.company.plugin", "DevKit", "Plugin org.some.company.plugin depends on the other plugin DevKit which has not a compatible build with IU-145.500"), ProblemLocation.fromPlugin("org.some.company.plugin"))
 
+          //field problems
+          .put(new FieldNotFoundProblem("fields/FieldsContainer#deletedField#I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessDeletedField()V"))
+          .put(new IllegalFieldAccessProblem("fields/FieldsContainer#privateField#I", AccessType.PRIVATE), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessPrivateField()V"))
+          .put(new IllegalFieldAccessProblem("fields/otherPackage/OtherFieldsContainer#protectedField#I", AccessType.PROTECTED), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessProtectedField()V"))
+          .put(new IllegalFieldAccessProblem("fields/otherPackage/OtherFieldsContainer#packageField#I", AccessType.PACKAGE_PRIVATE), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessPackageField()V"))
+
+          .put(new InstanceAccessOfStaticFieldProblem("fields/FieldsContainer#staticField#I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "instanceAccessOnStatic()V"))
+          .put(new StaticAccessOfInstanceFieldProblem("fields/FieldsContainer#instanceField#I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "staticAccessOnInstance()V"))
+          .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessUnknownClass()V"))
+          .put(new ChangeFinalFieldProblem("fields/FieldsContainer#finalField#I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "setOnFinalFieldFromNotInitMethod()V"))
+          .put(new ChangeFinalFieldProblem("fields/FieldsContainer#staticFinalField#I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "setOnStaticFinalFieldFromNotClinitMethod()V"))
           .build();
 
   private final ImmutableMultimap<Problem, ProblemLocation> RUBY_ACTUAL_PROBLEMS =

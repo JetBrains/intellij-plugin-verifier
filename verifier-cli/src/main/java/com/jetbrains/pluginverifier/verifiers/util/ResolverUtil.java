@@ -5,6 +5,7 @@ import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
+import com.jetbrains.pluginverifier.utils.FailUtil;
 import com.jetbrains.pluginverifier.verifiers.VerificationContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,7 @@ public class ResolverUtil {
   @Nullable
   private static MethodLocation findMethod(@NotNull Resolver resolver, @NotNull String className, @NotNull String methodName, @NotNull String methodDesc, VerificationContext ctx, String childName) {
     if (className.startsWith("[")) {
-      throw new IllegalArgumentException("Method owner class must not be an array class");
+      throw FailUtil.fail("Method owner class must not be an array class");
     }
 
     final ClassNode classFile = VerifierUtil.findClass(resolver, className, ctx);
@@ -68,7 +69,7 @@ public class ResolverUtil {
   @Nullable
   private static FieldLocation findField(@NotNull Resolver resolver, @NotNull String className, @NotNull String fieldName, @NotNull String fieldDescriptor, VerificationContext ctx, String childName) {
     if (className.startsWith("[")) {
-      throw new IllegalArgumentException("Method owner class must not be an array class");
+      throw FailUtil.fail("Method owner class must not be an array class");
     }
 
     ClassNode classFile = VerifierUtil.findClass(resolver, className, ctx);
