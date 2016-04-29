@@ -3,23 +3,27 @@ package com.jetbrains.pluginverifier.verifiers.instruction;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.*;
+import com.jetbrains.pluginverifier.problems.statics.InvokeInterfaceOnStaticMethodProblem;
+import com.jetbrains.pluginverifier.problems.statics.InvokeSpecialOnStaticMethodProblem;
+import com.jetbrains.pluginverifier.problems.statics.InvokeStaticOnInstanceMethodProblem;
+import com.jetbrains.pluginverifier.problems.statics.InvokeVirtualOnStaticMethodProblem;
 import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import com.jetbrains.pluginverifier.verifiers.VerificationContext;
 import com.jetbrains.pluginverifier.verifiers.util.ResolverUtil;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import java.util.Set;
-
 /**
- * @author Dennis.Ushakov
+ * TODO:
+ * 1) Instance initialization methods may be invoked only within the Java Virtual Machine by the invokespecial instruction (and check access rights)
+ * 2) Signature polymorphic methods may not be in the class (It is not necessary for C to declare a method with the descriptor specified by the method reference)
+ * 3) Class Method Resolution vs Interface Method Resolution (If C is not an interface, interface method resolution throws an IncompatibleClassChangeError)
  */
 public class InvokeInstructionVerifier implements InstructionVerifier {
   public void verify(final ClassNode clazz, final MethodNode method, final AbstractInsnNode instr, final Resolver resolver, final VerificationContext ctx) {
@@ -61,7 +65,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
           }
         }
 
-        if (hasUnresolvedClass(actualOwner, resolver, ctx)) {
+        if (VerifierUtil.hasUnresolvedParentClass(actualOwner, resolver, ctx)) {
           //actualOwner has some unresolved class => most likely that this class contains(-ed) the sought-for method
           return;
         }
@@ -86,10 +90,11 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
                                    @NotNull ClassNode clazz,
                                    @NotNull MethodNode method,
                                    @NotNull MethodInsnNode invokeInsn) {
-    String calledMethod = LocationUtils.getMethodLocation(actualLocation.getClassNode(), actualLocation.getMethodNode());
+    MethodNode actualMethod = actualLocation.getMethodNode();
+    String calledMethod = LocationUtils.getMethodLocation(actualLocation.getClassNode(), actualMethod);
     ProblemLocation location = ProblemLocation.fromMethod(clazz.name, method);
     if (invokeInsn.getOpcode() == Opcodes.INVOKEVIRTUAL) {
-      if (VerifierUtil.isStatic(actualLocation.getMethodNode())) {
+      if (VerifierUtil.isStatic(actualMethod)) {
         //attempt to invokevirtual on static method => IncompatibleClassChangeError at runtime
 
         ctx.registerProblem(new InvokeVirtualOnStaticMethodProblem(calledMethod), location);
@@ -97,7 +102,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
     }
 
     if (invokeInsn.getOpcode() == Opcodes.INVOKESTATIC) {
-      if (!VerifierUtil.isStatic(actualLocation.getMethodNode())) {
+      if (!VerifierUtil.isStatic(actualMethod)) {
         //attempt to invokestatic on an instance method => IncompatibleClassChangeError at runtime
 
         ctx.registerProblem(new InvokeStaticOnInstanceMethodProblem(calledMethod), location);
@@ -105,34 +110,22 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
     }
 
     if (invokeInsn.getOpcode() == Opcodes.INVOKEINTERFACE) {
-      if (VerifierUtil.isStatic(actualLocation.getMethodNode())) {
+      if (VerifierUtil.isStatic(actualMethod)) {
         ctx.registerProblem(new InvokeInterfaceOnStaticMethodProblem(calledMethod), location);
       }
 
-      if (VerifierUtil.isPrivate(actualLocation.getMethodNode())) {
+      if (VerifierUtil.isPrivate(actualMethod)) {
         ctx.registerProblem(new InvokeInterfaceOnPrivateMethodProblem(calledMethod), location);
       }
     }
 
     if (invokeInsn.getOpcode() == Opcodes.INVOKESPECIAL) {
-      if (VerifierUtil.isStatic(actualLocation.getMethodNode())) {
+      if (VerifierUtil.isStatic(actualMethod)) {
         ctx.registerProblem(new InvokeSpecialOnStaticMethodProblem(calledMethod), location);
       }
     }
 
 
-  }
-
-  private boolean hasUnresolvedClass(@NotNull String actualOwner,
-                                     @NotNull Resolver resolver,
-                                     @NotNull VerificationContext ctx) {
-    ClassNode aClass = VerifierUtil.findClass(resolver, actualOwner, ctx);
-    if (aClass == null) {
-      return true;
-    }
-
-    Set<String> unresolvedClasses = ResolverUtil.collectUnresolvedClasses(resolver, actualOwner, ctx);
-    return !unresolvedClasses.isEmpty();
   }
 
   private void checkAccessModifier(@NotNull ResolverUtil.MethodLocation actualLocation,
@@ -143,55 +136,29 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
     MethodNode actualMethod = actualLocation.getMethodNode();
     ClassNode actualOwner = actualLocation.getClassNode();
 
-    IllegalMethodAccessProblem.MethodAccess accessProblem = null;
+    AccessType accessProblem = null;
 
     if (VerifierUtil.isPrivate(actualMethod)) {
       if (!StringUtil.equals(verifiedClass.name, actualOwner.name)) {
         //accessing to private method of the other class
-        accessProblem = IllegalMethodAccessProblem.MethodAccess.PRIVATE;
+        accessProblem = AccessType.PRIVATE;
       }
     } else if (VerifierUtil.isProtected(actualMethod)) {
-      if (!isAncestor(actualOwner, verifiedClass, resolver, ctx) && !haveTheSamePackage(actualOwner, verifiedClass)) {
+      if (!VerifierUtil.isAncestor(verifiedClass, actualOwner, resolver, ctx) && !VerifierUtil.haveTheSamePackage(actualOwner, verifiedClass)) {
         //accessing to the package-private method of the non-inherited class
-        accessProblem = IllegalMethodAccessProblem.MethodAccess.PROTECTED;
+        accessProblem = AccessType.PROTECTED;
       }
     } else if (VerifierUtil.isDefaultAccess(actualMethod)) {
-      if (!haveTheSamePackage(actualOwner, verifiedClass)) {
+      if (!VerifierUtil.haveTheSamePackage(actualOwner, verifiedClass)) {
         //accessing to the method which is not available in the other package
-        accessProblem = IllegalMethodAccessProblem.MethodAccess.PACKAGE_PRIVATE;
+        accessProblem = AccessType.PACKAGE_PRIVATE;
       }
     }
 
     if (accessProblem != null) {
-      IllegalMethodAccessProblem problem = new IllegalMethodAccessProblem(actualOwner.name + "#" + actualMethod.name + actualMethod.desc, accessProblem);
+      IllegalMethodAccessProblem problem = new IllegalMethodAccessProblem(LocationUtils.getMethodLocation(actualOwner.name, actualMethod), accessProblem);
       ctx.registerProblem(problem, ProblemLocation.fromMethod(verifiedClass.name, verifiedMethod));
     }
-  }
-
-  private boolean haveTheSamePackage(@NotNull ClassNode first, @NotNull ClassNode second) {
-    return StringUtil.equals(extractPackage(first.name), extractPackage(second.name));
-  }
-
-  private boolean isAncestor(@NotNull ClassNode parent, ClassNode child, @NotNull Resolver resolver, @NotNull VerificationContext ctx) {
-    while (child != null) {
-      if (StringUtil.equals(parent.name, child.name)) {
-        return true;
-      }
-      String superName = child.superName;
-      if (superName == null) {
-        return false;
-      }
-      child = VerifierUtil.findClass(resolver, superName, ctx);
-    }
-    return false;
-  }
-
-  @Nullable
-  private String extractPackage(@Nullable String className) {
-    if (className == null) return null;
-    int slash = className.lastIndexOf('/');
-    if (slash == -1) return className;
-    return className.substring(0, slash);
   }
 
   /**
