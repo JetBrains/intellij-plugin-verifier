@@ -53,6 +53,9 @@ public class ProblemUtils {
           InstanceAccessOfStaticFieldProblem.class,
           StaticAccessOfInstanceFieldProblem.class,
 
+          AbstractClassInstantiationProblem.class,
+          InterfaceInstantiationProblem.class,
+
           InvokeInterfaceOnPrivateMethodProblem.class,
           InvokeInterfaceOnStaticMethodProblem.class,
           InvokeSpecialOnStaticMethodProblem.class,
