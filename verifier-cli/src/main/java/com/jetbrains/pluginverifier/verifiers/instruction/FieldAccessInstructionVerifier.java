@@ -28,7 +28,7 @@ public class FieldAccessInstructionVerifier implements InstructionVerifier {
 
     String fieldOwner = node.owner;
     if (fieldOwner.startsWith("[")) {
-      //this is an array field => assume it does exist TODO: add tests for this case
+      //this is an array field => assume it does exist
       return;
     }
     fieldOwner = VerifierUtil.extractClassNameFromDescr(fieldOwner);
@@ -68,7 +68,7 @@ public class FieldAccessInstructionVerifier implements InstructionVerifier {
     final String field = LocationUtils.getFieldLocation(actualLocation.getClassNode().name, actualLocation.getFieldNode());
 
     if (opcode == Opcodes.GETSTATIC || opcode == Opcodes.PUTSTATIC) {
-      if (!VerifierUtil.isStatic(actualLocation.getFieldNode())) { //TODO: "or an interface field"
+      if (!VerifierUtil.isStatic(actualLocation.getFieldNode())) { //TODO: "if the resolved field is not a static field or an interface field, getstatic throws an IncompatibleClassChangeError"
         ctx.registerProblem(new StaticAccessOfInstanceFieldProblem(field), ProblemLocation.fromMethod(clazz.name, method));
       }
     } else if (opcode == Opcodes.GETFIELD || opcode == Opcodes.PUTFIELD) {

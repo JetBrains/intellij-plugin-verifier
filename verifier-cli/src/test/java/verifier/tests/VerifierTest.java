@@ -56,10 +56,15 @@ public class VerifierTest {
           .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenInvocation()V"))
           .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromClass("mock/plugin/ParentDoesntExist"))
           .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/ParentDoesntExist", "<init>()V"))
+          .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/arrays/ANewArrayInsn", "foo(Ljava/lang/Object;)V"))
           .put(new ClassNotFoundProblem("non/existing/DeletedClass"), ProblemLocation.fromMethod("mock/plugin/inheritance/PluginClass", "<init>()V"))
           .put(new ClassNotFoundProblem("non/existing/DeletedClass"), ProblemLocation.fromClass("mock/plugin/inheritance/PluginClass"))
 
           .put(new MethodNotFoundProblem("com/intellij/openapi/actionSystem/AnAction#nonExistingMethod()V"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenNonFoundMethod()V"))
+
+          .put(new AbstractClassInstantiationProblem("misc/BecomeAbstract"), ProblemLocation.fromMethod("mock.plugin.news.NewProblems", "abstractClass()V"))
+          .put(new InterfaceInstantiationProblem("misc/BecomeInterface"), ProblemLocation.fromMethod("mock.plugin.news.NewProblems", "newInterface()V"))
+
 
           .put(new MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent#getState()Ljava/lang/Object;"), ProblemLocation.fromClass("mock/plugin/NotImplementedProblem"))
           .put(new MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent#loadState(Ljava/lang/Object;)V"), ProblemLocation.fromClass("mock/plugin/NotImplementedProblem"))
@@ -113,7 +118,7 @@ public class VerifierTest {
       Problem problem = entry.getKey();
       ProblemLocation location = entry.getValue();
       Assert.assertTrue("problem " + problem + " should be found, but it isn't", foundProblems.containsKey(problem));
-      Assert.assertTrue("problem " + problem + " should be found in the following location " + location, foundProblems.get(problem).contains(location));
+      Assert.assertTrue("problem " + problem + " should be found in the following location " + location + " but it is found in " + foundProblems.get(problem), foundProblems.get(problem).contains(location));
       redundantProblems.remove(problem, location);
     }
 
