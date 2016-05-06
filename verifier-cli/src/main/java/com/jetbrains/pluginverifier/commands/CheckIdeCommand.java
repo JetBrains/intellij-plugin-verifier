@@ -18,8 +18,6 @@ import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
 import com.jetbrains.pluginverifier.verifiers.PluginVerifierOptions;
-import com.jetbrains.pluginverifier.verifiers.VerificationContextImpl;
-import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
 import org.jdom2.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -297,25 +295,23 @@ public class CheckIdeCommand extends VerifierCommand {
 
         System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), myUpdatesToCheck.size()));
 
-        VerificationContextImpl ctx = new VerificationContextImpl(plugin, myIde, myJdk, myExternalClassPath, myVerifierOptions);
-        Verifiers.processAllVerifiers(ctx);
+        ProblemSet problemSet = Verification.verifyPlugin(plugin, myIde, myJdk, myExternalClassPath, myVerifierOptions);
 
-        myResults.put(updateJson, ctx.getProblemSet());
+        myResults.put(updateJson, problemSet);
 
-        if (ctx.getProblemSet().isEmpty()) {
+        if (problemSet.isEmpty()) {
           System.out.println("plugin " + updateJson + " is OK");
           myTc.message(updateJson + " is OK");
         } else {
-          int count = ctx.getProblemSet().count();
-          System.out.println("has " + count + " problems");
+          System.out.println("has " + problemSet.count() + " problems");
 
           if (myExcludedUpdatesFilter.apply(updateJson)) {
-            myTc.messageError(updateJson + " has " + count + " problems");
+            myTc.messageError(updateJson + " has " + problemSet.count() + " problems");
           } else {
             myTc.message(updateJson + " has problems, but is excluded in brokenPlugins.json");
           }
 
-          ctx.getProblemSet().printProblems(System.out, "    ");
+          problemSet.printProblems(System.out, "    ");
         }
 
 
