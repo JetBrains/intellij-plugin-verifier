@@ -55,7 +55,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
       for (MethodNode method : (List<MethodNode>) curNode.methods) {
 
         if (allMethods.add(new MethodSign(method))) {
-          if (VerifierUtil.isAbstract(method)) { //if method is abstract => it is neither static nor private
+          if (VerifierUtil.isAbstract(method) && !VerifierUtil.isStatic(method) && !VerifierUtil.isPrivate(method)) {
             //undefined abstract => problem
             ctx.registerProblem(new MethodNotImplementedProblem(LocationUtils.getMethodLocation(curNode, method)), ProblemLocation.fromClass(clazz.name));
 
@@ -70,7 +70,6 @@ public class AbstractMethodVerifier implements ClassVerifier {
 
       curNode = VerifierUtil.findClass(resolver, curNode.superName, ctx);
       if (curNode == null) {
-        //TODO: don't return silently
         return;
       }
     }
