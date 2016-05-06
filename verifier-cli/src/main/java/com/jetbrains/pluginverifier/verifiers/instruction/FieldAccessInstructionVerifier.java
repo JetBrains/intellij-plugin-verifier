@@ -86,13 +86,18 @@ public class FieldAccessInstructionVerifier implements InstructionVerifier {
 
     if (VerifierUtil.isFinal(location.getFieldNode())) {
       if (opcode == Opcodes.PUTFIELD) {
+        /*
+        TODO: this check is according to the JVM 8 spec, but Kotlin and others violate it (Java 8 doesn't complain too)
         if (!(StringUtil.equals(location.getClassNode().name, verifiedClass.name) && "<init>".equals(verifierMethod.name))) {
+       */
+        if (!(StringUtil.equals(location.getClassNode().name, verifiedClass.name))) {
           ctx.registerProblem(new ChangeFinalFieldProblem(field), ProblemLocation.fromMethod(verifiedClass.name, verifierMethod));
         }
       }
 
       if (opcode == Opcodes.PUTSTATIC) {
-        if (!(StringUtil.equals(location.getClassNode().name, verifiedClass.name) && "<clinit>".equals(verifierMethod.name))) {
+//        if (!(StringUtil.equals(location.getClassNode().name, verifiedClass.name) && "<clinit>".equals(verifierMethod.name))) {
+        if (!(StringUtil.equals(location.getClassNode().name, verifiedClass.name))) {
           ctx.registerProblem(new ChangeFinalFieldProblem(field), ProblemLocation.fromMethod(verifiedClass.name, verifierMethod));
         }
       }
