@@ -35,7 +35,8 @@ public class Verifiers {
       new TypeInstructionVerifier(),
       new LdcInstructionVerifier(),
       new MultiANewArrayInstructionVerifier(),
-      new FieldAccessInstructionVerifier()
+      new FieldAccessInstructionVerifier(),
+      new InvokeDynamicVerifier()
   };
 
   public static ClassVerifier[] getClassVerifiers() {

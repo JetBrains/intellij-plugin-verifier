@@ -22,8 +22,18 @@ public class LocationUtils {
   }
 
   @NotNull
+  public static String getMethodLocation(@NotNull ClassNode owner, @NotNull String methodName, @NotNull String methodDesc) {
+    return getMethodLocation(owner.name, methodName, methodDesc);
+  }
+
+  @NotNull
   public static String getMethodLocation(@NotNull String ownerClassName, @NotNull MethodNode methodNode) {
     return getMethodLocation(ownerClassName, methodNode.name, methodNode.desc);
+  }
+
+  @NotNull
+  public static String getFieldLocation(@NotNull ClassNode owner, @NotNull String fieldName, @NotNull String fieldDescriptor) {
+    return getFieldLocation(owner.name, fieldName, fieldDescriptor);
   }
 
   @NotNull

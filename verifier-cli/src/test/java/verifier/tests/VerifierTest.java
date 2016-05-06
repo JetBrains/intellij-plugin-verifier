@@ -62,9 +62,12 @@ public class VerifierTest {
 
           .put(new MethodNotFoundProblem("com/intellij/openapi/actionSystem/AnAction#nonExistingMethod()V"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenNonFoundMethod()V"))
 
-          .put(new AbstractClassInstantiationProblem("misc/BecomeAbstract"), ProblemLocation.fromMethod("mock.plugin.news.NewProblems", "abstractClass()V"))
-          .put(new InterfaceInstantiationProblem("misc/BecomeInterface"), ProblemLocation.fromMethod("mock.plugin.news.NewProblems", "newInterface()V"))
+          .put(new AbstractClassInstantiationProblem("misc/BecomeAbstract"), ProblemLocation.fromMethod("mock/plugin/news/NewProblems", "abstractClass()V"))
+          .put(new InterfaceInstantiationProblem("misc/BecomeInterface"), ProblemLocation.fromMethod("mock/plugin/news/NewProblems", "newInterface()V"))
+          .put(new MethodNotFoundProblem("misc/BecomeInterface#<init>()V"), ProblemLocation.fromMethod("mock/plugin/news/NewProblems", "newInterface()V"))
 
+          //lambda problems
+          .put(new MethodNotFoundProblem("invocation/InvocationProblems#deleted()V"), ProblemLocation.fromMethod("mock/plugin/lambda/LambdaProblems", "invokeDeletedFromLambda()V"))
 
           .put(new MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent#getState()Ljava/lang/Object;"), ProblemLocation.fromClass("mock/plugin/NotImplementedProblem"))
           .put(new MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent#loadState(Ljava/lang/Object;)V"), ProblemLocation.fromClass("mock/plugin/NotImplementedProblem"))
@@ -118,7 +121,15 @@ public class VerifierTest {
       Problem problem = entry.getKey();
       ProblemLocation location = entry.getValue();
       Assert.assertTrue("problem " + problem + " should be found, but it isn't", foundProblems.containsKey(problem));
-      Assert.assertTrue("problem " + problem + " should be found in the following location " + location + " but it is found in " + foundProblems.get(problem), foundProblems.get(problem).contains(location));
+      try {
+        boolean contains = foundProblems.get(problem).contains(location);
+        if (!contains) {
+          System.out.println("ax");
+        }
+        Assert.assertTrue("problem " + problem + " should be found in the following location " + location + " but it is found in " + foundProblems.get(problem), contains);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
       redundantProblems.remove(problem, location);
     }
 
