@@ -66,6 +66,7 @@ public class PluginResolver extends Resolver {
 
   @Override
   public void close() {
+    myResolver.close();
     if (myDeleteOnClose) {
       FileUtils.deleteQuietly(myPluginFile);
     }

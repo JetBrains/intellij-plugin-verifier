@@ -90,4 +90,11 @@ public class ContainerResolver extends Resolver {
     }
     return null;
   }
+
+  @Override
+  public void close() {
+    for (Resolver resolver : myResolvers) {
+      resolver.close();
+    }
+  }
 }
