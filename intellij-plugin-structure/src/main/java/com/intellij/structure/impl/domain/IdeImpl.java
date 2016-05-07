@@ -5,33 +5,30 @@ import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.utils.StringUtil;
-import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 class IdeImpl implements Ide {
-  private final Resolver myResolver;
   private final List<Plugin> myBundledPlugins;
   private final List<Plugin> myCustomPlugins;
 
   private final IdeVersion myVersion;
+  private final File myIdePath;
 
-  IdeImpl(@NotNull IdeVersion version,
-          @NotNull Resolver resolver,
+  IdeImpl(@NotNull File idePath,
+          @NotNull IdeVersion version,
           @NotNull List<Plugin> bundledPlugins) throws IOException, IncorrectPluginException {
-    myVersion = version;
-    myResolver = resolver;
-    myBundledPlugins = bundledPlugins;
-    myCustomPlugins = new ArrayList<Plugin>();
+    this(idePath, bundledPlugins, Collections.<Plugin>emptyList(), version);
   }
 
-  private IdeImpl(@NotNull Resolver resolver, @NotNull List<Plugin> bundledPlugins, @NotNull List<Plugin> customPlugins, @NotNull IdeVersion version) {
-    myResolver = resolver;
+  private IdeImpl(@NotNull File idePath, @NotNull List<Plugin> bundledPlugins, @NotNull List<Plugin> customPlugins, @NotNull IdeVersion version) {
+    myIdePath = idePath;
     myBundledPlugins = bundledPlugins;
     myCustomPlugins = customPlugins;
     myVersion = version;
@@ -48,7 +45,7 @@ class IdeImpl implements Ide {
   public Ide getExpandedIde(@NotNull Plugin plugin) {
     List<Plugin> newCustoms = new ArrayList<Plugin>(myCustomPlugins);
     newCustoms.add(plugin);
-    return new IdeImpl(myResolver, myBundledPlugins, newCustoms, myVersion);
+    return new IdeImpl(myIdePath, myBundledPlugins, newCustoms, myVersion);
   }
 
   @Override
@@ -80,13 +77,6 @@ class IdeImpl implements Ide {
     return null;
   }
 
-
-  @NotNull
-  @Override
-  public Resolver getResolver() {
-    return myResolver;
-  }
-
   @Override
   @Nullable
   public Plugin getPluginByModule(@NotNull String moduleId) {
@@ -101,5 +91,11 @@ class IdeImpl implements Ide {
       }
     }
     return null;
+  }
+
+  @NotNull
+  @Override
+  public File getIdePath() {
+    return myIdePath;
   }
 }

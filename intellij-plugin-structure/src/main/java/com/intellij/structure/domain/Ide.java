@@ -1,6 +1,5 @@
 package com.intellij.structure.domain;
 
-import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,11 +67,11 @@ public interface Ide {
   Plugin getPluginByModule(@NotNull String moduleId);
 
   /**
-   * Returns a class-files resolver for the {@code this} IDE. It consists of the .jar files under the {ide.home}/lib
-   * directory (not including the subdirectories of the ../lib itself)
+   * Returns the file from which {@code this} Ide obtained.
    *
-   * @return an Ide classes resolver
+   * @return the path to the Ide instance
    */
   @NotNull
-  Resolver getResolver();
+  File getIdePath();
+
 }

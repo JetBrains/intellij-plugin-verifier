@@ -43,7 +43,7 @@ class PluginImpl implements Plugin {
   private final Map<String, Plugin> myOptionalDescriptors = new HashMap<String, Plugin>();
   private final Set<String> myReferencedClasses = new HashSet<String>();
   private final Multimap<String, Element> myExtensions = ArrayListMultimap.create();
-  private File myFile;
+  private File myPluginFile;
   @NotNull private Document myUnderlyingDocument = EMPTY_DOCUMENT;
   @NotNull private String myFileName = "(unknown)";
   @Nullable private byte[] myLogoContent;
@@ -60,7 +60,8 @@ class PluginImpl implements Plugin {
   @Nullable private IdeVersion mySinceBuild;
   @Nullable private IdeVersion myUntilBuild;
 
-  PluginImpl() throws IncorrectPluginException {
+  PluginImpl(@NotNull File pluginFile) throws IncorrectPluginException {
+    myPluginFile = pluginFile;
   }
 
   private static String extractEPName(final Element extensionElement) {
@@ -456,11 +457,7 @@ class PluginImpl implements Plugin {
   @NotNull
   @Override
   public File getPluginFile() {
-    return myFile;
-  }
-
-  void setFile(@NotNull File file) {
-    myFile = file;
+    return myPluginFile;
   }
 
   void readExternalFromIdeSources(@NotNull URL url, @NotNull Validator validator, @NotNull JDOMXIncluder.PathResolver pathResolver) throws IncorrectPluginException {

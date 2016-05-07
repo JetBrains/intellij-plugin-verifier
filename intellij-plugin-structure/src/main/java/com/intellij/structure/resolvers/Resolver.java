@@ -1,6 +1,7 @@
 package com.intellij.structure.resolvers;
 
 
+import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.resolvers.*;
@@ -15,17 +16,18 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Provides an access to the byte-code of a class by its name via the {@link #findClass(String)}.
+ * <p>Provides an access to the byte-code of a class by its name via the {@link #findClass(String)}.
  * Note that the way of constructing the {@code Resolver} affects the searching order
- * (it is similar to the Java <i>class-path</i> option).
+ * (it is similar to the Java <i>class-path</i> option)
+ * <p>Note: the class is {@code Closeable} thus the {@code Resolver} requires to be closed when is no longer needed.
+ * Some resolvers may extract the classes in the temporary directory for performance reasons, so {@link #close()} will clean
+ * used disk space.</p>
  */
 public abstract class Resolver implements Closeable {
 
   /**
    * Creates a resolver for the given plugin.
    * <p>It consists of all the plugin classes and .jar libraries.</p>
-   * <p>Note: the resolver may firstly extract the plugin in temporary directory for performance reasons.
-   * So it's necessary to invoke {@link Resolver#close()} after Resolver is no longer needed. It will clean the disk space.</p>
    *
    * @param plugin plugin for which resolver should be created
    * @return resolver for the specified plugin
@@ -35,6 +37,31 @@ public abstract class Resolver implements Closeable {
   @NotNull
   public static Resolver createPluginResolver(@NotNull Plugin plugin) throws IncorrectPluginException, IOException {
     return PluginResolver.createPluginResolver(plugin);
+  }
+
+  /**
+   * Creates a resolver for the given Ide.
+   * <p>It consists of the .jar files under the <i>{ide.home}/lib</i> directory (not including the subdirectories of <i>lib</i> itself)</p>
+   *
+   * @throws IOException if error occurs during attempt to read a class file or an Ide has an incorrect directories structure
+   * @return resolver of classes for the given Ide
+   */
+  @NotNull
+  public static Resolver createIdeResolver(@NotNull Ide ide) throws IOException {
+    return IdeResolverCreator.createIdeResolver(ide);
+  }
+
+  /**
+   * Creates a resolver for the given JDK instance.
+   * <p>It consists of the jars which are required to run a Java program (<i>rt.jar</i> and others) </p>
+   *
+   * @param jdkPath path to the JDK or JRE containing directory (on Linux it might be <i>/usr/lib/jvm/java-8-oracle</i>)
+   * @return resolver of the JDK classes
+   * @throws IOException if IO error occurs during attempt to read a class-file
+   */
+  @NotNull
+  public static Resolver createJdkResolver(@NotNull File jdkPath) throws IOException {
+    return JdkResolverCreator.createJdkResolver(jdkPath);
   }
 
   /**
@@ -113,7 +140,6 @@ public abstract class Resolver implements Closeable {
    */
   @NotNull
   public abstract Set<String> getAllClasses();
-
 
   /**
    * Checks whether this resolver contains any class. Classes can be obtained through {@link #getAllClasses()}.

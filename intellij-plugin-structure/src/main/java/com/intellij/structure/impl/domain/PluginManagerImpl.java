@@ -124,7 +124,7 @@ public class PluginManagerImpl extends PluginManager {
           try {
             URL url = new URL(xmlPair.getFirst());
             Document document = xmlPair.getSecond();
-            PluginImpl optDescriptor = new PluginImpl();
+            PluginImpl optDescriptor = new PluginImpl(file);
             optDescriptor.readExternal(document, url, parentValidator.ignoreMissingConfigElement());
             descriptors.put(optFilePath, optDescriptor);
           } catch (MalformedURLException e) {
@@ -155,6 +155,7 @@ public class PluginManagerImpl extends PluginManager {
   /**
    * Checks than the given {@code entry} corresponds to the sought-for file specified with {@code filePath}.
    *
+   * @param pluginFile root plugin file
    * @param entry               current entry in the overlying traversing of zip file
    * @param filePath            sought-for file, path is relative to META-INF/ directory
    * @param rootUrl             url corresponding to the root of the zip file from which this {@code entry} come
@@ -164,7 +165,8 @@ public class PluginManagerImpl extends PluginManager {
    * @throws IncorrectPluginException if incorrect plugin structure
    */
   @Nullable
-  private Plugin loadDescriptorFromEntry(@NotNull ZipEntry entry,
+  private Plugin loadDescriptorFromEntry(@NotNull File pluginFile,
+                                         @NotNull ZipEntry entry,
                                          @NotNull String filePath,
                                          @NotNull String rootUrl,
                                          @NotNull Validator validator,
@@ -190,7 +192,7 @@ public class PluginManagerImpl extends PluginManager {
       }
 
       if (StringUtil.equal(name, filePath)) {
-        PluginImpl descriptor = new PluginImpl();
+        PluginImpl descriptor = new PluginImpl(pluginFile);
         descriptor.readExternal(document, url, validator);
         return descriptor;
       } else {
@@ -218,7 +220,7 @@ public class PluginManagerImpl extends PluginManager {
           String xmlUrl = rootUrl + entry.getName();
           URL url = new URL(xmlUrl);
 
-          PluginImpl descriptor = new PluginImpl();
+          PluginImpl descriptor = new PluginImpl(pluginFile);
           descriptor.readExternal(document, url, validator);
           return descriptor;
         } catch (RuntimeException e) {
@@ -233,7 +235,8 @@ public class PluginManagerImpl extends PluginManager {
   }
 
   @Nullable
-  private Plugin loadFromZipStream(@NotNull final ZipInputStream zipStream,
+  private Plugin loadFromZipStream(@NotNull File file,
+                                   @NotNull final ZipInputStream zipStream,
                                    @NotNull String zipRootUrl,
                                    @NotNull String filePath,
                                    @NotNull Validator validator) throws IncorrectPluginException {
@@ -246,7 +249,7 @@ public class PluginManagerImpl extends PluginManager {
           continue;
         }
 
-        Plugin inRoot = loadDescriptorFromEntry(entry, filePath, zipRootUrl, validator, new Supplier<InputStream>() {
+        Plugin inRoot = loadDescriptorFromEntry(file, entry, filePath, zipRootUrl, validator, new Supplier<InputStream>() {
           @Override
           public InputStream get() {
             return zipStream;
@@ -291,7 +294,7 @@ public class PluginManagerImpl extends PluginManager {
         }
 
         final ZipFile finalZipFile = zipFile;
-        Plugin inRoot = loadDescriptorFromEntry(entry, filePath, zipRootUrl, validator.ignoreMissingFile(), new Supplier<InputStream>() {
+        Plugin inRoot = loadDescriptorFromEntry(file, entry, filePath, zipRootUrl, validator.ignoreMissingFile(), new Supplier<InputStream>() {
           @Override
           public InputStream get() {
             try {
@@ -314,7 +317,7 @@ public class PluginManagerImpl extends PluginManager {
 
         if (LIB_JAR_REGEX.matcher(entry.getName()).matches()) {
           ZipInputStream inner = new ZipInputStream(zipFile.getInputStream(entry));
-          Plugin innerDescriptor = loadFromZipStream(inner, "jar:" + zipRootUrl + entry.getName() + "!/", filePath, validator.ignoreMissingFile());
+          Plugin innerDescriptor = loadFromZipStream(file, inner, "jar:" + zipRootUrl + entry.getName() + "!/", filePath, validator.ignoreMissingFile());
           if (innerDescriptor != null) {
             descriptorInner = innerDescriptor;
           }
@@ -371,7 +374,7 @@ public class PluginManagerImpl extends PluginManager {
         }
       }
 
-      PluginImpl descriptor = new PluginImpl();
+      PluginImpl descriptor = new PluginImpl(dir);
       try {
         descriptor.readExternal(descriptorFile.toURI().toURL(), validator);
       } catch (MalformedURLException e) {
@@ -445,7 +448,6 @@ public class PluginManagerImpl extends PluginManager {
 
     PluginImpl descriptor = (PluginImpl) loadDescriptor(pluginFile, PLUGIN_XML, validator);
     if (descriptor != null) {
-      descriptor.setFile(pluginFile);
       return descriptor;
     }
     //assert that PluginXmlValidator has thrown an appropriate exception

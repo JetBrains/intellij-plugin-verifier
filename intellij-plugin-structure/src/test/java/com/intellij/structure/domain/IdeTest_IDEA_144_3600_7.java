@@ -6,11 +6,11 @@ import org.codehaus.plexus.archiver.zip.ZipUnArchiver;
 import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.logging.console.ConsoleLogger;
 import org.jetbrains.annotations.NotNull;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -24,10 +24,11 @@ public class IdeTest_IDEA_144_3600_7 {
 
   private static final String IDEA_IU_144_3600_7_ZIP = "ideaIU-144.3600.7.zip";
   private static Ide ide;
-  private static Jdk runtime;
+  private static Resolver runtime;
 
-  public static void main(String[] args) throws IOException {
-    Ide ide = IdeManager.getInstance().createIde(new File("/home/user/Documents/ultimate"));
+  @After
+  public void tearDown() throws Exception {
+    runtime.close();
   }
 
   @Before
@@ -52,7 +53,7 @@ public class IdeTest_IDEA_144_3600_7 {
     String jdkPath = getJdkPath();
 
 
-    runtime = Jdk.createJdk(new File(jdkPath));
+    runtime = Resolver.createJdkResolver(new File(jdkPath));
     ide = IdeManager.getInstance().createIde(ideDir);
   }
 
@@ -67,8 +68,7 @@ public class IdeTest_IDEA_144_3600_7 {
 
   @Test
   public void testRuntime() throws Exception {
-    Resolver resolver = runtime.getResolver();
-    assertTrue(!resolver.getAllClasses().isEmpty());
+    assertTrue(!runtime.getAllClasses().isEmpty());
   }
 
   @Test
@@ -120,8 +120,9 @@ public class IdeTest_IDEA_144_3600_7 {
 
   @Test
   public void getResolver() throws Exception {
-    Resolver resolver = ide.getResolver();
+    Resolver resolver = Resolver.createIdeResolver(ide);
     Set<String> allClasses = resolver.getAllClasses();
+    resolver.close();
 
     assertEquals(83872, allClasses.size());
 

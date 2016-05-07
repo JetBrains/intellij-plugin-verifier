@@ -1,19 +1,14 @@
 package com.intellij.structure.impl.domain;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.io.Files;
 import com.intellij.structure.domain.*;
 import com.intellij.structure.errors.IncorrectPluginException;
-import com.intellij.structure.impl.resolvers.CompileOutputResolver;
-import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.validators.PluginXmlValidator;
 import com.intellij.structure.impl.utils.validators.Validator;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.impl.utils.xml.XIncludeException;
-import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -35,7 +30,6 @@ import java.util.regex.Pattern;
 public class IdeManagerImpl extends IdeManager {
 
   private static final Pattern BUILD_NUMBER_PATTERN = Pattern.compile("([^\\.]+\\.\\d+)\\.\\d+");
-  private static final String[] HARD_CODED_LIB_FOLDERS = new String[]{"community/android/android/lib"};
 
   @NotNull
   private static IdeVersion readBuildNumber(@NotNull File versionFile) throws IOException {
@@ -51,68 +45,18 @@ public class IdeManagerImpl extends IdeManager {
     return IdeVersion.createIdeVersion(buildNumberString);
   }
 
-  @NotNull
-  private static Resolver getIdeaResolverFromLibraries(File ideaDir) throws IOException {
-    final File lib = new File(ideaDir, "lib");
-    if (!lib.isDirectory()) {
-      throw new IOException("Directory \"lib\" is not found (should be found at " + lib + ")");
-    }
-
-    final Collection<File> jars = JarsUtils.collectJars(lib, new Predicate<File>() {
-      @Override
-      public boolean apply(File file) {
-        return !file.getName().endsWith("javac2.jar");
-      }
-    }, false);
-
-    return JarsUtils.makeResolver("Idea `lib` dir: " + lib.getCanonicalPath(), jars);
+  public static boolean isUltimate(File ideaDir) {
+    return new File(ideaDir, "community/.idea").isDirectory();
   }
 
   @NotNull
-  private static Resolver getIdeaResolverFromSources(File ideaDir) throws IOException {
-    List<Resolver> pools = new ArrayList<Resolver>();
-
-    pools.add(getIdeaResolverFromLibraries(ideaDir));
-
-    if (isUltimate(ideaDir)) {
-      pools.add(new CompileOutputResolver(getUltimateClassesRoot(ideaDir)));
-      pools.add(getIdeaResolverFromLibraries(new File(ideaDir, "community")));
-      pools.add(hardCodedUltimateLibraries(ideaDir));
-    } else {
-      pools.add(new CompileOutputResolver(getCommunityClassesRoot(ideaDir)));
-    }
-
-    return Resolver.createUnionResolver("Idea dir: " + ideaDir.getCanonicalPath(), pools);
-  }
-
-  @NotNull
-  private static Resolver hardCodedUltimateLibraries(File ideaDir) {
-    for (String libFolder : HARD_CODED_LIB_FOLDERS) {
-      File libDir = new File(ideaDir, libFolder);
-      if (libDir.isDirectory()) {
-        try {
-          return JarsUtils.makeResolver(libDir.getName() + " `lib` dir", JarsUtils.collectJars(libDir, Predicates.<File>alwaysTrue(), false));
-        } catch (IOException e) {
-          System.err.println("Unable to read libraries from " + libDir);
-          e.printStackTrace();
-        }
-      }
-    }
-    return Resolver.getEmptyResolver();
-  }
-
-  @NotNull
-  private static File getCommunityClassesRoot(File ideaDir) {
-    return new File(ideaDir, "out/production");
-  }
-
-  @NotNull
-  private static File getUltimateClassesRoot(File ideaDir) {
+  public static File getUltimateClassesRoot(File ideaDir) {
     return new File(ideaDir, "out/classes/production");
   }
 
-  private static boolean isUltimate(File ideaDir) {
-    return new File(ideaDir, "community/.idea").isDirectory();
+  @NotNull
+  public static File getCommunityClassesRoot(File ideaDir) {
+    return new File(ideaDir, "out/production");
   }
 
   @NotNull
@@ -123,6 +67,16 @@ public class IdeManagerImpl extends IdeManager {
       return getDummyPlugins(getCommunityClassesRoot(ideaDir));
     }
   }
+
+  /**
+   * Creates plugin descriptors from the found plugin.xml files.
+   * We don't know exactly which classes correspond to which descriptors
+   * so these classes are all in one Resolver.
+   * <p>See {@link com.intellij.structure.impl.resolvers.IdeResolverCreator#getIdeaResolverFromSources(File)}</p>
+   *
+   * @param root idea root directory
+   * @return dummy (no classes) plugins
+   */
 
   @NotNull
   private static List<Plugin> getDummyPlugins(@NotNull File root) {
@@ -146,7 +100,15 @@ public class IdeManagerImpl extends IdeManager {
     for (File file : files) {
       if (file.getName().equals("plugin.xml")) {
         try {
-          PluginImpl plugin = new PluginImpl();
+          File dummyRoot = file.getParentFile();
+          if (dummyRoot != null) {
+            dummyRoot = dummyRoot.getParentFile();
+          }
+          if (dummyRoot == null) {
+            dummyRoot = file;
+          }
+
+          PluginImpl plugin = new PluginImpl(dummyRoot);
           URL xmlUrl = file.toURI().toURL();
           plugin.readExternalFromIdeSources(xmlUrl, dummyValidator, pathResolver);
           result.add(plugin);
@@ -159,7 +121,7 @@ public class IdeManagerImpl extends IdeManager {
     return result;
   }
 
-  private static boolean isSourceDir(File dir) {
+  public static boolean isSourceDir(File dir) {
     return new File(dir, "build").isDirectory()
         && new File(dir, "out").isDirectory()
         && new File(dir, ".git").isDirectory();
@@ -202,11 +164,9 @@ public class IdeManagerImpl extends IdeManager {
   @NotNull
   @Override
   public Ide createIde(@NotNull File idePath, @Nullable IdeVersion version) throws IOException {
-    Resolver resolver;
     List<Plugin> bundled = new ArrayList<Plugin>();
 
     if (isSourceDir(idePath)) {
-      resolver = getIdeaResolverFromSources(idePath);
       bundled.addAll(getDummyPluginsFromSources(idePath));
       if (version == null) {
         File versionFile = new File(idePath, "build.txt");
@@ -221,14 +181,13 @@ public class IdeManagerImpl extends IdeManager {
         }
       }
     } else {
-      resolver = getIdeaResolverFromLibraries(idePath);
       bundled.addAll(getIdeaPlugins(idePath));
       if (version == null) {
         version = readBuildNumber(new File(idePath, "build.txt"));
       }
     }
 
-    return new IdeImpl(version, resolver, bundled);
+    return new IdeImpl(idePath, version, bundled);
   }
 
   private static class PluginFromSourcePathResolver extends JDOMXIncluder.DefaultPathResolver {
