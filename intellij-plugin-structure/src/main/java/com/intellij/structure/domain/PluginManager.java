@@ -19,15 +19,10 @@ public abstract class PluginManager {
 
   @NotNull
   final public Plugin createPlugin(@NotNull File pluginFile) throws IOException, IncorrectPluginException {
-    return createPlugin(pluginFile, true, true);
+    return createPlugin(pluginFile, true);
   }
 
   @NotNull
-  final public Plugin createPluginWithEmptyResolver(@NotNull File pluginFile) throws IOException, IncorrectPluginException {
-    return createPlugin(pluginFile, true, false);
-  }
-
-  @NotNull
-  public abstract Plugin createPlugin(@NotNull File pluginFile, boolean validatePluginXml, boolean loadClasses) throws IOException, IncorrectPluginException;
+  public abstract Plugin createPlugin(@NotNull File pluginFile, boolean validatePluginXml) throws IOException, IncorrectPluginException;
 
 }

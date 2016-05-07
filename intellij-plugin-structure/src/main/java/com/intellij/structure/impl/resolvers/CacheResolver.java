@@ -56,4 +56,9 @@ public class CacheResolver extends Resolver {
   public boolean isEmpty() {
     return myDelegate.isEmpty();
   }
+
+  @Override
+  public void close() {
+    myDelegate.close();
+  }
 }

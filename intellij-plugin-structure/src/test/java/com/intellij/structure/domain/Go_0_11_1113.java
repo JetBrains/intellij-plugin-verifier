@@ -1,5 +1,6 @@
 package com.intellij.structure.domain;
 
+import com.intellij.structure.resolvers.Resolver;
 import com.intellij.structure.utils.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,17 +32,20 @@ public class Go_0_11_1113 {
 
   @Test
   public void testClassesFound() throws Exception {
-    Collection<String> allClasses = plugin.getPluginResolver().getAllClasses();
+    Resolver resolver = Resolver.createPluginResolver(plugin);
+    Collection<String> allClasses = resolver.getAllClasses();
     assertEquals(allClasses.size(), new HashSet<String>(allClasses).size()); //no duplicates?
     assertEquals(1004, allClasses.size());
 
     Set<String> foundNames = new HashSet<String>();
 
     for (String name : allClasses) {
-      ClassNode node = plugin.getPluginResolver().findClass(name);
+      ClassNode node = resolver.findClass(name);
       assertNotNull(node);
       foundNames.add(node.name);
     }
+
+    resolver.close();
 
     Set<String> needNames = new HashSet<String>(Arrays.asList("com/goide/runconfig/testing/coverage/GoCoverageRunner$1$1", "com/goide/psi/impl/GoRangeClauseImpl"));
 

@@ -5,6 +5,7 @@ import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.impl.domain.PluginDependencyImpl;
+import com.intellij.structure.resolvers.Resolver;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +48,7 @@ public class TestMockPlugins {
     assertEquals("Kotlin", plugin.getPluginName());
     assertEquals("1.0.0-beta-1038-IJ141-17", plugin.getPluginVersion());
 
+    assertEquals("http://icons.com/icon.png", plugin.getVendorLogoUrl());
     assertEquals("vendor_email", plugin.getVendorEmail());
     assertEquals("http://www.jetbrains.com", plugin.getVendorUrl());
     assertEquals("JetBrains s.r.o.", plugin.getVendor());
@@ -61,33 +63,22 @@ public class TestMockPlugins {
   @Test
   public void testMock3() throws Exception {
     //also read classes
-    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3.jar")), true);
-    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3jarAsZip.zip")), true);
-    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3-dir")), true);
-    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3-lib.zip")), true);
-    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3-classes")), true);
-    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3-classes-zip.zip")), true);
-
-    //without reading classes
-    testMock3(PluginManager.getInstance().createPluginWithEmptyResolver(getMockPlugin("mock-plugin3.jar")), false);
-    testMock3(PluginManager.getInstance().createPluginWithEmptyResolver(getMockPlugin("mock-plugin3jarAsZip.zip")), false);
-    testMock3(PluginManager.getInstance().createPluginWithEmptyResolver(getMockPlugin("mock-plugin3-dir")), false);
-    testMock3(PluginManager.getInstance().createPluginWithEmptyResolver(getMockPlugin("mock-plugin3-lib.zip")), false);
-    testMock3(PluginManager.getInstance().createPluginWithEmptyResolver(getMockPlugin("mock-plugin3-classes")), false);
-    testMock3(PluginManager.getInstance().createPluginWithEmptyResolver(getMockPlugin("mock-plugin3-classes-zip.zip")), false);
+    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3.jar")));
+    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3jarAsZip.zip")));
+    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3-dir")));
+    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3-lib.zip")));
+    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3-classes")));
+    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3-classes-zip.zip")));
   }
 
-  private void testMock3(Plugin plugin, boolean checkClasses) {
+  private void testMock3(Plugin plugin) {
+    testMock3Classes(plugin);
     testMock3Configs(plugin);
     testMock3ClassesFromXml(plugin);
     testMock3ExtensionPoints(plugin);
     testMock3DependenciesAndModules(plugin);
     testMock3OptDescriptors(plugin);
     testMock3UnderlyingDocument(plugin);
-
-    if (checkClasses) {
-      testMock3Classes(plugin);
-    }
   }
 
   private void testMock3UnderlyingDocument(Plugin plugin) {
@@ -135,7 +126,14 @@ public class TestMockPlugins {
   }
 
   private void testMock3Classes(Plugin plugin) {
-    Set<String> allClasses = plugin.getPluginResolver().getAllClasses();
+    Resolver resolver;
+    try {
+      resolver = Resolver.createPluginResolver(plugin);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    Set<String> allClasses = resolver.getAllClasses();
+    resolver.close();
     assertEquals(4, allClasses.size());
     assertContains(allClasses, "packagename/InFileClassOne", "packagename/ClassOne$ClassOneInnerStatic", "packagename/ClassOne$ClassOneInner", "packagename/InFileClassOne");
   }

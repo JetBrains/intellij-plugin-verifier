@@ -115,7 +115,7 @@ public class PluginTest_PHP {
 
   @Test
   public void getPluginResolver() throws Exception {
-    Resolver pluginResolver = plugin.getPluginResolver();
+    Resolver pluginResolver = Resolver.createCacheResolver(Resolver.createPluginResolver(plugin));
     Collection<String> allClasses = pluginResolver.getAllClasses();
 
     assertTrue(allClasses.contains("com/intellij/structuralsearch/PhpStructuralSearchProfile"));

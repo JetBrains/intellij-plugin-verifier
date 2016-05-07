@@ -14,7 +14,6 @@ import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.impl.utils.xml.XIncludeException;
-import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.*;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 
+import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
@@ -43,8 +43,8 @@ class PluginImpl implements Plugin {
   private final Map<String, Plugin> myOptionalDescriptors = new HashMap<String, Plugin>();
   private final Set<String> myReferencedClasses = new HashSet<String>();
   private final Multimap<String, Element> myExtensions = ArrayListMultimap.create();
+  private File myFile;
   @NotNull private Document myUnderlyingDocument = EMPTY_DOCUMENT;
-  @NotNull private Resolver myPluginResolver = Resolver.getEmptyResolver();
   @NotNull private String myFileName = "(unknown)";
   @Nullable private byte[] myLogoContent;
   @Nullable private String myLogoUrl;
@@ -381,12 +381,6 @@ class PluginImpl implements Plugin {
     }
   }
 
-  @Override
-  @NotNull
-  public Resolver getPluginResolver() {
-    return myPluginResolver;
-  }
-
   @Nullable
   @Override
   public String getDescription() {
@@ -459,6 +453,16 @@ class PluginImpl implements Plugin {
     return myUnderlyingDocument.clone();
   }
 
+  @NotNull
+  @Override
+  public File getPluginFile() {
+    return myFile;
+  }
+
+  void setFile(@NotNull File file) {
+    myFile = file;
+  }
+
   void readExternalFromIdeSources(@NotNull URL url, @NotNull Validator validator, @NotNull JDOMXIncluder.PathResolver pathResolver) throws IncorrectPluginException {
     Document document;
     try {
@@ -501,10 +505,6 @@ class PluginImpl implements Plugin {
 
   private void mergeOptionalConfig(@NotNull PluginImpl optDescriptor) {
     myExtensions.putAll(optDescriptor.getExtensions());
-  }
-
-  void setResolver(@NotNull Resolver resolver) {
-    myPluginResolver = resolver;
   }
 
   @Override

@@ -93,4 +93,12 @@ public class JarFileResolver extends Resolver {
     }
     return null;
   }
+
+  @Override
+  public void close() {
+    try {
+      myJarFile.close();
+    } catch (IOException ignored) {
+    }
+  }
 }

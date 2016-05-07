@@ -1,14 +1,14 @@
 package com.intellij.structure.resolvers;
 
 
-import com.intellij.structure.impl.resolvers.CacheResolver;
-import com.intellij.structure.impl.resolvers.ContainerResolver;
-import com.intellij.structure.impl.resolvers.EmptyResolver;
-import com.intellij.structure.impl.resolvers.JarFileResolver;
+import com.intellij.structure.domain.Plugin;
+import com.intellij.structure.errors.IncorrectPluginException;
+import com.intellij.structure.impl.resolvers.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -17,9 +17,25 @@ import java.util.Set;
 /**
  * Provides an access to the byte-code of a class by its name via the {@link #findClass(String)}.
  * Note that the way of constructing the {@code Resolver} affects the searching order
- * (it is similar to the Java <i>class-path</i> setting).
+ * (it is similar to the Java <i>class-path</i> option).
  */
-public abstract class Resolver {
+public abstract class Resolver implements Closeable {
+
+  /**
+   * Creates a resolver for the given plugin.
+   * <p>It consists of all the plugin classes and .jar libraries.</p>
+   * <p>Note: the resolver may firstly extract the plugin in temporary directory for performance reasons.
+   * So it's necessary to invoke {@link Resolver#close()} after Resolver is no longer needed. It will clean the disk space.</p>
+   *
+   * @param plugin plugin for which resolver should be created
+   * @return resolver for the specified plugin
+   * @throws IOException if disk error occurs during attempt to read a class-file or to extract a plugin
+   * @throws IncorrectPluginException if the plugin has broken class-files or it has an incorrect directories structure
+   */
+  @NotNull
+  public static Resolver createPluginResolver(@NotNull Plugin plugin) throws IncorrectPluginException, IOException {
+    return PluginResolver.createPluginResolver(plugin);
+  }
 
   /**
    * Creates a resolver which combines the specified list of resolvers similar to the <i>Java class-path</i> setting.
@@ -105,4 +121,9 @@ public abstract class Resolver {
    * @return true if this resolver is not empty, false otherwise
    */
   public abstract boolean isEmpty();
+
+  @Override
+  public void close() {
+    //doesn't throw an IOException
+  }
 }
