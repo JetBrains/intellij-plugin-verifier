@@ -47,6 +47,8 @@ public class PluginManagerImpl extends PluginManager {
    */
   private final Map<String, Pair<String, Document>> myRootXmlDocuments = new HashMap<String, Pair<String, Document>>();
 
+  private File myPluginFile;
+
   public static boolean isJarOrZip(@NotNull File file) {
     if (file.isDirectory()) {
       return false;
@@ -124,7 +126,7 @@ public class PluginManagerImpl extends PluginManager {
           try {
             URL url = new URL(xmlPair.getFirst());
             Document document = xmlPair.getSecond();
-            PluginImpl optDescriptor = new PluginImpl(file);
+            PluginImpl optDescriptor = new PluginImpl(myPluginFile);
             optDescriptor.readExternal(document, url, parentValidator.ignoreMissingConfigElement());
             descriptors.put(optFilePath, optDescriptor);
           } catch (MalformedURLException e) {
@@ -192,7 +194,7 @@ public class PluginManagerImpl extends PluginManager {
       }
 
       if (StringUtil.equal(name, filePath)) {
-        PluginImpl descriptor = new PluginImpl(pluginFile);
+        PluginImpl descriptor = new PluginImpl(myPluginFile);
         descriptor.readExternal(document, url, validator);
         return descriptor;
       } else {
@@ -220,7 +222,7 @@ public class PluginManagerImpl extends PluginManager {
           String xmlUrl = rootUrl + entry.getName();
           URL url = new URL(xmlUrl);
 
-          PluginImpl descriptor = new PluginImpl(pluginFile);
+          PluginImpl descriptor = new PluginImpl(myPluginFile);
           descriptor.readExternal(document, url, validator);
           return descriptor;
         } catch (RuntimeException e) {
@@ -374,7 +376,7 @@ public class PluginManagerImpl extends PluginManager {
         }
       }
 
-      PluginImpl descriptor = new PluginImpl(dir);
+      PluginImpl descriptor = new PluginImpl(myPluginFile);
       try {
         descriptor.readExternal(descriptorFile.toURI().toURL(), validator);
       } catch (MalformedURLException e) {
@@ -445,6 +447,8 @@ public class PluginManagerImpl extends PluginManager {
     if (!validatePluginXml) {
       validator = validator.ignoreMissingConfigElement();
     }
+
+    myPluginFile = pluginFile;
 
     PluginImpl descriptor = (PluginImpl) loadDescriptor(pluginFile, PLUGIN_XML, validator);
     if (descriptor != null) {

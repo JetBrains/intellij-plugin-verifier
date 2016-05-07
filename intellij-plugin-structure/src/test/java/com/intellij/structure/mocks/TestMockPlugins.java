@@ -13,6 +13,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -63,15 +64,17 @@ public class TestMockPlugins {
   @Test
   public void testMock3() throws Exception {
     //also read classes
-    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3.jar")));
-    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3jarAsZip.zip")));
-    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3-dir")));
-    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3-lib.zip")));
-    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3-classes")));
-    testMock3(PluginManager.getInstance().createPlugin(getMockPlugin("mock-plugin3-classes-zip.zip")));
+    testMock3(getMockPlugin("mock-plugin3.jar"));
+    testMock3(getMockPlugin("mock-plugin3jarAsZip.zip"));
+    testMock3(getMockPlugin("mock-plugin3-dir"));
+    testMock3(getMockPlugin("mock-plugin3-lib.zip"));
+    testMock3(getMockPlugin("mock-plugin3-classes"));
+    testMock3(getMockPlugin("mock-plugin3-classes-zip.zip"));
   }
 
-  private void testMock3(Plugin plugin) {
+  private void testMock3(File pluginFile) throws IOException {
+    Plugin plugin = PluginManager.getInstance().createPlugin(pluginFile);
+    assertEquals(pluginFile, plugin.getPluginFile());
     testMock3Classes(plugin);
     testMock3Configs(plugin);
     testMock3ClassesFromXml(plugin);
