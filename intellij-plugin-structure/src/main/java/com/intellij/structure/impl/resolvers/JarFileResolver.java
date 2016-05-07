@@ -11,8 +11,10 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -25,7 +27,7 @@ public class JarFileResolver extends Resolver {
 
   private final ZipFile myJarFile;
 
-  private final Map<String, SoftReference<ClassNode>> myClassesCache = new HashMap<String, SoftReference<ClassNode>>();
+  private final Set<String> myClassesNames = new HashSet<String>();
 
   public JarFileResolver(@NotNull File jarFile) throws IOException {
     myJarFile = new ZipFile(jarFile);
@@ -38,7 +40,7 @@ public class JarFileResolver extends Resolver {
       ZipEntry entry = entries.nextElement();
       String name = entry.getName();
       if (name.endsWith(CLASS_SUFFIX)) {
-        myClassesCache.put(StringUtil.trimEnd(name, CLASS_SUFFIX), null);
+        myClassesNames.add(StringUtil.trimEnd(name, CLASS_SUFFIX));
       }
     }
   }
@@ -46,7 +48,7 @@ public class JarFileResolver extends Resolver {
   @NotNull
   @Override
   public Set<String> getAllClasses() {
-    return Collections.unmodifiableSet(myClassesCache.keySet());
+    return Collections.unmodifiableSet(myClassesNames);
   }
 
   @Override
@@ -56,22 +58,16 @@ public class JarFileResolver extends Resolver {
 
   @Override
   public boolean isEmpty() {
-    return myClassesCache.isEmpty();
+    return myClassesNames.isEmpty();
   }
 
   @Override
   @Nullable
   public ClassNode findClass(@NotNull String className) throws IOException {
-    if (!myClassesCache.containsKey(className)) {
+    if (!myClassesNames.contains(className)) {
       return null;
     }
-    SoftReference<ClassNode> reference = myClassesCache.get(className);
-    ClassNode classFile = reference == null ? null : reference.get();
-    if (classFile == null) {
-      classFile = evaluateNode(className);
-      myClassesCache.put(className, new SoftReference<ClassNode>(classFile));
-    }
-    return classFile;
+    return evaluateNode(className);
   }
 
   @Nullable
@@ -88,7 +84,7 @@ public class JarFileResolver extends Resolver {
 
   @Override
   public Resolver getClassLocation(@NotNull String className) {
-    if (myClassesCache.containsKey(className)) {
+    if (myClassesNames.contains(className)) {
       return this;
     }
     return null;
