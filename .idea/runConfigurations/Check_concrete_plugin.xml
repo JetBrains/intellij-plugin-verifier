@@ -3,7 +3,7 @@
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <option name="MAIN_CLASS_NAME" value="com.jetbrains.pluginverifier.PluginVerifierMain" />
     <option name="VM_PARAMETERS" value="-Xmx300m" />
-    <option name="PROGRAM_PARAMETERS" value="check-plugin for_tests/scalarR.zip for_tests/idea -r /usr/lib/jvm/java-8-oracle" />
+    <option name="PROGRAM_PARAMETERS" value="check-plugin for_tests/kotlin-plugin.zip $PROJECT_DIR$/../ultimate -r /usr/lib/jvm/java-8-oracle" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
     <option name="ALTERNATIVE_JRE_PATH" />

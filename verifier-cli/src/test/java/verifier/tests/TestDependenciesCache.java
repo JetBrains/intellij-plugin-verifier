@@ -2,7 +2,6 @@ package verifier.tests;
 
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.Plugin;
-import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.impl.domain.IdeManagerImpl;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.jetbrains.pluginverifier.misc.PluginCache;

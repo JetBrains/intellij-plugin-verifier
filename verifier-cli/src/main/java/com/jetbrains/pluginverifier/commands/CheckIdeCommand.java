@@ -3,7 +3,9 @@ package com.jetbrains.pluginverifier.commands;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.collect.*;
-import com.intellij.structure.domain.*;
+import com.intellij.structure.domain.Ide;
+import com.intellij.structure.domain.IdeVersion;
+import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
@@ -40,10 +42,11 @@ public class CheckIdeCommand extends VerifierCommand {
       ImmutableList.of("org.jetbrains.plugins.ruby", "com.jetbrains.php", "org.jetbrains.android", "Pythonid", "PythonCore");
   private TeamCityUtil.ReportGrouping myGrouping;
   private TeamCityLog myTc;
-  private Jdk myJdk;
+  private Resolver myJdkResolver;
   private PluginVerifierOptions myVerifierOptions;
   private Resolver myExternalClassPath;
   private Ide myIde;
+  private Resolver myIdeResolver;
   private Collection<UpdateInfo> myUpdatesToCheck;
   private List<String> myCheckedIds;
   private String myDumpBrokenPluginsFile;
@@ -64,7 +67,7 @@ public class CheckIdeCommand extends VerifierCommand {
   private static void saveResultsToXml(@NotNull String xmlFile,
                                        @NotNull String ideVersion,
                                        @NotNull Map<UpdateInfo, ProblemSet> results) throws IOException {
-    Map<UpdateInfo, Collection<Problem>> problems = new LinkedHashMap<UpdateInfo, Collection<Problem>>();
+    Map<UpdateInfo, Collection<Problem>> problems = new LinkedHashMap<>();
 
     for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
       problems.put(entry.getKey(), entry.getValue().getAllProblems());
@@ -87,7 +90,7 @@ public class CheckIdeCommand extends VerifierCommand {
   }
 
   private void fillMissingPluginProblems() {
-    for (String pluginId : new HashSet<String>(myCheckedIds)) { //plugins from checkedPlugins.txt. for them check that compatible version is present
+    for (String pluginId : new HashSet<>(myCheckedIds)) { //plugins from checkedPlugins.txt. for them check that compatible version is present
       boolean hasCompatibleUpdate = false;
       for (UpdateInfo update : myUpdatesToCheck) {
         if (myExcludedUpdatesFilter.apply(update)) {
@@ -149,13 +152,14 @@ public class CheckIdeCommand extends VerifierCommand {
 
     myTc = TeamCityLog.getInstance(commandLine);
 
-    myJdk = createJdk(commandLine);
+    myJdkResolver = createJdkResolver(commandLine);
 
     myVerifierOptions = PluginVerifierOptions.parseOpts(commandLine);
 
     myExternalClassPath = getExternalClassPath(commandLine);
 
     myIde = createIde(ideToCheck, commandLine);
+    myIdeResolver = Resolver.createIdeResolver(myIde);
 
     Pair<List<String>, List<String>> pluginsIds = Util.extractPluginToCheckList(commandLine);
     List<String> checkAllBuilds = pluginsIds.first;
@@ -164,7 +168,7 @@ public class CheckIdeCommand extends VerifierCommand {
     if (checkAllBuilds.isEmpty() && checkLastBuilds.isEmpty()) {
       myUpdatesToCheck = RepositoryManager.getInstance().getLastCompatibleUpdates(myIde.getVersion());
     } else {
-      myUpdatesToCheck = new ArrayList<UpdateInfo>();
+      myUpdatesToCheck = new ArrayList<>();
 
       if (checkAllBuilds.size() > 0) {
         for (String build : checkAllBuilds) {
@@ -173,9 +177,9 @@ public class CheckIdeCommand extends VerifierCommand {
       }
 
       if (checkLastBuilds.size() > 0) {
-        Map<String, UpdateInfo> lastBuilds = new HashMap<String, UpdateInfo>();
+        Map<String, UpdateInfo> lastBuilds = new HashMap<>();
 
-        List<UpdateInfo> list = new ArrayList<UpdateInfo>();
+        List<UpdateInfo> list = new ArrayList<>();
         for (String build : checkLastBuilds) {
           list.addAll(RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(myIde.getVersion(), build));
         }
@@ -201,12 +205,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     myExcludedPlugins = Util.getExcludedPlugins(commandLine);
 
-    myExcludedUpdatesFilter = new Predicate<UpdateInfo>() {
-      @Override
-      public boolean apply(UpdateInfo input) {
-        return !myExcludedPlugins.containsEntry(input.getPluginId(), input.getVersion());
-      }
-    };
+    myExcludedUpdatesFilter = input -> !myExcludedPlugins.containsEntry(input.getPluginId(), input.getVersion());
 
     fillMissingPluginProblems();
 
@@ -227,12 +226,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     myImportantUpdates = prepareImportantUpdates(myUpdatesToCheck);
 
-    myResults = new HashMap<UpdateInfo, ProblemSet>();
-  }
-
-  @NotNull
-  private Ide createIde(@NotNull File ideToCheck, @NotNull CommandLine commandLine) throws IOException {
-    return IdeManager.getInstance().createIde(ideToCheck, takeVersionFromCmd(commandLine));
+    myResults = new HashMap<>();
   }
 
   private void dumpUpdatesToCheck(Collection<UpdateInfo> updatesToCheck) {
@@ -242,8 +236,8 @@ public class CheckIdeCommand extends VerifierCommand {
 
   @NotNull
   private Collection<UpdateInfo> prepareUpdates(@NotNull Collection<UpdateInfo> updates) {
-    Collection<UpdateInfo> important = new ArrayList<UpdateInfo>();
-    Collection<UpdateInfo> notImportant = new ArrayList<UpdateInfo>();
+    Collection<UpdateInfo> important = new ArrayList<>();
+    Collection<UpdateInfo> notImportant = new ArrayList<>();
     for (UpdateInfo update : updates) {
       String pluginId = update.getPluginId();
       if (INTELLIJ_MODULES_PLUGIN_IDS.contains(pluginId)) {
@@ -295,7 +289,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
         System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), myUpdatesToCheck.size()));
 
-        ProblemSet problemSet = Verification.verifyPlugin(plugin, myIde, myJdk, myExternalClassPath, myVerifierOptions);
+        ProblemSet problemSet = Verification.verifyPlugin(plugin, myIde, myIdeResolver, myJdkResolver, myExternalClassPath, myVerifierOptions);
 
         myResults.put(updateJson, problemSet);
 
@@ -336,6 +330,8 @@ public class CheckIdeCommand extends VerifierCommand {
 
     }
 
+    tearDown();
+
     //-----------------------------PRINT RESULTS----------------------------------------
 
     System.out.println("Verification completed (" + ((System.currentTimeMillis() - time) / 1000) + " seconds)");
@@ -352,11 +348,8 @@ public class CheckIdeCommand extends VerifierCommand {
       if (myDumpBrokenPluginsFile != null) {
         System.out.println("Dumping list of broken plugins to " + myDumpBrokenPluginsFile);
 
-        Util.dumbBrokenPluginsList(myDumpBrokenPluginsFile, Collections2.filter(myUpdatesToCheck, new Predicate<UpdateInfo>() {
-          @Override
-          public boolean apply(UpdateInfo update) {
-            return myResults.get(update) != null && !myResults.get(update).isEmpty(); //update to check contains some problem
-          }
+        Util.dumbBrokenPluginsList(myDumpBrokenPluginsFile, Collections2.filter(myUpdatesToCheck, update -> {
+          return myResults.get(update) != null && !myResults.get(update).isEmpty(); //update to check contains some problem
         }));
       }
 
@@ -372,7 +365,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     int totalProblemsCnt = printMissingAndIncorrectPlugins();
 
-    Set<Problem> allProblems = new HashSet<Problem>();
+    Set<Problem> allProblems = new HashSet<>();
 
     for (ProblemSet problemSet : Maps.filterKeys(myResults, myExcludedUpdatesFilter).values()) {
       allProblems.addAll(problemSet.getAllProblems());
@@ -394,13 +387,18 @@ public class CheckIdeCommand extends VerifierCommand {
     return 0;
   }
 
+  private void tearDown() {
+    myIdeResolver.close();
+    myJdkResolver.close();
+  }
+
   /**
    * Drops out non-last builds of IntelliJ plugins IntelliJ plugin is a plugin which defines intellij-module in its
    * plugin.xml
    */
   @NotNull
   private Set<UpdateInfo> prepareImportantUpdates(@NotNull Collection<UpdateInfo> updates) {
-    Map<String, Integer> lastBuilds = new HashMap<String, Integer>();
+    Map<String, Integer> lastBuilds = new HashMap<>();
     for (UpdateInfo update : updates) {
       String pluginId = update.getPluginId();
       if (INTELLIJ_MODULES_PLUGIN_IDS.contains(pluginId)) {
@@ -413,7 +411,7 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
-    Set<UpdateInfo> result = new HashSet<UpdateInfo>();
+    Set<UpdateInfo> result = new HashSet<>();
     for (UpdateInfo update : updates) {
       String pluginId = update.getPluginId();
       Integer updateId = update.getUpdateId();

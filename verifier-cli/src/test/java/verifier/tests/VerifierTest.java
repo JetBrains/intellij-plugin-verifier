@@ -4,6 +4,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.intellij.structure.domain.*;
+import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.*;
 import com.jetbrains.pluginverifier.problems.fields.ChangeFinalFieldProblem;
@@ -19,7 +20,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -104,10 +104,6 @@ public class VerifierTest {
           .build();
 
 
-  private Ide myIde;
-  private Plugin myPlugin;
-  private Jdk myJavaRuntime;
-
   private static void testFoundProblems(Map<Problem, Set<ProblemLocation>> foundProblems, Multimap<Problem, ProblemLocation> actualProblems) throws Exception {
 
     Multimap<Problem, ProblemLocation> redundantProblems = HashMultimap.create();
@@ -144,17 +140,6 @@ public class VerifierTest {
       }
       Assert.fail("Found redundant problems which shouldn't be found:\n" + builder.toString());
     }
-
-  }
-
-  @Before
-  public void setUp() throws Exception {
-    String jdkPath = System.getenv("JAVA_HOME");
-    if (jdkPath == null) {
-      jdkPath = "/usr/lib/jvm/java-6-oracle";
-    }
-    myJavaRuntime = Jdk.createJdk(new File(jdkPath));
-
 
   }
 
@@ -204,19 +189,32 @@ public class VerifierTest {
   }
 
   private void testFoundProblems(File ideaFile, File pluginFile, ImmutableMultimap<Problem, ProblemLocation> actualProblems, boolean dummyIdeVersion) throws Exception {
+    Ide ide;
     if (dummyIdeVersion) {
-      myIde = IdeManager.getInstance().createIde(ideaFile, DUMMY_IDE_VERSION);
+      ide = IdeManager.getInstance().createIde(ideaFile, DUMMY_IDE_VERSION);
     } else {
-      myIde = IdeManager.getInstance().createIde(ideaFile);
+      ide = IdeManager.getInstance().createIde(ideaFile);
     }
 
-    myPlugin = PluginManager.getInstance().createPlugin(pluginFile);
+    Plugin plugin = PluginManager.getInstance().createPlugin(pluginFile);
 
     final CommandLine commandLine = new GnuParser().parse(Util.CMD_OPTIONS, new String[]{});
 
-    VerificationContextImpl ctx = new VerificationContextImpl(myPlugin, myIde, myJavaRuntime, null, PluginVerifierOptions.parseOpts(commandLine));
-    Verifiers.processAllVerifiers(ctx);
 
-    testFoundProblems(ctx.getProblemSet().asMap(), actualProblems);
+    String jdkPath = System.getenv("JAVA_HOME");
+    if (jdkPath == null) {
+      jdkPath = "/usr/lib/jvm/java-6-oracle";
+    }
+
+    try (
+        Resolver ideResolver = Resolver.createIdeResolver(ide);
+        Resolver jdkResolver = Resolver.createJdkResolver(new File(jdkPath))
+    ) {
+      VerificationContextImpl ctx = new VerificationContextImpl(plugin, ide, ideResolver, jdkResolver, null, PluginVerifierOptions.parseOpts(commandLine));
+      Verifiers.processAllVerifiers(ctx);
+
+      testFoundProblems(ctx.getProblemSet().asMap(), actualProblems);
+    }
+
   }
 }

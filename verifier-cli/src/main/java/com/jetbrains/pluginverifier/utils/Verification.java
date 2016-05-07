@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.utils;
 
 import com.intellij.structure.domain.Ide;
-import com.intellij.structure.domain.Jdk;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
@@ -13,7 +12,6 @@ import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Set;
 
 /**
@@ -27,11 +25,12 @@ public class Verification {
   @NotNull
   public static ProblemSet verifyPlugin(@NotNull Plugin plugin,
                                         @NotNull Ide ide,
-                                        @NotNull Jdk jdk,
+                                        @NotNull Resolver ideResolver,
+                                        @NotNull Resolver jdkResolver,
                                         @Nullable Resolver externalClassPath,
-                                        @NotNull PluginVerifierOptions options) throws IOException {
+                                        @NotNull PluginVerifierOptions options) {
 
-    VerificationContextImpl ctx = new VerificationContextImpl(plugin, ide, jdk, externalClassPath, options);
+    VerificationContextImpl ctx = new VerificationContextImpl(plugin, ide, ideResolver, jdkResolver, externalClassPath, options);
 
     Verifiers.processAllVerifiers(ctx);
 

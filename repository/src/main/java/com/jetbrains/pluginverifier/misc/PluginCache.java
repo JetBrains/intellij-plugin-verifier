@@ -25,22 +25,16 @@ public class PluginCache {
     return INSTANCE;
   }
 
-  @NotNull
-  public synchronized Plugin createPlugin(File pluginFile) throws IOException, IncorrectPluginException {
-    return createPlugin(pluginFile, true);
-  }
-
   /**
    * Returns a plugin from cache or creates it from the specified file
    *
    * @param pluginFile file of a plugin
-   * @param readClasses whether to try to load plugin classes or just read the <i>plugin.xml</i>
    * @return null if plugin is not found in the cache
    * @throws IOException if IO error occurs during attempt to create a plugin
    * @throws IncorrectPluginException if the given plugin file is incorrect
    */
   @NotNull
-  public synchronized Plugin createPlugin(File pluginFile, boolean readClasses) throws IOException, IncorrectPluginException {
+  public synchronized Plugin createPlugin(File pluginFile) throws IOException, IncorrectPluginException {
     if (!pluginFile.exists()) {
       throw new IOException("Plugin file does not exist: " + pluginFile.getAbsoluteFile());
     }
@@ -50,11 +44,7 @@ public class PluginCache {
     Plugin res = softReference == null ? null : softReference.get();
 
     if (res == null) {
-      if (readClasses) {
-        res = PluginManager.getInstance().createPlugin(pluginFile);
-      } else {
-        res = PluginManager.getInstance().createPluginWithEmptyResolver(pluginFile);
-      }
+      res = PluginManager.getInstance().createPlugin(pluginFile);
       myPluginsCache.put(pluginFile, new SoftReference<Plugin>(res));
     }
 
