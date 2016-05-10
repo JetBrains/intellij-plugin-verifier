@@ -1,0 +1,128 @@
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
+    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
+  }
+}
+
+def verifierVersion = '1.21'
+def intellijStructureVersion = '1.16'
+
+
+configure(allprojects) {
+  apply plugin: 'java'
+
+  group = 'org.jetbrains.intellij.plugins'
+
+  version = verifierVersion
+
+  //check if updated from command line
+  if (project.hasProperty("myVersion")) {
+    version = project.myVersion;
+  }
+
+  println("Configuring project ${it.name}:${it.version}")
+
+
+  sourceCompatibility = 1.6
+  targetCompatibility = 1.6
+
+  dependencies {
+
+    //plugin structure API
+    compile group: 'org.jetbrains.intellij.plugins', name: 'intellij-plugin-structure', version: intellijStructureVersion
+
+    compile group: 'com.intellij', name: 'annotations', version: '12.0'
+    compile group: 'org.ow2.asm', name: 'asm-all', version: '5.0.4'
+    compile group: 'com.google.guava', name: 'guava', version: '15.0'
+    compile group: 'commons-io', name: 'commons-io', version: '2.3'
+  }
+
+  repositories {
+    mavenCentral()
+    mavenLocal()
+    maven {
+      url "http://dl.bintray.com/jetbrains/intellij-plugin-service"
+    }
+  }
+
+  task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+  }
+
+  artifacts.archives sourcesJar
+}
+
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven-publish'
+
+
+
+publishing {
+
+  publications {
+
+    def configurePublication = { MavenPublication pub, String projectName, boolean appendFatJar ->
+
+      def verifierCli = project(projectName)
+      pub.groupId verifierCli.group
+      pub.artifactId verifierCli.name
+      pub.version verifierCli.version
+
+      pub.from verifierCli.components.java
+      verifierCli.artifacts
+      pub.artifact verifierCli.sourcesJar
+
+      if (appendFatJar) {
+        pub.artifact verifierCli.shadowJar
+      }
+    }
+
+    CommonUtilsPublication(MavenPublication) { configurePublication(it, ':common-utils', false) }
+    VerifierCliPublication(MavenPublication) { configurePublication(it, ':verifier-cli', true) }
+    RepositoryPublication(MavenPublication) { configurePublication(it, ':repository', false) }
+    UploaderPublication(MavenPublication) { configurePublication(it, ':uploader', true) }
+    ProblemsPublication(MavenPublication) { configurePublication(it, ':verifier-problems', false) }
+  }
+}
+
+publishToMavenLocal.dependsOn test
+
+
+bintray {
+  user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+  key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+
+
+  publish = true
+  publications = ['CommonUtilsPublication', 'VerifierCliPublication', 'RepositoryPublication',
+                  'UploaderPublication', 'ProblemsPublication']
+
+  pkg {
+    repo = 'intellij-plugin-service'
+    name = 'intellij-plugin-verifier'
+    licenses = ['Apache-2.0']
+    vcsUrl = 'https://github.com/JetBrains/intellij-plugin-verifier'
+    userOrg = 'jetbrains'
+
+    version {
+      name = project.version
+    }
+  }
+}
+
+bintrayUpload.doFirst {
+
+  if (!bintray.user || !bintray.key) {
+    throw new StopExecutionException("You must specify (bintrayUser, bintrayApiKey) or (BINTRAY_USER, BINTRAY_API_KEY) properties")
+  }
+
+  println("Uploading Plugin Verifier module ${project.name}:${project.version}" + ' to bintray')
+}
+
+//run tests before deploying
+bintrayUpload.dependsOn test

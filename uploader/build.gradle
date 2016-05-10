@@ -1,0 +1,19 @@
+apply plugin: 'com.github.johnrengelman.shadow'
+
+dependencies {
+  compile project(':verifier-cli')
+}
+
+shadowJar {
+  manifest {
+    attributes 'Main-Class': 'com.jetbrains.pluginverifier.Uploader'
+  }
+  def internalPrefix = 'com.jetbrains.pluginverifier.internal.'
+
+  relocate('org.apache.commons', internalPrefix + 'apachecommons') {}
+  relocate('org.intellij.lang.annotations', internalPrefix + 'intellijannotations') {}
+  relocate('org.jetbrains.annotations', internalPrefix + 'jetbrainsannotation') {}
+  relocate('org.apache.http', internalPrefix + 'apachehttp') {}
+}
+
+jar.finalizedBy(shadowJar)

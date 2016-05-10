@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id="verifier-parent:test" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="GRADLE" external.system.module.group="org.jetbrains.intellij.plugins" external.system.module.type="sourceSet" external.system.module.version="1.21" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_6" inherit-compiler-output="false">
+    <output-test url="file://$MODULE_DIR$/../../build/classes/test" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../src/test">
+      <sourceFolder url="file://$MODULE_DIR$/../../src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/test/resources" type="java-test-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="verifier-parent_main" />
+    <orderEntry type="library" name="Gradle: org.jetbrains.intellij.plugins:intellij-plugin-structure:1.16" level="project" />
+    <orderEntry type="library" name="Gradle: com.intellij:annotations:12.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.ow2.asm:asm-all:5.0.4" level="project" />
+    <orderEntry type="library" name="Gradle: commons-io:commons-io:2.3" level="project" />
+    <orderEntry type="library" name="Gradle: org.jdom:jdom:2.0.2" level="project" />
+    <orderEntry type="library" name="Gradle: org.jsoup:jsoup:1.8.3" level="project" />
+    <orderEntry type="library" name="Gradle: com.google.guava:guava:18.0" level="project" />
+  </component>
+  <component name="TestModuleProperties" production-module="verifier-parent_main" />
+</module>

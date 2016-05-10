@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.verifiers.instruction;
 
-import com.jetbrains.pluginverifier.VerificationContext;
+import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
-import com.jetbrains.pluginverifier.problems.ProblemLocation;
-import com.jetbrains.pluginverifier.resolvers.Resolver;
+import com.jetbrains.pluginverifier.verifiers.VerificationContext;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -22,8 +22,8 @@ public class TypeInstructionVerifier implements InstructionVerifier {
       className = VerifierUtil.extractClassNameFromDescr(className);
     }
 
-    if(className == null || VerifierUtil.classExists(ctx.getOptions(), resolver, className)) return;
+    if (className == null || VerifierUtil.classExistsOrExternal(ctx, resolver, className)) return;
 
-    ctx.registerProblem(new ClassNotFoundProblem(className), ProblemLocation.fromMethod(clazz.name, method.name + method.desc));
+    ctx.registerProblem(new ClassNotFoundProblem(className), ProblemLocation.fromMethod(clazz.name, method));
   }
 }

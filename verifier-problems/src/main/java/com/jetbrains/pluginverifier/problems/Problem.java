@@ -1,14 +1,16 @@
 package com.jetbrains.pluginverifier.problems;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * @author Sergey Evdokimov
  */
 public abstract class Problem {
+
+  @XmlTransient
+  //TODO: write a renderer for TC and others instead of prefix
+  public abstract String getDescriptionPrefix();
+
 
   @XmlTransient
   public abstract String getDescription();
@@ -21,5 +23,10 @@ public abstract class Problem {
   @Override
   public int hashCode() {
     throw new UnsupportedOperationException("Children of com.jetbrains.pluginverifier.problems.Problem must override equals() and hashcode()");
+  }
+
+  @Override
+  public String toString() {
+    return getDescription();
   }
 }

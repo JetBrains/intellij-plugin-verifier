@@ -8,26 +8,34 @@ import org.objectweb.asm.tree.MethodNode;
  */
 public class MethodSign {
 
-  private final String name;
-  private final String descr;
+  private final String myName;
+
+  /**
+   * We take return type of the method into account, although it's not necessary
+   * because method A overrides method B if they have the same name and parameters erasure.
+   * But JAVA works for us and generates bridge methods which match the parent ones.
+   */
+  private final String myDescriptor;
 
   private int hashCode;
 
-  public MethodSign(@NotNull String name, @NotNull String descr) {
-    this.name = name;
-    this.descr = descr;
+  public MethodSign(@NotNull String name, @NotNull String myDescriptor) {
+    this.myName = name;
+    this.myDescriptor = myDescriptor;
   }
 
   public MethodSign(@NotNull MethodNode methodNode) {
     this(methodNode.name, methodNode.desc);
   }
 
+  @NotNull
   public String getName() {
-    return name;
+    return myName;
   }
 
-  public String getDescr() {
-    return descr;
+  @NotNull
+  public String getDescriptor() {
+    return myDescriptor;
   }
 
   @Override
@@ -35,18 +43,16 @@ public class MethodSign {
     if (this == o) return true;
     if (!(o instanceof MethodSign)) return false;
 
-    MethodSign sign = (MethodSign)o;
+    MethodSign sign = (MethodSign) o;
 
-    if (!descr.equals(sign.descr)) return false;
-    if (!name.equals(sign.name)) return false;
+    return myDescriptor.equals(sign.myDescriptor) && myName.equals(sign.myName);
 
-    return true;
   }
 
   @Override
   public int hashCode() {
     if (hashCode == 0) {
-      hashCode = 31 * name.hashCode() + descr.hashCode();
+      hashCode = 31 * myName.hashCode() + myDescriptor.hashCode();
     }
     return hashCode;
   }

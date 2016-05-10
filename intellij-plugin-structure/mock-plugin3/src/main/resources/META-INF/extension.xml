@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.jetbrains.com/plugin.dtd">
+<idea-plugin version="2">
+    <extensions defaultExtensionNs="org.intellij.scala">
+        <scalaTestDefaultWorkingDirectoryProvider
+                implementation="org.jetbrains.plugins.scala.project.maven.MavenWorkingDirectoryProviderImpl"/>
+    </extensions>
+</idea-plugin>

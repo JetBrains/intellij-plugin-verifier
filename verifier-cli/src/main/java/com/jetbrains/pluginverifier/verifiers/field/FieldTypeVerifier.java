@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.verifiers.field;
 
-import com.jetbrains.pluginverifier.VerificationContext;
+import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
-import com.jetbrains.pluginverifier.problems.ProblemLocation;
-import com.jetbrains.pluginverifier.resolvers.Resolver;
+import com.jetbrains.pluginverifier.verifiers.VerificationContext;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
@@ -15,7 +15,7 @@ public class FieldTypeVerifier implements FieldVerifier {
   public void verify(final ClassNode clazz, final FieldNode field, final Resolver resolver, final VerificationContext ctx) {
     final String className = VerifierUtil.extractClassNameFromDescr(field.desc);
 
-    if(className == null || VerifierUtil.classExists(ctx.getOptions(), resolver, className)) {
+    if (className == null || VerifierUtil.classExistsOrExternal(ctx, resolver, className)) {
       return;
     }
 

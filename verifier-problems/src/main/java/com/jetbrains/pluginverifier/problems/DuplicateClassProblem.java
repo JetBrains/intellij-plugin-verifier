@@ -37,8 +37,12 @@ public class DuplicateClassProblem extends Problem {
   }
 
   @Override
+  public String getDescriptionPrefix() {
+    return "duplicated class";
+  }
+
   public String getDescription() {
-    return "duplicated class (className=" + MessageUtils.convertClassName(myClassName) + " location=" + myMoniker + ")";
+    return getDescriptionPrefix() + " (className=" + MessageUtils.convertClassName(myClassName) + " location=" + myMoniker + ")";
   }
 
   @Override
@@ -48,10 +52,10 @@ public class DuplicateClassProblem extends Problem {
 
     DuplicateClassProblem problem = (DuplicateClassProblem)o;
 
+    //noinspection SimplifiableIfStatement
     if (myClassName != null ? !myClassName.equals(problem.myClassName) : problem.myClassName != null) return false;
-    if (myMoniker != null ? !myMoniker.equals(problem.myMoniker) : problem.myMoniker != null) return false;
+    return myMoniker != null ? myMoniker.equals(problem.myMoniker) : problem.myMoniker == null;
 
-    return true;
   }
 
   @Override

@@ -1,5 +1,8 @@
 package com.jetbrains.pluginverifier;
 
+import com.jetbrains.pluginverifier.commands.VerifierCommand;
+import com.jetbrains.pluginverifier.utils.CommandHolder;
+import com.jetbrains.pluginverifier.utils.FailUtil;
 import com.jetbrains.pluginverifier.utils.Util;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
@@ -14,9 +17,8 @@ public class PluginVerifierMain {
     CommandLine commandLine;
     try {
       commandLine = new GnuParser().parse(Util.CMD_OPTIONS, args);
-    }
-    catch (ParseException e) {
-      throw Util.fail(e.getLocalizedMessage());
+    } catch (ParseException e) {
+      throw FailUtil.fail(e);
     }
 
     if (commandLine.hasOption('h')) {
@@ -29,13 +31,11 @@ public class PluginVerifierMain {
     VerifierCommand command;
     if (freeArgs.isEmpty()) {
       command = CommandHolder.getDefaultCommand();
-    }
-    else {
+    } else {
       command = CommandHolder.getCommand(freeArgs.get(0));
       if (command == null) {
         command = CommandHolder.getDefaultCommand();
-      }
-      else {
+      } else {
         freeArgs = freeArgs.subList(1, freeArgs.size());
       }
     }

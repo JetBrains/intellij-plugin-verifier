@@ -1,9 +1,10 @@
 package com.jetbrains.pluginverifier.verifiers.clazz;
 
-import com.jetbrains.pluginverifier.VerificationContext;
+import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
-import com.jetbrains.pluginverifier.problems.ProblemLocation;
-import com.jetbrains.pluginverifier.resolvers.Resolver;
+import com.jetbrains.pluginverifier.problems.IncompatibleClassChangeProblem;
+import com.jetbrains.pluginverifier.verifiers.VerificationContext;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -16,9 +17,15 @@ public class InterfacesVerifier implements ClassVerifier {
   public void verify(final ClassNode clazz, final Resolver resolver, final VerificationContext ctx) {
     for (Object o : clazz.interfaces) {
       final String iface = (String)o;
-      if(!VerifierUtil.classExists(ctx.getOptions(), resolver, iface, true)) {
-        ctx.registerProblem(new ClassNotFoundProblem(iface), new ProblemLocation(clazz.name));
-        return;
+      ClassNode node = VerifierUtil.findClass(resolver, iface, ctx);
+      if (node == null) {
+        if (!ctx.getVerifierOptions().isExternalClass(iface)) {
+          ctx.registerProblem(new ClassNotFoundProblem(iface), ProblemLocation.fromClass(clazz.name));
+        }
+        continue;
+      }
+      if (!VerifierUtil.isInterface(node)) {
+        ctx.registerProblem(new IncompatibleClassChangeProblem(iface, IncompatibleClassChangeProblem.Change.INTERFACE_TO_CLASS), ProblemLocation.fromClass(clazz.name));
       }
     }
   }

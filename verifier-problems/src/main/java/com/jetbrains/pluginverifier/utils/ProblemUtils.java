@@ -1,7 +1,19 @@
 package com.jetbrains.pluginverifier.utils;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.hash.Hashing;
+import com.google.common.io.Files;
+import com.jetbrains.pluginverifier.format.UpdateInfo;
+import com.jetbrains.pluginverifier.location.CodeLocation;
+import com.jetbrains.pluginverifier.location.PluginLocation;
+import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.*;
+import com.jetbrains.pluginverifier.results.ProblemSet;
+import com.jetbrains.pluginverifier.results.ResultsElement;
+import com.jetbrains.pluginverifier.results.plugin.IdeProblemsDescriptor;
+import com.jetbrains.pluginverifier.results.plugin.PluginCheckResult;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.JAXBContext;
@@ -18,39 +30,62 @@ public class ProblemUtils {
 
   static {
     try {
-      JAXB_CONTEXT = JAXBContext.newInstance(MethodNotFoundProblem.class,
-                                             ClassNotFoundProblem.class,
-                                             MethodNotImplementedProblem.class,
-                                             OverridingFinalMethodProblem.class,
-                                             DuplicateClassProblem.class,
-                                             ResultsElement.class,
-                                             UpdateInfo.class,
-                                             FailedToReadClassProblem.class);
-    }
-    catch (JAXBException e) {
-      throw new RuntimeException(e);
+      //if necessary add problem here (and add default constructor for it)
+      JAXB_CONTEXT = JAXBContext.newInstance(
+          //--------PROBLEMS--------
+          Problem.class,
+          ClassNotFoundProblem.class,
+          CyclicDependenciesProblem.class,
+          DuplicateClassProblem.class,
+          FailedToReadClassProblem.class,
+          IllegalMethodAccessProblem.class,
+          IncompatibleClassChangeProblem.class,
+          MethodNotFoundProblem.class,
+          MethodNotImplementedProblem.class,
+          OverridingFinalMethodProblem.class,
+          MissingDependencyProblem.class,
+
+          InvokeInterfaceOnPrivateMethodProblem.class,
+          InvokeInterfaceOnStaticMethodProblem.class,
+          InvokeSpecialOnStaticMethodProblem.class,
+          InvokeStaticOnInstanceMethodProblem.class,
+          InvokeVirtualOnStaticMethodProblem.class,
+
+          ProblemLocation.class,
+          CodeLocation.class,
+          PluginLocation.class,
+
+          //--------RESULT-ELEMENTS--------
+          IdeProblemsDescriptor.class,
+          PluginCheckResult.class,
+
+          ResultsElement.class,
+          UpdateInfo.class,
+          ProblemSet.class
+      );
+    } catch (JAXBException e) {
+      throw FailUtil.fail(e);
     }
   }
 
-  public static Marshaller createMarshaller() {
+  private static Marshaller createMarshaller() {
     try {
       return JAXB_CONTEXT.createMarshaller();
-    }
-    catch (JAXBException e) {
+    } catch (JAXBException e) {
       throw new RuntimeException("Failed to create marshaller");
     }
   }
 
-  public static Unmarshaller createUnmarshaller() {
+  private static Unmarshaller createUnmarshaller() {
     try {
       return JAXB_CONTEXT.createUnmarshaller();
-    }
-    catch (JAXBException e) {
+    } catch (JAXBException e) {
       throw new RuntimeException("Failed to create unmarshaller");
     }
   }
 
-  public static String problemToString(@NotNull Problem problem, boolean format) {
+  @NotNull
+  private static String problemToString(@NotNull Problem problem, boolean format) {
     try {
       Marshaller marshaller = JAXB_CONTEXT.createMarshaller();
 
@@ -65,67 +100,137 @@ public class ProblemUtils {
       marshaller.marshal(problem, writer);
 
       return writer.toString();
-    }
-    catch (JAXBException e) {
+    } catch (JAXBException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public static ResultsElement loadProblems(File xml) throws IOException {
-    InputStream inputStream = new BufferedInputStream(new FileInputStream(xml));
+  @NotNull
+  public static ResultsElement loadProblems(@NotNull File xml) throws IOException {
+    return (ResultsElement) loadFromFile(xml);
+  }
 
+  @NotNull
+  public static ResultsElement loadProblems(@NotNull InputStream inputStream) throws IOException {
+    return (ResultsElement) loadFromStream(inputStream);
+  }
+
+  @NotNull
+  public static PluginCheckResult loadPluginCheckResults(@NotNull File xml) throws IOException {
+    return (PluginCheckResult) loadFromFile(xml);
+  }
+
+  @NotNull
+  public static Object loadFromStream(@NotNull InputStream inputStream) throws IOException {
     try {
-      return loadProblems(inputStream);
-    }
-    finally {
-      inputStream.close();
+      return loadObject(inputStream);
+    } finally {
+      IOUtils.closeQuietly(inputStream);
     }
   }
 
-  public static void saveProblems(@NotNull File output, @NotNull String ide, @NotNull Map<UpdateInfo, Collection<Problem>> problems)
-    throws IOException {
+  @NotNull
+  private static Object loadFromFile(@NotNull File xml) throws IOException {
+    InputStream inputStream = new BufferedInputStream(new FileInputStream(xml));
+    return loadFromStream(inputStream);
+  }
+
+  public static void saveProblems(@NotNull File output,
+                                  @NotNull String ide,
+                                  @NotNull Map<UpdateInfo, Collection<Problem>> problems)
+      throws IOException {
     ResultsElement resultsElement = new ResultsElement();
 
     resultsElement.setIde(ide);
     resultsElement.initFromMap(problems);
 
-    saveProblems(output, resultsElement);
+    marshallObject(output, resultsElement);
   }
 
-  public static void saveProblems(@NotNull File output, ResultsElement resultsElement)
-    throws IOException {
+  public static void savePluginCheckResult(@NotNull File output,
+                                           @NotNull Map<String, ProblemSet> ideToProblems,
+                                           @NotNull UpdateInfo updateInfo) throws IOException {
+    savePluginCheckResult(output, new PluginCheckResult(updateInfo, ideToProblems));
+  }
+
+  public static void savePluginCheckResult(@NotNull File output,
+                                           @NotNull PluginCheckResult pluginCheckResult) throws IOException {
+    marshallObject(output, pluginCheckResult);
+  }
+
+  private static void marshallObject(@NotNull File output, @NotNull Object o)
+      throws IOException {
+    Files.createParentDirs(output);
+
     Marshaller marshaller = createMarshaller();
 
     try {
       marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
       marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 
-      marshaller.marshal(resultsElement, output);
-    }
-    catch (JAXBException e) {
+      marshaller.marshal(o, output);
+    } catch (JAXBException e) {
       throw new IOException(e);
     }
   }
 
-  public static ResultsElement loadProblems(InputStream inputStream) throws IOException {
+  @NotNull
+  private static Object loadObject(@NotNull InputStream inputStream) throws IOException {
     Unmarshaller unmarshaller = createUnmarshaller();
 
     try {
-      return (ResultsElement)unmarshaller.unmarshal(inputStream);
-    }
-    catch (JAXBException e) {
+      return unmarshaller.unmarshal(inputStream);
+    } catch (JAXBException e) {
       throw new IOException(e);
     }
   }
 
-  public static List<Problem> sort(Collection<Problem> problems) {
+
+  @NotNull
+  public static List<Problem> sortProblems(@NotNull Collection<Problem> problems) {
     List<Problem> res = new ArrayList<Problem>(problems);
     Collections.sort(res, new ToStringProblemComparator());
     return res;
   }
 
-  public static String hash(Problem problem) {
+  @NotNull
+  public static String hash(@NotNull Problem problem) {
     String s = problemToString(problem, false);
     return Hashing.md5().hashString(s, Charset.defaultCharset()).toString();
+  }
+
+  /**
+   * In DESCENDING order of versions
+   */
+  public static List<UpdateInfo> sortUpdates(@NotNull Collection<UpdateInfo> updateInfos) {
+    List<UpdateInfo> sorted = new ArrayList<UpdateInfo>(updateInfos);
+    Collections.sort(sorted, new Comparator<UpdateInfo>() {
+      @Override
+      public int compare(UpdateInfo o1, UpdateInfo o2) {
+        String p1 = o1.getPluginId() != null ? o1.getPluginId() : "#" + o1.getUpdateId();
+        String p2 = o2.getPluginId() != null ? o2.getPluginId() : "#" + o2.getUpdateId();
+        if (!p1.equals(p2)) {
+          return p1.compareTo(p2); //compare lexicographically
+        }
+        return VersionComparatorUtil.compare(o2.getVersion(), o1.getVersion());
+      }
+    });
+    return sorted;
+  }
+
+  /**
+   * Transforms {@literal Map<Update -> [Problems]>  TO Multimap<Problem -> [Updates]>}
+   */
+  @NotNull
+  public static Multimap<Problem, UpdateInfo> flipProblemsMap(@NotNull Map<UpdateInfo, Collection<Problem>> currentProblemsMap) {
+    Multimap<Problem, UpdateInfo> currentProblemsToUpdates = ArrayListMultimap.create();
+
+    //rearrange existing map: Map<Problem -> [plugin ids]>
+    for (Map.Entry<UpdateInfo, Collection<Problem>> entry : currentProblemsMap.entrySet()) {
+      for (Problem problem : entry.getValue()) {
+        currentProblemsToUpdates.put(problem, entry.getKey());
+      }
+    }
+    return currentProblemsToUpdates;
   }
 }

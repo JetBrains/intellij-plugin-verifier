@@ -1,0 +1,11 @@
+<idea-plugin>
+    <extensionPoints>
+        <extensionPoint name="updater" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
+        <extensionPoint name="projectConfigurator"
+                        interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator"/>
+    </extensionPoints>
+
+    <extensions defaultExtensionNs="org.jetbrains.kotlin">
+        <diagnosticSuppressor implementation="org.jetbrains.kotlin.idea.debugger.DiagnosticSuppressorForDebugger"/>
+    </extensions>
+</idea-plugin>

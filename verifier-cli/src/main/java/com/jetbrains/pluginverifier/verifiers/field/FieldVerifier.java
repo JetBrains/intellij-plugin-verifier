@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.field;
 
-import com.jetbrains.pluginverifier.VerificationContext;
-import com.jetbrains.pluginverifier.resolvers.Resolver;
+import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.verifiers.VerificationContext;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 

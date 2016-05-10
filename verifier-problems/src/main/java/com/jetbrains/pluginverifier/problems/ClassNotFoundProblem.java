@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.problems;
 
 import com.jetbrains.pluginverifier.utils.MessageUtils;
-import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -27,8 +26,12 @@ public class ClassNotFoundProblem extends Problem {
   }
 
   @Override
+  public String getDescriptionPrefix() {
+    return "accessing to unknown class";
+  }
+
   public String getDescription() {
-    return "accessing to unknown class: " + MessageUtils.convertClassName(myUnknownClass);
+    return getDescriptionPrefix() + " " + MessageUtils.convertClassName(myUnknownClass);
   }
 
   @Override

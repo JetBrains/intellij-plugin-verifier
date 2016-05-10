@@ -1,0 +1,174 @@
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
+  }
+}
+
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven-publish'
+
+version = '1.16'
+if (project.hasProperty("myVersion")) {
+  version = project.myVersion;
+}
+
+
+
+allprojects {
+  apply plugin: 'java'
+
+  group = 'org.jetbrains.intellij.plugins'
+
+  sourceCompatibility = 1.6
+  targetCompatibility = 1.6
+}
+
+//build .jar with sources
+task sourcesJar(type: Jar, dependsOn: classes) {
+  classifier = 'sources'
+  from sourceSets.main.allSource
+}
+
+//build .jar with javadoc
+task javadocJar(type: Jar, dependsOn: javadoc) {
+  classifier = 'javadoc'
+  from javadoc.destinationDir
+}
+
+artifacts {
+  archives sourcesJar
+  archives javadocJar
+}
+
+repositories {
+  maven { url "http://repo.maven.apache.org/maven2" }
+}
+
+publishing {
+  publications {
+    MyPublication(MavenPublication) {
+      from components.java
+      artifact sourcesJar
+      artifact javadocJar
+      groupId project.group
+      artifactId project.name
+      version project.version
+    }
+  }
+}
+
+def separator = File.separator
+def mocksPath = "$buildDir" + separator + "mocks"
+
+task prepareMock3asJar(type: Copy) {
+  //creates mock-plugin3.jar file
+  into mocksPath
+  project(":mock-plugin3") {
+    from tasks.withType(Jar)
+  }
+}
+
+task prepareMock3jarAsZip(type: Zip, dependsOn: prepareMock3asJar) {
+  //creates mock-plugin3jarAsZip.zip which is equivalent to mock-plugin3.jar
+  from zipTree(mocksPath + separator + "mock-plugin3.jar")
+  destinationDir = new File(mocksPath)
+  archiveName = "mock-plugin3jarAsZip.zip"
+}
+
+task prepareMock3asDir(type: Copy) {
+  //create mock-plugin3-dir/ which contains /lib/mock-plugin3.jar inside
+  into mocksPath + separator + "mock-plugin3-dir" + separator + "lib"
+  project(":mock-plugin3") {
+    from tasks.withType(Jar)
+  }
+}
+
+task prepareZipLibMock3(type: Zip, dependsOn: prepareMock3asJar) {
+  //create mock-plugin3-lib.zip which contains /lib/mock-plugin3.jar inside
+  project(":mock-plugin3") {
+    from tasks.withType(Jar)
+  }
+  into "lib"
+  destinationDir = new File(mocksPath)
+  archiveName = "mock-plugin3-lib.zip"
+}
+
+task prepareMock3classes(type: Copy) {
+  //create mock-plugin3-classes/ with /classes/ dir and /META-INF/ dir inside
+  into mocksPath + separator + "mock-plugin3-classes"
+
+  def classesSpec = copySpec {
+    from project(":mock-plugin3").sourceSets.main.output.classesDir
+    into "classes"
+  }
+
+  def pluginXmlSpec = copySpec {
+    from project(":mock-plugin3").sourceSets.main.output.resourcesDir
+    into "."
+  }
+
+  with classesSpec, pluginXmlSpec
+}
+prepareMock3classes.dependsOn project(":mock-plugin3").classes
+
+task prepareZipMock3classesAsZip(type: Zip, dependsOn: prepareMock3classes) {
+  //create mock-plugin3-classes.zip/ which is equivalent to prepareMock3classes but in the .zip
+  from mocksPath + separator + "mock-plugin3-classes" + separator
+  into "mock-plugin3"
+  destinationDir = new File(mocksPath)
+  archiveName = "mock-plugin3-classes-zip.zip"
+}
+
+test.dependsOn prepareMock3asJar, prepareMock3jarAsZip, prepareMock3asDir, prepareZipLibMock3, prepareMock3classes, prepareZipMock3classesAsZip
+publishToMavenLocal.dependsOn test
+
+
+dependencies {
+  //mock plugins are used in tests
+  testRuntime project("mock-plugin3")
+
+  compile group: 'org.jdom', name: 'jdom', version: '2.0.2'
+  compile group: 'com.google.guava', name: 'guava', version: '18.0'
+  compile group: 'commons-io', name: 'commons-io', version: '2.3'
+  compile group: 'com.intellij', name: 'annotations', version: '12.0'
+  compile group: 'org.ow2.asm', name: 'asm-all', version: '5.0.4'
+  compile group: 'org.jsoup', name: 'jsoup', version: '1.8.3'
+  testCompile group: 'junit', name: 'junit', version: '4.11'
+  testCompile group: 'org.codehaus.plexus', name: 'plexus-archiver', version: '2.3'
+}
+
+bintray {
+  user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+  key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+
+
+  publish = true
+  publications = ['MyPublication']
+
+  pkg {
+    repo = 'intellij-plugin-service'
+    name = 'intellij-plugin-structure'
+    licenses = ['Apache-2.0']
+    vcsUrl = 'https://github.com/JetBrains/intellij-plugin-verifier'
+    userOrg = 'jetbrains'
+
+    version {
+      name = project.version
+    }
+  }
+}
+
+bintrayUpload.doFirst {
+
+  if (!bintray.user || !bintray.key) {
+    throw new StopExecutionException("You must specify (bintrayUser, bintrayApiKey) or (BINTRAY_USER, BINTRAY_API_KEY) properties")
+  }
+
+  println('Uploading IntelliJ structure ' + project.version + ' to bintray')
+}
+
+//run tests before deploying
+bintrayUpload.dependsOn test
