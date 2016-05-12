@@ -40,7 +40,7 @@ public class FieldAccessInstructionVerifier implements InstructionVerifier {
       //assume the external class contains the field
       return;
     }
-    ClassNode ownerNode = VerifierUtil.findClass(resolver, fieldOwner, ctx);
+    ClassNode ownerNode = VerifierUtil.findClass(resolver, clazz, fieldOwner, ctx);
     if (ownerNode == null) {
       ctx.registerProblem(new ClassNotFoundProblem(fieldOwner), ProblemLocation.fromMethod(clazz.name, method));
       return;

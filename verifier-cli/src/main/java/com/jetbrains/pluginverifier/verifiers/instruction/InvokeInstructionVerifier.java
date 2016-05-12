@@ -48,7 +48,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
 
     if (ctx.getVerifierOptions().isExternalClass(ownerClassName)) return;
 
-    ClassNode ownerClass = VerifierUtil.findClass(resolver, ownerClassName, ctx);
+    ClassNode ownerClass = VerifierUtil.findClass(resolver, clazz, ownerClassName, ctx);
 
     if (ownerClass == null) {
       ctx.registerProblem(new ClassNotFoundProblem(ownerClassName), ProblemLocation.fromMethod(clazz.name, method));

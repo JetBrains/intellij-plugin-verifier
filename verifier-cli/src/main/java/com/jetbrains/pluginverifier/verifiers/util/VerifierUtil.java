@@ -25,6 +25,10 @@ public class VerifierUtil {
     return ctx.getVerifierOptions().isExternalClass(className) || VerifierUtil.findClass(resolver, className, ctx) != null;
   }
 
+  public static boolean classExistsOrExternal(VerificationContext ctx, @NotNull ClassNode potential, Resolver resolver, @NotNull String descr) {
+    return descr.equals(potential.name) || classExistsOrExternal(ctx, resolver, descr);
+  }
+
   public static boolean isInterface(@NotNull ClassNode classNode) {
     return (classNode.access & Opcodes.ACC_INTERFACE) != 0;
   }
@@ -41,6 +45,15 @@ public class VerifierUtil {
 
     return className;
   }
+
+  @Nullable
+  public static ClassNode findClass(@NotNull Resolver resolver, @NotNull ClassNode potential, @NotNull String className, @NotNull VerificationContext ctx) {
+    if (className.equals(potential.name)) {
+      return potential;
+    }
+    return findClass(resolver, className, ctx);
+  }
+
 
   /**
    * Finds a class with the given name in the given resolver
