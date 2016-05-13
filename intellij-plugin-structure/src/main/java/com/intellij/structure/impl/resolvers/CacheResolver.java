@@ -1,5 +1,6 @@
 package com.intellij.structure.impl.resolvers;
 
+import com.intellij.structure.impl.utils.cache.LRUCache;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -7,8 +8,6 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
 import java.lang.ref.SoftReference;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -16,9 +15,10 @@ import java.util.Set;
  */
 public class CacheResolver extends Resolver {
 
+  private static final int CLASSES_CACHE_SIZE = 1000;
   private final Resolver myDelegate;
 
-  private final Map<String, SoftReference<ClassNode>> myCache = new HashMap<String, SoftReference<ClassNode>>();
+  private final LRUCache<String, SoftReference<ClassNode>> myCache = new LRUCache<String, SoftReference<ClassNode>>(CLASSES_CACHE_SIZE);
 
   public CacheResolver(@NotNull Resolver delegate) {
     myDelegate = delegate;
