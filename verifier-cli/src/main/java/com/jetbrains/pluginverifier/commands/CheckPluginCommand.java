@@ -4,7 +4,9 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;
 import com.google.common.io.Files;
-import com.intellij.structure.domain.*;
+import com.intellij.structure.domain.Ide;
+import com.intellij.structure.domain.IdeVersion;
+import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
@@ -17,11 +19,8 @@ import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
 import com.jetbrains.pluginverifier.verifiers.PluginVerifierOptions;
-import com.jetbrains.pluginverifier.verifiers.VerificationContextImpl;
-import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
@@ -75,7 +74,7 @@ public class CheckPluginCommand extends VerifierCommand {
 
   @NotNull
   private static List<Pair<UpdateInfo, File>> fetchPlugins(@NotNull IdeVersion ideVersion, @NotNull File pluginListFile, @NotNull List<String> pluginPaths) {
-    List<Pair<UpdateInfo, File>> pluginsFiles = new ArrayList<Pair<UpdateInfo, File>>();
+    List<Pair<UpdateInfo, File>> pluginsFiles = new ArrayList<>();
 
     for (String pluginPath : pluginPaths) {
       pluginPath = pluginPath.trim();
@@ -134,7 +133,7 @@ public class CheckPluginCommand extends VerifierCommand {
       throw FailUtil.fail("Failed to fetch list of " + pluginId + " versions", e);
     }
 
-    List<Pair<UpdateInfo, File>> result = new ArrayList<Pair<UpdateInfo, File>>();
+    List<Pair<UpdateInfo, File>> result = new ArrayList<>();
     for (UpdateInfo updateInfo : compatibleUpdatesForPlugins) {
       try {
         result.add(Pair.create(updateInfo, RepositoryManager.getInstance().getPluginFile(updateInfo)));
@@ -156,60 +155,75 @@ public class CheckPluginCommand extends VerifierCommand {
           "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963");
     }
 
-    Jdk javaRuntime = createJdk(commandLine);
 
     PluginVerifierOptions options = PluginVerifierOptions.parseOpts(commandLine);
 
     long startTime = System.currentTimeMillis();
 
     //updateInfo -> (IDEA-build -> Problems)
-    final Map<UpdateInfo, Map<String, ProblemSet>> results = new HashMap<UpdateInfo, Map<String, ProblemSet>>();
+    final Map<UpdateInfo, Map<String, ProblemSet>> results = new HashMap<>();
 
-    TeamCityLog log = TeamCityLog.getInstance(commandLine);
-
-
-    List<Pair<UpdateInfo, ? extends Problem>> brokenPlugins = new ArrayList<Pair<UpdateInfo, ? extends Problem>>();
-
-    for (int i = 1; i < freeArgs.size(); i++) {
-      File ideaDirectory = new File(freeArgs.get(i));
-      verifyIdeaDirectory(ideaDirectory);
-
-      Ide ide = IdeManager.getInstance().createIde(ideaDirectory);
+    TeamCityLog tc = TeamCityLog.getInstance(commandLine);
 
 
-      List<Pair<UpdateInfo, File>> pluginFiles = loadPluginFiles(pluginsToTestArg, ide.getVersion());
+    List<Pair<UpdateInfo, ? extends Problem>> brokenPlugins = new ArrayList<>();
 
-      for (Pair<UpdateInfo, File> pluginFile : pluginFiles) {
-        try {
-          Plugin plugin = PluginCache.getInstance().createPlugin(pluginFile.getSecond());
+    try (Resolver jdkResolver = createJdkResolver(commandLine)) {
 
-          ProblemSet problemSet = verifyPlugin(ide, javaRuntime, getExternalClassPath(commandLine), plugin, options, log);
+      for (int i = 1; i < freeArgs.size(); i++) {
+        File ideaDirectory = new File(freeArgs.get(i));
+        verifyIdeaDirectory(ideaDirectory);
 
-          final UpdateInfo updateInfo = new UpdateInfo(plugin.getPluginId(), plugin.getPluginName(), plugin.getPluginVersion());
+        Ide ide = createIde(ideaDirectory, commandLine);
+        try (Resolver ideResolver = Resolver.createIdeResolver(ide)) {
+
+          List<Pair<UpdateInfo, File>> pluginFiles = loadPluginFiles(pluginsToTestArg, ide.getVersion());
+
+          for (Pair<UpdateInfo, File> pluginFile : pluginFiles) {
+            try {
+              Plugin plugin = PluginCache.getInstance().createPlugin(pluginFile.getSecond());
+
+              String text = "Verifying " + plugin.getPluginId() + ":" + plugin.getPluginVersion() + " against " + ide.getVersion() + "... ";
+              System.out.print(text);
+              tc.message(text);
+
+              TeamCityLog.Block block = tc.blockOpen(plugin.getPluginId());
+              ProblemSet problemSet;
+              try {
+                problemSet = Verification.verifyPlugin(plugin, ide, ideResolver, jdkResolver, getExternalClassPath(commandLine), options);
+              } finally {
+                block.close();
+              }
+
+              myLastProblemSet = problemSet;
+
+              final UpdateInfo updateInfo = new UpdateInfo(plugin.getPluginId(), plugin.getPluginName(), plugin.getPluginVersion());
 
 
-          Map<String, ProblemSet> ideaToProblems = results.get(updateInfo);
-          if (ideaToProblems == null) {
-            ideaToProblems = new HashMap<String, ProblemSet>();
-            results.put(updateInfo, ideaToProblems);
+              Map<String, ProblemSet> ideaToProblems = results.get(updateInfo);
+              if (ideaToProblems == null) {
+                ideaToProblems = new HashMap<>();
+                results.put(updateInfo, ideaToProblems);
+              }
+
+              ideaToProblems.put(ide.getVersion().asString(), problemSet);
+
+              ide = ide.getExpandedIde(plugin);
+
+            } catch (Exception e) {
+
+              String localizedMessage = e.getLocalizedMessage() != null ? e.getLocalizedMessage() : e.getClass().getName();
+              brokenPlugins.add(Pair.create(pluginFile.getFirst(), new VerificationProblem(localizedMessage, pluginFile.getFirst().toString())));
+
+              final String message = "failed to verify plugin " + pluginFile.getFirst();
+              System.err.println(message);
+              e.printStackTrace();
+              tc.messageError(message, Util.getStackTrace(e));
+            }
           }
-
-          ideaToProblems.put(ide.getVersion().asString(), problemSet);
-
-          ide = ide.getExpandedIde(plugin);
-
-        } catch (Exception e) {
-
-          String localizedMessage = e.getLocalizedMessage() != null ? e.getLocalizedMessage() : e.getClass().getName();
-          brokenPlugins.add(Pair.create(pluginFile.getFirst(), new VerificationProblem(localizedMessage, pluginFile.getFirst().toString())));
-
-          final String message = "failed to verify plugin " + pluginFile.getFirst();
-          System.err.println(message);
-          e.printStackTrace();
-          log.messageError(message, Util.getStackTrace(e));
         }
-      }
 
+      }
     }
 
     System.out.println("Plugin verification took " + (System.currentTimeMillis() - startTime) + "ms");
@@ -220,21 +234,21 @@ public class CheckPluginCommand extends VerifierCommand {
     Map<UpdateInfo, ProblemSet> pluginsProblems = mergeIdeResults(results);
     appendBrokenPluginProblems(pluginsProblems, brokenPlugins);
 
-    TeamCityUtil.printTeamCityProblems(log, pluginsProblems, Predicates.alwaysTrue(), TeamCityUtil.ReportGrouping.parseGrouping(commandLine));
+    TeamCityUtil.printTeamCityProblems(tc, pluginsProblems, Predicates.alwaysTrue(), TeamCityUtil.ReportGrouping.parseGrouping(commandLine));
 
     final int problemsCnt = countTotalProblems(pluginsProblems);
 
     boolean hasProblems = problemsCnt > 0;
     System.out.println("Plugin compatibility " + (hasProblems ? "FAILED" : "OK"));
     if (hasProblems) {
-      log.buildStatus(problemsCnt > 1 ? problemsCnt + " problems" : "1 problem");
+      tc.buildStatus(problemsCnt > 1 ? problemsCnt + " problems" : "1 problem");
     }
 
     return hasProblems ? 2 : 0;
   }
 
   private int countTotalProblems(Map<UpdateInfo, ProblemSet> problems) {
-    Set<Problem> set = new HashSet<Problem>();
+    Set<Problem> set = new HashSet<>();
     for (ProblemSet problemSet : problems.values()) {
       set.addAll(problemSet.getAllProblems());
     }
@@ -243,7 +257,7 @@ public class CheckPluginCommand extends VerifierCommand {
 
   @NotNull
   private Map<UpdateInfo, ProblemSet> mergeIdeResults(@NotNull Map<UpdateInfo, Map<String, ProblemSet>> idesResults) {
-    Map<UpdateInfo, ProblemSet> result = new HashMap<UpdateInfo, ProblemSet>();
+    Map<UpdateInfo, ProblemSet> result = new HashMap<>();
 
     //update --> (idea --> problems) ===> (update --> merged problems)
     for (Map.Entry<UpdateInfo, Map<String, ProblemSet>> entry : idesResults.entrySet()) {
@@ -299,65 +313,6 @@ public class CheckPluginCommand extends VerifierCommand {
     ProblemUtils.savePluginCheckResult(file, problemsMap, updateInfo);
   }
 
-
-
-  /**
-   * @return problems of plugin against specified IDEA
-   */
-  @NotNull
-  private ProblemSet verifyPlugin(@NotNull Ide ide,
-                                  @NotNull Jdk jdk,
-                                  @Nullable Resolver externalClassPath,
-                                  @NotNull Plugin plugin,
-                                  @NotNull PluginVerifierOptions options,
-                                  @NotNull TeamCityLog log) throws IOException {
-
-    String message = "Verifying " + plugin.getPluginId() + ":" + plugin.getPluginVersion() + " against " + ide.getVersion() + "... ";
-    System.out.print(message);
-    log.message(message);
-
-    VerificationContextImpl ctx = new VerificationContextImpl(plugin, ide, jdk, externalClassPath, options);
-
-    TeamCityLog.Block block = log.blockOpen(plugin.getPluginId());
-
-    try {
-
-      Verifiers.processAllVerifiers(ctx);
-
-      ProblemSet problemSet = ctx.getProblemSet();
-
-      printProblemsOnStdout(problemSet);
-
-      //for test only purposes
-      myLastProblemSet = problemSet;
-
-      return problemSet;
-
-    } finally {
-      block.close();
-    }
-  }
-
-  private void printProblemsOnStdout(ProblemSet problemSet) {
-    System.out.println(problemSet.isEmpty() ? "is OK" : " has " + problemSet.count() + " errors");
-    problemSet.printProblems(System.out, "");
-
-    Set<Problem> allProblems = problemSet.getAllProblems();
-
-    for (Problem problem : allProblems) {
-      StringBuilder description = new StringBuilder(problem.getDescription());
-      Set<ProblemLocation> locations = problemSet.getLocations(problem);
-      if (!locations.isEmpty()) {
-        description.append(" at ").append(locations.iterator().next());
-        int remaining = locations.size() - 1;
-        if (remaining > 0) {
-          description.append(" and ").append(remaining).append(" more location");
-          if (remaining > 1) description.append("s");
-        }
-      }
-      System.err.println(description);
-    }
-  }
 
   private void verifyIdeaDirectory(@NotNull File ideaDirectory) {
     if (!ideaDirectory.exists()) {
