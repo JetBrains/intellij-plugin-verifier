@@ -21,15 +21,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Sergey Patrikeev
  */
 public class IdeManagerImpl extends IdeManager {
-
-  private static final Pattern BUILD_NUMBER_PATTERN = Pattern.compile("([^\\.]+\\.\\d+)\\.\\d+");
 
   @NotNull
   private static IdeVersion readBuildNumber(@NotNull File versionFile) throws IOException {
@@ -37,11 +33,6 @@ public class IdeManagerImpl extends IdeManager {
       throw new IllegalArgumentException(versionFile + " is not found");
     }
     String buildNumberString = Files.toString(versionFile, Charset.defaultCharset()).trim();
-    Matcher matcher = BUILD_NUMBER_PATTERN.matcher(buildNumberString);
-    if (matcher.matches()) {
-      //IU-144.1532.23 -->> IU-144.1532 (without build number)
-      return IdeVersion.createIdeVersion(matcher.group(1));
-    }
     return IdeVersion.createIdeVersion(buildNumberString);
   }
 
