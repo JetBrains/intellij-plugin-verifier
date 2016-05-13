@@ -11,9 +11,9 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="uploader_main" />
     <orderEntry type="module" module-name="verifier-problems_main" />
-    <orderEntry type="module" module-name="common-utils_main" />
     <orderEntry type="module" module-name="repository_main" />
-    <orderEntry type="library" name="Gradle: org.jetbrains.intellij.plugins:intellij-plugin-structure:1.16" level="project" />
+    <orderEntry type="module" module-name="common-utils_main" />
+    <orderEntry type="library" name="Gradle: org.jetbrains.intellij.plugins:intellij-plugin-structure:1.17" level="project" />
     <orderEntry type="library" name="Gradle: com.intellij:annotations:12.0" level="project" />
     <orderEntry type="library" name="Gradle: org.ow2.asm:asm-all:5.0.4" level="project" />
     <orderEntry type="library" name="Gradle: commons-io:commons-io:2.3" level="project" />
