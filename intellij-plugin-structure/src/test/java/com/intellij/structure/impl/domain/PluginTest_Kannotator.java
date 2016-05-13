@@ -28,7 +28,7 @@ public class PluginTest_Kannotator {
     File pluginFile = TestUtils.downloadPlugin(TestUtils.KANNOTATOR, "kannotator.zip");
     Plugin plugin = PluginManager.getInstance().createPlugin(pluginFile);
 
-    Resolver pluginResolver = Resolver.createCacheResolver(plugin.getPluginResolver());
+    Resolver pluginResolver = Resolver.createPluginResolver(plugin);
 
     List<Exception> exceptions = new ArrayList<Exception>();
     Set<String> brokenClasses = new HashSet<String>();
@@ -43,6 +43,8 @@ public class PluginTest_Kannotator {
         exceptions.add(e);
       }
     }
+
+    pluginResolver.close();
 
     System.out.println(brokenClasses);
     assertTrue(brokenClasses.contains("checkers/regex/RegexUtil"));

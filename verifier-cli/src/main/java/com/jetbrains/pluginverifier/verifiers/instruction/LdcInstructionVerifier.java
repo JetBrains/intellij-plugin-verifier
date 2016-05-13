@@ -24,5 +24,7 @@ public class LdcInstructionVerifier implements InstructionVerifier {
     if (className == null || VerifierUtil.classExistsOrExternal(ctx, resolver, className)) return;
 
     ctx.registerProblem(new ClassNotFoundProblem(className), ProblemLocation.fromMethod(clazz.name, method));
+
+    //TODO: process method handle Type: org.objectweb.asm.Type.METHOD
   }
 }

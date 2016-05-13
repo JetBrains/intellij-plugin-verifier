@@ -1,12 +1,12 @@
 package com.intellij.structure.domain;
 
 import com.google.common.collect.Multimap;
-import com.intellij.structure.resolvers.Resolver;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,9 +42,6 @@ public interface Plugin {
   @NotNull
   Set<String> getDefinedModules();
 
-  @NotNull
-  Resolver getPluginResolver();
-
   @Nullable
   String getDescription();
 
@@ -74,5 +71,8 @@ public interface Plugin {
 
   @NotNull
   Document getUnderlyingDocument();
+
+  @NotNull
+  File getPluginFile();
 
 }

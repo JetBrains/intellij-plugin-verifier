@@ -1,4 +1,6 @@
-package com.jetbrains.pluginverifier.problems;
+package com.jetbrains.pluginverifier.problems.statics;
+
+import com.jetbrains.pluginverifier.problems.Problem;
 
 import javax.xml.bind.annotation.XmlRootElement;
 

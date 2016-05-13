@@ -4,8 +4,14 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.intellij.structure.domain.*;
+import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.*;
+import com.jetbrains.pluginverifier.problems.fields.ChangeFinalFieldProblem;
+import com.jetbrains.pluginverifier.problems.statics.InstanceAccessOfStaticFieldProblem;
+import com.jetbrains.pluginverifier.problems.statics.InvokeStaticOnInstanceMethodProblem;
+import com.jetbrains.pluginverifier.problems.statics.InvokeVirtualOnStaticMethodProblem;
+import com.jetbrains.pluginverifier.problems.statics.StaticAccessOfInstanceFieldProblem;
 import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.verifiers.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.verifiers.VerificationContextImpl;
@@ -14,7 +20,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -51,10 +56,18 @@ public class VerifierTest {
           .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenInvocation()V"))
           .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromClass("mock/plugin/ParentDoesntExist"))
           .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/ParentDoesntExist", "<init>()V"))
+          .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/arrays/ANewArrayInsn", "foo(Ljava/lang/Object;)V"))
           .put(new ClassNotFoundProblem("non/existing/DeletedClass"), ProblemLocation.fromMethod("mock/plugin/inheritance/PluginClass", "<init>()V"))
           .put(new ClassNotFoundProblem("non/existing/DeletedClass"), ProblemLocation.fromClass("mock/plugin/inheritance/PluginClass"))
 
           .put(new MethodNotFoundProblem("com/intellij/openapi/actionSystem/AnAction#nonExistingMethod()V"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenNonFoundMethod()V"))
+
+          .put(new AbstractClassInstantiationProblem("misc/BecomeAbstract"), ProblemLocation.fromMethod("mock/plugin/news/NewProblems", "abstractClass()V"))
+          .put(new InterfaceInstantiationProblem("misc/BecomeInterface"), ProblemLocation.fromMethod("mock/plugin/news/NewProblems", "newInterface()V"))
+          .put(new MethodNotFoundProblem("misc/BecomeInterface#<init>()V"), ProblemLocation.fromMethod("mock/plugin/news/NewProblems", "newInterface()V"))
+
+          //lambda problems
+          .put(new MethodNotFoundProblem("invocation/InvocationProblems#deleted()V"), ProblemLocation.fromMethod("mock/plugin/lambda/LambdaProblems", "invokeDeletedFromLambda()V"))
 
           .put(new MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent#getState()Ljava/lang/Object;"), ProblemLocation.fromClass("mock/plugin/NotImplementedProblem"))
           .put(new MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent#loadState(Ljava/lang/Object;)V"), ProblemLocation.fromClass("mock/plugin/NotImplementedProblem"))
@@ -64,13 +77,24 @@ public class VerifierTest {
 
           .put(new OverridingFinalMethodProblem("com/intellij/openapi/actionSystem/AnAction#isEnabledInModalContext()Z"), ProblemLocation.fromMethod("mock/plugin/OverrideFinalMethodProblem", "isEnabledInModalContext()Z"))
 
-          .put(new IllegalMethodAccessProblem("com/intellij/openapi/diagnostic/LogUtil#<init>()V", IllegalMethodAccessProblem.MethodAccess.PRIVATE), ProblemLocation.fromMethod("mock/plugin/AccessChangedProblem", "foo()V"))
+          .put(new IllegalMethodAccessProblem("com/intellij/openapi/diagnostic/LogUtil#<init>()V", AccessType.PRIVATE), ProblemLocation.fromMethod("mock/plugin/AccessChangedProblem", "foo()V"))
 
           .put(new InvokeVirtualOnStaticMethodProblem("com/intellij/lang/SmartEnterProcessor#commit()V"), ProblemLocation.fromMethod("mock/plugin/invokeVirtualOnStatic/SmartEnterProcessorUser", "main()V"))
           .put(new InvokeStaticOnInstanceMethodProblem("invocation/InvocationProblems#wasStatic()V"), ProblemLocation.fromMethod("mock/plugin/invokeStaticOnInstance/InvocationProblemsUser", "foo()V"))
 
           .put(new MissingDependencyProblem("org.some.company.plugin", "DevKit", "Plugin org.some.company.plugin depends on the other plugin DevKit which has not a compatible build with IU-145.500"), ProblemLocation.fromPlugin("org.some.company.plugin"))
 
+          //field problems
+          .put(new FieldNotFoundProblem("fields/FieldsContainer#deletedField#I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessDeletedField()V"))
+          .put(new IllegalFieldAccessProblem("fields/FieldsContainer#privateField#I", AccessType.PRIVATE), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessPrivateField()V"))
+          .put(new IllegalFieldAccessProblem("fields/otherPackage/OtherFieldsContainer#protectedField#I", AccessType.PROTECTED), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessProtectedField()V"))
+          .put(new IllegalFieldAccessProblem("fields/otherPackage/OtherFieldsContainer#packageField#I", AccessType.PACKAGE_PRIVATE), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessPackageField()V"))
+
+          .put(new InstanceAccessOfStaticFieldProblem("fields/FieldsContainer#staticField#I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "instanceAccessOnStatic()V"))
+          .put(new StaticAccessOfInstanceFieldProblem("fields/FieldsContainer#instanceField#I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "staticAccessOnInstance()V"))
+          .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessUnknownClass()V"))
+          .put(new ChangeFinalFieldProblem("fields/FieldsContainer#finalField#I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "setOnFinalFieldFromNotInitMethod()V"))
+          .put(new ChangeFinalFieldProblem("fields/FieldsContainer#staticFinalField#I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "setOnStaticFinalFieldFromNotClinitMethod()V"))
           .build();
 
   private final ImmutableMultimap<Problem, ProblemLocation> RUBY_ACTUAL_PROBLEMS =
@@ -79,10 +103,6 @@ public class VerifierTest {
           .put(new ClassNotFoundProblem("com/intellij/util/ui/ReloadableComboBoxPanel$DataProvider"), ProblemLocation.fromClass("org/jetbrains/plugins/ruby/rails/facet/ui/wizard/ui/tabs/RailsAppSampleProvider"))
           .build();
 
-
-  private Ide myIde;
-  private Plugin myPlugin;
-  private Jdk myJavaRuntime;
 
   private static void testFoundProblems(Map<Problem, Set<ProblemLocation>> foundProblems, Multimap<Problem, ProblemLocation> actualProblems) throws Exception {
 
@@ -97,7 +117,15 @@ public class VerifierTest {
       Problem problem = entry.getKey();
       ProblemLocation location = entry.getValue();
       Assert.assertTrue("problem " + problem + " should be found, but it isn't", foundProblems.containsKey(problem));
-      Assert.assertTrue("problem " + problem + " should be found in the following location " + location, foundProblems.get(problem).contains(location));
+      try {
+        boolean contains = foundProblems.get(problem).contains(location);
+        if (!contains) {
+          System.out.println("ax");
+        }
+        Assert.assertTrue("problem " + problem + " should be found in the following location " + location + " but it is found in " + foundProblems.get(problem), contains);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
       redundantProblems.remove(problem, location);
     }
 
@@ -112,17 +140,6 @@ public class VerifierTest {
       }
       Assert.fail("Found redundant problems which shouldn't be found:\n" + builder.toString());
     }
-
-  }
-
-  @Before
-  public void setUp() throws Exception {
-    String jdkPath = System.getenv("JAVA_HOME");
-    if (jdkPath == null) {
-      jdkPath = "/usr/lib/jvm/java-6-oracle";
-    }
-    myJavaRuntime = Jdk.createJdk(new File(jdkPath));
-
 
   }
 
@@ -172,19 +189,32 @@ public class VerifierTest {
   }
 
   private void testFoundProblems(File ideaFile, File pluginFile, ImmutableMultimap<Problem, ProblemLocation> actualProblems, boolean dummyIdeVersion) throws Exception {
+    Ide ide;
     if (dummyIdeVersion) {
-      myIde = IdeManager.getInstance().createIde(ideaFile, DUMMY_IDE_VERSION);
+      ide = IdeManager.getInstance().createIde(ideaFile, DUMMY_IDE_VERSION);
     } else {
-      myIde = IdeManager.getInstance().createIde(ideaFile);
+      ide = IdeManager.getInstance().createIde(ideaFile);
     }
 
-    myPlugin = PluginManager.getInstance().createPlugin(pluginFile);
+    Plugin plugin = PluginManager.getInstance().createPlugin(pluginFile);
 
     final CommandLine commandLine = new GnuParser().parse(Util.CMD_OPTIONS, new String[]{});
 
-    VerificationContextImpl ctx = new VerificationContextImpl(myPlugin, myIde, myJavaRuntime, null, PluginVerifierOptions.parseOpts(commandLine));
-    Verifiers.processAllVerifiers(ctx);
 
-    testFoundProblems(ctx.getProblemSet().asMap(), actualProblems);
+    String jdkPath = System.getenv("JAVA_HOME");
+    if (jdkPath == null) {
+      jdkPath = "/usr/lib/jvm/java-6-oracle";
+    }
+
+    try (
+        Resolver ideResolver = Resolver.createIdeResolver(ide);
+        Resolver jdkResolver = Resolver.createJdkResolver(new File(jdkPath))
+    ) {
+      VerificationContextImpl ctx = new VerificationContextImpl(plugin, ide, ideResolver, jdkResolver, null, PluginVerifierOptions.parseOpts(commandLine));
+      Verifiers.processAllVerifiers(ctx);
+
+      testFoundProblems(ctx.getProblemSet().asMap(), actualProblems);
+    }
+
   }
 }

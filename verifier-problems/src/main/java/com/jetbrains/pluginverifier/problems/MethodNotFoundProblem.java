@@ -8,22 +8,24 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class MethodNotFoundProblem extends Problem {
 
-  private String myMethodDescriptor;
+  //TODO: check serialization of this field in previous check results
+
+  private String myMethod;
 
   public MethodNotFoundProblem() {
 
   }
 
-  public MethodNotFoundProblem(@NotNull String methodDescriptor) {
-    myMethodDescriptor = methodDescriptor;
+  public MethodNotFoundProblem(@NotNull String method) {
+    myMethod = method;
   }
 
-  public String getMethodDescriptor() {
-    return myMethodDescriptor;
+  public String getMethod() {
+    return myMethod;
   }
 
-  public void setMethodDescriptor(String methodDescriptor) {
-    myMethodDescriptor = methodDescriptor;
+  public void setMethod(String method) {
+    myMethod = method;
   }
 
   @Override
@@ -32,7 +34,7 @@ public class MethodNotFoundProblem extends Problem {
   }
 
   public String getDescription() {
-    return getDescriptionPrefix() + " " + MessageUtils.convertMethodDescr(myMethodDescriptor);
+    return getDescriptionPrefix() + " " + MessageUtils.convertMethodDescr(myMethod);
   }
 
   @Override
@@ -42,11 +44,11 @@ public class MethodNotFoundProblem extends Problem {
 
     MethodNotFoundProblem problem = (MethodNotFoundProblem)o;
 
-    return !(myMethodDescriptor != null ? !myMethodDescriptor.equals(problem.myMethodDescriptor) : problem.myMethodDescriptor != null);
+    return !(myMethod != null ? !myMethod.equals(problem.myMethod) : problem.myMethod != null);
   }
 
   @Override
   public int hashCode() {
-    return 130807 + (myMethodDescriptor != null ? myMethodDescriptor.hashCode() : 0);
+    return 130807 + (myMethod != null ? myMethod.hashCode() : 0);
   }
 }

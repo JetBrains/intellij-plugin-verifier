@@ -1,4 +1,6 @@
-package com.jetbrains.pluginverifier.problems;
+package com.jetbrains.pluginverifier.problems.statics;
+
+import com.jetbrains.pluginverifier.problems.Problem;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -6,20 +8,20 @@ import javax.xml.bind.annotation.XmlRootElement;
  * Created by Sergey Patrikeev
  */
 @XmlRootElement
-public class InvokeSpecialOnStaticMethodProblem extends Problem {
+public class InvokeInterfaceOnStaticMethodProblem extends Problem {
 
   private String myMethod;
 
-  public InvokeSpecialOnStaticMethodProblem() {
+  public InvokeInterfaceOnStaticMethodProblem() {
   }
 
-  public InvokeSpecialOnStaticMethodProblem(String method) {
+  public InvokeInterfaceOnStaticMethodProblem(String method) {
     myMethod = method;
   }
 
   @Override
   public String getDescriptionPrefix() {
-    return "attempt to perform 'invokespecial' on static method";
+    return "attempt to perform 'invokeinterface' on static method";
   }
 
   public String getMethod() {
@@ -39,7 +41,7 @@ public class InvokeSpecialOnStaticMethodProblem extends Problem {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    InvokeSpecialOnStaticMethodProblem that = (InvokeSpecialOnStaticMethodProblem) o;
+    InvokeInterfaceOnStaticMethodProblem that = (InvokeInterfaceOnStaticMethodProblem) o;
 
     return myMethod != null ? myMethod.equals(that.myMethod) : that.myMethod == null;
 

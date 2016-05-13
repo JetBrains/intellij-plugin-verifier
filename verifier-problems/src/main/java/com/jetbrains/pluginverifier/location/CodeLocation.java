@@ -27,6 +27,9 @@ public class CodeLocation extends ProblemLocation {
 
   CodeLocation(@NotNull String className, @Nullable String methodDescr, @Nullable String fieldName) {
     FailUtil.assertTrue(methodDescr == null || !methodDescr.contains("#"), "Message descriptor " + methodDescr + " is malformed");
+    if (className.contains(".")) {
+      throw new IllegalArgumentException("Class name should be in binary form");
+    }
     this.className = className;
     this.methodDescr = methodDescr;
     this.fieldName = fieldName;

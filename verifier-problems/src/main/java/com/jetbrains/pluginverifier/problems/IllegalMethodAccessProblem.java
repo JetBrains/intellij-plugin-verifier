@@ -11,12 +11,12 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class IllegalMethodAccessProblem extends Problem {
 
   private String myMethod;
-  private MethodAccess myMethodAccess;
+  private AccessType myMethodAccess;
 
   public IllegalMethodAccessProblem() {
   }
 
-  public IllegalMethodAccessProblem(@NotNull String method, @NotNull MethodAccess methodAccess) {
+  public IllegalMethodAccessProblem(@NotNull String method, @NotNull AccessType methodAccess) {
     myMethod = method;
     myMethodAccess = methodAccess;
   }
@@ -38,11 +38,11 @@ public class IllegalMethodAccessProblem extends Problem {
     myMethod = method;
   }
 
-  public MethodAccess getMethodAccess() {
+  public AccessType getMethodAccess() {
     return myMethodAccess;
   }
 
-  public void setMethodAccess(MethodAccess methodAccess) {
+  public void setMethodAccess(AccessType methodAccess) {
     myMethodAccess = methodAccess;
   }
 
@@ -67,21 +67,4 @@ public class IllegalMethodAccessProblem extends Problem {
     return result;
   }
 
-  public enum MethodAccess {
-    PUBLIC("public"),
-    PROTECTED("protected"),
-    PACKAGE_PRIVATE("package-private"),
-    PRIVATE("private");
-
-    private final String myDescription;
-
-    MethodAccess(@NotNull String description) {
-      myDescription = description;
-    }
-
-    @NotNull
-    public String getDescription() {
-      return myDescription;
-    }
-  }
 }

@@ -6,22 +6,19 @@ import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Dennis.Ushakov
  */
 public class ContainerResolver extends Resolver {
 
-  private final List<Resolver> myResolvers = new ArrayList<Resolver>();
+  private final Map<String, Resolver> myClassToResolver = new HashMap<String, Resolver>();
   private final String myPresentableName;
 
   private ContainerResolver(@NotNull String presentableName, @NotNull List<Resolver> resolvers) {
     myPresentableName = presentableName;
-    myResolvers.addAll(resolvers);
+    fillClassMap(resolvers);
   }
 
   @NotNull
@@ -39,17 +36,26 @@ public class ContainerResolver extends Resolver {
     if (nonEmpty == null) {
       return EmptyResolver.INSTANCE;
     }
+    if (resolvers.size() == 1) {
+      return nonEmpty;
+    }
     return nonEmpty;
+  }
+
+  private void fillClassMap(@NotNull List<Resolver> resolvers) {
+    //the class will be mapped to the first containing resolver
+    for (int i = resolvers.size() - 1; i >= 0; i--) {
+      Resolver resolver = resolvers.get(i);
+      for (String aClass : resolver.getAllClasses()) {
+        myClassToResolver.put(aClass, resolver);
+      }
+    }
   }
 
   @NotNull
   @Override
   public Set<String> getAllClasses() {
-    Set<String> result = new HashSet<String>();
-    for (Resolver pool : myResolvers) {
-      result.addAll(pool.getAllClasses());
-    }
-    return result;
+    return Collections.unmodifiableSet(myClassToResolver.keySet());
   }
 
   @Override
@@ -59,35 +65,28 @@ public class ContainerResolver extends Resolver {
 
   @Override
   public boolean isEmpty() {
-    for (Resolver pool : myResolvers) {
-      if (!pool.isEmpty()) {
-        return false;
-      }
-    }
-    return true;
+    return myClassToResolver.isEmpty();
   }
 
   @Override
   @Nullable
   public ClassNode findClass(@NotNull String className) throws IOException {
-    for (Resolver pool : myResolvers) {
-      ClassNode node = pool.findClass(className);
-      if (node != null) {
-        return node;
-      }
+    if (!myClassToResolver.containsKey(className)) {
+      return null;
     }
-    return null;
+    return myClassToResolver.get(className).findClass(className);
   }
 
   @Override
   @Nullable
   public Resolver getClassLocation(@NotNull String className) {
-    for (Resolver pool : myResolvers) {
-      Resolver inner = pool.getClassLocation(className);
-      if (inner != null) {
-        return inner;
-      }
+    return myClassToResolver.get(className);
+  }
+
+  @Override
+  public void close() {
+    for (Resolver resolver : myClassToResolver.values()) {
+      resolver.close();
     }
-    return null;
   }
 }

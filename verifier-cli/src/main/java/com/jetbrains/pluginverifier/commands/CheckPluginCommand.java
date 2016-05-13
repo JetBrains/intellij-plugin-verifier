@@ -300,6 +300,7 @@ public class CheckPluginCommand extends VerifierCommand {
   }
 
 
+
   /**
    * @return problems of plugin against specified IDEA
    */

@@ -103,7 +103,7 @@ class CustomRepository implements PluginRepository {
 
       Plugin ideaPlugin;
       try {
-        ideaPlugin = PluginCache.getInstance().createPlugin(update, false);
+        ideaPlugin = PluginCache.getInstance().createPlugin(update);
       } catch (IncorrectPluginException e) {
         //TODO: add log
         continue;

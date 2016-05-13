@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers;
 
 import com.intellij.structure.domain.Ide;
-import com.intellij.structure.domain.Jdk;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
@@ -19,17 +18,20 @@ public class VerificationContextImpl implements VerificationContext {
   private final Plugin myPlugin;
   private final PluginVerifierOptions myVerifierOptions;
   private final Ide myIde;
-  private final Jdk myJdk;
+  private final Resolver myJdkResolver;
   private final Resolver myExternalClassPath;
+  private final Resolver myIdeResolver;
 
-  public VerificationContextImpl(@NotNull Plugin plugin, @NotNull Ide ide, @NotNull Jdk jdk, @Nullable Resolver externalClassPath, @NotNull PluginVerifierOptions verifierOptions) {
+  public VerificationContextImpl(@NotNull Plugin plugin, @NotNull Ide ide, @NotNull Resolver ideResolver, @NotNull Resolver jdkResolver, @Nullable Resolver externalClassPath, @NotNull PluginVerifierOptions verifierOptions) {
     myPlugin = plugin;
+    myIdeResolver = ideResolver;
     myVerifierOptions = verifierOptions;
     myIde = ide;
-    myJdk = jdk;
+    myJdkResolver = jdkResolver;
     myExternalClassPath = externalClassPath;
   }
 
+  @NotNull
   public PluginVerifierOptions getVerifierOptions() {
     return myVerifierOptions;
   }
@@ -41,6 +43,7 @@ public class VerificationContextImpl implements VerificationContext {
     }
   }
 
+  @NotNull
   @Override
   public Plugin getPlugin() {
     return myPlugin;
@@ -56,8 +59,16 @@ public class VerificationContextImpl implements VerificationContext {
     return myIde;
   }
 
-  public Jdk getJdk() {
-    return myJdk;
+  @NotNull
+  @Override
+  public Resolver getIdeResolver() {
+    return myIdeResolver;
+  }
+
+  @NotNull
+  @Override
+  public Resolver getJdkResolver() {
+    return myJdkResolver;
   }
 
   @Override

@@ -15,12 +15,11 @@ import java.util.*;
  */
 public class CompileOutputResolver extends Resolver {
 
-  private final String moniker;
-  private final Map<String, PackageDescriptor> packageMap = new HashMap<String, PackageDescriptor>();
-  private final Map<String, ClassNode> classesMap = new HashMap<String, ClassNode>();
+  private final String myPresentableName;
+  private final Map<String, PackageDescriptor> myPackageMap = new HashMap<String, PackageDescriptor>();
 
   public CompileOutputResolver(@NotNull File dir) {
-    moniker = dir.getPath();
+    myPresentableName = dir.getPath();
 
     List<DirDescriptor> dirs = new ArrayList<DirDescriptor>();
 
@@ -33,52 +32,43 @@ public class CompileOutputResolver extends Resolver {
       }
     }
 
-    packageMap.put("", new PackageDescriptor("", dirs));
+    myPackageMap.put("", new PackageDescriptor("", dirs));
   }
 
   @Nullable
   @Override
   public ClassNode findClass(@NotNull String className) {
-    ClassNode res = classesMap.get(className);
+    int dotIdx = className.lastIndexOf('/');
+    String packageName = dotIdx == -1 ? "" : className.substring(0, dotIdx);
+    String simpleName = className.substring(dotIdx + 1);
 
-    if (res == null) {
-      if (classesMap.containsKey(className)) return null;
+    PackageDescriptor packageDescriptor = getPackageDescriptor(packageName);
 
-      int dotIdx = className.lastIndexOf('/');
-      String packageName = dotIdx == -1 ? "" : className.substring(0, dotIdx);
-      String simpleName = className.substring(dotIdx + 1);
+    String classFileName = simpleName + ".class";
 
-      PackageDescriptor packageDescriptor = getPackageDescriptor(packageName);
-
-      String classFileName = simpleName + ".class";
-
-      for (DirDescriptor descriptor : packageDescriptor.getDirectories()) {
-        File classFile = descriptor.findChild(classFileName);
-        if (classFile != null) {
+    for (DirDescriptor descriptor : packageDescriptor.getDirectories()) {
+      File classFile = descriptor.findChild(classFileName);
+      if (classFile != null) {
+        try {
+          InputStream in = null;
           try {
-            InputStream in = null;
-            try {
-              in = new BufferedInputStream(new FileInputStream(classFile));
-              res = AsmUtil.readClassNode(classFileName, in);
-              break;
-            } finally {
-              IOUtils.closeQuietly(in);
-            }
-          } catch (IOException ignored) {
+            in = new BufferedInputStream(new FileInputStream(classFile));
+            return AsmUtil.readClassNode(classFileName, in);
 
+          } finally {
+            IOUtils.closeQuietly(in);
           }
+        } catch (IOException ignored) {
         }
       }
-
-      classesMap.put(className, res);
     }
+    return null;
 
-    return res;
   }
 
   @NotNull
   private PackageDescriptor getPackageDescriptor(String packageName) {
-    PackageDescriptor res = packageMap.get(packageName);
+    PackageDescriptor res = myPackageMap.get(packageName);
     if (res == null) {
       int dotIdx = packageName.lastIndexOf('/');
       String parentPackageName = dotIdx == -1 ? "" : packageName.substring(0, dotIdx);
@@ -96,7 +86,7 @@ public class CompileOutputResolver extends Resolver {
       }
 
       res = new PackageDescriptor(packageName, dirs);
-      packageMap.put(packageName, res);
+      myPackageMap.put(packageName, res);
     }
 
     return res;
@@ -120,7 +110,7 @@ public class CompileOutputResolver extends Resolver {
 
   @Override
   public String toString() {
-    return moniker;
+    return myPresentableName;
   }
 
   @Override

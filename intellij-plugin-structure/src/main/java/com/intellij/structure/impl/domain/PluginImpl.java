@@ -14,7 +14,6 @@ import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.impl.utils.xml.XIncludeException;
-import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.*;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 
+import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
@@ -43,40 +43,25 @@ class PluginImpl implements Plugin {
   private final Map<String, Plugin> myOptionalDescriptors = new HashMap<String, Plugin>();
   private final Set<String> myReferencedClasses = new HashSet<String>();
   private final Multimap<String, Element> myExtensions = ArrayListMultimap.create();
-  @NotNull
-  private Document myUnderlyingDocument = EMPTY_DOCUMENT;
-  @NotNull
-  private Resolver myPluginResolver = Resolver.getEmptyResolver();
-  @NotNull
-  private String myFileName = "(unknown)";
-  @Nullable
-  private byte[] myLogoContent;
-  @Nullable
-  private String myLogoUrl;
-  @Nullable
-  private String myPluginName;
-  @Nullable
-  private String myPluginVersion;
-  @Nullable
-  private String myPluginId;
-  @Nullable
-  private String myPluginVendor;
-  @Nullable
-  private String myVendorEmail;
-  @Nullable
-  private String myVendorUrl;
-  @Nullable
-  private String myDescription;
-  @Nullable
-  private String myUrl;
-  @Nullable
-  private String myNotes;
-  @Nullable
-  private IdeVersion mySinceBuild;
-  @Nullable
-  private IdeVersion myUntilBuild;
+  private File myPluginFile;
+  @NotNull private Document myUnderlyingDocument = EMPTY_DOCUMENT;
+  @NotNull private String myFileName = "(unknown)";
+  @Nullable private byte[] myLogoContent;
+  @Nullable private String myLogoUrl;
+  @Nullable private String myPluginName;
+  @Nullable private String myPluginVersion;
+  @Nullable private String myPluginId;
+  @Nullable private String myPluginVendor;
+  @Nullable private String myVendorEmail;
+  @Nullable private String myVendorUrl;
+  @Nullable private String myDescription;
+  @Nullable private String myUrl;
+  @Nullable private String myNotes;
+  @Nullable private IdeVersion mySinceBuild;
+  @Nullable private IdeVersion myUntilBuild;
 
-  PluginImpl() throws IncorrectPluginException {
+  PluginImpl(@NotNull File pluginFile) throws IncorrectPluginException {
+    myPluginFile = pluginFile;
   }
 
   private static String extractEPName(final Element extensionElement) {
@@ -397,12 +382,6 @@ class PluginImpl implements Plugin {
     }
   }
 
-  @Override
-  @NotNull
-  public Resolver getPluginResolver() {
-    return myPluginResolver;
-  }
-
   @Nullable
   @Override
   public String getDescription() {
@@ -475,6 +454,12 @@ class PluginImpl implements Plugin {
     return myUnderlyingDocument.clone();
   }
 
+  @NotNull
+  @Override
+  public File getPluginFile() {
+    return myPluginFile;
+  }
+
   void readExternalFromIdeSources(@NotNull URL url, @NotNull Validator validator, @NotNull JDOMXIncluder.PathResolver pathResolver) throws IncorrectPluginException {
     Document document;
     try {
@@ -517,10 +502,6 @@ class PluginImpl implements Plugin {
 
   private void mergeOptionalConfig(@NotNull PluginImpl optDescriptor) {
     myExtensions.putAll(optDescriptor.getExtensions());
-  }
-
-  void setResolver(@NotNull Resolver resolver) {
-    myPluginResolver = resolver;
   }
 
   @Override

@@ -39,8 +39,8 @@
       <module name="mock-plugin2_test" target="1.6" />
       <module name="mock-plugin3_main" target="1.6" />
       <module name="mock-plugin3_test" target="1.6" />
-      <module name="mock-plugin_main" target="1.6" />
-      <module name="mock-plugin_test" target="1.6" />
+      <module name="mock-plugin_main" target="1.8" />
+      <module name="mock-plugin_test" target="1.8" />
       <module name="mock_idea_main" target="1.6" />
       <module name="mock_idea_test" target="1.6" />
       <module name="mock_plugin1_main" target="1.6" />
