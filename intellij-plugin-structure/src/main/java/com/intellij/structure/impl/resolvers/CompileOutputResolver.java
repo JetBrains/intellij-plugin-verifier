@@ -2,6 +2,7 @@ package com.intellij.structure.impl.resolvers;
 
 import com.intellij.structure.impl.utils.AsmUtil;
 import com.intellij.structure.resolvers.Resolver;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,8 +18,9 @@ public class CompileOutputResolver extends Resolver {
 
   private final String myPresentableName;
   private final Map<String, PackageDescriptor> myPackageMap = new HashMap<String, PackageDescriptor>();
+  private final Set<String> myAllClasses = new HashSet<String>();
 
-  public CompileOutputResolver(@NotNull File dir) {
+  public CompileOutputResolver(@NotNull File dir) throws IOException {
     myPresentableName = dir.getPath();
 
     List<DirDescriptor> dirs = new ArrayList<DirDescriptor>();
@@ -30,6 +32,11 @@ public class CompileOutputResolver extends Resolver {
           dirs.add(new DirDescriptor(file));
         }
       }
+    }
+
+    for (File file : FileUtils.listFiles(dir, new String[]{"class"}, true)) {
+      ClassNode node = AsmUtil.readClassFromFile(file);
+      myAllClasses.add(node.name);
     }
 
     myPackageMap.put("", new PackageDescriptor("", dirs));
@@ -105,7 +112,7 @@ public class CompileOutputResolver extends Resolver {
   @NotNull
   @Override
   public Set<String> getAllClasses() {
-    throw new UnsupportedOperationException();
+    return Collections.unmodifiableSet(myAllClasses);
   }
 
   @Override

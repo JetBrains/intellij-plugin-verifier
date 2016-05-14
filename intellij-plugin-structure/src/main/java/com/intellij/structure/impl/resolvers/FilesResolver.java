@@ -1,17 +1,13 @@
 package com.intellij.structure.impl.resolvers;
 
-import com.google.common.io.Files;
 import com.intellij.structure.impl.utils.AsmUtil;
 import com.intellij.structure.resolvers.Resolver;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -26,21 +22,10 @@ public class FilesResolver extends Resolver {
     myPresentableName = presentableName;
     for (File classFile : classFiles) {
       if (classFile.getName().endsWith(".class")) {
-        ClassNode node = evaluateNode(classFile);
+        //TODO: rewrite without reading classes
+        ClassNode node = AsmUtil.readClassFromFile(classFile);
         myClass2File.put(node.name, classFile);
       }
-    }
-  }
-
-  @NotNull
-  private ClassNode evaluateNode(@NotNull File classFile) throws IOException {
-    InputStream is = null;
-    try {
-      is = FileUtils.openInputStream(classFile);
-      String className = Files.getNameWithoutExtension(classFile.getName());
-      return AsmUtil.readClassNode(className, is);
-    } finally {
-      IOUtils.closeQuietly(is);
     }
   }
 
@@ -50,7 +35,7 @@ public class FilesResolver extends Resolver {
     if (!myClass2File.containsKey(className)) {
       return null;
     }
-    return evaluateNode(myClass2File.get(className));
+    return AsmUtil.readClassFromFile(myClass2File.get(className));
   }
 
   @Nullable
