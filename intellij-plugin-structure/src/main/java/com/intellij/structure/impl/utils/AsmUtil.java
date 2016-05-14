@@ -1,9 +1,13 @@
 package com.intellij.structure.impl.utils;
 
+import com.google.common.io.Files;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -32,5 +36,17 @@ public class AsmUtil {
       message = e.getLocalizedMessage() != null ? e.getLocalizedMessage() : e.getClass().getName();
     }
     return message;
+  }
+
+  @NotNull
+  public static ClassNode readClassFromFile(@NotNull File classFile) throws IOException {
+    InputStream is = null;
+    try {
+      is = FileUtils.openInputStream(classFile);
+      String className = Files.getNameWithoutExtension(classFile.getName());
+      return readClassNode(className, is);
+    } finally {
+      IOUtils.closeQuietly(is);
+    }
   }
 }
