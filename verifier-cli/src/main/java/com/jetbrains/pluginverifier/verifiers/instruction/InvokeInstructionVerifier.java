@@ -7,7 +7,6 @@ import com.jetbrains.pluginverifier.problems.statics.InvokeInterfaceOnStaticMeth
 import com.jetbrains.pluginverifier.problems.statics.InvokeSpecialOnStaticMethodProblem;
 import com.jetbrains.pluginverifier.problems.statics.InvokeStaticOnInstanceMethodProblem;
 import com.jetbrains.pluginverifier.problems.statics.InvokeVirtualOnStaticMethodProblem;
-import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import com.jetbrains.pluginverifier.verifiers.VerificationContext;
 import com.jetbrains.pluginverifier.verifiers.util.ResolverUtil;
@@ -18,6 +17,8 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+
+import static com.jetbrains.pluginverifier.utils.LocationUtils.getMethodLocation;
 
 /**
  * TODO:
@@ -74,7 +75,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
         }
 
 
-        String calledMethod = LocationUtils.getMethodLocation(ownerClassName, invokedMethod.name, invokedMethod.desc);
+        String calledMethod = getMethodLocation(ownerClassName, invokedMethod.name, invokedMethod.desc);
         ctx.registerProblem(new MethodNotFoundProblem(calledMethod), ProblemLocation.fromMethod(clazz.name, method));
 
       } else {
@@ -94,13 +95,13 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
                                    @NotNull MethodNode method,
                                    @NotNull MethodInsnNode invokeInsn) {
     MethodNode actualMethod = actualLocation.getMethodNode();
-    String calledMethod = LocationUtils.getMethodLocation(actualLocation.getClassNode(), actualMethod);
     ProblemLocation location = ProblemLocation.fromMethod(clazz.name, method);
+    ClassNode classNode = actualLocation.getClassNode();
     if (invokeInsn.getOpcode() == Opcodes.INVOKEVIRTUAL) {
       if (VerifierUtil.isStatic(actualMethod)) {
         //attempt to invokevirtual on static method => IncompatibleClassChangeError at runtime
 
-        ctx.registerProblem(new InvokeVirtualOnStaticMethodProblem(calledMethod), location);
+        ctx.registerProblem(new InvokeVirtualOnStaticMethodProblem(getMethodLocation(classNode, actualMethod)), location);
       }
     }
 
@@ -108,23 +109,23 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       if (!VerifierUtil.isStatic(actualMethod)) {
         //attempt to invokestatic on an instance method => IncompatibleClassChangeError at runtime
 
-        ctx.registerProblem(new InvokeStaticOnInstanceMethodProblem(calledMethod), location);
+        ctx.registerProblem(new InvokeStaticOnInstanceMethodProblem(getMethodLocation(classNode, actualMethod)), location);
       }
     }
 
     if (invokeInsn.getOpcode() == Opcodes.INVOKEINTERFACE) {
       if (VerifierUtil.isStatic(actualMethod)) {
-        ctx.registerProblem(new InvokeInterfaceOnStaticMethodProblem(calledMethod), location);
+        ctx.registerProblem(new InvokeInterfaceOnStaticMethodProblem(getMethodLocation(classNode, actualMethod)), location);
       }
 
       if (VerifierUtil.isPrivate(actualMethod)) {
-        ctx.registerProblem(new InvokeInterfaceOnPrivateMethodProblem(calledMethod), location);
+        ctx.registerProblem(new InvokeInterfaceOnPrivateMethodProblem(getMethodLocation(classNode, actualMethod)), location);
       }
     }
 
     if (invokeInsn.getOpcode() == Opcodes.INVOKESPECIAL) {
       if (VerifierUtil.isStatic(actualMethod)) {
-        ctx.registerProblem(new InvokeSpecialOnStaticMethodProblem(calledMethod), location);
+        ctx.registerProblem(new InvokeSpecialOnStaticMethodProblem(getMethodLocation(classNode, actualMethod)), location);
       }
     }
 
@@ -159,7 +160,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
     }
 
     if (accessProblem != null) {
-      IllegalMethodAccessProblem problem = new IllegalMethodAccessProblem(LocationUtils.getMethodLocation(actualOwner.name, actualMethod), accessProblem);
+      IllegalMethodAccessProblem problem = new IllegalMethodAccessProblem(getMethodLocation(actualOwner.name, actualMethod), accessProblem);
       ctx.registerProblem(problem, ProblemLocation.fromMethod(verifiedClass.name, verifiedMethod));
     }
   }
