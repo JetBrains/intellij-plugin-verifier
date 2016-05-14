@@ -39,8 +39,7 @@ import java.util.regex.Pattern;
  */
 public class VerifierTest {
 
-  public static final IdeVersion DUMMY_IDE_VERSION = IdeVersion.createIdeVersion("IU-145.500");
-  private static final String IDEA_14_0_4 = TestData.IDEA_IC_14_0_4_ZIP;
+  private static final IdeVersion DUMMY_IDE_VERSION = IdeVersion.createIdeVersion("IU-145.500");
   private final ImmutableMultimap<Problem, ProblemLocation> MY_ACTUAL_PROBLEMS =
       ImmutableMultimap.<Problem, ProblemLocation>builder()
           .put(new ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromField("mock/plugin/FieldTypeNotFound", "myNonExistingClass"))
