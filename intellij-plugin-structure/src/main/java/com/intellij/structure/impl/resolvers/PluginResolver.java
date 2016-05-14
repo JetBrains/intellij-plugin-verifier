@@ -95,6 +95,11 @@ public class PluginResolver extends Resolver {
     return myResolver.isEmpty();
   }
 
+  @Override
+  public boolean containsClass(@NotNull String className) {
+    return myResolver.containsClass(className);
+  }
+
   @NotNull
   private Resolver loadClasses(@NotNull File file) {
     if (file.isDirectory()) {

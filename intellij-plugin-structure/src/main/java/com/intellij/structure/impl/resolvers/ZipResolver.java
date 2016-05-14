@@ -133,4 +133,9 @@ public class ZipResolver extends Resolver {
   public boolean isEmpty() {
     return myClassesCache.isEmpty();
   }
+
+  @Override
+  public boolean containsClass(@NotNull String className) {
+    return myClassesCache.containsKey(className);
+  }
 }

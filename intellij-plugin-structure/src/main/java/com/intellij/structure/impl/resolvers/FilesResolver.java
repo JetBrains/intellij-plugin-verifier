@@ -56,6 +56,11 @@ public class FilesResolver extends Resolver {
   }
 
   @Override
+  public boolean containsClass(@NotNull String className) {
+    return myClass2File.containsKey(className);
+  }
+
+  @Override
   public String toString() {
     return myPresentableName;
   }

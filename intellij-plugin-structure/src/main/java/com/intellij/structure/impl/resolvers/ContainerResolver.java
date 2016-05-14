@@ -69,6 +69,11 @@ public class ContainerResolver extends Resolver {
   }
 
   @Override
+  public boolean containsClass(@NotNull String className) {
+    return myClassToResolver.containsKey(className);
+  }
+
+  @Override
   @Nullable
   public ClassNode findClass(@NotNull String className) throws IOException {
     if (!myClassToResolver.containsKey(className)) {

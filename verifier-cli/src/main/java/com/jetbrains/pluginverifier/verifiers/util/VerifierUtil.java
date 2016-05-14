@@ -22,7 +22,7 @@ public class VerifierUtil {
     FailUtil.assertTrue(!className.startsWith("["), className);
     FailUtil.assertTrue(!className.endsWith(";"), className);
 
-    return ctx.getVerifierOptions().isExternalClass(className) || VerifierUtil.findClass(resolver, className, ctx) != null;
+    return ctx.getVerifierOptions().isExternalClass(className) || resolver.containsClass(className);
   }
 
   public static boolean classExistsOrExternal(VerificationContext ctx, @NotNull ClassNode potential, Resolver resolver, @NotNull String descr) {

@@ -62,6 +62,11 @@ public class JarFileResolver extends Resolver {
   }
 
   @Override
+  public boolean containsClass(@NotNull String className) {
+    return myClassesNames.contains(className);
+  }
+
+  @Override
   @Nullable
   public ClassNode findClass(@NotNull String className) throws IOException {
     if (!myClassesNames.contains(className)) {

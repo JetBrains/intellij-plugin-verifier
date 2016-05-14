@@ -152,6 +152,15 @@ public abstract class Resolver implements Closeable {
    */
   public abstract boolean isEmpty();
 
+  /**
+   * Returns true if {@code this} Resolver contains the given class. It may be faster
+   * than checking {@link #findClass(String)} is not null.
+   *
+   * @param className class name in <i>binary</i> form (see JVM specification)
+   * @return {@code true} if class is in Resolver, {@code false} otherwise
+   */
+  public abstract boolean containsClass(@NotNull String className);
+
   @Override
   public void close() {
     //doesn't throw an IOException

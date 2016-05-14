@@ -58,6 +58,11 @@ public class CacheResolver extends Resolver {
   }
 
   @Override
+  public boolean containsClass(@NotNull String className) {
+    return myDelegate.containsClass(className);
+  }
+
+  @Override
   public void close() {
     myDelegate.close();
   }

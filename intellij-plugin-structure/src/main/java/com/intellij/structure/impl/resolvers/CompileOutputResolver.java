@@ -125,6 +125,11 @@ public class CompileOutputResolver extends Resolver {
     return false;
   }
 
+  @Override
+  public boolean containsClass(@NotNull String className) {
+    return myAllClasses.contains(className);
+  }
+
   private static class PackageDescriptor {
     private final String packageName;
 

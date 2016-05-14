@@ -39,6 +39,11 @@ public class EmptyResolver extends Resolver {
   }
 
   @Override
+  public boolean containsClass(@NotNull String className) {
+    return false;
+  }
+
+  @Override
   public String toString() {
     return "EmptyResolver";
   }
