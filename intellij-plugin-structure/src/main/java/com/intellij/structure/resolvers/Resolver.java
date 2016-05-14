@@ -41,8 +41,12 @@ public abstract class Resolver implements Closeable {
 
   /**
    * Creates a resolver for the given Ide.
-   * <p>It consists of the .jar files under the <i>{ide.home}/lib</i> directory (not including the subdirectories of <i>lib</i> itself)</p>
+   * <p>If {@code ide} represents a binary IDE distribution the result consists of the .jar files under
+   * the <i>{ide.home}/lib</i> directory (not including the subdirectories of <i>lib</i> itself).</p>
+   * <p>If {@code ide} represents an IDE compile output the result consists of the class files under the build-directory
+   * (for Ultimate it is <i>{ide.home}/out/classes/production</i>)</p>
    *
+   * @param ide ide for which to create a resolver
    * @throws IOException if error occurs during attempt to read a class file or an Ide has an incorrect directories structure
    * @return resolver of classes for the given Ide
    */
