@@ -8,8 +8,8 @@ buildscript {
   }
 }
 
-def verifierVersion = '1.22'
-def intellijStructureVersion = '1.17'
+def verifierVersion = '1.23'
+def intellijStructureVersion = '1.18'
 
 
 configure(allprojects) {
