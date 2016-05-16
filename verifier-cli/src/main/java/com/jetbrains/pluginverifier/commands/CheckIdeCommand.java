@@ -34,6 +34,7 @@ import java.util.*;
  */
 public class CheckIdeCommand extends VerifierCommand {
 
+  public static final String NO_COMPATIBLE_UPDATE_VERSION = "no compatible update";
   /**
    * List of IntelliJ plugins which has defined module inside (e.g. plugin "org.jetbrains.plugins.ruby" has a module
    * "com.intellij.modules.ruby" inside)
@@ -104,7 +105,7 @@ public class CheckIdeCommand extends VerifierCommand {
       if (!hasCompatibleUpdate) {
         //try to find this update in the compatible updates of IDEA Community
 
-        UpdateInfo missingUpdate = new UpdateInfo(pluginId, pluginId, "no compatible update");
+        UpdateInfo missingUpdate = new UpdateInfo(pluginId, pluginId, NO_COMPATIBLE_UPDATE_VERSION);
 
         UpdateInfo buildForCommunity = getUpdateCompatibleWithCommunityEdition(pluginId);
         if (buildForCommunity != null) {

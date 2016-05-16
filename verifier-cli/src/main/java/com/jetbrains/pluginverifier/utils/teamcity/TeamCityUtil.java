@@ -6,6 +6,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import com.jetbrains.pluginverifier.commands.CheckIdeCommand;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.Problem;
@@ -32,14 +33,14 @@ public class TeamCityUtil {
     List<Problem> sortedProblems = ProblemUtils.sortProblems(problems.keySet());
 
     for (Problem problem : sortedProblems) {
-      List<UpdateInfo> updates = ProblemUtils.sortUpdates(problems.get(problem));
+      List<UpdateInfo> updates = ProblemUtils.sortUpdatesWithDescendingVersionsOrder(problems.get(problem));
 
       log.buildProblem(MessageUtils.cutCommonPackages(problem.getDescription()) + " (in " + Joiner.on(", ").join(updates) + ')');
     }
   }
 
-  private static void printReportWithLocations(@NotNull TeamCityLog log,
-                                               @NotNull Map<UpdateInfo, ProblemSet> results) {
+  public static void printReportWithLocations(@NotNull TeamCityLog log,
+                                              @NotNull Map<UpdateInfo, ProblemSet> results) {
     if (log == TeamCityLog.NULL_LOG) return;
     if (results.isEmpty()) return;
 
@@ -68,7 +69,7 @@ public class TeamCityUtil {
   }
 
   @NotNull
-  private static Map<UpdateInfo, ProblemSet> fillWithEmptyLocations(@NotNull Map<UpdateInfo, Collection<Problem>> map) {
+  public static Map<UpdateInfo, ProblemSet> fillWithEmptyLocations(@NotNull Map<UpdateInfo, Collection<Problem>> map) {
     Map<UpdateInfo, ProblemSet> result = new HashMap<UpdateInfo, ProblemSet>();
 
     final Set<ProblemLocation> emptySet = Collections.emptySet();
@@ -97,7 +98,7 @@ public class TeamCityUtil {
     return REPOSITORY_PLUGIN_ID_BASE + (updateInfo.getPluginId() != null ? updateInfo.getPluginId() : updateInfo.getPluginName());
   }
 
-  private static void groupByType(@NotNull TeamCityLog log, @NotNull Map<UpdateInfo, Collection<Problem>> map) {
+  public static void groupByType(@NotNull TeamCityLog log, @NotNull Map<UpdateInfo, Collection<Problem>> map) {
     Multimap<Problem, UpdateInfo> problem2Updates = ProblemUtils.flipProblemsMap(map);
 
     Multimap<String, Problem> problemType2Problem = ArrayListMultimap.create();
@@ -146,12 +147,12 @@ public class TeamCityUtil {
     return idToUpdates;
   }
 
-  private static void groupByPlugin(@NotNull TeamCityLog log, @NotNull Map<UpdateInfo, ProblemSet> map) {
+  public static void groupByPlugin(@NotNull TeamCityLog log, @NotNull Map<UpdateInfo, ProblemSet> map) {
 
     Multimap<String, UpdateInfo> idToUpdates = fillIdToUpdates(map);
 
     for (String pluginId : idToUpdates.keySet()) {
-      List<UpdateInfo> updateInfos = ProblemUtils.sortUpdates(idToUpdates.get(pluginId));
+      List<UpdateInfo> updateInfos = ProblemUtils.sortUpdatesWithDescendingVersionsOrder(idToUpdates.get(pluginId));
 
       String pluginLink = REPOSITORY_PLUGIN_ID_BASE + pluginId;
       TeamCityLog.TestSuite pluginSuite = log.testSuiteStarted(pluginId);
@@ -162,8 +163,14 @@ public class TeamCityUtil {
 
         List<Problem> problems = ProblemUtils.sortProblems(problemToLocations.keySet());
 
-        if (!problems.isEmpty()) {
-          String version = updateInfo.getVersion() != null ? updateInfo.getVersion() : "#" + updateInfo.getUpdateId();
+        String version = updateInfo.getVersion() != null ? updateInfo.getVersion() : "#" + updateInfo.getUpdateId();
+        String testName = "(" + version + (updateInfo == updateInfos.get(0) && !CheckIdeCommand.NO_COMPATIBLE_UPDATE_VERSION.equals(version) ? " - newest" : "") + ")";
+
+        if (problems.isEmpty()) {
+          //plugin has no problems => test passed.
+          TeamCityLog.Test test = log.testStarted(testName);
+          test.close();
+        } else {
 
           StringBuilder builder = new StringBuilder();
 
@@ -175,7 +182,6 @@ public class TeamCityUtil {
             }
           }
 
-          String testName = "(" + version + ")";
           TeamCityLog.Test test = log.testStarted(testName);
           log.testStdErr(testName, builder.toString());
           log.testFailed(testName, "Plugin URL: " + pluginLink + '\n' + updateInfo + " has " + problems.size() + " " + pluralize("problem", problems.size()), "");

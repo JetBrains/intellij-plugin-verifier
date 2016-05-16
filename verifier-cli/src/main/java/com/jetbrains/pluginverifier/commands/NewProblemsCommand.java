@@ -104,7 +104,7 @@ public class NewProblemsCommand extends VerifierCommand {
 
         Multimap<Problem, UpdateInfo> prevBuildProblems = ArrayListMultimap.create();
         for (Problem problem : problemsInBuild) {
-          Collection<UpdateInfo> affectedUpdates = ProblemUtils.sortUpdates(currentProblemsMap.get(problem));
+          Collection<UpdateInfo> affectedUpdates = ProblemUtils.sortUpdatesWithDescendingVersionsOrder(currentProblemsMap.get(problem));
           prevBuildProblems.putAll(problem, affectedUpdates);
 
           CharSequence problemDescription = MessageUtils.cutCommonPackages(problem.getDescription());
