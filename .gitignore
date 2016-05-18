@@ -6,6 +6,7 @@
 .idea/tasks.xml
 .idea/inspectionProfiles
 .idea/codeStyleSettings.xml
+.idea/modules/*
 target/
 /lib/*.jar
 **/for_tests/*
