@@ -113,9 +113,7 @@ public class IdeManagerImpl extends IdeManager {
   }
 
   public static boolean isSourceDir(File dir) {
-    return new File(dir, "build").isDirectory()
-        && new File(dir, "out").isDirectory()
-        && new File(dir, ".git").isDirectory();
+    return new File(dir, ".idea").isDirectory();
   }
 
   @NotNull
