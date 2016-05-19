@@ -27,7 +27,7 @@ public class MessageUtils {
   private MessageUtils() {
   }
 
-  public static String convertClassName(String className) {
+  public static String convertClassName(@NotNull String className) {
     return className.replace('/', '.');
   }
 
@@ -96,7 +96,7 @@ public class MessageUtils {
     return end;
   }
 
-  public static String convertMethodDescr(String methodDescr) {
+  public static String convertMethodDescr(@NotNull String methodDescr) {
     return convertMethodDescr0(methodDescr, null);
   }
 
@@ -104,11 +104,11 @@ public class MessageUtils {
    * @param methodDescr example:
    *                    com/intellij/codeInsight/intention/ConditionalOperatorConvertor#isAvailable(Lcom/intellij/openapi/project/Project;Lcom/intellij/openapi/editor/Editor;Lcom/intellij/psi/PsiFile;)Z
    */
-  public static String convertMethodDescr(String methodDescr, @NotNull String className) {
+  public static String convertMethodDescr(@NotNull String methodDescr, @NotNull String className) {
     return convertMethodDescr0(methodDescr, className);
   }
 
-  private static String convertMethodDescr0(String methodDescr, @Nullable String className) {
+  private static String convertMethodDescr0(@NotNull String methodDescr, @Nullable String className) {
     int closeBracketIndex = methodDescr.lastIndexOf(')');
 
     int openBracketIndex = methodDescr.indexOf('(');
