@@ -18,16 +18,17 @@ public class MethodNotFoundProblem extends Problem {
     myMethod = method;
   }
 
-  public String getCalledMethod() {
-    //for legacy serialization
-    return myMethod;
-  }
-
   public void setCalledMethod(String calledMethod) {
-    //for legacy serialization
+    //for legacy deserialization (don't add getCalledMethod!)
     myMethod = calledMethod;
   }
 
+  public void setMethod(String method) {
+    //for legacy serialization (don't add getMethod)
+    myMethod = method;
+  }
+
+  //serialized form of the MethodNotFoundProblem will contain "methodDescriptor"
   public String getMethodDescriptor() {
     return myMethod;
   }
