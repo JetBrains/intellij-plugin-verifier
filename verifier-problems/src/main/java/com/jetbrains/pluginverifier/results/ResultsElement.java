@@ -25,6 +25,8 @@ public class ResultsElement {
 
   private String map = "";
 
+  private Map<UpdateInfo, Collection<Problem>> myAsMapCache;
+
   public ResultsElement() {
   }
 
@@ -65,28 +67,31 @@ public class ResultsElement {
   }
 
   public Map<UpdateInfo, Collection<Problem>> asMap() {
-    Map<UpdateInfo, Collection<Problem>> res = new LinkedHashMap<UpdateInfo, Collection<Problem>>();
+    if (myAsMapCache == null) {
+      Map<UpdateInfo, Collection<Problem>> res = new LinkedHashMap<UpdateInfo, Collection<Problem>>();
 
-    Scanner sc = new Scanner(map);
+      Scanner sc = new Scanner(map);
 
-    for (UpdateInfo update : updates) {
-      Collection<Problem> problems;
+      for (UpdateInfo update : updates) {
+        Collection<Problem> problems;
 
-      int problemsCount = sc.nextInt();
-      if (problemsCount == 0) {
-        problems = Collections.emptyList();
-      }
-      else {
-        problems = new ArrayList<Problem>(problemsCount);
-        for (int i = 0; i < problemsCount; i++) {
-          problems.add(this.problems.get(sc.nextInt()));
+        int problemsCount = sc.nextInt();
+        if (problemsCount == 0) {
+          problems = Collections.emptyList();
+        } else {
+          problems = new ArrayList<Problem>(problemsCount);
+          for (int i = 0; i < problemsCount; i++) {
+            problems.add(this.problems.get(sc.nextInt()));
+          }
         }
+
+        res.put(update, problems);
       }
 
-      res.put(update, problems);
+      myAsMapCache = res;
     }
 
-    return res;
+    return myAsMapCache;
   }
 
   public void initFromMap(@NotNull Map<UpdateInfo, Collection<Problem>> map) {
