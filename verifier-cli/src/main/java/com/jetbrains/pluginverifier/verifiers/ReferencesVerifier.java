@@ -37,12 +37,14 @@ class ReferencesVerifier implements Verifier {
 
     try (
         //close the plugin resolver when it is no longer needed (it will delete possibly extracted files)
-        Resolver pluginResolver = Resolver.createPluginResolver(plugin)
+        Resolver pluginResolver = Resolver.createPluginResolver(plugin);
+        Resolver pluginDependencies = createPluginDependenciesResolver(descriptor)
     ) {
-      //don't close this Resolver because it consists of Ide and Jdk resolvers too (they should not be closed yet)
-      Resolver pluginClassLoader = createPluginClassLoader(pluginResolver, ctx, descriptor);
+      Resolver resolverForCheck = getResolverForCheck(plugin, pluginResolver);
 
-      final Resolver resolverForCheck = getResolverForCheck(plugin, pluginResolver);
+      //don't close this resolver because it contains IDE and JDK resolvers which are not ready to be closed.
+      //They will be closed above in the CheckXXXCommand
+      Resolver pluginClassLoader = createPluginClassLoader(pluginResolver, pluginDependencies, ctx);
 
       //TODO: improve caches
       for (String className : resolverForCheck.getAllClasses()) {
@@ -79,37 +81,46 @@ class ReferencesVerifier implements Verifier {
     return descriptor;
   }
 
+  @NotNull
+  private Resolver createPluginDependenciesResolver(@NotNull PluginDependenciesDescriptor descriptor) {
+    if (descriptor.getDependencies().isEmpty()) {
+      return Resolver.getEmptyResolver();
+    }
+    List<Resolver> depResolvers = new ArrayList<>();
+    for (Plugin dep : descriptor.getDependencies()) {
+      try {
+        depResolvers.add(Resolver.createPluginResolver(dep));
+      } catch (Exception e) {
+        depResolvers.forEach(Resolver::close);
+        throw new RuntimeException("Unable to create dependent plugin resolver " + dep.getPluginId(), e);
+      }
+    }
+    return Resolver.createUnionResolver("Plugin " + descriptor.getPluginName() + " transitive dependencies", depResolvers);
+  }
 
   /**
    * Constructs the plugin class-loader class-path.
    * <p>
    * We use the following sequence of searching the class (according to the way IDEA does): <ol> <li>plugin itself
    * (classes and libs)</li> <li>JDK classes</li> <li>IDE /lib classes</li> <li>plugin dependencies</li> </ol>
-
+   *
    * @param pluginResolver pluginResolver
+   * @param dependenciesResolver dependenciesResolver
    * @param context verification context
-   * @param descriptor dependencies
    * @return resolver
    */
   @NotNull
   private Resolver createPluginClassLoader(@NotNull Resolver pluginResolver,
-                                           @NotNull VerificationContext context,
-                                           @NotNull PluginDependenciesDescriptor descriptor) {
+                                           @NotNull Resolver dependenciesResolver,
+                                           @NotNull VerificationContext context) {
     Plugin plugin = context.getPlugin();
 
-    List<Resolver> resolvers = new ArrayList<Resolver>();
+    List<Resolver> resolvers = new ArrayList<>();
 
     resolvers.add(pluginResolver);
     resolvers.add(context.getJdkResolver());
     resolvers.add(context.getIdeResolver());
-
-    for (Plugin dep : descriptor.getDependencies()) {
-      try {
-        resolvers.add(Resolver.createPluginResolver(dep));
-      } catch (IOException e) {
-        throw new RuntimeException("Unable to create dependent plugin resolver " + dep.getPluginId(), e);
-      }
-    }
+    resolvers.add(dependenciesResolver);
 
     if (context.getExternalClassPath() != null) {
       resolvers.add(context.getExternalClassPath());
@@ -123,7 +134,7 @@ class ReferencesVerifier implements Verifier {
   private Resolver getResolverForCheck(@NotNull Plugin plugin, @NotNull Resolver pluginResolver) {
     Set<Resolver> usedResolvers = Sets.newIdentityHashSet();
 
-    Set<String> referencedFromXml = new HashSet<String>(plugin.getAllClassesReferencedFromXml());
+    Set<String> referencedFromXml = new HashSet<>(plugin.getAllClassesReferencedFromXml());
     plugin.getOptionalDescriptors().values().forEach(x -> referencedFromXml.addAll(x.getAllClassesReferencedFromXml()));
 
     for (String aClass : referencedFromXml) {
