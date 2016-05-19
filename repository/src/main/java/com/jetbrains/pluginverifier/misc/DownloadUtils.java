@@ -25,8 +25,9 @@ import java.util.TimeZone;
  */
 public class DownloadUtils {
 
-  public static final int BROKEN_ZIP_THRESHOLD = 200;
+  private static final int BROKEN_ZIP_THRESHOLD = 200;
   private static final DateFormat httpDateFormat;
+  private static final int HTTP_OK_STATUS = 200;
 
   static {
     httpDateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
@@ -67,7 +68,7 @@ public class DownloadUtils {
     return downloadDir;
   }
 
-  public static void updateFile(URL url, File file) throws IOException {
+  private static void updateFile(URL url, File file) throws IOException {
     long lastModified = file.lastModified();
 
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -80,7 +81,7 @@ public class DownloadUtils {
     int responseCode = connection.getResponseCode();
 
     try {
-      if (responseCode == BROKEN_ZIP_THRESHOLD) {
+      if (responseCode == HTTP_OK_STATUS) {
         String lastModifiedResStr = connection.getHeaderField(HttpHeaders.LAST_MODIFIED);
         if (lastModifiedResStr == null) {
           throw new IOException(HttpHeaders.LAST_MODIFIED + " header can not be null");
