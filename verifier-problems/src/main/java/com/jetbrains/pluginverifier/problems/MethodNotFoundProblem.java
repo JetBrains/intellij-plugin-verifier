@@ -8,8 +8,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class MethodNotFoundProblem extends Problem {
 
-  //TODO: check serialization of this field in previous check results
-
   private String myMethod;
 
   public MethodNotFoundProblem() {
@@ -20,12 +18,22 @@ public class MethodNotFoundProblem extends Problem {
     myMethod = method;
   }
 
-  public String getMethod() {
+  public String getCalledMethod() {
+    //for legacy serialization
     return myMethod;
   }
 
-  public void setMethod(String method) {
-    myMethod = method;
+  public void setCalledMethod(String calledMethod) {
+    //for legacy serialization
+    myMethod = calledMethod;
+  }
+
+  public String getMethodDescriptor() {
+    return myMethod;
+  }
+
+  public void setMethodDescriptor(String methodDescriptor) {
+    myMethod = methodDescriptor;
   }
 
   @Override
