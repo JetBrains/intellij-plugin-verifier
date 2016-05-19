@@ -37,7 +37,7 @@ public class Util {
       .addOption("g", "group", true, "Whether to group problems presentation (possible args are 'plugin' - group by plugin and 'type' - group by error-type)")
       .addOption("dce", "dont-check-excluded", false, "If specified no plugins from -epf will be checked at all")
       .addOption("imod", "ignore-missing-optional-dependencies", true, "Missing optional dependencies on the plugin IDs specified in this parameter will be ignored")
-      .addOption("ip", "ignore-problems", true, "Problems specified in this file will be ignored. File must contain lines in form <plugin_xml_id>:<plugin_version>:<problem_type>:<problem_details>");
+      .addOption("ip", "ignore-problems", true, "Problems specified in this file will be ignored. File must contain lines in form <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>");
 
   public static void printHelp() {
     new HelpFormatter().printHelp("java -jar verifier.jar <command> [<args>]", CMD_OPTIONS);
@@ -53,7 +53,7 @@ public class Util {
 
 
   public static <T> List<T> concat(Collection<T> first, Collection<T> second) {
-    List<T> res = new ArrayList<T>(first.size() + second.size());
+    List<T> res = new ArrayList<>(first.size() + second.size());
     res.addAll(first);
     res.addAll(second);
     return res;
@@ -61,8 +61,8 @@ public class Util {
 
   @NotNull
   public static Pair<List<String>, List<String>> extractPluginToCheckList(@NotNull CommandLine commandLine) {
-    List<String> pluginsCheckAllBuilds = new ArrayList<String>();
-    List<String> pluginsCheckLastBuilds = new ArrayList<String>();
+    List<String> pluginsCheckAllBuilds = new ArrayList<>();
+    List<String> pluginsCheckLastBuilds = new ArrayList<>();
 
     String[] pluginIdsCheckAllBuilds = commandLine.getOptionValues('p'); //plugin-to-check
     if (pluginIdsCheckAllBuilds != null) {
@@ -157,8 +157,7 @@ public class Util {
       m.put(update.getPluginId(), update.getVersion());
     }
 
-    PrintWriter out = new PrintWriter(dumpBrokenPluginsFile);
-    try {
+    try (PrintWriter out = new PrintWriter(dumpBrokenPluginsFile)) {
       out.println("// This file contains list of broken plugins.\n" +
           "// Each line contains plugin ID and list of versions that are broken.\n" +
           "// If plugin name or version contains a space you can quote it like in command line.\n");
@@ -167,10 +166,8 @@ public class Util {
 
         out.print(ParametersListUtil.join(Collections.singletonList(entry.getKey())));
         out.print("    ");
-        out.println(ParametersListUtil.join(new ArrayList<String>(entry.getValue())));
+        out.println(ParametersListUtil.join(new ArrayList<>(entry.getValue())));
       }
-    } finally {
-      out.close();
     }
   }
 }

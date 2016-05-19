@@ -5,38 +5,36 @@ import com.google.common.collect.Multimap;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
-import com.jetbrains.pluginverifier.problems.*;
+import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.utils.Pair;
 import com.jetbrains.pluginverifier.utils.Util;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
-import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class PluginVerifierOptions {
-  public static final String METHOD_DESCRIPTOR_REGEX = "[\\w$/]+#[^#]+\\([^#]*\\)[^#]+";
   private final String[] myPrefixesToSkipForDuplicateClassesCheck;
   private final String[] externalClassPrefixes;
   private final Set<String> myOptionalDependenciesIdsToIgnoreIfMissing;
   /**
    * Map of pluginDescriptor -> [problem] where pluginDescriptor := pluginXmlId and pluginVersion
    */
-  private final Multimap<Pair<String, String>, Problem> myProblemsToIgnore;
+  private final Multimap<Pair<String, String>, Pattern> myProblemsToIgnore;
 
   private PluginVerifierOptions(String[] prefixesToSkipForDuplicateClassesCheck,
                                 String[] externalClassPrefixes,
                                 String[] optionalDependenciesIdsToIgnoreIfMissing,
-                                Multimap<Pair<String, String>, Problem> problemsToIgnore) {
+                                Multimap<Pair<String, String>, Pattern> problemsToIgnore) {
     myPrefixesToSkipForDuplicateClassesCheck = prefixesToSkipForDuplicateClassesCheck;
     this.externalClassPrefixes = externalClassPrefixes;
-    myOptionalDependenciesIdsToIgnoreIfMissing = new HashSet<String>(Arrays.asList(optionalDependenciesIdsToIgnoreIfMissing));
+    myOptionalDependenciesIdsToIgnoreIfMissing = new HashSet<>(Arrays.asList(optionalDependenciesIdsToIgnoreIfMissing));
     myProblemsToIgnore = problemsToIgnore;
   }
 
@@ -52,7 +50,7 @@ public class PluginVerifierOptions {
 
   @NotNull
   private static List<String> getOptionValues(CommandLine commandLine, String shortKey) {
-    List<String> res = new ArrayList<String>();
+    List<String> res = new ArrayList<>();
 
     String[] cmdValues = commandLine.getOptionValues(shortKey);
     if (cmdValues != null) {
@@ -71,7 +69,7 @@ public class PluginVerifierOptions {
 
   @NotNull
   private static String[] getOptionValuesSplit(CommandLine commandLine, String splitter, String shortKey) {
-    List<String> res = new ArrayList<String>();
+    List<String> res = new ArrayList<>();
     for (String optionStr : getOptionValues(commandLine, shortKey)) {
       if (optionStr.isEmpty()) continue;
 
@@ -94,7 +92,7 @@ public class PluginVerifierOptions {
     }
     String[] optionalDependenciesIdsToIgnoreIfMissing = getOptionValuesSplit(commandLine, ",", "imod");
 
-    Multimap<Pair<String, String>, Problem> problemsToIgnore = HashMultimap.create();
+    Multimap<Pair<String, String>, Pattern> problemsToIgnore = HashMultimap.create();
 
     String ignoreProblemsFile = getOption(commandLine, "ip");
     if (ignoreProblemsFile != null) {
@@ -105,80 +103,51 @@ public class PluginVerifierOptions {
   }
 
   @NotNull
-  private static Multimap<Pair<String, String>, Problem> getProblemsToIgnoreFromFile(@NotNull String ignoreProblemsFile) {
+  private static Multimap<Pair<String, String>, Pattern> getProblemsToIgnoreFromFile(@NotNull String ignoreProblemsFile) {
     File file = new File(ignoreProblemsFile);
-    if (file.exists()) {
-      BufferedReader br = null;
-      try {
-        br = new BufferedReader(new FileReader(file));
-        final Multimap<Pair<String, String>, Problem> m = HashMultimap.create();
+    if (!file.exists()) {
+      throw new IllegalArgumentException("Ignored problems file doesn't exist " + ignoreProblemsFile);
+    }
 
-        String s;
-        while ((s = br.readLine()) != null) {
-          s = s.trim();
-          if (s.isEmpty() || s.startsWith("//")) continue; //it is a comment
+    Multimap<Pair<String, String>, Pattern> m = HashMultimap.create();
+    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+      String s;
+      while ((s = br.readLine()) != null) {
+        s = s.trim();
+        if (s.isEmpty() || s.startsWith("//")) continue; //it is a comment
 
-          String[] tokens = s.split(":");
+        String[] tokens = s.split(":");
 
-          if (tokens.length != 4) {
-            throw new IllegalArgumentException("incorrect problem line " + s +
-                "\nthe line must be in the form: <plugin_xml_id>:<plugin_version>:<problem_type>:<problem_description>" +
-                "\n<plugin_version> may be empty" +
-                "\nexample 'org.jetbrains.kotlin::unknown_class:org/jetbrains/kotlin/compiler/plugin/CliOption'");
-          }
-
-          String pluginId = tokens[0];
-          String pluginVersion = tokens[1];
-          String problemType = tokens[2];
-          String problemDescription = tokens[3];
-
-          switch (problemType) {
-            case "unknown_class":
-              m.put(Pair.create(pluginId, pluginVersion), new ClassNotFoundProblem(problemDescription));
-              break;
-            case "unknown_method":
-              if (!problemDescription.matches(METHOD_DESCRIPTOR_REGEX)) {
-                throw new IllegalArgumentException("Incorrect ignoring method descriptor " + problemDescription);
-              }
-              m.put(Pair.create(pluginId, pluginVersion), new MethodNotFoundProblem(problemDescription));
-              break;
-            case "not_implemented_method":
-              if (!problemDescription.matches(METHOD_DESCRIPTOR_REGEX)) {
-                throw new IllegalArgumentException("Incorrect ignoring method descriptor " + problemDescription);
-              }
-              m.put(Pair.create(pluginId, pluginVersion), new MethodNotImplementedProblem(problemDescription));
-              break;
-            case "incompatible_class_to_interface_change":
-              m.put(Pair.create(pluginId, pluginVersion), new IncompatibleClassChangeProblem(problemDescription, IncompatibleClassChangeProblem.Change.CLASS_TO_INTERFACE));
-              break;
-            case "incomptaible_interface_to_class_change":
-              m.put(Pair.create(pluginId, pluginVersion), new IncompatibleClassChangeProblem(problemDescription, IncompatibleClassChangeProblem.Change.INTERFACE_TO_CLASS));
-              break;
-            default:
-              throw new IllegalArgumentException("Unsupported ignore problem type " + problemType);
-          }
+        if (tokens.length != 3) {
+          throw new IllegalArgumentException("incorrect problem line " + s +
+              "\nthe line must be in the form: <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>" +
+              "\n<plugin_version> may be empty (which means that a problem will be ignored in all the versions of the plugin)" +
+              "\nexample 'org.jetbrains.kotlin::accessing to unknown class org/jetbrains/kotlin/compiler/.*' - ignore all the missing classes from org.jetbrains.kotlin.compiler package");
         }
 
-        return m;
-      } catch (IOException ignored) {
-      } finally {
-        IOUtils.closeQuietly(br);
+        String pluginId = tokens[0].trim();
+        String pluginVersion = tokens[1].trim();
+        String ignorePattern = tokens[2].trim().replace('/', '.');
+
+        m.put(Pair.create(pluginId, pluginVersion), Pattern.compile(ignorePattern));
       }
+    } catch (Exception e) {
+      throw new RuntimeException("Unable to parse ignored problems file " + ignoreProblemsFile, e);
     }
-    return HashMultimap.create();
+    return m;
   }
 
-  public boolean isIgnoredProblem(@NotNull Plugin plugin, @NotNull Problem problem) {
+  boolean isIgnoredProblem(@NotNull Plugin plugin, @NotNull Problem problem) {
     String xmlId = plugin.getPluginId();
     String version = plugin.getPluginVersion();
-    for (Map.Entry<Pair<String, String>, Problem> entry : myProblemsToIgnore.entries()) {
+    for (Map.Entry<Pair<String, String>, Pattern> entry : myProblemsToIgnore.entries()) {
       String ignoreXmlId = entry.getKey().getFirst();
       String ignoreVersion = entry.getKey().getSecond();
-      Problem ignoreProblem = entry.getValue();
+      Pattern ignoredPattern = entry.getValue();
 
       if (StringUtil.equal(xmlId, ignoreXmlId)) {
         if (StringUtil.isEmpty(ignoreVersion) || StringUtil.equal(version, ignoreVersion)) {
-          if (problem.equals(ignoreProblem)) {
+          if (ignoredPattern.matcher(problem.getDescription().replace('/', '.')).matches()) {
             return true;
           }
         }
@@ -187,7 +156,7 @@ public class PluginVerifierOptions {
     return false;
   }
 
-  public boolean isIgnoreMissingOptionalDependency(@NotNull String pluginId) {
+  boolean isIgnoreMissingOptionalDependency(@NotNull String pluginId) {
     return myOptionalDependenciesIdsToIgnoreIfMissing.contains(pluginId);
   }
 
