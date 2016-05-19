@@ -1,12 +1,10 @@
 package com.jetbrains.pluginverifier.commands;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.*;
 import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
+import com.jetbrains.pluginverifier.problems.MissingDependencyProblem;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.GlobalResultsRepository;
 import com.jetbrains.pluginverifier.results.ResultsElement;
@@ -38,10 +36,9 @@ public class NewProblemsCommand extends VerifierCommand {
   }
 
   /**
-   * @return list of IDEA builds for which check is already performed and
-   * its trunk number equals to the given trunk number (e.g. 141 and 141)
-   * and the build number is LESS than the given build number.
-   * NOTE: in ascending order, i.e. 141.01, 141.05, 141.264...
+   * @return list of IDEA builds for which check is already performed and its trunk number equals to the given trunk
+   * number (e.g. 141 and 141) and the build number is LESS than the given build number. NOTE: in ascending order, i.e.
+   * 141.01, 141.05, 141.264...
    */
   @NotNull
   public static List<IdeVersion> findPreviousBuilds(@NotNull IdeVersion currentBuild,
@@ -78,10 +75,12 @@ public class NewProblemsCommand extends VerifierCommand {
     return result;
   }
 
-  private static void printTcProblems(@NotNull Multimap<Problem, UpdateInfo> currentProblemsMap,
+  private static void printTcProblems(@NotNull Multimap<Problem, UpdateInfo> currentProblems,
+                                      @NotNull Multimap<Problem, UpdateInfo> missingDependenciesProblems,
                                       @NotNull Multimap<IdeVersion, Problem> firstOccurrence,
                                       @NotNull Iterable<IdeVersion> allBuilds,
                                       @NotNull TeamCityUtil.ReportGrouping reportGrouping,
+                                      @NotNull IdeVersion ideBuild,
                                       @NotNull TeamCityLog tc) {
     for (IdeVersion prevBuild : allBuilds) {
       Collection<Problem> problemsInBuild = firstOccurrence.get(prevBuild);
@@ -93,7 +92,7 @@ public class NewProblemsCommand extends VerifierCommand {
 
         Multimap<Problem, UpdateInfo> prevBuildProblems = ArrayListMultimap.create();
         for (Problem problem : problemsInBuild) {
-          Collection<UpdateInfo> affectedUpdates = ProblemUtils.sortUpdatesWithDescendingVersionsOrder(currentProblemsMap.get(problem));
+          Collection<UpdateInfo> affectedUpdates = ProblemUtils.sortUpdatesWithDescendingVersionsOrder(currentProblems.get(problem));
           prevBuildProblems.putAll(problem, affectedUpdates);
 
           CharSequence problemDescription = MessageUtils.cutCommonPackages(problem.getDescription());
@@ -110,6 +109,27 @@ public class NewProblemsCommand extends VerifierCommand {
       suite.close();
 
     }
+
+    printDependenciesProblems(tc, ideBuild, missingDependenciesProblems);
+  }
+
+  private static void printDependenciesProblems(TeamCityLog tc, IdeVersion ideBuild, Multimap<Problem, UpdateInfo> missingDependenciesProblems) {
+    Multimap<String, UpdateInfo> missingIdToAffectedPlugins = HashMultimap.create();
+
+    missingDependenciesProblems.entries().stream().filter(x -> x.getKey() instanceof MissingDependencyProblem).forEach(x -> missingIdToAffectedPlugins.put(((MissingDependencyProblem) x.getKey()).getMissingId(), x.getValue()));
+
+    if (!missingIdToAffectedPlugins.isEmpty()) {
+      TeamCityLog.TestSuite suite = tc.testSuiteStarted("missing plugin dependencies");
+      for (String missingId : missingIdToAffectedPlugins.keySet()) {
+        String pluginOrModule = missingId.startsWith("com.intellij.modules") ? "module" : "plugin";
+        String testName = "(missing " + pluginOrModule + " " + missingId + ")";
+        TeamCityLog.Test test = tc.testStarted(testName);
+        tc.testFailed(testName, "", pluginOrModule + " " + missingId + " is not found in " + ideBuild + " but it is required for the following plugins: " + missingIdToAffectedPlugins.get(missingId));
+        test.close();
+      }
+      suite.close();
+    }
+
   }
 
   @NotNull
@@ -174,7 +194,10 @@ public class NewProblemsCommand extends VerifierCommand {
 
     dropUnrelatedProblems(updateToProblems, checks);
 
-    Multimap<Problem, UpdateInfo> currentProblems = ProblemUtils.flipProblemsMap(updateToProblems);
+    Multimap<Problem, UpdateInfo> allProblems = ProblemUtils.flipProblemsMap(updateToProblems);
+
+    Multimap<Problem, UpdateInfo> missingDependenciesProblems = Multimaps.filterKeys(allProblems, input -> input instanceof MissingDependencyProblem);
+    Multimap<Problem, UpdateInfo> currentProblems = Multimaps.filterKeys(allProblems, input -> !(input instanceof MissingDependencyProblem));
 
     //Problems of this check
     Set<Problem> currProblems = new HashSet<>(currentProblems.keySet());
@@ -205,7 +228,7 @@ public class NewProblemsCommand extends VerifierCommand {
 
     TeamCityLog tc = TeamCityLog.getInstance(commandLine);
 
-    printTcProblems(currentProblems, firstOccurrence, allBuilds, reportGrouping, tc);
+    printTcProblems(currentProblems, missingDependenciesProblems, firstOccurrence, allBuilds, reportGrouping, ideBuild, tc);
 
 
     //number of problems appeared in the trunk (e.g. in 144.* builds)
