@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.misc;
 
 import com.google.common.base.Throwables;
 import com.google.common.net.HttpHeaders;
+import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -33,24 +34,24 @@ public class DownloadUtils {
   }
 
   @NotNull
-  public static File getCheckResultFile(@NotNull String build) throws IOException {
+  public static File getCheckResultFile(@NotNull IdeVersion build) throws IOException {
     File res = createCheckResultFile(build);
 
-    System.out.print("Loading check results for " + build + "...");
-    updateFile(new URL(RepositoryConfiguration.getInstance().getPluginRepositoryUrl() + "/files/checkResults/" + build + ".xml"), res);
+    System.out.print("Loading check results for " + build.asString() + "...");
+    updateFile(new URL(RepositoryConfiguration.getInstance().getPluginRepositoryUrl() + "/files/checkResults/" + build.asString() + ".xml"), res);
     System.out.println("done");
 
     return res;
   }
 
   @NotNull
-  public static File createCheckResultFile(@NotNull String build) throws IOException {
+  public static File createCheckResultFile(@NotNull IdeVersion build) throws IOException {
     File downloadDir = getOrCreateDownloadDir();
 
     File checkResDir = new File(downloadDir, "checkResult");
     FileUtils.forceMkdir(checkResDir);
 
-    return new File(checkResDir, build + ".xml");
+    return new File(checkResDir, build.asString() + ".xml");
   }
 
   @NotNull

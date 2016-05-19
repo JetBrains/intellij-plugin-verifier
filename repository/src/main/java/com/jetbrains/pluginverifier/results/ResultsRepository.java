@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.results;
 
+import com.intellij.structure.domain.IdeVersion;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -12,14 +13,13 @@ import java.util.List;
 public abstract class ResultsRepository {
 
   /**
-   * Returns IDEA-builds which have corresponding check result files on server.
-   * (.xml extension is truncated)
+   * Returns IDEA-builds which have check reports in the repository.
    */
   @NotNull
-  public abstract List<String> getAvailableReportsList() throws IOException;
+  public abstract List<IdeVersion> getAvailableReportsList() throws IOException;
 
   @NotNull
-  public abstract File getReportFile(@NotNull String build) throws IOException;
+  public abstract File getReportFile(@NotNull IdeVersion ideVersion) throws IOException;
 
   public void uploadReportFile(@NotNull File fileToUpload) throws IOException {
     //Default implementation does nothing

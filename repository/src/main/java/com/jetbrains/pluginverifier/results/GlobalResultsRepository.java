@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.results;
 
+import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.misc.DownloadUtils;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
 import org.apache.commons.io.IOUtils;
@@ -19,16 +20,16 @@ public class GlobalResultsRepository extends ResultsRepository {
 
   @NotNull
   @Override
-  public List<String> getAvailableReportsList() throws IOException {
+  public List<IdeVersion> getAvailableReportsList() throws IOException {
     System.out.print("Loading check results list...");
     URL url = new URL(RepositoryConfiguration.getInstance().getPluginRepositoryUrl() + "/problems/resultList?format=txt");
 
     String text = IOUtils.toString(url);
 
-    List<String> res = new ArrayList<String>();
+    List<IdeVersion> res = new ArrayList<IdeVersion>();
 
     for (StringTokenizer st = new StringTokenizer(text, " ,"); st.hasMoreTokens(); ) {
-      res.add(st.nextToken());
+      res.add(IdeVersion.createIdeVersion(st.nextToken()));
     }
 
     System.out.println("done");
@@ -37,8 +38,8 @@ public class GlobalResultsRepository extends ResultsRepository {
 
   @NotNull
   @Override
-  public File getReportFile(@NotNull String build) throws IOException {
-    return DownloadUtils.getCheckResultFile(build);
+  public File getReportFile(@NotNull IdeVersion ideVersion) throws IOException {
+    return DownloadUtils.getCheckResultFile(ideVersion);
   }
 
   @NotNull

@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.results;
 
+import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.service.VerifierServiceApi;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,14 +22,14 @@ public class VerifierServiceRepository extends ResultsRepository {
 
   @NotNull
   @Override
-  public List<String> getAvailableReportsList() throws IOException {
+  public List<IdeVersion> getAvailableReportsList() throws IOException {
     return VerifierServiceApi.requestAvailableReports(myRepositoryUrl);
   }
 
   @NotNull
   @Override
-  public File getReportFile(@NotNull String build) throws IOException {
-    return VerifierServiceApi.requestReportFile(myRepositoryUrl, build);
+  public File getReportFile(@NotNull IdeVersion ideVersion) throws IOException {
+    return VerifierServiceApi.requestReportFile(myRepositoryUrl, ideVersion);
   }
 
   @Override

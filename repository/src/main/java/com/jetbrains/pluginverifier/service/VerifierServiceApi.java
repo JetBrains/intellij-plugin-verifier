@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.service;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.misc.DownloadUtils;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import org.apache.commons.io.FileUtils;
@@ -130,19 +131,19 @@ public class VerifierServiceApi {
   }
 
   @NotNull
-  public static List<String> requestAvailableReports(@NotNull String repositoryUrl) throws IOException {
+  public static List<IdeVersion> requestAvailableReports(@NotNull String repositoryUrl) throws IOException {
     List<String> files = requestFilesList(repositoryUrl + RESULTS_LIST_PATH);
-    List<String> builds = new ArrayList<String>();
+    List<IdeVersion> builds = new ArrayList<IdeVersion>();
     for (String file : files) {
-      builds.add(StringUtil.trimEnd(file, XML_EXTENSION));
+      builds.add(IdeVersion.createIdeVersion(StringUtil.trimEnd(file, XML_EXTENSION)));
     }
     return builds;
   }
 
   @NotNull
-  public static File requestReportFile(@NotNull String repositoryUrl, @NotNull String build) throws IOException {
+  public static File requestReportFile(@NotNull String repositoryUrl, @NotNull IdeVersion build) throws IOException {
     File resultFile = DownloadUtils.createCheckResultFile(build);
-    downloadFile(repositoryUrl + RESULTS_PATH + "/" + build + XML_EXTENSION, resultFile);
+    downloadFile(repositoryUrl + RESULTS_PATH + "/" + build.asString() + XML_EXTENSION, resultFile);
     return resultFile;
   }
 

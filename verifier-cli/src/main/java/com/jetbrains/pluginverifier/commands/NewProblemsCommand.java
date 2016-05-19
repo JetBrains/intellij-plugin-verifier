@@ -44,26 +44,19 @@ public class NewProblemsCommand extends VerifierCommand {
    * NOTE: in ascending order, i.e. 141.01, 141.05, 141.264...
    */
   @NotNull
-  public static List<String> findPreviousBuilds(@NotNull String currentCheckBuild,
-                                                @NotNull ResultsRepository resultsRepository) throws IOException {
+  public static List<IdeVersion> findPreviousBuilds(@NotNull IdeVersion currentBuild,
+                                                    @NotNull ResultsRepository resultsRepository) throws IOException {
 
-    List<String> resultsInPluginRepository = resultsRepository.getAvailableReportsList();
-    Collections.sort(resultsInPluginRepository, new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        IdeVersion build1 = IdeVersion.createIdeVersion(o1);
-        IdeVersion build2 = IdeVersion.createIdeVersion(o2);
-        return build1.compareTo(build2);
-      }
-    });
+    List<IdeVersion> resultsInPluginRepository = resultsRepository.getAvailableReportsList();
+    Collections.sort(resultsInPluginRepository);
 
     String firstBuildProp = System.getProperty("firstBuild");
     if (firstBuildProp != null) {
       IdeVersion firstBuild = IdeVersion.createIdeVersion(firstBuildProp);
       int idx = -1;
       for (int i = 0; i < resultsInPluginRepository.size(); i++) {
-        String build = resultsInPluginRepository.get(i);
-        if (firstBuild.compareTo(IdeVersion.createIdeVersion(build)) == 0) {
+        IdeVersion build = resultsInPluginRepository.get(i);
+        if (firstBuild.compareTo(build) == 0) {
           idx = i;
           break;
         }
@@ -73,15 +66,11 @@ public class NewProblemsCommand extends VerifierCommand {
       }
     }
 
-    IdeVersion currentBuild = IdeVersion.createIdeVersion(currentCheckBuild);
+    List<IdeVersion> result = new ArrayList<>();
 
-    List<String> result = new ArrayList<String>();
-
-    for (String build : resultsInPluginRepository) {
-      IdeVersion updateBuild = IdeVersion.createIdeVersion(build);
-
+    for (IdeVersion build : resultsInPluginRepository) {
       //NOTE: compares only IDEAs of the same branch! that is 141.* between each others
-      if (updateBuild.getBaselineVersion() == currentBuild.getBaselineVersion() && updateBuild.compareTo(currentBuild) < 0) {
+      if (build.getBaselineVersion() == currentBuild.getBaselineVersion() && build.compareTo(currentBuild) < 0) {
         result.add(build);
       }
     }
@@ -90,11 +79,11 @@ public class NewProblemsCommand extends VerifierCommand {
   }
 
   private static void printTcProblems(@NotNull Multimap<Problem, UpdateInfo> currentProblemsMap,
-                                      @NotNull Multimap<String, Problem> firstOccurrence,
-                                      @NotNull Iterable<String> allBuilds,
+                                      @NotNull Multimap<IdeVersion, Problem> firstOccurrence,
+                                      @NotNull Iterable<IdeVersion> allBuilds,
                                       @NotNull TeamCityUtil.ReportGrouping reportGrouping,
                                       @NotNull TeamCityLog tc) {
-    for (String prevBuild : allBuilds) {
+    for (IdeVersion prevBuild : allBuilds) {
       Collection<Problem> problemsInBuild = firstOccurrence.get(prevBuild);
 
       TeamCityLog.TestSuite suite = tc.testSuiteStarted("since " + prevBuild);
@@ -140,7 +129,7 @@ public class NewProblemsCommand extends VerifierCommand {
   @Override
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.isEmpty()) {
-      throw FailUtil.fail("You have to specify IDE to check. For example: \"java -jar verifier.jar new-problems report-133.439.xml\"");
+      throw FailUtil.fail("You have to specify a report to compare and print. For example: \"java -jar verifier.jar new-problems report-133.439.xml\"");
     }
 
     TeamCityUtil.ReportGrouping reportGrouping = TeamCityUtil.ReportGrouping.parseGrouping(commandLine);
@@ -153,23 +142,23 @@ public class NewProblemsCommand extends VerifierCommand {
     ResultsElement checkResult = ProblemUtils.loadProblems(reportToCheck);
 
     final Map<UpdateInfo, Collection<Problem>> updateToProblems = checkResult.asMap();
-    final String ideBuild = checkResult.getIde();
+    final IdeVersion ideBuild = IdeVersion.createIdeVersion(checkResult.getIde());
 
 
     //--------------Load previous checks-------------------
 
     ResultsRepository resultsRepository = getResultsRepository(commandLine);
 
-    List<String> checkedBuilds;
+    List<IdeVersion> checkedBuilds;
     try {
       checkedBuilds = findPreviousBuilds(ideBuild, resultsRepository);
     } catch (IOException e) {
       throw FailUtil.fail("Couldn't get check results list from the server " + resultsRepository.getRepositoryUrl(), e);
     }
 
-    List<ResultsElement> checks = new ArrayList<ResultsElement>();
+    List<ResultsElement> checks = new ArrayList<>();
     try {
-      for (String build : checkedBuilds) {
+      for (IdeVersion build : checkedBuilds) {
         checks.add(ProblemUtils.loadProblems(resultsRepository.getReportFile(build)));
       }
     } catch (IOException e) {
@@ -188,16 +177,16 @@ public class NewProblemsCommand extends VerifierCommand {
     Multimap<Problem, UpdateInfo> currentProblems = ProblemUtils.flipProblemsMap(updateToProblems);
 
     //Problems of this check
-    Set<Problem> currProblems = new HashSet<Problem>(currentProblems.keySet());
+    Set<Problem> currProblems = new HashSet<>(currentProblems.keySet());
 
     //remove old API problems
     currProblems.removeAll(checks.get(0).getProblems());
 
     //Map: <Build Number -> List[Problem for which this problem occurred first]>
-    Multimap<String, Problem> firstOccurrence = ArrayListMultimap.create();
+    Multimap<IdeVersion, Problem> firstOccurrence = ArrayListMultimap.create();
 
     for (int i = 1; i < checkedBuilds.size(); i++) {
-      String prevBuild = checkedBuilds.get(i);
+      IdeVersion prevBuild = checkedBuilds.get(i);
 
       for (Problem problem : checks.get(i).getProblems()) {
         if (currProblems.remove(problem)) {
@@ -212,7 +201,7 @@ public class NewProblemsCommand extends VerifierCommand {
     //---------------Print new API problems-------------------
 
     //ALL the checked builds (excluding the EARLIEST one)
-    Iterable<String> allBuilds = Iterables.concat(checkedBuilds.subList(1, checkedBuilds.size()), Collections.singleton(ideBuild));
+    Iterable<IdeVersion> allBuilds = Iterables.concat(checkedBuilds.subList(1, checkedBuilds.size()), Collections.singleton(ideBuild));
 
     TeamCityLog tc = TeamCityLog.getInstance(commandLine);
 
@@ -271,10 +260,10 @@ public class NewProblemsCommand extends VerifierCommand {
   private Collection<Problem> getPreviousBuildProblems(@NotNull UpdateInfo curUpdate,
                                                        @NotNull Multimap<String, UpdateInfo> idToUpdates,
                                                        @NotNull List<ResultsElement> checks) {
-    List<UpdateInfo> allUpdates = new ArrayList<UpdateInfo>(idToUpdates.get(curUpdate.getPluginId()));
+    List<UpdateInfo> allUpdates = new ArrayList<>(idToUpdates.get(curUpdate.getPluginId()));
     Collections.sort(allUpdates, UpdateInfo.UPDATE_NUMBER_COMPARATOR);
 
-    List<Problem> allProblems = new ArrayList<Problem>();
+    List<Problem> allProblems = new ArrayList<>();
 
     for (UpdateInfo update : Lists.reverse(allUpdates)) {
       if (UpdateInfo.UPDATE_NUMBER_COMPARATOR.compare(update, curUpdate) < 0) {
