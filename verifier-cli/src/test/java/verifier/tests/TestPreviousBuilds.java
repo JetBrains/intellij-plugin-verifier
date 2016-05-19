@@ -54,9 +54,12 @@ public class TestPreviousBuilds {
       }
     };
 
-    Assert.assertEquals(Arrays.asList("144.01", "IU-144.1901", "IU-144.1909"), NewProblemsCommand.findPreviousBuilds(IdeVersion.createIdeVersion("144.1950"), resultsRepository));
+    Assert.assertEquals(Arrays.asList(civ("144.01"), civ("IU-144.1901"), civ("IU-144.1909")), NewProblemsCommand.findPreviousBuilds(IdeVersion.createIdeVersion("144.1950"), resultsRepository));
     Assert.assertEquals(Collections.emptyList(), NewProblemsCommand.findPreviousBuilds(IdeVersion.createIdeVersion("143.0"), resultsRepository));
-    Assert.assertEquals(Arrays.asList("144.01", "IU-144.1901", "IU-144.1909", "IU-144.1956"), NewProblemsCommand.findPreviousBuilds(IdeVersion.createIdeVersion("144.9999"), resultsRepository));
+    Assert.assertEquals(Arrays.asList(civ("144.01"), civ("IU-144.1901"), civ("IU-144.1909"), civ("IU-144.1956")), NewProblemsCommand.findPreviousBuilds(IdeVersion.createIdeVersion("144.9999"), resultsRepository));
+  }
 
+  private IdeVersion civ(@NotNull String s) {
+    return IdeVersion.createIdeVersion(s);
   }
 }
