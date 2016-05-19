@@ -85,7 +85,10 @@ public class ContainerResolver extends Resolver {
   @Override
   @Nullable
   public Resolver getClassLocation(@NotNull String className) {
-    return myClassToResolver.get(className);
+    if (!myClassToResolver.containsKey(className)) {
+      return null;
+    }
+    return myClassToResolver.get(className).getClassLocation(className);
   }
 
   @Override

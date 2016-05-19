@@ -9,7 +9,7 @@ buildscript {
 }
 
 def verifierVersion = '1.26'
-def intellijStructureVersion = '1.18'
+def intellijStructureVersion = '1.19'
 
 
 configure(allprojects) {
