@@ -6,6 +6,7 @@ import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.utils.Pair;
+import com.intellij.structure.impl.utils.Ref;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.validators.PluginXmlValidator;
 import com.intellij.structure.impl.utils.validators.Validator;
@@ -187,7 +188,11 @@ public class PluginManagerImpl extends PluginManager {
         document = JDOMUtil.loadDocument(stream);
         url = new URL(xmlUrl);
       } catch (Exception e) {
-        validator.onCheckedException("Unable to read META-INF/" + name, e);
+        //check if an exception happened on the sought-for entity
+        if (StringUtil.equal(name, filePath)) {
+          validator.onCheckedException("Unable to read META-INF/" + name, e);
+        }
+        System.err.println("Unable to read an entry `" + entry.getName() + "` because " + e.getLocalizedMessage());
         return null;
       }
 
@@ -224,6 +229,7 @@ public class PluginManagerImpl extends PluginManager {
           descriptor.readExternal(document, url, validator);
           return descriptor;
         } catch (RuntimeException e) {
+          //rethrow a RuntimeException but wrap a checked exception
           throw e;
         } catch (Exception e) {
           validator.onCheckedException("Unable to read META-INF/" + filePath, e);
@@ -293,17 +299,21 @@ public class PluginManagerImpl extends PluginManager {
         }
 
         final ZipFile finalZipFile = zipFile;
+        final Ref<IOException> maybeException = Ref.create();
         Plugin inRoot = loadDescriptorFromEntry(entry, filePath, zipRootUrl, validator.ignoreMissingFile(), new Supplier<InputStream>() {
           @Override
           public InputStream get() {
             try {
               return finalZipFile.getInputStream(entry);
             } catch (IOException e) {
-              validator.onCheckedException("Unable to read META-INF/" + filePath, e);
+              maybeException.set(e);
               return null;
             }
           }
         });
+        if (!maybeException.isNull()) {
+          throw maybeException.get();
+        }
 
         if (inRoot != null) {
           if (descriptorRoot != null) {
@@ -416,6 +426,7 @@ public class PluginManagerImpl extends PluginManager {
       if (isJarOrZip(f)) {
         descriptor = loadDescriptorFromZipFile(f, filePath, validator.ignoreMissingFile());
         if (descriptor != null) {
+          //is it necessary to check that only one META-INF/plugin.xml is presented?
           break;
         }
       } else if (f.isDirectory()) {
