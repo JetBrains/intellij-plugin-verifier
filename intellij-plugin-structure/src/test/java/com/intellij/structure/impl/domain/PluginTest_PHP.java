@@ -117,6 +117,7 @@ public class PluginTest_PHP {
   public void getPluginResolver() throws Exception {
     Resolver pluginResolver = Resolver.createCacheResolver(Resolver.createPluginResolver(plugin));
     Collection<String> allClasses = pluginResolver.getAllClasses();
+    pluginResolver.close();
 
     assertTrue(allClasses.contains("com/intellij/structuralsearch/PhpStructuralSearchProfile"));
     assertTrue(allClasses.contains("com/jetbrains/php/PhpClassHierarchyUtils$8"));
