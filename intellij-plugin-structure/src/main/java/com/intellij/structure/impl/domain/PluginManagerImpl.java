@@ -157,7 +157,6 @@ public class PluginManagerImpl extends PluginManager {
   /**
    * Checks than the given {@code entry} corresponds to the sought-for file specified with {@code filePath}.
    *
-   * @param pluginFile root plugin file
    * @param entry               current entry in the overlying traversing of zip file
    * @param filePath            sought-for file, path is relative to META-INF/ directory
    * @param rootUrl             url corresponding to the root of the zip file from which this {@code entry} come
@@ -167,8 +166,7 @@ public class PluginManagerImpl extends PluginManager {
    * @throws IncorrectPluginException if incorrect plugin structure
    */
   @Nullable
-  private Plugin loadDescriptorFromEntry(@NotNull File pluginFile,
-                                         @NotNull ZipEntry entry,
+  private Plugin loadDescriptorFromEntry(@NotNull ZipEntry entry,
                                          @NotNull String filePath,
                                          @NotNull String rootUrl,
                                          @NotNull Validator validator,
@@ -237,8 +235,7 @@ public class PluginManagerImpl extends PluginManager {
   }
 
   @Nullable
-  private Plugin loadFromZipStream(@NotNull File file,
-                                   @NotNull final ZipInputStream zipStream,
+  private Plugin loadFromZipStream(@NotNull final ZipInputStream zipStream,
                                    @NotNull String zipRootUrl,
                                    @NotNull String filePath,
                                    @NotNull Validator validator) throws IncorrectPluginException {
@@ -251,7 +248,7 @@ public class PluginManagerImpl extends PluginManager {
           continue;
         }
 
-        Plugin inRoot = loadDescriptorFromEntry(file, entry, filePath, zipRootUrl, validator, new Supplier<InputStream>() {
+        Plugin inRoot = loadDescriptorFromEntry(entry, filePath, zipRootUrl, validator, new Supplier<InputStream>() {
           @Override
           public InputStream get() {
             return zipStream;
@@ -296,7 +293,7 @@ public class PluginManagerImpl extends PluginManager {
         }
 
         final ZipFile finalZipFile = zipFile;
-        Plugin inRoot = loadDescriptorFromEntry(file, entry, filePath, zipRootUrl, validator.ignoreMissingFile(), new Supplier<InputStream>() {
+        Plugin inRoot = loadDescriptorFromEntry(entry, filePath, zipRootUrl, validator.ignoreMissingFile(), new Supplier<InputStream>() {
           @Override
           public InputStream get() {
             try {
@@ -319,7 +316,7 @@ public class PluginManagerImpl extends PluginManager {
 
         if (LIB_JAR_REGEX.matcher(entry.getName()).matches()) {
           ZipInputStream inner = new ZipInputStream(zipFile.getInputStream(entry));
-          Plugin innerDescriptor = loadFromZipStream(file, inner, "jar:" + zipRootUrl + entry.getName() + "!/", filePath, validator.ignoreMissingFile());
+          Plugin innerDescriptor = loadFromZipStream(inner, "jar:" + zipRootUrl + entry.getName() + "!/", filePath, validator.ignoreMissingFile());
           if (innerDescriptor != null) {
             descriptorInner = innerDescriptor;
           }
