@@ -94,7 +94,7 @@ public class JDOMUtil {
   }
 
   /**
-   * Warning! This method closes the supplied stream.
+   * Load a document from the specified InputStream
    *
    * @param stream stream
    * @return document
@@ -103,7 +103,9 @@ public class JDOMUtil {
    */
   @NotNull
   public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
-    InputStreamReader reader = new InputStreamReader(copyInputStream(stream), Charset.forName("UTF-8"));
+    //to prevent closing the supplied stream from finally-block
+    InputStream copied = copyInputStream(stream);
+    InputStreamReader reader = new InputStreamReader(copied, Charset.forName("UTF-8"));
     try {
       SAXBuilder saxBuilder = new SAXBuilder();
       saxBuilder.setEntityResolver(new EntityResolver() {
