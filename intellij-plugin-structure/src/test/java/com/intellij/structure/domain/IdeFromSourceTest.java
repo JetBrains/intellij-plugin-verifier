@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
+ * TODO: rewrite test. construct the directories structure manually.
+ *
  * Created by Sergey Patrikeev
  */
 public class IdeFromSourceTest {
