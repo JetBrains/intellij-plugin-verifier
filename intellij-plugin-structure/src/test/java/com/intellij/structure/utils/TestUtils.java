@@ -23,6 +23,7 @@ public class TestUtils {
   public static final String SCALA_URL = "https://plugins.jetbrains.com/plugin/download?pr=idea&updateId=23664";
   public static final String KANNOTATOR = "https://plugins.jetbrains.com/plugin/download?pr=&updateId=14852";
   public static final String JBOSS = "https://plugins.jetbrains.com/plugin/download?pr=&updateId=25536";
+  public static final String GERRIT = "https://plugins.jetbrains.com/plugin/download?pr=idea&updateId=25853";
 
   @NotNull
   private static URL getFinalUrl(@NotNull String startUrl) throws IOException {
