@@ -5,7 +5,7 @@
     <name>Kotlin</name>
     <description>Kotlin language support</description>
     <version>1.0.0-beta-1038-IJ141-17</version>
-    <vendor logo="http://icons.com/icon.png" email="vendor_email" url="http://www.jetbrains.com">JetBrains s.r.o.
+    <vendor logo="/icons/plugin.png" email="vendor_email" url="http://www.jetbrains.com">JetBrains s.r.o.
     </vendor>
 
     <idea-version since-build="141.1009.5" until-build="141.9999999"/>

@@ -179,16 +179,35 @@ class PluginImpl implements Plugin {
     return path;
   }
 
-  private void setLogoContent(@NotNull URL url, Element vendorElement) {
+  private void setLogoContent(@NotNull URL descriptorUrl, Element vendorElement) {
     myLogoUrl = vendorElement.getAttributeValue("logo");
     if (myLogoUrl != null && !myLogoUrl.startsWith("http://") && !myLogoUrl.startsWith("https://")) {
+      //the logo url represents a path inside the plugin => try to extract logo content
       InputStream input = null;
       try {
-        URL logoUrl = new URL(url, myLogoUrl);
-        input = URLUtil.openStream(logoUrl);
+        URL logoUrl;
+        if (myLogoUrl.startsWith("/")) {
+          //myLogoUrl represents a path from the <plugin_root> (where <plugin_root>/META-INF/plugin.xml)
+          logoUrl = new URL(descriptorUrl, ".." + myLogoUrl);
+        } else {
+          //it's a META-INF/ relative path
+          logoUrl = new URL(descriptorUrl, myLogoUrl);
+        }
+        try {
+          input = URLUtil.openStream(logoUrl);
+        } catch (Exception e) {
+          //try the following logo path: <plugin_root>/classes/<logo_url>
+          if (myLogoUrl.startsWith("/")) {
+            logoUrl = new URL(descriptorUrl, "../classes" + myLogoUrl);
+            input = URLUtil.openStream(logoUrl);
+          } else {
+            //this path is unique => no other variants
+            throw e;
+          }
+        }
         myLogoContent = IOUtils.toByteArray(input);
-        myLogoUrl = null;
-      } catch (Exception ignored) {
+      } catch (Exception e) {
+        System.err.println("Unable to extract plugin logo content by path " + myLogoUrl + " because " + e.getLocalizedMessage());
       } finally {
         IOUtils.closeQuietly(input);
       }
