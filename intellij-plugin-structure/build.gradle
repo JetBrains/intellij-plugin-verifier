@@ -96,6 +96,17 @@ task prepareZipLibMock3(type: Zip, dependsOn: prepareMock3asJar) {
   archiveName = "mock-plugin3-lib.zip"
 }
 
+task prepareJarInZip(type: Zip, dependsOn: prepareMock3asJar) {
+  //create mock-plugin3-jar-in-zip.zip which contains /mock-plugin3.jar in the root
+  project(":mock-plugin3") {
+    from tasks.withType(Jar)
+  }
+  //to the root
+//  into "."
+  destinationDir = new File(mocksPath)
+  archiveName = "mock-plugin3-jar-in-zip.zip"
+}
+
 task prepareMock3classes(type: Copy) {
   //create mock-plugin3-classes/ with /classes/ dir and /META-INF/ dir inside
   into mocksPath + separator + "mock-plugin3-classes"
@@ -122,7 +133,7 @@ task prepareZipMock3classesAsZip(type: Zip, dependsOn: prepareMock3classes) {
   archiveName = "mock-plugin3-classes-zip.zip"
 }
 
-test.dependsOn prepareMock3asJar, prepareMock3jarAsZip, prepareMock3asDir, prepareZipLibMock3, prepareMock3classes, prepareZipMock3classesAsZip
+test.dependsOn prepareMock3asJar, prepareMock3jarAsZip, prepareMock3asDir, prepareZipLibMock3, prepareMock3classes, prepareZipMock3classesAsZip, prepareJarInZip
 publishToMavenLocal.dependsOn test
 
 

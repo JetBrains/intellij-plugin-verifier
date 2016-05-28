@@ -73,6 +73,7 @@ public class TestMockPlugins {
     testMock3(getMockPlugin("mock-plugin3-lib.zip"));
     testMock3(getMockPlugin("mock-plugin3-classes"));
     testMock3(getMockPlugin("mock-plugin3-classes-zip.zip"));
+    testMock3(getMockPlugin("mock-plugin3-jar-in-zip.zip"));
   }
 
   private void testMock3(File pluginFile) throws IOException {

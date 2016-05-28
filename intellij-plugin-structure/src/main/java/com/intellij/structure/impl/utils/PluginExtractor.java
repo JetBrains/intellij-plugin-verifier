@@ -1,5 +1,6 @@
 package com.intellij.structure.impl.utils;
 
+import com.intellij.structure.errors.IncorrectPluginException;
 import org.apache.commons.io.FileUtils;
 import org.codehaus.plexus.archiver.AbstractUnArchiver;
 import org.codehaus.plexus.archiver.tar.TarBZip2UnArchiver;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  * @author Sergey Patrikeev
@@ -20,7 +22,7 @@ public class PluginExtractor {
   private static final int TEMP_DIR_ATTEMPTS = 10000;
 
   @NotNull
-  public static File extractPlugin(@NotNull File archive) throws IOException {
+  public static File extractPlugin(@NotNull File archive) throws IOException, IncorrectPluginException {
     //TODO: add some caching of the extracted plugins
 
     File tmp = createTempDir(archive);
@@ -35,6 +37,26 @@ public class PluginExtractor {
     ua.enableLogging(new ConsoleLogger(Logger.LEVEL_WARN, ""));
     ua.setDestDirectory(tmp);
     ua.extract();
+
+    /*
+      Check if the given .zip file actually contains a single .jar entry (a.zip!/b.jar!/META-INF/plugin.xml)
+      If so we should return this single .jar file because it is actually a plugin.
+    */
+    Collection<File> files = FileUtils.listFiles(tmp, new String[]{"jar"}, false);
+    if (files.size() > 1) {
+      throw new IncorrectPluginException("Plugin archive contains multiple .jar files representing plugins");
+    }
+    if (files.size() == 1) {
+      File singleJar = files.iterator().next();
+
+      //move this single jar outside from the extracted directory
+      File file = File.createTempFile("plugin_", ".jar", getCacheDir());
+      FileUtils.copyFile(singleJar, file);
+
+      //delete firstly extracted directory
+      FileUtils.deleteQuietly(tmp);
+      return file;
+    }
 
     stripTopLevelDirectory(tmp);
     FileUtils.forceDeleteOnExit(tmp);

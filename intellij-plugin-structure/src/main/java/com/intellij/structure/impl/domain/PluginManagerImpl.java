@@ -160,7 +160,7 @@ public class PluginManagerImpl extends PluginManager {
   //filePath is relative to META-INF/ => should resolve it properly
 
   /**
-   * Checks than the given {@code entry} corresponds to the sought-for file specified with {@code filePath}.
+   * Checks that the given {@code entry} corresponds to the sought-for file specified with {@code filePath}.
    *
    * @param entry               current entry in the overlying traversing of zip file
    * @param filePath            sought-for file, path is relative to META-INF/ directory
@@ -300,6 +300,23 @@ public class PluginManagerImpl extends PluginManager {
         final ZipEntry entry = entries.nextElement();
         if (entry.isDirectory()) {
           continue;
+        }
+
+        //check if this .zip file is an archive of the .jar file
+        //in this case it contains the following entry: a.zip!/b.jar!/META-INF/plugin.xml
+        if (entry.getName().endsWith(".jar")) {
+          if (entry.getName().indexOf('/') == -1) {
+            //this is in-root .jar file which will be extracted by the IDE
+            ZipInputStream inRootJar = new ZipInputStream(zipFile.getInputStream(entry));
+            Plugin plugin = loadFromZipStream(inRootJar, "jar:" + zipRootUrl + entry.getName() + "!/", filePath, validator.ignoreMissingFile());
+            if (plugin != null) {
+              if (descriptorRoot != null) {
+                validator.onIncorrectStructure("Multiple META-INF/" + filePath + " found in the root of the plugin");
+                return null;
+              }
+              descriptorRoot = plugin;
+            }
+          }
         }
 
         final ZipFile finalZipFile = zipFile;
