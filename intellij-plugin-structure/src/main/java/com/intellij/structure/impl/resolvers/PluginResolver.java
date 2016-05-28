@@ -47,7 +47,7 @@ public class PluginResolver extends Resolver {
   public static PluginResolver createPluginResolver(@NotNull Plugin plugin) throws IncorrectPluginException, IOException {
     File file = plugin.getPluginFile();
     if (file.isDirectory() || (file.exists() && PluginManagerImpl.isJarOrZip(file))) {
-      if (file.exists() && StringUtil.endsWithIgnoreCase(file.getName(), ".zip")) {
+      if (StringUtil.endsWithIgnoreCase(file.getName(), ".zip")) {
         File extracted = PluginExtractor.extractPlugin(file);
         return new PluginResolver(plugin, extracted, true);
       }
