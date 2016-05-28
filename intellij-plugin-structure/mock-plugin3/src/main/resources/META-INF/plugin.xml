@@ -13,6 +13,7 @@
     <depends optional="true" config-file="extension.xml">JUnit</depends>
     <depends optional="true" config-file="optionals/optional.xml">optionalDependency</depends>
     <depends optional="true" config-file="../optionalsDir/otherDirOptional.xml">otherDirOptionalDependency</depends>
+    <depends optional="true" config-file="/META-INF/referencedFromRoot.xml">referenceFromRoot</depends>
 
     <depends>mandatoryDependency</depends>
     <depends>com.intellij.modules.mandatoryDependency</depends>
@@ -20,8 +21,8 @@
     <module value="one_module"/>
     <module value="two_module"/>
 
-    <change-notes>change_notes</change-notes>
-
+    <!--xi-include with absolute path-->
+    <xi:include href="/META-INF/version-notes.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
     <project-components>
         <component>

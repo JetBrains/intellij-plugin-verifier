@@ -3,6 +3,7 @@ package com.intellij.structure.mocks;
 import com.google.common.collect.Multimap;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
+import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.impl.domain.PluginDependencyImpl;
 import com.intellij.structure.resolvers.Resolver;
@@ -97,8 +98,8 @@ public class TestMockPlugins {
 
   private void testMock3OptDescriptors(Plugin plugin) {
     Map<String, Plugin> optionalDescriptors = plugin.getOptionalDescriptors();
-    assertEquals(3, optionalDescriptors.size());
-    assertContains(optionalDescriptors.keySet(), "extension.xml", "optionals/optional.xml", "../optionalsDir/otherDirOptional.xml");
+    assertEquals(4, optionalDescriptors.size());
+    assertContains(optionalDescriptors.keySet(), "extension.xml", "optionals/optional.xml", "../optionalsDir/otherDirOptional.xml", "/META-INF/referencedFromRoot.xml");
 
     assertContains(optionalDescriptors.get("extension.xml").getAllClassesReferencedFromXml(), "org.jetbrains.plugins.scala.project.maven.MavenWorkingDirectoryProviderImpl".replace('.', '/'));
     assertContains(optionalDescriptors.get("optionals/optional.xml").getAllClassesReferencedFromXml(), "com.intellij.BeanClass".replace('.', '/'));
@@ -106,9 +107,9 @@ public class TestMockPlugins {
   }
 
   private void testMock3DependenciesAndModules(Plugin plugin) {
-    assertEquals(4, plugin.getDependencies().size());
-    List<PluginDependencyImpl> dependencies = Arrays.asList(new PluginDependencyImpl("JUnit", true), new PluginDependencyImpl("optionalDependency", true), new PluginDependencyImpl("otherDirOptionalDependency", true), new PluginDependencyImpl("mandatoryDependency", false));
-    assertEquals(dependencies, plugin.getDependencies());
+    assertEquals(5, plugin.getDependencies().size());
+    List<PluginDependencyImpl> dependencies = Arrays.asList(new PluginDependencyImpl("JUnit", true), new PluginDependencyImpl("optionalDependency", true), new PluginDependencyImpl("otherDirOptionalDependency", true), new PluginDependencyImpl("mandatoryDependency", false), new PluginDependencyImpl("referenceFromRoot", true));
+    assertContains(plugin.getDependencies(), (PluginDependency[]) dependencies.toArray());
 
     //check module dependencies
     assertEquals(Collections.singletonList(new PluginDependencyImpl("com.intellij.modules.mandatoryDependency", false)), plugin.getModuleDependencies());

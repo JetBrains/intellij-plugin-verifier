@@ -122,6 +122,11 @@ public class PluginManagerImpl extends PluginManager {
           parentValidator.onIncorrectStructure("Plugin has recursive config dependencies for descriptor " + filePath);
         }
 
+        final String original = optFilePath;
+        if (optFilePath.startsWith("/META-INF/")) {
+          optFilePath = StringUtil.trimStart(optFilePath, "/META-INF/");
+        }
+
         Pair<String, Document> xmlPair = myRootXmlDocuments.get(optFilePath);
         if (xmlPair != null) {
           try {
@@ -129,7 +134,7 @@ public class PluginManagerImpl extends PluginManager {
             Document document = xmlPair.getSecond();
             PluginImpl optDescriptor = new PluginImpl(myPluginFile);
             optDescriptor.readExternal(document, url, parentValidator.ignoreMissingConfigElement());
-            descriptors.put(optFilePath, optDescriptor);
+            descriptors.put(original, optDescriptor);
           } catch (MalformedURLException e) {
             parentValidator.onCheckedException("Unable to read META-INF/" + optFilePath, e);
           }
@@ -146,7 +151,7 @@ public class PluginManagerImpl extends PluginManager {
 //          }
 
           if (optDescriptor != null) {
-            descriptors.put(optFilePath, optDescriptor);
+            descriptors.put(original, optDescriptor);
           } else {
             System.err.println("Optional descriptor META-INF/" + optFilePath + " is not found");
           }

@@ -23,6 +23,7 @@ import org.jsoup.safety.Whitelist;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -507,7 +508,7 @@ class PluginImpl implements Plugin {
 
   void readExternal(@NotNull Document document, @NotNull URL url, Validator validator) throws IncorrectPluginException {
     try {
-      document = JDOMXIncluder.resolve(document, url.toExternalForm());
+      document = JDOMXIncluder.resolve(document, url.toExternalForm(), false, new XIncludePluginResolver());
     } catch (XIncludeException e) {
       throw new IncorrectPluginException("Unable to read resolve " + url.getFile(), e);
     }
@@ -537,4 +538,21 @@ class PluginImpl implements Plugin {
     }
     return id + (getPluginVersion() != null ? ":" + getPluginVersion() : "");
   }
+
+  private static class XIncludePluginResolver extends JDOMXIncluder.DefaultPathResolver {
+    @NotNull
+    @Override
+    public URL resolvePath(@NotNull String relativePath, @Nullable String base) {
+      if (base != null && relativePath.startsWith("/META-INF/")) {
+        //for plugin descriptor the root is a directory containing the META-INF
+        try {
+          return new URL(new URL(base), ".." + relativePath);
+        } catch (MalformedURLException e) {
+          throw new XIncludeException(e);
+        }
+      }
+      return super.resolvePath(relativePath, base);
+    }
+  }
+
 }
