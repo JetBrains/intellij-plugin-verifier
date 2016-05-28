@@ -139,7 +139,11 @@ public class PluginManagerImpl extends PluginManager {
 
           PluginImpl optDescriptor = (PluginImpl) loadDescriptor(file, optFilePath, optValidator);
 
-          //in IDEA there is a one more attempt to load descriptor (loadDescriptorFromResource) but I don't know why
+//          TODO: in IDEA there is one more attempt to load optional descriptor
+//          URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + '/' + optionalDescriptorName);
+//          if (resource != null) {
+//            optionalDescriptor = loadDescriptorFromResource(resource);
+//          }
 
           if (optDescriptor != null) {
             descriptors.put(optFilePath, optDescriptor);
@@ -356,6 +360,9 @@ public class PluginManagerImpl extends PluginManager {
     if (descriptorInner != null) {
       return descriptorInner;
     }
+
+    //TODO: print illustrative message about why it's not found
+    //(maybe a plugin has an incorrect structure, e.g. a.zip/plugin_name/plugin.jar - without lib/ directory.
 
     validator.onMissingFile("META-INF/" + filePath + " is not found");
     return null;
