@@ -86,7 +86,7 @@ public class PluginManagerImpl extends PluginManager {
     if (file.isDirectory()) {
       descriptor = loadDescriptorFromDir(file, filePath, validator);
     } else if (file.exists() && isJarOrZip(file)) {
-      descriptor = loadDescriptorFromZipFile(file, filePath, validator);
+      descriptor = loadDescriptorFromZipOrJarFile(file, filePath, validator);
     } else {
       if (!file.exists()) {
         validator.onIncorrectStructure("Plugin file is not found " + file);
@@ -286,7 +286,7 @@ public class PluginManagerImpl extends PluginManager {
   }
 
   @Nullable
-  private Plugin loadDescriptorFromZipFile(@NotNull final File file, @NotNull final String filePath, @NotNull final Validator validator) throws IncorrectPluginException {
+  private Plugin loadDescriptorFromZipOrJarFile(@NotNull final File file, @NotNull final String filePath, @NotNull final Validator validator) throws IncorrectPluginException {
     final String zipRootUrl = "jar:" + getFileEscapedUri(file) + "!/";
 
     Plugin descriptorRoot = null;
@@ -431,7 +431,7 @@ public class PluginManagerImpl extends PluginManager {
 
     for (final File f : files) {
       if (isJarOrZip(f)) {
-        descriptor = loadDescriptorFromZipFile(f, filePath, validator.ignoreMissingFile());
+        descriptor = loadDescriptorFromZipOrJarFile(f, filePath, validator.ignoreMissingFile());
         if (descriptor != null) {
           //is it necessary to check that only one META-INF/plugin.xml is presented?
           break;
