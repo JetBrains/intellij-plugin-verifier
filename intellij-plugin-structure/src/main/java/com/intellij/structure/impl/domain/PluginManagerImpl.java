@@ -343,8 +343,10 @@ public class PluginManagerImpl extends PluginManager {
 
         if (inRoot != null) {
           if (descriptorRoot != null) {
-            validator.onIncorrectStructure("Multiple META-INF/" + filePath + " found in the root of the plugin");
-            return null;
+            //TODO: is it necessary to throw an exception?
+            System.err.println("Multiple META-INF/" + filePath + " found in the root of the plugin");
+//            validator.onIncorrectStructure("Multiple META-INF/" + filePath + " found in the root of the plugin");
+//            return null;
           }
           descriptorRoot = inRoot;
           continue;
