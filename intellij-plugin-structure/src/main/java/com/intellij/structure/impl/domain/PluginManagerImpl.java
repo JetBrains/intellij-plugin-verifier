@@ -375,6 +375,15 @@ public class PluginManagerImpl extends PluginManager {
     //in-root descriptor takes precedence over other descriptors, so don't throw
     //"Multiple plugin.xml" if they are found in the <root>/META-INF/plugin.xml and <root>/lib/some.jar/META-INF/plugin.xml
     if (descriptorRoot != null) {
+
+      //TODO: rewrite
+      if (descriptorInner != null) {
+        //some plugins have logo-file in the lib-descriptor
+        if (descriptorInner.getVendorLogo() != null) {
+          ((PluginImpl) descriptorRoot).setLogoContent(descriptorInner.getVendorLogo());
+        }
+      }
+
       return descriptorRoot;
     }
 

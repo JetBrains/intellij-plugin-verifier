@@ -456,6 +456,10 @@ class PluginImpl implements Plugin {
     }
   }
 
+  void setLogoContent(@Nullable byte[] logoContent) {
+    myLogoContent = logoContent;
+  }
+
   @Override
   @Nullable
   public byte[] getVendorLogo() {
