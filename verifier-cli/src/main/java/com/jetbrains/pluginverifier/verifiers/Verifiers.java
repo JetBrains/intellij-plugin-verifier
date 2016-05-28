@@ -13,6 +13,8 @@ import com.jetbrains.pluginverifier.verifiers.method.*;
  * @author Dennis.Ushakov
  */
 public class Verifiers {
+
+  //TODO: add a verifier which reports minor problems (missing optional plugin descriptor, missing logo file and other)
   public static final Verifier[] PLUGIN_VERIFIERS = new Verifier[]{new ReferencesVerifier()};
   private static final FieldVerifier[] FIELD_VERIFIERS = new FieldVerifier[]{new FieldTypeVerifier()};
 
