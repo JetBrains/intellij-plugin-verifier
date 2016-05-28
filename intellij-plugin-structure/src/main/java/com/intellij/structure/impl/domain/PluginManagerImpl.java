@@ -338,7 +338,7 @@ public class PluginManagerImpl extends PluginManager {
 
         if (inRoot != null) {
           if (descriptorRoot != null) {
-            validator.onIncorrectStructure("Multiple META-INF/" + filePath + " found");
+            validator.onIncorrectStructure("Multiple META-INF/" + filePath + " found in the root of the plugin");
             return null;
           }
           descriptorRoot = inRoot;
@@ -365,11 +365,10 @@ public class PluginManagerImpl extends PluginManager {
       }
     }
 
-    if (descriptorRoot != null && descriptorInner != null) {
-      validator.onIncorrectStructure("Multiple META-INF/" + filePath + " found");
-      return null;
-    }
+    //TODO: write a test: in-root-descriptor takes precedence over in-lib-descriptor
 
+    //in-root descriptor takes precedence over other descriptors, so don't throw
+    //"Multiple plugin.xml" if they are found in the <root>/META-INF/plugin.xml and <root>/lib/some.jar/META-INF/plugin.xml
     if (descriptorRoot != null) {
       return descriptorRoot;
     }
