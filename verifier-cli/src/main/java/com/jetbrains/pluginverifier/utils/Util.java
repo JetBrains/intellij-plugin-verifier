@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.utils;
 import com.google.common.base.Joiner;
 import com.google.common.collect.*;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
+import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
@@ -38,6 +39,18 @@ public class Util {
       .addOption("dce", "dont-check-excluded", false, "If specified no plugins from -epf will be checked at all")
       .addOption("imod", "ignore-missing-optional-dependencies", true, "Missing optional dependencies on the plugin IDs specified in this parameter will be ignored")
       .addOption("ip", "ignore-problems", true, "Problems specified in this file will be ignored. File must contain lines in form <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>");
+
+  //TODO: write a System.option for appending this list.
+  private static final ImmutableList<String> IDEA_ULTIMATE_MODULES = ImmutableList.of(
+      "com.intellij.modules.platform",
+      "com.intellij.modules.lang",
+      "com.intellij.modules.vcs",
+      "com.intellij.modules.xml",
+      "com.intellij.modules.xdebugger",
+      "com.intellij.modules.java",
+      "com.intellij.modules.ultimate",
+      "com.intellij.modules.all"
+  );
 
   public static void printHelp() {
     new HelpFormatter().printHelp("java -jar verifier.jar <command> [<args>]", CMD_OPTIONS);
@@ -169,5 +182,14 @@ public class Util {
         out.println(ParametersListUtil.join(new ArrayList<>(entry.getValue())));
       }
     }
+  }
+
+  public static boolean isDefaultModule(String moduleId) {
+    return IDEA_ULTIMATE_MODULES.contains(moduleId);
+  }
+
+  public static boolean failOnCyclicDependency() {
+    //TODO: change this with a method parameter
+    return Boolean.parseBoolean(RepositoryConfiguration.getInstance().getProperty("fail.on.cyclic.dependencies"));
   }
 }
