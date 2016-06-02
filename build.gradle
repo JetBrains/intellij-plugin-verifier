@@ -8,7 +8,7 @@ buildscript {
   }
 }
 
-def verifierVersion = '1.29'
+def verifierVersion = '1.30'
 def intellijStructureVersion = '1.22'
 
 
