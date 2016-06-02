@@ -156,6 +156,10 @@ public class PluginVerifierOptions {
     return false;
   }
 
+  boolean isIgnoreDependency(@NotNull String pluginId) {
+    return isIgnoreMissingOptionalDependency(pluginId); //TODO: add an option to ignore mandatory plugins too
+  }
+
   boolean isIgnoreMissingOptionalDependency(@NotNull String pluginId) {
     return myOptionalDependenciesIdsToIgnoreIfMissing.contains(pluginId);
   }

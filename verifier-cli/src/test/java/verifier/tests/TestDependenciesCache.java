@@ -5,12 +5,10 @@ import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.impl.domain.IdeManagerImpl;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.jetbrains.pluginverifier.misc.PluginCache;
-import com.jetbrains.pluginverifier.utils.dependencies.DependenciesCache;
-import com.jetbrains.pluginverifier.utils.dependencies.PluginDependenciesDescriptor;
+import com.jetbrains.pluginverifier.utils.dependencies.Dependencies;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -32,8 +30,8 @@ public class TestDependenciesCache {
     Ide ide = IdeManagerImpl.getInstance().createIde(idea144_3600);
     Plugin plugin = PluginCache.getInstance().createPlugin(pluginFile);
 
-    PluginDependenciesDescriptor descriptor = DependenciesCache.getInstance().calcDependenciesWithTransitive(ide, plugin, new ArrayList<PluginDependenciesDescriptor>());
-    Set<Plugin> deps = descriptor.getDependencies();
+    Dependencies.DependenciesResult descriptor = Dependencies.getInstance().calcDependencies(plugin, ide);
+    Set<Plugin> deps = descriptor.getDescriptor().getTransitiveDependencies();
     assertNotNull(deps);
     assertEquals("Missing transitive dependencies", dependencies.size(), deps.size());
 

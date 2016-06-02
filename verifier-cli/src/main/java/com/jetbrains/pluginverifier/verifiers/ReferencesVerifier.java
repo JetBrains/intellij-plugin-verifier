@@ -1,24 +1,29 @@
 package com.jetbrains.pluginverifier.verifiers;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.structure.domain.Plugin;
+import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
-import com.jetbrains.pluginverifier.problems.CyclicDependenciesProblem;
 import com.jetbrains.pluginverifier.problems.MissingDependencyProblem;
-import com.jetbrains.pluginverifier.utils.dependencies.*;
+import com.jetbrains.pluginverifier.problems.VerificationError;
+import com.jetbrains.pluginverifier.utils.Util;
+import com.jetbrains.pluginverifier.utils.dependencies.Dependencies;
+import com.jetbrains.pluginverifier.utils.dependencies.MissingReason;
+import com.jetbrains.pluginverifier.utils.dependencies.PluginDependenciesNode;
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
 import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier;
 import com.jetbrains.pluginverifier.verifiers.instruction.InstructionVerifier;
 import com.jetbrains.pluginverifier.verifiers.method.MethodVerifier;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.*;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Dennis.Ushakov
@@ -29,16 +34,27 @@ class ReferencesVerifier implements Verifier {
   public void verify(@NotNull VerificationContext ctx) {
     Plugin plugin = ctx.getPlugin();
 
-    PluginDependenciesDescriptor descriptor = getPluginDependencies(ctx);
-    if (descriptor == null) {
+    PluginDependenciesNode depNode = getPluginDependencies(ctx);
+
+    boolean hasMissingMandatory = false;
+    for (Map.Entry<PluginDependency, MissingReason> entry : depNode.getMissingDependencies().entrySet()) {
+      String missingId = entry.getKey().getId();
+      if (!ctx.getVerifierOptions().isIgnoreDependency(missingId)) {
+        hasMissingMandatory |= !entry.getKey().isOptional();
+        ctx.registerProblem(new MissingDependencyProblem(plugin.getPluginId(), missingId, entry.getValue().getReason()), ProblemLocation.fromPlugin(plugin.getPluginId()));
+      }
+    }
+
+    if (hasMissingMandatory) {
+      List<PluginDependency> missing = depNode.getMissingDependencies().keySet().stream().filter(p -> !p.isOptional()).collect(Collectors.toList());
+      System.err.println("The plugin verifier will not verify a plugin " + plugin + " because it has missing mandatory dependencies: " + missing);
       return;
     }
-    processOptionalMissingDependencies(descriptor, ctx);
 
     try (
         //close the plugin resolver when it is no longer needed (it will delete possibly extracted files)
         Resolver pluginResolver = Resolver.createPluginResolver(plugin);
-        Resolver pluginDependencies = createPluginDependenciesResolver(descriptor)
+        Resolver pluginDependencies = createPluginDependenciesResolver(depNode)
     ) {
       Resolver resolverForCheck = getResolverForCheck(plugin, pluginResolver);
 
@@ -59,35 +75,22 @@ class ReferencesVerifier implements Verifier {
     }
   }
 
-  @Nullable
-  private PluginDependenciesDescriptor getPluginDependencies(@NotNull VerificationContext ctx) {
-    PluginDependenciesDescriptor descriptor;
-    try {
-      descriptor = DependenciesCache.getInstance().getDependenciesDescriptor(ctx.getPlugin(), ctx.getIde());
-    } catch (DependenciesError dependenciesError) {
-      if (dependenciesError instanceof CyclicDependencyError) {
-        CyclicDependenciesProblem problem = new CyclicDependenciesProblem(((CyclicDependencyError) dependenciesError).getCycle());
-        ctx.registerProblem(problem, ProblemLocation.fromPlugin(ctx.getPlugin().toString()));
-      } else if (dependenciesError instanceof MissingDependenciesError) {
-        MissingDependenciesError error = (MissingDependenciesError) dependenciesError;
-        MissingDependencyProblem problem = new MissingDependencyProblem(error.getPlugin(), error.getMissedPlugin(), error.getDescription());
-        ctx.registerProblem(problem, ProblemLocation.fromPlugin(ctx.getPlugin().toString()));
-      } else {
-        throw new AssertionError("Forgotten case");
-      }
-      //we have a missing dependency so unable to verify a plugin fully
-      return null;
+  @NotNull
+  private PluginDependenciesNode getPluginDependencies(@NotNull VerificationContext ctx) {
+    Dependencies.DependenciesResult result = Dependencies.getInstance().calcDependencies(ctx.getPlugin(), ctx.getIde());
+    if (result.getCycle() != null && Util.failOnCyclicDependency()) {
+      throw new VerificationError("Plugin dependencies tree has the following cycle: " + Joiner.on(" -> ").join(result.getCycle()));
     }
-    return descriptor;
+    return result.getDescriptor();
   }
 
   @NotNull
-  private Resolver createPluginDependenciesResolver(@NotNull PluginDependenciesDescriptor descriptor) {
-    if (descriptor.getDependencies().isEmpty()) {
+  private Resolver createPluginDependenciesResolver(@NotNull PluginDependenciesNode descriptor) {
+    if (descriptor.getTransitiveDependencies().isEmpty()) {
       return Resolver.getEmptyResolver();
     }
     List<Resolver> depResolvers = new ArrayList<>();
-    for (Plugin dep : descriptor.getDependencies()) {
+    for (Plugin dep : descriptor.getTransitiveDependencies()) {
       try {
         depResolvers.add(Resolver.createPluginResolver(dep));
       } catch (Exception e) {
@@ -95,7 +98,7 @@ class ReferencesVerifier implements Verifier {
         throw new RuntimeException("Unable to create dependent plugin resolver " + dep.getPluginId(), e);
       }
     }
-    return Resolver.createUnionResolver("Plugin " + descriptor.getPluginName() + " transitive dependencies", depResolvers);
+    return Resolver.createUnionResolver("Plugin " + descriptor.getPlugin() + " transitive dependencies", depResolvers);
   }
 
   /**
@@ -149,22 +152,6 @@ class ReferencesVerifier implements Verifier {
     }
 
     return Resolver.createUnionResolver("Plugin classes for check", Lists.newArrayList(usedResolvers));
-  }
-
-  private void processOptionalMissingDependencies(@NotNull PluginDependenciesDescriptor descriptor, @NotNull VerificationContext ctx) {
-    String pluginName = descriptor.getPluginName();
-    Map<String, String> missingDependencies = descriptor.getMissingOptionalDependencies().get(pluginName);
-    if (missingDependencies != null) {
-      for (Map.Entry<String, String> entry : missingDependencies.entrySet()) {
-        String missingId = entry.getKey();
-        String description = entry.getValue();
-        if (!ctx.getVerifierOptions().isIgnoreMissingOptionalDependency(missingId)) {
-          ctx.registerProblem(new MissingDependencyProblem(pluginName, missingId, description), ProblemLocation.fromPlugin(pluginName));
-        }
-      }
-    }
-
-
   }
 
   @SuppressWarnings("unchecked")
