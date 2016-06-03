@@ -12,7 +12,7 @@ import java.util.Comparator;
  * @author Sergey Evdokimov
  */
 @XmlRootElement(name = "update")
-public class UpdateInfo {
+public final class UpdateInfo {
 
   public static final Comparator<UpdateInfo> UPDATE_NUMBER_COMPARATOR = new Comparator<UpdateInfo>() {
     @Override
@@ -49,6 +49,17 @@ public class UpdateInfo {
     this.pluginId = pluginId;
     this.pluginName = pluginName;
     this.version = version;
+  }
+
+  @NotNull
+  public static UpdateInfo copy(@NotNull UpdateInfo instance) {
+    UpdateInfo info = new UpdateInfo();
+    info.updateId = instance.updateId;
+    info.pluginId = instance.pluginId;
+    info.pluginName = instance.pluginName;
+    info.version = instance.version;
+    info.cdate = instance.cdate;
+    return info;
   }
 
   @XmlAttribute
