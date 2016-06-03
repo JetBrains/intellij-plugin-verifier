@@ -41,6 +41,13 @@ public final class UpdateInfo {
   public UpdateInfo() {
   }
 
+  public UpdateInfo(Integer updateId, String pluginId, String pluginName, String version) {
+    this.updateId = updateId;
+    this.pluginId = pluginId;
+    this.pluginName = pluginName;
+    this.version = version;
+  }
+
   public UpdateInfo(int updateId) {
     this.updateId = updateId;
   }
