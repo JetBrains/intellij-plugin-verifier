@@ -7,8 +7,8 @@ import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
+import com.jetbrains.pluginverifier.problems.CyclicDependenciesProblem;
 import com.jetbrains.pluginverifier.problems.MissingDependencyProblem;
-import com.jetbrains.pluginverifier.problems.VerificationError;
 import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.utils.dependencies.Dependencies;
 import com.jetbrains.pluginverifier.utils.dependencies.MissingReason;
@@ -34,7 +34,14 @@ class ReferencesVerifier implements Verifier {
   public void verify(@NotNull VerificationContext ctx) {
     Plugin plugin = ctx.getPlugin();
 
-    PluginDependenciesNode depNode = getPluginDependencies(ctx);
+    Dependencies.DependenciesResult result = Dependencies.getInstance().calcDependencies(ctx.getPlugin(), ctx.getIde());
+    if (result.getCycle() != null && Util.failOnCyclicDependency()) {
+      String cycle = Joiner.on(" -> ").join(result.getCycle());
+      ctx.registerProblem(new CyclicDependenciesProblem(cycle), ProblemLocation.fromPlugin(plugin.getPluginId()));
+      System.err.println("The plugin verifier will not verify a plugin " + plugin + " because its dependencies tree has the following cycle: " + cycle);
+      return;
+    }
+    PluginDependenciesNode depNode = result.getDescriptor();
 
     boolean hasMissingMandatory = false;
     for (Map.Entry<PluginDependency, MissingReason> entry : depNode.getMissingDependencies().entrySet()) {
@@ -73,15 +80,6 @@ class ReferencesVerifier implements Verifier {
     } catch (IOException e) {
       throw new RuntimeException("Unable to create a plugin class loader " + plugin.getPluginId(), e);
     }
-  }
-
-  @NotNull
-  private PluginDependenciesNode getPluginDependencies(@NotNull VerificationContext ctx) {
-    Dependencies.DependenciesResult result = Dependencies.getInstance().calcDependencies(ctx.getPlugin(), ctx.getIde());
-    if (result.getCycle() != null && Util.failOnCyclicDependency()) {
-      throw new VerificationError("Plugin dependencies tree has the following cycle: " + Joiner.on(" -> ").join(result.getCycle()));
-    }
-    return result.getDescriptor();
   }
 
   @NotNull
