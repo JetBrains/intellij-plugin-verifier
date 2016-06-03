@@ -1,9 +1,12 @@
 package com.jetbrains.pluginverifier.problems.statics;
 
 import com.jetbrains.pluginverifier.problems.Problem;
+import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by Sergey Patrikeev
@@ -31,6 +34,18 @@ public class StaticAccessOfInstanceFieldProblem extends Problem {
   public String getDescription() {
     return getDescriptionPrefix() + " " + myField;
   }
+
+
+  @Override
+  public Problem deserialize(String... params) {
+    return new StaticAccessOfInstanceFieldProblem(params[0]);
+  }
+
+  @Override
+  public List<Pair<String, String>> serialize() {
+    return Collections.singletonList(Pair.create("field", myField));
+  }
+
 
   public String getField() {
     return myField;

@@ -3,6 +3,8 @@ package com.jetbrains.pluginverifier.problems;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Represents possible JVM visibility constants.
+ *
  * @author Sergey Patrikeev
  */
 public enum AccessType {

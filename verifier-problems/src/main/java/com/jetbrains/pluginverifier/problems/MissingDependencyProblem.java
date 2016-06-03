@@ -1,8 +1,11 @@
 package com.jetbrains.pluginverifier.problems;
 
+import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Arrays;
+import java.util.List;
 
 @XmlRootElement
 public class MissingDependencyProblem extends Problem {
@@ -55,4 +58,16 @@ public class MissingDependencyProblem extends Problem {
   public void setPlugin(String plugin) {
     myPlugin = plugin;
   }
+
+  @Override
+  public Problem deserialize(String... params) {
+    return new MissingDependencyProblem(params[0], params[1], params[2]);
+  }
+
+  @Override
+  public List<Pair<String, String>> serialize() {
+    //noinspection unchecked
+    return Arrays.asList(Pair.create("plugin", myPlugin), Pair.create("missingId", myMissingId), Pair.create("description", myMissDescription));
+  }
+
 }

@@ -1,8 +1,11 @@
 package com.jetbrains.pluginverifier.problems;
 
+import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Sergey Patrikeev
@@ -48,4 +51,14 @@ public class IllegalFieldAccessProblem extends Problem {
     myFieldAccess = fieldAccess;
   }
 
+  @Override
+  public Problem deserialize(String... params) {
+    return new IllegalFieldAccessProblem(params[0], AccessType.valueOf(params[1].toUpperCase()));
+  }
+
+  @Override
+  public List<Pair<String, String>> serialize() {
+    //noinspection unchecked
+    return Arrays.asList(Pair.create("field", myField), Pair.create("access", myFieldAccess != null ? myFieldAccess.name() : null)); //name() used because of Javadoc about stability
+  }
 }

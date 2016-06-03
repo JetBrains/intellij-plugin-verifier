@@ -1,8 +1,11 @@
 package com.jetbrains.pluginverifier.problems;
 
+import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Arrays;
+import java.util.List;
 
 @XmlRootElement
 public class FailedToReadClassProblem extends Problem {
@@ -45,5 +48,18 @@ public class FailedToReadClassProblem extends Problem {
   public String getDescription() {
     return getDescriptionPrefix() + " " + myClassName + (myDetails != null ? " " + myDetails : "");
   }
+
+
+  @Override
+  public Problem deserialize(String... params) {
+    return new FailedToReadClassProblem(params[0], params[1]);
+  }
+
+  @Override
+  public List<Pair<String, String>> serialize() {
+    //noinspection unchecked
+    return Arrays.asList(Pair.create("class", myClassName), Pair.create("details", myDetails));
+  }
+
 
 }

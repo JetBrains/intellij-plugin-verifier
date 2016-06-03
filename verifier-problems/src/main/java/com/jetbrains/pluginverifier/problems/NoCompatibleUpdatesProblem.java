@@ -1,9 +1,12 @@
 package com.jetbrains.pluginverifier.problems;
 
 
+import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Arrays;
+import java.util.List;
 
 @XmlRootElement
 public class NoCompatibleUpdatesProblem extends Problem {
@@ -57,4 +60,18 @@ public class NoCompatibleUpdatesProblem extends Problem {
   public void setDetails(String details) {
     myDetails = details;
   }
+
+
+  @Override
+  public Problem deserialize(String... params) {
+    return new NoCompatibleUpdatesProblem(params[0], params[1], params[2]);
+  }
+
+  @Override
+  public List<Pair<String, String>> serialize() {
+    //noinspection unchecked
+    return Arrays.asList(Pair.create("plugin", myPlugin), Pair.create("ideVersion", myIdeVersion), Pair.create("details", myDetails));
+  }
+
+
 }

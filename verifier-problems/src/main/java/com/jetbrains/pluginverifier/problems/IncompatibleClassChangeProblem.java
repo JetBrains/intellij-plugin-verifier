@@ -1,8 +1,11 @@
 package com.jetbrains.pluginverifier.problems;
 
+import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Sergey Patrikeev
@@ -59,9 +62,21 @@ public class IncompatibleClassChangeProblem extends Problem {
     myChange = change;
   }
 
+  @Override
+  public Problem deserialize(String... params) {
+    return new IncompatibleClassChangeProblem(params[0], Change.valueOf(params[1].toUpperCase()));
+  }
+
+  @Override
+  public List<Pair<String, String>> serialize() {
+    //noinspection unchecked
+    return Arrays.asList(Pair.create("class", myClassName), Pair.create("change", myChange != null ? myChange.name() : null));
+  }
+
   public enum Change {
     CLASS_TO_INTERFACE,
     INTERFACE_TO_CLASS
   }
+
 
 }
