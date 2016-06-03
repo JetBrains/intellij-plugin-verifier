@@ -26,27 +26,15 @@ public class AbstractClassInstantiationProblem extends Problem {
     myClassName = className;
   }
 
+  @NotNull
   @Override
   public String getDescriptionPrefix() {
     return "instantiation an abstract class";
   }
 
+  @NotNull
   public String getDescription() {
     return getDescriptionPrefix() + " " + MessageUtils.convertMethodDescr(myClassName);
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof AbstractClassInstantiationProblem)) return false;
-
-    AbstractClassInstantiationProblem problem = (AbstractClassInstantiationProblem) o;
-
-    return !(myClassName != null ? !myClassName.equals(problem.myClassName) : problem.myClassName != null);
-  }
-
-  @Override
-  public int hashCode() {
-    return 9002118 + (myClassName != null ? myClassName.hashCode() : 0);
-  }
 }

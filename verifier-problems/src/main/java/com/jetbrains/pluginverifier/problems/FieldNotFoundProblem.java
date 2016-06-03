@@ -25,27 +25,15 @@ public class FieldNotFoundProblem extends Problem {
     myField = field;
   }
 
+  @NotNull
   @Override
   public String getDescriptionPrefix() {
     return "accessing to unknown field";
   }
 
+  @NotNull
   public String getDescription() {
     return getDescriptionPrefix() + " " + myField;
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    FieldNotFoundProblem problem = (FieldNotFoundProblem) o;
-
-    return !(myField != null ? !myField.equals(problem.myField) : problem.myField != null);
-  }
-
-  @Override
-  public int hashCode() {
-    return 807130 + (myField != null ? myField.hashCode() : 0);
-  }
 }

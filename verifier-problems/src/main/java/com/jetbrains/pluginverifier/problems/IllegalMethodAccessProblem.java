@@ -21,11 +21,13 @@ public class IllegalMethodAccessProblem extends Problem {
     myMethodAccess = methodAccess;
   }
 
+  @NotNull
   @Override
   public String getDescriptionPrefix() {
     return "illegal invocation of";
   }
 
+  @NotNull
   public String getDescription() {
     return getDescriptionPrefix() + " " + myMethodAccess.getDescription() + " method " + myMethod;
   }
@@ -44,27 +46,6 @@ public class IllegalMethodAccessProblem extends Problem {
 
   public void setMethodAccess(AccessType methodAccess) {
     myMethodAccess = methodAccess;
-  }
-
-  @SuppressWarnings("SimplifiableIfStatement")
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof IllegalMethodAccessProblem)) return false;
-
-    IllegalMethodAccessProblem that = (IllegalMethodAccessProblem) o;
-
-    if (myMethod != null ? !myMethod.equals(that.myMethod) : that.myMethod != null) return false;
-    return myMethodAccess == that.myMethodAccess;
-
-  }
-
-  @Override
-  public int hashCode() {
-    int result = 100500;
-    result = 31 * result + (myMethod != null ? myMethod.hashCode() : 0);
-    result = 31 * result + (myMethodAccess != null ? myMethodAccess.hashCode() : 0);
-    return result;
   }
 
 }

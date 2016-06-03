@@ -26,27 +26,15 @@ public class MethodNotImplementedProblem extends Problem {
     myMethod = method;
   }
 
+  @NotNull
   @Override
   public String getDescriptionPrefix() {
     return "method isn't implemented";
   }
 
+  @NotNull
   public String getDescription() {
     return getDescriptionPrefix() + " " + MessageUtils.convertMethodDescr(myMethod);
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof MethodNotImplementedProblem)) return false;
-
-    MethodNotImplementedProblem problem = (MethodNotImplementedProblem)o;
-
-    return !(myMethod != null ? !myMethod.equals(problem.myMethod) : problem.myMethod != null);
-  }
-
-  @Override
-  public int hashCode() {
-    return 8112009 + (myMethod != null ? myMethod.hashCode() : 0);
-  }
 }

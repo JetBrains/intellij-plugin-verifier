@@ -37,27 +37,15 @@ public class MethodNotFoundProblem extends Problem {
     myMethod = methodDescriptor;
   }
 
+  @NotNull
   @Override
   public String getDescriptionPrefix() {
     return "invoking unknown method";
   }
 
+  @NotNull
   public String getDescription() {
     return getDescriptionPrefix() + " " + MessageUtils.convertMethodDescr(myMethod);
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    MethodNotFoundProblem problem = (MethodNotFoundProblem)o;
-
-    return !(myMethod != null ? !myMethod.equals(problem.myMethod) : problem.myMethod != null);
-  }
-
-  @Override
-  public int hashCode() {
-    return 130807 + (myMethod != null ? myMethod.hashCode() : 0);
-  }
 }

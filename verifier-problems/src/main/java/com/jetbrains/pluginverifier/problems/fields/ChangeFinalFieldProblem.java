@@ -26,27 +26,15 @@ public class ChangeFinalFieldProblem extends Problem {
     myField = field;
   }
 
+  @NotNull
   @Override
   public String getDescriptionPrefix() {
     return "attempt to change a final field";
   }
 
+  @NotNull
   public String getDescription() {
     return getDescriptionPrefix() + " " + myField;
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof ChangeFinalFieldProblem)) return false;
-
-    ChangeFinalFieldProblem problem = (ChangeFinalFieldProblem) o;
-
-    return !(myField != null ? !myField.equals(problem.myField) : problem.myField != null);
-  }
-
-  @Override
-  public int hashCode() {
-    return myField != null ? myField.hashCode() : 0;
-  }
 }

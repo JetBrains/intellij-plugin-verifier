@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.problems;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
@@ -32,33 +34,16 @@ public class FailedToReadClassProblem extends Problem {
     myDetails = details;
   }
 
+  @NotNull
   @Override
   public String getDescriptionPrefix() {
     return "failed to read a class-file";
   }
 
+  @NotNull
   @Override
   public String getDescription() {
     return getDescriptionPrefix() + " " + myClassName + (myDetails != null ? " " + myDetails : "");
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    FailedToReadClassProblem that = (FailedToReadClassProblem) o;
-
-    if (myClassName != null ? !myClassName.equals(that.myClassName) : that.myClassName != null) return false;
-    return myDetails != null ? myDetails.equals(that.myDetails) : that.myDetails == null;
-
-  }
-
-  @Override
-  public int hashCode() {
-    int result = 12431231;
-    result = 31 * result + (myClassName != null ? myClassName.hashCode() : 0);
-    result = 31 * result + (myDetails != null ? myDetails.hashCode() : 0);
-    return result;
-  }
 }

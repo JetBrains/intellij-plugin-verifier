@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.problems;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -19,11 +21,13 @@ public class IncompatibleClassChangeProblem extends Problem {
     myChange = change;
   }
 
+  @NotNull
   @Override
   public String getDescriptionPrefix() {
     return "incompatible change problem";
   }
 
+  @NotNull
   public String getDescription() {
     String s = null;
     if (myChange != null) {
@@ -53,26 +57,6 @@ public class IncompatibleClassChangeProblem extends Problem {
 
   public void setChange(Change change) {
     myChange = change;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    IncompatibleClassChangeProblem that = (IncompatibleClassChangeProblem) o;
-
-    if (myClassName != null ? !myClassName.equals(that.myClassName) : that.myClassName != null) return false;
-    return myChange == that.myChange;
-
-  }
-
-  @Override
-  public int hashCode() {
-    int result = 105032;
-    result = 31 * result + (myClassName != null ? myClassName.hashCode() : 0);
-    result = 31 * result + (myChange != null ? myChange.hashCode() : 0);
-    return result;
   }
 
   public enum Change {

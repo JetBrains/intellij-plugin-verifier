@@ -36,32 +36,15 @@ public class DuplicateClassProblem extends Problem {
     myClassName = className;
   }
 
+  @NotNull
   @Override
   public String getDescriptionPrefix() {
     return "duplicated class";
   }
 
+  @NotNull
   public String getDescription() {
     return getDescriptionPrefix() + " (className=" + MessageUtils.convertClassName(myClassName) + " location=" + myMoniker + ")";
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    DuplicateClassProblem problem = (DuplicateClassProblem)o;
-
-    //noinspection SimplifiableIfStatement
-    if (myClassName != null ? !myClassName.equals(problem.myClassName) : problem.myClassName != null) return false;
-    return myMoniker != null ? myMoniker.equals(problem.myMoniker) : problem.myMoniker == null;
-
-  }
-
-  @Override
-  public int hashCode() {
-    int result = myMoniker != null ? myMoniker.hashCode() : 0;
-    result = 31 * result + (myClassName != null ? myClassName.hashCode() : 0);
-    return result;
-  }
 }

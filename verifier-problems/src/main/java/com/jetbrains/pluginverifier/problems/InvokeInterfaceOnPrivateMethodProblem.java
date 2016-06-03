@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.problems;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -17,6 +19,7 @@ public class InvokeInterfaceOnPrivateMethodProblem extends Problem {
     myMethod = method;
   }
 
+  @NotNull
   @Override
   public String getDescriptionPrefix() {
     return "attempt to perform 'invokeinterface' on private method";
@@ -30,25 +33,10 @@ public class InvokeInterfaceOnPrivateMethodProblem extends Problem {
     myMethod = method;
   }
 
+  @NotNull
   @Override
   public String getDescription() {
     return getDescriptionPrefix() + " " + myMethod;
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    InvokeInterfaceOnPrivateMethodProblem that = (InvokeInterfaceOnPrivateMethodProblem) o;
-
-    return myMethod != null ? myMethod.equals(that.myMethod) : that.myMethod == null;
-
-  }
-
-  @Override
-  public int hashCode() {
-    int result = 321;
-    result = 31 * result + (myMethod != null ? myMethod.hashCode() : 0);
-    return result;
-  }
 }
