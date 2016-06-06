@@ -35,14 +35,8 @@ public class NoCompatibleUpdatesProblem extends Problem {
 
   @NotNull
   @Override
-  public String getDescriptionPrefix() {
-    return "For " + myPlugin + " there are no updates compatible with " + myIdeVersion + " in the Plugin Repository" + (myDetails != null ? " " + myDetails : "");
-  }
-
-  @NotNull
-  @Override
   public String getDescription() {
-    return getDescriptionPrefix();
+    return "For " + myPlugin + " there are no updates compatible with " + myIdeVersion + " in the Plugin Repository" + (myDetails != null ? " " + myDetails : "");
   }
 
   public String getIdeVersion() {

@@ -24,12 +24,6 @@ public class InvokeInterfaceOnPrivateMethodProblem extends Problem {
     myMethod = method;
   }
 
-  @NotNull
-  @Override
-  public String getDescriptionPrefix() {
-    return "attempt to perform 'invokeinterface' on private method";
-  }
-
   public String getMethod() {
     return myMethod;
   }
@@ -41,7 +35,7 @@ public class InvokeInterfaceOnPrivateMethodProblem extends Problem {
   @NotNull
   @Override
   public String getDescription() {
-    return getDescriptionPrefix() + " " + myMethod;
+    return "attempt to perform 'invokeinterface' on private method" + " " + myMethod;
   }
 
 

@@ -31,14 +31,8 @@ public class FieldNotFoundProblem extends Problem {
   }
 
   @NotNull
-  @Override
-  public String getDescriptionPrefix() {
-    return "accessing to unknown field";
-  }
-
-  @NotNull
   public String getDescription() {
-    return getDescriptionPrefix() + " " + myField;
+    return "accessing to unknown field" + " " + myField;
   }
 
   @Override

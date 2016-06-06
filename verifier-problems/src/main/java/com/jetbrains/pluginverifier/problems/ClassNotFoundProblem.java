@@ -32,14 +32,8 @@ public class ClassNotFoundProblem extends Problem {
   }
 
   @NotNull
-  @Override
-  public String getDescriptionPrefix() {
-    return "accessing to unknown class";
-  }
-
-  @NotNull
   public String getDescription() {
-    return getDescriptionPrefix() + " " + MessageUtils.convertClassName(myUnknownClass);
+    return "accessing to unknown class" + " " + MessageUtils.convertClassName(myUnknownClass);
   }
 
   @Override

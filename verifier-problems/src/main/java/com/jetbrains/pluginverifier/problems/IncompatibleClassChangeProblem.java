@@ -28,12 +28,6 @@ public class IncompatibleClassChangeProblem extends Problem {
   }
 
   @NotNull
-  @Override
-  public String getDescriptionPrefix() {
-    return "incompatible change problem";
-  }
-
-  @NotNull
   public String getDescription() {
     String s = null;
     if (myChange != null) {
@@ -46,7 +40,7 @@ public class IncompatibleClassChangeProblem extends Problem {
           break;
       }
     }
-    return getDescriptionPrefix() + " of class " + myClassName + (s != null ? " " + s : "");
+    return "incompatible change problem" + " of class " + myClassName + (s != null ? " " + s : "");
   }
 
   public String getClassName() {

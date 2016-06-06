@@ -28,14 +28,8 @@ public class VerificationProblem extends Problem {
 
   @NotNull
   @Override
-  public String getDescriptionPrefix() {
-    return "failed to verify plugin";
-  }
-
-  @NotNull
-  @Override
   public String getDescription() {
-    return String.format("%s %s: %s", getDescriptionPrefix(), (myPlugin != null ? myPlugin : ""), myDetails);
+    return String.format("%s %s: %s", "failed to verify plugin", (myPlugin != null ? myPlugin : ""), myDetails);
   }
 
   @Override

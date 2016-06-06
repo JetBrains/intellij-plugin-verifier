@@ -47,14 +47,8 @@ public class MethodNotFoundProblem extends Problem {
   }
 
   @NotNull
-  @Override
-  public String getDescriptionPrefix() {
-    return "invoking unknown method";
-  }
-
-  @NotNull
   public String getDescription() {
-    return getDescriptionPrefix() + " " + MessageUtils.convertMethodDescr(myMethod);
+    return "invoking unknown method" + " " + MessageUtils.convertMethodDescr(myMethod);
   }
 
   @Override

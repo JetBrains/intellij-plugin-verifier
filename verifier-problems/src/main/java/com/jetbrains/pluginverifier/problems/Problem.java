@@ -10,12 +10,6 @@ import javax.xml.bind.annotation.XmlTransient;
  */
 public abstract class Problem implements Jsonable<Problem> {
 
-  @XmlTransient
-  @NotNull
-  //TODO: write a renderer for TC and others instead of prefix
-  @Deprecated
-  public abstract String getDescriptionPrefix();
-
 
   @XmlTransient
   @NotNull

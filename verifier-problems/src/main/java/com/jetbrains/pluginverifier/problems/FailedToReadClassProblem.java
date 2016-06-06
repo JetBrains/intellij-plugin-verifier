@@ -42,14 +42,8 @@ public class FailedToReadClassProblem extends Problem {
 
   @NotNull
   @Override
-  public String getDescriptionPrefix() {
-    return "failed to read a class-file";
-  }
-
-  @NotNull
-  @Override
   public String getDescription() {
-    return getDescriptionPrefix() + " " + myClassName + (myDetails != null ? " " + myDetails : "");
+    return "failed to read a class-file" + " " + myClassName + (myDetails != null ? " " + myDetails : "");
   }
 
 

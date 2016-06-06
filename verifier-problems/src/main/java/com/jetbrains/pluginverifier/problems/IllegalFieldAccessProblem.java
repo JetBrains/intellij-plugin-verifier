@@ -28,14 +28,8 @@ public class IllegalFieldAccessProblem extends Problem {
   }
 
   @NotNull
-  @Override
-  public String getDescriptionPrefix() {
-    return "illegal access of";
-  }
-
-  @NotNull
   public String getDescription() {
-    return getDescriptionPrefix() + " " + myFieldAccess.getDescription() + " field " + myField;
+    return "illegal access of" + " " + myFieldAccess.getDescription() + " field " + myField;
   }
 
   public String getField() {

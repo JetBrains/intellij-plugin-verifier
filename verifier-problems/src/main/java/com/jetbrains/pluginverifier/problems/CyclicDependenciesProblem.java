@@ -31,14 +31,8 @@ public class CyclicDependenciesProblem extends Problem {
   }
 
   @NotNull
-  @Override
-  public String getDescriptionPrefix() {
-    return "cyclic plugin dependencies";
-  }
-
-  @NotNull
   public String getDescription() {
-    return getDescriptionPrefix() + (myCycle != null ? " " + myCycle : "");
+    return "cyclic plugin dependencies" + (myCycle != null ? " " + myCycle : "");
   }
 
 

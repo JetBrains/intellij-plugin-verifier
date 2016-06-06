@@ -19,6 +19,7 @@ import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.jetbrains.pluginverifier.utils.StringUtil.pluralize;
 
@@ -111,11 +112,11 @@ public class TeamCityUtil {
 
       if (problems.isEmpty()) continue;
 
-      String descriptionPrefix = problems.get(0).getDescriptionPrefix();
-      TeamCityLog.TestSuite problemTypeSuite = log.testSuiteStarted("\"" + descriptionPrefix + "\"");
+      String prefix = convertNameToPrefix(problemType);
+      TeamCityLog.TestSuite problemTypeSuite = log.testSuiteStarted("(" + prefix + ")");
 
       for (Problem problem : problems) {
-        String description = StringUtil.trimStart(problem.getDescription(), descriptionPrefix).trim();
+        String description = StringUtil.trimStart(problem.getDescription(), prefix).trim();
         Collection<UpdateInfo> updateInfos = problem2Updates.get(problem);
 
         TeamCityLog.TestSuite problemSuite = log.testSuiteStarted("[" + description + "]");
@@ -134,6 +135,18 @@ public class TeamCityUtil {
       problemTypeSuite.close();
     }
 
+  }
+
+  public static String convertNameToPrefix(@NotNull String className) {
+    String name = className.substring(className.lastIndexOf('.') + 1);
+    String[] words = name.split("(?=[A-Z])");
+    if (words.length == 0) {
+      return name;
+    }
+    if (words[words.length - 1].equals("Problem")) {
+      words = Arrays.copyOf(words, words.length - 1);
+    }
+    return Arrays.stream(words).map(String::toLowerCase).collect(Collectors.joining(" "));
   }
 
 

@@ -45,14 +45,8 @@ public class MissingDependencyProblem extends Problem {
 
   @NotNull
   @Override
-  public String getDescriptionPrefix() {
-    return "missing plugin dependency";
-  }
-
-  @NotNull
-  @Override
   public String getDescription() {
-    return getDescriptionPrefix() + " of a plugin " + myPlugin + " (" + myMissDescription + ")";
+    return "missing plugin dependency" + " of a plugin " + myPlugin + " (" + myMissDescription + ")";
   }
 
   public String getPlugin() {

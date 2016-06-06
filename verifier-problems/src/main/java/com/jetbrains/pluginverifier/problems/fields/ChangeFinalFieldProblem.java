@@ -32,14 +32,8 @@ public class ChangeFinalFieldProblem extends Problem {
   }
 
   @NotNull
-  @Override
-  public String getDescriptionPrefix() {
-    return "attempt to change a final field";
-  }
-
-  @NotNull
   public String getDescription() {
-    return getDescriptionPrefix() + " " + myField;
+    return "attempt to change a final field" + " " + myField;
   }
 
   @Override

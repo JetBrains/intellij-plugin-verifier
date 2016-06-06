@@ -24,14 +24,8 @@ public class BrokenPluginProblem extends Problem {
 
   @NotNull
   @Override
-  public String getDescriptionPrefix() {
-    return "broken plugin";
-  }
-
-  @NotNull
-  @Override
   public String getDescription() {
-    return getDescriptionPrefix() + (myDetails != null ? " " + myDetails : "");
+    return "broken plugin" + (myDetails != null ? " " + myDetails : "");
   }
 
 

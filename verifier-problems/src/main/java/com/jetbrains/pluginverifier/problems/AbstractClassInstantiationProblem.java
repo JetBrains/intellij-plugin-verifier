@@ -32,14 +32,8 @@ public class AbstractClassInstantiationProblem extends Problem {
   }
 
   @NotNull
-  @Override
-  public String getDescriptionPrefix() {
-    return "instantiation an abstract class";
-  }
-
-  @NotNull
   public String getDescription() {
-    return getDescriptionPrefix() + " " + MessageUtils.convertClassName(myClassName);
+    return "instantiation an abstract class" + " " + MessageUtils.convertClassName(myClassName);
   }
 
 

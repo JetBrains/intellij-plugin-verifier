@@ -25,12 +25,6 @@ public class InvokeInterfaceOnStaticMethodProblem extends Problem {
     myMethod = method;
   }
 
-  @NotNull
-  @Override
-  public String getDescriptionPrefix() {
-    return "attempt to perform 'invokeinterface' on static method";
-  }
-
   public String getMethod() {
     return myMethod;
   }
@@ -42,7 +36,7 @@ public class InvokeInterfaceOnStaticMethodProblem extends Problem {
   @NotNull
   @Override
   public String getDescription() {
-    return getDescriptionPrefix() + " " + myMethod;
+    return "attempt to perform 'invokeinterface' on static method" + " " + myMethod;
   }
 
   @Override

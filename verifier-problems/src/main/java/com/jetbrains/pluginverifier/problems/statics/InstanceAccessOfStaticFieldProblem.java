@@ -25,11 +25,6 @@ public class InstanceAccessOfStaticFieldProblem extends Problem {
     myField = field;
   }
 
-  @NotNull
-  @Override
-  public String getDescriptionPrefix() {
-    return "attempt to perform instance access on a static field";
-  }
   public String getField() {
     return myField;
   }
@@ -41,7 +36,7 @@ public class InstanceAccessOfStaticFieldProblem extends Problem {
   @NotNull
   @Override
   public String getDescription() {
-    return getDescriptionPrefix() + " " + myField;
+    return "attempt to perform instance access on a static field" + " " + myField;
   }
 
   @Override

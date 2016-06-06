@@ -32,14 +32,8 @@ public class OverridingFinalMethodProblem extends Problem {
   }
 
   @NotNull
-  @Override
-  public String getDescriptionPrefix() {
-    return "overriding final method";
-  }
-
-  @NotNull
   public String getDescription() {
-    return getDescriptionPrefix() + " " + MessageUtils.convertMethodDescr(myMethod);
+    return "overriding final method" + " " + MessageUtils.convertMethodDescr(myMethod);
   }
 
   @Override

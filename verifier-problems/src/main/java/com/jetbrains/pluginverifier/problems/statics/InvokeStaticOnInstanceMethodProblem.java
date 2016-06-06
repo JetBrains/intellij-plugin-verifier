@@ -25,12 +25,6 @@ public class InvokeStaticOnInstanceMethodProblem extends Problem {
     myMethod = method;
   }
 
-  @NotNull
-  @Override
-  public String getDescriptionPrefix() {
-    return "attempt to perform 'invokestatic' on an instance method";
-  }
-
   public String getMethod() {
     return myMethod;
   }
@@ -42,7 +36,7 @@ public class InvokeStaticOnInstanceMethodProblem extends Problem {
   @NotNull
   @Override
   public String getDescription() {
-    return getDescriptionPrefix() + " " + myMethod;
+    return "attempt to perform 'invokestatic' on an instance method" + " " + myMethod;
   }
 
 

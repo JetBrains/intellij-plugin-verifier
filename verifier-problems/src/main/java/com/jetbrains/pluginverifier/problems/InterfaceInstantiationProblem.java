@@ -32,14 +32,8 @@ public class InterfaceInstantiationProblem extends Problem {
   }
 
   @NotNull
-  @Override
-  public String getDescriptionPrefix() {
-    return "instantiation an interface";
-  }
-
-  @NotNull
   public String getDescription() {
-    return getDescriptionPrefix() + " " + MessageUtils.convertClassName(myClassName);
+    return "instantiation an interface" + " " + MessageUtils.convertClassName(myClassName);
   }
 
 
