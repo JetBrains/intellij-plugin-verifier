@@ -12,7 +12,6 @@ import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.misc.PluginCache;
 import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.problems.VerificationProblem;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.utils.*;

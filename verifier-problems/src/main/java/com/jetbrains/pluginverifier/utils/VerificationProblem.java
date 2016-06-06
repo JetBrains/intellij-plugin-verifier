@@ -1,6 +1,6 @@
-package com.jetbrains.pluginverifier.problems;
+package com.jetbrains.pluginverifier.utils;
 
-import com.jetbrains.pluginverifier.utils.Pair;
+import com.jetbrains.pluginverifier.problems.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +11,7 @@ import java.util.List;
  *
  * @author Sergey Patrikeev
  */
+//TODO: get rid of this class
 public class VerificationProblem extends Problem {
 
   private String myPlugin;
