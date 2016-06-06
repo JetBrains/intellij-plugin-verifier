@@ -1,8 +1,11 @@
 package com.jetbrains.pluginverifier.location;
 
+import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Sergey Patrikeev
@@ -15,7 +18,7 @@ public class PluginLocation extends ProblemLocation {
   public PluginLocation() {
   }
 
-  PluginLocation(@NotNull String pluginId) {
+  public PluginLocation(@NotNull String pluginId) {
     myPluginId = pluginId;
   }
 
@@ -28,25 +31,17 @@ public class PluginLocation extends ProblemLocation {
   }
 
   @Override
-  public String toString() {
+  public String asString() {
     return myPluginId;
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    PluginLocation that = (PluginLocation) o;
-
-    return myPluginId != null ? myPluginId.equals(that.myPluginId) : that.myPluginId == null;
-
+  public List<Pair<String, String>> serialize() {
+    return Collections.singletonList(Pair.create("plugin", myPluginId));
   }
 
   @Override
-  public int hashCode() {
-    int result = 100;
-    result = 31 * result + (myPluginId != null ? myPluginId.hashCode() : 0);
-    return result;
+  public ProblemLocation deserialize(String... params) {
+    return new PluginLocation(params[0]);
   }
 }

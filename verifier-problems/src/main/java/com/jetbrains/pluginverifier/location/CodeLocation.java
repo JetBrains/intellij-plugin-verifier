@@ -2,10 +2,13 @@ package com.jetbrains.pluginverifier.location;
 
 import com.jetbrains.pluginverifier.utils.FailUtil;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
+import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Describe problem location inside plugin
@@ -25,7 +28,7 @@ public class CodeLocation extends ProblemLocation {
     //required empty-constructor for XML processing
   }
 
-  CodeLocation(@NotNull String className, @Nullable String methodDescr, @Nullable String fieldName) {
+  public CodeLocation(@NotNull String className, @Nullable String methodDescr, @Nullable String fieldName) {
     FailUtil.assertTrue(methodDescr == null || !methodDescr.contains("#"), "Message descriptor " + methodDescr + " is malformed");
     if (className.contains(".")) {
       throw new IllegalArgumentException("Class name should be in binary form");
@@ -63,7 +66,7 @@ public class CodeLocation extends ProblemLocation {
   }
 
   @Override
-  public String toString() {
+  public String asString() {
     if (className == null) {
       return "";
     }
@@ -79,25 +82,14 @@ public class CodeLocation extends ProblemLocation {
     return MessageUtils.convertMethodDescr(methodDescr, className);
   }
 
-  @SuppressWarnings("SimplifiableIfStatement")
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    CodeLocation location = (CodeLocation) o;
-
-    if (className != null ? !className.equals(location.className) : location.className != null) return false;
-    if (fieldName != null ? !fieldName.equals(location.fieldName) : location.fieldName != null) return false;
-    return !(methodDescr != null ? !methodDescr.equals(location.methodDescr) : location.methodDescr != null);
-
+  public List<Pair<String, String>> serialize() {
+    //noinspection unchecked
+    return Arrays.asList(Pair.create("class", className), Pair.create("method", methodDescr), Pair.create("field", fieldName));
   }
 
   @Override
-  public int hashCode() {
-    int result = className != null ? className.hashCode() : 0;
-    result = 31 * result + (methodDescr != null ? methodDescr.hashCode() : 0);
-    result = 31 * result + (fieldName != null ? fieldName.hashCode() : 0);
-    return result;
+  public ProblemLocation deserialize(String... params) {
+    return new CodeLocation(params[0], params[1], params[2]);
   }
 }

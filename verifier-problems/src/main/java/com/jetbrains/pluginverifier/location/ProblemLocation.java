@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.location;
 
-import com.jetbrains.pluginverifier.utils.FailUtil;
+import com.google.common.base.Preconditions;
+import com.jetbrains.pluginverifier.persistence.Jsonable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.objectweb.asm.tree.MethodNode;
@@ -8,7 +9,7 @@ import org.objectweb.asm.tree.MethodNode;
 /**
  * @author Sergey Patrikeev
  */
-public abstract class ProblemLocation {
+public abstract class ProblemLocation implements Jsonable<ProblemLocation> {
 
   //TODO: add more detailed location, e.g. superclass, field of a class, interface, throws list and so on
 
@@ -40,23 +41,27 @@ public abstract class ProblemLocation {
 
   @NotNull
   private static String getMethodDescr(@NotNull MethodNode methodNode) {
-    FailUtil.assertTrue(methodNode.name != null);
-    FailUtil.assertTrue(methodNode.desc != null);
+    Preconditions.checkArgument(methodNode.name != null);
+    Preconditions.checkArgument(methodNode.desc != null);
     return methodNode.name + methodNode.desc;
   }
 
+  public abstract String asString();
+
   @Override
-  public String toString() {
-    throw new UnsupportedOperationException("Children of ProblemLocation must override toString()");
+  public final String toString() {
+    return asString();
   }
 
   @Override
-  public boolean equals(Object o) {
-    throw new UnsupportedOperationException("Children of ProblemLocation must override equals() and hashcode()");
+  public final boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || o.getClass() != getClass()) return false;
+    return asString().equals(((ProblemLocation) o).asString());
   }
 
   @Override
   public int hashCode() {
-    throw new UnsupportedOperationException("Children of ProblemLocation must override equals() and hashcode()");
+    return asString().hashCode();
   }
 }
