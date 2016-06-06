@@ -19,7 +19,7 @@ public class IncompatibleClassChangeProblem extends Problem {
   public IncompatibleClassChangeProblem() {
   }
 
-  public IncompatibleClassChangeProblem(String className, Change change) {
+  public IncompatibleClassChangeProblem(@NotNull String className, @NotNull Change change) {
     myClassName = className;
     myChange = change;
   }
