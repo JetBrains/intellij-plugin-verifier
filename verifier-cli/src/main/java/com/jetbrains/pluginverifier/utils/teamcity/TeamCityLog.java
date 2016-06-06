@@ -4,6 +4,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.io.output.NullOutputStream;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Closeable;
 import java.io.PrintStream;
 
 /**
@@ -97,37 +98,40 @@ public class TeamCityLog {
     return new Test(testName);
   }
 
-  public class Test {
+  public class Test implements Closeable {
     private String testName;
 
     public Test(String testName) {
       this.testName = testName;
     }
 
+    @Override
     public void close() {
       out.printf("##teamcity[testFinished name='%s']\n", escape(testName));
     }
   }
 
-  public class TestSuite {
+  public class TestSuite implements Closeable {
     private String suiteName;
 
     public TestSuite(String suiteName) {
       this.suiteName = suiteName;
     }
 
+    @Override
     public void close() {
       out.printf("##teamcity[testSuiteFinished name='%s']\n", escape(suiteName));
     }
   }
 
-  public class Block {
+  public class Block implements Closeable {
     private String name;
 
     public Block(String name) {
       this.name = name;
     }
 
+    @Override
     public void close() {
       out.printf("##teamcity[blockClosed name='%s']\n", escape(name));
     }
