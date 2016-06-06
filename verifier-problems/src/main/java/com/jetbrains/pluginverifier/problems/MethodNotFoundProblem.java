@@ -21,6 +21,10 @@ public class MethodNotFoundProblem extends Problem {
     myMethod = method;
   }
 
+  public String getCalledMethod() {
+    return myMethod;
+  }
+
   public void setCalledMethod(String calledMethod) {
     //for legacy deserialization (don't add getCalledMethod!)
     myMethod = calledMethod;
