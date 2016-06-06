@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.problems;
 
+import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +17,9 @@ public class FailedToReadClassProblem extends Problem {
   public FailedToReadClassProblem() {
   }
 
-  public FailedToReadClassProblem(String className, String details) {
+  public FailedToReadClassProblem(@NotNull String className, @NotNull String details) {
+    Preconditions.checkNotNull(className);
+    Preconditions.checkNotNull(details);
     myClassName = className;
     myDetails = details;
   }

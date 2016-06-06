@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.problems;
 
+import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +21,8 @@ public class IllegalFieldAccessProblem extends Problem {
   }
 
   public IllegalFieldAccessProblem(@NotNull String field, @NotNull AccessType fieldAccess) {
+    Preconditions.checkNotNull(field);
+    Preconditions.checkNotNull(fieldAccess);
     myField = field;
     myFieldAccess = fieldAccess;
   }

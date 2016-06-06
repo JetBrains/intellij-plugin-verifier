@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.problems;
 
+import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,6 +18,7 @@ public class BrokenPluginProblem extends Problem {
   }
 
   public BrokenPluginProblem(@NotNull String details) {
+    Preconditions.checkNotNull(details);
     myDetails = details;
   }
 

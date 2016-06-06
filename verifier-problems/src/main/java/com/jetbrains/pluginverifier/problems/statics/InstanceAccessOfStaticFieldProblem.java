@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.problems.statics;
 
+import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,8 @@ public class InstanceAccessOfStaticFieldProblem extends Problem {
   public InstanceAccessOfStaticFieldProblem() {
   }
 
-  public InstanceAccessOfStaticFieldProblem(String field) {
+  public InstanceAccessOfStaticFieldProblem(@NotNull String field) {
+    Preconditions.checkNotNull(field);
     myField = field;
   }
 

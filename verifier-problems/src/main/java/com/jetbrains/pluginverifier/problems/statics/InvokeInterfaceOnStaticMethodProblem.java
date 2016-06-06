@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.problems.statics;
 
+import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,8 @@ public class InvokeInterfaceOnStaticMethodProblem extends Problem {
   public InvokeInterfaceOnStaticMethodProblem() {
   }
 
-  public InvokeInterfaceOnStaticMethodProblem(String method) {
+  public InvokeInterfaceOnStaticMethodProblem(@NotNull String method) {
+    Preconditions.checkNotNull(method);
     myMethod = method;
   }
 

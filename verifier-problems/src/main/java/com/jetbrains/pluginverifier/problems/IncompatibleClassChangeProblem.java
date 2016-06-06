@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.problems;
 
+import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +21,8 @@ public class IncompatibleClassChangeProblem extends Problem {
   }
 
   public IncompatibleClassChangeProblem(@NotNull String className, @NotNull Change change) {
+    Preconditions.checkNotNull(className);
+    Preconditions.checkNotNull(change);
     myClassName = className;
     myChange = change;
   }

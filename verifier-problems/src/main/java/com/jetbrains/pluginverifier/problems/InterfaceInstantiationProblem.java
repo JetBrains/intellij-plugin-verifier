@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.problems;
 
+import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
 import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +19,7 @@ public class InterfaceInstantiationProblem extends Problem {
   }
 
   public InterfaceInstantiationProblem(@NotNull String className) {
+    Preconditions.checkNotNull(className);
     myClassName = className;
   }
 

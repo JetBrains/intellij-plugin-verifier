@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.problems;
 
+import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +17,8 @@ public class CyclicDependenciesProblem extends Problem {
 
   }
 
-  public CyclicDependenciesProblem(String cycle) {
+  public CyclicDependenciesProblem(@NotNull String cycle) {
+    Preconditions.checkNotNull(cycle);
     myCycle = cycle;
   }
 

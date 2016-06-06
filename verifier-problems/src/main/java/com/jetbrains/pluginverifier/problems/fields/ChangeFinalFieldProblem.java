@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.problems.fields;
 
+import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +19,7 @@ public class ChangeFinalFieldProblem extends Problem {
   }
 
   public ChangeFinalFieldProblem(@NotNull String field) {
+    Preconditions.checkNotNull(field);
     myField = field;
   }
 

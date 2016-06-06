@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.problems;
 
+import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +20,7 @@ public class InvokeInterfaceOnPrivateMethodProblem extends Problem {
   }
 
   public InvokeInterfaceOnPrivateMethodProblem(String method) {
+    Preconditions.checkNotNull(method);
     myMethod = method;
   }
 

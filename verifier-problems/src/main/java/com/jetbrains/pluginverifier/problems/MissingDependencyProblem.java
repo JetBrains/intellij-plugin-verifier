@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.problems;
 
+import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +18,10 @@ public class MissingDependencyProblem extends Problem {
   public MissingDependencyProblem() {
   }
 
-  public MissingDependencyProblem(String plugin, @NotNull String missingId, @NotNull String missDescription) {
+  public MissingDependencyProblem(@NotNull String plugin, @NotNull String missingId, @NotNull String missDescription) {
+    Preconditions.checkNotNull(plugin);
+    Preconditions.checkNotNull(missingId);
+    Preconditions.checkNotNull(missDescription);
     myPlugin = plugin;
     myMissingId = missingId;
     myMissDescription = missDescription;

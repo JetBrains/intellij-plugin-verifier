@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.problems;
 
+import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +21,8 @@ public class IllegalMethodAccessProblem extends Problem {
   }
 
   public IllegalMethodAccessProblem(@NotNull String method, @NotNull AccessType methodAccess) {
+    Preconditions.checkNotNull(method);
+    Preconditions.checkNotNull(methodAccess);
     myMethod = method;
     myMethodAccess = methodAccess;
   }

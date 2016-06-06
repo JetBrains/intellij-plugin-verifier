@@ -1,8 +1,10 @@
 package com.jetbrains.pluginverifier.problems;
 
 
+import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Arrays;
@@ -23,7 +25,9 @@ public class NoCompatibleUpdatesProblem extends Problem {
     this(plugin, ideVersion, null);
   }
 
-  public NoCompatibleUpdatesProblem(@NotNull String plugin, @NotNull String ideVersion, String details) {
+  public NoCompatibleUpdatesProblem(@NotNull String plugin, @NotNull String ideVersion, @Nullable String details) {
+    Preconditions.checkNotNull(plugin);
+    Preconditions.checkNotNull(ideVersion);
     myPlugin = plugin;
     myIdeVersion = ideVersion;
     myDetails = details;
