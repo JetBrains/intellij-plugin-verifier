@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.repository;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
-import com.jetbrains.pluginverifier.utils.FailUtil;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,7 +89,7 @@ public class RepositoryManager implements PluginRepository {
   @Nullable
   public File getPluginFile(@NotNull UpdateInfo update) throws IOException {
     PluginRepository repository = update2repository.get(update);
-    FailUtil.assertTrue(repository != null, "Unknown update, update should be found by RepositoryManager");
+    Preconditions.checkArgument(repository != null, "Unknown update, update should be found by RepositoryManager");
     return repository.getPluginFile(update);
   }
 

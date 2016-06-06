@@ -24,13 +24,4 @@ public class FailUtil {
     return new RuntimeException(message, cause);
   }
 
-  public static void assertTrue(boolean condition, @NotNull String errorMessage) {
-    if (!condition) {
-      throw new RuntimeException(errorMessage);
-    }
-  }
-
-  public static void assertTrue(boolean condition) {
-    assertTrue(condition, "assertion failed");
-  }
 }

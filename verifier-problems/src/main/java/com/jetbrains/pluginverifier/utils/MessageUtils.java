@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.utils;
 
+import com.google.common.base.Preconditions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,14 +15,14 @@ public class MessageUtils {
   private static final Pattern CLASS_QUALIFIED_NAME = Pattern.compile("(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(?:\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*)\\.(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)");
 
   private static final Set<String> COMMON_CLASSES = new HashSet<String>(Arrays.asList("com.intellij.openapi.vfs.VirtualFile",
-                                                                                      "com.intellij.openapi.module.Module",
-                                                                                      "com.intellij.openapi.project.Project",
-                                                                                      "com.intellij.psi.PsiElement",
-                                                                                      "com.intellij.openapi.util.TextRange",
-                                                                                      "com.intellij.psi.PsiFile",
-                                                                                      "com.intellij.psi.PsiReference",
-                                                                                      "com.intellij.psi.search.GlobalSearchScope",
-                                                                                      "com.intellij.lang.ASTNode"));
+      "com.intellij.openapi.module.Module",
+      "com.intellij.openapi.project.Project",
+      "com.intellij.psi.PsiElement",
+      "com.intellij.openapi.util.TextRange",
+      "com.intellij.psi.PsiFile",
+      "com.intellij.psi.PsiReference",
+      "com.intellij.psi.search.GlobalSearchScope",
+      "com.intellij.lang.ASTNode"));
   private static final Set<String> COMMON_PACKAGES = new HashSet<String>(Arrays.asList("java.io", "java.lang", "java.util"));
 
   private MessageUtils() {
@@ -101,8 +102,7 @@ public class MessageUtils {
   }
 
   /**
-   * @param methodDescr example:
-   *                    com/intellij/codeInsight/intention/ConditionalOperatorConvertor#isAvailable(Lcom/intellij/openapi/project/Project;Lcom/intellij/openapi/editor/Editor;Lcom/intellij/psi/PsiFile;)Z
+   * @param methodDescr example: com/intellij/codeInsight/intention/ConditionalOperatorConvertor#isAvailable(Lcom/intellij/openapi/project/Project;Lcom/intellij/openapi/editor/Editor;Lcom/intellij/psi/PsiFile;)Z
    */
   public static String convertMethodDescr(@NotNull String methodDescr, @NotNull String className) {
     return convertMethodDescr0(methodDescr, className);
@@ -122,10 +122,9 @@ public class MessageUtils {
     int methodNameIndex;
 
     if (className != null) {
-      FailUtil.assertTrue(methodDescr.indexOf('#') == -1);
+      Preconditions.checkArgument(methodDescr.indexOf('#') == -1);
       methodNameIndex = 0;
-    }
-    else {
+    } else {
       int classSeparatorIndex = methodDescr.indexOf('#');
       if (classSeparatorIndex == -1) return methodDescr;
       className = methodDescr.substring(0, classSeparatorIndex);
@@ -143,8 +142,7 @@ public class MessageUtils {
     while (i < closeBracketIndex) {
       if (isFirst) {
         isFirst = false;
-      }
-      else {
+      } else {
         res.append(", ");
       }
 
@@ -169,8 +167,7 @@ public class MessageUtils {
 
       if (COMMON_CLASSES.contains(matcher.group()) || COMMON_PACKAGES.contains(matcher.group(1))) {
         res.append(matcher.group(2)); // class name without package
-      }
-      else {
+      } else {
         res.append(matcher.group()); // qualified class name
       }
 

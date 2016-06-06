@@ -4,7 +4,6 @@ import com.google.common.base.Preconditions;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.FailedToReadClassProblem;
-import com.jetbrains.pluginverifier.utils.FailUtil;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import com.jetbrains.pluginverifier.verifiers.VerificationContext;
 import org.jetbrains.annotations.NotNull;
@@ -19,8 +18,8 @@ import java.util.Set;
 
 public class VerifierUtil {
   public static boolean classExistsOrExternal(VerificationContext ctx, final Resolver resolver, final @NotNull String className) {
-    FailUtil.assertTrue(!className.startsWith("["), className);
-    FailUtil.assertTrue(!className.endsWith(";"), className);
+    Preconditions.checkArgument(!className.startsWith("["), className);
+    Preconditions.checkArgument(!className.endsWith(";"), className);
 
     return ctx.getVerifierOptions().isExternalClass(className) || resolver.containsClass(className);
   }

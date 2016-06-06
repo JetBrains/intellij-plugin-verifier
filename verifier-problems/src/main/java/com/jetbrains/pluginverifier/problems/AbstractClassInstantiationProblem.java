@@ -37,7 +37,7 @@ public class AbstractClassInstantiationProblem extends Problem {
 
   @NotNull
   public String getDescription() {
-    return getDescriptionPrefix() + " " + MessageUtils.convertMethodDescr(myClassName);
+    return getDescriptionPrefix() + " " + MessageUtils.convertClassName(myClassName);
   }
 
 

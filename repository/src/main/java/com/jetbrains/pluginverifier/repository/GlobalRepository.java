@@ -1,11 +1,11 @@
 package com.jetbrains.pluginverifier.repository;
 
+import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.DownloadUtils;
-import com.jetbrains.pluginverifier.utils.FailUtil;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,7 +83,7 @@ class GlobalRepository implements PluginRepository {
   @NotNull
   @Override
   public File getPluginFile(@NotNull UpdateInfo update) throws IOException {
-    FailUtil.assertTrue(update.getUpdateId() != null, "UpdateId must contain a valid id to be downloaded");
+    Preconditions.checkArgument(update.getUpdateId() != null, "UpdateId must contain a valid id to be downloaded");
     return DownloadUtils.getOrLoadUpdate(update, getUrlForUpdate(update));
   }
 

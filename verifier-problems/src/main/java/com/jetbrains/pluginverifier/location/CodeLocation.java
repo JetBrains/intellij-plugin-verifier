@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.location;
 
-import com.jetbrains.pluginverifier.utils.FailUtil;
+import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
 import com.jetbrains.pluginverifier.utils.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +29,7 @@ public class CodeLocation extends ProblemLocation {
   }
 
   public CodeLocation(@NotNull String className, @Nullable String methodDescr, @Nullable String fieldName) {
-    FailUtil.assertTrue(methodDescr == null || !methodDescr.contains("#"), "Message descriptor " + methodDescr + " is malformed");
+    Preconditions.checkArgument(methodDescr == null || !methodDescr.contains("#"), "Message descriptor " + methodDescr + " is malformed");
     if (className.contains(".")) {
       throw new IllegalArgumentException("Class name should be in binary form");
     }
