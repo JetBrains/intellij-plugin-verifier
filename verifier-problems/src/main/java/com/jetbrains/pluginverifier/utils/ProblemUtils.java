@@ -13,8 +13,6 @@ import com.jetbrains.pluginverifier.problems.fields.ChangeFinalFieldProblem;
 import com.jetbrains.pluginverifier.problems.statics.*;
 import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.results.ResultsElement;
-import com.jetbrains.pluginverifier.results.plugin.IdeProblemsDescriptor;
-import com.jetbrains.pluginverifier.results.plugin.PluginCheckResult;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,8 +64,6 @@ public class ProblemUtils {
           PluginLocation.class,
 
           //--------RESULT-ELEMENTS--------
-          IdeProblemsDescriptor.class,
-          PluginCheckResult.class,
 
           ResultsElement.class,
           UpdateInfo.class,
@@ -126,11 +122,6 @@ public class ProblemUtils {
   }
 
   @NotNull
-  public static PluginCheckResult loadPluginCheckResults(@NotNull File xml) throws IOException {
-    return (PluginCheckResult) loadFromFile(xml);
-  }
-
-  @NotNull
   public static Object loadFromStream(@NotNull InputStream inputStream) throws IOException {
     try {
       return loadObject(inputStream);
@@ -160,12 +151,7 @@ public class ProblemUtils {
   public static void savePluginCheckResult(@NotNull File output,
                                            @NotNull Map<String, ProblemSet> ideToProblems,
                                            @NotNull UpdateInfo updateInfo) throws IOException {
-    savePluginCheckResult(output, new PluginCheckResult(updateInfo, ideToProblems));
-  }
-
-  public static void savePluginCheckResult(@NotNull File output,
-                                           @NotNull PluginCheckResult pluginCheckResult) throws IOException {
-    marshallObject(output, pluginCheckResult);
+    //TODO:
   }
 
   private static void marshallObject(@NotNull File output, @NotNull Object o)
