@@ -43,7 +43,7 @@ public class IdeVersionImpl extends IdeVersion {
     }
 
     String code = version;
-    int productSeparator = code.indexOf('-');
+    int productSeparator = code.lastIndexOf('-'); //some products have multiple parts, e.g. "FB-IC-143.157"
     final String productCode;
     if (productSeparator > 0) {
       productCode = code.substring(0, productSeparator);

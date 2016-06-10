@@ -153,6 +153,22 @@ public class IdeVersionTest {
   }
 
   @Test
+  public void studio() throws Exception {
+    IdeVersion version = IdeVersion.createIdeVersion("Studio-1.0");
+    Assert.assertEquals("Studio", version.getProductCode());
+    Assert.assertEquals(1, version.getBaselineVersion());
+    Assert.assertEquals(0, version.getBuild());
+  }
+
+  @Test
+  public void fbIc() throws Exception {
+    IdeVersion version = IdeVersion.createIdeVersion("FB-IC-143.157");
+    Assert.assertEquals("FB-IC", version.getProductCode());
+    Assert.assertEquals(143, version.getBaselineVersion());
+    Assert.assertEquals(157, version.getBuild());
+  }
+
+  @Test
   public void isSnapshot() {
     assertTrue(IdeVersion.createIdeVersion("SNAPSHOT").isSnapshot());
     assertTrue(IdeVersion.createIdeVersion("__BUILD_NUMBER__").isSnapshot());
