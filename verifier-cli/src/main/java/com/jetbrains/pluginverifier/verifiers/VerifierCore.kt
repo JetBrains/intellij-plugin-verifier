@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.verifiers
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.Plugin
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.VerificationOptions
+import com.jetbrains.pluginverifier.VOptions
 import com.jetbrains.pluginverifier.results.ProblemSet
 
 /**
@@ -20,7 +20,7 @@ object VerifierCore {
                    ideResolver: Resolver,
                    jdkResolver: Resolver,
                    externalClassPath: Resolver?,
-                   options: VerificationOptions): ProblemSet {
+                   options: VOptions): ProblemSet {
 
     val ctx = VerificationContextImpl(plugin, ide, ideResolver, jdkResolver, externalClassPath, options)
 
