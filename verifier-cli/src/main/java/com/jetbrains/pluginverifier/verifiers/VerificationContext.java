@@ -19,6 +19,9 @@ public interface VerificationContext {
   void registerProblem(@NotNull Problem problem, @NotNull ProblemLocation location);
 
   @NotNull
+  String getOverview();
+
+  @NotNull
   Plugin getPlugin();
 
   @NotNull

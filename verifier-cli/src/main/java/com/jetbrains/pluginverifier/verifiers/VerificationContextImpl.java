@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers;
 
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.Plugin;
+import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.VOptions;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
@@ -22,6 +23,7 @@ public class VerificationContextImpl implements VerificationContext {
   private final Resolver myJdkResolver;
   private final Resolver myExternalClassPath;
   private final Resolver myIdeResolver;
+  private String myOverview;
 
   public VerificationContextImpl(@NotNull Plugin plugin, @NotNull Ide ide, @NotNull Resolver ideResolver, @NotNull Resolver jdkResolver, @Nullable Resolver externalClassPath, @NotNull VOptions verifierOptions) {
     myPlugin = plugin;
@@ -42,6 +44,16 @@ public class VerificationContextImpl implements VerificationContext {
     if (!myVerifierOptions.isIgnoredProblem(myPlugin, problem)) {
       myProblemSet.addProblem(problem, location);
     }
+  }
+
+  @Override
+  @NotNull
+  public String getOverview() {
+    return StringUtil.notNullize(myOverview);
+  }
+
+  public void setOverview(String overview) {
+    myOverview = overview;
   }
 
   @NotNull
