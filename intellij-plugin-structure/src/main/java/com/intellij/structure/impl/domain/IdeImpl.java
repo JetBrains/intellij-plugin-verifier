@@ -98,4 +98,9 @@ class IdeImpl implements Ide {
   public File getIdePath() {
     return myIdePath;
   }
+
+  @Override
+  public String toString() {
+    return myVersion.asString();
+  }
 }
