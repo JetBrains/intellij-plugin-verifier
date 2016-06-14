@@ -18,6 +18,7 @@ import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
+import com.jetbrains.pluginverifier.verifiers.VerifierCore;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -189,7 +190,7 @@ public class CheckPluginCommand extends VerifierCommand {
               TeamCityLog.Block block = tc.blockOpen(plugin.getPluginId());
               ProblemSet problemSet;
               try {
-                problemSet = Verification.verifyPlugin(plugin, ide, ideResolver, jdkResolver, getExternalClassPath(commandLine), options);
+                problemSet = VerifierCore.verifyPlugin(plugin, ide, ideResolver, jdkResolver, getExternalClassPath(commandLine), options);
               } finally {
                 block.close();
               }

@@ -19,6 +19,7 @@ import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
+import com.jetbrains.pluginverifier.verifiers.VerifierCore;
 import org.apache.commons.cli.CommandLine;
 import org.jdom2.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -289,7 +290,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
         System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), myUpdatesToCheck.size()));
 
-        ProblemSet problemSet = Verification.verifyPlugin(plugin, myIde, myIdeResolver, myJdkResolver, myExternalClassPath, myVerifierOptions);
+        ProblemSet problemSet = VerifierCore.verifyPlugin(plugin, myIde, myIdeResolver, myJdkResolver, myExternalClassPath, myVerifierOptions);
 
         myResults.put(updateJson, problemSet);
 
