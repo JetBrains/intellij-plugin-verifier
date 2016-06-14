@@ -14,6 +14,7 @@ import java.util.List;
 /**
  * @author Sergey Patrikeev
  */
+//TODO: optimize the size of output
 class ReportTypeAdapter extends TypeAdapter<Report> {
   @Override
   public void write(JsonWriter out, Report value) throws IOException {

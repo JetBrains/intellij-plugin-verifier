@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * <p>
@@ -27,7 +27,7 @@ class JsonableTypeAdapter<T> extends TypeAdapter<Jsonable<T>> {
 
   private static final String CLASS_FIELD = "class";
   private static final String CONTENT_FIELD = "content";
-  private Map<String, Jsonable<?>> myFactories = new ConcurrentHashMap<String, Jsonable<?>>();
+  private ConcurrentMap<String, Jsonable<?>> myFactories = new ConcurrentHashMap<String, Jsonable<?>>();
 
   @Override
   public void write(JsonWriter out, Jsonable<T> value) throws IOException {
