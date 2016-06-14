@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.verifiers;
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.VerificationOptions;
+import com.jetbrains.pluginverifier.VOptions;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.Problem;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface VerificationContext {
   @NotNull
-  VerificationOptions getVerifierOptions();
+  VOptions getVerifierOptions();
 
   void registerProblem(@NotNull Problem problem, @NotNull ProblemLocation location);
 

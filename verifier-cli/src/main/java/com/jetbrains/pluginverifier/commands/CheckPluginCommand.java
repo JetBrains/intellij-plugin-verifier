@@ -8,7 +8,7 @@ import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.VerificationOptions;
+import com.jetbrains.pluginverifier.VOptions;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.misc.PluginCache;
@@ -156,7 +156,7 @@ public class CheckPluginCommand extends VerifierCommand {
     }
 
 
-    VerificationOptions options = VerificationOptions.Companion.parseOpts(commandLine);
+    VOptions options = VOptions.Companion.parseOpts(commandLine);
 
     long startTime = System.currentTimeMillis();
 

@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.verifiers;
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.VerificationOptions;
+import com.jetbrains.pluginverifier.VOptions;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.ProblemSet;
@@ -17,13 +17,13 @@ public class VerificationContextImpl implements VerificationContext {
 
   private final ProblemSet myProblemSet = new ProblemSet();
   private final Plugin myPlugin;
-  private final VerificationOptions myVerifierOptions;
+  private final VOptions myVerifierOptions;
   private final Ide myIde;
   private final Resolver myJdkResolver;
   private final Resolver myExternalClassPath;
   private final Resolver myIdeResolver;
 
-  public VerificationContextImpl(@NotNull Plugin plugin, @NotNull Ide ide, @NotNull Resolver ideResolver, @NotNull Resolver jdkResolver, @Nullable Resolver externalClassPath, @NotNull VerificationOptions verifierOptions) {
+  public VerificationContextImpl(@NotNull Plugin plugin, @NotNull Ide ide, @NotNull Resolver ideResolver, @NotNull Resolver jdkResolver, @Nullable Resolver externalClassPath, @NotNull VOptions verifierOptions) {
     myPlugin = plugin;
     myIdeResolver = ideResolver;
     myVerifierOptions = verifierOptions;
@@ -33,7 +33,7 @@ public class VerificationContextImpl implements VerificationContext {
   }
 
   @NotNull
-  public VerificationOptions getVerifierOptions() {
+  public VOptions getVerifierOptions() {
     return myVerifierOptions;
   }
 
