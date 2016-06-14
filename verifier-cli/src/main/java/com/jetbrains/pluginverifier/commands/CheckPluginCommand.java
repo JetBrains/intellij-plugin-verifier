@@ -8,6 +8,7 @@ import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.misc.PluginCache;
@@ -17,7 +18,6 @@ import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
-import com.jetbrains.pluginverifier.verifiers.PluginVerifierOptions;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -155,7 +155,7 @@ public class CheckPluginCommand extends VerifierCommand {
     }
 
 
-    PluginVerifierOptions options = PluginVerifierOptions.parseOpts(commandLine);
+    PluginVerifierOptions options = PluginVerifierOptions.Companion.parseOpts(commandLine);
 
     long startTime = System.currentTimeMillis();
 

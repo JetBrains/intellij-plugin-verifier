@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.intellij.structure.domain.*;
 import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.*;
 import com.jetbrains.pluginverifier.problems.fields.ChangeFinalFieldProblem;
@@ -13,7 +14,6 @@ import com.jetbrains.pluginverifier.problems.statics.InvokeStaticOnInstanceMetho
 import com.jetbrains.pluginverifier.problems.statics.InvokeVirtualOnStaticMethodProblem;
 import com.jetbrains.pluginverifier.problems.statics.StaticAccessOfInstanceFieldProblem;
 import com.jetbrains.pluginverifier.utils.Util;
-import com.jetbrains.pluginverifier.verifiers.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.verifiers.VerificationContextImpl;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
@@ -209,7 +209,7 @@ public class VerifierTest {
         Resolver ideResolver = Resolver.createIdeResolver(ide);
         Resolver jdkResolver = Resolver.createJdkResolver(new File(jdkPath))
     ) {
-      VerificationContextImpl ctx = new VerificationContextImpl(plugin, ide, ideResolver, jdkResolver, null, PluginVerifierOptions.parseOpts(commandLine));
+      VerificationContextImpl ctx = new VerificationContextImpl(plugin, ide, ideResolver, jdkResolver, null, PluginVerifierOptions.Companion.parseOpts(commandLine));
       Verifiers.processAllVerifiers(ctx);
 
       testFoundProblems(ctx.getProblemSet().asMap(), actualProblems);

@@ -8,6 +8,7 @@ import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.PluginCache;
 import com.jetbrains.pluginverifier.problems.BrokenPluginProblem;
@@ -18,7 +19,6 @@ import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
-import com.jetbrains.pluginverifier.verifiers.PluginVerifierOptions;
 import org.apache.commons.cli.CommandLine;
 import org.jdom2.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -154,7 +154,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     myJdkResolver = createJdkResolver(commandLine);
 
-    myVerifierOptions = PluginVerifierOptions.parseOpts(commandLine);
+    myVerifierOptions = PluginVerifierOptions.Companion.parseOpts(commandLine);
 
     myExternalClassPath = getExternalClassPath(commandLine);
 

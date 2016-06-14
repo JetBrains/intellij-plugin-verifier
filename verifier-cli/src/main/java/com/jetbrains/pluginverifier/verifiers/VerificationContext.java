@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.verifiers;
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.PluginVerifierOptions;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.Problem;
 import org.jetbrains.annotations.NotNull;
