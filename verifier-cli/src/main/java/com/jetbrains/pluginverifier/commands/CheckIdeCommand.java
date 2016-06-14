@@ -8,7 +8,7 @@ import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.PluginVerifierOptions;
+import com.jetbrains.pluginverifier.VerificationOptions;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.PluginCache;
 import com.jetbrains.pluginverifier.problems.BrokenPluginProblem;
@@ -43,7 +43,7 @@ public class CheckIdeCommand extends VerifierCommand {
   private TeamCityUtil.ReportGrouping myGrouping;
   private TeamCityLog myTc;
   private Resolver myJdkResolver;
-  private PluginVerifierOptions myVerifierOptions;
+  private VerificationOptions myVerifierOptions;
   private Resolver myExternalClassPath;
   private Ide myIde;
   private Resolver myIdeResolver;
@@ -154,7 +154,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     myJdkResolver = createJdkResolver(commandLine);
 
-    myVerifierOptions = PluginVerifierOptions.Companion.parseOpts(commandLine);
+    myVerifierOptions = VerificationOptions.Companion.parseOpts(commandLine);
 
     myExternalClassPath = getExternalClassPath(commandLine);
 

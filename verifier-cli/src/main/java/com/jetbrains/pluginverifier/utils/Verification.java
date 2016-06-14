@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.utils;
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.PluginVerifierOptions;
+import com.jetbrains.pluginverifier.VerificationOptions;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.ProblemSet;
@@ -28,7 +28,7 @@ public class Verification {
                                         @NotNull Resolver ideResolver,
                                         @NotNull Resolver jdkResolver,
                                         @Nullable Resolver externalClassPath,
-                                        @NotNull PluginVerifierOptions options) {
+                                        @NotNull VerificationOptions options) {
 
     VerificationContextImpl ctx = new VerificationContextImpl(plugin, ide, ideResolver, jdkResolver, externalClassPath, options);
 

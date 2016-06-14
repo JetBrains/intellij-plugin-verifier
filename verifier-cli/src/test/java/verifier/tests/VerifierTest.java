@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.intellij.structure.domain.*;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.PluginVerifierOptions;
+import com.jetbrains.pluginverifier.VerificationOptions;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.*;
 import com.jetbrains.pluginverifier.problems.fields.ChangeFinalFieldProblem;
@@ -209,7 +209,7 @@ public class VerifierTest {
         Resolver ideResolver = Resolver.createIdeResolver(ide);
         Resolver jdkResolver = Resolver.createJdkResolver(new File(jdkPath))
     ) {
-      VerificationContextImpl ctx = new VerificationContextImpl(plugin, ide, ideResolver, jdkResolver, null, PluginVerifierOptions.Companion.parseOpts(commandLine));
+      VerificationContextImpl ctx = new VerificationContextImpl(plugin, ide, ideResolver, jdkResolver, null, VerificationOptions.Companion.parseOpts(commandLine));
       Verifiers.processAllVerifiers(ctx);
 
       testFoundProblems(ctx.getProblemSet().asMap(), actualProblems);

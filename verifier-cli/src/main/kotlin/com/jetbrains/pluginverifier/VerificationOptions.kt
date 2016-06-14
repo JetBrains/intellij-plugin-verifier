@@ -18,7 +18,7 @@ import java.util.regex.Pattern
 /**
  * @author Sergey Patrikeev
  */
-interface PluginVerifierOptions {
+interface VerificationOptions {
 
   fun isIgnoredProblem(plugin: Plugin, problem: Problem): Boolean
 
@@ -27,21 +27,21 @@ interface PluginVerifierOptions {
   fun isExternalClass(className: String): Boolean
 
   companion object {
-    fun parseOpts(commandLine: CommandLine): PluginVerifierOptions {
-      return PluginVerifierOptionsImpl.Companion.parseOpts(commandLine)
+    fun parseOpts(commandLine: CommandLine): VerificationOptions {
+      return VerificationOptionsImpl.Companion.parseOpts(commandLine)
     }
   }
 
 }
 
 
-class PluginVerifierOptionsImpl constructor(val prefixesToSkipForDuplicateClassesCheck: Array<String>,
-                                            val externalClassPrefixes: Array<String>,
-                                            val optionalDependenciesIdsToIgnoreIfMissing: Set<String>,
-                                            /**
+class VerificationOptionsImpl constructor(val prefixesToSkipForDuplicateClassesCheck: Array<String>,
+                                          val externalClassPrefixes: Array<String>,
+                                          val optionalDependenciesIdsToIgnoreIfMissing: Set<String>,
+                                          /**
                                              * Map of _(pluginXmlId, version)_ -> to be ignored _problem pattern_
                                              */
-                                            private val myProblemsToIgnore: Multimap<Pair<String, String>, Pattern>) : PluginVerifierOptions {
+                                          private val myProblemsToIgnore: Multimap<Pair<String, String>, Pattern>) : VerificationOptions {
   override fun isIgnoredProblem(plugin: Plugin, problem: Problem): Boolean {
     val xmlId = plugin.pluginId
     val version = plugin.pluginVersion
@@ -118,7 +118,7 @@ class PluginVerifierOptionsImpl constructor(val prefixesToSkipForDuplicateClasse
       return res.toTypedArray()
     }
 
-    fun parseOpts(commandLine: CommandLine): PluginVerifierOptionsImpl {
+    fun parseOpts(commandLine: CommandLine): VerificationOptionsImpl {
       val prefixesToSkipForDuplicateClassesCheck = getOptionValuesSplit(commandLine, ":", "s")
       for (i in prefixesToSkipForDuplicateClassesCheck.indices) {
         prefixesToSkipForDuplicateClassesCheck[i] = prefixesToSkipForDuplicateClassesCheck[i].replace('.', '/')
@@ -137,7 +137,7 @@ class PluginVerifierOptionsImpl constructor(val prefixesToSkipForDuplicateClasse
         problemsToIgnore = getProblemsToIgnoreFromFile(ignoreProblemsFile)
       }
 
-      return PluginVerifierOptionsImpl(prefixesToSkipForDuplicateClassesCheck, externalClasses, optionalDependenciesIdsToIgnoreIfMissing, problemsToIgnore)
+      return VerificationOptionsImpl(prefixesToSkipForDuplicateClassesCheck, externalClasses, optionalDependenciesIdsToIgnoreIfMissing, problemsToIgnore)
     }
 
     private fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): Multimap<Pair<String, String>, Pattern> {
