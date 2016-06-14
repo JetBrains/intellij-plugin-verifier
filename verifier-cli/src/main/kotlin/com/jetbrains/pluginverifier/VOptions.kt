@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.utils.Pair
 import com.jetbrains.pluginverifier.utils.Util
 import org.apache.commons.cli.CommandLine
+import org.apache.commons.cli.GnuParser
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -27,6 +28,9 @@ interface VOptions {
   fun isExternalClass(className: String): Boolean
 
   companion object {
+
+    fun parseOpts(vararg cmd: String): VOptions = parseOpts(GnuParser().parse(Util.CMD_OPTIONS, cmd))
+
     fun parseOpts(commandLine: CommandLine): VOptions {
       return VOptionsImpl.Companion.parseOpts(commandLine)
     }
