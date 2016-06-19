@@ -15,5 +15,5 @@ sealed class VResult() {
   class Nice(pluginDescriptor: PluginDescriptor, val overview: String) : VResult()
   class Problems(pluginDescriptor: PluginDescriptor, ideDescriptor: IdeDescriptor, val overview: String, val problems: Multimap<Problem, ProblemLocation>) : VResult()
   class BadPlugin(pluginDescriptor: PluginDescriptor, val reason: String) : VResult()
-  class VerificationError(pluginDescriptor: PluginDescriptor, ideDescriptor: IdeDescriptor, val message: String? = null, val exception: Exception? = null) : VResult()
+  class VerificationError(pluginDescriptor: PluginDescriptor, ideDescriptor: IdeDescriptor? = null, val message: String? = null, val exception: Exception? = null) : VResult()
 }
