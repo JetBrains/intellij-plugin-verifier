@@ -36,7 +36,7 @@ object VManager {
         } catch (e: Exception) {
           val message = "Failed to create Resolver for ${ideToPlugins.key}"
           LOG.error(message, e)
-          ideToPlugins.value.forEach { results.add(PluginOnIdeResult.Error(it, message, e)) }
+          ideToPlugins.value.forEach { results.add(PluginOnIdeResult.Error(it.pluginDescriptor, it.ideDescriptor, message, e)) }
           return@forEach
         }
 
@@ -52,7 +52,7 @@ object VManager {
             } catch (e: Exception) {
               val message = "Failed to verify ${pluginOnIde.plugin} against ${pluginOnIde.ide}"
               LOG.error(message, e)
-              results.add(PluginOnIdeResult.Error(pluginOnIde, message, e))
+              results.add(PluginOnIdeResult.Error(pluginOnIde.pluginDescriptor, pluginOnIde.ideDescriptor, message, e))
               return@poi
             }
 
@@ -60,7 +60,7 @@ object VManager {
 
             ctx.problemSet.asMap().forEach { entry -> entry.value.forEach { location -> problems.put(entry.key, location) } }
 
-            results.add(PluginOnIdeResult.Success(pluginOnIde, ctx.overview, problems))
+            results.add(PluginOnIdeResult.Success(pluginOnIde.pluginDescriptor, pluginOnIde.ideDescriptor, ctx.overview, problems))
 
             LOG.debug("Successfully verified ${pluginOnIde.plugin} against ${pluginOnIde.ide}")
           }
