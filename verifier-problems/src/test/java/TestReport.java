@@ -18,20 +18,14 @@ public class TestReport {
   @Test
   public void testReport() throws Exception {
 
-    DetailsImpl details1 = new DetailsBuilder()
-        .setIdeVersion(IdeVersion.createIdeVersion("IC-1500"))
-        .setOverview("overview1")
-        .setPlugin(new UpdateInfo(100500))
+    DetailsImpl details1 = new DetailsBuilder(IdeVersion.createIdeVersion("IC-1500"), new UpdateInfo(100500), "overview1")
         .addProblem(new ClassNotFoundProblem("NO_CLASS"), ProblemLocation.fromClass("fromClass"))
         .addProblem(new MethodNotFoundProblem("METHOD"), ProblemLocation.fromMethod("fromClass", "method"))
         .addProblem(new IncompatibleClassChangeProblem("CLASS", IncompatibleClassChangeProblem.Change.CLASS_TO_INTERFACE), ProblemLocation.fromMethod("Class", "Method"))
         .addProblem(new IncompatibleClassChangeProblem("CLASS", IncompatibleClassChangeProblem.Change.INTERFACE_TO_CLASS), ProblemLocation.fromMethod("Class", "Method"))
         .build();
 
-    DetailsImpl details2 = new DetailsBuilder()
-        .setIdeVersion(IdeVersion.createIdeVersion("IU-1"))
-        .setOverview("overview2")
-        .setPlugin(new UpdateInfo("id", "name", "version"))
+    DetailsImpl details2 = new DetailsBuilder(IdeVersion.createIdeVersion("IU-1"), new UpdateInfo("id", "name", "version"), "overview2")
         .addProblem(new NoCompatibleUpdatesProblem("plugin", "id"), ProblemLocation.fromPlugin("pid"))
         .build();
 

@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.Problem;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -20,28 +21,10 @@ public class DetailsBuilder {
   private UpdateInfo myUpdate;
   private String myOverview;
 
-  public DetailsBuilder setIdeVersion(@NotNull IdeVersion ideVersion) {
-    if (myIdeVersion != null) {
-      throw new IllegalArgumentException("Ide version is already set");
-    }
+  public DetailsBuilder(@NotNull IdeVersion ideVersion, @NotNull UpdateInfo update, @Nullable String overview) {
     myIdeVersion = ideVersion;
-    return this;
-  }
-
-  public DetailsBuilder setPlugin(@NotNull UpdateInfo update) {
-    if (myUpdate != null) {
-      throw new IllegalArgumentException("Update number is already set");
-    }
     myUpdate = update;
-    return this;
-  }
-
-  public DetailsBuilder setOverview(@NotNull String overview) {
-    if (myOverview != null) {
-      throw new IllegalArgumentException("Overview is already set");
-    }
-    myOverview = overview;
-    return this;
+    myOverview = overview == null ? "" : overview;
   }
 
   public DetailsBuilder addProblem(@NotNull Problem problem, @NotNull ProblemLocation location) {
@@ -49,7 +32,7 @@ public class DetailsBuilder {
     return this;
   }
 
-  public DetailsBuilder addProblem(@NotNull Problem problem, @NotNull Set<ProblemLocation> locations) {
+  public DetailsBuilder addProblems(@NotNull Problem problem, @NotNull Set<ProblemLocation> locations) {
     myProblems.putAll(problem, locations);
     return this;
   }
