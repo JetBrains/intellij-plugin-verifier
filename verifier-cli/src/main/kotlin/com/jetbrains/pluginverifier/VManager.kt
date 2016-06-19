@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.verifiers.VerificationContextImpl
 import com.jetbrains.pluginverifier.verifiers.Verifiers
 import org.slf4j.LoggerFactory
+import java.io.IOException
 
 
 /**
@@ -16,11 +17,26 @@ object VManager {
 
   private val LOG = LoggerFactory.getLogger(VManager::class.java)
 
+  /**
+   * Perform the verification according to passed parameters.
+   *
+   * Parameters consist of the _(ide, plugin)_ pairs.
+   * Every plugin is checked against the corresponding IDE.
+   * For every such pair the method returns a result of the verification:
+   * normally every result consists of the found binary problems (the main task of the Verifier), if they exist,
+   * but there could be the verification errors too (the most typical are due to broken plugin mandatory dependencies,
+   * invalid plugin class-files or whatever other reasons including the bugs of the Verifier itself).
+   * Thus you should check the type of the _(ide, plugin)_ pairs results (see {#VResults}) .
+   *
+   * @return the verification result
+   * @throws IOException if io-errors occur. The other problems are hidden in the corresponding _(ide, plugin)_ (with the message and cause).
+   */
+  @Throws(IOException::class)
   fun verify(params: VParams): VResults {
 
     LOG.debug("Verifying $params")
 
-    val results = arrayListOf<PluginOnIdeResult>()
+    val results = arrayListOf<VResult>()
 
     //IOException is acceptable
     Resolver.createJdkResolver(params.runtimeDir).use { runtimeResolver ->
@@ -36,7 +52,7 @@ object VManager {
         } catch (e: Exception) {
           val message = "Failed to create Resolver for ${ideToPlugins.key}"
           LOG.error(message, e)
-          ideToPlugins.value.forEach { results.add(PluginOnIdeResult.Error(it.pluginDescriptor, it.ideDescriptor, message, e)) }
+          ideToPlugins.value.forEach { results.add(VResult.VerificationError(it.pluginDescriptor, it.ideDescriptor, message, e)) }
           return@forEach
         }
 
@@ -52,7 +68,7 @@ object VManager {
             } catch (e: Exception) {
               val message = "Failed to verify ${pluginOnIde.plugin} against ${pluginOnIde.ide}"
               LOG.error(message, e)
-              results.add(PluginOnIdeResult.Error(pluginOnIde.pluginDescriptor, pluginOnIde.ideDescriptor, message, e))
+              results.add(VResult.VerificationError(pluginOnIde.pluginDescriptor, pluginOnIde.ideDescriptor, message, e))
               return@poi
             }
 
@@ -60,7 +76,7 @@ object VManager {
 
             ctx.problemSet.asMap().forEach { entry -> entry.value.forEach { location -> problems.put(entry.key, location) } }
 
-            results.add(PluginOnIdeResult.Success(pluginOnIde.pluginDescriptor, pluginOnIde.ideDescriptor, ctx.overview, problems))
+            results.add(VResult.Problems(pluginOnIde.pluginDescriptor, pluginOnIde.ideDescriptor, ctx.overview, problems))
 
             LOG.debug("Successfully verified ${pluginOnIde.plugin} against ${pluginOnIde.ide}")
           }
