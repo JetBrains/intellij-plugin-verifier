@@ -43,8 +43,8 @@ class VOptionsImpl constructor(val prefixesToSkipForDuplicateClassesCheck: Array
                                val externalClassPrefixes: Array<String>,
                                val optionalDependenciesIdsToIgnoreIfMissing: Set<String>,
                                /**
-                                             * Map of _(pluginXmlId, version)_ -> to be ignored _problem pattern_
-                                             */
+                                * Map of _(pluginXmlId, version)_ -> to be ignored _problem pattern_
+                                */
                                private val myProblemsToIgnore: Multimap<Pair<String, String>, Pattern>) : VOptions {
   override fun isIgnoredProblem(plugin: Plugin, problem: Problem): Boolean {
     val xmlId = plugin.pluginId

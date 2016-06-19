@@ -9,6 +9,13 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Comparator;
 
 /**
+ * The plugin descriptor.
+ * <p>
+ * It's used either to describe the plugin build in the Plugin repository or
+ * the plugin located locally (but not necessarily published to the Repository).
+ * In the former case the {@link #updateId} is specified (it's the unique id of the build in the database).
+ * In the latter case {@link #pluginId}, {@link #pluginName} and {@link #version} are specified.
+ *
  * @author Sergey Evdokimov
  */
 @XmlRootElement(name = "update")
