@@ -1,13 +1,15 @@
 package com.jetbrains.pluginverifier
 
 import com.google.common.collect.HashMultimap
+import com.intellij.structure.domain.Ide
+import com.intellij.structure.domain.Plugin
+import com.intellij.structure.errors.IncorrectPluginException
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.verifiers.VerificationContextImpl
 import com.jetbrains.pluginverifier.verifiers.Verifiers
 import org.slf4j.LoggerFactory
-import java.io.IOException
 
 
 /**
@@ -20,65 +22,81 @@ object VManager {
   /**
    * Perform the verification according to passed parameters.
    *
-   * Parameters consist of the _(ide, plugin)_ pairs.
+   * The parameters consist of the _(ide, plugin)_ pairs.
    * Every plugin is checked against the corresponding IDE.
    * For every such pair the method returns a result of the verification:
-   * normally every result consists of the found binary problems (the main task of the Verifier), if they exist,
-   * but there could be the verification errors too (the most typical are due to broken plugin mandatory dependencies,
-   * invalid plugin class-files or whatever other reasons including the bugs of the Verifier itself).
-   * Thus you should check the type of the _(ide, plugin)_ pairs results (see {#VResults}) .
+   * normally every result consists of the found binary problems (the main task of the Verifier), if they exist.
+   * But there could be the verification errors (the most typical are due to missing plugin mandatory dependencies,
+   * invalid plugin class-files or whatever other reasons).
+   * Thus you should check the type of the _(ide, plugin)_ pairs results (see [VResult]) .
    *
-   * @return the verification result
-   * @throws IOException if io-errors occur. The other problems are hidden in the corresponding _(ide, plugin)_ (with the message and cause).
+   * @return the verification results
+   * @throws RuntimeException if unexpected errors occur: e.g. the IDE broken, or the Repository doesn't respond.
    */
-  @Throws(IOException::class)
   fun verify(params: VParams): VResults {
 
-    LOG.debug("Verifying $params")
+    LOG.info("Verifying the plugins according to $params")
 
     val results = arrayListOf<VResult>()
 
-    //IOException is acceptable
+    //IOException is propagated.
     Resolver.createJdkResolver(params.runtimeDir).use { runtimeResolver ->
 
       //Group by IDE to reduce the Ide-Resolver creations number.
-      params.pluginsToCheck.groupBy { it.ide }.entries.forEach { ideToPlugins ->
+      params.pluginsToCheck.groupBy { it.second }.entries.forEach { ideToPlugins ->
 
-        LOG.debug("Creating Resolver for ${ideToPlugins.key}")
+        LOG.info("Creating Resolver for ${ideToPlugins.key}")
 
+        val ide: Ide
         val ideResolver: Resolver
         try {
-          ideResolver = Resolver.createIdeResolver(ideToPlugins.key)
-        } catch (e: Exception) {
-          val message = "Failed to create Resolver for ${ideToPlugins.key}"
-          LOG.error(message, e)
-          ideToPlugins.value.forEach { results.add(VResult.VerificationError(it.pluginDescriptor, it.ideDescriptor, message, e)) }
-          return@forEach
+          ide = VParamsCreator.getIde(ideToPlugins.key)
+          ideResolver = Resolver.createIdeResolver(ide)
+        } catch(e: Exception) {
+          //IDE errors are propagated.
+          throw RuntimeException("Failed to create IDE instance for ${ideToPlugins.key}")
         }
 
+        //auto-close
         ideResolver.use { ideResolver ->
           ideToPlugins.value.forEach poi@ { pluginOnIde ->
 
-            LOG.debug("Verifying ${pluginOnIde.plugin} against ${pluginOnIde.ide}")
+            LOG.info("Verifying ${pluginOnIde.first} against ${pluginOnIde.second}")
 
-            val ctx = VerificationContextImpl(pluginOnIde.plugin, pluginOnIde.ide, ideResolver, runtimeResolver, params.externalClassPath, params.options)
+            val plugin: Plugin
+            try {
+              plugin = VParamsCreator.getPlugin(pluginOnIde.first, ide.version)
+            } catch(e: IncorrectPluginException) {
+              //the plugin has incorrect structure.
+              results.add(VResult.BadPlugin(pluginOnIde.first, e.message ?: e.javaClass.name))
+              return@poi
+            } catch(e: Exception) {
+              results.add(VResult.BadPlugin(pluginOnIde.first, e.message ?: e.javaClass.name))
+              return@poi
+            }
+
+            val ctx = VerificationContextImpl(plugin, ide, ideResolver, runtimeResolver, params.externalClassPath, params.options)
 
             try {
               Verifiers.processAllVerifiers(ctx)
             } catch (e: Exception) {
-              val message = "Failed to verify ${pluginOnIde.plugin} against ${pluginOnIde.ide}"
+              val message = "Failed to verify ${pluginOnIde.first} against ${pluginOnIde.second}"
               LOG.error(message, e)
-              results.add(VResult.VerificationError(pluginOnIde.pluginDescriptor, pluginOnIde.ideDescriptor, message, e))
+              results.add(VResult.BadPlugin(pluginOnIde.first, message, e))
               return@poi
             }
 
-            val problems = HashMultimap.create<Problem, ProblemLocation>()
+            if (ctx.problemSet.isEmpty) {
+              results.add(VResult.Nice(pluginOnIde.first, ctx.overview))
+            } else {
+              val problems = HashMultimap.create<Problem, ProblemLocation>()
 
-            ctx.problemSet.asMap().forEach { entry -> entry.value.forEach { location -> problems.put(entry.key, location) } }
+              ctx.problemSet.asMap().forEach { entry -> entry.value.forEach { location -> problems.put(entry.key, location) } }
 
-            results.add(VResult.Problems(pluginOnIde.pluginDescriptor, pluginOnIde.ideDescriptor, ctx.overview, problems))
+              results.add(VResult.Problems(pluginOnIde.first, pluginOnIde.second, ctx.overview, problems))
+            }
 
-            LOG.debug("Successfully verified ${pluginOnIde.plugin} against ${pluginOnIde.ide}")
+            LOG.info("Successfully verified ${plugin.pluginFile} against ${pluginOnIde.second}")
           }
         }
       }

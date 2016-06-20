@@ -12,8 +12,20 @@ data class VResults(val results: List<VResult>) {
 }
 
 sealed class VResult() {
-  class Nice(pluginDescriptor: PluginDescriptor, val overview: String) : VResult()
-  class Problems(pluginDescriptor: PluginDescriptor, ideDescriptor: IdeDescriptor, val overview: String, val problems: Multimap<Problem, ProblemLocation>) : VResult()
-  class BadPlugin(pluginDescriptor: PluginDescriptor, val reason: String) : VResult()
-  class VerificationError(pluginDescriptor: PluginDescriptor, ideDescriptor: IdeDescriptor? = null, val message: String? = null, val exception: Exception? = null) : VResult()
+  /**
+   * Indicates that the Plugin doesn't have compatibility problems with the checked IDE.
+   */
+  class Nice(val pluginDescriptor: PluginDescriptor, val overview: String) : VResult()
+
+  /**
+   * The Plugin has compatibility problems with the IDE. They are listed in the [problems]
+   */
+  class Problems(val pluginDescriptor: PluginDescriptor, val ideDescriptor: IdeDescriptor, val overview: String, val problems: Multimap<Problem, ProblemLocation>) : VResult()
+
+  /**
+   * The Plugin has a completely incorrect structure (missing plugin.xml, etc.).
+   * The [reason] is a user-friendly description of the problem.
+   */
+  class BadPlugin(val pluginDescriptor: PluginDescriptor, val reason: String, val exception: Exception? = null) : VResult()
+
 }

@@ -11,7 +11,7 @@ import java.io.IOException;
 /**
  * @author Sergey Patrikeev
  */
-class UpdateInfoTypeAdapter extends TypeAdapter<UpdateInfo> {
+public class UpdateInfoTypeAdapter extends TypeAdapter<UpdateInfo> {
   @Override
   public void write(JsonWriter out, UpdateInfo value) throws IOException {
     out.beginArray();

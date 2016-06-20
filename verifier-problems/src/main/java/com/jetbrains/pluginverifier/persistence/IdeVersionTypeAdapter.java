@@ -10,7 +10,7 @@ import java.io.IOException;
 /**
  * @author Sergey Patrikeev
  */
-class IdeVersionTypeAdapter extends TypeAdapter<IdeVersion> {
+public class IdeVersionTypeAdapter extends TypeAdapter<IdeVersion> {
 
   @Override
   public void write(JsonWriter out, IdeVersion value) throws IOException {

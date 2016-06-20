@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author Sergey Patrikeev
  */
-class JsonableTypeAdapter<T> extends TypeAdapter<Jsonable<T>> {
+public class JsonableTypeAdapter<T> extends TypeAdapter<Jsonable<T>> {
 
   private static final String CLASS_FIELD = "class";
   private static final String CONTENT_FIELD = "content";
