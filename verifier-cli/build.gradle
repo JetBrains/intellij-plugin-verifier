@@ -23,6 +23,7 @@ dependencies {
   testCompile group: 'org.codehaus.plexus', name: 'plexus-archiver', version: '2.3'
 
 
+  compile 'com.github.salomonbrys.kotson:kotson:2.2.2'
   compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
   compile project(':verifier-problems')
   compile project(':repository')
