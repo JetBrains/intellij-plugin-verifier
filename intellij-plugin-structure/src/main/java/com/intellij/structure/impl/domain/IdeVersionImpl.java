@@ -202,6 +202,11 @@ public class IdeVersionImpl extends IdeVersion {
   }
 
   @Override
+  public int[] getComponents() {
+    return myComponents.clone();
+  }
+
+  @Override
   public int getBaselineVersion() {
     return myComponents[0];
   }

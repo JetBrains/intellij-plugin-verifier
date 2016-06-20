@@ -66,4 +66,6 @@ public abstract class IdeVersion implements Comparable<IdeVersion> {
 
   public abstract boolean isSnapshot();
 
+  public abstract int[] getComponents();
+
 }

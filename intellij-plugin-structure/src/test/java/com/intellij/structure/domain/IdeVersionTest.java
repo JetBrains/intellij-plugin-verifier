@@ -32,6 +32,7 @@ public class IdeVersionTest {
     Assert.assertEquals("IU", ideVersion.getProductCode());
     Assert.assertEquals(false, ideVersion.isSnapshot());
     Assert.assertEquals("IU-138.1042", ideVersion.asString());
+    Assert.assertArrayEquals(new int[]{138, 1042}, ideVersion.getComponents());
   }
 
   @Test
@@ -42,6 +43,7 @@ public class IdeVersionTest {
     Assert.assertEquals("IU", ideVersion.getProductCode());
     Assert.assertEquals(false, ideVersion.isSnapshot());
     Assert.assertEquals("IU-138.1042.1", ideVersion.asString(true, true));
+    Assert.assertArrayEquals(new int[]{138, 1042, 1}, ideVersion.getComponents());
   }
 
   @Test
@@ -52,6 +54,7 @@ public class IdeVersionTest {
     Assert.assertEquals("RS", updateBuild.getProductCode());
 //    Assert.assertEquals("rider", updateBuild.getProductName());
     Assert.assertEquals(false, updateBuild.isSnapshot());
+    Assert.assertArrayEquals(new int[]{144, 4713}, updateBuild.getComponents());
   }
 
   /*@Test(expected = IllegalArgumentException.class)
@@ -90,6 +93,7 @@ public class IdeVersionTest {
     Assert.assertEquals("", updateBuild.getProductCode());
     Assert.assertEquals(false, updateBuild.isSnapshot());
     Assert.assertEquals("133.0", updateBuild.asString());
+    Assert.assertArrayEquals(new int[]{133, 0}, updateBuild.getComponents());
   }
 
   @Test
@@ -100,6 +104,7 @@ public class IdeVersionTest {
     Assert.assertEquals("", updateBuild.getProductCode());
     Assert.assertEquals(false, updateBuild.isSnapshot());
     Assert.assertEquals("80.8987", updateBuild.asString());
+    Assert.assertArrayEquals(new int[]{80, 8987}, updateBuild.getComponents());
   }
 
   @Test
@@ -136,6 +141,11 @@ public class IdeVersionTest {
 
     assertParsed(IdeVersion.createIdeVersion("IU-145.1.2.3.4"), 145, 1, "IU-145.1.2.3.4");
     assertParsed(IdeVersion.createIdeVersion("IU-145.1000.2000.3000.4000"), 145, 1000, "IU-145.1000.2000.3000.4000");
+  }
+
+  @Test
+  public void components() throws Exception {
+    Assert.assertArrayEquals(new int[]{162, 1, 2, 3, 4, 5, 6}, IdeVersion.createIdeVersion("IU-162.1.2.3.4.5.6").getComponents());
   }
 
   @Test
