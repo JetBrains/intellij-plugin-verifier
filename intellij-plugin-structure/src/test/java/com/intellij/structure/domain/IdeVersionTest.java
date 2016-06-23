@@ -134,9 +134,9 @@ public class IdeVersionTest {
     assertParsed(IdeVersion.createIdeVersion("145.1"), 145, 1, "145.1");
     assertParsed(IdeVersion.createIdeVersion("145.1.2"), 145, 1, "145.1.2");
     assertParsed(IdeVersion.createIdeVersion("IU-145.1.2"), 145, 1, "IU-145.1.2");
-    assertParsed(IdeVersion.createIdeVersion("IU-145.*"), 145, Integer.MAX_VALUE, "IU-145.SNAPSHOT");
+    assertParsed(IdeVersion.createIdeVersion("IU-145.*"), 145, Integer.MAX_VALUE, "IU-145.*");
     assertParsed(IdeVersion.createIdeVersion("IU-145.SNAPSHOT"), 145, Integer.MAX_VALUE, "IU-145.SNAPSHOT");
-    assertParsed(IdeVersion.createIdeVersion("IU-145.1.*"), 145, 1, "IU-145.1.SNAPSHOT");
+    assertParsed(IdeVersion.createIdeVersion("IU-145.1.*"), 145, 1, "IU-145.1.*");
     assertParsed(IdeVersion.createIdeVersion("IU-145.1.SNAPSHOT"), 145, 1, "IU-145.1.SNAPSHOT");
 
     assertParsed(IdeVersion.createIdeVersion("IU-145.1.2.3.4"), 145, 1, "IU-145.1.2.3.4");
@@ -186,7 +186,7 @@ public class IdeVersionTest {
     assertTrue(IdeVersion.createIdeVersion("IU-145.1.2.3.4.SNAPSHOT").isSnapshot());
     assertFalse(IdeVersion.createIdeVersion("IU-145.1.2.3.4").isSnapshot());
 
-    assertTrue(IdeVersion.createIdeVersion("IC-90.*").isSnapshot());
+    assertFalse(IdeVersion.createIdeVersion("IC-90.*").isSnapshot());
     assertFalse(IdeVersion.createIdeVersion("90.9999999").isSnapshot());
   }
 

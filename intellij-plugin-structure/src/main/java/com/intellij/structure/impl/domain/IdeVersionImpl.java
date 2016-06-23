@@ -21,14 +21,16 @@ public class IdeVersionImpl extends IdeVersion {
 
   private final String myProductCode;
   private final int[] myComponents;
+  private final boolean myIsSnapshot;
 
   private IdeVersionImpl(@NotNull String productCode, int baselineVersion, int buildNumber) {
-    this(productCode, new int[]{baselineVersion, buildNumber});
+    this(productCode, false, baselineVersion, buildNumber);
   }
 
-  private IdeVersionImpl(@NotNull String productCode, int... components) {
+  private IdeVersionImpl(@NotNull String productCode, boolean isSnapshot, int... components) {
     myProductCode = productCode;
     myComponents = components;
+    myIsSnapshot = isSnapshot;
   }
 
   @NotNull
@@ -39,7 +41,7 @@ public class IdeVersionImpl extends IdeVersion {
 
     if (BUILD_NUMBER.equals(version) || SNAPSHOT.equals(version)) {
       IdeVersionImpl fallback = IdeVersionImpl.fromString(FALLBACK_VERSION);
-      return new IdeVersionImpl("", fallback.myComponents);
+      return new IdeVersionImpl("", true, fallback.myComponents);
     }
 
     String code = version;
@@ -65,10 +67,14 @@ public class IdeVersionImpl extends IdeVersion {
       List<String> components = StringUtil.split(code, ".");
       List<Integer> intComponentsList = new ArrayList<Integer>();
 
+      boolean isSnapshot = false;
       for (String component : components) {
         int comp = parseBuildNumber(version, component);
         intComponentsList.add(comp);
-        if (comp == SNAPSHOT_VALUE) break;
+        if (comp == SNAPSHOT_VALUE) {
+          if (component.equals(SNAPSHOT)) isSnapshot = true;
+          break;
+        }
       }
 
       int[] intComponents = new int[intComponentsList.size()];
@@ -76,7 +82,7 @@ public class IdeVersionImpl extends IdeVersion {
         intComponents[i] = intComponentsList.get(i);
       }
 
-      return new IdeVersionImpl(productCode, intComponents);
+      return new IdeVersionImpl(productCode, isSnapshot, intComponents);
 
     } else {
       buildNumber = parseBuildNumber(version, code);
@@ -194,7 +200,7 @@ public class IdeVersionImpl extends IdeVersion {
       if (myComponents[i] != SNAPSHOT_VALUE) {
         builder.append('.').append(myComponents[i]);
       } else if (includeSnapshotMarker) {
-        builder.append('.').append(SNAPSHOT);
+        builder.append('.').append(myIsSnapshot ? SNAPSHOT : STAR);
       }
     }
 
@@ -229,10 +235,7 @@ public class IdeVersionImpl extends IdeVersion {
 
   @Override
   public boolean isSnapshot() {
-    for (int each : myComponents) {
-      if (each == SNAPSHOT_VALUE) return true;
-    }
-    return false;
+    return myIsSnapshot;
   }
 
   @Override
@@ -242,7 +245,9 @@ public class IdeVersionImpl extends IdeVersion {
 
     IdeVersionImpl that = (IdeVersionImpl) o;
 
-    return myProductCode.equals(that.myProductCode) && Arrays.equals(myComponents, that.myComponents);
+    return myProductCode.equals(that.myProductCode) &&
+            myIsSnapshot == that.myIsSnapshot &&
+            Arrays.equals(myComponents, that.myComponents);
 
   }
 
@@ -250,8 +255,7 @@ public class IdeVersionImpl extends IdeVersion {
   public int hashCode() {
     int result = myProductCode.hashCode();
     result = 31 * result + Arrays.hashCode(myComponents);
+    result = 31 * result + (myIsSnapshot ? 1 : 0);
     return result;
   }
-
-
 }
