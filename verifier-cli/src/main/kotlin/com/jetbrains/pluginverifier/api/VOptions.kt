@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier
+package com.jetbrains.pluginverifier.api
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
@@ -6,7 +6,6 @@ import com.intellij.structure.domain.Plugin
 import com.intellij.structure.impl.utils.StringUtil
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration
 import com.jetbrains.pluginverifier.problems.Problem
-import com.jetbrains.pluginverifier.utils.Pair
 import com.jetbrains.pluginverifier.utils.Util
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.GnuParser
@@ -32,7 +31,7 @@ interface VOptions {
     fun parseOpts(vararg cmd: String): VOptions = parseOpts(GnuParser().parse(Util.CMD_OPTIONS, cmd))
 
     fun parseOpts(commandLine: CommandLine): VOptions {
-      return VOptionsImpl.Companion.parseOpts(commandLine)
+      return VOptionsImpl.parseOpts(commandLine)
     }
   }
 
@@ -50,8 +49,8 @@ class VOptionsImpl constructor(val prefixesToSkipForDuplicateClassesCheck: Array
     val xmlId = plugin.pluginId
     val version = plugin.pluginVersion
     for (entry in myProblemsToIgnore.entries()) {
-      val ignoreXmlId = entry.key.getFirst()
-      val ignoreVersion = entry.key.getSecond()
+      val ignoreXmlId = entry.key.first
+      val ignoreVersion = entry.key.second
       val ignoredPattern = entry.value
 
       if (StringUtil.equal(xmlId, ignoreXmlId)) {
@@ -169,7 +168,7 @@ class VOptionsImpl constructor(val prefixesToSkipForDuplicateClassesCheck: Array
             val pluginVersion = tokens[1].trim { it <= ' ' }
             val ignorePattern = tokens[2].trim { it <= ' ' }.replace('/', '.')
 
-            m.put(Pair.create(pluginId, pluginVersion), Pattern.compile(ignorePattern))
+            m.put(pluginId to pluginVersion, Pattern.compile(ignorePattern))
           }
         }
       } catch (e: Exception) {

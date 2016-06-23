@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier
+package com.jetbrains.pluginverifier.api
 
 import com.google.common.collect.HashMultimap
 import com.intellij.structure.domain.Ide

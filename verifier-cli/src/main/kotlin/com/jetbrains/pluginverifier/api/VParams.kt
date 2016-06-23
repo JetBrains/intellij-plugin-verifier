@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier
+package com.jetbrains.pluginverifier.api
 
 import com.intellij.structure.domain.*
 import com.intellij.structure.errors.IncorrectPluginException
@@ -7,6 +7,11 @@ import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import java.io.File
 import java.io.IOException
+
+/**
+ * The exception signals that the plugin is failed to be loaded from the Repository.
+ */
+class RepositoryException(message: String, cause: Exception? = null) : IOException(message, cause)
 
 /**
  * Accumulates parameters of the upcoming verification.
@@ -35,60 +40,6 @@ data class VParams(
      */
     val externalClassPath: Resolver = Resolver.getEmptyResolver()
 )
-
-/**
- * Descriptor of the plugin to be checked
- */
-sealed class PluginDescriptor() {
-  class ByXmlId(val pluginId: String, val version: String? = null) : PluginDescriptor() {
-    override fun toString(): String {
-      return "PluginDescriptor.ByXmlId(pluginId='$pluginId', version=$version)"
-    }
-  }
-
-  class ByBuildId(val buildId: Int) : PluginDescriptor() {
-    override fun toString(): String {
-      return "PluginDescriptor.ByBuildId(buildId=$buildId)"
-    }
-  }
-
-  class ByFile(val file: File) : PluginDescriptor() {
-    constructor(path: String) : this(File(path))
-
-    override fun toString(): String {
-      return "PluginDescriptor.ByFile(file=$file)"
-    }
-
-  }
-
-  class ByInstance(val plugin: Plugin) : PluginDescriptor() {
-    override fun toString(): String {
-      return "PluginDescriptor.ByInstance(plugin=$plugin)"
-    }
-  }
-}
-
-sealed class IdeDescriptor() {
-  class ByFile(val file: File) : IdeDescriptor() {
-    constructor(path: String) : this(File(path))
-
-    override fun toString(): String {
-      return "IdeDescriptor.ByFile(file=$file)"
-    }
-
-  }
-
-  class ByInstance(val ide: Ide) : IdeDescriptor() {
-    override fun toString(): String {
-      return "IdeDescriptor.ByInstance(ide=$ide; file=${ide.idePath})"
-    }
-  }
-}
-
-/**
- * The exception signals that the plugin is failed to be loaded from the Repository.
- */
-class RepositoryException(message: String, cause: Exception? = null) : IOException(message, cause)
 
 object VParamsCreator {
 
@@ -152,6 +103,7 @@ object VParamsCreator {
   fun getIde(ideDescriptor: IdeDescriptor): Ide = when (ideDescriptor) {
     is IdeDescriptor.ByFile -> IdeManager.getInstance().createIde(ideDescriptor.file)
     is IdeDescriptor.ByInstance -> ideDescriptor.ide
+    is IdeDescriptor.ByVersion -> TODO()
   }
 
 }
