@@ -1,10 +1,14 @@
 buildscript {
+
+  ext.kotlin_version = '1.0.2'
+
   repositories {
     jcenter()
   }
   dependencies {
     classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
     classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   }
 }
 
@@ -14,6 +18,7 @@ def intellijStructureVersion = '1.25'
 
 configure(allprojects) {
   apply plugin: 'java'
+  apply plugin: 'kotlin'
 
   group = 'org.jetbrains.intellij.plugins'
 
@@ -31,6 +36,8 @@ configure(allprojects) {
   targetCompatibility = 1.6
 
   dependencies {
+
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
     //plugin structure API
     compile group: 'org.jetbrains.intellij.plugins', name: 'intellij-plugin-structure', version: intellijStructureVersion
@@ -64,7 +71,6 @@ configure(allprojects) {
 
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
-
 
 
 publishing {
