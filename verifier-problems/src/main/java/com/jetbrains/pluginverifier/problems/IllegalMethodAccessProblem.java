@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.problems;
 
 import com.google.common.base.Preconditions;
-import com.jetbrains.pluginverifier.utils.Pair;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -48,15 +48,17 @@ public class IllegalMethodAccessProblem extends Problem {
     myMethodAccess = methodAccess;
   }
 
+  @NotNull
   @Override
-  public Problem deserialize(String... params) {
+  public Problem deserialize(@NotNull String... params) {
     return new IllegalMethodAccessProblem(params[0], AccessType.valueOf(params[1].toUpperCase()));
   }
 
+  @NotNull
   @Override
   public List<Pair<String, String>> serialize() {
     //noinspection unchecked
-    return Arrays.asList(Pair.create("method", myMethod), Pair.create("access", myMethodAccess != null ? myMethodAccess.name() : null));
+    return Arrays.asList(new Pair<String, String>("method", myMethod), new Pair<String, String>("access", myMethodAccess != null ? myMethodAccess.name() : null));
   }
 
 }

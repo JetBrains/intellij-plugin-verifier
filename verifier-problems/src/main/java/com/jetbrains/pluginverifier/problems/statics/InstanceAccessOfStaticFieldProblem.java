@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.problems.statics;
 
 import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.utils.Pair;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -39,14 +39,16 @@ public class InstanceAccessOfStaticFieldProblem extends Problem {
     return "attempt to perform instance access on a static field" + " " + myField;
   }
 
+  @NotNull
   @Override
-  public Problem deserialize(String... params) {
+  public Problem deserialize(@NotNull String... params) {
     return new InstanceAccessOfStaticFieldProblem(params[0]);
   }
 
+  @NotNull
   @Override
   public List<Pair<String, String>> serialize() {
-    return Collections.singletonList(Pair.create("field", myField));
+    return Collections.singletonList(new Pair<String, String>("field", myField));
   }
 
 

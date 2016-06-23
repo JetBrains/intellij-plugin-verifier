@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.problems;
 
 import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
-import com.jetbrains.pluginverifier.utils.Pair;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -37,14 +37,16 @@ public class InterfaceInstantiationProblem extends Problem {
   }
 
 
+  @NotNull
   @Override
-  public Problem deserialize(String... params) {
+  public Problem deserialize(@NotNull String... params) {
     return new InterfaceInstantiationProblem(params[0]);
   }
 
+  @NotNull
   @Override
   public List<Pair<String, String>> serialize() {
-    return Collections.singletonList(Pair.create("class", myClassName));
+    return Collections.singletonList(new Pair<String, String>("class", myClassName));
   }
 
 }

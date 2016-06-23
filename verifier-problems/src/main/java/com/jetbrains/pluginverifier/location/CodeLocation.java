@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.location;
 
 import com.google.common.base.Preconditions;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
-import com.jetbrains.pluginverifier.utils.Pair;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,14 +82,16 @@ public class CodeLocation extends ProblemLocation {
     return MessageUtils.convertMethodDescr(methodDescr, className);
   }
 
+  @NotNull
   @Override
   public List<Pair<String, String>> serialize() {
     //noinspection unchecked
-    return Arrays.asList(Pair.create("class", className), Pair.create("method", methodDescr), Pair.create("field", fieldName));
+    return Arrays.asList(new Pair<String, String>("class", className), new Pair<String, String>("method", methodDescr), new Pair<String, String>("field", fieldName));
   }
 
+  @NotNull
   @Override
-  public ProblemLocation deserialize(String... params) {
+  public ProblemLocation deserialize(@NotNull String... params) {
     return new CodeLocation(params[0], params[1], params[2]);
   }
 }

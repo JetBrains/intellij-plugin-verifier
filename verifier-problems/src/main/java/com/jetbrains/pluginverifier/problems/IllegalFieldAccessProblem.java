@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.problems;
 
 import com.google.common.base.Preconditions;
-import com.jetbrains.pluginverifier.utils.Pair;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -48,14 +48,16 @@ public class IllegalFieldAccessProblem extends Problem {
     myFieldAccess = fieldAccess;
   }
 
+  @NotNull
   @Override
-  public Problem deserialize(String... params) {
+  public Problem deserialize(@NotNull String... params) {
     return new IllegalFieldAccessProblem(params[0], AccessType.valueOf(params[1].toUpperCase()));
   }
 
+  @NotNull
   @Override
   public List<Pair<String, String>> serialize() {
     //noinspection unchecked
-    return Arrays.asList(Pair.create("field", myField), Pair.create("access", myFieldAccess != null ? myFieldAccess.name() : null)); //name() used because of Javadoc about stability
+    return Arrays.asList(new Pair<String, String>("field", myField), new Pair<String, String>("access", myFieldAccess != null ? myFieldAccess.name() : null)); //name() used because of Javadoc about stability
   }
 }

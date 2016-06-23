@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.problems;
 
 
 import com.google.common.base.Preconditions;
-import com.jetbrains.pluginverifier.utils.Pair;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,15 +60,17 @@ public class NoCompatibleUpdatesProblem extends Problem {
   }
 
 
+  @NotNull
   @Override
-  public Problem deserialize(String... params) {
+  public Problem deserialize(@NotNull String... params) {
     return new NoCompatibleUpdatesProblem(params[0], params[1], params[2]);
   }
 
+  @NotNull
   @Override
   public List<Pair<String, String>> serialize() {
     //noinspection unchecked
-    return Arrays.asList(Pair.create("plugin", myPlugin), Pair.create("ideVersion", myIdeVersion), Pair.create("details", myDetails));
+    return Arrays.asList(new Pair<String, String>("plugin", myPlugin), new Pair<String, String>("ideVersion", myIdeVersion), new Pair<String, String>("details", myDetails));
   }
 
 

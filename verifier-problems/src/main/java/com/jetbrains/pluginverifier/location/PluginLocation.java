@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.location;
 
-import com.jetbrains.pluginverifier.utils.Pair;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -35,13 +35,15 @@ public class PluginLocation extends ProblemLocation {
     return myPluginId;
   }
 
+  @NotNull
   @Override
   public List<Pair<String, String>> serialize() {
-    return Collections.singletonList(Pair.create("plugin", myPluginId));
+    return Collections.singletonList(new Pair<String, String>("plugin", myPluginId));
   }
 
+  @NotNull
   @Override
-  public ProblemLocation deserialize(String... params) {
+  public ProblemLocation deserialize(@NotNull String... params) {
     return new PluginLocation(params[0]);
   }
 }

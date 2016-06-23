@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.problems;
 
 import com.google.common.base.Preconditions;
-import com.jetbrains.pluginverifier.utils.Pair;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -59,15 +59,17 @@ public class IncompatibleClassChangeProblem extends Problem {
     myChange = change;
   }
 
+  @NotNull
   @Override
-  public Problem deserialize(String... params) {
+  public Problem deserialize(@NotNull String... params) {
     return new IncompatibleClassChangeProblem(params[0], Change.valueOf(params[1].toUpperCase()));
   }
 
+  @NotNull
   @Override
   public List<Pair<String, String>> serialize() {
     //noinspection unchecked
-    return Arrays.asList(Pair.create("class", myClassName), Pair.create("change", myChange != null ? myChange.name() : null));
+    return Arrays.asList(new Pair<String, String>("class", myClassName), new Pair<String, String>("change", myChange != null ? myChange.name() : null));
   }
 
   public enum Change {
