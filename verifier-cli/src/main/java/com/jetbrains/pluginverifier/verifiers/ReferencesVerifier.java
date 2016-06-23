@@ -30,6 +30,8 @@ import java.util.stream.Collectors;
  */
 class ReferencesVerifier implements Verifier {
 
+  //TODO: replace stderr with LOG.error
+
   @Override
   public void verify(@NotNull VerificationContext ctx) {
     Plugin plugin = ctx.getPlugin();

@@ -207,7 +207,7 @@ public final class Dependencies {
     private final PluginDependenciesNode myDescriptor;
     /**
      * Not-null value represents some cycle in the dependencies graph.
-     * It's for the caller consideration whether to throw an exception in a such case.
+     * It's for the caller consideration whether to throw an exception in such a case.
      */
     @Nullable
     private final List<Plugin> myCycle;
