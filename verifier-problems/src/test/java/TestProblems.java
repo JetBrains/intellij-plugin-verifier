@@ -1,9 +1,9 @@
 import com.intellij.structure.impl.utils.StringUtil;
-import com.jetbrains.pluginverifier.persistence.Persistence;
+import com.jetbrains.pluginverifier.persistence.GsonHolder;
 import com.jetbrains.pluginverifier.problems.AccessType;
 import com.jetbrains.pluginverifier.problems.IncompatibleClassChangeProblem;
 import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.utils.Pair;
+import kotlin.Pair;
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Before;
@@ -64,10 +64,10 @@ public class TestProblems {
         //create an instance with empty (null) fields
         Problem instance = ((Problem) aClass.newInstance());
 
-        String json = Persistence.GSON.toJson(instance);
+        String json = GsonHolder.INSTANCE.getGSON().toJson(instance);
         boolean ok = false;
         try {
-          Persistence.GSON.fromJson(json, Problem.class);
+          GsonHolder.INSTANCE.getGSON().fromJson(json, Problem.class);
         } catch (Exception e) {
           ok = true;
         }
@@ -121,10 +121,10 @@ public class TestProblems {
       }
     }
 
-    Problem instance = factory.deserialize(params);
+    Problem instance = (Problem) factory.deserialize(params);
 
-    String json = Persistence.GSON.toJson(instance);
-    Problem problem = Persistence.GSON.fromJson(json, instance.getClass());
+    String json = GsonHolder.INSTANCE.getGSON().toJson(instance);
+    Problem problem = GsonHolder.INSTANCE.getGSON().fromJson(json, instance.getClass());
 
     Assert.assertEquals(instance, problem);
   }

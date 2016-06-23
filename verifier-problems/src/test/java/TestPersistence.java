@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.location.CodeLocation;
 import com.jetbrains.pluginverifier.location.PluginLocation;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
-import com.jetbrains.pluginverifier.persistence.Persistence;
+import com.jetbrains.pluginverifier.persistence.GsonHolder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -18,8 +18,8 @@ import java.lang.reflect.Type;
  */
 public class TestPersistence {
   private static <T> void assertConversion(T input, Class<T> cls) {
-    String json = Persistence.GSON.toJson(input);
-    T t = Persistence.GSON.fromJson(json, cls);
+    String json = GsonHolder.INSTANCE.getGSON().toJson(input);
+    T t = GsonHolder.INSTANCE.getGSON().fromJson(json, cls);
     Assert.assertEquals(input, t);
   }
 
@@ -66,8 +66,8 @@ public class TestPersistence {
     //we have to explicitly specify multimap type arguments
     Type type = new TypeToken<Multimap<IdeVersion, UpdateInfo>>() {
     }.getType();
-    String json = Persistence.GSON.toJson(expectedMultimap, type);
-    Multimap t = Persistence.GSON.fromJson(json, type);
+    String json = GsonHolder.INSTANCE.getGSON().toJson(expectedMultimap, type);
+    Multimap t = GsonHolder.INSTANCE.getGSON().fromJson(json, type);
 
     //check that contents are equal (multimap-backing classes may differ)
     HashMultimap<K, V> expectedCopy = HashMultimap.create(expectedMultimap);
