@@ -15,7 +15,7 @@ sealed class VResult() {
   /**
    * Indicates that the Plugin doesn't have compatibility problems with the checked IDE.
    */
-  class Nice(val pluginDescriptor: PluginDescriptor, val overview: String) : VResult()
+  class Nice(val pluginDescriptor: PluginDescriptor, val ideDescriptor: IdeDescriptor, val overview: String) : VResult()
 
   /**
    * The Plugin has compatibility problems with the IDE. They are listed in the [problems]

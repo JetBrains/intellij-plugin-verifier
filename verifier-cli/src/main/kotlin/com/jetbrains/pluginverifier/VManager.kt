@@ -31,7 +31,7 @@ object VManager {
    * Thus you should check the type of the _(ide, plugin)_ pairs results (see [VResult]) .
    *
    * @return the verification results
-   * @throws RuntimeException if unexpected errors occur: e.g. the IDE broken, or the Repository doesn't respond.
+   * @throws RuntimeException if unexpected errors occur: e.g. the IDE is broken, or the Repository doesn't respond.
    */
   fun verify(params: VParams): VResults {
 
@@ -82,12 +82,11 @@ object VManager {
             } catch (e: Exception) {
               val message = "Failed to verify ${pluginOnIde.first} against ${pluginOnIde.second}"
               LOG.error(message, e)
-              results.add(VResult.BadPlugin(pluginOnIde.first, message, e))
-              return@poi
+              throw RuntimeException(message, e)
             }
 
             if (ctx.problemSet.isEmpty) {
-              results.add(VResult.Nice(pluginOnIde.first, ctx.overview))
+              results.add(VResult.Nice(pluginOnIde.first, pluginOnIde.second, ctx.overview))
             } else {
               val problems = HashMultimap.create<Problem, ProblemLocation>()
 
