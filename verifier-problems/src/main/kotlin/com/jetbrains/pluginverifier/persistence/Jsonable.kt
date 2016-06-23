@@ -20,7 +20,7 @@ interface Jsonable<out T> {
    * Note: subclasses have to make an effort of serialising its fields.
    * @return (key, value) pairs of the content
    */
-  fun serialize(): List<Pair<String, String>>
+  fun serialize(): List<Pair<String, String?>>
 
   /**
    * Override this method to deserialize your subclass
@@ -31,6 +31,6 @@ interface Jsonable<out T> {
    * @param params parameters for the construction of the subclass.
    * @return subclass instance
    */
-  fun deserialize(vararg params: String?): Jsonable<T>
+  fun deserialize(vararg params: String?): T
 
 }
