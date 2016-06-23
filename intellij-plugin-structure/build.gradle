@@ -10,7 +10,7 @@ buildscript {
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
 
-version = '1.25'
+version = '1.24'
 if (project.hasProperty("myVersion")) {
   version = project.myVersion;
 }
