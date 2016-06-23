@@ -121,7 +121,7 @@ public class TestProblems {
       }
     }
 
-    Problem instance = (Problem) factory.deserialize(params);
+    Problem instance = factory.deserialize(params);
 
     String json = GsonHolder.INSTANCE.getGSON().toJson(instance);
     Problem problem = GsonHolder.INSTANCE.getGSON().fromJson(json, instance.getClass());
