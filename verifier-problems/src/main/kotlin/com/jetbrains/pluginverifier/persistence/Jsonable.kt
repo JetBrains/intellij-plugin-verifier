@@ -6,7 +6,7 @@ package com.jetbrains.pluginverifier.persistence
  * Subclasses **must have** the default public constructor.
  * @author Sergey Patrikeev
  */
-interface Jsonable<T> {
+interface Jsonable<out T> {
 
   /**
    * Override this method to serialize the subclass
@@ -31,6 +31,6 @@ interface Jsonable<T> {
    * @param params parameters for the construction of the subclass.
    * @return subclass instance
    */
-  fun deserialize(vararg params: String): T
+  fun deserialize(vararg params: String?): Jsonable<T>
 
 }
