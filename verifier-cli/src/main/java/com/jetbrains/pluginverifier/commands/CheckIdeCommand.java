@@ -8,7 +8,7 @@ import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.VOptions;
+import com.jetbrains.pluginverifier.api.VOptions;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.PluginCache;
 import com.jetbrains.pluginverifier.problems.BrokenPluginProblem;
@@ -20,6 +20,7 @@ import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
 import com.jetbrains.pluginverifier.verifiers.VerifierCore;
+import kotlin.Pair;
 import org.apache.commons.cli.CommandLine;
 import org.jdom2.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -163,8 +164,8 @@ public class CheckIdeCommand extends VerifierCommand {
     myIdeResolver = Resolver.createIdeResolver(myIde);
 
     Pair<List<String>, List<String>> pluginsIds = Util.extractPluginToCheckList(commandLine);
-    List<String> checkAllBuilds = pluginsIds.first;
-    List<String> checkLastBuilds = pluginsIds.second;
+    List<String> checkAllBuilds = pluginsIds.getFirst();
+    List<String> checkLastBuilds = pluginsIds.getSecond();
 
     if (checkAllBuilds.isEmpty() && checkLastBuilds.isEmpty()) {
       myUpdatesToCheck = RepositoryManager.getInstance().getLastCompatibleUpdates(myIde.getVersion());

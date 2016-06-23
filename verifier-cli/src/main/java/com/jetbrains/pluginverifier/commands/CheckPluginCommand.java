@@ -8,7 +8,7 @@ import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.VOptions;
+import com.jetbrains.pluginverifier.api.VOptions;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.misc.PluginCache;
@@ -19,6 +19,7 @@ import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
 import com.jetbrains.pluginverifier.verifiers.VerifierCore;
+import kotlin.Pair;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -58,7 +59,7 @@ public class CheckPluginCommand extends VerifierCommand {
         int updateId = Integer.parseInt(pluginId);
         UpdateInfo updateInfo = RepositoryManager.getInstance().findUpdateById(updateId);
         File update = RepositoryManager.getInstance().getPluginFile(updateInfo);
-        return Collections.singletonList(Pair.create(new UpdateInfo(updateId), update));
+        return Collections.singletonList(new Pair<>(new UpdateInfo(updateId), update));
       } catch (IOException e) {
         throw FailUtil.fail("Cannot load plugin #" + pluginId, e);
       }
@@ -68,7 +69,7 @@ public class CheckPluginCommand extends VerifierCommand {
         // Looks like user write unknown command. This command was called because it's default command.
         throw FailUtil.fail("Unknown command: " + pluginToTestArg + "\navailable commands: " + Joiner.on(", ").join(CommandHolder.getCommandMap().keySet()));
       }
-      return Collections.singletonList(Pair.create(updateInfoByFile(file), file));
+      return Collections.singletonList(new Pair<>(updateInfoByFile(file), file));
     }
   }
 
@@ -104,7 +105,7 @@ public class CheckPluginCommand extends VerifierCommand {
           throw FailUtil.fail("Plugin file '" + pluginPath + "' specified in '" + pluginListFile.getAbsolutePath() + "' doesn't exist");
         }
 
-        pluginsFiles.add(Pair.create(updateInfoByFile(file), file));
+        pluginsFiles.add(new Pair<>(updateInfoByFile(file), file));
       }
     }
 
@@ -136,7 +137,7 @@ public class CheckPluginCommand extends VerifierCommand {
     List<Pair<UpdateInfo, File>> result = new ArrayList<>();
     for (UpdateInfo updateInfo : compatibleUpdatesForPlugins) {
       try {
-        result.add(Pair.create(updateInfo, RepositoryManager.getInstance().getPluginFile(updateInfo)));
+        result.add(new Pair<>(updateInfo, RepositoryManager.getInstance().getPluginFile(updateInfo)));
       } catch (IOException e) {
         throw FailUtil.fail("Cannot download '" + updateInfo, e);
       }
@@ -213,7 +214,7 @@ public class CheckPluginCommand extends VerifierCommand {
             } catch (Exception e) {
 
               String localizedMessage = e.getLocalizedMessage() != null ? e.getLocalizedMessage() : e.getClass().getName();
-              brokenPlugins.add(Pair.create(pluginFile.getFirst(), new VerificationProblem(localizedMessage, pluginFile.getFirst().toString())));
+              brokenPlugins.add(new Pair<>(pluginFile.getFirst(), new VerificationProblem(localizedMessage, pluginFile.getFirst().toString())));
 
               final String message = "failed to verify plugin " + pluginFile.getFirst();
               System.err.println(message);
