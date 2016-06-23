@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.*;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
+import kotlin.Pair;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
@@ -121,7 +122,7 @@ public class Util {
 
     System.out.println("List of plugins to check: " + Joiner.on(", ").join(Iterables.concat(pluginsCheckAllBuilds, pluginsCheckLastBuilds)));
 
-    return Pair.create(pluginsCheckAllBuilds, pluginsCheckLastBuilds);
+    return new Pair<>(pluginsCheckAllBuilds, pluginsCheckLastBuilds);
   }
 
   @NotNull
