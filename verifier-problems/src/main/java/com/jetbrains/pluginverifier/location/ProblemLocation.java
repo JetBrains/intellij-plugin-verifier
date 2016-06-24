@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.location;
 
 import com.google.common.base.Preconditions;
-import com.jetbrains.pluginverifier.persistence.Jsonable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.objectweb.asm.tree.MethodNode;
@@ -9,7 +8,7 @@ import org.objectweb.asm.tree.MethodNode;
 /**
  * @author Sergey Patrikeev
  */
-public abstract class ProblemLocation implements Jsonable<ProblemLocation> {
+public abstract class ProblemLocation {
 
   //TODO: add more detailed location, e.g. superclass, field of a class, interface, throws list and so on
 
