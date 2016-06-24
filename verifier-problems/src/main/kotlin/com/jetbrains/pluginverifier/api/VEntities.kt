@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.domain.Plugin
+import com.jetbrains.pluginverifier.format.UpdateInfo
 import java.io.File
 
 /**
@@ -26,6 +27,12 @@ sealed class PluginDescriptor() {
 
   override fun hashCode(): Int {
     return this.id().hashCode()
+  }
+
+  class ByUpdateInfo(@SerializedName("update") val updateInfo: UpdateInfo) : PluginDescriptor() {
+    override fun toString(): String {
+      return "PluginDescriptor.ByUpdateInfo(updateInfo=$updateInfo)"
+    }
   }
 
   class ByXmlId(@SerializedName("id") val pluginId: String, @SerializedName("version") val version: String? = null) : PluginDescriptor() {
