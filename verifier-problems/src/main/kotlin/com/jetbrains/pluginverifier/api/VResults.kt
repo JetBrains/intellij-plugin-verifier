@@ -1,11 +1,8 @@
 package com.jetbrains.pluginverifier.api
 
-import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
+import com.google.gson.annotations.SerializedName
 import com.jetbrains.pluginverifier.location.ProblemLocation
-import com.jetbrains.pluginverifier.persistence.Jsonable
-import com.jetbrains.pluginverifier.persistence.fromGson
-import com.jetbrains.pluginverifier.persistence.toGson
 import com.jetbrains.pluginverifier.problems.Problem
 
 /**
@@ -15,27 +12,24 @@ data class VResults(val results: List<VResult>) {
   constructor(result: VResult) : this(listOf(result))
 }
 
-sealed class VResult() : Jsonable<VResult> {
+sealed class VResult() {
   /**
    * Indicates that the Plugin doesn't have compatibility problems with the checked IDE.
    */
-  class Nice(val pluginDescriptor: PluginDescriptor, val ideDescriptor: IdeDescriptor, val overview: String) : VResult() {
-    constructor() : this(PluginDescriptor.ByBuildId(0), IdeDescriptor.ByFile(""), "")
-
-    override fun serialize(): List<Pair<String, String>> = listOf(Pair("plugin", pluginDescriptor.toGson()), Pair("ide", ideDescriptor.toGson()), Pair("overview", overview))
-
-    override fun deserialize(vararg params: String?): VResult = Nice(params[0]!!.fromGson(), params[1]!!.fromGson(), params[2]!!.fromGson())
+  class Nice(@SerializedName("plugin") val pluginDescriptor: PluginDescriptor, @SerializedName("ide") val ideDescriptor: IdeDescriptor, @SerializedName("overview") val overview: String) : VResult() {
+    override fun toString(): String {
+      return "VResult.Nice(plugin=$pluginDescriptor, ide=$ideDescriptor, overview='$overview')"
+    }
   }
 
   /**
    * The Plugin has compatibility problems with the IDE. They are listed in the [problems]
    */
-  class Problems(val pluginDescriptor: PluginDescriptor, val ideDescriptor: IdeDescriptor, val overview: String, val problems: Multimap<Problem, ProblemLocation>) : VResult() {
-    constructor() : this(PluginDescriptor.ByBuildId(0), IdeDescriptor.ByFile(""), "", ArrayListMultimap.create())
+  class Problems(@SerializedName("plugin") val pluginDescriptor: PluginDescriptor, @SerializedName("ide") val ideDescriptor: IdeDescriptor, @SerializedName("overview") val overview: String, @SerializedName("problems") val problems: Multimap<Problem, ProblemLocation>) : VResult() {
 
-    override fun serialize(): List<Pair<String, String>> = listOf(Pair("plugin", pluginDescriptor.toGson()), Pair("ide", ideDescriptor.toGson()), Pair("overview", overview), Pair("problems", problems.toGson()))
-
-    override fun deserialize(vararg params: String?): VResult = Problems(params[0]!!.fromGson(), params[1]!!.fromGson(), params[2]!!.fromGson(), params[3]!!.fromGson())
+    override fun toString(): String {
+      return "VResult.Problems(plugin=$pluginDescriptor, ide=$ideDescriptor, overview='$overview', problems=$problems)"
+    }
 
   }
 
@@ -43,12 +37,13 @@ sealed class VResult() : Jsonable<VResult> {
    * The Plugin has a completely incorrect structure (missing plugin.xml, etc.).
    * The [reason] is a user-friendly description of the problem.
    */
-  class BadPlugin(val pluginDescriptor: PluginDescriptor, val reason: String) : VResult() {
-    constructor() : this(PluginDescriptor.ByBuildId(0), "")
+  class BadPlugin(@SerializedName("plugin") val pluginDescriptor: PluginDescriptor, @SerializedName("reason") val reason: String) : VResult() {
 
-    override fun serialize(): List<Pair<String, String>> = listOf(Pair("plugin", pluginDescriptor.toGson()), Pair("reason", reason))
+    override fun toString(): String {
+      return "VResult.BadPlugin(plugin=$pluginDescriptor, reason='$reason')"
+    }
 
-    override fun deserialize(vararg params: String?): VResult = BadPlugin(params[0]!!.fromGson(), params[1]!!.fromGson())
+
   }
 
 }
