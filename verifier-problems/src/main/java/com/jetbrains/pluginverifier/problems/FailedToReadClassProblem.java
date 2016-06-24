@@ -1,17 +1,17 @@
 package com.jetbrains.pluginverifier.problems;
 
 import com.google.common.base.Preconditions;
-import kotlin.Pair;
+import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.Arrays;
-import java.util.List;
 
 @XmlRootElement
 public class FailedToReadClassProblem extends Problem {
 
+  @SerializedName("class")
   private String myClassName;
+  @SerializedName("details")
   private String myDetails;
 
   public FailedToReadClassProblem() {
@@ -45,20 +45,5 @@ public class FailedToReadClassProblem extends Problem {
   public String getDescription() {
     return "failed to read a class-file" + " " + myClassName + (myDetails != null ? " " + myDetails : "");
   }
-
-
-  @NotNull
-  @Override
-  public Problem deserialize(@NotNull String... params) {
-    return new FailedToReadClassProblem(params[0], params[1]);
-  }
-
-  @NotNull
-  @Override
-  public List<Pair<String, String>> serialize() {
-    //noinspection unchecked
-    return Arrays.asList(new Pair<String, String>("class", myClassName), new Pair<String, String>("details", myDetails));
-  }
-
 
 }

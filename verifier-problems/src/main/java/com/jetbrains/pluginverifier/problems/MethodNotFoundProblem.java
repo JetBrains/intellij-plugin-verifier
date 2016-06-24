@@ -1,17 +1,16 @@
 package com.jetbrains.pluginverifier.problems;
 
 import com.google.common.base.Preconditions;
+import com.google.gson.annotations.SerializedName;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
-import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.Collections;
-import java.util.List;
 
 @XmlRootElement
 public class MethodNotFoundProblem extends Problem {
 
+  @SerializedName("method")
   private String myMethod;
 
   public MethodNotFoundProblem() {
@@ -49,18 +48,6 @@ public class MethodNotFoundProblem extends Problem {
   @NotNull
   public String getDescription() {
     return "invoking unknown method" + " " + MessageUtils.convertMethodDescr(myMethod);
-  }
-
-  @NotNull
-  @Override
-  public Problem deserialize(@NotNull String... params) {
-    return new MethodNotFoundProblem(params[0]);
-  }
-
-  @NotNull
-  @Override
-  public List<Pair<String, String>> serialize() {
-    return Collections.singletonList(new Pair<String, String>("method", myMethod));
   }
 
 }

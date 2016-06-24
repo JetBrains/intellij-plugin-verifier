@@ -1,12 +1,10 @@
 package com.jetbrains.pluginverifier.problems;
 
 import com.google.common.base.Preconditions;
-import kotlin.Pair;
+import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Sergey Patrikeev
@@ -14,7 +12,10 @@ import java.util.List;
 @XmlRootElement
 public class IllegalFieldAccessProblem extends Problem {
 
+  @SerializedName("field")
   private String myField;
+
+  @SerializedName("access")
   private AccessType myFieldAccess;
 
   public IllegalFieldAccessProblem() {
@@ -48,16 +49,4 @@ public class IllegalFieldAccessProblem extends Problem {
     myFieldAccess = fieldAccess;
   }
 
-  @NotNull
-  @Override
-  public Problem deserialize(@NotNull String... params) {
-    return new IllegalFieldAccessProblem(params[0], AccessType.valueOf(params[1].toUpperCase()));
-  }
-
-  @NotNull
-  @Override
-  public List<Pair<String, String>> serialize() {
-    //noinspection unchecked
-    return Arrays.asList(new Pair<String, String>("field", myField), new Pair<String, String>("access", myFieldAccess != null ? myFieldAccess.name() : null)); //name() used because of Javadoc about stability
-  }
 }

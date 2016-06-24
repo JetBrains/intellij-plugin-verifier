@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.problems;
 
-import com.jetbrains.pluginverifier.persistence.Jsonable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlTransient;
@@ -8,7 +7,7 @@ import javax.xml.bind.annotation.XmlTransient;
 /**
  * Problem container class.
  */
-public abstract class Problem implements Jsonable<Problem> {
+public abstract class Problem {
 
 
   @XmlTransient

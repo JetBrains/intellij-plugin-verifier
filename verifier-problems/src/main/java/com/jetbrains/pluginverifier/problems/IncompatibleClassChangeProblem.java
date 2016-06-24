@@ -1,12 +1,10 @@
 package com.jetbrains.pluginverifier.problems;
 
 import com.google.common.base.Preconditions;
-import kotlin.Pair;
+import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Sergey Patrikeev
@@ -14,7 +12,10 @@ import java.util.List;
 @XmlRootElement
 public class IncompatibleClassChangeProblem extends Problem {
 
+  @SerializedName("class")
   private String myClassName;
+
+  @SerializedName("change")
   private Change myChange;
 
   public IncompatibleClassChangeProblem() {
@@ -57,19 +58,6 @@ public class IncompatibleClassChangeProblem extends Problem {
 
   public void setChange(Change change) {
     myChange = change;
-  }
-
-  @NotNull
-  @Override
-  public Problem deserialize(@NotNull String... params) {
-    return new IncompatibleClassChangeProblem(params[0], Change.valueOf(params[1].toUpperCase()));
-  }
-
-  @NotNull
-  @Override
-  public List<Pair<String, String>> serialize() {
-    //noinspection unchecked
-    return Arrays.asList(new Pair<String, String>("class", myClassName), new Pair<String, String>("change", myChange != null ? myChange.name() : null));
   }
 
   public enum Change {

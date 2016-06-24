@@ -1,13 +1,11 @@
 package com.jetbrains.pluginverifier.problems.statics;
 
 import com.google.common.base.Preconditions;
+import com.google.gson.annotations.SerializedName;
 import com.jetbrains.pluginverifier.problems.Problem;
-import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Created by Sergey Patrikeev
@@ -15,6 +13,7 @@ import java.util.List;
 @XmlRootElement
 public class StaticAccessOfInstanceFieldProblem extends Problem {
 
+  @SerializedName("field")
   private String myField;
 
   public StaticAccessOfInstanceFieldProblem() {
@@ -29,19 +28,6 @@ public class StaticAccessOfInstanceFieldProblem extends Problem {
   @Override
   public String getDescription() {
     return "attempt to perform static access on an instance field" + " " + myField;
-  }
-
-
-  @NotNull
-  @Override
-  public Problem deserialize(@NotNull String... params) {
-    return new StaticAccessOfInstanceFieldProblem(params[0]);
-  }
-
-  @NotNull
-  @Override
-  public List<Pair<String, String>> serialize() {
-    return Collections.singletonList(new Pair<String, String>("field", myField));
   }
 
 

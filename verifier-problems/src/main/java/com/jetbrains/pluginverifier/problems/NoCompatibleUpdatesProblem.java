@@ -2,19 +2,20 @@ package com.jetbrains.pluginverifier.problems;
 
 
 import com.google.common.base.Preconditions;
-import kotlin.Pair;
+import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.Arrays;
-import java.util.List;
 
 @XmlRootElement
 public class NoCompatibleUpdatesProblem extends Problem {
 
+  @SerializedName("plugin")
   private String myPlugin;
+  @SerializedName("ideVersion")
   private String myIdeVersion;
+  @SerializedName("details")
   private String myDetails;
 
   public NoCompatibleUpdatesProblem() {
@@ -59,19 +60,6 @@ public class NoCompatibleUpdatesProblem extends Problem {
     myDetails = details;
   }
 
-
-  @NotNull
-  @Override
-  public Problem deserialize(@NotNull String... params) {
-    return new NoCompatibleUpdatesProblem(params[0], params[1], params[2]);
-  }
-
-  @NotNull
-  @Override
-  public List<Pair<String, String>> serialize() {
-    //noinspection unchecked
-    return Arrays.asList(new Pair<String, String>("plugin", myPlugin), new Pair<String, String>("ideVersion", myIdeVersion), new Pair<String, String>("details", myDetails));
-  }
 
 
 }
