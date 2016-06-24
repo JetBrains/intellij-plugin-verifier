@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.problems.Problem
 /**
  * @author Sergey Patrikeev
  */
-data class VResults(val results: List<VResult>) {
+data class VResults(@SerializedName("results") val results: List<VResult>) {
   constructor(result: VResult) : this(listOf(result))
 }
 
