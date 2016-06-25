@@ -79,6 +79,10 @@ object VParamsCreator {
         val file = withRepositoryException { RepositoryManager.getInstance().getPluginFile(suitable) } ?: throw noSuchPlugin(plugin)
         return PluginManager.getInstance().createPlugin(file) //IncorrectPluginException, IOException
       }
+      is PluginDescriptor.ByUpdateInfo -> {
+        val file = withRepositoryException { RepositoryManager.getInstance().getPluginFile(plugin.updateInfo) } ?: throw noSuchPlugin(plugin)
+        return PluginManager.getInstance().createPlugin(file)
+      }
     }
   }
 
@@ -96,6 +100,7 @@ object VParamsCreator {
       is PluginDescriptor.ByXmlId -> "${plugin.pluginId}${if (plugin.version != null) ":${plugin.version}" else "" }"
       is PluginDescriptor.ByFile -> "${plugin.file.name}"
       is PluginDescriptor.ByInstance -> plugin.plugin.toString()
+      is PluginDescriptor.ByUpdateInfo -> plugin.updateInfo.toString()
     }
     return RepositoryException("Plugin $id is not found in the Plugin repository")
   }
