@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.jetbrains.pluginverifier.persistence;
+package com.jetbrains.pluginverifier.utils;
 
 import com.google.gson.*;
 import com.google.gson.internal.Streams;

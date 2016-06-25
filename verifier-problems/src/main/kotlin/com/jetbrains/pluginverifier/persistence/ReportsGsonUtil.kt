@@ -26,6 +26,7 @@ import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.problems.fields.ChangeFinalFieldProblem
 import com.jetbrains.pluginverifier.problems.statics.*
 import com.jetbrains.pluginverifier.results.ResultsElement
+import com.jetbrains.pluginverifier.utils.RuntimeTypeAdapterFactory
 import java.io.File
 import java.io.IOException
 import java.lang.reflect.ParameterizedType
