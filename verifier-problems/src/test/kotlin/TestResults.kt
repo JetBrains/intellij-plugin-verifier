@@ -1,7 +1,5 @@
 import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.typedToJson
 import com.google.common.collect.ImmutableMultimap
-import com.google.common.collect.Multimap
 import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginDescriptor
@@ -9,20 +7,32 @@ import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.persistence.GsonHolder
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
-import com.jetbrains.pluginverifier.problems.Problem
 import org.junit.Assert
 import org.junit.Test
 import java.io.File
 
-fun Any.toGson(): String = GsonHolder.GSON.toJson(this)
+private fun Any.toGson(): String = GsonHolder.GSON.toJson(this)
 
-inline fun <reified T : Any> String.fromGson() = GsonHolder.GSON.fromJson<T>(this)
+private inline fun <reified T : Any> String.fromGson() = GsonHolder.GSON.fromJson<T>(this)
 
 
 /**
  * @author Sergey Patrikeev
  */
 class Results {
+
+  //assert to-from
+  private inline fun <reified T : Any> assert(init: Any) {
+    val json = init.toGson()
+    val instance = json.fromGson<T>()
+    Assert.assertEquals(init, instance)
+  }
+
+  private inline fun <reified T : Any> assertBlock(init: T, assertBlock: (T) -> Unit) {
+    val json = init.toGson()
+    val gson = json.fromGson<T>()
+    assertBlock(gson)
+  }
 
   @Test
   fun pluginDescriptor() {
@@ -40,48 +50,27 @@ class Results {
 
   @Test
   fun nice() {
-    assertBlock<VResult.Nice>(VResult.Nice(PluginDescriptor.ByBuildId(1), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-143.15")), "overview"),
-        {
-          check(it.overview.equals("overview"))
-        })
+    val init: VResult = someNicePlugin()
+    assertBlock<VResult>(init, { Assert.assertEquals(init.toString(), it.toString()) })
   }
 
   @Test
   fun problems() {
-    assertBlock<VResult.Problems>(VResult.Problems(PluginDescriptor.ByBuildId(1), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-145.1111")), "overview",
-        ImmutableMultimap.of(ClassNotFoundProblem("class"), ProblemLocation.fromClass("a"))), {
-      check(it.overview.equals("overview"))
-    })
-  }
-
-  private inline fun <reified T : Any> assertBlock(x: T, block: (T) -> Unit) {
-    val json = x.toGson()
-    println(json)
-    block(json.fromGson<T>())
-  }
-
-  private inline fun <reified T : Any> assert(x: Any) {
-    val json = x.toGson()
-    println(json)
-    val instance = json.fromGson<T>()
-    Assert.assertEquals(x, instance)
+    val init = someProblematicPlugin()
+    assertBlock<VResult>(init, { Assert.assertEquals(init.toString(), it.toString()) })
   }
 
   @Test
-  fun results() {
-    val problem = ClassNotFoundProblem("not_found")
-    val of: Multimap<Problem, ProblemLocation> = ImmutableMultimap.of(problem, ProblemLocation.fromPlugin("pluginId"))
-    val problems = VResult.Problems(PluginDescriptor.ByXmlId("pluginId", "123"), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-145.12.1")), "overview", of)
-
-    val ps: String = GsonHolder.GSON.typedToJson(of)
-    println(ps)
-
-    val multimap = ps.fromGson<Multimap<Problem, ProblemLocation>>()
-
-    println(multimap)
-
-//    val s = GsonHolder.GSON.toJson(problems)
-//    println(s)
-
+  fun bad() {
+    val init = someBadPlugin()
+    assertBlock<VResult>(init, { Assert.assertEquals(init.toString(), it.toString()) })
   }
+
+  private fun someNicePlugin() = VResult.Nice(PluginDescriptor.ByBuildId(1), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-143.15")), "overview")
+
+  private fun someProblematicPlugin() = VResult.Problems(PluginDescriptor.ByBuildId(1), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-123.456.789")), "overview",
+      ImmutableMultimap.of(ClassNotFoundProblem("NotFoundClass"), ProblemLocation.fromClass("UserOfNotFoundClass")))
+
+  private fun someBadPlugin() = VResult.BadPlugin(PluginDescriptor.ByBuildId(1), "I am bad")
+
 }
