@@ -5,6 +5,8 @@ import com.jetbrains.pluginverifier.misc.DownloadUtils;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,10 +20,12 @@ import java.util.StringTokenizer;
  */
 public class GlobalResultsRepository extends ResultsRepository {
 
+  private final static Logger LOG = LoggerFactory.getLogger(GlobalResultsRepository.class);
+
   @NotNull
   @Override
   public List<IdeVersion> getAvailableReportsList() throws IOException {
-    System.out.print("Loading check results list...");
+    LOG.info("Loading check results list...");
     URL url = new URL(RepositoryConfiguration.getInstance().getPluginRepositoryUrl() + "/problems/resultList?format=txt");
 
     String text = IOUtils.toString(url);
@@ -32,7 +36,7 @@ public class GlobalResultsRepository extends ResultsRepository {
       res.add(IdeVersion.createIdeVersion(st.nextToken()));
     }
 
-    System.out.println("done");
+    LOG.info("done");
     return res;
   }
 

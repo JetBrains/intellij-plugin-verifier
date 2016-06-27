@@ -9,6 +9,8 @@ import com.jetbrains.pluginverifier.misc.DownloadUtils;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +25,8 @@ import java.util.List;
  */
 class GlobalRepository implements PluginRepository {
 
+  private final static Logger LOG = LoggerFactory.getLogger(GlobalRepository.class);
+
   private static final Type updateListType = new TypeToken<List<UpdateInfo>>() {
   }.getType();
 
@@ -35,7 +39,7 @@ class GlobalRepository implements PluginRepository {
   @NotNull
   @Override
   public List<UpdateInfo> getLastCompatibleUpdates(@NotNull IdeVersion ideVersion) throws IOException {
-    System.out.println("Loading compatible plugins list... ");
+    LOG.info("Loading compatible plugins list... ");
 
     URL url1 = new URL(url + "/manager/allCompatibleUpdates/?build=" + ideVersion);
     String text = IOUtils.toString(url1);
@@ -69,7 +73,7 @@ class GlobalRepository implements PluginRepository {
   @NotNull
   @Override
   public List<UpdateInfo> getAllCompatibleUpdatesOfPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException {
-    System.out.println("Fetching list of all compatible builds of a pluginId " + pluginId + " on IDE " + ideVersion);
+    LOG.info("Fetching list of all compatible builds of a pluginId " + pluginId + " on IDE " + ideVersion);
 
     String urlSb = url + "/manager/originalCompatibleUpdatesByPluginIds/?build=" + ideVersion +
         "&pluginIds=" + URLEncoder.encode(pluginId, "UTF-8");

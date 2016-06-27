@@ -10,12 +10,15 @@ import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.utils.Util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
 
 public final class Dependencies {
 
+  private final static Logger LOG = LoggerFactory.getLogger(Dependencies.class);
   //TODO: add some caching
 
   private static final Dependencies INSTANCE = new Dependencies();
@@ -120,8 +123,7 @@ public final class Dependencies {
                 updateInfo = RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(ide.getVersion(), depId);
               } catch (Exception e) {
                 String message = String.format("Couldn't get dependency plugin '%s' from the Plugin Repository for IDE %s", depId, ide.getVersion());
-                System.err.println(message);
-                e.printStackTrace();
+                LOG.error(message, e);
                 missing.put(pd, new MissingReason(message, e));
                 continue;
               }
@@ -133,8 +135,7 @@ public final class Dependencies {
                   pluginZip = RepositoryManager.getInstance().getPluginFile(updateInfo);
                 } catch (Exception e) {
                   String message = String.format("Couldn't download dependency plugin '%s' from the Plugin Repository for IDE %s", depId, ide.getVersion());
-                  System.err.println(message);
-                  e.printStackTrace();
+                  LOG.error(message, e);
                   missing.put(pd, new MissingReason(message, e));
                   continue;
                 }
@@ -143,8 +144,7 @@ public final class Dependencies {
                   dependency = PluginCache.getInstance().createPlugin(pluginZip);
                 } catch (Exception e) {
                   final String message = String.format("Plugin %s depends on the other plugin %s which has some problems%s", plugin, depId, e.getMessage() != null ? e.getMessage() : "");
-                  System.err.println(message);
-                  e.printStackTrace();
+                  LOG.error(message, e);
                   missing.put(pd, new MissingReason(message, e));
                   continue;
                 }
@@ -153,7 +153,7 @@ public final class Dependencies {
 
             if (dependency == null) {
               final String message = String.format("Plugin %s depends on the other plugin %s which has not a compatible build with %s", plugin, depId, ide.getVersion());
-              System.err.println(message);
+              LOG.error(message);
               missing.put(pd, new MissingReason(message, null));
               continue;
             }

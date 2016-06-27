@@ -7,6 +7,8 @@ import com.jetbrains.pluginverifier.format.UpdateInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +27,8 @@ import java.util.TimeZone;
  */
 public class DownloadUtils {
 
+  private final static Logger LOG = LoggerFactory.getLogger(DownloadUtils.class);
+
   private static final int BROKEN_ZIP_THRESHOLD = 200;
   private static final DateFormat httpDateFormat;
   private static final int HTTP_OK_STATUS = 200;
@@ -38,9 +42,9 @@ public class DownloadUtils {
   public static File getCheckResultFile(@NotNull IdeVersion build) throws IOException {
     File res = createCheckResultFile(build);
 
-    System.out.print("Loading check results for " + build.asString() + "...");
+    LOG.info("Loading check results for " + build.asString() + "...");
     updateFile(new URL(RepositoryConfiguration.getInstance().getPluginRepositoryUrl() + "/files/checkResults/" + build.asString() + ".xml"), res);
-    System.out.println("done");
+    LOG.info("done");
 
     return res;
   }
@@ -176,7 +180,7 @@ public class DownloadUtils {
     if (!pluginInCache.exists() || pluginInCache.length() < BROKEN_ZIP_THRESHOLD) {
       File currentDownload = File.createTempFile("currentDownload", ".zip", downloadDir);
 
-      System.out.println("Downloading " + update + "... ");
+      LOG.info("Downloading " + update + "... ");
 
       boolean downloadFail = true;
       try {
@@ -186,10 +190,10 @@ public class DownloadUtils {
           throw new IOException("Broken zip archive");
         }
 
-        System.out.println("downloading " + update + " done!");
+        LOG.info("downloading " + update + " done!");
         downloadFail = false;
       } catch (IOException e) {
-        System.out.println("Error loading plugin " + update + " " + e.getLocalizedMessage());
+        LOG.info("Error loading plugin " + update + " " + e.getLocalizedMessage());
         e.printStackTrace();
         throw e;
 
