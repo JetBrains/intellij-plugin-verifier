@@ -38,6 +38,7 @@ object GsonHolder {
       .registerTypeAdapter(UpdateInfo::class.java, UpdateInfoTypeAdapter())
       .registerTypeAdapter(File::class.java, FileTypeAdapter())
       .registerTypeHierarchyAdapter(IdeVersion::class.java, IdeVersionTypeAdapter())
+      .registerTypeAdapterFactory(resultTAF)
       .registerTypeAdapterFactory(problemsTAF)
       .registerTypeAdapterFactory(locationTAF)
       .registerTypeAdapterFactory(pluginDescriptorTAF)
@@ -45,6 +46,11 @@ object GsonHolder {
       .registerTypeAdapterFactory(MultimapTypeAdapterFactory())
       .create()
 }
+
+private val resultTAF = RuntimeTypeAdapterFactory.of(VResult::class.java)
+    .registerSubtype(VResult.Nice::class.java)
+    .registerSubtype(VResult.Problems::class.java)
+    .registerSubtype(VResult.BadPlugin::class.java)
 
 //add inheritors
 private val problemsTAF = RuntimeTypeAdapterFactory.of(Problem::class.java)
