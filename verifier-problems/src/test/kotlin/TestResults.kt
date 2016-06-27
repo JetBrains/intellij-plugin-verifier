@@ -1,3 +1,5 @@
+import com.github.salomonbrys.kotson.fromJson
+import com.github.salomonbrys.kotson.typedToJson
 import com.google.common.collect.ImmutableMultimap
 import com.google.common.collect.Multimap
 import com.intellij.structure.domain.IdeVersion
@@ -5,14 +7,17 @@ import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.location.ProblemLocation
-import com.jetbrains.pluginverifier.persistence.fromGson
-import com.jetbrains.pluginverifier.persistence.toGson
-import com.jetbrains.pluginverifier.persistence.toGsonTyped
+import com.jetbrains.pluginverifier.persistence.GsonHolder
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import org.junit.Assert
 import org.junit.Test
 import java.io.File
+
+fun Any.toGson(): String = GsonHolder.GSON.toJson(this)
+
+inline fun <reified T : Any> String.fromGson() = GsonHolder.GSON.fromJson<T>(this)
+
 
 /**
  * @author Sergey Patrikeev
@@ -68,7 +73,7 @@ class Results {
     val of: Multimap<Problem, ProblemLocation> = ImmutableMultimap.of(problem, ProblemLocation.fromPlugin("pluginId"))
     val problems = VResult.Problems(PluginDescriptor.ByXmlId("pluginId", "123"), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-145.12.1")), "overview", of)
 
-    val ps: String = of.toGsonTyped<Multimap<Problem, ProblemLocation>>()
+    val ps: String = GsonHolder.GSON.typedToJson(of)
     println(ps)
 
     val multimap = ps.fromGson<Multimap<Problem, ProblemLocation>>()

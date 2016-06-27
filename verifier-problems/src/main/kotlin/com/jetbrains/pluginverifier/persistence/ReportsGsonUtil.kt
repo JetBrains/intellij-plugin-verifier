@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.persistence
 
-import com.github.salomonbrys.kotson.fromJson
-import com.github.salomonbrys.kotson.typeToken
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.LinkedHashMultimap
 import com.google.common.collect.Multimap
@@ -34,15 +32,6 @@ import java.lang.reflect.ParameterizedType
 /**
  * @author Sergey Patrikeev
  */
-inline fun <reified T : Any> Any.toGsonTyped(): String = GsonHolder.GSON.toJson(this, typeToken<T>())
-
-fun Any.toGson(): String = GsonHolder.GSON.toJson(this)
-
-fun Any.toGsonTree() = GsonHolder.GSON.toJsonTree(this)
-
-inline fun <reified T : Any> String.fromGson() = GsonHolder.GSON.fromJson<T>(this)
-
-fun <T> T?.notNullize(default: T) = if (this == null) default else this
 
 object GsonHolder {
   val GSON = GsonBuilder()
