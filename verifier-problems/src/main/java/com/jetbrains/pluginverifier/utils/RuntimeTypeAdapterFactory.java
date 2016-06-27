@@ -116,12 +116,12 @@ import java.util.Map;
  * }</pre>
  */
 public final class RuntimeTypeAdapterFactory<T> implements TypeAdapterFactory {
-  private final Class<?> baseType;
+  private final Class<T> baseType;
   private final String typeFieldName;
-  private final Map<String, Class<?>> labelToSubtype = new LinkedHashMap<String, Class<?>>();
-  private final Map<Class<?>, String> subtypeToLabel = new LinkedHashMap<Class<?>, String>();
+  private final Map<String, Class<? extends T>> labelToSubtype = new LinkedHashMap<String, Class<? extends T>>();
+  private final Map<Class<? extends T>, String> subtypeToLabel = new LinkedHashMap<Class<? extends T>, String>();
 
-  private RuntimeTypeAdapterFactory(Class<?> baseType, String typeFieldName) {
+  private RuntimeTypeAdapterFactory(Class<T> baseType, String typeFieldName) {
     if (typeFieldName == null || baseType == null) {
       throw new NullPointerException();
     }
@@ -149,8 +149,8 @@ public final class RuntimeTypeAdapterFactory<T> implements TypeAdapterFactory {
    * Registers {@code type} identified by {@code label}. Labels are case
    * sensitive.
    *
-   * @throws IllegalArgumentException if either {@code type} or {@code label}
-   *                                  have already been registered on this type adapter.
+   * @throws IllegalArgumentException if either {@code type} or {@code label} have already been registered on this type
+   *                                  adapter.
    */
   public RuntimeTypeAdapterFactory<T> registerSubtype(Class<? extends T> type, String label) {
     if (type == null || label == null) {
@@ -168,24 +168,28 @@ public final class RuntimeTypeAdapterFactory<T> implements TypeAdapterFactory {
    * Registers {@code type} identified by its {@link Class#getSimpleName simple
    * name}. Labels are case sensitive.
    *
-   * @throws IllegalArgumentException if either {@code type} or its simple name
-   *                                  have already been registered on this type adapter.
+   * @throws IllegalArgumentException if either {@code type} or its simple name have already been registered on this
+   *                                  type adapter.
    */
   public RuntimeTypeAdapterFactory<T> registerSubtype(Class<? extends T> type) {
     return registerSubtype(type, type.getSimpleName());
   }
 
+  @SuppressWarnings("unchecked")
   public <R> TypeAdapter<R> create(Gson gson, TypeToken<R> type) {
-    if (type.getRawType() != baseType) {
+    Class<? super R> rawType = type.getRawType();
+    if (rawType != baseType) {
+      if (baseType.isAssignableFrom(rawType) && subtypeToLabel.containsKey(rawType)) {
+        return (TypeAdapter<R>) create(gson, TypeToken.get(baseType));
+      }
       return null;
     }
 
-    final Map<String, TypeAdapter<?>> labelToDelegate
-        = new LinkedHashMap<String, TypeAdapter<?>>();
-    final Map<Class<?>, TypeAdapter<?>> subtypeToDelegate
-        = new LinkedHashMap<Class<?>, TypeAdapter<?>>();
-    for (Map.Entry<String, Class<?>> entry : labelToSubtype.entrySet()) {
-      TypeAdapter<?> delegate = gson.getDelegateAdapter(this, TypeToken.get(entry.getValue()));
+    final Map<String, TypeAdapter<? extends T>> labelToDelegate = new LinkedHashMap<String, TypeAdapter<? extends T>>();
+    final Map<Class<? extends T>, TypeAdapter<?>> subtypeToDelegate = new LinkedHashMap<Class<? extends T>, TypeAdapter<?>>();
+
+    for (Map.Entry<String, Class<? extends T>> entry : labelToSubtype.entrySet()) {
+      TypeAdapter<? extends T> delegate = gson.getDelegateAdapter(this, TypeToken.get(entry.getValue()));
       labelToDelegate.put(entry.getKey(), delegate);
       subtypeToDelegate.put(entry.getValue(), delegate);
     }
