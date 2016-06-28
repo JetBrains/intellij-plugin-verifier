@@ -109,7 +109,7 @@ class TeamCityLog(private val out: PrintStream) {
     }
 
     fun getInstance(commandLine: CommandLine): TeamCityLog {
-      return if (commandLine.hasOption("tc")) TeamCityLog(System.out) else TeamCityLog.NULL_LOG
+      return if (commandLine.hasOption("tc")) TeamCityLog(System.out) else NULL_LOG
     }
   }
 }

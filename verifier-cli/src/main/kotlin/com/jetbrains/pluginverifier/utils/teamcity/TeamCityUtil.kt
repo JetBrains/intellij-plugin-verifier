@@ -51,10 +51,10 @@ object TeamCityUtil {
     val inverted = invertMultimap(problems)
 
     when (reportGrouping) {
-      TeamCityUtil.ReportGrouping.NONE -> notGrouped(log, problems)
-      TeamCityUtil.ReportGrouping.PLUGIN -> groupByPlugin(log, fillWithEmptyLocations(inverted.asMap()))
-      TeamCityUtil.ReportGrouping.PROBLEM_TYPE -> groupByType(log, inverted.asMap())
-      TeamCityUtil.ReportGrouping.PLUGIN_WITH_LOCATION -> groupByPlugin(log, fillWithEmptyLocations(inverted.asMap()))
+      ReportGrouping.NONE -> notGrouped(log, problems)
+      ReportGrouping.PLUGIN -> groupByPlugin(log, fillWithEmptyLocations(inverted.asMap()))
+      ReportGrouping.PROBLEM_TYPE -> groupByType(log, inverted.asMap())
+      ReportGrouping.PLUGIN_WITH_LOCATION -> groupByPlugin(log, fillWithEmptyLocations(inverted.asMap()))
     }
   }
 
@@ -233,10 +233,10 @@ object TeamCityUtil {
     companion object {
 
       fun parseGrouping(commandLine: CommandLine): ReportGrouping {
-        val grouping = ReportGrouping.NONE
+        val grouping = NONE
         val groupValue = commandLine.getOptionValue("g")
         if (groupValue != null) {
-          for (report in ReportGrouping.values()) {
+          for (report in values()) {
             if (report.myText == groupValue) {
               return report
             }
