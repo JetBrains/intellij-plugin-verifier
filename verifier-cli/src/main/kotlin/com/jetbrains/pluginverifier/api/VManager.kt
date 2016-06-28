@@ -1,13 +1,10 @@
 package com.jetbrains.pluginverifier.api
 
-import com.google.common.collect.HashMultimap
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.Plugin
 import com.intellij.structure.errors.IncorrectPluginException
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.location.ProblemLocation
-import com.jetbrains.pluginverifier.problems.Problem
-import com.jetbrains.pluginverifier.verifiers.VerificationContextImpl
+import com.jetbrains.pluginverifier.verifiers.VContext
 import com.jetbrains.pluginverifier.verifiers.Verifiers
 import org.slf4j.LoggerFactory
 
@@ -31,8 +28,10 @@ object VManager {
    * Thus you should check the type of the _(ide, plugin)_ pairs results (see [VResult]) .
    *
    * @return the verification results
+   * @throws InterruptedException if the verification was cancelled
    * @throws RuntimeException if unexpected errors occur: e.g. the IDE is broken, or the Repository doesn't respond.
    */
+  @Throws(InterruptedException::class)
   fun verify(params: VParams): VResults {
 
     LOG.info("Verifying the plugins according to $params")
@@ -40,10 +39,12 @@ object VManager {
     val results = arrayListOf<VResult>()
 
     //IOException is propagated.
-    Resolver.createJdkResolver(params.runtimeDir).use { runtimeResolver ->
+    VParamsCreator.getJdkResolver(params.jdkDescriptor).use { runtimeResolver ->
 
       //Group by IDE to reduce the Ide-Resolver creations number.
       params.pluginsToCheck.groupBy { it.second }.entries.forEach { ideToPlugins ->
+
+        checkCancelled()
 
         LOG.info("Creating Resolver for ${ideToPlugins.key}")
 
@@ -52,6 +53,8 @@ object VManager {
         try {
           ide = VParamsCreator.getIde(ideToPlugins.key)
           ideResolver = Resolver.createIdeResolver(ide)
+        } catch(ie: InterruptedException) {
+          throw ie
         } catch(e: Exception) {
           //IDE errors are propagated.
           throw RuntimeException("Failed to create IDE instance for ${ideToPlugins.key}")
@@ -60,48 +63,65 @@ object VManager {
         //auto-close
         ideResolver.use { ideResolver ->
           ideToPlugins.value.forEach poi@ { pluginOnIde ->
+            checkCancelled()
 
             LOG.info("Verifying ${pluginOnIde.first} against ${pluginOnIde.second}")
 
             val plugin: Plugin
             try {
               plugin = VParamsCreator.getPlugin(pluginOnIde.first, ide.version)
+            } catch(ie: InterruptedException) {
+              throw ie
             } catch(e: IncorrectPluginException) {
               //the plugin has incorrect structure.
-              results.add(VResult.BadPlugin(pluginOnIde.first, e.message ?: e.javaClass.name))
+              results.add(VResult.BadPlugin(pluginOnIde.first, e.message ?: "The plugin ${pluginOnIde.first} has incorrect structure"))
+              return@poi
+            } catch(e: RepositoryException) {
+              results.add(VResult.BadPlugin(pluginOnIde.first, e.message ?: "The plugin ${pluginOnIde.first} is not found in the Repository"))
               return@poi
             } catch(e: Exception) {
               results.add(VResult.BadPlugin(pluginOnIde.first, e.message ?: e.javaClass.name))
               return@poi
             }
 
-            val ctx = VerificationContextImpl(plugin, ide, ideResolver, runtimeResolver, params.externalClassPath, params.options)
-
+            val pluginResolver: Resolver
             try {
-              Verifiers.processAllVerifiers(ctx)
-            } catch (e: Exception) {
-              val message = "Failed to verify ${pluginOnIde.first} against ${pluginOnIde.second}"
-              LOG.error(message, e)
-              throw RuntimeException(message, e)
+              pluginResolver = Resolver.createPluginResolver(plugin)
+            } catch(e: Exception) {
+              results.add(VResult.BadPlugin(pluginOnIde.first, e.message ?: "Failed to read the class-files of the plugin $plugin"))
+              return@poi
             }
 
-            if (ctx.problemSet.isEmpty) {
-              results.add(VResult.Nice(pluginOnIde.first, pluginOnIde.second, ctx.overview))
-            } else {
-              val problems = HashMultimap.create<Problem, ProblemLocation>()
+            //auto-close
+            pluginResolver.use {
+              val ctx = VContext(plugin, pluginResolver, pluginOnIde.first, ide, ideResolver, pluginOnIde.second, runtimeResolver, params.options, params.externalClassPath)
 
-              ctx.problemSet.asMap().forEach { entry -> entry.value.forEach { location -> problems.put(entry.key, location) } }
+              try {
+                val vResult = Verifiers.processAllVerifiers(ctx)
+                results.add(vResult)
+                LOG.info("Successfully verified ${plugin.pluginFile} against ${pluginOnIde.second}")
+              } catch (ie: InterruptedException) {
+                throw ie
+              } catch (e: Exception) {
+                val message = "Failed to verify ${pluginOnIde.first} against ${pluginOnIde.second}"
+                LOG.error(message, e)
+                throw RuntimeException(message, e)
+              }
 
-              results.add(VResult.Problems(pluginOnIde.first, pluginOnIde.second, ctx.overview, problems))
             }
 
-            LOG.info("Successfully verified ${plugin.pluginFile} against ${pluginOnIde.second}")
           }
         }
       }
     }
 
     return VResults(results)
+  }
+
+  private fun checkCancelled() {
+    if (Thread.currentThread().isInterrupted) {
+      throw InterruptedException("The verification was cancelled")
+    }
   }
 
 }
