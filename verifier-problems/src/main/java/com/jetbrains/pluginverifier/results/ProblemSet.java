@@ -4,7 +4,6 @@ import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
 import java.util.*;
@@ -54,11 +53,8 @@ public class ProblemSet {
     locations.add(location);
   }
 
-  public void printProblems(@NotNull PrintStream out, @Nullable String indent) {
-    if (indent == null) {
-      indent = "";
-    }
 
+  public void printProblems(@NotNull PrintStream out, @NotNull String indent) {
     for (Map.Entry<Problem, Set<ProblemLocation>> entry : asMap().entrySet()) {
       out.print(indent);
       out.println(MessageUtils.cutCommonPackages(entry.getKey().getDescription()));

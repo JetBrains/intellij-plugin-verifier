@@ -194,6 +194,8 @@ public class CheckPluginCommand extends VerifierCommand {
             }
 
             myLastProblemSet = problemSet;
+            System.out.println(problemSet.isEmpty() ? "is OK" : "has " + problemSet.count() + " errors");
+            problemSet.printProblems(System.out, "");
 
             final UpdateInfo updateInfo = new UpdateInfo(plugin.getPluginId(), plugin.getPluginName(), plugin.getPluginVersion());
 
