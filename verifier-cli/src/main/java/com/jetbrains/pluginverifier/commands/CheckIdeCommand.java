@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.commands;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
 import com.google.common.collect.*;
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeVersion;
@@ -19,7 +18,6 @@ import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
-import com.jetbrains.pluginverifier.verifiers.VerifierCore;
 import kotlin.Pair;
 import org.apache.commons.cli.CommandLine;
 import org.jdom2.JDOMException;
@@ -29,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author Sergey Evdokimov
@@ -44,7 +43,7 @@ public class CheckIdeCommand extends VerifierCommand {
       ImmutableList.of("org.jetbrains.plugins.ruby", "com.jetbrains.php", "org.jetbrains.android", "Pythonid", "PythonCore");
   private TeamCityUtil.ReportGrouping myGrouping;
   private TeamCityLog myTc;
-  private Resolver myJdkResolver;
+  private File myJdkDir;
   private VOptions myVerifierOptions;
   private Resolver myExternalClassPath;
   private Ide myIde;
@@ -95,7 +94,7 @@ public class CheckIdeCommand extends VerifierCommand {
     for (String pluginId : new HashSet<>(myCheckedIds)) { //plugins from checkedPlugins.txt. for them check that compatible version is present
       boolean hasCompatibleUpdate = false;
       for (UpdateInfo update : myUpdatesToCheck) {
-        if (myExcludedUpdatesFilter.apply(update)) {
+        if (myExcludedUpdatesFilter.test(update)) {
           if (StringUtil.equals(pluginId, update.getPluginId())) {
             hasCompatibleUpdate = true;
             break;
@@ -154,7 +153,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     myTc = TeamCityLog.getInstance(commandLine);
 
-    myJdkResolver = createJdkResolver(commandLine);
+    myJdkDir = getJdkDir(commandLine);
 
     myVerifierOptions = VOptions.Companion.parseOpts(commandLine);
 
@@ -217,7 +216,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     if (!myCheckExcludedBuilds || commandLine.hasOption("dce")) {
       //drop out excluded plugins and don't check them
-      myUpdatesToCheck = Collections2.filter(myUpdatesToCheck, myExcludedUpdatesFilter);
+      myUpdatesToCheck = Collections2.filter(myUpdatesToCheck, myExcludedUpdatesFilter::test);
     }
 
     dumpUpdatesToCheck(myUpdatesToCheck);
@@ -291,7 +290,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
         System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), myUpdatesToCheck.size()));
 
-        ProblemSet problemSet = VerifierCore.verifyPlugin(plugin, myIde, myIdeResolver, myJdkResolver, myExternalClassPath, myVerifierOptions);
+        ProblemSet problemSet = verify(plugin, myIde, myIdeResolver, myJdkDir, myExternalClassPath, myVerifierOptions);
 
         myResults.put(updateJson, problemSet);
 
@@ -301,7 +300,7 @@ public class CheckIdeCommand extends VerifierCommand {
         } else {
           System.out.println("has " + problemSet.count() + " problems");
 
-          if (myExcludedUpdatesFilter.apply(updateJson)) {
+          if (myExcludedUpdatesFilter.test(updateJson)) {
             myTc.messageError(updateJson + " has " + problemSet.count() + " problems");
           } else {
             myTc.message(updateJson + " has problems, but is excluded in brokenPlugins.json");
@@ -319,7 +318,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
       } catch (Exception e) {
         String details = e.getLocalizedMessage() != null ? e.getLocalizedMessage() : e.getClass().getName();
-        if (myExcludedUpdatesFilter.apply(updateJson)) {
+        if (myExcludedUpdatesFilter.test(updateJson)) {
           myBrokenPluginsProblems.put(new VerificationProblem(details, updateJson.toString()), updateJson);
         }
 
@@ -369,7 +368,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     Set<Problem> allProblems = new HashSet<>();
 
-    for (ProblemSet problemSet : Maps.filterKeys(myResults, myExcludedUpdatesFilter).values()) {
+    for (ProblemSet problemSet : Maps.filterKeys(myResults, myExcludedUpdatesFilter::test).values()) {
       allProblems.addAll(problemSet.getAllProblems());
     }
 
@@ -391,7 +390,6 @@ public class CheckIdeCommand extends VerifierCommand {
 
   private void tearDown() {
     myIdeResolver.close();
-    myJdkResolver.close();
   }
 
   /**
