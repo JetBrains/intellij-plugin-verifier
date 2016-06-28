@@ -51,8 +51,10 @@ object VManager {
         val ide: Ide
         val ideResolver: Resolver
         try {
-          ide = VParamsCreator.getIde(ideToPlugins.key)
-          ideResolver = Resolver.createIdeResolver(ide)
+          val ideDescriptor = ideToPlugins.key
+          ide = VParamsCreator.getIde(ideDescriptor)
+          ideResolver = VParamsCreator.getIdeResolver(ide, ideDescriptor)
+
         } catch(ie: InterruptedException) {
           throw ie
         } catch(e: Exception) {
@@ -74,13 +76,19 @@ object VManager {
               throw ie
             } catch(e: IncorrectPluginException) {
               //the plugin has incorrect structure.
-              results.add(VResult.BadPlugin(pluginOnIde.first, e.message ?: "The plugin ${pluginOnIde.first} has incorrect structure"))
+              val reason = e.message ?: "The plugin ${pluginOnIde.first} has incorrect structure"
+              LOG.error(reason, e)
+              results.add(VResult.BadPlugin(pluginOnIde.first, reason))
               return@poi
             } catch(e: RepositoryException) {
-              results.add(VResult.BadPlugin(pluginOnIde.first, e.message ?: "The plugin ${pluginOnIde.first} is not found in the Repository"))
+              val reason = e.message ?: "The plugin ${pluginOnIde.first} is not found in the Repository"
+              LOG.error(reason, e)
+              results.add(VResult.BadPlugin(pluginOnIde.first, reason))
               return@poi
             } catch(e: Exception) {
-              results.add(VResult.BadPlugin(pluginOnIde.first, e.message ?: e.javaClass.name))
+              val reason = e.message ?: e.javaClass.name
+              LOG.error(reason, e)
+              results.add(VResult.BadPlugin(pluginOnIde.first, reason))
               return@poi
             }
 
@@ -88,7 +96,9 @@ object VManager {
             try {
               pluginResolver = Resolver.createPluginResolver(plugin)
             } catch(e: Exception) {
-              results.add(VResult.BadPlugin(pluginOnIde.first, e.message ?: "Failed to read the class-files of the plugin $plugin"))
+              val reason = e.message ?: "Failed to read the class-files of the plugin $plugin"
+              LOG.error(reason, e)
+              results.add(VResult.BadPlugin(pluginOnIde.first, reason))
               return@poi
             }
 

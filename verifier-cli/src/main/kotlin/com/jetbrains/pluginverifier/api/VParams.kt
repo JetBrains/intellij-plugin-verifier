@@ -65,32 +65,32 @@ object VParamsCreator {
    */
   @Throws(IncorrectPluginException::class, IOException::class)
   fun getPlugin(plugin: PluginDescriptor, ideVersion: IdeVersion? = null): Plugin = when (plugin) {
-      is PluginDescriptor.ByInstance -> plugin.plugin //already created.
+    is PluginDescriptor.ByInstance -> plugin.plugin //already created.
     is PluginDescriptor.ByFile -> PluginManager.getInstance().createPlugin(plugin.file) //IncorrectPluginException, IOException
-      is PluginDescriptor.ByBuildId -> {
-        val info = withRepositoryException { RepositoryManager.getInstance().findUpdateById(plugin.buildId) } ?: throw noSuchPlugin(plugin)
-        val file = withRepositoryException { RepositoryManager.getInstance().getPluginFile(info) } ?: throw noSuchPlugin(plugin)
-        PluginManager.getInstance().createPlugin(file) //IncorrectPluginException, IOException
-      }
-      is PluginDescriptor.ByXmlId -> {
-        val suitable: UpdateInfo?
-        if (plugin.version != null) {
-          val updates = withRepositoryException { RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion!!, plugin.pluginId) } //IOException
-          suitable = updates.find { plugin.version.equals(it.version) }
-        } else {
-          suitable = withRepositoryException { RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(ideVersion!!, plugin.pluginId) } //IOException
-        }
-        if (suitable == null) {
-          throw noSuchPlugin(plugin)
-        }
-        val file = withRepositoryException { RepositoryManager.getInstance().getPluginFile(suitable) } ?: throw noSuchPlugin(plugin)
-        PluginManager.getInstance().createPlugin(file) //IncorrectPluginException, IOException
-      }
-      is PluginDescriptor.ByUpdateInfo -> {
-        val file = withRepositoryException { RepositoryManager.getInstance().getPluginFile(plugin.updateInfo) } ?: throw noSuchPlugin(plugin)
-        PluginManager.getInstance().createPlugin(file)
-      }
+    is PluginDescriptor.ByBuildId -> {
+      val info = withRepositoryException { RepositoryManager.getInstance().findUpdateById(plugin.buildId) } ?: throw noSuchPlugin(plugin)
+      val file = withRepositoryException { RepositoryManager.getInstance().getPluginFile(info) } ?: throw noSuchPlugin(plugin)
+      PluginManager.getInstance().createPlugin(file) //IncorrectPluginException, IOException
     }
+    is PluginDescriptor.ByXmlId -> {
+      val suitable: UpdateInfo?
+      if (plugin.version != null) {
+        val updates = withRepositoryException { RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion!!, plugin.pluginId) } //IOException
+        suitable = updates.find { plugin.version.equals(it.version) }
+      } else {
+        suitable = withRepositoryException { RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(ideVersion!!, plugin.pluginId) } //IOException
+      }
+      if (suitable == null) {
+        throw noSuchPlugin(plugin)
+      }
+      val file = withRepositoryException { RepositoryManager.getInstance().getPluginFile(suitable) } ?: throw noSuchPlugin(plugin)
+      PluginManager.getInstance().createPlugin(file) //IncorrectPluginException, IOException
+    }
+    is PluginDescriptor.ByUpdateInfo -> {
+      val file = withRepositoryException { RepositoryManager.getInstance().getPluginFile(plugin.updateInfo) } ?: throw noSuchPlugin(plugin)
+      PluginManager.getInstance().createPlugin(file)
+    }
+  }
 
   private fun <T> withRepositoryException(block: () -> T): T {
     try {
@@ -117,6 +117,13 @@ object VParamsCreator {
     is IdeDescriptor.ByFile -> IdeManager.getInstance().createIde(ideDescriptor.file)
     is IdeDescriptor.ByInstance -> ideDescriptor.ide
     is IdeDescriptor.ByVersion -> TODO()
+  }
+
+
+  fun getIdeResolver(ide: Ide, ideDescriptor: IdeDescriptor): Resolver = when (ideDescriptor) {
+    is IdeDescriptor.ByFile -> Resolver.createIdeResolver(ide)
+    is IdeDescriptor.ByVersion -> Resolver.createIdeResolver(ide)
+    is IdeDescriptor.ByInstance -> if (ideDescriptor.ideResolver != null) ideDescriptor.ideResolver!! else Resolver.createIdeResolver(ide)
   }
 
 }

@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.domain.Plugin
+import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import java.io.File
 
@@ -98,7 +99,7 @@ sealed class IdeDescriptor() {
   }
 
   //this class is not intended to be serialized yet.
-  class ByInstance(@Transient val ide: Ide) : IdeDescriptor() {
+  class ByInstance(@Transient val ide: Ide, @Transient val ideResolver: Resolver? = null) : IdeDescriptor() {
 
     override fun toString(): String {
       return "IdeDescriptor.ByInstance(ide=$ide; file=${ide.idePath})"
