@@ -26,6 +26,17 @@ import java.util.*;
 
 public class ProblemUtils {
 
+  public static final Comparator<UpdateInfo> UPDATE_INFO_VERSIONS_COMPARATOR = new Comparator<UpdateInfo>() {
+    @Override
+    public int compare(UpdateInfo o1, UpdateInfo o2) {
+      String p1 = o1.getPluginId() != null ? o1.getPluginId() : "#" + o1.getUpdateId();
+      String p2 = o2.getPluginId() != null ? o2.getPluginId() : "#" + o2.getUpdateId();
+      if (!p1.equals(p2)) {
+        return p1.compareTo(p2); //compare lexicographically
+      }
+      return VersionComparatorUtil.compare(o2.getVersion(), o1.getVersion());
+    }
+  };
   private static final JAXBContext JAXB_CONTEXT;
 
   static {
@@ -194,17 +205,7 @@ public class ProblemUtils {
    */
   public static List<UpdateInfo> sortUpdatesWithDescendingVersionsOrder(@NotNull Collection<UpdateInfo> updateInfos) {
     List<UpdateInfo> sorted = new ArrayList<UpdateInfo>(updateInfos);
-    Collections.sort(sorted, new Comparator<UpdateInfo>() {
-      @Override
-      public int compare(UpdateInfo o1, UpdateInfo o2) {
-        String p1 = o1.getPluginId() != null ? o1.getPluginId() : "#" + o1.getUpdateId();
-        String p2 = o2.getPluginId() != null ? o2.getPluginId() : "#" + o2.getUpdateId();
-        if (!p1.equals(p2)) {
-          return p1.compareTo(p2); //compare lexicographically
-        }
-        return VersionComparatorUtil.compare(o2.getVersion(), o1.getVersion());
-      }
-    });
+    Collections.sort(sorted, UPDATE_INFO_VERSIONS_COMPARATOR);
     return sorted;
   }
 
