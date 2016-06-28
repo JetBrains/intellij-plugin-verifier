@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.domain.Plugin
+import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import java.io.File
 
@@ -57,6 +58,7 @@ sealed class PluginDescriptor() {
 
   }
 
+  //this class is not intended to be serialized yet.
   class ByInstance(@Transient val plugin: Plugin) : PluginDescriptor() {
 
     override fun toString(): String {
@@ -96,10 +98,28 @@ sealed class IdeDescriptor() {
     }
   }
 
+  //this class is not intended to be serialized yet.
   class ByInstance(@Transient val ide: Ide) : IdeDescriptor() {
 
     override fun toString(): String {
       return "IdeDescriptor.ByInstance(ide=$ide; file=${ide.idePath})"
+    }
+  }
+}
+
+sealed class JdkDescriptor() {
+  class ByFile(val file: File) : JdkDescriptor() {
+    constructor(path: String) : this(File(path))
+
+    override fun toString(): String {
+      return "JdkDescriptor.ByFile(file=$file)"
+    }
+
+  }
+
+  class ByInstance(val jdkResolver: Resolver) : JdkDescriptor() {
+    override fun toString(): String {
+      return "JdkDescriptor.ByInstance(jdkResolver=$jdkResolver)"
     }
   }
 }

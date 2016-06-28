@@ -86,14 +86,14 @@ private val locationTAF = RuntimeTypeAdapterFactory.of(ProblemLocation::class.ja
 private val pluginDescriptorTAF = RuntimeTypeAdapterFactory.of(PluginDescriptor::class.java)
     .registerSubtype(PluginDescriptor.ByBuildId::class.java)
     .registerSubtype(PluginDescriptor.ByFile::class.java)
-    .registerSubtype(PluginDescriptor.ByInstance::class.java)
     .registerSubtype(PluginDescriptor.ByXmlId::class.java)
     .registerSubtype(PluginDescriptor.ByUpdateInfo::class.java)
+//    .registerSubtype(PluginDescriptor.ByInstance::class.java) this class is not intended to be serialized yet.
 
 private val ideDescriptorTAF = RuntimeTypeAdapterFactory.of(IdeDescriptor::class.java)
     .registerSubtype(IdeDescriptor.ByVersion::class.java)
     .registerSubtype(IdeDescriptor.ByFile::class.java)
-    .registerSubtype(IdeDescriptor.ByInstance::class.java)
+//    .registerSubtype(IdeDescriptor.ByInstance::class.java) this class is not intended to be serialized yet.
 
 class FileTypeAdapter : TypeAdapter<File>() {
 
