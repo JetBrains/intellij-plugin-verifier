@@ -6,7 +6,7 @@ import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.utils.FailUtil;
-import com.jetbrains.pluginverifier.verifiers.VerificationContext;
+import com.jetbrains.pluginverifier.verifiers.VContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -23,7 +23,7 @@ import java.util.Set;
 public class ResolverUtil {
 
   @Nullable
-  private static MethodLocation findMethod(@NotNull Resolver resolver, @NotNull String className, @NotNull String methodName, @NotNull String methodDesc, VerificationContext ctx, String childName) {
+  private static MethodLocation findMethod(@NotNull Resolver resolver, @NotNull String className, @NotNull String methodName, @NotNull String methodDesc, VContext ctx, String childName) {
     if (className.startsWith("[")) {
       throw FailUtil.fail("Method owner class must not be an array class");
     }
@@ -41,7 +41,7 @@ public class ResolverUtil {
 
   @SuppressWarnings("unchecked")
   @Nullable
-  public static MethodLocation findMethod(@NotNull Resolver resolver, @NotNull ClassNode clazz, @NotNull String methodName, @NotNull String methodDesc, VerificationContext ctx) {
+  public static MethodLocation findMethod(@NotNull Resolver resolver, @NotNull ClassNode clazz, @NotNull String methodName, @NotNull String methodDesc, VContext ctx) {
     for (MethodNode method : (List<MethodNode>) clazz.methods) {
       if (methodName.equals(method.name) && methodDesc.equals(method.desc)) {
         return new MethodLocation(clazz, method);
@@ -67,7 +67,7 @@ public class ResolverUtil {
 
   @SuppressWarnings("unchecked")
   @Nullable
-  private static FieldLocation findField(@NotNull Resolver resolver, @NotNull String className, @NotNull String fieldName, @NotNull String fieldDescriptor, VerificationContext ctx, String childName) {
+  private static FieldLocation findField(@NotNull Resolver resolver, @NotNull String className, @NotNull String fieldName, @NotNull String fieldDescriptor, VContext ctx, String childName) {
     if (className.startsWith("[")) {
       throw FailUtil.fail("Method owner class must not be an array class");
     }
@@ -85,7 +85,7 @@ public class ResolverUtil {
 
   @SuppressWarnings("unchecked")
   @Nullable
-  public static FieldLocation findField(@NotNull Resolver resolver, @NotNull ClassNode clazz, @NotNull String fieldName, @NotNull String fieldDescriptor, VerificationContext ctx) {
+  public static FieldLocation findField(@NotNull Resolver resolver, @NotNull ClassNode clazz, @NotNull String fieldName, @NotNull String fieldDescriptor, VContext ctx) {
     for (FieldNode field : (List<FieldNode>) clazz.fields) {
       if (StringUtil.equal(field.name, fieldName) && StringUtil.equal(field.desc, fieldDescriptor)) {
         return new FieldLocation(clazz, field);
@@ -112,7 +112,7 @@ public class ResolverUtil {
   }
 
   @NotNull
-  public static Set<String> collectUnresolvedClasses(@NotNull Resolver resolver, @NotNull String className, VerificationContext ctx) {
+  public static Set<String> collectUnresolvedClasses(@NotNull Resolver resolver, @NotNull String className, VContext ctx) {
     ClassNode node = VerifierUtil.findClass(resolver, className, ctx);
     if (node == null) {
       return Collections.singleton(className);

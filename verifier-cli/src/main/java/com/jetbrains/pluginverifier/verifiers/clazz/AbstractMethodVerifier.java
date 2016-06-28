@@ -4,7 +4,7 @@ import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem;
 import com.jetbrains.pluginverifier.utils.LocationUtils;
-import com.jetbrains.pluginverifier.verifiers.VerificationContext;
+import com.jetbrains.pluginverifier.verifiers.VContext;
 import com.jetbrains.pluginverifier.verifiers.util.MethodSign;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.tree.ClassNode;
@@ -18,7 +18,7 @@ import java.util.*;
 public class AbstractMethodVerifier implements ClassVerifier {
   @SuppressWarnings("unchecked")
   @Override
-  public void verify(ClassNode clazz, Resolver resolver, VerificationContext ctx) {
+  public void verify(ClassNode clazz, Resolver resolver, VContext ctx) {
     if (VerifierUtil.isAbstract(clazz) || VerifierUtil.isInterface(clazz)) {
       return;
     }

@@ -4,7 +4,7 @@ import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.IncompatibleClassChangeProblem;
-import com.jetbrains.pluginverifier.verifiers.VerificationContext;
+import com.jetbrains.pluginverifier.verifiers.VContext;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -14,7 +14,7 @@ import org.objectweb.asm.tree.ClassNode;
  * @author Dennis.Ushakov
  */
 public class SuperClassVerifier implements ClassVerifier {
-  public void verify(final ClassNode clazz, final Resolver resolver, final VerificationContext ctx) {
+  public void verify(final ClassNode clazz, final Resolver resolver, final VContext ctx) {
     final String superClassName = clazz.superName == null ? "java/lang/Object" : clazz.superName;
     ClassNode aClass = VerifierUtil.findClass(resolver, superClassName, ctx);
     if (aClass == null) {

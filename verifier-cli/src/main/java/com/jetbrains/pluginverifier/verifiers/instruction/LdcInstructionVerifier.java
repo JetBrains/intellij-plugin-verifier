@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.verifiers.instruction;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
-import com.jetbrains.pluginverifier.verifiers.VerificationContext;
+import com.jetbrains.pluginverifier.verifiers.VContext;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -12,7 +12,7 @@ import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 public class LdcInstructionVerifier implements InstructionVerifier {
-  public void verify(final ClassNode clazz, final MethodNode method, final AbstractInsnNode instr, final Resolver resolver, final VerificationContext ctx) {
+  public void verify(final ClassNode clazz, final MethodNode method, final AbstractInsnNode instr, final Resolver resolver, final VContext ctx) {
     if (!(instr instanceof LdcInsnNode)) return;
 
     final Object constant = ((LdcInsnNode) instr).cst;

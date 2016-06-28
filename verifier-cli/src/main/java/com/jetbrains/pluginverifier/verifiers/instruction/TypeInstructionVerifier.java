@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.AbstractClassInstantiationProblem;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.InterfaceInstantiationProblem;
-import com.jetbrains.pluginverifier.verifiers.VerificationContext;
+import com.jetbrains.pluginverifier.verifiers.VContext;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -19,7 +19,7 @@ import org.objectweb.asm.tree.TypeInsnNode;
  * @author Dennis.Ushakov
  */
 public class TypeInstructionVerifier implements InstructionVerifier {
-  public void verify(final ClassNode clazz, final MethodNode method, final AbstractInsnNode instr, final Resolver resolver, final VerificationContext ctx) {
+  public void verify(final ClassNode clazz, final MethodNode method, final AbstractInsnNode instr, final Resolver resolver, final VContext ctx) {
     if (!(instr instanceof TypeInsnNode)) return;
 
     TypeInsnNode insnNode = (TypeInsnNode) instr;

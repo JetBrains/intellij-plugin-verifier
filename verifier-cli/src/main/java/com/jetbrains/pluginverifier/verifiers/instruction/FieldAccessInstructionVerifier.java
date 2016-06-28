@@ -11,7 +11,7 @@ import com.jetbrains.pluginverifier.problems.statics.InstanceAccessOfStaticField
 import com.jetbrains.pluginverifier.problems.statics.StaticAccessOfInstanceFieldProblem;
 import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.utils.StringUtil;
-import com.jetbrains.pluginverifier.verifiers.VerificationContext;
+import com.jetbrains.pluginverifier.verifiers.VContext;
 import com.jetbrains.pluginverifier.verifiers.util.ResolverUtil;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.objectweb.asm.Opcodes;
@@ -22,7 +22,7 @@ import org.objectweb.asm.tree.*;
  */
 public class FieldAccessInstructionVerifier implements InstructionVerifier {
   @Override
-  public void verify(ClassNode clazz, MethodNode method, AbstractInsnNode instr, Resolver resolver, VerificationContext ctx) {
+  public void verify(ClassNode clazz, MethodNode method, AbstractInsnNode instr, Resolver resolver, VContext ctx) {
     if (!(instr instanceof FieldInsnNode)) return;
     FieldInsnNode node = (FieldInsnNode) instr;
 
@@ -81,7 +81,7 @@ public class FieldAccessInstructionVerifier implements InstructionVerifier {
 
   }
 
-  private void checkFinalModifier(int opcode, ResolverUtil.FieldLocation location, VerificationContext ctx, ClassNode verifiedClass, MethodNode verifierMethod) {
+  private void checkFinalModifier(int opcode, ResolverUtil.FieldLocation location, VContext ctx, ClassNode verifiedClass, MethodNode verifierMethod) {
     final String field = LocationUtils.getFieldLocation(location.getClassNode().name, location.getFieldNode());
 
     if (VerifierUtil.isFinal(location.getFieldNode())) {
@@ -105,7 +105,7 @@ public class FieldAccessInstructionVerifier implements InstructionVerifier {
 
   }
 
-  private void checkAccess(ResolverUtil.FieldLocation location, VerificationContext ctx, Resolver resolver, ClassNode verifiedClass, MethodNode verifiedMethod) {
+  private void checkAccess(ResolverUtil.FieldLocation location, VContext ctx, Resolver resolver, ClassNode verifiedClass, MethodNode verifiedMethod) {
     ClassNode actualOwner = location.getClassNode();
     FieldNode actualField = location.getFieldNode();
 

@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.problems.statics.InvokeSpecialOnStaticMethod
 import com.jetbrains.pluginverifier.problems.statics.InvokeStaticOnInstanceMethodProblem;
 import com.jetbrains.pluginverifier.problems.statics.InvokeVirtualOnStaticMethodProblem;
 import com.jetbrains.pluginverifier.utils.StringUtil;
-import com.jetbrains.pluginverifier.verifiers.VerificationContext;
+import com.jetbrains.pluginverifier.verifiers.VContext;
 import com.jetbrains.pluginverifier.verifiers.util.ResolverUtil;
 import com.jetbrains.pluginverifier.verifiers.util.VerifierUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ import static com.jetbrains.pluginverifier.utils.LocationUtils.getMethodLocation
  * 3) Class Method Resolution vs Interface Method Resolution (If C is not an interface, interface method resolution throws an IncompatibleClassChangeError)
  */
 public class InvokeInstructionVerifier implements InstructionVerifier {
-  public void verify(final ClassNode clazz, final MethodNode method, final AbstractInsnNode instr, final Resolver resolver, final VerificationContext ctx) {
+  public void verify(final ClassNode clazz, final MethodNode method, final AbstractInsnNode instr, final Resolver resolver, final VContext ctx) {
     if (!(instr instanceof MethodInsnNode))
       return;
 
@@ -90,7 +90,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
   }
 
   private void checkInvocationType(@NotNull ResolverUtil.MethodLocation actualLocation,
-                                   @NotNull VerificationContext ctx,
+                                   @NotNull VContext ctx,
                                    @NotNull ClassNode clazz,
                                    @NotNull MethodNode method,
                                    @NotNull MethodInsnNode invokeInsn) {
@@ -133,7 +133,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
   }
 
   private void checkAccessModifier(@NotNull ResolverUtil.MethodLocation actualLocation,
-                                   @NotNull VerificationContext ctx,
+                                   @NotNull VContext ctx,
                                    @NotNull Resolver resolver,
                                    @NotNull ClassNode verifiedClass,
                                    @NotNull MethodNode verifiedMethod) {

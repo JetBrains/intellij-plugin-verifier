@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.util;
 
 import com.google.common.base.Predicate;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.verifiers.VerificationContext;
+import com.jetbrains.pluginverifier.verifiers.VContext;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -17,9 +17,9 @@ class ParentsVisitor {
   private final Map<String, Set<String>> myParentsCache = new HashMap<String, Set<String>>();
 
   private final Resolver myResolver;
-  private final VerificationContext myCtx;
+  private final VContext myCtx;
 
-  ParentsVisitor(@NotNull Resolver resolver, VerificationContext ctx) {
+  ParentsVisitor(@NotNull Resolver resolver, VContext ctx) {
     myResolver = resolver;
     myCtx = ctx;
   }

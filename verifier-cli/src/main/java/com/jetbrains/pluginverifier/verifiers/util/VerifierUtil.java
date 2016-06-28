@@ -5,7 +5,7 @@ import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.FailedToReadClassProblem;
 import com.jetbrains.pluginverifier.utils.StringUtil;
-import com.jetbrains.pluginverifier.verifiers.VerificationContext;
+import com.jetbrains.pluginverifier.verifiers.VContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
@@ -17,14 +17,14 @@ import java.io.IOException;
 import java.util.Set;
 
 public class VerifierUtil {
-  public static boolean classExistsOrExternal(VerificationContext ctx, final Resolver resolver, final @NotNull String className) {
+  public static boolean classExistsOrExternal(VContext ctx, final Resolver resolver, final @NotNull String className) {
     Preconditions.checkArgument(!className.startsWith("["), className);
     Preconditions.checkArgument(!className.endsWith(";"), className);
 
     return ctx.getVerifierOptions().isExternalClass(className) || resolver.containsClass(className);
   }
 
-  public static boolean classExistsOrExternal(VerificationContext ctx, @NotNull ClassNode potential, Resolver resolver, @NotNull String descr) {
+  public static boolean classExistsOrExternal(VContext ctx, @NotNull ClassNode potential, Resolver resolver, @NotNull String descr) {
     return descr.equals(potential.name) || classExistsOrExternal(ctx, resolver, descr);
   }
 
@@ -46,7 +46,7 @@ public class VerifierUtil {
   }
 
   @Nullable
-  public static ClassNode findClass(@NotNull Resolver resolver, @NotNull ClassNode potential, @NotNull String className, @NotNull VerificationContext ctx) {
+  public static ClassNode findClass(@NotNull Resolver resolver, @NotNull ClassNode potential, @NotNull String className, @NotNull VContext ctx) {
     if (className.equals(potential.name)) {
       return potential;
     }
@@ -63,7 +63,7 @@ public class VerifierUtil {
    * @return null if not found or exception occurs (in the last case FailedToReadClassProblem is reported)
    */
   @Nullable
-  public static ClassNode findClass(@NotNull Resolver resolver, @NotNull String className, @NotNull VerificationContext ctx) {
+  public static ClassNode findClass(@NotNull Resolver resolver, @NotNull String className, @NotNull VContext ctx) {
     try {
       return resolver.findClass(className);
     } catch (IOException e) {
@@ -170,7 +170,7 @@ public class VerifierUtil {
     return className.substring(0, slash);
   }
 
-  public static boolean isAncestor(@NotNull ClassNode child, @NotNull ClassNode possibleParent, @NotNull Resolver resolver, @NotNull VerificationContext ctx) {
+  public static boolean isAncestor(@NotNull ClassNode child, @NotNull ClassNode possibleParent, @NotNull Resolver resolver, @NotNull VContext ctx) {
     while (child != null) {
       if (StringUtil.equals(possibleParent.name, child.name)) {
         return true;
@@ -186,7 +186,7 @@ public class VerifierUtil {
 
   public static boolean hasUnresolvedParentClass(@NotNull String clazz,
                                                  @NotNull Resolver resolver,
-                                                 @NotNull VerificationContext ctx) {
+                                                 @NotNull VContext ctx) {
     ClassNode aClass = findClass(resolver, clazz, ctx);
     if (aClass == null) {
       return true;
