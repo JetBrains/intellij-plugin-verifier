@@ -5,7 +5,10 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.intellij.structure.domain.*;
 import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.api.IdeDescriptor;
+import com.jetbrains.pluginverifier.api.PluginDescriptor;
 import com.jetbrains.pluginverifier.api.VOptions;
+import com.jetbrains.pluginverifier.api.VResult;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.*;
 import com.jetbrains.pluginverifier.problems.fields.ChangeFinalFieldProblem;
@@ -14,7 +17,7 @@ import com.jetbrains.pluginverifier.problems.statics.InvokeStaticOnInstanceMetho
 import com.jetbrains.pluginverifier.problems.statics.InvokeVirtualOnStaticMethodProblem;
 import com.jetbrains.pluginverifier.problems.statics.StaticAccessOfInstanceFieldProblem;
 import com.jetbrains.pluginverifier.utils.Util;
-import com.jetbrains.pluginverifier.verifiers.VerificationContextImpl;
+import com.jetbrains.pluginverifier.verifiers.VContext;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
@@ -25,7 +28,6 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -103,14 +105,9 @@ public class VerifierTest {
           .build();
 
 
-  private static void testFoundProblems(Map<Problem, Set<ProblemLocation>> foundProblems, Multimap<Problem, ProblemLocation> actualProblems) throws Exception {
+  private static void testFoundProblems(Multimap<Problem, ProblemLocation> foundProblems, Multimap<Problem, ProblemLocation> actualProblems) throws Exception {
 
-    Multimap<Problem, ProblemLocation> redundantProblems = HashMultimap.create();
-    for (Map.Entry<Problem, Set<ProblemLocation>> entry : foundProblems.entrySet()) {
-      for (ProblemLocation location : entry.getValue()) {
-        redundantProblems.put(entry.getKey(), location);
-      }
-    }
+    Multimap<Problem, ProblemLocation> redundantProblems = HashMultimap.create(foundProblems);
 
     for (Map.Entry<Problem, ProblemLocation> entry : actualProblems.entries()) {
       Problem problem = entry.getKey();
@@ -209,10 +206,11 @@ public class VerifierTest {
         Resolver ideResolver = Resolver.createIdeResolver(ide);
         Resolver jdkResolver = Resolver.createJdkResolver(new File(jdkPath))
     ) {
-      VerificationContextImpl ctx = new VerificationContextImpl(plugin, ide, ideResolver, jdkResolver, null, VOptions.Companion.parseOpts(commandLine));
-      Verifiers.processAllVerifiers(ctx);
+      VContext vContext = new VContext(plugin, Resolver.createPluginResolver(plugin), new PluginDescriptor.ByInstance(plugin), ide, ideResolver, new IdeDescriptor.ByInstance(ide), jdkResolver, VOptions.Companion.parseOpts(commandLine), Resolver.getEmptyResolver());
+      VResult vResult = Verifiers.INSTANCE.processAllVerifiers(vContext);
+      assert vResult instanceof VResult.Problems;
 
-      testFoundProblems(ctx.getProblemSet().asMap(), actualProblems);
+      testFoundProblems(((VResult.Problems) vResult).getProblems(), actualProblems);
     }
 
   }
