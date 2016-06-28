@@ -206,7 +206,7 @@ public class VerifierTest {
         Resolver ideResolver = Resolver.createIdeResolver(ide);
         Resolver jdkResolver = Resolver.createJdkResolver(new File(jdkPath))
     ) {
-      VContext vContext = new VContext(plugin, Resolver.createPluginResolver(plugin), new PluginDescriptor.ByInstance(plugin), ide, ideResolver, new IdeDescriptor.ByInstance(ide), jdkResolver, VOptions.Companion.parseOpts(commandLine), Resolver.getEmptyResolver());
+      VContext vContext = new VContext(plugin, Resolver.createPluginResolver(plugin), new PluginDescriptor.ByInstance(plugin), ide, ideResolver, new IdeDescriptor.ByInstance(ide, ideResolver), jdkResolver, VOptions.Companion.parseOpts(commandLine), Resolver.getEmptyResolver());
       VResult vResult = Verifiers.INSTANCE.processAllVerifiers(vContext);
       assert vResult instanceof VResult.Problems;
 
