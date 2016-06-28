@@ -164,7 +164,7 @@ public class CheckPluginCommand extends VerifierCommand {
     //updateInfo -> (IDEA-build -> Problems)
     final Map<UpdateInfo, Map<String, ProblemSet>> results = new HashMap<>();
 
-    TeamCityLog tc = TeamCityLog.getInstance(commandLine);
+    TeamCityLog tc = TeamCityLog.Companion.getInstance(commandLine);
 
 
     List<Pair<UpdateInfo, ? extends Problem>> brokenPlugins = new ArrayList<>();
@@ -230,7 +230,7 @@ public class CheckPluginCommand extends VerifierCommand {
     Map<UpdateInfo, ProblemSet> pluginsProblems = mergeIdeResults(results);
     appendBrokenPluginProblems(pluginsProblems, brokenPlugins);
 
-    TeamCityUtil.printTeamCityProblems(tc, pluginsProblems, updateInfo -> true, TeamCityUtil.ReportGrouping.parseGrouping(commandLine));
+    TeamCityUtil.INSTANCE.printTeamCityProblems(tc, pluginsProblems, updateInfo -> true, TeamCityUtil.ReportGrouping.Companion.parseGrouping(commandLine));
 
     final int problemsCnt = countTotalProblems(pluginsProblems);
 

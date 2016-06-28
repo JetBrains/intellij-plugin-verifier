@@ -154,7 +154,7 @@ public class MessageUtils {
     return res.toString();
   }
 
-  public static CharSequence cutCommonPackages(@NotNull String text) {
+  public static String cutCommonPackages(@NotNull String text) {
     Matcher matcher = CLASS_QUALIFIED_NAME.matcher(text);
 
     if (!matcher.find()) return text;
@@ -176,6 +176,6 @@ public class MessageUtils {
 
     res.append(text, idx, text.length());
 
-    return res;
+    return res.toString();
   }
 }

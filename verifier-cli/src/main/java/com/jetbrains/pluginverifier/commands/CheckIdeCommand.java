@@ -84,9 +84,9 @@ public class CheckIdeCommand extends VerifierCommand {
    * @return number of "missing update" and "broken plugin" problems
    */
   private int printMissingAndIncorrectPlugins() {
-    if (myTc == TeamCityLog.NULL_LOG) return 0;
-    TeamCityUtil.printReport(myTc, myBrokenPluginsProblems, TeamCityUtil.ReportGrouping.PLUGIN);
-    TeamCityUtil.printReport(myTc, myMissingUpdatesProblems, TeamCityUtil.ReportGrouping.PLUGIN);
+    if (myTc == TeamCityLog.Companion.getNULL_LOG()) return 0;
+    TeamCityUtil.INSTANCE.printReport(myTc, myBrokenPluginsProblems, TeamCityUtil.ReportGrouping.PLUGIN);
+    TeamCityUtil.INSTANCE.printReport(myTc, myMissingUpdatesProblems, TeamCityUtil.ReportGrouping.PLUGIN);
     return myBrokenPluginsProblems.size() + myMissingUpdatesProblems.size();
   }
 
@@ -149,9 +149,9 @@ public class CheckIdeCommand extends VerifierCommand {
       throw FailUtil.fail("IDE home is not a directory: " + ideToCheck);
     }
 
-    myGrouping = TeamCityUtil.ReportGrouping.parseGrouping(commandLine);
+    myGrouping = TeamCityUtil.ReportGrouping.Companion.parseGrouping(commandLine);
 
-    myTc = TeamCityLog.getInstance(commandLine);
+    myTc = TeamCityLog.Companion.getInstance(commandLine);
 
     myJdkDir = getJdkDir(commandLine);
 
@@ -359,7 +359,7 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
-    TeamCityUtil.printTeamCityProblems(myTc, myResults, myExcludedUpdatesFilter, myGrouping);
+    TeamCityUtil.INSTANCE.printTeamCityProblems(myTc, myResults, myExcludedUpdatesFilter, myGrouping);
 
     int totalProblemsCnt = printMissingAndIncorrectPlugins();
 

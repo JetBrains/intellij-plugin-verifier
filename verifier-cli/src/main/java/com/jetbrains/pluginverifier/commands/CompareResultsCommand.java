@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Sergey Evdokimov
@@ -44,11 +45,7 @@ public class CompareResultsCommand extends VerifierCommand {
       UpdateInfo update = entry.getKey();
       Collection<Problem> updateProblems = entry.getValue();
 
-      for (Problem problem : updateProblems) {
-        if (!oldProblems.contains(problem)) {
-          res.put(problem, update);
-        }
-      }
+      updateProblems.stream().filter(problem -> !oldProblems.contains(problem)).forEach(problem -> res.put(problem, update));
     }
 
     if (res.isEmpty()) {
@@ -58,20 +55,15 @@ public class CompareResultsCommand extends VerifierCommand {
       Map<Problem, Collection<UpdateInfo>> collectionMap = res.asMap();
       System.out.printf("Found %d new problems:\n", collectionMap.size());
 
-      List<String> clazzNames = new ArrayList<String>();
-      for (Problem problem : collectionMap.keySet()) {
-        clazzNames.add(problem.getClass().getCanonicalName());
-      }
+      List<String> clazzNames = collectionMap.keySet().stream().map(problem -> problem.getClass().getCanonicalName()).collect(Collectors.toList());
       Map<String, Integer> typeCounter = countObjects(clazzNames);
 
-      Set<String> updateNames = new HashSet<String>();
+      Set<String> updateNames = new HashSet<>();
       for (Collection<UpdateInfo> updateInfos : collectionMap.values()) {
-        for (UpdateInfo updateInfo : updateInfos) {
-          updateNames.add(updateInfo.toString());
-        }
+        updateNames.addAll(updateInfos.stream().map(UpdateInfo::toString).collect(Collectors.toList()));
       }
 
-      Map<String, Integer> updateCounter = countObjects(new ArrayList<String>(updateNames));
+      Map<String, Integer> updateCounter = countObjects(new ArrayList<>(updateNames));
 
       System.out.println("Number of problems by type: ");
       for (Map.Entry<String, Integer> entry : typeCounter.entrySet()) {
@@ -94,8 +86,8 @@ public class CompareResultsCommand extends VerifierCommand {
       }
     }
 
-    TeamCityLog tc = TeamCityLog.getInstance(commandLine);
-    TeamCityUtil.printReport(tc, res, TeamCityUtil.ReportGrouping.NONE);
+    TeamCityLog tc = TeamCityLog.Companion.getInstance(commandLine);
+    TeamCityUtil.INSTANCE.printReport(tc, res, TeamCityUtil.ReportGrouping.NONE);
 
     System.out.println("Done");
 
@@ -104,7 +96,7 @@ public class CompareResultsCommand extends VerifierCommand {
 
   @NotNull
   private Map<String, Integer> countObjects(List<String> clazzNames) {
-    Map<String, Integer> typeCounter = new HashMap<String, Integer>();
+    Map<String, Integer> typeCounter = new HashMap<>();
     for (String name : clazzNames) {
       if (!typeCounter.containsKey(name)) {
         typeCounter.put(name, 1);
@@ -121,9 +113,7 @@ public class CompareResultsCommand extends VerifierCommand {
     Map<UpdateInfo, Collection<Problem>> previousProblemMap = ProblemUtils.loadProblems(previousResults).asMap();
 
     Set<Problem> oldProblems = Sets.newHashSet();
-    for (Collection<Problem> problems : previousProblemMap.values()) {
-      oldProblems.addAll(problems);
-    }
+    previousProblemMap.values().forEach(oldProblems::addAll);
 
     return oldProblems;
   }

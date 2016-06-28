@@ -11,10 +11,10 @@ public class TestStringUtil {
 
   @Test
   public void testConvertProblemClassName() throws Exception {
-    Assert.assertEquals("broken plugin", TeamCityUtil.convertNameToPrefix("BrokenPluginProblem"));
-    Assert.assertEquals("field not found", TeamCityUtil.convertNameToPrefix("FieldNotFoundProblem"));
-    Assert.assertEquals("invoke interface on private method", TeamCityUtil.convertNameToPrefix("InvokeInterfaceOnPrivateMethodProblem"));
-    Assert.assertEquals("overriding final method", TeamCityUtil.convertNameToPrefix("OverridingFinalMethodProblem"));
-    Assert.assertEquals("missing dependency", TeamCityUtil.convertNameToPrefix("MissingDependencyProblem"));
+    Assert.assertEquals("broken plugin", TeamCityUtil.INSTANCE.convertNameToPrefix("BrokenPluginProblem"));
+    Assert.assertEquals("field not found", TeamCityUtil.INSTANCE.convertNameToPrefix("FieldNotFoundProblem"));
+    Assert.assertEquals("invoke interface on private method", TeamCityUtil.INSTANCE.convertNameToPrefix("InvokeInterfaceOnPrivateMethodProblem"));
+    Assert.assertEquals("overriding final method", TeamCityUtil.INSTANCE.convertNameToPrefix("OverridingFinalMethodProblem"));
+    Assert.assertEquals("missing dependency", TeamCityUtil.INSTANCE.convertNameToPrefix("MissingDependencyProblem"));
   }
 }

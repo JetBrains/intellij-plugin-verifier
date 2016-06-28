@@ -30,7 +30,7 @@ public class ProblemsPrinter extends VerifierCommand {
 
   @Override
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
-    TeamCityLog log = TeamCityLog.getInstance(commandLine);
+    TeamCityLog log = TeamCityLog.Companion.getInstance(commandLine);
 
     String file = commandLine.getOptionValue("printFile");
 
@@ -43,7 +43,7 @@ public class ProblemsPrinter extends VerifierCommand {
       throw FailUtil.fail("Report not found: " + reportToCheck);
     }
 
-    TeamCityUtil.ReportGrouping grouping = TeamCityUtil.ReportGrouping.parseGrouping(commandLine);
+    TeamCityUtil.ReportGrouping grouping = TeamCityUtil.ReportGrouping.Companion.parseGrouping(commandLine);
 
     ResultsElement currentCheckResult = ProblemUtils.loadProblems(reportToCheck);
     Map<UpdateInfo, Collection<Problem>> map = currentCheckResult.asMap();
@@ -53,10 +53,10 @@ public class ProblemsPrinter extends VerifierCommand {
       case NONE:
         break;
       case PLUGIN:
-        TeamCityUtil.groupByPlugin(log, TeamCityUtil.fillWithEmptyLocations(map));
+        TeamCityUtil.INSTANCE.groupByPlugin(log, TeamCityUtil.INSTANCE.fillWithEmptyLocations(map));
         break;
       case PROBLEM_TYPE:
-        TeamCityUtil.groupByType(log, map);
+        TeamCityUtil.INSTANCE.groupByType(log, map);
         break;
       case PLUGIN_WITH_LOCATION:
         Map<UpdateInfo, ProblemSet> setMap = new HashMap<>();
@@ -66,7 +66,7 @@ public class ProblemsPrinter extends VerifierCommand {
             setMap.get(entry.getKey()).addProblem(problem, ProblemLocation.fromClass("TestClass"));
           }
         }
-        TeamCityUtil.groupByPlugin(log, setMap);
+        TeamCityUtil.INSTANCE.groupByPlugin(log, setMap);
         break;
     }
 

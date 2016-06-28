@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Prints new problems of current plugins verification compared to all
@@ -63,16 +64,11 @@ public class NewProblemsCommand extends VerifierCommand {
       }
     }
 
-    List<IdeVersion> result = new ArrayList<>();
+    //NOTE: compares only IDEAs of the same branch! that is 141.* between each others
 
-    for (IdeVersion build : resultsInPluginRepository) {
-      //NOTE: compares only IDEAs of the same branch! that is 141.* between each others
-      if (build.getBaselineVersion() == currentBuild.getBaselineVersion() && build.compareTo(currentBuild) < 0) {
-        result.add(build);
-      }
-    }
-
-    return result;
+    return resultsInPluginRepository.stream()
+        .filter(build -> build.getBaselineVersion() == currentBuild.getBaselineVersion() && build.compareTo(currentBuild) < 0)
+        .collect(Collectors.toList());
   }
 
   private static void printTcProblems(@NotNull Multimap<Problem, UpdateInfo> currentProblems,
@@ -95,7 +91,7 @@ public class NewProblemsCommand extends VerifierCommand {
           Collection<UpdateInfo> affectedUpdates = ProblemUtils.sortUpdatesWithDescendingVersionsOrder(currentProblems.get(problem));
           prevBuildProblems.putAll(problem, affectedUpdates);
 
-          CharSequence problemDescription = MessageUtils.cutCommonPackages(problem.getDescription());
+          String problemDescription = MessageUtils.cutCommonPackages(problem.getDescription());
 
           System.out.print("    ");
           System.out.println(problemDescription);
@@ -103,7 +99,7 @@ public class NewProblemsCommand extends VerifierCommand {
 
         }
 
-        TeamCityUtil.printReport(tc, prevBuildProblems, reportGrouping);
+        TeamCityUtil.INSTANCE.printReport(tc, prevBuildProblems, reportGrouping);
       }
 
       suite.close();
@@ -152,7 +148,7 @@ public class NewProblemsCommand extends VerifierCommand {
       throw FailUtil.fail("You have to specify a report to compare and print. For example: \"java -jar verifier.jar new-problems report-133.439.xml\"");
     }
 
-    TeamCityUtil.ReportGrouping reportGrouping = TeamCityUtil.ReportGrouping.parseGrouping(commandLine);
+    TeamCityUtil.ReportGrouping reportGrouping = TeamCityUtil.ReportGrouping.Companion.parseGrouping(commandLine);
 
     File reportToCheck = new File(freeArgs.get(0));
     if (!reportToCheck.isFile()) {
@@ -211,11 +207,7 @@ public class NewProblemsCommand extends VerifierCommand {
     for (int i = 1; i < checkedBuilds.size(); i++) {
       IdeVersion prevBuild = checkedBuilds.get(i);
 
-      for (Problem problem : checks.get(i).getProblems()) {
-        if (currProblems.remove(problem)) {
-          firstOccurrence.put(prevBuild, problem);
-        }
-      }
+      checks.get(i).getProblems().stream().filter(currProblems::remove).forEach(problem -> firstOccurrence.put(prevBuild, problem));
     }
 
     //map of unresolved problems: <IDEA-build -> All the problems of this build (in which these problems were met first)>
@@ -226,7 +218,7 @@ public class NewProblemsCommand extends VerifierCommand {
     //ALL the checked builds (excluding the EARLIEST one)
     Iterable<IdeVersion> allBuilds = Iterables.concat(checkedBuilds.subList(1, checkedBuilds.size()), Collections.singleton(ideBuild));
 
-    TeamCityLog tc = TeamCityLog.getInstance(commandLine);
+    TeamCityLog tc = TeamCityLog.Companion.getInstance(commandLine);
 
     printTcProblems(currentProblems, missingDependenciesProblems, firstOccurrence, allBuilds, reportGrouping, ideBuild, tc);
 
@@ -288,17 +280,15 @@ public class NewProblemsCommand extends VerifierCommand {
 
     List<Problem> allProblems = new ArrayList<>();
 
-    for (UpdateInfo update : Lists.reverse(allUpdates)) {
-      if (UpdateInfo.UPDATE_NUMBER_COMPARATOR.compare(update, curUpdate) < 0) {
+    Lists.reverse(allUpdates).stream().filter(update -> UpdateInfo.UPDATE_NUMBER_COMPARATOR.compare(update, curUpdate) < 0).forEach(update -> {
 
-        for (ResultsElement check : checks) {
-          Collection<Problem> problems = check.asMap().get(update);
-          if (problems != null) {
-            allProblems.addAll(problems);
-          }
+      for (ResultsElement check : checks) {
+        Collection<Problem> problems = check.asMap().get(update);
+        if (problems != null) {
+          allProblems.addAll(problems);
         }
       }
-    }
+    });
 
     return allProblems;
   }
