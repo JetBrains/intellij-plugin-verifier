@@ -46,7 +46,7 @@ object VManager {
 
         checkCancelled()
 
-        LOG.info("Creating Resolver for ${ideToPlugins.key}")
+        LOG.debug("Creating Resolver for ${ideToPlugins.key}")
 
         val ide: Ide
         try {
@@ -54,10 +54,11 @@ object VManager {
         } catch(ie: InterruptedException) {
           throw ie
         } catch(e: Exception) {
-          //IDE errors are propagated.
+          //IDE errors are propagated. We assume the IDE-s are correct while the plugins may not be so.
           throw RuntimeException("Failed to create IDE instance for ${ideToPlugins.key}")
         }
 
+        //we must not close the IDE Resolver coming from the caller
         val closeIdeResolver: Boolean
         val ideResolver: Resolver
         try {
@@ -131,7 +132,7 @@ object VManager {
               try {
                 val vResult = Verifiers.processAllVerifiers(ctx)
                 results.add(vResult)
-                LOG.info("Successfully verified ${plugin.pluginFile} against ${pluginOnIde.second}")
+                LOG.info("Successfully verified $plugin against ${pluginOnIde.second}")
               } catch (ie: InterruptedException) {
                 throw ie
               } catch (e: Exception) {
