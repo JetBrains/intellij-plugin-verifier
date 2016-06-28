@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.utils.teamcity;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -19,6 +18,7 @@ import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.jetbrains.pluginverifier.utils.StringUtil.pluralize;
@@ -220,7 +220,7 @@ public class TeamCityUtil {
 
     //fill problems map
     for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
-      if (!updateFilter.apply(entry.getKey())) {
+      if (!updateFilter.test(entry.getKey())) {
         continue; //this is excluded plugin
       }
 
@@ -230,7 +230,7 @@ public class TeamCityUtil {
     }
 
     if (reportGrouping.equals(ReportGrouping.PLUGIN_WITH_LOCATION)) {
-      printReportWithLocations(log, Maps.filterKeys(results, updateFilter));
+      printReportWithLocations(log, Maps.filterKeys(results, updateFilter::test));
     } else {
       printReport(log, problems, reportGrouping);
     }
