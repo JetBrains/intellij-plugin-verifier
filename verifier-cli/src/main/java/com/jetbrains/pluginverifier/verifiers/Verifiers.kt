@@ -277,10 +277,10 @@ class VContext(
     val ideDescriptor: IdeDescriptor = IdeDescriptor.ByInstance(ide),
     val jdkResolver: Resolver,
     val verifierOptions: VOptions,
-    val externalClassPath: Resolver = Resolver.getEmptyResolver(),
-    val problems: Multimap<Problem, ProblemLocation> = HashMultimap.create<Problem, ProblemLocation>(),
-    var overview: String = ""
+    val externalClassPath: Resolver = Resolver.getEmptyResolver()
 ) {
+  val problems: Multimap<Problem, ProblemLocation> = HashMultimap.create<Problem, ProblemLocation>()
+  var overview: String = ""
 
   fun registerProblem(problem: Problem, location: ProblemLocation) {
     if (!verifierOptions.isIgnoredProblem(plugin, problem)) {
