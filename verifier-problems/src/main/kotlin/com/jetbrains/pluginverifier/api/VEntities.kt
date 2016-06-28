@@ -4,7 +4,6 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.domain.Plugin
-import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import java.io.File
 
@@ -117,9 +116,4 @@ sealed class JdkDescriptor() {
 
   }
 
-  class ByInstance(val jdkResolver: Resolver) : JdkDescriptor() {
-    override fun toString(): String {
-      return "JdkDescriptor.ByInstance(jdkResolver=$jdkResolver)"
-    }
-  }
 }
