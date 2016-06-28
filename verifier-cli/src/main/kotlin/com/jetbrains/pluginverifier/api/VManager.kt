@@ -49,12 +49,8 @@ object VManager {
         LOG.info("Creating Resolver for ${ideToPlugins.key}")
 
         val ide: Ide
-        val ideResolver: Resolver
         try {
-          val ideDescriptor = ideToPlugins.key
-          ide = VParamsCreator.getIde(ideDescriptor)
-          ideResolver = VParamsCreator.getIdeResolver(ide, ideDescriptor)
-
+          ide = VParamsCreator.getIde(ideToPlugins.key)
         } catch(ie: InterruptedException) {
           throw ie
         } catch(e: Exception) {
@@ -62,8 +58,34 @@ object VManager {
           throw RuntimeException("Failed to create IDE instance for ${ideToPlugins.key}")
         }
 
-        //auto-close
-        ideResolver.use { ideResolver ->
+        val closeIdeResolver: Boolean
+        val ideResolver: Resolver
+        try {
+          ideResolver = when (ideToPlugins.key) {
+            is IdeDescriptor.ByFile -> {
+              closeIdeResolver = true; Resolver.createIdeResolver(ide)
+            }
+            is IdeDescriptor.ByVersion -> {
+              closeIdeResolver = true; Resolver.createIdeResolver(ide)
+            }
+            is IdeDescriptor.ByInstance -> {
+              val ideDescriptor = ideToPlugins.key as IdeDescriptor.ByInstance
+              closeIdeResolver = (ideDescriptor.ideResolver == null);
+              if (closeIdeResolver) {
+                Resolver.createIdeResolver(ide)
+              } else {
+                ideDescriptor.ideResolver!!
+              }
+            }
+          }
+        } catch(ie: InterruptedException) {
+          throw ie
+        } catch(e: Exception) {
+          //IDE errors are propagated.
+          throw RuntimeException("Failed to read IDE classes for ${ideToPlugins.key}")
+        }
+
+        try {
           ideToPlugins.value.forEach poi@ { pluginOnIde ->
             checkCancelled()
 
@@ -120,6 +142,10 @@ object VManager {
 
             }
 
+          }
+        } finally {
+          if (closeIdeResolver) {
+            ideResolver.close()
           }
         }
       }

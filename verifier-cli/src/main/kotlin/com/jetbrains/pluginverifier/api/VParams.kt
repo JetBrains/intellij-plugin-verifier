@@ -120,10 +120,5 @@ object VParamsCreator {
   }
 
 
-  fun getIdeResolver(ide: Ide, ideDescriptor: IdeDescriptor): Resolver = when (ideDescriptor) {
-    is IdeDescriptor.ByFile -> Resolver.createIdeResolver(ide)
-    is IdeDescriptor.ByVersion -> Resolver.createIdeResolver(ide)
-    is IdeDescriptor.ByInstance -> if (ideDescriptor.ideResolver != null) ideDescriptor.ideResolver!! else Resolver.createIdeResolver(ide)
-  }
 
 }
