@@ -49,7 +49,7 @@ object VParamsCreator {
    * @return [Resolver] of the JDK classes
    */
   @Throws(IOException::class)
-  fun getJdkResolver(jdkDescriptor: JdkDescriptor): Resolver = when (jdkDescriptor) {
+  fun createJdkResolver(jdkDescriptor: JdkDescriptor): Resolver = when (jdkDescriptor) {
     is JdkDescriptor.ByFile -> Resolver.createJdkResolver(jdkDescriptor.file)
   }
 

@@ -38,8 +38,8 @@ object VManager {
 
     val results = arrayListOf<VResult>()
 
-    //IOException is propagated.
-    VParamsCreator.getJdkResolver(params.jdkDescriptor).use { runtimeResolver ->
+    //IOException is propagated. Auto-close the JDK resolver (we have just created it)
+    VParamsCreator.createJdkResolver(params.jdkDescriptor).use { runtimeResolver ->
 
       //Group by IDE to reduce the Ide-Resolver creations number.
       params.pluginsToCheck.groupBy { it.second }.entries.forEach { ideToPlugins ->
