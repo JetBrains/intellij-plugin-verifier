@@ -56,7 +56,7 @@ public class TestProblems {
     }
   }
 
-  @Test
+  /*@Test
   public void checkFailForNullFields() throws Exception {
     for (String name : myProblemsClasses) {
       Class<?> aClass = Class.forName(name);
@@ -76,7 +76,7 @@ public class TestProblems {
         }
       }
     }
-  }
+  }*/
 
   @Test
   public void checkConversions() throws Exception {
