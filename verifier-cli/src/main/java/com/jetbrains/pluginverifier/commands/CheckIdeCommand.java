@@ -262,9 +262,8 @@ public class CheckIdeCommand extends VerifierCommand {
     int updatesProceed = 0;
 
     for (UpdateInfo updateJson : myUpdatesToCheck) {
-      TeamCityLog.Block block = myTc.blockOpen(updateJson.toString());
 
-      try {
+      try (TeamCityLog.Block block = myTc.blockOpen(updateJson.toString())) {
         File updateFile;
         try {
           updateFile = RepositoryManager.getInstance().getPluginFile(updateJson);
@@ -325,8 +324,6 @@ public class CheckIdeCommand extends VerifierCommand {
         System.err.println("Failed to verify plugin " + updateJson + " because " + details);
         e.printStackTrace();
         myTc.messageError("Failed to verify plugin " + updateJson + " because " + details, Util.getStackTrace(e));
-      } finally {
-        block.close();
       }
 
     }

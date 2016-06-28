@@ -188,12 +188,9 @@ public class CheckPluginCommand extends VerifierCommand {
             System.out.print(text);
             tc.message(text);
 
-            TeamCityLog.Block block = tc.blockOpen(plugin.getPluginId());
             ProblemSet problemSet;
-            try {
+            try (TeamCityLog.Block block = tc.blockOpen(plugin.getPluginId())) {
               problemSet = verify(plugin, ide, ideResolver, jdkDir, getExternalClassPath(commandLine), options);
-            } finally {
-              block.close();
             }
 
             myLastProblemSet = problemSet;
