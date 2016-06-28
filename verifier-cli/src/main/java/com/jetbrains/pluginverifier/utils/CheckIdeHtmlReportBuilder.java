@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.utils;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Ordering;
 import com.google.common.html.HtmlEscapers;
@@ -18,6 +17,7 @@ import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class CheckIdeHtmlReportBuilder {
 
@@ -93,7 +93,7 @@ public class CheckIdeHtmlReportBuilder {
 
               out.printf("<div class='update %s %s'>\n",
                   problems.isEmpty() ? "updateOk" : "updateHasProblems",
-                  updateFilter.apply(update) ? "" : "excluded");
+                  updateFilter.test(update) ? "" : "excluded");
 
               out.printf("  <h3><span class='uMarker'>   </span> %s <small>(#%d%s)</small> %s</h3>\n",
                   HtmlEscapers.htmlEscaper().escape(update.getVersion()),
@@ -202,7 +202,7 @@ public class CheckIdeHtmlReportBuilder {
                                            @NotNull Map<UpdateInfo, ProblemSet> results,
                                            @NotNull Predicate<UpdateInfo> updateFilter) {
     for (UpdateInfo update : checkedUpdates) {
-      if (updateFilter.apply(update)) {
+      if (updateFilter.test(update)) {
         if (!results.get(update).isEmpty()) return true;
       }
     }
