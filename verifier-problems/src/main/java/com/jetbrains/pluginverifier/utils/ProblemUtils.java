@@ -148,12 +148,6 @@ public class ProblemUtils {
     marshallObject(output, resultsElement);
   }
 
-  public static void savePluginCheckResult(@NotNull File output,
-                                           @NotNull Map<String, ProblemSet> ideToProblems,
-                                           @NotNull UpdateInfo updateInfo) throws IOException {
-    //TODO:
-  }
-
   private static void marshallObject(@NotNull File output, @NotNull Object o)
       throws IOException {
     Files.createParentDirs(output);
