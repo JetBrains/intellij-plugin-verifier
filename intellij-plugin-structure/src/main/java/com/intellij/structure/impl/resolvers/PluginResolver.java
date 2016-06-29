@@ -40,7 +40,14 @@ public class PluginResolver extends Resolver {
     myPluginFile = extracted;
     myDeleteOnClose = deleteOnClose;
     myPlugin = plugin;
-    myResolver = loadClasses(myPluginFile);
+    try {
+      myResolver = loadClasses(myPluginFile);
+    } catch (IncorrectPluginException e) {
+      if (myDeleteOnClose) {
+        FileUtils.deleteQuietly(myPluginFile);
+      }
+      throw e;
+    }
   }
 
   @NotNull
@@ -214,7 +221,9 @@ public class PluginResolver extends Resolver {
       if (lib.isDirectory()) {
         Collection<File> jars = JarsUtils.collectJars(lib, Predicates.<File>alwaysTrue(), true);
         Resolver libResolver = JarsUtils.makeResolver("Plugin `lib` jars: " + lib.getCanonicalPath(), jars);
-        resolvers.add(libResolver);
+        if (!libResolver.isEmpty()) {
+          resolvers.add(libResolver);
+        }
       }
     } catch (IOException e) {
       throw new IncorrectPluginException("Unable to read `lib` directory", e);
