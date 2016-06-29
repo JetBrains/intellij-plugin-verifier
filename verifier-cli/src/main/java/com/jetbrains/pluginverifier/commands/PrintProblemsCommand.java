@@ -1,6 +1,5 @@
-package com.jetbrains.pluginverifier;
+package com.jetbrains.pluginverifier.commands;
 
-import com.jetbrains.pluginverifier.commands.VerifierCommand;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.Problem;
@@ -21,9 +20,9 @@ import static com.jetbrains.pluginverifier.utils.StringUtil.pluralize;
 /**
  * @author Sergey Patrikeev
  */
-public class ProblemsPrinter extends VerifierCommand {
+public class PrintProblemsCommand extends VerifierCommand {
 
-  public ProblemsPrinter() {
+  public PrintProblemsCommand() {
     super("print-problems");
   }
 
