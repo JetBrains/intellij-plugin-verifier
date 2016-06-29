@@ -13,7 +13,6 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import java.io.IOException;
 import java.util.Set;
 
 public class VerifierUtil {
@@ -66,7 +65,7 @@ public class VerifierUtil {
   public static ClassNode findClass(@NotNull Resolver resolver, @NotNull String className, @NotNull VContext ctx) {
     try {
       return resolver.findClass(className);
-    } catch (IOException e) {
+    } catch (Exception e) {
       ctx.registerProblem(new FailedToReadClassProblem(className, e.getLocalizedMessage()), ProblemLocation.fromPlugin(ctx.getPlugin().toString()));
       return null;
     }
