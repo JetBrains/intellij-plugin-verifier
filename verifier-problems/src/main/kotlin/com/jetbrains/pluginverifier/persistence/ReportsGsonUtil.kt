@@ -15,7 +15,6 @@ import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VResult
-import com.jetbrains.pluginverifier.api.VResults
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.location.CodeLocation
 import com.jetbrains.pluginverifier.location.PluginLocation
@@ -23,7 +22,6 @@ import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.problems.fields.ChangeFinalFieldProblem
 import com.jetbrains.pluginverifier.problems.statics.*
-import com.jetbrains.pluginverifier.results.ResultsElement
 import com.jetbrains.pluginverifier.utils.RuntimeTypeAdapterFactory
 import java.io.File
 import java.io.IOException
@@ -88,12 +86,12 @@ private val pluginDescriptorTAF = RuntimeTypeAdapterFactory.of(PluginDescriptor:
     .registerSubtype(PluginDescriptor.ByFile::class.java)
     .registerSubtype(PluginDescriptor.ByXmlId::class.java)
     .registerSubtype(PluginDescriptor.ByUpdateInfo::class.java)
-//    .registerSubtype(PluginDescriptor.ByInstance::class.java) this class is not intended to be serialized yet.
+    .registerSubtype(PluginDescriptor.ByInstance::class.java)
 
 private val ideDescriptorTAF = RuntimeTypeAdapterFactory.of(IdeDescriptor::class.java)
     .registerSubtype(IdeDescriptor.ByVersion::class.java)
     .registerSubtype(IdeDescriptor.ByFile::class.java)
-//    .registerSubtype(IdeDescriptor.ByInstance::class.java) this class is not intended to be serialized yet.
+    .registerSubtype(IdeDescriptor.ByInstance::class.java)
 
 class FileTypeAdapter : TypeAdapter<File>() {
 
@@ -219,24 +217,6 @@ class MultimapTypeAdapterFactory : TypeAdapterFactory {
       }
     }.nullSafe() //Gson will check nulls automatically
   }
-}
-
-fun resultsElementToVResult(element: ResultsElement): VResults {
-  val list: MutableList<VResult> = arrayListOf()
-
-  val ideDescriptor = IdeDescriptor.ByVersion(IdeVersion.createIdeVersion(element.ide))
-  val overview = ""
-  element.asMap().forEach {
-    val pluginDescriptor = PluginDescriptor.ByUpdateInfo(it.key)
-
-    val location = ProblemLocation.fromPlugin(it.key.pluginId ?: it.key.pluginName ?: "unknown")
-
-    val multimap = multimapFromMap(it.value.groupBy({ it }, { location }))
-
-    list.add(if (multimap.isEmpty) VResult.Nice(pluginDescriptor, ideDescriptor, overview) else VResult.Problems(pluginDescriptor, ideDescriptor, overview, multimap))
-  }
-
-  return VResults(list)
 }
 
 /**

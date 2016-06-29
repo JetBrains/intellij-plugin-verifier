@@ -15,7 +15,8 @@ import java.io.File
 /**
  * Descriptor of the plugin to be checked
  */
-sealed class PluginDescriptor() {
+sealed class PluginDescriptor(@SerializedName("id") val pluginId: String,
+                              @SerializedName("version") val version: String) {
 
   private fun id() = this.javaClass.name + this.toString()
 
@@ -30,27 +31,26 @@ sealed class PluginDescriptor() {
     return this.id().hashCode()
   }
 
-  class ByUpdateInfo(@SerializedName("update") val updateInfo: UpdateInfo) : PluginDescriptor() {
+  class ByUpdateInfo(pluginId: String, version: String, @SerializedName("update") val updateInfo: UpdateInfo) : PluginDescriptor(pluginId, version) {
     override fun toString(): String {
       return "PluginDescriptor.ByUpdateInfo(updateInfo=$updateInfo)"
     }
   }
 
-  class ByXmlId(@SerializedName("id") val pluginId: String, @SerializedName("version") val version: String? = null) : PluginDescriptor() {
+  class ByXmlId(pluginId: String, version: String) : PluginDescriptor(pluginId, version) {
 
     override fun toString(): String {
       return "PluginDescriptor.ByXmlId(pluginId='$pluginId', version=$version)"
     }
   }
 
-  class ByBuildId(@SerializedName("buildId") val buildId: Int) : PluginDescriptor() {
+  class ByBuildId(pluginId: String, version: String, @SerializedName("buildId") val buildId: Int) : PluginDescriptor(pluginId, version) {
     override fun toString(): String {
       return "PluginDescriptor.ByBuildId(buildId=$buildId)"
     }
   }
 
-  class ByFile(@SerializedName("file") val file: File) : PluginDescriptor() {
-    constructor(path: String) : this(File(path))
+  class ByFile(pluginId: String, version: String, @Transient val file: File) : PluginDescriptor(pluginId, version) {
 
     override fun toString(): String {
       return "PluginDescriptor.ByFile(file=$file)"
@@ -59,7 +59,7 @@ sealed class PluginDescriptor() {
   }
 
   //this class is not intended to be serialized yet.
-  class ByInstance(@Transient val plugin: Plugin) : PluginDescriptor() {
+  class ByInstance(@Transient val plugin: Plugin) : PluginDescriptor(plugin.pluginId ?: plugin.pluginName, plugin.pluginVersion) {
 
     override fun toString(): String {
       return "PluginDescriptor.ByInstance(plugin=$plugin)"
@@ -67,7 +67,7 @@ sealed class PluginDescriptor() {
   }
 }
 
-sealed class IdeDescriptor() {
+sealed class IdeDescriptor(@SerializedName("version") val ideVersion: IdeVersion) {
 
   private fun id() = this.javaClass.name + this.toString()
 
@@ -82,9 +82,7 @@ sealed class IdeDescriptor() {
     return this.id().hashCode()
   }
 
-  class ByFile(@SerializedName("file") val file: File) : IdeDescriptor() {
-
-    constructor(path: String) : this(File(path))
+  class ByFile(ideVersion: IdeVersion, @SerializedName("file") val file: File) : IdeDescriptor(ideVersion) {
 
     override fun toString(): String {
       return "IdeDescriptor.ByFile(file=$file)"
@@ -92,14 +90,13 @@ sealed class IdeDescriptor() {
 
   }
 
-  class ByVersion(@SerializedName("version") val version: IdeVersion) : IdeDescriptor() {
+  class ByVersion(ideVersion: IdeVersion) : IdeDescriptor(ideVersion) {
     override fun toString(): String {
-      return "IdeDescriptor.ByVersion(version=$version)"
+      return "IdeDescriptor.ByVersion(version=$ideVersion)"
     }
   }
 
-  //this class is not intended to be serialized yet.
-  class ByInstance(@Transient val ide: Ide, @Transient val ideResolver: Resolver? = null) : IdeDescriptor() {
+  class ByInstance(@Transient val ide: Ide, @Transient val ideResolver: Resolver? = null) : IdeDescriptor(ide.version) {
 
     override fun toString(): String {
       return "IdeDescriptor.ByInstance(ide=$ide; file=${ide.idePath})"

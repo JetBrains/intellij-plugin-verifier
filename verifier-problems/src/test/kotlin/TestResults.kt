@@ -36,16 +36,14 @@ class Results {
 
   @Test
   fun pluginDescriptor() {
-    assert<PluginDescriptor>(PluginDescriptor.ByBuildId(1))
-    assert<PluginDescriptor>(PluginDescriptor.ByFile(File("/home/")))
-    assert<PluginDescriptor>(PluginDescriptor.ByFile("/home/"))
+    assert<PluginDescriptor>(PluginDescriptor.ByBuildId("pluginId", "version", 1))
+    assert<PluginDescriptor>(PluginDescriptor.ByFile("pluginId", "version", File("/home/")))
     assert<PluginDescriptor>(PluginDescriptor.ByXmlId("xmlId", "123"))
   }
 
   @Test
   fun ideDescriptor() {
     assert<IdeDescriptor>(IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-143.15")))
-    assert<IdeDescriptor>(IdeDescriptor.ByFile("/home/ide"))
   }
 
   @Test
@@ -66,11 +64,11 @@ class Results {
     assertBlock<VResult>(init, { Assert.assertEquals(init.toString(), it.toString()) })
   }
 
-  private fun someNicePlugin() = VResult.Nice(PluginDescriptor.ByBuildId(1), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-143.15")), "overview")
+  private fun someNicePlugin() = VResult.Nice(PluginDescriptor.ByBuildId("pluginId", "version", 1), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-143.15")), "overview")
 
-  private fun someProblematicPlugin() = VResult.Problems(PluginDescriptor.ByBuildId(1), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-123.456.789")), "overview",
+  private fun someProblematicPlugin() = VResult.Problems(PluginDescriptor.ByBuildId("pluginId", "version", 1), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-123.456.789")), "overview",
       ImmutableMultimap.of(ClassNotFoundProblem("NotFoundClass"), ProblemLocation.fromClass("UserOfNotFoundClass")))
 
-  private fun someBadPlugin() = VResult.BadPlugin(PluginDescriptor.ByBuildId(1), "I am bad")
+  private fun someBadPlugin() = VResult.BadPlugin(PluginDescriptor.ByBuildId("pluginId", "version", 1), "I am bad")
 
 }

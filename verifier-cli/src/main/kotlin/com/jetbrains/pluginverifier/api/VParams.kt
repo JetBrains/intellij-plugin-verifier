@@ -73,16 +73,8 @@ object VParamsCreator {
       PluginManager.getInstance().createPlugin(file) //IncorrectPluginException, IOException
     }
     is PluginDescriptor.ByXmlId -> {
-      val suitable: UpdateInfo?
-      if (plugin.version != null) {
-        val updates = withRepositoryException { RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion!!, plugin.pluginId) } //IOException
-        suitable = updates.find { plugin.version.equals(it.version) }
-      } else {
-        suitable = withRepositoryException { RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(ideVersion!!, plugin.pluginId) } //IOException
-      }
-      if (suitable == null) {
-        throw noSuchPlugin(plugin)
-      }
+      val updates = withRepositoryException { RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion!!, plugin.pluginId) } //IOException
+      val suitable: UpdateInfo = updates.find { plugin.version.equals(it.version) } ?: throw noSuchPlugin(plugin)
       val file = withRepositoryException { RepositoryManager.getInstance().getPluginFile(suitable) } ?: throw noSuchPlugin(plugin)
       PluginManager.getInstance().createPlugin(file) //IncorrectPluginException, IOException
     }
@@ -105,7 +97,7 @@ object VParamsCreator {
   private fun noSuchPlugin(plugin: PluginDescriptor): RepositoryException {
     val id: String = when (plugin) {
       is PluginDescriptor.ByBuildId -> plugin.buildId.toString()
-      is PluginDescriptor.ByXmlId -> "${plugin.pluginId}${if (plugin.version != null) ":${plugin.version}" else "" }"
+      is PluginDescriptor.ByXmlId -> "${plugin.pluginId}:${plugin.version}"
       is PluginDescriptor.ByFile -> "${plugin.file.name}"
       is PluginDescriptor.ByInstance -> plugin.plugin.toString()
       is PluginDescriptor.ByUpdateInfo -> plugin.updateInfo.toString()
