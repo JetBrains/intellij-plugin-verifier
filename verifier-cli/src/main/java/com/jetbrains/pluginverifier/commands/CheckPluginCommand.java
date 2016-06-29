@@ -1,10 +1,7 @@
 package com.jetbrains.pluginverifier.commands;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.io.Files;
 import com.intellij.structure.domain.Ide;
-import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.api.VOptions;
@@ -12,7 +9,6 @@ import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.misc.PluginCache;
 import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.utils.CommandHolder;
 import com.jetbrains.pluginverifier.utils.FailUtil;
@@ -26,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -40,110 +35,6 @@ public class CheckPluginCommand extends VerifierCommand {
 
   public CheckPluginCommand() {
     super("check-plugin");
-  }
-
-  @NotNull
-  private static List<Pair<UpdateInfo, File>> loadPluginFiles(@NotNull String pluginToTestArg, @NotNull IdeVersion ideVersion) {
-    if (pluginToTestArg.startsWith("@")) {
-      File pluginListFile = new File(pluginToTestArg.substring(1));
-      List<String> pluginPaths;
-      try {
-        pluginPaths = Files.readLines(pluginListFile, Charsets.UTF_8);
-      } catch (IOException e) {
-        throw FailUtil.fail("Cannot load plugins from " + pluginListFile.getAbsolutePath() + ": " + e.getMessage(), e);
-      }
-      return fetchPlugins(ideVersion, pluginListFile, pluginPaths);
-
-    } else if (pluginToTestArg.matches("#\\d+")) {
-      String pluginId = pluginToTestArg.substring(1);
-      try {
-        int updateId = Integer.parseInt(pluginId);
-        UpdateInfo updateInfo = RepositoryManager.getInstance().findUpdateById(updateId);
-        File update = RepositoryManager.getInstance().getPluginFile(updateInfo);
-        return Collections.singletonList(new Pair<>(new UpdateInfo(updateId), update));
-      } catch (IOException e) {
-        throw FailUtil.fail("Cannot load plugin #" + pluginId, e);
-      }
-    } else {
-      File file = new File(pluginToTestArg);
-      if (!file.exists()) {
-        // Looks like user write unknown command. This command was called because it's default command.
-        throw FailUtil.fail("Unknown command: " + pluginToTestArg + "\navailable commands: " + Joiner.on(", ").join(CommandHolder.getCommandMap().keySet()));
-      }
-      return Collections.singletonList(new Pair<>(updateInfoByFile(file), file));
-    }
-  }
-
-  @NotNull
-  private static List<Pair<UpdateInfo, File>> fetchPlugins(@NotNull IdeVersion ideVersion, @NotNull File pluginListFile, @NotNull List<String> pluginPaths) {
-    List<Pair<UpdateInfo, File>> pluginsFiles = new ArrayList<>();
-
-    for (String pluginPath : pluginPaths) {
-      pluginPath = pluginPath.trim();
-      if (pluginPath.isEmpty()) continue;
-
-      if (pluginPath.startsWith("id:")) {
-        //single plugin by plugin build number
-
-        String pluginId = pluginPath.substring("id:".length());
-        List<Pair<UpdateInfo, File>> pluginBuilds = downloadPluginBuilds(pluginId, ideVersion);
-        if (!pluginBuilds.isEmpty()) {
-          pluginsFiles.add(pluginBuilds.get(0));
-        }
-
-      } else if (pluginPath.startsWith("ids:")) {
-        //all updates of this plugin compatible with specified IDEA
-
-        String pluginId = pluginPath.substring("ids:".length());
-        pluginsFiles.addAll(downloadPluginBuilds(pluginId, ideVersion));
-
-      } else {
-        File file = new File(pluginPath);
-        if (!file.isAbsolute()) {
-          file = new File(pluginListFile.getParentFile(), pluginPath);
-        }
-        if (!file.exists()) {
-          throw FailUtil.fail("Plugin file '" + pluginPath + "' specified in '" + pluginListFile.getAbsolutePath() + "' doesn't exist");
-        }
-
-        pluginsFiles.add(new Pair<>(updateInfoByFile(file), file));
-      }
-    }
-
-    return pluginsFiles;
-  }
-
-  @NotNull
-  private static UpdateInfo updateInfoByFile(@NotNull File file) {
-    String name = file.getName();
-    int idx = name.lastIndexOf('.');
-    if (idx != -1) {
-      name = name.substring(0, idx);
-    }
-    if (name.matches("\\d+")) {
-      return new UpdateInfo(Integer.parseInt(name));
-    }
-    return new UpdateInfo(name, name, "?");
-  }
-
-  @NotNull
-  private static List<Pair<UpdateInfo, File>> downloadPluginBuilds(@NotNull String pluginId, @NotNull IdeVersion ideVersion) {
-    List<UpdateInfo> compatibleUpdatesForPlugins;
-    try {
-      compatibleUpdatesForPlugins = RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId);
-    } catch (IOException e) {
-      throw FailUtil.fail("Failed to fetch list of " + pluginId + " versions", e);
-    }
-
-    List<Pair<UpdateInfo, File>> result = new ArrayList<>();
-    for (UpdateInfo updateInfo : compatibleUpdatesForPlugins) {
-      try {
-        result.add(new Pair<>(updateInfo, RepositoryManager.getInstance().getPluginFile(updateInfo)));
-      } catch (IOException e) {
-        throw FailUtil.fail("Cannot download '" + updateInfo, e);
-      }
-    }
-    return result;
   }
 
   @Override
@@ -178,7 +69,7 @@ public class CheckPluginCommand extends VerifierCommand {
       Ide ide = createIde(ideaDirectory, commandLine);
       try (Resolver ideResolver = Resolver.createIdeResolver(ide)) {
 
-        List<Pair<UpdateInfo, File>> pluginFiles = loadPluginFiles(pluginsToTestArg, ide.getVersion());
+        List<Pair<UpdateInfo, File>> pluginFiles = Util.loadPluginFiles(pluginsToTestArg, ide.getVersion());
 
         for (Pair<UpdateInfo, File> pluginFile : pluginFiles) {
           try {
