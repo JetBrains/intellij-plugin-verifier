@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.service;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.structure.domain.IdeVersion;
-import com.jetbrains.pluginverifier.misc.DownloadUtils;
+import com.jetbrains.pluginverifier.misc.DownloadManager;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -142,7 +142,7 @@ public class VerifierServiceApi {
 
   @NotNull
   public static File requestReportFile(@NotNull String repositoryUrl, @NotNull IdeVersion build) throws IOException {
-    File resultFile = DownloadUtils.createCheckResultFile(build);
+    File resultFile = DownloadManager.getInstance().createCheckResultFile(build);
     downloadFile(repositoryUrl + RESULTS_PATH + "/" + build.asString() + XML_EXTENSION, resultFile);
     return resultFile;
   }

@@ -1,11 +1,13 @@
 package com.jetbrains.pluginverifier.repository;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
+import com.jetbrains.pluginverifier.utils.FailUtil;
 import com.jetbrains.pluginverifier.utils.StringUtil;
+import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,35 +18,39 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Sergey Evdokimov
  */
+@ThreadSafe
 public class RepositoryManager implements PluginRepository {
 
   private static final RepositoryManager INSTANCE = new RepositoryManager();
 
-  private final List<PluginRepository> repositories;
+  private final ImmutableList<PluginRepository> repositories;
 
-  private final WeakHashMap<UpdateInfo, PluginRepository> update2repository = new WeakHashMap<UpdateInfo, PluginRepository>();
+  private final ConcurrentMap<UpdateInfo, PluginRepository> update2repository = new ConcurrentHashMap<UpdateInfo, PluginRepository>();
 
   private RepositoryManager() {
 
-    repositories = new ArrayList<PluginRepository>();
-    repositories.add(new GlobalRepository(RepositoryConfiguration.getInstance().getPluginRepositoryUrl()));
+    List<PluginRepository> reps = new ArrayList<PluginRepository>();
+    reps.add(new GlobalRepository(RepositoryConfiguration.getInstance().getPluginRepositoryUrl()));
 
     String customRepositories = RepositoryConfiguration.getInstance().getCustomRepositories();
     if (StringUtil.isNotEmpty(customRepositories)) {
-      for (StringTokenizer tokenizer = new StringTokenizer(customRepositories, ", "); tokenizer.hasMoreTokens(); ) {
-        String repositoryUrl = tokenizer.nextToken();
+      for (StringTokenizer tokenizer = new StringTokenizer(customRepositories, ","); tokenizer.hasMoreTokens(); ) {
+        String repositoryUrl = tokenizer.nextToken().trim();
         try {
-          repositories.add(new CustomRepository(new URL(repositoryUrl)));
+          reps.add(new CustomRepository(new URL(repositoryUrl)));
         } catch (MalformedURLException e) {
-          throw Throwables.propagate(e);
+          throw FailUtil.fail("Unable to connect custom repository by " + repositoryUrl, e);
         }
       }
     }
+
+    repositories = ImmutableList.copyOf(reps);
   }
 
   public static RepositoryManager getInstance() {
@@ -52,6 +58,7 @@ public class RepositoryManager implements PluginRepository {
   }
 
   @NotNull
+  @Override
   public List<UpdateInfo> getLastCompatibleUpdates(@NotNull IdeVersion ideVersion) throws IOException {
     List<UpdateInfo> res = new ArrayList<UpdateInfo>();
 
@@ -89,7 +96,7 @@ public class RepositoryManager implements PluginRepository {
   @Nullable
   public File getPluginFile(@NotNull UpdateInfo update) throws IOException {
     PluginRepository repository = update2repository.get(update);
-    Preconditions.checkArgument(repository != null, "Unknown update, update should be found by RepositoryManager");
+    Preconditions.checkArgument(repository != null, "Unknown update " + update + ", it should be registered in the RepositoryManager");
     return repository.getPluginFile(update);
   }
 

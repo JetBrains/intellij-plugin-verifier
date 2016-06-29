@@ -28,7 +28,7 @@ public class RepositoryConfiguration {
 
     myProperties = new Properties(defaultConfig);
 
-    File cfg = new File(getValidatorHome(), "config.properties");
+    File cfg = new File(getVerifierHome(), "config.properties");
     if (cfg.exists()) {
       try {
         InputStream inputStream = new BufferedInputStream(new FileInputStream(cfg));
@@ -56,7 +56,7 @@ public class RepositoryConfiguration {
   }
 
   @NotNull
-  private File getValidatorHome() {
+  private File getVerifierHome() {
     String homeDir = getProperty("home.directory.name");
     if (homeDir == null) {
       throw FailUtil.fail("Repository home directory is not specified");
@@ -92,7 +92,7 @@ public class RepositoryConfiguration {
       return new File(pluginCacheDir);
     }
 
-    return new File(getValidatorHome(), "cache");
+    return new File(getVerifierHome(), "cache");
   }
 
   @Nullable

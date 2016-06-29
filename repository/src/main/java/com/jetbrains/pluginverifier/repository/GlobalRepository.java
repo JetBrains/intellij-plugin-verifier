@@ -5,8 +5,9 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
-import com.jetbrains.pluginverifier.misc.DownloadUtils;
+import com.jetbrains.pluginverifier.misc.DownloadManager;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -23,6 +24,7 @@ import java.util.List;
 /**
  * @author Sergey Evdokimov
  */
+@ThreadSafe
 class GlobalRepository implements PluginRepository {
 
   private final static Logger LOG = LoggerFactory.getLogger(GlobalRepository.class);
@@ -39,7 +41,7 @@ class GlobalRepository implements PluginRepository {
   @NotNull
   @Override
   public List<UpdateInfo> getLastCompatibleUpdates(@NotNull IdeVersion ideVersion) throws IOException {
-    LOG.info("Loading compatible plugins list... ");
+    LOG.info("Loading list of plugins compatible with " + ideVersion + "... ");
 
     URL url1 = new URL(url + "/manager/allCompatibleUpdates/?build=" + ideVersion);
     String text = IOUtils.toString(url1);
@@ -88,7 +90,7 @@ class GlobalRepository implements PluginRepository {
   @Override
   public File getPluginFile(@NotNull UpdateInfo update) throws IOException {
     Preconditions.checkArgument(update.getUpdateId() != null, "UpdateId must contain a valid id to be downloaded");
-    return DownloadUtils.getOrLoadUpdate(update, getUrlForUpdate(update));
+    return DownloadManager.getInstance().getOrLoadUpdate(update, getUrlForUpdate(update));
   }
 
   @NotNull
@@ -100,7 +102,7 @@ class GlobalRepository implements PluginRepository {
   @Override
   public UpdateInfo findUpdateById(int updateId) throws IOException {
     UpdateInfo update = new UpdateInfo(updateId);
-    if (DownloadUtils.doesUpdateExist(update, getUrlForUpdate(update))) {
+    if (DownloadManager.getInstance().doesUpdateExist(update, getUrlForUpdate(update))) {
       return update;
     }
     return null;

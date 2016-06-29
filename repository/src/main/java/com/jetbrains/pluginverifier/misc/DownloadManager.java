@@ -6,6 +6,7 @@ import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,32 +26,40 @@ import java.util.TimeZone;
 /**
  * @author Sergey Evdokimov
  */
-public class DownloadUtils {
+@ThreadSafe
+public class DownloadManager {
 
-  private final static Logger LOG = LoggerFactory.getLogger(DownloadUtils.class);
+  private final static Logger LOG = LoggerFactory.getLogger(DownloadManager.class);
 
   private static final int BROKEN_ZIP_THRESHOLD = 200;
   private static final DateFormat httpDateFormat;
   private static final int HTTP_OK_STATUS = 200;
+  private static final DownloadManager INSTANCE = new DownloadManager();
 
   static {
     httpDateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
     httpDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
 
+  private DownloadManager() {
+  }
+
+  public static DownloadManager getInstance() {
+    return INSTANCE;
+  }
+
   @NotNull
-  public static File getCheckResultFile(@NotNull IdeVersion build) throws IOException {
+  public File getCheckResultFile(@NotNull IdeVersion build) throws IOException {
     File res = createCheckResultFile(build);
 
     LOG.info("Loading check results for " + build.asString() + "...");
     updateFile(new URL(RepositoryConfiguration.getInstance().getPluginRepositoryUrl() + "/files/checkResults/" + build.asString() + ".xml"), res);
-    LOG.info("done");
 
     return res;
   }
 
   @NotNull
-  public static File createCheckResultFile(@NotNull IdeVersion build) throws IOException {
+  public File createCheckResultFile(@NotNull IdeVersion build) throws IOException {
     File downloadDir = getOrCreateDownloadDir();
 
     File checkResDir = new File(downloadDir, "checkResult");
@@ -60,7 +69,7 @@ public class DownloadUtils {
   }
 
   @NotNull
-  private static File getOrCreateDownloadDir() throws IOException {
+  private File getOrCreateDownloadDir() throws IOException {
     File downloadDir = RepositoryConfiguration.getInstance().getPluginCacheDir();
     if (!downloadDir.isDirectory()) {
       FileUtils.forceMkdir(downloadDir);
@@ -72,7 +81,7 @@ public class DownloadUtils {
     return downloadDir;
   }
 
-  private static void updateFile(URL url, File file) throws IOException {
+  private void updateFile(URL url, File file) throws IOException {
     long lastModified = file.lastModified();
 
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -117,7 +126,7 @@ public class DownloadUtils {
   }
 
   @NotNull
-  private static String getCacheFileName(UpdateInfo update) {
+  private String getCacheFileName(UpdateInfo update) {
     if (update.getUpdateId() != null) {
       return update.getUpdateId() + ".zip";
     } else {
@@ -130,7 +139,7 @@ public class DownloadUtils {
    * Performs necessary redirection
    */
   @NotNull
-  private static URL getFinalUrl(@NotNull URL url) throws IOException {
+  private URL getFinalUrl(@NotNull URL url) throws IOException {
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     connection.setInstanceFollowRedirects(false);
 
@@ -148,7 +157,7 @@ public class DownloadUtils {
     return url;
   }
 
-  public static boolean doesUpdateExist(@NotNull UpdateInfo updateInfo, @NotNull URL url) throws IOException {
+  public boolean doesUpdateExist(@NotNull UpdateInfo updateInfo, @NotNull URL url) throws IOException {
     File cachedFile = new File(getOrCreateDownloadDir(), getCacheFileName(updateInfo));
     if (cachedFile.exists() && cachedFile.length() > BROKEN_ZIP_THRESHOLD) {
       //file exists in the cache
@@ -170,8 +179,8 @@ public class DownloadUtils {
   }
 
   @NotNull
-  public static File getOrLoadUpdate(@NotNull UpdateInfo update, @NotNull URL url) throws IOException {
-    File downloadDir = DownloadUtils.getOrCreateDownloadDir();
+  public File getOrLoadUpdate(@NotNull UpdateInfo update, @NotNull URL url) throws IOException {
+    File downloadDir = getOrCreateDownloadDir();
 
     url = getFinalUrl(url);
 
@@ -193,22 +202,29 @@ public class DownloadUtils {
         LOG.info("downloading " + update + " done!");
         downloadFail = false;
       } catch (IOException e) {
-        LOG.info("Error loading plugin " + update + " " + e.getLocalizedMessage());
-        e.printStackTrace();
+        LOG.info("Error loading plugin " + update + " by " + url.toExternalForm(), e);
         throw e;
-
       } finally {
         if (downloadFail) {
           if (currentDownload.exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            currentDownload.delete();
+            try {
+              FileUtils.forceDelete(currentDownload);
+            } catch (Exception ce) {
+              LOG.error("Unable to delete temporary file " + currentDownload, ce);
+            }
           }
         }
       }
-      if (pluginInCache.exists()) {
-        FileUtils.deleteQuietly(pluginInCache);
+
+      //provides the thread safety while multiple threads attempt to load the same plugin.
+      synchronized (this) {
+        if (pluginInCache.exists()) {
+          //remove the old (possible broken plugin)
+          FileUtils.forceDelete(pluginInCache);
+        }
+        FileUtils.moveFile(currentDownload, pluginInCache);
       }
-      FileUtils.moveFile(currentDownload, pluginInCache);
+
     }
 
     return pluginInCache;

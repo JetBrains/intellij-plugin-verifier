@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.results;
 
 import com.intellij.structure.domain.IdeVersion;
-import com.jetbrains.pluginverifier.misc.DownloadUtils;
+import com.jetbrains.pluginverifier.misc.DownloadManager;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public class GlobalResultsRepository extends ResultsRepository {
   @NotNull
   @Override
   public File getReportFile(@NotNull IdeVersion ideVersion) throws IOException {
-    return DownloadUtils.getCheckResultFile(ideVersion);
+    return DownloadManager.getInstance().getCheckResultFile(ideVersion);
   }
 
   @NotNull
