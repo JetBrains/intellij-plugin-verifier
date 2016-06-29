@@ -39,6 +39,7 @@ private val LOG = LoggerFactory.getLogger(Verifiers::class.java)
 object Verifiers {
 
   //TODO: add a verifier which reports minor problems (missing optional plugin descriptor, missing logo file and other)
+  //TODO: add support of warnings in the plugin-structure
 
   val PLUGIN_VERIFIERS = arrayOf<Verifier>(ReferencesVerifier())
 
@@ -86,6 +87,7 @@ private class ReferencesVerifier : Verifier {
 
   /**
    * @throws InterruptedException if the verification was cancelled
+   * @throws RuntimeException if the verification has faced some difficulties
    */
   @Throws(InterruptedException::class)
   override fun verify(ctx: VContext) {
