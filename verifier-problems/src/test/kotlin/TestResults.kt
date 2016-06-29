@@ -9,7 +9,6 @@ import com.jetbrains.pluginverifier.persistence.GsonHolder
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import org.junit.Assert
 import org.junit.Test
-import java.io.File
 
 private fun Any.toGson(): String = GsonHolder.GSON.toJson(this)
 
@@ -37,7 +36,6 @@ class Results {
   @Test
   fun pluginDescriptor() {
     assert<PluginDescriptor>(PluginDescriptor.ByBuildId("pluginId", "version", 1))
-    assert<PluginDescriptor>(PluginDescriptor.ByFile("pluginId", "version", File("/home/")))
     assert<PluginDescriptor>(PluginDescriptor.ByXmlId("xmlId", "123"))
   }
 

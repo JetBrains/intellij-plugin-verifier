@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.persistence
 
+import com.github.salomonbrys.kotson.registerTypeAdapter
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.LinkedHashMultimap
 import com.google.common.collect.Multimap
@@ -23,7 +24,6 @@ import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.problems.fields.ChangeFinalFieldProblem
 import com.jetbrains.pluginverifier.problems.statics.*
 import com.jetbrains.pluginverifier.utils.RuntimeTypeAdapterFactory
-import java.io.File
 import java.io.IOException
 import java.lang.reflect.ParameterizedType
 
@@ -34,14 +34,25 @@ import java.lang.reflect.ParameterizedType
 object GsonHolder {
   val GSON = GsonBuilder()
       .registerTypeAdapter(UpdateInfo::class.java, UpdateInfoTypeAdapter())
-      .registerTypeAdapter(File::class.java, FileTypeAdapter())
       .registerTypeHierarchyAdapter(IdeVersion::class.java, IdeVersionTypeAdapter())
+      .registerTypeHierarchyAdapter(IdeDescriptor::class.java, IdeDescriptorTypeAdapter())
       .registerTypeAdapterFactory(resultTAF)
       .registerTypeAdapterFactory(problemsTAF)
       .registerTypeAdapterFactory(locationTAF)
       .registerTypeAdapterFactory(pluginDescriptorTAF)
-      .registerTypeAdapterFactory(ideDescriptorTAF)
       .registerTypeAdapterFactory(MultimapTypeAdapterFactory())
+
+      //delegate to ByXmlId (we can't serialize File and Ide because it makes no sense)
+      .registerTypeAdapter<PluginDescriptor.ByFile> {
+        serialize {
+          it.context.serialize(PluginDescriptor.ByXmlId(it.src.pluginId, it.src.version))
+        }
+      }
+      .registerTypeAdapter<PluginDescriptor.ByInstance> {
+        serialize {
+          it.context.serialize(PluginDescriptor.ByXmlId(it.src.pluginId, it.src.version))
+        }
+      }
       .create()
 }
 
@@ -83,30 +94,20 @@ private val locationTAF = RuntimeTypeAdapterFactory.of(ProblemLocation::class.ja
 
 private val pluginDescriptorTAF = RuntimeTypeAdapterFactory.of(PluginDescriptor::class.java)
     .registerSubtype(PluginDescriptor.ByBuildId::class.java)
-    .registerSubtype(PluginDescriptor.ByFile::class.java)
     .registerSubtype(PluginDescriptor.ByXmlId::class.java)
     .registerSubtype(PluginDescriptor.ByUpdateInfo::class.java)
-    .registerSubtype(PluginDescriptor.ByInstance::class.java)
+//    .registerSubtype(PluginDescriptor.ByFile::class.java) //this class is serialized as ByXmlId
+//    .registerSubtype(PluginDescriptor.ByInstance::class.java) //this class is serialized as ByXmlId
 
-private val ideDescriptorTAF = RuntimeTypeAdapterFactory.of(IdeDescriptor::class.java)
-    .registerSubtype(IdeDescriptor.ByVersion::class.java)
-    .registerSubtype(IdeDescriptor.ByFile::class.java)
-    .registerSubtype(IdeDescriptor.ByInstance::class.java)
-
-class FileTypeAdapter : TypeAdapter<File>() {
-
-  @Throws(IOException::class)
-  override fun write(out: JsonWriter, value: File) {
-    out.value(value.absolutePath)
+class IdeDescriptorTypeAdapter : TypeAdapter<IdeDescriptor>() {
+  override fun read(`in`: JsonReader): IdeDescriptor {
+    return IdeDescriptor.ByVersion(IdeVersion.createIdeVersion(`in`.nextString()))
   }
 
-  @Throws(IOException::class)
-  override fun read(`in`: JsonReader): File {
-    return File(`in`.nextString())
+  override fun write(out: JsonWriter, value: IdeDescriptor) {
+    out.value(value.ideVersion.asString())
   }
-
 }
-
 
 class IdeVersionTypeAdapter : TypeAdapter<IdeVersion>() {
 

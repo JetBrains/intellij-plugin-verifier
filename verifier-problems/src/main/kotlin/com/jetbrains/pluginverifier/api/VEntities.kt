@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.api
 
-import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.domain.Plugin
@@ -15,10 +14,10 @@ import java.io.File
 /**
  * Descriptor of the plugin to be checked
  */
-sealed class PluginDescriptor(@SerializedName("id") val pluginId: String,
-                              @SerializedName("version") val version: String) {
+sealed class PluginDescriptor(val pluginId: String,
+                              val version: String) {
 
-  private fun id() = this.javaClass.name + this.toString()
+  private fun id() = this.toString()
 
   override fun equals(other: Any?): Boolean {
     if (other is PluginDescriptor) {
@@ -31,7 +30,7 @@ sealed class PluginDescriptor(@SerializedName("id") val pluginId: String,
     return this.id().hashCode()
   }
 
-  class ByUpdateInfo(pluginId: String, version: String, @SerializedName("update") val updateInfo: UpdateInfo) : PluginDescriptor(pluginId, version) {
+  class ByUpdateInfo(pluginId: String, version: String, val updateInfo: UpdateInfo) : PluginDescriptor(pluginId, version) {
     override fun toString(): String {
       return "PluginDescriptor.ByUpdateInfo(updateInfo=$updateInfo)"
     }
@@ -44,7 +43,7 @@ sealed class PluginDescriptor(@SerializedName("id") val pluginId: String,
     }
   }
 
-  class ByBuildId(pluginId: String, version: String, @SerializedName("buildId") val buildId: Int) : PluginDescriptor(pluginId, version) {
+  class ByBuildId(pluginId: String, version: String, val buildId: Int) : PluginDescriptor(pluginId, version) {
     override fun toString(): String {
       return "PluginDescriptor.ByBuildId(buildId=$buildId)"
     }
@@ -58,7 +57,6 @@ sealed class PluginDescriptor(@SerializedName("id") val pluginId: String,
 
   }
 
-  //this class is not intended to be serialized yet.
   class ByInstance(@Transient val plugin: Plugin) : PluginDescriptor(plugin.pluginId ?: plugin.pluginName, plugin.pluginVersion) {
 
     override fun toString(): String {
@@ -67,9 +65,9 @@ sealed class PluginDescriptor(@SerializedName("id") val pluginId: String,
   }
 }
 
-sealed class IdeDescriptor(@SerializedName("version") val ideVersion: IdeVersion) {
+sealed class IdeDescriptor(val ideVersion: IdeVersion) {
 
-  private fun id() = this.javaClass.name + this.toString()
+  private fun id() = this.toString()
 
   override fun equals(other: Any?): Boolean {
     if (other is IdeDescriptor) {
@@ -82,7 +80,7 @@ sealed class IdeDescriptor(@SerializedName("version") val ideVersion: IdeVersion
     return this.id().hashCode()
   }
 
-  class ByFile(ideVersion: IdeVersion, @SerializedName("file") val file: File) : IdeDescriptor(ideVersion) {
+  class ByFile(ideVersion: IdeVersion, val file: File) : IdeDescriptor(ideVersion) {
 
     override fun toString(): String {
       return "IdeDescriptor.ByFile(file=$file)"
@@ -96,10 +94,10 @@ sealed class IdeDescriptor(@SerializedName("version") val ideVersion: IdeVersion
     }
   }
 
-  class ByInstance(@Transient val ide: Ide, @Transient val ideResolver: Resolver? = null) : IdeDescriptor(ide.version) {
+  class ByInstance(val ide: Ide, val ideResolver: Resolver? = null) : IdeDescriptor(ide.version) {
 
     override fun toString(): String {
-      return "IdeDescriptor.ByInstance(ide=$ide; file=${ide.idePath})"
+      return "IdeDescriptor.ByInstance(ide=$ide;idePath=${ide.idePath})"
     }
   }
 }
