@@ -22,6 +22,15 @@ public class OverrideNonFinalVerifier implements MethodVerifier {
 
   public void verify(final ClassNode clazz, final MethodNode method, final Resolver resolver, final VContext ctx) {
     if (VerifierUtil.isPrivate(method)) return;
+
+    /*
+    According to JVM 8 specification the static methods cannot <i>override</i> the parent methods.
+    They can only <i>hide</i> them. Java compiler prohibits <i>hiding</i> the final static methods of the parent,
+    but Java Virtual Machine (at least the 8-th version) allows to invoke such methods and doesn't complain
+    during the class-file verification
+     */
+    if (VerifierUtil.isStatic(method)) return;
+
     final String superClass = clazz.superName;
 
     if (superClass == null || superClass.startsWith("[") || ctx.getVerifierOptions().isExternalClass(superClass)) {
