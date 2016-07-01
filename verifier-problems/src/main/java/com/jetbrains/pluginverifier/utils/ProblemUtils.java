@@ -46,6 +46,7 @@ public class ProblemUtils {
           OverridingFinalMethodProblem.class,
           MissingDependencyProblem.class,
           ChangeFinalFieldProblem.class,
+          InheritFromFinalClassProblem.class,
 
           InstanceAccessOfStaticFieldProblem.class,
           StaticAccessOfInstanceFieldProblem.class,
