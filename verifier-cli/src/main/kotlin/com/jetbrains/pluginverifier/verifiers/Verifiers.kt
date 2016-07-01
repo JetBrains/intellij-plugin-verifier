@@ -20,6 +20,7 @@ import com.jetbrains.pluginverifier.utils.Util
 import com.jetbrains.pluginverifier.utils.dependencies.Dependencies
 import com.jetbrains.pluginverifier.utils.dependencies.PluginDependenciesNode
 import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier
+import com.jetbrains.pluginverifier.verifiers.clazz.InheritFromFinalClassVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.SuperClassVerifier
 import com.jetbrains.pluginverifier.verifiers.field.FieldTypeVerifier
@@ -48,7 +49,8 @@ object Verifiers {
   val classVerifiers = arrayOf(
       SuperClassVerifier(),
       InterfacesVerifier(),
-      AbstractMethodVerifier()
+      AbstractMethodVerifier(),
+      InheritFromFinalClassVerifier()
   )
   val methodVerifiers = arrayOf(
       OverrideNonFinalVerifier(),

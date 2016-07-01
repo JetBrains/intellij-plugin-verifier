@@ -101,6 +101,10 @@ public class VerifierUtil {
         "F".equals(type) || "S".equals(type) || "D".equals(type) || "C".equals(type);
   }
 
+  public static boolean isFinal(final ClassNode classNode) {
+    return (classNode.access & Opcodes.ACC_FINAL) != 0;
+  }
+
   public static boolean isFinal(final MethodNode superMethod) {
     return (superMethod.access & Opcodes.ACC_FINAL) != 0;
   }
