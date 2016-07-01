@@ -6,16 +6,14 @@ import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.MissingDependencyProblem;
 import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.results.GlobalResultsRepository;
-import com.jetbrains.pluginverifier.results.ResultsElement;
-import com.jetbrains.pluginverifier.results.ResultsRepository;
-import com.jetbrains.pluginverifier.results.VerifierServiceRepository;
+import com.jetbrains.pluginverifier.results.*;
 import com.jetbrains.pluginverifier.utils.FailUtil;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
 import com.jetbrains.pluginverifier.utils.ProblemUtils;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
+import com.jetbrains.pluginverifier.utils.teamcity.TeamCityVPrinter;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,7 +73,7 @@ public class NewProblemsCommand extends VerifierCommand {
                                       @NotNull Multimap<Problem, UpdateInfo> missingDependenciesProblems,
                                       @NotNull Multimap<IdeVersion, Problem> firstOccurrence,
                                       @NotNull Iterable<IdeVersion> allBuilds,
-                                      @NotNull TeamCityUtil.ReportGrouping reportGrouping,
+                                      @NotNull TeamCityVPrinter.GroupBy reportGrouping,
                                       @NotNull IdeVersion ideBuild,
                                       @NotNull TeamCityLog tc) {
     for (IdeVersion prevBuild : allBuilds) {
@@ -99,7 +97,8 @@ public class NewProblemsCommand extends VerifierCommand {
 
         }
 
-        TeamCityUtil.INSTANCE.printReport(tc, prevBuildProblems, reportGrouping);
+        Map<UpdateInfo, ProblemSet> map = TeamCityUtil.INSTANCE.convertToProblemSet(prevBuildProblems);
+        new TeamCityVPrinter(tc, reportGrouping).printResults(TeamCityUtil.INSTANCE.convertOldResultsToNewResults(map, ideBuild));
       }
 
       suite.close();
@@ -148,7 +147,7 @@ public class NewProblemsCommand extends VerifierCommand {
       throw FailUtil.fail("You have to specify a report to compare and print. For example: \"java -jar verifier.jar new-problems report-133.439.xml\"");
     }
 
-    TeamCityUtil.ReportGrouping reportGrouping = TeamCityUtil.ReportGrouping.Companion.parseGrouping(commandLine);
+    TeamCityVPrinter.GroupBy reportGrouping = TeamCityVPrinter.GroupBy.parse(commandLine);
 
     File reportToCheck = new File(freeArgs.get(0));
     if (!reportToCheck.isFile()) {

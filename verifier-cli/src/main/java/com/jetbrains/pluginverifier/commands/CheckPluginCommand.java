@@ -2,9 +2,11 @@ package com.jetbrains.pluginverifier.commands;
 
 import com.google.common.base.Joiner;
 import com.intellij.structure.domain.Ide;
+import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.api.VOptions;
+import com.jetbrains.pluginverifier.api.VResults;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.misc.PluginCache;
@@ -16,6 +18,7 @@ import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.utils.VerificationProblem;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
+import com.jetbrains.pluginverifier.utils.teamcity.TeamCityVPrinter;
 import kotlin.Pair;
 import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +56,7 @@ public class CheckPluginCommand extends VerifierCommand {
     long startTime = System.currentTimeMillis();
 
     //updateInfo -> (IDEA-build -> Problems)
-    final Map<UpdateInfo, Map<String, ProblemSet>> results = new HashMap<>();
+    final Map<UpdateInfo, Map<IdeVersion, ProblemSet>> results = new HashMap<>();
 
     TeamCityLog tc = TeamCityLog.Companion.getInstance(commandLine);
 
@@ -91,13 +94,13 @@ public class CheckPluginCommand extends VerifierCommand {
             final UpdateInfo updateInfo = new UpdateInfo(plugin.getPluginId(), plugin.getPluginName(), plugin.getPluginVersion());
 
 
-            Map<String, ProblemSet> ideaToProblems = results.get(updateInfo);
+            Map<IdeVersion, ProblemSet> ideaToProblems = results.get(updateInfo);
             if (ideaToProblems == null) {
               ideaToProblems = new HashMap<>();
               results.put(updateInfo, ideaToProblems);
             }
 
-            ideaToProblems.put(ide.getVersion().asString(), problemSet);
+            ideaToProblems.put(ide.getVersion(), problemSet);
 
             ide = ide.getExpandedIde(plugin);
 
@@ -121,7 +124,11 @@ public class CheckPluginCommand extends VerifierCommand {
     Map<UpdateInfo, ProblemSet> pluginsProblems = mergeIdeResults(results);
     appendBrokenPluginProblems(pluginsProblems, brokenPlugins);
 
-    TeamCityUtil.INSTANCE.printTeamCityProblems(tc, pluginsProblems, updateInfo -> true, TeamCityUtil.ReportGrouping.Companion.parseGrouping(commandLine));
+    //TODO: get rid of it.
+    IdeVersion someIdeVersion = results.entrySet().iterator().next().getValue().entrySet().iterator().next().getKey();
+    VResults vResults = TeamCityUtil.INSTANCE.convertOldResultsToNewResults(pluginsProblems, someIdeVersion);
+    new TeamCityVPrinter(tc, TeamCityVPrinter.GroupBy.parse(commandLine)).printResults(vResults);
+
 
     final int problemsCnt = countTotalProblems(pluginsProblems);
 
@@ -143,11 +150,11 @@ public class CheckPluginCommand extends VerifierCommand {
   }
 
   @NotNull
-  private Map<UpdateInfo, ProblemSet> mergeIdeResults(@NotNull Map<UpdateInfo, Map<String, ProblemSet>> idesResults) {
+  private Map<UpdateInfo, ProblemSet> mergeIdeResults(@NotNull Map<UpdateInfo, Map<IdeVersion, ProblemSet>> idesResults) {
     Map<UpdateInfo, ProblemSet> result = new HashMap<>();
 
     //update --> (idea --> problems) ===> (update --> merged problems)
-    for (Map.Entry<UpdateInfo, Map<String, ProblemSet>> entry : idesResults.entrySet()) {
+    for (Map.Entry<UpdateInfo, Map<IdeVersion, ProblemSet>> entry : idesResults.entrySet()) {
       UpdateInfo info = entry.getKey();
 
       ProblemSet set = result.get(info);
@@ -156,7 +163,7 @@ public class CheckPluginCommand extends VerifierCommand {
         result.put(info, set);
       }
 
-      for (Map.Entry<String, ProblemSet> setEntry : entry.getValue().entrySet()) {
+      for (Map.Entry<IdeVersion, ProblemSet> setEntry : entry.getValue().entrySet()) {
         set.appendProblems(setEntry.getValue());
       }
     }

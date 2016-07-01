@@ -7,7 +7,7 @@ import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.api.VOptions;
+import com.jetbrains.pluginverifier.api.*;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.PluginCache;
 import com.jetbrains.pluginverifier.problems.BrokenPluginProblem;
@@ -18,6 +18,7 @@ import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
+import com.jetbrains.pluginverifier.utils.teamcity.TeamCityVPrinter;
 import kotlin.Pair;
 import org.apache.commons.cli.CommandLine;
 import org.jdom2.JDOMException;
@@ -41,7 +42,7 @@ public class CheckIdeCommand extends VerifierCommand {
    */
   private static final ImmutableList<String> INTELLIJ_MODULES_PLUGIN_IDS =
       ImmutableList.of("org.jetbrains.plugins.ruby", "com.jetbrains.php", "org.jetbrains.android", "Pythonid", "PythonCore");
-  private TeamCityUtil.ReportGrouping myGrouping;
+  private TeamCityVPrinter.GroupBy myGroupBy;
   private TeamCityLog myTc;
   private File myJdkDir;
   private VOptions myVerifierOptions;
@@ -85,9 +86,25 @@ public class CheckIdeCommand extends VerifierCommand {
    */
   private int printMissingAndIncorrectPlugins() {
     if (myTc == TeamCityLog.Companion.getNULL_LOG()) return 0;
-    TeamCityUtil.INSTANCE.printReport(myTc, myBrokenPluginsProblems, TeamCityUtil.ReportGrouping.PLUGIN);
-    TeamCityUtil.INSTANCE.printReport(myTc, myMissingUpdatesProblems, TeamCityUtil.ReportGrouping.PLUGIN);
-    return myBrokenPluginsProblems.size() + myMissingUpdatesProblems.size();
+    TeamCityVPrinter printer = new TeamCityVPrinter(myTc, TeamCityVPrinter.GroupBy.BY_PLUGIN);
+
+    IdeDescriptor.ByVersion ideDescriptor = new IdeDescriptor.ByVersion(myIde.getVersion());
+
+    List<VResult> broken = new ArrayList<>();
+    myBrokenPluginsProblems.entries().forEach(it ->
+        broken.add(new VResult.BadPlugin(new PluginDescriptor.ByUpdateInfo(it.getValue()), ideDescriptor, it.getKey().getDescription()))
+    );
+    VResults brokens = new VResults(broken);
+
+    List<VResult> missing = new ArrayList<>();
+    myMissingUpdatesProblems.entries().forEach(it ->
+        missing.add(new VResult.BadPlugin(new PluginDescriptor.ByUpdateInfo(it.getValue()), ideDescriptor, it.getKey().getDescription()))
+    );
+    VResults missings = new VResults(missing);
+
+    printer.printResults(brokens);
+    printer.printResults(missings);
+    return myBrokenPluginsProblems.keySet().size() + myMissingUpdatesProblems.keySet().size();
   }
 
   private void fillMissingPluginProblems() {
@@ -149,7 +166,7 @@ public class CheckIdeCommand extends VerifierCommand {
       throw FailUtil.fail("IDE home is not a directory: " + ideToCheck);
     }
 
-    myGrouping = TeamCityUtil.ReportGrouping.Companion.parseGrouping(commandLine);
+    myGroupBy = TeamCityVPrinter.GroupBy.parse(commandLine);
 
     myTc = TeamCityLog.Companion.getInstance(commandLine);
 
@@ -359,7 +376,10 @@ public class CheckIdeCommand extends VerifierCommand {
       }
     }
 
-    TeamCityUtil.INSTANCE.printTeamCityProblems(myTc, myResults, myExcludedUpdatesFilter, myGrouping);
+    myResults = Maps.filterKeys(myResults, x -> myExcludedUpdatesFilter.test(x));
+
+    VResults vResults = TeamCityUtil.INSTANCE.convertOldResultsToNewResults(myResults, myIde.getVersion());
+    new TeamCityVPrinter(myTc, TeamCityVPrinter.GroupBy.parse(commandLine)).printResults(vResults);
 
     int totalProblemsCnt = printMissingAndIncorrectPlugins();
 
