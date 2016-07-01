@@ -215,6 +215,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
 
     companion object {
 
+      @JvmStatic
       fun parse(commandLine: CommandLine): GroupBy {
         val groupValue = commandLine.getOptionValue("g") ?: return NOT_GROUPED
         return values().find { it.arg == groupValue } ?: NOT_GROUPED
