@@ -103,7 +103,7 @@ public abstract class VerifierCommand {
       ((VResult.Problems) result).getProblems().entries().forEach(x -> problemSet.addProblem(x.getKey(), x.getValue()));
       return problemSet;
     } else if (result instanceof VResult.BadPlugin) {
-      throw new IllegalArgumentException(((VResult.BadPlugin) result).getReason());
+      throw new IllegalArgumentException(result.getOverview()); //will be caught above
     }
     return new ProblemSet();
   }
