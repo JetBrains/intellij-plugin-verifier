@@ -31,6 +31,8 @@ sealed class PluginDescriptor(val pluginId: String,
   }
 
   class ByUpdateInfo(pluginId: String, version: String, val updateInfo: UpdateInfo) : PluginDescriptor(pluginId, version) {
+    constructor(updateInfo: UpdateInfo) : this(updateInfo.pluginId!!, updateInfo.version!!, updateInfo)
+
     override fun toString(): String {
       return "PluginDescriptor.ByUpdateInfo(updateInfo=$updateInfo)"
     }
