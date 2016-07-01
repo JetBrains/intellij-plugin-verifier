@@ -101,17 +101,17 @@ object VManager {
               //the plugin has incorrect structure.
               val reason = e.message ?: "The plugin ${pluginOnIde.first} has incorrect structure"
               LOG.error(reason, e)
-              results.add(VResult.BadPlugin(pluginOnIde.first, reason))
+              results.add(VResult.BadPlugin(pluginOnIde.first, pluginOnIde.second, reason))
               return@poi
             } catch(e: RepositoryException) {
               val reason = e.message ?: "The plugin ${pluginOnIde.first} is not found in the Repository"
               LOG.error(reason, e)
-              results.add(VResult.BadPlugin(pluginOnIde.first, reason))
+              results.add(VResult.BadPlugin(pluginOnIde.first, pluginOnIde.second, reason))
               return@poi
             } catch(e: Exception) {
               val reason = e.message ?: e.javaClass.name
               LOG.error(reason, e)
-              results.add(VResult.BadPlugin(pluginOnIde.first, reason))
+              results.add(VResult.BadPlugin(pluginOnIde.first, pluginOnIde.second, reason))
               return@poi
             }
 
@@ -121,7 +121,7 @@ object VManager {
             } catch(e: Exception) {
               val reason = e.message ?: "Failed to read the class-files of the plugin $plugin"
               LOG.error(reason, e)
-              results.add(VResult.BadPlugin(pluginOnIde.first, reason))
+              results.add(VResult.BadPlugin(pluginOnIde.first, pluginOnIde.second, reason))
               return@poi
             }
 

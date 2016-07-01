@@ -67,6 +67,6 @@ class Results {
   private fun someProblematicPlugin() = VResult.Problems(PluginDescriptor.ByBuildId("pluginId", "version", 1), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-123.456.789")), "overview",
       ImmutableMultimap.of(ClassNotFoundProblem("NotFoundClass"), ProblemLocation.fromClass("UserOfNotFoundClass")))
 
-  private fun someBadPlugin() = VResult.BadPlugin(PluginDescriptor.ByBuildId("pluginId", "version", 1), "I am bad")
+  private fun someBadPlugin() = VResult.BadPlugin(PluginDescriptor.ByBuildId("pluginId", "version", 1), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-140.1")), "I am bad")
 
 }

@@ -12,13 +12,15 @@ data class VResults(@SerializedName("results") val results: List<VResult>) {
   constructor(result: VResult) : this(listOf(result))
 }
 
-sealed class VResult(@SerializedName("plugin") val pluginDescriptor: PluginDescriptor) {
+sealed class VResult(@SerializedName("plugin") val pluginDescriptor: PluginDescriptor,
+                     @SerializedName("ide") val ideDescriptor: IdeDescriptor,
+                     @SerializedName("overview") val overview: String) {
   /**
    * Indicates that the Plugin doesn't have compatibility problems with the checked IDE.
    */
   class Nice(pluginDescriptor: PluginDescriptor,
-             @SerializedName("ide") val ideDescriptor: IdeDescriptor,
-             @SerializedName("overview") val overview: String) : VResult(pluginDescriptor) {
+             ideDescriptor: IdeDescriptor,
+             overview: String) : VResult(pluginDescriptor, ideDescriptor, overview) {
 
     override fun toString(): String {
       return "VResult.Nice(plugin=$pluginDescriptor, ide=$ideDescriptor, overview='$overview')"
@@ -29,9 +31,9 @@ sealed class VResult(@SerializedName("plugin") val pluginDescriptor: PluginDescr
    * The Plugin has compatibility problems with the IDE. They are listed in the [problems]
    */
   class Problems(pluginDescriptor: PluginDescriptor,
-                 @SerializedName("ide") val ideDescriptor: IdeDescriptor,
-                 @SerializedName("overview") val overview: String,
-                 @SerializedName("problems") val problems: Multimap<Problem, ProblemLocation>) : VResult(pluginDescriptor) {
+                 ideDescriptor: IdeDescriptor,
+                 overview: String,
+                 @SerializedName("problems") val problems: Multimap<Problem, ProblemLocation>) : VResult(pluginDescriptor, ideDescriptor, overview) {
 
     override fun toString(): String {
       return "VResult.Problems(plugin=$pluginDescriptor, ide=$ideDescriptor, overview='$overview', problems=$problems)"
@@ -44,10 +46,11 @@ sealed class VResult(@SerializedName("plugin") val pluginDescriptor: PluginDescr
    * The [reason] is a user-friendly description of the problem.
    */
   class BadPlugin(pluginDescriptor: PluginDescriptor,
-                  @SerializedName("reason") val reason: String) : VResult(pluginDescriptor) {
+                  ideDescriptor: IdeDescriptor,
+                  reason: String) : VResult(pluginDescriptor, ideDescriptor, reason) {
 
     override fun toString(): String {
-      return "VResult.BadPlugin(plugin=$pluginDescriptor, reason='$reason')"
+      return "VResult.BadPlugin(plugin=$pluginDescriptor, reason='$overview')"
     }
 
 
