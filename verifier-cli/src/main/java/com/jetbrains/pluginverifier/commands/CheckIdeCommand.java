@@ -15,7 +15,10 @@ import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.results.ProblemSet;
-import com.jetbrains.pluginverifier.utils.*;
+import com.jetbrains.pluginverifier.utils.HtmlReportBuilder;
+import com.jetbrains.pluginverifier.utils.StringUtil;
+import com.jetbrains.pluginverifier.utils.Util;
+import com.jetbrains.pluginverifier.utils.VerificationProblem;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityVPrinter;
@@ -35,14 +38,12 @@ import java.util.function.Predicate;
  */
 public class CheckIdeCommand extends VerifierCommand {
 
-  public static final String NO_COMPATIBLE_UPDATE_VERSION = "no compatible update";
   /**
    * List of IntelliJ plugins which has defined module inside (e.g. plugin "org.jetbrains.plugins.ruby" has a module
    * "com.intellij.modules.ruby" inside)
    */
   private static final ImmutableList<String> INTELLIJ_MODULES_PLUGIN_IDS =
       ImmutableList.of("org.jetbrains.plugins.ruby", "com.jetbrains.php", "org.jetbrains.android", "Pythonid", "PythonCore");
-  private TeamCityVPrinter.GroupBy myGroupBy;
   private TeamCityLog myTc;
   private File myJdkDir;
   private VOptions myVerifierOptions;
@@ -63,19 +64,6 @@ public class CheckIdeCommand extends VerifierCommand {
 
   public CheckIdeCommand() {
     super("check-ide");
-  }
-
-
-  private static void saveResultsToXml(@NotNull String xmlFile,
-                                       @NotNull String ideVersion,
-                                       @NotNull Map<UpdateInfo, ProblemSet> results) throws IOException {
-    Map<UpdateInfo, Collection<Problem>> problems = new LinkedHashMap<>();
-
-    for (Map.Entry<UpdateInfo, ProblemSet> entry : results.entrySet()) {
-      problems.put(entry.getKey(), entry.getValue().getAllProblems());
-    }
-
-    ProblemUtils.saveProblems(new File(xmlFile), ideVersion, problems);
   }
 
   /**
@@ -122,7 +110,7 @@ public class CheckIdeCommand extends VerifierCommand {
       if (!hasCompatibleUpdate) {
         //try to find this update in the compatible updates of IDEA Community
 
-        UpdateInfo missingUpdate = new UpdateInfo(pluginId, pluginId, NO_COMPATIBLE_UPDATE_VERSION);
+        UpdateInfo missingUpdate = new UpdateInfo(pluginId, pluginId, "no compatible update");
 
         UpdateInfo buildForCommunity = getUpdateCompatibleWithCommunityEdition(pluginId);
         if (buildForCommunity != null) {
@@ -165,8 +153,6 @@ public class CheckIdeCommand extends VerifierCommand {
     if (!ideToCheck.isDirectory()) {
       throw new RuntimeException("IDE home is not a directory: " + ideToCheck);
     }
-
-    myGroupBy = TeamCityVPrinter.GroupBy.parse(commandLine);
 
     myTc = TeamCityLog.Companion.getInstance(commandLine);
 
@@ -353,7 +339,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     //Save results to XML if necessary
     if (commandLine.hasOption("xr")) {
-      saveResultsToXml(commandLine.getOptionValue("xr"), myIde.getVersion().toString(), myResults);
+      Util.INSTANCE.saveResultsToXml(commandLine.getOptionValue("xr"), myIde.getVersion().toString(), myResults);
     }
 
 
@@ -372,7 +358,7 @@ public class CheckIdeCommand extends VerifierCommand {
         File file = new File(myReportFile);
         System.out.println("Saving report to " + file.getAbsolutePath());
 
-        CheckIdeHtmlReportBuilder.build(file, myIde.getVersion().asString(), myCheckedIds, myExcludedUpdatesFilter, myResults);
+        HtmlReportBuilder.INSTANCE.build(file, myIde.getVersion(), myExcludedUpdatesFilter, myResults);
       }
     }
 

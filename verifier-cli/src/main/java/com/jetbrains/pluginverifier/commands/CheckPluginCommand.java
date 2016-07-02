@@ -12,7 +12,6 @@ import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.misc.PluginCache;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.ProblemSet;
-import com.jetbrains.pluginverifier.utils.CommandHolder;
 import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.utils.VerificationProblem;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;

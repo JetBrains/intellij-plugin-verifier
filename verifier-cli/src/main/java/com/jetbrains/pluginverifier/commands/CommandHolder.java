@@ -1,9 +1,5 @@
-package com.jetbrains.pluginverifier.utils;
+package com.jetbrains.pluginverifier.commands;
 
-import com.jetbrains.pluginverifier.commands.CheckIdeCommand;
-import com.jetbrains.pluginverifier.commands.CheckPluginCommand;
-import com.jetbrains.pluginverifier.commands.NewProblemsCommand;
-import com.jetbrains.pluginverifier.commands.VerifierCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

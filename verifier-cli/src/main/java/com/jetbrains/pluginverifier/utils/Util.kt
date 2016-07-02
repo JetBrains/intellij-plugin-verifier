@@ -5,9 +5,12 @@ import com.google.common.base.Joiner
 import com.google.common.collect.*
 import com.google.common.io.Files
 import com.intellij.structure.domain.IdeVersion
+import com.jetbrains.pluginverifier.commands.CommandHolder
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration
+import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
+import com.jetbrains.pluginverifier.results.ProblemSet
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.HelpFormatter
 import org.apache.commons.cli.Options
@@ -174,6 +177,19 @@ object Util {
         out.println(ParametersListUtil.join(entry.value.map { it.version }.sortedWith(VersionComparatorUtil.COMPARATOR)))
       }
     }
+  }
+
+  @Throws(IOException::class)
+  fun saveResultsToXml(xmlFile: String,
+                       ideVersion: String,
+                       results: Map<UpdateInfo, ProblemSet>) {
+    val problems = LinkedHashMap<UpdateInfo, Collection<Problem>>()
+
+    for (entry in results.entries) {
+      problems.put(entry.key, entry.value.allProblems)
+    }
+
+    ProblemUtils.saveProblems(File(xmlFile), ideVersion, problems)
   }
 
   fun isDefaultModule(moduleId: String): Boolean {
