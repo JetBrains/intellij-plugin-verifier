@@ -5,7 +5,6 @@ import com.google.common.base.Joiner
 import com.google.common.collect.*
 import com.google.common.io.Files
 import com.intellij.structure.domain.IdeVersion
-import com.jetbrains.pluginverifier.commands.CommandHolder
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration
 import com.jetbrains.pluginverifier.problems.Problem
@@ -227,8 +226,7 @@ object Util {
     } else {
       val file = File(pluginToTestArg)
       if (!file.exists()) {
-        // Looks like user write unknown command. This command was called because it's default command.
-        throw RuntimeException("Unknown command: " + pluginToTestArg + "\navailable commands: " + Joiner.on(", ").join(CommandHolder.getCommandMap().keys))
+        throw IllegalArgumentException("The file $file doesn't exist")
       }
       return listOf(Pair(updateInfoByFile(file), file))
     }

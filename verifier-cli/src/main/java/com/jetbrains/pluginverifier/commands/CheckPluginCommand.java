@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.commands;
 
-import com.google.common.base.Joiner;
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
@@ -40,7 +39,12 @@ public class CheckPluginCommand extends VerifierCommand {
 
   @Override
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
-    verifyArgs(commandLine, freeArgs);
+    if (freeArgs.isEmpty()) {
+      // User run command 'check-plugin' without parameters
+      throw new RuntimeException("You must specify plugin to check and IDE, example:\n" +
+          "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963\n" +
+          "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963");
+    }
 
     String pluginsToTestArg = freeArgs.get(0);
 
@@ -194,24 +198,6 @@ public class CheckPluginCommand extends VerifierCommand {
     if (!ideaDirectory.isDirectory()) {
       throw new RuntimeException("IDE directory is not a directory: " + ideaDirectory);
     }
-  }
-
-  private void verifyArgs(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) {
-    if (commandLine.getArgs().length == 0) {
-      // it's default command. Looks like user start application without parameters
-      throw new RuntimeException("You must specify one of the commands: " + Joiner.on(", ").join(CommandHolder.getCommandMap().keySet()) + "\n" +
-          "Examples:\n" +
-          "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963 ~/EAPs/idea-IU-129.713 ~/EAPs/idea-IU-133.439\n" +
-          "java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439 -pl org.intellij.scala");
-    }
-
-    if (freeArgs.isEmpty()) {
-      // User run command 'check-plugin' without parameters
-      throw new RuntimeException("You must specify plugin to check and IDE, example:\n" +
-          "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963\n" +
-          "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963");
-    }
-
   }
 
   @TestOnly
