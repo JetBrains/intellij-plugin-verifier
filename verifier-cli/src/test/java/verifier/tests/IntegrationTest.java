@@ -13,7 +13,10 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class IntegrationTest {
   @Test
@@ -34,7 +37,7 @@ public class IntegrationTest {
 
     List<String> args = Arrays.asList(plugin.getPath(), ide.getPath());
 
-    final CommandLine commandLine = new GnuParser().parse(Util.CMD_OPTIONS, args.toArray(new String[args.size()]));
+    final CommandLine commandLine = new GnuParser().parse(Util.INSTANCE.getCMD_OPTIONS(), args.toArray(new String[args.size()]));
     final CheckPluginCommand checkPluginCommand = new CheckPluginCommand();
     checkPluginCommand.execute(commandLine, Arrays.asList(commandLine.getArgs()));
 
@@ -44,19 +47,14 @@ public class IntegrationTest {
   private String problemSetToString(ProblemSet set) {
     StringWriter result = new StringWriter();
 
-    final ArrayList<Problem> problems = new ArrayList<Problem>(set.asMap().keySet());
-    Collections.sort(problems, new Comparator<Problem>() {
-      @Override
-      public int compare(Problem o1, Problem o2) {
-        return o1.getDescription().compareTo(o2.getDescription());
-      }
-    });
+    final ArrayList<Problem> problems = new ArrayList<>(set.asMap().keySet());
+    Collections.sort(problems, (o1, o2) -> o1.getDescription().compareTo(o2.getDescription()));
 
     for (Problem problem : problems) {
       result.append(problem.getDescription()).append("\n");
 
-      final List<ProblemLocation> locations = new ArrayList<ProblemLocation>(set.getLocations(problem));
-      Collections.sort(locations, new ToStringCachedComparator<ProblemLocation>());
+      final List<ProblemLocation> locations = new ArrayList<>(set.getLocations(problem));
+      Collections.sort(locations, new ToStringCachedComparator<>());
       for (ProblemLocation location : locations) {
         result.append("  ").append(location.toString());
       }

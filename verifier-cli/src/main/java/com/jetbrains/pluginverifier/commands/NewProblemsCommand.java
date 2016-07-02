@@ -7,7 +7,6 @@ import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.MissingDependencyProblem;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.*;
-import com.jetbrains.pluginverifier.utils.FailUtil;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
 import com.jetbrains.pluginverifier.utils.ProblemUtils;
 import com.jetbrains.pluginverifier.utils.StringUtil;
@@ -144,14 +143,14 @@ public class NewProblemsCommand extends VerifierCommand {
   @Override
   public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.isEmpty()) {
-      throw FailUtil.fail("You have to specify a report to compare and print. For example: \"java -jar verifier.jar new-problems report-133.439.xml\"");
+      throw new RuntimeException("You have to specify a report to compare and print. For example: \"java -jar verifier.jar new-problems report-133.439.xml\"");
     }
 
     TeamCityVPrinter.GroupBy reportGrouping = TeamCityVPrinter.GroupBy.parse(commandLine);
 
     File reportToCheck = new File(freeArgs.get(0));
     if (!reportToCheck.isFile()) {
-      throw FailUtil.fail("Report not found: " + reportToCheck);
+      throw new RuntimeException("Report not found: " + reportToCheck);
     }
 
     ResultsElement checkResult = ProblemUtils.loadProblems(reportToCheck);
@@ -168,7 +167,7 @@ public class NewProblemsCommand extends VerifierCommand {
     try {
       checkedBuilds = findPreviousBuilds(ideBuild, resultsRepository);
     } catch (IOException e) {
-      throw FailUtil.fail("Couldn't get check results list from the server " + resultsRepository.getRepositoryUrl(), e);
+      throw new RuntimeException("Couldn't get check results list from the server " + resultsRepository.getRepositoryUrl(), e);
     }
 
     List<ResultsElement> checks = new ArrayList<>();
@@ -177,7 +176,7 @@ public class NewProblemsCommand extends VerifierCommand {
         checks.add(ProblemUtils.loadProblems(resultsRepository.getReportFile(build)));
       }
     } catch (IOException e) {
-      throw FailUtil.fail("Couldn't get check from the server " + resultsRepository.getRepositoryUrl(), e);
+      throw new RuntimeException("Couldn't get check from the server " + resultsRepository.getRepositoryUrl(), e);
     }
 
     if (checks.isEmpty()) {

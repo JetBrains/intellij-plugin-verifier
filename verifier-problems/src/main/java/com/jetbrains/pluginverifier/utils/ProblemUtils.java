@@ -82,7 +82,7 @@ public class ProblemUtils {
           ProblemSet.class
       );
     } catch (JAXBException e) {
-      throw FailUtil.fail(e);
+      throw new RuntimeException(e);
     }
   }
 

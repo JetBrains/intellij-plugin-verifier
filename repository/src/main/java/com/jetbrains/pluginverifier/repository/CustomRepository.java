@@ -9,7 +9,6 @@ import com.intellij.structure.errors.IncorrectPluginException;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.DownloadManager;
 import com.jetbrains.pluginverifier.misc.PluginCache;
-import com.jetbrains.pluginverifier.utils.FailUtil;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -65,7 +64,7 @@ class CustomRepository implements PluginRepository {
         repositoriesMap.put(update, pluginUrl);
       }
     } catch (Exception e) {
-      throw FailUtil.fail(String.format("Failed to download plugin list from %s (%s)\n", url, e.getLocalizedMessage()));
+      throw new RuntimeException(String.format("Failed to download plugin list from %s (%s)\n", url, e.getLocalizedMessage()));
     }
   }
 

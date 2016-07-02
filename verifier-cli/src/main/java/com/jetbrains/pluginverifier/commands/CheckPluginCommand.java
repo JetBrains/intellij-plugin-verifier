@@ -13,7 +13,6 @@ import com.jetbrains.pluginverifier.misc.PluginCache;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.utils.CommandHolder;
-import com.jetbrains.pluginverifier.utils.FailUtil;
 import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.utils.VerificationProblem;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
@@ -47,7 +46,7 @@ public class CheckPluginCommand extends VerifierCommand {
     String pluginsToTestArg = freeArgs.get(0);
 
     if (freeArgs.size() == 1) {
-      throw FailUtil.fail("You must specify IDE directory/directories, example:\n" +
+      throw new RuntimeException("You must specify IDE directory/directories, example:\n" +
           "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963");
     }
 
@@ -72,7 +71,7 @@ public class CheckPluginCommand extends VerifierCommand {
       Ide ide = createIde(ideaDirectory, commandLine);
       try (Resolver ideResolver = Resolver.createIdeResolver(ide)) {
 
-        List<Pair<UpdateInfo, File>> pluginFiles = Util.loadPluginFiles(pluginsToTestArg, ide.getVersion());
+        List<Pair<UpdateInfo, File>> pluginFiles = Util.INSTANCE.loadPluginFiles(pluginsToTestArg, ide.getVersion());
 
         for (Pair<UpdateInfo, File> pluginFile : pluginFiles) {
           try {
@@ -112,7 +111,7 @@ public class CheckPluginCommand extends VerifierCommand {
             final String message = "failed to verify plugin " + pluginFile.getFirst();
             System.err.println(message);
             e.printStackTrace();
-            tc.messageError(message, Util.getStackTrace(e));
+            tc.messageError(message, Util.INSTANCE.getStackTrace(e));
           }
         }
       }
@@ -190,18 +189,18 @@ public class CheckPluginCommand extends VerifierCommand {
 
   private void verifyIdeaDirectory(@NotNull File ideaDirectory) {
     if (!ideaDirectory.exists()) {
-      throw FailUtil.fail("IDE directory is not found: " + ideaDirectory);
+      throw new RuntimeException("IDE directory is not found: " + ideaDirectory);
     }
 
     if (!ideaDirectory.isDirectory()) {
-      throw FailUtil.fail("IDE directory is not a directory: " + ideaDirectory);
+      throw new RuntimeException("IDE directory is not a directory: " + ideaDirectory);
     }
   }
 
   private void verifyArgs(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) {
     if (commandLine.getArgs().length == 0) {
       // it's default command. Looks like user start application without parameters
-      throw FailUtil.fail("You must specify one of the commands: " + Joiner.on(", ").join(CommandHolder.getCommandMap().keySet()) + "\n" +
+      throw new RuntimeException("You must specify one of the commands: " + Joiner.on(", ").join(CommandHolder.getCommandMap().keySet()) + "\n" +
           "Examples:\n" +
           "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963 ~/EAPs/idea-IU-129.713 ~/EAPs/idea-IU-133.439\n" +
           "java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439 -pl org.intellij.scala");
@@ -209,7 +208,7 @@ public class CheckPluginCommand extends VerifierCommand {
 
     if (freeArgs.isEmpty()) {
       // User run command 'check-plugin' without parameters
-      throw FailUtil.fail("You must specify plugin to check and IDE, example:\n" +
+      throw new RuntimeException("You must specify plugin to check and IDE, example:\n" +
           "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963\n" +
           "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963");
     }

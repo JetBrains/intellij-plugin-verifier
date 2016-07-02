@@ -195,7 +195,7 @@ public class VerifierTest {
 
     Plugin plugin = PluginManager.getInstance().createPlugin(pluginFile);
 
-    final CommandLine commandLine = new GnuParser().parse(Util.CMD_OPTIONS, new String[]{});
+    final CommandLine commandLine = new GnuParser().parse(Util.INSTANCE.getCMD_OPTIONS(), new String[]{});
 
 
     String jdkPath = System.getenv("JAVA_HOME");

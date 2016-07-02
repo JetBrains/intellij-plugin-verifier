@@ -158,12 +158,12 @@ public class CheckIdeCommand extends VerifierCommand {
 
   private void fillArguments(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws IOException, JDOMException {
     if (freeArgs.isEmpty()) {
-      throw FailUtil.fail("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"");
+      throw new RuntimeException("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"");
     }
 
     File ideToCheck = new File(freeArgs.get(0));
     if (!ideToCheck.isDirectory()) {
-      throw FailUtil.fail("IDE home is not a directory: " + ideToCheck);
+      throw new RuntimeException("IDE home is not a directory: " + ideToCheck);
     }
 
     myGroupBy = TeamCityVPrinter.GroupBy.parse(commandLine);
@@ -179,7 +179,7 @@ public class CheckIdeCommand extends VerifierCommand {
     myIde = createIde(ideToCheck, commandLine);
     myIdeResolver = Resolver.createIdeResolver(myIde);
 
-    Pair<List<String>, List<String>> pluginsIds = Util.extractPluginToCheckList(commandLine);
+    Pair<List<String>, List<String>> pluginsIds = Util.INSTANCE.extractPluginToCheckList(commandLine);
     List<String> checkAllBuilds = pluginsIds.getFirst();
     List<String> checkLastBuilds = pluginsIds.getSecond();
 
@@ -216,12 +216,12 @@ public class CheckIdeCommand extends VerifierCommand {
     }
 
     //preserve initial lists of plugins
-    myCheckedIds = Util.concat(checkAllBuilds, checkLastBuilds);
+    myCheckedIds = Util.INSTANCE.concat(checkAllBuilds, checkLastBuilds);
 
     myDumpBrokenPluginsFile = commandLine.getOptionValue("d");
     myReportFile = commandLine.getOptionValue("report");
 
-    myExcludedPlugins = Util.getExcludedPlugins(commandLine);
+    myExcludedPlugins = Util.INSTANCE.getExcludedPlugins(commandLine);
 
     myExcludedUpdatesFilter = input -> !myExcludedPlugins.containsEntry(input.getPluginId(), input.getVersion());
 
@@ -291,7 +291,7 @@ public class CheckIdeCommand extends VerifierCommand {
         }
 
         if (updateFile == null) {
-          throw FailUtil.fail("Plugin " + updateJson + " is not found in the repository");
+          throw new RuntimeException("Plugin " + updateJson + " is not found in the repository");
         }
 
         Plugin plugin;
@@ -340,7 +340,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
         System.err.println("Failed to verify plugin " + updateJson + " because " + details);
         e.printStackTrace();
-        myTc.messageError("Failed to verify plugin " + updateJson + " because " + details, Util.getStackTrace(e));
+        myTc.messageError("Failed to verify plugin " + updateJson + " because " + details, Util.INSTANCE.getStackTrace(e));
       }
 
     }
@@ -363,7 +363,7 @@ public class CheckIdeCommand extends VerifierCommand {
       if (myDumpBrokenPluginsFile != null) {
         System.out.println("Dumping list of broken plugins to " + myDumpBrokenPluginsFile);
 
-        Util.dumbBrokenPluginsList(myDumpBrokenPluginsFile, Collections2.filter(myUpdatesToCheck, update -> {
+        Util.INSTANCE.dumbBrokenPluginsList(myDumpBrokenPluginsFile, Collections2.filter(myUpdatesToCheck, update -> {
           return myResults.get(update) != null && !myResults.get(update).isEmpty(); //update to check contains some problem
         }));
       }

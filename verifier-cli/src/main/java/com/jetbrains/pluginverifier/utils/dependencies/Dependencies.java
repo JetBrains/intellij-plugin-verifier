@@ -103,7 +103,7 @@ public final class Dependencies {
           String depId = pd.getId();
           Plugin dependency;
           if (isModule) {
-            if (Util.isDefaultModule(depId)) {
+            if (Util.INSTANCE.isDefaultModule(depId)) {
               continue;
             }
             dependency = ide.getPluginByModule(depId);

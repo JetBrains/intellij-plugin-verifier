@@ -5,7 +5,6 @@ import com.google.common.collect.ImmutableList;
 import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
-import com.jetbrains.pluginverifier.utils.FailUtil;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +44,7 @@ public class RepositoryManager implements PluginRepository {
         try {
           reps.add(new CustomRepository(new URL(repositoryUrl)));
         } catch (MalformedURLException e) {
-          throw FailUtil.fail("Unable to connect custom repository by " + repositoryUrl, e);
+          throw new RuntimeException("Unable to connect custom repository by " + repositoryUrl, e);
         }
       }
     }

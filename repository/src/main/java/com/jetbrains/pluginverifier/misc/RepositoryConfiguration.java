@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.misc;
 
-import com.jetbrains.pluginverifier.utils.FailUtil;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +58,7 @@ public class RepositoryConfiguration {
   private File getVerifierHome() {
     String homeDir = getProperty("home.directory.name");
     if (homeDir == null) {
-      throw FailUtil.fail("Repository home directory is not specified");
+      throw new RuntimeException("Repository home directory is not specified");
     }
     return new File(getProperty("user.home"), homeDir);
   }
@@ -76,7 +75,7 @@ public class RepositoryConfiguration {
   public String getPluginRepositoryUrl() {
     String res = getProperty("plugin.repository.url");
     if (res == null) {
-      throw FailUtil.fail("Plugin repository URL is not specified");
+      throw new RuntimeException("Plugin repository URL is not specified");
     }
 
     if (res.endsWith("/")) {
