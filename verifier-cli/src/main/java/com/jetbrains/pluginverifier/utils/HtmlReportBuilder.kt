@@ -26,6 +26,8 @@ object HtmlReportBuilder {
             ideVersion: IdeVersion,
             updateFilter: Predicate<UpdateInfo>,
             results: Map<UpdateInfo, ProblemSet>) {
+    println("Saving report to " + report.absolutePath)
+
     //pluginId -> [list of all its checked builds]
     val pidToBuilds: Map<String, List<UpdateInfo>> = results.keys
         .groupBy { it.pluginId!! }

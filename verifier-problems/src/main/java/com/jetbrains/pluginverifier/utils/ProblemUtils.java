@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
+import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.location.CodeLocation;
 import com.jetbrains.pluginverifier.location.PluginLocation;
@@ -149,12 +150,12 @@ public class ProblemUtils {
   }
 
   public static void saveProblems(@NotNull File output,
-                                  @NotNull String ide,
+                                  @NotNull IdeVersion ideVersion,
                                   @NotNull Map<UpdateInfo, Collection<Problem>> problems)
       throws IOException {
     ResultsElement resultsElement = new ResultsElement();
 
-    resultsElement.setIde(ide);
+    resultsElement.setIde(ideVersion.asString());
     resultsElement.initFromMap(problems);
 
     marshallObject(output, resultsElement);

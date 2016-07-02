@@ -63,7 +63,7 @@ object VParamsCreator {
    * @throws IOException if the plugin has a broken File.
    * @throws RepositoryException if the plugin is not found in the Repository, or if the Repository doesn't respond.
    */
-  @Throws(IncorrectPluginException::class, IOException::class)
+  @Throws(IncorrectPluginException::class, IOException::class, RepositoryException::class)
   fun getPlugin(plugin: PluginDescriptor, ideVersion: IdeVersion? = null): Plugin = when (plugin) {
     is PluginDescriptor.ByInstance -> plugin.plugin //already created.
     is PluginDescriptor.ByFile -> PluginManager.getInstance().createPlugin(plugin.file) //IncorrectPluginException, IOException

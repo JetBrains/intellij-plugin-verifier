@@ -39,7 +39,9 @@ object PluginVerifierMain {
       System.err.println("Unknown command $command. Should be one of ${COMMAND_MAP.keys.joinToString()}")
       System.exit(1)
     }
+    val time = System.currentTimeMillis()
     val exitCode = verifierCommand!!.execute(commandLine, params.toList())
+    println("Completed in ${(System.currentTimeMillis() - time) / 1000} seconds")
 
     //TODO: replace exitCode0 with cli-parameter
     if (exitCode != 0 && !java.lang.Boolean.getBoolean("exitCode0")) {

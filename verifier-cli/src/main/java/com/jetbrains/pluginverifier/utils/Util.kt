@@ -4,7 +4,12 @@ import com.google.common.base.Charsets
 import com.google.common.base.Joiner
 import com.google.common.collect.*
 import com.google.common.io.Files
+import com.intellij.structure.domain.Ide
+import com.intellij.structure.domain.IdeManager
 import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.domain.Plugin
+import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration
 import com.jetbrains.pluginverifier.problems.Problem
@@ -13,7 +18,6 @@ import com.jetbrains.pluginverifier.results.ProblemSet
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.HelpFormatter
 import org.apache.commons.cli.Options
-import org.apache.commons.io.IOUtils
 import java.io.*
 import java.util.*
 
@@ -72,6 +76,9 @@ object Util {
     return res
   }
 
+  /**
+   * (id-s of plugins to check all builds, id-s of plugins to check last builds)
+   */
   fun extractPluginToCheckList(commandLine: CommandLine): Pair<List<String>, List<String>> {
     val pluginsCheckAllBuilds = ArrayList<String>()
     val pluginsCheckLastBuilds = ArrayList<String>()
@@ -132,8 +139,7 @@ object Util {
     //no predicate specified
 
     //file containing list of broken plugins (e.g. IDEA-*/lib/resources.jar!/brokenPlugins.txt)
-    val br = BufferedReader(FileReader(File(epf)))
-    try {
+    BufferedReader(FileReader(File(epf))).use { br ->
       val m = HashMultimap.create<String, String>()
 
       var s: String
@@ -156,14 +162,13 @@ object Util {
       }
 
       return m
-
-    } finally {
-      IOUtils.closeQuietly(br)
     }
   }
 
   @Throws(IOException::class)
-  fun dumbBrokenPluginsList(dumpBrokenPluginsFile: String, brokenUpdates: Collection<UpdateInfo>) {
+  fun dumbBrokenPluginsList(dumpBrokenPluginsFile: String, brokenUpdates: List<UpdateInfo>) {
+    println("Dumping list of broken plugins to " + dumpBrokenPluginsFile)
+
     PrintWriter(dumpBrokenPluginsFile).use { out ->
       out.println("// This file contains list of broken plugins.\n" +
           "// Each line contains plugin ID and list of versions that are broken.\n" +
@@ -179,8 +184,8 @@ object Util {
   }
 
   @Throws(IOException::class)
-  fun saveResultsToXml(xmlFile: String,
-                       ideVersion: String,
+  fun saveResultsToXml(xmlFile: File,
+                       ideVersion: IdeVersion,
                        results: Map<UpdateInfo, ProblemSet>) {
     val problems = LinkedHashMap<UpdateInfo, Collection<Problem>>()
 
@@ -188,8 +193,86 @@ object Util {
       problems.put(entry.key, entry.value.allProblems)
     }
 
-    ProblemUtils.saveProblems(File(xmlFile), ideVersion, problems)
+    ProblemUtils.saveProblems(xmlFile, ideVersion, problems)
   }
+
+  @Throws(IOException::class)
+  fun createIde(ideToCheck: File, commandLine: CommandLine): Ide {
+    return IdeManager.getInstance().createIde(ideToCheck, takeVersionFromCmd(commandLine))
+  }
+
+  @Throws(IOException::class)
+  private fun takeVersionFromCmd(commandLine: CommandLine): IdeVersion? {
+    val build = commandLine.getOptionValue("iv")
+    if (build != null && !build.isEmpty()) {
+      try {
+        return IdeVersion.createIdeVersion(build)
+      } catch (e: IllegalArgumentException) {
+        throw RuntimeException("Incorrect update IDE-version has been specified " + build, e)
+      }
+
+    }
+    return null
+  }
+
+  @Throws(Exception::class)
+  fun verify(plugin: Plugin,
+             ide: Ide,
+             ideResolver: Resolver,
+             jdkDir: File,
+             externalClassPath: Resolver,
+             options: VOptions): ProblemSet {
+    val jdkDescriptor = JdkDescriptor.ByFile(jdkDir)
+    val pairs = listOf(Pair<PluginDescriptor, IdeDescriptor>(PluginDescriptor.ByInstance(plugin), IdeDescriptor.ByInstance(ide, ideResolver)))
+
+    //the exceptions are propagated
+    val result = VManager.verify(VParams(jdkDescriptor, pairs, options, externalClassPath)).results[0]
+
+    if (result is VResult.Problems) {
+      val problemSet = ProblemSet()
+      result.problems.entries().forEach { x -> problemSet.addProblem(x.key, x.value) }
+      return problemSet
+    } else if (result is VResult.BadPlugin) {
+      throw IllegalArgumentException(result.overview) //will be caught above
+    }
+    return ProblemSet()
+  }
+
+
+  @Throws(IOException::class)
+  fun getJdkDir(commandLine: CommandLine): File {
+    val runtimeDirectory: File
+
+    if (commandLine.hasOption('r')) {
+      runtimeDirectory = File(commandLine.getOptionValue('r'))
+      if (!runtimeDirectory.isDirectory) {
+        throw RuntimeException("Specified runtime directory is not a directory: " + commandLine.getOptionValue('r'))
+      }
+    } else {
+      val javaHome = System.getenv("JAVA_HOME") ?: throw RuntimeException("JAVA_HOME is not specified")
+
+      runtimeDirectory = File(javaHome)
+      if (!runtimeDirectory.isDirectory) {
+        throw RuntimeException("Invalid JAVA_HOME: " + javaHome)
+      }
+    }
+
+    return runtimeDirectory
+  }
+
+  @Throws(IOException::class)
+  fun getExternalClassPath(commandLine: CommandLine): Resolver {
+    val values = commandLine.getOptionValues("cp") ?: return Resolver.getEmptyResolver()
+
+    val pools = ArrayList<Resolver>(values.size)
+
+    for (value in values) {
+      pools.add(Resolver.createJarResolver(File(value)))
+    }
+
+    return Resolver.createUnionResolver("External classpath resolver: " + Arrays.toString(values), pools)
+  }
+
 
   fun isDefaultModule(moduleId: String): Boolean {
     return IDEA_ULTIMATE_MODULES.contains(moduleId)
