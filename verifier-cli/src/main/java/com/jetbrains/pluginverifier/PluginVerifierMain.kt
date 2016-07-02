@@ -32,7 +32,7 @@ object PluginVerifierMain {
     }
 
     val command = args[0]
-    val params = args.copyOfRange(1, args.size)
+    val freeArgs = commandLine.args.copyOfRange(1, commandLine.args.size)
 
     val verifierCommand = COMMAND_MAP[command]
     if (verifierCommand == null) {
@@ -40,7 +40,7 @@ object PluginVerifierMain {
       System.exit(1)
     }
     val time = System.currentTimeMillis()
-    val exitCode = verifierCommand!!.execute(commandLine, params.toList())
+    val exitCode = verifierCommand!!.execute(commandLine, freeArgs.toList())
     println("Completed in ${(System.currentTimeMillis() - time) / 1000} seconds")
 
     //TODO: replace exitCode0 with cli-parameter
