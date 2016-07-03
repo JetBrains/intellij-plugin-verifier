@@ -12,6 +12,7 @@ import com.jetbrains.pluginverifier.misc.PluginCache;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.ProblemSet;
 import com.jetbrains.pluginverifier.utils.Util;
+import com.jetbrains.pluginverifier.utils.VOptionsUtil;
 import com.jetbrains.pluginverifier.utils.VerificationProblem;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
@@ -53,7 +54,7 @@ public class CheckPluginCommand extends VerifierCommand {
           "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963");
     }
 
-    VOptions options = VOptions.Companion.parseOpts(commandLine);
+    VOptions options = VOptionsUtil.parseOpts(commandLine);
 
     long startTime = System.currentTimeMillis();
 
@@ -65,13 +66,13 @@ public class CheckPluginCommand extends VerifierCommand {
 
     List<Pair<UpdateInfo, ? extends Problem>> brokenPlugins = new ArrayList<>();
 
-    File jdkDir = getJdkDir(commandLine);
+    File jdkDir = Util.INSTANCE.getJdkDir(commandLine);
 
     for (int i = 1; i < freeArgs.size(); i++) {
       File ideaDirectory = new File(freeArgs.get(i));
       verifyIdeaDirectory(ideaDirectory);
 
-      Ide ide = createIde(ideaDirectory, commandLine);
+      Ide ide = Util.INSTANCE.createIde(ideaDirectory, commandLine);
       try (Resolver ideResolver = Resolver.createIdeResolver(ide)) {
 
         List<Pair<UpdateInfo, File>> pluginFiles = Util.INSTANCE.loadPluginFiles(pluginsToTestArg, ide.getVersion());
@@ -86,7 +87,7 @@ public class CheckPluginCommand extends VerifierCommand {
 
             ProblemSet problemSet;
             try (TeamCityLog.Block block = tc.blockOpen(plugin.getPluginId())) {
-              problemSet = verify(plugin, ide, ideResolver, jdkDir, getExternalClassPath(commandLine), options);
+              problemSet = Util.INSTANCE.verify(plugin, ide, ideResolver, jdkDir, Util.INSTANCE.getExternalClassPath(commandLine), options);
             }
 
             myLastProblemSet = problemSet;

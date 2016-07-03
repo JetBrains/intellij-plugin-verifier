@@ -12,6 +12,8 @@ dependencies {
   compile project(':verifier-problems')
   compile project(':repository')
   compile project(':common-utils')
+  compile project(':verifier-core')
+
   compile group: 'commons-cli', name: 'commons-cli', version: '1.2'
   compile group: 'com.google.guava', name: 'guava', version: '15.0'
   compile group: 'com.google.code.gson', name: 'gson', version: '2.2.4'

@@ -15,10 +15,7 @@ import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.results.ProblemSet;
-import com.jetbrains.pluginverifier.utils.HtmlReportBuilder;
-import com.jetbrains.pluginverifier.utils.StringUtil;
-import com.jetbrains.pluginverifier.utils.Util;
-import com.jetbrains.pluginverifier.utils.VerificationProblem;
+import com.jetbrains.pluginverifier.utils.*;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityVPrinter;
@@ -156,13 +153,13 @@ public class CheckIdeCommand extends VerifierCommand {
 
     myTc = TeamCityLog.Companion.getInstance(commandLine);
 
-    myJdkDir = getJdkDir(commandLine);
+    myJdkDir = Util.INSTANCE.getJdkDir(commandLine);
 
-    myVerifierOptions = VOptions.Companion.parseOpts(commandLine);
+    myVerifierOptions = VOptionsUtil.parseOpts(commandLine);
 
-    myExternalClassPath = getExternalClassPath(commandLine);
+    myExternalClassPath = Util.INSTANCE.getExternalClassPath(commandLine);
 
-    myIde = createIde(ideToCheck, commandLine);
+    myIde = Util.INSTANCE.createIde(ideToCheck, commandLine);
     myIdeResolver = Resolver.createIdeResolver(myIde);
 
     Pair<List<String>, List<String>> pluginsIds = Util.INSTANCE.extractPluginToCheckList(commandLine);
@@ -292,7 +289,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
         System.out.println(String.format("Verifying plugin %s (#%d out of %d)...", updateJson, (++updatesProceed), myUpdatesToCheck.size()));
 
-        ProblemSet problemSet = verify(plugin, myIde, myIdeResolver, myJdkDir, myExternalClassPath, myVerifierOptions);
+        ProblemSet problemSet = Util.INSTANCE.verify(plugin, myIde, myIdeResolver, myJdkDir, myExternalClassPath, myVerifierOptions);
 
         myResults.put(updateJson, problemSet);
 
@@ -339,7 +336,7 @@ public class CheckIdeCommand extends VerifierCommand {
 
     //Save results to XML if necessary
     if (commandLine.hasOption("xr")) {
-      Util.INSTANCE.saveResultsToXml(commandLine.getOptionValue("xr"), myIde.getVersion().toString(), myResults);
+      Util.INSTANCE.saveResultsToXml(new File(commandLine.getOptionValue("xr")), myIde.getVersion(), myResults);
     }
 
 
@@ -349,9 +346,9 @@ public class CheckIdeCommand extends VerifierCommand {
       if (myDumpBrokenPluginsFile != null) {
         System.out.println("Dumping list of broken plugins to " + myDumpBrokenPluginsFile);
 
-        Util.INSTANCE.dumbBrokenPluginsList(myDumpBrokenPluginsFile, Collections2.filter(myUpdatesToCheck, update -> {
+        Util.INSTANCE.dumbBrokenPluginsList(myDumpBrokenPluginsFile, new ArrayList<>(Collections2.filter(myUpdatesToCheck, update -> {
           return myResults.get(update) != null && !myResults.get(update).isEmpty(); //update to check contains some problem
-        }));
+        })));
       }
 
       if (myReportFile != null) {

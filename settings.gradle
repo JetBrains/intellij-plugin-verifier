@@ -8,3 +8,5 @@ include 'verifier-cli'
 include 'verifier-cli:after-idea'
 include 'verifier-cli:before-idea'
 include 'verifier-cli:mock-plugin'
+include 'verifier-core'
+

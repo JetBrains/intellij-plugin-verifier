@@ -2,7 +2,10 @@ package com.jetbrains.pluginverifier.utils
 
 import com.google.common.base.Charsets
 import com.google.common.base.Joiner
-import com.google.common.collect.*
+import com.google.common.collect.ArrayListMultimap
+import com.google.common.collect.HashMultimap
+import com.google.common.collect.Iterables
+import com.google.common.collect.Multimap
 import com.google.common.io.Files
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeManager
@@ -16,10 +19,12 @@ import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.results.ProblemSet
 import org.apache.commons.cli.CommandLine
+import org.apache.commons.cli.GnuParser
 import org.apache.commons.cli.HelpFormatter
 import org.apache.commons.cli.Options
 import java.io.*
 import java.util.*
+import java.util.regex.Pattern
 
 object Util {
 
@@ -46,16 +51,6 @@ object Util {
       .addOption("imod", "ignore-missing-optional-dependencies", true, "Missing optional dependencies on the plugin IDs specified in this parameter will be ignored")
       .addOption("ip", "ignore-problems", true, "Problems specified in this file will be ignored. File must contain lines in form <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>")
 
-  //TODO: write a System.option for appending this list.
-  private val IDEA_ULTIMATE_MODULES = ImmutableList.of(
-      "com.intellij.modules.platform",
-      "com.intellij.modules.lang",
-      "com.intellij.modules.vcs",
-      "com.intellij.modules.xml",
-      "com.intellij.modules.xdebugger",
-      "com.intellij.modules.java",
-      "com.intellij.modules.ultimate",
-      "com.intellij.modules.all")
 
   fun printHelp() {
     HelpFormatter().printHelp("java -jar verifier.jar <command> [<args>]", CMD_OPTIONS)
@@ -273,16 +268,6 @@ object Util {
     return Resolver.createUnionResolver("External classpath resolver: " + Arrays.toString(values), pools)
   }
 
-
-  fun isDefaultModule(moduleId: String): Boolean {
-    return IDEA_ULTIMATE_MODULES.contains(moduleId)
-  }
-
-  fun failOnCyclicDependency(): Boolean {
-    //TODO: change this with a method parameter
-    return java.lang.Boolean.parseBoolean(RepositoryConfiguration.getInstance().getProperty("fail.on.cyclic.dependencies"))
-  }
-
   fun loadPluginFiles(pluginToTestArg: String, ideVersion: IdeVersion): List<Pair<UpdateInfo, File>> {
     if (pluginToTestArg.startsWith("@")) {
       val pluginListFile = File(pluginToTestArg.substring(1))
@@ -384,4 +369,107 @@ object Util {
     }
     return result
   }
+}
+
+object VOptionsUtil {
+
+  @JvmStatic
+  fun parseOpts(vararg cmd: String): VOptions = parseOpts(GnuParser().parse(Util.CMD_OPTIONS, cmd))
+
+  @JvmStatic
+  fun parseOpts(commandLine: CommandLine): VOptions {
+    val prefixesToSkipForDuplicateClassesCheck = getOptionValuesSplit(commandLine, ":", "s")
+    for (i in prefixesToSkipForDuplicateClassesCheck.indices) {
+      prefixesToSkipForDuplicateClassesCheck[i] = prefixesToSkipForDuplicateClassesCheck[i].replace('.', '/')
+    }
+
+    val externalClasses = getOptionValuesSplit(commandLine, ":", "e")
+    for (i in externalClasses.indices) {
+      externalClasses[i] = externalClasses[i].replace('.', '/')
+    }
+    val optionalDependenciesIdsToIgnoreIfMissing: Set<String> = HashSet(getOptionValuesSplit(commandLine, ",", "imod").toList())
+
+    var problemsToIgnore: Multimap<Pair<String, String>, Pattern> = HashMultimap.create<Pair<String, String>, Pattern>()
+
+    val ignoreProblemsFile = getOption(commandLine, "ip")
+    if (ignoreProblemsFile != null) {
+      problemsToIgnore = getProblemsToIgnoreFromFile(ignoreProblemsFile)
+    }
+
+    return VOptions(prefixesToSkipForDuplicateClassesCheck, externalClasses, optionalDependenciesIdsToIgnoreIfMissing, problemsToIgnore)
+  }
+
+  private fun getOption(commandLine: CommandLine, shortKey: String): String? {
+    val option = Util.CMD_OPTIONS.getOption(shortKey)
+
+    val cmdValue = commandLine.getOptionValue(shortKey)
+    if (cmdValue != null) return cmdValue
+
+    return RepositoryConfiguration.getInstance().getProperty(option.longOpt)
+  }
+
+  private fun getOptionValues(commandLine: CommandLine, shortKey: String): List<String> {
+    val res = ArrayList<String>()
+
+    val cmdValues = commandLine.getOptionValues(shortKey)
+    if (cmdValues != null) {
+      Collections.addAll(res, *cmdValues)
+    }
+
+    val option = Util.CMD_OPTIONS.getOption(shortKey)
+    val cfgProperty = RepositoryConfiguration.getInstance().getProperty(option.longOpt)
+
+    if (cfgProperty != null) {
+      res.add(cfgProperty)
+    }
+
+    return res
+  }
+
+  private fun getOptionValuesSplit(commandLine: CommandLine, splitter: String, shortKey: String): Array<String> {
+    val res = ArrayList<String>()
+    for (optionStr in getOptionValues(commandLine, shortKey)) {
+      if (optionStr.isEmpty()) continue
+
+      Collections.addAll(res, *optionStr.split(splitter.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray())
+    }
+
+    return res.toTypedArray()
+  }
+
+  private fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): Multimap<Pair<String, String>, Pattern> {
+    val file = File(ignoreProblemsFile)
+    if (!file.exists()) {
+      throw IllegalArgumentException("Ignored problems file doesn't exist " + ignoreProblemsFile)
+    }
+
+    val m = HashMultimap.create<Pair<String, String>, Pattern>()
+    try {
+      BufferedReader(FileReader(file)).use { br ->
+        var s: String
+        while (true) {
+          s = br.readLine() ?: break
+          s = s.trim { it <= ' ' }
+          if (s.isEmpty() || s.startsWith("//")) continue //it is a comment
+
+          val tokens = s.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+
+          if (tokens.size != 3) {
+            throw IllegalArgumentException("incorrect problem line $s\nthe line must be in the form: <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>\n<plugin_version> may be empty (which means that a problem will be ignored in all the versions of the plugin)\nexample 'org.jetbrains.kotlin::accessing to unknown class org/jetbrains/kotlin/compiler/.*' - ignore all the missing classes from org.jetbrains.kotlin.compiler package")
+          }
+
+          val pluginId = tokens[0].trim { it <= ' ' }
+          val pluginVersion = tokens[1].trim { it <= ' ' }
+          val ignorePattern = tokens[2].trim { it <= ' ' }.replace('/', '.')
+
+          m.put(pluginId to pluginVersion, Pattern.compile(ignorePattern))
+        }
+      }
+    } catch (e: Exception) {
+      throw RuntimeException("Unable to parse ignored problems file " + ignoreProblemsFile, e)
+    }
+
+    return m
+  }
+
 }

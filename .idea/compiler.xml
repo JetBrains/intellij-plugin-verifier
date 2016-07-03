@@ -59,6 +59,8 @@
       <module name="uploader_test" target="1.6" />
       <module name="verifier-cli_main" target="1.8" />
       <module name="verifier-cli_test" target="1.8" />
+      <module name="verifier-core_main" target="1.8" />
+      <module name="verifier-core_test" target="1.8" />
       <module name="verifier-parent_main" target="1.6" />
       <module name="verifier-parent_test" target="1.6" />
       <module name="verifier-problems_main" target="1.6" />

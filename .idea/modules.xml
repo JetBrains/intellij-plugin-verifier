@@ -29,6 +29,9 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli.iml" group="verifier-cli" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_main.iml" group="verifier-cli" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_test.iml" group="verifier-cli" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-core/verifier-core.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-core/verifier-core.iml" group="verifier-core" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-core/verifier-core_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-core/verifier-core_main.iml" group="verifier-core" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-core/verifier-core_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-core/verifier-core_test.iml" group="verifier-core" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-parent.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-parent.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-parent_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-parent_main.iml" group="verifier-parent" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-parent_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-parent_test.iml" group="verifier-parent" />

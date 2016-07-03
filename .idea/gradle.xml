@@ -17,6 +17,7 @@
             <option value="$PROJECT_DIR$/verifier-cli/after-idea" />
             <option value="$PROJECT_DIR$/verifier-cli/before-idea" />
             <option value="$PROJECT_DIR$/verifier-cli/mock-plugin" />
+            <option value="$PROJECT_DIR$/verifier-core" />
             <option value="$PROJECT_DIR$/verifier-problems" />
           </set>
         </option>
