@@ -99,6 +99,7 @@ publishing {
     RepositoryPublication(MavenPublication) { configurePublication(it, ':repository', false) }
     UploaderPublication(MavenPublication) { configurePublication(it, ':uploader', true) }
     ProblemsPublication(MavenPublication) { configurePublication(it, ':verifier-problems', false) }
+    VerifierCorePublication(MavenPublication) { configurePublication(it, ':verifier-core', false) }
   }
 }
 
