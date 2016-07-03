@@ -6,14 +6,17 @@ import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.problems.MissingDependencyProblem;
 import com.jetbrains.pluginverifier.problems.Problem;
-import com.jetbrains.pluginverifier.results.*;
+import com.jetbrains.pluginverifier.results.GlobalResultsRepository;
+import com.jetbrains.pluginverifier.results.ProblemSet;
+import com.jetbrains.pluginverifier.results.ResultsElement;
+import com.jetbrains.pluginverifier.results.ResultsRepository;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
+import com.jetbrains.pluginverifier.utils.Opts;
 import com.jetbrains.pluginverifier.utils.ProblemUtils;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityVPrinter;
-import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -126,27 +129,13 @@ public class NewProblemsCommand extends VerifierCommand {
 
   }
 
-  @NotNull
-  private static ResultsRepository getResultsRepository(@NotNull CommandLine commandLine) {
-    ResultsRepository resultsRepository;
-    String repoUrl = commandLine.getOptionValue("repo");
-    if (repoUrl == null) {
-      System.out.println("Results repository set to global repository");
-      resultsRepository = new GlobalResultsRepository();
-    } else {
-      System.out.println("Results repository set to " + repoUrl);
-      resultsRepository = new VerifierServiceRepository(repoUrl);
-    }
-    return resultsRepository;
-  }
-
   @Override
-  public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
+  public int execute(@NotNull Opts opts, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.isEmpty()) {
       throw new RuntimeException("You have to specify a report to compare and print. For example: \"java -jar verifier.jar new-problems report-133.439.xml\"");
     }
 
-    TeamCityVPrinter.GroupBy reportGrouping = TeamCityVPrinter.GroupBy.parse(commandLine);
+    TeamCityVPrinter.GroupBy reportGrouping = TeamCityVPrinter.GroupBy.parse(opts);
 
     File reportToCheck = new File(freeArgs.get(0));
     if (!reportToCheck.isFile()) {
@@ -161,7 +150,7 @@ public class NewProblemsCommand extends VerifierCommand {
 
     //--------------Load previous checks-------------------
 
-    ResultsRepository resultsRepository = getResultsRepository(commandLine);
+    ResultsRepository resultsRepository = new GlobalResultsRepository();
 
     List<IdeVersion> checkedBuilds;
     try {
@@ -216,7 +205,7 @@ public class NewProblemsCommand extends VerifierCommand {
     //ALL the checked builds (excluding the EARLIEST one)
     Iterable<IdeVersion> allBuilds = Iterables.concat(checkedBuilds.subList(1, checkedBuilds.size()), Collections.singleton(ideBuild));
 
-    TeamCityLog tc = TeamCityLog.Companion.getInstance(commandLine);
+    TeamCityLog tc = TeamCityLog.Companion.getInstance(opts.getNeedTeamCityLog());
 
     printTcProblems(currentProblems, missingDependenciesProblems, firstOccurrence, allBuilds, reportGrouping, ideBuild, tc);
 

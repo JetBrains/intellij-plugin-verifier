@@ -14,47 +14,71 @@ import com.intellij.structure.domain.Plugin
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.format.UpdateInfo
-import com.jetbrains.pluginverifier.misc.RepositoryConfiguration
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.results.ProblemSet
-import org.apache.commons.cli.CommandLine
-import org.apache.commons.cli.GnuParser
-import org.apache.commons.cli.HelpFormatter
-import org.apache.commons.cli.Options
+import com.sampullara.cli.Args
+import com.sampullara.cli.Argument
 import java.io.*
 import java.util.*
 import java.util.regex.Pattern
 
+fun main(args: Array<String>) {
+  val opts = Opts()
+  Args.parse(opts, args)
+  println(opts)
+}
+
+data class Opts(
+    @set:Argument("runtime-dir", alias = "r", description = "The path to directory containing Java runtime jars (usually rt.jar and tools.jar are sufficient)")
+    var runtimeDir: String? = null,
+
+    @set:Argument("TeamCity", alias = "tc", description = "Specify this flag if you want to print the TeamCity compatible output.")
+    var needTeamCityLog: Boolean = false,
+
+    @set:Argument("tc-grouping", alias = "g", description = "How to group the TeamCity presentation of the problems")
+    var group: String? = null,
+
+    @set:Argument("ignored-problems", alias = "ip", description = "The problems specified in this file will be ignored. File must contain lines in form <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>")
+    var ignoreProblemsFile: String? = null,
+
+    @set:Argument("plugin-to-check", alias = "p", description = "A plugin id to check with IDE, plugin verifier will check ALL compatible plugin builds")
+    var pluginsToCheck: Array<String> = arrayOf(),
+
+    @set:Argument("update-to-check", alias = "u", description = "A plugin id to check with IDE, plugin verifier will check LAST plugin build only")
+    var updatesToCheck: Array<String> = arrayOf(),
+
+    @set:Argument("ide-version", alias = "iv", description = "Version of IDE that will be tested, e.g. IU-133.439")
+    var actualIdeVersion: String? = null,
+
+    @set:Argument("excluded-plugin-file", alias = "epf", description = "File with list of excluded plugin builds.")
+    var excludedPluginsFile: String? = null,
+
+    @set:Argument("dump-broken-plugin-list", alias = "d", description = "File to dump broken plugin list.")
+    var dumpBrokenPluginsFile: String? = null,
+
+    @set:Argument("html-report", description = "Create a beautiful HTML report of broken plugins")
+    var htmlReportFile: String? = null,
+
+    @set:Argument("results-file", description = "Save results to this file")
+    var resultFile: String? = null,
+
+    @set:Argument("plugins-to-check-file", alias = "ptcf", description = "The file that contains list of plugins to check.")
+    var pluginsToCheckFile: String? = null,
+
+    @set:Argument("ignore-missing-optional-dependencies", alias = "imod", description = "Missing optional dependencies on the plugin IDs specified in this parameter will be ignored")
+    var ignoreMissingOptionalDependencies: Array<String> = arrayOf(),
+
+    @set:Argument("externalClasspath", alias = "ex-cp", delimiter = ":", description = "Classes from external libraries. Error will not be reported if class not found. Delimited by ':'")
+    var externalClasspath: Array<String> = arrayOf(),
+
+
+    @set:Argument("external-prefixes", alias = "ex-prefixes", delimiter = ":", description = "The classes from the external libraries. The Verifier doesn't report 'No such class' for such classes.")
+    var externalClassesPrefixes: Array<String> = arrayOf()
+
+)
+
 object Util {
-
-  val CMD_OPTIONS = Options()
-      .addOption("h", "help", false, "Show help")
-      .addOption("r", "runtime", true, "Path to directory containing Java runtime jars (usually rt.jar and tools.jar is sufficient)")
-      .addOption("s", "skip-class-for-dup-check", true, "Class name prefixes to skip in duplicate classes check, delimited by ':'")
-      .addOption("e", "external-classes", true, "Classes from external libraries. Error will not be reported if class not found. Delimited by ':'")
-      .addOption("all", "check-all-plugins-with-ide", false, "Check IDE build with all compatible plugins")
-      .addOption("p", "plugin-to-check", true, "A plugin id to check with IDE, plugin verifier will check ALL compatible plugin builds")
-      .addOption("u", "update-to-check", true, "A plugin id to check with IDE, plugin verifier will check LAST plugin build only")
-      .addOption("iv", "ide-version", true, "Version of IDE that will be tested, e.g. IU-133.439")
-      .addOption("epf", "excluded-plugin-file", true, "File with list of excluded plugin builds.")
-      .addOption("d", "dump-broken-plugin-list", true, "File to dump broken plugin list.")
-      .addOption("report", "make-report", true, "Create a detailed report about broken plugins.")
-      .addOption("xr", "save-results-xml", true, "Save results to xml file")
-      .addOption("tc", "team-city-output", false, "Print TeamCity compatible output.")
-      .addOption("pluginsFile", "plugins-to-check-file", true, "The file that contains list of plugins to check.")
-      .addOption("cp", "external-class-path", true, "External class path")
-      .addOption("printFile", true, ".xml report file to be printed in TeamCity")
-      .addOption("repo", "results-repository", true, "Url of repository which contains check results")
-      .addOption("g", "group", true, "Whether to group problems presentation (possible args are 'plugin' - group by plugin and 'type' - group by error-type)")
-      .addOption("dce", "dont-check-excluded", false, "If specified no plugins from -epf will be checked at all")
-      .addOption("imod", "ignore-missing-optional-dependencies", true, "Missing optional dependencies on the plugin IDs specified in this parameter will be ignored")
-      .addOption("ip", "ignore-problems", true, "Problems specified in this file will be ignored. File must contain lines in form <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>")
-
-
-  fun printHelp() {
-    HelpFormatter().printHelp("java -jar verifier.jar <command> [<args>]", CMD_OPTIONS)
-  }
 
   fun getStackTrace(t: Throwable?): String {
     if (t == null) return ""
@@ -74,21 +98,14 @@ object Util {
   /**
    * (id-s of plugins to check all builds, id-s of plugins to check last builds)
    */
-  fun extractPluginToCheckList(commandLine: CommandLine): Pair<List<String>, List<String>> {
+  fun extractPluginToCheckList(opts: Opts): Pair<List<String>, List<String>> {
     val pluginsCheckAllBuilds = ArrayList<String>()
     val pluginsCheckLastBuilds = ArrayList<String>()
 
-    val pluginIdsCheckAllBuilds = commandLine.getOptionValues('p') //plugin-to-check
-    if (pluginIdsCheckAllBuilds != null) {
-      pluginsCheckAllBuilds.addAll(Arrays.asList(*pluginIdsCheckAllBuilds))
-    }
+    pluginsCheckAllBuilds.addAll(opts.pluginsToCheck)
+    pluginsCheckLastBuilds.addAll(opts.updatesToCheck)
 
-    val pluginIdsCheckLastBuilds = commandLine.getOptionValues('u') //update-to-check
-    if (pluginIdsCheckLastBuilds != null) {
-      pluginsCheckLastBuilds.addAll(Arrays.asList(*pluginIdsCheckLastBuilds))
-    }
-
-    val pluginsFile = commandLine.getOptionValue("pluginsFile") //plugins-to-check-file (usually checkedPlugins.txt)
+    val pluginsFile = opts.pluginsToCheckFile
     if (pluginsFile != null) {
       try {
         val reader = BufferedReader(FileReader(pluginsFile))
@@ -129,8 +146,8 @@ object Util {
   }
 
   @Throws(IOException::class)
-  fun getExcludedPlugins(commandLine: CommandLine): Multimap<String, String> {
-    val epf = commandLine.getOptionValue("epf") ?: return ArrayListMultimap.create<String, String>() //excluded-plugin-file (usually brokenPlugins.txt)
+  fun getExcludedPlugins(opts: Opts): Multimap<String, String> {
+    val epf = opts.excludedPluginsFile ?: return ArrayListMultimap.create<String, String>() //excluded-plugin-file (usually brokenPlugins.txt)
     //no predicate specified
 
     //file containing list of broken plugins (e.g. IDEA-*/lib/resources.jar!/brokenPlugins.txt)
@@ -192,13 +209,13 @@ object Util {
   }
 
   @Throws(IOException::class)
-  fun createIde(ideToCheck: File, commandLine: CommandLine): Ide {
-    return IdeManager.getInstance().createIde(ideToCheck, takeVersionFromCmd(commandLine))
+  fun createIde(ideToCheck: File, opts: Opts): Ide {
+    return IdeManager.getInstance().createIde(ideToCheck, takeVersionFromCmd(opts))
   }
 
   @Throws(IOException::class)
-  private fun takeVersionFromCmd(commandLine: CommandLine): IdeVersion? {
-    val build = commandLine.getOptionValue("iv")
+  private fun takeVersionFromCmd(opts: Opts): IdeVersion? {
+    val build = opts.actualIdeVersion
     if (build != null && !build.isEmpty()) {
       try {
         return IdeVersion.createIdeVersion(build)
@@ -235,13 +252,13 @@ object Util {
 
 
   @Throws(IOException::class)
-  fun getJdkDir(commandLine: CommandLine): File {
+  fun getJdkDir(opts: Opts): File {
     val runtimeDirectory: File
 
-    if (commandLine.hasOption('r')) {
-      runtimeDirectory = File(commandLine.getOptionValue('r'))
+    if (opts.runtimeDir != null) {
+      runtimeDirectory = File(opts.runtimeDir)
       if (!runtimeDirectory.isDirectory) {
-        throw RuntimeException("Specified runtime directory is not a directory: " + commandLine.getOptionValue('r'))
+        throw RuntimeException("Specified runtime directory is not a directory: " + opts.runtimeDir)
       }
     } else {
       val javaHome = System.getenv("JAVA_HOME") ?: throw RuntimeException("JAVA_HOME is not specified")
@@ -256,17 +273,9 @@ object Util {
   }
 
   @Throws(IOException::class)
-  fun getExternalClassPath(commandLine: CommandLine): Resolver {
-    val values = commandLine.getOptionValues("cp") ?: return Resolver.getEmptyResolver()
-
-    val pools = ArrayList<Resolver>(values.size)
-
-    for (value in values) {
-      pools.add(Resolver.createJarResolver(File(value)))
-    }
-
-    return Resolver.createUnionResolver("External classpath resolver: " + Arrays.toString(values), pools)
-  }
+  fun getExternalClassPath(opts: Opts): Resolver =
+      Resolver.createUnionResolver("External classpath resolver: ${opts.externalClasspath}",
+          opts.externalClasspath.map { Resolver.createJarResolver(File(it)) })
 
   fun loadPluginFiles(pluginToTestArg: String, ideVersion: IdeVersion): List<Pair<UpdateInfo, File>> {
     if (pluginToTestArg.startsWith("@")) {
@@ -374,67 +383,16 @@ object Util {
 object VOptionsUtil {
 
   @JvmStatic
-  fun parseOpts(vararg cmd: String): VOptions = parseOpts(GnuParser().parse(Util.CMD_OPTIONS, cmd))
-
-  @JvmStatic
-  fun parseOpts(commandLine: CommandLine): VOptions {
-    val prefixesToSkipForDuplicateClassesCheck = getOptionValuesSplit(commandLine, ":", "s")
-    for (i in prefixesToSkipForDuplicateClassesCheck.indices) {
-      prefixesToSkipForDuplicateClassesCheck[i] = prefixesToSkipForDuplicateClassesCheck[i].replace('.', '/')
-    }
-
-    val externalClasses = getOptionValuesSplit(commandLine, ":", "e")
-    for (i in externalClasses.indices) {
-      externalClasses[i] = externalClasses[i].replace('.', '/')
-    }
-    val optionalDependenciesIdsToIgnoreIfMissing: Set<String> = HashSet(getOptionValuesSplit(commandLine, ",", "imod").toList())
+  fun parseOpts(opts: Opts): VOptions {
 
     var problemsToIgnore: Multimap<Pair<String, String>, Pattern> = HashMultimap.create<Pair<String, String>, Pattern>()
 
-    val ignoreProblemsFile = getOption(commandLine, "ip")
+    val ignoreProblemsFile = opts.ignoreProblemsFile
     if (ignoreProblemsFile != null) {
       problemsToIgnore = getProblemsToIgnoreFromFile(ignoreProblemsFile)
     }
 
-    return VOptions(prefixesToSkipForDuplicateClassesCheck, externalClasses, optionalDependenciesIdsToIgnoreIfMissing, problemsToIgnore)
-  }
-
-  private fun getOption(commandLine: CommandLine, shortKey: String): String? {
-    val option = Util.CMD_OPTIONS.getOption(shortKey)
-
-    val cmdValue = commandLine.getOptionValue(shortKey)
-    if (cmdValue != null) return cmdValue
-
-    return RepositoryConfiguration.getInstance().getProperty(option.longOpt)
-  }
-
-  private fun getOptionValues(commandLine: CommandLine, shortKey: String): List<String> {
-    val res = ArrayList<String>()
-
-    val cmdValues = commandLine.getOptionValues(shortKey)
-    if (cmdValues != null) {
-      Collections.addAll(res, *cmdValues)
-    }
-
-    val option = Util.CMD_OPTIONS.getOption(shortKey)
-    val cfgProperty = RepositoryConfiguration.getInstance().getProperty(option.longOpt)
-
-    if (cfgProperty != null) {
-      res.add(cfgProperty)
-    }
-
-    return res
-  }
-
-  private fun getOptionValuesSplit(commandLine: CommandLine, splitter: String, shortKey: String): Array<String> {
-    val res = ArrayList<String>()
-    for (optionStr in getOptionValues(commandLine, shortKey)) {
-      if (optionStr.isEmpty()) continue
-
-      Collections.addAll(res, *optionStr.split(splitter.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray())
-    }
-
-    return res.toTypedArray()
+    return VOptions(opts.externalClassesPrefixes.map { it.replace('.', '/') }.toTypedArray(), opts.ignoreMissingOptionalDependencies.toSet(), problemsToIgnore)
   }
 
   private fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): Multimap<Pair<String, String>, Pattern> {

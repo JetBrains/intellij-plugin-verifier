@@ -20,7 +20,6 @@ import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityVPrinter;
 import kotlin.Pair;
-import org.apache.commons.cli.CommandLine;
 import org.jdom2.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,7 @@ public class CheckIdeCommand extends VerifierCommand {
   private Collection<UpdateInfo> myUpdatesToCheck;
   private List<String> myCheckedIds;
   private String myDumpBrokenPluginsFile;
-  private String myReportFile;
+  private String myHtmlReportFile;
   private boolean myCheckExcludedBuilds;
   private Predicate<UpdateInfo> myExcludedUpdatesFilter;
   private Map<UpdateInfo, ProblemSet> myResults;
@@ -141,7 +140,7 @@ public class CheckIdeCommand extends VerifierCommand {
     return null;
   }
 
-  private void fillArguments(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws IOException, JDOMException {
+  private void fillArguments(@NotNull Opts opts, @NotNull List<String> freeArgs) throws IOException, JDOMException {
     if (freeArgs.isEmpty()) {
       throw new RuntimeException("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"");
     }
@@ -151,18 +150,18 @@ public class CheckIdeCommand extends VerifierCommand {
       throw new RuntimeException("IDE home is not a directory: " + ideToCheck);
     }
 
-    myTc = TeamCityLog.Companion.getInstance(commandLine);
+    myTc = TeamCityLog.Companion.getInstance(opts.getNeedTeamCityLog());
 
-    myJdkDir = Util.INSTANCE.getJdkDir(commandLine);
+    myJdkDir = Util.INSTANCE.getJdkDir(opts);
 
-    myVerifierOptions = VOptionsUtil.parseOpts(commandLine);
+    myVerifierOptions = VOptionsUtil.parseOpts(opts);
 
-    myExternalClassPath = Util.INSTANCE.getExternalClassPath(commandLine);
+    myExternalClassPath = Util.INSTANCE.getExternalClassPath(opts);
 
-    myIde = Util.INSTANCE.createIde(ideToCheck, commandLine);
+    myIde = Util.INSTANCE.createIde(ideToCheck, opts);
     myIdeResolver = Resolver.createIdeResolver(myIde);
 
-    Pair<List<String>, List<String>> pluginsIds = Util.INSTANCE.extractPluginToCheckList(commandLine);
+    Pair<List<String>, List<String>> pluginsIds = Util.INSTANCE.extractPluginToCheckList(opts);
     List<String> checkAllBuilds = pluginsIds.getFirst();
     List<String> checkLastBuilds = pluginsIds.getSecond();
 
@@ -201,20 +200,20 @@ public class CheckIdeCommand extends VerifierCommand {
     //preserve initial lists of plugins
     myCheckedIds = Util.INSTANCE.concat(checkAllBuilds, checkLastBuilds);
 
-    myDumpBrokenPluginsFile = commandLine.getOptionValue("d");
-    myReportFile = commandLine.getOptionValue("report");
+    myDumpBrokenPluginsFile = opts.getDumpBrokenPluginsFile();
+    myHtmlReportFile = opts.getHtmlReportFile();
 
-    myExcludedPlugins = Util.INSTANCE.getExcludedPlugins(commandLine);
+    myExcludedPlugins = Util.INSTANCE.getExcludedPlugins(opts);
 
     myExcludedUpdatesFilter = input -> !myExcludedPlugins.containsEntry(input.getPluginId(), input.getVersion());
 
     fillMissingPluginProblems();
 
     //whether to check excluded builds or not
-    myCheckExcludedBuilds = myDumpBrokenPluginsFile != null || myReportFile != null;
+    myCheckExcludedBuilds = myDumpBrokenPluginsFile != null || myHtmlReportFile != null;
 
 
-    if (!myCheckExcludedBuilds || commandLine.hasOption("dce")) {
+    if (!myCheckExcludedBuilds) {
       //drop out excluded plugins and don't check them
       myUpdatesToCheck = Collections2.filter(myUpdatesToCheck, myExcludedUpdatesFilter::test);
     }
@@ -252,8 +251,8 @@ public class CheckIdeCommand extends VerifierCommand {
   }
 
   @Override
-  public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
-    fillArguments(commandLine, freeArgs);
+  public int execute(@NotNull Opts opts, @NotNull List<String> freeArgs) throws Exception {
+    fillArguments(opts, freeArgs);
 
 
     //-----------------------------VERIFICATION---------------------------------------
@@ -335,8 +334,8 @@ public class CheckIdeCommand extends VerifierCommand {
     System.out.println("Verification completed (" + ((System.currentTimeMillis() - time) / 1000) + " seconds)");
 
     //Save results to XML if necessary
-    if (commandLine.hasOption("xr")) {
-      Util.INSTANCE.saveResultsToXml(new File(commandLine.getOptionValue("xr")), myIde.getVersion(), myResults);
+    if (opts.getResultFile() != null) {
+      Util.INSTANCE.saveResultsToXml(new File(opts.getResultFile()), myIde.getVersion(), myResults);
     }
 
 
@@ -351,8 +350,8 @@ public class CheckIdeCommand extends VerifierCommand {
         })));
       }
 
-      if (myReportFile != null) {
-        File file = new File(myReportFile);
+      if (myHtmlReportFile != null) {
+        File file = new File(myHtmlReportFile);
         System.out.println("Saving report to " + file.getAbsolutePath());
 
         HtmlReportBuilder.INSTANCE.build(file, myIde.getVersion(), myExcludedUpdatesFilter, myResults);
@@ -362,7 +361,7 @@ public class CheckIdeCommand extends VerifierCommand {
     myResults = Maps.filterKeys(myResults, x -> myExcludedUpdatesFilter.test(x));
 
     VResults vResults = TeamCityUtil.INSTANCE.convertOldResultsToNewResults(myResults, myIde.getVersion());
-    new TeamCityVPrinter(myTc, TeamCityVPrinter.GroupBy.parse(commandLine)).printResults(vResults);
+    new TeamCityVPrinter(myTc, TeamCityVPrinter.GroupBy.parse(opts)).printResults(vResults);
 
     int totalProblemsCnt = printMissingAndIncorrectPlugins();
 

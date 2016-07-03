@@ -16,9 +16,9 @@ import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.results.ResultsElement
 import com.jetbrains.pluginverifier.utils.MessageUtils
+import com.jetbrains.pluginverifier.utils.Opts
 import com.jetbrains.pluginverifier.utils.ProblemUtils
 import com.jetbrains.pluginverifier.utils.StringUtil
-import org.apache.commons.cli.CommandLine
 import java.io.File
 import java.io.FileOutputStream
 import java.io.PrintStream
@@ -216,8 +216,8 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
     companion object {
 
       @JvmStatic
-      fun parse(commandLine: CommandLine): GroupBy {
-        val groupValue = commandLine.getOptionValue("g") ?: return NOT_GROUPED
+      fun parse(opts: Opts): GroupBy {
+        val groupValue = opts.group ?: return NOT_GROUPED
         return values().find { it.arg == groupValue } ?: NOT_GROUPED
       }
     }

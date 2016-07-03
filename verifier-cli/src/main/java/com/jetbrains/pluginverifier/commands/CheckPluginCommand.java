@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.misc.PluginCache;
 import com.jetbrains.pluginverifier.problems.Problem;
 import com.jetbrains.pluginverifier.results.ProblemSet;
+import com.jetbrains.pluginverifier.utils.Opts;
 import com.jetbrains.pluginverifier.utils.Util;
 import com.jetbrains.pluginverifier.utils.VOptionsUtil;
 import com.jetbrains.pluginverifier.utils.VerificationProblem;
@@ -18,7 +19,6 @@ import com.jetbrains.pluginverifier.utils.teamcity.TeamCityLog;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityUtil;
 import com.jetbrains.pluginverifier.utils.teamcity.TeamCityVPrinter;
 import kotlin.Pair;
-import org.apache.commons.cli.CommandLine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -39,7 +39,7 @@ public class CheckPluginCommand extends VerifierCommand {
   }
 
   @Override
-  public int execute(@NotNull CommandLine commandLine, @NotNull List<String> freeArgs) throws Exception {
+  public int execute(@NotNull Opts opts, @NotNull List<String> freeArgs) throws Exception {
     if (freeArgs.isEmpty()) {
       // User run command 'check-plugin' without parameters
       throw new RuntimeException("You must specify plugin to check and IDE, example:\n" +
@@ -54,25 +54,25 @@ public class CheckPluginCommand extends VerifierCommand {
           "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963");
     }
 
-    VOptions options = VOptionsUtil.parseOpts(commandLine);
+    VOptions options = VOptionsUtil.parseOpts(opts);
 
     long startTime = System.currentTimeMillis();
 
     //updateInfo -> (IDEA-build -> Problems)
     final Map<UpdateInfo, Map<IdeVersion, ProblemSet>> results = new HashMap<>();
 
-    TeamCityLog tc = TeamCityLog.Companion.getInstance(commandLine);
+    TeamCityLog tc = TeamCityLog.Companion.getInstance(opts.getNeedTeamCityLog());
 
 
     List<Pair<UpdateInfo, ? extends Problem>> brokenPlugins = new ArrayList<>();
 
-    File jdkDir = Util.INSTANCE.getJdkDir(commandLine);
+    File jdkDir = Util.INSTANCE.getJdkDir(opts);
 
     for (int i = 1; i < freeArgs.size(); i++) {
       File ideaDirectory = new File(freeArgs.get(i));
       verifyIdeaDirectory(ideaDirectory);
 
-      Ide ide = Util.INSTANCE.createIde(ideaDirectory, commandLine);
+      Ide ide = Util.INSTANCE.createIde(ideaDirectory, opts);
       try (Resolver ideResolver = Resolver.createIdeResolver(ide)) {
 
         List<Pair<UpdateInfo, File>> pluginFiles = Util.INSTANCE.loadPluginFiles(pluginsToTestArg, ide.getVersion());
@@ -87,7 +87,7 @@ public class CheckPluginCommand extends VerifierCommand {
 
             ProblemSet problemSet;
             try (TeamCityLog.Block block = tc.blockOpen(plugin.getPluginId())) {
-              problemSet = Util.INSTANCE.verify(plugin, ide, ideResolver, jdkDir, Util.INSTANCE.getExternalClassPath(commandLine), options);
+              problemSet = Util.INSTANCE.verify(plugin, ide, ideResolver, jdkDir, Util.INSTANCE.getExternalClassPath(opts), options);
             }
 
             myLastProblemSet = problemSet;
@@ -130,7 +130,7 @@ public class CheckPluginCommand extends VerifierCommand {
     //TODO: get rid of it.
     IdeVersion someIdeVersion = results.entrySet().iterator().next().getValue().entrySet().iterator().next().getKey();
     VResults vResults = TeamCityUtil.INSTANCE.convertOldResultsToNewResults(pluginsProblems, someIdeVersion);
-    new TeamCityVPrinter(tc, TeamCityVPrinter.GroupBy.parse(commandLine)).printResults(vResults);
+    new TeamCityVPrinter(tc, TeamCityVPrinter.GroupBy.parse(opts)).printResults(vResults);
 
 
     final int problemsCnt = countTotalProblems(pluginsProblems);

@@ -9,8 +9,7 @@ import java.util.regex.Pattern
 /**
  * @author Sergey Patrikeev
  */
-data class VOptions(val prefixesToSkipForDuplicateClassesCheck: Array<String>,
-                    val externalClassPrefixes: Array<String>,
+data class VOptions(val externalClassPrefixes: Array<String>,
                     val optionalDependenciesIdsToIgnoreIfMissing: Set<String>,
                     /**
                      * Map of _(pluginXmlId, version)_ -> to be ignored _problem pattern_

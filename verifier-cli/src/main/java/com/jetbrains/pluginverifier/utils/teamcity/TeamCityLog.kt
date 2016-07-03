@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.utils.teamcity
 
-import org.apache.commons.cli.CommandLine
 import org.apache.commons.io.output.NullOutputStream
 
 import java.io.Closeable
@@ -108,8 +107,8 @@ class TeamCityLog(private val out: PrintStream) {
       return s.replace("[\\|'\\[\\]]".toRegex(), "\\|$0").replace("\n".toRegex(), "|n").replace("\r".toRegex(), "|r")
     }
 
-    fun getInstance(commandLine: CommandLine): TeamCityLog {
-      return if (commandLine.hasOption("tc")) TeamCityLog(System.out) else NULL_LOG
+    fun getInstance(needLog: Boolean): TeamCityLog {
+      return if (needLog) TeamCityLog(System.out) else NULL_LOG
     }
   }
 }
