@@ -82,7 +82,7 @@ public class VerifierTest {
           .put(new InvokeVirtualOnStaticMethodProblem("com/intellij/lang/SmartEnterProcessor#commit()V"), ProblemLocation.fromMethod("mock/plugin/invokeVirtualOnStatic/SmartEnterProcessorUser", "main()V"))
           .put(new InvokeStaticOnInstanceMethodProblem("invocation/InvocationProblems#wasStatic()V"), ProblemLocation.fromMethod("mock/plugin/invokeStaticOnInstance/InvocationProblemsUser", "foo()V"))
 
-          .put(new MissingDependencyProblem("org.some.company.plugin", "DevKit", "Plugin org.some.company.plugin:1.0 depends on the other plugin DevKit which has not a compatible build with IU-145.500"), ProblemLocation.fromPlugin("org.some.company.plugin"))
+          .put(new MissingDependencyProblem("org.some.company.plugin", "DevKit", "Plugin org.some.company.plugin:1.0 depends on the other plugin DevKit which doesn't have a build compatible with IU-145.500"), ProblemLocation.fromPlugin("org.some.company.plugin"))
 
           //field problems
           .put(new FieldNotFoundProblem("fields/FieldsContainer#deletedField#I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessDeletedField()V"))

@@ -155,8 +155,15 @@ public final class Dependencies {
                   continue;
                 }
 
+                if (pluginZip == null) {
+                  String reason = "The dependency plugin " + updateInfo + " is not found in the Plugin Repository";
+                  LOG.error(reason);
+                  missing.put(pd, new MissingReason(reason, null));
+                  continue;
+                }
+
                 try {
-                  dependency = PluginCache.getInstance().createPlugin(pluginZip);
+                  dependency = PluginCache.INSTANCE.createPlugin(pluginZip);
                 } catch (Exception e) {
                   final String message = String.format("Plugin %s depends on the other plugin %s which has some problems%s", plugin, depId, e.getMessage() != null ? e.getMessage() : "");
                   LOG.error(message, e);
@@ -167,7 +174,7 @@ public final class Dependencies {
             }
 
             if (dependency == null) {
-              final String message = String.format("Plugin %s depends on the other plugin %s which has not a compatible build with %s", plugin, depId, ide.getVersion());
+              final String message = String.format("Plugin %s depends on the other plugin %s which doesn't have a build compatible with %s", plugin, depId, ide.getVersion());
               LOG.error(message);
               missing.put(pd, new MissingReason(message, null));
               continue;

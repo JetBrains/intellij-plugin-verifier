@@ -36,6 +36,8 @@ object VManager {
 
     LOG.info("Verifying the plugins according to $params")
 
+    val time = System.currentTimeMillis()
+
     val results = arrayListOf<VResult>()
 
     //IOException is propagated. Auto-close the JDK resolver (we have just created it)
@@ -71,7 +73,7 @@ object VManager {
             }
             is IdeDescriptor.ByInstance -> {
               val ideDescriptor = ideToPlugins.key as IdeDescriptor.ByInstance
-              closeIdeResolver = (ideDescriptor.ideResolver == null);
+              closeIdeResolver = (ideDescriptor.ideResolver == null)
               if (closeIdeResolver) {
                 Resolver.createIdeResolver(ide)
               } else {
@@ -151,6 +153,8 @@ object VManager {
         }
       }
     }
+
+    LOG.info("The verification has been successfully completed in ${(System.currentTimeMillis() - time) / 1000} seconds")
 
     return VResults(results)
   }

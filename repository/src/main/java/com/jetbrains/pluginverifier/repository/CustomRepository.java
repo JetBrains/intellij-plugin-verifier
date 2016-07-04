@@ -87,7 +87,7 @@ class CustomRepository implements PluginRepository {
 
       Plugin ideaPlugin;
       try {
-        ideaPlugin = PluginCache.getInstance().createPlugin(update);
+        ideaPlugin = PluginCache.INSTANCE.createPlugin(update);
       } catch (IncorrectPluginException e) {
         LOG.error("Unable to create plugin for update " + update, e);
         continue;
