@@ -1,19 +1,16 @@
 package com.jetbrains.pluginverifier.utils
 
-import com.google.common.base.Charsets
 import com.google.common.base.Joiner
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Iterables
 import com.google.common.collect.Multimap
-import com.google.common.io.Files
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeManager
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VOptions
 import com.jetbrains.pluginverifier.format.UpdateInfo
-import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import java.io.*
@@ -237,107 +234,7 @@ object Util {
       Resolver.createUnionResolver("External classpath resolver: ${opts.externalClasspath}",
           opts.externalClasspath.map { Resolver.createJarResolver(File(it)) })
 
-  fun loadPluginFiles(pluginToTestArg: String, ideVersion: IdeVersion): List<Pair<UpdateInfo, File>> {
-    if (pluginToTestArg.startsWith("@")) {
-      val pluginListFile = File(pluginToTestArg.substring(1))
-      val pluginPaths: List<String>
-      try {
-        pluginPaths = Files.readLines(pluginListFile, Charsets.UTF_8)
-      } catch (e: IOException) {
-        throw RuntimeException("Cannot load plugins from " + pluginListFile.absolutePath + ": " + e.message, e)
-      }
 
-      return fetchPlugins(ideVersion, pluginListFile, pluginPaths)
-
-    } else if (pluginToTestArg.matches("#\\d+".toRegex())) {
-      val pluginId = pluginToTestArg.substring(1)
-      try {
-        val updateId = Integer.parseInt(pluginId)
-        val updateInfo = RepositoryManager.getInstance().findUpdateById(updateId)
-        val update = RepositoryManager.getInstance().getPluginFile(updateInfo!!)
-        return listOf(Pair<UpdateInfo, File>(UpdateInfo(updateId), update!!))
-      } catch (e: IOException) {
-        throw RuntimeException("Cannot load plugin #" + pluginId, e)
-      }
-
-    } else {
-      val file = File(pluginToTestArg)
-      if (!file.exists()) {
-        throw IllegalArgumentException("The file $file doesn't exist")
-      }
-      return listOf(Pair(updateInfoByFile(file), file))
-    }
-  }
-
-  private fun fetchPlugins(ideVersion: IdeVersion, pluginListFile: File, pluginPaths: List<String>): List<Pair<UpdateInfo, File>> {
-    val pluginsFiles = ArrayList<Pair<UpdateInfo, File>>()
-
-    for (pp in pluginPaths) {
-      val pluginPath = pp.trim()
-      if (pluginPath.isEmpty()) continue
-
-      if (pluginPath.startsWith("id:")) {
-        //single plugin by plugin build number
-
-        val pluginId = pluginPath.substring("id:".length)
-        val pluginBuilds = downloadPluginBuilds(pluginId, ideVersion)
-        if (!pluginBuilds.isEmpty()) {
-          pluginsFiles.add(pluginBuilds[0])
-        }
-
-      } else if (pluginPath.startsWith("ids:")) {
-        //all updates of this plugin compatible with specified IDEA
-
-        val pluginId = pluginPath.substring("ids:".length)
-        pluginsFiles.addAll(downloadPluginBuilds(pluginId, ideVersion))
-
-      } else {
-        var file = File(pluginPath)
-        if (!file.isAbsolute) {
-          file = File(pluginListFile.parentFile, pluginPath)
-        }
-        if (!file.exists()) {
-          throw RuntimeException("Plugin file '" + pluginPath + "' specified in '" + pluginListFile.absolutePath + "' doesn't exist")
-        }
-
-        pluginsFiles.add(Pair(updateInfoByFile(file), file))
-      }
-    }
-
-    return pluginsFiles
-  }
-
-  private fun updateInfoByFile(file: File): UpdateInfo {
-    var name = file.name
-    val idx = name.lastIndexOf('.')
-    if (idx != -1) {
-      name = name.substring(0, idx)
-    }
-    if (name.matches("\\d+".toRegex())) {
-      return UpdateInfo(Integer.parseInt(name))
-    }
-    return UpdateInfo(name, name, "?")
-  }
-
-  private fun downloadPluginBuilds(pluginId: String, ideVersion: IdeVersion): List<Pair<UpdateInfo, File>> {
-    val compatibleUpdatesForPlugins: List<UpdateInfo>
-    try {
-      compatibleUpdatesForPlugins = RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId)
-    } catch (e: IOException) {
-      throw RuntimeException("Failed to fetch list of $pluginId versions", e)
-    }
-
-    val result = ArrayList<Pair<UpdateInfo, File>>()
-    for (updateInfo in compatibleUpdatesForPlugins) {
-      try {
-        result.add(Pair<UpdateInfo, File>(updateInfo, RepositoryManager.getInstance().getPluginFile(updateInfo)!!))
-      } catch (e: IOException) {
-        throw RuntimeException("Cannot download '" + updateInfo, e)
-      }
-
-    }
-    return result
-  }
 }
 
 object VOptionsUtil {
