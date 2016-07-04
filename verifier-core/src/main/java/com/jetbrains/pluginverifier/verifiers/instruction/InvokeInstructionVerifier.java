@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.problems.statics.InvokeInterfaceOnStaticMeth
 import com.jetbrains.pluginverifier.problems.statics.InvokeSpecialOnStaticMethodProblem;
 import com.jetbrains.pluginverifier.problems.statics.InvokeStaticOnInstanceMethodProblem;
 import com.jetbrains.pluginverifier.problems.statics.InvokeVirtualOnStaticMethodProblem;
+import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.utils.ResolverUtil;
 import com.jetbrains.pluginverifier.utils.StringUtil;
 import com.jetbrains.pluginverifier.utils.VerifierUtil;
@@ -17,8 +18,6 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
-
-import static com.jetbrains.pluginverifier.utils.LocationUtils.getMethodLocation;
 
 /**
  * TODO:
@@ -75,7 +74,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
         }
 
 
-        String calledMethod = getMethodLocation(ownerClassName, invokedMethod.name, invokedMethod.desc);
+        String calledMethod = LocationUtils.INSTANCE.getMethodLocation(ownerClassName, invokedMethod.name, invokedMethod.desc);
         ctx.registerProblem(new MethodNotFoundProblem(calledMethod), ProblemLocation.fromMethod(clazz.name, method));
 
       } else {
@@ -101,7 +100,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       if (VerifierUtil.isStatic(actualMethod)) {
         //attempt to invokevirtual on static method => IncompatibleClassChangeError at runtime
 
-        ctx.registerProblem(new InvokeVirtualOnStaticMethodProblem(getMethodLocation(classNode, actualMethod)), location);
+        ctx.registerProblem(new InvokeVirtualOnStaticMethodProblem(LocationUtils.INSTANCE.getMethodLocation(classNode, actualMethod)), location);
       }
     }
 
@@ -109,23 +108,23 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
       if (!VerifierUtil.isStatic(actualMethod)) {
         //attempt to invokestatic on an instance method => IncompatibleClassChangeError at runtime
 
-        ctx.registerProblem(new InvokeStaticOnInstanceMethodProblem(getMethodLocation(classNode, actualMethod)), location);
+        ctx.registerProblem(new InvokeStaticOnInstanceMethodProblem(LocationUtils.INSTANCE.getMethodLocation(classNode, actualMethod)), location);
       }
     }
 
     if (invokeInsn.getOpcode() == Opcodes.INVOKEINTERFACE) {
       if (VerifierUtil.isStatic(actualMethod)) {
-        ctx.registerProblem(new InvokeInterfaceOnStaticMethodProblem(getMethodLocation(classNode, actualMethod)), location);
+        ctx.registerProblem(new InvokeInterfaceOnStaticMethodProblem(LocationUtils.INSTANCE.getMethodLocation(classNode, actualMethod)), location);
       }
 
       if (VerifierUtil.isPrivate(actualMethod)) {
-        ctx.registerProblem(new InvokeInterfaceOnPrivateMethodProblem(getMethodLocation(classNode, actualMethod)), location);
+        ctx.registerProblem(new InvokeInterfaceOnPrivateMethodProblem(LocationUtils.INSTANCE.getMethodLocation(classNode, actualMethod)), location);
       }
     }
 
     if (invokeInsn.getOpcode() == Opcodes.INVOKESPECIAL) {
       if (VerifierUtil.isStatic(actualMethod)) {
-        ctx.registerProblem(new InvokeSpecialOnStaticMethodProblem(getMethodLocation(classNode, actualMethod)), location);
+        ctx.registerProblem(new InvokeSpecialOnStaticMethodProblem(LocationUtils.INSTANCE.getMethodLocation(classNode, actualMethod)), location);
       }
     }
 
@@ -160,7 +159,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
     }
 
     if (accessProblem != null) {
-      IllegalMethodAccessProblem problem = new IllegalMethodAccessProblem(getMethodLocation(actualOwner.name, actualMethod), accessProblem);
+      IllegalMethodAccessProblem problem = new IllegalMethodAccessProblem(LocationUtils.INSTANCE.getMethodLocation(actualOwner.name, actualMethod), accessProblem);
       ctx.registerProblem(problem, ProblemLocation.fromMethod(verifiedClass.name, verifiedMethod));
     }
   }

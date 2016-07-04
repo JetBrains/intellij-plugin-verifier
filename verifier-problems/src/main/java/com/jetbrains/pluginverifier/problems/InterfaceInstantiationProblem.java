@@ -32,7 +32,7 @@ public class InterfaceInstantiationProblem extends Problem {
 
   @NotNull
   public String getDescription() {
-    return "instantiation an interface" + " " + MessageUtils.convertClassName(myClassName);
+    return "instantiation an interface" + " " + MessageUtils.INSTANCE.convertClassName(myClassName);
   }
 
 

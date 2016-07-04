@@ -32,7 +32,7 @@ public class InheritFromFinalClassProblem extends Problem {
 
   @NotNull
   public String getDescription() {
-    return "cannot inherit from final class " + MessageUtils.convertClassName(myFinalClass);
+    return "cannot inherit from final class " + MessageUtils.INSTANCE.convertClassName(myFinalClass);
   }
 
 }

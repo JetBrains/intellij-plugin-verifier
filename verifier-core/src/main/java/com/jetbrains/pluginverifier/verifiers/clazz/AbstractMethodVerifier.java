@@ -57,7 +57,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
         if (allMethods.add(new MethodSign(method))) {
           if (VerifierUtil.isAbstract(method) && !VerifierUtil.isStatic(method) && !VerifierUtil.isPrivate(method)) {
             //undefined abstract => problem
-            ctx.registerProblem(new MethodNotImplementedProblem(LocationUtils.getMethodLocation(curNode, method)), ProblemLocation.fromClass(clazz.name));
+            ctx.registerProblem(new MethodNotImplementedProblem(LocationUtils.INSTANCE.getMethodLocation(curNode, method)), ProblemLocation.fromClass(clazz.name));
 
           }
         }
@@ -125,7 +125,7 @@ public class AbstractMethodVerifier implements ClassVerifier {
           //failed to find such a method in any ancestor => method is not implemented
           allMethods.add(method);
 
-          ctx.registerProblem(new MethodNotImplementedProblem(LocationUtils.getMethodLocation(iNode, methodNode)), ProblemLocation.fromClass(clazz.name));
+          ctx.registerProblem(new MethodNotImplementedProblem(LocationUtils.INSTANCE.getMethodLocation(iNode, methodNode)), ProblemLocation.fromClass(clazz.name));
         }
       }
     }

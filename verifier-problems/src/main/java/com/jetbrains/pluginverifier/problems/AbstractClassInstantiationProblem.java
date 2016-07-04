@@ -32,7 +32,7 @@ public class AbstractClassInstantiationProblem extends Problem {
 
   @NotNull
   public String getDescription() {
-    return "instantiation an abstract class" + " " + MessageUtils.convertClassName(myClassName);
+    return "instantiation an abstract class" + " " + MessageUtils.INSTANCE.convertClassName(myClassName);
   }
 
 }

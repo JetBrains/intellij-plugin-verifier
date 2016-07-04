@@ -54,7 +54,7 @@ public class FieldAccessInstructionVerifier implements InstructionVerifier {
         return;
       }
 
-      String fieldLocation = LocationUtils.getFieldLocation(ownerNode.name, node.name, node.desc);
+      String fieldLocation = LocationUtils.INSTANCE.getFieldLocation(ownerNode.name, node.name, node.desc);
       ctx.registerProblem(new FieldNotFoundProblem(fieldLocation), ProblemLocation.fromMethod(clazz.name, method));
       return;
     }
@@ -65,7 +65,7 @@ public class FieldAccessInstructionVerifier implements InstructionVerifier {
 
     int opcode = node.getOpcode();
 
-    final String field = LocationUtils.getFieldLocation(actualLocation.getClassNode().name, actualLocation.getFieldNode());
+    final String field = LocationUtils.INSTANCE.getFieldLocation(actualLocation.getClassNode().name, actualLocation.getFieldNode());
 
     if (opcode == Opcodes.GETSTATIC || opcode == Opcodes.PUTSTATIC) {
       if (!VerifierUtil.isStatic(actualLocation.getFieldNode())) { //TODO: "if the resolved field is not a static field or an interface field, getstatic throws an IncompatibleClassChangeError"
@@ -82,7 +82,7 @@ public class FieldAccessInstructionVerifier implements InstructionVerifier {
   }
 
   private void checkFinalModifier(int opcode, ResolverUtil.FieldLocation location, VContext ctx, ClassNode verifiedClass, MethodNode verifierMethod) {
-    final String field = LocationUtils.getFieldLocation(location.getClassNode().name, location.getFieldNode());
+    final String field = LocationUtils.INSTANCE.getFieldLocation(location.getClassNode().name, location.getFieldNode());
 
     if (VerifierUtil.isFinal(location.getFieldNode())) {
       if (opcode == Opcodes.PUTFIELD) {
@@ -127,7 +127,7 @@ public class FieldAccessInstructionVerifier implements InstructionVerifier {
     }
 
     if (accessProblem != null) {
-      IllegalFieldAccessProblem problem = new IllegalFieldAccessProblem(LocationUtils.getFieldLocation(actualOwner.name, actualField), accessProblem);
+      IllegalFieldAccessProblem problem = new IllegalFieldAccessProblem(LocationUtils.INSTANCE.getFieldLocation(actualOwner.name, actualField), accessProblem);
       ctx.registerProblem(problem, ProblemLocation.fromMethod(verifiedClass.name, verifiedMethod));
     }
 

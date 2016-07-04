@@ -47,7 +47,7 @@ public class MethodNotFoundProblem extends Problem {
 
   @NotNull
   public String getDescription() {
-    return "invoking unknown method" + " " + MessageUtils.convertMethodDescr(myMethod);
+    return "invoking unknown method" + " " + MessageUtils.INSTANCE.convertMethodDescr(myMethod);
   }
 
 }

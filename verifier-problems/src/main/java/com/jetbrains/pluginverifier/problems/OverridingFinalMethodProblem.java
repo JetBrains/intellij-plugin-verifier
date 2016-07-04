@@ -32,7 +32,7 @@ public class OverridingFinalMethodProblem extends Problem {
 
   @NotNull
   public String getDescription() {
-    return "overriding final method" + " " + MessageUtils.convertMethodDescr(myMethod);
+    return "overriding final method" + " " + MessageUtils.INSTANCE.convertMethodDescr(myMethod);
   }
 
 }

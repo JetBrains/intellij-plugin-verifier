@@ -53,13 +53,13 @@ public class InvokeDynamicVerifier implements InstructionVerifier {
           if (METHOD_TAGS.contains(handle.getTag())) {
             ResolverUtil.MethodLocation location = ResolverUtil.findMethod(resolver, aClass, handle.getName(), handle.getDesc(), ctx);
             if (location == null) {
-              String methodLocation = LocationUtils.getMethodLocation(aClass, handle.getName(), handle.getDesc());
+              String methodLocation = LocationUtils.INSTANCE.getMethodLocation(aClass, handle.getName(), handle.getDesc());
               ctx.registerProblem(new MethodNotFoundProblem(methodLocation), ProblemLocation.fromMethod(clazz.name, method));
             }
           } else if (FIELD_TAGS.contains(handle.getTag())) {
             ResolverUtil.FieldLocation location = ResolverUtil.findField(resolver, aClass, handle.getName(), handle.getDesc(), ctx);
             if (location == null) {
-              String fieldLocation = LocationUtils.getFieldLocation(aClass, handle.getName(), handle.getDesc());
+              String fieldLocation = LocationUtils.INSTANCE.getFieldLocation(aClass, handle.getName(), handle.getDesc());
               ctx.registerProblem(new FieldNotFoundProblem(fieldLocation), ProblemLocation.fromMethod(clazz.name, method));
             }
             //TODO; write a test for the case

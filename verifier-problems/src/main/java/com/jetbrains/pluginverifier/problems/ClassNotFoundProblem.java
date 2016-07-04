@@ -32,7 +32,7 @@ public class ClassNotFoundProblem extends Problem {
 
   @NotNull
   public String getDescription() {
-    return "accessing to unknown class" + " " + MessageUtils.convertClassName(myUnknownClass);
+    return "accessing to unknown class" + " " + MessageUtils.INSTANCE.convertClassName(myUnknownClass);
   }
 
 }

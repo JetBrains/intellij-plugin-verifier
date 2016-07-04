@@ -74,12 +74,12 @@ public class CodeLocation extends ProblemLocation {
 
     if (methodDescr == null) {
       if (fieldName != null) {
-        return MessageUtils.convertClassName(className) + '.' + fieldName;
+        return MessageUtils.INSTANCE.convertClassName(className) + '.' + fieldName;
       }
 
-      return MessageUtils.convertClassName(className);
+      return MessageUtils.INSTANCE.convertClassName(className);
     }
 
-    return MessageUtils.convertMethodDescr(methodDescr, className);
+    return MessageUtils.INSTANCE.convertMethodDescr(methodDescr, className);
   }
 }

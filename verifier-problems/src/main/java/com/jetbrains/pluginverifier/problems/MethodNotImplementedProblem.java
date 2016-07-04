@@ -32,7 +32,7 @@ public class MethodNotImplementedProblem extends Problem {
 
   @NotNull
   public String getDescription() {
-    return "method isn't implemented" + " " + MessageUtils.convertMethodDescr(myMethod);
+    return "method isn't implemented" + " " + MessageUtils.INSTANCE.convertMethodDescr(myMethod);
   }
 
 }

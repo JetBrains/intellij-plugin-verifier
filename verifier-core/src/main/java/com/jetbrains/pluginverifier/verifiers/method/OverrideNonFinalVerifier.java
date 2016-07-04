@@ -4,13 +4,13 @@ import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.problems.OverridingFinalMethodProblem;
+import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.utils.ResolverUtil;
 import com.jetbrains.pluginverifier.utils.VerifierUtil;
 import com.jetbrains.pluginverifier.verifiers.VContext;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import static com.jetbrains.pluginverifier.utils.LocationUtils.getMethodLocation;
 
 /**
  * @author Dennis.Ushakov
@@ -52,7 +52,7 @@ public class OverrideNonFinalVerifier implements MethodVerifier {
     MethodNode methodNode = superMethod.getMethodNode();
 
     if (VerifierUtil.isFinal(methodNode) && !VerifierUtil.isAbstract(methodNode)) {
-      ctx.registerProblem(new OverridingFinalMethodProblem(getMethodLocation(classNode, methodNode)), ProblemLocation.fromMethod(clazz.name, method));
+      ctx.registerProblem(new OverridingFinalMethodProblem(LocationUtils.INSTANCE.getMethodLocation(classNode, methodNode)), ProblemLocation.fromMethod(clazz.name, method));
     }
   }
 }
