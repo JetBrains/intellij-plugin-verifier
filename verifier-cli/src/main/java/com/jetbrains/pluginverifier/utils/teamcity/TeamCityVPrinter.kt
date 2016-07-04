@@ -5,7 +5,6 @@ import com.google.common.collect.HashMultimap
 import com.google.common.collect.ImmutableMultimap
 import com.google.common.collect.Multimap
 import com.intellij.structure.domain.IdeVersion
-import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.api.VResults
@@ -14,31 +13,12 @@ import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.BrokenPluginProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
-import com.jetbrains.pluginverifier.results.ResultsElement
 import com.jetbrains.pluginverifier.utils.MessageUtils
 import com.jetbrains.pluginverifier.utils.Opts
-import com.jetbrains.pluginverifier.utils.ProblemUtils
 import com.jetbrains.pluginverifier.utils.StringUtil
-import java.io.File
-import java.io.FileOutputStream
-import java.io.PrintStream
 import kotlin.comparisons.compareBy
 import kotlin.comparisons.thenBy
 
-fun main(args: Array<String>) {
-  val log = TeamCityLog(PrintStream(FileOutputStream(File("for_tests/report.tc"))))
-  val vPrinter = TeamCityVPrinter(log, TeamCityVPrinter.GroupBy.NOT_GROUPED)
-  val problems: ResultsElement = ProblemUtils.loadProblems(File("for_tests/build-report.xml"))
-  val ress = arrayListOf<VResult>()
-  problems.asMap().forEach {
-    val multimap = HashMultimap.create<Problem, ProblemLocation>()
-    it.value.forEach {
-      multimap.put(it, ProblemLocation.fromClass("some_class"))
-    }
-    ress.add(VResult.Problems(PluginDescriptor.ByUpdateInfo(it.key), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion(problems.ide)), "overview", multimap))
-  }
-  vPrinter.printResults(VResults(ress))
-}
 
 /**
  * @author Sergey Patrikeev

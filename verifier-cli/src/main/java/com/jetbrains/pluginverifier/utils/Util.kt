@@ -10,13 +10,10 @@ import com.google.common.io.Files
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeManager
 import com.intellij.structure.domain.IdeVersion
-import com.intellij.structure.domain.Plugin
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.api.*
+import com.jetbrains.pluginverifier.api.VOptions
 import com.jetbrains.pluginverifier.format.UpdateInfo
-import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
-import com.jetbrains.pluginverifier.results.ProblemSet
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import java.io.*
@@ -196,19 +193,6 @@ object Util {
   }
 
   @Throws(IOException::class)
-  fun saveResultsToXml(xmlFile: File,
-                       ideVersion: IdeVersion,
-                       results: Map<UpdateInfo, ProblemSet>) {
-    val problems = LinkedHashMap<UpdateInfo, Collection<Problem>>()
-
-    for (entry in results.entries) {
-      problems.put(entry.key, entry.value.allProblems)
-    }
-
-    ProblemUtils.saveProblems(xmlFile, ideVersion, problems)
-  }
-
-  @Throws(IOException::class)
   fun createIde(ideToCheck: File, opts: Opts): Ide {
     return IdeManager.getInstance().createIde(ideToCheck, takeVersionFromCmd(opts))
   }
@@ -226,30 +210,6 @@ object Util {
     }
     return null
   }
-
-  @Throws(Exception::class)
-  fun verify(plugin: Plugin,
-             ide: Ide,
-             ideResolver: Resolver,
-             jdkDir: File,
-             externalClassPath: Resolver,
-             options: VOptions): ProblemSet {
-    val jdkDescriptor = JdkDescriptor.ByFile(jdkDir)
-    val pairs = listOf(Pair<PluginDescriptor, IdeDescriptor>(PluginDescriptor.ByInstance(plugin), IdeDescriptor.ByInstance(ide, ideResolver)))
-
-    //the exceptions are propagated
-    val result = VManager.verify(VParams(jdkDescriptor, pairs, options, externalClassPath)).results[0]
-
-    if (result is VResult.Problems) {
-      val problemSet = ProblemSet()
-      result.problems.entries().forEach { x -> problemSet.addProblem(x.key, x.value) }
-      return problemSet
-    } else if (result is VResult.BadPlugin) {
-      throw IllegalArgumentException(result.overview) //will be caught above
-    }
-    return ProblemSet()
-  }
-
 
   @Throws(IOException::class)
   fun getJdkDir(opts: Opts): File {
