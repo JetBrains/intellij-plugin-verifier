@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.utils.teamcity
+package com.jetbrains.pluginverifier.output
 
 import org.apache.commons.io.output.NullOutputStream
 

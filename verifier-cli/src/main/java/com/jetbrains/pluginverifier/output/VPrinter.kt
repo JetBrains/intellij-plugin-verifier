@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.utils.teamcity
+package com.jetbrains.pluginverifier.output
 
 import com.jetbrains.pluginverifier.api.VResults
 

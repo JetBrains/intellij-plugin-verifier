@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.utils.teamcity
+package com.jetbrains.pluginverifier.output
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashMultimap
@@ -29,9 +29,9 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
 
   override fun printResults(results: VResults) {
     when (groupBy) {
-      TeamCityVPrinter.GroupBy.NOT_GROUPED -> notGrouped(results)
-      TeamCityVPrinter.GroupBy.BY_PROBLEM_TYPE -> groupByProblemType(results)
-      TeamCityVPrinter.GroupBy.BY_PLUGIN -> groupByPlugin(results)
+      GroupBy.NOT_GROUPED -> notGrouped(results)
+      GroupBy.BY_PROBLEM_TYPE -> groupByProblemType(results)
+      GroupBy.BY_PLUGIN -> groupByPlugin(results)
     }
   }
 
