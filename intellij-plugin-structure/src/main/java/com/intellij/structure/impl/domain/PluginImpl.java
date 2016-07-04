@@ -388,7 +388,7 @@ class PluginImpl implements Plugin {
 
       String ub = ideaVersion.getAttributeValue("until-build");
       if (!Strings.isNullOrEmpty(ub)) {
-        if (ub.endsWith(".*") || ub.endsWith(".999") || ub.endsWith(".9999") || ub.endsWith(".99999")) {
+        if (ub.endsWith(".*")) {
           int idx = ub.lastIndexOf('.');
           ub = ub.substring(0, idx + 1) + Integer.MAX_VALUE;
         }
