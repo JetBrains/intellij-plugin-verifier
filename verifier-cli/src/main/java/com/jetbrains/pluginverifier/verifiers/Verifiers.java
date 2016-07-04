@@ -1,9 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers;
 
-import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier;
-import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier;
-import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier;
-import com.jetbrains.pluginverifier.verifiers.clazz.SuperClassVerifier;
+import com.jetbrains.pluginverifier.verifiers.clazz.*;
 import com.jetbrains.pluginverifier.verifiers.field.FieldTypeVerifier;
 import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier;
 import com.jetbrains.pluginverifier.verifiers.instruction.*;
@@ -21,7 +18,8 @@ public class Verifiers {
   private static final ClassVerifier[] CLASS_VERIFIERS = new ClassVerifier[]{
       new SuperClassVerifier(),
       new InterfacesVerifier(),
-      new AbstractMethodVerifier()
+      new AbstractMethodVerifier(),
+      new InheritFromFinalClassVerifier()
   };
   private static final MethodVerifier[] METHOD_VERIFIERS = new MethodVerifier[]{
       new OverrideNonFinalVerifier(),
