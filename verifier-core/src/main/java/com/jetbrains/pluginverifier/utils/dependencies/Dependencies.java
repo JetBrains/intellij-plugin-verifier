@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.utils.dependencies;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
@@ -19,6 +20,16 @@ import java.util.*;
 public final class Dependencies {
 
   private final static Logger LOG = LoggerFactory.getLogger(Dependencies.class);
+
+  /**
+   * The list of IntelliJ plugins which define some modules
+   * (e.g. the plugin "org.jetbrains.plugins.ruby" defines a module "com.intellij.modules.ruby")
+   */
+  //TODO: add a cli-option
+  private static final ImmutableMap<String, String> INTELLIJ_MODULES_CONTAINING_PLUGINS =
+      ImmutableMap.of("com.intellij.modules.ruby", "org.jetbrains.plugins.ruby",
+          "com.intellij.modules.php", "com.jetbrains.php",
+          "com.intellij.modules.python", "Pythonid");
 
   //TODO: write a System.option for appending this list.
   private static final List<String> IDEA_ULTIMATE_MODULES = ImmutableList.of(
@@ -123,9 +134,30 @@ public final class Dependencies {
             }
             dependency = ide.getPluginByModule(depId);
             if (dependency == null) {
-              String reason = String.format("Plugin %s depends on module %s which is not found in %s", plugin.getPluginId(), depId, ide.getVersion());
-              missing.put(pd, new MissingReason(reason, null));
-              continue;
+              if (INTELLIJ_MODULES_CONTAINING_PLUGINS.containsKey(depId)) {
+                //try to add the intellij plugin which defines this module
+                String pluginId = INTELLIJ_MODULES_CONTAINING_PLUGINS.get(depId);
+                dependency = ide.getPluginById(pluginId);
+                if (dependency == null) {
+                  try {
+                    UpdateInfo updateInfo = RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(ide.getVersion(), pluginId);
+                    if (updateInfo != null) {
+                      File pluginFile = RepositoryManager.getInstance().getPluginFile(updateInfo);
+                      if (pluginFile != null) {
+                        dependency = PluginCache.INSTANCE.createPlugin(pluginFile);
+                      }
+                    }
+                  } catch (Exception e) {
+                    LOG.error("Unable to add the plugin " + pluginId + " defining the IntelliJ-module " + depId + " which is required for " + plugin.getPluginId(), e);
+                  }
+                }
+              }
+
+              if (dependency == null) {
+                String reason = String.format("Plugin %s depends on module %s which is not found in %s", plugin.getPluginId(), depId, ide.getVersion());
+                missing.put(pd, new MissingReason(reason, null));
+                continue;
+              }
             }
 
           } else {
