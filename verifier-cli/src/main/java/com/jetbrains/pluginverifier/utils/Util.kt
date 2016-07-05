@@ -15,7 +15,7 @@ import java.io.FileReader
 import java.io.IOException
 import java.util.regex.Pattern
 
-data class CmdOpts(
+open class CmdOpts(
     @set:Argument("runtime-dir", alias = "r", description = "The path to directory containing Java runtime jars (usually rt.jar and tools.jar are sufficient)")
     var runtimeDir: String? = null,
 
