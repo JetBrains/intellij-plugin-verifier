@@ -28,7 +28,7 @@ public class TestDependenciesCache {
     File pluginFile = TestData.fetchResource("ruby-8.0.0.20160127.zip", false);
 
     Ide ide = IdeManagerImpl.getInstance().createIde(idea144_3600);
-    Plugin plugin = PluginCache.getInstance().createPlugin(pluginFile);
+    Plugin plugin = PluginCache.INSTANCE.createPlugin(pluginFile);
 
     Dependencies.DependenciesResult descriptor = Dependencies.getInstance().calcDependencies(plugin, ide);
     Set<Plugin> deps = descriptor.getDescriptor().getTransitiveDependencies();
