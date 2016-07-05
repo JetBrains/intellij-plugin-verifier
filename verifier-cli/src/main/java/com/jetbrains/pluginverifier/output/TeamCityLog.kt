@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.output
 
-import org.apache.commons.io.output.NullOutputStream
-
 import java.io.Closeable
 import java.io.PrintStream
 
@@ -9,8 +7,6 @@ import java.io.PrintStream
  * @author Sergey Evdokimov
  */
 class TeamCityLog(private val out: PrintStream) {
-
-  val NULL_LOG = TeamCityLog(PrintStream(NullOutputStream.NULL_OUTPUT_STREAM))
 
   fun messageError(text: String) {
     out.printf("##teamcity[message text='%s' status='ERROR']\n", escape(text))
