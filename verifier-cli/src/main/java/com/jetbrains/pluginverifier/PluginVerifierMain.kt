@@ -4,13 +4,13 @@ import com.jetbrains.pluginverifier.configurations.CheckIdeConfiguration
 import com.jetbrains.pluginverifier.configurations.CheckIdeParamsParser
 import com.jetbrains.pluginverifier.configurations.CheckPluginConfiguration
 import com.jetbrains.pluginverifier.configurations.CheckPluginParamsParser
-import com.jetbrains.pluginverifier.utils.Opts
+import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.sampullara.cli.Args
 
 object PluginVerifierMain {
 
   @JvmStatic fun main(args: Array<String>) {
-    val opts = Opts()
+    val opts = CmdOpts()
     var freeArgs = Args.parse(opts, args)
 
 

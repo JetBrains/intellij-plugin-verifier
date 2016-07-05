@@ -14,8 +14,8 @@ import com.jetbrains.pluginverifier.problems.BrokenPluginProblem
 import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
+import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.MessageUtils
-import com.jetbrains.pluginverifier.utils.Opts
 import com.jetbrains.pluginverifier.utils.StringUtil
 import kotlin.comparisons.compareBy
 import kotlin.comparisons.thenBy
@@ -230,7 +230,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
     companion object {
 
       @JvmStatic
-      fun parse(opts: Opts): GroupBy {
+      fun parse(opts: CmdOpts): GroupBy {
         val groupValue = opts.group ?: return NOT_GROUPED
         return values().find { it.arg == groupValue } ?: NOT_GROUPED
       }

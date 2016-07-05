@@ -15,7 +15,7 @@ import com.jetbrains.pluginverifier.problems.statics.InstanceAccessOfStaticField
 import com.jetbrains.pluginverifier.problems.statics.InvokeStaticOnInstanceMethodProblem;
 import com.jetbrains.pluginverifier.problems.statics.InvokeVirtualOnStaticMethodProblem;
 import com.jetbrains.pluginverifier.problems.statics.StaticAccessOfInstanceFieldProblem;
-import com.jetbrains.pluginverifier.utils.Opts;
+import com.jetbrains.pluginverifier.utils.CmdOpts;
 import com.jetbrains.pluginverifier.utils.VOptionsUtil;
 import com.jetbrains.pluginverifier.verifiers.VContext;
 import com.jetbrains.pluginverifier.verifiers.Verifiers;
@@ -203,7 +203,7 @@ public class VerifierTest {
         Resolver ideResolver = Resolver.createIdeResolver(ide);
         Resolver jdkResolver = Resolver.createJdkResolver(new File(jdkPath))
     ) {
-      VContext vContext = new VContext(plugin, Resolver.createPluginResolver(plugin), new PluginDescriptor.ByInstance(plugin), ide, ideResolver, new IdeDescriptor.ByInstance(ide, ideResolver), jdkResolver, VOptionsUtil.parseOpts(new Opts()), Resolver.getEmptyResolver());
+      VContext vContext = new VContext(plugin, Resolver.createPluginResolver(plugin), new PluginDescriptor.ByInstance(plugin), ide, ideResolver, new IdeDescriptor.ByInstance(ide, ideResolver), jdkResolver, VOptionsUtil.parseOpts(new CmdOpts()), Resolver.getEmptyResolver());
       VResult vResult = Verifiers.INSTANCE.processAllVerifiers(vContext);
       assert vResult instanceof VResult.Problems;
 

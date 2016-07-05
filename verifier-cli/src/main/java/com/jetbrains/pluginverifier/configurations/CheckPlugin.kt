@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.misc.PluginCache
 import com.jetbrains.pluginverifier.output.StreamVPrinter
 import com.jetbrains.pluginverifier.repository.RepositoryManager
-import com.jetbrains.pluginverifier.utils.Opts
+import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.Util
 import com.jetbrains.pluginverifier.utils.VOptionsUtil
 import java.io.File
@@ -15,7 +15,7 @@ import java.io.PrintStream
 
 object CheckPluginParamsParser : ParamsParser {
 
-  override fun parse(opts: Opts, freeArgs: List<String>): CheckPluginParams {
+  override fun parse(opts: CmdOpts, freeArgs: List<String>): CheckPluginParams {
     if (freeArgs.size <= 1) {
       throw RuntimeException("You must specify plugin to check and IDE, example:\n" +
           "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963\n" +

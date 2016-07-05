@@ -15,7 +15,7 @@ import java.io.FileReader
 import java.io.IOException
 import java.util.regex.Pattern
 
-data class Opts(
+data class CmdOpts(
     @set:Argument("runtime-dir", alias = "r", description = "The path to directory containing Java runtime jars (usually rt.jar and tools.jar are sufficient)")
     var runtimeDir: String? = null,
 
@@ -75,12 +75,12 @@ object Util {
 
 
   @Throws(IOException::class)
-  fun createIde(ideToCheck: File, opts: Opts): Ide {
+  fun createIde(ideToCheck: File, opts: CmdOpts): Ide {
     return IdeManager.getInstance().createIde(ideToCheck, takeVersionFromCmd(opts))
   }
 
   @Throws(IOException::class)
-  private fun takeVersionFromCmd(opts: Opts): IdeVersion? {
+  private fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {
     val build = opts.actualIdeVersion
     if (!build.isNullOrBlank()) {
       try {
@@ -95,7 +95,7 @@ object Util {
 
   //TODO: add support of custom JDK ?
   @Throws(IOException::class)
-  fun getJdkDir(opts: Opts): File {
+  fun getJdkDir(opts: CmdOpts): File {
     val runtimeDirectory: File
 
     if (opts.runtimeDir != null) {
@@ -116,7 +116,7 @@ object Util {
   }
 
   @Throws(IOException::class)
-  fun getExternalClassPath(opts: Opts): Resolver =
+  fun getExternalClassPath(opts: CmdOpts): Resolver =
       Resolver.createUnionResolver("External classpath resolver: ${opts.externalClasspath}",
           opts.externalClasspath.map { Resolver.createJarResolver(File(it)) })
 
@@ -126,7 +126,7 @@ object Util {
 object VOptionsUtil {
 
   @JvmStatic
-  fun parseOpts(opts: Opts): VOptions {
+  fun parseOpts(opts: CmdOpts): VOptions {
 
     var problemsToIgnore: Multimap<Pair<String, String>, Pattern> = HashMultimap.create<Pair<String, String>, Pattern>()
 

@@ -19,7 +19,7 @@ import com.jetbrains.pluginverifier.utils.*
 import java.io.*
 
 object CheckIdeParamsParser : ParamsParser {
-  override fun parse(opts: Opts, freeArgs: List<String>): CheckIdeParams {
+  override fun parse(opts: CmdOpts, freeArgs: List<String>): CheckIdeParams {
     if (freeArgs.isEmpty()) {
       throw RuntimeException("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"")
     }
@@ -45,7 +45,7 @@ object CheckIdeParamsParser : ParamsParser {
   /**
    * (id-s of plugins to check all builds, id-s of plugins to check last builds)
    */
-  private fun extractPluginToCheckList(opts: Opts): Pair<List<String>, List<String>> {
+  private fun extractPluginToCheckList(opts: CmdOpts): Pair<List<String>, List<String>> {
     val pluginsCheckAllBuilds = arrayListOf<String>()
     val pluginsCheckLastBuilds = arrayListOf<String>()
 
@@ -119,7 +119,7 @@ object CheckIdeParamsParser : ParamsParser {
    * Plugin Id -> Versions
    */
   @Throws(IOException::class)
-  private fun getExcludedPlugins(opts: Opts): Multimap<String, String> {
+  private fun getExcludedPlugins(opts: CmdOpts): Multimap<String, String> {
     val epf = opts.excludedPluginsFile ?: return ArrayListMultimap.create<String, String>() //excluded-plugin-file (usually brokenPlugins.txt)
 
     //file containing list of broken plugins (e.g. IDEA-*/lib/resources.jar!/brokenPlugins.txt)
@@ -189,7 +189,7 @@ class CheckIdeResults(val ideVersion: IdeVersion,
     HtmlVPrinter(ideVersion, { x -> params.excludedPlugins.containsEntry(x.first, x.second) }, htmlFile.create()).printResults(vResults)
   }
 
-  fun processResults(opts: Opts) {
+  fun processResults(opts: CmdOpts) {
     if (opts.needTeamCityLog) {
       val vPrinter = TeamCityVPrinter(TeamCityLog(System.out), TeamCityVPrinter.GroupBy.parse(opts))
       vPrinter.printResults(vResults)
