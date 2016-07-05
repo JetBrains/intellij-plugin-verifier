@@ -100,14 +100,7 @@ object VParamsCreator {
   }
 
   private fun noSuchUpdate(plugin: PluginDescriptor): UpdateNotFoundException {
-    val id: String = when (plugin) {
-      is PluginDescriptor.ByBuildId -> "#${plugin.buildId.toString()}"
-      is PluginDescriptor.ByXmlId -> "${plugin.pluginId}:${plugin.version}"
-      is PluginDescriptor.ByFile -> "${plugin.file.name}"
-      is PluginDescriptor.ByInstance -> plugin.plugin.toString()
-      is PluginDescriptor.ByUpdateInfo -> plugin.updateInfo.toString()
-    }
-    return UpdateNotFoundException("Plugin $id is not found in the Plugin repository")
+    return UpdateNotFoundException("Plugin ${plugin.presentableName()} is not found in the Plugin repository")
   }
 
   fun getIde(ideDescriptor: IdeDescriptor): Ide = when (ideDescriptor) {

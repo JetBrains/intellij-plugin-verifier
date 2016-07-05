@@ -31,6 +31,15 @@ sealed class PluginDescriptor(@SerializedName("pluginId") val pluginId: String,
     return this.id().hashCode()
   }
 
+  fun presentableName(): String = when (this) {
+    is ByBuildId -> "#${this.buildId.toString()}"
+    is ByXmlId -> "${this.pluginId}:${this.version}"
+    is ByFile -> "${this.file.name}"
+    is ByInstance -> plugin.toString()
+    is ByUpdateInfo -> this.updateInfo.toString()
+  }
+
+
   class ByUpdateInfo(pluginId: String, version: String, @SerializedName("updateInfo") val updateInfo: UpdateInfo) : PluginDescriptor(pluginId, version) {
     constructor(updateInfo: UpdateInfo) : this(updateInfo.pluginId!!, updateInfo.version!!, updateInfo)
 
@@ -82,6 +91,8 @@ sealed class IdeDescriptor(@SerializedName("version") val ideVersion: IdeVersion
   override fun hashCode(): Int {
     return this.id().hashCode()
   }
+
+  fun presentableName(): String = ideVersion.asString()
 
   class ByFile(ideVersion: IdeVersion, @Transient val file: File) : IdeDescriptor(ideVersion) {
 

@@ -93,7 +93,7 @@ object VManager {
           ideToPlugins.value.forEach poi@ { pluginOnIde ->
             checkCancelled()
 
-            LOG.info("Verifying ${pluginOnIde.first} against ${pluginOnIde.second}")
+            LOG.info("Verifying ${pluginOnIde.first.presentableName()} against ${pluginOnIde.second.presentableName()}")
 
             val plugin: Plugin
             try {
@@ -135,7 +135,7 @@ object VManager {
               try {
                 val vResult = Verifiers.processAllVerifiers(ctx)
                 results.add(vResult)
-                LOG.info("Successfully verified $plugin against ${pluginOnIde.second}")
+                LOG.info("Successfully verified $plugin against ${pluginOnIde.second.presentableName()}")
               } catch (ie: InterruptedException) {
                 throw ie
               } catch (e: Exception) {
