@@ -161,45 +161,10 @@ class CheckIdeParams(val ideDescriptor: IdeDescriptor,
 
 }
 
-class CheckIdeResults(val params: CheckIdeParams, val vResults: VResults) : Results {
-
-  private fun getUpdateCompatibleWithCommunityEdition(pluginId: String, version: IdeVersion): UpdateInfo? {
-    val ideVersion = version.asString()
-    if (ideVersion.startsWith("IU-")) {
-      val communityVersion = "IC-" + StringUtil.trimStart(ideVersion, "IU-")
-      try {
-        return RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(IdeVersion.createIdeVersion(communityVersion), pluginId)
-      } catch (e: Exception) {
-        return null
-      }
-
-    }
-    return null
-  }
-
-  fun getMissingUpdatesProblems(): List<NoCompatibleUpdatesProblem> {
-    val ideVersion = params.ideDescriptor.ideVersion
-    val existingUpdatesForIde = RepositoryManager.getInstance()
-        .getLastCompatibleUpdates(ideVersion)
-        .filterNot { params.excludedPlugins.containsEntry(it.pluginId, it.version) }
-        .map { it.pluginId }
-        .filterNotNull()
-        .distinct()
-        .toSet()
-
-    return params.pluginsToCheck.map { it.pluginId }.distinct()
-        .filterNot { existingUpdatesForIde.contains(it) }
-        .map {
-          val buildForCommunity = getUpdateCompatibleWithCommunityEdition(it, ideVersion)
-          if (buildForCommunity != null) {
-            val details = "\nNote: there is an update (#" + buildForCommunity.updateId + ") compatible with IDEA Community Edition, " +
-                "\nbut the Plugin repository does not offer to install it if you run the IDEA Ultimate."
-            NoCompatibleUpdatesProblem(it, ideVersion.asString(), details)
-          } else {
-            NoCompatibleUpdatesProblem(it, ideVersion.asString(), "")
-          }
-        }
-  }
+class CheckIdeResults(val ideVersion: IdeVersion,
+                      val vResults: VResults,
+                      val params: CheckIdeParams,
+                      val noCompatibleUpdatesProblems: List<NoCompatibleUpdatesProblem>) : Results {
 
   fun dumbBrokenPluginsList(dumpBrokenPluginsFile: File) {
     PrintWriter(dumpBrokenPluginsFile).use { out ->
@@ -228,8 +193,8 @@ class CheckIdeResults(val params: CheckIdeParams, val vResults: VResults) : Resu
     if (opts.needTeamCityLog) {
       val vPrinter = TeamCityVPrinter(TeamCityLog(System.out), TeamCityVPrinter.GroupBy.parse(opts))
       vPrinter.printResults(vResults)
-      //TODO:
-//      vPrinter.printResults(VResults(getMissingUpdatesProblems().map { VResult.Problems() }))
+      vPrinter.printNoCompatibleUpdatesProblems(noCompatibleUpdatesProblems)
+      //TODO: set tc-build status to either success or fail
     }
     if (opts.htmlReportFile != null) {
       saveToHtmlFile(File(opts.htmlReportFile))
@@ -249,7 +214,45 @@ class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
     val pluginsToCheck = params.pluginsToCheck.filterNot { params.excludedPlugins.containsEntry(it.pluginId, it.version) }.map { it to params.ideDescriptor }
     val vParams = VParams(params.jdkDescriptor, pluginsToCheck, params.vOptions, params.externalClassPath)
     val vResults = VManager.verify(vParams)
-    return CheckIdeResults(params, vResults)
+    return CheckIdeResults(params.ideDescriptor.ideVersion, vResults, params, getMissingUpdatesProblems())
   }
+
+  private fun getMissingUpdatesProblems(): List<NoCompatibleUpdatesProblem> {
+    val ideVersion = params.ideDescriptor.ideVersion
+    val existingUpdatesForIde = RepositoryManager.getInstance()
+        .getLastCompatibleUpdates(ideVersion)
+        .filterNot { params.excludedPlugins.containsEntry(it.pluginId, it.version) }
+        .map { it.pluginId }
+        .filterNotNull()
+        .toSet()
+
+    return params.pluginsToCheck.map { it.pluginId }.distinct()
+        .filterNot { existingUpdatesForIde.contains(it) }
+        .map {
+          val buildForCommunity = getUpdateCompatibleWithCommunityEdition(it, ideVersion)
+          if (buildForCommunity != null) {
+            val details = "\nNote: there is an update (#" + buildForCommunity.updateId + ") compatible with IDEA Community Edition, " +
+                "\nbut the Plugin repository does not offer to install it if you run the IDEA Ultimate."
+            NoCompatibleUpdatesProblem(it, ideVersion.asString(), details)
+          } else {
+            NoCompatibleUpdatesProblem(it, ideVersion.asString(), "")
+          }
+        }
+  }
+
+  private fun getUpdateCompatibleWithCommunityEdition(pluginId: String, version: IdeVersion): UpdateInfo? {
+    val ideVersion = version.asString()
+    if (ideVersion.startsWith("IU-")) {
+      val communityVersion = "IC-" + StringUtil.trimStart(ideVersion, "IU-")
+      try {
+        return RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(IdeVersion.createIdeVersion(communityVersion), pluginId)
+      } catch (e: Exception) {
+        return null
+      }
+
+    }
+    return null
+  }
+
 
 }
