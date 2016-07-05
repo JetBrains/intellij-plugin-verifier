@@ -189,7 +189,7 @@ public class DownloadManager {
     if (!pluginInCache.exists() || pluginInCache.length() < BROKEN_ZIP_THRESHOLD) {
       File currentDownload = File.createTempFile("currentDownload", ".zip", downloadDir);
 
-      LOG.info("Downloading " + update + "... ");
+//      LOG.info("Downloading " + update + "... ");
 
       boolean downloadFail = true;
       try {
@@ -199,10 +199,10 @@ public class DownloadManager {
           throw new IOException("Broken zip archive");
         }
 
-        LOG.info("downloading " + update + " done!");
+//        LOG.info("downloading " + update + " done!");
         downloadFail = false;
       } catch (IOException e) {
-        LOG.info("Error loading plugin " + update + " by " + url.toExternalForm(), e);
+        LOG.error("Error loading plugin " + update + " by " + url.toExternalForm(), e);
         throw e;
       } finally {
         if (downloadFail) {

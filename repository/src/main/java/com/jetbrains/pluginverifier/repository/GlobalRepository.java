@@ -41,7 +41,7 @@ class GlobalRepository implements PluginRepository {
   @NotNull
   @Override
   public List<UpdateInfo> getLastCompatibleUpdates(@NotNull IdeVersion ideVersion) throws IOException {
-    LOG.info("Loading list of plugins compatible with " + ideVersion + "... ");
+//    LOG.info("Loading list of plugins compatible with " + ideVersion + "... ");
 
     URL url1 = new URL(url + "/manager/allCompatibleUpdates/?build=" + ideVersion);
     String text = IOUtils.toString(url1);
@@ -75,7 +75,7 @@ class GlobalRepository implements PluginRepository {
   @NotNull
   @Override
   public List<UpdateInfo> getAllCompatibleUpdatesOfPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException {
-    LOG.info("Fetching list of all compatible builds of a pluginId " + pluginId + " on IDE " + ideVersion);
+//    LOG.info("Fetching list of all compatible builds of a pluginId " + pluginId + " on IDE " + ideVersion);
 
     String urlSb = url + "/manager/originalCompatibleUpdatesByPluginIds/?build=" + ideVersion +
         "&pluginIds=" + URLEncoder.encode(pluginId, "UTF-8");
