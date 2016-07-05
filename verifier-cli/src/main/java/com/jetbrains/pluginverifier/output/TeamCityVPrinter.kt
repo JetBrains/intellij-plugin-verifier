@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.api.VResults
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.BrokenPluginProblem
+import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.MessageUtils
@@ -26,6 +27,39 @@ import kotlin.comparisons.thenBy
 class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter {
 
   private val REPOSITORY_PLUGIN_ID_BASE = "https://plugins.jetbrains.com/plugin/index?xmlId="
+
+  fun printNoCompatibleUpdatesProblems(problems: List<NoCompatibleUpdatesProblem>) {
+    when (groupBy) {
+      TeamCityVPrinter.GroupBy.NOT_GROUPED -> {
+        problems.forEach { tcLog.buildProblem(it.description) }
+      }
+      TeamCityVPrinter.GroupBy.BY_PLUGIN -> {
+        problems.forEach { problem ->
+          tcLog.testSuiteStarted(problem.plugin).use {
+            val testName = "(no compatible update)"
+            tcLog.testStarted(testName).use {
+              tcLog.testStdErr(testName, "#${problem.description}\n")
+              tcLog.testFailed(testName, "Plugin URL: ${REPOSITORY_PLUGIN_ID_BASE + problem.plugin}\n", "")
+            }
+          }
+        }
+      }
+      TeamCityVPrinter.GroupBy.BY_PROBLEM_TYPE -> {
+        tcLog.testSuiteStarted("(no compatible update)").use {
+          problems.forEach { problem ->
+            tcLog.testSuiteStarted(problem.plugin).use {
+              val testName = problem.plugin
+              tcLog.testStarted(testName).use {
+                tcLog.testFailed(testName, "Plugin URL: ${REPOSITORY_PLUGIN_ID_BASE + problem.plugin}\n", problem.description)
+              }
+            }
+          }
+        }
+      }
+    }
+
+  }
+
 
   override fun printResults(results: VResults) {
     when (groupBy) {

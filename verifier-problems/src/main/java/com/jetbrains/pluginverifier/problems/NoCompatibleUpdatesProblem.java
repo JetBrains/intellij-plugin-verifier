@@ -48,6 +48,10 @@ public class NoCompatibleUpdatesProblem extends Problem {
     myIdeVersion = ideVersion;
   }
 
+  public String getPlugin() {
+    return myPlugin;
+  }
+
   public void setPlugin(String plugin) {
     myPlugin = plugin;
   }
