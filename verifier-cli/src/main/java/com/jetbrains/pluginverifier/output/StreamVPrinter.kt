@@ -4,7 +4,7 @@ import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.api.VResults
 import java.io.PrintStream
 
-class StreamVPrinter(val out: PrintStream) : VPrinter {
+class StreamVPrinter(private val out: PrintStream) : VPrinter {
 
   override fun printResults(results: VResults) {
     results.results.forEach {
