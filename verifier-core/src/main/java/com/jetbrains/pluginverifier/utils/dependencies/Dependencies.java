@@ -27,9 +27,12 @@ public final class Dependencies {
    */
   //TODO: add a cli-option
   private static final ImmutableMap<String, String> INTELLIJ_MODULES_CONTAINING_PLUGINS =
-      ImmutableMap.of("com.intellij.modules.ruby", "org.jetbrains.plugins.ruby",
+      ImmutableMap.of(
+          "com.intellij.modules.ruby", "org.jetbrains.plugins.ruby",
           "com.intellij.modules.php", "com.jetbrains.php",
-          "com.intellij.modules.python", "Pythonid");
+          "com.intellij.modules.python", "Pythonid",
+          "com.intellij.modules.swift.lang", "com.intellij.clion-swift"
+      );
 
   //TODO: write a System.option for appending this list.
   private static final List<String> IDEA_ULTIMATE_MODULES = ImmutableList.of(
