@@ -1,20 +1,18 @@
 package com.jetbrains.pluginverifier.utils
 
-import com.google.common.base.Joiner
-import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashMultimap
-import com.google.common.collect.Iterables
 import com.google.common.collect.Multimap
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeManager
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VOptions
-import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
-import java.io.*
-import java.util.*
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileReader
+import java.io.IOException
 import java.util.regex.Pattern
 
 fun main(args: Array<String>) {
@@ -74,120 +72,6 @@ data class Opts(
 
 object Util {
 
-  fun getStackTrace(t: Throwable?): String {
-    if (t == null) return ""
-    val sw = StringWriter()
-    t.printStackTrace(PrintWriter(sw))
-    return sw.toString()
-  }
-
-
-  fun <T> concat(first: Collection<T>, second: Collection<T>): List<T> {
-    val res = ArrayList<T>(first.size + second.size)
-    res.addAll(first)
-    res.addAll(second)
-    return res
-  }
-
-  /**
-   * (id-s of plugins to check all builds, id-s of plugins to check last builds)
-   */
-  fun extractPluginToCheckList(opts: Opts): Pair<List<String>, List<String>> {
-    val pluginsCheckAllBuilds = ArrayList<String>()
-    val pluginsCheckLastBuilds = ArrayList<String>()
-
-    pluginsCheckAllBuilds.addAll(opts.pluginsToCheck)
-    pluginsCheckLastBuilds.addAll(opts.updatesToCheck)
-
-    val pluginsFile = opts.pluginsToCheckFile
-    if (pluginsFile != null) {
-      try {
-        val reader = BufferedReader(FileReader(pluginsFile))
-        var s: String
-        while (true) {
-          s = reader.readLine()
-          if (s == null) break
-          s = s.trim { it <= ' ' }
-          if (s.isEmpty() || s.startsWith("//")) continue
-
-          var checkAllBuilds = true
-          if (s.endsWith("$")) {
-            s = s.substring(0, s.length - 1).trim { it <= ' ' }
-            checkAllBuilds = false
-          }
-          if (s.startsWith("$")) {
-            s = s.substring(1).trim { it <= ' ' }
-            checkAllBuilds = false
-          }
-
-          if (checkAllBuilds) {
-            pluginsCheckAllBuilds.add(s)
-          } else {
-            if (s.isEmpty()) continue
-
-            pluginsCheckLastBuilds.add(s)
-          }
-        }
-      } catch (e: IOException) {
-        throw RuntimeException("Failed to read plugins file " + pluginsFile + ": " + e.message, e)
-      }
-
-    }
-
-    println("List of plugins to check: " + Joiner.on(", ").join(Iterables.concat(pluginsCheckAllBuilds, pluginsCheckLastBuilds)))
-
-    return Pair<List<String>, List<String>>(pluginsCheckAllBuilds, pluginsCheckLastBuilds)
-  }
-
-  @Throws(IOException::class)
-  fun getExcludedPlugins(opts: Opts): Multimap<String, String> {
-    val epf = opts.excludedPluginsFile ?: return ArrayListMultimap.create<String, String>() //excluded-plugin-file (usually brokenPlugins.txt)
-    //no predicate specified
-
-    //file containing list of broken plugins (e.g. IDEA-*/lib/resources.jar!/brokenPlugins.txt)
-    BufferedReader(FileReader(File(epf))).use { br ->
-      val m = HashMultimap.create<String, String>()
-
-      var s: String
-      while (true) {
-        s = br.readLine()
-        if (s == null) break
-        s = s.trim { it <= ' ' }
-        if (s.startsWith("//")) continue //it is a comment
-
-        val tokens = ParametersListUtil.parse(s)
-        if (tokens.isEmpty()) continue
-
-        if (tokens.size == 1) {
-          throw IOException(epf + " is broken. The line contains plugin name, but does not contain version: " + s)
-        }
-
-        val pluginId = tokens[0]
-
-        m.putAll(pluginId, tokens.subList(1, tokens.size)) //"plugin id" -> [all its builds]
-      }
-
-      return m
-    }
-  }
-
-  @Throws(IOException::class)
-  fun dumbBrokenPluginsList(dumpBrokenPluginsFile: String, brokenUpdates: List<UpdateInfo>) {
-    println("Dumping list of broken plugins to " + dumpBrokenPluginsFile)
-
-    PrintWriter(dumpBrokenPluginsFile).use { out ->
-      out.println("// This file contains list of broken plugins.\n" +
-          "// Each line contains plugin ID and list of versions that are broken.\n" +
-          "// If plugin name or version contains a space you can quote it like in command line.\n")
-
-      for (entry in brokenUpdates.groupBy { it.pluginId!! }.entries) {
-
-        out.print(ParametersListUtil.join(listOf(entry.key)))
-        out.print("    ")
-        out.println(ParametersListUtil.join(entry.value.map { it.version }.sortedWith(VersionComparatorUtil.COMPARATOR)))
-      }
-    }
-  }
 
   @Throws(IOException::class)
   fun createIde(ideToCheck: File, opts: Opts): Ide {
