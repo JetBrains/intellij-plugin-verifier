@@ -31,41 +31,41 @@ data class Opts(
     @set:Argument("tc-grouping", alias = "g", description = "How to group the TeamCity presentation of the problems")
     var group: String? = null,
 
-    @set:Argument("ignored-problems", alias = "ip", description = "The problems specified in this file will be ignored. File must contain lines in form <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>")
+    @set:Argument("ignored-problems", alias = "ip", description = "The problems specified in this file will be ignored. The file must contain lines in form <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>")
     var ignoreProblemsFile: String? = null,
 
-    @set:Argument("plugin-to-check", alias = "p", description = "A plugin id to check with IDE, plugin verifier will check ALL compatible plugin builds")
-    var pluginsToCheck: Array<String> = arrayOf(),
+    @set:Argument("plugins-to-check-all-builds", alias = "p-all", description = "The plugin ids to check with IDE. The plugin verifier will check ALL compatible plugin builds")
+    var pluginToCheckAllBuilds: Array<String> = arrayOf(),
 
-    @set:Argument("update-to-check", alias = "u", description = "A plugin id to check with IDE, plugin verifier will check LAST plugin build only")
-    var updatesToCheck: Array<String> = arrayOf(),
+    @set:Argument("plugins-to-check-last-builds", alias = "p-last", description = "The plugin ids to check with IDE. The plugin verifier will check LAST plugin build only")
+    var pluginToCheckLastBuild: Array<String> = arrayOf(),
 
-    @set:Argument("ide-version", alias = "iv", description = "Version of IDE that will be tested, e.g. IU-133.439")
+    @set:Argument("ide-version", alias = "iv", description = "The actual version of the IDE that will be verified. This value will overwrite the one found in the IDE itself.")
     var actualIdeVersion: String? = null,
 
-    @set:Argument("excluded-plugin-file", alias = "epf", description = "File with list of excluded plugin builds.")
+    @set:Argument("excluded-plugins-file", alias = "epf", description = "The file with list of excluded plugin builds (e.g. brokenPlugins.txt)")
     var excludedPluginsFile: String? = null,
 
     @set:Argument("dump-broken-plugin-list", alias = "d", description = "File to dump broken plugin list.")
     var dumpBrokenPluginsFile: String? = null,
 
-    @set:Argument("html-report", description = "Create a beautiful HTML report of broken plugins")
+    @set:Argument("html-report", description = "Create an HTML report of broken plugins")
     var htmlReportFile: String? = null,
 
     @set:Argument("results-file", description = "Save results to this file")
     var resultFile: String? = null,
 
-    @set:Argument("plugins-to-check-file", alias = "ptcf", description = "The file that contains list of plugins to check.")
+    @set:Argument("plugins-to-check-file", alias = "ptcf", description = "The file that contains list of plugins to check (e.g. checkedPlugins.txt)")
     var pluginsToCheckFile: String? = null,
 
-    @set:Argument("ignore-missing-optional-dependencies", alias = "imod", description = "Missing optional dependencies on the plugin IDs specified in this parameter will be ignored")
+    @set:Argument("ignore-missing-optional-dependencies", alias = "imod", description = "Missing optional dependencies of the plugin IDs specified in this parameter will be ignored")
     var ignoreMissingOptionalDependencies: Array<String> = arrayOf(),
 
-    @set:Argument("externalClasspath", alias = "ex-cp", delimiter = ":", description = "Classes from external libraries. Error will not be reported if class not found. Delimited by ':'")
+    @set:Argument("externalClasspath", alias = "ex-cp", delimiter = ":", description = "The classes from external libraries. The Verifier will not report 'No such class' for such classes.")
     var externalClasspath: Array<String> = arrayOf(),
 
 
-    @set:Argument("external-prefixes", alias = "ex-prefixes", delimiter = ":", description = "The classes from the external libraries. The Verifier doesn't report 'No such class' for such classes.")
+    @set:Argument("external-prefixes", alias = "ex-prefixes", delimiter = ":", description = "The classes from the external libraries. The Verifier will not report 'No such class' for such classes.")
     var externalClassesPrefixes: Array<String> = arrayOf()
 
 )
@@ -81,9 +81,9 @@ object Util {
   @Throws(IOException::class)
   private fun takeVersionFromCmd(opts: Opts): IdeVersion? {
     val build = opts.actualIdeVersion
-    if (build != null && !build.isEmpty()) {
+    if (!build.isNullOrBlank()) {
       try {
-        return IdeVersion.createIdeVersion(build)
+        return IdeVersion.createIdeVersion(build!!)
       } catch (e: IllegalArgumentException) {
         throw RuntimeException("Incorrect update IDE-version has been specified " + build, e)
       }
@@ -92,6 +92,7 @@ object Util {
     return null
   }
 
+  //TODO: add support of custom JDK ?
   @Throws(IOException::class)
   fun getJdkDir(opts: Opts): File {
     val runtimeDirectory: File

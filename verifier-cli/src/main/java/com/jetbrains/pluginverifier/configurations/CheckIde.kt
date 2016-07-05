@@ -49,8 +49,8 @@ object CheckIdeParamsParser : ParamsParser {
     val pluginsCheckAllBuilds = arrayListOf<String>()
     val pluginsCheckLastBuilds = arrayListOf<String>()
 
-    pluginsCheckAllBuilds.addAll(opts.pluginsToCheck)
-    pluginsCheckLastBuilds.addAll(opts.updatesToCheck)
+    pluginsCheckAllBuilds.addAll(opts.pluginToCheckAllBuilds)
+    pluginsCheckLastBuilds.addAll(opts.pluginToCheckLastBuild)
 
     val pluginsFile = opts.pluginsToCheckFile
     if (pluginsFile != null) {

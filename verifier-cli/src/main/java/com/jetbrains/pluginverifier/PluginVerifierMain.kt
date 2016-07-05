@@ -14,7 +14,7 @@ object PluginVerifierMain {
     var freeArgs = Args.parse(opts, args)
 
 
-    if (args.isEmpty()) {
+    if (freeArgs.isEmpty()) {
       System.err.println("The command is not specified. Should be one of 'check-plugin' or 'check-ide'")
       System.exit(1)
     }
