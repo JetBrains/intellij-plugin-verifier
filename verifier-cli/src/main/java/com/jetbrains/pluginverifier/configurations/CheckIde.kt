@@ -73,11 +73,11 @@ object CheckIdeParamsParser : ParamsParser {
             checkAllBuilds = false
           }
 
+          if (s.isEmpty()) continue
+
           if (checkAllBuilds) {
             pluginsCheckAllBuilds.add(s)
           } else {
-            if (s.isEmpty()) continue
-
             pluginsCheckLastBuilds.add(s)
           }
         }
@@ -167,7 +167,7 @@ class CheckIdeResults(val ideVersion: IdeVersion,
                       val noCompatibleUpdatesProblems: List<NoCompatibleUpdatesProblem>) : Results {
 
   fun dumbBrokenPluginsList(dumpBrokenPluginsFile: File) {
-    PrintWriter(dumpBrokenPluginsFile.apply { parentFile.mkdirs() }).use { out ->
+    PrintWriter(dumpBrokenPluginsFile.create()).use { out ->
       out.println("// This file contains list of broken plugins.\n" +
           "// Each line contains plugin ID and list of versions that are broken.\n" +
           "// If plugin name or version contains a space you can quote it like in command line.\n")
@@ -182,11 +182,11 @@ class CheckIdeResults(val ideVersion: IdeVersion,
   }
 
   fun saveResultsToFile(file: File) {
-    PrintStream(file).use { StreamVPrinter(it).printResults(vResults) }
+    PrintStream(file.create()).use { StreamVPrinter(it).printResults(vResults) }
   }
 
   fun saveToHtmlFile(htmlFile: File) {
-    HtmlVPrinter(ideVersion, { x -> params.excludedPlugins.containsEntry(x.first, x.second) }, htmlFile).printResults(vResults)
+    HtmlVPrinter(ideVersion, { x -> params.excludedPlugins.containsEntry(x.first, x.second) }, htmlFile.create()).printResults(vResults)
   }
 
   fun processResults(opts: Opts) {

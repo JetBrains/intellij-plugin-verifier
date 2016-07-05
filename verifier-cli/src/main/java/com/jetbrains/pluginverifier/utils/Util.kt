@@ -7,25 +7,19 @@ import com.intellij.structure.domain.IdeManager
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VOptions
-import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
+import org.apache.commons.io.FileUtils
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
 import java.io.IOException
 import java.util.regex.Pattern
 
-fun main(args: Array<String>) {
-  val opts = Opts()
-  Args.parse(opts, args)
-  println(opts)
-}
-
 data class Opts(
     @set:Argument("runtime-dir", alias = "r", description = "The path to directory containing Java runtime jars (usually rt.jar and tools.jar are sufficient)")
     var runtimeDir: String? = null,
 
-    @set:Argument("TeamCity", alias = "tc", description = "Specify this flag if you want to print the TeamCity compatible output.")
+    @set:Argument("team-city", alias = "tc", description = "Specify this flag if you want to print the TeamCity compatible output.")
     var needTeamCityLog: Boolean = false,
 
     @set:Argument("tc-grouping", alias = "g", description = "How to group the TeamCity presentation of the problems")
@@ -61,7 +55,7 @@ data class Opts(
     @set:Argument("ignore-missing-optional-dependencies", alias = "imod", description = "Missing optional dependencies of the plugin IDs specified in this parameter will be ignored")
     var ignoreMissingOptionalDependencies: Array<String> = arrayOf(),
 
-    @set:Argument("externalClasspath", alias = "ex-cp", delimiter = ":", description = "The classes from external libraries. The Verifier will not report 'No such class' for such classes.")
+    @set:Argument("external-classpath", alias = "ex-cp", delimiter = ":", description = "The classes from external libraries. The Verifier will not report 'No such class' for such classes.")
     var externalClasspath: Array<String> = arrayOf(),
 
 
@@ -69,6 +63,14 @@ data class Opts(
     var externalClassesPrefixes: Array<String> = arrayOf()
 
 )
+
+fun File.create(): File {
+  if (this.parentFile != null) {
+    FileUtils.forceMkdir(this.parentFile)
+  }
+  this.createNewFile()
+  return this
+}
 
 object Util {
 

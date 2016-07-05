@@ -28,7 +28,7 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
   private val UPDATE_DATE_FORMAT = SimpleDateFormat("yyyy.MM.dd HH:mm")
 
   override fun printResults(results: VResults) {
-    PrintWriter(htmlFile.apply { parentFile.mkdirs() }).use { out ->
+    PrintWriter(htmlFile).use { out ->
 
       out.append("<html>\n<head>\n  <title>Result of checking $ideVersion</title>\n\n  " +
           "<link rel='stylesheet' href='http://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css'>\n  " +
