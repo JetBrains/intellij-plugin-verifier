@@ -28,7 +28,7 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
   private val UPDATE_DATE_FORMAT = SimpleDateFormat("yyyy.MM.dd HH:mm")
 
   override fun printResults(results: VResults) {
-    PrintWriter(htmlFile).use { out ->
+    PrintWriter(htmlFile.apply { parentFile.mkdirs() }).use { out ->
 
       out.append("<html>\n<head>\n  <title>Result of checking $ideVersion</title>\n\n  " +
           "<link rel='stylesheet' href='http://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css'>\n  " +
@@ -51,7 +51,7 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
           out.printf("  <h3><span class='pMarker'>   </span> %s</h3>\n", HtmlEscapers.htmlEscaper().escape(pluginId))
           out.printf("  <div>\n")
 
-          if (pidToResults.value.isEmpty()) {
+          if (pidToResults.value.filterNot { isExcluded(it.pluginDescriptor.pluginId to it.pluginDescriptor.version) }.isEmpty()) {
             out.printf("There are no updates compatible with %s in the Plugin Repository\n", ideVersion)
           } else {
 
