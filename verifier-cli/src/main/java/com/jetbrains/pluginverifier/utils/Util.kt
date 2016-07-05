@@ -58,7 +58,6 @@ data class Opts(
     @set:Argument("external-classpath", alias = "ex-cp", delimiter = ":", description = "The classes from external libraries. The Verifier will not report 'No such class' for such classes.")
     var externalClasspath: Array<String> = arrayOf(),
 
-
     @set:Argument("external-prefixes", alias = "ex-prefixes", delimiter = ":", description = "The classes from the external libraries. The Verifier will not report 'No such class' for such classes.")
     var externalClassesPrefixes: Array<String> = arrayOf()
 

@@ -36,11 +36,6 @@ object PluginVerifierMain {
         System.exit(1)
       }
     }
-
-    //TODO: replace exitCode0 with cli-parameter
-//    if (exitCode != 0 && !java.lang.Boolean.getBoolean("exitCode0")) {
-//      System.exit(exitCode)
-//    }
   }
 
 }
