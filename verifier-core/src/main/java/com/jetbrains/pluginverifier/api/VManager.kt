@@ -7,6 +7,7 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.verifiers.VContext
 import com.jetbrains.pluginverifier.verifiers.Verifiers
 import org.slf4j.LoggerFactory
+import java.io.IOException
 
 
 /**
@@ -105,12 +106,12 @@ object VManager {
               LOG.error(reason, e)
               results.add(VResult.BadPlugin(pluginOnIde.first, pluginOnIde.second, reason))
               return@poi
-            } catch(e: RepositoryException) {
-              val reason = e.message ?: "The plugin ${pluginOnIde.first} is not found in the Repository"
-              LOG.error(reason, e)
-              results.add(VResult.BadPlugin(pluginOnIde.first, pluginOnIde.second, reason))
-              return@poi
-            } catch(e: Exception) {
+            } catch(e: UpdateNotFoundException) {
+              //the caller has specified a missing plugin
+              LOG.error(e.message ?: "The plugin ${pluginOnIde.first} is not found in the Repository", e)
+              throw e
+            } catch(e: IOException) {
+              //the plugin has an invalid file
               val reason = e.message ?: e.javaClass.name
               LOG.error(reason, e)
               results.add(VResult.BadPlugin(pluginOnIde.first, pluginOnIde.second, reason))

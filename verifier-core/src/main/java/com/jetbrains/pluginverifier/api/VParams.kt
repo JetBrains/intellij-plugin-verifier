@@ -12,9 +12,9 @@ import com.jetbrains.pluginverifier.repository.RepositoryManager
 import java.io.IOException
 
 /**
- * The exception signals that the plugin is failed to be loaded from the Repository.
+ * The exception signals that the plugin is not found in the Repository.
  */
-class RepositoryException(message: String, cause: Exception? = null) : IOException(message, cause)
+class UpdateNotFoundException(message: String, cause: Exception? = null) : RuntimeException(message, cause)
 
 /**
  * Accumulates parameters of the upcoming verification.
@@ -65,54 +65,55 @@ object VParamsCreator {
    * @param ideVersion the version of the compatible IDE. It's used if the plugin descriptor specifies the plugin id only.
    * @throws IncorrectPluginException if the specified plugin has incorrect structure
    * @throws IOException if the plugin has a broken File.
-   * @throws RepositoryException if the plugin is not found in the Repository, or if the Repository doesn't respond.
+   * @throws UpdateNotFoundException if the plugin is not found in the Repository
+   * @throws RuntimeException if the Repository doesn't respond
    */
-  @Throws(IncorrectPluginException::class, IOException::class, RepositoryException::class)
+  @Throws(IncorrectPluginException::class, IOException::class, UpdateNotFoundException::class, RuntimeException::class)
   fun getPlugin(plugin: PluginDescriptor, ideVersion: IdeVersion? = null): Plugin = when (plugin) {
     is PluginDescriptor.ByInstance -> plugin.plugin //already created.
     is PluginDescriptor.ByFile -> PluginCache.createPlugin(plugin.file) //IncorrectPluginException, IOException
     is PluginDescriptor.ByBuildId -> {
-      val info = withRepositoryException { RepositoryManager.getInstance().findUpdateById(plugin.buildId) } ?: throw noSuchPlugin(plugin)
-      val file = withRepositoryException { RepositoryManager.getInstance().getPluginFile(info) } ?: throw noSuchPlugin(plugin)
+      val info = withRuntimeException { RepositoryManager.getInstance().findUpdateById(plugin.buildId) } ?: throw noSuchUpdate(plugin)
+      val file = withRuntimeException { RepositoryManager.getInstance().getPluginFile(info) } ?: throw noSuchUpdate(plugin)
       PluginCache.createPlugin(file) //IncorrectPluginException, IOException
     }
     is PluginDescriptor.ByXmlId -> {
-      val updates = withRepositoryException { RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion!!, plugin.pluginId) } //IOException
-      val suitable: UpdateInfo = updates.find { plugin.version.equals(it.version) } ?: throw noSuchPlugin(plugin)
-      val file = withRepositoryException { RepositoryManager.getInstance().getPluginFile(suitable) } ?: throw noSuchPlugin(plugin)
+      val updates = withRuntimeException { RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion!!, plugin.pluginId) } //IOException
+      val suitable: UpdateInfo = updates.find { plugin.version.equals(it.version) } ?: throw noSuchUpdate(plugin)
+      val file = withRuntimeException { RepositoryManager.getInstance().getPluginFile(suitable) } ?: throw noSuchUpdate(plugin)
       PluginCache.createPlugin(file) //IncorrectPluginException, IOException
     }
     is PluginDescriptor.ByUpdateInfo -> {
-      val file = withRepositoryException { RepositoryManager.getInstance().getPluginFile(plugin.updateInfo) } ?: throw noSuchPlugin(plugin)
-      PluginCache.createPlugin(file)
+      val file = withRuntimeException { RepositoryManager.getInstance().getPluginFile(plugin.updateInfo) } ?: throw noSuchUpdate(plugin)
+      PluginCache.createPlugin(file) //IncorrectPluginException, IOException
     }
   }
 
-  private fun <T> withRepositoryException(block: () -> T): T {
+  private fun <T> withRuntimeException(block: () -> T): T {
     try {
       return block()
     } catch(ie: InterruptedException) {
       throw ie
     } catch(e: Exception) {
-      throw RepositoryException(e.message!!, e)
+      throw RuntimeException(e.message ?: e.javaClass.name, e)
     }
   }
 
-  private fun noSuchPlugin(plugin: PluginDescriptor): RepositoryException {
+  private fun noSuchUpdate(plugin: PluginDescriptor): UpdateNotFoundException {
     val id: String = when (plugin) {
-      is PluginDescriptor.ByBuildId -> plugin.buildId.toString()
+      is PluginDescriptor.ByBuildId -> "#${plugin.buildId.toString()}"
       is PluginDescriptor.ByXmlId -> "${plugin.pluginId}:${plugin.version}"
       is PluginDescriptor.ByFile -> "${plugin.file.name}"
       is PluginDescriptor.ByInstance -> plugin.plugin.toString()
       is PluginDescriptor.ByUpdateInfo -> plugin.updateInfo.toString()
     }
-    return RepositoryException("Plugin $id is not found in the Plugin repository")
+    return UpdateNotFoundException("Plugin $id is not found in the Plugin repository")
   }
 
   fun getIde(ideDescriptor: IdeDescriptor): Ide = when (ideDescriptor) {
     is IdeDescriptor.ByFile -> IdeManager.getInstance().createIde(ideDescriptor.file)
     is IdeDescriptor.ByInstance -> ideDescriptor.ide
-    is IdeDescriptor.ByVersion -> TODO()
+    is IdeDescriptor.ByVersion -> TODO("Downloading the IDE by IdeVersion is not supported yet.")
   }
 
 
