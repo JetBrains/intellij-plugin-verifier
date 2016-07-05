@@ -146,7 +146,7 @@ object VOptionsUtil {
     val m = HashMultimap.create<Pair<String, String>, Pattern>()
     try {
       BufferedReader(FileReader(file)).use { br ->
-        var s: String
+        var s: String?
         while (true) {
           s = br.readLine() ?: break
           s = s.trim { it <= ' ' }

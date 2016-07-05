@@ -56,7 +56,7 @@ object CheckIdeParamsParser : ParamsParser {
     if (pluginsFile != null) {
       try {
         val reader = BufferedReader(FileReader(pluginsFile))
-        var s: String
+        var s: String?
         while (true) {
           s = reader.readLine()
           if (s == null) break
@@ -126,7 +126,7 @@ object CheckIdeParamsParser : ParamsParser {
     BufferedReader(FileReader(File(epf))).use { br ->
       val m = HashMultimap.create<String, String>()
 
-      var s: String
+      var s: String?
       while (true) {
         s = br.readLine()
         if (s == null) break
@@ -167,7 +167,7 @@ class CheckIdeResults(val ideVersion: IdeVersion,
                       val noCompatibleUpdatesProblems: List<NoCompatibleUpdatesProblem>) : Results {
 
   fun dumbBrokenPluginsList(dumpBrokenPluginsFile: File) {
-    PrintWriter(dumpBrokenPluginsFile).use { out ->
+    PrintWriter(dumpBrokenPluginsFile.apply { parentFile.mkdirs() }).use { out ->
       out.println("// This file contains list of broken plugins.\n" +
           "// Each line contains plugin ID and list of versions that are broken.\n" +
           "// If plugin name or version contains a space you can quote it like in command line.\n")
@@ -186,7 +186,7 @@ class CheckIdeResults(val ideVersion: IdeVersion,
   }
 
   fun saveToHtmlFile(htmlFile: File) {
-    HtmlVPrinter(params.ideDescriptor.ideVersion, { x -> params.excludedPlugins.containsEntry(x.first, x.second) }, htmlFile).printResults(vResults)
+    HtmlVPrinter(ideVersion, { x -> params.excludedPlugins.containsEntry(x.first, x.second) }, htmlFile).printResults(vResults)
   }
 
   fun processResults(opts: Opts) {
