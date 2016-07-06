@@ -33,9 +33,9 @@ import java.lang.reflect.ParameterizedType
 
 object GsonHolder {
   val GSON = GsonBuilder()
-      .registerTypeAdapter(UpdateInfo::class.java, UpdateInfoTypeAdapter())
-      .registerTypeHierarchyAdapter(IdeVersion::class.java, IdeVersionTypeAdapter())
-      .registerTypeHierarchyAdapter(IdeDescriptor::class.java, IdeDescriptorTypeAdapter())
+      .registerTypeAdapter(UpdateInfo::class.java, UpdateInfoTypeAdapter().nullSafe())
+      .registerTypeHierarchyAdapter(IdeVersion::class.java, IdeVersionTypeAdapter().nullSafe())
+      .registerTypeHierarchyAdapter(IdeDescriptor::class.java, IdeDescriptorTypeAdapter().nullSafe())
       .registerTypeAdapterFactory(resultTAF)
       .registerTypeAdapterFactory(problemsTAF)
       .registerTypeAdapterFactory(locationTAF)
