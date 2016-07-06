@@ -15,8 +15,7 @@ object PluginVerifierMain {
 
 
     if (freeArgs.isEmpty()) {
-      System.err.println("The command is not specified. Should be one of 'check-plugin' or 'check-ide'")
-      System.exit(1)
+      throw IllegalArgumentException("The command is not specified. Should be one of 'check-plugin' or 'check-ide'")
     }
 
     val command = freeArgs[0]
@@ -32,8 +31,7 @@ object PluginVerifierMain {
         CheckIdeConfiguration(params).execute().processResults(opts)
       }
       else -> {
-        System.err.println("Unsupported command $command")
-        System.exit(1)
+        throw IllegalArgumentException("Unsupported command $command")
       }
     }
   }
