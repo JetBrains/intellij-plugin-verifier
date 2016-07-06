@@ -71,7 +71,7 @@ fun File.create(): File {
   return this
 }
 
-object Util {
+object CmdUtil {
 
 
   @Throws(IOException::class)

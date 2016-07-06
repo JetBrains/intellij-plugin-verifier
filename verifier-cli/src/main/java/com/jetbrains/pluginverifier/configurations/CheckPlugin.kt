@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.misc.PluginCache
 import com.jetbrains.pluginverifier.output.StreamVPrinter
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.CmdOpts
-import com.jetbrains.pluginverifier.utils.Util
+import com.jetbrains.pluginverifier.utils.CmdUtil
 import com.jetbrains.pluginverifier.utils.VOptionsUtil
 import java.io.File
 import java.io.IOException
@@ -21,22 +21,27 @@ object CheckPluginParamsParser : ParamsParser {
           "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963\n" +
           "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963")
     }
-    val pluginFile = getPlugin(freeArgs[0])
-    val ideFiles = freeArgs.drop(1).map { File(it) }.map { Util.createIde(it, opts) }.map { IdeDescriptor.ByInstance(it) }
-    val jdkDescriptor = JdkDescriptor.ByFile(Util.getJdkDir(opts))
+    val plugin = createPlugin(freeArgs[0])
+    val ideFiles = freeArgs.drop(1).map { File(it) }.map { CmdUtil.createIde(it, opts) }.map { IdeDescriptor.ByInstance(it) }
+    val jdkDescriptor = JdkDescriptor.ByFile(CmdUtil.getJdkDir(opts))
     val vOptions = VOptionsUtil.parseOpts(opts)
-    val externalClasspath = Util.getExternalClassPath(opts)
-    return CheckPluginParams(pluginFile, ideFiles, jdkDescriptor, vOptions, externalClasspath)
+    val externalClasspath = CmdUtil.getExternalClassPath(opts)
+    return CheckPluginParams(plugin, ideFiles, jdkDescriptor, vOptions, externalClasspath)
   }
 
-  private fun getPlugin(pluginToTestArg: String): PluginDescriptor {
+  fun createPlugin(pluginToTestArg: String): PluginDescriptor.ByInstance {
     if (pluginToTestArg.matches("#\\d+".toRegex())) {
       val pluginId = pluginToTestArg.substring(1)
       try {
         val updateId = Integer.parseInt(pluginId)
         val updateInfo = RepositoryManager.getInstance().findUpdateById(updateId) ?: throw RuntimeException("No such plugin $pluginToTestArg")
-        val update = RepositoryManager.getInstance().getPluginFile(updateInfo) ?: throw RuntimeException("No such plugin $pluginToTestArg")
-        return PluginDescriptor.ByFile(updateInfo.pluginId ?: updateInfo.pluginName ?: "<unknown>", updateInfo.version ?: "<unknown>", update)
+        val pluginFile = RepositoryManager.getInstance().getPluginFile(updateInfo) ?: throw RuntimeException("No such plugin $pluginToTestArg")
+        try {
+          val plugin = PluginCache.createPlugin(pluginFile)
+          return PluginDescriptor.ByInstance(plugin)
+        } catch (e: Exception) {
+          throw IllegalArgumentException("The plugin $pluginFile is invalid", e)
+        }
       } catch (e: IOException) {
         throw RuntimeException("Cannot load plugin #" + pluginId, e)
       }

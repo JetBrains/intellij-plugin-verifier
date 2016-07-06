@@ -5,6 +5,7 @@ import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Iterables
 import com.google.common.collect.Multimap
+import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
@@ -27,15 +28,15 @@ object CheckIdeParamsParser : ParamsParser {
     if (!ideFile.isDirectory) {
       throw RuntimeException("IDE home is not a directory: " + ideFile)
     }
-    val ide = Util.createIde(ideFile, opts)
+    val ide = CmdUtil.createIde(ideFile, opts)
 
-    val jdkDescriptor = JdkDescriptor.ByFile(Util.getJdkDir(opts))
+    val jdkDescriptor = JdkDescriptor.ByFile(CmdUtil.getJdkDir(opts))
     val vOptions = VOptionsUtil.parseOpts(opts)
-    val externalClassPath = Util.getExternalClassPath(opts)
+    val externalClassPath = CmdUtil.getExternalClassPath(opts)
 
-    val (checkAllBuilds, checkLastBuilds) = extractPluginToCheckList(opts)
+    val (checkAllBuilds, checkLastBuilds) = parsePluginToCheckList(opts)
 
-    val excludedPlugins = getExcludedPlugins(opts)
+    val excludedPlugins = parseExcludedPlugins(opts)
 
     val pluginsToCheck = getDescriptorsToCheck(checkAllBuilds, checkLastBuilds, ide.version)
 
@@ -45,7 +46,7 @@ object CheckIdeParamsParser : ParamsParser {
   /**
    * (id-s of plugins to check all builds, id-s of plugins to check last builds)
    */
-  private fun extractPluginToCheckList(opts: CmdOpts): Pair<List<String>, List<String>> {
+  fun parsePluginToCheckList(opts: CmdOpts): Pair<List<String>, List<String>> {
     val pluginsCheckAllBuilds = arrayListOf<String>()
     val pluginsCheckLastBuilds = arrayListOf<String>()
 
@@ -93,7 +94,7 @@ object CheckIdeParamsParser : ParamsParser {
   }
 
 
-  private fun getDescriptorsToCheck(checkAllBuilds: List<String>, checkLastBuilds: List<String>, ideVersion: IdeVersion): List<PluginDescriptor> {
+  fun getDescriptorsToCheck(checkAllBuilds: List<String>, checkLastBuilds: List<String>, ideVersion: IdeVersion): List<PluginDescriptor> {
     if (checkAllBuilds.isEmpty() && checkLastBuilds.isEmpty()) {
       return RepositoryManager.getInstance().getLastCompatibleUpdates(ideVersion).map { PluginDescriptor.ByUpdateInfo(it.pluginId ?: "", it.version ?: "", it) }
     } else {
@@ -119,7 +120,7 @@ object CheckIdeParamsParser : ParamsParser {
    * Plugin Id -> Versions
    */
   @Throws(IOException::class)
-  private fun getExcludedPlugins(opts: CmdOpts): Multimap<String, String> {
+  fun parseExcludedPlugins(opts: CmdOpts): Multimap<String, String> {
     val epf = opts.excludedPluginsFile ?: return ArrayListMultimap.create<String, String>() //excluded-plugin-file (usually brokenPlugins.txt)
 
     //file containing list of broken plugins (e.g. IDEA-*/lib/resources.jar!/brokenPlugins.txt)
@@ -161,10 +162,10 @@ class CheckIdeParams(val ideDescriptor: IdeDescriptor,
 
 }
 
-class CheckIdeResults(val ideVersion: IdeVersion,
-                      val vResults: VResults,
-                      val params: CheckIdeParams,
-                      val noCompatibleUpdatesProblems: List<NoCompatibleUpdatesProblem>) : Results {
+class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
+                      @SerializedName("results") val vResults: VResults,
+                      @SerializedName("excludedPlugins") val excludedPlugins: Multimap<String, String>,
+                      @SerializedName("noUpdatesProblems") val noCompatibleUpdatesProblems: List<NoCompatibleUpdatesProblem>) : Results {
 
   fun dumbBrokenPluginsList(dumpBrokenPluginsFile: File) {
     PrintWriter(dumpBrokenPluginsFile.create()).use { out ->
@@ -186,7 +187,7 @@ class CheckIdeResults(val ideVersion: IdeVersion,
   }
 
   fun saveToHtmlFile(htmlFile: File) {
-    HtmlVPrinter(ideVersion, { x -> params.excludedPlugins.containsEntry(x.first, x.second) }, htmlFile.create()).printResults(vResults)
+    HtmlVPrinter(ideVersion, { x -> excludedPlugins.containsEntry(x.first, x.second) }, htmlFile.create()).printResults(vResults)
   }
 
   fun processResults(opts: CmdOpts) {
@@ -214,7 +215,7 @@ class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
     val pluginsToCheck = params.pluginsToCheck.filterNot { params.excludedPlugins.containsEntry(it.pluginId, it.version) }.map { it to params.ideDescriptor }
     val vParams = VParams(params.jdkDescriptor, pluginsToCheck, params.vOptions, params.externalClassPath)
     val vResults = VManager.verify(vParams)
-    return CheckIdeResults(params.ideDescriptor.ideVersion, vResults, params, getMissingUpdatesProblems())
+    return CheckIdeResults(params.ideDescriptor.ideVersion, vResults, params.excludedPlugins, getMissingUpdatesProblems())
   }
 
   private fun getMissingUpdatesProblems(): List<NoCompatibleUpdatesProblem> {

@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.api
 
 import com.google.common.collect.Multimap
+import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.Plugin
 import com.intellij.structure.impl.utils.StringUtil
 import com.jetbrains.pluginverifier.problems.Problem
@@ -9,17 +10,17 @@ import java.util.regex.Pattern
 /**
  * @author Sergey Patrikeev
  */
-data class VOptions(val externalClassPrefixes: Array<String>,
-                    val optionalDependenciesIdsToIgnoreIfMissing: Set<String>,
+data class VOptions(@SerializedName("externalCp") val externalClassPrefixes: Array<String>,
+                    @SerializedName("ignoredProblem") val optionalDependenciesIdsToIgnoreIfMissing: Set<String>,
                     /**
                      * Map of _(pluginXmlId, version)_ -> to be ignored _problem pattern_
                      */
-                    private val myProblemsToIgnore: Multimap<Pair<String, String>, Pattern>) {
+                    @SerializedName("ignoredProblems") val problemsToIgnore: Multimap<Pair<String, String>, Pattern>) {
 
   fun isIgnoredProblem(plugin: Plugin, problem: Problem): Boolean {
     val xmlId = plugin.pluginId
     val version = plugin.pluginVersion
-    for (entry in myProblemsToIgnore.entries()) {
+    for (entry in problemsToIgnore.entries()) {
       val ignoreXmlId = entry.key.first
       val ignoreVersion = entry.key.second
       val ignoredPattern = entry.value
