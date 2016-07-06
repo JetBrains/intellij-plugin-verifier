@@ -80,13 +80,13 @@ object CmdUtil {
   }
 
   @Throws(IOException::class)
-  private fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {
+  fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {
     val build = opts.actualIdeVersion
     if (!build.isNullOrBlank()) {
       try {
         return IdeVersion.createIdeVersion(build!!)
       } catch (e: IllegalArgumentException) {
-        throw RuntimeException("Incorrect update IDE-version has been specified " + build, e)
+        throw IllegalArgumentException("Incorrect update IDE-version has been specified " + build, e)
       }
 
     }
@@ -138,7 +138,7 @@ object VOptionsUtil {
     return VOptions(opts.externalClassesPrefixes.map { it.replace('.', '/') }.toTypedArray(), opts.ignoreMissingOptionalDependencies.toSet(), problemsToIgnore)
   }
 
-  private fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): Multimap<Pair<String, String>, Pattern> {
+  fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): Multimap<Pair<String, String>, Pattern> {
     val file = File(ignoreProblemsFile)
     if (!file.exists()) {
       throw IllegalArgumentException("Ignored problems file doesn't exist " + ignoreProblemsFile)
