@@ -1,20 +1,17 @@
 package com.jetbrains.pluginverifier.misc;
 
-import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.Properties;
 
-/**
- * This class contains convenient methods for
- */
 public class RepositoryConfiguration {
 
   private static RepositoryConfiguration INSTANCE;
 
-  private final Properties myProperties;
+  private final Properties myDefaultProperties;
 
   private RepositoryConfiguration() {
     Properties defaultConfig = new Properties();
@@ -25,24 +22,7 @@ public class RepositoryConfiguration {
       throw new RuntimeException("Failed to read defaultConfig.properties", e);
     }
 
-    myProperties = new Properties(defaultConfig);
-
-    File cfg = new File(getVerifierHome(), "config.properties");
-    if (cfg.exists()) {
-      try {
-        InputStream inputStream = new BufferedInputStream(new FileInputStream(cfg));
-
-        try {
-          myProperties.load(inputStream);
-        }
-        finally {
-          IOUtils.closeQuietly(inputStream);
-        }
-      }
-      catch (IOException e) {
-        throw new RuntimeException("Failed to read config file: " + cfg, e);
-      }
-    }
+    myDefaultProperties = new Properties(defaultConfig);
   }
 
   @NotNull
@@ -55,12 +35,16 @@ public class RepositoryConfiguration {
   }
 
   @NotNull
-  private File getVerifierHome() {
-    String homeDir = getProperty("home.directory.name");
-    if (homeDir == null) {
-      throw new RuntimeException("Repository home directory is not specified");
+  private File getVerifierHomeDir() {
+    String verifierHomeDir = getProperty("plugin.verifier.home.dir");
+    if (verifierHomeDir != null) {
+      return new File(verifierHomeDir);
     }
-    return new File(getProperty("user.home"), homeDir);
+    String userHome = getProperty("user.home");
+    if (userHome == null) {
+      throw new RuntimeException("Neither the verifier home directory 'plugin.verifier.home.dir' nor 'user.home' are specified");
+    }
+    return new File(userHome, ".pluginVerifier");
   }
 
   @Nullable
@@ -68,7 +52,7 @@ public class RepositoryConfiguration {
     String systemProperty = System.getProperty(propertyName);
     if (systemProperty != null) return systemProperty;
 
-    return myProperties.getProperty(propertyName);
+    return myDefaultProperties.getProperty(propertyName);
   }
 
   @NotNull
@@ -86,12 +70,7 @@ public class RepositoryConfiguration {
 
   @NotNull
   public File getPluginCacheDir() {
-    String pluginCacheDir = getProperty("plugin.cache.dir");
-    if (pluginCacheDir != null) {
-      return new File(pluginCacheDir);
-    }
-
-    return new File(getVerifierHome(), "cache");
+    return new File(getVerifierHomeDir(), "cache");
   }
 
   @Nullable
