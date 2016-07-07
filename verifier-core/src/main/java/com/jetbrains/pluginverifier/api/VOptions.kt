@@ -15,7 +15,8 @@ data class VOptions(@SerializedName("externalCp") val externalClassPrefixes: Arr
                     /**
                      * Map of _(pluginXmlId, version)_ -> to be ignored _problem pattern_
                      */
-                    @SerializedName("ignoredProblems") val problemsToIgnore: Multimap<Pair<String, String>, Pattern>) {
+                    @SerializedName("ignoredProblems") val problemsToIgnore: Multimap<Pair<String, String>, Pattern>,
+                    @SerializedName("failOnCycle") val failOnCyclicDependencies: Boolean) {
 
   fun isIgnoredProblem(plugin: Plugin, problem: Problem): Boolean {
     val xmlId = plugin.pluginId

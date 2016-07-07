@@ -96,7 +96,7 @@ private class ReferencesVerifier : Verifier {
     val plugin = ctx.plugin
 
     val dependencies = Dependencies.getInstance().calcDependencies(ctx.plugin, ctx.ide)
-    if (dependencies.cycle != null && failOnCyclicDependency()) {
+    if (dependencies.cycle != null && ctx.verifierOptions.failOnCyclicDependencies) {
       val cycle = Joiner.on(" -> ").join(dependencies.cycle!!)
       ctx.registerProblem(CyclicDependenciesProblem(cycle), ProblemLocation.fromPlugin(plugin.pluginId))
       LOG.error("The plugin verifier will not verify a plugin $plugin because its dependencies tree has the following cycle: $cycle")

@@ -59,8 +59,10 @@ open class CmdOpts(
     var externalClasspath: Array<String> = arrayOf(),
 
     @set:Argument("external-prefixes", alias = "ex-prefixes", delimiter = ":", description = "The classes from the external libraries. The Verifier will not report 'No such class' for such classes.")
-    var externalClassesPrefixes: Array<String> = arrayOf()
+    var externalClassesPrefixes: Array<String> = arrayOf(),
 
+    @set:Argument("fail-on-cyclic-dependencies", alias = "focd", description = "Whether to stop the verification of the plugin in case the dependencies cycle found. The default value is true, because it is potentially a plugin problem.")
+    var failOnCyclicDependencies: Boolean = true
 )
 
 fun File.create(): File {
@@ -135,7 +137,12 @@ object VOptionsUtil {
       problemsToIgnore = getProblemsToIgnoreFromFile(ignoreProblemsFile)
     }
 
-    return VOptions(opts.externalClassesPrefixes.map { it.replace('.', '/') }.toTypedArray(), opts.ignoreMissingOptionalDependencies.toSet(), problemsToIgnore)
+    return VOptions(
+        opts.externalClassesPrefixes.map { it.replace('.', '/') }.toTypedArray(),
+        opts.ignoreMissingOptionalDependencies.toSet(),
+        problemsToIgnore,
+        opts.failOnCyclicDependencies
+    )
   }
 
   fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): Multimap<Pair<String, String>, Pattern> {
