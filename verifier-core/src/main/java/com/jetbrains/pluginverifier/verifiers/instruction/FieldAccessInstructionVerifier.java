@@ -11,9 +11,9 @@ import com.jetbrains.pluginverifier.problems.statics.InstanceAccessOfStaticField
 import com.jetbrains.pluginverifier.problems.statics.StaticAccessOfInstanceFieldProblem;
 import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.utils.ResolverUtil;
-import com.jetbrains.pluginverifier.utils.StringUtil;
 import com.jetbrains.pluginverifier.utils.VerifierUtil;
 import com.jetbrains.pluginverifier.verifiers.VContext;
+import kotlin.text.StringsKt;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
@@ -90,14 +90,14 @@ public class FieldAccessInstructionVerifier implements InstructionVerifier {
         TODO: this check is according to the JVM 8 spec, but Kotlin and others violate it (Java 8 doesn't complain too)
         if (!(StringUtil.equals(location.getClassNode().name, verifiedClass.name) && "<init>".equals(verifierMethod.name))) {
        */
-        if (!(StringUtil.equals(location.getClassNode().name, verifiedClass.name))) {
+        if (!(StringsKt.equals(location.getClassNode().name, verifiedClass.name, false))) {
           ctx.registerProblem(new ChangeFinalFieldProblem(field), ProblemLocation.fromMethod(verifiedClass.name, verifierMethod));
         }
       }
 
       if (opcode == Opcodes.PUTSTATIC) {
 //        if (!(StringUtil.equals(location.getClassNode().name, verifiedClass.name) && "<clinit>".equals(verifierMethod.name))) {
-        if (!(StringUtil.equals(location.getClassNode().name, verifiedClass.name))) {
+        if (!(StringsKt.equals(location.getClassNode().name, verifiedClass.name, false))) {
           ctx.registerProblem(new ChangeFinalFieldProblem(field), ProblemLocation.fromMethod(verifiedClass.name, verifierMethod));
         }
       }
@@ -112,7 +112,7 @@ public class FieldAccessInstructionVerifier implements InstructionVerifier {
     AccessType accessProblem = null;
 
     if (VerifierUtil.isPrivate(actualField)) {
-      if (!StringUtil.equals(verifiedClass.name, actualOwner.name)) {
+      if (!StringsKt.equals(verifiedClass.name, actualOwner.name, false)) {
         //accessing to the private field of the other class
         accessProblem = AccessType.PRIVATE;
       }

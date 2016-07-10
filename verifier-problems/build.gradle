@@ -2,6 +2,5 @@ sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
 dependencies {
-  compile project(':common-utils')
   compile project(':repository')
 }

@@ -4,7 +4,6 @@ import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.Plugin
 import com.intellij.structure.errors.IncorrectPluginException
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.utils.StringUtil
 import com.jetbrains.pluginverifier.verifiers.VContext
 import com.jetbrains.pluginverifier.verifiers.Verifiers
 import org.slf4j.LoggerFactory
@@ -50,7 +49,7 @@ object VManager {
 
     LOG.info("Verifying the plugins according to $params")
     val pluginsNumber = params.pluginsToCheck.size
-    progress.setText("Verifying $pluginsNumber ${StringUtil.pluralize("plugin", pluginsNumber)}")
+    progress.setText("Verifying $pluginsNumber plugins")
     progress.setProgress(0.0)
     var verified = 0
 
@@ -173,7 +172,7 @@ object VManager {
               progress.setText("${pluginOnIde.first.presentableName()} has been verified with ${pluginOnIde.second.presentableName()}. Result: ${
               when (result) {
                 is VResult.Nice -> "It is OK."
-                is VResult.Problems -> "It has ${result.problems.keySet().size} ${StringUtil.pluralize("problem", result.problems.keySet().size)}"
+                is VResult.Problems -> "It has ${result.problems.keySet().size} problems"
                 is VResult.BadPlugin -> "It is invalid: ${result.overview}"
               }
               }")

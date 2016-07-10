@@ -16,7 +16,6 @@ import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.MessageUtils
-import com.jetbrains.pluginverifier.utils.StringUtil
 import kotlin.comparisons.compareBy
 import kotlin.comparisons.thenBy
 
@@ -144,7 +143,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
                 }
 
                 tcLog.testStdErr(testName, sb.toString())
-                tcLog.testFailed(testName, "Plugin URL: $pluginLink\n" + "$pluginId:${result.pluginDescriptor.version} has ${problems.keySet().size} ${StringUtil.pluralize("problem", problems.keySet().size)}", "")
+                tcLog.testFailed(testName, "Plugin URL: $pluginLink\n" + "$pluginId:${result.pluginDescriptor.version} has ${problems.keySet().size} ${"problem".pluralize(problems.keySet().size)}", "")
               }
             }
 
@@ -154,6 +153,12 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
       }
 
     }
+  }
+
+  private fun String.pluralize(times: Int): String {
+    if (times < 0) throw IllegalArgumentException("Negative value")
+    if (times == 0) return ""
+    if (times == 1) return this else return this + "s"
   }
 
   private fun genTestName(pluginDescriptor: PluginDescriptor, ideVersion: IdeVersion, lastUpdates: Map<IdeVersion, List<UpdateInfo>>): String {

@@ -1,5 +1,4 @@
 dependencies {
-  compile project(':common-utils')
   compile group: 'com.google.code.gson', name: 'gson', version: '2.2.4'
   compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.3.1'
   compile group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.3.1'

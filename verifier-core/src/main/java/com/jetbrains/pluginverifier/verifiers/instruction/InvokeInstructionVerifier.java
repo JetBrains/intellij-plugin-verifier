@@ -9,9 +9,9 @@ import com.jetbrains.pluginverifier.problems.statics.InvokeStaticOnInstanceMetho
 import com.jetbrains.pluginverifier.problems.statics.InvokeVirtualOnStaticMethodProblem;
 import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.utils.ResolverUtil;
-import com.jetbrains.pluginverifier.utils.StringUtil;
 import com.jetbrains.pluginverifier.utils.VerifierUtil;
 import com.jetbrains.pluginverifier.verifiers.VContext;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -62,7 +62,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
         if (ownerClassName.equals(clazz.name)) {
 
           // Looks like method was defined in some parent class
-          if (StringUtil.isNotEmpty(ownerClass.superName) && ownerClass.interfaces.isEmpty()) {
+          if (ownerClass.superName != null && !ownerClass.superName.isEmpty() && ownerClass.interfaces.isEmpty()) {
             //the only possible method holder is a direct parent class
             actualOwner = ownerClass.superName;
           }
@@ -142,7 +142,7 @@ public class InvokeInstructionVerifier implements InstructionVerifier {
     AccessType accessProblem = null;
 
     if (VerifierUtil.isPrivate(actualMethod)) {
-      if (!StringUtil.equals(verifiedClass.name, actualOwner.name)) {
+      if (!StringsKt.equals(verifiedClass.name, actualOwner.name, false)) {
         //accessing to private method of the other class
         accessProblem = AccessType.PRIVATE;
       }

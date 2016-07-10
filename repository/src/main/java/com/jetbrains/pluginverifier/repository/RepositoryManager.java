@@ -5,7 +5,6 @@ import com.google.common.collect.ImmutableList;
 import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.RepositoryConfiguration;
-import com.jetbrains.pluginverifier.utils.StringUtil;
 import org.apache.http.annotation.ThreadSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +37,7 @@ public class RepositoryManager implements PluginRepository {
     reps.add(new GlobalRepository(RepositoryConfiguration.getInstance().getPluginRepositoryUrl()));
 
     String customRepositories = RepositoryConfiguration.getInstance().getCustomRepositories();
-    if (StringUtil.isNotEmpty(customRepositories)) {
+    if (customRepositories != null && !customRepositories.isEmpty()) {
       for (StringTokenizer tokenizer = new StringTokenizer(customRepositories, ","); tokenizer.hasMoreTokens(); ) {
         String repositoryUrl = tokenizer.nextToken().trim();
         try {

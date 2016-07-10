@@ -10,6 +10,7 @@ import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.format.UpdateInfo
+import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.output.HtmlVPrinter
 import com.jetbrains.pluginverifier.output.StreamVPrinter
 import com.jetbrains.pluginverifier.output.TeamCityLog
@@ -243,7 +244,7 @@ class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
   private fun getUpdateCompatibleWithCommunityEdition(pluginId: String, version: IdeVersion): UpdateInfo? {
     val ideVersion = version.asString()
     if (ideVersion.startsWith("IU-")) {
-      val communityVersion = "IC-" + StringUtil.trimStart(ideVersion, "IU-")
+      val communityVersion = "IC-" + ideVersion.substringAfter(ideVersion, "IU-")
       try {
         return RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(IdeVersion.createIdeVersion(communityVersion), pluginId)
       } catch (e: Exception) {

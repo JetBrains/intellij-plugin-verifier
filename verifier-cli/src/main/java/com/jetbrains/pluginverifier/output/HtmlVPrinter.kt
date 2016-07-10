@@ -10,10 +10,10 @@ import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.api.VResults
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.location.ProblemLocation
+import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.problems.BrokenPluginProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.utils.ToStringCachedComparator
-import com.jetbrains.pluginverifier.utils.VersionComparatorUtil
 import java.io.File
 import java.io.PrintWriter
 import java.nio.charset.Charset

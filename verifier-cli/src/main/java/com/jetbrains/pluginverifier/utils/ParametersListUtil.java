@@ -96,7 +96,7 @@ public class ParametersListUtil {
   private static List<String> parse(@NotNull String parameterString, boolean keepQuotes) {
     parameterString = parameterString.trim();
 
-    final ArrayList<String> params = new ArrayList<String>();
+    final ArrayList<String> params = new ArrayList<>();
     final StringBuilder token = new StringBuilder(128);
     boolean inQuotes = false;
     boolean escapedQuote = false;
@@ -160,10 +160,46 @@ public class ParametersListUtil {
   private static String encode(@NotNull String parameter) {
     final StringBuilder builder = new StringBuilder();
     builder.append(parameter);
-    StringUtil.escapeQuotes(builder);
-    if (builder.length() == 0 || StringUtil.indexOf(builder, ' ') >= 0 || StringUtil.indexOf(builder, '|') >= 0) {
-      StringUtil.quote(builder);
+    escapeQuotes(builder);
+    if (builder.length() == 0 || indexOf(builder, ' ') >= 0 || indexOf(builder, '|') >= 0) {
+      quote(builder);
     }
     return builder.toString();
+  }
+
+  private static void quote(@NotNull final StringBuilder builder) {
+    quote(builder, '\"');
+  }
+
+  private static void quote(@NotNull final StringBuilder builder, final char quotingChar) {
+    builder.insert(0, quotingChar);
+    builder.append(quotingChar);
+  }
+
+  private static void escapeQuotes(@NotNull final StringBuilder buf) {
+    escapeChar(buf, '"');
+  }
+
+  private static void escapeChar(@NotNull final StringBuilder buf, final char character) {
+    int idx = 0;
+    while ((idx = indexOf(buf, character, idx)) >= 0) {
+      buf.insert(idx, "\\");
+      idx += 2;
+    }
+  }
+
+  private static int indexOf(@NotNull CharSequence s, char c) {
+    return indexOf(s, c, 0, s.length());
+  }
+
+  private static int indexOf(@NotNull CharSequence s, char c, int start) {
+    return indexOf(s, c, start, s.length());
+  }
+
+  private static int indexOf(@NotNull CharSequence s, char c, int start, int end) {
+    for (int i = start; i < end; i++) {
+      if (s.charAt(i) == c) return i;
+    }
+    return -1;
   }
 }

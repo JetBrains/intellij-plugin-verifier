@@ -11,7 +11,6 @@ dependencies {
 
   compile project(':verifier-problems')
   compile project(':repository')
-  compile project(':common-utils')
   compile project(':verifier-core')
 
   compile 'com.github.spullara.cli-parser:cli-parser:1.1.2'

@@ -5,6 +5,7 @@ import com.intellij.structure.resolvers.Resolver;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.FailedToReadClassProblem;
 import com.jetbrains.pluginverifier.verifiers.VContext;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
@@ -161,7 +162,7 @@ public class VerifierUtil {
   }
 
   public static boolean haveTheSamePackage(@NotNull ClassNode first, @NotNull ClassNode second) {
-    return StringUtil.equals(extractPackage(first.name), extractPackage(second.name));
+    return StringsKt.equals(extractPackage(first.name), extractPackage(second.name), false);
   }
 
   @Nullable
@@ -174,7 +175,7 @@ public class VerifierUtil {
 
   public static boolean isAncestor(@NotNull ClassNode child, @NotNull ClassNode possibleParent, @NotNull Resolver resolver, @NotNull VContext ctx) {
     while (child != null) {
-      if (StringUtil.equals(possibleParent.name, child.name)) {
+      if (StringsKt.equals(possibleParent.name, child.name, false)) {
         return true;
       }
       String superName = child.superName;

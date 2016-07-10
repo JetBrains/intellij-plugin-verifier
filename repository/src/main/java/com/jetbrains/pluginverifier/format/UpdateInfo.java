@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.format;
 
-import com.jetbrains.pluginverifier.utils.VersionComparatorUtil;
+import com.jetbrains.pluginverifier.misc.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
