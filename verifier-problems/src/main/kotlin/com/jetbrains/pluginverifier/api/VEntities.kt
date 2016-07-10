@@ -124,6 +124,9 @@ sealed class JdkDescriptor() {
       return "JdkDescriptor.ByFile(file=$file)"
     }
 
+    override fun presentableName(): String = file.absolutePath
   }
+
+  open fun presentableName() = this.toString()
 
 }
