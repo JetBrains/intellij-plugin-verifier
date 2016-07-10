@@ -79,11 +79,12 @@ object CheckPluginParamsParser : ParamsParser {
 
 }
 
-class CheckPluginParams(val pluginDescriptors: List<PluginDescriptor>,
-                        val ideDescriptors: List<IdeDescriptor>,
-                        val jdkDescriptor: JdkDescriptor,
-                        val vOptions: VOptions,
-                        val externalClasspath: Resolver = Resolver.getEmptyResolver()) : Params
+data class CheckPluginParams(val pluginDescriptors: List<PluginDescriptor>,
+                             val ideDescriptors: List<IdeDescriptor>,
+                             val jdkDescriptor: JdkDescriptor,
+                             val vOptions: VOptions,
+                             val externalClasspath: Resolver = Resolver.getEmptyResolver(),
+                             val progress: VProgress = DefaultVProgress()) : Params
 
 class CheckPluginResults(val vResults: VResults) : Results {
 
@@ -96,7 +97,7 @@ class CheckPluginConfiguration(val params: CheckPluginParams) : Configuration {
   override fun execute(): CheckPluginResults {
     val pluginsToCheck = params.pluginDescriptors.map { p -> params.ideDescriptors.map { p to it } }.flatten()
     val vParams = VParams(params.jdkDescriptor, pluginsToCheck, params.vOptions, params.externalClasspath)
-    val vResults = VManager.verify(vParams)
+    val vResults = VManager.verify(vParams, params.progress)
 
     return CheckPluginResults(vResults)
   }

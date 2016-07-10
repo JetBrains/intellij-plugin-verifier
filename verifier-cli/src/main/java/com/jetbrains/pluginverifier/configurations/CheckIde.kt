@@ -153,14 +153,13 @@ object CheckIdeParamsParser : ParamsParser {
 
 }
 
-class CheckIdeParams(val ideDescriptor: IdeDescriptor,
-                     val jdkDescriptor: JdkDescriptor,
-                     val pluginsToCheck: List<PluginDescriptor>,
-                     val excludedPlugins: Multimap<String, String>,
-                     val vOptions: VOptions,
-                     val externalClassPath: Resolver) : Params {
-
-}
+data class CheckIdeParams(val ideDescriptor: IdeDescriptor,
+                          val jdkDescriptor: JdkDescriptor,
+                          val pluginsToCheck: List<PluginDescriptor>,
+                          val excludedPlugins: Multimap<String, String>,
+                          val vOptions: VOptions,
+                          val externalClassPath: Resolver = Resolver.getEmptyResolver(),
+                          val progress: VProgress = DefaultVProgress()) : Params
 
 class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
                       @SerializedName("results") val vResults: VResults,
@@ -214,7 +213,7 @@ class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
   override fun execute(): CheckIdeResults {
     val pluginsToCheck = params.pluginsToCheck.filterNot { params.excludedPlugins.containsEntry(it.pluginId, it.version) }.map { it to params.ideDescriptor }
     val vParams = VParams(params.jdkDescriptor, pluginsToCheck, params.vOptions, params.externalClassPath)
-    val vResults = VManager.verify(vParams)
+    val vResults = VManager.verify(vParams, params.progress)
     return CheckIdeResults(params.ideDescriptor.ideVersion, vResults, params.excludedPlugins, getMissingUpdatesProblems())
   }
 
