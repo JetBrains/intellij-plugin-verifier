@@ -46,8 +46,7 @@ sealed class VResult(@SerializedName("plugin") val pluginDescriptor: PluginDescr
    * The [reason] is a user-friendly description of the problem.
    */
   class BadPlugin(pluginDescriptor: PluginDescriptor,
-                  ideDescriptor: IdeDescriptor,
-                  reason: String) : VResult(pluginDescriptor, ideDescriptor, reason) {
+                  reason: String) : VResult(pluginDescriptor, IdeDescriptor.AnyIde, reason) {
 
     override fun toString(): String {
       return "VResult.BadPlugin(plugin=$pluginDescriptor, reason='$overview')"

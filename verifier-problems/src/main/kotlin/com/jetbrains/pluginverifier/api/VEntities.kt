@@ -94,6 +94,12 @@ sealed class IdeDescriptor(@SerializedName("version") val ideVersion: IdeVersion
 
   fun presentableName(): String = ideVersion.asString()
 
+  object AnyIde : IdeDescriptor(IdeVersion.createIdeVersion("0")) {
+    override fun toString(): String {
+      return "AnyIde"
+    }
+  }
+
   class ByFile(ideVersion: IdeVersion, @Transient val file: File) : IdeDescriptor(ideVersion) {
 
     override fun toString(): String {

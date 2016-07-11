@@ -97,6 +97,7 @@ object VManager {
                 ideDescriptor.ideResolver!!
               }
             }
+            IdeDescriptor.AnyIde -> throw IllegalArgumentException()
           }
         } catch(ie: InterruptedException) {
           throw ie
@@ -124,7 +125,7 @@ object VManager {
                 //the plugin has incorrect structure.
                 val reason = e.message ?: "The plugin ${pluginOnIde.first} has incorrect structure"
                 LOG.error(reason, e)
-                pluginResult = VResult.BadPlugin(pluginOnIde.first, pluginOnIde.second, reason)
+                pluginResult = VResult.BadPlugin(pluginOnIde.first, reason)
                 return@poi
               } catch(e: UpdateNotFoundException) {
                 //the caller has specified a missing plugin
@@ -134,7 +135,7 @@ object VManager {
                 //the plugin has an invalid file
                 val reason = e.message ?: e.javaClass.name
                 LOG.error(reason, e)
-                pluginResult = VResult.BadPlugin(pluginOnIde.first, pluginOnIde.second, reason)
+                pluginResult = VResult.BadPlugin(pluginOnIde.first, reason)
                 return@poi
               }
 
@@ -144,7 +145,7 @@ object VManager {
               } catch(e: Exception) {
                 val reason = e.message ?: "Failed to read the class-files of the plugin $plugin"
                 LOG.error(reason, e)
-                pluginResult = VResult.BadPlugin(pluginOnIde.first, pluginOnIde.second, reason)
+                pluginResult = VResult.BadPlugin(pluginOnIde.first, reason)
                 return@poi
               }
 

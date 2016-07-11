@@ -114,6 +114,7 @@ object VParamsCreator {
     is IdeDescriptor.ByFile -> IdeManager.getInstance().createIde(ideDescriptor.file)
     is IdeDescriptor.ByInstance -> ideDescriptor.ide
     is IdeDescriptor.ByVersion -> TODO("Downloading the IDE by IdeVersion is not supported yet.")
+    IdeDescriptor.AnyIde -> throw IllegalArgumentException()
   }
 
 
