@@ -1,6 +1,8 @@
 package com.jetbrains.pluginverifier.format;
 
+import com.google.gson.annotations.SerializedName;
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil;
+import kotlin.jvm.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,11 +41,11 @@ public final class UpdateInfo {
     }
   };
 
-  private Integer updateId;
-  private String pluginId;
-  private String pluginName;
-  private String version;
-  private Long cdate;
+  @SerializedName("updateId") private Integer updateId;
+  @SerializedName("pluginId") private String pluginId;
+  @SerializedName("pluginName") private String pluginName;
+  @SerializedName("version") private String version;
+  @Transient private Long cdate;
 
   public UpdateInfo() {
   }

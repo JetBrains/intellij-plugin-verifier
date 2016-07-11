@@ -10,13 +10,11 @@ import com.google.gson.TypeAdapter
 import com.google.gson.TypeAdapterFactory
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
-import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VResult
-import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.location.CodeLocation
 import com.jetbrains.pluginverifier.location.PluginLocation
 import com.jetbrains.pluginverifier.location.ProblemLocation
@@ -33,7 +31,6 @@ import java.lang.reflect.ParameterizedType
 
 object GsonHolder {
   val GSON = GsonBuilder()
-      .registerTypeAdapter(UpdateInfo::class.java, UpdateInfoTypeAdapter().nullSafe())
       .registerTypeHierarchyAdapter(IdeVersion::class.java, IdeVersionTypeAdapter().nullSafe())
       .registerTypeHierarchyAdapter(IdeDescriptor::class.java, IdeDescriptorTypeAdapter().nullSafe())
       .registerTypeAdapterFactory(resultTAF)
@@ -124,49 +121,6 @@ class IdeVersionTypeAdapter : TypeAdapter<IdeVersion>() {
 
 }
 
-class UpdateInfoTypeAdapter : TypeAdapter<UpdateInfo>() {
-  @Throws(IOException::class)
-  override fun write(out: JsonWriter, value: UpdateInfo) {
-    out.beginArray()
-    out.value(value.pluginId)
-    out.value(value.pluginName)
-    out.value(value.version)
-    out.value(value.updateId)
-    //we don't serialize CDate because it's useless.
-    out.endArray()
-  }
-
-  @Throws(IOException::class)
-  override fun read(`in`: JsonReader): UpdateInfo {
-    `in`.beginArray()
-    val id = getStringOrNull(`in`)
-    val name = getStringOrNull(`in`)
-    val version = getStringOrNull(`in`)
-    var updateId: Int? = null
-
-    if (`in`.peek() == JsonToken.NULL) {
-      `in`.nextNull()
-    } else {
-      updateId = `in`.nextInt()
-    }
-
-    `in`.endArray()
-    return UpdateInfo(updateId, id, name, version)
-  }
-
-  @Throws(IOException::class)
-  private fun getStringOrNull(`in`: JsonReader): String? {
-    if (`in`.peek() == JsonToken.NULL) {
-      `in`.nextNull()
-      return null
-    } else {
-      return `in`.nextString()
-    }
-  }
-
-}
-
-
 /**
  * The class allows to serialize all the `Multimap&lt;K, V&gt;` generified classes.
  */
@@ -181,6 +135,7 @@ class MultimapTypeAdapterFactory : TypeAdapterFactory {
     val valueType = types[1]
     val keyAdapter = gson.getAdapter(TypeToken.get(keyType))
     val valueAdapter = gson.getAdapter(TypeToken.get(valueType))
+    @Suppress("UNCHECKED_CAST")
     return newMultimapAdapter(keyAdapter, valueAdapter) as TypeAdapter<T>
   }
 
