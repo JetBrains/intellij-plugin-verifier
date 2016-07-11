@@ -53,23 +53,18 @@ class GlobalRepository implements PluginRepository {
   @Override
   public UpdateInfo getLastCompatibleUpdateOfPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException {
 
-    //returns the last compatible update number
-    URL u = new URL(url + "/manager/getCompatibleUpdateId/?build=" + ideVersion.asString() + "&pluginId=" + URLEncoder.encode(pluginId, "UTF-8"));
-
-    int updateId = Integer.parseInt(IOUtils.toString(u));
-    if (updateId == 0) {
-      return null;
-    }
-
     //search the given number in the all compatible updates
     List<UpdateInfo> all = getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId);
+    UpdateInfo result = null;
     for (UpdateInfo info : all) {
-      if (info.getUpdateId() != null && info.getUpdateId() == updateId) {
-        return info;
+      if (info.getUpdateId() != null) {
+        if (result == null || result.getUpdateId() == null || result.getUpdateId() < info.getUpdateId()) {
+          result = info;
+        }
       }
     }
 
-    return null;
+    return result;
   }
 
   @NotNull
