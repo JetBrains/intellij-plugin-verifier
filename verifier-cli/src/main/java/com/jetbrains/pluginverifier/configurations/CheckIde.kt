@@ -12,10 +12,11 @@ import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.output.HtmlVPrinter
-import com.jetbrains.pluginverifier.output.StreamVPrinter
 import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
 import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem
+import com.jetbrains.pluginverifier.report.CheckIdeReport
+import com.jetbrains.pluginverifier.report.multimapFromMap
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.*
 import java.io.*
@@ -182,20 +183,25 @@ class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
     }
   }
 
-  fun saveResultsToFile(file: File) {
-    PrintStream(file.create()).use { StreamVPrinter(it).printResults(vResults) }
-  }
-
   fun saveToHtmlFile(htmlFile: File) {
     HtmlVPrinter(ideVersion, { x -> excludedPlugins.containsEntry(x.first, x.second) }, htmlFile.create()).printResults(vResults)
   }
 
   fun processResults(opts: CmdOpts) {
+    val report = CheckIdeReport(ideVersion, vResults.results
+        .filter { it is VResult.Problems }
+        .map { it as VResult.Problems }
+        .filter { it.pluginDescriptor is PluginDescriptor.ByUpdateInfo }
+        .associateBy({ (it.pluginDescriptor as PluginDescriptor.ByUpdateInfo).updateInfo }, { it.problems.keySet() }).multimapFromMap()
+    )
     if (opts.needTeamCityLog) {
       val vPrinter = TeamCityVPrinter(TeamCityLog(System.out), TeamCityVPrinter.GroupBy.parse(opts))
       vPrinter.printResults(vResults)
       vPrinter.printNoCompatibleUpdatesProblems(noCompatibleUpdatesProblems)
       //TODO: set tc-build status to either success or fail
+      if (opts.compareCheckIdeReport) {
+        vPrinter.printIdeCompareResult(report.compareWithPreviousChecks())
+      }
     }
     if (opts.htmlReportFile != null) {
       saveToHtmlFile(File(opts.htmlReportFile))
@@ -203,8 +209,8 @@ class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
     if (opts.dumpBrokenPluginsFile != null) {
       dumbBrokenPluginsList(File(opts.dumpBrokenPluginsFile))
     }
-    if (opts.resultFile != null) {
-      saveResultsToFile(File(opts.resultFile))
+    if (opts.saveCheckIdeReport != null) {
+      report.saveToFile(File(opts.saveCheckIdeReport))
     }
   }
 

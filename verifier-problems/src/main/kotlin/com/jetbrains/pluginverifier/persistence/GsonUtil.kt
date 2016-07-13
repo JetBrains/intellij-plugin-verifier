@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.persistence
 
 import com.github.salomonbrys.kotson.registerTypeAdapter
-import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.LinkedHashMultimap
 import com.google.common.collect.Multimap
 import com.google.gson.Gson
@@ -21,6 +20,9 @@ import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.problems.fields.ChangeFinalFieldProblem
 import com.jetbrains.pluginverifier.problems.statics.*
+import com.jetbrains.pluginverifier.report.CheckIdeReport
+import com.jetbrains.pluginverifier.report.checkIdeReportDeserializer
+import com.jetbrains.pluginverifier.report.checkIdeReportSerializer
 import com.jetbrains.pluginverifier.utils.RuntimeTypeAdapterFactory
 import java.io.IOException
 import java.lang.reflect.ParameterizedType
@@ -50,6 +52,8 @@ object GsonHolder {
           it.context.serialize(PluginDescriptor.ByXmlId(it.src.pluginId, it.src.version))
         }
       }
+      .registerTypeAdapter<CheckIdeReport>(checkIdeReportSerializer)
+      .registerTypeAdapter<CheckIdeReport>(checkIdeReportDeserializer)
       .create()
 }
 
@@ -174,15 +178,4 @@ class MultimapTypeAdapterFactory : TypeAdapterFactory {
       }
     }.nullSafe() //Gson will check nulls automatically
   }
-}
-
-/**
- * Creates a Guava multimap using the input map.
- */
-fun <K, V> multimapFromMap(input: Map<K, Iterable<V>>): Multimap<K, V> {
-  val result = ArrayListMultimap.create<K, V>()
-  for (entry in input.entries) {
-    result.putAll(entry.key, entry.value)
-  }
-  return result
 }

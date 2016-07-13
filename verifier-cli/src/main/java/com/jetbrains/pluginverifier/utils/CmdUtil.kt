@@ -46,9 +46,6 @@ open class CmdOpts(
     @set:Argument("html-report", description = "Create an HTML report of broken plugins")
     var htmlReportFile: String? = null,
 
-    @set:Argument("results-file", description = "Save results to this file")
-    var resultFile: String? = null,
-
     @set:Argument("plugins-to-check-file", alias = "ptcf", description = "The file that contains list of plugins to check (e.g. checkedPlugins.txt)")
     var pluginsToCheckFile: String? = null,
 
@@ -62,7 +59,13 @@ open class CmdOpts(
     var externalClassesPrefixes: Array<String> = arrayOf(),
 
     @set:Argument("fail-on-cyclic-dependencies", alias = "focd", description = "Whether to stop the verification of the plugin in case the dependencies cycle found. The default value is true, because it is potentially a plugin problem.")
-    var failOnCyclicDependencies: Boolean = true
+    var failOnCyclicDependencies: Boolean = true,
+
+    @set:Argument("save-check-ide-report", alias = "save", description = "Save the check IDE report to this file")
+    var saveCheckIdeReport: String? = null,
+
+    @set:Argument("compare-check-ide-reports-team-city", alias = "compare", description = "Whether to compare the check IDE report with the previous check reports and print the difference (new problems) on the TeamCity")
+    var compareCheckIdeReport: Boolean = true
 )
 
 fun File.create(): File {

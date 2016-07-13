@@ -1,9 +1,6 @@
 package com.jetbrains.pluginverifier.output
 
-import com.google.common.collect.ArrayListMultimap
-import com.google.common.collect.HashMultimap
-import com.google.common.collect.ImmutableMultimap
-import com.google.common.collect.Multimap
+import com.google.common.collect.*
 import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VResult
@@ -13,6 +10,8 @@ import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.BrokenPluginProblem
 import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem
 import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.report.CheckIdeCompareResult
+import com.jetbrains.pluginverifier.report.multimapFromMap
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.MessageUtils
@@ -135,9 +134,9 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
                 //nice
               } else {
                 val sb = StringBuilder()
-                for (entry in problems.asMap()) {
-                  sb.append("#").append(entry.key.description).append("\n")
-                  for (location in entry.value) {
+                for ((key, value) in problems.asMap()) {
+                  sb.append("#").append(key.description).append("\n")
+                  for (location in value) {
                     sb.append("    at ").append(location).append("\n")
                   }
                 }
@@ -172,6 +171,52 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
     }
   }
 
+  fun printIdeCompareResult(compareResult: CheckIdeCompareResult) {
+    //since IU-162.100
+    //....accessing to unknown class
+    //........firstClass
+    //.............pluginOne:1.0
+    //.............pluginOne:1.2
+    //.............pluginTwo:2.1
+    //........secondClass
+    //.............pluginOne:1.0
+    //....invoking unknown method
+    //........myUnknownMethod
+    //...and so on....
+    val problemToUpdates: Multimap<Problem, UpdateInfo> = Multimaps.invertFrom(compareResult.pluginProblems, ArrayListMultimap.create())
+    val ideToProblems: Multimap<IdeVersion, Problem> = compareResult.firstOccurrences.entries.groupBy({ it.value }, { it.key }).multimapFromMap()
+
+    ideToProblems.keySet().sorted().forEach { ide ->
+      tcLog.testSuiteStarted("(since $ide)").use {
+        ideToProblems[ide].groupBy { it.javaClass }.forEach { typeToProblems ->
+          val prefix = convertNameToPrefix(typeToProblems.key)
+          tcLog.testSuiteStarted("($prefix)").use {
+            typeToProblems.value.forEach { problem ->
+              tcLog.testSuiteStarted(problem.description).use {
+                problemToUpdates.get(problem).forEach { plugin ->
+                  val testName = "(${plugin.pluginId}:${plugin.version})"
+                  tcLog.testStarted(testName).use {
+                    val pluginUrl = REPOSITORY_PLUGIN_ID_BASE + plugin.pluginId
+                    tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problem.description)
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    val newProblemsCnt = ideToProblems.get(compareResult.checkIdeVersion).size
+    val totalProblemsCnt = problemToUpdates.keySet().size
+    val allCheckedIdes: List<IdeVersion> = ideToProblems.keySet().sorted()
+    val text = "Done, %d new %s in %s; %d problems between %s and %s".format(newProblemsCnt, "problem".pluralize(newProblemsCnt), compareResult.checkIdeVersion.asString(), totalProblemsCnt, allCheckedIdes.first(), allCheckedIdes.last())
+    if (newProblemsCnt > 0) {
+      tcLog.buildStatusFailure(text)
+    } else {
+      tcLog.buildStatusSuccess(text)
+    }
+  }
 
   private fun groupByProblemType(results: VResults) {
     //accessing to unknown class SomeClass
