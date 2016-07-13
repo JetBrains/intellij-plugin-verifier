@@ -9,6 +9,7 @@ import com.intellij.structure.errors.IncorrectPluginException;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.misc.DownloadManager;
 import com.jetbrains.pluginverifier.misc.PluginCache;
+import com.jetbrains.pluginverifier.misc.VersionComparatorUtil;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -117,7 +118,7 @@ class CustomRepository implements PluginRepository {
 
     UpdateInfo res = list.get(0);
     for (UpdateInfo info : list) {
-      if (UpdateInfo.UPDATE_NUMBER_COMPARATOR.compare(res, info) < 0) {
+      if (VersionComparatorUtil.compare(res.getVersion(), info.getVersion()) < 0) {
         res = info;
       }
     }

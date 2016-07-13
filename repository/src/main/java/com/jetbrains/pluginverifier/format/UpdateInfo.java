@@ -1,14 +1,12 @@
 package com.jetbrains.pluginverifier.format;
 
 import com.google.gson.annotations.SerializedName;
-import com.jetbrains.pluginverifier.misc.VersionComparatorUtil;
 import kotlin.jvm.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.Comparator;
 
 /**
  * The plugin descriptor.
@@ -22,24 +20,6 @@ import java.util.Comparator;
  */
 @XmlRootElement(name = "update")
 public final class UpdateInfo {
-
-  public static final Comparator<UpdateInfo> UPDATE_NUMBER_COMPARATOR = new Comparator<UpdateInfo>() {
-    @Override
-    public int compare(@NotNull UpdateInfo o1, @NotNull UpdateInfo o2) {
-      Integer u1 = o1.getUpdateId();
-      Integer u2 = o2.getUpdateId();
-      if (u1 != null && u2 != null) {
-        return u1 - u2;
-      }
-      if (u1 != null) {
-        return -1;
-      }
-      if (u2 != null) {
-        return 1;
-      }
-      return VersionComparatorUtil.compare(o1.getVersion(), o2.getVersion());
-    }
-  };
 
   @SerializedName("updateId") private Integer updateId;
   @SerializedName("pluginId") private String pluginId;
@@ -65,17 +45,6 @@ public final class UpdateInfo {
     this.pluginId = pluginId;
     this.pluginName = pluginName;
     this.version = version;
-  }
-
-  @NotNull
-  public static UpdateInfo copy(@NotNull UpdateInfo instance) {
-    UpdateInfo info = new UpdateInfo();
-    info.updateId = instance.updateId;
-    info.pluginId = instance.pluginId;
-    info.pluginName = instance.pluginName;
-    info.version = instance.version;
-    info.cdate = instance.cdate;
-    return info;
   }
 
   @XmlAttribute
