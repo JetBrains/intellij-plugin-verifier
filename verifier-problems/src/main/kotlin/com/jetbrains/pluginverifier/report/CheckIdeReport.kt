@@ -67,6 +67,3 @@ data class CheckIdeReport(@SerializedName("ideVersion") val ideVersion: IdeVersi
   }
 }
 
-data class CheckIdeCompareResult(val checkIdeVersion: IdeVersion,
-                                 val pluginProblems: Multimap<UpdateInfo, Problem>,
-                                 val firstOccurrences: Map<Problem, IdeVersion>)

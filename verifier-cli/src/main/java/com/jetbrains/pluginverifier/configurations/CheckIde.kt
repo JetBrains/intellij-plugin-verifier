@@ -15,6 +15,7 @@ import com.jetbrains.pluginverifier.output.HtmlVPrinter
 import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
 import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem
+import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.*
 import java.io.*
@@ -249,3 +250,7 @@ class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
 
 
 }
+
+data class CheckIdeCompareResult(val checkIdeVersion: IdeVersion,
+                                 val pluginProblems: Multimap<UpdateInfo, Problem>,
+                                 val firstOccurrences: Map<Problem, IdeVersion>)
