@@ -10,7 +10,6 @@ import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.persistence.GsonHolder
 import com.jetbrains.pluginverifier.problems.Problem
-import com.jetbrains.pluginverifier.results.GlobalResultsRepository
 import java.io.File
 
 /**
@@ -54,34 +53,6 @@ data class CheckIdeReport(@SerializedName("ideVersion") val ideVersion: IdeVersi
                           @SerializedName("pluginProblems") val pluginProblems: Multimap<UpdateInfo, Problem>) {
   fun saveToFile(file: File) {
     file.writeText(GsonHolder.GSON.toJson(this))
-  }
-
-  private fun findPreviousReports(ideVersion: IdeVersion): List<CheckIdeReport> {
-    val repository = GlobalResultsRepository()
-    return repository.availableReportsList
-        .map { repository.getReportFile(it) }
-        .map { CheckIdeReport.loadFromFile(it) }
-        .filter { it.ideVersion.baselineVersion == ideVersion.baselineVersion && it.ideVersion.compareTo(ideVersion) < 0 }
-        .sortedBy { it.ideVersion }
-  }
-
-
-  fun compareWithPreviousChecks(): CheckIdeCompareResult {
-    val previousReports = findPreviousReports(ideVersion)
-    val firstOccurrences: Map<Problem, IdeVersion> = (previousReports + CheckIdeReport(ideVersion, pluginProblems))
-        .flatMap { r -> r.pluginProblems.values().map { it to r.ideVersion } }
-        .groupBy { it.first }
-        .filterValues { it.isNotEmpty() }
-        .mapValues { it.value.map { it.second }.min()!! }
-    if (previousReports.isEmpty()) {
-      return CheckIdeCompareResult(ideVersion, pluginProblems, firstOccurrences)
-    }
-    val firstProblems = previousReports[0].pluginProblems.values().distinct().toSet()
-    val newProblems = pluginProblems.asMap()
-        .mapValues { it.value.filterNot { firstProblems.contains(it) } }
-        .filterValues { it.isNotEmpty() }
-        .multimapFromMap()
-    return CheckIdeCompareResult(ideVersion, newProblems, firstOccurrences)
   }
 
   companion object {

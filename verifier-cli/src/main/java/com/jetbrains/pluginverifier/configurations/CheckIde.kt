@@ -15,8 +15,6 @@ import com.jetbrains.pluginverifier.output.HtmlVPrinter
 import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
 import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem
-import com.jetbrains.pluginverifier.report.CheckIdeReport
-import com.jetbrains.pluginverifier.report.multimapFromMap
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.*
 import java.io.*
@@ -188,29 +186,17 @@ class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
   }
 
   fun processResults(opts: CmdOpts) {
-    val report = CheckIdeReport(ideVersion, vResults.results
-        .filter { it is VResult.Problems }
-        .map { it as VResult.Problems }
-        .filter { it.pluginDescriptor is PluginDescriptor.ByUpdateInfo }
-        .associateBy({ (it.pluginDescriptor as PluginDescriptor.ByUpdateInfo).updateInfo }, { it.problems.keySet() }).multimapFromMap()
-    )
     if (opts.needTeamCityLog) {
       val vPrinter = TeamCityVPrinter(TeamCityLog(System.out), TeamCityVPrinter.GroupBy.parse(opts))
       vPrinter.printResults(vResults)
       vPrinter.printNoCompatibleUpdatesProblems(noCompatibleUpdatesProblems)
       //TODO: set tc-build status to either success or fail
-      if (opts.compareCheckIdeReport) {
-        vPrinter.printIdeCompareResult(report.compareWithPreviousChecks())
-      }
     }
     if (opts.htmlReportFile != null) {
       saveToHtmlFile(File(opts.htmlReportFile))
     }
     if (opts.dumpBrokenPluginsFile != null) {
       dumbBrokenPluginsList(File(opts.dumpBrokenPluginsFile))
-    }
-    if (opts.saveCheckIdeReport != null) {
-      report.saveToFile(File(opts.saveCheckIdeReport))
     }
   }
 
