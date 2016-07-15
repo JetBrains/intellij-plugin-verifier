@@ -26,12 +26,6 @@ public class PluginExtractor {
     //TODO: add some caching of the extracted plugins
 
     File tmp = createTempDir(archive);
-    if (tmp.exists()) {
-      //if this dir already exists (which is incredible) force delete it
-      FileUtils.forceDelete(tmp);
-    }
-
-    FileUtils.forceMkdir(tmp);
 
     final AbstractUnArchiver ua = createUnArchiver(archive);
     ua.enableLogging(new ConsoleLogger(Logger.LEVEL_WARN, ""));
@@ -69,8 +63,10 @@ public class PluginExtractor {
     String baseName = "plugin_" + archive.getName() + "_" + System.currentTimeMillis();
     for (int counter = 0; counter < TEMP_DIR_ATTEMPTS; counter++) {
       File tempDir = new File(cacheDir, baseName + counter);
-      if (tempDir.mkdir()) {
+      try {
+        FileUtils.forceMkdir(tempDir);
         return tempDir;
+      } catch (IOException ignored) {
       }
     }
     throw new IllegalStateException("Failed to create directory within "
@@ -79,8 +75,17 @@ public class PluginExtractor {
   }
 
   @NotNull
+  private static File getTempDirectory() {
+    String tempDir = System.getProperty("intellij.structure.temp.dir");
+    if (tempDir != null) {
+      return new File(tempDir);
+    }
+    return FileUtils.getTempDirectory();
+  }
+
+  @NotNull
   private static File getCacheDir() throws IOException {
-    final File dir = new File(FileUtils.getTempDirectory(), "intellij-plugin-structure-cache");
+    final File dir = new File(getTempDirectory(), "intellij-plugin-structure-cache");
     if (!dir.isDirectory()) {
       if (dir.exists()) {
         FileUtils.forceDelete(dir);
