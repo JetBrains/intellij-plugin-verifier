@@ -7,6 +7,7 @@ import com.google.common.collect.Multimap
 import com.google.common.collect.Sets
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.Plugin
+import com.intellij.structure.domain.PluginDependency
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginDescriptor
@@ -18,6 +19,7 @@ import com.jetbrains.pluginverifier.problems.MissingDependencyProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import com.jetbrains.pluginverifier.utils.dependencies.Dependencies
+import com.jetbrains.pluginverifier.utils.dependencies.MissingReason
 import com.jetbrains.pluginverifier.utils.dependencies.PluginDependenciesNode
 import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.InheritFromFinalClassVerifier
@@ -36,22 +38,29 @@ import java.util.*
 
 private val LOG = LoggerFactory.getLogger(Verifiers::class.java)
 
-object Verifiers {
+internal object Verifiers {
 
   //TODO: add a verifier which reports minor problems (missing optional plugin descriptor, missing logo file and other)
   //TODO: add support of warnings in the plugin-structure
 
-  val PLUGIN_VERIFIERS = arrayOf<Verifier>(ReferencesVerifier())
+  @Throws(InterruptedException::class)
+  internal fun processAllVerifiers(ctx: VContext): VResult {
+    return ReferencesVerifier.verify(ctx)
+  }
+}
 
-  val fieldVerifiers = arrayOf<FieldVerifier>(FieldTypeVerifier())
+internal object ReferencesVerifier {
 
-  val classVerifiers = arrayOf(
+  private val fieldVerifiers = arrayOf<FieldVerifier>(FieldTypeVerifier())
+
+  private val classVerifiers = arrayOf(
       SuperClassVerifier(),
       InterfacesVerifier(),
       AbstractMethodVerifier(),
       InheritFromFinalClassVerifier()
   )
-  val methodVerifiers = arrayOf(
+
+  private val methodVerifiers = arrayOf(
       OverrideNonFinalVerifier(),
       MethodReturnTypeVerifier(),
       MethodArgumentTypesVerifier(),
@@ -60,7 +69,7 @@ object Verifiers {
       MethodTryCatchVerifier()
   )
 
-  val instructionVerifiers = arrayOf(
+  private val instructionVerifiers = arrayOf(
       InvokeInstructionVerifier(),
       TypeInstructionVerifier(),
       LdcInstructionVerifier(),
@@ -69,57 +78,66 @@ object Verifiers {
       InvokeDynamicVerifier()
   )
 
-  @Throws(InterruptedException::class)
-  fun processAllVerifiers(ctx: VContext): VResult {
-    //collect the problems in the context
-    for (verifier in PLUGIN_VERIFIERS) {
-      verifier.verify(ctx)
-    }
-
-    if (ctx.problems.isEmpty) {
-      return VResult.Nice(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.overview)
-    } else {
-      return VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.overview, ctx.problems)
-    }
-  }
-}
-
-private class ReferencesVerifier : Verifier {
-
   /**
    * @throws InterruptedException if the verification was cancelled
-   * @throws RuntimeException if the verification has faced some difficulties
    */
   @Throws(InterruptedException::class)
-  override fun verify(ctx: VContext) {
+  fun verify(ctx: VContext): VResult {
     val plugin = ctx.plugin
 
     val dependencies = Dependencies.getInstance().calcDependencies(ctx.plugin, ctx.ide)
     if (dependencies.cycle != null && ctx.verifierOptions.failOnCyclicDependencies) {
       val cycle = Joiner.on(" -> ").join(dependencies.cycle!!)
-      ctx.registerProblem(CyclicDependenciesProblem(cycle), ProblemLocation.fromPlugin(plugin.pluginId))
       LOG.error("The plugin verifier will not verify a plugin $plugin because its dependencies tree has the following cycle: $cycle")
-      return
+      ctx.registerProblem(CyclicDependenciesProblem(cycle), ProblemLocation.fromPlugin(plugin.pluginId))
+      return VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Cyclic dependencies: $cycle", ctx.problems)
     }
     val depNode = dependencies.descriptor
 
-    for (entry in depNode.missingDependencies.entries) {
-      val missingId = entry.key.id
+    for ((key, value) in depNode.missingDependencies) {
+      val missingId = key.id
       if (!ctx.verifierOptions.isIgnoreDependency(missingId)) {
-        ctx.registerProblem(MissingDependencyProblem(plugin.pluginId, missingId, entry.value.reason), ProblemLocation.fromPlugin(plugin.pluginId))
+        ctx.registerProblem(MissingDependencyProblem(plugin.pluginId, missingId, value.reason), ProblemLocation.fromPlugin(plugin.pluginId))
       }
     }
 
-    val missingMandatoryDeps = depNode.missingDependencies.keys.filter { !it.isOptional }.toList()
+    val missingMandatoryDeps: Map<PluginDependency, MissingReason> = depNode.missingDependencies.filterNot({ it.key.isOptional })
     if (!missingMandatoryDeps.isEmpty()) {
-      LOG.error("The plugin verifier will not verify a plugin $plugin because it has missing mandatory dependencies: $missingMandatoryDeps")
-      return
+      LOG.error("The plugin verifier will not verify a plugin $plugin because it has missing mandatory dependencies: ${depNode.missingDependencies.entries.joinToString { it.key.toString() }}")
+      return VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Missing dependencies: ${missingMandatoryDeps.map { it.key.id }}", ctx.problems)
     }
 
     val mandatoryDeps: MutableSet<PluginDependenciesNode> = hashSetOf()
     dfsMandatoryDependencies(depNode, mandatoryDeps)
 
-    createPluginDependenciesResolver(depNode, mandatoryDeps).use { dependenciesResolver ->
+
+    val dependenciesResolver: Resolver
+    if (depNode.transitiveDependencies.isEmpty()) {
+      dependenciesResolver = Resolver.getEmptyResolver()
+    } else {
+      val depResolvers: MutableList<Resolver> = arrayListOf()
+      for (dep in depNode.transitiveDependencies) {
+        try {
+          depResolvers.add(Resolver.createPluginResolver(dep))
+        } catch (e: Exception) {
+          val isMandatory = mandatoryDeps.find { it.plugin.equals(dep) } != null
+          val message = "Unable to read class-files of the ${if (isMandatory) "mandatory" else "optional"} plugin ${dep.pluginId}"
+
+          ctx.registerProblem(MissingDependencyProblem(plugin.pluginId, dep.pluginId, message), ProblemLocation.fromPlugin(plugin.pluginId))
+
+          if (isMandatory) {
+            LOG.error("The plugin verifier will not verify a plugin because its dependent plugin $dep has broken class-files", e)
+            depResolvers.forEach({ it.close() })
+            return VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Transitive mandatory dependency $dep is broken", ctx.problems)
+          } else {
+            LOG.error(message, e)
+          }
+        }
+      }
+      dependenciesResolver = Resolver.createUnionResolver("Plugin ${depNode.plugin} transitive dependencies", depResolvers)
+    }
+
+    dependenciesResolver.use {
       val resolverForCheck = getResolverForCheck(plugin, ctx.pluginResolver)
 
       //Don't close this resolver because it contains IDE and JDK resolvers which are not ready to be closed. They will be closed by the caller.
@@ -138,6 +156,11 @@ private class ReferencesVerifier : Verifier {
       }
     }
 
+    if (ctx.problems.isEmpty) {
+      return VResult.Nice(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.overview)
+    } else {
+      return VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.overview, ctx.problems)
+    }
   }
 
 
@@ -159,31 +182,6 @@ private class ReferencesVerifier : Verifier {
 
   }
 
-  private fun createPluginDependenciesResolver(depNode: PluginDependenciesNode,
-                                               mandatoryDependencies: MutableSet<PluginDependenciesNode>): Resolver {
-    if (depNode.transitiveDependencies.isEmpty()) {
-      return Resolver.getEmptyResolver()
-    }
-    val depResolvers = ArrayList<Resolver>()
-    for (dep in depNode.transitiveDependencies) {
-      try {
-        depResolvers.add(Resolver.createPluginResolver(dep))
-      } catch (e: Exception) {
-        val isMandatory = mandatoryDependencies.find { it.plugin.equals(dep) } != null
-        val message = "Unable to read class-files of the ${if (isMandatory) "mandatory" else "optional"} plugin ${dep.pluginId}"
-
-        if (isMandatory) {
-          LOG.error("The plugin verifier will not verify a plugin because its dependent plugin $dep has broken class-files", e)
-          depResolvers.forEach({ it.close() })
-          throw RuntimeException(message, e)
-        } else {
-          //non-mandatory plugins are not important.
-          LOG.error(message, e)
-        }
-      }
-    }
-    return Resolver.createUnionResolver("Plugin " + depNode.plugin + " transitive dependencies", depResolvers)
-  }
 
   /**
    * Constructs the plugin class-loader class-path.
@@ -221,8 +219,7 @@ private class ReferencesVerifier : Verifier {
   private fun getResolverForCheck(plugin: Plugin, pluginResolver: Resolver): Resolver {
     val usedResolvers = Sets.newIdentityHashSet<Resolver>()
 
-    val referencedFromXml = HashSet(plugin.allClassesReferencedFromXml)
-    plugin.optionalDescriptors.values.forEach { x -> referencedFromXml.addAll(x.allClassesReferencedFromXml) }
+    val referencedFromXml = plugin.allClassesReferencedFromXml + plugin.optionalDescriptors.values.flatMap { it.allClassesReferencedFromXml }
 
     for (aClass in referencedFromXml) {
       val location = pluginResolver.getClassLocation(aClass)
@@ -240,14 +237,14 @@ private class ReferencesVerifier : Verifier {
 
   @SuppressWarnings("unchecked")
   private fun verifyClass(resolver: Resolver, node: ClassNode, ctx: VContext) {
-    for (verifier in Verifiers.classVerifiers) {
+    for (verifier in classVerifiers) {
       verifier.verify(node, resolver, ctx)
     }
 
     @Suppress("UNCHECKED_CAST")
     val methods = node.methods as List<MethodNode>
     for (method in methods) {
-      for (verifier in Verifiers.methodVerifiers) {
+      for (verifier in methodVerifiers) {
         verifier.verify(node, method, resolver, ctx)
       }
 
@@ -255,7 +252,7 @@ private class ReferencesVerifier : Verifier {
       val i = instructions.iterator()
       while (i.hasNext()) {
         val instruction = i.next()
-        for (verifier in Verifiers.instructionVerifiers) {
+        for (verifier in instructionVerifiers) {
           verifier.verify(node, method, instruction as AbstractInsnNode, resolver, ctx)
         }
       }
@@ -264,7 +261,7 @@ private class ReferencesVerifier : Verifier {
     @Suppress("UNCHECKED_CAST")
     val fields = node.fields as List<FieldNode>
     for (field in fields) {
-      for (verifier in Verifiers.fieldVerifiers) {
+      for (verifier in fieldVerifiers) {
         verifier.verify(node, field, resolver, ctx)
       }
     }
@@ -272,7 +269,7 @@ private class ReferencesVerifier : Verifier {
 
 }
 
-class VContext(
+internal class VContext(
     val plugin: Plugin,
     val pluginResolver: Resolver,
     val pluginDescriptor: PluginDescriptor = PluginDescriptor.ByInstance(plugin),
@@ -292,8 +289,4 @@ class VContext(
     }
   }
 
-}
-
-interface Verifier {
-  fun verify(ctx: VContext)
 }
