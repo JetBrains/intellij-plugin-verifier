@@ -92,9 +92,17 @@ public class ContainerResolver extends Resolver {
   }
 
   @Override
-  public void close() {
+  public void close() throws IOException {
+    IOException first = null;
     for (Resolver resolver : myClassToResolver.values()) {
-      resolver.close();
+      try {
+        resolver.close();
+      } catch (IOException e) {
+        first = e;
+      }
+    }
+    if (first != null) {
+      throw first;
     }
   }
 }

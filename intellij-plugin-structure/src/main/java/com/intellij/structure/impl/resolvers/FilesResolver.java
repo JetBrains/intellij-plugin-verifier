@@ -13,12 +13,12 @@ import java.util.*;
 /**
  * Created by Sergey Patrikeev
  */
-public class FilesResolver extends Resolver {
+class FilesResolver extends Resolver {
 
   private final Map<String, File> myClass2File = new HashMap<String, File>();
   private final String myPresentableName;
 
-  public FilesResolver(@NotNull String presentableName, @NotNull Collection<File> classFiles) throws IOException {
+  FilesResolver(@NotNull String presentableName, @NotNull Collection<File> classFiles) throws IOException {
     myPresentableName = presentableName;
     for (File classFile : classFiles) {
       if (classFile.getName().endsWith(".class")) {
@@ -66,4 +66,8 @@ public class FilesResolver extends Resolver {
   }
 
 
+  @Override
+  public void close() throws IOException {
+    //do nothing
+  }
 }

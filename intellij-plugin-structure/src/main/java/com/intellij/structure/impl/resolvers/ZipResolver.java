@@ -23,7 +23,7 @@ import java.util.zip.ZipInputStream;
 /**
  * Created by Sergey Patrikeev
  */
-public class ZipResolver extends Resolver {
+class ZipResolver extends Resolver {
 
   private static final String CLASS_SUFFIX = ".class";
   private final Map<String, SoftReference<ClassNode>> myClassesCache = new HashMap<String, SoftReference<ClassNode>>();
@@ -31,7 +31,7 @@ public class ZipResolver extends Resolver {
   private final String myZipUrl;
   private final String myRootDirectoryPrefix;
 
-  public ZipResolver(@NotNull String presentableName, @NotNull String zipUrl, @NotNull String rootDirectory) throws IOException {
+  ZipResolver(@NotNull String presentableName, @NotNull String zipUrl, @NotNull String rootDirectory) throws IOException {
     myPresentableName = presentableName;
     myZipUrl = zipUrl;
     if (rootDirectory.isEmpty() || rootDirectory.equals(".")) {
@@ -137,5 +137,10 @@ public class ZipResolver extends Resolver {
   @Override
   public boolean containsClass(@NotNull String className) {
     return myClassesCache.containsKey(className);
+  }
+
+  @Override
+  public void close() {
+    //do nothing
   }
 }

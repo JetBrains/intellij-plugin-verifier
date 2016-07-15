@@ -63,7 +63,7 @@ public class CacheResolver extends Resolver {
   }
 
   @Override
-  public void close() {
+  public void close() throws IOException {
     myDelegate.close();
   }
 }

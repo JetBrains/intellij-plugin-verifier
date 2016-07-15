@@ -72,10 +72,18 @@ public class PluginResolver extends Resolver {
   }
 
   @Override
-  public void close() {
-    myResolver.close();
+  public void close() throws IOException {
+    IOException ce = null;
+    try {
+      myResolver.close();
+    } catch (IOException e) {
+      ce = e;
+    }
     if (myDeleteOnClose) {
-      FileUtils.deleteQuietly(myPluginFile);
+      FileUtils.forceDelete(myPluginFile);
+    }
+    if (ce != null) {
+      throw ce;
     }
   }
 

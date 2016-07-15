@@ -14,13 +14,13 @@ import java.util.*;
 /**
  * @author Sergey Evdokimov
  */
-public class CompileOutputResolver extends Resolver {
+class CompileOutputResolver extends Resolver {
 
   private final String myPresentableName;
   private final Map<String, PackageDescriptor> myPackageMap = new HashMap<String, PackageDescriptor>();
   private final Set<String> myAllClasses = new HashSet<String>();
 
-  public CompileOutputResolver(@NotNull File dir) throws IOException {
+  CompileOutputResolver(@NotNull File dir) throws IOException {
     myPresentableName = dir.getPath();
 
     List<DirDescriptor> dirs = new ArrayList<DirDescriptor>();
@@ -128,6 +128,11 @@ public class CompileOutputResolver extends Resolver {
   @Override
   public boolean containsClass(@NotNull String className) {
     return myAllClasses.contains(className);
+  }
+
+  @Override
+  public void close() {
+    //do nothing
   }
 
   private static class PackageDescriptor {

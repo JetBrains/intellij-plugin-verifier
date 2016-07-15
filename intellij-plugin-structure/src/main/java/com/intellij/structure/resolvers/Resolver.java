@@ -161,8 +161,4 @@ public abstract class Resolver implements Closeable {
    */
   public abstract boolean containsClass(@NotNull String className);
 
-  @Override
-  public void close() {
-    //doesn't throw an IOException
-  }
 }
