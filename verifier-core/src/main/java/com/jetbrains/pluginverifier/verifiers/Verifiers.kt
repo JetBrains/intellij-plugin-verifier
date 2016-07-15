@@ -13,7 +13,6 @@ import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VOptions
 import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.location.ProblemLocation
-import com.jetbrains.pluginverifier.misc.RepositoryConfiguration
 import com.jetbrains.pluginverifier.problems.CyclicDependenciesProblem
 import com.jetbrains.pluginverifier.problems.MissingDependencyProblem
 import com.jetbrains.pluginverifier.problems.Problem
@@ -139,11 +138,6 @@ private class ReferencesVerifier : Verifier {
       }
     }
 
-  }
-
-  private fun failOnCyclicDependency(): Boolean {
-    //TODO: change this with a method parameter
-    return java.lang.Boolean.parseBoolean(RepositoryConfiguration.getInstance().getProperty("fail.on.cyclic.dependencies"))
   }
 
 

@@ -10,7 +10,6 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/common-utils" />
             <option value="$PROJECT_DIR$/repository" />
             <option value="$PROJECT_DIR$/uploader" />
             <option value="$PROJECT_DIR$/verifier-cli" />

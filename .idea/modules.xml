@@ -8,8 +8,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/before-idea/before-idea.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/before-idea/before-idea.iml" group="verifier-cli/before-idea" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/before-idea/before-idea_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/before-idea/before-idea_main.iml" group="verifier-cli/before-idea" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/before-idea/before-idea_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/before-idea/before-idea_test.iml" group="verifier-cli/before-idea" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-utils/common-utils_main.iml" filepath="$PROJECT_DIR$/.idea/modules/common-utils/common-utils_main.iml" group="common-utils" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common-utils/common-utils_test.iml" filepath="$PROJECT_DIR$/.idea/modules/common-utils/common-utils_test.iml" group="common-utils" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-plugin-structure.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-plugin-structure.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_main.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_main.iml" group="intellij-plugin-structure" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_test.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_test.iml" group="intellij-plugin-structure" />
