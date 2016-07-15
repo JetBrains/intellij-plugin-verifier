@@ -155,7 +155,6 @@ object VManager {
 
                 try {
                   val vResult = Verifiers.processAllVerifiers(ctx)
-                  results.add(vResult)
                   pluginResult = vResult
                   LOG.info("Successfully verified $plugin with ${pluginOnIde.second.presentableName()}")
                 } catch (ie: InterruptedException) {
