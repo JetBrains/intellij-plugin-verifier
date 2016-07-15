@@ -14,10 +14,10 @@ import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.output.HtmlVPrinter
 import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
+import com.jetbrains.pluginverifier.persistence.multimapFromMap
 import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.report.CheckIdeReport
-import com.jetbrains.pluginverifier.report.multimapFromMap
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.*
 import java.io.*

@@ -3,25 +3,14 @@ package com.jetbrains.pluginverifier.report
 import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.jsonDeserializer
 import com.github.salomonbrys.kotson.jsonSerializer
-import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.persistence.GsonHolder
+import com.jetbrains.pluginverifier.persistence.multimapFromMap
 import com.jetbrains.pluginverifier.problems.Problem
 import java.io.File
-
-/**
- * Creates a Guava multimap using the input map.
- */
-fun <K, V> Map<K, Iterable<V>>.multimapFromMap(): Multimap<K, V> {
-  val result = ArrayListMultimap.create<K, V>()
-  for ((key, values) in this) {
-    result.putAll(key, values)
-  }
-  return result
-}
 
 
 private data class CheckIdeReportCompact(@SerializedName("ideVersion") val ideVersion: IdeVersion,

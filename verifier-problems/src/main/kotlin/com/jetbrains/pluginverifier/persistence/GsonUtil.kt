@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.persistence
 
 import com.github.salomonbrys.kotson.registerTypeAdapter
+import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.LinkedHashMultimap
 import com.google.common.collect.Multimap
 import com.google.gson.Gson
@@ -178,4 +179,15 @@ class MultimapTypeAdapterFactory : TypeAdapterFactory {
       }
     }.nullSafe() //Gson will check nulls automatically
   }
+}
+
+/**
+ * Creates a Guava multimap using the input map.
+ */
+fun <K, V> Map<K, Iterable<V>>.multimapFromMap(): Multimap<K, V> {
+  val result = ArrayListMultimap.create<K, V>()
+  for ((key, values) in this) {
+    result.putAll(key, values)
+  }
+  return result
 }

@@ -8,10 +8,10 @@ import com.jetbrains.pluginverifier.api.VResults
 import com.jetbrains.pluginverifier.configurations.CheckIdeCompareResult
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.location.ProblemLocation
+import com.jetbrains.pluginverifier.persistence.multimapFromMap
 import com.jetbrains.pluginverifier.problems.BrokenPluginProblem
 import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem
 import com.jetbrains.pluginverifier.problems.Problem
-import com.jetbrains.pluginverifier.report.multimapFromMap
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.MessageUtils
