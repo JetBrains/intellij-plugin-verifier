@@ -119,6 +119,9 @@ internal object ReferencesVerifier {
       for (dep in depNode.transitiveDependencies) {
         try {
           depResolvers.add(Resolver.createPluginResolver(dep))
+        } catch (ie: InterruptedException) {
+          depResolvers.forEach { it.close() }
+          throw ie
         } catch (e: Exception) {
           val isMandatory = mandatoryDeps.find { it.plugin.equals(dep) } != null
           val message = "Unable to read class-files of the ${if (isMandatory) "mandatory" else "optional"} plugin ${dep.pluginId}"
@@ -127,7 +130,7 @@ internal object ReferencesVerifier {
 
           if (isMandatory) {
             LOG.error("The plugin verifier will not verify a plugin because its dependent plugin $dep has broken class-files", e)
-            depResolvers.forEach({ it.close() })
+            depResolvers.forEach { it.close() }
             return VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Transitive mandatory dependency $dep is broken", ctx.problems)
           } else {
             LOG.error(message, e)
