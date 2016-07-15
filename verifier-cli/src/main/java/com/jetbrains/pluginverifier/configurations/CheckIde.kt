@@ -16,6 +16,8 @@ import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
 import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem
 import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.report.CheckIdeReport
+import com.jetbrains.pluginverifier.report.multimapFromMap
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.*
 import java.io.*
@@ -200,6 +202,16 @@ class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
       dumbBrokenPluginsList(File(opts.dumpBrokenPluginsFile))
     }
   }
+
+  fun getCheckIdeReport(): CheckIdeReport {
+    val report = CheckIdeReport(ideVersion, vResults.results
+        .filter { it is VResult.Problems }
+        .map { it as VResult.Problems }
+        .filter { it.pluginDescriptor is PluginDescriptor.ByUpdateInfo }
+        .associateBy({ (it.pluginDescriptor as PluginDescriptor.ByUpdateInfo).updateInfo }, { it.problems.keySet() }).multimapFromMap())
+    return report
+  }
+
 
 }
 
