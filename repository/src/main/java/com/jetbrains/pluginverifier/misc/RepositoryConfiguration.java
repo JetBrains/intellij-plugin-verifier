@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.misc;
 
+import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,10 +42,10 @@ public class RepositoryConfiguration {
       return new File(verifierHomeDir);
     }
     String userHome = getProperty("user.home");
-    if (userHome == null) {
-      throw new RuntimeException("Neither the verifier home directory 'plugin.verifier.home.dir' nor 'user.home' are specified");
+    if (userHome != null) {
+      return new File(userHome, ".pluginVerifier");
     }
-    return new File(userHome, ".pluginVerifier");
+    return new File(FileUtils.getTempDirectory(), ".pluginVerifier");
   }
 
   @Nullable
