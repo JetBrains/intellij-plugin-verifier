@@ -62,26 +62,27 @@ object VManager {
 
       //Group by IDE to reduce the Ide-Resolver creations number.
       params.pluginsToCheck.groupBy { it.second }.entries.forEach { ideToPlugins ->
+        val ideDescriptor = ideToPlugins.key
 
         checkCancelled()
 
-        LOG.debug("Creating Resolver for ${ideToPlugins.key}")
+        LOG.debug("Creating Resolver for $ideDescriptor")
 
         val ide: Ide
         try {
-          ide = VParamsCreator.getIde(ideToPlugins.key)
+          ide = VParamsCreator.getIde(ideDescriptor)
         } catch(ie: InterruptedException) {
           throw ie
         } catch(e: Exception) {
           //IDE errors are propagated. We assume the IDE-s are correct while the plugins may not be so.
-          throw RuntimeException("Failed to create IDE instance for ${ideToPlugins.key}")
+          throw RuntimeException("Failed to create IDE instance for $ideDescriptor")
         }
 
         //we must not close the IDE Resolver coming from the caller
         val closeIdeResolver: Boolean
         val ideResolver: Resolver
         try {
-          ideResolver = when (ideToPlugins.key) {
+          ideResolver = when (ideDescriptor) {
             is IdeDescriptor.ByFile -> {
               closeIdeResolver = true; Resolver.createIdeResolver(ide)
             }
@@ -89,7 +90,6 @@ object VManager {
               closeIdeResolver = true; Resolver.createIdeResolver(ide)
             }
             is IdeDescriptor.ByInstance -> {
-              val ideDescriptor = ideToPlugins.key as IdeDescriptor.ByInstance
               closeIdeResolver = (ideDescriptor.ideResolver == null)
               if (closeIdeResolver) {
                 Resolver.createIdeResolver(ide)
@@ -103,7 +103,7 @@ object VManager {
           throw ie
         } catch(e: Exception) {
           //IDE errors are propagated.
-          throw RuntimeException("Failed to read IDE classes for ${ideToPlugins.key}")
+          throw RuntimeException("Failed to read IDE classes for $ideDescriptor")
         }
 
         try {
