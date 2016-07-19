@@ -59,7 +59,10 @@ open class CmdOpts(
     var externalClassesPrefixes: Array<String> = arrayOf(),
 
     @set:Argument("fail-on-cyclic-dependencies", alias = "focd", description = "Whether to stop the verification of the plugin in case the dependencies cycle found. The default value is true, because it is potentially a plugin problem.")
-    var failOnCyclicDependencies: Boolean = true
+    var failOnCyclicDependencies: Boolean = true,
+
+    @set:com.sampullara.cli.Argument("save-check-ide-report", alias = "save", description = "Save the check IDE report to this file")
+    var saveCheckIdeReport: String? = null
 )
 
 fun File.create(): File {
