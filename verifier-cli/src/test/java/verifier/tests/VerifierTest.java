@@ -204,9 +204,10 @@ public class VerifierTest {
       IdeDescriptor.ByInstance ideDescriptor = new IdeDescriptor.ByInstance(ide, ideResolver);
       VOptions vOptions = VOptionsUtil.parseOpts(new CmdOpts());
       VResults results = VManager.INSTANCE.verify(new VParams(new JdkDescriptor.ByFile(jdkPath), Collections.singletonList(new Pair<PluginDescriptor, IdeDescriptor>(pluginDescriptor, ideDescriptor)), vOptions, Resolver.getEmptyResolver()));
-      assert results.getResults().get(0) instanceof VResult.Problems;
+      VResult result = results.getResults().get(0);
+      Assert.assertTrue(result instanceof VResult.Problems);
 
-      testFoundProblems(((VResult.Problems) results.getResults().get(0)).getProblems(), actualProblems);
+      testFoundProblems(((VResult.Problems) result).getProblems(), actualProblems);
     }
 
   }

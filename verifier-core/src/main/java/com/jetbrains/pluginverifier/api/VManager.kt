@@ -319,12 +319,17 @@ object VManager {
           )
       )
 
-  private fun getClassesForCheck(plugin: Plugin, pluginResolver: Resolver): Resolver =
-      Resolver.createUnionResolver("Plugin classes for check",
-          (plugin.allClassesReferencedFromXml + plugin.optionalDescriptors.flatMap { it.value.allClassesReferencedFromXml })
-              .map { pluginResolver.getClassLocation(it) }
-              .filterNotNull()
-              .distinct())
+  private fun getClassesForCheck(plugin: Plugin, pluginResolver: Resolver): Resolver {
+    val resolver = Resolver.createUnionResolver("Plugin classes for check",
+        (plugin.allClassesReferencedFromXml + plugin.optionalDescriptors.flatMap { it.value.allClassesReferencedFromXml })
+            .map { pluginResolver.getClassLocation(it) }
+            .filterNotNull()
+            .distinct())
+    if (resolver.isEmpty) {
+      return pluginResolver
+    }
+    return resolver
+  }
 
 }
 
