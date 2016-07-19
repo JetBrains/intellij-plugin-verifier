@@ -133,7 +133,7 @@ public class TestMockPlugins {
     assertFalse(set.contains("org.jetbrains.plugins.scala.project.maven.MavenWorkingDirectoryProviderImpl".replace('.', '/')));
   }
 
-  private void testMock3Classes(Plugin plugin) {
+  private void testMock3Classes(Plugin plugin) throws IOException {
     Resolver resolver;
     try {
       resolver = Resolver.createPluginResolver(plugin);

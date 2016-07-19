@@ -5,9 +5,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.intellij.structure.domain.*;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.api.IdeDescriptor;
-import com.jetbrains.pluginverifier.api.PluginDescriptor;
-import com.jetbrains.pluginverifier.api.VResult;
+import com.jetbrains.pluginverifier.api.*;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.*;
 import com.jetbrains.pluginverifier.problems.fields.ChangeFinalFieldProblem;
@@ -17,14 +15,14 @@ import com.jetbrains.pluginverifier.problems.statics.InvokeVirtualOnStaticMethod
 import com.jetbrains.pluginverifier.problems.statics.StaticAccessOfInstanceFieldProblem;
 import com.jetbrains.pluginverifier.utils.CmdOpts;
 import com.jetbrains.pluginverifier.utils.VOptionsUtil;
-import com.jetbrains.pluginverifier.verifiers.VContext;
-import com.jetbrains.pluginverifier.verifiers.Verifiers;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -200,14 +198,15 @@ public class VerifierTest {
     }
 
     try (
-        Resolver ideResolver = Resolver.createIdeResolver(ide);
-        Resolver jdkResolver = Resolver.createJdkResolver(new File(jdkPath))
+        Resolver ideResolver = Resolver.createIdeResolver(ide)
     ) {
-      VContext vContext = new VContext(plugin, Resolver.createPluginResolver(plugin), new PluginDescriptor.ByInstance(plugin), ide, ideResolver, new IdeDescriptor.ByInstance(ide, ideResolver), jdkResolver, VOptionsUtil.parseOpts(new CmdOpts()), Resolver.getEmptyResolver());
-      VResult vResult = Verifiers.INSTANCE.processAllVerifiers(vContext);
-      assert vResult instanceof VResult.Problems;
+      PluginDescriptor.ByInstance pluginDescriptor = new PluginDescriptor.ByInstance(plugin);
+      IdeDescriptor.ByInstance ideDescriptor = new IdeDescriptor.ByInstance(ide, ideResolver);
+      VOptions vOptions = VOptionsUtil.parseOpts(new CmdOpts());
+      VResults results = VManager.INSTANCE.verify(new VParams(new JdkDescriptor.ByFile(jdkPath), Collections.singletonList(new Pair<PluginDescriptor, IdeDescriptor>(pluginDescriptor, ideDescriptor)), vOptions, Resolver.getEmptyResolver()));
+      assert results.getResults().get(0) instanceof VResult.Problems;
 
-      testFoundProblems(((VResult.Problems) vResult).getProblems(), actualProblems);
+      testFoundProblems(((VResult.Problems) results.getResults().get(0)).getProblems(), actualProblems);
     }
 
   }
