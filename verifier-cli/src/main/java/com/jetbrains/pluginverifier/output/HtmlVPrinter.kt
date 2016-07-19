@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.output
 
-import com.google.common.collect.ImmutableMultimap
-import com.google.common.collect.Multimap
 import com.google.common.html.HtmlEscapers
 import com.google.common.io.Resources
 import com.intellij.structure.domain.IdeVersion
@@ -11,9 +9,6 @@ import com.jetbrains.pluginverifier.api.VResults
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
-import com.jetbrains.pluginverifier.problems.BrokenPluginProblem
-import com.jetbrains.pluginverifier.problems.Problem
-import com.jetbrains.pluginverifier.utils.ToStringCachedComparator
 import java.io.File
 import java.io.PrintWriter
 import java.nio.charset.Charset
@@ -64,11 +59,6 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
                   val vResult = versionToResult.value
                   val descriptor = vResult.pluginDescriptor
                   val updateInfo = if (descriptor is PluginDescriptor.ByUpdateInfo) descriptor.updateInfo else UpdateInfo(descriptor.pluginId, descriptor.pluginId, descriptor.version)
-                  val problems: Multimap<Problem, ProblemLocation> = when (vResult) {
-                    is VResult.Nice -> ImmutableMultimap.of()
-                    is VResult.Problems -> vResult.problems
-                    is VResult.BadPlugin -> ImmutableMultimap.of(BrokenPluginProblem(vResult.overview), ProblemLocation.fromPlugin(pluginId))
-                  }
 
                   out.printf("<div class='update %s %s'>\n", if (vResult is VResult.Nice) "updateOk" else "updateHasProblems", if (isExcluded(pluginId to version)) "excluded" else "")
 
@@ -76,31 +66,23 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
                       HtmlEscapers.htmlEscaper().escape(version),
                       updateInfo.updateId,
                       if (updateInfo.cdate == null) "" else ", " + UPDATE_DATE_FORMAT.format(Date(updateInfo.cdate!!)),
-                      if (problems.isEmpty) "" else "<small>" + problems.keySet().size + " problems found</small>")
+                      when (vResult) {
+                        is VResult.Nice -> ""
+                        is VResult.Problems -> "<small>" + vResult.problems.keySet().size + " problems found</small>"
+                        is VResult.BadPlugin -> "<small>Plugin is invalid</small>"
+                      })
 
                   out.printf("  <div>\n")
 
-                  if (problems.isEmpty) {
-                    out.printf("No problems.\n")
-                  } else {
-                    for (problem in problems.keySet()) {
-                      out.append("    <div class='errorDetails'>").append(HtmlEscapers.htmlEscaper().escape(problem.description)).append(' ').append("<a href=\"#\" class='detailsLink'>details</a>\n")
-
-
-                      out.append("<div class='errLoc'>")
-
-                      var isFirst = true
-                      for (location in problems.get(problem).sortedWith(ToStringCachedComparator<ProblemLocation>())) {
-                        if (isFirst) {
-                          isFirst = false
-                        } else {
-                          out.append("<br>")
-                        }
-
-                        out.append(HtmlEscapers.htmlEscaper().escape(location.toString()))
-                      }
-
-                      out.append("</div></div>")
+                  when (vResult) {
+                    is VResult.Nice -> {
+                      out.printf("No problems.\n")
+                    }
+                    is VResult.Problems -> {
+                      vResult.problems.asMap().entries.forEach { createProblemTab(out, it.key.description, it.value.toList()) }
+                    }
+                    is VResult.BadPlugin -> {
+                      createProblemTab(out, vResult.overview, listOf(ProblemLocation.fromPlugin(vResult.pluginDescriptor.pluginId)))
                     }
                   }
 
@@ -124,6 +106,26 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
       out.append("</html>")
     }
 
+  }
+
+  private fun createProblemTab(out: PrintWriter, description: String, locations: List<ProblemLocation>) {
+    out.append("    <div class='errorDetails'>").append(HtmlEscapers.htmlEscaper().escape(description)).append(' ').append("<a href=\"#\" class='detailsLink'>details</a>\n")
+
+
+    out.append("<div class='errLoc'>")
+
+    var isFirst = true
+    for (location in locations) {
+      if (isFirst) {
+        isFirst = false
+      } else {
+        out.append("<br>")
+      }
+
+      out.append(HtmlEscapers.htmlEscaper().escape(location.toString()))
+    }
+
+    out.append("</div></div>")
   }
 
   fun pluginHasProblems(pluginResults: List<VResult>,

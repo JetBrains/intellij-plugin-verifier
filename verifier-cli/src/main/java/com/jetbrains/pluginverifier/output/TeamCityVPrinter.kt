@@ -1,15 +1,16 @@
 package com.jetbrains.pluginverifier.output
 
-import com.google.common.collect.*
+import com.google.common.collect.ArrayListMultimap
+import com.google.common.collect.HashMultimap
+import com.google.common.collect.Multimap
+import com.google.common.collect.Multimaps
 import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.api.VResults
 import com.jetbrains.pluginverifier.configurations.CheckIdeCompareResult
 import com.jetbrains.pluginverifier.format.UpdateInfo
-import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.persistence.multimapFromMap
-import com.jetbrains.pluginverifier.problems.BrokenPluginProblem
 import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
@@ -123,26 +124,23 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
 
             val testName = genTestName(result.pluginDescriptor, result.ideDescriptor.ideVersion, lastUpdates)
 
-            val problems: Multimap<Problem, ProblemLocation> = when (result) {
-              is VResult.Nice -> ImmutableMultimap.of()
-              is VResult.Problems -> result.problems
-              is VResult.BadPlugin -> ImmutableMultimap.of(BrokenPluginProblem(result.overview), ProblemLocation.fromPlugin(pluginId))
-            }
-
             tcLog.testStarted(testName).use {
-              if (problems.isEmpty) {
-                //nice
-              } else {
-                val sb = StringBuilder()
-                for ((key, value) in problems.asMap()) {
-                  sb.append("#").append(key.description).append("\n")
-                  for (location in value) {
-                    sb.append("    at ").append(location).append("\n")
-                  }
+              when (result) {
+                is VResult.Nice -> {/*test is passed.*/
+                }
+                is VResult.Problems -> {
+
+                  tcLog.testStdErr(testName, result.problems.asMap().entries.joinToString(separator = "\n") {
+                    "#${it.key.description}\n" +
+                        it.value.joinToString(separator = "\n", prefix = "    #")
+                  })
+                  tcLog.testFailed(testName, "Plugin URL: $pluginLink\n" + "$pluginId:${result.pluginDescriptor.version} has ${result.problems.keySet().size} ${"problem".pluralize(result.problems.keySet().size)}", "")
+
+                }
+                is VResult.BadPlugin -> {
+                  tcLog.testStdErr(testName, "Plugin is invalid: ${result.overview}")
                 }
 
-                tcLog.testStdErr(testName, sb.toString())
-                tcLog.testFailed(testName, "Plugin URL: $pluginLink\n" + "$pluginId:${result.pluginDescriptor.version} has ${problems.keySet().size} ${"problem".pluralize(problems.keySet().size)}", "")
               }
             }
 
@@ -224,6 +222,9 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
     //....(pluginTwo:2.0.0)
     //invoking unknown method method
     //....(pluginThree:1.0.0)
+    class BrokenPluginProblem(private val description: String) : Problem() {
+      override fun getDescription(): String = description
+    }
 
     val affected: Multimap<Problem, PluginDescriptor> = HashMultimap.create()
     results.results.forEach { result ->
