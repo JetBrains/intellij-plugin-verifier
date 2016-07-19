@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.instruction;
 
 import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.api.VContext;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.*;
 import com.jetbrains.pluginverifier.problems.statics.InvokeInterfaceOnStaticMethodProblem;
@@ -10,7 +11,6 @@ import com.jetbrains.pluginverifier.problems.statics.InvokeVirtualOnStaticMethod
 import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.utils.ResolverUtil;
 import com.jetbrains.pluginverifier.utils.VerifierUtil;
-import com.jetbrains.pluginverifier.verifiers.VContext;
 import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;

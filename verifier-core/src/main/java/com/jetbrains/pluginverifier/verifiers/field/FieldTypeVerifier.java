@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.verifiers.field;
 
 import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.api.VContext;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
 import com.jetbrains.pluginverifier.utils.VerifierUtil;
-import com.jetbrains.pluginverifier.verifiers.VContext;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 

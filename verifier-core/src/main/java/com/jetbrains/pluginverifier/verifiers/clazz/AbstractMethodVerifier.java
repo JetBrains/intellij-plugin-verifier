@@ -1,12 +1,12 @@
 package com.jetbrains.pluginverifier.verifiers.clazz;
 
 import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.api.VContext;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem;
 import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.utils.MethodSign;
 import com.jetbrains.pluginverifier.utils.VerifierUtil;
-import com.jetbrains.pluginverifier.verifiers.VContext;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 

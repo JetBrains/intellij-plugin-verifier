@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.instruction;
 
 import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.api.VContext;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.AccessType;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
@@ -12,7 +13,6 @@ import com.jetbrains.pluginverifier.problems.statics.StaticAccessOfInstanceField
 import com.jetbrains.pluginverifier.utils.LocationUtils;
 import com.jetbrains.pluginverifier.utils.ResolverUtil;
 import com.jetbrains.pluginverifier.utils.VerifierUtil;
-import com.jetbrains.pluginverifier.verifiers.VContext;
 import kotlin.text.StringsKt;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;

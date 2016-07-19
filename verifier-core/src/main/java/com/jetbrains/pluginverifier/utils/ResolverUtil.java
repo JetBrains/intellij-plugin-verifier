@@ -2,9 +2,9 @@ package com.jetbrains.pluginverifier.utils;
 
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.pluginverifier.api.VContext;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem;
-import com.jetbrains.pluginverifier.verifiers.VContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -110,7 +110,7 @@ public class ResolverUtil {
   }
 
   @NotNull
-  public static Set<String> collectUnresolvedClasses(@NotNull Resolver resolver, @NotNull String className, VContext ctx) {
+  static Set<String> collectUnresolvedClasses(@NotNull Resolver resolver, @NotNull String className, VContext ctx) {
     ClassNode node = VerifierUtil.findClass(resolver, className, ctx);
     if (node == null) {
       return Collections.singleton(className);
@@ -123,7 +123,7 @@ public class ResolverUtil {
     private final FieldNode myFieldNode;
 
 
-    public FieldLocation(ClassNode classNode, FieldNode fieldNode) {
+    FieldLocation(ClassNode classNode, FieldNode fieldNode) {
       myClassNode = classNode;
       myFieldNode = fieldNode;
     }
