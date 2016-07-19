@@ -78,7 +78,7 @@ object VManager {
 
         LOG.debug("Creating Resolver for $ideDescriptor")
 
-        val ide: Ide
+        var ide: Ide
         try {
           ide = VParamsCreator.getIde(ideDescriptor)
         } catch(ie: InterruptedException) {
@@ -179,6 +179,10 @@ object VManager {
                       pluginResult = VResult.Nice(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.overview)
                     } else {
                       pluginResult = VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.overview, ctx.problems)
+                    }
+
+                    if (params.resolveDependenciesWithin) {
+                      ide = ide.getExpandedIde(plugin)
                     }
 
                     LOG.info("Successfully verified $plugin with ${pluginOnIde.second.presentableName()}")

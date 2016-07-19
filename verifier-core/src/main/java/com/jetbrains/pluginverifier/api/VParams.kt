@@ -41,7 +41,13 @@ data class VParams(
     /**
      * The Resolver for external classes. The verification can refer to them.
      */
-    val externalClassPath: Resolver = Resolver.getEmptyResolver()
+    val externalClassPath: Resolver = Resolver.getEmptyResolver(),
+
+    /**
+     * If set to true the plugins can refer other plugins withing the verification.
+     * It's used to check several plugins with dependencies between them.
+     */
+    val resolveDependenciesWithin: Boolean = false
 ) {
   override fun toString(): String {
     val todo: Map<IdeDescriptor, List<PluginDescriptor>> = pluginsToCheck.groupBy { it.second }.mapValues { it.value.map { it.first } }

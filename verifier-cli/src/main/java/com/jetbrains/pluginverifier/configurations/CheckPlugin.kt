@@ -112,7 +112,7 @@ class CheckPluginConfiguration(val params: CheckPluginParams) : Configuration {
 
   override fun execute(): CheckPluginResults {
     val pluginsToCheck = params.pluginDescriptors.map { p -> params.ideDescriptors.map { p to it } }.flatten()
-    val vParams = VParams(params.jdkDescriptor, pluginsToCheck, params.vOptions, params.externalClasspath)
+    val vParams = VParams(params.jdkDescriptor, pluginsToCheck, params.vOptions, params.externalClasspath, true)
     val vResults = VManager.verify(vParams, params.progress)
 
     return CheckPluginResults(vResults)
