@@ -1,26 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers
 
-import com.google.common.base.Joiner
-import com.google.common.collect.HashMultimap
-import com.google.common.collect.Lists
-import com.google.common.collect.Multimap
-import com.google.common.collect.Sets
-import com.intellij.structure.domain.Ide
-import com.intellij.structure.domain.Plugin
-import com.intellij.structure.domain.PluginDependency
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.api.IdeDescriptor
-import com.jetbrains.pluginverifier.api.PluginDescriptor
-import com.jetbrains.pluginverifier.api.VOptions
-import com.jetbrains.pluginverifier.api.VResult
-import com.jetbrains.pluginverifier.location.ProblemLocation
-import com.jetbrains.pluginverifier.problems.CyclicDependenciesProblem
-import com.jetbrains.pluginverifier.problems.MissingDependencyProblem
-import com.jetbrains.pluginverifier.problems.Problem
-import com.jetbrains.pluginverifier.utils.VerifierUtil
-import com.jetbrains.pluginverifier.utils.dependencies.Dependencies
-import com.jetbrains.pluginverifier.utils.dependencies.MissingReason
-import com.jetbrains.pluginverifier.utils.dependencies.PluginDependenciesNode
+import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.InheritFromFinalClassVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier
@@ -33,23 +14,11 @@ import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
-import org.slf4j.LoggerFactory
-import java.util.*
 
-private val LOG = LoggerFactory.getLogger(Verifiers::class.java)
-
-internal object Verifiers {
+internal object ReferencesVerifier {
 
   //TODO: add a verifier which reports minor problems (missing optional plugin descriptor, missing logo file and other)
   //TODO: add support of warnings in the plugin-structure
-
-  @Throws(InterruptedException::class)
-  internal fun processAllVerifiers(ctx: VContext): VResult {
-    return ReferencesVerifier.verify(ctx)
-  }
-}
-
-internal object ReferencesVerifier {
 
   private val fieldVerifiers = arrayOf<FieldVerifier>(FieldTypeVerifier())
 
@@ -82,173 +51,29 @@ internal object ReferencesVerifier {
    * @throws InterruptedException if the verification was cancelled
    */
   @Throws(InterruptedException::class)
-  fun verify(ctx: VContext): VResult {
-    val plugin = ctx.plugin
-
-    val dependencies = Dependencies.getInstance().calcDependencies(ctx.plugin, ctx.ide)
-    if (dependencies.cycle != null && ctx.verifierOptions.failOnCyclicDependencies) {
-      val cycle = Joiner.on(" -> ").join(dependencies.cycle!!)
-      LOG.error("The plugin verifier will not verify a plugin $plugin because its dependencies tree has the following cycle: $cycle")
-      ctx.registerProblem(CyclicDependenciesProblem(cycle), ProblemLocation.fromPlugin(plugin.pluginId))
-      return VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Cyclic dependencies: $cycle", ctx.problems)
-    }
-    val depNode = dependencies.descriptor
-
-    for ((key, value) in depNode.missingDependencies) {
-      val missingId = key.id
-      if (!ctx.verifierOptions.isIgnoreDependency(missingId)) {
-        ctx.registerProblem(MissingDependencyProblem(plugin.pluginId, missingId, value.reason), ProblemLocation.fromPlugin(plugin.pluginId))
+  fun verify(ctx: VContext, checkClasses: Resolver, classLoader: Resolver) {
+    checkClasses.allClasses.forEach {
+      if (Thread.currentThread().isInterrupted) {
+        throw InterruptedException("The verification was cancelled")
+      }
+      val node = checkClasses.findClass(it)
+      if (node != null) {
+        verifyClass(classLoader, node, ctx)
       }
     }
-
-    val missingMandatoryDeps: Map<PluginDependency, MissingReason> = depNode.missingDependencies.filterNot({ it.key.isOptional })
-    if (!missingMandatoryDeps.isEmpty()) {
-      LOG.error("The plugin verifier will not verify a plugin $plugin because it has missing mandatory dependencies: ${depNode.missingDependencies.entries.joinToString { it.key.toString() }}")
-      return VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Missing dependencies: ${missingMandatoryDeps.map { it.key.id }}", ctx.problems)
-    }
-
-    val mandatoryDeps: MutableSet<PluginDependenciesNode> = hashSetOf()
-    dfsMandatoryDependencies(depNode, mandatoryDeps)
-
-
-    val dependenciesResolver: Resolver
-    if (depNode.transitiveDependencies.isEmpty()) {
-      dependenciesResolver = Resolver.getEmptyResolver()
-    } else {
-      val depResolvers: MutableList<Resolver> = arrayListOf()
-      for (dep in depNode.transitiveDependencies) {
-        try {
-          depResolvers.add(Resolver.createPluginResolver(dep))
-        } catch (ie: InterruptedException) {
-          depResolvers.forEach { it.close() }
-          throw ie
-        } catch (e: Exception) {
-          val isMandatory = mandatoryDeps.find { it.plugin.equals(dep) } != null
-          val message = "Unable to read class-files of the ${if (isMandatory) "mandatory" else "optional"} plugin ${dep.pluginId}"
-
-          ctx.registerProblem(MissingDependencyProblem(plugin.pluginId, dep.pluginId, message), ProblemLocation.fromPlugin(plugin.pluginId))
-
-          if (isMandatory) {
-            LOG.error("The plugin verifier will not verify a plugin because its dependent plugin $dep has broken class-files", e)
-            depResolvers.forEach { it.close() }
-            return VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Transitive mandatory dependency $dep is broken", ctx.problems)
-          } else {
-            LOG.error(message, e)
-          }
-        }
-      }
-      dependenciesResolver = Resolver.createUnionResolver("Plugin ${depNode.plugin} transitive dependencies", depResolvers)
-    }
-
-    dependenciesResolver.use {
-      val resolverForCheck = getResolverForCheck(plugin, ctx.pluginResolver)
-
-      //Don't close this resolver because it contains IDE and JDK resolvers which are not ready to be closed. They will be closed by the caller.
-      val pluginClassLoader = createPluginClassLoader(dependenciesResolver, ctx)
-
-      for (className in resolverForCheck.allClasses) {
-        if (Thread.currentThread().isInterrupted) {
-          throw InterruptedException("The verification was cancelled")
-        }
-
-        val node = VerifierUtil.findClass(resolverForCheck, className, ctx)
-
-        if (node != null) {
-          verifyClass(pluginClassLoader, node, ctx)
-        }
-      }
-    }
-
-    if (ctx.problems.isEmpty) {
-      return VResult.Nice(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.overview)
-    } else {
-      return VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.overview, ctx.problems)
-    }
-  }
-
-
-  /**
-   * Traverse the dependencies starting from [node]. Only the mandatory (non-optional) dependencies edges are considered.
-   */
-  private fun dfsMandatoryDependencies(node: PluginDependenciesNode, accumulator: MutableSet<PluginDependenciesNode>) {
-    accumulator.add(node)
-
-    val directMandatoryDeps = listOf(*node.plugin.dependencies.toTypedArray(), *node.plugin.moduleDependencies.toTypedArray()).filter { !it.isOptional }
-
-    for (to in node.edges) {
-      if (directMandatoryDeps.find { it.id.equals(to.plugin.pluginId) } != null) {
-        if (!accumulator.contains(to)) {
-          dfsMandatoryDependencies(to, accumulator)
-        }
-      }
-    }
-
-  }
-
-
-  /**
-   * Constructs the plugin class-loader class-path.
-   *
-   * We use the following sequence for searching the class
-   * 1. plugin itself (classes and libs)
-   * 2. JDK classes
-   * 3. IDE /lib classes
-   * 4. plugin dependencies
-   *
-   * @param dependenciesResolver dependenciesResolver
-   * @param context verification context
-   * @return resolver
-   */
-  private fun createPluginClassLoader(dependenciesResolver: Resolver,
-                                      context: VContext): Resolver {
-    val plugin = context.plugin
-
-    val list = ArrayList<Resolver>()
-
-    list.add(context.pluginResolver)
-    list.add(context.jdkResolver)
-    list.add(context.ideResolver)
-    list.add(dependenciesResolver)
-    list.add(context.externalClassPath)
-
-    val presentableName = "Common resolver for plugin " + plugin.pluginId + " with transitive dependencies; ide " + context.ide.version + "; jdk " + context.jdkResolver
-    return Resolver.createCacheResolver(Resolver.createUnionResolver(presentableName, list))
-  }
-
-  /**
-   * The Resolver for check consists of the jar-s which contain the classes referenced from META-INF/plugin.xml and related configuration files.
-   * It's so that not to check classes not related to plugin (utility classes, libraries, etc)
-   */
-  private fun getResolverForCheck(plugin: Plugin, pluginResolver: Resolver): Resolver {
-    val usedResolvers = Sets.newIdentityHashSet<Resolver>()
-
-    val referencedFromXml = plugin.allClassesReferencedFromXml + plugin.optionalDescriptors.values.flatMap { it.allClassesReferencedFromXml }
-
-    for (aClass in referencedFromXml) {
-      val location = pluginResolver.getClassLocation(aClass)
-      if (location != null) {
-        usedResolvers.add(location)
-      }
-    }
-
-    if (usedResolvers.isEmpty()) {
-      return pluginResolver
-    }
-
-    return Resolver.createUnionResolver("Plugin classes for check", Lists.newArrayList(usedResolvers))
   }
 
   @SuppressWarnings("unchecked")
-  private fun verifyClass(resolver: Resolver, node: ClassNode, ctx: VContext) {
+  private fun verifyClass(classLoader: Resolver, node: ClassNode, ctx: VContext) {
     for (verifier in classVerifiers) {
-      verifier.verify(node, resolver, ctx)
+      verifier.verify(node, classLoader, ctx)
     }
 
     @Suppress("UNCHECKED_CAST")
     val methods = node.methods as List<MethodNode>
     for (method in methods) {
       for (verifier in methodVerifiers) {
-        verifier.verify(node, method, resolver, ctx)
+        verifier.verify(node, method, classLoader, ctx)
       }
 
       val instructions = method.instructions
@@ -256,7 +81,7 @@ internal object ReferencesVerifier {
       while (i.hasNext()) {
         val instruction = i.next()
         for (verifier in instructionVerifiers) {
-          verifier.verify(node, method, instruction as AbstractInsnNode, resolver, ctx)
+          verifier.verify(node, method, instruction as AbstractInsnNode, classLoader, ctx)
         }
       }
     }
@@ -265,30 +90,8 @@ internal object ReferencesVerifier {
     val fields = node.fields as List<FieldNode>
     for (field in fields) {
       for (verifier in fieldVerifiers) {
-        verifier.verify(node, field, resolver, ctx)
+        verifier.verify(node, field, classLoader, ctx)
       }
-    }
-  }
-
-}
-
-internal class VContext(
-    val plugin: Plugin,
-    val pluginResolver: Resolver,
-    val pluginDescriptor: PluginDescriptor = PluginDescriptor.ByInstance(plugin),
-    val ide: Ide,
-    val ideResolver: Resolver = Resolver.createIdeResolver(ide),
-    val ideDescriptor: IdeDescriptor = IdeDescriptor.ByInstance(ide),
-    val jdkResolver: Resolver,
-    val verifierOptions: VOptions,
-    val externalClassPath: Resolver = Resolver.getEmptyResolver()
-) {
-  val problems: Multimap<Problem, ProblemLocation> = HashMultimap.create<Problem, ProblemLocation>()
-  var overview: String = ""
-
-  fun registerProblem(problem: Problem, location: ProblemLocation) {
-    if (!verifierOptions.isIgnoredProblem(plugin, problem)) {
-      problems.put(problem, location)
     }
   }
 
