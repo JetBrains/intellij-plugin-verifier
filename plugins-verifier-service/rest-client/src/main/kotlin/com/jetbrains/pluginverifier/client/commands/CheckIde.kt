@@ -87,7 +87,9 @@ class CheckIdeCommand : Command {
       vPrinter.printIdeCompareResult(compareWithPreviousChecks(report, service))
     }
     if (opts.saveCheckIdeReport != null) {
-      report.saveToFile(File(opts.saveCheckIdeReport))
+      val file = File(opts.saveCheckIdeReport)
+      report.saveToFile(file)
+      uploadReport(file, service)
     }
     if (opts.needTeamCityLog && !opts.compareCheckIdeReport) {
       checkIdeResults.printTcLog(TeamCityVPrinter.GroupBy.parse(opts), true)
@@ -103,11 +105,14 @@ class CheckIdeCommand : Command {
 
   fun reportsList(service: VerifierService): List<IdeVersion> = service.reportsService.listReports().execute().body()
 
-  fun getReportFile(ideVersion: IdeVersion, service: VerifierService): File {
+  fun getReportFile(ideVersion: IdeVersion, service: VerifierService): File? {
     val execute = service.reportsService.get(ideVersion.asString()).execute()
-    val reportFile = File.createTempFile("report", "")
-    execute.body().byteStream().copyTo(reportFile.outputStream())
-    return reportFile
+    if (execute.isSuccessful) {
+      val reportFile = File.createTempFile("report", "")
+      execute.body().byteStream().copyTo(reportFile.outputStream())
+      return reportFile
+    }
+    return null
   }
 
   fun uploadReport(file: File, service: VerifierService) {
@@ -115,11 +120,11 @@ class CheckIdeCommand : Command {
     service.reportsService.uploadReport(filePart).execute()
   }
 
-  private fun findPreviousReports(ideVersion: IdeVersion, service: VerifierService): List<CheckIdeReport> {
+  fun findPreviousReports(ideVersion: IdeVersion, service: VerifierService): List<CheckIdeReport> {
     val reportsList = reportsList(service)
     val reportFiles: MutableList<File> = arrayListOf()
     try {
-      reportsList.mapTo(reportFiles, { getReportFile(ideVersion, service) })
+      reportsList.mapNotNullTo(reportFiles, { getReportFile(it, service) })
       return reportFiles
           .map { CheckIdeReport.loadFromFile(it) }
           .filter { it.ideVersion.baselineVersion == ideVersion.baselineVersion && it.ideVersion.compareTo(ideVersion) < 0 }
@@ -164,15 +169,5 @@ class CheckIdeCommand : Command {
     return CheckIdeRunnerParams(jdkVersion, vOptions, checkAllBuilds, checkLastBuilds, excludedPlugins, actualIdeVersion)
   }
 
-
-}
-
-fun main(args: Array<String>) {
-  val command = CheckIdeCommand()
-  val service = VerifierService("http://localhost:8080")
-//  command.uploadReport(File("for_tests/IU-2.0"), service)
-  println(command.reportsList(service))
-  val file = command.getReportFile(IdeVersion.createIdeVersion("IU-1.0"), service)
-  println(file.absoluteFile)
 
 }
