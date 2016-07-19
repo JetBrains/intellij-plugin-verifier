@@ -231,9 +231,9 @@ object VManager {
   private fun getDependenciesResolver(ctx: VContext): Pair<Resolver?, VResult?> {
 
     val plugin = ctx.plugin
-    val dependencies = Dependencies.getInstance().calcDependencies(plugin, ctx.ide)
+    val dependencies = Dependencies.calcDependencies(plugin, ctx.ide)
     if (dependencies.cycle != null && ctx.verifierOptions.failOnCyclicDependencies) {
-      val cycle = Joiner.on(" -> ").join(dependencies.cycle!!)
+      val cycle = Joiner.on(" -> ").join(dependencies.cycle)
       LOG.error("The plugin verifier will not verify a plugin $ctx.plugin because its dependencies tree has the following cycle: $cycle")
       ctx.registerProblem(CyclicDependenciesProblem(cycle), ProblemLocation.fromPlugin(plugin.pluginId))
       return null to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Cyclic dependencies: $cycle", ctx.problems)
