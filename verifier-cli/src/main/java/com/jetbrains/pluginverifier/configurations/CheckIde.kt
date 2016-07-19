@@ -188,18 +188,25 @@ class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
     HtmlVPrinter(ideVersion, { x -> excludedPlugins.containsEntry(x.first, x.second) }, htmlFile.create()).printResults(vResults)
   }
 
-  fun processResults(opts: CmdOpts) {
-    if (opts.needTeamCityLog) {
-      val vPrinter = TeamCityVPrinter(TeamCityLog(System.out), TeamCityVPrinter.GroupBy.parse(opts))
-      vPrinter.printResults(vResults)
-      vPrinter.printNoCompatibleUpdatesProblems(noCompatibleUpdatesProblems)
-      //TODO: set tc-build status to either success or fail
-    }
-    if (opts.htmlReportFile != null) {
-      saveToHtmlFile(File(opts.htmlReportFile))
-    }
-    if (opts.dumpBrokenPluginsFile != null) {
-      dumbBrokenPluginsList(File(opts.dumpBrokenPluginsFile))
+  fun printTcLog(groupBy: TeamCityVPrinter.GroupBy, setBuildStatus: Boolean) {
+    val tcLog = TeamCityLog(System.out)
+    val vPrinter = TeamCityVPrinter(tcLog, groupBy)
+    vPrinter.printResults(vResults)
+    vPrinter.printNoCompatibleUpdatesProblems(noCompatibleUpdatesProblems)
+    if (setBuildStatus) {
+      val totalProblemsNumber: Int = vResults.results.flatMap {
+        when (it) {
+          is VResult.Nice -> setOf()
+          is VResult.Problems -> it.problems.keySet()
+          is VResult.BadPlugin -> setOf(Any())
+        }
+      }.distinct().size
+      if (totalProblemsNumber > 0) {
+        tcLog.buildStatusFailure("IDE $ideVersion has $totalProblemsNumber problem${if (totalProblemsNumber > 1) "s" else ""}")
+      } else {
+        tcLog.buildStatusSuccess("IDE $ideVersion doesn't have broken API problems")
+      }
+
     }
   }
 
