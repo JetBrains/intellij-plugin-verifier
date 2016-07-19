@@ -1,4 +1,6 @@
 /.gradle
+*.asscache
+
 /intellij-plugin-structure/.gradle
 .idea/dictionaries
 .idea/workspace.xml

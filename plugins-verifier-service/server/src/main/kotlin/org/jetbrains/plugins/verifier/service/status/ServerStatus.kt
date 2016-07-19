@@ -1,0 +1,42 @@
+package org.jetbrains.plugins.verifier.service.status
+
+import com.intellij.structure.domain.IdeVersion
+import org.apache.commons.io.FileUtils
+import org.jetbrains.plugins.verifier.service.core.TaskManager
+import org.jetbrains.plugins.verifier.service.storage.FileManager
+import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
+
+object ServerStatus {
+  fun parameters(): List<Pair<String, *>> {
+    val result = arrayListOf<Pair<String, *>>()
+    result.addAll(memory())
+    result.addAll(diskUsage())
+    return result
+  }
+
+  fun ideFiles(): List<IdeVersion> = IdeFilesManager.ideList().sorted()
+
+  fun getRunningTasks(): List<String> = TaskManager.listTasks().map {
+    "${it.taskId.id}) ${it.presentableName} (${it.status} - ${it.progress * 100}%) (${it.completionTime() / 1000} seconds) ${it.progressText}"
+  }
+
+  private fun diskUsage(): List<Pair<String, *>> {
+    val dir = FileManager.getAppHomeDirectory()
+    return arrayListOf(
+        "Total disk usage: " to FileUtils.byteCountToDisplaySize(FileUtils.sizeOf(dir))
+    )
+  }
+
+  private fun memory(): List<Pair<String, Long>> {
+    val runtime = Runtime.getRuntime()
+    val mb = 1024 * 1024
+
+    return arrayListOf(
+        "Total memory: " to runtime.totalMemory() / mb,
+        "Free memory: " to runtime.freeMemory() / mb,
+        "Used memory: " to (runtime.totalMemory() - runtime.freeMemory()) / mb,
+        "Max memory: " to runtime.maxMemory() / mb
+    )
+  }
+
+}

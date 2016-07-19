@@ -17,9 +17,22 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3_test.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3_test.iml" group="mock-plugin3" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin_main.iml" group="verifier-cli/mock-plugin" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin_test.iml" group="verifier-cli/mock-plugin" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/plugins-verifier-service.iml" filepath="$PROJECT_DIR$/.idea/modules/plugins-verifier-service.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/plugins-verifier-service_main.iml" filepath="$PROJECT_DIR$/.idea/modules/plugins-verifier-service_main.iml" group="plugins-verifier-service" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/plugins-verifier-service_test.iml" filepath="$PROJECT_DIR$/.idea/modules/plugins-verifier-service_test.iml" group="plugins-verifier-service" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/protocol/protocol.iml" filepath="$PROJECT_DIR$/.idea/modules/protocol/protocol.iml" group="protocol" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/protocol/protocol_main.iml" filepath="$PROJECT_DIR$/.idea/modules/protocol/protocol_main.iml" group="protocol" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/protocol/protocol_test.iml" filepath="$PROJECT_DIR$/.idea/modules/protocol/protocol_test.iml" group="protocol" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/repository/repository.iml" filepath="$PROJECT_DIR$/.idea/modules/repository/repository.iml" group="repository" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/repository/repository_main.iml" filepath="$PROJECT_DIR$/.idea/modules/repository/repository_main.iml" group="repository" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/repository/repository_test.iml" filepath="$PROJECT_DIR$/.idea/modules/repository/repository_test.iml" group="repository" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/rest-client/rest-client.iml" filepath="$PROJECT_DIR$/.idea/modules/rest-client/rest-client.iml" group="rest-client" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/rest-client/rest-client_main.iml" filepath="$PROJECT_DIR$/.idea/modules/rest-client/rest-client_main.iml" group="rest-client" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/rest-client/rest-client_test.iml" filepath="$PROJECT_DIR$/.idea/modules/rest-client/rest-client_test.iml" group="rest-client" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/server/server.iml" filepath="$PROJECT_DIR$/.idea/modules/server/server.iml" group="server" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/server/server_integrationTest.iml" filepath="$PROJECT_DIR$/.idea/modules/server/server_integrationTest.iml" group="server" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/server/server_main.iml" filepath="$PROJECT_DIR$/.idea/modules/server/server_main.iml" group="server" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/server/server_test.iml" filepath="$PROJECT_DIR$/.idea/modules/server/server_test.iml" group="server" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/uploader/uploader.iml" filepath="$PROJECT_DIR$/.idea/modules/uploader/uploader.iml" group="uploader" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/uploader/uploader_main.iml" filepath="$PROJECT_DIR$/.idea/modules/uploader/uploader_main.iml" group="uploader" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/uploader/uploader_test.iml" filepath="$PROJECT_DIR$/.idea/modules/uploader/uploader_test.iml" group="uploader" />

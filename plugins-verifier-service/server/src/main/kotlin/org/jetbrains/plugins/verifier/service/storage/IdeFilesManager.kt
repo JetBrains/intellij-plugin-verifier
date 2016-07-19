@@ -1,0 +1,148 @@
+package org.jetbrains.plugins.verifier.service.storage
+
+import com.intellij.structure.domain.Ide
+import com.intellij.structure.domain.IdeManager
+import com.intellij.structure.domain.IdeVersion
+import org.jetbrains.plugins.verifier.service.util.deleteLogged
+import org.jetbrains.plugins.verifier.service.util.extractTo
+import org.slf4j.LoggerFactory
+import java.io.File
+
+/**
+ * @author Sergey Patrikeev
+ */
+interface IIdeFilesManager {
+
+  fun ideList(): List<IdeVersion>
+
+  fun getIde(version: IdeVersion): IdeLock?
+
+  fun addIde(ideFile: File): Boolean
+
+  fun deleteIde(version: IdeVersion)
+
+  class IdeLock(val ide: Ide) {
+    fun release() {
+      IdeFilesManager.releaseLock(this)
+    }
+  }
+}
+
+object IdeFilesManager : IIdeFilesManager {
+
+  private val LOG = LoggerFactory.getLogger(IdeFilesManager::class.java)
+  private val ideCache: MutableMap<IdeVersion, Ide> = hashMapOf()
+  private val lockedIdes: MutableMap<IdeVersion, Int> = hashMapOf()
+  private val deleteQueue: MutableSet<IdeVersion> = hashSetOf()
+
+  @Synchronized
+  fun releaseLock(lock: IIdeFilesManager.IdeLock) {
+    val version = lock.ide.version
+    var cnt = lockedIdes.getOrElse(version, { throw IllegalStateException("Unregistered lock!") })
+    cnt--
+    if (cnt == 0) {
+      lockedIdes.remove(version)
+      ideCache.remove(version)
+      onRelease(version)
+    } else {
+      lockedIdes.put(version, cnt)
+    }
+  }
+
+  private fun onRelease(version: IdeVersion) {
+    if (deleteQueue.contains(version)) {
+      deleteQueue.remove(version)
+      val ideFile = FileManager.getFileByName(version.asString(), FileType.IDE)
+      LOG.info("Deleting the IDE file $ideFile")
+      if (ideFile.isDirectory) {
+        ideFile.deleteLogged()
+      }
+    }
+  }
+
+  @Synchronized
+  override fun ideList(): List<IdeVersion> = FileManager.getFilesOfType(FileType.IDE).map { it -> IdeVersion.createIdeVersion(it.name) }.toList()
+
+  @Synchronized
+  override fun getIde(version: IdeVersion): IIdeFilesManager.IdeLock? {
+    val ideFile = FileManager.getFileByName(version.asString(), FileType.IDE)
+    if (!ideFile.isDirectory) {
+      return null
+    }
+
+    val ide = ideCache.getOrPut(version, { IdeManager.getInstance().createIde(ideFile) })
+    val cnt = lockedIdes.getOrPut(version, { 0 })
+    lockedIdes.put(version, cnt + 1)
+    return IIdeFilesManager.IdeLock(ide)
+  }
+
+  @Synchronized
+  override fun deleteIde(version: IdeVersion) {
+    LOG.info("Deleting $version")
+    deleteQueue.add(version)
+    if (!lockedIdes.contains(version)) {
+      onRelease(version)
+    }
+  }
+
+  @Synchronized
+  override fun addIde(ideFile: File): Boolean {
+    if (!ideFile.exists()) {
+      throw IllegalArgumentException("The IDE file $ideFile doesn't exist")
+    }
+
+    if (ideFile.isDirectory) {
+      val version: IdeVersion
+      try {
+        version = IdeManager.getInstance().createIde(ideFile).version
+      } catch(e: Exception) {
+        LOG.error("The IDE file $ideFile is invalid", e)
+        throw e
+      }
+      return addIde(ideFile, version)
+    }
+
+    if (ideFile.isFile) {
+      val tempDirectory = FileManager.createTempDirectory(ideFile.name)
+
+      try {
+        try {
+          ideFile.extractTo(tempDirectory)
+        } catch (e: Exception) {
+          LOG.error("Unable to extract $ideFile", e)
+          throw e
+        }
+
+        val version: IdeVersion
+        try {
+          version = IdeManager.getInstance().createIde(tempDirectory).version
+        } catch(e: Exception) {
+          LOG.error("The IDE file $tempDirectory is not a valid IDE", e)
+          throw e
+        }
+        return addIde(tempDirectory, version)
+      } finally {
+        tempDirectory.deleteLogged()
+      }
+    }
+
+    throw IllegalArgumentException("Invalid file $ideFile")
+  }
+
+  private fun addIde(ideDir: File, version: IdeVersion): Boolean {
+    if (lockedIdes.contains(version)) {
+      return false
+    }
+
+    val destination = FileManager.getFileByName(version.asString(), FileType.IDE)
+    try {
+      ideDir.copyRecursively(destination, true)
+    } catch(e: Exception) {
+      destination.deleteLogged()
+      throw e
+    }
+
+    return true
+  }
+
+}

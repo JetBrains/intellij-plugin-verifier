@@ -53,8 +53,17 @@
       <module name="mock_plugin_test" target="1.6" />
       <module name="phantom-idea_main" target="1.6" />
       <module name="phantom-idea_test" target="1.6" />
+      <module name="plugins-verifier-service_main" target="1.8" />
+      <module name="plugins-verifier-service_test" target="1.8" />
+      <module name="protocol_main" target="1.8" />
+      <module name="protocol_test" target="1.8" />
       <module name="repository_main" target="1.6" />
       <module name="repository_test" target="1.6" />
+      <module name="rest-client_main" target="1.8" />
+      <module name="rest-client_test" target="1.8" />
+      <module name="server_integrationTest" target="1.8" />
+      <module name="server_main" target="1.8" />
+      <module name="server_test" target="1.8" />
       <module name="uploader_main" target="1.6" />
       <module name="uploader_test" target="1.6" />
       <module name="verifier-cli_main" target="1.8" />
