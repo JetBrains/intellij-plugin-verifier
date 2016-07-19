@@ -27,7 +27,9 @@ object PluginVerifierMain {
       "check-plugin" -> {
         val params = CheckPluginParamsParser.parse(opts, freeArgs)
         val results = CheckPluginConfiguration(params).execute()
-        results.printResults(System.out)
+        if (opts.needTeamCityLog) {
+          results.printTcLog(TeamCityVPrinter.GroupBy.parse(opts), true)
+        }
       }
       "check-ide" -> {
         val params = CheckIdeParamsParser.parse(opts, freeArgs)

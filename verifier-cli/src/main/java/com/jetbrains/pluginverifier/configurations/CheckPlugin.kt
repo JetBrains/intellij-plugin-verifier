@@ -3,14 +3,14 @@ package com.jetbrains.pluginverifier.configurations
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
-import com.jetbrains.pluginverifier.output.StreamVPrinter
+import com.jetbrains.pluginverifier.output.TeamCityLog
+import com.jetbrains.pluginverifier.output.TeamCityVPrinter
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.CmdUtil
 import com.jetbrains.pluginverifier.utils.VOptionsUtil
 import java.io.File
 import java.io.IOException
-import java.io.PrintStream
 
 object CheckPluginParamsParser : ParamsParser {
 
@@ -88,7 +88,23 @@ data class CheckPluginParams(val pluginDescriptors: List<PluginDescriptor>,
 
 class CheckPluginResults(val vResults: VResults) : Results {
 
-  fun printResults(out: PrintStream) = StreamVPrinter(out).printResults(vResults)
+  fun printTcLog(groupBy: TeamCityVPrinter.GroupBy, setBuildStatus: Boolean) {
+    val tcLog = TeamCityLog(System.out)
+    val vPrinter = TeamCityVPrinter(tcLog, groupBy)
+    vPrinter.printResults(vResults)
+    if (setBuildStatus) {
+      val totalProblemsNumber = vResults.results.flatMap {
+        when (it) {
+          is VResult.Nice -> setOf<Any>()
+          is VResult.Problems -> it.problems.keySet()
+          is VResult.BadPlugin -> setOf(Any())
+        }
+      }.distinct().size
+      if (totalProblemsNumber > 0) {
+        tcLog.buildStatusFailure("$totalProblemsNumber problem${if (totalProblemsNumber > 0) "s" else ""} found")
+      }
+    }
+  }
 
 }
 
