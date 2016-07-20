@@ -11,7 +11,6 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/repository" />
-            <option value="$PROJECT_DIR$/uploader" />
             <option value="$PROJECT_DIR$/verifier-cli" />
             <option value="$PROJECT_DIR$/verifier-cli/after-idea" />
             <option value="$PROJECT_DIR$/verifier-cli/before-idea" />

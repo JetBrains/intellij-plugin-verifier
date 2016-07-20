@@ -96,7 +96,6 @@ publishing {
 
     VerifierCliPublication(MavenPublication) { configurePublication(it, ':verifier-cli', true) }
     RepositoryPublication(MavenPublication) { configurePublication(it, ':repository', false) }
-    UploaderPublication(MavenPublication) { configurePublication(it, ':uploader', true) }
     ProblemsPublication(MavenPublication) { configurePublication(it, ':verifier-problems', false) }
     VerifierCorePublication(MavenPublication) { configurePublication(it, ':verifier-core', false) }
   }
@@ -111,8 +110,7 @@ bintray {
 
 
   publish = true
-  publications = ['CommonUtilsPublication', 'VerifierCliPublication', 'RepositoryPublication',
-                  'UploaderPublication', 'ProblemsPublication']
+  publications = ['CommonUtilsPublication', 'VerifierCliPublication', 'RepositoryPublication', 'ProblemsPublication']
 
   pkg {
     repo = 'intellij-plugin-service'

@@ -33,9 +33,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/server/server_integrationTest.iml" filepath="$PROJECT_DIR$/.idea/modules/server/server_integrationTest.iml" group="server" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/server/server_main.iml" filepath="$PROJECT_DIR$/.idea/modules/server/server_main.iml" group="server" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/server/server_test.iml" filepath="$PROJECT_DIR$/.idea/modules/server/server_test.iml" group="server" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/uploader/uploader.iml" filepath="$PROJECT_DIR$/.idea/modules/uploader/uploader.iml" group="uploader" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/uploader/uploader_main.iml" filepath="$PROJECT_DIR$/.idea/modules/uploader/uploader_main.iml" group="uploader" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/uploader/uploader_test.iml" filepath="$PROJECT_DIR$/.idea/modules/uploader/uploader_test.iml" group="uploader" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli.iml" group="verifier-cli" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_main.iml" group="verifier-cli" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_test.iml" group="verifier-cli" />
