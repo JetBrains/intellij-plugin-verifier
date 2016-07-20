@@ -30,7 +30,6 @@
           <element id="library" level="project" name="Gradle: org.jetbrains.intellij.plugins:repository:1.33" />
           <element id="library" level="project" name="Gradle: org.jetbrains.intellij.plugins:verifier-core:1.33" />
           <element id="library" level="project" name="Gradle: com.github.spullara.cli-parser:cli-parser:1.1.2" />
-          <element id="library" level="project" name="Gradle: log4j:log4j:1.2.17" />
           <element id="library" level="project" name="Gradle: org.jsoup:jsoup:1.8.3" />
           <element id="library" level="project" name="Gradle: org.jdom:jdom:2.0.2" />
           <element id="library" level="project" name="Gradle: org.grails:grails-core:3.1.4" />
@@ -120,8 +119,8 @@
           <element id="library" level="project" name="Gradle: org.apache.httpcomponents:httpcore:4.4.4" />
           <element id="library" level="project" name="Gradle: commons-codec:commons-codec:1.9" />
           <element id="library" level="project" name="Gradle: aopalliance:aopalliance:1.0" />
-          <element id="library" level="project" name="Gradle: com.google.javascript:closure-compiler:v20141023" />
           <element id="library" level="project" name="Gradle: com.fasterxml.jackson.core:jackson-annotations:2.6.5" />
+          <element id="library" level="project" name="Gradle: com.google.javascript:closure-compiler:v20141023" />
           <element id="library" level="project" name="Gradle: com.fasterxml.jackson.core:jackson-core:2.6.5" />
           <element id="library" level="project" name="Gradle: org.grails:grails-web-gsp:3.1.4" />
           <element id="library" level="project" name="Gradle: org.grails:grails-web-jsp:3.1.4" />
@@ -182,6 +181,7 @@
           <element id="library" level="project" name="Gradle: net.minidev:asm:1.0.2" />
           <element id="library" level="project" name="Gradle: asm:asm:3.3.1" />
           <element id="file-copy" path="$MAVEN_REPOSITORY$/com/intellij/annotations/12.0/annotations-12.0.jar" />
+          <element id="file-copy" path="$MAVEN_REPOSITORY$/log4j/log4j/1.2.17/log4j-1.2.17.jar" />
           <element id="file-copy" path="$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/2.3/plexus-archiver-2.3.jar" />
           <element id="file-copy" path="$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-container-default/1.0-alpha-9-stable-1/plexus-container-default-1.0-alpha-9-stable-1.jar" />
           <element id="file-copy" path="$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.0.10/plexus-utils-3.0.10.jar" />

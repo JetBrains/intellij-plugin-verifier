@@ -2,7 +2,6 @@ package org.jetbrains.plugins.verifier.service.storage
 
 import org.apache.commons.io.FileUtils
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.setting.get
 import org.jetbrains.plugins.verifier.service.util.deleteLogged
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -32,7 +31,7 @@ object FileManager : IFileManager {
   override fun getTypeDir(type: FileType): File = findOrCreateDirectory(File(getAppHomeDirectory(), dirName(type)))
 
   @Synchronized
-  override fun getAppHomeDirectory(): File = findOrCreateDirectory(Settings[Settings.APP_HOME_DIRECTORY]!!)
+  override fun getAppHomeDirectory(): File = findOrCreateDirectory(Settings.APP_HOME_DIRECTORY.get())
 
   private fun findOrCreateDirectory(path: String): File = findOrCreateDirectory(File(path))
 

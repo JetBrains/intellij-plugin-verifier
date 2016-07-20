@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Start service" type="GrailsRunConfigurationType" factoryName="Grails">
-    <setting name="vmparams" value="" />
+    <setting name="vmparams" value="-DhomeDirectory=/home/user/.pluginVerifierService -DverifierService.jdk.home.6=/usr/lib/jvm/java-6-oracle -DverifierService.jdk.home.8=/usr/lib/jvm/java-8-oracle" />
     <setting name="cmdLine" value="run-app" />
     <setting name="passParentEnv" value="true" />
     <setting name="grailsApplicationRoot" value="$PROJECT_DIR$/plugins-verifier-service/server" />

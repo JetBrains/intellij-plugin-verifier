@@ -13,18 +13,6 @@ dataSource:
     username: sa
     password:
 
-verifierService:
-    filesDirectory:
-        /home/sergey/.pluginVerifierService
-    jdk:
-        home:
-            6:
-                /usr/lib/jvm/java-6-oracle
-            7:
-                /usr/lib/jvm/java-7-oracle
-            8:
-                /usr/lib/jvm/java-8-oracle
-
 environments:
     development:
         dataSource:

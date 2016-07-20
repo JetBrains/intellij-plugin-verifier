@@ -16,7 +16,7 @@ dependencyManagement {
 }
 
 bootRun {
-  jvmArgs = ['-Xmx2048m']
+  jvmArgs = ['-Xmx4096m']
 }
 
 task wrapper(type: Wrapper) {
