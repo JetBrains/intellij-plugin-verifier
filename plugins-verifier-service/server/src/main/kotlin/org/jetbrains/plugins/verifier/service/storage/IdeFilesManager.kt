@@ -15,17 +15,16 @@ interface IIdeFilesManager {
 
   fun ideList(): List<IdeVersion>
 
-  fun getIde(version: IdeVersion): IdeLock?
+  fun getIde(version: IdeVersion): IIdeLock?
 
   fun addIde(ideFile: File): Boolean
 
   fun deleteIde(version: IdeVersion)
 
-  class IdeLock(val ide: Ide) {
-    fun release() {
-      IdeFilesManager.releaseLock(this)
-    }
+  interface IIdeLock {
+    fun release()
   }
+
 }
 
 object IdeFilesManager : IIdeFilesManager {
@@ -35,8 +34,14 @@ object IdeFilesManager : IIdeFilesManager {
   private val lockedIdes: MutableMap<IdeVersion, Int> = hashMapOf()
   private val deleteQueue: MutableSet<IdeVersion> = hashSetOf()
 
+  class IdeLock(val ide: Ide) : IIdeFilesManager.IIdeLock {
+    override fun release() {
+      releaseLock(this)
+    }
+  }
+
   @Synchronized
-  fun releaseLock(lock: IIdeFilesManager.IdeLock) {
+  private fun releaseLock(lock: IdeLock) {
     val version = lock.ide.version
     var cnt = lockedIdes.getOrElse(version, { throw IllegalStateException("Unregistered lock!") })
     cnt--
@@ -64,7 +69,7 @@ object IdeFilesManager : IIdeFilesManager {
   override fun ideList(): List<IdeVersion> = FileManager.getFilesOfType(FileType.IDE).map { it -> IdeVersion.createIdeVersion(it.name) }.toList()
 
   @Synchronized
-  override fun getIde(version: IdeVersion): IIdeFilesManager.IdeLock? {
+  override fun getIde(version: IdeVersion): IdeLock? {
     val ideFile = FileManager.getFileByName(version.asString(), FileType.IDE)
     if (!ideFile.isDirectory) {
       return null
@@ -73,7 +78,7 @@ object IdeFilesManager : IIdeFilesManager {
     val ide = ideCache.getOrPut(version, { IdeManager.getInstance().createIde(ideFile) })
     val cnt = lockedIdes.getOrPut(version, { 0 })
     lockedIdes.put(version, cnt + 1)
-    return IIdeFilesManager.IdeLock(ide)
+    return IdeLock(ide)
   }
 
   @Synchronized
