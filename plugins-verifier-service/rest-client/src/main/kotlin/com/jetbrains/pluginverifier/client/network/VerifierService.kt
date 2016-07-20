@@ -60,12 +60,8 @@ inline fun <reified T : Any> waitCompletion(service: VerifierService, taskId: Ta
 
     val taskStatus = result.taskStatus
     when (taskStatus.status) {
-      Status.WAITING -> {
-        LOG.info("The task $taskId is in the queue yet.")
-        Thread.sleep(REQUEST_PERIOD)
-      }
-      Status.RUNNING -> {
-        LOG.info("The task $taskId is running now. $taskStatus")
+      Status.WAITING, Status.RUNNING -> {
+        LOG.info("The task status: $taskStatus")
         Thread.sleep(REQUEST_PERIOD)
       }
       Status.COMPLETE -> {
@@ -74,7 +70,6 @@ inline fun <reified T : Any> waitCompletion(service: VerifierService, taskId: Ta
       }
     }
   }
-
 }
 
 
