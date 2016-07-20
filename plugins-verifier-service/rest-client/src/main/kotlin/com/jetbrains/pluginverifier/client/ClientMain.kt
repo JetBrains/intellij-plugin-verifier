@@ -20,7 +20,7 @@ class Client {
     @JvmStatic
     fun main(args: Array<String>) {
       val opts = BaseCmdOpts()
-      var freeArgs = Args.parse(opts, args, false)
+      val freeArgs = Args.parse(opts, args, false)
       if (freeArgs.isEmpty()) {
         throw IllegalArgumentException("Command is not specified")
       }

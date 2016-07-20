@@ -89,6 +89,10 @@ class CheckPluginCommand : Command {
     LOG.info("The task ID is $taskId")
     val results = waitCompletion<CheckPluginResults>(service, taskId)
 
+    processResults(opts, results)
+  }
+
+  fun processResults(opts: BaseCmdOpts, results: CheckPluginResults) {
     if (opts.needTeamCityLog) {
       results.printTcLog(TeamCityVPrinter.GroupBy.parse(opts), true)
     }

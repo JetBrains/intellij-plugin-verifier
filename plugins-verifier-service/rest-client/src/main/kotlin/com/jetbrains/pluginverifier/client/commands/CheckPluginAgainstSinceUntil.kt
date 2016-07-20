@@ -33,7 +33,7 @@ class CheckPluginAgainstSinceUntilCommand : Command {
 
     val jdkVersion = BaseCmdUtil.parseJdkVersion(opts) ?: throw IllegalArgumentException("Specify the JDK version to check with")
     val vOptions = VOptionsUtil.parseOpts(opts)
-    checkPluginWithSinceUntilBuilds(File(freeArgs[0]), opts.host, vOptions, jdkVersion).processResults()
+    checkPluginWithSinceUntilBuilds(File(freeArgs[0]), opts.host, vOptions, jdkVersion).printResults(System.out)
   }
 
   fun checkPluginWithSinceUntilBuilds(pluginFile: File,
@@ -86,7 +86,12 @@ class CheckPluginAgainstSinceUntilCommand : Command {
     LOG.info("The task ID is $taskId")
 
     val results = waitCompletion<CheckPluginAgainstSinceUntilBuildsResults>(service, taskId)
+    processResults(results)
     return results
+  }
+
+  fun processResults(results: CheckPluginAgainstSinceUntilBuildsResults) {
+    results.printResults(System.out)
   }
 
 }

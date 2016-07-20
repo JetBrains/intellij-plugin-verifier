@@ -80,6 +80,10 @@ class CheckIdeCommand : Command {
 
     val checkIdeResults = waitCompletion<CheckIdeResults>(service, taskId)
 
+    processResults(checkIdeResults, opts, service)
+  }
+
+  fun processResults(checkIdeResults: CheckIdeResults, opts: BaseCmdOpts, service: VerifierService) {
     val report = checkIdeResults.getCheckIdeReport()
 
     if (opts.compareCheckIdeReport) {
@@ -100,7 +104,6 @@ class CheckIdeCommand : Command {
     if (opts.dumpBrokenPluginsFile != null) {
       checkIdeResults.dumbBrokenPluginsList(File(opts.dumpBrokenPluginsFile))
     }
-
   }
 
   fun reportsList(service: VerifierService): List<IdeVersion> = service.reportsService.listReports().execute().body()
