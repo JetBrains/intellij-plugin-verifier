@@ -16,6 +16,8 @@ import org.apache.commons.io.IOUtils;
 import org.jdom2.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +40,7 @@ public class PluginManagerImpl extends PluginManager {
   private static final String PLUGIN_XML = "plugin.xml";
   private static final Pattern LIB_JAR_REGEX = Pattern.compile("([^/]+/)?lib/([^/]+\\.(jar|zip))");
 
+  private static final Logger LOG = LoggerFactory.getLogger(PluginManagerImpl.class);
 
   private static final Pattern XML_IN_META_INF_PATTERN = Pattern.compile("([^/]*/)?META-INF/(([^/]+/)*(\\w|\\-)+\\.xml)");
 
@@ -153,7 +156,7 @@ public class PluginManagerImpl extends PluginManager {
           if (optDescriptor != null) {
             descriptors.put(original, optDescriptor);
           } else {
-            System.err.println("Optional descriptor META-INF/" + optFilePath + " is not found");
+            LOG.warn("Optional descriptor META-INF/" + optFilePath + " is not found");
           }
         }
       }
@@ -201,7 +204,7 @@ public class PluginManagerImpl extends PluginManager {
         if (StringUtil.equal(name, filePath)) {
           validator.onCheckedException("Unable to read META-INF/" + name, e);
         }
-        System.err.println("Unable to read an entry `" + entry.getName() + "` because " + e.getLocalizedMessage());
+        LOG.warn("Unable to read an entry " + entry.getName(), e);
         return null;
       }
 
@@ -344,7 +347,7 @@ public class PluginManagerImpl extends PluginManager {
         if (inRoot != null) {
           if (descriptorRoot != null) {
             //TODO: is it necessary to throw an exception?
-            System.err.println("Multiple META-INF/" + filePath + " found in the root of the plugin");
+            LOG.warn("Multiple META-INF/" + filePath + " found in the root of the plugin");
 //            validator.onIncorrectStructure("Multiple META-INF/" + filePath + " found in the root of the plugin");
 //            return null;
           }

@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.InputStream;
@@ -30,6 +32,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class PluginImpl implements Plugin {
+
+  private static final Logger LOG = LoggerFactory.getLogger(PluginImpl.class);
 
   private static final Pattern JAVA_CLASS_PATTERN = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*");
   private static final String INTERESTING_STRINGS[] = new String[]{"class", "interface", "implementation", "instance"};
@@ -208,7 +212,7 @@ class PluginImpl implements Plugin {
         }
         myLogoContent = IOUtils.toByteArray(input);
       } catch (Exception e) {
-        System.err.println("Unable to extract plugin logo content by path " + myLogoUrl + " because " + e.getLocalizedMessage());
+        LOG.info("Unable to extract plugin " + getPluginId() + ":" + getPluginVersion() + " logo content by path " + myLogoUrl, e);
       } finally {
         IOUtils.closeQuietly(input);
       }
@@ -495,8 +499,7 @@ class PluginImpl implements Plugin {
     try {
       document = JDOMXIncluder.resolve(document, url.toExternalForm(), false, pathResolver);
     } catch (Exception e) {
-      System.err.println("Unable to resolve xinclude elements");
-      e.printStackTrace();
+      LOG.error("Unable to resolve xinclude elements", e);
     }
     checkAndSetEntries(url, document, validator);
   }
