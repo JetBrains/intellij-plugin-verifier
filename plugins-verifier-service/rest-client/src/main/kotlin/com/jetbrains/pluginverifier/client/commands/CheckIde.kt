@@ -2,10 +2,7 @@ package com.jetbrains.pluginverifier.client.commands
 
 import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.client.BaseCmdOpts
-import com.jetbrains.pluginverifier.client.network.MultipartUtil
-import com.jetbrains.pluginverifier.client.network.VerifierService
-import com.jetbrains.pluginverifier.client.network.parseTaskId
-import com.jetbrains.pluginverifier.client.network.waitCompletion
+import com.jetbrains.pluginverifier.client.network.*
 import com.jetbrains.pluginverifier.client.util.ArchiverUtil
 import com.jetbrains.pluginverifier.client.util.BaseCmdUtil
 import com.jetbrains.pluginverifier.configurations.CheckIdeCompareResult
@@ -68,8 +65,7 @@ class CheckIdeCommand : Command {
       val filePart = MultipartUtil.createFilePart("ideFile", ideFile)
 
       val call = service.enqueueTaskService.checkIde(filePart, paramsPart)
-      val response = call.execute()
-      taskId = parseTaskId(response)
+      taskId = parseTaskId(call.executeSuccessfully())
       LOG.info("The task ID is $taskId")
 
     } finally {
@@ -106,13 +102,13 @@ class CheckIdeCommand : Command {
     }
   }
 
-  fun reportsList(service: VerifierService): List<IdeVersion> = service.reportsService.listReports().execute().body()
+  fun reportsList(service: VerifierService): List<IdeVersion> = service.reportsService.listReports().executeSuccessfully().body()
 
   fun getReportFile(ideVersion: IdeVersion, service: VerifierService): File? {
-    val execute = service.reportsService.get(ideVersion.asString()).execute()
-    if (execute.isSuccessful) {
+    val response = service.reportsService.get(ideVersion.asString()).executeSuccessfully()
+    if (response.isSuccessful) {
       val reportFile = File.createTempFile("report", "")
-      execute.body().byteStream().copyTo(reportFile.outputStream())
+      response.body().byteStream().copyTo(reportFile.outputStream())
       return reportFile
     }
     return null
@@ -120,7 +116,7 @@ class CheckIdeCommand : Command {
 
   fun uploadReport(file: File, service: VerifierService) {
     val filePart = MultipartUtil.createFilePart("reportFile", file)
-    service.reportsService.uploadReport(filePart).execute()
+    service.reportsService.uploadReport(filePart).executeSuccessfully()
   }
 
   fun findPreviousReports(ideVersion: IdeVersion, service: VerifierService): List<CheckIdeReport> {

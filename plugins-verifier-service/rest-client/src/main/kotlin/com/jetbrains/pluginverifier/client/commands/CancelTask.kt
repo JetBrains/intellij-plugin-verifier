@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.client.commands
 
 import com.jetbrains.pluginverifier.client.BaseCmdOpts
 import com.jetbrains.pluginverifier.client.network.VerifierService
+import com.jetbrains.pluginverifier.client.network.executeSuccessfully
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import org.jetbrains.plugins.verifier.service.api.TaskId
@@ -22,7 +23,7 @@ class CancelTaskCommand : Command {
     Args.parseOrExit(options, freeArgs.toTypedArray())
     val service = VerifierService(options.host)
     val call = service.taskResultsService.cancelTask(TaskId(Integer.parseInt(options.taskId)))
-    val response = call.execute()
+    val response = call.executeSuccessfully()
     LOG.info("Cancellation result: ${response.body().string()}")
   }
 

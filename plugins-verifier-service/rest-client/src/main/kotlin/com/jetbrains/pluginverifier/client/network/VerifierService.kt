@@ -8,6 +8,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import org.jetbrains.plugins.verifier.service.api.Result
 import org.jetbrains.plugins.verifier.service.api.Status
 import org.jetbrains.plugins.verifier.service.api.TaskId
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import retrofit2.Call
 import retrofit2.Response
@@ -18,7 +19,7 @@ import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-val LOG = LoggerFactory.getLogger(VerifierService::class.java)
+val LOG: Logger = LoggerFactory.getLogger(VerifierService::class.java)
 
 object MediaTypes {
   val JSON: MediaType = MediaType.parse("application/json")
@@ -40,6 +41,14 @@ object MultipartUtil {
 
 val REQUEST_PERIOD: Long = 5000
 
+fun <T> Call<T>.executeSuccessfully(): Response<T> {
+  val response = this.execute()
+  if (response.isSuccessful) {
+    return response
+  }
+  throw RuntimeException("The response status code is ${response.code()}: ${response.errorBody().string()}")
+}
+
 fun parseTaskId(response: Response<ResponseBody>): TaskId = parseResponse(response)
 
 inline fun <reified T : Any> parseResponse(response: Response<ResponseBody>): T {
@@ -53,7 +62,7 @@ inline fun <reified T : Any> waitCompletion(service: VerifierService, taskId: Ta
   val resultType = ParameterizedTypeImpl.make(Result::class.java, arrayOf(T::class.java), null)
 
   while (true) {
-    val response: Response<ResponseBody> = service.taskResultsService.getTaskResult(taskId).execute()
+    val response: Response<ResponseBody> = service.taskResultsService.getTaskResult(taskId).executeSuccessfully()
     val json = response.body().string()
 
     val result: Result<T> = GsonHolder.GSON.fromJson(json, resultType)
@@ -61,11 +70,11 @@ inline fun <reified T : Any> waitCompletion(service: VerifierService, taskId: Ta
     val taskStatus = result.taskStatus
     when (taskStatus.status) {
       Status.WAITING, Status.RUNNING -> {
-        LOG.info("The task status: $taskStatus")
+        LOG.debug("The task status: $taskStatus")
         Thread.sleep(REQUEST_PERIOD)
       }
       Status.COMPLETE -> {
-        LOG.info("The task $taskId is complete.")
+        LOG.debug("The task $taskId is complete.")
         return result.result!!
       }
     }
@@ -102,7 +111,7 @@ class VerifierService(host: String) {
       .connectTimeout(5, TimeUnit.MINUTES)
       .readTimeout(5, TimeUnit.MINUTES)
       .writeTimeout(5, TimeUnit.MINUTES)
-      .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BASIC))
+      .addInterceptor(HttpLoggingInterceptor().setLevel(if (LOG.isDebugEnabled) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE))
       .build()
 
 }

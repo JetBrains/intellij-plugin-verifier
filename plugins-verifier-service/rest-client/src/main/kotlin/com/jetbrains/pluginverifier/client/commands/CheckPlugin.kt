@@ -2,10 +2,7 @@ package com.jetbrains.pluginverifier.client.commands
 
 import com.intellij.structure.domain.IdeManager
 import com.jetbrains.pluginverifier.client.BaseCmdOpts
-import com.jetbrains.pluginverifier.client.network.MediaTypes
-import com.jetbrains.pluginverifier.client.network.VerifierService
-import com.jetbrains.pluginverifier.client.network.parseTaskId
-import com.jetbrains.pluginverifier.client.network.waitCompletion
+import com.jetbrains.pluginverifier.client.network.*
 import com.jetbrains.pluginverifier.client.util.ArchiverUtil
 import com.jetbrains.pluginverifier.client.util.BaseCmdUtil
 import com.jetbrains.pluginverifier.configurations.CheckPluginParamsParser
@@ -82,7 +79,7 @@ class CheckPluginCommand : Command {
     pluginFiles.forEachIndexed { id, file -> builder.addFormDataPart("plugin_$id", file.name, RequestBody.create(MediaTypes.OCTET_STREAM, file)) }
 
     val call = service.enqueueTaskService.checkPlugin(builder.build())
-    val response = call.execute()
+    val response = call.executeSuccessfully()
 
     val taskId: TaskId
     taskId = parseTaskId(response)

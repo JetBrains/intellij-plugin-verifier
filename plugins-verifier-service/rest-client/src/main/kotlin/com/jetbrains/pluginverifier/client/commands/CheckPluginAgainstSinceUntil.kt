@@ -2,10 +2,7 @@ package com.jetbrains.pluginverifier.client.commands
 
 import com.jetbrains.pluginverifier.api.VOptions
 import com.jetbrains.pluginverifier.client.BaseCmdOpts
-import com.jetbrains.pluginverifier.client.network.MultipartUtil
-import com.jetbrains.pluginverifier.client.network.VerifierService
-import com.jetbrains.pluginverifier.client.network.parseTaskId
-import com.jetbrains.pluginverifier.client.network.waitCompletion
+import com.jetbrains.pluginverifier.client.network.*
 import com.jetbrains.pluginverifier.client.util.ArchiverUtil
 import com.jetbrains.pluginverifier.client.util.BaseCmdUtil
 import com.jetbrains.pluginverifier.utils.VOptionsUtil
@@ -81,7 +78,7 @@ class CheckPluginAgainstSinceUntilCommand : Command {
     val paramsPart = MultipartUtil.createJsonPart("params", runnerParams)
 
     val call = service.enqueueTaskService.checkPluginAgainstSinceUntilBuilds(pluginPart, paramsPart)
-    val response = call.execute()
+    val response = call.executeSuccessfully()
     val taskId = parseTaskId(response)
     LOG.info("The task ID is $taskId")
 
