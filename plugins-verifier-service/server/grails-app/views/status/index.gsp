@@ -8,6 +8,15 @@
 <body>
 
 <div id="parameters">
+    <h2>Application parameters:</h2>
+    <ul>
+        <g:each var="c" in="${ServerStatus.INSTANCE.appProperties()}">
+            <li>
+                ${c.first} = ${c.second}
+            </li>
+        </g:each>
+    </ul>
+
     <h2>Status:</h2>
     <ul>
         <g:each var="c" in="${ServerStatus.INSTANCE.parameters()}">

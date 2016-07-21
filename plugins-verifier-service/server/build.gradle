@@ -17,6 +17,7 @@ dependencyManagement {
 
 bootRun {
   jvmArgs = ['-Xmx4096m']
+  systemProperties = System.properties
 }
 
 task wrapper(type: Wrapper) {

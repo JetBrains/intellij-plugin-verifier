@@ -1,5 +1,6 @@
 package plugins.verifier.service
 
+import com.google.common.base.Preconditions
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
 import org.jetbrains.plugins.verifier.service.setting.Settings
@@ -12,12 +13,18 @@ class Application extends GrailsAutoConfiguration {
   private static final Logger LOG = LoggerFactory.getLogger(Application.class)
 
   static void main(String[] args) {
+    assertSystemProperties()
     setSystemProperties()
 
     LOG.info("Server settings: ${Settings.values().collect { it.key + "=" + it.get() }.join(", ")}")
 
     def context = GrailsApp.run(Application, args)
+  }
 
+  private static def assertSystemProperties() {
+    Settings.values().toList().forEach { setting ->
+      Preconditions.checkNotNull(System.getProperty(setting.key), "$setting.key must be specified")
+    }
   }
 
   private static void setSystemProperties() {
