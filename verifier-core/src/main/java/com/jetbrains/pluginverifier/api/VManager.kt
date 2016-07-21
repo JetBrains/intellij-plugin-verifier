@@ -197,16 +197,18 @@ object VManager {
 
               }
             } finally {
-              val result = pluginResult!!
-              results.add(result)
-              progress.setText("${pluginOnIde.first.presentableName()} has been verified with ${pluginOnIde.second.presentableName()}. Result: ${
-              when (result) {
-                is VResult.Nice -> "It is OK."
-                is VResult.Problems -> "It has ${result.problems.keySet().size} problems"
-                is VResult.BadPlugin -> "It is invalid: ${result.overview}"
+              if (pluginResult != null) {
+                val result = pluginResult!!
+                results.add(result)
+                progress.setText("${pluginOnIde.first.presentableName()} has been verified with ${pluginOnIde.second.presentableName()}. Result: ${
+                when (result) {
+                  is VResult.Nice -> "It is OK."
+                  is VResult.Problems -> "It has ${result.problems.keySet().size} problems"
+                  is VResult.BadPlugin -> "It is invalid: ${result.overview}"
+                }
+                }")
+                progress.setProgress(((++verified).toDouble()) / pluginsNumber)
               }
-              }")
-              progress.setProgress(((++verified).toDouble()) / pluginsNumber)
             }
 
           }
