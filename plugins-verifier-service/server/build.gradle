@@ -29,19 +29,14 @@ assets {
   minifyCss = true
 }
 
-configurations {
-  compile.exclude group: "org.springframework.boot", module: "spring-boot-starter-logging"
-}
-
 repositories {
   maven { url "https://repo.grails.org/grails/core" }
 }
 
 dependencies {
 
-//  compile "org.springframework.boot:spring-boot-starter-logging"
+  compile "org.springframework.boot:spring-boot-starter-logging"
   compile "org.springframework.boot:spring-boot-autoconfigure"
-  compile "org.springframework.boot:spring-boot-starter-log4j"
 
   compile "commons-fileupload:commons-fileupload:1.3.1"
 

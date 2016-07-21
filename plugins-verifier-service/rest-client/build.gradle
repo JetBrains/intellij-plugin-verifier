@@ -5,7 +5,7 @@ dependencies {
   compile 'com.squareup.retrofit2:converter-gson:2.1.0'
   compile 'com.squareup.okhttp3:logging-interceptor:3.3.1'
   compile 'com.github.spullara.cli-parser:cli-parser:1.1.2'
-  compile 'org.slf4j:slf4j-log4j12:1.7.21'
+  compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
   compile project(':protocol')
 }
 

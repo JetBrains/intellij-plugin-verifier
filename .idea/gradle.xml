@@ -24,6 +24,7 @@
         <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/intellij-plugin-structure" />
         <option name="gradleHome" value="$USER_HOME$/opt/gradle" />
+        <option name="gradleJvm" value="#JAVA_HOME" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$/intellij-plugin-structure" />
@@ -35,6 +36,7 @@
         <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/plugins-verifier-service" />
         <option name="gradleHome" value="$USER_HOME$/opt/gradle" />
+        <option name="gradleJvm" value="#JAVA_HOME" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$/plugins-verifier-service" />
