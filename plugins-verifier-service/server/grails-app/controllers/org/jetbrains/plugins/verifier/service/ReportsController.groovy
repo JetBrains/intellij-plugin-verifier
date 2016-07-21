@@ -20,7 +20,7 @@ class ReportsController {
     def reportFile = params.reportFile
     if (!reportFile || reportFile.empty) {
       log.error("user attempted to load empty report")
-      response.sendError(HttpStatus.BAD_REQUEST.value(), "Report file is empty")
+      sendError(HttpStatus.BAD_REQUEST.value(), "Report file is empty")
       return
     }
     File tempFile = FileManager.INSTANCE.createTempFile("report")
@@ -30,7 +30,7 @@ class ReportsController {
       } catch (Exception e) {
         log.error("unable to save the report", e)
         LanguageUtilsKt.deleteLogged(tempFile)
-        response.sendError(HttpStatus.BAD_REQUEST.value(), "Report file is invalid")
+        sendError(HttpStatus.BAD_REQUEST.value(), "Report file is invalid")
         return
       }
       try {
@@ -38,7 +38,7 @@ class ReportsController {
         render([success: success] as JSON)
       } catch (Exception e) {
         log.error("unable to save the report", e)
-        response.sendError(HttpStatus.BAD_REQUEST.value(), "Report file is invalid")
+        sendError(HttpStatus.BAD_REQUEST.value(), "Report file is invalid")
       }
     } finally {
       LanguageUtilsKt.deleteLogged(tempFile)
@@ -52,7 +52,7 @@ class ReportsController {
       version = IdeVersion.createIdeVersion(ideVersion)
     } catch (Exception e) {
       log.error("user specified an invalid ideVersion: $ideVersion", e)
-      response.sendError(HttpStatus.BAD_REQUEST.value(), "IDE version \'$ideVersion\' is invalid")
+      sendError(HttpStatus.BAD_REQUEST.value(), "IDE version \'$ideVersion\' is invalid")
       return
     }
     def success = ReportsManager.INSTANCE.deleteReport(version)
@@ -65,7 +65,7 @@ class ReportsController {
       version = IdeVersion.createIdeVersion(ideVersion)
     } catch (Exception e) {
       log.error("user ideVersion is invalid: $ideVersion", e)
-      response.sendError(HttpStatus.BAD_REQUEST.value(), "IDE version \'$ideVersion\' is invalid")
+      sendError(HttpStatus.BAD_REQUEST.value(), "IDE version \'$ideVersion\' is invalid")
       return
     }
     File report = ReportsManager.INSTANCE.getReport(version)
@@ -74,8 +74,12 @@ class ReportsController {
       response.setHeader("Content-disposition", "attachment;filename=$report.name")
       report.withInputStream { response.outputStream << it }
     } else {
-      response.sendError(HttpStatus.NOT_FOUND.value(), "No such report \'$ideVersion\' found on the server")
+      sendError(HttpStatus.NOT_FOUND.value(), "No such report \'$ideVersion\' found on the server")
     }
+  }
+
+  private sendError(int statusCode, String msg) {
+    render(status: statusCode, text: msg, encoding: 'utf-8', contentType: 'text/plain')
   }
 
   private sendJson(Object obj) {

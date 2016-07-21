@@ -29,12 +29,12 @@ class VerifierController {
     } catch (Exception e) {
       def msg = "Invalid taskId: $e.message"
       log.error(msg, e)
-      response.sendError(HttpStatus.BAD_REQUEST.value(), msg)
+      sendError(HttpStatus.BAD_REQUEST.value(), msg)
       return null
     }
     if (!taskId) {
       log.error("Null task ID")
-      response.sendError(HttpStatus.BAD_REQUEST.value(), "Invalid taskId: null")
+      sendError(HttpStatus.BAD_REQUEST.value(), "Invalid taskId: null")
       return null
     }
     return taskId
@@ -47,7 +47,7 @@ class VerifierController {
     Result<?> result = TaskManager.INSTANCE.get(taskId)
     if (!result) {
       def msg = "The task with such ID $taskId is not found"
-      response.sendError(HttpStatus.NOT_FOUND.value(), msg)
+      sendError(HttpStatus.NOT_FOUND.value(), msg)
       log.error(msg)
       return
     }
@@ -59,7 +59,7 @@ class VerifierController {
   def printTaskResult(int id) {
     Result<?> result = TaskManager.INSTANCE.get(new TaskId(id))
     if (!result) {
-      response.sendError(HttpStatus.NOT_FOUND.value(), "The task with such ID $id is not found")
+      sendError(HttpStatus.NOT_FOUND.value(), "The task with such ID $id is not found")
       return
     }
 
@@ -134,12 +134,12 @@ class VerifierController {
   private def File saveIdeTemporarily(ideFile) {
     if (!ideFile || ideFile.empty) {
       log.error("user attempted to load empty IDE file")
-      response.sendError(HttpStatus.BAD_REQUEST.value(), "IDE file is empty")
+      sendError(HttpStatus.BAD_REQUEST.value(), "IDE file is empty")
       return null
     }
     if (!ideFile.getOriginalFilename().endsWith(".zip")) {
       log.error("user attempted to load non-.zip archive IDE")
-      response.sendError(HttpStatus.BAD_REQUEST.value(), "Only the .zip archived IDE-s are supported")
+      sendError(HttpStatus.BAD_REQUEST.value(), "Only the .zip archived IDE-s are supported")
       return null
     }
 
@@ -157,7 +157,7 @@ class VerifierController {
       log.error("Unable to save IDE file $ideFile", e)
       LanguageUtilsKt.deleteLogged(tmpIdeFile)
 
-      response.sendError(HttpStatus.BAD_REQUEST.value(), "The IDE file is invalid ${e.message}")
+      sendError(HttpStatus.BAD_REQUEST.value(), "The IDE file is invalid ${e.message}")
       return null
     }
 
@@ -169,7 +169,7 @@ class VerifierController {
       return savedIde
     } catch (Exception e) {
       log.debug("Unable to extract IDE file $tmpIdeFile", e)
-      response.sendError(HttpStatus.BAD_REQUEST.value(), "The IDE file is invalid ${e.message}")
+      sendError(HttpStatus.BAD_REQUEST.value(), "The IDE file is invalid ${e.message}")
       return null
     } finally {
       LanguageUtilsKt.deleteLogged(tmpIdeFile)
@@ -188,7 +188,7 @@ class VerifierController {
   private File savePluginTemporarily(pluginFile) {
     if (!pluginFile || pluginFile.empty) {
       log.error("user attempted to load empty plugin file")
-      response.sendError(HttpStatus.BAD_REQUEST.value(), "Empty plugin file")
+      sendError(HttpStatus.BAD_REQUEST.value(), "Empty plugin file")
       return null
     }
 
@@ -197,13 +197,17 @@ class VerifierController {
       pluginFile.transferTo(tmpFile)
     } catch (Exception e) {
       log.error("Unable to save plugin file to $tmpFile", e)
-      response.sendError(HttpStatus.BAD_REQUEST.value(), "The plugin file is broken")
+      sendError(HttpStatus.BAD_REQUEST.value(), "The plugin file is broken")
       LanguageUtilsKt.deleteLogged(tmpFile)
       return null
     }
 
     log.info("plugin file saved to ${tmpFile}")
     return tmpFile
+  }
+
+  private sendError(int statusCode, String msg) {
+    render(status: statusCode, text: msg, encoding: 'utf-8', contentType: 'text/plain')
   }
 
   private sendJson(Object obj) {
