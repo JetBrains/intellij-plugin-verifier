@@ -119,8 +119,8 @@
           <element id="library" level="project" name="Gradle: org.apache.httpcomponents:httpcore:4.4.4" />
           <element id="library" level="project" name="Gradle: commons-codec:commons-codec:1.9" />
           <element id="library" level="project" name="Gradle: aopalliance:aopalliance:1.0" />
-          <element id="library" level="project" name="Gradle: com.fasterxml.jackson.core:jackson-annotations:2.6.5" />
           <element id="library" level="project" name="Gradle: com.google.javascript:closure-compiler:v20141023" />
+          <element id="library" level="project" name="Gradle: com.fasterxml.jackson.core:jackson-annotations:2.6.5" />
           <element id="library" level="project" name="Gradle: com.fasterxml.jackson.core:jackson-core:2.6.5" />
           <element id="library" level="project" name="Gradle: org.grails:grails-web-gsp:3.1.4" />
           <element id="library" level="project" name="Gradle: org.grails:grails-web-jsp:3.1.4" />
