@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.utils.dependencies
 
-import com.google.common.base.Preconditions
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.ImmutableMap
 import com.intellij.structure.domain.Ide
@@ -18,8 +17,7 @@ object Dependencies {
   @JvmStatic
   fun calcDependencies(plugin: Plugin, ide: Ide): DependenciesResult {
     val dfs = Dfs(ide)
-    val result = dfs.dfs(plugin)
-    Preconditions.checkNotNull(result)
+    val result: PluginDependenciesNode = dfs.dfs(plugin)
     return DependenciesResult(result, dfs.cycle)
   }
 
@@ -52,12 +50,12 @@ object Dependencies {
     internal fun dfs(plugin: Plugin): PluginDependenciesNode {
       if (nodes.containsKey(plugin)) {
         //already calculated.
-        Preconditions.checkArgument(state.containsKey(plugin) && state[plugin] == DfsState.BLACK)
+        assert(state.containsKey(plugin) && state[plugin] == DfsState.BLACK, { "$plugin" })
         return nodes[plugin]!!
       }
 
       //assure plugin is not in-progress.
-      Preconditions.checkArgument(!state.containsKey(plugin))
+      assert(!state.containsKey(plugin), { "$plugin" })
 
       //mark as in-progress
       state.put(plugin, DfsState.GRAY)
@@ -72,12 +70,9 @@ object Dependencies {
       try {
         //process plugin dependencies.
 
-        val union = ArrayList(plugin.moduleDependencies)
-        union.addAll(plugin.dependencies)
-
-        for (pd in union) {
+        for (pd in plugin.moduleDependencies + plugin.dependencies) {
           val isModule = plugin.moduleDependencies.indexOf(pd) != -1
-          val depId = pd.id
+          val depId: String = pd.id
           var dependency: Plugin?
           if (isModule) {
             if (isDefaultModule(depId)) {
@@ -87,27 +82,25 @@ object Dependencies {
             if (dependency == null) {
               if (INTELLIJ_MODULES_CONTAINING_PLUGINS.containsKey(depId)) {
                 //try to add the intellij plugin which defines this module
-                val pluginId = INTELLIJ_MODULES_CONTAINING_PLUGINS[depId]
-                if (pluginId != null) {
-                  dependency = ide.getPluginById(pluginId)
-                  if (dependency == null) {
-                    try {
-                      val updateInfo = RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(ide.version, pluginId)
-                      if (updateInfo != null) {
-                        val pluginFile = RepositoryManager.getInstance().getPluginFile(updateInfo)
-                        if (pluginFile != null) {
-                          dependency = PluginCache.createPlugin(pluginFile)
-                        }
+                val pluginId = INTELLIJ_MODULES_CONTAINING_PLUGINS[depId]!!
+                dependency = ide.getPluginById(pluginId)
+                if (dependency == null) {
+                  try {
+                    val updateInfo = RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(ide.version, pluginId)
+                    if (updateInfo != null) {
+                      val pluginFile = RepositoryManager.getInstance().getPluginFile(updateInfo)
+                      if (pluginFile != null) {
+                        dependency = PluginCache.createPlugin(pluginFile)
                       }
-                    } catch (e: Exception) {
-                      LOG.error("Unable to add the plugin " + pluginId + " defining the IntelliJ-module " + depId + " which is required for " + plugin.pluginId, e)
                     }
+                  } catch (e: Exception) {
+                    LOG.debug("Unable to add the plugin " + pluginId + " defining the IntelliJ-module " + depId + " which is required for " + plugin.pluginId, e)
                   }
                 }
               }
 
               if (dependency == null) {
-                val reason = String.format("Plugin %s depends on module %s which is not found in %s", plugin.pluginId, depId, ide.version)
+                val reason = "Plugin $plugin depends on module $depId which is not found in ${ide.version}"
                 missing.put(pd, MissingReason(reason, null))
                 continue
               }
@@ -122,8 +115,8 @@ object Dependencies {
               try {
                 updateInfo = RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(ide.version, depId)
               } catch (e: Exception) {
-                val message = String.format("Couldn't get dependency plugin '%s' from the Plugin Repository for IDE %s", depId, ide.version)
-                LOG.error(message, e)
+                val message = "Couldn't get dependency plugin '$depId' from the Plugin Repository for IDE ${ide.version}"
+                LOG.debug(message, e)
                 missing.put(pd, MissingReason(message, e))
                 continue
               }
@@ -134,15 +127,15 @@ object Dependencies {
                 try {
                   pluginZip = RepositoryManager.getInstance().getPluginFile(updateInfo)
                 } catch (e: Exception) {
-                  val message = String.format("Couldn't download dependency plugin '%s' from the Plugin Repository for IDE %s", depId, ide.version)
-                  LOG.error(message, e)
+                  val message = "Couldn't download dependency plugin '$depId' from the Plugin Repository for IDE ${ide.version}"
+                  LOG.debug(message, e)
                   missing.put(pd, MissingReason(message, e))
                   continue
                 }
 
                 if (pluginZip == null) {
                   val reason = "The dependency plugin $updateInfo is not found in the Plugin Repository"
-                  LOG.error(reason)
+                  LOG.debug(reason)
                   missing.put(pd, MissingReason(reason, null))
                   continue
                 }
@@ -150,8 +143,8 @@ object Dependencies {
                 try {
                   dependency = PluginCache.createPlugin(pluginZip)
                 } catch (e: Exception) {
-                  val message = String.format("Plugin %s depends on the other plugin %s which has some problems%s", plugin, depId, if (e.message != null) e.message else "")
-                  LOG.error(message, e)
+                  val message = "Plugin $plugin depends on the other plugin $depId which has some problems"
+                  LOG.debug(message, e)
                   missing.put(pd, MissingReason(message, e))
                   continue
                 }
@@ -160,8 +153,8 @@ object Dependencies {
             }
 
             if (dependency == null) {
-              val message = String.format("Plugin %s depends on the other plugin %s which doesn't have a build compatible with %s", plugin, depId, ide.version)
-              LOG.error(message)
+              val message = "Plugin $plugin depends on the other plugin $depId which doesn't have a build compatible with ${ide.version}"
+              LOG.debug(message)
               missing.put(pd, MissingReason(message, null))
               continue
             }
@@ -172,7 +165,7 @@ object Dependencies {
           //check if cycle
           if (state.containsKey(dependency) && state[dependency] == DfsState.GRAY) {
             val idx = path.lastIndexOf(dependency)
-            Preconditions.checkArgument(idx != -1)
+            assert(idx != -1)
             cycle = ArrayList(path.subList(idx, path.size))
             cycle!!.add(dependency) //first and last entries are the same (A -> B -> C -> A)
 
@@ -180,7 +173,7 @@ object Dependencies {
             continue
           }
 
-          val to = dfs(dependency)
+          val to: PluginDependenciesNode = dfs(dependency)
           edges.add(to)
           transitives.add(to.plugin) //the dependency itself
           transitives.addAll(to.transitiveDependencies) //and all its transitive dependencies
@@ -198,7 +191,7 @@ object Dependencies {
         state.put(plugin, DfsState.BLACK)
 
         val lastIdx = path.size - 1
-        Preconditions.checkArgument(path.size > 0 && path[lastIdx] === plugin)
+        assert(path.size > 0 && path[lastIdx] === plugin)
         path.removeAt(lastIdx)
       }
     }
