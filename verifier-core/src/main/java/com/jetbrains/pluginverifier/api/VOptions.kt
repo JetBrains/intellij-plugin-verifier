@@ -10,7 +10,7 @@ import java.util.regex.Pattern
 /**
  * @author Sergey Patrikeev
  */
-data class VOptions(@SerializedName("externalCp") val externalClassPrefixes: Array<String>,
+data class VOptions(@SerializedName("externalCp") val externalClassPrefixes: Set<String>,
                     @SerializedName("ignoredProblem") val optionalDependenciesIdsToIgnoreIfMissing: Set<String>,
                     /**
                      * Map of _(pluginXmlId, version)_ -> to be ignored _problem pattern_

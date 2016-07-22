@@ -138,7 +138,7 @@ object VOptionsUtil {
     }
 
     return VOptions(
-        opts.externalClassesPrefixes.map { it.replace('.', '/') }.toTypedArray(),
+        opts.externalClassesPrefixes.map { it.replace('.', '/') }.toSet(),
         opts.ignoreMissingOptionalDependencies.toSet(),
         problemsToIgnore,
         opts.failOnCyclicDependencies
