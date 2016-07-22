@@ -34,7 +34,7 @@ class CheckPluginAgainstSinceUntilBuildsRunner(val pluginFile: File,
       } catch(e: Exception) {
         LOG.error("Unable to create plugin from $pluginFile", e)
         val byFile = PluginDescriptor.ByFile("${pluginFile.name}", "", pluginFile)
-        return CheckPluginAgainstSinceUntilBuildsResults(VResults(VResult.BadPlugin(byFile, e.message ?: e.javaClass.simpleName)))
+        return CheckPluginAgainstSinceUntilBuildsResults(VResults(listOf(VResult.BadPlugin(byFile, e.message ?: e.javaClass.simpleName))))
       }
 
       val pluginDescriptor = PluginDescriptor.ByInstance(plugin)
@@ -44,7 +44,7 @@ class CheckPluginAgainstSinceUntilBuildsRunner(val pluginFile: File,
 
       if (sinceBuild == null) {
         LOG.error("The plugin $pluginFile has not specified since-build property")
-        return CheckPluginAgainstSinceUntilBuildsResults(VResults(VResult.BadPlugin(pluginDescriptor, "The plugin ${plugin.toString()} has not specified the <idea-version> 'since-build' attribute. See  <a href=\"http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html\">Plugin Configuration File - plugin.xml<\\a>")))
+        return CheckPluginAgainstSinceUntilBuildsResults(VResults(listOf(VResult.BadPlugin(pluginDescriptor, "The plugin ${plugin.toString()} has not specified the <idea-version> 'since-build' attribute. See  <a href=\"http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html\">Plugin Configuration File - plugin.xml<\\a>"))))
       }
 
       LOG.info("Verifying plugin $plugin against its specified [$sinceBuild; $untilBuild] builds")
