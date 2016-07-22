@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.api
 
-import com.google.common.base.Joiner
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.intellij.structure.domain.Ide
@@ -17,6 +16,7 @@ import com.jetbrains.pluginverifier.utils.dependencies.MissingReason
 import com.jetbrains.pluginverifier.utils.dependencies.PluginDependenciesNode
 import com.jetbrains.pluginverifier.verifiers.ReferencesVerifier
 import org.slf4j.LoggerFactory
+import java.io.Closeable
 import java.io.IOException
 
 interface VProgress {
@@ -57,7 +57,7 @@ object VManager {
   @JvmOverloads
   fun verify(params: VParams, progress: VProgress = DefaultVProgress()): VResults {
 
-    LOG.info("Verifying the plugins according to $params")
+    LOG.debug("Verifying the plugins according to $params")
     val pluginsNumber = params.pluginsToCheck.size
     progress.setText("Verifying $pluginsNumber plugins")
     progress.setProgress(0.0)
@@ -76,7 +76,7 @@ object VManager {
 
         checkCancelled()
 
-        LOG.debug("Creating Resolver for $ideDescriptor")
+        LOG.trace("Creating Resolver for $ideDescriptor")
 
         var ide: Ide
         try {
@@ -121,7 +121,7 @@ object VManager {
             checkCancelled()
 
             val text = "Verifying ${pluginOnIde.first.presentableName()} with ${pluginOnIde.second.presentableName()}"
-            LOG.info(text)
+            LOG.trace(text)
             progress.setText(text)
 
             var pluginResult: VResult? = null
@@ -133,28 +133,34 @@ object VManager {
                 throw ie
               } catch(e: IncorrectPluginException) {
                 //the plugin has incorrect structure.
-                val reason = e.message ?: "The plugin ${pluginOnIde.first} has incorrect structure"
-                LOG.error(reason, e)
+                val reason = e.message ?: "The plugin ${pluginOnIde.first.presentableName()} has incorrect structure"
+                LOG.debug(reason, e) //this is a problem of the plugin, but not of the Verifier.
                 pluginResult = VResult.BadPlugin(pluginOnIde.first, reason)
                 return@poi
               } catch(e: UpdateNotFoundException) {
                 //the caller has specified a missing plugin
-                LOG.error(e.message ?: "The plugin ${pluginOnIde.first} is not found in the Repository", e)
-                throw e
+                val reason = e.message ?: "The plugin ${pluginOnIde.first.presentableName()} is not found in the Repository"
+                LOG.debug(reason, e)
+                pluginResult = VResult.NotFound(pluginOnIde.first, pluginOnIde.second, reason)
+                return@poi
               } catch(e: IOException) {
                 //the plugin has an invalid file
                 val reason = e.message ?: e.javaClass.name
-                LOG.error(reason, e)
+                LOG.debug(reason, e)
                 pluginResult = VResult.BadPlugin(pluginOnIde.first, reason)
                 return@poi
+              } catch (e: Exception) {
+                if (e is RuntimeException) throw e else throw RuntimeException(e)
               }
+
+              assert(pluginResult == null)
 
               val pluginResolver: Resolver
               try {
                 pluginResolver = Resolver.createPluginResolver(plugin)
               } catch(e: Exception) {
                 val reason = e.message ?: "Failed to read the class-files of the plugin $plugin"
-                LOG.error(reason, e)
+                LOG.debug(reason, e)
                 pluginResult = VResult.BadPlugin(pluginOnIde.first, reason)
                 return@poi
               }
@@ -185,7 +191,6 @@ object VManager {
                       ide = ide.getExpandedIde(plugin)
                     }
 
-                    LOG.info("Successfully verified $plugin with ${pluginOnIde.second.presentableName()}")
                   } catch (ie: InterruptedException) {
                     throw ie
                   } catch (e: Exception) {
@@ -200,28 +205,30 @@ object VManager {
               if (pluginResult != null) {
                 val result = pluginResult!!
                 results.add(result)
-                progress.setText("${pluginOnIde.first.presentableName()} has been verified with ${pluginOnIde.second.presentableName()}. Result: ${
-                when (result) {
+                val resType: String = when (result) {
                   is VResult.Nice -> "It is OK."
                   is VResult.Problems -> "It has ${result.problems.keySet().size} problems"
                   is VResult.BadPlugin -> "It is invalid: ${result.overview}"
+                  is VResult.NotFound -> "It is not found: ${result.overview}"
                 }
-                }")
+                val statusString = "${pluginOnIde.first.presentableName()} has been verified with ${pluginOnIde.second.presentableName()}. Result: $resType"
+                progress.setText(statusString)
                 progress.setProgress(((++verified).toDouble()) / pluginsNumber)
+                LOG.trace("$statusString; progress = $verified out of $pluginsNumber")
               }
             }
 
           }
         } finally {
           if (closeIdeResolver) {
-            ideResolver.close()
+            ideResolver.closeLogged()
           }
         }
       }
     }
 
     val elapsed = "${(System.currentTimeMillis() - time) / 1000} seconds"
-    LOG.info("The verification has been successfully completed in $elapsed")
+    LOG.debug("The verification has been successfully completed in $elapsed")
     progress.setText("Finished in $elapsed")
     progress.setProgress(1.0)
 
@@ -237,10 +244,16 @@ object VManager {
   private fun getDependenciesResolver(ctx: VContext): Pair<Resolver?, VResult?> {
 
     val plugin = ctx.plugin
-    val dependencies = Dependencies.calcDependencies(plugin, ctx.ide)
+    val dependencies: Dependencies.DependenciesResult
+    try {
+      dependencies = Dependencies.calcDependencies(plugin, ctx.ide)
+    } catch(e: Exception) {
+      throw RuntimeException("Unable to evaluate dependencies of the plugin $plugin with IDE ${ctx.ide}", e)
+    }
+
     if (dependencies.cycle != null && ctx.verifierOptions.failOnCyclicDependencies) {
-      val cycle = Joiner.on(" -> ").join(dependencies.cycle)
-      LOG.error("The plugin verifier will not verify a plugin $ctx.plugin because its dependencies tree has the following cycle: $cycle")
+      val cycle = dependencies.cycle.joinToString(separator = " -> ")
+      LOG.debug("The plugin verifier will not verify a plugin $ctx.plugin because its dependencies tree has the following cycle: $cycle")
       ctx.registerProblem(CyclicDependenciesProblem(cycle), ProblemLocation.fromPlugin(plugin.pluginId))
       return null to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Cyclic dependencies: $cycle", ctx.problems)
     }
@@ -255,7 +268,7 @@ object VManager {
 
     val missingMandatoryDeps: Map<PluginDependency, MissingReason> = depNode.missingDependencies.filterNot({ it.key.isOptional })
     if (!missingMandatoryDeps.isEmpty()) {
-      LOG.error("The plugin verifier will not verify a plugin $plugin because it has missing mandatory dependencies: ${depNode.missingDependencies.entries.joinToString { it.key.toString() }}")
+      LOG.debug("The plugin verifier will not verify a plugin $plugin because it has missing mandatory dependencies: ${depNode.missingDependencies.entries.joinToString { it.key.toString() }}")
       return null to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Missing dependencies: ${missingMandatoryDeps.map { it.key.id }}", ctx.problems)
     }
 
@@ -271,7 +284,7 @@ object VManager {
         try {
           depResolvers.add(Resolver.createPluginResolver(dep))
         } catch (ie: InterruptedException) {
-          depResolvers.forEach { it.close() }
+          depResolvers.forEach { it.closeLogged() }
           throw ie
         } catch (e: Exception) {
           val isMandatory = mandatoryDeps.find { it.plugin.equals(dep) } != null
@@ -280,17 +293,25 @@ object VManager {
           ctx.registerProblem(MissingDependencyProblem(plugin.pluginId, dep.pluginId, message), ProblemLocation.fromPlugin(plugin.pluginId))
 
           if (isMandatory) {
-            LOG.error("The plugin verifier will not verify a plugin because its dependent plugin $dep has broken class-files", e)
-            depResolvers.forEach { it.close() }
+            LOG.debug("The plugin verifier will not verify a plugin because its dependent plugin $dep has broken class-files", e)
+            depResolvers.forEach { it.closeLogged() }
             return null to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Transitive mandatory dependency $dep is unavailable", ctx.problems)
           } else {
-            LOG.error(message, e)
+            LOG.debug(message, e)
           }
         }
       }
-      return Resolver.createUnionResolver("Plugin ${depNode.plugin} transitive dependencies", depResolvers) to null
+      return Resolver.createUnionResolver("Plugin ${depNode.plugin} transitive dependencies resolver", depResolvers) to null
     }
 
+  }
+
+  private fun Closeable.closeLogged() {
+    try {
+      this.close()
+    } catch(e: Exception) {
+      LOG.warn("Unable to close $this", e)
+    }
   }
 
   /**
@@ -339,7 +360,7 @@ object VManager {
 
 }
 
-internal class VContext(
+internal data class VContext(
     val plugin: Plugin,
     val pluginDescriptor: PluginDescriptor,
     val ide: Ide,

@@ -9,6 +9,7 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.PluginCache
 import com.jetbrains.pluginverifier.repository.RepositoryManager
+import java.io.File
 import java.io.IOException
 
 /**
@@ -86,23 +87,41 @@ object VParamsCreator {
     is PluginDescriptor.ByInstance -> plugin.plugin //already created.
     is PluginDescriptor.ByFile -> PluginCache.createPlugin(plugin.file) //IncorrectPluginException, IOException
     is PluginDescriptor.ByBuildId -> {
-      val info = withRuntimeException { RepositoryManager.getInstance().findUpdateById(plugin.buildId) } ?: throw noSuchUpdate(plugin)
-      val file = withRuntimeException { RepositoryManager.getInstance().getPluginFile(info) } ?: throw noSuchUpdate(plugin)
+      val info = withConnectionCheck { RepositoryManager.getInstance().findUpdateById(plugin.buildId) } ?: throw noSuchUpdate(plugin)
+      val file: File
+      try {
+        file = RepositoryManager.getInstance().getPluginFile(info) ?: throw noSuchUpdate(plugin)
+      } catch(e: Exception) {
+        throw noSuchUpdate(plugin, e)
+      }
       PluginCache.createPlugin(file) //IncorrectPluginException, IOException
     }
     is PluginDescriptor.ByXmlId -> {
-      val updates = withRuntimeException { RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion!!, plugin.pluginId) } //IOException
+      val updates = withConnectionCheck { RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion!!, plugin.pluginId) }
       val suitable: UpdateInfo = updates.find { plugin.version.equals(it.version) } ?: throw noSuchUpdate(plugin)
-      val file = withRuntimeException { RepositoryManager.getInstance().getPluginFile(suitable) } ?: throw noSuchUpdate(plugin)
+      val file: File
+      try {
+        file = RepositoryManager.getInstance().getPluginFile(suitable) ?: throw noSuchUpdate(plugin)
+      } catch (e: Exception) {
+        throw noSuchUpdate(plugin, e)
+      }
       PluginCache.createPlugin(file) //IncorrectPluginException, IOException
     }
     is PluginDescriptor.ByUpdateInfo -> {
-      val file = withRuntimeException { RepositoryManager.getInstance().getPluginFile(plugin.updateInfo) } ?: throw noSuchUpdate(plugin)
+      //firstly test the Repository connection
+      withConnectionCheck { RepositoryManager.getInstance().findUpdateById(0) }
+
+      val file: File
+      try {
+        file = RepositoryManager.getInstance().getPluginFile(plugin.updateInfo) ?: throw noSuchUpdate(plugin)
+      } catch (e: Exception) {
+        throw noSuchUpdate(plugin, e)
+      }
       PluginCache.createPlugin(file) //IncorrectPluginException, IOException
     }
   }
 
-  private fun <T> withRuntimeException(block: () -> T): T {
+  private fun <T> withConnectionCheck(block: () -> T): T {
     try {
       return block()
     } catch(ie: InterruptedException) {
@@ -112,8 +131,8 @@ object VParamsCreator {
     }
   }
 
-  private fun noSuchUpdate(plugin: PluginDescriptor): UpdateNotFoundException {
-    return UpdateNotFoundException("Plugin ${plugin.presentableName()} is not found in the Plugin repository")
+  private fun noSuchUpdate(plugin: PluginDescriptor, exception: Exception? = null): UpdateNotFoundException {
+    return UpdateNotFoundException("Plugin ${plugin.presentableName()} is not found in the Plugin repository${if (exception != null) exception.message ?: exception.javaClass.name else ""}")
   }
 
   fun getIde(ideDescriptor: IdeDescriptor): Ide = when (ideDescriptor) {
