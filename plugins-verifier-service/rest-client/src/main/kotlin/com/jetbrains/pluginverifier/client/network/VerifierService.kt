@@ -17,6 +17,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl
 import java.io.File
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 val LOG: Logger = LoggerFactory.getLogger(VerifierService::class.java)
@@ -42,9 +43,18 @@ object MultipartUtil {
 val REQUEST_PERIOD: Long = 5000
 
 fun <T> Call<T>.executeSuccessfully(): Response<T> {
-  val response = this.execute()
+  val server = "${this.request().url().host()}:${this.request().url().port()}"
+  val response: Response<T>?
+  try {
+    response = this.execute()
+  } catch(e: IOException) {
+    throw RuntimeException("The server $server is not available")
+  }
   if (response.isSuccessful) {
     return response
+  }
+  if (response.code() == 500) {
+    throw RuntimeException("The server $server has faced unexpected problems (500 Internal Server Error)")
   }
   throw RuntimeException("The response status code is ${response.code()}: ${response.errorBody().string()}")
 }
