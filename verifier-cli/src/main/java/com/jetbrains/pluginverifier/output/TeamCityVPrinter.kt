@@ -140,6 +140,9 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
                 is VResult.BadPlugin -> {
                   tcLog.testStdErr(testName, "Plugin is invalid: ${result.overview}")
                 }
+                is VResult.NotFound -> {
+                  /*Suppose it is ok*/
+                }
 
               }
             }
@@ -234,6 +237,9 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
         is VResult.Problems -> result.problems.keySet().forEach { affected.put(it, result.pluginDescriptor) }
         is VResult.BadPlugin -> {
           affected.put(BrokenPluginProblem(result.overview), result.pluginDescriptor)
+        }
+        is VResult.NotFound -> {
+
         }
       }
     }

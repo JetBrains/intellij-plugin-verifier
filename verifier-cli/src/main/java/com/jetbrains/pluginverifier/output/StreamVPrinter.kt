@@ -23,6 +23,7 @@ class StreamVPrinter(private val out: PrintStream) : VPrinter {
           }
         }
         is VResult.BadPlugin -> out.println("With the $ideVersion it is broken ${it.overview}")
+        is VResult.NotFound -> out.println("The plugin $plugin is not found in the Repository: ${it.overview}")
       }
     }
   }

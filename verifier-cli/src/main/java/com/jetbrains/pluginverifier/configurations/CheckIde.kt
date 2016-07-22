@@ -199,6 +199,7 @@ class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
           is VResult.Nice -> setOf()
           is VResult.Problems -> it.problems.keySet()
           is VResult.BadPlugin -> setOf(Any())
+          is VResult.NotFound -> setOf()
         }
       }.distinct().size
       if (totalProblemsNumber > 0) {

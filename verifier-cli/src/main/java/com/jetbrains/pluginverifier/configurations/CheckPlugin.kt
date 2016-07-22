@@ -95,9 +95,10 @@ class CheckPluginResults(val vResults: VResults) : Results {
     if (setBuildStatus) {
       val totalProblemsNumber = vResults.results.flatMap {
         when (it) {
-          is VResult.Nice -> setOf<Any>()
+          is VResult.Nice -> setOf()
           is VResult.Problems -> it.problems.keySet()
           is VResult.BadPlugin -> setOf(Any())
+          is VResult.NotFound -> setOf()
         }
       }.distinct().size
       if (totalProblemsNumber > 0) {

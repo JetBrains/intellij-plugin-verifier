@@ -70,6 +70,7 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
                         is VResult.Nice -> ""
                         is VResult.Problems -> "<small>" + vResult.problems.keySet().size + " problems found</small>"
                         is VResult.BadPlugin -> "<small>Plugin is invalid</small>"
+                        is VResult.NotFound -> "<small>Plugin $pluginId:$version is not found in the Repository</small>"
                       })
 
                   out.printf("  <div>\n")
@@ -83,6 +84,9 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
                     }
                     is VResult.BadPlugin -> {
                       createProblemTab(out, vResult.overview, listOf(ProblemLocation.fromPlugin(vResult.pluginDescriptor.pluginId)))
+                    }
+                    is VResult.NotFound -> {
+                      out.printf("The plugin ${vResult.pluginDescriptor.presentableName()} is not found in the Repository")
                     }
                   }
 
