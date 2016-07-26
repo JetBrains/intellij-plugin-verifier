@@ -23,3 +23,6 @@ data class CheckPluginAgainstSinceUntilBuildsRunnerParams(@SerializedName("jdkVe
 
 data class CheckPluginRunnerParams(@SerializedName("jdkVersion") val jdkVersion: JdkVersion,
                                    @SerializedName("vOptions") val vOptions: VOptions)
+
+data class CheckTrunkApiRunnerParams(@SerializedName("jdkVersion") val jdkVersion: JdkVersion,
+                                     @SerializedName("vOptions") val vOptions: VOptions)
