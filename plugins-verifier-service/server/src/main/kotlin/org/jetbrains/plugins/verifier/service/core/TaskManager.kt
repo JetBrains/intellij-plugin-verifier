@@ -88,7 +88,7 @@ object TaskManager : ITaskManager {
                        val progress: Progress = DefaultProgress()) : Runnable {
 
     override fun run() {
-      LOG.info("Task #$taskId is starting")
+      LOG.info("Task #$taskId ${task.presentableName()} is starting")
       status = Status.RUNNING
       try {
         task.compute(progress)
