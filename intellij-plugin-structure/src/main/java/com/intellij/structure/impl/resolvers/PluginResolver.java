@@ -42,26 +42,26 @@ public class PluginResolver extends Resolver {
     myPlugin = plugin;
     try {
       myResolver = loadClasses(myPluginFile);
-    } catch (IncorrectPluginException e) {
+    } catch (Exception e) {
       if (myDeleteOnClose) {
         FileUtils.deleteQuietly(myPluginFile);
       }
-      throw e;
+      throw (e instanceof IncorrectPluginException ? ((IncorrectPluginException) e) : new RuntimeException(e));
     }
   }
 
   @NotNull
   public static PluginResolver createPluginResolver(@NotNull Plugin plugin) throws IncorrectPluginException, IOException {
     File file = plugin.getPluginFile();
-    if (file.isDirectory() || (file.exists() && PluginManagerImpl.isJarOrZip(file))) {
+    if (!file.exists()) {
+      throw new IllegalArgumentException("Plugin file doesn't exist " + file);
+    }
+    if (file.isDirectory() || PluginManagerImpl.isJarOrZip(file)) {
       if (StringUtil.endsWithIgnoreCase(file.getName(), ".zip")) {
         File extracted = PluginExtractor.extractPlugin(file);
         return new PluginResolver(plugin, extracted, true);
       }
       return new PluginResolver(plugin, file, false);
-    }
-    if (!file.exists()) {
-      throw new IllegalArgumentException("Plugin file doesn't exist " + file);
     }
     throw new IllegalArgumentException("Incorrect plugin file type " + file.getName() + ": expected a directory, a .zip or a .jar archive");
   }

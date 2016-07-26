@@ -25,12 +25,17 @@ public class PluginExtractor {
   public static File extractPlugin(@NotNull File archive) throws IOException, IncorrectPluginException {
     //TODO: add some caching of the extracted plugins
 
-    File tmp = createTempDir(archive);
+    File tmp = createTempDir(archive.getName());
 
-    final AbstractUnArchiver ua = createUnArchiver(archive);
-    ua.enableLogging(new ConsoleLogger(Logger.LEVEL_WARN, ""));
-    ua.setDestDirectory(tmp);
-    ua.extract();
+    try {
+      final AbstractUnArchiver ua = createUnArchiver(archive);
+      ua.enableLogging(new ConsoleLogger(Logger.LEVEL_WARN, ""));
+      ua.setDestDirectory(tmp);
+      ua.extract();
+    } catch (Exception e) {
+      FileUtils.deleteQuietly(tmp);
+      throw new IncorrectPluginException("Unable to extract plugin file " + archive, e);
+    }
 
     /*
       Check if the given .zip file actually contains a single .jar entry (a.zip!/b.jar!/META-INF/plugin.xml)
@@ -38,29 +43,41 @@ public class PluginExtractor {
     */
     Collection<File> files = FileUtils.listFiles(tmp, new String[]{"jar"}, false);
     if (files.size() > 1) {
+      FileUtils.deleteQuietly(tmp);
       throw new IncorrectPluginException("Plugin archive contains multiple .jar files representing plugins");
     }
     if (files.size() == 1) {
-      File singleJar = files.iterator().next();
+      try {
+        File singleJar = files.iterator().next();
 
-      //move this single jar outside from the extracted directory
-      File file = File.createTempFile("plugin_", ".jar", getCacheDir());
-      FileUtils.copyFile(singleJar, file);
-
-      //delete firstly extracted directory
-      FileUtils.deleteQuietly(tmp);
-      return file;
+        //move this single jar outside from the extracted directory
+        File tmpFile = File.createTempFile("plugin_", ".jar", getCacheDir());
+        try {
+          FileUtils.copyFile(singleJar, tmpFile);
+          return tmpFile;
+        } catch (Exception e) {
+          FileUtils.deleteQuietly(tmpFile);
+          throw new IncorrectPluginException("Unable to read plugin jar file " + singleJar.getName(), e);
+        }
+      } finally {
+        //delete firstly extracted directory
+        FileUtils.deleteQuietly(tmp);
+      }
     }
 
-    stripTopLevelDirectory(tmp);
-    FileUtils.forceDeleteOnExit(tmp);
-    return tmp;
+    try {
+      stripTopLevelDirectory(tmp);
+      return tmp;
+    } catch (Exception e) {
+      FileUtils.deleteQuietly(tmp);
+      throw new IncorrectPluginException("Unable to read plugin files", e);
+    }
   }
 
   @NotNull
-  private static File createTempDir(@NotNull File archive) throws IOException {
+  private static File createTempDir(String pluginName) throws IOException {
     File cacheDir = getCacheDir();
-    String baseName = "plugin_" + archive.getName() + "_" + System.currentTimeMillis();
+    String baseName = "plugin_" + pluginName + "_" + System.currentTimeMillis();
     for (int counter = 0; counter < TEMP_DIR_ATTEMPTS; counter++) {
       File tempDir = new File(cacheDir, baseName + counter);
       try {
