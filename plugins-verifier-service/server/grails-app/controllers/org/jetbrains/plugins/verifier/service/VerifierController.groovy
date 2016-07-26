@@ -54,7 +54,7 @@ class VerifierController {
       return
     }
     def resultJson = GSON.toJson(result)
-    log.info("Task ${taskId} result: $resultJson")
+    log.debug("Task ${taskId} result: $resultJson")
     sendJson(resultJson)
   }
 

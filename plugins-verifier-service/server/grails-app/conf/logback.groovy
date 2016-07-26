@@ -7,10 +7,12 @@ import grails.util.Environment
 
 statusListener OnConsoleStatusListener
 
+String timedPattern = "%d{yyyy-MM-dd'T'HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
 //http://logback.qos.ch/manual/groovy.html
 appender('STDOUT', ConsoleAppender) {
   encoder(PatternLayoutEncoder) {
-    pattern = "%d{yyyy-MM-dd'T'HH:mm:ss,SSS} [%thread] %-5level %logger{36} - %msg%n"
+    pattern = timedPattern
   }
 }
 
@@ -20,15 +22,16 @@ appender('FILE', FileAppender) {
   file = "$home/logs/$logName"
   append = true
   encoder(PatternLayoutEncoder) {
-    pattern = "%d{yyyy-MM-dd'T'HH:mm:ss,SSS} [%thread] %-5level %logger{36} - %msg%n"
+    pattern = timedPattern
   }
 }
 
 logger("com.jetbrains.pluginverifier.misc.DownloadManager", OFF)
 logger("com.intellij.structure", ERROR, ['STDOUT'])
-logger("com.jetbrains.pluginverifier", INFO, ['FILE'])
-logger("grails.app.controllers", DEBUG, ['STDOUT'])
-logger("grails.app.services", DEBUG, ['STDOUT'])
+logger("com.jetbrains.pluginverifier.api.VManager", TRACE, ['STDOUT'], false)
+logger("com.jetbrains.pluginverifier", INFO, ['STDOUT'])
+logger("grails.app.controllers", DEBUG, ['STDOUT'], false)
+logger("grails.app.services", DEBUG, ['STDOUT'], false)
 
 root(ERROR, ['STDOUT'])
 
@@ -38,7 +41,7 @@ if (Environment.isDevelopmentMode() && targetDir) {
     file = "${targetDir}/stacktrace.log"
     append = true
     encoder(PatternLayoutEncoder) {
-      pattern = "%level %logger - %msg%n"
+      pattern = timedPattern
     }
   }
   logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
