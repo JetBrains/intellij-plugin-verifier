@@ -13,7 +13,7 @@ class Client {
 
   companion object {
 
-    private val COMMANDS = arrayOf(GetResultCommand(), CancelTaskCommand(), CheckIdeCommand(), CheckPluginCommand(), CheckPluginAgainstSinceUntilCommand())
+    private val COMMANDS = arrayOf(GetResultCommand(), CancelTaskCommand(), CheckIdeCommand(), CheckPluginCommand(), CheckPluginAgainstSinceUntilCommand(), CheckTrunkApiCommand())
 
     private val LOG = LoggerFactory.getLogger(Client::class.java)
 
@@ -24,9 +24,10 @@ class Client {
       if (freeArgs.isEmpty()) {
         throw IllegalArgumentException("Command is not specified")
       }
-      val command = freeArgs[0]
+      val commandName = freeArgs[0]
 
-      COMMANDS.find { it.name().equals(command) }!!.execute(opts, freeArgs.drop(1))
+      val command = COMMANDS.find { it.name().equals(commandName) } ?: throw IllegalArgumentException("Command $commandName is unknown")
+      command.execute(opts, freeArgs.drop(1))
     }
 
   }
