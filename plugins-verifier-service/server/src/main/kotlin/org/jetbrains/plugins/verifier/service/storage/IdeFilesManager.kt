@@ -83,7 +83,7 @@ object IdeFilesManager : IIdeFilesManager {
 
   @Synchronized
   override fun deleteIde(version: IdeVersion) {
-    LOG.info("Deleting $version")
+    LOG.info("Deleting IDE #$version")
     deleteQueue.add(version)
     if (!lockedIdes.contains(version)) {
       onRelease(version)
@@ -92,6 +92,7 @@ object IdeFilesManager : IIdeFilesManager {
 
   @Synchronized
   override fun addIde(ideFile: File): Boolean {
+    LOG.info("Adding IDE from file $ideFile")
     if (!ideFile.exists()) {
       throw IllegalArgumentException("The IDE file $ideFile doesn't exist")
     }
@@ -142,6 +143,7 @@ object IdeFilesManager : IIdeFilesManager {
     val destination = FileManager.getFileByName(version.asString(), FileType.IDE)
     try {
       ideDir.copyRecursively(destination, true)
+      LOG.info("IDE #$version is saved")
     } catch(e: Exception) {
       destination.deleteLogged()
       throw e

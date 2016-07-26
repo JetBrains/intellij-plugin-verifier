@@ -15,11 +15,17 @@ import org.jetbrains.plugins.verifier.service.core.Task
 import org.jetbrains.plugins.verifier.service.params.CheckIdeRunnerParams
 import org.jetbrains.plugins.verifier.service.storage.JdkManager
 import org.jetbrains.plugins.verifier.service.util.deleteLogged
+import org.slf4j.LoggerFactory
 import java.io.File
 
 class CheckIdeRunner(val ideFile: File,
                      val deleteOnCompletion: Boolean,
                      val runnerParams: CheckIdeRunnerParams) : Task<CheckIdeResults>() {
+
+  companion object {
+    private val LOG = LoggerFactory.getLogger(CheckIdeRunner::class.java)
+  }
+
   override fun presentableName(): String = "CheckIde"
 
   override fun computeImpl(progress: Progress): CheckIdeResults {
@@ -35,6 +41,8 @@ class CheckIdeRunner(val ideFile: File,
 
       val jdkDescriptor = JdkDescriptor.ByFile(JdkManager.getJdkHome(runnerParams.jdkVersion))
       val checkIdeParams = CheckIdeParams(IdeDescriptor.ByInstance(ide), jdkDescriptor, pluginsToCheck, runnerParams.excludedPlugins, runnerParams.vOptions, Resolver.getEmptyResolver(), BridgeVProgress(progress))
+
+      LOG.debug("CheckIde #$taskId arguments: $checkIdeParams")
 
       return CheckIdeConfiguration(checkIdeParams).execute()
     } finally {

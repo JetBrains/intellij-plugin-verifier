@@ -22,12 +22,12 @@ class CheckPluginAgainstSinceUntilBuildsRunner(val pluginFile: File,
                                                val params: CheckPluginAgainstSinceUntilBuildsRunnerParams) : Task<CheckPluginAgainstSinceUntilBuildsResults>() {
   override fun presentableName(): String = "CheckPluginWithSinceUntilBuilds"
 
-  private val LOG = LoggerFactory.getLogger(CheckPluginAgainstSinceUntilBuildsRunner::class.java)
+  companion object {
+    private val LOG = LoggerFactory.getLogger(CheckPluginAgainstSinceUntilBuildsRunner::class.java)
+  }
 
   override fun computeImpl(progress: Progress): CheckPluginAgainstSinceUntilBuildsResults {
     try {
-      LOG.info("The task $this is ready to start")
-
       val plugin: Plugin
       try {
         plugin = PluginManager.getInstance().createPlugin(pluginFile)
@@ -47,13 +47,11 @@ class CheckPluginAgainstSinceUntilBuildsRunner(val pluginFile: File,
         return CheckPluginAgainstSinceUntilBuildsResults(VResults(listOf(VResult.BadPlugin(pluginDescriptor, "The plugin ${plugin.toString()} has not specified the <idea-version> 'since-build' attribute. See  <a href=\"http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html\">Plugin Configuration File - plugin.xml<\\a>"))))
       }
 
-      LOG.info("Verifying plugin $plugin against its specified [$sinceBuild; $untilBuild] builds")
+      LOG.debug("Verifying plugin $plugin against its specified [$sinceBuild; $untilBuild] builds")
 
       val compatibleIdes = IdeFilesManager.ideList().filter { sinceBuild.compareTo(it) <= 0 && (untilBuild == null || it.compareTo(untilBuild) <= 0) }
 
-      LOG.info("There are the following IDE-s on the server: ${IdeFilesManager.ideList()}")
-
-      LOG.info("There are the following IDE-s compatible with [$sinceBuild; $untilBuild] on the Server: $compatibleIdes")
+      LOG.debug("IDE-s on the server: ${IdeFilesManager.ideList()}; Updates compatible with [$sinceBuild; $untilBuild]: $compatibleIdes")
 
       if (compatibleIdes.isEmpty()) {
         //TODO: download from the IDE repository.
@@ -68,7 +66,7 @@ class CheckPluginAgainstSinceUntilBuildsRunner(val pluginFile: File,
         val jdkDescriptor = JdkDescriptor.ByFile(JdkManager.getJdkHome(params.jdkVersion))
         val params = CheckPluginParams(listOf(pluginDescriptor), ideDescriptors, jdkDescriptor, params.vOptions, Resolver.getEmptyResolver(), BridgeVProgress(progress))
 
-        LOG.info("Ready to start verification. Parameters: $params")
+        LOG.debug("CheckPlugin with [since; until] #$taskId arguments: $params")
 
         val results: VResults
         try {
@@ -80,9 +78,6 @@ class CheckPluginAgainstSinceUntilBuildsRunner(val pluginFile: File,
           LOG.error("Failed to verify the plugin $plugin", e)
           throw e
         }
-
-        LOG.info("The verification has been passed without exceptions.")
-
         return CheckPluginAgainstSinceUntilBuildsResults(results)
       } finally {
         locks.forEach { it.release() }

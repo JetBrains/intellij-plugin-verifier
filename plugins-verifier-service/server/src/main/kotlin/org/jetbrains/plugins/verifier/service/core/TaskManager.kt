@@ -4,6 +4,8 @@ import org.jetbrains.plugins.verifier.service.api.Result
 import org.jetbrains.plugins.verifier.service.api.Status
 import org.jetbrains.plugins.verifier.service.api.TaskId
 import org.jetbrains.plugins.verifier.service.api.TaskStatusDescriptor
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
@@ -25,6 +27,8 @@ object TaskManager : ITaskManager {
 
   private val completedTasks: Queue<TaskId> = LinkedList()
 
+  private val LOG: Logger = LoggerFactory.getLogger(TaskManager::class.java)
+
   @Synchronized
   override fun get(taskId: TaskId): Result<*>? {
     val worker = (tasks[taskId] ?: return null).second
@@ -41,6 +45,8 @@ object TaskManager : ITaskManager {
   @Synchronized
   override fun <T> enqueue(task: Task<T>): TaskId {
     val taskId = TaskId(counter++)
+
+    task.taskId = taskId
 
     val worker = Worker(task, taskId)
 
@@ -82,6 +88,7 @@ object TaskManager : ITaskManager {
                        val progress: Progress = DefaultProgress()) : Runnable {
 
     override fun run() {
+      LOG.info("Task #$taskId is starting")
       status = Status.RUNNING
       try {
         task.compute(progress)
@@ -89,6 +96,7 @@ object TaskManager : ITaskManager {
         status = Status.COMPLETE
         endTime = System.currentTimeMillis()
         onComplete(taskId)
+        LOG.info("Task #$taskId is finished")
       }
     }
 

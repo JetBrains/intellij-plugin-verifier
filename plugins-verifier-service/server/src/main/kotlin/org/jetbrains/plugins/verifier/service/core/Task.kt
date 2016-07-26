@@ -1,11 +1,12 @@
 package org.jetbrains.plugins.verifier.service.core
 
+import org.jetbrains.plugins.verifier.service.api.TaskId
 import org.slf4j.LoggerFactory
 
 /**
  * @author Sergey Patrikeev
  */
-abstract class Task<R>() {
+abstract class Task<R>(@Volatile var taskId: TaskId? = null) {
 
   @Volatile
   var result: R? = null
@@ -28,10 +29,10 @@ abstract class Task<R>() {
     try {
       result = computeImpl(progress)
     } catch(e: InterruptedException) {
-      LOG.info("The task $this was cancelled")
+      LOG.info("The task #$taskId was cancelled")
       exception = CancelledException()
     } catch(e: Exception) {
-      LOG.error("An exception in the Task $this", e)
+      LOG.error("Exception in the task #$taskId", e)
       exception = e
     }
   }
