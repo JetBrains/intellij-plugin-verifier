@@ -35,7 +35,7 @@ class CheckPlugin(val runnerParams: CheckPluginRunnerParams,
       val jdkDescriptor = JdkDescriptor.ByFile(JdkManager.getJdkHome(runnerParams.jdkVersion))
       val pluginDescriptors = pluginFiles.map { PluginDescriptor.ByFile("${it.nameWithoutExtension}", "", it) }
       val ideDescriptors = ideFiles.map { IdeManager.getInstance().createIde(it) }.map { IdeDescriptor.ByInstance(it) }
-      val params = CheckPluginParams(pluginDescriptors, ideDescriptors, jdkDescriptor, runnerParams.vOptions, Resolver.getEmptyResolver(), BridgeVProgress(progress))
+      val params = CheckPluginParams(pluginDescriptors, ideDescriptors, jdkDescriptor, runnerParams.vOptions, true, Resolver.getEmptyResolver(), BridgeVProgress(progress))
 
       LOG.debug("CheckPlugin #$taskId arguments: $params")
 

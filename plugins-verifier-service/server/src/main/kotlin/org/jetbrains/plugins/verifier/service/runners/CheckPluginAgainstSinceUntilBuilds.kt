@@ -64,7 +64,7 @@ class CheckPluginAgainstSinceUntilBuildsRunner(val pluginFile: File,
       try {
         val ideDescriptors = locks.map { IdeDescriptor.ByInstance(it.ide) }
         val jdkDescriptor = JdkDescriptor.ByFile(JdkManager.getJdkHome(params.jdkVersion))
-        val params = CheckPluginParams(listOf(pluginDescriptor), ideDescriptors, jdkDescriptor, params.vOptions, Resolver.getEmptyResolver(), BridgeVProgress(progress))
+        val params = CheckPluginParams(listOf(pluginDescriptor), ideDescriptors, jdkDescriptor, params.vOptions, true, Resolver.getEmptyResolver(), BridgeVProgress(progress))
 
         LOG.debug("CheckPlugin with [since; until] #$taskId arguments: $params")
 

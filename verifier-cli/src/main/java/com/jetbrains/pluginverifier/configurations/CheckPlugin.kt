@@ -25,7 +25,7 @@ object CheckPluginParamsParser : ParamsParser {
     val jdkDescriptor = JdkDescriptor.ByFile(CmdUtil.getJdkDir(opts))
     val vOptions = VOptionsUtil.parseOpts(opts)
     val externalClasspath = CmdUtil.getExternalClassPath(opts)
-    return CheckPluginParams(pluginFiles.map { PluginDescriptor.ByFile("${it.nameWithoutExtension}", "", it) }, ideDescriptors, jdkDescriptor, vOptions, externalClasspath)
+    return CheckPluginParams(pluginFiles.map { PluginDescriptor.ByFile("${it.nameWithoutExtension}", "", it) }, ideDescriptors, jdkDescriptor, vOptions, true, externalClasspath)
   }
 
   fun getPluginFiles(pluginToTestArg: String, ideVersions: List<IdeVersion>? = null): List<File> {
@@ -83,6 +83,7 @@ data class CheckPluginParams(val pluginDescriptors: List<PluginDescriptor>,
                              val ideDescriptors: List<IdeDescriptor>,
                              val jdkDescriptor: JdkDescriptor,
                              val vOptions: VOptions,
+                             val resolveDependenciesWithin: Boolean = false,
                              val externalClasspath: Resolver = Resolver.getEmptyResolver(),
                              val progress: VProgress = DefaultVProgress()) : Params
 
@@ -113,7 +114,7 @@ class CheckPluginConfiguration(val params: CheckPluginParams) : Configuration {
 
   override fun execute(): CheckPluginResults {
     val pluginsToCheck = params.pluginDescriptors.map { p -> params.ideDescriptors.map { p to it } }.flatten()
-    val vParams = VParams(params.jdkDescriptor, pluginsToCheck, params.vOptions, params.externalClasspath, true)
+    val vParams = VParams(params.jdkDescriptor, pluginsToCheck, params.vOptions, params.externalClasspath, params.resolveDependenciesWithin)
     val vResults = VManager.verify(vParams, params.progress)
 
     return CheckPluginResults(vResults)
