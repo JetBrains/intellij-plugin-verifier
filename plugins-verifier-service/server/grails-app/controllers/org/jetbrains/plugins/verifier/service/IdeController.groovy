@@ -11,38 +11,45 @@ import org.springframework.http.HttpStatus
 
 class IdeController {
 
+  private sendError(int statusCode, String msg) {
+    render(status: statusCode, text: msg, encoding: 'utf-8', contentType: 'text/plain')
+  }
+
   def list() {
     sendJson(IdeFilesManager.INSTANCE.ideList())
   }
 
   def upload() {
+    log.info("User is going to UPLOAD the new IDE file")
     def ideFile = params.ideFile
     if (!ideFile || ideFile.empty) {
       log.error("user attempted to upload empty IDE")
-      response.sendError(HttpStatus.BAD_REQUEST.value(), "IDE file is empty")
+      sendError(HttpStatus.BAD_REQUEST.value(), "IDE file is empty")
       return
     }
     if (!ideFile.getOriginalFilename().endsWith(".zip")) {
       log.error("user attempted to upload non-.zip IDE")
-      response.sendError(HttpStatus.BAD_REQUEST.value(), "IDE file should be a .zip archive")
+      sendError(HttpStatus.BAD_REQUEST.value(), "IDE file should be a .zip archive")
       return
     }
     File tempFile = FileManager.INSTANCE.createTempFile(ideFile.getOriginalFilename() as String)
     try {
       try {
+        log.debug("Temporarily save IDE to $tempFile")
         ideFile.transferTo(tempFile)
       } catch (Exception e) {
         log.error("unable to save IDE", e)
         LanguageUtilsKt.deleteLogged(tempFile)
-        response.sendError(HttpStatus.BAD_REQUEST.value(), "IDE is invalid")
+        sendError(HttpStatus.BAD_REQUEST.value(), "IDE is invalid")
         return
       }
       try {
         boolean success = IdeFilesManager.INSTANCE.addIde(tempFile)
         render([success: success] as JSON)
+        log.info("IDE file has been successfully uploaded. IDE list: ${IdeFilesManager.INSTANCE.ideList()}")
       } catch (Exception e) {
         log.error("unable to add the IDE", e)
-        response.sendError(HttpStatus.BAD_REQUEST.value(), "IDE is invalid")
+        sendError(HttpStatus.BAD_REQUEST.value(), "IDE is invalid")
       }
     } finally {
       LanguageUtilsKt.deleteLogged(tempFile)
@@ -51,19 +58,21 @@ class IdeController {
   }
 
   def delete(String version) {
+    log.info("User is going to DELETE the IDE file #$version")
     if (StringsKt.isNullOrBlank(version)) {
-      response.sendError(HttpStatus.BAD_REQUEST.value(), "Version $version is empty")
+      sendError(HttpStatus.BAD_REQUEST.value(), "Version $version is empty")
       return
     }
     IdeVersion ideVersion
     try {
       ideVersion = IdeVersion.createIdeVersion(version)
     } catch (Exception e) {
-      response.sendError(HttpStatus.BAD_REQUEST.value(), "Version $version is incorrect: ${e.message}")
+      sendError(HttpStatus.BAD_REQUEST.value(), "Version $version is incorrect: ${e.message}")
       return
     }
     IdeFilesManager.INSTANCE.deleteIde(ideVersion)
     render([success: true] as JSON)
+    log.info("IDE #$version has been successfully deleted")
   }
 
   private sendJson(Object obj) {
