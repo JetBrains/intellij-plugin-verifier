@@ -115,6 +115,7 @@ class VerifierController {
 
       def runner = new CheckPlugin(runnerParams, ideFiles, pluginFiles)
       def taskId = TaskManager.INSTANCE.enqueue(runner)
+      log.info("New Check-Plugin command is enqueued with taskId=$taskId")
       sendJson(taskId)
 
     } catch (Exception e) {
@@ -131,6 +132,7 @@ class VerifierController {
     def runner = new CheckIdeRunner(saved, true, params)
     def taskId = TaskManager.INSTANCE.enqueue(runner)
     sendJson(taskId)
+    log.info("New Check-Ide command is enqueued with taskId=$taskId")
   }
 
   def checkTrunkApi() {
@@ -140,6 +142,7 @@ class VerifierController {
     def runner = new CheckTrunkApiRunner(saved, true, params)
     def taskId = TaskManager.INSTANCE.enqueue(runner)
     sendJson(taskId)
+    log.info("New Check-Trunk-Api command is enqueued with taskId=$taskId")
   }
 
   private def File saveIdeTemporarily(ideFile) {
@@ -179,7 +182,7 @@ class VerifierController {
       log.info("ide file saved to ${savedIde}")
       return savedIde
     } catch (Exception e) {
-      log.debug("Unable to extract IDE file $tmpIdeFile", e)
+      log.error("Unable to extract IDE file $tmpIdeFile", e)
       sendError(HttpStatus.BAD_REQUEST.value(), "The IDE file is invalid ${e.message}")
       return null
     } finally {
@@ -194,6 +197,7 @@ class VerifierController {
     def runner = new CheckPluginAgainstSinceUntilBuildsRunner(saved, true, params)
     def taskId = TaskManager.INSTANCE.enqueue(runner)
     sendJson(taskId)
+    log.info("New Check-Plugin-With-[since;until] is enqueued with taskId=$taskId")
   }
 
   private File savePluginTemporarily(pluginFile) {
