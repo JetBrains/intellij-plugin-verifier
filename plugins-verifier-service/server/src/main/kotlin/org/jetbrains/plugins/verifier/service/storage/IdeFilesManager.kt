@@ -43,7 +43,7 @@ object IdeFilesManager : IIdeFilesManager {
   @Synchronized
   private fun releaseLock(lock: IdeLock) {
     val version = lock.ide.version
-    var cnt = lockedIdes.getOrElse(version, { throw IllegalStateException("Unregistered lock!") })
+    var cnt = lockedIdes.getOrElse(version, { throw AssertionError("Unregistered lock!") })
     cnt--
     if (cnt == 0) {
       lockedIdes.remove(version)
