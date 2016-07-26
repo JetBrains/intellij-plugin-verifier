@@ -80,7 +80,7 @@ public class PluginResolver extends Resolver {
       ce = e;
     }
     if (myDeleteOnClose) {
-      FileUtils.forceDelete(myPluginFile);
+      FileUtils.deleteQuietly(myPluginFile);
     }
     if (ce != null) {
       throw ce;
