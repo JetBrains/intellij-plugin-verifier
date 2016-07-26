@@ -78,7 +78,7 @@ class CheckIdeCommand : Command {
   }
 
   fun processResults(checkIdeResults: CheckIdeResults, opts: BaseCmdOpts, service: VerifierService) {
-    val report = CheckIdeReport.createReport(checkIdeResults.ideVersion, checkIdeResults.vResults.results)
+    val report = CheckIdeReport.createReport(checkIdeResults.ideVersion, checkIdeResults.vResults)
 
     if (opts.compareCheckIdeReport) {
       val vPrinter = TeamCityVPrinter(TeamCityLog(System.out), TeamCityVPrinter.GroupBy.parse(opts))
