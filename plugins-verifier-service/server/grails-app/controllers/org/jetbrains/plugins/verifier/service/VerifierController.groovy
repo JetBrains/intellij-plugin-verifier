@@ -10,9 +10,11 @@ import org.jetbrains.plugins.verifier.service.core.TaskManager
 import org.jetbrains.plugins.verifier.service.params.CheckIdeRunnerParams
 import org.jetbrains.plugins.verifier.service.params.CheckPluginAgainstSinceUntilBuildsRunnerParams
 import org.jetbrains.plugins.verifier.service.params.CheckPluginRunnerParams
+import org.jetbrains.plugins.verifier.service.params.CheckTrunkApiRunnerParams
 import org.jetbrains.plugins.verifier.service.runners.CheckIdeRunner
 import org.jetbrains.plugins.verifier.service.runners.CheckPlugin
 import org.jetbrains.plugins.verifier.service.runners.CheckPluginAgainstSinceUntilBuildsRunner
+import org.jetbrains.plugins.verifier.service.runners.CheckTrunkApiRunner
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.jetbrains.plugins.verifier.service.util.LanguageUtilsKt
 import org.jetbrains.plugins.verifier.service.util.UnarchiverUtilKt
@@ -127,6 +129,15 @@ class VerifierController {
     if (!saved) return
     def params = GSON.fromJson(params.params as String, CheckIdeRunnerParams.class)
     def runner = new CheckIdeRunner(saved, true, params)
+    def taskId = TaskManager.INSTANCE.enqueue(runner)
+    sendJson(taskId)
+  }
+
+  def checkTrunkApi() {
+    def saved = saveIdeTemporarily(params.ideFile)
+    if (!saved) return
+    def params = GSON.fromJson(params.params as String, CheckTrunkApiRunnerParams.class)
+    def runner = new CheckTrunkApiRunner(saved, true, params)
     def taskId = TaskManager.INSTANCE.enqueue(runner)
     sendJson(taskId)
   }

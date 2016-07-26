@@ -160,6 +160,14 @@ interface EnqueueTaskApi {
   fun checkIde(@Part ideFile: MultipartBody.Part, @Part parameters: MultipartBody.Part): Call<ResponseBody>
 
   /**
+   * The check-trunk-api command.
+   * The result is of type [org.jetbrains.plugins.verifier.service.results.CheckTrunkApiResults]
+   */
+  @Multipart
+  @POST("/verifier/checkTrunkApi")
+  fun checkTrunkApi(@Part ideFile: MultipartBody.Part, @Part parameters: MultipartBody.Part): Call<ResponseBody>
+
+  /**
    * The check plugin against <since; until> builds range.
    * The result is of type [org.jetbrains.plugins.verifier.service.results.CheckPluginAgainstSinceUntilBuildsResults]
    */
