@@ -10,8 +10,6 @@ import com.jetbrains.pluginverifier.configurations.CheckIdeParamsParser
 import com.jetbrains.pluginverifier.configurations.CheckIdeResults
 import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
-import com.jetbrains.pluginverifier.persistence.multimapFromMap
-import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.utils.CmdUtil
 import com.jetbrains.pluginverifier.utils.VOptionsUtil
@@ -80,7 +78,7 @@ class CheckIdeCommand : Command {
   }
 
   fun processResults(checkIdeResults: CheckIdeResults, opts: BaseCmdOpts, service: VerifierService) {
-    val report = checkIdeResults.getCheckIdeReport()
+    val report = CheckIdeReport.createReport(checkIdeResults.ideVersion, checkIdeResults.vResults.results)
 
     if (opts.compareCheckIdeReport) {
       val vPrinter = TeamCityVPrinter(TeamCityLog(System.out), TeamCityVPrinter.GroupBy.parse(opts))
@@ -137,22 +135,9 @@ class CheckIdeCommand : Command {
 
 
   private fun compareWithPreviousChecks(report: CheckIdeReport, service: VerifierService): CheckIdeCompareResult {
-    val previousReports = findPreviousReports(report.ideVersion, service)
-    val firstOccurrences: Map<Problem, IdeVersion> = (previousReports + CheckIdeReport(report.ideVersion, report.pluginProblems))
-        .flatMap { r -> r.pluginProblems.values().map { it to r.ideVersion } }
-        .groupBy { it.first }
-        .filterValues { it.isNotEmpty() }
-        .mapValues { it.value.map { it.second }.min()!! }
-    if (previousReports.isEmpty()) {
-      return CheckIdeCompareResult(report.ideVersion, report.pluginProblems, firstOccurrences)
-    }
-    val firstProblems = previousReports[0].pluginProblems.values().distinct().toSet()
-    val newProblems = report.pluginProblems.asMap()
-        .mapValues { it.value.filterNot { firstProblems.contains(it) } }
-        .filterValues { it.isNotEmpty() }
-        .multimapFromMap()
-    return CheckIdeCompareResult(report.ideVersion, newProblems, firstOccurrences)
+    return CheckIdeCompareResult.compareWithPreviousReports(findPreviousReports(report.ideVersion, service), report)
   }
+
 
   private fun checkIdeRunnerParams(opts: BaseCmdOpts): CheckIdeRunnerParams {
     val jdkVersion: JdkVersion = BaseCmdUtil.parseJdkVersion(opts) ?: throw IllegalArgumentException("Specify the JDK version to check with")
@@ -160,7 +145,7 @@ class CheckIdeCommand : Command {
     val actualIdeVersion = CmdUtil.takeVersionFromCmd(opts)
     val vOptions = VOptionsUtil.parseOpts(opts)
 
-    if (opts.externalClassesPrefixes.isNotEmpty() || opts.externalClasspath.isNotEmpty()) TODO()
+    if (opts.externalClasspath.isNotEmpty()) TODO() //TODO: external jars
 
     val (checkAllBuilds, checkLastBuilds) = CheckIdeParamsParser.parsePluginToCheckList(opts)
     val excludedPlugins = CheckIdeParamsParser.parseExcludedPlugins(opts)

@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.configurations.CheckIdeParamsParser
 import com.jetbrains.pluginverifier.configurations.CheckPluginConfiguration
 import com.jetbrains.pluginverifier.configurations.CheckPluginParamsParser
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
+import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.sampullara.cli.Args
 import java.io.File
@@ -36,7 +37,7 @@ object PluginVerifierMain {
         val checkIdeResults = CheckIdeConfiguration(params).execute()
 
         if (opts.saveCheckIdeReport != null) {
-          checkIdeResults.getCheckIdeReport().saveToFile(File(opts.saveCheckIdeReport))
+          CheckIdeReport.createReport(checkIdeResults.ideVersion, checkIdeResults.vResults.results).saveToFile(File(opts.saveCheckIdeReport))
         }
         if (opts.needTeamCityLog) {
           checkIdeResults.printTcLog(TeamCityVPrinter.GroupBy.parse(opts), true)

@@ -6,6 +6,8 @@ import com.github.salomonbrys.kotson.jsonSerializer
 import com.google.common.collect.Multimap
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.IdeVersion
+import com.jetbrains.pluginverifier.api.PluginDescriptor
+import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.persistence.GsonHolder
 import com.jetbrains.pluginverifier.persistence.multimapFromMap
@@ -45,6 +47,16 @@ data class CheckIdeReport(@SerializedName("ideVersion") val ideVersion: IdeVersi
   }
 
   companion object {
+
+    fun createReport(ideVersion: IdeVersion, results: List<VResult>): CheckIdeReport {
+      val report = CheckIdeReport(ideVersion, results
+          .filter { it is VResult.Problems }
+          .map { it as VResult.Problems }
+          .filter { it.pluginDescriptor is PluginDescriptor.ByUpdateInfo }
+          .associateBy({ (it.pluginDescriptor as PluginDescriptor.ByUpdateInfo).updateInfo }, { it.problems.keySet() }).multimapFromMap())
+      return report
+    }
+
     fun loadFromFile(file: File): CheckIdeReport {
       val lines = file.readLines()
       if (lines.isEmpty()) {

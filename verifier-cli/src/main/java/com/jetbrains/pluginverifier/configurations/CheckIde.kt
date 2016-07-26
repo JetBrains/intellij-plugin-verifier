@@ -211,16 +211,6 @@ class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
     }
   }
 
-  fun getCheckIdeReport(): CheckIdeReport {
-    val report = CheckIdeReport(ideVersion, vResults.results
-        .filter { it is VResult.Problems }
-        .map { it as VResult.Problems }
-        .filter { it.pluginDescriptor is PluginDescriptor.ByUpdateInfo }
-        .associateBy({ (it.pluginDescriptor as PluginDescriptor.ByUpdateInfo).updateInfo }, { it.problems.keySet() }).multimapFromMap())
-    return report
-  }
-
-
 }
 
 class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
@@ -273,4 +263,25 @@ class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
 
 data class CheckIdeCompareResult(val checkIdeVersion: IdeVersion,
                                  val pluginProblems: Multimap<UpdateInfo, Problem>,
-                                 val firstOccurrences: Map<Problem, IdeVersion>)
+                                 val firstOccurrences: Map<Problem, IdeVersion>) {
+
+  companion object {
+    fun compareWithPreviousReports(previousReports: List<CheckIdeReport>, currentReport: CheckIdeReport): CheckIdeCompareResult {
+      val firstOccurrences: Map<Problem, IdeVersion> = (previousReports + CheckIdeReport(currentReport.ideVersion, currentReport.pluginProblems))
+          .flatMap { r -> r.pluginProblems.values().map { it to r.ideVersion } }
+          .groupBy { it.first }
+          .filterValues { it.isNotEmpty() }
+          .mapValues { it.value.map { it.second }.min()!! }
+      if (previousReports.isEmpty()) {
+        return CheckIdeCompareResult(currentReport.ideVersion, currentReport.pluginProblems, firstOccurrences)
+      }
+      val firstProblems = previousReports[0].pluginProblems.values().distinct().toSet()
+      val newProblems = currentReport.pluginProblems.asMap()
+          .mapValues { it.value.filterNot { firstProblems.contains(it) } }
+          .filterValues { it.isNotEmpty() }
+          .multimapFromMap()
+      return CheckIdeCompareResult(currentReport.ideVersion, newProblems, firstOccurrences)
+    }
+
+  }
+}
