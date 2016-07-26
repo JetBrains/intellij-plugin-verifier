@@ -41,10 +41,10 @@ class CheckTrunkApiRunner(val ideFile: File,
       } catch (e: Exception) {
         throw IllegalArgumentException("The supplied IDE $ideFile is broken", e)
       }
-      val majorBuildLock: IdeFilesManager.IdeLock? = firstMajorBuild(ide.version)
+      val majorBuildLock: IdeFilesManager.IdeLock? = firstMajorBuild(ide.version.baselineVersion)
       if (majorBuildLock == null) {
         val msg = "There is no major IDE update on the Server with which to compare check results"
-        LOG.warn(msg)
+        LOG.error(msg)
         throw IllegalStateException(msg)
       }
 
@@ -85,10 +85,10 @@ class CheckTrunkApiRunner(val ideFile: File,
   }
 
 
-  private fun firstMajorBuild(version: IdeVersion): IdeFilesManager.IdeLock? {
+  private fun firstMajorBuild(baselineNumber: Int): IdeFilesManager.IdeLock? {
     val major: IdeVersion? = IdeFilesManager
         .ideList()
-        .filter { it.baselineVersion == version.baselineVersion }
+        .filter { it.baselineVersion == baselineNumber }
         .sorted()
         .firstOrNull()
     if (major != null) {
