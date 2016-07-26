@@ -37,7 +37,7 @@ object PluginVerifierMain {
         val checkIdeResults = CheckIdeConfiguration(params).execute()
 
         if (opts.saveCheckIdeReport != null) {
-          CheckIdeReport.createReport(checkIdeResults.ideVersion, checkIdeResults.vResults.results).saveToFile(File(opts.saveCheckIdeReport))
+          CheckIdeReport.createReport(checkIdeResults.ideVersion, checkIdeResults.vResults).saveToFile(File(opts.saveCheckIdeReport))
         }
         if (opts.needTeamCityLog) {
           checkIdeResults.printTcLog(TeamCityVPrinter.GroupBy.parse(opts), true)

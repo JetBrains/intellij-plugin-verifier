@@ -8,6 +8,7 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VResult
+import com.jetbrains.pluginverifier.api.VResults
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.persistence.GsonHolder
 import com.jetbrains.pluginverifier.persistence.multimapFromMap
@@ -48,8 +49,8 @@ data class CheckIdeReport(@SerializedName("ideVersion") val ideVersion: IdeVersi
 
   companion object {
 
-    fun createReport(ideVersion: IdeVersion, results: List<VResult>): CheckIdeReport {
-      val report = CheckIdeReport(ideVersion, results
+    fun createReport(ideVersion: IdeVersion, results: VResults): CheckIdeReport {
+      val report = CheckIdeReport(ideVersion, results.results
           .filter { it is VResult.Problems }
           .map { it as VResult.Problems }
           .filter { it.pluginDescriptor is PluginDescriptor.ByUpdateInfo }
