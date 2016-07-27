@@ -35,6 +35,7 @@ public class PluginResolver extends Resolver {
   @NotNull private final Plugin myPlugin;
   private final boolean myDeleteOnClose;
   private final Resolver myResolver;
+  private volatile boolean isClosed;
 
   private PluginResolver(@NotNull Plugin plugin, @NotNull File extracted, boolean deleteOnClose) throws IncorrectPluginException {
     myPluginFile = extracted;
@@ -73,17 +74,17 @@ public class PluginResolver extends Resolver {
 
   @Override
   public void close() throws IOException {
-    IOException ce = null;
+    if (isClosed) {
+      return;
+    }
+    isClosed = true;
+
     try {
       myResolver.close();
-    } catch (IOException e) {
-      ce = e;
-    }
-    if (myDeleteOnClose) {
-      FileUtils.deleteQuietly(myPluginFile);
-    }
-    if (ce != null) {
-      throw ce;
+    } finally {
+      if (myDeleteOnClose) {
+        FileUtils.deleteQuietly(myPluginFile);
+      }
     }
   }
 
