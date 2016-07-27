@@ -89,10 +89,7 @@ public class JarFileResolver extends Resolver {
 
   @Override
   public Resolver getClassLocation(@NotNull String className) {
-    if (myClassesNames.contains(className)) {
-      return this;
-    }
-    return null;
+    return myClassesNames.contains(className) ? this : null;
   }
 
   @Override

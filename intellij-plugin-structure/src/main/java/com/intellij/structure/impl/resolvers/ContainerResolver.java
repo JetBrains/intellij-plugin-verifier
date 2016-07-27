@@ -13,12 +13,14 @@ import java.util.*;
  */
 public class ContainerResolver extends Resolver {
 
+  private final List<Resolver> myResolvers;
   private final Map<String, Resolver> myClassToResolver = new HashMap<String, Resolver>();
   private final String myPresentableName;
 
   private ContainerResolver(@NotNull String presentableName, @NotNull List<Resolver> resolvers) {
+    myResolvers = new ArrayList<Resolver>(resolvers);
     myPresentableName = presentableName;
-    fillClassMap(resolvers);
+    fillClassMap();
   }
 
   @NotNull
@@ -42,10 +44,10 @@ public class ContainerResolver extends Resolver {
     return nonEmpty;
   }
 
-  private void fillClassMap(@NotNull List<Resolver> resolvers) {
+  private void fillClassMap() {
     //the class will be mapped to the first containing resolver
-    for (int i = resolvers.size() - 1; i >= 0; i--) {
-      Resolver resolver = resolvers.get(i);
+    for (int i = myResolvers.size() - 1; i >= 0; i--) {
+      Resolver resolver = myResolvers.get(i);
       for (String aClass : resolver.getAllClasses()) {
         myClassToResolver.put(aClass, resolver);
       }
@@ -76,25 +78,21 @@ public class ContainerResolver extends Resolver {
   @Override
   @Nullable
   public ClassNode findClass(@NotNull String className) throws IOException {
-    if (!myClassToResolver.containsKey(className)) {
-      return null;
-    }
-    return myClassToResolver.get(className).findClass(className);
+    Resolver resolver = myClassToResolver.get(className);
+    return resolver == null ? null : resolver.findClass(className);
   }
 
   @Override
   @Nullable
   public Resolver getClassLocation(@NotNull String className) {
-    if (!myClassToResolver.containsKey(className)) {
-      return null;
-    }
-    return myClassToResolver.get(className).getClassLocation(className);
+    Resolver resolver = myClassToResolver.get(className);
+    return resolver == null ? null : resolver.getClassLocation(className);
   }
 
   @Override
   public void close() throws IOException {
     IOException first = null;
-    for (Resolver resolver : myClassToResolver.values()) {
+    for (Resolver resolver : myResolvers) {
       try {
         resolver.close();
       } catch (IOException e) {
