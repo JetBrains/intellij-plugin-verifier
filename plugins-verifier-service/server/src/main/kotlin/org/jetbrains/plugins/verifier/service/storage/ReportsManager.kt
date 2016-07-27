@@ -15,13 +15,19 @@ object ReportsManager {
 
   @Synchronized
   fun saveReport(file: File): Boolean {
-    LOG.info("Saving report $file")
+    LOG.info("Saving report from file $file")
     val ideReport: CheckIdeReport
     try {
       ideReport = CheckIdeReport.loadFromFile(file)
     } catch(e: Exception) {
       throw IllegalArgumentException("Report file ${file.name} is invalid", e)
     }
+    return saveReport(ideReport)
+  }
+
+  @Synchronized
+  fun saveReport(ideReport: CheckIdeReport): Boolean {
+    LOG.info("Saving report IDE=#${ideReport.ideVersion}, Verifier-Version=#${ideReport.verifierVersion}")
     val report = FileManager.getFileByName(ideReport.ideVersion.asString(), FileType.REPORT)
     if (report.exists()) {
       val oldReport = CheckIdeReport.loadFromFile(report)
@@ -30,8 +36,8 @@ object ReportsManager {
         return false
       }
     }
-    file.copyTo(report, true)
-    LOG.info("Report saved $file")
+    ideReport.saveToFile(report)
+    LOG.info("Report saved IDE=#${ideReport.ideVersion}, Verifier-Version=#${ideReport.verifierVersion}")
     return true
   }
 
