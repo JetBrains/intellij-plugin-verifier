@@ -82,7 +82,7 @@ fun getVerifierVersion(): String {
   if (classPath.protocol.equals("file")) {
     manifestUrl = URL(classPath.toString().substringBeforeLast(className) + "/../../tmp/jar/MANIFEST.MF")
   } else if (classPath.protocol.equals("jar")) {
-    manifestUrl = URL(classPath.toString().substringBeforeLast("!") + "/META-INF/MANIFEST.MF")
+    manifestUrl = URL(classPath.toString().substringBeforeLast("!") + "!/META-INF/MANIFEST.MF")
   } else {
     throw IllegalStateException()
   }
