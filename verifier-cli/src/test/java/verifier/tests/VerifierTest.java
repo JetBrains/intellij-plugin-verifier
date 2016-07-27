@@ -80,7 +80,7 @@ public class VerifierTest {
           .put(new InvokeVirtualOnStaticMethodProblem("com/intellij/lang/SmartEnterProcessor#commit()V"), ProblemLocation.fromMethod("mock/plugin/invokeVirtualOnStatic/SmartEnterProcessorUser", "main()V"))
           .put(new InvokeStaticOnInstanceMethodProblem("invocation/InvocationProblems#wasStatic()V"), ProblemLocation.fromMethod("mock/plugin/invokeStaticOnInstance/InvocationProblemsUser", "foo()V"))
 
-          .put(new MissingDependencyProblem("org.some.company.plugin", "DevKit", "Plugin org.some.company.plugin:1.0 depends on the other plugin DevKit which doesn't have a build compatible with IU-145.500"), ProblemLocation.fromPlugin("org.some.company.plugin"))
+          .put(new MissingDependencyProblem("org.some.company.plugin", "MissingPlugin", "Plugin org.some.company.plugin:1.0 depends on the other plugin MissingPlugin which doesn't have a build compatible with IU-145.500"), ProblemLocation.fromPlugin("org.some.company.plugin"))
 
           //field problems
           .put(new FieldNotFoundProblem("fields/FieldsContainer#deletedField#I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessDeletedField()V"))
@@ -109,7 +109,7 @@ public class VerifierTest {
     for (Map.Entry<Problem, ProblemLocation> entry : actualProblems.entries()) {
       Problem problem = entry.getKey();
       ProblemLocation location = entry.getValue();
-      Assert.assertTrue("problem " + problem + " should be found, but it isn't", foundProblems.containsKey(problem));
+      Assert.assertTrue("problem " + problem + " should be found at " + location + ", but it isn't", foundProblems.containsKey(problem));
       try {
         boolean contains = foundProblems.get(problem).contains(location);
         if (!contains) {
@@ -194,7 +194,7 @@ public class VerifierTest {
 
     String jdkPath = System.getenv("JAVA_HOME");
     if (jdkPath == null) {
-      jdkPath = "/usr/lib/jvm/java-6-oracle";
+      jdkPath = "/usr/lib/jvm/java-8-oracle";
     }
 
     try (

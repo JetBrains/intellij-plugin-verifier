@@ -22,6 +22,7 @@
     </extensions>
 
     <depends optional="true" config-file="optionalFeatures.xml">DevKit</depends>
+    <depends optional="true" config-file="missingOptionalFeatures.xml">MissingPlugin</depends>
 
     <application-components>
     </application-components>
