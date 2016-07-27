@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.api
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.intellij.structure.domain.Ide
+import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.domain.Plugin
 import com.intellij.structure.domain.PluginDependency
 import com.intellij.structure.errors.IncorrectPluginException
@@ -100,102 +101,22 @@ object VManager {
             LOG.trace(text)
             progress.setText(text)
 
-            var pluginResult: VResult? = null
-            try {
-              val plugin: Plugin
-              try {
-                plugin = VParamsCreator.getPlugin(pluginDescriptor, ide.version)
-              } catch(ie: InterruptedException) {
-                throw ie
-              } catch(e: IncorrectPluginException) {
-                //the plugin has incorrect structure.
-                val reason = e.message ?: "The plugin ${pluginDescriptor.presentableName()} has incorrect structure"
-                LOG.debug(reason, e) //this is a problem of the plugin, but not of the Verifier.
-                pluginResult = VResult.BadPlugin(pluginDescriptor, reason)
-                return@poi
-              } catch(e: UpdateNotFoundException) {
-                //the caller has specified a missing plugin
-                val reason = e.message ?: "The plugin ${pluginDescriptor.presentableName()} is not found in the Repository"
-                LOG.debug(reason, e)
-                pluginResult = VResult.NotFound(pluginDescriptor, ideDescriptor, reason)
-                return@poi
-              } catch(e: IOException) {
-                //the plugin has an invalid file
-                val reason = e.message ?: e.javaClass.name
-                LOG.debug(reason, e)
-                pluginResult = VResult.BadPlugin(pluginDescriptor, reason)
-                return@poi
-              } catch (e: RuntimeException) {
-                throw e
-              } catch (e: Exception) {
-                throw RuntimeException(e)
-              }
+            val (plugin, result) = verification(pluginDescriptor, ide, ideDescriptor, params, ideResolver, runtimeResolver)
 
-              assert(pluginResult == null)
+            results.add(result)
+            val resType: String = when (result) {
+              is VResult.Nice -> "It is OK."
+              is VResult.Problems -> "It has ${result.problems.keySet().size} problems"
+              is VResult.BadPlugin -> "It is invalid: ${result.overview}"
+              is VResult.NotFound -> "It is not found in the Repository: ${result.overview}"
+            }
+            val statusString = "${pluginDescriptor.presentableName()} has been verified with ${ideDescriptor.presentableName()}. Result: $resType"
+            progress.setText(statusString)
+            progress.setProgress(((++verified).toDouble()) / pluginsNumber)
+            LOG.trace("$statusString; progress = $verified out of $pluginsNumber")
 
-              val pluginResolver: Resolver
-              try {
-                pluginResolver = Resolver.createPluginResolver(plugin)
-              } catch (ie: InterruptedException) {
-                throw ie
-              } catch(e: Exception) {
-                val reason = e.message ?: "Failed to read the class-files of the plugin $plugin"
-                LOG.debug(reason, e)
-                pluginResult = VResult.BadPlugin(pluginDescriptor, reason)
-                return@poi
-              }
-
-              //auto-close
-              pluginResolver.use puse@ {
-                val ctx = VContext(plugin, pluginDescriptor, ide, ideDescriptor, params.options)
-                val (dependenciesResolver: Resolver?, vResult: VResult?) = getDependenciesResolver(ctx)
-                if (vResult != null) {
-                  pluginResult = vResult
-                  return@puse
-                }
-
-                dependenciesResolver!!.use {
-                  try {
-                    val checkClasses = getClassesForCheck(plugin, pluginResolver)
-                    val classLoader = createClassLoader(dependenciesResolver, ctx, ideResolver, pluginResolver, runtimeResolver, params.externalClassPath)
-
-                    ReferencesVerifier.verify(ctx, checkClasses, classLoader)
-
-                    if (ctx.problems.isEmpty) {
-                      pluginResult = VResult.Nice(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.overview)
-                    } else {
-                      pluginResult = VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.overview, ctx.problems)
-                    }
-
-                    if (params.resolveDependenciesWithin) {
-                      ide = ide.getExpandedIde(plugin)
-                    }
-
-                  } catch (ie: InterruptedException) {
-                    throw ie
-                  } catch (e: Exception) {
-                    val message = "Failed to verify $pluginDescriptor with $ideDescriptor"
-                    LOG.error(message, e)
-                    throw RuntimeException(message, e)
-                  }
-                }
-
-              }
-            } finally {
-              if (pluginResult != null) {
-                val result = pluginResult!!
-                results.add(result)
-                val resType: String = when (result) {
-                  is VResult.Nice -> "It is OK."
-                  is VResult.Problems -> "It has ${result.problems.keySet().size} problems"
-                  is VResult.BadPlugin -> "It is invalid: ${result.overview}"
-                  is VResult.NotFound -> "It is not found: ${result.overview}"
-                }
-                val statusString = "${pluginDescriptor.presentableName()} has been verified with ${ideDescriptor.presentableName()}. Result: $resType"
-                progress.setText(statusString)
-                progress.setProgress(((++verified).toDouble()) / pluginsNumber)
-                LOG.trace("$statusString; progress = $verified out of $pluginsNumber")
-              }
+            if (params.resolveDependenciesWithin && plugin != null) {
+              ide = ide.getExpandedIde(plugin)
             }
 
           }
@@ -213,6 +134,91 @@ object VManager {
     progress.setProgress(1.0)
 
     return VResults(results)
+  }
+
+  private fun createPlugin(pluginDescriptor: PluginDescriptor, ideDescriptor: IdeDescriptor, ideVersion: IdeVersion): Pair<Plugin?, VResult?> {
+    try {
+      return VParamsCreator.getPlugin(pluginDescriptor, ideVersion) to null
+    } catch(ie: InterruptedException) {
+      throw ie
+    } catch(e: IncorrectPluginException) {
+      //the plugin has incorrect structure.
+      val reason = e.message ?: "The plugin ${pluginDescriptor.presentableName()} has incorrect structure"
+      LOG.debug(reason, e) //this is a problem of the plugin, but not of the Verifier.
+      return null to VResult.BadPlugin(pluginDescriptor, reason)
+    } catch(e: UpdateNotFoundException) {
+      //the caller has specified a missing plugin
+      val reason = e.message ?: "The plugin ${pluginDescriptor.presentableName()} is not found in the Repository"
+      LOG.debug(reason, e)
+      return null to VResult.NotFound(pluginDescriptor, ideDescriptor, reason)
+    } catch(e: IOException) {
+      //the plugin has an invalid file
+      val reason = e.message ?: e.javaClass.name
+      LOG.debug(reason, e)
+      return null to VResult.BadPlugin(pluginDescriptor, reason)
+    } catch (e: RuntimeException) {
+      throw e
+    } catch (e: Exception) {
+      throw RuntimeException(e)
+    }
+  }
+
+  private fun createPluginResolver(plugin: Plugin, pluginDescriptor: PluginDescriptor): Pair<Resolver?, VResult?> {
+    try {
+      return Resolver.createPluginResolver(plugin) to null
+    } catch (ie: InterruptedException) {
+      throw ie
+    } catch(e: Exception) {
+      val reason = e.message ?: "Failed to read the class-files of the plugin $plugin"
+      LOG.debug(reason, e)
+      return null to VResult.BadPlugin(pluginDescriptor, reason)
+    }
+  }
+
+  private fun verification(pluginDescriptor: PluginDescriptor,
+                           ide: Ide,
+                           ideDescriptor: IdeDescriptor,
+                           params: VParams,
+                           ideResolver: Resolver,
+                           runtimeResolver: Resolver): Pair<Plugin?, VResult> {
+    val (plugin: Plugin?, badResult: VResult?) = createPlugin(pluginDescriptor, ideDescriptor, ide.version)
+    if (badResult != null) {
+      return null to badResult
+    }
+    val (pluginResolver, badResult2) = createPluginResolver(plugin!!, pluginDescriptor)
+    if (badResult2 != null) {
+      return null to badResult2
+    }
+    pluginResolver!!.use puse@ {
+      val ctx = VContext(plugin, pluginDescriptor, ide, ideDescriptor, params.options)
+      val (dependenciesResolver: Resolver?, vResult: VResult?) = getDependenciesResolver(ctx)
+      if (vResult != null) {
+        return plugin to vResult
+      }
+
+      dependenciesResolver!!.use {
+        try {
+          val checkClasses = getClassesForCheck(plugin, pluginResolver)
+          val classLoader = createClassLoader(dependenciesResolver, ctx, ideResolver, pluginResolver, runtimeResolver, params.externalClassPath)
+
+          ReferencesVerifier.verify(ctx, checkClasses, classLoader)
+
+          if (ctx.problems.isEmpty) {
+            return plugin to VResult.Nice(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.overview)
+          } else {
+            return plugin to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.overview, ctx.problems)
+          }
+
+        } catch (ie: InterruptedException) {
+          throw ie
+        } catch (e: Exception) {
+          val message = "Failed to verify $pluginDescriptor with $ideDescriptor"
+          LOG.error(message, e)
+          throw RuntimeException(message, e)
+        }
+      }
+
+    }
   }
 
   private fun ideResolverPair(ide: Ide, ideDescriptor: IdeDescriptor): Pair<Boolean, Resolver> {
