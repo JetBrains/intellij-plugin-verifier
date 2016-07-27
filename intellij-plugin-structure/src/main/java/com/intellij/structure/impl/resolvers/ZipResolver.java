@@ -101,11 +101,11 @@ class ZipResolver extends Resolver {
   @Nullable
   @Override
   public ClassNode findClass(@NotNull String className) throws IOException {
-    SoftReference<ClassNode> reference = myClassesCache.get(className);
-    if (reference == null) {
+    if (!myClassesCache.containsKey(className)) {
       return null;
     }
-    ClassNode node = reference.get();
+    SoftReference<ClassNode> reference = myClassesCache.get(className);
+    ClassNode node = reference == null ? null : reference.get();
     if (node == null) {
       node = updateCacheAndFindClass(className, true);
     }
