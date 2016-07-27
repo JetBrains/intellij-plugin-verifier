@@ -371,7 +371,7 @@ object VManager {
 
 }
 
-internal data class VContext(
+data class VContext(
     val plugin: Plugin,
     val pluginDescriptor: PluginDescriptor,
     val ide: Ide,
