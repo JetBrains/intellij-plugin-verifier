@@ -9,6 +9,7 @@ import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import org.jetbrains.plugins.verifier.service.api.TaskId
 import org.jetbrains.plugins.verifier.service.results.CheckPluginAgainstSinceUntilBuildsResults
+import org.jetbrains.plugins.verifier.service.results.CheckTrunkApiResults
 
 /**
  * @author Sergey Patrikeev
@@ -37,6 +38,10 @@ class GetResultCommand : Command {
       "check-since-until" -> {
         val result = waitCompletion<CheckPluginAgainstSinceUntilBuildsResults>(service, taskId)
         CheckPluginAgainstSinceUntilCommand().processResults(result)
+      }
+      "check-trunk-api" -> {
+        val result = waitCompletion<CheckTrunkApiResults>(service, taskId)
+        CheckTrunkApiCommand().processResults(result, opts)
       }
       else -> {
         throw IllegalArgumentException("unknown command")
