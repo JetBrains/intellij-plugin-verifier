@@ -8,9 +8,12 @@ import com.jetbrains.pluginverifier.output.TeamCityVPrinter
 import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.sampullara.cli.Args
+import org.slf4j.LoggerFactory
 import java.io.File
 
 object PluginVerifierMain {
+
+  private val LOG = LoggerFactory.getLogger(CheckIdeParamsParser.javaClass)
 
   @JvmStatic fun main(args: Array<String>) {
     val opts = CmdOpts()
@@ -27,6 +30,8 @@ object PluginVerifierMain {
     when (command) {
       "check-plugin" -> {
         val params = CheckPluginParamsParser.parse(opts, freeArgs)
+        LOG.info("Check-Plugin arguments: $params")
+
         val results = CheckPluginConfiguration(params).execute()
         if (opts.needTeamCityLog) {
           results.printTcLog(TeamCityVPrinter.GroupBy.parse(opts), true)
@@ -34,6 +39,8 @@ object PluginVerifierMain {
       }
       "check-ide" -> {
         val params = CheckIdeParamsParser.parse(opts, freeArgs)
+        LOG.info("Check-Ide arguments: $params")
+
         val checkIdeResults = CheckIdeConfiguration(params).execute()
 
         if (opts.saveCheckIdeReport != null) {

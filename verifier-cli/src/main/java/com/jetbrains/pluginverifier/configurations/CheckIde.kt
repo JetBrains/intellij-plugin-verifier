@@ -1,9 +1,7 @@
 package com.jetbrains.pluginverifier.configurations
 
-import com.google.common.base.Joiner
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashMultimap
-import com.google.common.collect.Iterables
 import com.google.common.collect.Multimap
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.IdeVersion
@@ -90,8 +88,6 @@ object CheckIdeParamsParser : ParamsParser {
       }
 
     }
-
-    println("List of plugins to check: " + Joiner.on(", ").join(Iterables.concat(pluginsCheckAllBuilds, pluginsCheckLastBuilds)))
 
     return Pair<List<String>, List<String>>(pluginsCheckAllBuilds, pluginsCheckLastBuilds)
   }
