@@ -10,7 +10,8 @@ enum class Settings(private val key: String) {
   JDK_6_HOME("verifierService.jdk.home.6"),
   JDK_7_HOME("verifierService.jdk.home.7"),
   JDK_8_HOME("verifierService.jdk.home.8"),
-  MAX_DISK_SPACE("verifierService.max.disk.space");
+  MAX_DISK_SPACE("verifierService.max.disk.space"),
+  TRUNK_162_RELEASE_VERSION("verifierService.trunk.162.release.version");
 
   fun get(): String {
     val property = System.getProperty(key)
