@@ -23,6 +23,13 @@ object ReportsManager {
       throw IllegalArgumentException("Report file ${file.name} is invalid", e)
     }
     val report = FileManager.getFileByName(ideReport.ideVersion.asString(), FileType.REPORT)
+    if (report.exists()) {
+      val oldReport = CheckIdeReport.loadFromFile(report)
+      if (oldReport.verifierVersion > ideReport.verifierVersion) {
+        LOG.info("There is a report with newer verifier version: ${oldReport.verifierVersion} > ${ideReport.verifierVersion}")
+        return false
+      }
+    }
     file.copyTo(report, true)
     LOG.info("Report saved $file")
     return true
