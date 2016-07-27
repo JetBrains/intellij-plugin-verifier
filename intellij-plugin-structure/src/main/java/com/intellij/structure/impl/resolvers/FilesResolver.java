@@ -68,6 +68,5 @@ class FilesResolver extends Resolver {
 
   @Override
   public void close() throws IOException {
-    myClass2File.clear();
   }
 }

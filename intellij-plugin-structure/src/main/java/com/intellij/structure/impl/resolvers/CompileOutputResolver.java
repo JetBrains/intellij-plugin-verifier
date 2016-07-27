@@ -132,8 +132,6 @@ class CompileOutputResolver extends Resolver {
 
   @Override
   public void close() {
-    myPackageMap.clear();
-    myAllClasses.clear();
   }
 
   private static class PackageDescriptor {
