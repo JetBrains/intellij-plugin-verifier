@@ -5,8 +5,8 @@ import com.jetbrains.pluginverifier.api.VContext;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem;
 import com.jetbrains.pluginverifier.utils.LocationUtils;
-import com.jetbrains.pluginverifier.utils.MethodSign;
 import com.jetbrains.pluginverifier.utils.VerifierUtil;
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -131,4 +131,58 @@ public class AbstractMethodVerifier implements ClassVerifier {
     }
   }
 
+  /**
+   * @author Sergey Evdokimov
+   */
+  private static class MethodSign {
+
+    private final String myName;
+
+    /**
+     * We take return type of the method into account, although it's not necessary
+     * because method A overrides method B if they have the same name and parameters erasure.
+     * But JAVA works for us and generates bridge methods which match the parent ones.
+     */
+    private final String myDescriptor;
+
+    private int hashCode;
+
+    MethodSign(@NotNull String name, @NotNull String myDescriptor) {
+      this.myName = name;
+      this.myDescriptor = myDescriptor;
+    }
+
+    MethodSign(@NotNull MethodNode methodNode) {
+      this(methodNode.name, methodNode.desc);
+    }
+
+    @NotNull
+    public String getName() {
+      return myName;
+    }
+
+    @NotNull
+    public String getDescriptor() {
+      return myDescriptor;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof MethodSign)) return false;
+
+      MethodSign sign = (MethodSign) o;
+
+      return myDescriptor.equals(sign.myDescriptor) && myName.equals(sign.myName);
+
+    }
+
+    @Override
+    public int hashCode() {
+      if (hashCode == 0) {
+        hashCode = 31 * myName.hashCode() + myDescriptor.hashCode();
+      }
+      return hashCode;
+    }
+  }
 }
