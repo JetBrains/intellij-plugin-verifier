@@ -267,7 +267,7 @@ data class CheckIdeCompareResult(val checkIdeVersion: IdeVersion,
 
   companion object {
     fun compareWithPreviousReports(previousReports: List<CheckIdeReport>, currentReport: CheckIdeReport): CheckIdeCompareResult {
-      val firstOccurrences: Map<Problem, IdeVersion> = (previousReports + CheckIdeReport(currentReport.ideVersion, currentReport.pluginProblems))
+      val firstOccurrences: Map<Problem, IdeVersion> = (previousReports + currentReport)
           .flatMap { r -> r.pluginProblems.values().map { it to r.ideVersion } }
           .groupBy { it.first }
           .filterValues { it.isNotEmpty() }

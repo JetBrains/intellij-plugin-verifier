@@ -14,9 +14,12 @@ import com.jetbrains.pluginverifier.persistence.GsonHolder
 import com.jetbrains.pluginverifier.persistence.multimapFromMap
 import com.jetbrains.pluginverifier.problems.Problem
 import java.io.File
+import java.net.URL
+import java.util.jar.Manifest
 
 
 private data class CheckIdeReportCompact(@SerializedName("ideVersion") val ideVersion: IdeVersion,
+                                         @SerializedName("verifierVersion") val verifierVersion: String,
                                          @SerializedName("pluginProblems") val pluginProblems: Multimap<UpdateInfo, Int>,
                                          @SerializedName("problems") val problems: List<Problem>)
 
@@ -25,7 +28,7 @@ val checkIdeReportSerializer = jsonSerializer<CheckIdeReport> {
   val updateToProblemIds: Multimap<UpdateInfo, Int> = it.src.pluginProblems.asMap().mapValues { it.value.map { problemToId[it]!! } }.multimapFromMap()
 
   it.context.serialize(
-      CheckIdeReportCompact(it.src.ideVersion, updateToProblemIds, problemToId.keys.toList())
+      CheckIdeReportCompact(it.src.ideVersion, it.src.verifierVersion, updateToProblemIds, problemToId.keys.toList())
   )
 }
 
@@ -33,6 +36,7 @@ val checkIdeReportDeserializer = jsonDeserializer<CheckIdeReport> {
   val compact = it.context.deserialize<CheckIdeReportCompact>(it.json)
   CheckIdeReport(
       compact.ideVersion,
+      compact.verifierVersion,
       compact.pluginProblems.asMap().mapValues { it.value.map { compact.problems[it] } }.multimapFromMap()
   )
 }
@@ -42,6 +46,7 @@ val checkIdeReportDeserializer = jsonDeserializer<CheckIdeReport> {
  * @author Sergey Patrikeev
  */
 data class CheckIdeReport(@SerializedName("ideVersion") val ideVersion: IdeVersion,
+                          @SerializedName("verifierVersion") val verifierVersion: String,
                           @SerializedName("pluginProblems") val pluginProblems: Multimap<UpdateInfo, Problem>) {
   fun saveToFile(file: File) {
     file.writeText(GsonHolder.GSON.toJson(this))
@@ -50,7 +55,7 @@ data class CheckIdeReport(@SerializedName("ideVersion") val ideVersion: IdeVersi
   companion object {
 
     fun createReport(ideVersion: IdeVersion, results: VResults): CheckIdeReport {
-      val report = CheckIdeReport(ideVersion, results.results
+      val report = CheckIdeReport(ideVersion, getVerifierVersion(), results.results
           .filter { it is VResult.Problems }
           .map { it as VResult.Problems }
           .filter { it.pluginDescriptor is PluginDescriptor.ByUpdateInfo }
@@ -69,3 +74,21 @@ data class CheckIdeReport(@SerializedName("ideVersion") val ideVersion: IdeVersi
   }
 }
 
+fun getVerifierVersion(): String {
+  val clazz: Class<CheckIdeReport> = CheckIdeReport::class.java
+  val className = "/" + clazz.canonicalName.replace('.', '/') + ".class"
+  val classPath = clazz.getResource(className) ?: throw IllegalStateException()
+  val manifestUrl: URL
+  if (classPath.protocol.equals("file")) {
+    manifestUrl = URL(classPath.toString().substringBeforeLast(className) + "/../../tmp/jar/MANIFEST.MF")
+  } else if (classPath.protocol.equals("jar")) {
+    manifestUrl = URL(classPath.toString().substringBeforeLast("!") + "/META-INF/MANIFEST.MF")
+  } else {
+    throw IllegalStateException()
+  }
+  manifestUrl.openStream().use {
+    val manifest = Manifest(it)
+    val mainAttributes = manifest.mainAttributes
+    return mainAttributes.getValue("Verifier-Version") ?: throw IllegalStateException()
+  }
+}

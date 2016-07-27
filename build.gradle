@@ -67,6 +67,12 @@ configure(allprojects) {
   }
 
   artifacts.archives sourcesJar
+
+  jar {
+    manifest {
+      attributes 'Verifier-Version': version
+    }
+  }
 }
 
 apply plugin: 'com.jfrog.bintray'
