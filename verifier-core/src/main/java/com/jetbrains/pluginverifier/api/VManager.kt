@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.api
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
+import com.google.common.util.concurrent.MoreExecutors
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.domain.Plugin
@@ -19,6 +20,7 @@ import com.jetbrains.pluginverifier.verifiers.ReferencesVerifier
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.IOException
+import java.util.concurrent.*
 
 interface VProgress {
   fun getProgress(): Double
@@ -38,6 +40,7 @@ private val LOG = LoggerFactory.getLogger(VManager::class.java)
  */
 object VManager {
 
+  private fun getWorkersNumber() = Math.max(8, Runtime.getRuntime().availableProcessors())
 
   /**
    * Perform the verification according to passed parameters.
@@ -75,50 +78,54 @@ object VManager {
       params.pluginsToCheck.groupBy { it.second }.entries.forEach { ideToPlugins ->
         val ideDescriptor = ideToPlugins.key
 
-        checkCancelled()
-
-        LOG.trace("Creating Resolver for $ideDescriptor")
-
-        var ide: Ide
-        try {
-          ide = VParamsCreator.getIde(ideDescriptor)
-        } catch(ie: InterruptedException) {
-          throw ie
-        } catch(e: Exception) {
-          //IDE errors are propagated. We assume the IDE-s are correct while the plugins may not be so.
-          throw RuntimeException("Failed to create IDE instance for $ideDescriptor")
-        }
-
+        var ide: Ide = createIde(ideDescriptor)
         val (closeIdeResolver: Boolean, ideResolver: Resolver) = ideResolverPair(ide, ideDescriptor)
 
         try {
-          ideToPlugins.value.forEach poi@ { pluginOnIde ->
-            val pluginDescriptor = pluginOnIde.first
+          val executor = if (params.resolveDependenciesWithin) MoreExecutors.newDirectExecutorService() else Executors.newFixedThreadPool(getWorkersNumber())
+          val ecp = ExecutorCompletionService<VCallableResult>(executor)
+          val futures = ideToPlugins.value.map { it.first }.map { ecp.submit(VCallable(it, ideDescriptor, ide, params, ideResolver, runtimeResolver)) }
+          val totalN = futures.size
+          try {
+            (0..totalN - 1).forEach fori@ {
+              while (true) {
+                if (Thread.currentThread().isInterrupted) {
+                  throw InterruptedException()
+                }
+                val future = ecp.poll(500, TimeUnit.MILLISECONDS) //throws InterruptedException (it's ok)
+                if (future != null) {
 
-            checkCancelled()
+                  val result: VCallableResult
+                  try {
+                    result = future.get()
+                  } catch (ie: InterruptedException) {
+                    throw ie
+                  } catch (e: CancellationException) {
+                    throw InterruptedException()
+                  } catch (e: ExecutionException) {
+                    throw e.cause ?: e
+                  } catch (e: Exception) {
+                    throw RuntimeException("Unexpected exception in the task", e)
+                  }
 
-            val text = "Verifying ${pluginDescriptor.presentableName()} with ${ideDescriptor.presentableName()}"
-            LOG.trace(text)
-            progress.setText(text)
+                  results.add(result.vResult)
 
-            val (plugin, result) = verification(pluginDescriptor, ide, ideDescriptor, params, ideResolver, runtimeResolver)
+                  if (params.resolveDependenciesWithin && result.plugin != null) {
+                    ide = ide.getExpandedIde(result.plugin)
+                  }
 
-            results.add(result)
-            val resType: String = when (result) {
-              is VResult.Nice -> "It is OK."
-              is VResult.Problems -> "It has ${result.problems.keySet().size} problems"
-              is VResult.BadPlugin -> "It is invalid: ${result.overview}"
-              is VResult.NotFound -> "It is not found in the Repository: ${result.overview}"
+                  progress.setProgress(((++verified).toDouble()) / pluginsNumber)
+                  val statusString = "${result.vResult.pluginDescriptor.presentableName()} has been verified with ${ideDescriptor.presentableName()}. Result: ${presentableResult(result.vResult)}"
+                  progress.setText(statusString)
+                  LOG.trace("$statusString; progress = $verified out of $pluginsNumber")
+
+                  break
+                }
+              }
             }
-            val statusString = "${pluginDescriptor.presentableName()} has been verified with ${ideDescriptor.presentableName()}. Result: $resType"
-            progress.setText(statusString)
-            progress.setProgress(((++verified).toDouble()) / pluginsNumber)
-            LOG.trace("$statusString; progress = $verified out of $pluginsNumber")
-
-            if (params.resolveDependenciesWithin && plugin != null) {
-              ide = ide.getExpandedIde(plugin)
-            }
-
+          } finally {
+            futures.forEach { it.cancel(true) }
+            executor.shutdownNow()
           }
         } finally {
           if (closeIdeResolver) {
@@ -134,6 +141,49 @@ object VManager {
     progress.setProgress(1.0)
 
     return VResults(results)
+  }
+
+  private fun presentableResult(result: VResult): String {
+    val resType: String = when (result) {
+      is VResult.Nice -> "It is OK."
+      is VResult.Problems -> "It has ${result.problems.keySet().size} problems"
+      is VResult.BadPlugin -> "It is invalid: ${result.overview}"
+      is VResult.NotFound -> "It is not found in the Repository: ${result.overview}"
+    }
+    return resType
+  }
+
+  private data class VCallableResult(val plugin: Plugin?, val vResult: VResult)
+
+  private class VCallable(val pluginDescriptor: PluginDescriptor,
+                          val ideDescriptor: IdeDescriptor,
+                          val ide: Ide,
+                          val params: VParams,
+                          val ideResolver: Resolver,
+                          val runtimeResolver: Resolver) : Callable<VCallableResult> {
+    override fun call(): VCallableResult {
+      if (Thread.currentThread().isInterrupted) {
+        throw InterruptedException("The verification was cancelled")
+      }
+
+      LOG.trace("Verifying ${pluginDescriptor.presentableName()} with ${ideDescriptor.presentableName()}")
+      val (plugin, vResult) = verification(pluginDescriptor, ide, ideDescriptor, params, ideResolver, runtimeResolver)
+      return VCallableResult(plugin, vResult)
+    }
+
+  }
+
+
+  private fun createIde(ideDescriptor: IdeDescriptor): Ide {
+    try {
+      LOG.trace("Creating IDE instance for $ideDescriptor")
+      return VParamsCreator.getIde(ideDescriptor)
+    } catch(ie: InterruptedException) {
+      throw ie
+    } catch(e: Exception) {
+      //IDE errors are propagated. We assume the IDE-s are correct while the plugins may not be so.
+      throw RuntimeException("Failed to create IDE instance for $ideDescriptor")
+    }
   }
 
   private fun createPlugin(pluginDescriptor: PluginDescriptor, ideDescriptor: IdeDescriptor, ideVersion: IdeVersion): Pair<Plugin?, VResult?> {
@@ -223,6 +273,7 @@ object VManager {
 
   private fun ideResolverPair(ide: Ide, ideDescriptor: IdeDescriptor): Pair<Boolean, Resolver> {
     //we must not close the IDE Resolver coming from the caller
+    LOG.trace("Creating IDE Resolver instance for $ide")
     val closeIdeResolver: Boolean
     val ideResolver: Resolver
     try {
@@ -250,12 +301,6 @@ object VManager {
       throw RuntimeException("Failed to read IDE classes for $ideDescriptor")
     }
     return Pair(closeIdeResolver, ideResolver)
-  }
-
-  private fun checkCancelled() {
-    if (Thread.currentThread().isInterrupted) {
-      throw InterruptedException("The verification was cancelled")
-    }
   }
 
   private fun getDependenciesResolver(ctx: VContext): Pair<Resolver?, VResult?> {
