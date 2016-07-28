@@ -7,6 +7,8 @@ import org.apache.commons.io.filefilter.AbstractFileFilter;
 import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +17,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class JarsUtils {
+
+  private static final Logger LOG = LoggerFactory.getLogger(JarsUtils.class);
 
   @NotNull
   public static Collection<File> collectJars(@NotNull File directory, @NotNull final Predicate<File> filter, boolean recursively) throws IOException {
@@ -34,7 +38,14 @@ public class JarsUtils {
       try {
         pool.add(Resolver.createJarResolver(jar));
       } catch (IOException e) {
-        throw new IOException("Unable to create resolver for " + jar.getName(), e);
+        for (Resolver opened : pool) {
+          try {
+            opened.close();
+          } catch (Exception ce) {
+            LOG.error("Unable to close resolver " + opened, ce);
+          }
+        }
+        throw e;
       }
     }
 

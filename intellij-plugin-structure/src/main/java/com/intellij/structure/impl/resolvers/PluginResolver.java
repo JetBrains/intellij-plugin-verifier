@@ -12,6 +12,8 @@ import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +31,7 @@ import static com.intellij.structure.impl.domain.PluginManagerImpl.isJarOrZip;
  */
 public class PluginResolver extends Resolver {
 
+  private static final Logger LOG = LoggerFactory.getLogger(PluginResolver.class);
   private static final Pattern LIB_JAR_REGEX = Pattern.compile("([^/]+/)?lib/([^/]+\\.(jar|zip))");
   private static final Pattern CLASSES_DIR_REGEX = Pattern.compile("([^/]+/)?classes/");
   @NotNull private final File myPluginFile;
@@ -202,8 +205,6 @@ public class PluginResolver extends Resolver {
   private Resolver loadClassesFromDir(@NotNull File dir) throws IncorrectPluginException {
     File classesDir = new File(dir, "classes");
 
-    List<Resolver> resolvers = new ArrayList<Resolver>();
-
     Collection<File> classFiles;
     boolean classesDirExists = classesDir.isDirectory();
     if (classesDirExists) {
@@ -220,13 +221,14 @@ public class PluginResolver extends Resolver {
     } catch (IOException e) {
       throw new IncorrectPluginException("Unable to read " + (classesDirExists ? "`classes`" : "root") + " plugin classes", e);
     }
+    List<Resolver> resolvers = new ArrayList<Resolver>();
     if (!rootResolver.isEmpty()) {
       resolvers.add(rootResolver);
     }
 
 
+    File lib = new File(dir, "lib");
     try {
-      File lib = new File(dir, "lib");
       if (lib.isDirectory()) {
         Collection<File> jars = JarsUtils.collectJars(lib, Predicates.<File>alwaysTrue(), true);
         Resolver libResolver = JarsUtils.makeResolver("Plugin `lib` jars: " + lib.getCanonicalPath(), jars);
@@ -234,8 +236,16 @@ public class PluginResolver extends Resolver {
           resolvers.add(libResolver);
         }
       }
-    } catch (IOException e) {
-      throw new IncorrectPluginException("Unable to read `lib` directory", e);
+    } catch (Exception e) {
+      for (Resolver resolver : resolvers) {
+        try {
+          resolver.close();
+        } catch (Exception ce) {
+          LOG.error("Unable to close resolver " + resolver, ce);
+        }
+      }
+
+      throw new IncorrectPluginException("Unable to read `lib` directory " + lib, e);
     }
 
     return Resolver.createUnionResolver("Plugin resolver " + myPlugin.getPluginId(), resolvers);
