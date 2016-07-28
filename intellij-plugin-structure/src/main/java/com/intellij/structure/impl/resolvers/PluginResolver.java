@@ -63,7 +63,12 @@ public class PluginResolver extends Resolver {
     if (file.isDirectory() || PluginManagerImpl.isJarOrZip(file)) {
       if (StringUtil.endsWithIgnoreCase(file.getName(), ".zip")) {
         File extracted = PluginExtractor.extractPlugin(file);
-        return new PluginResolver(plugin, extracted, true);
+        try {
+          return new PluginResolver(plugin, extracted, true);
+        } catch (RuntimeException e) {
+          FileUtils.deleteQuietly(extracted);
+          throw e;
+        }
       }
       return new PluginResolver(plugin, file, false);
     }
