@@ -51,6 +51,8 @@ public class PluginManagerImpl extends PluginManager {
    */
   private final Map<String, Pair<String, Document>> myRootXmlDocuments = new HashMap<String, Pair<String, Document>>();
 
+  private final List<String> myHints = new ArrayList<String>();
+
   private File myPluginFile;
 
   public static boolean isJarOrZip(@NotNull File file) {
@@ -64,6 +66,11 @@ public class PluginManagerImpl extends PluginManager {
   @NotNull
   public static String getFileEscapedUri(@NotNull File file) {
     return StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
+  }
+
+  @NotNull
+  private static String getMissingDepMsg(String dependencyId, String configFile) {
+    return "Plugin dependency " + dependencyId + " config-file " + configFile + " specified in META-INF/plugin.xml is not found";
   }
 
   /**
@@ -132,32 +139,51 @@ public class PluginManagerImpl extends PluginManager {
 
         Pair<String, Document> xmlPair = myRootXmlDocuments.get(optFilePath);
         if (xmlPair != null) {
+          URL url = null;
           try {
-            URL url = new URL(xmlPair.getFirst());
+            url = new URL(xmlPair.getFirst());
+          } catch (MalformedURLException e) {
+            String msg = getMissingDepMsg(entry.getKey().getId(), entry.getValue());
+            myHints.add(msg);
+            LOG.debug(msg);
+            parentValidator.onCheckedException(msg, e);
+          }
+          if (url != null) {
             Document document = xmlPair.getSecond();
             PluginImpl optDescriptor = new PluginImpl(myPluginFile);
-            optDescriptor.readExternal(document, url, parentValidator.ignoreMissingConfigElement());
-            descriptors.put(original, optDescriptor);
-          } catch (MalformedURLException e) {
-            parentValidator.onCheckedException("Unable to read META-INF/" + optFilePath, e);
+            try {
+              optDescriptor.readExternal(document, url, parentValidator.ignoreMissingConfigElement());
+              descriptors.put(original, optDescriptor);
+            } catch (Exception e) {
+              String msg = getMissingDepMsg(entry.getKey().getId(), entry.getValue());
+              myHints.add(msg);
+              LOG.debug(msg, e);
+            }
           }
         } else {
           //don't complain if the file is not found and don't complain if it has incorrect .xml structure
           Validator optValidator = parentValidator.ignoreMissingConfigElement().ignoreMissingFile();
 
-          PluginImpl optDescriptor = (PluginImpl) loadDescriptor(file, optFilePath, optValidator);
+          try {
+            PluginImpl optDescriptor = (PluginImpl) loadDescriptor(file, optFilePath, optValidator);
+            if (optDescriptor == null) {
+              String msg = getMissingDepMsg(entry.getKey().getId(), entry.getValue());
+              myHints.add(msg);
+              LOG.debug(msg);
+            } else {
+              descriptors.put(original, optDescriptor);
+            }
+          } catch (Exception e) {
+            String msg = getMissingDepMsg(entry.getKey().getId(), entry.getValue());
+            myHints.add(msg);
+            LOG.debug(msg, e);
+          }
 
 //          TODO: in IDEA there is one more attempt to load optional descriptor
 //          URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + '/' + optionalDescriptorName);
 //          if (resource != null) {
 //            optionalDescriptor = loadDescriptorFromResource(resource);
 //          }
-
-          if (optDescriptor != null) {
-            descriptors.put(original, optDescriptor);
-          } else {
-            LOG.warn("Optional descriptor META-INF/" + optFilePath + " is not found");
-          }
         }
       }
 
@@ -346,10 +372,9 @@ public class PluginManagerImpl extends PluginManager {
 
         if (inRoot != null) {
           if (descriptorRoot != null) {
-            //TODO: is it necessary to throw an exception?
-            LOG.warn("Multiple META-INF/" + filePath + " found in the root of the plugin");
-//            validator.onIncorrectStructure("Multiple META-INF/" + filePath + " found in the root of the plugin");
-//            return null;
+            String msg = "Multiple META-INF/" + filePath + " found in the root of the plugin";
+            LOG.warn(msg);
+            myHints.add(msg);
           }
           descriptorRoot = inRoot;
           continue;
@@ -447,7 +472,7 @@ public class PluginManagerImpl extends PluginManager {
 
     final File[] files = libDir.listFiles();
     if (files == null || files.length == 0) {
-      validator.onIncorrectStructure("Plugin `lib` directory is empty");
+      validator.onIncorrectStructure("Plugin `lib` directory " + libDir + " is empty");
       return null;
     }
     //move plugin-jar to the beginning: Sample.jar goes first (if Sample is a plugin name)
@@ -502,6 +527,7 @@ public class PluginManagerImpl extends PluginManager {
 
     PluginImpl descriptor = (PluginImpl) loadDescriptor(pluginFile, PLUGIN_XML, validator);
     if (descriptor != null) {
+      descriptor.addHints(myHints);
       return descriptor;
     }
     //assert that PluginXmlValidator has thrown an appropriate exception

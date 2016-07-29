@@ -75,4 +75,7 @@ public interface Plugin {
   @NotNull
   File getPluginFile();
 
+  @NotNull
+  List<String> getHints();
+
 }
