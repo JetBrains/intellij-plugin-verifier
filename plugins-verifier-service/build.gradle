@@ -20,10 +20,11 @@ buildscript {
   }
 }
 
+def serviceVersion = '1.1'
 def verifierVersion = '1.33'
 
 configure(allprojects) {
-  version "1.0"
+  version = serviceVersion
   group "org.jetbrains.intellij.plugins.verifier"
 
   apply plugin: 'kotlin'
