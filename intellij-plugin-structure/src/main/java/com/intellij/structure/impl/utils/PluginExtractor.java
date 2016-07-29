@@ -22,10 +22,9 @@ public class PluginExtractor {
   private static final int TEMP_DIR_ATTEMPTS = 10000;
 
   @NotNull
-  public static File extractPlugin(@NotNull File archive) throws IOException, IncorrectPluginException {
-    //TODO: add some caching of the extracted plugins
+  public static File extractPlugin(@NotNull String plugin, @NotNull File archive) throws IOException, IncorrectPluginException {
 
-    File tmp = createTempDir(archive.getName());
+    File tmp = createTempDir("plugin_" + plugin);
 
     try {
       final AbstractUnArchiver ua = createUnArchiver(archive);
@@ -34,7 +33,7 @@ public class PluginExtractor {
       ua.extract();
     } catch (Exception e) {
       FileUtils.deleteQuietly(tmp);
-      throw new IncorrectPluginException("Unable to extract plugin file " + archive, e);
+      throw new IncorrectPluginException("Unable to extract plugin " + plugin + " file " + archive, e);
     }
 
     /*
@@ -44,20 +43,20 @@ public class PluginExtractor {
     Collection<File> files = FileUtils.listFiles(tmp, new String[]{"jar"}, false);
     if (files.size() > 1) {
       FileUtils.deleteQuietly(tmp);
-      throw new IncorrectPluginException("Plugin archive contains multiple .jar files representing plugins");
+      throw new IncorrectPluginException("Plugin " + plugin + " archive contains multiple .jar files representing plugins");
     }
     if (files.size() == 1) {
       try {
         File singleJar = files.iterator().next();
 
         //move this single jar outside from the extracted directory
-        File tmpFile = File.createTempFile("plugin_", ".jar", getCacheDir());
+        File tmpFile = File.createTempFile("plugin_" + plugin, ".jar", getCacheDir());
         try {
           FileUtils.copyFile(singleJar, tmpFile);
           return tmpFile;
         } catch (Exception e) {
           FileUtils.deleteQuietly(tmpFile);
-          throw new IncorrectPluginException("Unable to read plugin jar file " + singleJar.getName(), e);
+          throw new IncorrectPluginException("Unable to read plugin " + plugin + " jar file " + singleJar, e);
         }
       } finally {
         //delete firstly extracted directory
@@ -66,29 +65,32 @@ public class PluginExtractor {
     }
 
     try {
-      stripTopLevelDirectory(tmp);
+      stripTopLevelDirectory(plugin, tmp);
       return tmp;
     } catch (Exception e) {
       FileUtils.deleteQuietly(tmp);
-      throw new IncorrectPluginException("Unable to read plugin files", e);
+      throw new IncorrectPluginException("Unable to read plugin " + plugin + " files", e);
     }
   }
 
+  //it's synchronized because otherwise there is a possibility of two threads creating the same directory
   @NotNull
-  private static File createTempDir(String pluginName) throws IOException {
-    File cacheDir = getCacheDir();
-    String baseName = "plugin_" + pluginName + "_" + System.currentTimeMillis();
+  private synchronized static File createTempDir(String prefix) throws IOException {
+    File tmpDirs = getCacheDir();
+    String baseName = prefix + "_" + System.currentTimeMillis();
     for (int counter = 0; counter < TEMP_DIR_ATTEMPTS; counter++) {
-      File tempDir = new File(cacheDir, baseName + counter);
-      try {
-        FileUtils.forceMkdir(tempDir);
-        return tempDir;
-      } catch (IOException ignored) {
+      File tempDir = new File(tmpDirs, baseName + "_" + counter);
+      if (!tempDir.isDirectory()) {
+        try {
+          FileUtils.forceMkdir(tempDir);
+          return tempDir;
+        } catch (IOException ignored) {
+        }
       }
     }
     throw new IllegalStateException("Failed to create directory within "
         + TEMP_DIR_ATTEMPTS + " attempts (tried "
-        + baseName + "0 to " + baseName + (TEMP_DIR_ATTEMPTS - 1) + ')');
+        + baseName + "_0 to " + baseName + "_" + (TEMP_DIR_ATTEMPTS - 1) + ')');
   }
 
   @NotNull
@@ -104,10 +106,10 @@ public class PluginExtractor {
   private static File getCacheDir() throws IOException {
     final File dir = new File(getTempDirectory(), "intellij-plugin-structure-cache");
     if (!dir.isDirectory()) {
-      if (dir.exists()) {
-        FileUtils.forceDelete(dir);
-      }
       try {
+        if (dir.exists()) {
+          FileUtils.forceDelete(dir);
+        }
         FileUtils.forceMkdir(dir);
       } catch (IOException e) {
         throw new IOException("Unable to create plugins cache directory " + dir + " (check access permissions)", e);
@@ -116,7 +118,7 @@ public class PluginExtractor {
     return dir;
   }
 
-  private static void stripTopLevelDirectory(@NotNull File dir) throws IOException {
+  private static void stripTopLevelDirectory(String plugin, @NotNull File dir) throws IOException {
     final String[] entries = dir.list();
     if (entries == null || entries.length != 1 || !new File(dir, entries[0]).isDirectory()) {
       return;
@@ -133,19 +135,37 @@ public class PluginExtractor {
       return;
     }
 
+    File badEntry = null;
     for (String entry : list) {
+      File fileOrDir = new File(topLevelEntry, entry);
       if (entry.equals(topLevelEntry.getName())) {
-        continue;
-      }
-
-      File file = new File(topLevelEntry, entry);
-      File dest = new File(dir, entry);
-      if (!file.renameTo(dest)) {
-        throw new IOException("Unable to strip the top level directory " + file);
+        //The entry has the same name (.../dir/topLevelEntry/topLevelEntry), we can't move right now
+        badEntry = fileOrDir;
+      } else {
+        FileUtils.moveToDirectory(fileOrDir, dir, false);
       }
     }
 
-    FileUtils.deleteQuietly(topLevelEntry);
+    if (badEntry != null) {
+      File tempDir = createTempDir(badEntry.getName());
+      try {
+        FileUtils.moveToDirectory(badEntry, tempDir, false);
+
+        //assert the plugin-directory is empty now
+        File[] files = topLevelEntry.listFiles();
+        if (files != null && files.length > 0) {
+          throw new IOException("Unable to strip plugin " + plugin + " directory " + dir + " [topLevelEntry=" + topLevelEntry + "]");
+        }
+
+        FileUtils.forceDelete(topLevelEntry);
+        FileUtils.moveToDirectory(new File(tempDir, badEntry.getName()), dir, false);
+      } finally {
+        FileUtils.deleteQuietly(tempDir);
+      }
+    } else {
+      FileUtils.forceDelete(topLevelEntry);
+    }
+
   }
 
 
