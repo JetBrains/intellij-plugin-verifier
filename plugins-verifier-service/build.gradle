@@ -10,6 +10,7 @@ buildscript {
     maven { url "https://repo.grails.org/grails/core" }
   }
   dependencies {
+    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
     classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
     classpath "org.springframework:springloaded:1.2.6.RELEASE"
     classpath "org.grails:grails-gradle-plugin:$grailsVersion"
@@ -55,6 +56,8 @@ configure(allprojects) {
 }
 
 apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+
 
 publishing {
   publications {
@@ -82,3 +85,37 @@ publishing {
 }
 
 publishToMavenLocal.dependsOn test
+
+bintray {
+  user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+  key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+
+
+  publish = true
+  publications = ['ClientPublication', 'ApiPublication']
+
+  pkg {
+    repo = 'intellij-plugin-service'
+    name = 'intellij-plugin-verifier-service'
+    licenses = ['Apache-2.0']
+    vcsUrl = 'https://github.com/JetBrains/intellij-plugin-verifier'
+//    userOrg = 'jetbrains'
+
+    version {
+      name = project.version
+    }
+  }
+}
+
+bintrayUpload.doFirst {
+
+  if (!bintray.user || !bintray.key) {
+    throw new StopExecutionException("You must specify (bintrayUser, bintrayApiKey) or (BINTRAY_USER, BINTRAY_API_KEY) properties")
+  }
+
+  println("Uploading Plugin Verifier Service module ${project.name}:${project.version}" + ' to bintray')
+}
+
+//run tests before deploying
+bintrayUpload.dependsOn test
+
