@@ -62,6 +62,7 @@ private val resultTAF = RuntimeTypeAdapterFactory.of(VResult::class.java)
     .registerSubtype(VResult.Nice::class.java)
     .registerSubtype(VResult.Problems::class.java)
     .registerSubtype(VResult.BadPlugin::class.java)
+    .registerSubtype(VResult.NotFound::class.java)
 
 //add inheritors
 private val problemsTAF = RuntimeTypeAdapterFactory.of(Problem::class.java)
