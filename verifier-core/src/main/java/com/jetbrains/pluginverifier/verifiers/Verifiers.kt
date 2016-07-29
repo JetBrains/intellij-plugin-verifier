@@ -17,9 +17,6 @@ import org.objectweb.asm.tree.MethodNode
 
 internal object ReferencesVerifier {
 
-  //TODO: add a verifier which reports minor problems (missing optional plugin descriptor, missing logo file and other)
-  //TODO: add support of warnings in the plugin-structure
-
   private val fieldVerifiers = arrayOf<FieldVerifier>(FieldTypeVerifier())
 
   private val classVerifiers = arrayOf(

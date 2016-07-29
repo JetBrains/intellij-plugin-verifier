@@ -254,9 +254,9 @@ object VManager {
           ReferencesVerifier.verify(ctx, checkClasses, classLoader)
 
           if (ctx.problems.isEmpty) {
-            return plugin to VResult.Nice(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.overview)
+            return plugin to VResult.Nice(ctx.pluginDescriptor, ctx.ideDescriptor, plugin.hints.joinToString())
           } else {
-            return plugin to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.overview, ctx.problems)
+            return plugin to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, plugin.hints.joinToString(), ctx.problems)
           }
 
         } catch (ie: InterruptedException) {
@@ -430,7 +430,6 @@ data class VContext(
     val verifierOptions: VOptions
 ) {
   val problems: Multimap<Problem, ProblemLocation> = HashMultimap.create()
-  val overview: String = ""
 
   fun registerProblem(problem: Problem, location: ProblemLocation) {
     if (!verifierOptions.isIgnoredProblem(plugin, problem)) {
