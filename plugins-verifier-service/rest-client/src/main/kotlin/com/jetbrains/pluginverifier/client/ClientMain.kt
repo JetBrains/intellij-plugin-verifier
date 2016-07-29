@@ -26,6 +26,8 @@ class Client {
       }
       val commandName = freeArgs[0]
 
+      LOG.debug("Debug mode ON")
+
       val command = COMMANDS.find { it.name().equals(commandName) } ?: throw IllegalArgumentException("Command $commandName is unknown")
       command.execute(opts, freeArgs.drop(1))
     }
