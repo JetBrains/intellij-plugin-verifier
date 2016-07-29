@@ -1,14 +1,11 @@
 package com.jetbrains.pluginverifier.client.commands
 
-import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.client.BaseCmdOpts
 import com.jetbrains.pluginverifier.client.network.*
 import com.jetbrains.pluginverifier.client.util.ArchiverUtil
 import com.jetbrains.pluginverifier.client.util.BaseCmdUtil
-import com.jetbrains.pluginverifier.configurations.CheckIdeCompareResult
 import com.jetbrains.pluginverifier.configurations.CheckIdeParamsParser
 import com.jetbrains.pluginverifier.configurations.CheckIdeResults
-import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
 import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.utils.CmdUtil
@@ -80,16 +77,12 @@ class CheckIdeCommand : Command {
   fun processResults(checkIdeResults: CheckIdeResults, opts: BaseCmdOpts, service: VerifierService) {
     val report = CheckIdeReport.createReport(checkIdeResults.ideVersion, checkIdeResults.vResults)
 
-    if (opts.compareCheckIdeReport) {
-      val vPrinter = TeamCityVPrinter(TeamCityLog(System.out), TeamCityVPrinter.GroupBy.parse(opts))
-      vPrinter.printIdeCompareResult(compareWithPreviousChecks(report, service))
-    }
     if (opts.saveCheckIdeReport != null) {
       val file = File(opts.saveCheckIdeReport)
       report.saveToFile(file)
       uploadReport(file, service)
     }
-    if (opts.needTeamCityLog && !opts.compareCheckIdeReport) {
+    if (opts.needTeamCityLog) {
       checkIdeResults.printTcLog(TeamCityVPrinter.GroupBy.parse(opts), true)
     }
     if (opts.htmlReportFile != null) {
@@ -100,42 +93,9 @@ class CheckIdeCommand : Command {
     }
   }
 
-  fun reportsList(service: VerifierService): List<IdeVersion> = service.reportsService.listReports().executeSuccessfully().body()
-
-  fun getReportFile(ideVersion: IdeVersion, service: VerifierService): File? {
-    val response = service.reportsService.get(ideVersion.asString()).executeSuccessfully()
-    if (response.isSuccessful) {
-      val reportFile = File.createTempFile("report", "")
-      response.body().byteStream().copyTo(reportFile.outputStream())
-      return reportFile
-    }
-    return null
-  }
-
   fun uploadReport(file: File, service: VerifierService) {
     val filePart = MultipartUtil.createFilePart("reportFile", file)
     service.reportsService.uploadReport(filePart).executeSuccessfully()
-  }
-
-  fun findPreviousReports(ideVersion: IdeVersion, service: VerifierService): List<CheckIdeReport> {
-    val reportsList = reportsList(service)
-    val reportFiles: MutableList<File> = arrayListOf()
-    try {
-      reportsList.mapNotNullTo(reportFiles, { getReportFile(it, service) })
-      return reportFiles
-          .map { CheckIdeReport.loadFromFile(it) }
-          .filter { it.ideVersion.baselineVersion == ideVersion.baselineVersion && it.ideVersion.compareTo(ideVersion) < 0 }
-          .sortedBy { it.ideVersion }
-    } catch (e: Exception) {
-      throw e
-    } finally {
-      reportFiles.forEach { it.deleteLogged() }
-    }
-  }
-
-
-  private fun compareWithPreviousChecks(report: CheckIdeReport, service: VerifierService): CheckIdeCompareResult {
-    return CheckIdeCompareResult.compareWithPreviousReports(findPreviousReports(report.ideVersion, service), report)
   }
 
 
