@@ -35,21 +35,29 @@ public class JarsUtils {
     List<Resolver> pool = new ArrayList<Resolver>();
 
     for (File jar : jars) {
+      if (!jar.exists()) {
+        closeResolvers(pool);
+        throw new IllegalArgumentException("File " + jar + " doesn't exist");
+      }
       try {
         pool.add(Resolver.createJarResolver(jar));
       } catch (IOException e) {
-        for (Resolver opened : pool) {
-          try {
-            opened.close();
-          } catch (Exception ce) {
-            LOG.error("Unable to close resolver " + opened, ce);
-          }
-        }
+        closeResolvers(pool);
         throw e;
       }
     }
 
     return Resolver.createUnionResolver(presentableName, pool);
+  }
+
+  private static void closeResolvers(List<Resolver> pool) {
+    for (Resolver opened : pool) {
+      try {
+        opened.close();
+      } catch (Exception ce) {
+        LOG.error("Unable to close resolver " + opened, ce);
+      }
+    }
   }
 
 }

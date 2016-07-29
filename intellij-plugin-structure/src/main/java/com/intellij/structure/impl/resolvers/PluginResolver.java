@@ -180,7 +180,9 @@ public class PluginResolver extends Resolver {
           }
         }
       }
-    } catch (IOException e) {
+    } catch (Exception e) {
+      closeResolvers(resolvers);
+      if (e instanceof IncorrectPluginException) throw (IncorrectPluginException) e;
       throw new IncorrectPluginException("Unable to read plugin classes from " + file.getName(), e);
     } finally {
       if (zipFile != null) {
@@ -199,6 +201,7 @@ public class PluginResolver extends Resolver {
           resolvers.add(rootResolver);
         }
       } catch (IOException e) {
+        closeResolvers(resolvers);
         throw new IncorrectPluginException("Unable to read plugin classes from " + file.getName(), e);
       }
     }
@@ -242,17 +245,20 @@ public class PluginResolver extends Resolver {
         }
       }
     } catch (Exception e) {
-      for (Resolver resolver : resolvers) {
-        try {
-          resolver.close();
-        } catch (Exception ce) {
-          LOG.error("Unable to close resolver " + resolver, ce);
-        }
-      }
-
-      throw new IncorrectPluginException("Unable to read `lib` directory " + lib, e);
+      closeResolvers(resolvers);
+      throw new IncorrectPluginException("Unable to read `lib` directory " + lib + " of the plugin " + myPlugin, e);
     }
 
     return Resolver.createUnionResolver("Plugin resolver " + myPlugin.getPluginId(), resolvers);
+  }
+
+  private void closeResolvers(List<Resolver> resolvers) {
+    for (Resolver resolver : resolvers) {
+      try {
+        resolver.close();
+      } catch (Exception ce) {
+        LOG.error("Unable to close resolver " + resolver, ce);
+      }
+    }
   }
 }
