@@ -1,13 +1,11 @@
 package com.jetbrains.pluginverifier.client.commands
 
 import com.jetbrains.pluginverifier.client.BaseCmdOpts
-import com.jetbrains.pluginverifier.client.network.VerifierService
-import com.jetbrains.pluginverifier.client.network.waitCompletion
 import com.jetbrains.pluginverifier.configurations.CheckIdeResults
 import com.jetbrains.pluginverifier.configurations.CheckPluginResults
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
-import org.jetbrains.plugins.verifier.service.api.TaskId
+import org.jetbrains.plugins.verifier.service.api.GetResult
 import org.jetbrains.plugins.verifier.service.results.CheckPluginAgainstSinceUntilBuildsResults
 import org.jetbrains.plugins.verifier.service.results.CheckTrunkApiResults
 
@@ -21,27 +19,23 @@ class GetResultCommand : Command {
   override fun execute(opts: BaseCmdOpts, freeArgs: List<String>) {
     val options = GetTaskResultOptions()
     val free = Args.parse(options, freeArgs.toTypedArray())
-    val service = VerifierService(opts.host)
-    val taskId = TaskId(Integer.parseInt(options.taskId))
     if (free.isEmpty()) {
       throw IllegalArgumentException("Check result command is not specified")
     }
-    when (free[0]) {
+    val command = free[0]
+    val any: Any = GetResult(options.host, Integer.parseInt(options.taskId), command).execute()
+    when (command) {
       "check-ide" -> {
-        val result = waitCompletion<CheckIdeResults>(service, taskId)
-        CheckIdeCommand().processResults(result, options, service)
+        CheckIdeCommand().processResults(any as CheckIdeResults, options)
       }
       "check-plugin" -> {
-        val result = waitCompletion<CheckPluginResults>(service, taskId)
-        CheckPluginCommand().processResults(opts, result)
+        CheckPluginCommand().processResults(any as CheckPluginResults, opts)
       }
       "check-since-until" -> {
-        val result = waitCompletion<CheckPluginAgainstSinceUntilBuildsResults>(service, taskId)
-        CheckPluginAgainstSinceUntilCommand().processResults(result)
+        CheckPluginAgainstSinceUntilCommand().processResults(any as CheckPluginAgainstSinceUntilBuildsResults)
       }
       "check-trunk-api" -> {
-        val result = waitCompletion<CheckTrunkApiResults>(service, taskId)
-        CheckTrunkApiCommand().processResults(result, opts)
+        CheckTrunkApiCommand().processResults(any as CheckTrunkApiResults, opts)
       }
       else -> {
         throw IllegalArgumentException("unknown command")
