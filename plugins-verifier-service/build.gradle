@@ -21,7 +21,8 @@ buildscript {
 }
 
 def serviceVersion = '1.1'
-def verifierVersion = '1.33'
+
+project.ext.verifierVersion = '1.33'
 
 configure(allprojects) {
   version = serviceVersion
@@ -50,8 +51,6 @@ configure(allprojects) {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile group: 'commons-io', name: 'commons-io', version: '2.5'
     compile 'com.github.salomonbrys.kotson:kotson:2.2.2'
-    compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-problems', version: verifierVersion
-    compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-cli', version: verifierVersion
   }
 
 }
