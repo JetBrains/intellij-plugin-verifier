@@ -4,6 +4,7 @@ import com.jetbrains.pluginverifier.client.commands.*
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
+import org.jetbrains.plugins.verifier.service.params.JdkVersion
 import org.slf4j.LoggerFactory
 
 /**
@@ -44,5 +45,24 @@ open class BaseCmdOpts : CmdOpts() {
 
   @set:Argument("jdk", description = "The Oracle JDK version with which to check the plugins (either 6 or 8)")
   var jdkVersion: Int? = null
+
+  companion object {
+    fun parseJdkVersion(opts: BaseCmdOpts): JdkVersion? {
+      if (opts.jdkVersion == null) {
+        return null
+      }
+      val jdkVersion: JdkVersion = when (opts.jdkVersion) {
+        6 -> JdkVersion.JAVA_6_ORACLE
+        7 -> JdkVersion.JAVA_7_ORACLE
+        8 -> JdkVersion.JAVA_8_ORACLE
+        else -> {
+          throw IllegalArgumentException("Unsupported JDK version ${opts.jdkVersion}")
+        }
+      }
+      return jdkVersion
+    }
+
+
+  }
 
 }
