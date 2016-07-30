@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.misc;
 
 import com.google.common.base.Throwables;
 import com.google.common.net.HttpHeaders;
-import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -46,26 +45,6 @@ public class DownloadManager {
 
   public static DownloadManager getInstance() {
     return INSTANCE;
-  }
-
-  @NotNull
-  public File getCheckResultFile(@NotNull IdeVersion build) throws IOException {
-    File res = createCheckResultFile(build);
-
-    LOG.info("Loading check results for " + build.asString() + "...");
-    updateFile(new URL(RepositoryConfiguration.getInstance().getPluginRepositoryUrl() + "/files/checkResults/" + build.asString() + ".xml"), res);
-
-    return res;
-  }
-
-  @NotNull
-  public File createCheckResultFile(@NotNull IdeVersion build) throws IOException {
-    File downloadDir = getOrCreateDownloadDir();
-
-    File checkResDir = new File(downloadDir, "checkResult");
-    FileUtils.forceMkdir(checkResDir);
-
-    return new File(checkResDir, build.asString() + ".xml");
   }
 
   @NotNull

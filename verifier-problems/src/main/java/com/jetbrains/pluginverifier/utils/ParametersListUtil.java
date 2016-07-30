@@ -96,7 +96,7 @@ public class ParametersListUtil {
   private static List<String> parse(@NotNull String parameterString, boolean keepQuotes) {
     parameterString = parameterString.trim();
 
-    final ArrayList<String> params = new ArrayList<>();
+    final ArrayList<String> params = new ArrayList<String>();
     final StringBuilder token = new StringBuilder(128);
     boolean inQuotes = false;
     boolean escapedQuote = false;

@@ -49,7 +49,7 @@ public class RepositoryConfiguration {
   }
 
   @Nullable
-  public String getProperty(String propertyName) {
+  private String getProperty(String propertyName) {
     String systemProperty = System.getProperty(propertyName);
     if (systemProperty != null) return systemProperty;
 
@@ -70,7 +70,7 @@ public class RepositoryConfiguration {
   }
 
   @NotNull
-  public File getPluginCacheDir() {
+  File getPluginCacheDir() {
     return new File(getVerifierHomeDir(), "cache");
   }
 

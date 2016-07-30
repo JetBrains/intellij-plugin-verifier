@@ -32,12 +32,7 @@ public class VersionComparatorUtil {
   private static final Pattern WORDS_SPLITTER = Pattern.compile("\\d+|[^\\d]+");
   private static final VersionTokenType[] VALUES = VersionTokenType.values();
 
-  public static final Comparator<String> COMPARATOR = new Comparator<String>() {
-    @Override
-    public int compare(String s1, String s2) {
-      return VersionComparatorUtil.compare(s1, s2);
-    }
-  };
+  public static final Comparator<String> COMPARATOR = VersionComparatorUtil::compare;
 
   private VersionComparatorUtil() {
   }
@@ -50,9 +45,9 @@ public class VersionComparatorUtil {
     return compare(v1, v2) < 0 ? v1 : v2;
   }
 
-  static List<String> splitVersionString(final String ver) {
+  private static List<String> splitVersionString(final String ver) {
     StringTokenizer st = new StringTokenizer(ver.trim(), "()._-;:/, +~");
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
 
     while (st.hasMoreTokens()) {
       final Matcher matcher = WORDS_SPLITTER.matcher(st.nextToken());

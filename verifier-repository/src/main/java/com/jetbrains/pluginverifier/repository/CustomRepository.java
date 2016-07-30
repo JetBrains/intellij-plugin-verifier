@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.repository;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.collect.Maps;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
@@ -27,6 +25,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * @author Sergey Evdokimov
@@ -38,7 +37,7 @@ class CustomRepository implements PluginRepository {
   private final Map<UpdateInfo, String> repositoriesMap;
 
   CustomRepository(URL url) {
-    repositoriesMap = new LinkedHashMap<UpdateInfo, String>();
+    repositoriesMap = new LinkedHashMap<>();
 
     try {
       String pluginListXml = IOUtils.toString(url);
@@ -80,10 +79,10 @@ class CustomRepository implements PluginRepository {
     return pluginUrl;
   }
 
-  private List<UpdateInfo> getUpdates(@NotNull IdeVersion ideVersion, Predicate<UpdateInfo> predicate) throws IOException {
-    List<UpdateInfo> res = new ArrayList<UpdateInfo>();
+  private List<UpdateInfo> getUpdates(@NotNull IdeVersion ideVersion, @NotNull Predicate<UpdateInfo> predicate) throws IOException {
+    List<UpdateInfo> res = new ArrayList<>();
 
-    for (Map.Entry<UpdateInfo, String> entry : Maps.filterKeys(repositoriesMap, predicate).entrySet()) {
+    for (Map.Entry<UpdateInfo, String> entry : Maps.filterKeys(repositoriesMap, predicate::test).entrySet()) {
       File update = DownloadManager.getInstance().getOrLoadUpdate(entry.getKey(), new URL(entry.getValue()));
 
       Plugin ideaPlugin;
@@ -105,7 +104,7 @@ class CustomRepository implements PluginRepository {
   @NotNull
   @Override
   public List<UpdateInfo> getLastCompatibleUpdates(@NotNull IdeVersion ideVersion) throws IOException {
-    return getUpdates(ideVersion, Predicates.<UpdateInfo>alwaysTrue());
+    return getUpdates(ideVersion, updateInfo -> true);
   }
 
   @Nullable
@@ -129,12 +128,7 @@ class CustomRepository implements PluginRepository {
   @NotNull
   @Override
   public List<UpdateInfo> getAllCompatibleUpdatesOfPlugin(@NotNull IdeVersion ideVersion, @NotNull final String pluginId) throws IOException {
-    return getUpdates(ideVersion, new Predicate<UpdateInfo>() {
-      @Override
-      public boolean apply(UpdateInfo input) {
-        return pluginId.equals(input.getPluginId());
-      }
-    });
+    return getUpdates(ideVersion, input -> pluginId.equals(input.getPluginId()));
   }
 
   @Override

@@ -29,11 +29,11 @@ public class RepositoryManager implements PluginRepository {
 
   private final ImmutableList<PluginRepository> repositories;
 
-  private final ConcurrentMap<UpdateInfo, PluginRepository> update2repository = new ConcurrentHashMap<UpdateInfo, PluginRepository>();
+  private final ConcurrentMap<UpdateInfo, PluginRepository> update2repository = new ConcurrentHashMap<>();
 
   private RepositoryManager() {
 
-    List<PluginRepository> reps = new ArrayList<PluginRepository>();
+    List<PluginRepository> reps = new ArrayList<>();
     reps.add(new GlobalRepository(RepositoryConfiguration.getInstance().getPluginRepositoryUrl()));
 
     String customRepositories = RepositoryConfiguration.getInstance().getCustomRepositories();
@@ -58,7 +58,7 @@ public class RepositoryManager implements PluginRepository {
   @NotNull
   @Override
   public List<UpdateInfo> getLastCompatibleUpdates(@NotNull IdeVersion ideVersion) throws IOException {
-    List<UpdateInfo> res = new ArrayList<UpdateInfo>();
+    List<UpdateInfo> res = new ArrayList<>();
 
     for (PluginRepository repository : repositories) {
       List<UpdateInfo> updates = repository.getLastCompatibleUpdates(ideVersion);
@@ -75,7 +75,7 @@ public class RepositoryManager implements PluginRepository {
   @NotNull
   @Override
   public List<UpdateInfo> getAllCompatibleUpdatesOfPlugin(@NotNull IdeVersion ideVersion, @NotNull String pluginId) throws IOException {
-    List<UpdateInfo> res = new ArrayList<UpdateInfo>();
+    List<UpdateInfo> res = new ArrayList<>();
 
     for (PluginRepository repository : repositories) {
       List<UpdateInfo> updates = repository.getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId);
