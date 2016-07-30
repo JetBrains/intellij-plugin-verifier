@@ -6,3 +6,8 @@ dependencies {
 
   compile project(':protocol')
 }
+
+task sourcesJar(type: Jar) {
+  classifier = 'sources'
+  from sourceSets.main.allSource
+}

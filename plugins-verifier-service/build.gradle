@@ -79,6 +79,7 @@ publishing {
     }
 
     ClientPublication(MavenPublication) { configurePublication(it, ':rest-client', true) }
+    RestPublication(MavenPublication) { configurePublication(it, ':rest', false) }
     ApiPublication(MavenPublication) { configurePublication(it, ':protocol', false) }
 
   }
@@ -92,7 +93,7 @@ bintray {
 
 
   publish = true
-  publications = ['ClientPublication', 'ApiPublication']
+  publications = ['ClientPublication', 'ApiPublication', 'RestPublication']
 
   pkg {
     repo = 'intellij-plugin-service'
