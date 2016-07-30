@@ -1,0 +1,3 @@
+package com.jetbrains.pluginverifier.configurations
+
+interface Results

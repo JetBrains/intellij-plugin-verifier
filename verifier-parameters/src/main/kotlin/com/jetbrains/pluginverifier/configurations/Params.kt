@@ -7,10 +7,3 @@ interface Params
 interface ParamsParser {
   fun parse(opts: CmdOpts, freeArgs: List<String>): Params
 }
-
-
-interface Results
-
-interface Configuration {
-  fun execute(): Results
-}

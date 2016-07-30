@@ -3,8 +3,6 @@ package com.jetbrains.pluginverifier.configurations
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
-import com.jetbrains.pluginverifier.output.TeamCityLog
-import com.jetbrains.pluginverifier.output.TeamCityVPrinter
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.CmdUtil
@@ -86,39 +84,3 @@ data class CheckPluginParams(val pluginDescriptors: List<PluginDescriptor>,
                              val resolveDependenciesWithin: Boolean = false,
                              val externalClasspath: Resolver = Resolver.getEmptyResolver(),
                              val progress: VProgress = DefaultVProgress()) : Params
-
-class CheckPluginResults(val vResults: VResults) : Results {
-
-  fun printTcLog(groupBy: TeamCityVPrinter.GroupBy, setBuildStatus: Boolean) {
-    val tcLog = TeamCityLog(System.out)
-    val vPrinter = TeamCityVPrinter(tcLog, groupBy)
-    vPrinter.printResults(vResults)
-    if (setBuildStatus) {
-      val totalProblemsNumber = vResults.results.flatMap {
-        when (it) {
-          is VResult.Nice -> setOf()
-          is VResult.Problems -> it.problems.keySet()
-          is VResult.BadPlugin -> setOf(Any())
-          is VResult.NotFound -> setOf()
-        }
-      }.distinct().size
-      if (totalProblemsNumber > 0) {
-        tcLog.buildStatusFailure("$totalProblemsNumber problem${if (totalProblemsNumber > 0) "s" else ""} found")
-      }
-    }
-  }
-
-}
-
-class CheckPluginConfiguration(val params: CheckPluginParams) : Configuration {
-
-  override fun execute(): CheckPluginResults {
-    val pluginsToCheck = params.pluginDescriptors.map { p -> params.ideDescriptors.map { p to it } }.flatten()
-    val vParams = VParams(params.jdkDescriptor, pluginsToCheck, params.vOptions, params.externalClasspath, params.resolveDependenciesWithin)
-    val vResults = VManager.verify(vParams, params.progress)
-
-    return CheckPluginResults(vResults)
-  }
-
-
-}

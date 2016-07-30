@@ -13,7 +13,7 @@ import java.io.File
 
 object PluginVerifierMain {
 
-  private val LOG = LoggerFactory.getLogger(CheckIdeParamsParser.javaClass)
+  private val LOG = LoggerFactory.getLogger(PluginVerifierMain.javaClass)
 
   @JvmStatic fun main(args: Array<String>) {
     val opts = CmdOpts()
@@ -34,7 +34,7 @@ object PluginVerifierMain {
 
         val results = CheckPluginConfiguration(params).execute()
         if (opts.needTeamCityLog) {
-          results.printTcLog(TeamCityVPrinter.GroupBy.parse(opts), true)
+          results.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true)
         }
       }
       "check-ide" -> {
@@ -47,7 +47,7 @@ object PluginVerifierMain {
           CheckIdeReport.createReport(checkIdeResults.ideVersion, checkIdeResults.vResults).saveToFile(File(opts.saveCheckIdeReport))
         }
         if (opts.needTeamCityLog) {
-          checkIdeResults.printTcLog(TeamCityVPrinter.GroupBy.parse(opts), true)
+          checkIdeResults.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true)
         }
         if (opts.htmlReportFile != null) {
           checkIdeResults.saveToHtmlFile(File(opts.htmlReportFile))
