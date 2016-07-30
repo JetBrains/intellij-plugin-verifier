@@ -7,11 +7,8 @@ dependencies {
 
   runtime group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
 
-  compile project(':verifier-problems')
-  compile project(':repository')
-  compile project(':verifier-core')
+  compile project(':verifier-configurations')
 
-  compile 'com.github.spullara.cli-parser:cli-parser:1.1.2'
   compile group: 'com.google.guava', name: 'guava', version: '15.0'
   compile group: 'com.google.code.gson', name: 'gson', version: '2.2.4'
   compile group: 'commons-io', name: 'commons-io', version: '2.3'
