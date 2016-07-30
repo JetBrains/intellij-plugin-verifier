@@ -78,7 +78,7 @@ publishing {
 
     }
 
-    ClientPublication(MavenPublication) { configurePublication(it, ':rest-client', true) }
+    ClientPublication(MavenPublication) { configurePublication(it, ':cli', true) }
     RestPublication(MavenPublication) { configurePublication(it, ':rest', false) }
     ApiPublication(MavenPublication) { configurePublication(it, ':protocol', false) }
 
