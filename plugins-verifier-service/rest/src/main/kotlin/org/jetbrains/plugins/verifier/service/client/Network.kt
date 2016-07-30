@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.client.network
+package org.jetbrains.plugins.verifier.service.client
 
 import com.github.salomonbrys.kotson.fromJson
 import com.intellij.structure.domain.IdeVersion
@@ -68,7 +68,7 @@ inline fun <reified T : Any> parseResponse(response: Response<ResponseBody>): T 
   throw IllegalStateException("The response status code is ${response.code()}: ${response.errorBody().string()}")
 }
 
-inline fun <reified T : Any> waitCompletion(service: VerifierService, taskId: TaskId): T {
+internal inline fun <reified T : Any> waitCompletion(service: VerifierService, taskId: TaskId): T {
   val resultType = ParameterizedTypeImpl.make(Result::class.java, arrayOf(T::class.java), null)
 
   while (true) {
@@ -95,7 +95,7 @@ inline fun <reified T : Any> waitCompletion(service: VerifierService, taskId: Ta
 /**
  * @author Sergey Patrikeev
  */
-class VerifierService(host: String) {
+internal class VerifierService(host: String) {
 
   val enqueueTaskService: EnqueueTaskApi = Retrofit.Builder()
       .baseUrl(host)
