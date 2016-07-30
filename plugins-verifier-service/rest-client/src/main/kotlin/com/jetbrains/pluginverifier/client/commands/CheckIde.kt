@@ -83,7 +83,7 @@ class CheckIdeCommand : Command {
       uploadReport(file, service)
     }
     if (opts.needTeamCityLog) {
-      checkIdeResults.printTcLog(TeamCityVPrinter.GroupBy.parse(opts), true)
+      checkIdeResults.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true)
     }
     if (opts.htmlReportFile != null) {
       checkIdeResults.saveToHtmlFile(File(opts.htmlReportFile))

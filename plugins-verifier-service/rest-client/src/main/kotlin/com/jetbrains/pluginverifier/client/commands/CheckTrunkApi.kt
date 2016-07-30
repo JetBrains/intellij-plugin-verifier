@@ -70,7 +70,7 @@ class CheckTrunkApiCommand : Command {
 
   fun processResults(apiResults: CheckTrunkApiResults, opts: BaseCmdOpts) {
     if (opts.needTeamCityLog) {
-      val vPrinter = TeamCityVPrinter(TeamCityLog(System.out), TeamCityVPrinter.GroupBy.parse(opts))
+      val vPrinter = TeamCityVPrinter(TeamCityLog(System.out), TeamCityVPrinter.GroupBy.parse(opts.group))
       val compareResult = CheckIdeCompareResult.compareWithPreviousReports(listOf(apiResults.majorReport), apiResults.currentReport)
       vPrinter.printIdeCompareResult(compareResult)
     }
