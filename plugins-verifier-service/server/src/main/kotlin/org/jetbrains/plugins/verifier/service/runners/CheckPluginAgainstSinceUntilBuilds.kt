@@ -51,12 +51,11 @@ class CheckPluginAgainstSinceUntilBuildsRunner(val pluginFile: File,
 
       val compatibleIdes = IdeFilesManager.ideList().filter { sinceBuild.compareTo(it) <= 0 && (untilBuild == null || it.compareTo(untilBuild) <= 0) }
 
-      LOG.debug("IDE-s on the server: ${IdeFilesManager.ideList()}; Updates compatible with [$sinceBuild; $untilBuild]: $compatibleIdes")
+      LOG.debug("IDE-s on the server: ${IdeFilesManager.ideList().joinToString()}; IDE-s compatible with [$sinceBuild; $untilBuild]: [${compatibleIdes.joinToString()}]")
 
       if (compatibleIdes.isEmpty()) {
         //TODO: download from the IDE repository.
-        LOG.warn("There are no IDEs compatible with the Plugin ${plugin.toString()}")
-//        val vResults = VResults(VResult.BadPlugin(pluginDescriptor, "There are no IDE compatible with the Plugin on the Server. Check your [since; until] builds so that the plugin is compatible with at least one release/EAP IDE version"))
+        LOG.error("There are no IDEs compatible with the Plugin ${plugin.toString()}; [since; until] = [$sinceBuild; $untilBuild]")
         return CheckPluginAgainstSinceUntilBuildsResults(VResults(emptyList()))
       }
 
