@@ -27,17 +27,10 @@ object ReportsManager {
 
   @Synchronized
   fun saveReport(ideReport: CheckIdeReport): Boolean {
-    LOG.info("Saving report IDE=#${ideReport.ideVersion}, Verifier-Version=#${ideReport.verifierVersion}")
+    LOG.info("Saving report IDE=#${ideReport.ideVersion}")
     val report = FileManager.getFileByName(ideReport.ideVersion.asString(), FileType.REPORT)
-    if (report.exists()) {
-      val oldReport = CheckIdeReport.loadFromFile(report)
-      if (oldReport.verifierVersion > ideReport.verifierVersion) {
-        LOG.info("There is a report with newer verifier version: ${oldReport.verifierVersion} > ${ideReport.verifierVersion}")
-        return false
-      }
-    }
     ideReport.saveToFile(report)
-    LOG.info("Report saved IDE=#${ideReport.ideVersion}, Verifier-Version=#${ideReport.verifierVersion}")
+    LOG.info("Report saved IDE=#${ideReport.ideVersion}")
     return true
   }
 
@@ -49,8 +42,10 @@ object ReportsManager {
     LOG.info("Deleting report #$ideVersion")
     val file = FileManager.getFileByName(ideVersion.asString(), FileType.REPORT)
     if (!file.exists()) {
+      LOG.info("The is no report for $ideVersion")
       return false
     }
+    LOG.info("The report $ideVersion is deleted")
     return file.deleteLogged()
   }
 
