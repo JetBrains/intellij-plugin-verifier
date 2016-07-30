@@ -54,7 +54,9 @@ class VerifierController {
       return
     }
     def resultJson = GSON.toJson(result)
-    log.debug("Task ${taskId} result: $resultJson")
+    if (log.debugEnabled) {
+      log.debug("Task ${taskId} status: ${result.taskStatus}, content: ${result.result == null ? "<is not calculated yet>" : "[${result.result.toString().take(1000)}...]"}")
+    }
     sendJson(resultJson)
   }
 
