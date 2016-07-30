@@ -1,9 +1,11 @@
 .errorDetails {
     padding: 2px;
 }
+
 .updates div div:nth-child(odd) {
     background: #eee;
 }
+
 .uMarker, .pMarker {
     white-space: pre;
     font-weight: bold;
@@ -13,6 +15,7 @@
     background: #0f0;
     color: #0f0;
 }
+
 .updateHasProblems .uMarker {
     background: #f00;
     color: #f00;
@@ -39,6 +42,7 @@
 .errorDetails a {
     color: #2B587A !important;
 }
+
 .errLoc {
     display: none;
     margin-left: 100px;
