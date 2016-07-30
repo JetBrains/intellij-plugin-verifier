@@ -3,34 +3,25 @@ package com.jetbrains.pluginverifier.api
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.google.common.util.concurrent.MoreExecutors
-import com.intellij.structure.domain.Ide
-import com.intellij.structure.domain.IdeVersion
-import com.intellij.structure.domain.Plugin
-import com.intellij.structure.domain.PluginDependency
+import com.intellij.structure.domain.*
 import com.intellij.structure.errors.IncorrectPluginException
 import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.location.ProblemLocation
+import com.jetbrains.pluginverifier.misc.PluginCache
 import com.jetbrains.pluginverifier.problems.CyclicDependenciesProblem
 import com.jetbrains.pluginverifier.problems.MissingDependencyProblem
 import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.dependencies.Dependencies
 import com.jetbrains.pluginverifier.utils.dependencies.MissingReason
 import com.jetbrains.pluginverifier.utils.dependencies.PluginDependenciesNode
 import com.jetbrains.pluginverifier.verifiers.ReferencesVerifier
 import org.slf4j.LoggerFactory
 import java.io.Closeable
+import java.io.File
 import java.io.IOException
 import java.util.concurrent.*
-
-interface VProgress {
-  fun getProgress(): Double
-
-  fun setProgress(value: Double)
-
-  fun getText(): String
-
-  fun setText(text: String)
-}
 
 private val LOG = LoggerFactory.getLogger(VManager::class.java)
 
@@ -439,21 +430,94 @@ data class VContext(
 
 }
 
-class DefaultVProgress() : VProgress {
-  @Volatile private var progress: Double = 0.0
+private object VParamsCreator {
 
-  @Volatile private var text: String = ""
-
-  override fun getProgress(): Double = progress
-
-  override fun setProgress(value: Double) {
-    progress = value
+  /**
+   * Creates the [Resolver] by the given JDK descriptor.
+   *
+   * @throws IOException if the [Resolver] cannot be created.
+   * @return [Resolver] of the JDK classes
+   */
+  @Throws(IOException::class)
+  fun createJdkResolver(jdkDescriptor: JdkDescriptor): Resolver = when (jdkDescriptor) {
+    is JdkDescriptor.ByFile -> Resolver.createJdkResolver(jdkDescriptor.file)
   }
 
-  override fun getText(): String = text
+  /**
+   * Creates the Plugin instance by the given Plugin descriptor.
+   * If the descriptor specifies the plugin build id, it firstly loads the
+   * corresponding plugin build from the Repository.
+   *
+   * @param ideVersion the version of the compatible IDE. It's used if the plugin descriptor specifies the plugin id only.
+   * @throws IncorrectPluginException if the specified plugin has incorrect structure
+   * @throws IOException if the plugin has a broken File.
+   * @throws UpdateNotFoundException if the plugin is not found in the Repository
+   * @throws RuntimeException if the Repository doesn't respond
+   */
+  @Throws(IncorrectPluginException::class, IOException::class, UpdateNotFoundException::class, RuntimeException::class)
+  fun getPlugin(plugin: PluginDescriptor, ideVersion: IdeVersion? = null): Plugin = when (plugin) {
+    is PluginDescriptor.ByInstance -> plugin.plugin //already created.
+    is PluginDescriptor.ByFile -> PluginCache.createPlugin(plugin.file) //IncorrectPluginException, IOException
+    is PluginDescriptor.ByBuildId -> {
+      val info = withConnectionCheck { RepositoryManager.getInstance().findUpdateById(plugin.buildId) } ?: throw noSuchUpdate(plugin)
+      val file: File
+      try {
+        file = RepositoryManager.getInstance().getPluginFile(info) ?: throw noSuchUpdate(plugin)
+      } catch(e: Exception) {
+        throw noSuchUpdate(plugin, e)
+      }
+      PluginCache.createPlugin(file) //IncorrectPluginException, IOException
+    }
+    is PluginDescriptor.ByXmlId -> {
+      val updates = withConnectionCheck { RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion!!, plugin.pluginId) }
+      val suitable: UpdateInfo = updates.find { plugin.version.equals(it.version) } ?: throw noSuchUpdate(plugin)
+      val file: File
+      try {
+        file = RepositoryManager.getInstance().getPluginFile(suitable) ?: throw noSuchUpdate(plugin)
+      } catch (e: Exception) {
+        throw noSuchUpdate(plugin, e)
+      }
+      PluginCache.createPlugin(file) //IncorrectPluginException, IOException
+    }
+    is PluginDescriptor.ByUpdateInfo -> {
+      //firstly test the Repository connection
+      withConnectionCheck { RepositoryManager.getInstance().findUpdateById(0) }
 
-  override fun setText(text: String) {
-    this.text = text
+      val file: File
+      try {
+        file = RepositoryManager.getInstance().getPluginFile(plugin.updateInfo) ?: throw noSuchUpdate(plugin)
+      } catch (e: Exception) {
+        throw noSuchUpdate(plugin, e)
+      }
+      PluginCache.createPlugin(file) //IncorrectPluginException, IOException
+    }
   }
+
+  private fun <T> withConnectionCheck(block: () -> T): T {
+    try {
+      return block()
+    } catch(ie: InterruptedException) {
+      throw ie
+    } catch(e: Exception) {
+      throw RuntimeException(e.message ?: e.javaClass.name, e)
+    }
+  }
+
+  private fun noSuchUpdate(plugin: PluginDescriptor, exception: Exception? = null): UpdateNotFoundException {
+    return UpdateNotFoundException("Plugin ${plugin.presentableName()} is not found in the Plugin repository${if (exception != null) exception.message ?: exception.javaClass.name else ""}")
+  }
+
+  fun getIde(ideDescriptor: IdeDescriptor): Ide = when (ideDescriptor) {
+    is IdeDescriptor.ByFile -> IdeManager.getInstance().createIde(ideDescriptor.file)
+    is IdeDescriptor.ByInstance -> ideDescriptor.ide
+    is IdeDescriptor.ByVersion -> TODO("Downloading the IDE by IdeVersion is not supported yet.")
+    IdeDescriptor.AnyIde -> throw IllegalArgumentException()
+  }
+
 
 }
+
+/**
+ * The exception signals that the plugin is not found in the Repository.
+ */
+private class UpdateNotFoundException(message: String, cause: Exception? = null) : RuntimeException(message, cause)
