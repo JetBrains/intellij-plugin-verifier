@@ -41,6 +41,7 @@ task prepareAfterIdea(type: Copy) {
 }
 
 test.dependsOn prepareMockPlugin, prepareAfterIdea
+jar.dependsOn test
 
 shadowJar {
   manifest {
