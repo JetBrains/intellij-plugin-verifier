@@ -1,5 +1,5 @@
 rootProject.name = 'verifier-parent'
-include 'verifier-problems'
+include 'verifier-results'
 include 'verifier-repository'
 
 include 'verifier-cli'

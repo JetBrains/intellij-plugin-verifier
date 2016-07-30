@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.utils
 
-import java.util.Comparator
-import java.util.IdentityHashMap
+import java.util.*
 
 open class ToStringCachedComparator<T> : Comparator<T> {
 

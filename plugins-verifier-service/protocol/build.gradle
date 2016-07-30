@@ -6,6 +6,6 @@ task sourcesJar(type: Jar) {
 artifacts.archives sourcesJar
 
 dependencies {
-  compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-problems', version: rootProject.verifierVersion
+  compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-results', version: rootProject.verifierVersion
   compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-parameters', version: rootProject.verifierVersion
 }

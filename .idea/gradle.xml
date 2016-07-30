@@ -17,8 +17,8 @@
             <option value="$PROJECT_DIR$/verifier-configurations" />
             <option value="$PROJECT_DIR$/verifier-core" />
             <option value="$PROJECT_DIR$/verifier-parameters" />
-            <option value="$PROJECT_DIR$/verifier-problems" />
             <option value="$PROJECT_DIR$/verifier-repository" />
+            <option value="$PROJECT_DIR$/verifier-results" />
           </set>
         </option>
       </GradleProjectSettings>

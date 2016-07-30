@@ -1,6 +1,6 @@
 dependencies {
   testCompile group: 'junit', name: 'junit', version: '4.11'
-  compile project(':verifier-problems')
+  compile project(':verifier-results')
   compile project(':verifier-parameters')
   compile project(':verifier-repository')
   compile project(':verifier-core')
