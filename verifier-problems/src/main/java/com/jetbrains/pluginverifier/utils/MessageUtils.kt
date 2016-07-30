@@ -23,8 +23,8 @@ object MessageUtils {
     return className.replace('/', '.')
   }
 
-  private fun processJavaType(res: StringBuilder, s: String, start: Int): Int {
-    var start = start
+  private fun processJavaType(res: StringBuilder, s: String, st: Int): Int {
+    var start = st
     var arrayDeep = 0
 
     while (s.startsWith("[", start)) {
@@ -81,8 +81,8 @@ object MessageUtils {
     return convertMethodDescr0(methodDescr, className)
   }
 
-  private fun convertMethodDescr0(methodDescr: String, className: String?): String {
-    var className = className
+  private fun convertMethodDescr0(methodDescr: String, clazzName: String?): String {
+    var className = clazzName
     val closeBracketIndex = methodDescr.lastIndexOf(')')
 
     val openBracketIndex = methodDescr.indexOf('(')
