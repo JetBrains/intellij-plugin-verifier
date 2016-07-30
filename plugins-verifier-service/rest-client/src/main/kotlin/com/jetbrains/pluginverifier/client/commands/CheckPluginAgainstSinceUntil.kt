@@ -30,7 +30,8 @@ class CheckPluginAgainstSinceUntilCommand : Command {
 
     val jdkVersion = BaseCmdUtil.parseJdkVersion(opts) ?: throw IllegalArgumentException("Specify the JDK version to check with")
     val vOptions = VOptionsUtil.parseOpts(opts)
-    checkPluginWithSinceUntilBuilds(File(freeArgs[0]), opts.host, vOptions, jdkVersion).printResults(System.out)
+    val results = checkPluginWithSinceUntilBuilds(File(freeArgs[0]), opts.host, vOptions, jdkVersion)
+    results.printResults(System.out)
   }
 
   fun checkPluginWithSinceUntilBuilds(pluginFile: File,
@@ -46,7 +47,8 @@ class CheckPluginAgainstSinceUntilCommand : Command {
     if (pf.isDirectory) {
       val tempFile = File.createTempFile("plugin", ".zip")
       try {
-        pf = ArchiverUtil.archiveDirectory(pf, tempFile)
+        ArchiverUtil.archiveDirectory(pf, tempFile)
+        pf = tempFile
       } catch (e: Exception) {
         tempFile.deleteLogged()
         throw RuntimeException("Unable to pack the plugin $pf", e)
@@ -54,15 +56,13 @@ class CheckPluginAgainstSinceUntilCommand : Command {
       delete = true
     }
 
-    val results: CheckPluginAgainstSinceUntilBuildsResults
     try {
-      results = doCheck(host, pf, jdkVersion, vOptions)
+      return doCheck(host, pf, jdkVersion, vOptions)
     } finally {
       if (delete) {
         pf.deleteLogged()
       }
     }
-    return results
   }
 
   private fun doCheck(host: String,
@@ -73,7 +73,7 @@ class CheckPluginAgainstSinceUntilCommand : Command {
     val service = VerifierService(host)
 
     val pluginPart = MultipartUtil.createFilePart("pluginFile", pluginFile)
-    val runnerParams = CheckPluginAgainstSinceUntilBuildsRunnerParams(jdkVersion, vOptions)
+    val runnerParams = createRunnerParams(jdkVersion, vOptions)
     LOG.debug("The runner parameters: $runnerParams")
     val paramsPart = MultipartUtil.createJsonPart("params", runnerParams)
 
@@ -86,6 +86,8 @@ class CheckPluginAgainstSinceUntilCommand : Command {
     processResults(results)
     return results
   }
+
+  private fun createRunnerParams(jdkVersion: JdkVersion, vOptions: VOptions) = CheckPluginAgainstSinceUntilBuildsRunnerParams(jdkVersion, vOptions)
 
   fun processResults(results: CheckPluginAgainstSinceUntilBuildsResults) {
     results.printResults(System.out)
