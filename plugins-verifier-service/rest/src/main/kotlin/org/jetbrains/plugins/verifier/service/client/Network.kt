@@ -103,7 +103,7 @@ internal inline fun <reified T : Any> waitCompletion(service: VerifierService, t
 /**
  * @author Sergey Patrikeev
  */
-internal class VerifierService(val host: String) {
+class VerifierService(val host: String) {
 
   val statusService: StatusApi = Retrofit.Builder()
       .baseUrl(host)

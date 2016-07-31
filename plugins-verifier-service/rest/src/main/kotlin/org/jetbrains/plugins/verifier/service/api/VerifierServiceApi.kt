@@ -5,7 +5,7 @@ import org.jetbrains.plugins.verifier.service.client.VerifierService
 import org.jetbrains.plugins.verifier.service.client.executeSuccessfully
 
 abstract class VerifierServiceApi<out T>(val host: String) {
-  internal val service = VerifierService(host)
+  val service = VerifierService(host)
 
   abstract fun executeImpl(): T
 
