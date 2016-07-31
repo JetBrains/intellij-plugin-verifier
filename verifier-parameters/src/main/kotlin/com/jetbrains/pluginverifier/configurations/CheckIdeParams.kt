@@ -102,7 +102,7 @@ object CheckIdeParamsParser : ParamsParser {
 
   fun getDescriptorsToCheck(checkAllBuilds: List<String>, checkLastBuilds: List<String>, ideVersion: IdeVersion): List<PluginDescriptor> {
     if (checkAllBuilds.isEmpty() && checkLastBuilds.isEmpty()) {
-      return RepositoryManager.getInstance().getLastCompatibleUpdates(ideVersion).map { PluginDescriptor.ByUpdateInfo(it.pluginId ?: "", it.version ?: "", it) }
+      return RepositoryManager.getInstance().getLastCompatibleUpdates(ideVersion).map { PluginDescriptor.ByUpdateInfo(it.pluginId, it.version, it) }
     } else {
       val myActualUpdatesToCheck = arrayListOf<UpdateInfo>()
 
@@ -113,12 +113,11 @@ object CheckIdeParamsParser : ParamsParser {
       checkLastBuilds.distinct().map {
         RepositoryManager.getInstance()
             .getAllCompatibleUpdatesOfPlugin(ideVersion, it)
-            .filter { it.updateId != null }
             .sortedByDescending { it.updateId }
             .firstOrNull()
       }.filterNotNull().toCollection(myActualUpdatesToCheck)
 
-      return myActualUpdatesToCheck.map { PluginDescriptor.ByUpdateInfo(it.pluginId ?: "", it.version ?: "", it) }
+      return myActualUpdatesToCheck.map { PluginDescriptor.ByUpdateInfo(it.pluginId, it.version, it) }
     }
   }
 
