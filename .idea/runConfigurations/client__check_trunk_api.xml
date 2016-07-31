@@ -1,9 +1,9 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="com.jetbrains.pluginverifier.client.Client" type="JetRunConfigurationType" factoryName="Kotlin" nameIsGenerated="true">
+  <configuration default="false" name="client: check trunk api" type="JetRunConfigurationType" factoryName="Kotlin">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <option name="MAIN_CLASS_NAME" value="com.jetbrains.pluginverifier.client.Client" />
     <option name="VM_PARAMETERS" value="" />
-    <option name="PROGRAM_PARAMETERS" value="check-ide for_tests/idea-162 -jdk 8 -tcf for_tests/checkedPlugins.txt" />
+    <option name="PROGRAM_PARAMETERS" value="check-trunk-api for_tests/idea-162.zip -jdk 8 -tc" />
     <option name="WORKING_DIRECTORY" value="" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
     <option name="ALTERNATIVE_JRE_PATH" />
