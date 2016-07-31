@@ -35,8 +35,7 @@ object CheckPluginParamsParser : ParamsParser {
       val pluginId = pluginToTestArg.substring(1)
       try {
         val updateId = Integer.parseInt(pluginId)
-        val updateInfo = RepositoryManager.getInstance().findUpdateById(updateId) ?: throw RuntimeException("No such plugin $pluginToTestArg")
-        val pluginFile = RepositoryManager.getInstance().getPluginFile(updateInfo) ?: throw RuntimeException("No such plugin $pluginToTestArg")
+        val pluginFile = RepositoryManager.getInstance().getPluginFile(updateId) ?: throw RuntimeException("No such plugin $pluginToTestArg")
         return listOf(pluginFile)
       } catch (e: IOException) {
         throw RuntimeException("Cannot load plugin #" + pluginId, e)
