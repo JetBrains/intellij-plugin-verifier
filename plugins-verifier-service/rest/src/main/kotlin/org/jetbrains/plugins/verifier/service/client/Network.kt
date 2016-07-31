@@ -20,7 +20,9 @@ import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-val LOG: Logger = LoggerFactory.getLogger(VerifierService::class.java)
+val CLIENT_SIDE_VERSION: String = "1.0"
+
+private val LOG: Logger = LoggerFactory.getLogger(VerifierService::class.java)
 
 object MediaTypes {
   val JSON: MediaType = MediaType.parse("application/json")
@@ -40,7 +42,7 @@ object MultipartUtil {
 
 }
 
-val REQUEST_PERIOD: Long = 5000
+private val REQUEST_PERIOD: Long = 5000
 
 fun <T> Call<T>.executeSuccessfully(): Response<T> {
   val server = "${this.request().url().host()}:${this.request().url().port()}"
@@ -95,7 +97,14 @@ internal inline fun <reified T : Any> waitCompletion(service: VerifierService, t
 /**
  * @author Sergey Patrikeev
  */
-internal class VerifierService(host: String) {
+internal class VerifierService(val host: String) {
+
+  val statusService: StatusApi = Retrofit.Builder()
+      .baseUrl(host)
+      .addConverterFactory(GsonConverterFactory.create(GsonHolder.GSON))
+      .client(makeClient())
+      .build()
+      .create(StatusApi::class.java)
 
   val enqueueTaskService: EnqueueTaskApi = Retrofit.Builder()
       .baseUrl(host)
@@ -124,6 +133,11 @@ internal class VerifierService(host: String) {
       .addInterceptor(HttpLoggingInterceptor().setLevel(if (LOG.isDebugEnabled) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE))
       .build()
 
+}
+
+interface StatusApi {
+  @GET("/status/supportedClients")
+  fun getSupportedClients(): Call<List<String>>
 }
 
 interface TaskResultsApi {
