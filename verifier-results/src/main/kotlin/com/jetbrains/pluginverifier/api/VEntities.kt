@@ -18,18 +18,9 @@ import java.io.File
 sealed class PluginDescriptor(@SerializedName("pluginId") val pluginId: String,
                               @SerializedName("version") val version: String) {
 
-  private fun id() = this.toString()
+  abstract override fun equals(other: Any?): Boolean
 
-  override fun equals(other: Any?): Boolean {
-    if (other is PluginDescriptor) {
-      return this.id().equals(other.id())
-    }
-    return false
-  }
-
-  override fun hashCode(): Int {
-    return this.id().hashCode()
-  }
+  abstract override fun hashCode(): Int
 
   fun presentableName(): String = when (this) {
     is ByBuildId -> "#${this.buildId.toString()}"
@@ -41,98 +32,109 @@ sealed class PluginDescriptor(@SerializedName("pluginId") val pluginId: String,
 
 
   class ByUpdateInfo(pluginId: String, version: String, @SerializedName("updateInfo") val updateInfo: UpdateInfo) : PluginDescriptor(pluginId, version) {
-    constructor(updateInfo: UpdateInfo) : this(updateInfo.pluginId!!, updateInfo.version!!, updateInfo)
+    override fun equals(other: Any?): Boolean = other is ByUpdateInfo && updateInfo.equals(other.updateInfo)
 
-    override fun toString(): String {
-      return "PluginDescriptor.ByUpdateInfo(updateInfo=$updateInfo)"
-    }
+    override fun hashCode(): Int = updateInfo.hashCode()
+
+    override fun toString(): String = "PD.(updateInfo=$updateInfo)"
   }
 
   class ByXmlId(pluginId: String, version: String) : PluginDescriptor(pluginId, version) {
+    override fun equals(other: Any?): Boolean = other is ByXmlId && pluginId.equals(other.pluginId) && version.equals(other.version)
 
-    override fun toString(): String {
-      return "PluginDescriptor.ByXmlId(pluginId='$pluginId', version=$version)"
-    }
+    override fun hashCode(): Int = pluginId.hashCode() + version.hashCode()
+
+    override fun toString(): String = "PD.(pluginId='$pluginId', version=$version)"
   }
 
   class ByBuildId(pluginId: String, version: String, @SerializedName("buildId") val buildId: Int) : PluginDescriptor(pluginId, version) {
-    override fun toString(): String {
-      return "PluginDescriptor.ByBuildId(buildId=$buildId)"
-    }
+    override fun toString(): String = "PD.(buildId=$buildId)"
+
+    override fun equals(other: Any?): Boolean = other is ByBuildId && buildId.equals(other.buildId)
+
+    override fun hashCode(): Int = buildId
   }
 
   class ByFile(pluginId: String, version: String, @Transient val file: File) : PluginDescriptor(pluginId, version) {
+    override fun toString(): String = "PD.(file=$file)"
 
-    override fun toString(): String {
-      return "PluginDescriptor.ByFile(file=$file)"
-    }
+    override fun equals(other: Any?): Boolean = other is ByFile && file.equals(other.file)
+
+    override fun hashCode(): Int = file.hashCode()
 
   }
 
   class ByInstance(@Transient val plugin: Plugin) : PluginDescriptor(plugin.pluginId!!, plugin.pluginVersion!!) {
+    override fun equals(other: Any?): Boolean = other is ByInstance && plugin.equals(other.plugin)
 
-    override fun toString(): String {
-      return "PluginDescriptor.ByInstance(plugin=$plugin)"
-    }
+    override fun hashCode(): Int = plugin.hashCode()
+
+    override fun toString(): String = "PD.(plugin=$plugin)"
   }
 }
 
 sealed class IdeDescriptor(@SerializedName("version") val ideVersion: IdeVersion) {
 
-  private fun id() = this.toString()
 
-  override fun equals(other: Any?): Boolean {
-    if (other is IdeDescriptor) {
-      return this.id().equals(other.id())
-    }
-    return false
-  }
+  abstract override fun equals(other: Any?): Boolean
 
-  override fun hashCode(): Int {
-    return this.id().hashCode()
-  }
+  abstract override fun hashCode(): Int
 
   fun presentableName(): String = ideVersion.asString()
 
   object AnyIde : IdeDescriptor(IdeVersion.createIdeVersion("0")) {
-    override fun toString(): String {
-      return "AnyIde"
-    }
+    override fun equals(other: Any?): Boolean = other is AnyIde
+
+    override fun hashCode(): Int = "AnyIde".hashCode()
+
+    override fun toString(): String = "AnyIde"
   }
 
   class ByFile(ideVersion: IdeVersion, @Transient val file: File) : IdeDescriptor(ideVersion) {
+    override fun equals(other: Any?): Boolean = other is ByFile && file.equals(other.file)
 
-    override fun toString(): String {
-      return "IdeDescriptor.ByFile(file=$file)"
-    }
+    override fun hashCode(): Int = file.hashCode()
+
+    override fun toString(): String = "ID.(file=$file)"
 
   }
 
   class ByVersion(ideVersion: IdeVersion) : IdeDescriptor(ideVersion) {
-    override fun toString(): String {
-      return "IdeDescriptor.ByVersion(version=$ideVersion)"
-    }
+    override fun equals(other: Any?): Boolean = other is ByVersion && ideVersion.equals(other.ideVersion)
+
+    override fun hashCode(): Int = ideVersion.hashCode()
+
+    override fun toString(): String = "ID.(version=$ideVersion)"
   }
 
   class ByInstance(@Transient val ide: Ide, @Transient val ideResolver: Resolver? = null) : IdeDescriptor(ide.version) {
+    override fun equals(other: Any?): Boolean = other is ByInstance && ideVersion.equals(other.ideVersion) && ide.equals(other.ide)
 
-    override fun toString(): String {
-      return "IdeDescriptor.ByInstance(ide=$ide;idePath=${ide.idePath})"
-    }
+    override fun hashCode(): Int = ide.hashCode()
+
+    override fun toString(): String = "ID.(ide=$ide;idePath=${ide.idePath})"
   }
 }
 
 sealed class JdkDescriptor() {
+
+  abstract override fun equals(other: Any?): Boolean
+
+  abstract override fun hashCode(): Int
+
+  abstract fun presentableName(): String
+
   class ByFile(@Transient val file: File) : JdkDescriptor() {
     constructor(path: String) : this(File(path))
 
-    override fun toString(): String {
-      return "JdkDescriptor.ByFile(file=$file)"
-    }
+    override fun equals(other: Any?): Boolean = other is ByFile && file.equals(other.file)
+
+    override fun hashCode(): Int = file.hashCode()
+
+    override fun toString(): String = "JD.(file=$file)"
 
     override fun presentableName(): String = file.absolutePath
   }
 
-  open fun presentableName() = this.toString()
 
 }
