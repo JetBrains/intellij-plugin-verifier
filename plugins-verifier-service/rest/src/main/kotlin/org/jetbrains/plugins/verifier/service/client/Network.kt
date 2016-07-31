@@ -50,7 +50,7 @@ fun <T> Call<T>.executeSuccessfully(): Response<T> {
   try {
     response = this.execute()
   } catch(e: IOException) {
-    throw RuntimeException("The server $server is not available")
+    throw RuntimeException("The server $server is not available", e)
   }
   if (response.isSuccessful) {
     return response
@@ -73,6 +73,7 @@ inline fun <reified T : Any> parseResponse(response: Response<ResponseBody>): T 
 internal inline fun <reified T : Any> waitCompletion(service: VerifierService, taskId: TaskId): T {
   val resultType = ParameterizedTypeImpl.make(Result::class.java, arrayOf(T::class.java), null)
 
+  var progress: Double = 0.0
   while (true) {
     val response: Response<ResponseBody> = service.taskResultsService.getTaskResult(taskId).executeSuccessfully()
     val json = response.body().string()
@@ -80,13 +81,18 @@ internal inline fun <reified T : Any> waitCompletion(service: VerifierService, t
     val result: Result<T> = GsonHolder.GSON.fromJson(json, resultType)
 
     val taskStatus = result.taskStatus
+
+    if (taskStatus.progress - progress > 0.05) {
+      progress = taskStatus.progress
+      LOG.info("The task progress ${"%.1f".format(progress * 100)}%: ${taskStatus.progressText} (${taskStatus.completionTime() / 1000} seconds)")
+    }
+
     when (taskStatus.status) {
       Status.WAITING, Status.RUNNING -> {
-        LOG.debug("The task status: $taskStatus")
         Thread.sleep(REQUEST_PERIOD)
       }
       Status.COMPLETE -> {
-        LOG.debug("The task $taskId is complete.")
+        LOG.info("The task $taskId is complete.")
         return result.result!!
       }
     }
