@@ -42,9 +42,9 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$/plugins-verifier-service" />
+            <option value="$PROJECT_DIR$/plugins-verifier-service/cli" />
             <option value="$PROJECT_DIR$/plugins-verifier-service/protocol" />
             <option value="$PROJECT_DIR$/plugins-verifier-service/rest" />
-            <option value="$PROJECT_DIR$/plugins-verifier-service/rest-client" />
             <option value="$PROJECT_DIR$/plugins-verifier-service/server" />
           </set>
         </option>
