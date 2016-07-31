@@ -62,7 +62,7 @@ boolean isProduction = 'true' == System.getProperty('verifierService.productionM
 def loggers = ['STDOUT', 'ERRORS_FILE', 'FILE']
 
 logger("com.jetbrains.pluginverifier.misc.DownloadManager", ERROR, loggers, false)
-logger("com.jetbrains.pluginverifier.repository", ERROR, loggers, false)
+logger("com.jetbrains.pluginverifier.repository.RepositoryManager", ERROR, loggers, false)
 logger("com.intellij.structure", ERROR, loggers, false)
 logger("org.jetbrains.plugins.verifier.service", isProduction ? INFO : TRACE, loggers, false)
 logger("com.jetbrains.pluginverifier.api.VManager", isProduction ? INFO : TRACE, loggers, false)
