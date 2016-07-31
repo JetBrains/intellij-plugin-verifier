@@ -1,22 +1,25 @@
 package org.jetbrains.plugins.verifier.service.api
 
-import org.jetbrains.plugins.verifier.service.client.*
+import org.jetbrains.plugins.verifier.service.client.MultipartUtil
+import org.jetbrains.plugins.verifier.service.client.executeSuccessfully
+import org.jetbrains.plugins.verifier.service.client.parseTaskId
 import org.jetbrains.plugins.verifier.service.client.util.ArchiverUtil
+import org.jetbrains.plugins.verifier.service.client.waitCompletion
 import org.jetbrains.plugins.verifier.service.params.CheckTrunkApiRunnerParams
 import org.jetbrains.plugins.verifier.service.results.CheckTrunkApiResults
 import org.jetbrains.plugins.verifier.service.util.deleteLogged
 import org.slf4j.LoggerFactory
 import java.io.File
 
-class CheckTrunkApi(val host: String,
+class CheckTrunkApi(host: String,
                     val ideFile: File,
-                    val runnerParams: CheckTrunkApiRunnerParams) : VerifierServiceApi<CheckTrunkApiResults> {
+                    val runnerParams: CheckTrunkApiRunnerParams) : VerifierServiceApi<CheckTrunkApiResults>(host) {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(CheckTrunkApi::class.java)
   }
 
-  override fun execute(): CheckTrunkApiResults {
+  override fun executeImpl(): CheckTrunkApiResults {
     LOG.debug("The runner params: $runnerParams")
 
     val paramsPart = MultipartUtil.createJsonPart("params", runnerParams)
@@ -37,7 +40,6 @@ class CheckTrunkApi(val host: String,
       ideFileZipped = ideFile
     }
 
-    val service = VerifierService(host)
     val taskId: TaskId
     try {
       val filePart = MultipartUtil.createFilePart("ideFile", ideFile)

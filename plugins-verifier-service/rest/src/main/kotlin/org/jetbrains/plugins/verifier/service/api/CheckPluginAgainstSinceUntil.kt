@@ -1,22 +1,25 @@
 package org.jetbrains.plugins.verifier.service.api
 
-import org.jetbrains.plugins.verifier.service.client.*
+import org.jetbrains.plugins.verifier.service.client.MultipartUtil
+import org.jetbrains.plugins.verifier.service.client.executeSuccessfully
+import org.jetbrains.plugins.verifier.service.client.parseTaskId
 import org.jetbrains.plugins.verifier.service.client.util.ArchiverUtil
+import org.jetbrains.plugins.verifier.service.client.waitCompletion
 import org.jetbrains.plugins.verifier.service.params.CheckPluginAgainstSinceUntilBuildsRunnerParams
 import org.jetbrains.plugins.verifier.service.results.CheckPluginAgainstSinceUntilBuildsResults
 import org.jetbrains.plugins.verifier.service.util.deleteLogged
 import org.slf4j.LoggerFactory
 import java.io.File
 
-class CheckPluginAgainstSinceUntil(val host: String,
+class CheckPluginAgainstSinceUntil(host: String,
                                    val pluginFile: File,
-                                   val runnerParams: CheckPluginAgainstSinceUntilBuildsRunnerParams) : VerifierServiceApi<CheckPluginAgainstSinceUntilBuildsResults> {
+                                   val runnerParams: CheckPluginAgainstSinceUntilBuildsRunnerParams) : VerifierServiceApi<CheckPluginAgainstSinceUntilBuildsResults>(host) {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(CheckPluginAgainstSinceUntil::class.java)
   }
 
-  override fun execute(): CheckPluginAgainstSinceUntilBuildsResults {
+  override fun executeImpl(): CheckPluginAgainstSinceUntilBuildsResults {
     var pf = pluginFile
     if (!pf.exists()) {
       throw IllegalArgumentException("The plugin file $pluginFile doesn't exist")
@@ -36,7 +39,7 @@ class CheckPluginAgainstSinceUntil(val host: String,
     }
 
     try {
-      return doCheck(host, pf)
+      return doCheck(pf)
     } finally {
       if (delete) {
         pf.deleteLogged()
@@ -44,10 +47,7 @@ class CheckPluginAgainstSinceUntil(val host: String,
     }
   }
 
-  private fun doCheck(host: String,
-                      pluginFile: File): CheckPluginAgainstSinceUntilBuildsResults {
-
-    val service = VerifierService(host)
+  private fun doCheck(pluginFile: File): CheckPluginAgainstSinceUntilBuildsResults {
 
     val pluginPart = MultipartUtil.createFilePart("pluginFile", pluginFile)
 

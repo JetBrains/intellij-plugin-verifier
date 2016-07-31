@@ -1,20 +1,23 @@
 package org.jetbrains.plugins.verifier.service.api
 
 import com.jetbrains.pluginverifier.configurations.CheckIdeResults
-import org.jetbrains.plugins.verifier.service.client.*
+import org.jetbrains.plugins.verifier.service.client.MultipartUtil
+import org.jetbrains.plugins.verifier.service.client.executeSuccessfully
+import org.jetbrains.plugins.verifier.service.client.parseTaskId
 import org.jetbrains.plugins.verifier.service.client.util.ArchiverUtil
+import org.jetbrains.plugins.verifier.service.client.waitCompletion
 import org.jetbrains.plugins.verifier.service.params.CheckIdeRunnerParams
 import org.jetbrains.plugins.verifier.service.util.deleteLogged
 import org.slf4j.LoggerFactory
 import java.io.File
 
-class CheckIde(val host: String, val ideFile: File, val runnerParams: CheckIdeRunnerParams) : VerifierServiceApi<CheckIdeResults> {
+class CheckIde(host: String, val ideFile: File, val runnerParams: CheckIdeRunnerParams) : VerifierServiceApi<CheckIdeResults>(host) {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(CheckIde::class.java)
   }
 
-  override fun execute(): CheckIdeResults {
+  override fun executeImpl(): CheckIdeResults {
     LOG.debug("The runner params: $runnerParams")
     val paramsPart = MultipartUtil.createJsonPart("params", runnerParams)
 
@@ -35,7 +38,6 @@ class CheckIde(val host: String, val ideFile: File, val runnerParams: CheckIdeRu
     }
 
     LOG.info("Enqueue the check-ide task of $ideFile")
-    val service = VerifierService(host)
 
     val taskId: TaskId
     try {
