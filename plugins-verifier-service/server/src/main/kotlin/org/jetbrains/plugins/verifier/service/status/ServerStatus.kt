@@ -25,8 +25,9 @@ object ServerStatus {
 
   private fun diskUsage(): List<Pair<String, *>> {
     val dir = FileManager.getAppHomeDirectory()
-    return arrayListOf(
-        "Total disk usage: " to FileUtils.byteCountToDisplaySize(FileUtils.sizeOf(dir))
+    val size = FileUtils.sizeOf(dir)
+    return listOf(
+        "Total disk usage: " to "%.3f GB".format(size.toDouble() / FileUtils.ONE_GB)
     )
   }
 
