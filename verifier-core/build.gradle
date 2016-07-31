@@ -5,7 +5,6 @@ repositories {
 dependencies {
   compile project(':verifier-results')
   compile project(':verifier-parameters')
-  compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.4'
 
   testCompile group: 'junit', name: 'junit', version: '4.11'
 }
