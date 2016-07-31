@@ -17,7 +17,6 @@ import com.jetbrains.pluginverifier.utils.dependencies.Dependencies
 import com.jetbrains.pluginverifier.utils.dependencies.MissingReason
 import com.jetbrains.pluginverifier.utils.dependencies.PluginDependenciesNode
 import com.jetbrains.pluginverifier.verifiers.ReferencesVerifier
-import org.apache.commons.lang3.exception.ExceptionUtils
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.File
@@ -155,7 +154,7 @@ object VManager {
                           val runtimeResolver: Resolver) : Callable<VCallableResult> {
     override fun call(): VCallableResult {
       if (Thread.currentThread().isInterrupted) {
-        throw InterruptedException("The verification was cancelled")
+        throw InterruptedException()
       }
 
       LOG.trace("Verifying ${pluginDescriptor.presentableName()} with ${ideDescriptor.presentableName()}")
@@ -456,7 +455,7 @@ private object VParamsCreator {
    * @throws RepositoryDoesntRespondException if the Repository doesn't respond
    */
   @Throws(IncorrectPluginException::class, IOException::class, UpdateNotFoundException::class, RuntimeException::class)
-  fun getPlugin(plugin: PluginDescriptor, ideVersion: IdeVersion? = null): Plugin = when (plugin) {
+  fun getPlugin(plugin: PluginDescriptor, ideVersion: IdeVersion): Plugin = when (plugin) {
     is PluginDescriptor.ByInstance -> plugin.plugin //already created.
     is PluginDescriptor.ByFile -> PluginCache.createPlugin(plugin.file) //IncorrectPluginException, IOException
     is PluginDescriptor.ByBuildId -> {
@@ -464,7 +463,7 @@ private object VParamsCreator {
       PluginCache.createPlugin(file) //IncorrectPluginException, IOException
     }
     is PluginDescriptor.ByXmlId -> {
-      val updates = withConnectionCheck { RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion!!, plugin.pluginId) }
+      val updates = withConnectionCheck { RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion, plugin.pluginId) }
       val suitable: UpdateInfo = updates.find { plugin.version.equals(it.version) } ?: throw noSuchUpdate(plugin)
       val file: File
       try {
@@ -483,8 +482,9 @@ private object VParamsCreator {
   private fun <T> withConnectionCheck(block: () -> T): T {
     try {
       return block()
+    } catch (ie: InterruptedException) {
+      throw ie
     } catch(e: Exception) {
-      if (ExceptionUtils.indexOfThrowable(e, InterruptedException::class.java) != -1) throw InterruptedException()
       throw RepositoryDoesntRespondException(e.message ?: e.javaClass.name, e)
     }
   }

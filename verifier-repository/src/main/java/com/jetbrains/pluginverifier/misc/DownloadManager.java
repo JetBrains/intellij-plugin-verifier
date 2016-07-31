@@ -109,7 +109,8 @@ public class DownloadManager {
         FileUtils.copyURLToFile(url, currentDownload);
 
         if (currentDownload.length() < BROKEN_ZIP_THRESHOLD) {
-          throw new IOException("Broken zip archive");
+          LOG.error("Broken zip archive by url {} of file {}", url, currentDownload);
+          return null;
         }
 
         LOG.debug("Plugin {} is downloaded", updateId);

@@ -14,13 +14,10 @@ object PluginCache {
 
   /**
    * Returns a plugin from cache or creates it from the specified file
-
+   *
    * @param pluginFile file of a plugin
-   * *
    * @return null if plugin is not found in the cache
-   * *
    * @throws IOException if IO error occurs during attempt to create a plugin
-   * *
    * @throws IncorrectPluginException if the given plugin file is incorrect
    */
   @Synchronized @Throws(IOException::class, IncorrectPluginException::class)
