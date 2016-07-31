@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.location.CodeLocation;
 import com.jetbrains.pluginverifier.location.PluginLocation;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.persistence.GsonHolder;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -25,14 +26,7 @@ public class TestPersistence {
 
   @Test
   public void testUpdateInfo() throws Exception {
-    assertConversion(new UpdateInfo(1, "pluginId", "pluginName", "pluginVersion"), UpdateInfo.class);
-    assertConversion(new UpdateInfo(null, "pluginId", "pluginName", "pluginVersion"), UpdateInfo.class);
-    assertConversion(new UpdateInfo(-1), UpdateInfo.class);
-    assertConversion(new UpdateInfo(1, "p", null, null), UpdateInfo.class);
-    assertConversion(new UpdateInfo(1, null, "p", null), UpdateInfo.class);
-    assertConversion(new UpdateInfo(1, null, null, "p"), UpdateInfo.class);
-    assertConversion(new UpdateInfo(1, null, null, null), UpdateInfo.class);
-    assertConversion(new UpdateInfo(null, null, null, null), UpdateInfo.class);
+    assertConversion(new UpdateInfo("pluginId", "pluginName", "pluginVersion", 1), UpdateInfo.class);
   }
 
   @Test
@@ -45,11 +39,16 @@ public class TestPersistence {
     assertMultimapConversion(HashMultimap.<Integer, String>create());
 
     assertMultimapConversion(ImmutableMultimap.<IdeVersion, UpdateInfo>builder()
-        .put(IdeVersion.createIdeVersion("1"), new UpdateInfo(1))
-        .put(IdeVersion.createIdeVersion("1"), new UpdateInfo(2))
-        .put(IdeVersion.createIdeVersion("2"), new UpdateInfo(3))
-        .put(IdeVersion.createIdeVersion("3"), new UpdateInfo(4))
+        .put(IdeVersion.createIdeVersion("1"), getUpdate(1))
+        .put(IdeVersion.createIdeVersion("1"), getUpdate(2))
+        .put(IdeVersion.createIdeVersion("2"), getUpdate(3))
+        .put(IdeVersion.createIdeVersion("3"), getUpdate(4))
         .build());
+  }
+
+  @NotNull
+  private UpdateInfo getUpdate(int i) {
+    return new UpdateInfo("pluginId", "pluginName", "pluginVersion", i);
   }
 
   @Test
