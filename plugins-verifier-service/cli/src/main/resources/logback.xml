@@ -11,7 +11,7 @@
 
     </appender>
 
-    <root level="${logger.root.level:-INFO}">
+    <root level="${logger.root.level:-TRACE}">
         <appender-ref ref="STDOUT"/>
     </root>
 
