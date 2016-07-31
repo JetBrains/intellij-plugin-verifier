@@ -42,7 +42,7 @@ class CheckTrunkApi(host: String,
 
     val taskId: TaskId
     try {
-      val filePart = MultipartUtil.createFilePart("ideFile", ideFile)
+      val filePart = MultipartUtil.createFilePart("ideFile", ideFileZipped)
       val call = service.enqueueTaskService.checkTrunkApi(filePart, paramsPart)
       taskId = parseTaskId(call.executeSuccessfully())
       LOG.debug("The task ID is $taskId")

@@ -41,7 +41,7 @@ class CheckIde(host: String, val ideFile: File, val runnerParams: CheckIdeRunner
 
     val taskId: TaskId
     try {
-      val filePart = MultipartUtil.createFilePart("ideFile", ideFile)
+      val filePart = MultipartUtil.createFilePart("ideFile", ideFileZipped)
 
       val call = service.enqueueTaskService.checkIde(filePart, paramsPart)
       taskId = parseTaskId(call.executeSuccessfully())
