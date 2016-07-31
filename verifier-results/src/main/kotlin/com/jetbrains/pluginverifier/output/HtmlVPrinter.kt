@@ -6,21 +6,16 @@ import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.api.VResults
-import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import java.io.File
 import java.io.PrintWriter
 import java.nio.charset.Charset
-import java.text.SimpleDateFormat
-import java.util.*
 import kotlin.comparisons.compareBy
 
 class HtmlVPrinter(val ideVersion: IdeVersion,
                    val isExcluded: (Pair<String, String>) -> Boolean,
                    val htmlFile: File) : VPrinter {
-
-  private val UPDATE_DATE_FORMAT = SimpleDateFormat("yyyy.MM.dd HH:mm")
 
   override fun printResults(results: VResults) {
     PrintWriter(htmlFile).use { out ->
@@ -58,14 +53,12 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
                   val version = versionToResult.key
                   val vResult = versionToResult.value
                   val descriptor = vResult.pluginDescriptor
-                  val updateInfo = if (descriptor is PluginDescriptor.ByUpdateInfo) descriptor.updateInfo else UpdateInfo(descriptor.pluginId, descriptor.pluginId, descriptor.version)
 
                   out.printf("<div class='update %s %s'>\n", if (vResult is VResult.Nice) "updateOk" else "updateHasProblems", if (isExcluded(pluginId to version)) "excluded" else "")
 
-                  out.printf("  <h3><span class='uMarker'>   </span> %s <small>(#%d%s)</small> %s</h3>\n",
+                  out.printf("  <h3><span class='uMarker'>   </span> %s <small>(#%d)</small> %s</h3>\n",
                       HtmlEscapers.htmlEscaper().escape(version),
-                      updateInfo.updateId,
-                      if (updateInfo.cdate == null) "" else ", " + UPDATE_DATE_FORMAT.format(Date(updateInfo.cdate!!)),
+                      if (descriptor is PluginDescriptor.ByUpdateInfo) descriptor.updateInfo.updateId else 0,
                       when (vResult) {
                         is VResult.Nice -> ""
                         is VResult.Problems -> "<small>" + vResult.problems.keySet().size + " problems found</small>"
