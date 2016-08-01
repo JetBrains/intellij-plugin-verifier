@@ -1,14 +1,13 @@
 package com.jetbrains.pluginverifier.client.commands
 
 import com.jetbrains.pluginverifier.client.BaseCmdOpts
-import com.jetbrains.pluginverifier.configurations.CheckIdeCompareResult
-import com.jetbrains.pluginverifier.output.HtmlVPrinter
+import com.jetbrains.pluginverifier.configurations.CheckTrunkApiCompareResult
+import com.jetbrains.pluginverifier.configurations.CheckTrunkApiResults
 import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
 import com.jetbrains.pluginverifier.utils.VOptionsUtil
 import org.jetbrains.plugins.verifier.service.api.CheckTrunkApi
 import org.jetbrains.plugins.verifier.service.params.CheckTrunkApiRunnerParams
-import org.jetbrains.plugins.verifier.service.results.CheckTrunkApiResults
 import java.io.File
 
 /**
@@ -34,16 +33,13 @@ class CheckTrunkApiCommand : Command {
 
   fun processResults(apiResults: CheckTrunkApiResults, opts: BaseCmdOpts) {
     if (opts.needTeamCityLog) {
+      val compareResult = CheckTrunkApiCompareResult.create(apiResults)
       val vPrinter = TeamCityVPrinter(TeamCityLog(System.out), TeamCityVPrinter.GroupBy.parse(opts.group))
-      val compareResult = CheckIdeCompareResult.compareWithPreviousReports(listOf(apiResults.majorReport), apiResults.currentReport)
       vPrinter.printIdeCompareResult(compareResult)
     }
     if (opts.saveCheckIdeReport != null) {
       val file = File(opts.saveCheckIdeReport)
       apiResults.currentReport.saveToFile(file)
-    }
-    if (opts.htmlReportFile != null) {
-      HtmlVPrinter(apiResults.currentReport.ideVersion, { false }, File(opts.htmlReportFile))
     }
   }
 
