@@ -8,10 +8,8 @@ import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.api.VResults
-import com.jetbrains.pluginverifier.configurations.CheckIdeCompareResult
+import com.jetbrains.pluginverifier.configurations.CheckTrunkApiCompareResult
 import com.jetbrains.pluginverifier.format.UpdateInfo
-import com.jetbrains.pluginverifier.persistence.multimapFromMap
-import com.jetbrains.pluginverifier.problems.MissingDependencyProblem
 import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
@@ -171,40 +169,35 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
     }
   }
 
-  fun printIdeCompareResult(compareResult: CheckIdeCompareResult) {
-    //since IU-162.100
-    //....accessing to unknown class
-    //........firstClass
-    //.............pluginOne:1.0
-    //.............pluginOne:1.2
-    //.............pluginTwo:2.1
-    //........secondClass
-    //.............pluginOne:1.0
-    //....invoking unknown method
-    //........myUnknownMethod
+  fun printIdeCompareResult(compareResult: CheckTrunkApiCompareResult) {
+    //accessing to unknown class
+    //....firstClass
+    //.........pluginOne:1.0
+    //.........pluginOne:1.2
+    //.........pluginTwo:2.1
+    //....secondClass
+    //.........pluginOne:1.0
+    //invoking unknown method
+    //....myUnknownMethod
+    //.........pluginThree:1.3
     //missing plugin dependencies
     //....(missing module oneModule)
     //.........oneModule is required for plugin#1, plugin#2
     //....(missing plugin onePlugin)
     //.........onePlugin is required for plugin#1
     //...and so on....
-    val problemToUpdates: Multimap<Problem, UpdateInfo> = Multimaps.invertFrom(compareResult.pluginProblems, ArrayListMultimap.create())
-    val ideToProblems: Multimap<IdeVersion, Problem> = compareResult.firstOccurrences.entries.groupBy({ it.value }, { it.key }).multimapFromMap()
+    val problemToUpdates: Multimap<Problem, UpdateInfo> = Multimaps.invertFrom(compareResult.newProblems, ArrayListMultimap.create())
 
-    ideToProblems.keySet().sorted().forEach { ide ->
-      tcLog.testSuiteStarted("(since $ide)").use {
-        ideToProblems[ide].filterNot { it is MissingDependencyProblem }.groupBy { it.javaClass }.forEach { typeToProblems ->
-          val prefix = convertNameToPrefix(typeToProblems.key)
-          tcLog.testSuiteStarted("($prefix)").use {
-            typeToProblems.value.forEach { problem ->
-              tcLog.testSuiteStarted(problem.description).use {
-                problemToUpdates.get(problem).forEach { plugin ->
-                  val testName = "(${plugin.pluginId}:${plugin.version})"
-                  tcLog.testStarted(testName).use {
-                    val pluginUrl = REPOSITORY_PLUGIN_ID_BASE + plugin.pluginId
-                    tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problem.description)
-                  }
-                }
+    compareResult.newProblems.values().distinct().groupBy { it.javaClass }.forEach { typeToProblems ->
+      val prefix = convertNameToPrefix(typeToProblems.key)
+      tcLog.testSuiteStarted("($prefix)").use {
+        typeToProblems.value.forEach { problem ->
+          tcLog.testSuiteStarted(problem.description).use {
+            problemToUpdates.get(problem).forEach { plugin ->
+              val testName = "(${plugin.pluginId}:${plugin.version})"
+              tcLog.testStarted(testName).use {
+                val pluginUrl = REPOSITORY_PLUGIN_ID_BASE + plugin.pluginId
+                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problem.description)
               }
             }
           }
@@ -214,27 +207,21 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
 
     //print missing dependencies
     tcLog.testSuiteStarted("missing plugin dependencies").use {
-      problemToUpdates
-          .keySet()
-          .filter { it is MissingDependencyProblem }
-          .map { it as MissingDependencyProblem }
+      compareResult.newMissingProblems
           .groupBy { it.missingId }
           .forEach { missingToProblems ->
             val type = if (missingToProblems.key.startsWith("com.intellij.modules")) "module" else "plugin"
             val testName = "(missing $type ${missingToProblems.key})"
             tcLog.testStarted(testName).use {
-              tcLog.testFailed(testName, "$type ${missingToProblems.key} is not found in ${compareResult.checkIdeVersion} " +
+              tcLog.testFailed(testName, "$type ${missingToProblems.key} is not found in ${compareResult.currentVersion} " +
                   "but it is required for the following plugins: [${missingToProblems.value.map { it.plugin }.joinToString()}]", "")
             }
           }
     }
 
 
-    //TODO: maybe don't count missing dependencies here?
-    val newProblemsCnt = ideToProblems.get(compareResult.checkIdeVersion).size
-    val totalProblemsCnt = problemToUpdates.keySet().size
-    val allCheckedIdes: List<IdeVersion> = ideToProblems.keySet().sorted()
-    val text = "Done, %d new %s in %s; %d problems between %s and %s".format(newProblemsCnt, "problem".pluralize(newProblemsCnt), compareResult.checkIdeVersion.asString(), totalProblemsCnt, allCheckedIdes.first(), allCheckedIdes.last())
+    val newProblemsCnt = problemToUpdates.keySet().size + compareResult.newMissingProblems.size
+    val text = "Done, %d %s in %s".format(newProblemsCnt, "problem".pluralize(newProblemsCnt), compareResult.currentVersion)
     if (newProblemsCnt > 0) {
       tcLog.buildStatusFailure(text)
     } else {
