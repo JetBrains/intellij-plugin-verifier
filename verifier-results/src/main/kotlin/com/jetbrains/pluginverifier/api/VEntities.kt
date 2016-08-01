@@ -31,7 +31,7 @@ sealed class PluginDescriptor(@SerializedName("pluginId") val pluginId: String,
   }
 
 
-  class ByUpdateInfo(pluginId: String, version: String, @SerializedName("updateInfo") val updateInfo: UpdateInfo) : PluginDescriptor(pluginId, version) {
+  class ByUpdateInfo(@SerializedName("updateInfo") val updateInfo: UpdateInfo) : PluginDescriptor(updateInfo.pluginId, updateInfo.version) {
     override fun equals(other: Any?): Boolean = other is ByUpdateInfo && updateInfo.equals(other.updateInfo)
 
     override fun hashCode(): Int = updateInfo.hashCode()
