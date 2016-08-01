@@ -5,12 +5,10 @@ import com.google.gson.annotations.SerializedName;
 import com.jetbrains.pluginverifier.problems.Problem;
 import org.jetbrains.annotations.NotNull;
 
-import javax.xml.bind.annotation.XmlRootElement;
-
 /**
  * Created by Sergey Patrikeev
  */
-@XmlRootElement
+
 public class InstanceAccessOfStaticFieldProblem extends Problem {
 
   @SerializedName("field")

@@ -4,9 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
 
-import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement
 public class FieldNotFoundProblem extends Problem {
 
   @SerializedName("field")

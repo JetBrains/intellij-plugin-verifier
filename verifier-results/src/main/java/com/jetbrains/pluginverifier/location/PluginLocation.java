@@ -2,12 +2,10 @@ package com.jetbrains.pluginverifier.location;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.xml.bind.annotation.XmlRootElement;
-
 /**
  * @author Sergey Patrikeev
  */
-@XmlRootElement
+
 public class PluginLocation extends ProblemLocation {
 
   private String myPluginId;

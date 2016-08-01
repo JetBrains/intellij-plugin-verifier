@@ -6,14 +6,11 @@ import com.jetbrains.pluginverifier.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.xml.bind.annotation.XmlRootElement;
-
 /**
  * Describe problem location inside plugin
  *
  * @author Sergey Evdokimov
  */
-@XmlRootElement
 public class CodeLocation extends ProblemLocation {
 
   @SerializedName("class")

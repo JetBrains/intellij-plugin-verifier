@@ -3,9 +3,7 @@ package com.jetbrains.pluginverifier.problems;
 import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
 
-import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement
 public class MissingDependencyProblem extends Problem {
 
   @SerializedName("plugin")

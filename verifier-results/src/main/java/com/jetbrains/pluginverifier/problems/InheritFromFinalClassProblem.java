@@ -5,9 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import com.jetbrains.pluginverifier.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement
 public class InheritFromFinalClassProblem extends Problem {
 
   @SerializedName("finalClass")

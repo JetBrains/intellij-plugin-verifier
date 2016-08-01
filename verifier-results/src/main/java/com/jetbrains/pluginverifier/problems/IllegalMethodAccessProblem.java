@@ -4,12 +4,10 @@ import com.google.common.base.Preconditions;
 import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
 
-import javax.xml.bind.annotation.XmlRootElement;
-
 /**
  * @author Sergey Patrikeev
  */
-@XmlRootElement
+
 public class IllegalMethodAccessProblem extends Problem {
 
   @SerializedName("method")
