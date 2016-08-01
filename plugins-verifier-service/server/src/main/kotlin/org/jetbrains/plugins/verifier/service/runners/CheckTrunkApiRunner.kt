@@ -18,7 +18,7 @@ import org.jetbrains.plugins.verifier.service.core.BridgeVProgress
 import org.jetbrains.plugins.verifier.service.core.Progress
 import org.jetbrains.plugins.verifier.service.core.Task
 import org.jetbrains.plugins.verifier.service.params.CheckTrunkApiRunnerParams
-import org.jetbrains.plugins.verifier.service.setting.Settings
+import org.jetbrains.plugins.verifier.service.setting.TrunkVersions
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.storage.JdkManager
 import org.jetbrains.plugins.verifier.service.storage.ReportsManager
@@ -59,7 +59,7 @@ class CheckTrunkApiRunner(val ideFile: File,
 
       val jdkDescriptor = JdkDescriptor.ByFile(JdkManager.getJdkHome(runnerParams.jdkVersion))
 
-      val majorVersion = getMajorVersion(ide.version.baselineVersion, runnerParams.majorVersion)
+      val majorVersion = runnerParams.majorVersion ?: TrunkVersions.getReleaseVersion(ide.version.baselineVersion)
       if (majorVersion == null) {
         val msg = "There is no major IDE update on the Server with which to compare check results"
         LOG.error(msg)
@@ -79,15 +79,6 @@ class CheckTrunkApiRunner(val ideFile: File,
       }
     }
   }
-
-  private fun getMajorVersion(trunkNumber: Int, majorVersion: IdeVersion?): IdeVersion? = majorVersion ?: when (trunkNumber) {
-    162 -> {
-      val ideVersion = IdeVersion.createIdeVersion(Settings.TRUNK_162_RELEASE_VERSION.get())
-      require(ideVersion in IdeFilesManager.ideList())
-      ideVersion
-    }
-    else -> IdeFilesManager.ideList().filter { it.baselineVersion == trunkNumber }.sorted().firstOrNull()
-      }
 
   private fun calculateIdeReport(ide: Ide,
                                  jdkDescriptor: JdkDescriptor.ByFile,
