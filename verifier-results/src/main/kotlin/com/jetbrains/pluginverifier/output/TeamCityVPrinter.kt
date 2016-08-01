@@ -221,7 +221,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
 
 
     val newProblemsCnt = problemToUpdates.keySet().size + compareResult.newMissingProblems.size
-    val text = "Done, %d %s in %s".format(newProblemsCnt, "problem".pluralize(newProblemsCnt), compareResult.currentVersion)
+    val text = "Done, %d new %s in %s compared to %s".format(newProblemsCnt, "problem".pluralize(newProblemsCnt), compareResult.currentVersion, compareResult.majorVersion)
     if (newProblemsCnt > 0) {
       tcLog.buildStatusFailure(text)
     } else {
