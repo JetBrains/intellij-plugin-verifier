@@ -28,9 +28,11 @@ data class CheckTrunkApiCompareResult(val currentVersion: IdeVersion,
   companion object {
     fun create(apiResults: CheckTrunkApiResults): CheckTrunkApiCompareResult {
       val oldProblems = apiResults.majorReport.pluginProblems.values().toSet()
+      val oldMissingIds = oldProblems.filterIsInstance<MissingDependencyProblem>().map { it.missingId }
       val newProblems = Multimaps.filterValues(apiResults.currentReport.pluginProblems, { it !in oldProblems && it !is MissingDependencyProblem })
       val newMissingProblems = apiResults.currentReport.pluginProblems.values().distinct()
           .filterIsInstance<MissingDependencyProblem>()
+          .filterNot { it.missingId in oldMissingIds }
           .filter { it.missingId in apiResults.majorPlugins.pluginIds || it.missingId in apiResults.majorPlugins.moduleIds }
 
       return CheckTrunkApiCompareResult(apiResults.currentReport.ideVersion, apiResults.majorReport.ideVersion, newProblems, newMissingProblems)
