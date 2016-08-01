@@ -12,7 +12,7 @@ buildscript {
   }
 }
 
-def verifierVersion = '1.33'
+def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.33'
 def intellijStructureVersion = '1.28'
 
 
@@ -23,11 +23,6 @@ configure(allprojects) {
   group = 'org.jetbrains.intellij.plugins'
 
   version = verifierVersion
-
-  //check if updated from command line
-  if (project.hasProperty("myVersion")) {
-    version = project.myVersion;
-  }
 
   println("Configuring project ${it.name}:${it.version}")
 
@@ -117,7 +112,7 @@ bintray {
 
 
   publish = true
-  publications = ['VerifierCliPublication', 'RepositoryPublication', 'ResultsPublication', 'VerifierParameters', 'VerifierConfigurations']
+  publications = ['VerifierCliPublication', 'RepositoryPublication', 'ResultsPublication', 'VerifierParameters', 'VerifierConfigurations', 'VerifierCorePublication']
 
   pkg {
     repo = 'intellij-plugin-service'
