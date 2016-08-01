@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.problems;
 
-import com.google.common.base.Preconditions;
 import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,9 +19,6 @@ public class MissingDependencyProblem extends Problem {
   }
 
   public MissingDependencyProblem(@NotNull String plugin, @NotNull String missingId, @NotNull String missDescription) {
-    Preconditions.checkNotNull(plugin);
-    Preconditions.checkNotNull(missingId);
-    Preconditions.checkNotNull(missDescription);
     myPlugin = plugin;
     myMissingId = missingId;
     myMissDescription = missDescription;
@@ -47,7 +43,7 @@ public class MissingDependencyProblem extends Problem {
   @NotNull
   @Override
   public String getDescription() {
-    return "missing plugin dependency" + " of a plugin " + myPlugin + " (" + myMissDescription + ")";
+    return "missing plugin dependency " + myMissingId + " of a plugin " + myPlugin + " (" + myMissDescription + ")";
   }
 
   public String getPlugin() {
