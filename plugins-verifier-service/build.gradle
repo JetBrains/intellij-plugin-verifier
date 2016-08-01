@@ -20,7 +20,7 @@ buildscript {
   }
 }
 
-def serviceVersion = '1.1'
+def serviceVersion = project.hasProperty('myVersion') ? project.myVersion : '1.0'
 
 project.ext.verifierVersion = '1.33'
 
