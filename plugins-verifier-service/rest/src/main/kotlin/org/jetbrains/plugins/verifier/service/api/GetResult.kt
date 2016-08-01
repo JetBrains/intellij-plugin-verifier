@@ -2,9 +2,9 @@ package org.jetbrains.plugins.verifier.service.api
 
 import com.jetbrains.pluginverifier.configurations.CheckIdeResults
 import com.jetbrains.pluginverifier.configurations.CheckPluginResults
+import com.jetbrains.pluginverifier.configurations.CheckTrunkApiResults
 import org.jetbrains.plugins.verifier.service.client.waitCompletion
 import org.jetbrains.plugins.verifier.service.results.CheckPluginAgainstSinceUntilBuildsResults
-import org.jetbrains.plugins.verifier.service.results.CheckTrunkApiResults
 
 class GetResult(host: String, val taskId: Int, val command: String) : VerifierServiceApi<Any>(host) {
   override fun executeImpl(): Any {

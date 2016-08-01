@@ -3,11 +3,11 @@ package com.jetbrains.pluginverifier.client.commands
 import com.jetbrains.pluginverifier.client.BaseCmdOpts
 import com.jetbrains.pluginverifier.configurations.CheckIdeResults
 import com.jetbrains.pluginverifier.configurations.CheckPluginResults
+import com.jetbrains.pluginverifier.configurations.CheckTrunkApiResults
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import org.jetbrains.plugins.verifier.service.api.GetResult
 import org.jetbrains.plugins.verifier.service.results.CheckPluginAgainstSinceUntilBuildsResults
-import org.jetbrains.plugins.verifier.service.results.CheckTrunkApiResults
 
 /**
  * @author Sergey Patrikeev
