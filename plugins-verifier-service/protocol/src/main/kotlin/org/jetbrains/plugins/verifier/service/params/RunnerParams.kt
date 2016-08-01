@@ -25,4 +25,5 @@ data class CheckPluginRunnerParams(@SerializedName("jdkVersion") val jdkVersion:
                                    @SerializedName("vOptions") val vOptions: VOptions)
 
 data class CheckTrunkApiRunnerParams(@SerializedName("jdkVersion") val jdkVersion: JdkVersion,
-                                     @SerializedName("vOptions") val vOptions: VOptions)
+                                     @SerializedName("vOptions") val vOptions: VOptions,
+                                     @SerializedName("majorVersion") val majorVersion: IdeVersion?)

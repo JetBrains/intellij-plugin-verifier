@@ -59,7 +59,7 @@ class CheckTrunkApiRunner(val ideFile: File,
 
       val jdkDescriptor = JdkDescriptor.ByFile(JdkManager.getJdkHome(runnerParams.jdkVersion))
 
-      val majorVersion = getMajorVersion(ide.version.baselineVersion)
+      val majorVersion = getMajorVersion(ide.version.baselineVersion, runnerParams.majorVersion)
       if (majorVersion == null) {
         val msg = "There is no major IDE update on the Server with which to compare check results"
         LOG.error(msg)
@@ -80,16 +80,14 @@ class CheckTrunkApiRunner(val ideFile: File,
     }
   }
 
-  private fun getMajorVersion(trunkNumber: Int): IdeVersion? {
-    return when (trunkNumber) {
-      162 -> {
-        val ideVersion = IdeVersion.createIdeVersion(Settings.TRUNK_162_RELEASE_VERSION.get())
-        require(ideVersion in IdeFilesManager.ideList())
-        ideVersion
-      }
-      else -> return IdeFilesManager.ideList().filter { it.baselineVersion == trunkNumber }.sorted().firstOrNull()
+  private fun getMajorVersion(trunkNumber: Int, majorVersion: IdeVersion?): IdeVersion? = majorVersion ?: when (trunkNumber) {
+    162 -> {
+      val ideVersion = IdeVersion.createIdeVersion(Settings.TRUNK_162_RELEASE_VERSION.get())
+      require(ideVersion in IdeFilesManager.ideList())
+      ideVersion
     }
-  }
+    else -> IdeFilesManager.ideList().filter { it.baselineVersion == trunkNumber }.sorted().firstOrNull()
+      }
 
   private fun calculateIdeReport(ide: Ide,
                                  jdkDescriptor: JdkDescriptor.ByFile,
@@ -115,7 +113,7 @@ class CheckTrunkApiRunner(val ideFile: File,
                                    jdkDescriptor: JdkDescriptor.ByFile,
                                    pluginsToCheck: List<PluginDescriptor>,
                                    progress: Progress): Pair<CheckIdeReport, BundledPlugins> {
-    val majorBuildLock: IdeFilesManager.IdeLock = IdeFilesManager.getIde(majorVersion)!!
+    val majorBuildLock: IdeFilesManager.IdeLock = IdeFilesManager.getIde(majorVersion) ?: throw IllegalArgumentException("There is no IDE #$majorVersion on the server")
     try {
       val existingReport = getExistingReport(majorVersion)
       val bundledPlugins = getBundledPlugins(majorBuildLock.ide)

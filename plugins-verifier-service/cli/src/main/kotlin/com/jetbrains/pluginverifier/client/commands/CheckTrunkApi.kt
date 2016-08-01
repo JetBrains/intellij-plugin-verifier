@@ -1,11 +1,14 @@
 package com.jetbrains.pluginverifier.client.commands
 
+import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.client.BaseCmdOpts
 import com.jetbrains.pluginverifier.configurations.CheckTrunkApiCompareResult
 import com.jetbrains.pluginverifier.configurations.CheckTrunkApiResults
 import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
 import com.jetbrains.pluginverifier.utils.VOptionsUtil
+import com.sampullara.cli.Args
+import com.sampullara.cli.Argument
 import org.jetbrains.plugins.verifier.service.api.CheckTrunkApi
 import org.jetbrains.plugins.verifier.service.params.CheckTrunkApiRunnerParams
 import java.io.File
@@ -25,7 +28,7 @@ class CheckTrunkApiCommand : Command {
       throw IllegalArgumentException("IDE $ideFile doesn't exist")
     }
 
-    val runnerParams = checkTrunkApiRunnerParams(opts)
+    val runnerParams = checkTrunkApiRunnerParams(opts, freeArgs)
 
     val results = CheckTrunkApi(opts.host, ideFile, runnerParams).execute()
     processResults(results, opts)
@@ -43,11 +46,20 @@ class CheckTrunkApiCommand : Command {
     }
   }
 
-  private fun checkTrunkApiRunnerParams(opts: BaseCmdOpts): CheckTrunkApiRunnerParams {
+  private fun checkTrunkApiRunnerParams(opts: BaseCmdOpts, freeArgs: List<String>): CheckTrunkApiRunnerParams {
     val jdkVersion = BaseCmdOpts.parseJdkVersion(opts) ?: throw IllegalArgumentException("Specify the JDK version to check with")
     val vOptions = VOptionsUtil.parseOpts(opts)
+    val apiOptions = CheckTrunkApiOptions()
+    Args.parse(apiOptions, freeArgs.toTypedArray())
 
-    return CheckTrunkApiRunnerParams(jdkVersion, vOptions)
+    val version = apiOptions.majorIdeVersion
+    return CheckTrunkApiRunnerParams(jdkVersion, vOptions, if (version == null) null else IdeVersion.createIdeVersion(version))
   }
 
+
+}
+
+private class CheckTrunkApiOptions : BaseCmdOpts() {
+  @set:Argument("majorIdeVersion", alias = "miv", description = "The IDE version with which to compare API problems")
+  var majorIdeVersion: String? = null
 }
