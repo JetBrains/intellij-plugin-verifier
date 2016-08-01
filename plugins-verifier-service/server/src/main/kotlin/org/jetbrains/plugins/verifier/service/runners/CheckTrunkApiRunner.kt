@@ -65,13 +65,13 @@ class CheckTrunkApiRunner(val ideFile: File,
         throw IllegalStateException(msg)
       }
 
-      val majorReport = getExistingReport(majorVersion) ?: calculateMajorReport(majorVersion, jdkDescriptor, pluginsToCheck, progress)
+      val majorReport = calculateMajorReport(majorVersion, jdkDescriptor, pluginsToCheck, progress)
       val currentReport = calculateIdeReport(ide, jdkDescriptor, pluginsToCheck, progress)
 
-      ReportsManager.saveReport(majorReport)
-      ReportsManager.saveReport(currentReport)
+      ReportsManager.saveReport(majorReport.first)
+      ReportsManager.saveReport(currentReport.first)
 
-      return CheckTrunkApiResults(majorReport, currentReport)
+      return CheckTrunkApiResults(majorReport.first, majorReport.second, currentReport.first, currentReport.second)
     } finally {
       if (deleteOnCompletion) {
         ideFile.deleteLogged()
@@ -90,11 +90,14 @@ class CheckTrunkApiRunner(val ideFile: File,
     }
   }
 
-  private fun calculateIdeReport(ide: Ide, jdkDescriptor: JdkDescriptor.ByFile, pluginsToCheck: List<PluginDescriptor>, progress: Progress): CheckIdeReport {
+  private fun calculateIdeReport(ide: Ide,
+                                 jdkDescriptor: JdkDescriptor.ByFile,
+                                 pluginsToCheck: List<PluginDescriptor>,
+                                 progress: Progress): Pair<CheckIdeReport, CheckTrunkApiResults.BundledPlugins> {
     try {
       val currentParams = CheckIdeParams(IdeDescriptor.ByInstance(ide), jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), runnerParams.vOptions, Resolver.getEmptyResolver(), BridgeVProgress(progress))
       LOG.debug("${presentableName()} current arguments: $currentParams")
-      return CheckIdeConfiguration(currentParams).execute().run { CheckIdeReport.createReport(ideVersion, vResults) }
+      return CheckIdeConfiguration(currentParams).execute().run { CheckIdeReport.createReport(ideVersion, vResults) } to CheckTrunkApiResults.BundledPlugins(ide.bundledPlugins.map { it.pluginId })
     } catch (ie: InterruptedException) {
       throw ie
     } catch (e: Exception) {
@@ -103,12 +106,20 @@ class CheckTrunkApiRunner(val ideFile: File,
     }
   }
 
-  private fun calculateMajorReport(majorVersion: IdeVersion, jdkDescriptor: JdkDescriptor.ByFile, pluginsToCheck: List<PluginDescriptor>, progress: Progress): CheckIdeReport {
+  private fun calculateMajorReport(majorVersion: IdeVersion,
+                                   jdkDescriptor: JdkDescriptor.ByFile,
+                                   pluginsToCheck: List<PluginDescriptor>,
+                                   progress: Progress): Pair<CheckIdeReport, CheckTrunkApiResults.BundledPlugins> {
     val majorBuildLock: IdeFilesManager.IdeLock = IdeFilesManager.getIde(majorVersion)!!
     try {
+      val bundledPluginIds = majorBuildLock.ide.bundledPlugins.map { it.pluginId }
+      val existingReport = getExistingReport(majorVersion)
+      if (existingReport != null) {
+        return existingReport to CheckTrunkApiResults.BundledPlugins(bundledPluginIds)
+      }
       val majorParams = CheckIdeParams(IdeDescriptor.ByInstance(majorBuildLock.ide), jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), runnerParams.vOptions, Resolver.getEmptyResolver(), BridgeVProgress(progress))
       LOG.debug("${presentableName()} major arguments: $majorParams")
-      return CheckIdeConfiguration(majorParams).execute().run { CheckIdeReport.createReport(ideVersion, vResults) }
+      return CheckIdeConfiguration(majorParams).execute().run { CheckIdeReport.createReport(ideVersion, vResults) } to CheckTrunkApiResults.BundledPlugins(bundledPluginIds)
     } catch (ie: InterruptedException) {
       throw ie
     } catch (e: Exception) {

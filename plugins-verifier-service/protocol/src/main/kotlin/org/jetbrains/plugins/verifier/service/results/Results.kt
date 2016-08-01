@@ -17,4 +17,8 @@ data class CheckPluginAgainstSinceUntilBuildsResults(@SerializedName("results") 
 }
 
 data class CheckTrunkApiResults(@SerializedName("majorReport") val majorReport: CheckIdeReport,
-                                @SerializedName("currentReport") val currentReport: CheckIdeReport) : Results
+                                @SerializedName("majorPlugins") val majorPlugins: BundledPlugins,
+                                @SerializedName("currentReport") val currentReport: CheckIdeReport,
+                                @SerializedName("currentPlugins") val currentPlugins: BundledPlugins) : Results {
+  data class BundledPlugins(@SerializedName("pluginIds") val pluginIds: List<String>)
+}
