@@ -20,5 +20,7 @@ data class CheckTrunkApiResults(@SerializedName("majorReport") val majorReport: 
                                 @SerializedName("majorPlugins") val majorPlugins: BundledPlugins,
                                 @SerializedName("currentReport") val currentReport: CheckIdeReport,
                                 @SerializedName("currentPlugins") val currentPlugins: BundledPlugins) : Results {
-  data class BundledPlugins(@SerializedName("pluginIds") val pluginIds: List<String>)
 }
+
+data class BundledPlugins(@SerializedName("pluginIds") val pluginIds: List<String>,
+                          @SerializedName("moduleIds") val moduleIds: List<String>)
