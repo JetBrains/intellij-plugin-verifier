@@ -96,7 +96,6 @@ private val locationTAF = RuntimeTypeAdapterFactory.of(ProblemLocation::class.ja
     .registerSubtype(CodeLocation::class.java)
 
 private val pluginDescriptorTAF = RuntimeTypeAdapterFactory.of(PluginDescriptor::class.java)
-    .registerSubtype(PluginDescriptor.ByBuildId::class.java)
     .registerSubtype(PluginDescriptor.ByXmlId::class.java)
     .registerSubtype(PluginDescriptor.ByUpdateInfo::class.java)
 //    .registerSubtype(PluginDescriptor.ByFile::class.java) //this class is serialized as ByXmlId

@@ -166,7 +166,6 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
     val simple = "(${pluginDescriptor.version})"
     val newest = "(${pluginDescriptor.version} - newest)"
     return when (pluginDescriptor) {
-      is PluginDescriptor.ByBuildId -> if (relevant.find { pluginDescriptor.buildId == it.updateId } != null) newest else simple
       is PluginDescriptor.ByUpdateInfo -> if (relevant.find { pluginDescriptor.updateInfo.updateId == it.updateId } != null) newest else simple
       else -> if (relevant.find { pluginDescriptor.pluginId == it.pluginId && pluginDescriptor.version == it.version } != null) newest else simple
     }

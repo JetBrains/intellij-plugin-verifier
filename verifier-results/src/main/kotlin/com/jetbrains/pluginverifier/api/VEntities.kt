@@ -23,7 +23,6 @@ sealed class PluginDescriptor(@SerializedName("pluginId") val pluginId: String,
   abstract override fun hashCode(): Int
 
   fun presentableName(): String = when (this) {
-    is ByBuildId -> "#${this.buildId.toString()}"
     is ByXmlId -> "${this.pluginId}:${this.version}"
     is ByFile -> "${this.file.name}"
     is ByInstance -> plugin.toString()
@@ -45,14 +44,6 @@ sealed class PluginDescriptor(@SerializedName("pluginId") val pluginId: String,
     override fun hashCode(): Int = pluginId.hashCode() + version.hashCode()
 
     override fun toString(): String = "PD.(pluginId='$pluginId', version=$version)"
-  }
-
-  class ByBuildId(pluginId: String, version: String, @SerializedName("buildId") val buildId: Int) : PluginDescriptor(pluginId, version) {
-    override fun toString(): String = "PD.(buildId=$buildId)"
-
-    override fun equals(other: Any?): Boolean = other is ByBuildId && buildId.equals(other.buildId)
-
-    override fun hashCode(): Int = buildId
   }
 
   class ByFile(pluginId: String, version: String, @Transient val file: File) : PluginDescriptor(pluginId, version) {

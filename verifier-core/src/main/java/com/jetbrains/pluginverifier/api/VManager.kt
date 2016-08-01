@@ -458,10 +458,6 @@ private object VParamsCreator {
   fun getPlugin(plugin: PluginDescriptor, ideVersion: IdeVersion): Plugin = when (plugin) {
     is PluginDescriptor.ByInstance -> plugin.plugin //already created.
     is PluginDescriptor.ByFile -> PluginCache.createPlugin(plugin.file) //IncorrectPluginException, IOException
-    is PluginDescriptor.ByBuildId -> {
-      val file = withConnectionCheck { RepositoryManager.getInstance().getPluginFile(plugin.buildId) } ?: throw noSuchUpdate(plugin)
-      PluginCache.createPlugin(file) //IncorrectPluginException, IOException
-    }
     is PluginDescriptor.ByXmlId -> {
       val updates = withConnectionCheck { RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion, plugin.pluginId) }
       val suitable: UpdateInfo = updates.find { plugin.version.equals(it.version) } ?: throw noSuchUpdate(plugin)
