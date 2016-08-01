@@ -13,7 +13,7 @@ buildscript {
 }
 
 def verifierVersion = '1.33'
-def intellijStructureVersion = '1.25'
+def intellijStructureVersion = '1.28'
 
 
 configure(allprojects) {
