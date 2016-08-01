@@ -306,7 +306,7 @@ object VManager {
 
     if (dependencies.cycle != null && ctx.verifierOptions.failOnCyclicDependencies) {
       val cycle = dependencies.cycle.joinToString(separator = " -> ")
-      LOG.debug("The plugin verifier will not verify a plugin $ctx.plugin because its dependencies tree has the following cycle: $cycle")
+      LOG.debug("The plugin verifier will not verify a plugin ${ctx.plugin} because its dependencies tree has the following cycle: $cycle")
       ctx.registerProblem(CyclicDependenciesProblem(cycle), ProblemLocation.fromPlugin(plugin.pluginId))
       return null to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Cyclic dependencies: $cycle", ctx.problems)
     }
