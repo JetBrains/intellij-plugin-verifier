@@ -19,9 +19,9 @@ import java.util.Set;
  * <p>Provides an access to the byte-code of a class by its name via the {@link #findClass(String)}.
  * Note that the way of constructing the {@code Resolver} affects the searching order
  * (it is similar to the Java <i>class-path</i> option)
- * <p>Note: the class is {@code Closeable} thus the {@code Resolver} requires to be closed when is no longer needed.
- * Some resolvers may extract the classes in the temporary directory for performance reasons, so {@link #close()} will clean
- * used disk space.</p>
+ * <p>Note: the class is {@code Closeable} thus the {@code Resolver} requires to be closed when it is no longer needed.
+ * Some resolvers may extract the classes in the temporary directory for performance reasons, so {@link #close()} will
+ * clean the used disk space.</p>
  */
 public abstract class Resolver implements Closeable {
 
@@ -161,8 +161,4 @@ public abstract class Resolver implements Closeable {
    */
   public abstract boolean containsClass(@NotNull String className);
 
-  @Override
-  public void close() {
-    //doesn't throw an IOException
-  }
 }

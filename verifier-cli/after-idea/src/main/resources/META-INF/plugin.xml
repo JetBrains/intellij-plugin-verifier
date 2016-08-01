@@ -1,0 +1,13 @@
+<idea-plugin version="2">
+    <id>DevKit</id>
+    <name>DevKit</name>
+    <version>1.0</version>
+    <vendor email="nonono.com" url="http://www.HornsAndHooves.com">HornsAndHooves</vendor>
+
+    <description><![CDATA[
+      HornsAndHooves plugin
+    ]]></description>
+
+    <idea-version since-build="131"/>
+
+</idea-plugin>

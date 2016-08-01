@@ -14,6 +14,7 @@
     <depends optional="true" config-file="optionals/optional.xml">optionalDependency</depends>
     <depends optional="true" config-file="../optionalsDir/otherDirOptional.xml">otherDirOptionalDependency</depends>
     <depends optional="true" config-file="/META-INF/referencedFromRoot.xml">referenceFromRoot</depends>
+    <depends optional="true" config-file="missingFile">missingDependency</depends>
 
     <depends>mandatoryDependency</depends>
     <depends>com.intellij.modules.mandatoryDependency</depends>

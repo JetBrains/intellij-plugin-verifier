@@ -1,0 +1,13 @@
+dependencies {
+  compile 'com.squareup.retrofit2:retrofit:2.1.0'
+  compile 'com.squareup.retrofit2:converter-gson:2.1.0'
+  compile 'com.squareup.okhttp3:logging-interceptor:3.3.1'
+  compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-parameters', version: rootProject.verifierVersion
+
+  compile project(':protocol')
+}
+
+task sourcesJar(type: Jar) {
+  classifier = 'sources'
+  from sourceSets.main.allSource
+}

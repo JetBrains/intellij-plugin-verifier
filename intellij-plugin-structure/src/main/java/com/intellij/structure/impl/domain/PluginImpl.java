@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.InputStream;
@@ -30,6 +32,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class PluginImpl implements Plugin {
+
+  private static final Logger LOG = LoggerFactory.getLogger(PluginImpl.class);
 
   private static final Pattern JAVA_CLASS_PATTERN = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*");
   private static final String INTERESTING_STRINGS[] = new String[]{"class", "interface", "implementation", "instance"};
@@ -44,7 +48,8 @@ class PluginImpl implements Plugin {
   private final Map<String, Plugin> myOptionalDescriptors = new HashMap<String, Plugin>();
   private final Set<String> myReferencedClasses = new HashSet<String>();
   private final Multimap<String, Element> myExtensions = ArrayListMultimap.create();
-  private File myPluginFile;
+  private final File myPluginFile;
+  private final List<String> myHints = new ArrayList<String>();
   @NotNull private Document myUnderlyingDocument = EMPTY_DOCUMENT;
   @NotNull private String myFileName = "(unknown)";
   @Nullable private byte[] myLogoContent;
@@ -61,7 +66,7 @@ class PluginImpl implements Plugin {
   @Nullable private IdeVersion mySinceBuild;
   @Nullable private IdeVersion myUntilBuild;
 
-  PluginImpl(@NotNull File pluginFile) throws IncorrectPluginException {
+  PluginImpl(@NotNull File pluginFile) {
     myPluginFile = pluginFile;
   }
 
@@ -208,7 +213,9 @@ class PluginImpl implements Plugin {
         }
         myLogoContent = IOUtils.toByteArray(input);
       } catch (Exception e) {
-        System.err.println("Unable to extract plugin logo content by path " + myLogoUrl + " because " + e.getLocalizedMessage());
+        String msg = "Unable to find plugin logo file by path " + myLogoUrl + " specified in META-INF/plugin.xml";
+        myHints.add(msg);
+        LOG.debug(msg, e);
       } finally {
         IOUtils.closeQuietly(input);
       }
@@ -484,6 +491,12 @@ class PluginImpl implements Plugin {
     return myPluginFile;
   }
 
+  @NotNull
+  @Override
+  public List<String> getHints() {
+    return Collections.unmodifiableList(myHints);
+  }
+
   void readExternalFromIdeSources(@NotNull URL url, @NotNull Validator validator, @NotNull JDOMXIncluder.PathResolver pathResolver) throws IncorrectPluginException {
     Document document;
     try {
@@ -495,8 +508,7 @@ class PluginImpl implements Plugin {
     try {
       document = JDOMXIncluder.resolve(document, url.toExternalForm(), false, pathResolver);
     } catch (Exception e) {
-      System.err.println("Unable to resolve xinclude elements");
-      e.printStackTrace();
+      LOG.error("Unable to resolve xinclude elements", e);
     }
     checkAndSetEntries(url, document, validator);
   }
@@ -541,6 +553,10 @@ class PluginImpl implements Plugin {
       id = myFileName;
     }
     return id + (getPluginVersion() != null ? ":" + getPluginVersion() : "");
+  }
+
+  void addHints(@NotNull List<String> hints) {
+    myHints.addAll(hints);
   }
 
   private static class XIncludePluginResolver extends JDOMXIncluder.DefaultPathResolver {

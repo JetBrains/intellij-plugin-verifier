@@ -1,0 +1,5 @@
+rootProject.name = 'plugins-verifier-service'
+include 'cli'
+include 'protocol'
+include 'server'
+include 'rest'

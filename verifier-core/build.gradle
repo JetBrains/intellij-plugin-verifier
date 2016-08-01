@@ -1,0 +1,10 @@
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile project(':verifier-results')
+  compile project(':verifier-parameters')
+
+  testCompile group: 'junit', name: 'junit', version: '4.11'
+}

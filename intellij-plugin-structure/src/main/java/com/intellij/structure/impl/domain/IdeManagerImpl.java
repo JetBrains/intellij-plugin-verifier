@@ -14,6 +14,8 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +28,8 @@ import java.util.*;
  * @author Sergey Patrikeev
  */
 public class IdeManagerImpl extends IdeManager {
+
+  private static final Logger LOG = LoggerFactory.getLogger(IdeManagerImpl.class);
 
   @NotNull
   private static IdeVersion readBuildNumber(@NotNull File versionFile) throws IOException {
@@ -104,8 +108,7 @@ public class IdeManagerImpl extends IdeManager {
           plugin.readExternalFromIdeSources(xmlUrl, dummyValidator, pathResolver);
           result.add(plugin);
         } catch (Exception e) {
-          System.err.println("Unable to load dummy plugin from " + file);
-          e.printStackTrace();
+          LOG.warn("Unable to load dummy plugin from " + file);
         }
       }
     }
@@ -133,10 +136,8 @@ public class IdeManagerImpl extends IdeManager {
 
       try {
         plugins.add(PluginManager.getInstance().createPlugin(file, false));
-      } catch (IncorrectPluginException e) {
-        System.out.println("Failed to read plugin " + file + ": " + e.getMessage());
-      } catch (IOException e) {
-        System.out.println("Failed to read plugin " + file + ": " + e.getMessage());
+      } catch (Exception e) {
+        LOG.warn("Failed to read plugin " + file, e);
       }
     }
 

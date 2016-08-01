@@ -63,6 +63,8 @@ public class TestMockPlugins {
     assertEquals(IdeVersion.createIdeVersion("141.9999999"), plugin.getUntilBuild());
 
     assertEquals("change_notes", plugin.getChangeNotes());
+
+    assertContains(plugin.getHints(), "Plugin dependency missingDependency config-file missingFile specified in META-INF/plugin.xml is not found");
   }
 
   @Test
@@ -107,8 +109,8 @@ public class TestMockPlugins {
   }
 
   private void testMock3DependenciesAndModules(Plugin plugin) {
-    assertEquals(5, plugin.getDependencies().size());
-    List<PluginDependencyImpl> dependencies = Arrays.asList(new PluginDependencyImpl("JUnit", true), new PluginDependencyImpl("optionalDependency", true), new PluginDependencyImpl("otherDirOptionalDependency", true), new PluginDependencyImpl("mandatoryDependency", false), new PluginDependencyImpl("referenceFromRoot", true));
+    assertEquals(6, plugin.getDependencies().size());
+    List<PluginDependencyImpl> dependencies = Arrays.asList(new PluginDependencyImpl("JUnit", true), new PluginDependencyImpl("optionalDependency", true), new PluginDependencyImpl("otherDirOptionalDependency", true), new PluginDependencyImpl("mandatoryDependency", false), new PluginDependencyImpl("referenceFromRoot", true), new PluginDependencyImpl("missingDependency", true));
     assertContains(plugin.getDependencies(), (PluginDependency[]) dependencies.toArray());
 
     //check module dependencies
@@ -133,7 +135,7 @@ public class TestMockPlugins {
     assertFalse(set.contains("org.jetbrains.plugins.scala.project.maven.MavenWorkingDirectoryProviderImpl".replace('.', '/')));
   }
 
-  private void testMock3Classes(Plugin plugin) {
+  private void testMock3Classes(Plugin plugin) throws IOException {
     Resolver resolver;
     try {
       resolver = Resolver.createPluginResolver(plugin);

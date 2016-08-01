@@ -12,6 +12,8 @@ import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,32 +31,46 @@ import static com.intellij.structure.impl.domain.PluginManagerImpl.isJarOrZip;
  */
 public class PluginResolver extends Resolver {
 
+  private static final Logger LOG = LoggerFactory.getLogger(PluginResolver.class);
   private static final Pattern LIB_JAR_REGEX = Pattern.compile("([^/]+/)?lib/([^/]+\\.(jar|zip))");
   private static final Pattern CLASSES_DIR_REGEX = Pattern.compile("([^/]+/)?classes/");
   @NotNull private final File myPluginFile;
   @NotNull private final Plugin myPlugin;
   private final boolean myDeleteOnClose;
   private final Resolver myResolver;
+  private volatile boolean isClosed;
 
   private PluginResolver(@NotNull Plugin plugin, @NotNull File extracted, boolean deleteOnClose) throws IncorrectPluginException {
     myPluginFile = extracted;
     myDeleteOnClose = deleteOnClose;
     myPlugin = plugin;
-    myResolver = loadClasses(myPluginFile);
+    try {
+      myResolver = loadClasses(myPluginFile);
+    } catch (Exception e) {
+      if (myDeleteOnClose) {
+        FileUtils.deleteQuietly(myPluginFile);
+      }
+      throw (e instanceof IncorrectPluginException ? ((IncorrectPluginException) e) : new RuntimeException(e));
+    }
   }
 
   @NotNull
   public static PluginResolver createPluginResolver(@NotNull Plugin plugin) throws IncorrectPluginException, IOException {
     File file = plugin.getPluginFile();
-    if (file.isDirectory() || (file.exists() && PluginManagerImpl.isJarOrZip(file))) {
-      if (StringUtil.endsWithIgnoreCase(file.getName(), ".zip")) {
-        File extracted = PluginExtractor.extractPlugin(file);
-        return new PluginResolver(plugin, extracted, true);
-      }
-      return new PluginResolver(plugin, file, false);
-    }
     if (!file.exists()) {
       throw new IllegalArgumentException("Plugin file doesn't exist " + file);
+    }
+    if (file.isDirectory() || PluginManagerImpl.isJarOrZip(file)) {
+      if (StringUtil.endsWithIgnoreCase(file.getName(), ".zip")) {
+        File extracted = PluginExtractor.extractPlugin(plugin.getPluginId() + ":" + plugin.getPluginVersion(), file);
+        try {
+          return new PluginResolver(plugin, extracted, true);
+        } catch (RuntimeException e) {
+          FileUtils.deleteQuietly(extracted);
+          throw e;
+        }
+      }
+      return new PluginResolver(plugin, file, false);
     }
     throw new IllegalArgumentException("Incorrect plugin file type " + file.getName() + ": expected a directory, a .zip or a .jar archive");
   }
@@ -65,10 +81,18 @@ public class PluginResolver extends Resolver {
   }
 
   @Override
-  public void close() {
-    myResolver.close();
-    if (myDeleteOnClose) {
-      FileUtils.deleteQuietly(myPluginFile);
+  public void close() throws IOException {
+    if (isClosed) {
+      return;
+    }
+    isClosed = true;
+
+    try {
+      myResolver.close();
+    } finally {
+      if (myDeleteOnClose) {
+        FileUtils.deleteQuietly(myPluginFile);
+      }
     }
   }
 
@@ -156,7 +180,9 @@ public class PluginResolver extends Resolver {
           }
         }
       }
-    } catch (IOException e) {
+    } catch (Exception e) {
+      closeResolvers(resolvers);
+      if (e instanceof IncorrectPluginException) throw (IncorrectPluginException) e;
       throw new IncorrectPluginException("Unable to read plugin classes from " + file.getName(), e);
     } finally {
       if (zipFile != null) {
@@ -175,6 +201,7 @@ public class PluginResolver extends Resolver {
           resolvers.add(rootResolver);
         }
       } catch (IOException e) {
+        closeResolvers(resolvers);
         throw new IncorrectPluginException("Unable to read plugin classes from " + file.getName(), e);
       }
     }
@@ -185,8 +212,6 @@ public class PluginResolver extends Resolver {
 
   private Resolver loadClassesFromDir(@NotNull File dir) throws IncorrectPluginException {
     File classesDir = new File(dir, "classes");
-
-    List<Resolver> resolvers = new ArrayList<Resolver>();
 
     Collection<File> classFiles;
     boolean classesDirExists = classesDir.isDirectory();
@@ -204,22 +229,36 @@ public class PluginResolver extends Resolver {
     } catch (IOException e) {
       throw new IncorrectPluginException("Unable to read " + (classesDirExists ? "`classes`" : "root") + " plugin classes", e);
     }
+    List<Resolver> resolvers = new ArrayList<Resolver>();
     if (!rootResolver.isEmpty()) {
       resolvers.add(rootResolver);
     }
 
 
+    File lib = new File(dir, "lib");
     try {
-      File lib = new File(dir, "lib");
       if (lib.isDirectory()) {
         Collection<File> jars = JarsUtils.collectJars(lib, Predicates.<File>alwaysTrue(), true);
         Resolver libResolver = JarsUtils.makeResolver("Plugin `lib` jars: " + lib.getCanonicalPath(), jars);
-        resolvers.add(libResolver);
+        if (!libResolver.isEmpty()) {
+          resolvers.add(libResolver);
+        }
       }
-    } catch (IOException e) {
-      throw new IncorrectPluginException("Unable to read `lib` directory", e);
+    } catch (Exception e) {
+      closeResolvers(resolvers);
+      throw new IncorrectPluginException("Unable to read `lib` directory " + lib + " of the plugin " + myPlugin, e);
     }
 
     return Resolver.createUnionResolver("Plugin resolver " + myPlugin.getPluginId(), resolvers);
+  }
+
+  private void closeResolvers(List<Resolver> resolvers) {
+    for (Resolver resolver : resolvers) {
+      try {
+        resolver.close();
+      } catch (Exception ce) {
+        LOG.error("Unable to close resolver " + resolver, ce);
+      }
+    }
   }
 }

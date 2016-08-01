@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.intellij.structure.domain.*;
 import com.intellij.structure.resolvers.Resolver;
-import com.jetbrains.pluginverifier.VOptions;
+import com.jetbrains.pluginverifier.api.*;
 import com.jetbrains.pluginverifier.location.ProblemLocation;
 import com.jetbrains.pluginverifier.problems.*;
 import com.jetbrains.pluginverifier.problems.fields.ChangeFinalFieldProblem;
@@ -13,19 +13,17 @@ import com.jetbrains.pluginverifier.problems.statics.InstanceAccessOfStaticField
 import com.jetbrains.pluginverifier.problems.statics.InvokeStaticOnInstanceMethodProblem;
 import com.jetbrains.pluginverifier.problems.statics.InvokeVirtualOnStaticMethodProblem;
 import com.jetbrains.pluginverifier.problems.statics.StaticAccessOfInstanceFieldProblem;
-import com.jetbrains.pluginverifier.utils.Util;
-import com.jetbrains.pluginverifier.verifiers.VerificationContextImpl;
-import com.jetbrains.pluginverifier.verifiers.Verifiers;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.GnuParser;
+import com.jetbrains.pluginverifier.utils.CmdOpts;
+import com.jetbrains.pluginverifier.utils.VOptionsUtil;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -82,7 +80,7 @@ public class VerifierTest {
           .put(new InvokeVirtualOnStaticMethodProblem("com/intellij/lang/SmartEnterProcessor#commit()V"), ProblemLocation.fromMethod("mock/plugin/invokeVirtualOnStatic/SmartEnterProcessorUser", "main()V"))
           .put(new InvokeStaticOnInstanceMethodProblem("invocation/InvocationProblems#wasStatic()V"), ProblemLocation.fromMethod("mock/plugin/invokeStaticOnInstance/InvocationProblemsUser", "foo()V"))
 
-          .put(new MissingDependencyProblem("org.some.company.plugin", "DevKit", "Plugin org.some.company.plugin:1.0 depends on the other plugin DevKit which has not a compatible build with IU-145.500"), ProblemLocation.fromPlugin("org.some.company.plugin"))
+          .put(new MissingDependencyProblem("org.some.company.plugin", "MissingPlugin", "Plugin org.some.company.plugin:1.0 depends on the other plugin MissingPlugin which doesn't have a build compatible with IU-145.500"), ProblemLocation.fromPlugin("org.some.company.plugin"))
 
           //field problems
           .put(new FieldNotFoundProblem("fields/FieldsContainer#deletedField#I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessDeletedField()V"))
@@ -104,19 +102,14 @@ public class VerifierTest {
           .build();
 
 
-  private static void testFoundProblems(Map<Problem, Set<ProblemLocation>> foundProblems, Multimap<Problem, ProblemLocation> actualProblems) throws Exception {
+  private static void testFoundProblems(Multimap<Problem, ProblemLocation> foundProblems, Multimap<Problem, ProblemLocation> actualProblems) throws Exception {
 
-    Multimap<Problem, ProblemLocation> redundantProblems = HashMultimap.create();
-    for (Map.Entry<Problem, Set<ProblemLocation>> entry : foundProblems.entrySet()) {
-      for (ProblemLocation location : entry.getValue()) {
-        redundantProblems.put(entry.getKey(), location);
-      }
-    }
+    Multimap<Problem, ProblemLocation> redundantProblems = HashMultimap.create(foundProblems);
 
     for (Map.Entry<Problem, ProblemLocation> entry : actualProblems.entries()) {
       Problem problem = entry.getKey();
       ProblemLocation location = entry.getValue();
-      Assert.assertTrue("problem " + problem + " should be found, but it isn't", foundProblems.containsKey(problem));
+      Assert.assertTrue("problem " + problem + " should be found at " + location + ", but it isn't", foundProblems.containsKey(problem));
       try {
         boolean contains = foundProblems.get(problem).contains(location);
         if (!contains) {
@@ -198,22 +191,23 @@ public class VerifierTest {
 
     Plugin plugin = PluginManager.getInstance().createPlugin(pluginFile);
 
-    final CommandLine commandLine = new GnuParser().parse(Util.CMD_OPTIONS, new String[]{});
-
 
     String jdkPath = System.getenv("JAVA_HOME");
     if (jdkPath == null) {
-      jdkPath = "/usr/lib/jvm/java-6-oracle";
+      jdkPath = "/usr/lib/jvm/java-8-oracle";
     }
 
     try (
-        Resolver ideResolver = Resolver.createIdeResolver(ide);
-        Resolver jdkResolver = Resolver.createJdkResolver(new File(jdkPath))
+        Resolver ideResolver = Resolver.createIdeResolver(ide)
     ) {
-      VerificationContextImpl ctx = new VerificationContextImpl(plugin, ide, ideResolver, jdkResolver, null, VOptions.Companion.parseOpts(commandLine));
-      Verifiers.processAllVerifiers(ctx);
+      PluginDescriptor.ByInstance pluginDescriptor = new PluginDescriptor.ByInstance(plugin);
+      IdeDescriptor.ByInstance ideDescriptor = new IdeDescriptor.ByInstance(ide, ideResolver);
+      VOptions vOptions = VOptionsUtil.parseOpts(new CmdOpts());
+      VResults results = VManager.INSTANCE.verify(new VParams(new JdkDescriptor.ByFile(jdkPath), Collections.singletonList(new Pair<PluginDescriptor, IdeDescriptor>(pluginDescriptor, ideDescriptor)), vOptions, Resolver.getEmptyResolver(), true));
+      VResult result = results.getResults().get(0);
+      Assert.assertTrue(result instanceof VResult.Problems);
 
-      testFoundProblems(ctx.getProblemSet().asMap(), actualProblems);
+      testFoundProblems(((VResult.Problems) result).getProblems(), actualProblems);
     }
 
   }

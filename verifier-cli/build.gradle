@@ -1,34 +1,14 @@
 apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'kotlin'
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-buildscript {
-  ext.kotlin_version = '1.0.2'
-
-  repositories {
-    jcenter()
-  }
-  dependencies {
-    classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
-    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-  }
-}
 
 dependencies {
   //for verifier tests
   testRuntime project('mock-plugin')
   testCompile group: 'org.codehaus.plexus', name: 'plexus-archiver', version: '2.3'
 
+  runtime group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
 
-  compile 'com.github.salomonbrys.kotson:kotson:2.2.2'
-  compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-  compile project(':verifier-problems')
-  compile project(':repository')
-  compile project(':common-utils')
-  compile group: 'commons-cli', name: 'commons-cli', version: '1.2'
+  compile project(':verifier-configurations')
+
   compile group: 'com.google.guava', name: 'guava', version: '15.0'
   compile group: 'com.google.code.gson', name: 'gson', version: '2.2.4'
   compile group: 'commons-io', name: 'commons-io', version: '2.3'
@@ -45,13 +25,23 @@ task prepareMockPlugin(type: Copy) {
 }
 
 task prepareAfterIdea(type: Copy) {
-  project('after-idea') {
-    from tasks.withType(Jar)
+  into "$buildDir/mocks/after-idea"
+
+  def libDir = copySpec {
+    from project('after-idea').tasks.withType(Jar)
+    into "lib"
   }
-  into "$buildDir/mocks/after-idea/lib"
+
+  def pluginDir = copySpec {
+    from project('after-idea').file("src/main/resources/META-INF")
+    into "plugins/devkit/META-INF"
+  }
+
+  with libDir, pluginDir
 }
 
 test.dependsOn prepareMockPlugin, prepareAfterIdea
+jar.dependsOn test
 
 shadowJar {
   manifest {

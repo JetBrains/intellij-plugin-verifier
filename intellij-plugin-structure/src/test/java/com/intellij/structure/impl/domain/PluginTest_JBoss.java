@@ -26,7 +26,7 @@ public class PluginTest_JBoss {
 
   @Test
   public void downloadAndOpenAsDir() throws Exception {
-    File asDir = PluginExtractor.extractPlugin(TestUtils.downloadPlugin(TestUtils.JBOSS, "jboss.zip"));
+    File asDir = PluginExtractor.extractPlugin("jboss", TestUtils.downloadPlugin(TestUtils.JBOSS, "jboss.zip"));
     Plugin plugin = PluginManager.getInstance().createPlugin(asDir);
     checkPlugin(plugin);
   }

@@ -1,4 +1,0 @@
-dependencies {
-  compile project(':common-utils')
-  compile project(':repository')
-}

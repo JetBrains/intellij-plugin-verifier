@@ -1,19 +1,24 @@
 buildscript {
+
+  ext.kotlin_version = '1.0.3'
+
   repositories {
     jcenter()
   }
   dependencies {
     classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
     classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   }
 }
 
-def verifierVersion = '1.32'
-def intellijStructureVersion = '1.24'
+def verifierVersion = '1.33'
+def intellijStructureVersion = '1.25'
 
 
 configure(allprojects) {
   apply plugin: 'java'
+  apply plugin: 'kotlin'
 
   group = 'org.jetbrains.intellij.plugins'
 
@@ -27,18 +32,20 @@ configure(allprojects) {
   println("Configuring project ${it.name}:${it.version}")
 
 
-  sourceCompatibility = 1.6
-  targetCompatibility = 1.6
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
 
   dependencies {
 
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile 'com.github.salomonbrys.kotson:kotson:2.2.2'
+    
     //plugin structure API
     compile group: 'org.jetbrains.intellij.plugins', name: 'intellij-plugin-structure', version: intellijStructureVersion
 
     testCompile group: 'junit', name: 'junit', version: '4.11'
 
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
-    runtime group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.21'
 
     compile group: 'com.intellij', name: 'annotations', version: '12.0'
     compile group: 'org.ow2.asm', name: 'asm-all', version: '5.0.4'
@@ -60,11 +67,16 @@ configure(allprojects) {
   }
 
   artifacts.archives sourcesJar
+
+  jar {
+    manifest {
+      attributes 'Verifier-Version': version
+    }
+  }
 }
 
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
-
 
 
 publishing {
@@ -87,11 +99,12 @@ publishing {
       }
     }
 
-    CommonUtilsPublication(MavenPublication) { configurePublication(it, ':common-utils', false) }
     VerifierCliPublication(MavenPublication) { configurePublication(it, ':verifier-cli', true) }
-    RepositoryPublication(MavenPublication) { configurePublication(it, ':repository', false) }
-    UploaderPublication(MavenPublication) { configurePublication(it, ':uploader', true) }
-    ProblemsPublication(MavenPublication) { configurePublication(it, ':verifier-problems', false) }
+    VerifierParameters(MavenPublication) { configurePublication(it, ':verifier-parameters', false) }
+    VerifierConfigurations(MavenPublication) { configurePublication(it, ':verifier-configurations', false) }
+    RepositoryPublication(MavenPublication) { configurePublication(it, ':verifier-repository', false) }
+    ResultsPublication(MavenPublication) { configurePublication(it, ':verifier-results', false) }
+    VerifierCorePublication(MavenPublication) { configurePublication(it, ':verifier-core', false) }
   }
 }
 
@@ -104,8 +117,7 @@ bintray {
 
 
   publish = true
-  publications = ['CommonUtilsPublication', 'VerifierCliPublication', 'RepositoryPublication',
-                  'UploaderPublication', 'ProblemsPublication']
+  publications = ['VerifierCliPublication', 'RepositoryPublication', 'ResultsPublication', 'VerifierParameters', 'VerifierConfigurations']
 
   pkg {
     repo = 'intellij-plugin-service'

@@ -7,6 +7,8 @@ import com.intellij.structure.impl.domain.IdeManagerImpl;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +24,8 @@ import static com.intellij.structure.resolvers.Resolver.createUnionResolver;
 public class IdeResolverCreator {
 
   private static final String[] HARD_CODED_LIB_FOLDERS = new String[]{"community/android/android/lib"};
+
+  private static final Logger LOG = LoggerFactory.getLogger(IdeResolverCreator.class);
 
   @NotNull
   public static Resolver createIdeResolver(@NotNull Ide ide) throws IOException {
@@ -75,8 +79,7 @@ public class IdeResolverCreator {
         try {
           return JarsUtils.makeResolver(libDir.getName() + " `lib` dir", JarsUtils.collectJars(libDir, Predicates.<File>alwaysTrue(), false));
         } catch (IOException e) {
-          System.err.println("Unable to read libraries from " + libDir);
-          e.printStackTrace();
+          LOG.warn("Unable to read libraries from " + libDir, e);
         }
       }
     }

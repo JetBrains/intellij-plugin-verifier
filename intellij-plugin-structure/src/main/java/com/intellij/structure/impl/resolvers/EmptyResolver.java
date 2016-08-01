@@ -47,4 +47,9 @@ public class EmptyResolver extends Resolver {
   public String toString() {
     return "EmptyResolver";
   }
+
+  @Override
+  public void close() {
+    //do nothing
+  }
 }
