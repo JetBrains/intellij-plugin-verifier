@@ -46,7 +46,7 @@ dependencies {
   //Grails specific dependencies.
   compile "org.grails:grails-core"
   compile "org.springframework.boot:spring-boot-starter-actuator"
-  compile "org.springframework.boot:spring-boot-starter-tomcat"
+  provided "org.springframework.boot:spring-boot-starter-tomcat"
   compile "org.grails:grails-dependencies"
   compile "org.grails:grails-web-boot"
   compile "org.grails.plugins:cache"
