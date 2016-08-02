@@ -85,7 +85,7 @@ class CheckTrunkApiRunner(val ideFile: File,
                                  pluginsToCheck: List<PluginDescriptor>,
                                  progress: Progress): Pair<CheckIdeReport, BundledPlugins> {
     try {
-      val currentParams = CheckIdeParams(IdeDescriptor.ByInstance(ide), jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), runnerParams.vOptions, Resolver.getEmptyResolver(), BridgeVProgress(progress))
+      val currentParams = CheckIdeParams(IdeDescriptor.ByInstance(ide), jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), runnerParams.vOptions, emptyList(), Resolver.getEmptyResolver(), BridgeVProgress(progress))
       LOG.debug("${presentableName()} current arguments: $currentParams")
       val bundledPlugins = getBundledPlugins(ide)
       val ideReport = CheckIdeConfiguration(currentParams).execute().run { CheckIdeReport.createReport(ideVersion, vResults) }
@@ -111,7 +111,7 @@ class CheckTrunkApiRunner(val ideFile: File,
       if (existingReport != null) {
         return existingReport to bundledPlugins
       }
-      val majorParams = CheckIdeParams(IdeDescriptor.ByInstance(majorBuildLock.ide), jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), runnerParams.vOptions, Resolver.getEmptyResolver(), BridgeVProgress(progress))
+      val majorParams = CheckIdeParams(IdeDescriptor.ByInstance(majorBuildLock.ide), jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), runnerParams.vOptions, emptyList(), Resolver.getEmptyResolver(), BridgeVProgress(progress))
       LOG.debug("${presentableName()} major arguments: $majorParams")
       val ideReport = CheckIdeConfiguration(majorParams).execute().run { CheckIdeReport.createReport(ideVersion, vResults) }
       return ideReport to bundledPlugins
