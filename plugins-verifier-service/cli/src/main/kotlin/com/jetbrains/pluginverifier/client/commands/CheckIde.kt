@@ -63,7 +63,7 @@ class CheckIdeCommand : Command {
     val (checkAllBuilds, checkLastBuilds) = CheckIdeParamsParser.parsePluginToCheckList(opts)
     val excludedPlugins = CheckIdeParamsParser.parseExcludedPlugins(opts)
 
-    return CheckIdeRunnerParams(jdkVersion, vOptions, checkAllBuilds, checkLastBuilds, excludedPlugins, actualIdeVersion)
+    return CheckIdeRunnerParams(jdkVersion, vOptions, checkAllBuilds, checkLastBuilds, excludedPlugins, checkAllBuilds, actualIdeVersion)
   }
 
 

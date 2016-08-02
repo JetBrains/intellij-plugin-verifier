@@ -23,6 +23,7 @@ data class CheckIdeParams(val ideDescriptor: IdeDescriptor,
                           val pluginsToCheck: List<PluginDescriptor>,
                           val excludedPlugins: Multimap<String, String>,
                           val vOptions: VOptions,
+                          val pluginIdsToCheckExistingBuilds: List<String> = emptyList(),
                           val externalClassPath: Resolver = Resolver.getEmptyResolver(),
                           val progress: VProgress = DefaultVProgress()) : Params
 
@@ -48,7 +49,7 @@ object CheckIdeParamsParser : ParamsParser {
 
     val pluginsToCheck = getDescriptorsToCheck(checkAllBuilds, checkLastBuilds, ide.version)
 
-    return CheckIdeParams(IdeDescriptor.ByInstance(ide), jdkDescriptor, pluginsToCheck, excludedPlugins, vOptions, externalClassPath)
+    return CheckIdeParams(IdeDescriptor.ByInstance(ide), jdkDescriptor, pluginsToCheck, excludedPlugins, vOptions, checkAllBuilds, externalClassPath)
   }
 
   /**
@@ -64,30 +65,31 @@ object CheckIdeParamsParser : ParamsParser {
     val pluginsFile = opts.pluginsToCheckFile
     if (pluginsFile != null) {
       try {
-        val reader = BufferedReader(FileReader(pluginsFile))
-        var s: String?
-        while (true) {
-          s = reader.readLine()
-          if (s == null) break
-          s = s.trim { it <= ' ' }
-          if (s.isEmpty() || s.startsWith("//")) continue
+        BufferedReader(FileReader(pluginsFile)).use { reader ->
+          var s: String?
+          while (true) {
+            s = reader.readLine()
+            if (s == null) break
+            s = s.trim { it <= ' ' }
+            if (s.isEmpty() || s.startsWith("//")) continue
 
-          var checkAllBuilds = true
-          if (s.endsWith("$")) {
-            s = s.substring(0, s.length - 1).trim { it <= ' ' }
-            checkAllBuilds = false
-          }
-          if (s.startsWith("$")) {
-            s = s.substring(1).trim { it <= ' ' }
-            checkAllBuilds = false
-          }
+            var checkAllBuilds = true
+            if (s.endsWith("$")) {
+              s = s.substring(0, s.length - 1).trim { it <= ' ' }
+              checkAllBuilds = false
+            }
+            if (s.startsWith("$")) {
+              s = s.substring(1).trim { it <= ' ' }
+              checkAllBuilds = false
+            }
 
-          if (s.isEmpty()) continue
+            if (s.isEmpty()) continue
 
-          if (checkAllBuilds) {
-            pluginsCheckAllBuilds.add(s)
-          } else {
-            pluginsCheckLastBuilds.add(s)
+            if (checkAllBuilds) {
+              pluginsCheckAllBuilds.add(s)
+            } else {
+              pluginsCheckLastBuilds.add(s)
+            }
           }
         }
       } catch (e: IOException) {

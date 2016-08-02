@@ -40,7 +40,7 @@ class CheckIdeRunner(val ideFile: File,
       val pluginsToCheck = CheckIdeParamsParser.getDescriptorsToCheck(runnerParams.checkAllBuilds, runnerParams.checkLastBuilds, ide.version)
 
       val jdkDescriptor = JdkDescriptor.ByFile(JdkManager.getJdkHome(runnerParams.jdkVersion))
-      val checkIdeParams = CheckIdeParams(IdeDescriptor.ByInstance(ide), jdkDescriptor, pluginsToCheck, runnerParams.excludedPlugins, runnerParams.vOptions, Resolver.getEmptyResolver(), BridgeVProgress(progress))
+      val checkIdeParams = CheckIdeParams(IdeDescriptor.ByInstance(ide), jdkDescriptor, pluginsToCheck, runnerParams.excludedPlugins, runnerParams.vOptions, Resolver.getEmptyResolver(), BridgeVProgress(progress), runnerParams.pluginIdsToCheckExistingBuilds)
 
       LOG.debug("CheckIde #$taskId arguments: $checkIdeParams")
 
