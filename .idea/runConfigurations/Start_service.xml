@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Start service" type="GrailsRunConfigurationType" factoryName="Grails">
-    <setting name="vmparams" value="-DverifierService.homeDirectory=/home/sergey/.pluginVerifierService -DverifierService.jdk.home.6=/usr/lib/jvm/java-6-oracle -DverifierService.jdk.home.7=/usr/lib/jvm/java-7-oracle -DverifierService.jdk.home.8=/usr/lib/jvm/java-8-oracle -DverifierService.max.disk.space=40960 -DverifierService.trunk.162.release.version=IU-162.1121.32" />
+    <setting name="vmparams" value="-DVERIFIER_SERVICE_HOME_DIRECTORY=/home/sergey/.pluginVerifierService -DVERIFIER_SERVICE_JDK_6_HOME=/usr/lib/jvm/java-6-oracle -DVERIFIER_SERVICE_JDK_7_HOME=/usr/lib/jvm/java-7-oracle -DVERIFIER_SERVICE_JDK_8_HOME=/usr/lib/jvm/java-8-oracle -DVERIFIER_SERVICE_MAX_DISK_SPACE=40960" />
     <setting name="cmdLine" value="run-app" />
     <setting name="passParentEnv" value="true" />
     <setting name="grailsApplicationRoot" value="$PROJECT_DIR$/plugins-verifier-service/server" />

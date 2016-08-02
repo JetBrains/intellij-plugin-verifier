@@ -17,9 +17,9 @@ appender('STDOUT', ConsoleAppender) {
   }
 }
 
-def home = System.getProperty('verifierService.homeDirectory')
+def home = System.getProperty('VERIFIER_SERVICE_HOME_DIRECTORY')
 if (!home) {
-  throw new RuntimeException("The property 'verifierService.homeDirectory' is not set")
+  throw new RuntimeException("The property 'VERIFIER_SERVICE_HOME_DIRECTORY' is not set")
 }
 appender('FILE', RollingFileAppender) {
   //the logger is always logging into this file (but rollovers the files according to fileNamePattern)
