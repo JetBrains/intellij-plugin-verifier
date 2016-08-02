@@ -18,7 +18,7 @@ enum class Settings(private val key: String) {
     if (property != null) {
       return property
     }
-    return Holders.getGrailsApplication().config.getProperty(key)
+    return Holders.getGrailsApplication().config.getProperty(key) ?: throw IllegalStateException("The property $key should be set")
   }
 }
 
@@ -26,20 +26,12 @@ object TrunkVersions {
 
   private val versions: MutableMap<Int, IdeVersion> = hashMapOf()
 
-  @Synchronized
-  fun getReleaseVersion(trunkNumber: Int): IdeVersion? {
-    val version = versions[trunkNumber]
-    if (version != null) {
-      return version
-    }
-    val property = System.getProperty("verifierService.trunk.$trunkNumber.release.version")
-    if (property != null) {
-      val ideVersion = IdeVersion.createIdeVersion(property)
-      versions[trunkNumber] = ideVersion
-      return ideVersion
-    }
-    return null
+  init {
+    versions[162] = IdeVersion.createIdeVersion("IU-162.1132.10")
   }
+
+  @Synchronized
+  fun getReleaseVersion(trunkNumber: Int): IdeVersion? = versions[trunkNumber]
 
   @Synchronized
   fun setReleaseVersion(trunkNumber: Int, ideVersion: IdeVersion) {
