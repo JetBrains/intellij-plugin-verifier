@@ -203,12 +203,7 @@ object Dependencies {
 
   }
 
-  class DependenciesResult(val descriptor: PluginDependenciesNode,
-                           /**
-                            * Not-null value represents some cycle in the dependencies graph.
-                            * It's for the caller consideration whether to throw an exception in such a case.
-                            */
-                           val cycle: List<Plugin>?)
+  data class DependenciesResult(val descriptor: PluginDependenciesNode, val cycle: List<Plugin>?)
 
 
   private val LOG = LoggerFactory.getLogger(Dependencies::class.java)
@@ -242,3 +237,38 @@ object Dependencies {
 
 
 }
+
+data class PluginDependenciesNode(val plugin: Plugin,
+                                  /**
+                                   * The set of existing [PluginDependenciesNode]s reachable from `this` node.
+                                   */
+                                  val edges: Set<PluginDependenciesNode>,
+                                  /**
+                                   * All plugins reachable from [plugin].
+                                   */
+                                  val transitiveDependencies: Set<Plugin>,
+                                  /**
+                                   * Missing dependency -> reason why it is missing.
+                                   */
+                                  val missingDependencies: Map<PluginDependency, MissingReason>) {
+
+
+  override fun toString(): String {
+    return plugin.pluginId
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null || javaClass != other.javaClass) return false
+
+    val that = other as PluginDependenciesNode?
+
+    return plugin.pluginFile == that!!.plugin.pluginFile
+  }
+
+  override fun hashCode(): Int {
+    return plugin.pluginFile.hashCode()
+  }
+}
+
+data class MissingReason(val reason: String, val exception: Exception?)
