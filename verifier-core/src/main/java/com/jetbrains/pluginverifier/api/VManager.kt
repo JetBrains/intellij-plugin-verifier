@@ -298,14 +298,14 @@ object VManager {
   private fun getDependenciesResolver(ctx: VContext): Pair<Resolver?, VResult?> {
 
     val plugin = ctx.plugin
-    val dependencies: DirectedGraph<DependencyVertex, DependencyEdge>
+    val graphAndStart: Pair<DirectedGraph<DependencyVertex, DependencyEdge>, DependencyVertex>
     try {
-      dependencies = Dependencies.calcDependencies(plugin, ctx.ide)
+      graphAndStart = Dependencies.calcDependencies(plugin, ctx.ide)
     } catch(e: Exception) {
       throw RuntimeException("Unable to evaluate dependencies of the plugin $plugin with IDE ${ctx.ide}", e)
     }
+    val (dependencies, vertex) = graphAndStart
 
-    val vertex = DependencyVertex(plugin)
     JohnsonSimpleCycles(dependencies).findSimpleCycles().forEach {
       if (vertex in it) {
         val cycle = it.map { it.plugin.pluginId }.joinToString(separator = " -> ")

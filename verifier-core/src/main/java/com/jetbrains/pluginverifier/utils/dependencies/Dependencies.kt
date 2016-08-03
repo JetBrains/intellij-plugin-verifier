@@ -27,10 +27,10 @@ fun DirectedGraph<DependencyVertex, DependencyEdge>.getTransitiveDependencies(st
 object Dependencies {
 
   @JvmStatic
-  fun calcDependencies(plugin: Plugin, ide: Ide): DirectedGraph<DependencyVertex, DependencyEdge> {
+  fun calcDependencies(plugin: Plugin, ide: Ide): Pair<DirectedGraph<DependencyVertex, DependencyEdge>, DependencyVertex> {
     val dfs = Dfs(ide)
-    dfs.dfs(plugin)
-    return dfs.graph
+    val vertex = dfs.dfs(plugin)
+    return dfs.graph to vertex
   }
 
   /**

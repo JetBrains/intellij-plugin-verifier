@@ -4,7 +4,6 @@ import com.intellij.structure.impl.domain.IdeManagerImpl
 import com.intellij.structure.impl.utils.StringUtil
 import com.jetbrains.pluginverifier.misc.PluginCache
 import com.jetbrains.pluginverifier.utils.dependencies.Dependencies
-import com.jetbrains.pluginverifier.utils.dependencies.DependencyVertex
 import com.jetbrains.pluginverifier.utils.dependencies.getTransitiveDependencies
 import org.junit.Assert.*
 import org.junit.Test
@@ -26,9 +25,9 @@ class TestDependencies {
     val ide = IdeManagerImpl.getInstance().createIde(idea144_3600)
     val plugin = PluginCache.createPlugin(pluginFile)
 
-    val graph = Dependencies.calcDependencies(plugin, ide)
+    val (graph, vertex) = Dependencies.calcDependencies(plugin, ide)
 
-    val deps = graph.getTransitiveDependencies(DependencyVertex(plugin)).map { it.plugin }
+    val deps = graph.getTransitiveDependencies(vertex).map { it.plugin }
 
     assertNotNull(deps)
     assertEquals("Missing transitive dependencies", dependencies.size.toLong(), deps.size.toLong())
