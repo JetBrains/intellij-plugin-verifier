@@ -13,10 +13,11 @@ import com.jetbrains.pluginverifier.problems.CyclicDependenciesProblem
 import com.jetbrains.pluginverifier.problems.MissingDependencyProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
-import com.jetbrains.pluginverifier.utils.dependencies.Dependencies
-import com.jetbrains.pluginverifier.utils.dependencies.MissingReason
-import com.jetbrains.pluginverifier.utils.dependencies.PluginDependenciesNode
+import com.jetbrains.pluginverifier.utils.dependencies.*
 import com.jetbrains.pluginverifier.verifiers.ReferencesVerifier
+import org.jgrapht.DirectedGraph
+import org.jgrapht.alg.DijkstraShortestPath
+import org.jgrapht.alg.cycle.JohnsonSimpleCycles
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.File
@@ -297,53 +298,55 @@ object VManager {
   private fun getDependenciesResolver(ctx: VContext): Pair<Resolver?, VResult?> {
 
     val plugin = ctx.plugin
-    val dependencies: Dependencies.DependenciesResult
+    val dependencies: DirectedGraph<DependencyVertex, DependencyEdge>
     try {
       dependencies = Dependencies.calcDependencies(plugin, ctx.ide)
     } catch(e: Exception) {
       throw RuntimeException("Unable to evaluate dependencies of the plugin $plugin with IDE ${ctx.ide}", e)
     }
 
-    if (dependencies.cycle != null && ctx.verifierOptions.failOnCyclicDependencies) {
-      val cycle = dependencies.cycle.joinToString(separator = " -> ")
-      LOG.debug("The plugin verifier will not verify a plugin ${ctx.plugin} because its dependencies tree has the following cycle: $cycle")
-      ctx.registerProblem(CyclicDependenciesProblem(cycle), ProblemLocation.fromPlugin(plugin.pluginId))
-      return null to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Cyclic dependencies: $cycle", ctx.problems)
+    val vertex = DependencyVertex(plugin)
+    JohnsonSimpleCycles(dependencies).findSimpleCycles().forEach {
+      if (vertex in it) {
+        val cycle = it.map { it.plugin.pluginId }.joinToString(separator = " -> ")
+        ctx.registerProblem(CyclicDependenciesProblem(cycle), ProblemLocation.fromPlugin(plugin.pluginId))
+        if (ctx.verifierOptions.failOnCyclicDependencies) {
+          LOG.debug("The plugin verifier will not verify a plugin ${ctx.plugin} because its dependencies tree has the following cycle: $cycle")
+          return null to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Cyclic dependencies: $cycle", ctx.problems)
+        }
+      }
     }
-    val depNode = dependencies.descriptor
 
-    for ((key, value) in depNode.missingDependencies) {
+    for ((key, value) in vertex.missingDependencies) {
       val missingId = key.id
       if (!ctx.verifierOptions.isIgnoreDependency(missingId)) {
         ctx.registerProblem(MissingDependencyProblem(plugin.pluginId, missingId, value.reason), ProblemLocation.fromPlugin(plugin.pluginId))
       }
     }
 
-    val missingMandatoryDeps: Map<PluginDependency, MissingReason> = depNode.missingDependencies.filterNot({ it.key.isOptional })
+    val missingMandatoryDeps: Map<PluginDependency, MissingReason> = vertex.missingDependencies.filterNot({ it.key.isOptional })
     if (!missingMandatoryDeps.isEmpty()) {
-      LOG.debug("The plugin verifier will not verify a plugin $plugin because it has missing mandatory dependencies: ${depNode.missingDependencies.entries.joinToString { it.key.toString() }}")
+      LOG.debug("The plugin verifier will not verify a plugin $plugin because it has missing mandatory dependencies: ${missingMandatoryDeps.entries.joinToString { it.key.toString() }}")
       return null to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Missing dependencies: ${missingMandatoryDeps.map { it.key.id }}", ctx.problems)
     }
 
-    val mandatoryDeps: MutableSet<PluginDependenciesNode> = hashSetOf()
-    dfsMandatoryDependencies(depNode, mandatoryDeps)
+    val transitiveDependencies = dependencies.getTransitiveDependencies(vertex)
 
-
-    if (depNode.transitiveDependencies.isEmpty()) {
+    if (transitiveDependencies.isEmpty()) {
       return Resolver.getEmptyResolver() to null
     } else {
-      val depResolvers: MutableList<Resolver> = arrayListOf()
-      for (dep in depNode.transitiveDependencies) {
+      val depResolvers = arrayListOf<Resolver>()
+      for (dep in transitiveDependencies) {
         try {
-          depResolvers.add(Resolver.createPluginResolver(dep))
+          depResolvers.add(Resolver.createPluginResolver(dep.plugin))
         } catch (ie: InterruptedException) {
           depResolvers.forEach { it.closeLogged() }
           throw ie
         } catch (e: Exception) {
-          val isMandatory = mandatoryDeps.find { it.plugin.equals(dep) } != null
-          val message = "Unable to read class-files of the ${if (isMandatory) "mandatory" else "optional"} plugin ${dep.pluginId}"
+          val isMandatory = checkIfMandatory(vertex, dep, dependencies)
+          val message = "Unable to read class-files of the ${if (isMandatory) "mandatory" else "optional"} plugin ${dep.plugin.pluginId}"
 
-          ctx.registerProblem(MissingDependencyProblem(plugin.pluginId, dep.pluginId, message), ProblemLocation.fromPlugin(plugin.pluginId))
+          ctx.registerProblem(MissingDependencyProblem(plugin.pluginId, dep.plugin.pluginId, message), ProblemLocation.fromPlugin(plugin.pluginId))
 
           if (isMandatory) {
             LOG.debug("The plugin verifier will not verify a plugin because its dependent plugin $dep has broken class-files", e)
@@ -354,10 +357,13 @@ object VManager {
           }
         }
       }
-      return Resolver.createUnionResolver("Plugin ${depNode.plugin} transitive dependencies resolver", depResolvers) to null
+      return Resolver.createUnionResolver("Plugin ${vertex.plugin} transitive dependencies resolver", depResolvers) to null
     }
 
   }
+
+  private fun checkIfMandatory(vertex: DependencyVertex, dependency: DependencyVertex, dependencies: DirectedGraph<DependencyVertex, DependencyEdge>): Boolean =
+      DijkstraShortestPath(dependencies, vertex, dependency).pathEdgeList?.all { it.isMandatory } ?: false
 
   private fun Closeable.closeLogged() {
     try {
@@ -365,24 +371,6 @@ object VManager {
     } catch(e: Exception) {
       LOG.warn("Unable to close $this", e)
     }
-  }
-
-  /**
-   * Traverse the dependencies starting from [node]. Only the mandatory (non-optional) dependencies edges are considered.
-   */
-  private fun dfsMandatoryDependencies(node: PluginDependenciesNode, accumulator: MutableSet<PluginDependenciesNode>) {
-    accumulator.add(node)
-
-    val directMandatoryDeps = listOf(*node.plugin.dependencies.toTypedArray(), *node.plugin.moduleDependencies.toTypedArray()).filter { !it.isOptional }
-
-    for (to in node.edges) {
-      if (directMandatoryDeps.find { it.id.equals(to.plugin.pluginId) } != null) {
-        if (!accumulator.contains(to)) {
-          dfsMandatoryDependencies(to, accumulator)
-        }
-      }
-    }
-
   }
 
 
