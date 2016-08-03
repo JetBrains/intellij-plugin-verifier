@@ -6,5 +6,7 @@ dependencies {
   compile project(':verifier-results')
   compile project(':verifier-parameters')
 
+  compile 'org.jgrapht:jgrapht-core:0.9.2'
+
   testCompile group: 'junit', name: 'junit', version: '4.11'
 }
