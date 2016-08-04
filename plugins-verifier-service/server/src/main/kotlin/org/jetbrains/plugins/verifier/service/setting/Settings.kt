@@ -2,6 +2,7 @@ package org.jetbrains.plugins.verifier.service.setting
 
 import com.intellij.structure.domain.IdeVersion
 import grails.util.Holders
+import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 
 /**
  * @author Sergey Patrikeev
@@ -26,12 +27,8 @@ object TrunkVersions {
 
   private val versions: MutableMap<Int, IdeVersion> = hashMapOf()
 
-  init {
-    versions[162] = IdeVersion.createIdeVersion("IU-162.1132.10")
-  }
-
   @Synchronized
-  fun getReleaseVersion(trunkNumber: Int): IdeVersion? = versions[trunkNumber]
+  fun getReleaseVersion(trunkNumber: Int): IdeVersion? = versions[trunkNumber] ?: IdeFilesManager.ideList().filter { it.baselineVersion == trunkNumber }.sorted().firstOrNull()
 
   @Synchronized
   fun setReleaseVersion(trunkNumber: Int, ideVersion: IdeVersion) {
