@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.utils.dependencies
+package com.jetbrains.pluginverifier.utils
 
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.ImmutableMap
@@ -6,6 +6,7 @@ import com.google.common.collect.Lists
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.Plugin
 import com.intellij.structure.domain.PluginDependency
+import com.jetbrains.pluginverifier.dependencies.MissingReason
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.PluginCache
 import com.jetbrains.pluginverifier.repository.RepositoryManager
@@ -83,7 +84,7 @@ object Dependencies {
 
             if (dependency == null) {
               val reason = "Plugin $plugin depends on module $depId which is not found in ${ide.version}"
-              missing.put(pd, MissingReason(reason, null))
+              missing.put(pd, MissingReason(reason))
               continue
             }
           }
@@ -99,7 +100,7 @@ object Dependencies {
             } catch (e: Exception) {
               val message = "Couldn't get dependency plugin '$depId' from the Plugin Repository for IDE ${ide.version}"
               LOG.debug(message, e)
-              missing.put(pd, MissingReason(message, e))
+              missing.put(pd, MissingReason(message))
               continue
             }
 
@@ -111,14 +112,14 @@ object Dependencies {
               } catch (e: Exception) {
                 val message = "Couldn't download dependency plugin '$depId' from the Plugin Repository for IDE ${ide.version}"
                 LOG.debug(message, e)
-                missing.put(pd, MissingReason(message, e))
+                missing.put(pd, MissingReason(message))
                 continue
               }
 
               if (pluginZip == null) {
                 val reason = "The dependency plugin $updateInfo is not found in the Plugin Repository"
                 LOG.debug(reason)
-                missing.put(pd, MissingReason(reason, null))
+                missing.put(pd, MissingReason(reason))
                 continue
               }
 
@@ -127,7 +128,7 @@ object Dependencies {
               } catch (e: Exception) {
                 val message = "Plugin $plugin depends on the other plugin $depId which has some problems"
                 LOG.debug(message, e)
-                missing.put(pd, MissingReason(message, e))
+                missing.put(pd, MissingReason(message))
                 continue
               }
 
@@ -137,7 +138,7 @@ object Dependencies {
           if (dependency == null) {
             val message = "Plugin $plugin depends on the other plugin $depId which doesn't have a build compatible with ${ide.version}"
             LOG.debug(message)
-            missing.put(pd, MissingReason(message, null))
+            missing.put(pd, MissingReason(message))
             continue
           }
         }
@@ -193,5 +194,3 @@ data class DependencyVertex(val plugin: Plugin) {
 
   override fun hashCode(): Int = plugin.pluginFile.hashCode()
 }
-
-data class MissingReason(val reason: String, val exception: Exception?)
