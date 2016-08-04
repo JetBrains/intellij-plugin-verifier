@@ -5,44 +5,14 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.api.VResults
-import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.output.HtmlVPrinter
 import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
-import com.jetbrains.pluginverifier.persistence.multimapFromMap
-import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem
-import com.jetbrains.pluginverifier.problems.Problem
-import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.utils.ParametersListUtil
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.PrintWriter
-
-data class CheckIdeCompareResult(val checkIdeVersion: IdeVersion,
-                                 val pluginProblems: Multimap<UpdateInfo, Problem>,
-                                 val firstOccurrences: Map<Problem, IdeVersion>) {
-
-  companion object {
-    fun compareWithPreviousReports(previousReports: List<CheckIdeReport>, currentReport: CheckIdeReport): CheckIdeCompareResult {
-      val firstOccurrences: Map<Problem, IdeVersion> = (previousReports + currentReport)
-          .flatMap { r -> r.pluginProblems.values().map { it to r.ideVersion } }
-          .groupBy { it.first }
-          .filterValues { it.isNotEmpty() }
-          .mapValues { it.value.map { it.second }.min()!! }
-      if (previousReports.isEmpty()) {
-        return CheckIdeCompareResult(currentReport.ideVersion, currentReport.pluginProblems, firstOccurrences)
-      }
-      val firstProblems = previousReports[0].pluginProblems.values().distinct().toSet()
-      val newProblems = currentReport.pluginProblems.asMap()
-          .mapValues { it.value.filterNot { firstProblems.contains(it) } }
-          .filterValues { it.isNotEmpty() }
-          .multimapFromMap()
-      return CheckIdeCompareResult(currentReport.ideVersion, newProblems, firstOccurrences)
-    }
-
-  }
-}
 
 private fun File.create(): File {
   if (this.parentFile != null) {
@@ -52,11 +22,14 @@ private fun File.create(): File {
   return this
 }
 
+data class MissingCompatibleUpdate(val pluginId: String, val ideVersion: IdeVersion, val details: String) {
+  override fun toString(): String = "For $pluginId there are no updates compatible with $ideVersion in the Plugin Repository${if (details.isNullOrEmpty()) "" else " ($details)"}"
+}
 
 class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
                       @SerializedName("results") val vResults: VResults,
                       @SerializedName("excludedPlugins") val excludedPlugins: Multimap<String, String>,
-                      @SerializedName("noUpdatesProblems") val noCompatibleUpdatesProblems: List<NoCompatibleUpdatesProblem>) : Results {
+                      @SerializedName("noUpdatesProblems") val noCompatibleUpdatesProblems: List<MissingCompatibleUpdate>) : Results {
 
   fun dumbBrokenPluginsList(dumpBrokenPluginsFile: File) {
     PrintWriter(dumpBrokenPluginsFile.create()).use { out ->

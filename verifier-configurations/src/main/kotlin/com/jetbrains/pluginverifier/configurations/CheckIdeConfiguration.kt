@@ -4,7 +4,6 @@ import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.VManager
 import com.jetbrains.pluginverifier.api.VParams
 import com.jetbrains.pluginverifier.format.UpdateInfo
-import com.jetbrains.pluginverifier.problems.NoCompatibleUpdatesProblem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 
 
@@ -16,7 +15,7 @@ class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
     return CheckIdeResults(params.ideDescriptor.ideVersion, vResults, params.excludedPlugins, getMissingUpdatesProblems())
   }
 
-  private fun getMissingUpdatesProblems(): List<NoCompatibleUpdatesProblem> {
+  private fun getMissingUpdatesProblems(): List<MissingCompatibleUpdate> {
     val ideVersion = params.ideDescriptor.ideVersion
     val existingUpdatesForIde = RepositoryManager.getInstance()
         .getLastCompatibleUpdates(ideVersion)
@@ -31,10 +30,10 @@ class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
           val buildForCommunity = getUpdateCompatibleWithCommunityEdition(it, ideVersion)
           if (buildForCommunity != null) {
             val details = "\nNote: there is an update (#" + buildForCommunity.updateId + ") compatible with IDEA Community Edition, " +
-                "\nbut the Plugin repository does not offer to install it if you run the IDEA Ultimate."
-            NoCompatibleUpdatesProblem(it, ideVersion.asString(), details)
+                "but the Plugin repository does not offer to install it if you run the IDEA Ultimate."
+            MissingCompatibleUpdate(it, ideVersion, details)
           } else {
-            NoCompatibleUpdatesProblem(it, ideVersion.asString(), "")
+            MissingCompatibleUpdate(it, ideVersion, "")
           }
         }
   }

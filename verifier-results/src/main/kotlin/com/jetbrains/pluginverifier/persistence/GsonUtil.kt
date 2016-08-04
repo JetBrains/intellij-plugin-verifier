@@ -86,7 +86,6 @@ private val problemsTAF = RuntimeTypeAdapterFactory.of(Problem::class.java)
     .registerSubtype(MethodNotFoundProblem::class.java)
     .registerSubtype(MethodNotImplementedProblem::class.java)
     .registerSubtype(MissingDependencyProblem::class.java)
-    .registerSubtype(NoCompatibleUpdatesProblem::class.java)
     .registerSubtype(OverridingFinalMethodProblem::class.java)
     .registerSubtype(InheritFromFinalClassProblem::class.java)
 
