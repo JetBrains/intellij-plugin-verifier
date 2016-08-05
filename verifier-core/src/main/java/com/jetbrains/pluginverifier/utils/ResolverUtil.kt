@@ -3,8 +3,10 @@ package com.jetbrains.pluginverifier.utils
 import com.intellij.structure.impl.utils.StringUtil
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
+import com.jetbrains.pluginverifier.location.ClassLocation
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
+import com.jetbrains.pluginverifier.reference.ClassReference
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
@@ -64,7 +66,7 @@ object ResolverUtil {
     val classFile = VerifierUtil.findClass(resolver, className, ctx)
     if (classFile == null) {
       if (!ctx.verifierOptions.isExternalClass(className)) {
-        ctx.registerProblem(ClassNotFoundProblem(className), ProblemLocation.fromClass(childName))
+        ctx.registerProblem(ClassNotFoundProblem(ClassReference(className)), ClassLocation(childName))
       }
       return null
     }

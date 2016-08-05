@@ -4,11 +4,8 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.*
-import com.jetbrains.pluginverifier.problems.statics.InvokeInterfaceOnStaticMethodProblem
-import com.jetbrains.pluginverifier.problems.statics.InvokeSpecialOnStaticMethodProblem
-import com.jetbrains.pluginverifier.problems.statics.InvokeStaticOnInstanceMethodProblem
-import com.jetbrains.pluginverifier.problems.statics.InvokeVirtualOnStaticMethodProblem
-import com.jetbrains.pluginverifier.utils.LocationUtils
+import com.jetbrains.pluginverifier.reference.ClassReference
+import com.jetbrains.pluginverifier.reference.MethodReference
 import com.jetbrains.pluginverifier.utils.ResolverUtil
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.objectweb.asm.Opcodes
@@ -48,7 +45,7 @@ class InvokeInstructionVerifier : InstructionVerifier {
     val ownerClass = VerifierUtil.findClass(resolver, clazz, ownerClassName, ctx)
 
     if (ownerClass == null) {
-      ctx.registerProblem(ClassNotFoundProblem(ownerClassName), ProblemLocation.fromMethod(clazz.name, method))
+      ctx.registerProblem(ClassNotFoundProblem(ClassReference(ownerClassName)), ProblemLocation.fromMethod(clazz.name, method))
     } else {
       val actualLocation = ResolverUtil.findMethod(resolver, ownerClass, instr.name, instr.desc, ctx)
 
@@ -71,8 +68,7 @@ class InvokeInstructionVerifier : InstructionVerifier {
         }
 
 
-        val calledMethod = LocationUtils.getMethodLocation(ownerClassName, instr.name, instr.desc)
-        ctx.registerProblem(MethodNotFoundProblem(calledMethod), ProblemLocation.fromMethod(clazz.name, method))
+        ctx.registerProblem(MethodNotFoundProblem(MethodReference.from(ownerClassName, instr.name, instr.desc)), ProblemLocation.fromMethod(clazz.name, method))
 
       } else {
         checkAccessModifier(actualLocation, ctx, resolver, clazz, method)
@@ -97,7 +93,7 @@ class InvokeInstructionVerifier : InstructionVerifier {
       if (VerifierUtil.isStatic(actualMethod)) {
         //attempt to invokevirtual on static method => IncompatibleClassChangeError at runtime
 
-        ctx.registerProblem(InvokeVirtualOnStaticMethodProblem(LocationUtils.getMethodLocation(classNode, actualMethod)), location)
+        ctx.registerProblem(InvokeVirtualOnStaticMethodProblem(MethodReference.from(classNode, actualMethod)), location)
       }
     }
 
@@ -105,23 +101,23 @@ class InvokeInstructionVerifier : InstructionVerifier {
       if (!VerifierUtil.isStatic(actualMethod)) {
         //attempt to invokestatic on an instance method => IncompatibleClassChangeError at runtime
 
-        ctx.registerProblem(InvokeStaticOnInstanceMethodProblem(LocationUtils.getMethodLocation(classNode, actualMethod)), location)
+        ctx.registerProblem(InvokeStaticOnInstanceMethodProblem(MethodReference.from(classNode, actualMethod)), location)
       }
     }
 
     if (invokeInsn.opcode == Opcodes.INVOKEINTERFACE) {
       if (VerifierUtil.isStatic(actualMethod)) {
-        ctx.registerProblem(InvokeInterfaceOnStaticMethodProblem(LocationUtils.getMethodLocation(classNode, actualMethod)), location)
+        ctx.registerProblem(InvokeInterfaceOnStaticMethodProblem(MethodReference.from(classNode, actualMethod)), location)
       }
 
       if (VerifierUtil.isPrivate(actualMethod)) {
-        ctx.registerProblem(InvokeInterfaceOnPrivateMethodProblem(LocationUtils.getMethodLocation(classNode, actualMethod)), location)
+        ctx.registerProblem(InvokeInterfaceOnPrivateMethodProblem(MethodReference.from(classNode, actualMethod)), location)
       }
     }
 
     if (invokeInsn.opcode == Opcodes.INVOKESPECIAL) {
       if (VerifierUtil.isStatic(actualMethod)) {
-        ctx.registerProblem(InvokeSpecialOnStaticMethodProblem(LocationUtils.getMethodLocation(classNode, actualMethod)), location)
+        ctx.registerProblem(InvokeSpecialOnStaticMethodProblem(MethodReference.from(classNode, actualMethod)), location)
       }
     }
 
@@ -156,7 +152,7 @@ class InvokeInstructionVerifier : InstructionVerifier {
     }
 
     if (accessProblem != null) {
-      val problem = IllegalMethodAccessProblem(LocationUtils.getMethodLocation(actualOwner.name, actualMethod), accessProblem)
+      val problem = IllegalMethodAccessProblem(MethodReference.from(actualOwner.name, actualMethod), accessProblem)
       ctx.registerProblem(problem, ProblemLocation.fromMethod(verifiedClass.name, verifiedMethod))
     }
   }

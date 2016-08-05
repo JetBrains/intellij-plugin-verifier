@@ -4,13 +4,14 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
-import com.jetbrains.pluginverifier.problems.IncompatibleClassChangeProblem
+import com.jetbrains.pluginverifier.problems.IncompatibleClassToInterfaceChange
+import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.objectweb.asm.tree.ClassNode
 
 /**
  * Check that superclass exists.
-
+ *
  * @author Dennis.Ushakov
  */
 class SuperClassVerifier : ClassVerifier {
@@ -24,7 +25,7 @@ class SuperClassVerifier : ClassVerifier {
       return
     }
     if (VerifierUtil.isInterface(aClass)) {
-      ctx.registerProblem(IncompatibleClassChangeProblem(superClassName, IncompatibleClassChangeProblem.Change.CLASS_TO_INTERFACE), ProblemLocation.fromClass(clazz.name))
+      ctx.registerProblem(IncompatibleClassToInterfaceChange(ClassReference(superClassName)), ProblemLocation.fromClass(clazz.name))
     }
   }
 }

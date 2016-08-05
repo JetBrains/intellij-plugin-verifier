@@ -6,7 +6,9 @@ import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.FieldNotFoundProblem
 import com.jetbrains.pluginverifier.problems.MethodNotFoundProblem
-import com.jetbrains.pluginverifier.utils.LocationUtils
+import com.jetbrains.pluginverifier.reference.ClassReference
+import com.jetbrains.pluginverifier.reference.FieldReference
+import com.jetbrains.pluginverifier.reference.MethodReference
 import com.jetbrains.pluginverifier.utils.ResolverUtil
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.objectweb.asm.Handle
@@ -36,7 +38,7 @@ class InvokeDynamicVerifier : InstructionVerifier {
           val aClass = VerifierUtil.findClass(resolver, owner, ctx)
           if (aClass == null) {
             if (!ctx.verifierOptions.isExternalClass(owner)) {
-              ctx.registerProblem(ClassNotFoundProblem(owner), ProblemLocation.fromMethod(clazz.name, method))
+              ctx.registerProblem(ClassNotFoundProblem(ClassReference(owner)), ProblemLocation.fromMethod(clazz.name, method))
             }
             continue
           }
@@ -44,14 +46,12 @@ class InvokeDynamicVerifier : InstructionVerifier {
           if (METHOD_TAGS.contains(arg.tag)) {
             val location = ResolverUtil.findMethod(resolver, aClass, arg.name, arg.desc, ctx)
             if (location == null) {
-              val methodLocation = LocationUtils.getMethodLocation(aClass, arg.name, arg.desc)
-              ctx.registerProblem(MethodNotFoundProblem(methodLocation), ProblemLocation.fromMethod(clazz.name, method))
+              ctx.registerProblem(MethodNotFoundProblem(MethodReference.from(aClass, arg.name, arg.desc)), ProblemLocation.fromMethod(clazz.name, method))
             }
           } else if (FIELD_TAGS.contains(arg.tag)) {
             val location = ResolverUtil.findField(resolver, aClass, arg.name, arg.desc, ctx)
             if (location == null) {
-              val fieldLocation = LocationUtils.getFieldLocation(aClass, arg.name, arg.desc)
-              ctx.registerProblem(FieldNotFoundProblem(fieldLocation), ProblemLocation.fromMethod(clazz.name, method))
+              ctx.registerProblem(FieldNotFoundProblem(FieldReference(aClass.name, arg.name, arg.desc)), ProblemLocation.fromMethod(clazz.name, method))
             }
             //TODO; write a test for the case
           }

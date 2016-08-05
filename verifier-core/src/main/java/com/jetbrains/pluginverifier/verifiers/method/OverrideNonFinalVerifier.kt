@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.OverridingFinalMethodProblem
-import com.jetbrains.pluginverifier.utils.LocationUtils
+import com.jetbrains.pluginverifier.reference.MethodReference
 import com.jetbrains.pluginverifier.utils.ResolverUtil
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.objectweb.asm.tree.ClassNode
@@ -49,7 +49,7 @@ class OverrideNonFinalVerifier : MethodVerifier {
     val methodNode = superMethod.methodNode
 
     if (VerifierUtil.isFinal(methodNode) && !VerifierUtil.isAbstract(methodNode)) {
-      ctx.registerProblem(OverridingFinalMethodProblem(LocationUtils.getMethodLocation(classNode, methodNode)), ProblemLocation.fromMethod(clazz.name, method))
+      ctx.registerProblem(OverridingFinalMethodProblem(MethodReference.from(classNode, methodNode)), ProblemLocation.fromMethod(clazz.name, method))
     }
   }
 }

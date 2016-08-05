@@ -3,14 +3,9 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.ProblemLocation
-import com.jetbrains.pluginverifier.problems.AccessType
-import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
-import com.jetbrains.pluginverifier.problems.FieldNotFoundProblem
-import com.jetbrains.pluginverifier.problems.IllegalFieldAccessProblem
-import com.jetbrains.pluginverifier.problems.fields.ChangeFinalFieldProblem
-import com.jetbrains.pluginverifier.problems.statics.InstanceAccessOfStaticFieldProblem
-import com.jetbrains.pluginverifier.problems.statics.StaticAccessOfInstanceFieldProblem
-import com.jetbrains.pluginverifier.utils.LocationUtils
+import com.jetbrains.pluginverifier.problems.*
+import com.jetbrains.pluginverifier.reference.ClassReference
+import com.jetbrains.pluginverifier.reference.FieldReference
 import com.jetbrains.pluginverifier.utils.ResolverUtil
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.objectweb.asm.Opcodes
@@ -42,7 +37,7 @@ class FieldAccessInstructionVerifier : InstructionVerifier {
     }
     val ownerNode = VerifierUtil.findClass(resolver, clazz, fieldOwner, ctx)
     if (ownerNode == null) {
-      ctx.registerProblem(ClassNotFoundProblem(fieldOwner), ProblemLocation.fromMethod(clazz.name, method))
+      ctx.registerProblem(ClassNotFoundProblem(ClassReference(fieldOwner)), ProblemLocation.fromMethod(clazz.name, method))
       return
     }
 
@@ -54,8 +49,7 @@ class FieldAccessInstructionVerifier : InstructionVerifier {
         return
       }
 
-      val fieldLocation = LocationUtils.getFieldLocation(ownerNode.name, instr.name, instr.desc)
-      ctx.registerProblem(FieldNotFoundProblem(fieldLocation), ProblemLocation.fromMethod(clazz.name, method))
+      ctx.registerProblem(FieldNotFoundProblem(FieldReference(ownerNode.name, instr.name, instr.desc)), ProblemLocation.fromMethod(clazz.name, method))
       return
     }
 
@@ -65,7 +59,7 @@ class FieldAccessInstructionVerifier : InstructionVerifier {
 
     val opcode = instr.opcode
 
-    val field = LocationUtils.getFieldLocation(actualLocation.classNode.name, actualLocation.fieldNode)
+    val field = FieldReference.from(actualLocation.classNode.name, actualLocation.fieldNode)
 
     if (opcode == Opcodes.GETSTATIC || opcode == Opcodes.PUTSTATIC) {
       if (!VerifierUtil.isStatic(actualLocation.fieldNode)) { //TODO: "if the resolved field is not a static field or an interface field, getstatic throws an IncompatibleClassChangeError"
@@ -82,7 +76,7 @@ class FieldAccessInstructionVerifier : InstructionVerifier {
   }
 
   private fun checkFinalModifier(opcode: Int, location: ResolverUtil.FieldLocation, ctx: VContext, verifiedClass: ClassNode, verifierMethod: MethodNode) {
-    val field = LocationUtils.getFieldLocation(location.classNode.name, location.fieldNode)
+    val field = FieldReference.from(location.classNode.name, location.fieldNode)
 
     if (VerifierUtil.isFinal(location.fieldNode)) {
       if (opcode == Opcodes.PUTFIELD) {
@@ -127,7 +121,7 @@ class FieldAccessInstructionVerifier : InstructionVerifier {
     }
 
     if (accessProblem != null) {
-      val problem = IllegalFieldAccessProblem(LocationUtils.getFieldLocation(actualOwner.name, actualField), accessProblem)
+      val problem = IllegalFieldAccessProblem(FieldReference(actualOwner.name, actualField.name, actualField.desc), accessProblem)
       ctx.registerProblem(problem, ProblemLocation.fromMethod(verifiedClass.name, verifiedMethod))
     }
 
