@@ -3,20 +3,28 @@ package com.jetbrains.pluginverifier.api
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.google.common.util.concurrent.MoreExecutors
-import com.intellij.structure.domain.*
+import com.intellij.structure.domain.Ide
+import com.intellij.structure.domain.IdeManager
+import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.domain.Plugin
 import com.intellij.structure.errors.IncorrectPluginException
+import com.intellij.structure.impl.domain.PluginImpl
 import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.DependencyEdge
+import com.jetbrains.pluginverifier.dependencies.DependencyNode
+import com.jetbrains.pluginverifier.dependencies.MissingReason
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.misc.PluginCache
-import com.jetbrains.pluginverifier.problems.CyclicDependenciesProblem
-import com.jetbrains.pluginverifier.problems.MissingDependencyProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
-import com.jetbrains.pluginverifier.utils.dependencies.*
+import com.jetbrains.pluginverifier.utils.Dependencies
+import com.jetbrains.pluginverifier.utils.Edge
+import com.jetbrains.pluginverifier.utils.Vertex
 import com.jetbrains.pluginverifier.verifiers.ReferencesVerifier
+import com.jetbrains.pluginverifier.warnings.Warning
 import org.jgrapht.DirectedGraph
-import org.jgrapht.alg.DijkstraShortestPath
 import org.jgrapht.alg.cycle.JohnsonSimpleCycles
 import org.slf4j.LoggerFactory
 import java.io.Closeable
@@ -24,13 +32,12 @@ import java.io.File
 import java.io.IOException
 import java.util.concurrent.*
 
-private val LOG = LoggerFactory.getLogger(VManager::class.java)
-
-
 /**
  * @author Sergey Patrikeev
  */
 object VManager {
+
+  private val LOG = LoggerFactory.getLogger(VManager::class.java)
 
   private fun getWorkersNumber() = Math.max(8, Runtime.getRuntime().availableProcessors())
 
@@ -139,8 +146,8 @@ object VManager {
     val resType: String = when (result) {
       is VResult.Nice -> "It is OK."
       is VResult.Problems -> "It has ${result.problems.keySet().size} problems"
-      is VResult.BadPlugin -> "It is invalid: ${result.overview}"
-      is VResult.NotFound -> "It is not found in the Repository: ${result.overview}"
+      is VResult.BadPlugin -> "It is invalid: ${result.reason}"
+      is VResult.NotFound -> "It is not found in the Repository: ${result.reason}"
     }
     return resType
   }
@@ -211,7 +218,7 @@ object VManager {
     } catch (ie: InterruptedException) {
       throw ie
     } catch(e: Exception) {
-      val reason = e.message ?: "Failed to read the class-files of the plugin $plugin"
+      val reason = "Unable to read class-files of the plugin"
       LOG.debug(reason, e)
       return null to VResult.BadPlugin(pluginDescriptor, reason)
     }
@@ -233,22 +240,23 @@ object VManager {
     }
     pluginResolver!!.use puse@ {
       val ctx = VContext(plugin, pluginDescriptor, ide, ideDescriptor, params.options)
-      val (dependenciesResolver: Resolver?, vResult: VResult?) = getDependenciesResolver(ctx)
-      if (vResult != null) {
-        return plugin to vResult
-      }
+      val (dependenciesResolver, dependenciesGraph, cycle: List<Plugin>?) = getDependenciesResolver(ctx)
 
-      dependenciesResolver!!.use {
+      dependenciesResolver.use {
         try {
           val checkClasses = getClassesForCheck(plugin, pluginResolver)
           val classLoader = createClassLoader(dependenciesResolver, ctx, ideResolver, pluginResolver, runtimeResolver, params.externalClassPath)
 
           ReferencesVerifier.verify(ctx, checkClasses, classLoader)
 
+          val warnings = ctx.warnings +
+              (if (plugin is PluginImpl) plugin.hints.map { Warning(it) } else emptyList()) +
+              (if (cycle != null) listOf(Warning(cycle.joinToString(separator = " -> ") { it.pluginId })) else emptyList())
+
           if (ctx.problems.isEmpty) {
-            return plugin to VResult.Nice(ctx.pluginDescriptor, ctx.ideDescriptor, plugin.hints.joinToString())
+            return plugin to VResult.Nice(ctx.pluginDescriptor, ctx.ideDescriptor, warnings)
           } else {
-            return plugin to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, plugin.hints.joinToString(), ctx.problems)
+            return plugin to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.problems, dependenciesGraph, warnings)
           }
 
         } catch (ie: InterruptedException) {
@@ -295,75 +303,89 @@ object VManager {
     return Pair(closeIdeResolver, ideResolver)
   }
 
-  private fun getDependenciesResolver(ctx: VContext): Pair<Resolver?, VResult?> {
+  private data class DependenciesResult(val resolver: Resolver,
+                                        val dependenciesGraph: DependenciesGraph,
+                                        val cycle: List<Plugin>?)
+
+
+  private fun getDependenciesResolver(ctx: VContext): DependenciesResult {
 
     val plugin = ctx.plugin
-    val graphAndStart: Pair<DirectedGraph<DependencyVertex, DependencyEdge>, DependencyVertex>
+    val graphAndStart: Pair<DirectedGraph<Vertex, Edge>, Vertex>
     try {
       graphAndStart = Dependencies.calcDependencies(plugin, ctx.ide)
     } catch(e: Exception) {
       throw RuntimeException("Unable to evaluate dependencies of the plugin $plugin with IDE ${ctx.ide}", e)
     }
-    val (dependencies, vertex) = graphAndStart
+    val (graph, startVertex) = graphAndStart
 
-    JohnsonSimpleCycles(dependencies).findSimpleCycles().forEach {
-      if (vertex in it) {
-        val cycle = it.map { it.plugin.pluginId }.joinToString(separator = " -> ")
-        ctx.registerProblem(CyclicDependenciesProblem(cycle), ProblemLocation.fromPlugin(plugin.pluginId))
-        if (ctx.verifierOptions.failOnCyclicDependencies) {
-          LOG.debug("The plugin verifier will not verify a plugin ${ctx.plugin} because its dependencies tree has the following cycle: $cycle")
-          return null to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Cyclic dependencies: $cycle", ctx.problems)
-        }
+    var cycle: List<Plugin>? = null
+    JohnsonSimpleCycles(graph).findSimpleCycles().forEach {
+      //check if the plugin is on the dependencies cycle
+      if (startVertex in it) {
+        cycle = it.map { it.plugin } + startVertex.plugin
       }
     }
 
-    for ((key, value) in vertex.missingDependencies) {
-      val missingId = key.id
-      if (!ctx.verifierOptions.isIgnoreDependency(missingId)) {
-        ctx.registerProblem(MissingDependencyProblem(plugin.pluginId, missingId, value.reason), ProblemLocation.fromPlugin(plugin.pluginId))
-      }
+    val resolvers = arrayListOf<Resolver>()
+    val vertices = arrayListOf<DependencyNode>()
+    val edges = arrayListOf<DependencyEdge>()
+    val dfsResult: DfsResult
+    try {
+      dfsResult = dfs(startVertex, true, graph, hashMapOf(), resolvers, vertices, edges)
+    } catch (e: Exception) {
+      resolvers.forEach { it.closeLogged() }
+      throw RuntimeException("Unable to create dependencies resolver", e)
     }
 
-    val missingMandatoryDeps: Map<PluginDependency, MissingReason> = vertex.missingDependencies.filterNot({ it.key.isOptional })
-    if (!missingMandatoryDeps.isEmpty()) {
-      LOG.debug("The plugin verifier will not verify a plugin $plugin because it has missing mandatory dependencies: ${missingMandatoryDeps.entries.joinToString { it.key.toString() }}")
-      return null to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Missing dependencies: ${missingMandatoryDeps.map { it.key.id }}", ctx.problems)
-    }
+    val resolver = Resolver.createUnionResolver("Plugin ${startVertex.plugin} transitive dependencies resolver", resolvers)
 
-    val transitiveDependencies = dependencies.getTransitiveDependencies(vertex)
-
-    if (transitiveDependencies.isEmpty()) {
-      return Resolver.getEmptyResolver() to null
-    } else {
-      val depResolvers = arrayListOf<Resolver>()
-      for (dep in transitiveDependencies) {
-        try {
-          depResolvers.add(Resolver.createPluginResolver(dep.plugin))
-        } catch (ie: InterruptedException) {
-          depResolvers.forEach { it.closeLogged() }
-          throw ie
-        } catch (e: Exception) {
-          val isMandatory = checkIfMandatory(vertex, dep, dependencies)
-          val message = "Unable to read class-files of the ${if (isMandatory) "mandatory" else "optional"} plugin ${dep.plugin.pluginId}"
-
-          ctx.registerProblem(MissingDependencyProblem(plugin.pluginId, dep.plugin.pluginId, message), ProblemLocation.fromPlugin(plugin.pluginId))
-
-          if (isMandatory) {
-            LOG.debug("The plugin verifier will not verify a plugin because its dependent plugin $dep has broken class-files", e)
-            depResolvers.forEach { it.closeLogged() }
-            return null to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, "Transitive mandatory dependency $dep is unavailable", ctx.problems)
-          } else {
-            LOG.debug(message, e)
-          }
-        }
-      }
-      return Resolver.createUnionResolver("Plugin ${vertex.plugin} transitive dependencies resolver", depResolvers) to null
-    }
-
+    val resGraph = DependenciesGraph(dfsResult.vertex!!, vertices, edges)
+    return DependenciesResult(resolver, resGraph, cycle)
   }
 
-  private fun checkIfMandatory(vertex: DependencyVertex, dependency: DependencyVertex, dependencies: DirectedGraph<DependencyVertex, DependencyEdge>): Boolean =
-      DijkstraShortestPath(dependencies, vertex, dependency).pathEdgeList?.all { it.isMandatory } ?: false
+  private data class DfsResult(val success: Boolean,
+                               val missingReason: MissingReason?,
+                               val vertex: DependencyNode?)
+
+  private fun dfs(vertex: Vertex,
+                  isStart: Boolean,
+                  graph: DirectedGraph<Vertex, Edge>,
+                  visited: MutableMap<String, DependencyNode>,
+                  resolvers: MutableList<Resolver>,
+                  vertices: MutableList<DependencyNode>,
+                  edges: MutableList<DependencyEdge>): DfsResult {
+    if (!isStart) {
+      try {
+        val resolver = Resolver.createPluginResolver(vertex.plugin)
+        resolvers.add(resolver)
+      } catch (e: Exception) {
+        return DfsResult(false, MissingReason("Failed to read the class-files of the plugin"), null)
+      }
+    }
+
+    val missingDependencies = vertex.missingDependencies
+    val node = DependencyNode(vertex.plugin.pluginId ?: "", vertex.plugin.pluginVersion ?: "", missingDependencies)
+    vertices.add(node)
+
+    visited[vertex.plugin.pluginId] = node
+
+    graph.outgoingEdgesOf(vertex).forEach {
+      if (it.to.plugin.pluginId !in visited) {
+        val (success, missingReason, toNode) = dfs(it.to, false, graph, visited, resolvers, vertices, edges)
+        if (!success) {
+          missingDependencies[it.dependency] = missingReason!!
+        } else {
+          edges.add(DependencyEdge(node, toNode!!, it.dependency))
+        }
+      } else {
+        edges.add(DependencyEdge(node, visited[it.to.plugin.pluginId]!!, it.dependency))
+      }
+    }
+
+    return DfsResult(true, null, node)
+  }
+
 
   private fun Closeable.closeLogged() {
     try {
@@ -410,10 +432,16 @@ data class VContext(
 ) {
   val problems: Multimap<Problem, ProblemLocation> = HashMultimap.create()
 
+  val warnings: MutableList<Warning> = arrayListOf()
+
   fun registerProblem(problem: Problem, location: ProblemLocation) {
     if (!verifierOptions.isIgnoredProblem(plugin, problem)) {
       problems.put(problem, location)
     }
+  }
+
+  fun registerWarning(warning: Warning) {
+    warnings.add(warning)
   }
 
 }
