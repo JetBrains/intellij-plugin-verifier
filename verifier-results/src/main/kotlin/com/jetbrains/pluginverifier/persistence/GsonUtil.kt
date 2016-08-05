@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.persistence
 
-import com.github.salomonbrys.kotson.registerTypeAdapter
+import com.github.salomonbrys.kotson.*
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.LinkedHashMultimap
 import com.google.common.collect.Multimap
@@ -12,9 +12,14 @@ import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.domain.PluginDependency
+import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VResult
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.dependenciesGraphDeserializer
+import com.jetbrains.pluginverifier.dependencies.dependenciesGraphSerializer
 import com.jetbrains.pluginverifier.location.CodeLocation
 import com.jetbrains.pluginverifier.location.PluginLocation
 import com.jetbrains.pluginverifier.location.ProblemLocation
@@ -33,8 +38,21 @@ import java.lang.reflect.ParameterizedType
  */
 
 object GsonHolder {
-  val GSON = GsonBuilder()
+  val GSON: Gson = GsonBuilder()
+      //serializes map as Json-array instead of Json-object
+      .enableComplexMapKeySerialization()
       .registerTypeHierarchyAdapter(IdeVersion::class.java, IdeVersionTypeAdapter().nullSafe())
+
+      .registerTypeHierarchyAdapter<PluginDependency> {
+        serialize {
+          jsonArray(it.src.id, it.src.isOptional)
+        }
+        deserialize {
+          val array = it.json.asJsonArray
+          PluginDependencyImpl(array[0].string, array[1].bool)
+        }
+      }
+
       .registerTypeHierarchyAdapter(IdeDescriptor::class.java, IdeDescriptorTypeAdapter().nullSafe())
       .registerTypeAdapterFactory(resultTAF)
       .registerTypeAdapterFactory(problemsTAF)
@@ -55,6 +73,8 @@ object GsonHolder {
       }
       .registerTypeAdapter<CheckIdeReport>(checkIdeReportSerializer)
       .registerTypeAdapter<CheckIdeReport>(checkIdeReportDeserializer)
+      .registerTypeAdapter<DependenciesGraph>(dependenciesGraphSerializer)
+      .registerTypeAdapter<DependenciesGraph>(dependenciesGraphDeserializer)
       .create()
 }
 
@@ -75,8 +95,6 @@ private val problemsTAF = RuntimeTypeAdapterFactory.of(Problem::class.java)
     .registerSubtype(StaticAccessOfInstanceFieldProblem::class.java)
     .registerSubtype(AbstractClassInstantiationProblem::class.java)
     .registerSubtype(ClassNotFoundProblem::class.java)
-    .registerSubtype(CyclicDependenciesProblem::class.java)
-    .registerSubtype(FailedToReadClassProblem::class.java)
     .registerSubtype(FieldNotFoundProblem::class.java)
     .registerSubtype(IllegalFieldAccessProblem::class.java)
     .registerSubtype(IllegalMethodAccessProblem::class.java)
@@ -85,7 +103,6 @@ private val problemsTAF = RuntimeTypeAdapterFactory.of(Problem::class.java)
     .registerSubtype(InvokeInterfaceOnPrivateMethodProblem::class.java)
     .registerSubtype(MethodNotFoundProblem::class.java)
     .registerSubtype(MethodNotImplementedProblem::class.java)
-    .registerSubtype(MissingDependencyProblem::class.java)
     .registerSubtype(OverridingFinalMethodProblem::class.java)
     .registerSubtype(InheritFromFinalClassProblem::class.java)
 
