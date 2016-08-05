@@ -136,7 +136,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
 
                 }
                 is VResult.BadPlugin -> {
-                  tcLog.testStdErr(testName, "Plugin is invalid: ${result.overview}")
+                  tcLog.testStdErr(testName, "Plugin is invalid: ${result.reason}")
                 }
                 is VResult.NotFound -> {
                   /*Suppose it is ok*/
@@ -207,20 +207,18 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
 
     //print missing dependencies
     tcLog.testSuiteStarted("missing plugin dependencies").use {
-      compareResult.newMissingProblems
-          .groupBy { it.missingId }
-          .forEach { missingToProblems ->
-            val type = if (missingToProblems.key.startsWith("com.intellij.modules")) "module" else "plugin"
-            val testName = "(missing $type ${missingToProblems.key})"
-            tcLog.testStarted(testName).use {
-              tcLog.testFailed(testName, "$type ${missingToProblems.key} is not found in ${compareResult.currentVersion} " +
-                  "but it is required for the following plugins: [${missingToProblems.value.map { it.plugin }.joinToString()}]", "")
-            }
-          }
+      compareResult.newMissingProblems.asMap().entries.forEach { missingToProblems ->
+        val type = if (missingToProblems.key.pluginId.startsWith("com.intellij.modules")) "module" else "plugin"
+        val testName = "(missing $type ${missingToProblems.key})"
+        tcLog.testStarted(testName).use {
+          tcLog.testFailed(testName, "$type ${missingToProblems.key} is not found in ${compareResult.currentVersion} " +
+              "but it is required for the following plugins: [${missingToProblems.value.map { it.pluginId }.joinToString()}]", "")
+        }
+      }
     }
 
 
-    val newProblemsCnt = problemToUpdates.keySet().size + compareResult.newMissingProblems.size
+    val newProblemsCnt = problemToUpdates.keySet().size + compareResult.newMissingProblems.keySet().size
     val text = "Done, %d new %s in %s compared to %s".format(newProblemsCnt, "problem".pluralize(newProblemsCnt), compareResult.currentVersion, compareResult.majorVersion)
     if (newProblemsCnt > 0) {
       tcLog.buildStatusFailure(text)
@@ -235,10 +233,6 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
     //....(pluginTwo:2.0.0)
     //invoking unknown method method
     //....(pluginThree:1.0.0)
-    class BrokenPluginProblem(private val description: String) : Problem() {
-      override fun getDescription(): String = description
-    }
-
     val affected: Multimap<Problem, PluginDescriptor> = HashMultimap.create()
     results.results.forEach { result ->
       when (result) {
@@ -246,10 +240,8 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
         }
         is VResult.Problems -> result.problems.keySet().forEach { affected.put(it, result.pluginDescriptor) }
         is VResult.BadPlugin -> {
-          affected.put(BrokenPluginProblem(result.overview), result.pluginDescriptor)
         }
         is VResult.NotFound -> {
-
         }
       }
     }
