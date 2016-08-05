@@ -1,12 +1,20 @@
 import com.github.salomonbrys.kotson.fromJson
 import com.google.common.collect.ImmutableMultimap
+import com.google.common.collect.Multimap
 import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VResult
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.DependencyEdge
+import com.jetbrains.pluginverifier.dependencies.DependencyNode
+import com.jetbrains.pluginverifier.dependencies.MissingReason
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.persistence.GsonHolder
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
+import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.warnings.Warning
 import org.junit.Assert
 import org.junit.Test
 
@@ -61,10 +69,21 @@ class Results {
     assertBlock<VResult>(init, { Assert.assertEquals(init.toString(), it.toString()) })
   }
 
-  private fun someNicePlugin() = VResult.Nice(PluginDescriptor.ByXmlId("pluginId", "version"), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-143.15")), "overview")
+  private fun someNicePlugin() = VResult.Nice(PluginDescriptor.ByXmlId("pluginId", "version"), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-143.15")), listOf(Warning("warn#1"), Warning("warn#2")))
 
-  private fun someProblematicPlugin() = VResult.Problems(PluginDescriptor.ByXmlId("pluginId", "version"), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-123.456.789")), "overview",
-      ImmutableMultimap.of(ClassNotFoundProblem("NotFoundClass"), ProblemLocation.fromClass("UserOfNotFoundClass")))
+  private fun someProblematicPlugin(): VResult.Problems {
+    val pluginDescriptor = PluginDescriptor.ByXmlId("pluginId", "version")
+    val ideDescriptor = IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-123.456.789"))
+    val multimap: Multimap<Problem, ProblemLocation> = ImmutableMultimap.of(ClassNotFoundProblem("NotFoundClass"), ProblemLocation.fromClass("UserOfNotFoundClass"))
+
+    val node = DependencyNode("pluginId", "version", mapOf(PluginDependencyImpl("id", false) to MissingReason("reason")))
+    val depImpl = PluginDependencyImpl("id2", true)
+    val node2 = DependencyNode("pluginId2", "version2", mapOf(depImpl to MissingReason("reason2")))
+    val dependenciesGraph = DependenciesGraph(node, listOf(node, node2), listOf(DependencyEdge(node, node2, depImpl)))
+
+    val problems = VResult.Problems(pluginDescriptor, ideDescriptor, multimap, dependenciesGraph, listOf(Warning("one"), Warning("two")))
+    return problems
+  }
 
   private fun someBadPlugin() = VResult.BadPlugin(PluginDescriptor.ByXmlId("pluginId", "version"), "I am bad")
 
