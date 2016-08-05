@@ -3,14 +3,17 @@ package com.jetbrains.pluginverifier.utils
 import com.google.common.base.Preconditions
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
-import com.jetbrains.pluginverifier.location.ProblemLocation
-import com.jetbrains.pluginverifier.problems.FailedToReadClassProblem
+import com.jetbrains.pluginverifier.warnings.Warning
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
+import org.slf4j.LoggerFactory
 
 object VerifierUtil {
+
+  private val LOG = LoggerFactory.getLogger(VerifierUtil::class.java)
+
   fun classExistsOrExternal(ctx: VContext, resolver: Resolver, className: String): Boolean {
     Preconditions.checkArgument(!className.startsWith("["), className)
     Preconditions.checkArgument(!className.endsWith(";"), className)
@@ -49,13 +52,14 @@ object VerifierUtil {
    * @param resolver  resolver to search in
    * @param className className in binary form
    * @param ctx       context to report a problem of missing class to
-   * @return null if not found or exception occurs (in the last case FailedToReadClassProblem is reported)
+   * @return null if not found or exception occurs (in the last case 'failed to read' warning is reported)
    */
   fun findClass(resolver: Resolver, className: String, ctx: VContext): ClassNode? {
     try {
       return resolver.findClass(className)
     } catch (e: Exception) {
-      ctx.registerProblem(FailedToReadClassProblem(className, e.message ?: ""), ProblemLocation.fromPlugin(ctx.plugin.toString()))
+      LOG.debug("Unable to read a class file $className", e)
+      ctx.registerWarning(Warning("Unable to read a class $className using ASM (<a href=\"http://asm.ow2.org\"></a>). Probably it has invalid class-file. Try to recompile the plugin"))
       return null
     }
 
