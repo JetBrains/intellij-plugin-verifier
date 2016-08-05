@@ -76,7 +76,7 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
                       vResult.problems.asMap().entries.forEach { createProblemTab(out, it.key.description, it.value.toList()) }
                     }
                     is VResult.BadPlugin -> {
-                      createProblemTab(out, vResult.overview, listOf(ProblemLocation.fromPlugin(vResult.pluginDescriptor.pluginId)))
+                      createProblemTab(out, vResult.reason, listOf(ProblemLocation.fromPlugin(vResult.pluginDescriptor.pluginId)))
                     }
                     is VResult.NotFound -> {
                       out.printf("The plugin ${vResult.pluginDescriptor.presentableName()} is not found in the Repository")
