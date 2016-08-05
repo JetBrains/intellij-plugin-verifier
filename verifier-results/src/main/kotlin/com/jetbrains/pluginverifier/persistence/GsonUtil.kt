@@ -20,12 +20,15 @@ import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.dependenciesGraphDeserializer
 import com.jetbrains.pluginverifier.dependencies.dependenciesGraphSerializer
-import com.jetbrains.pluginverifier.location.CodeLocation
-import com.jetbrains.pluginverifier.location.PluginLocation
+import com.jetbrains.pluginverifier.location.ClassLocation
+import com.jetbrains.pluginverifier.location.FieldLocation
+import com.jetbrains.pluginverifier.location.MethodLocation
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.*
-import com.jetbrains.pluginverifier.problems.fields.ChangeFinalFieldProblem
-import com.jetbrains.pluginverifier.problems.statics.*
+import com.jetbrains.pluginverifier.reference.ClassReference
+import com.jetbrains.pluginverifier.reference.FieldReference
+import com.jetbrains.pluginverifier.reference.MethodReference
+import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.report.checkIdeReportDeserializer
 import com.jetbrains.pluginverifier.report.checkIdeReportSerializer
@@ -57,6 +60,7 @@ object GsonHolder {
       .registerTypeAdapterFactory(resultTAF)
       .registerTypeAdapterFactory(problemsTAF)
       .registerTypeAdapterFactory(locationTAF)
+      .registerTypeAdapterFactory(symbolicReferenceTAF)
       .registerTypeAdapterFactory(pluginDescriptorTAF)
       .registerTypeAdapterFactory(MultimapTypeAdapterFactory())
 
@@ -78,6 +82,11 @@ object GsonHolder {
       .create()
 }
 
+private val symbolicReferenceTAF = RuntimeTypeAdapterFactory.of(SymbolicReference::class.java)
+    .registerSubtype(ClassReference::class.java)
+    .registerSubtype(MethodReference::class.java)
+    .registerSubtype(FieldReference::class.java)
+
 private val resultTAF = RuntimeTypeAdapterFactory.of(VResult::class.java)
     .registerSubtype(VResult.Nice::class.java)
     .registerSubtype(VResult.Problems::class.java)
@@ -98,7 +107,8 @@ private val problemsTAF = RuntimeTypeAdapterFactory.of(Problem::class.java)
     .registerSubtype(FieldNotFoundProblem::class.java)
     .registerSubtype(IllegalFieldAccessProblem::class.java)
     .registerSubtype(IllegalMethodAccessProblem::class.java)
-    .registerSubtype(IncompatibleClassChangeProblem::class.java)
+    .registerSubtype(IncompatibleClassToInterfaceChange::class.java)
+    .registerSubtype(IncompatibleInterfaceToClassChange::class.java)
     .registerSubtype(InterfaceInstantiationProblem::class.java)
     .registerSubtype(InvokeInterfaceOnPrivateMethodProblem::class.java)
     .registerSubtype(MethodNotFoundProblem::class.java)
@@ -108,8 +118,9 @@ private val problemsTAF = RuntimeTypeAdapterFactory.of(Problem::class.java)
 
 
 private val locationTAF = RuntimeTypeAdapterFactory.of(ProblemLocation::class.java)
-    .registerSubtype(PluginLocation::class.java)
-    .registerSubtype(CodeLocation::class.java)
+    .registerSubtype(ClassLocation::class.java)
+    .registerSubtype(MethodLocation::class.java)
+    .registerSubtype(FieldLocation::class.java)
 
 private val pluginDescriptorTAF = RuntimeTypeAdapterFactory.of(PluginDescriptor::class.java)
     .registerSubtype(PluginDescriptor.ByXmlId::class.java)
