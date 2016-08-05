@@ -6,7 +6,6 @@ import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.api.VResults
-import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import java.io.File
 import java.io.PrintWriter
@@ -73,10 +72,10 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
                       out.printf("No problems.\n")
                     }
                     is VResult.Problems -> {
-                      vResult.problems.asMap().entries.forEach { createProblemTab(out, it.key.description, it.value.toList()) }
+                      vResult.problems.asMap().entries.forEach { createProblemTab(out, it.key.getDescription(), it.value.toList().map { it.presentableForm() }) }
                     }
                     is VResult.BadPlugin -> {
-                      createProblemTab(out, vResult.reason, listOf(ProblemLocation.fromPlugin(vResult.pluginDescriptor.pluginId)))
+                      createProblemTab(out, vResult.reason, listOf(vResult.pluginDescriptor.pluginId))
                     }
                     is VResult.NotFound -> {
                       out.printf("The plugin ${vResult.pluginDescriptor.presentableName()} is not found in the Repository")
@@ -105,7 +104,7 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
 
   }
 
-  private fun createProblemTab(out: PrintWriter, description: String, locations: List<ProblemLocation>) {
+  private fun createProblemTab(out: PrintWriter, description: String, locations: List<String>) {
     out.append("    <div class='errorDetails'>").append(HtmlEscapers.htmlEscaper().escape(description)).append(' ').append("<a href=\"#\" class='detailsLink'>details</a>\n")
 
 
@@ -119,7 +118,7 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
         out.append("<br>")
       }
 
-      out.append(HtmlEscapers.htmlEscaper().escape(location.toString()))
+      out.append(HtmlEscapers.htmlEscaper().escape(location))
     }
 
     out.append("</div></div>")

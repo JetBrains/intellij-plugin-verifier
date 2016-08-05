@@ -13,7 +13,6 @@ import com.jetbrains.pluginverifier.configurations.MissingCompatibleUpdate
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
-import com.jetbrains.pluginverifier.utils.MessageUtils
 import kotlin.comparisons.compareBy
 import kotlin.comparisons.thenBy
 
@@ -84,7 +83,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
     affected.asMap().forEach {
       val plugins = it.value.sortedWith(compareBy<PluginDescriptor>({ it.pluginId }).thenBy { it.version })
 
-      tcLog.buildProblem(MessageUtils.cutCommonPackages(it.key.description) + " (in " + plugins.joinToString { it.pluginId + ":" + it.version } + ")")
+      tcLog.buildProblem(it.key.getDescription() + " (in " + plugins.joinToString { it.pluginId + ":" + it.version } + ")")
     }
 
   }
@@ -129,7 +128,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
                 is VResult.Problems -> {
 
                   tcLog.testStdErr(testName, result.problems.asMap().entries.joinToString(separator = "\n") {
-                    "#${it.key.description}\n" +
+                    "#${it.key.getDescription()}\n" +
                         it.value.joinToString(separator = "\n", prefix = "    #")
                   })
                   tcLog.testFailed(testName, "Plugin URL: $pluginLink\n" + "$pluginId:${result.pluginDescriptor.version} has ${result.problems.keySet().size} ${"problem".pluralize(result.problems.keySet().size)}", "")
@@ -192,12 +191,12 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
       val prefix = convertNameToPrefix(typeToProblems.key)
       tcLog.testSuiteStarted("($prefix)").use {
         typeToProblems.value.forEach { problem ->
-          tcLog.testSuiteStarted(problem.description).use {
+          tcLog.testSuiteStarted(problem.getDescription()).use {
             problemToUpdates.get(problem).forEach { plugin ->
               val testName = "(${plugin.pluginId}:${plugin.version})"
               tcLog.testStarted(testName).use {
                 val pluginUrl = REPOSITORY_PLUGIN_ID_BASE + plugin.pluginId
-                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problem.description)
+                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problem.getDescription())
               }
             }
           }
@@ -251,11 +250,11 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
       tcLog.testSuiteStarted("($prefix)").use {
         typeToProblems.value.forEach { problem ->
           affected.get(problem).forEach { plugin ->
-            tcLog.testSuiteStarted(problem.description).use {
+            tcLog.testSuiteStarted(problem.getDescription()).use {
               val testName = "(${plugin.pluginId}:${plugin.version})"
               tcLog.testStarted(testName).use {
                 val pluginUrl = REPOSITORY_PLUGIN_ID_BASE + plugin.pluginId
-                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problem.description)
+                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problem.getDescription())
               }
             }
           }

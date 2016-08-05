@@ -16,9 +16,9 @@ class StreamVPrinter(private val out: PrintStream) : VPrinter {
           val problemsCnt = it.problems.keySet().size
           out.println("With the $ideVersion the plugin $plugin has $problemsCnt problems:")
           it.problems.asMap().forEach {
-            out.println("    #${it.key.description}")
+            out.println("    #${it.key.getDescription()}")
             it.value.forEach {
-              out.println("        at ${it.asString()}")
+              out.println("        at ${it.presentableForm()}")
             }
           }
         }
