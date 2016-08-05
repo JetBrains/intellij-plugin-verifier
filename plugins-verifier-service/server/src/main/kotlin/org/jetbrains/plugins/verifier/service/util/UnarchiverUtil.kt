@@ -30,9 +30,10 @@ fun File.extractTo(destination: File): File {
     archiver.extract()
 
     stripTopLevelDirectory(destination)
-  } catch(e: IOException) {
+  } catch(e: Exception) {
     val message = "Unable to extract $this to $destination"
     LOG.error(message, e)
+    destination.deleteLogged()
     throw IOException(message, e)
   }
 

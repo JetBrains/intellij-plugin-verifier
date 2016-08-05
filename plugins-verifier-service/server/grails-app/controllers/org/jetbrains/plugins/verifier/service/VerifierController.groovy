@@ -164,6 +164,7 @@ class VerifierController {
       tmpIdeFile = FileManager.INSTANCE.createTempFile(ideFile.getOriginalFilename() as String)
     } catch (Exception e) {
       log.error("Unable to create temp file for IDE", e)
+      sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Server disk is exhausted")
       return null
     }
 
@@ -172,8 +173,7 @@ class VerifierController {
     } catch (Exception e) {
       log.error("Unable to save IDE file $ideFile", e)
       LanguageUtilsKt.deleteLogged(tmpIdeFile)
-
-      sendError(HttpStatus.BAD_REQUEST.value(), "The IDE file is invalid ${e.message}")
+      sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unable to save the IDE, probably no space left")
       return null
     }
 
