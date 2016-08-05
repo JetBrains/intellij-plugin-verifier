@@ -7,6 +7,7 @@ import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeManager
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.domain.PluginManager
+import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.location.ProblemLocation
@@ -68,7 +69,6 @@ class VerifierTest {
       .put(IllegalMethodAccessProblem("com/intellij/openapi/diagnostic/LogUtil#<init>()V", AccessType.PRIVATE), ProblemLocation.fromMethod("mock/plugin/AccessChangedProblem", "foo()V"))
       .put(InvokeVirtualOnStaticMethodProblem("com/intellij/lang/SmartEnterProcessor#commit()V"), ProblemLocation.fromMethod("mock/plugin/invokeVirtualOnStatic/SmartEnterProcessorUser", "main()V"))
       .put(InvokeStaticOnInstanceMethodProblem("invocation/InvocationProblems#wasStatic()V"), ProblemLocation.fromMethod("mock/plugin/invokeStaticOnInstance/InvocationProblemsUser", "foo()V"))
-      .put(MissingDependencyProblem("org.some.company.plugin", "MissingPlugin", "Plugin org.some.company.plugin:1.0 depends on the other plugin MissingPlugin which doesn't have a build compatible with IU-145.500"), ProblemLocation.fromPlugin("org.some.company.plugin"))
       .put(FieldNotFoundProblem("fields/FieldsContainer#deletedField#I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessDeletedField()V"))//field problems
 
 
@@ -90,7 +90,7 @@ class VerifierTest {
   fun testRuby20160127() {
     val idea = TestData.fetchResource("ideaIU-144.3600.7.zip", true)
     val rubyPlugin = TestData.fetchResource("ruby-8.0.0.20160127.zip", false)
-    testFoundProblems(idea, rubyPlugin, RUBY_ACTUAL_PROBLEMS, false)
+    testFoundProblems(idea, rubyPlugin, RUBY_ACTUAL_PROBLEMS, false, false)
   }
 
   @Test
@@ -98,7 +98,7 @@ class VerifierTest {
   fun testMyPlugin() {
     val ideaFile = File("build/mocks/after-idea")
     val pluginFile = findLatestFile(File("build/mocks"), "mock-plugin")
-    testFoundProblems(ideaFile, pluginFile, MY_ACTUAL_PROBLEMS, true)
+    testFoundProblems(ideaFile, pluginFile, MY_ACTUAL_PROBLEMS, true, true)
   }
 
 
@@ -133,7 +133,7 @@ class VerifierTest {
   }
 
   @Throws(Exception::class)
-  private fun testFoundProblems(ideaFile: File, pluginFile: File, actualProblems: ImmutableMultimap<Problem, ProblemLocation>, dummyIdeVersion: Boolean) {
+  private fun testFoundProblems(ideaFile: File, pluginFile: File, actualProblems: ImmutableMultimap<Problem, ProblemLocation>, dummyIdeVersion: Boolean, isMyPlugin: Boolean) {
     val ide: Ide
     if (dummyIdeVersion) {
       ide = IdeManager.getInstance().createIde(ideaFile, DUMMY_IDE_VERSION)
@@ -158,8 +158,17 @@ class VerifierTest {
       Assert.assertTrue(result is VResult.Problems)
 
       testFoundProblems((result as VResult.Problems).problems, actualProblems)
+
+      if (isMyPlugin) {
+        checkMissingDeps(result)
+      }
     }
 
+  }
+
+  private fun checkMissingDeps(result: VResult.Problems) {
+    Assert.assertFalse(result.dependenciesGraph.start.missingDependencies.isEmpty())
+    Assert.assertTrue(result.dependenciesGraph.start.missingDependencies.containsKey(PluginDependencyImpl("MissingPlugin", true)))
   }
 
   companion object {
