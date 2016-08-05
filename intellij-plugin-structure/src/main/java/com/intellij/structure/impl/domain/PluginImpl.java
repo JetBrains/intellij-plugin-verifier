@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class PluginImpl implements Plugin {
+public class PluginImpl implements Plugin {
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginImpl.class);
 
@@ -492,7 +492,6 @@ class PluginImpl implements Plugin {
   }
 
   @NotNull
-  @Override
   public List<String> getHints() {
     return Collections.unmodifiableList(myHints);
   }

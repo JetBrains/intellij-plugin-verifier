@@ -6,6 +6,7 @@ import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.impl.domain.PluginDependencyImpl;
+import com.intellij.structure.impl.domain.PluginImpl;
 import com.intellij.structure.resolvers.Resolver;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -64,7 +65,7 @@ public class TestMockPlugins {
 
     assertEquals("change_notes", plugin.getChangeNotes());
 
-    assertContains(plugin.getHints(), "Plugin dependency missingDependency config-file missingFile specified in META-INF/plugin.xml is not found");
+    assertContains(((PluginImpl) plugin).getHints(), "Plugin dependency missingDependency config-file missingFile specified in META-INF/plugin.xml is not found");
   }
 
   @Test
