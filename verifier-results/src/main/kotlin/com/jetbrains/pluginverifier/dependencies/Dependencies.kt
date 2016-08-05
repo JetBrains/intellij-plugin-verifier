@@ -10,6 +10,8 @@ import com.intellij.structure.domain.PluginDependency
  */
 data class MissingReason(@SerializedName("reason") val reason: String)
 
+data class MissingPlugin(@SerializedName("pluginId") val pluginId: String)
+
 data class DependencyNode(@SerializedName("pluginId") val pluginId: String,
                           @SerializedName("version") val version: String,
                           @SerializedName("missingDeps") val missingDependencies: Map<PluginDependency, MissingReason>)
