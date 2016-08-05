@@ -4,8 +4,8 @@ import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.IdeVersion
+import com.jetbrains.pluginverifier.dependencies.MissingPlugin
 import com.jetbrains.pluginverifier.format.UpdateInfo
-import com.jetbrains.pluginverifier.problems.MissingDependencyProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.report.CheckIdeReport
 
@@ -21,20 +21,15 @@ data class CheckTrunkApiResults(@SerializedName("majorReport") val majorReport: 
 data class BundledPlugins(@SerializedName("pluginIds") val pluginIds: List<String>,
                           @SerializedName("moduleIds") val moduleIds: List<String>)
 
-data class CheckTrunkApiCompareResult(val currentVersion: IdeVersion,
-                                      val majorVersion: IdeVersion,
-                                      val newProblems: Multimap<UpdateInfo, Problem>,
-                                      val newMissingProblems: List<MissingDependencyProblem>) {
+data class CheckTrunkApiCompareResult(@SerializedName("curVersion") val currentVersion: IdeVersion,
+                                      @SerializedName("majorVersion") val majorVersion: IdeVersion,
+                                      @SerializedName("newProblems") val newProblems: Multimap<UpdateInfo, Problem>,
+                                      @SerializedName("newMissingProblems") val newMissingProblems: Multimap<MissingPlugin, UpdateInfo>) {
   companion object {
     fun create(apiResults: CheckTrunkApiResults): CheckTrunkApiCompareResult {
       val oldProblems = apiResults.majorReport.pluginProblems.values().toSet()
-      val oldMissingIds = oldProblems.filterIsInstance<MissingDependencyProblem>().map { it.missingId }
-      val newProblems = Multimaps.filterValues(apiResults.currentReport.pluginProblems, { it !in oldProblems && it !is MissingDependencyProblem })
-      val newMissingProblems = apiResults.currentReport.pluginProblems.values().distinct()
-          .filterIsInstance<MissingDependencyProblem>()
-          .filterNot { it.missingId in oldMissingIds }
-          .filter { it.missingId in apiResults.majorPlugins.pluginIds || it.missingId in apiResults.majorPlugins.moduleIds }
-
+      val newProblems = Multimaps.filterValues(apiResults.currentReport.pluginProblems, { it !in oldProblems })
+      val newMissingProblems = Multimaps.filterEntries(apiResults.currentReport.missingPlugins, { it !in apiResults.majorReport.missingPlugins.entries() })
       return CheckTrunkApiCompareResult(apiResults.currentReport.ideVersion, apiResults.majorReport.ideVersion, newProblems, newMissingProblems)
     }
   }
