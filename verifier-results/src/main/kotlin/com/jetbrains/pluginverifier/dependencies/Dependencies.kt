@@ -22,6 +22,7 @@ data class DependenciesGraph(@SerializedName("start") val start: DependencyNode,
                              @SerializedName("vertices") val vertices: List<DependencyNode>,
                              @SerializedName("edges") val edges: List<DependencyEdge>)
 
+//TODO: write a compact implementation
 private data class DependenciesGraphCompact(@SerializedName("vertices") val vertices: List<DependencyNode>,
                                             @SerializedName("startIdx") val startIdx: Int,
                                             @SerializedName("edges") val edges: List<Triple<Int, Int, PluginDependency>>)
