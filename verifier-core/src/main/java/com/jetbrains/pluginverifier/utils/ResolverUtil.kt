@@ -99,7 +99,7 @@ object ResolverUtil {
     return null
   }
 
-  internal fun collectUnresolvedClasses(resolver: Resolver, className: String, ctx: VContext): Set<String> {
+  fun collectUnresolvedClasses(resolver: Resolver, className: String, ctx: VContext): Set<String> {
     VerifierUtil.findClass(resolver, className, ctx) ?: return setOf(className)
     return ParentsVisitor(resolver, ctx).collectUnresolvedParents(className, Predicate { s -> false })
   }
