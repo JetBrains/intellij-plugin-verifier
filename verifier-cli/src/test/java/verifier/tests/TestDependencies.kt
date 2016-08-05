@@ -1,10 +1,14 @@
 package verifier.tests
 
+import com.google.common.collect.Lists
 import com.intellij.structure.impl.domain.IdeManagerImpl
 import com.intellij.structure.impl.utils.StringUtil
 import com.jetbrains.pluginverifier.misc.PluginCache
-import com.jetbrains.pluginverifier.utils.dependencies.Dependencies
-import com.jetbrains.pluginverifier.utils.dependencies.getTransitiveDependencies
+import com.jetbrains.pluginverifier.utils.Dependencies
+import com.jetbrains.pluginverifier.utils.Edge
+import com.jetbrains.pluginverifier.utils.Vertex
+import org.jgrapht.DirectedGraph
+import org.jgrapht.traverse.DepthFirstIterator
 import org.junit.Assert.*
 import org.junit.Test
 import java.util.*
@@ -39,7 +43,15 @@ class TestDependencies {
           found = true
         }
       }
-      assertTrue("Dependency " + s + " is not found", found)
+      assertTrue("Dependency $s is not found", found)
     }
   }
+
+  private fun DirectedGraph<Vertex, Edge>.getTransitiveDependencies(start: Vertex): List<Vertex> {
+    val iterator = DepthFirstIterator(this, start)
+    if (!iterator.hasNext()) return emptyList()
+    iterator.next() //skip the start
+    return Lists.newArrayList(iterator)
+  }
+
 }
