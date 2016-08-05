@@ -2,10 +2,11 @@ package com.jetbrains.pluginverifier.verifiers.clazz
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
+import com.jetbrains.pluginverifier.location.ClassLocation
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem
-import com.jetbrains.pluginverifier.utils.LocationUtils
+import com.jetbrains.pluginverifier.reference.MethodReference
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
@@ -23,7 +24,7 @@ class AbstractMethodVerifier : ClassVerifier {
     traverseTree(clazz, resolver, ctx, hashSetOf(), abstractMethods, implementedMethods)
 
     (abstractMethods.keys - implementedMethods.keys).forEach {
-      ctx.registerProblem(MethodNotImplementedProblem(LocationUtils.getMethodLocation(abstractMethods[it]!!, it.name, it.descriptor)), ProblemLocation.fromClass(clazz.name))
+      ctx.registerProblem(MethodNotImplementedProblem(MethodReference.from(abstractMethods[it]!!, it.name, it.descriptor)), ClassLocation(clazz.name))
     }
   }
 
