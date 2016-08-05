@@ -2,8 +2,10 @@ package com.jetbrains.pluginverifier.api
 
 import com.google.common.collect.Multimap
 import com.google.gson.annotations.SerializedName
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.warnings.Warning
 
 /**
  * @author Sergey Patrikeev
@@ -11,16 +13,15 @@ import com.jetbrains.pluginverifier.problems.Problem
 data class VResults(@SerializedName("results") val results: List<VResult>)
 
 sealed class VResult(@SerializedName("plugin") val pluginDescriptor: PluginDescriptor,
-                     @SerializedName("ide") val ideDescriptor: IdeDescriptor,
-                     @SerializedName("overview") val overview: String) {
+                     @SerializedName("ide") val ideDescriptor: IdeDescriptor) {
   /**
    * Indicates that the Plugin doesn't have compatibility problems with the checked IDE.
    */
   class Nice(pluginDescriptor: PluginDescriptor,
              ideDescriptor: IdeDescriptor,
-             overview: String) : VResult(pluginDescriptor, ideDescriptor, overview) {
+             @SerializedName("warnings") val warnings: List<Warning>) : VResult(pluginDescriptor, ideDescriptor) {
 
-    override fun toString(): String = "VResult.Nice(plugin=$pluginDescriptor, ide=$ideDescriptor, overview='$overview')"
+    override fun toString(): String = "VResult.Nice(plugin=$pluginDescriptor, ide=$ideDescriptor, warnings='$warnings')"
   }
 
   /**
@@ -28,10 +29,11 @@ sealed class VResult(@SerializedName("plugin") val pluginDescriptor: PluginDescr
    */
   class Problems(pluginDescriptor: PluginDescriptor,
                  ideDescriptor: IdeDescriptor,
-                 overview: String,
-                 @SerializedName("problems") val problems: Multimap<Problem, ProblemLocation>) : VResult(pluginDescriptor, ideDescriptor, overview) {
+                 @SerializedName("problems") val problems: Multimap<Problem, ProblemLocation>,
+                 @SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph,
+                 @SerializedName("warnings") val warnings: List<Warning>) : VResult(pluginDescriptor, ideDescriptor) {
 
-    override fun toString(): String = "VResult.Problems(plugin=$pluginDescriptor, ide=$ideDescriptor, overview='$overview', problems=$problems)"
+    override fun toString(): String = "VResult.Problems(plugin=$pluginDescriptor, ide=$ideDescriptor, warnings='$warnings', problems=$problems)"
 
   }
 
@@ -40,9 +42,9 @@ sealed class VResult(@SerializedName("plugin") val pluginDescriptor: PluginDescr
    * The [reason] is a user-friendly description of the problem.
    */
   class BadPlugin(pluginDescriptor: PluginDescriptor,
-                  reason: String) : VResult(pluginDescriptor, IdeDescriptor.AnyIde, reason) {
+                  @SerializedName("reason") val reason: String) : VResult(pluginDescriptor, IdeDescriptor.AnyIde) {
 
-    override fun toString(): String = "VResult.BadPlugin(plugin=$pluginDescriptor, reason='$overview')"
+    override fun toString(): String = "VResult.BadPlugin(plugin=$pluginDescriptor, reason='$reason')"
 
   }
 
@@ -51,9 +53,9 @@ sealed class VResult(@SerializedName("plugin") val pluginDescriptor: PluginDescr
    */
   class NotFound(pluginDescriptor: PluginDescriptor,
                  ideDescriptor: IdeDescriptor,
-                 reason: String) : VResult(pluginDescriptor, ideDescriptor, reason) {
+                 @SerializedName("reason") val reason: String) : VResult(pluginDescriptor, ideDescriptor) {
 
-    override fun toString(): String = "VResult.NotFound(plugin=$pluginDescriptor, ideDescriptor=$ideDescriptor, reason=$overview)"
+    override fun toString(): String = "VResult.NotFound(plugin=$pluginDescriptor, ideDescriptor=$ideDescriptor, reason=$reason)"
   }
 
 
