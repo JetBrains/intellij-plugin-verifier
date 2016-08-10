@@ -24,11 +24,11 @@ data class ClassNotFoundProblem(@SerializedName("class") val unknownClass: Class
   override fun getDescription(): String = "accessing to unknown class $unknownClass"
 }
 
-data class IncompatibleClassToInterfaceChange(@SerializedName("class") val clazz: ClassReference) : Problem {
+data class IncompatibleClassToInterfaceChangeProblem(@SerializedName("class") val clazz: ClassReference) : Problem {
   override fun getDescription(): String = "incompatible change of class $clazz to interface"
 }
 
-data class IncompatibleInterfaceToClassChange(@SerializedName("interface") val interfaze: ClassReference) : Problem {
+data class IncompatibleInterfaceToClassChangeProblem(@SerializedName("interface") val interfaze: ClassReference) : Problem {
   override fun getDescription(): String = "incompatible change of interface $interfaze to class"
 }
 

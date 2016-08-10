@@ -4,7 +4,7 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
-import com.jetbrains.pluginverifier.problems.IncompatibleInterfaceToClassChange
+import com.jetbrains.pluginverifier.problems.IncompatibleInterfaceToClassChangeProblem
 import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.objectweb.asm.tree.ClassNode
@@ -26,7 +26,7 @@ class InterfacesVerifier : ClassVerifier {
         continue
       }
       if (!VerifierUtil.isInterface(node)) {
-        ctx.registerProblem(IncompatibleInterfaceToClassChange(ClassReference(iface)), ProblemLocation.fromClass(clazz.name))
+        ctx.registerProblem(IncompatibleInterfaceToClassChangeProblem(ClassReference(iface)), ProblemLocation.fromClass(clazz.name))
       }
     }
   }
