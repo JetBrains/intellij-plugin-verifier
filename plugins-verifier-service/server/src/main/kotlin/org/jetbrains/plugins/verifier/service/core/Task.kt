@@ -18,6 +18,7 @@ abstract class Task<R>(@Volatile var taskId: TaskId? = null) {
       return field
     }
 
+  @Volatile
   var exception: Exception? = null
 
   abstract fun presentableName(): String
