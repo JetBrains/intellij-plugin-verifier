@@ -106,11 +106,7 @@ class CheckTrunkApiRunner(val ideFile: File,
                                    progress: Progress): Pair<CheckIdeReport, BundledPlugins> {
     val majorBuildLock: IdeFilesManager.IdeLock = IdeFilesManager.getIde(majorVersion) ?: throw IllegalArgumentException("There is no IDE #$majorVersion on the server")
     try {
-      val existingReport = getExistingReport(majorVersion)
       val bundledPlugins = getBundledPlugins(majorBuildLock.ide)
-      if (existingReport != null) {
-        return existingReport to bundledPlugins
-      }
       val majorParams = CheckIdeParams(IdeDescriptor.ByInstance(majorBuildLock.ide), jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), runnerParams.vOptions, emptyList(), Resolver.getEmptyResolver(), BridgeVProgress(progress))
       LOG.debug("${presentableName()} major arguments: $majorParams")
       val ideReport = CheckIdeConfiguration(majorParams).execute().run { CheckIdeReport.createReport(ideVersion, vResults) }
@@ -125,7 +121,5 @@ class CheckTrunkApiRunner(val ideFile: File,
     }
   }
 
-
-  private fun getExistingReport(ideVersion: IdeVersion): CheckIdeReport? = ReportsManager.getReport(ideVersion)?.run { CheckIdeReport.loadFromFile(this) }
 
 }
