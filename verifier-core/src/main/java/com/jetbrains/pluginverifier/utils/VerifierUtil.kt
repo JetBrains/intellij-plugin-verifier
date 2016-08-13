@@ -25,19 +25,6 @@ object VerifierUtil {
 
   fun isInterface(classNode: ClassNode): Boolean = classNode.access and Opcodes.ACC_INTERFACE != 0
 
-  private fun prepareArrayName(className: String): String {
-    if (className.startsWith("[")) {
-      var i = 1
-      while (i < className.length && className[i] == '[') {
-        i++
-      }
-
-      return className.substring(i)
-    }
-
-    return className
-  }
-
   fun findClass(resolver: Resolver, potential: ClassNode, className: String, ctx: VContext): ClassNode? {
     if (className == potential.name) {
       return potential
@@ -72,8 +59,8 @@ object VerifierUtil {
    * @return null for primitive types and the innermost type for array types
    */
   fun extractClassNameFromDescr(descr: String): String? {
-    var descr1 = descr
-    descr1 = prepareArrayName(descr1)
+    //prepare array name
+    val descr1 = descr.trimStart('[')
 
     if (isPrimitiveType(descr1)) return null
 
