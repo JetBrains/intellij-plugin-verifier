@@ -3,10 +3,7 @@ package com.jetbrains.pluginverifier.verifiers.method
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.ProblemLocation
-import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.OverridingFinalMethodProblem
-import com.jetbrains.pluginverifier.reference.MethodReference
-import com.jetbrains.pluginverifier.utils.ResolverUtil
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
@@ -17,9 +14,8 @@ import org.objectweb.asm.tree.MethodNode
  */
 class OverrideNonFinalVerifier : MethodVerifier {
 
-  //TODO: add the following use-case:
-  // static or private method overrides instance method (overriding abstract method is already processed in AbstractVerifier)
 
+  @Suppress("UNCHECKED_CAST")
   override fun verify(clazz: ClassNode, method: MethodNode, resolver: Resolver, ctx: VContext) {
     if (VerifierUtil.isPrivate(method)) return
 
@@ -37,19 +33,19 @@ class OverrideNonFinalVerifier : MethodVerifier {
       return
     }
 
-    val superNode = VerifierUtil.findClass(resolver, superClass, ctx)
-    if (superNode == null) {
-      ctx.registerProblem(ClassNotFoundProblem(superClass), ProblemLocation.fromMethod(clazz.name, method))
-      return
-    }
+    var curNode: ClassNode? = VerifierUtil.resolveClassOrProblem(resolver, superClass, clazz, ctx, { ProblemLocation.fromMethod(clazz.name, method) }) ?: return
 
-    val superMethod = ResolverUtil.findMethod(resolver, superNode, method.name, method.desc, ctx) ?: return
-
-    val classNode = superMethod.classNode
-    val methodNode = superMethod.methodNode
-
-    if (VerifierUtil.isFinal(methodNode) && !VerifierUtil.isAbstract(methodNode)) {
-      ctx.registerProblem(OverridingFinalMethodProblem(MethodReference.from(classNode, methodNode)), ProblemLocation.fromMethod(clazz.name, method))
+    while (curNode != null) {
+      val first = (curNode.methods as List<MethodNode>).firstOrNull { it.name == method.name && it.desc == method.desc }
+      val curName = curNode.name
+      if (first != null && VerifierUtil.isFinal(first)) {
+        ctx.registerProblem(OverridingFinalMethodProblem(curName, first.name, first.desc), ProblemLocation.fromMethod(clazz.name, method))
+        return
+      }
+      val superName = curNode.superName ?: break
+      val superNode = VerifierUtil.resolveClassOrProblem(resolver, superName, curNode, ctx, { ProblemLocation.fromClass(curName) }) ?: break
+      curNode = superNode
     }
   }
+
 }
