@@ -57,7 +57,7 @@ data class FieldNotFoundProblem(@SerializedName("field") val field: FieldReferen
 }
 
 data class IllegalFieldAccessProblem(@SerializedName("field") val field: FieldReference, @SerializedName("access") val fieldAccess: AccessType) : Problem {
-  constructor(hostClass: String, fieldName: String, fieldDescriptor: String, methodAccess: AccessType) : this(FieldReference(hostClass, fieldName, fieldDescriptor), methodAccess)
+  constructor(hostClass: String, fieldName: String, fieldDescriptor: String, fieldAccess: AccessType) : this(FieldReference(hostClass, fieldName, fieldDescriptor), fieldAccess)
 
   override fun getDescription(): String = "illegal access of ${fieldAccess.type} field $field"
 }
