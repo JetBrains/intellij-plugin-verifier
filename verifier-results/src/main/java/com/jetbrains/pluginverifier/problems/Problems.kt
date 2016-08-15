@@ -12,6 +12,18 @@ interface Problem {
   fun getDescription(): String
 }
 
+data class IllegalClassAccessProblem(@SerializedName("class") val clazz: ClassReference, @SerializedName("access") val classAccess: AccessType) : Problem {
+  constructor(className: String, accessType: AccessType) : this(ClassReference(className), accessType)
+
+  override fun getDescription(): String = "illegal access to $classAccess class $clazz"
+}
+
+data class IllegalInterfaceAccessProblem(@SerializedName("interface") val interfaze: ClassReference, @SerializedName("access") val classAccess: AccessType) : Problem {
+  constructor(interfaceName: String, accessType: AccessType) : this(ClassReference(interfaceName), accessType)
+
+  override fun getDescription(): String = "illegal access to $classAccess interface $interfaze"
+}
+
 data class AbstractClassInstantiationProblem(@SerializedName("class") val clazz: ClassReference) : Problem {
   constructor(className: String) : this(ClassReference(className))
 
@@ -59,13 +71,13 @@ data class FieldNotFoundProblem(@SerializedName("field") val field: FieldReferen
 data class IllegalFieldAccessProblem(@SerializedName("field") val field: FieldReference, @SerializedName("access") val fieldAccess: AccessType) : Problem {
   constructor(hostClass: String, fieldName: String, fieldDescriptor: String, fieldAccess: AccessType) : this(FieldReference(hostClass, fieldName, fieldDescriptor), fieldAccess)
 
-  override fun getDescription(): String = "illegal access of ${fieldAccess.type} field $field"
+  override fun getDescription(): String = "illegal access of $fieldAccess field $field"
 }
 
 data class IllegalMethodAccessProblem(@SerializedName("method") val method: MethodReference, @SerializedName("access") val methodAccess: AccessType) : Problem {
   constructor(hostClass: String, methodName: String, methodDescriptor: String, methodAccess: AccessType) : this(MethodReference(hostClass, methodName, methodDescriptor), methodAccess)
 
-  override fun getDescription(): String = "illegal invocation of ${methodAccess.type} method $method"
+  override fun getDescription(): String = "illegal invocation of $methodAccess method $method"
 }
 
 data class InvokeInterfaceOnPrivateMethodProblem(@SerializedName("method") val method: MethodReference) : Problem {
@@ -122,9 +134,11 @@ data class StaticAccessOfInstanceFieldProblem(@SerializedName("field") val field
   override fun getDescription(): String = "attempt to perform static access on an instance field $field"
 }
 
-enum class AccessType constructor(val type: String) {
+enum class AccessType constructor(private val type: String) {
   PUBLIC("public"),
   PROTECTED("protected"),
   PACKAGE_PRIVATE("package-private"),
-  PRIVATE("private")
+  PRIVATE("private");
+
+  override fun toString(): String = type
 }

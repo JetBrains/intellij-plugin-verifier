@@ -115,6 +115,8 @@ private val problemsTAF = RuntimeTypeAdapterFactory.of(Problem::class.java)
     .registerSubtype(MethodNotImplementedProblem::class.java)
     .registerSubtype(OverridingFinalMethodProblem::class.java)
     .registerSubtype(InheritFromFinalClassProblem::class.java)
+    .registerSubtype(IllegalClassAccessProblem::class.java)
+    .registerSubtype(IllegalInterfaceAccessProblem::class.java)
 
 
 private val locationTAF = RuntimeTypeAdapterFactory.of(ProblemLocation::class.java)
