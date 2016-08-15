@@ -60,13 +60,12 @@ internal object ReferencesVerifier {
     }
   }
 
-  @SuppressWarnings("unchecked")
+  @Suppress("UNCHECKED_CAST")
   private fun verifyClass(classLoader: Resolver, node: ClassNode, ctx: VContext) {
     for (verifier in classVerifiers) {
       verifier.verify(node, classLoader, ctx)
     }
 
-    @Suppress("UNCHECKED_CAST")
     val methods = node.methods as List<MethodNode>
     for (method in methods) {
       for (verifier in methodVerifiers) {
@@ -83,7 +82,6 @@ internal object ReferencesVerifier {
       }
     }
 
-    @Suppress("UNCHECKED_CAST")
     val fields = node.fields as List<FieldNode>
     for (field in fields) {
       for (verifier in fieldVerifiers) {
