@@ -4,7 +4,6 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.ClassLocation
 import com.jetbrains.pluginverifier.location.ProblemLocation
-import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem
 import com.jetbrains.pluginverifier.reference.MethodReference
 import com.jetbrains.pluginverifier.utils.VerifierUtil
@@ -53,11 +52,9 @@ class AbstractMethodVerifier : ClassVerifier {
 
     (listOf(superName) + (clazz.interfaces as List<String>)).forEach { clsName ->
       if (!visitedClasses.contains(clsName)) {
-        val node = VerifierUtil.findClass(resolver, clsName, ctx)
+        val node = VerifierUtil.resolveClassOrProblem(resolver, clsName, clazz, ctx, { ProblemLocation.fromClass(clazz.name) })
         if (node != null) {
           traverseTree(node, resolver, ctx, visitedClasses, abstractMethods, implementedMethods)
-        } else {
-          ctx.registerProblem(ClassNotFoundProblem(clsName), ProblemLocation.fromClass(clazz.name))
         }
       }
     }

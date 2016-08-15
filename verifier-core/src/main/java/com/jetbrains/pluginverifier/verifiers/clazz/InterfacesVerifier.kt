@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.verifiers.clazz
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.ProblemLocation
-import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.IncompatibleInterfaceToClassChangeProblem
 import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.utils.VerifierUtil
@@ -18,13 +17,7 @@ class InterfacesVerifier : ClassVerifier {
   override fun verify(clazz: ClassNode, resolver: Resolver, ctx: VContext) {
     for (o in clazz.interfaces) {
       val iface = o as String
-      val node = VerifierUtil.findClass(resolver, iface, ctx)
-      if (node == null) {
-        if (!ctx.verifierOptions.isExternalClass(iface)) {
-          ctx.registerProblem(ClassNotFoundProblem(iface), ProblemLocation.fromClass(clazz.name))
-        }
-        continue
-      }
+      val node = VerifierUtil.resolveClassOrProblem(resolver, iface, clazz, ctx, { ProblemLocation.fromClass(clazz.name) }) ?: continue
       if (!VerifierUtil.isInterface(node)) {
         ctx.registerProblem(IncompatibleInterfaceToClassChangeProblem(ClassReference(iface)), ProblemLocation.fromClass(clazz.name))
       }

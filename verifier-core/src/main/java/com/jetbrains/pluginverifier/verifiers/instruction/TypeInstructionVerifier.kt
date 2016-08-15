@@ -4,7 +4,6 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.AbstractClassInstantiationProblem
-import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.InterfaceInstantiationProblem
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.objectweb.asm.Opcodes
@@ -25,14 +24,7 @@ class TypeInstructionVerifier : InstructionVerifier {
     val desc = instr.desc
     val className = VerifierUtil.extractClassNameFromDescr(desc) ?: return
 
-    val aClass = VerifierUtil.findClass(resolver, className, ctx)
-    if (aClass == null) {
-      if (!ctx.verifierOptions.isExternalClass(className)) {
-        ctx.registerProblem(ClassNotFoundProblem(className), ProblemLocation.fromMethod(clazz.name, method))
-      }
-      return
-    }
-
+    val aClass = VerifierUtil.resolveClassOrProblem(resolver, className, clazz, ctx, { ProblemLocation.fromMethod(clazz.name, method) }) ?: return
 
     if (instr.opcode == Opcodes.NEW) {
       if (VerifierUtil.isInterface(aClass)) {
