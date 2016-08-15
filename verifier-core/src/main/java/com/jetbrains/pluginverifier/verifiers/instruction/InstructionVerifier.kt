@@ -13,6 +13,3 @@ import org.objectweb.asm.tree.MethodNode
 interface InstructionVerifier : Opcodes {
   fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, resolver: Resolver, ctx: VContext)
 }
-
-//TODO: https://examples.javacodegeeks.com/java-basics/exceptions/java-lang-verifyerror-how-to-solve-verifyerror/
-//implement the "A wrong argument is passed to a method" use case

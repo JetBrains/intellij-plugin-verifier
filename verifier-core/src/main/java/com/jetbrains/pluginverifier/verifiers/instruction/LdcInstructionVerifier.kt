@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.ProblemLocation
-import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AbstractInsnNode
@@ -19,12 +18,8 @@ class LdcInstructionVerifier : InstructionVerifier {
     if (constant !is Type) return
 
     val descriptor = constant.descriptor
-    val className = VerifierUtil.extractClassNameFromDescr(descriptor)
+    val className = VerifierUtil.extractClassNameFromDescr(descriptor) ?: return
 
-    if (className == null || VerifierUtil.classExistsOrExternal(ctx, resolver, className)) return
-
-    ctx.registerProblem(ClassNotFoundProblem(className), ProblemLocation.fromMethod(clazz.name, method))
-
-    //TODO: process method handle Type: org.objectweb.asm.Type.METHOD
+    VerifierUtil.checkClassExistsOrExternal(resolver, className, ctx, { ProblemLocation.fromMethod(clazz.name, method) })
   }
 }

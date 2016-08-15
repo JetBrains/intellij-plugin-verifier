@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.verifiers.method
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.ProblemLocation
-import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
@@ -18,9 +17,7 @@ class MethodArgumentTypesVerifier : MethodVerifier {
     val argumentTypes = methodType.argumentTypes
     for (type in argumentTypes) {
       val argDescr = VerifierUtil.extractClassNameFromDescr(type.descriptor) ?: continue
-      if (!VerifierUtil.classExistsOrExternal(ctx, resolver, argDescr)) {
-        ctx.registerProblem(ClassNotFoundProblem(argDescr), ProblemLocation.fromMethod(clazz.name, method))
-      }
+      VerifierUtil.checkClassExistsOrExternal(resolver, argDescr, ctx, { ProblemLocation.fromMethod(clazz.name, method) })
     }
 
 
