@@ -22,7 +22,7 @@ import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.Dependencies
 import com.jetbrains.pluginverifier.utils.Edge
 import com.jetbrains.pluginverifier.utils.Vertex
-import com.jetbrains.pluginverifier.verifiers.ReferencesVerifier
+import com.jetbrains.pluginverifier.verifiers.VERIFIERS
 import com.jetbrains.pluginverifier.warnings.Warning
 import org.jgrapht.DirectedGraph
 import org.jgrapht.alg.cycle.JohnsonSimpleCycles
@@ -247,7 +247,7 @@ object VManager {
           val checkClasses = getClassesForCheck(plugin, pluginResolver)
           val classLoader = createClassLoader(dependenciesResolver, ctx, ideResolver, pluginResolver, runtimeResolver, params.externalClassPath)
 
-          ReferencesVerifier.verify(ctx, checkClasses, classLoader)
+          VERIFIERS.forEach { it.verify(ctx, checkClasses, classLoader) }
 
           val warnings = ctx.warnings +
               (if (plugin is PluginImpl) plugin.hints.map { Warning(it) } else emptyList()) +
