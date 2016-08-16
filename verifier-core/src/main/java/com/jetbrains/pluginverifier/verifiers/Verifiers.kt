@@ -58,8 +58,7 @@ object ReferencesVerifier : Verifier() {
       TypeInstructionVerifier(),
       LdcInstructionVerifier(),
       MultiANewArrayInstructionVerifier(),
-      FieldAccessInstructionVerifier(),
-      InvokeDynamicVerifier()
+      FieldAccessInstructionVerifier()
   )
 
   /**
