@@ -5,7 +5,13 @@ package mock.plugin.noproblems.private_inner;
  */
 public class SomeClass {
 
+  private int x;
+
   private void foo() {
+
+  }
+
+  protected void protFoo() {
 
   }
 
@@ -19,5 +25,15 @@ public class SomeClass {
       }
     };
   }
+
+  class InstanceSubClass {
+    public void bar() {
+      int x = SomeClass.this.x;
+
+      protFoo();
+    }
+  }
+
+
 
 }
