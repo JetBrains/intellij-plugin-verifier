@@ -72,7 +72,7 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
                       out.printf("No problems.\n")
                     }
                     is VResult.Problems -> {
-                      vResult.problems.asMap().entries.forEach { createProblemTab(out, it.key.getDescription(), it.value.toList().map { it.presentableForm() }) }
+                      vResult.problems.asMap().entries.forEach { createProblemTab(out, it.key.getDescription(), it.value.toList().map { it.toString() }) }
                     }
                     is VResult.BadPlugin -> {
                       createProblemTab(out, vResult.reason, listOf(vResult.pluginDescriptor.pluginId))

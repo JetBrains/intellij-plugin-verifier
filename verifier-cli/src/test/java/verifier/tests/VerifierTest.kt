@@ -32,7 +32,7 @@ import java.util.regex.Pattern
 class VerifierTest {
   private val MY_ACTUAL_PROBLEMS = ImmutableMultimap.builder<Problem, ProblemLocation>()
 
-      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromField("mock/plugin/FieldTypeNotFound", "myNonExistingClass"))
+      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromField("mock/plugin/FieldTypeNotFound", "myNonExistingClass", "Lnon/existing/NonExistingClass;"))
       .put(ClassNotFoundProblem("non/existing/NonExistingInterface"), ProblemLocation.fromClass("mock/plugin/NotFoundInterface"))
       .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenReturn", "()Lnon/existing/NonExistingClass;"))
       .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenArg", "(Lnon/existing/NonExistingClass;)V"))

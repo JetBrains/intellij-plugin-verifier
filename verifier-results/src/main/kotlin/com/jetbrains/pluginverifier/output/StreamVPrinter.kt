@@ -18,7 +18,7 @@ class StreamVPrinter(private val out: PrintStream) : VPrinter {
           it.problems.asMap().forEach {
             out.println("    #${it.key.getDescription()}")
             it.value.forEach {
-              out.println("        at ${it.presentableForm()}")
+              out.println("        at $it")
             }
           }
         }
