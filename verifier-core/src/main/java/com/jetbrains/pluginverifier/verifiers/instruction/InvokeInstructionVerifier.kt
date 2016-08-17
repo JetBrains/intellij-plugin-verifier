@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
+import com.jetbrains.pluginverifier.location.ClassLocation
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.ClassReference
@@ -73,12 +74,121 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     }
 
     /*
+    Otherwise, if the resolved method is an instance initialization method, and the class in which it is declared
+    is not the class symbolically referenced by the instruction, a NoSuchMethodError is thrown.
+     */
+    if (resolved.methodNode.name == "<init>" && resolved.definingClass.name != methodOwner) {
+      ctx.registerProblem(MethodNotFoundProblem(methodOwner, methodName, methodDescriptor), getFromMethod())
+    }
+
+    /*
     Otherwise, if the resolved method is a class (static) method,
     the invokespecial instruction throws an IncompatibleClassChangeError.
      */
     if (VerifierUtil.isStatic(resolved.methodNode)) {
       ctx.registerProblem(InvokeSpecialOnStaticMethodProblem(MethodReference(methodOwner, methodName, methodDescriptor)), getFromMethod())
     }
+
+    /*
+      If all of the following are true, let C be the direct superclass of the current class:
+        1) The resolved method is not an instance initialization method (§2.9).
+        2) If the symbolic reference names a class (not an interface), then that class is a superclass of the current class.
+        2) The ACC_SUPER flag is set for the class file (§4.1).
+
+      Otherwise, let C be the class or interface named by the symbolic reference.
+    */
+    val classRef: ClassNode
+    if (resolved.methodNode.name != "<init>" && (instr.itf || methodOwner == verifiableClass.superName) && VerifierUtil.isSuperFlag(verifiableClass)) {
+      classRef = VerifierUtil.resolveClassOrProblem(resolver, verifiableClass.superName, verifiableClass, ctx, { getFromMethod() }) ?: return
+    } else {
+      classRef = VerifierUtil.resolveClassOrProblem(resolver, methodOwner, verifiableClass, ctx, { getFromMethod() }) ?: return
+    }
+
+    /*
+      The actual method to be invoked is selected by the following lookup procedure:
+      */
+    val (stepNumber, resolvedMethod) = invokeSpecialLookup(classRef, resolved.methodNode) ?: return
+
+    /*
+    Otherwise, if step 1, step 2, or step 3 of the lookup procedure selects an abstract method, invokespecial throws an AbstractMethodError.
+     */
+    if (stepNumber in listOf(1, 2, 3) && VerifierUtil.isAbstract(resolvedMethod.methodNode)) {
+      ctx.registerProblem(MethodNotImplementedProblem(methodOwner, methodName, methodDescriptor), getFromMethod())
+    }
+  }
+
+
+  private fun invokeSpecialLookup(classRef: ClassNode, resolvedMethod: MethodNode): Pair<Int, ResolvedMethod>? {
+    /*
+      1) If C contains a declaration for an instance method with the same name and descriptor as the resolved method,
+      then it is the method to be invoked .
+    */
+    val matching = (classRef.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc }
+    if (matching != null) {
+      return 1 to ResolvedMethod(classRef, matching)
+    }
+
+    /*
+      2) Otherwise, if C is a class and has a superclass, a search for a declaration of an instance method with the same name
+        and descriptor as the resolved method is performed, starting with the direct superclass of C and continuing with the
+        direct superclass of that class, and so forth, until a match is found or no further superclasses exist.
+        If a match is found, then it is the method to be invoked.
+    */
+    if (!VerifierUtil.isInterface(classRef) && classRef.superName != null) {
+      var current: ClassNode = VerifierUtil.resolveClassOrProblem(resolver, classRef.superName, classRef, ctx, { ClassLocation(classRef.name) }) ?: return null
+      while (true) {
+        val match = (current.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc }
+        if (match != null) {
+          return 2 to ResolvedMethod(current, match)
+        }
+
+        val superName = current.superName
+        superName ?: break
+        current = VerifierUtil.resolveClassOrProblem(resolver, superName, current, ctx, { ClassLocation(current.name) }) ?: return null
+      }
+    }
+
+    /*
+       3) Otherwise, if C is an interface and the class Object contains a declaration of a public instance method with
+       the same name and descriptor as the resolved method, then it is the method to be invoked.
+    */
+    if (VerifierUtil.isInterface(classRef)) {
+      val objectClass = VerifierUtil.resolveClassOrProblem(resolver, "java/lang/Object", classRef, ctx, { ClassLocation(classRef.name) }) ?: return null
+      val match = (objectClass.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc && VerifierUtil.isPublic(it) }
+      if (match != null) {
+        return 3 to ResolvedMethod(objectClass, match)
+      }
+    }
+
+    /*
+       4) Otherwise, if there is exactly one maximally-specific method (§5.4.3.3) in the superinterfaces of C that
+       matches the resolved method's name and descriptor and is not abstract, then it is the method to be invoked.
+     */
+    val interfaceMethods = getMaximallySpecificSuperInterfaceMethods(classRef) ?: return null
+    val filtered = interfaceMethods.filter { it.methodNode.name == resolvedMethod.name && it.methodNode.desc == resolvedMethod.desc && !VerifierUtil.isAbstract(it.methodNode) }
+
+    if (filtered.size == 1) {
+      return 4 to filtered.single()
+    }
+
+    /*
+    Otherwise, if step 4 of the lookup procedure determines there are multiple maximally-specific methods in
+    the superinterfaces of C that match the resolved method's name and descriptor and are
+    not abstract, invokespecial throws an IncompatibleClassChangeError
+    */
+    if (filtered.size > 1) {
+      ctx.registerProblem(MultipleMethodImplementationsProblem(methodOwner, methodName, methodDescriptor), getFromMethod())
+      return null
+    }
+
+    /*
+    Otherwise, if step 4 of the lookup procedure determines there are zero maximally-specific methods in the
+    superinterfaces of C that match the resolved method's name and descriptor and are not abstract,
+    invokespecial throws an AbstractMethodError.
+     */
+
+    ctx.registerProblem(MethodNotImplementedProblem(methodOwner, methodName, methodDescriptor), getFromMethod())
+    return null
   }
 
   private fun processInvokeInterface() {
