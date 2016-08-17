@@ -30,7 +30,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/rest/rest_main.iml" filepath="$PROJECT_DIR$/.idea/modules/rest/rest_main.iml" group="rest" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/rest/rest_test.iml" filepath="$PROJECT_DIR$/.idea/modules/rest/rest_test.iml" group="rest" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/server/server.iml" filepath="$PROJECT_DIR$/.idea/modules/server/server.iml" group="server" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/server/server_integrationTest.iml" filepath="$PROJECT_DIR$/.idea/modules/server/server_integrationTest.iml" group="server" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/server/server_main.iml" filepath="$PROJECT_DIR$/.idea/modules/server/server_main.iml" group="server" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/server/server_test.iml" filepath="$PROJECT_DIR$/.idea/modules/server/server_test.iml" group="server" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli.iml" group="verifier-cli" />
