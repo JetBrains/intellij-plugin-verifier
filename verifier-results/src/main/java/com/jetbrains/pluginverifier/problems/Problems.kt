@@ -12,6 +12,12 @@ interface Problem {
   fun getDescription(): String
 }
 
+data class MultipleMethodImplementationsProblem(@SerializedName("method") val method: MethodReference) : Problem {
+  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(MethodReference(hostClass, methodName, methodDescriptor))
+
+  override fun getDescription(): String = "multiple default implementations of method $method"
+}
+
 data class IllegalClassAccessProblem(@SerializedName("class") val clazz: ClassReference, @SerializedName("access") val classAccess: AccessType) : Problem {
   constructor(className: String, accessType: AccessType) : this(ClassReference(className), accessType)
 
