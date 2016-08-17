@@ -188,6 +188,37 @@ object VerifierUtil {
 
   private fun extractPackage(className: String): String = className.substringBeforeLast('/', "")
 
+  /**
+   * An instance method mC declared in class C overrides another instance method mA declared in
+   * class A iff either mC is the same as mA, or all of the following are true:
+   *  1) C is a subclass of A.
+   *  2) mC has the same name and descriptor as mA.
+   *  3) mC is not marked ACC_PRIVATE.
+   *  4) One of the following is true:
+   *      mA is marked ACC_PUBLIC; or is marked ACC_PROTECTED; or is marked neither ACC_PUBLIC nor ACC_PROTECTED
+   *      nor ACC_PRIVATE and A belongs to the same run-time package as C.
+   *      mC overrides a method m' (m' distinct from mC and mA) such that m' overrides mA.
+   */
+  fun overrides(firstOwner: ClassNode,
+                firstMethod: MethodNode,
+                secondOwner: ClassNode,
+                secondMethod: MethodNode,
+                resolver: Resolver,
+                ctx: VContext): Boolean {
+    if (firstOwner.name == secondOwner.name && firstMethod.name == secondMethod.name && firstMethod.desc == secondMethod.desc) {
+      //the same
+      return true
+    }
+    val isAccessible = isPublic(firstMethod) ||
+        isProtected(firstMethod) ||
+        (isDefaultAccess(firstMethod) && haveTheSamePackage(firstOwner, secondOwner))
+
+    return isSubclassOf(firstOwner, secondOwner, resolver, ctx)
+        && firstMethod.name == secondMethod.name && firstMethod.desc == secondMethod.desc
+        && !isPrivate(firstMethod)
+        && isAccessible
+  }
+
   fun isSubclassOf(child: ClassNode, possibleParent: ClassNode, resolver: Resolver, ctx: VContext): Boolean {
     var current: ClassNode? = child
     while (current != null) {
