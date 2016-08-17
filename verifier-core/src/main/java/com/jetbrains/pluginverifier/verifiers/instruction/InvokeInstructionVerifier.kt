@@ -206,7 +206,12 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
   }
 
   private fun processInvokeStatic() {
-    val resolved = resolveClassMethod() ?: return
+    val resolved: ResolvedMethod
+    if (instr.itf) {
+      resolved = resolveInterfaceMethod() ?: return
+    } else {
+      resolved = resolveClassMethod() ?: return
+    }
 
     /*
     Otherwise, if the resolved method is an instance method, the invokestatic instruction throws an IncompatibleClassChangeError.
