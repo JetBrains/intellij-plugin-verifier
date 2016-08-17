@@ -43,14 +43,11 @@ open class BaseCmdOpts : CmdOpts() {
   @set:Argument("host", description = "Verifier service host")
   var host = "http://localhost:8080"
 
-  @set:Argument("jdk", description = "The Oracle JDK version with which to check the plugins (either 6 or 8)")
-  var jdkVersion: Int? = null
+  @set:Argument("jdk", description = "The Oracle JDK version with which to check the plugins (either 6, 7 or 8)")
+  var jdkVersion: Int = 8
 
   companion object {
     fun parseJdkVersion(opts: BaseCmdOpts): JdkVersion? {
-      if (opts.jdkVersion == null) {
-        return null
-      }
       val jdkVersion: JdkVersion = when (opts.jdkVersion) {
         6 -> JdkVersion.JAVA_6_ORACLE
         7 -> JdkVersion.JAVA_7_ORACLE
