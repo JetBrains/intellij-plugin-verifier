@@ -174,6 +174,8 @@ object VerifierUtil {
 
   fun isStatic(field: FieldNode): Boolean = field.access and Opcodes.ACC_STATIC != 0
 
+  fun isSuperFlag(classNode: ClassNode): Boolean = classNode.access and Opcodes.ACC_SUPER != 0
+
   fun haveTheSamePackage(first: ClassNode, second: ClassNode): Boolean = extractPackage(first.name) == extractPackage(second.name)
 
   /**
