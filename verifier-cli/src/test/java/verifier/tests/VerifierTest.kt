@@ -12,6 +12,7 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.*
+import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.VOptionsUtil
 import org.junit.Assert
@@ -51,8 +52,7 @@ class VerifierTest {
       .put(MethodNotFoundProblem("com/intellij/openapi/actionSystem/AnAction", "nonExistingMethod", "()V"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenNonFoundMethod", "()V"))
       .put(AbstractClassInstantiationProblem("misc/BecomeAbstract"), ProblemLocation.fromMethod("mock/plugin/news/NewProblems", "abstractClass", "()V"))
       .put(InterfaceInstantiationProblem("misc/BecomeInterface"), ProblemLocation.fromMethod("mock/plugin/news/NewProblems", "newInterface", "()V"))
-      .put(MethodNotFoundProblem("misc/BecomeInterface", "<init>", "()V"), ProblemLocation.fromMethod("mock/plugin/news/NewProblems", "newInterface", "()V"))
-      .put(MethodNotFoundProblem("invocation/InvocationProblems", "deleted", "()V"), ProblemLocation.fromMethod("mock/plugin/lambda/LambdaProblems", "invokeDeletedFromLambda", "()V"))//lambda problems
+      .put(IncompatibleClassToInterfaceChangeProblem(ClassReference("misc/BecomeInterface")), ProblemLocation.Companion.fromMethod("mock/plugin/news/NewProblems", "newInterface", "()V"))
 
 
       .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "getState", "()Ljava/lang/Object;"), ProblemLocation.fromClass("mock/plugin/NotImplementedProblem"))
@@ -66,8 +66,10 @@ class VerifierTest {
       .put(InvokeStaticOnInstanceMethodProblem("invocation/InvocationProblems", "wasStatic", "()V"), ProblemLocation.fromMethod("mock/plugin/invokeStaticOnInstance/InvocationProblemsUser", "foo", "()V"))
       .put(FieldNotFoundProblem("fields/FieldsContainer", "deletedField", "I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessDeletedField", "()V"))//field problems
 
-      .put(IllegalFieldAccessProblem("access/AccessProblemBase", "x", "I", AccessType.PROTECTED), ProblemLocation.fromMethod("mock/plugin/access/IllegalAccess", "main", "()V"))
-      .put(IllegalMethodAccessProblem("access/AccessProblemBase", "foo", "()V", AccessType.PROTECTED), ProblemLocation.fromMethod("mock/plugin/access/IllegalAccess", "main", "()V"))
+//      protected members access check
+//      .put(IllegalFieldAccessProblem("mock/plugin/access/Point3d", "x", "I", AccessType.PROTECTED), ProblemLocation.Companion.fromMethod("mock/plugin/access/Point3d", "delta", "(Laccess/points/Point;)V"))
+//      .put(IllegalFieldAccessProblem("access/AccessProblemBase", "x", "I", AccessType.PROTECTED), ProblemLocation.fromMethod("mock/plugin/access/IllegalAccess", "main", "([Ljava/lang/String;)V"))
+//      .put(IllegalMethodAccessProblem("access/AccessProblemBase", "foo", "()V", AccessType.PROTECTED), ProblemLocation.fromMethod("mock/plugin/access/IllegalAccess", "main", "([Ljava/lang/String;)V"))
 
       .put(IllegalFieldAccessProblem("fields/FieldsContainer", "privateField", "I", AccessType.PRIVATE), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessPrivateField", "()V"))
       .put(IllegalFieldAccessProblem("fields/otherPackage/OtherFieldsContainer", "protectedField", "I", AccessType.PROTECTED), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessProtectedField", "()V"))
@@ -76,6 +78,10 @@ class VerifierTest {
       .put(StaticAccessOfInstanceFieldProblem("fields/FieldsContainer", "instanceField", "I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "staticAccessOnInstance", "()V"))
       .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessUnknownClass", "()V"))
       .put(ChangeFinalFieldProblem("fields/FieldsContainer", "finalField", "I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "setOnFinalFieldFromNotInitMethod", "()V"))
+
+      //missing default constructor
+      .put(MethodNotFoundProblem("constructors/DeletedDefaultConstructor", "<init>", "()V"), ProblemLocation.fromMethod("mock/plugin/constructors/MissingDefaultConstructor", "<init>", "()V"))
+
       .put(ChangeFinalFieldProblem("fields/FieldsContainer", "staticFinalField", "I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "setOnStaticFinalFieldFromNotClinitMethod", "()V")).build()
 
   private val RUBY_ACTUAL_PROBLEMS = ImmutableMultimap.builder<Problem, ProblemLocation>()
@@ -175,6 +181,8 @@ class VerifierTest {
 
     @Throws(Exception::class)
     private fun testFoundProblems(foundProblems: Multimap<Problem, ProblemLocation>, actualProblems: Multimap<Problem, ProblemLocation>) {
+
+//      println("Found problems: ${foundProblems.entries().joinToString { "$it\n" }}")
 
       val redundantProblems = HashMultimap.create(foundProblems)
 
