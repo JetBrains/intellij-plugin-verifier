@@ -18,19 +18,7 @@ import org.objectweb.asm.tree.MethodNode
 val VERIFIERS: List<Verifier> = listOf<Verifier>(ReferencesVerifier)
 
 abstract class Verifier() {
-  fun verify(ctx: VContext, classesToCheck: Resolver, classLoader: Resolver) {
-    classesToCheck.allClasses.forEach {
-      if (Thread.currentThread().isInterrupted) {
-        throw InterruptedException("The verification was cancelled")
-      }
-      val node = classesToCheck.findClass(it)
-      if (node != null) {
-        verifyImpl(ctx, classLoader, node)
-      }
-    }
-  }
-
-  abstract protected fun verifyImpl(ctx: VContext, classLoader: Resolver, node: ClassNode)
+  abstract fun verify(ctx: VContext, classesToCheck: Resolver, classLoader: Resolver)
 }
 
 object ReferencesVerifier : Verifier() {
@@ -65,8 +53,16 @@ object ReferencesVerifier : Verifier() {
    * @throws InterruptedException if the verification was cancelled
    */
   @Throws(InterruptedException::class)
-  override fun verifyImpl(ctx: VContext, classLoader: Resolver, node: ClassNode) {
-    verifyClass(classLoader, node, ctx)
+  override fun verify(ctx: VContext, classesToCheck: Resolver, classLoader: Resolver) {
+    classesToCheck.allClasses.forEach {
+      if (Thread.currentThread().isInterrupted) {
+        throw InterruptedException("The verification was cancelled")
+      }
+      val node = classesToCheck.findClass(it)
+      if (node != null) {
+        verifyClass(classLoader, node, ctx)
+      }
+    }
   }
 
   @Suppress("UNCHECKED_CAST")
