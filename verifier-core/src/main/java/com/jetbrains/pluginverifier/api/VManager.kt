@@ -360,7 +360,7 @@ object VManager {
         val resolver = Resolver.createPluginResolver(vertex.plugin)
         resolvers.add(resolver)
       } catch (e: Exception) {
-        return DfsResult(false, MissingReason("Failed to read the class-files of the plugin"), null)
+        return DfsResult(false, MissingReason("Failed to read the class-files of the plugin ${vertex.plugin}"), null)
       }
     }
 
