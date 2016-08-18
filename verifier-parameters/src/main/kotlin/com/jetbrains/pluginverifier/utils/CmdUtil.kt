@@ -7,6 +7,7 @@ import com.intellij.structure.domain.IdeManager
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VOptions
+import com.sampullara.cli.Argument
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -14,52 +15,52 @@ import java.io.IOException
 import java.util.regex.Pattern
 
 open class CmdOpts(
-    @set:com.sampullara.cli.Argument("runtime-dir", alias = "r", description = "The path to directory containing Java runtime jars (usually rt.jar and tools.jar are sufficient)")
+    @set:Argument("runtime-dir", alias = "r", description = "The path to directory containing Java runtime jars (usually rt.jar and tools.jar are sufficient)")
     var runtimeDir: String? = null,
 
-    @set:com.sampullara.cli.Argument("team-city", alias = "tc", description = "Specify this flag if you want to print the TeamCity compatible output.")
+    @set:Argument("team-city", alias = "tc", description = "Specify this flag if you want to print the TeamCity compatible output.")
     var needTeamCityLog: Boolean = false,
 
-    @set:com.sampullara.cli.Argument("tc-grouping", alias = "g", description = "How to group the TeamCity presentation of the problems")
+    @set:Argument("tc-grouping", alias = "g", description = "How to group the TeamCity presentation of the problems")
     var group: String? = null,
 
-    @set:com.sampullara.cli.Argument("ignored-problems", alias = "ip", description = "The problems specified in this file will be ignored. The file must contain lines in form <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>")
+    @set:Argument("ignored-problems", alias = "ip", description = "The problems specified in this file will be ignored. The file must contain lines in form <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>")
     var ignoreProblemsFile: String? = null,
 
-    @set:com.sampullara.cli.Argument("plugins-to-check-all-builds", alias = "p-all", description = "The plugin ids to check with IDE. The plugin verifier will check ALL compatible plugin builds")
+    @set:Argument("plugins-to-check-all-builds", alias = "p-all", description = "The plugin ids to check with IDE. The plugin verifier will check ALL compatible plugin builds")
     var pluginToCheckAllBuilds: Array<String> = arrayOf(),
 
-    @set:com.sampullara.cli.Argument("plugins-to-check-last-builds", alias = "p-last", description = "The plugin ids to check with IDE. The plugin verifier will check LAST plugin build only")
+    @set:Argument("plugins-to-check-last-builds", alias = "p-last", description = "The plugin ids to check with IDE. The plugin verifier will check LAST plugin build only")
     var pluginToCheckLastBuild: Array<String> = arrayOf(),
 
-    @set:com.sampullara.cli.Argument("ide-version", alias = "iv", description = "The actual version of the IDE that will be verified. This value will overwrite the one found in the IDE itself.")
+    @set:Argument("ide-version", alias = "iv", description = "The actual version of the IDE that will be verified. This value will overwrite the one found in the IDE itself.")
     var actualIdeVersion: String? = null,
 
-    @set:com.sampullara.cli.Argument("excluded-plugins-file", alias = "epf", description = "The file with list of excluded plugin builds (e.g. brokenPlugins.txt)")
+    @set:Argument("excluded-plugins-file", alias = "epf", description = "The file with list of excluded plugin builds (e.g. brokenPlugins.txt)")
     var excludedPluginsFile: String? = null,
 
-    @set:com.sampullara.cli.Argument("dump-broken-plugin-list", alias = "d", description = "File to dump broken plugin list.")
+    @set:Argument("dump-broken-plugin-list", alias = "d", description = "File to dump broken plugin list.")
     var dumpBrokenPluginsFile: String? = null,
 
-    @set:com.sampullara.cli.Argument("html-report", description = "Create an HTML report of broken plugins")
+    @set:Argument("html-report", description = "Create an HTML report of broken plugins")
     var htmlReportFile: String? = null,
 
-    @set:com.sampullara.cli.Argument("plugins-to-check-file", alias = "ptcf", description = "The file that contains list of plugins to check (e.g. checkedPlugins.txt)")
+    @set:Argument("plugins-to-check-file", alias = "ptcf", description = "The file that contains list of plugins to check (e.g. checkedPlugins.txt)")
     var pluginsToCheckFile: String? = null,
 
-    @set:com.sampullara.cli.Argument("ignore-missing-optional-dependencies", alias = "imod", description = "Missing optional dependencies of the plugin IDs specified in this parameter will be ignored")
+    @set:Argument("ignore-missing-optional-dependencies", alias = "imod", description = "Missing optional dependencies of the plugin IDs specified in this parameter will be ignored")
     var ignoreMissingOptionalDependencies: Array<String> = arrayOf(),
 
-    @set:com.sampullara.cli.Argument("external-classpath", alias = "ex-cp", delimiter = ":", description = "The classes from external libraries. The Verifier will not report 'No such class' for such classes.")
+    @set:Argument("external-classpath", alias = "ex-cp", delimiter = ":", description = "The classes from external libraries. The Verifier will not report 'No such class' for such classes.")
     var externalClasspath: Array<String> = arrayOf(),
 
-    @set:com.sampullara.cli.Argument("external-prefixes", alias = "ex-prefixes", delimiter = ":", description = "The classes from the external libraries. The Verifier will not report 'No such class' for such classes.")
+    @set:Argument("external-prefixes", alias = "ex-prefixes", delimiter = ":", description = "The classes from the external libraries. The Verifier will not report 'No such class' for such classes.")
     var externalClassesPrefixes: Array<String> = arrayOf(),
 
-    @set:com.sampullara.cli.Argument("fail-on-cyclic-dependencies", alias = "focd", description = "Whether to stop the verification of the plugin in case the dependencies cycle found. The default value is true, because it is potentially a plugin problem.")
+    @set:Argument("fail-on-cyclic-dependencies", alias = "focd", description = "Whether to stop the verification of the plugin in case the dependencies cycle found. The default value is true, because it is potentially a plugin problem.")
     var failOnCyclicDependencies: Boolean = true,
 
-    @set:com.sampullara.cli.Argument("save-check-ide-report", alias = "save", description = "Save the check IDE report to this file")
+    @set:Argument("save-check-ide-report", alias = "save", description = "Save the check IDE report to this file")
     var saveCheckIdeReport: String? = null
 )
 
