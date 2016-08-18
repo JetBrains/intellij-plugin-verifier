@@ -67,12 +67,16 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
 
                   out.printf("  <div>\n")
 
-                  when (vResult) {
+                  val exhaustedWhen: Any = when (vResult) {
                     is VResult.Nice -> {
                       out.printf("No problems.\n")
                     }
                     is VResult.Problems -> {
                       vResult.problems.asMap().entries.forEach { createProblemTab(out, it.key.getDescription(), it.value.toList().map { it.toString() }) }
+                      vResult.dependenciesGraph.getMissingNonOptionalDependencies()
+                          .forEach {
+                            createProblemTab(out, "missing non optional dependency: ${it.missing}", listOf(it.toString()))
+                          }
                     }
                     is VResult.BadPlugin -> {
                       createProblemTab(out, vResult.reason, listOf(vResult.pluginDescriptor.pluginId))
