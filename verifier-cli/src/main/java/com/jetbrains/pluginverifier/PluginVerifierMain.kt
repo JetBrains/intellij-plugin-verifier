@@ -17,7 +17,7 @@ object PluginVerifierMain {
 
   @JvmStatic fun main(args: Array<String>) {
     val opts = CmdOpts()
-    var freeArgs = Args.parse(opts, args)
+    var freeArgs = Args.parse(opts, args, false)
 
 
     if (freeArgs.isEmpty()) {
