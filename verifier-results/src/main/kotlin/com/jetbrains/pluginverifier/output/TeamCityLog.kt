@@ -49,12 +49,12 @@ class TeamCityLog(private val out: PrintStream) {
     out.printf("##teamcity[testIgnored name='%s' message='%s']\n", escape(testName), escape(message))
   }
 
-  fun testStdOut(className: String, outText: String) {
-    out.printf("##teamcity[testStdOut name='%s' out='%s']\n", escape(className), escape(outText))
+  fun testStdOut(testName: String, outText: String) {
+    out.printf("##teamcity[testStdOut name='%s' out='%s']\n", escape(testName), escape(outText))
   }
 
-  fun testStdErr(className: String, errText: String) {
-    out.printf("##teamcity[testStdErr name='%s' out='%s']\n", escape(className), escape(errText))
+  fun testStdErr(testName: String, errText: String) {
+    out.printf("##teamcity[testStdErr name='%s' out='%s']\n", escape(testName), escape(errText))
   }
 
   fun testFailed(name: String, message: String, details: String) {
