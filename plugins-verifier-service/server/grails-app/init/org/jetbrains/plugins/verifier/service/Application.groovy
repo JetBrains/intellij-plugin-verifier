@@ -1,4 +1,4 @@
-package plugins.verifier.service
+package org.jetbrains.plugins.verifier.service
 
 import com.google.common.base.Preconditions
 import grails.boot.GrailsApp

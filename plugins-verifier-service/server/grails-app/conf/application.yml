@@ -53,7 +53,7 @@ grails:
         version: 3.0
     profile: web
     codegen:
-        defaultPackage: plugins.verifier.service
+        defaultPackage: org.jetbrains.plugins.verifier.service
     spring:
         transactionManagement:
             proxies: false
