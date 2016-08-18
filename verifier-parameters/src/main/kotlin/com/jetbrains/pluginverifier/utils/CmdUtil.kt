@@ -48,17 +48,11 @@ open class CmdOpts(
     @set:Argument("plugins-to-check-file", alias = "ptcf", description = "The file that contains list of plugins to check (e.g. checkedPlugins.txt)")
     var pluginsToCheckFile: String? = null,
 
-    @set:Argument("ignore-missing-optional-dependencies", alias = "imod", description = "Missing optional dependencies of the plugin IDs specified in this parameter will be ignored")
-    var ignoreMissingOptionalDependencies: Array<String> = arrayOf(),
-
     @set:Argument("external-classpath", alias = "ex-cp", delimiter = ":", description = "The classes from external libraries. The Verifier will not report 'No such class' for such classes.")
     var externalClasspath: Array<String> = arrayOf(),
 
     @set:Argument("external-prefixes", alias = "ex-prefixes", delimiter = ":", description = "The classes from the external libraries. The Verifier will not report 'No such class' for such classes.")
     var externalClassesPrefixes: Array<String> = arrayOf(),
-
-    @set:Argument("fail-on-cyclic-dependencies", alias = "focd", description = "Whether to stop the verification of the plugin in case the dependencies cycle found. The default value is true, because it is potentially a plugin problem.")
-    var failOnCyclicDependencies: Boolean = true,
 
     @set:Argument("save-check-ide-report", alias = "save", description = "Save the check IDE report to this file")
     var saveCheckIdeReport: String? = null
@@ -130,9 +124,7 @@ object VOptionsUtil {
 
     return VOptions(
         opts.externalClassesPrefixes.map { it.replace('.', '/') }.toSet(),
-        opts.ignoreMissingOptionalDependencies.toSet(),
-        problemsToIgnore,
-        opts.failOnCyclicDependencies
+        problemsToIgnore
     )
   }
 

@@ -82,12 +82,10 @@ data class VParams(
  * @author Sergey Patrikeev
  */
 data class VOptions(@SerializedName("externalCp") val externalClassPrefixes: Set<String> = emptySet(),
-                    @SerializedName("ignoredProblem") val optionalDependenciesIdsToIgnoreIfMissing: Set<String> = emptySet(),
                     /**
                      * Map of _(pluginXmlId, version)_ -> to be ignored _problem pattern_
                      */
-                    @SerializedName("ignoredProblems") val problemsToIgnore: Multimap<Pair<String, String>, Pattern> = ImmutableMultimap.of(),
-                    @SerializedName("failOnCycle") val failOnCyclicDependencies: Boolean = false) { //TODO why?
+                    @SerializedName("ignoredProblems") val problemsToIgnore: Multimap<Pair<String, String>, Pattern> = ImmutableMultimap.of()) {
 
   fun isIgnoredProblem(plugin: Plugin, problem: Problem): Boolean {
     val xmlId = plugin.pluginId
