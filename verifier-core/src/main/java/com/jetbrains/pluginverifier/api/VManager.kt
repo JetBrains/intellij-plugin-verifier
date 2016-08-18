@@ -145,7 +145,9 @@ object VManager {
   private fun presentableResult(result: VResult): String {
     val resType: String = when (result) {
       is VResult.Nice -> "It is OK."
-      is VResult.Problems -> "It has ${result.problems.keySet().size} problems"
+      is VResult.Problems -> "It has ${result.problems.keySet().size} problems; " +
+          "${result.warnings.size} warnings; " +
+          "${result.dependenciesGraph.getMissingNonOptionalDependencies().map { it.missing }.distinct().size} missing dependencies"
       is VResult.BadPlugin -> "It is invalid: ${result.reason}"
       is VResult.NotFound -> "It is not found in the Repository: ${result.reason}"
     }

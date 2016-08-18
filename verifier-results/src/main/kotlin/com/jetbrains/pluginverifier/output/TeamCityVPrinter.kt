@@ -68,6 +68,8 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
   private fun notGrouped(results: VResults) {
     //problem1 (in a:1.0, a:1.2, b:1.0)
     //problem2 (in a:1.0, c:1.3)
+    //missing dependencies: missing#1 (required for plugin1, plugin2, plugin3)
+    //missing dependencies: missing#2 (required for plugin2, plugin4)
 
     val affected = ArrayListMultimap.create<Problem, PluginDescriptor>()
 
@@ -86,6 +88,18 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
       tcLog.buildProblem(it.key.getDescription() + " (in " + plugins.joinToString { it.pluginId + ":" + it.version } + ")")
     }
 
+    results.results.filterIsInstance<VResult.Problems>()
+        .flatMap { descr -> descr.dependenciesGraph.getMissingNonOptionalDependencies().map { it.missing.id to descr.pluginDescriptor } }
+        .groupBy({ it.first }, { it.second })
+        .filterValues { it.isNotEmpty() }
+        .apply {
+          if (this.isNotEmpty()) {
+            this.forEach {
+              tcLog.buildProblem("Missing dependency ${it.key} (required for ${it.value.joinToString()})")
+            }
+          }
+        }
+
   }
 
 
@@ -99,6 +113,9 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
     //....(1.2)
     //........#invoking unknown method
     //............at someClass
+    //........missing non-optional dependency dep#1
+    //........missing non-optional dependency pluginOne:1.2 -> otherPlugin:3.3 -> dep#2 (it doesn't have a compatible build with IDE #IU-162.1121.10)
+    //........missing optional dependency dep#3
     //pluginTwo
     //...and so on...
 
@@ -122,15 +139,26 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
             val testName = genTestName(result.pluginDescriptor, result.ideDescriptor.ideVersion, lastUpdates)
 
             tcLog.testStarted(testName).use {
-              when (result) {
+              val exhaustedWhen = when (result) {
                 is VResult.Nice -> {/*test is passed.*/
                 }
                 is VResult.Problems -> {
 
                   tcLog.testStdErr(testName, result.problems.asMap().entries.joinToString(separator = "\n") {
                     "#${it.key.getDescription()}\n" +
-                        it.value.joinToString(separator = "\n", prefix = "    #")
+                        it.value.joinToString(separator = "\n", prefix = "    at ")
                   })
+                  result.dependenciesGraph.getMissingNonOptionalDependencies().apply {
+                    if (this.isNotEmpty()) {
+                      val missingPluginsPaths = this.joinToString(separator = "\n", prefix = "   ")
+
+                      tcLog.testStdErr(testName, "Some problems might be caused by missing non-optional plugins:\n$missingPluginsPaths")
+                    }
+                  }
+                  result.dependenciesGraph.start.missingDependencies.filterKeys { it.isOptional }.forEach {
+                    tcLog.testStdErr(testName, "Missing optional plugin ${it.key.id} because ${it.value.reason}")
+                  }
+
                   tcLog.testFailed(testName, "Plugin URL: $pluginLink\n" + "$pluginId:${result.pluginDescriptor.version} has ${result.problems.keySet().size} ${"problem".pluralize(result.problems.keySet().size)}", "")
 
                 }
@@ -232,6 +260,9 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
     //....(pluginTwo:2.0.0)
     //invoking unknown method method
     //....(pluginThree:1.0.0)
+    //missing dependencies
+    //....(missing#1)
+    //.........Required for plugin1, plugin2, plugin3
     val affected: Multimap<Problem, PluginDescriptor> = HashMultimap.create()
     results.results.forEach { result ->
       when (result) {
@@ -261,6 +292,23 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
         }
       }
     }
+
+    results.results.filterIsInstance<VResult.Problems>()
+        .flatMap { descr -> descr.dependenciesGraph.getMissingNonOptionalDependencies().map { it.missing.id to descr.pluginDescriptor } }
+        .groupBy({ it.first }, { it.second })
+        .filterValues { it.isNotEmpty() }
+        .apply {
+          if (this.isNotEmpty()) {
+            tcLog.testSuiteStarted("(missing dependencies)").use {
+              this.forEach { entry ->
+                val testName = "(${entry.key})"
+                tcLog.testStarted(testName).use {
+                  tcLog.testFailed(testName, "Required for ${entry.value.joinToString()}", "")
+                }
+              }
+            }
+          }
+        }
   }
 
 

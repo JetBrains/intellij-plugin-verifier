@@ -21,6 +21,12 @@ class StreamVPrinter(private val out: PrintStream) : VPrinter {
               out.println("        at $it")
             }
           }
+          it.dependenciesGraph.getMissingNonOptionalDependencies().apply {
+            if (this.isNotEmpty()) {
+              out.println("   Some problems may be caused by missing non-optional dependencies:")
+              this.map { it.toString() }.forEach { out.println("        $it") }
+            }
+          }
         }
         is VResult.BadPlugin -> out.println("With the $ideVersion it is broken ${it.reason}")
         is VResult.NotFound -> out.println("The plugin $plugin is not found in the Repository: ${it.reason}")
