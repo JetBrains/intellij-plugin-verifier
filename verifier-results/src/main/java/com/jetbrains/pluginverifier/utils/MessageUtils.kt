@@ -21,12 +21,12 @@ object MessageUtils {
   fun convertMethod(methodName: String, methodDescriptor: String, className: String? = null): String {
     val methodType = Type.getMethodType(methodDescriptor)
     val nameAndArgs = methodType.argumentTypes.map { it.className }.joinToString(prefix = "$methodName(", postfix = ")") { convertClass(it) }
-    return if (className != null) "$className.$nameAndArgs" else convertClass(methodType.returnType.className) + " " + nameAndArgs
+    return if (className != null) convertClass(className) + ".$nameAndArgs" else convertClass(methodType.returnType.className) + " " + nameAndArgs
   }
 
   fun convertField(fieldName: String, fieldDescriptor: String, className: String? = null): String =
       if (className != null)
-        "$className.$fieldName"
+        convertClass(className) + ".$fieldName"
       else
         convertClass(Type.getType(fieldDescriptor).className) + " " + fieldName
 
