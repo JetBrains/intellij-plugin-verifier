@@ -59,7 +59,7 @@ class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
       val totalProblemsNumber: Int = vResults.results.flatMap {
         when (it) {
           is VResult.Nice -> setOf()
-          is VResult.Problems -> it.problems.keySet()
+          is VResult.Problems -> it.problems.keySet() //some problems might be caused by missing dependencies
           is VResult.BadPlugin -> setOf(Any())
           is VResult.NotFound -> setOf()
         }

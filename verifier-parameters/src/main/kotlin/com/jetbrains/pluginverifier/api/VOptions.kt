@@ -108,14 +108,6 @@ data class VOptions(@SerializedName("externalCp") val externalClassPrefixes: Set
     return false
   }
 
-  fun isIgnoreDependency(pluginId: String): Boolean {
-    return isIgnoreMissingOptionalDependency(pluginId) //TODO: add an option to ignore mandatory plugins too
-  }
-
-  private fun isIgnoreMissingOptionalDependency(pluginId: String): Boolean {
-    return optionalDependenciesIdsToIgnoreIfMissing.contains(pluginId)
-  }
-
   fun isExternalClass(className: String): Boolean {
     for (prefix in externalClassPrefixes) {
       if (prefix.length > 0 && className.startsWith(prefix)) {
