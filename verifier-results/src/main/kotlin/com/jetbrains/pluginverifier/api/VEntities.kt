@@ -22,20 +22,12 @@ sealed class PluginDescriptor(@SerializedName("pluginId") val pluginId: String,
 
   abstract override fun hashCode(): Int
 
-  fun presentableName(): String = when (this) {
-    is ByXmlId -> "${this.pluginId}:${this.version}"
-    is ByFile -> "${this.file.name}"
-    is ByInstance -> plugin.toString()
-    is ByUpdateInfo -> this.updateInfo.toString()
-  }
-
-
   class ByUpdateInfo(@SerializedName("updateInfo") val updateInfo: UpdateInfo) : PluginDescriptor(updateInfo.pluginId, updateInfo.version) {
     override fun equals(other: Any?): Boolean = other is ByUpdateInfo && updateInfo.equals(other.updateInfo)
 
     override fun hashCode(): Int = updateInfo.hashCode()
 
-    override fun toString(): String = "PD.(updateInfo=$updateInfo)"
+    override fun toString(): String = "$updateInfo"
   }
 
   class ByXmlId(pluginId: String, version: String) : PluginDescriptor(pluginId, version) {
@@ -43,11 +35,11 @@ sealed class PluginDescriptor(@SerializedName("pluginId") val pluginId: String,
 
     override fun hashCode(): Int = pluginId.hashCode() + version.hashCode()
 
-    override fun toString(): String = "PD.(pluginId='$pluginId', version=$version)"
+    override fun toString(): String = "$pluginId:$version"
   }
 
   class ByFile(pluginId: String, version: String, @Transient val file: File) : PluginDescriptor(pluginId, version) {
-    override fun toString(): String = "PD.(file=$file)"
+    override fun toString(): String = "${file.name}"
 
     override fun equals(other: Any?): Boolean = other is ByFile && file.equals(other.file)
 
@@ -60,7 +52,7 @@ sealed class PluginDescriptor(@SerializedName("pluginId") val pluginId: String,
 
     override fun hashCode(): Int = plugin.hashCode()
 
-    override fun toString(): String = "PD.(plugin=$plugin)"
+    override fun toString(): String = "$plugin"
   }
 }
 
@@ -70,8 +62,6 @@ sealed class IdeDescriptor(@SerializedName("version") val ideVersion: IdeVersion
   abstract override fun equals(other: Any?): Boolean
 
   abstract override fun hashCode(): Int
-
-  fun presentableName(): String = ideVersion.asString()
 
   object AnyIde : IdeDescriptor(IdeVersion.createIdeVersion("0")) {
     override fun equals(other: Any?): Boolean = other is AnyIde
@@ -86,7 +76,7 @@ sealed class IdeDescriptor(@SerializedName("version") val ideVersion: IdeVersion
 
     override fun hashCode(): Int = file.hashCode()
 
-    override fun toString(): String = "ID.(file=$file)"
+    override fun toString(): String = "${file.name}"
 
   }
 
@@ -95,7 +85,7 @@ sealed class IdeDescriptor(@SerializedName("version") val ideVersion: IdeVersion
 
     override fun hashCode(): Int = ideVersion.hashCode()
 
-    override fun toString(): String = "ID.(version=$ideVersion)"
+    override fun toString(): String = "$ideVersion"
   }
 
   class ByInstance(@Transient val ide: Ide, @Transient val ideResolver: Resolver? = null) : IdeDescriptor(ide.version) {
@@ -103,7 +93,7 @@ sealed class IdeDescriptor(@SerializedName("version") val ideVersion: IdeVersion
 
     override fun hashCode(): Int = ide.hashCode()
 
-    override fun toString(): String = "ID.(ide=$ide;idePath=${ide.idePath})"
+    override fun toString(): String = "$ide"
   }
 }
 
@@ -113,8 +103,6 @@ sealed class JdkDescriptor() {
 
   abstract override fun hashCode(): Int
 
-  abstract fun presentableName(): String
-
   class ByFile(@Transient val file: File) : JdkDescriptor() {
     constructor(path: String) : this(File(path))
 
@@ -122,9 +110,7 @@ sealed class JdkDescriptor() {
 
     override fun hashCode(): Int = file.hashCode()
 
-    override fun toString(): String = "JD.(file=$file)"
-
-    override fun presentableName(): String = file.absolutePath
+    override fun toString(): String = "${file.name}"
   }
 
 

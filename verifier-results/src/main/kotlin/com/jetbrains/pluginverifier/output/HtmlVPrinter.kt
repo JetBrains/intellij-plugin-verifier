@@ -82,7 +82,7 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
                       createProblemTab(out, vResult.reason, listOf(vResult.pluginDescriptor.pluginId))
                     }
                     is VResult.NotFound -> {
-                      out.printf("The plugin ${vResult.pluginDescriptor.presentableName()} is not found in the Repository")
+                      out.printf("The plugin ${vResult.pluginDescriptor} is not found in the Repository")
                     }
                   }
 

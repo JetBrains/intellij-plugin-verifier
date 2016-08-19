@@ -114,7 +114,7 @@ object VManager {
                   }
 
                   progress.setProgress(((++verified).toDouble()) / pluginsNumber)
-                  val statusString = "${result.vResult.pluginDescriptor.presentableName()} has been verified with ${ideDescriptor.presentableName()}. Result: ${presentableResult(result.vResult)}"
+                  val statusString = "${result.vResult.pluginDescriptor} has been verified with $ideDescriptor. Result: ${presentableResult(result.vResult)}"
                   progress.setText(statusString)
                   LOG.trace("$statusString; progress = $verified out of $pluginsNumber")
 
@@ -167,7 +167,7 @@ object VManager {
         throw InterruptedException()
       }
 
-      LOG.trace("Verifying ${pluginDescriptor.presentableName()} with ${ideDescriptor.presentableName()}")
+      LOG.trace("Verifying $pluginDescriptor with $ideDescriptor")
       val (plugin, vResult) = verification(pluginDescriptor, ide, ideDescriptor, params, ideResolver, runtimeResolver)
       return VCallableResult(plugin, vResult)
     }
@@ -194,12 +194,12 @@ object VManager {
       throw ie
     } catch(e: IncorrectPluginException) {
       //the plugin has incorrect structure.
-      val reason = e.message ?: "The plugin ${pluginDescriptor.presentableName()} has incorrect structure"
+      val reason = e.message ?: "The plugin $pluginDescriptor has incorrect structure"
       LOG.debug(reason, e) //this is a problem of the plugin, but not of the Verifier.
       return null to VResult.BadPlugin(pluginDescriptor, reason)
     } catch(e: UpdateNotFoundException) {
       //the caller has specified a missing plugin
-      val reason = e.message ?: "The plugin ${pluginDescriptor.presentableName()} is not found in the Repository"
+      val reason = e.message ?: "The plugin $pluginDescriptor is not found in the Repository"
       LOG.debug(reason, e)
       return null to VResult.NotFound(pluginDescriptor, ideDescriptor, reason)
     } catch(e: IOException) {
@@ -504,7 +504,7 @@ private object VParamsCreator {
   }
 
   private fun noSuchUpdate(plugin: PluginDescriptor, exception: Exception? = null): UpdateNotFoundException {
-    return UpdateNotFoundException("Plugin ${plugin.presentableName()} is not found in the Plugin repository${if (exception != null) exception.message ?: exception.javaClass.name else ""}")
+    return UpdateNotFoundException("Plugin $plugin is not found in the Plugin repository${if (exception != null) exception.message ?: exception.javaClass.name else ""}")
   }
 
   fun getIde(ideDescriptor: IdeDescriptor): Ide = when (ideDescriptor) {

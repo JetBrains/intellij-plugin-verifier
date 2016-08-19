@@ -71,8 +71,8 @@ data class VParams(
 ) {
   override fun toString(): String {
     val todo: Map<IdeDescriptor, List<PluginDescriptor>> = pluginsToCheck.groupBy { it.second }.mapValues { it.value.map { it.first } }
-    return "Jdk = ${jdkDescriptor.presentableName()}; " +
-        "(IDE -> [Plugins]) = [${todo.entries.joinToString { "${it.key.presentableName()} -> [${it.value.joinToString { it.presentableName() }}]" }}]; " +
+    return "Jdk = $jdkDescriptor; " +
+        "(IDE -> [Plugins]) = [${todo.entries.joinToString { "${it.key} -> [${it.value.joinToString()}]" }}]; " +
         "vOptions: $options; "
   }
 }
