@@ -54,7 +54,7 @@ class CheckRange(host: String,
     LOG.debug("The runner parameters: $runnerParams")
     val paramsPart = MultipartUtil.createJsonPart("params", runnerParams)
 
-    val call = service.enqueueTaskService.checkPluginAgainstSinceUntilBuilds(pluginPart, paramsPart)
+    val call = service.enqueueTaskService.checkPluginRange(pluginPart, paramsPart)
     val response = call.executeSuccessfully()
     val taskId = parseTaskId(response)
     LOG.info("The task ID is $taskId")

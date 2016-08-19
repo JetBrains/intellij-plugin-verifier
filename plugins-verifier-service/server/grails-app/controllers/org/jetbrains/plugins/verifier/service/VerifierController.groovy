@@ -176,7 +176,7 @@ class VerifierController {
     }
   }
 
-  def checkPluginAgainstSinceUntilBuilds() {
+  def checkPluginRange() {
     File saved = savePluginTemporarily(params.pluginFile)
     if (!saved) return
     UpdateInfo updateInfo = params.updateInfo ? GSON.fromJson(params.updateInfo as String, UpdateInfo.class) : null

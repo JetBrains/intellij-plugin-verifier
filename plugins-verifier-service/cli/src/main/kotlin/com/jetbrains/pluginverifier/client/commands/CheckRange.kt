@@ -14,7 +14,7 @@ import java.io.File
  * @author Sergey Patrikeev
  */
 class CheckRangeCommand : Command {
-  override fun name(): String = "check-plugin-against-since-until-builds"
+  override fun name(): String = "check-range"
 
   override fun execute(opts: BaseCmdOpts, freeArgs: List<String>) {
     if (freeArgs.isEmpty()) {

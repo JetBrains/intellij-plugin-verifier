@@ -6,8 +6,8 @@
 
 <body>
 
-Check plugin against [since; until]: <br/>
-<g:uploadForm action="checkPluginAgainstSinceUntilRange" method="post">
+Check plugin range: <br/>
+<g:uploadForm action="checkPluginRange" method="post">
     <input type="file" name="pluginFile"/>
     <input type="submit" value="Check plugin"/>
 </g:uploadForm>
