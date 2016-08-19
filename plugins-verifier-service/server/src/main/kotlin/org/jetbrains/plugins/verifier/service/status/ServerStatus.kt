@@ -20,7 +20,7 @@ object ServerStatus {
   fun ideFiles(): List<IdeVersion> = IdeFilesManager.ideList().sorted()
 
   fun getRunningTasks(): List<String> = TaskManager.listTasks().map {
-    "${it.taskId.id}) ${it.presentableName} (${it.status} - ${it.progress * 100.0}%) (${it.completionTime() / 1000} seconds) ${it.progressText}"
+    "${it.taskId.id}) ${it.presentableName} (${it.state} - ${it.progress * 100.0}%) (${it.elapsedTime() / 1000} seconds) ${it.progressText}"
   }
 
   private fun diskUsage(): List<Pair<String, *>> {

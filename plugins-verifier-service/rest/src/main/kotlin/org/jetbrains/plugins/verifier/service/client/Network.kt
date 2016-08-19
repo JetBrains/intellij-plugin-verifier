@@ -6,8 +6,8 @@ import com.jetbrains.pluginverifier.persistence.GsonHolder
 import okhttp3.*
 import okhttp3.logging.HttpLoggingInterceptor
 import org.jetbrains.plugins.verifier.service.api.Result
-import org.jetbrains.plugins.verifier.service.api.Status
 import org.jetbrains.plugins.verifier.service.api.TaskId
+import org.jetbrains.plugins.verifier.service.api.TaskStatus
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import retrofit2.Call
@@ -18,6 +18,7 @@ import retrofit2.http.*
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl
 import java.io.File
 import java.io.IOException
+import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
 
 val CLIENT_SIDE_VERSION: String = "1.0"
@@ -71,7 +72,7 @@ inline fun <reified T : Any> parseResponse(response: Response<ResponseBody>): T 
 }
 
 internal inline fun <reified T : Any> waitCompletion(service: VerifierService, taskId: TaskId): T {
-  val resultType = ParameterizedTypeImpl.make(Result::class.java, arrayOf(T::class.java), null)
+  val resultType: Type = ParameterizedTypeImpl.make(Result::class.java, arrayOf(T::class.java), null)
 
   var progress: Double = 0.0
   while (true) {
@@ -84,16 +85,23 @@ internal inline fun <reified T : Any> waitCompletion(service: VerifierService, t
 
     if (taskStatus.progress - progress > 0.05) {
       progress = taskStatus.progress
-      LOG.info("The task progress ${"%.1f".format(progress * 100)}%: ${taskStatus.progressText} (${taskStatus.completionTime() / 1000} seconds)")
+      LOG.info("The task progress ${"%.1f".format(progress * 100)}%: ${taskStatus.progressText} (${taskStatus.elapsedTime() / 1000} seconds)")
     }
 
-    when (taskStatus.status) {
-      Status.WAITING, Status.RUNNING -> {
+    val exhaustedWhen = when (taskStatus.state) {
+      TaskStatus.State.WAITING, TaskStatus.State.RUNNING -> {
+        LOG.debug("The task is not finished yet.")
         Thread.sleep(REQUEST_PERIOD)
       }
-      Status.COMPLETE -> {
-        LOG.info("The task $taskId is complete.")
+      TaskStatus.State.SUCCESS -> {
+        LOG.info("The task $taskId is completed successfully.")
         return result.result!!
+      }
+      TaskStatus.State.ERROR -> {
+        throw RuntimeException("The task $taskId is completed with error: ${result.errorMessage!!}")
+      }
+      TaskStatus.State.CANCELLED -> {
+        throw RuntimeException("The task $taskId was cancelled")
       }
     }
   }
@@ -189,11 +197,11 @@ interface EnqueueTaskApi {
 
   /**
    * The check plugin against <since; until> builds range.
-   * The result is of type [org.jetbrains.plugins.verifier.service.results.CheckPluginAgainstSinceUntilBuildsResults]
+   * The result is of type [com.jetbrains.pluginverifier.configurations.CheckRangeResults]
    */
   @Multipart
-  @POST("/verifier/checkPluginAgainstSinceUntilBuilds")
-  fun checkPluginAgainstSinceUntilBuilds(@Part pluginFile: MultipartBody.Part, @Part parameters: MultipartBody.Part): Call<ResponseBody>
+  @POST("/verifier/checkPluginRange")
+  fun checkPluginRange(@Part pluginFile: MultipartBody.Part, @Part parameters: MultipartBody.Part): Call<ResponseBody>
 
   /**
    * The check-plugin command.
