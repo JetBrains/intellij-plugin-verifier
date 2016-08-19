@@ -19,8 +19,8 @@ data class CheckIdeRunnerParams(@SerializedName("jdkVersion") val jdkVersion: Jd
                                 @SerializedName("pluginIdsToCheckExistingBuilds") val pluginIdsToCheckExistingBuilds: List<String>,
                                 @SerializedName("actualIdeVersion") val actualIdeVersion: IdeVersion? = null)
 
-data class CheckPluginAgainstSinceUntilBuildsRunnerParams(@SerializedName("jdkVersion") val jdkVersion: JdkVersion,
-                                                          @SerializedName("vOptions") val vOptions: VOptions)
+data class CheckRangeRunnerParams(@SerializedName("jdkVersion") val jdkVersion: JdkVersion,
+                                  @SerializedName("vOptions") val vOptions: VOptions)
 
 data class CheckPluginRunnerParams(@SerializedName("jdkVersion") val jdkVersion: JdkVersion,
                                    @SerializedName("vOptions") val vOptions: VOptions)

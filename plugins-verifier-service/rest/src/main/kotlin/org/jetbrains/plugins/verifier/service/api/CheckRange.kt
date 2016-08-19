@@ -1,25 +1,25 @@
 package org.jetbrains.plugins.verifier.service.api
 
+import com.jetbrains.pluginverifier.configurations.CheckRangeResults
 import org.jetbrains.plugins.verifier.service.client.MultipartUtil
 import org.jetbrains.plugins.verifier.service.client.executeSuccessfully
 import org.jetbrains.plugins.verifier.service.client.parseTaskId
 import org.jetbrains.plugins.verifier.service.client.util.ArchiverUtil
 import org.jetbrains.plugins.verifier.service.client.waitCompletion
-import org.jetbrains.plugins.verifier.service.params.CheckPluginAgainstSinceUntilBuildsRunnerParams
-import org.jetbrains.plugins.verifier.service.results.CheckPluginAgainstSinceUntilBuildsResults
+import org.jetbrains.plugins.verifier.service.params.CheckRangeRunnerParams
 import org.jetbrains.plugins.verifier.service.util.deleteLogged
 import org.slf4j.LoggerFactory
 import java.io.File
 
-class CheckPluginAgainstSinceUntil(host: String,
-                                   val pluginFile: File,
-                                   val runnerParams: CheckPluginAgainstSinceUntilBuildsRunnerParams) : VerifierServiceApi<CheckPluginAgainstSinceUntilBuildsResults>(host) {
+class CheckRange(host: String,
+                 val pluginFile: File,
+                 val runnerParams: CheckRangeRunnerParams) : VerifierServiceApi<CheckRangeResults>(host) {
 
   companion object {
-    private val LOG = LoggerFactory.getLogger(CheckPluginAgainstSinceUntil::class.java)
+    private val LOG = LoggerFactory.getLogger(CheckRange::class.java)
   }
 
-  override fun executeImpl(): CheckPluginAgainstSinceUntilBuildsResults {
+  override fun executeImpl(): CheckRangeResults {
     var pf = pluginFile
     if (!pf.exists()) {
       throw IllegalArgumentException("The plugin file $pluginFile doesn't exist")
@@ -47,7 +47,7 @@ class CheckPluginAgainstSinceUntil(host: String,
     }
   }
 
-  private fun doCheck(pluginFile: File): CheckPluginAgainstSinceUntilBuildsResults {
+  private fun doCheck(pluginFile: File): CheckRangeResults {
 
     val pluginPart = MultipartUtil.createFilePart("pluginFile", pluginFile)
 
@@ -59,7 +59,7 @@ class CheckPluginAgainstSinceUntil(host: String,
     val taskId = parseTaskId(response)
     LOG.info("The task ID is $taskId")
 
-    return waitCompletion<CheckPluginAgainstSinceUntilBuildsResults>(service, taskId)
+    return waitCompletion<CheckRangeResults>(service, taskId)
   }
 
 }

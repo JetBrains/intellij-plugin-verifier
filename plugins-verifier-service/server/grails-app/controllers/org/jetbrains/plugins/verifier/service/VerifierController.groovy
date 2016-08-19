@@ -1,19 +1,19 @@
 package org.jetbrains.plugins.verifier.service
 
 import com.google.gson.Gson
+import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.persistence.GsonHolder
 import kotlin.text.StringsKt
 import org.jetbrains.plugins.verifier.service.api.Result
-import org.jetbrains.plugins.verifier.service.api.Status
 import org.jetbrains.plugins.verifier.service.api.TaskId
 import org.jetbrains.plugins.verifier.service.core.TaskManager
 import org.jetbrains.plugins.verifier.service.params.CheckIdeRunnerParams
-import org.jetbrains.plugins.verifier.service.params.CheckPluginAgainstSinceUntilBuildsRunnerParams
 import org.jetbrains.plugins.verifier.service.params.CheckPluginRunnerParams
+import org.jetbrains.plugins.verifier.service.params.CheckRangeRunnerParams
 import org.jetbrains.plugins.verifier.service.params.CheckTrunkApiRunnerParams
 import org.jetbrains.plugins.verifier.service.runners.CheckIdeRunner
 import org.jetbrains.plugins.verifier.service.runners.CheckPlugin
-import org.jetbrains.plugins.verifier.service.runners.CheckPluginAgainstSinceUntilBuildsRunner
+import org.jetbrains.plugins.verifier.service.runners.CheckRangeRunner
 import org.jetbrains.plugins.verifier.service.runners.CheckTrunkApiRunner
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.jetbrains.plugins.verifier.service.util.LanguageUtilsKt
@@ -58,22 +58,6 @@ class VerifierController {
       log.debug("Task ${taskId} status: ${result.taskStatus}, content: ${result.result == null ? "<is not calculated yet>" : "[${result.result.toString().take(1000)}...]"}")
     }
     sendJson(resultJson)
-  }
-
-  def printTaskResult(int id) {
-    Result<?> result = TaskManager.INSTANCE.get(new TaskId(id))
-    if (!result) {
-      sendError(HttpStatus.NOT_FOUND.value(), "The task with such ID $id is not found")
-      return
-    }
-
-    if (result.status == Status.WAITING) {
-      render("Not started yet")
-    } else if (result.status == Status.RUNNING) {
-      render("Running now")
-    } else if (result.status == Status.COMPLETE) {
-      render result.result.toString()
-    }
   }
 
   def cancelTask() {
@@ -195,8 +179,9 @@ class VerifierController {
   def checkPluginAgainstSinceUntilBuilds() {
     File saved = savePluginTemporarily(params.pluginFile)
     if (!saved) return
-    def params = GSON.fromJson(params.params as String, CheckPluginAgainstSinceUntilBuildsRunnerParams.class)
-    def runner = new CheckPluginAgainstSinceUntilBuildsRunner(saved, true, params)
+    UpdateInfo updateInfo = params.updateInfo ? GSON.fromJson(params.updateInfo as String, UpdateInfo.class) : null
+    def runnerParams = GSON.fromJson(params.params as String, CheckRangeRunnerParams.class)
+    def runner = new CheckRangeRunner(saved, true, runnerParams, updateInfo)
     def taskId = TaskManager.INSTANCE.enqueue(runner)
     sendJson(taskId)
     log.info("New Check-Plugin-With-[since;until] is enqueued with taskId=$taskId")

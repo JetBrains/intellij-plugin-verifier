@@ -6,27 +6,29 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.configurations.CheckPluginConfiguration
 import com.jetbrains.pluginverifier.configurations.CheckPluginParams
+import com.jetbrains.pluginverifier.configurations.CheckRangeResults
+import com.jetbrains.pluginverifier.format.UpdateInfo
 import org.jetbrains.plugins.verifier.service.core.BridgeVProgress
 import org.jetbrains.plugins.verifier.service.core.Progress
 import org.jetbrains.plugins.verifier.service.core.Task
-import org.jetbrains.plugins.verifier.service.params.CheckPluginAgainstSinceUntilBuildsRunnerParams
-import org.jetbrains.plugins.verifier.service.results.CheckPluginAgainstSinceUntilBuildsResults
+import org.jetbrains.plugins.verifier.service.params.CheckRangeRunnerParams
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.storage.JdkManager
 import org.jetbrains.plugins.verifier.service.util.deleteLogged
 import org.slf4j.LoggerFactory
 import java.io.File
 
-class CheckPluginAgainstSinceUntilBuildsRunner(val pluginFile: File,
-                                               val deleteOnCompletion: Boolean,
-                                               val params: CheckPluginAgainstSinceUntilBuildsRunnerParams) : Task<CheckPluginAgainstSinceUntilBuildsResults>() {
+class CheckRangeRunner(val pluginFile: File,
+                       val deleteOnCompletion: Boolean,
+                       val params: CheckRangeRunnerParams,
+                       val updateInfo: UpdateInfo? = null) : Task<CheckRangeResults>() {
   override fun presentableName(): String = "CheckPluginWithSinceUntilBuilds"
 
   companion object {
-    private val LOG = LoggerFactory.getLogger(CheckPluginAgainstSinceUntilBuildsRunner::class.java)
+    private val LOG = LoggerFactory.getLogger(CheckRangeRunner::class.java)
   }
 
-  override fun computeImpl(progress: Progress): CheckPluginAgainstSinceUntilBuildsResults {
+  override fun computeImpl(progress: Progress): CheckRangeResults {
     try {
       val plugin: Plugin
       try {
@@ -34,7 +36,7 @@ class CheckPluginAgainstSinceUntilBuildsRunner(val pluginFile: File,
       } catch(e: Exception) {
         LOG.error("Unable to create plugin from $pluginFile", e)
         val byFile = PluginDescriptor.ByFile("${pluginFile.name}", "", pluginFile)
-        return CheckPluginAgainstSinceUntilBuildsResults(VResults(listOf(VResult.BadPlugin(byFile, e.message ?: e.javaClass.simpleName))))
+        return CheckRangeResults(byFile, VResults(listOf(VResult.BadPlugin(byFile, e.message ?: e.javaClass.simpleName))))
       }
 
       val pluginDescriptor = PluginDescriptor.ByInstance(plugin)
@@ -44,7 +46,7 @@ class CheckPluginAgainstSinceUntilBuildsRunner(val pluginFile: File,
 
       if (sinceBuild == null) {
         LOG.error("The plugin $pluginFile has not specified since-build property")
-        return CheckPluginAgainstSinceUntilBuildsResults(VResults(listOf(VResult.BadPlugin(pluginDescriptor, "The plugin ${plugin.toString()} has not specified the <idea-version> 'since-build' attribute. See  <a href=\"http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html\">Plugin Configuration File - plugin.xml<\\a>"))))
+        return CheckRangeResults(pluginDescriptor, VResults(listOf(VResult.BadPlugin(pluginDescriptor, "The plugin ${plugin.toString()} has not specified the <idea-version> 'since-build' attribute. See  <a href=\"http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html\">Plugin Configuration File - plugin.xml<\\a>"))))
       }
 
       LOG.debug("Verifying plugin $plugin against its specified [$sinceBuild; $untilBuild] builds")
@@ -56,7 +58,7 @@ class CheckPluginAgainstSinceUntilBuildsRunner(val pluginFile: File,
       if (compatibleIdes.isEmpty()) {
         //TODO: download from the IDE repository.
         LOG.error("There are no IDEs compatible with the Plugin ${plugin.toString()}; [since; until] = [$sinceBuild; $untilBuild]")
-        return CheckPluginAgainstSinceUntilBuildsResults(VResults(emptyList()))
+        return CheckRangeResults(pluginDescriptor, VResults(emptyList()))
       }
 
       val locks = compatibleIdes.map { IdeFilesManager.getIde(it) }.filterNotNull()
@@ -77,7 +79,7 @@ class CheckPluginAgainstSinceUntilBuildsRunner(val pluginFile: File,
           LOG.error("Failed to verify the plugin $plugin", e)
           throw e
         }
-        return CheckPluginAgainstSinceUntilBuildsResults(results)
+        return CheckRangeResults(pluginDescriptor, results)
       } finally {
         locks.forEach { it.release() }
       }

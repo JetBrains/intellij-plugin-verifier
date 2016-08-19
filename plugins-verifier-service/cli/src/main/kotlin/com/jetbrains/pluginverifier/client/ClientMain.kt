@@ -14,7 +14,7 @@ class Client {
 
   companion object {
 
-    private val COMMANDS = arrayOf(GetResultCommand(), CancelTaskCommand(), CheckIdeCommand(), CheckPluginCommand(), CheckPluginAgainstSinceUntilCommand(), CheckTrunkApiCommand())
+    private val COMMANDS = arrayOf(GetResultCommand(), CancelTaskCommand(), CheckIdeCommand(), CheckPluginCommand(), CheckRangeCommand(), CheckTrunkApiCommand())
 
     private val LOG = LoggerFactory.getLogger(Client::class.java)
 

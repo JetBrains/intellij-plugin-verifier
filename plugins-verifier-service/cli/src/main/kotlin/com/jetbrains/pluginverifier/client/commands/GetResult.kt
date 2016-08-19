@@ -3,11 +3,11 @@ package com.jetbrains.pluginverifier.client.commands
 import com.jetbrains.pluginverifier.client.BaseCmdOpts
 import com.jetbrains.pluginverifier.configurations.CheckIdeResults
 import com.jetbrains.pluginverifier.configurations.CheckPluginResults
+import com.jetbrains.pluginverifier.configurations.CheckRangeResults
 import com.jetbrains.pluginverifier.configurations.CheckTrunkApiResults
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import org.jetbrains.plugins.verifier.service.api.GetResult
-import org.jetbrains.plugins.verifier.service.results.CheckPluginAgainstSinceUntilBuildsResults
 
 /**
  * @author Sergey Patrikeev
@@ -32,7 +32,7 @@ class GetResultCommand : Command {
         CheckPluginCommand().processResults(any as CheckPluginResults, opts)
       }
       "check-since-until" -> {
-        CheckPluginAgainstSinceUntilCommand().processResults(any as CheckPluginAgainstSinceUntilBuildsResults)
+        CheckRangeCommand().processResults(any as CheckRangeResults)
       }
       "check-trunk-api" -> {
         CheckTrunkApiCommand().processResults(any as CheckTrunkApiResults, opts)
