@@ -1,28 +1,37 @@
 package org.jetbrains.plugins.verifier.service.api
 
+import com.google.gson.annotations.SerializedName
+
 /**
  * @author Sergey Patrikeev
  */
-data class TaskId(val id: Int)
-
-enum class Status {
-  WAITING,
-  RUNNING,
-  COMPLETE
+data class TaskId(@SerializedName("id") val id: Int) {
+  override fun toString(): String = id.toString()
 }
 
-data class TaskStatusDescriptor(val taskId: TaskId,
-                                val startTime: Long,
-                                val endTime: Long?,
-                                val status: Status,
-                                val progress: Double,
-                                val progressText: String,
-                                val presentableName: String) {
-  fun completionTime(): Long = (endTime ?: System.currentTimeMillis()) - startTime
+data class TaskStatus(@SerializedName("taskId") val taskId: TaskId,
+                      @SerializedName("startTime") val startTime: Long,
+                      @SerializedName("endTime") val endTime: Long?,
+                      @SerializedName("status") val state: State,
+                      @SerializedName("progress") val progress: Double,
+                      @SerializedName("progressText") val progressText: String,
+                      @SerializedName("taskName") val presentableName: String) {
+  fun elapsedTime(): Long = (endTime ?: System.currentTimeMillis()) - startTime
 
   override fun toString(): String {
-    return "(Id=${taskId.id}; Status=$status; Time=${completionTime() / 1000} s; Progress:$progress; Text:$progressText; Task-name: $presentableName)"
+    return "(Id=${taskId.id}; State=$state; Time=${elapsedTime() / 1000} s; Progress:$progress; Text:$progressText; Task-name: $presentableName)"
   }
+
+  enum class State {
+    WAITING,
+    RUNNING,
+    SUCCESS,
+    ERROR,
+    CANCELLED
+  }
+
 }
 
-data class Result<out T>(val taskStatus: TaskStatusDescriptor, val result: T? = null)
+data class Result<out T>(@SerializedName("taskStatus") val taskStatus: TaskStatus,
+                         @SerializedName("result") val result: T?,
+                         @SerializedName("errorMsg") val errorMessage: String?)
