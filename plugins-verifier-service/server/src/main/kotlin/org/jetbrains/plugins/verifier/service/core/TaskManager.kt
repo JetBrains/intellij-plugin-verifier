@@ -1,9 +1,9 @@
 package org.jetbrains.plugins.verifier.service.core
 
 import org.jetbrains.plugins.verifier.service.api.Result
-import org.jetbrains.plugins.verifier.service.api.Status
 import org.jetbrains.plugins.verifier.service.api.TaskId
-import org.jetbrains.plugins.verifier.service.api.TaskStatusDescriptor
+import org.jetbrains.plugins.verifier.service.api.TaskStatus
+import org.jetbrains.plugins.verifier.service.api.TaskStatus.State.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -14,15 +14,16 @@ import java.util.concurrent.Future
  * @author Sergey Patrikeev
  */
 object TaskManager : ITaskManager {
-  private const val MAX_EXECUTORS = 8
+  const val PARALLEL_LIMIT = 8
 
   private var counter: Int = 0
 
-  private val service = Executors.newFixedThreadPool(MAX_EXECUTORS)
+  private val service = Executors.newFixedThreadPool(PARALLEL_LIMIT)
 
-  private val tasks: MutableMap<TaskId, Pair<Future<*>, Worker>> = hashMapOf()
+  private val tasks: MutableMap<TaskId, Pair<Future<*>, Worker<*>>> = hashMapOf()
 
   private val PRESERVE_RESULTS_NUMBER: Int = 100
+
   private val MINIMUM_TIME_WAITING_GET_MILLIS: Long = 10 * 1000
 
   private val completedTasks: Queue<TaskId> = LinkedList()
@@ -30,25 +31,36 @@ object TaskManager : ITaskManager {
   private val LOG: Logger = LoggerFactory.getLogger(TaskManager::class.java)
 
   @Synchronized
+  override fun runningTasksNumber(): Int = tasks.values.count { it.second.state == WAITING || it.second.state == TaskStatus.State.RUNNING }
+
+  @Synchronized
   override fun get(taskId: TaskId): Result<*>? {
     val worker = (tasks[taskId] ?: return null).second
-    val result = worker.task.result
-    return Result(TaskStatusDescriptor(taskId, worker.startTime, worker.endTime, worker.status, worker.progress.getProgress(), worker.progress.getText(), worker.task.presentableName()), result)
+    val taskStatus = TaskStatus(taskId, worker.startTime, worker.endTime, worker.state,
+        worker.progress.getProgress(), worker.progress.getText(), worker.task.presentableName())
+
+    return when (worker.state) {
+      WAITING, CANCELLED, RUNNING -> Result(taskStatus, null, null)
+      SUCCESS -> Result(taskStatus, worker.result!!, null)
+      ERROR -> Result(taskStatus, null, worker.errorMsg!!)
+    }
   }
 
   @Synchronized
-  override fun listTasks(): List<TaskStatusDescriptor> = tasks.entries.map {
+  override fun listTasks(): List<TaskStatus> = tasks.entries.map {
     val worker = it.value.second
-    TaskStatusDescriptor(it.key, worker.startTime, worker.endTime, worker.status, worker.progress.getProgress(), worker.progress.getText(), worker.task.presentableName())
+    TaskStatus(it.key, worker.startTime, worker.endTime, worker.state, worker.progress.getProgress(), worker.progress.getText(), worker.task.presentableName())
   }
 
   @Synchronized
-  override fun <T> enqueue(task: Task<T>): TaskId {
+  override fun <T> enqueue(task: Task<T>,
+                           onSuccess: (Result<T>) -> Unit,
+                           onError: (t: Throwable, taskId: TaskId, task: Task<T>) -> Unit): TaskId {
     val taskId = TaskId(counter++)
 
     task.taskId = taskId
 
-    val worker = Worker(task, taskId)
+    val worker = Worker(task, taskId, onSuccess, onError)
 
     val future = service.submit(worker)
 
@@ -56,6 +68,9 @@ object TaskManager : ITaskManager {
 
     return taskId
   }
+
+  @Synchronized
+  override fun <T> enqueue(task: Task<T>): TaskId = enqueue(task, {}, { t, tid, task -> })
 
   @Synchronized
   override fun cancel(taskId: TaskId): Boolean {
@@ -80,23 +95,42 @@ object TaskManager : ITaskManager {
     completedTasks.remove()
   }
 
-  private class Worker(val task: Task<*>,
-                       val taskId: TaskId,
-                       @Volatile var status: Status = Status.WAITING,
-                       val startTime: Long = System.currentTimeMillis(),
-                       @Volatile var endTime: Long? = null,
-                       val progress: Progress = DefaultProgress()) : Runnable {
+  private class Worker<T>(val task: Task<T>,
+                          val taskId: TaskId,
+                          val onSuccess: (Result<T>) -> Unit,
+                          val onError: (t: Throwable, taskId: TaskId, task: Task<T>) -> Unit,
+                          @Volatile var result: T? = null,
+                          @Volatile var errorMsg: String? = null,
+                          @Volatile var state: TaskStatus.State = WAITING,
+                          val startTime: Long = System.currentTimeMillis(),
+                          @Volatile var endTime: Long? = null,
+                          val progress: Progress = DefaultProgress()) : Runnable {
 
     override fun run() {
       LOG.info("Task #$taskId ${task.presentableName()} is starting")
-      status = Status.RUNNING
+      state = TaskStatus.State.RUNNING
       try {
         task.compute(progress)
+        if (task.isSuccessful()) {
+          state = TaskStatus.State.SUCCESS
+          result = task.result()
+        } else if (task.isCancelled()) {
+          state = TaskStatus.State.CANCELLED
+        } else {
+          state = TaskStatus.State.ERROR
+          errorMsg = "The task #$taskId failed due to ${task.exception().message ?: task.exception().javaClass.name}"
+        }
       } finally {
-        status = Status.COMPLETE
         endTime = System.currentTimeMillis()
         onComplete(taskId)
-        LOG.info("Task #$taskId is finished")
+        LOG.info("Task #$taskId is completed")
+      }
+
+      val status = TaskStatus(taskId, startTime, endTime, state, progress.getProgress(), progress.getText(), task.presentableName())
+      if (task.isSuccessful()) {
+        onSuccess(Result(status, task.result(), null))
+      } else if (task.isFailed()) {
+        onError(task.exception(), taskId, task)
       }
     }
 
@@ -108,9 +142,13 @@ interface ITaskManager {
 
   fun <T> enqueue(task: Task<T>): TaskId
 
+  fun <T> enqueue(task: Task<T>, onSuccess: (Result<T>) -> Unit, onError: (Throwable, TaskId, Task<T>) -> Unit): TaskId
+
   fun cancel(taskId: TaskId): Boolean
 
   fun get(taskId: TaskId): Result<*>?
 
-  fun listTasks(): List<TaskStatusDescriptor>
+  fun listTasks(): List<TaskStatus>
+
+  fun runningTasksNumber(): Int
 }
