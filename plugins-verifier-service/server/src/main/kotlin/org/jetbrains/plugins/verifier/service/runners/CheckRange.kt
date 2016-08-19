@@ -28,7 +28,7 @@ class CheckRangeRunner(val pluginFile: File,
     private val LOG = LoggerFactory.getLogger(CheckRangeRunner::class.java)
   }
 
-  override fun computeImpl(progress: Progress): CheckRangeResults {
+  override fun computeResult(progress: Progress): CheckRangeResults {
     try {
       val plugin: Plugin
       try {

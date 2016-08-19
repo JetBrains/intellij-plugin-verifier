@@ -30,7 +30,7 @@ class CheckPlugin(val runnerParams: CheckPluginRunnerParams,
 
   override fun presentableName(): String = "CheckPlugin"
 
-  override fun computeImpl(progress: Progress): CheckPluginResults {
+  override fun computeResult(progress: Progress): CheckPluginResults {
     try {
       val jdkDescriptor = JdkDescriptor.ByFile(JdkManager.getJdkHome(runnerParams.jdkVersion))
       val pluginDescriptors = pluginFiles.map { PluginDescriptor.ByFile("${it.nameWithoutExtension}", "", it) }

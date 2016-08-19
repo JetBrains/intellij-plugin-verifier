@@ -38,7 +38,7 @@ class CheckTrunkApiRunner(val ideFile: File,
     private val LOG = LoggerFactory.getLogger(CheckTrunkApiResults::class.java)
   }
 
-  override fun computeImpl(progress: Progress): CheckTrunkApiResults {
+  override fun computeResult(progress: Progress): CheckTrunkApiResults {
     try {
       val ide: Ide
       try {

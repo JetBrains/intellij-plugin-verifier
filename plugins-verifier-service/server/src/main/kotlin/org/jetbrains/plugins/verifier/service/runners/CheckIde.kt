@@ -28,7 +28,7 @@ class CheckIdeRunner(val ideFile: File,
 
   override fun presentableName(): String = "CheckIde"
 
-  override fun computeImpl(progress: Progress): CheckIdeResults {
+  override fun computeResult(progress: Progress): CheckIdeResults {
     try {
       val ide: Ide
       try {
