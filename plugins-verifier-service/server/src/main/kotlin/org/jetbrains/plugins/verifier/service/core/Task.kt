@@ -6,32 +6,43 @@ import org.slf4j.LoggerFactory
 /**
  * @author Sergey Patrikeev
  */
-abstract class Task<R>(@Volatile var taskId: TaskId? = null) {
+abstract class Task<out R>(@Volatile var taskId: TaskId? = null) : ITask<R> {
+
+  override fun isCancelled(): Boolean = cancelled
+
+  override fun isSuccessful(): Boolean = result != null
+
+  override fun isFailed(): Boolean = exception != null
+
+  override fun result(): R = result!!
+
+  override fun exception(): Exception = exception!!
 
   @Volatile
-  var result: R? = null
-    private set
-    get() {
-      if (exception != null) {
-        throw exception as Exception
-      }
-      return field
-    }
+  private var cancelled: Boolean = false
 
   @Volatile
-  var exception: Exception? = null
+  private var result: R? = null
+
+  @Volatile
+  private var exception: Exception? = null
+
+  @Volatile
+  private var isStarted: Boolean = false
 
   abstract fun presentableName(): String
 
   @Throws(InterruptedException::class)
-  abstract fun computeImpl(progress: Progress): R
+  protected abstract fun computeResult(progress: Progress): R
 
   fun compute(progress: Progress) {
+    check(!isStarted, { "The task #$taskId must not be started twice" })
+    isStarted = true
     try {
-      result = computeImpl(progress)
+      result = computeResult(progress)
     } catch(e: InterruptedException) {
       LOG.info("The task #$taskId was cancelled")
-      exception = CancelledException()
+      cancelled = true
     } catch(e: Exception) {
       LOG.error("Exception in the task #$taskId", e)
       exception = e
@@ -42,6 +53,17 @@ abstract class Task<R>(@Volatile var taskId: TaskId? = null) {
     private val LOG = LoggerFactory.getLogger(Task::class.java)
   }
 
-  class CancelledException() : RuntimeException("The task was cancelled", null, false, false)
+}
 
+interface ITask<out R> {
+
+  fun isSuccessful(): Boolean
+
+  fun isCancelled(): Boolean
+
+  fun isFailed(): Boolean
+
+  fun result(): R
+
+  fun exception(): Exception
 }
