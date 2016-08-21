@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.api
 
-import org.jetbrains.plugins.verifier.service.client.executeSuccessfully
+import org.jetbrains.plugins.verifier.service.util.executeSuccessfully
 import org.slf4j.LoggerFactory
 
 class CancelTask(host: String, val taskId: Int) : VerifierServiceApi<Unit>(host) {

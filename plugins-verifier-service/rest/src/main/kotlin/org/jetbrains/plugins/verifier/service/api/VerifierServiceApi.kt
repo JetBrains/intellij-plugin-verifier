@@ -2,7 +2,7 @@ package org.jetbrains.plugins.verifier.service.api
 
 import org.jetbrains.plugins.verifier.service.client.CLIENT_SIDE_VERSION
 import org.jetbrains.plugins.verifier.service.client.VerifierService
-import org.jetbrains.plugins.verifier.service.client.executeSuccessfully
+import org.jetbrains.plugins.verifier.service.util.executeSuccessfully
 
 abstract class VerifierServiceApi<out T>(val host: String) {
   val service = VerifierService(host)
