@@ -22,7 +22,7 @@ buildscript {
 
 def serviceVersion = project.hasProperty('myVersion') ? project.myVersion : '1.0'
 
-project.ext.verifierVersion = '1.36'
+project.ext.verifierVersion = '1.38'
 
 configure(allprojects) {
   version = serviceVersion
@@ -51,6 +51,11 @@ configure(allprojects) {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile group: 'commons-io', name: 'commons-io', version: '2.5'
     compile 'com.github.salomonbrys.kotson:kotson:2.2.2'
+    compile 'com.google.code.gson:gson:2.7'
+
+    compile 'com.squareup.retrofit2:retrofit:2.1.0'
+    compile 'com.squareup.retrofit2:converter-gson:2.1.0'
+    compile 'com.squareup.okhttp3:logging-interceptor:3.3.1'
   }
 
 }
