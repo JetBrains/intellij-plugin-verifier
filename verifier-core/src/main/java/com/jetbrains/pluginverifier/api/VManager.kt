@@ -187,7 +187,7 @@ object VManager {
     }
   }
 
-  private fun createPlugin(pluginDescriptor: PluginDescriptor, ideDescriptor: IdeDescriptor, ideVersion: IdeVersion): Pair<Plugin?, VResult?> {
+  fun createPlugin(pluginDescriptor: PluginDescriptor, ideVersion: IdeVersion? = null): Pair<Plugin?, VResult?> {
     try {
       return VParamsCreator.getPlugin(pluginDescriptor, ideVersion) to null
     } catch(ie: InterruptedException) {
@@ -201,7 +201,7 @@ object VManager {
       //the caller has specified a missing plugin
       val reason = e.message ?: "The plugin $pluginDescriptor is not found in the Repository"
       LOG.debug(reason, e)
-      return null to VResult.NotFound(pluginDescriptor, ideDescriptor, reason)
+      return null to VResult.NotFound(pluginDescriptor, reason)
     } catch(e: IOException) {
       //the plugin has an invalid file
       val reason = e.message ?: e.javaClass.name
@@ -232,7 +232,7 @@ object VManager {
                            params: VParams,
                            ideResolver: Resolver,
                            runtimeResolver: Resolver): Pair<Plugin?, VResult> {
-    val (plugin: Plugin?, badResult: VResult?) = createPlugin(pluginDescriptor, ideDescriptor, ide.version)
+    val (plugin: Plugin?, badResult: VResult?) = createPlugin(pluginDescriptor, ide.version)
     if (badResult != null) {
       return null to badResult
     }
@@ -473,11 +473,11 @@ private object VParamsCreator {
    * @throws RepositoryDoesntRespondException if the Repository doesn't respond
    */
   @Throws(IncorrectPluginException::class, IOException::class, UpdateNotFoundException::class, RuntimeException::class)
-  fun getPlugin(plugin: PluginDescriptor, ideVersion: IdeVersion): Plugin = when (plugin) {
+  fun getPlugin(plugin: PluginDescriptor, ideVersion: IdeVersion?): Plugin = when (plugin) {
     is PluginDescriptor.ByInstance -> plugin.plugin //already created.
     is PluginDescriptor.ByFile -> PluginCache.createPlugin(plugin.file) //IncorrectPluginException, IOException
     is PluginDescriptor.ByXmlId -> {
-      val updates = withConnectionCheck { RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion, plugin.pluginId) }
+      val updates = withConnectionCheck { RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(ideVersion!!, plugin.pluginId) }
       val suitable: UpdateInfo = updates.find { plugin.version.equals(it.version) } ?: throw noSuchUpdate(plugin)
       val file: File
       try {
