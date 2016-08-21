@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service
 
 import com.google.gson.Gson
-import com.jetbrains.pluginverifier.format.UpdateInfo
+import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.persistence.GsonHolder
 import kotlin.text.StringsKt
 import org.jetbrains.plugins.verifier.service.api.Result
@@ -179,10 +179,21 @@ class VerifierController {
   def checkPluginRange() {
     File saved = savePluginTemporarily(params.pluginFile)
     if (!saved) return
-    UpdateInfo updateInfo = params.updateInfo ? GSON.fromJson(params.updateInfo as String, UpdateInfo.class) : null
     def runnerParams = GSON.fromJson(params.params as String, CheckRangeRunnerParams.class)
-    def runner = new CheckRangeRunner(saved, true, runnerParams, updateInfo)
-    def taskId = TaskManager.INSTANCE.enqueue(runner)
+    def byFile = new PluginDescriptor.ByFile("${params.pluginFile.getOriginalFilename() as String}", "", saved)
+    def runner = new CheckRangeRunner(byFile, runnerParams)
+
+    def onSuccess = { def result ->
+      LanguageUtilsKt.deleteLogged(saved)
+      return null
+    }
+    def onError = { def one, def two, def three ->
+      LanguageUtilsKt.deleteLogged(saved)
+      return null
+    }
+
+    def taskId = TaskManager.INSTANCE.enqueue(runner, onSuccess, onError)
+
     sendJson(taskId)
     log.info("New Check-Plugin-With-[since;until] is enqueued with taskId=$taskId")
   }
