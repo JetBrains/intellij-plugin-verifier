@@ -31,7 +31,7 @@ class CheckRangeCommand : Command {
   private fun createRunnerParams(jdkVersion: JdkVersion, vOptions: VOptions) = CheckRangeRunnerParams(jdkVersion, vOptions)
 
   fun processResults(results: CheckRangeResults) {
-    StreamVPrinter(System.out).printResults(results.vResults)
+    StreamVPrinter(System.out).printResults(results.vResults!!)
   }
 
 }
