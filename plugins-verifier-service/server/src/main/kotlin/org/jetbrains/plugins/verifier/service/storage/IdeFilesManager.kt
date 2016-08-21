@@ -13,6 +13,8 @@ import java.io.File
  */
 interface IIdeFilesManager {
 
+  fun <R> locked(block: () -> R): R
+
   fun ideList(): List<IdeVersion>
 
   fun getIde(version: IdeVersion): IIdeLock?
@@ -30,16 +32,15 @@ interface IIdeFilesManager {
 object IdeFilesManager : IIdeFilesManager {
 
   private val LOG = LoggerFactory.getLogger(IdeFilesManager::class.java)
+
   private val ideCache: MutableMap<IdeVersion, Ide> = hashMapOf()
   private val lockedIdes: MutableMap<IdeVersion, Int> = hashMapOf()
   private val deleteQueue: MutableSet<IdeVersion> = hashSetOf()
-
   class IdeLock(val ide: Ide) : IIdeFilesManager.IIdeLock {
     override fun release() {
       releaseLock(this)
     }
   }
-
   @Synchronized
   private fun releaseLock(lock: IdeLock) {
     val version = lock.ide.version
@@ -53,6 +54,9 @@ object IdeFilesManager : IIdeFilesManager {
       lockedIdes.put(version, cnt)
     }
   }
+
+  @Synchronized
+  override fun <R> locked(block: () -> R): R = block()
 
   private fun onRelease(version: IdeVersion) {
     if (deleteQueue.contains(version)) {
