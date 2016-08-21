@@ -3,11 +3,14 @@ package org.jetbrains.plugins.verifier.service.client
 import com.github.salomonbrys.kotson.fromJson
 import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.persistence.GsonHolder
-import okhttp3.*
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
 import org.jetbrains.plugins.verifier.service.api.Result
 import org.jetbrains.plugins.verifier.service.api.TaskId
 import org.jetbrains.plugins.verifier.service.api.TaskStatus
+import org.jetbrains.plugins.verifier.service.util.executeSuccessfully
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import retrofit2.Call
@@ -16,8 +19,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl
-import java.io.File
-import java.io.IOException
 import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
 
@@ -25,42 +26,7 @@ val CLIENT_SIDE_VERSION: String = "1.0"
 
 private val LOG: Logger = LoggerFactory.getLogger(VerifierService::class.java)
 
-object MediaTypes {
-  val JSON: MediaType = MediaType.parse("application/json")
-  val OCTET_STREAM: MediaType = MediaType.parse("application/octet-stream")
-}
-
-object MultipartUtil {
-
-  fun createJsonPart(partName: String, obj: Any): MultipartBody.Part =
-      createJsonPart(partName, GsonHolder.GSON.toJson(obj))
-
-  fun createJsonPart(partName: String, json: String): MultipartBody.Part =
-      MultipartBody.Part.createFormData(partName, null, RequestBody.create(MediaTypes.JSON, json))
-
-  fun createFilePart(partName: String, file: File): MultipartBody.Part =
-      MultipartBody.Part.createFormData(partName, file.name, RequestBody.create(MediaTypes.OCTET_STREAM, file))
-
-}
-
 private val REQUEST_PERIOD: Long = 5000
-
-fun <T> Call<T>.executeSuccessfully(): Response<T> {
-  val server = "${this.request().url().host()}:${this.request().url().port()}"
-  val response: Response<T>?
-  try {
-    response = this.execute()
-  } catch(e: IOException) {
-    throw RuntimeException("The server $server is not available", e)
-  }
-  if (response.isSuccessful) {
-    return response
-  }
-  if (response.code() == 500) {
-    throw RuntimeException("The server $server has faced unexpected problems (500 Internal Server Error)")
-  }
-  throw RuntimeException("The response status code is ${response.code()}: ${response.errorBody().string()}")
-}
 
 fun parseTaskId(response: Response<ResponseBody>): TaskId = parseResponse(response)
 
