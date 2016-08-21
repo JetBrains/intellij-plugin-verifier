@@ -133,7 +133,8 @@ private val pluginDescriptorTAF = RuntimeTypeAdapterFactory.of(PluginDescriptor:
 
 class IdeDescriptorTypeAdapter : TypeAdapter<IdeDescriptor>() {
   override fun read(`in`: JsonReader): IdeDescriptor {
-    return IdeDescriptor.ByVersion(IdeVersion.createIdeVersion(`in`.nextString()))
+    val nextString = `in`.nextString()
+    return if ("0" == nextString) IdeDescriptor.AnyIde else IdeDescriptor.ByVersion(IdeVersion.createIdeVersion(nextString))
   }
 
   override fun write(out: JsonWriter, value: IdeDescriptor) {
