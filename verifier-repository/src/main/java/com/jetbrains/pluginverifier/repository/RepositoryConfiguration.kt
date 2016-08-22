@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.misc
+package com.jetbrains.pluginverifier.repository
 
 import org.apache.commons.io.FileUtils
 import java.io.File
