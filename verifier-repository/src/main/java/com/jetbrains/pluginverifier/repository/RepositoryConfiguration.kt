@@ -40,15 +40,21 @@ object RepositoryConfiguration {
     return myDefaultProperties.getProperty(propertyName)
   }
 
-  val pluginRepositoryUrl: String
-    get() {
-      var res: String = getProperty("plugin.repository.url") ?: throw RuntimeException("Plugin repository URL is not specified")
+  internal val pluginRepositoryUrl: String by lazy {
+    getProperty("plugin.repository.url")?.trimEnd('/') ?: throw RuntimeException("Plugin repository URL is not specified")
+  }
 
-      if (res.endsWith("/")) {
-        res = res.substring(0, res.length - 1)
-      }
-      return res
+  internal val cacheDirMaxSpaceMb: Int by lazy {
+    val minimum = 5 * 1024 //5 Gb
+    val default = 50 * 1024 //50 Gb
+
+    val prop = getProperty("plugin.verifier.cache.dir.max.space") ?: return@lazy default
+    try {
+      return@lazy Math.max(Integer.parseInt(prop), minimum)
+    } catch (e: Exception) {
+      return@lazy default
     }
+  }
 
   internal val pluginCacheDir: File
     get() = File(verifierHomeDir, "cache")

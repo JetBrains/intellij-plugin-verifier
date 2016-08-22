@@ -4,12 +4,9 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.format.UpdateInfo
-import com.jetbrains.pluginverifier.misc.DownloadManager
-import com.jetbrains.pluginverifier.misc.RepositoryConfiguration
 import org.apache.commons.io.IOUtils
 import org.apache.http.annotation.ThreadSafe
 import org.slf4j.LoggerFactory
-import java.io.File
 import java.io.IOException
 import java.net.URL
 import java.net.URLEncoder
@@ -53,12 +50,12 @@ object RepositoryManager : PluginRepository {
   }
 
   @Throws(IOException::class)
-  override fun getPluginFile(update: UpdateInfo): File? {
+  override fun getPluginFile(update: UpdateInfo): IFileLock? {
     return getPluginFile(update.updateId)
   }
 
   @Throws(IOException::class)
-  override fun getPluginFile(updateId: Int): File? {
+  override fun getPluginFile(updateId: Int): IFileLock? {
     return DownloadManager.getOrLoadUpdate(updateId)
   }
 

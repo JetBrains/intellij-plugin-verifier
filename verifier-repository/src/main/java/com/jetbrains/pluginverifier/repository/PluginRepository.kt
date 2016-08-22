@@ -21,9 +21,26 @@ interface PluginRepository {
   fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo>
 
   @Throws(IOException::class)
-  fun getPluginFile(updateId: Int): File?
+  fun getPluginFile(updateId: Int): IFileLock?
 
   @Throws(IOException::class)
-  fun getPluginFile(update: UpdateInfo): File?
+  fun getPluginFile(update: UpdateInfo): IFileLock?
+
+}
+
+interface IFileLock {
+
+  fun getFile(): File
+
+  fun release()
+
+}
+
+data class IdleFileLock(val content: File) : IFileLock {
+  override fun getFile(): File = content
+
+  override fun release() {
+    //do nothing.
+  }
 
 }
