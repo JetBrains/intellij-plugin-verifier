@@ -19,6 +19,7 @@ def intellijStructureVersion = '1.29'
 configure(allprojects) {
   apply plugin: 'java'
   apply plugin: 'kotlin'
+  apply plugin: 'com.github.johnrengelman.shadow'
 
   group = 'org.jetbrains.intellij.plugins'
 
@@ -68,6 +69,19 @@ configure(allprojects) {
       attributes 'Verifier-Version': version
     }
   }
+
+  shadowJar {
+    String internalPrefix = 'org.jetbrains.pluginverifier.internal.'
+
+    relocate('org.objectweb.asm', internalPrefix + 'asm') {}
+    relocate('org.apache.commons', internalPrefix + 'apachecommons') {}
+    relocate('org.jdom', internalPrefix + 'jdom') {}
+    relocate('org.intellij.lang.annotations', internalPrefix + 'intellijannotations') {}
+    relocate('org.jetbrains.annotations', internalPrefix + 'jetbrainsannotation') {}
+    relocate('org.apache.http', internalPrefix + 'apachehttp') {}
+  }
+
+  jar.finalizedBy(shadowJar)
 }
 
 apply plugin: 'com.jfrog.bintray'
@@ -78,28 +92,25 @@ publishing {
 
   publications {
 
-    def configurePublication = { MavenPublication pub, String projectName, boolean appendFatJar ->
+    def configurePublication = { MavenPublication pub, String projectName ->
 
-      def verifierCli = project(projectName)
-      pub.groupId verifierCli.group
-      pub.artifactId verifierCli.name
-      pub.version verifierCli.version
+      def proj = project(projectName)
+      pub.groupId proj.group
+      pub.artifactId proj.name
+      pub.version proj.version
 
-      pub.from verifierCli.components.java
-      verifierCli.artifacts
-      pub.artifact verifierCli.sourcesJar
-
-      if (appendFatJar) {
-        pub.artifact verifierCli.shadowJar
-      }
+      pub.from proj.components.java
+      proj.artifacts
+      pub.artifact proj.sourcesJar
+      pub.artifact proj.shadowJar
     }
 
-    VerifierCliPublication(MavenPublication) { configurePublication(it, ':verifier-cli', true) }
-    VerifierParameters(MavenPublication) { configurePublication(it, ':verifier-parameters', false) }
-    VerifierConfigurations(MavenPublication) { configurePublication(it, ':verifier-configurations', false) }
-    RepositoryPublication(MavenPublication) { configurePublication(it, ':verifier-repository', false) }
-    ResultsPublication(MavenPublication) { configurePublication(it, ':verifier-results', false) }
-    VerifierCorePublication(MavenPublication) { configurePublication(it, ':verifier-core', false) }
+    VerifierCliPublication(MavenPublication) { configurePublication(it, ':verifier-cli') }
+    VerifierParameters(MavenPublication) { configurePublication(it, ':verifier-parameters') }
+    VerifierConfigurations(MavenPublication) { configurePublication(it, ':verifier-configurations') }
+    RepositoryPublication(MavenPublication) { configurePublication(it, ':verifier-repository') }
+    ResultsPublication(MavenPublication) { configurePublication(it, ':verifier-results') }
+    VerifierCorePublication(MavenPublication) { configurePublication(it, ':verifier-core') }
   }
 }
 
