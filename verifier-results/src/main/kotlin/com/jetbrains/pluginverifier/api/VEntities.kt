@@ -6,6 +6,7 @@ import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.domain.Plugin
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.format.UpdateInfo
+import com.jetbrains.pluginverifier.repository.IFileLock
 import java.io.File
 
 /**
@@ -39,12 +40,20 @@ sealed class PluginDescriptor(@SerializedName("pluginId") val pluginId: String,
   }
 
   class ByFile(pluginId: String, version: String, @Transient val file: File) : PluginDescriptor(pluginId, version) {
-    override fun toString(): String = "${file.name}"
+    override fun toString(): String = "$file"
 
     override fun equals(other: Any?): Boolean = other is ByFile && file.equals(other.file)
 
     override fun hashCode(): Int = file.hashCode()
 
+  }
+
+  class ByFileLock(pluginId: String, version: String, @Transient val fileLock: IFileLock) : PluginDescriptor(pluginId, version) {
+    override fun equals(other: Any?): Boolean = other is ByFileLock && fileLock.getFile().equals(other.fileLock.getFile())
+
+    override fun hashCode(): Int = fileLock.getFile().hashCode()
+
+    override fun toString(): String = "${fileLock.getFile()}"
   }
 
   class ByInstance(@Transient val plugin: Plugin) : PluginDescriptor(plugin.pluginId!!, plugin.pluginVersion!!) {
@@ -76,7 +85,7 @@ sealed class IdeDescriptor(@SerializedName("version") val ideVersion: IdeVersion
 
     override fun hashCode(): Int = file.hashCode()
 
-    override fun toString(): String = "${file.name}"
+    override fun toString(): String = "$file"
 
   }
 
@@ -110,7 +119,7 @@ sealed class JdkDescriptor() {
 
     override fun hashCode(): Int = file.hashCode()
 
-    override fun toString(): String = "${file.name}"
+    override fun toString(): String = "$file"
   }
 
 
