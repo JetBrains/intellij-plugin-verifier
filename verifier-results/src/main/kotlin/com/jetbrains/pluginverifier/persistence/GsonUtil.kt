@@ -65,6 +65,11 @@ object GsonHolder {
       .registerTypeAdapterFactory(MultimapTypeAdapterFactory())
 
       //delegate to ByXmlId (we can't serialize File and Ide because it makes no sense)
+      .registerTypeAdapter<PluginDescriptor.ByFileLock> {
+        serialize {
+          it.context.serialize(PluginDescriptor.ByXmlId(it.src.pluginId, it.src.version))
+        }
+      }
       .registerTypeAdapter<PluginDescriptor.ByFile> {
         serialize {
           it.context.serialize(PluginDescriptor.ByXmlId(it.src.pluginId, it.src.version))

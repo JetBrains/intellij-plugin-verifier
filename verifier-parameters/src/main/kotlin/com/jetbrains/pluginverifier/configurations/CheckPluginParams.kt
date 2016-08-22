@@ -3,6 +3,8 @@ package com.jetbrains.pluginverifier.configurations
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
+import com.jetbrains.pluginverifier.repository.IFileLock
+import com.jetbrains.pluginverifier.repository.IdleFileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.CmdUtil
@@ -23,10 +25,10 @@ object CheckPluginParamsParser : ParamsParser {
     val jdkDescriptor = JdkDescriptor.ByFile(CmdUtil.getJdkDir(opts))
     val vOptions = VOptionsUtil.parseOpts(opts)
     val externalClasspath = CmdUtil.getExternalClassPath(opts)
-    return CheckPluginParams(pluginFiles.map { PluginDescriptor.ByFile("${it.nameWithoutExtension}", "", it) }, ideDescriptors, jdkDescriptor, vOptions, true, externalClasspath)
+    return CheckPluginParams(pluginFiles.map { PluginDescriptor.ByFileLock("${it.getFile().nameWithoutExtension}", "", it) }, ideDescriptors, jdkDescriptor, vOptions, true, externalClasspath)
   }
 
-  fun getPluginFiles(pluginToTestArg: String, ideVersions: List<IdeVersion>? = null): List<File> {
+  fun getPluginFiles(pluginToTestArg: String, ideVersions: List<IdeVersion>? = null): List<IFileLock> {
     if (pluginToTestArg.startsWith("@")) {
       val pluginListFile = File(pluginToTestArg.substring(1))
       val pluginPaths = pluginListFile.readLines()
@@ -35,8 +37,8 @@ object CheckPluginParamsParser : ParamsParser {
       val pluginId = pluginToTestArg.substring(1)
       try {
         val updateId = Integer.parseInt(pluginId)
-        val pluginFile = RepositoryManager.getPluginFile(updateId) ?: throw RuntimeException("No such plugin $pluginToTestArg")
-        return listOf(pluginFile)
+        val pluginLock = RepositoryManager.getPluginFile(updateId) ?: throw RuntimeException("No such plugin $pluginToTestArg")
+        return listOf(pluginLock)
       } catch (e: IOException) {
         throw RuntimeException("Cannot load plugin #" + pluginId, e)
       }
@@ -45,11 +47,11 @@ object CheckPluginParamsParser : ParamsParser {
       if (!file.exists()) {
         throw IllegalArgumentException("The file $file doesn't exist")
       }
-      return listOf(file)
+      return listOf(IdleFileLock(file))
     }
   }
 
-  fun fetchPlugins(ideVersion: IdeVersion, pluginListFile: File, pluginPaths: List<String>): List<File> =
+  fun fetchPlugins(ideVersion: IdeVersion, pluginListFile: File, pluginPaths: List<String>): List<IFileLock> =
       pluginPaths
           .map { it.trim() }
           .filter { it.isNotEmpty() }
@@ -64,11 +66,11 @@ object CheckPluginParamsParser : ParamsParser {
               if (!pluginFile.exists()) {
                 throw RuntimeException("Plugin file '" + it + "' specified in '" + pluginListFile.absolutePath + "' doesn't exist")
               }
-              listOf(pluginFile)
+              listOf(IdleFileLock(pluginFile))
             }
           }.flatten()
 
-  fun downloadPluginBuilds(pluginId: String, ideVersion: IdeVersion): List<File> =
+  fun downloadPluginBuilds(pluginId: String, ideVersion: IdeVersion): List<IFileLock> =
       RepositoryManager
           .getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId)
           .map { RepositoryManager.getPluginFile(it)!! }
