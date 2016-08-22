@@ -17,7 +17,7 @@ class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
 
   private fun getMissingUpdatesProblems(): List<MissingCompatibleUpdate> {
     val ideVersion = params.ideDescriptor.ideVersion
-    val existingUpdatesForIde = RepositoryManager.getInstance()
+    val existingUpdatesForIde = RepositoryManager
         .getLastCompatibleUpdates(ideVersion)
         .filterNot { params.excludedPlugins.containsEntry(it.pluginId, it.version) }
         .map { it.pluginId }
@@ -43,7 +43,7 @@ class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
     if (ideVersion.startsWith("IU-")) {
       val communityVersion = "IC-" + ideVersion.substringAfter(ideVersion, "IU-")
       try {
-        return RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(IdeVersion.createIdeVersion(communityVersion), pluginId)
+        return RepositoryManager.getLastCompatibleUpdateOfPlugin(IdeVersion.createIdeVersion(communityVersion), pluginId)
       } catch (e: Exception) {
         return null
       }

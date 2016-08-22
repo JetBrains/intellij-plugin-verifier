@@ -63,9 +63,9 @@ object Dependencies {
                 dependency = ide.getPluginById(pluginId)
                 if (dependency == null) {
                   try {
-                    val updateInfo = RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(ide.version, pluginId)
+                    val updateInfo = RepositoryManager.getLastCompatibleUpdateOfPlugin(ide.version, pluginId)
                     if (updateInfo != null) {
-                      val pluginFile = RepositoryManager.getInstance().getPluginFile(updateInfo)
+                      val pluginFile = RepositoryManager.getPluginFile(updateInfo)
                       if (pluginFile != null) {
                         dependency = PluginCache.createPlugin(pluginFile)
                       }
@@ -90,7 +90,7 @@ object Dependencies {
               //try to load plugin
               val updateInfo: UpdateInfo?
               try {
-                updateInfo = RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(ide.version, depId)
+                updateInfo = RepositoryManager.getLastCompatibleUpdateOfPlugin(ide.version, depId)
               } catch (e: Exception) {
                 val message = "Couldn't get dependency plugin '$depId' from the Plugin Repository for IDE ${ide.version}"
                 LOG.debug(message, e)
@@ -102,7 +102,7 @@ object Dependencies {
                 //update does really exist in the repo
                 val pluginZip: File?
                 try {
-                  pluginZip = RepositoryManager.getInstance().getPluginFile(updateInfo)
+                  pluginZip = RepositoryManager.getPluginFile(updateInfo)
                 } catch (e: Exception) {
                   val message = "Couldn't download dependency plugin '$depId' from the Plugin Repository for IDE ${ide.version}"
                   LOG.debug(message, e)

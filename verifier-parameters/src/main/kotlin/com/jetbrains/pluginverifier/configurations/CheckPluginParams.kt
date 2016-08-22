@@ -35,7 +35,7 @@ object CheckPluginParamsParser : ParamsParser {
       val pluginId = pluginToTestArg.substring(1)
       try {
         val updateId = Integer.parseInt(pluginId)
-        val pluginFile = RepositoryManager.getInstance().getPluginFile(updateId) ?: throw RuntimeException("No such plugin $pluginToTestArg")
+        val pluginFile = RepositoryManager.getPluginFile(updateId) ?: throw RuntimeException("No such plugin $pluginToTestArg")
         return listOf(pluginFile)
       } catch (e: IOException) {
         throw RuntimeException("Cannot load plugin #" + pluginId, e)
@@ -69,9 +69,9 @@ object CheckPluginParamsParser : ParamsParser {
           }.flatten()
 
   fun downloadPluginBuilds(pluginId: String, ideVersion: IdeVersion): List<File> =
-      RepositoryManager.getInstance()
+      RepositoryManager
           .getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId)
-          .map { RepositoryManager.getInstance().getPluginFile(it)!! }
+          .map { RepositoryManager.getPluginFile(it)!! }
 
 
 }

@@ -17,12 +17,12 @@ public class TestRepositoryManager {
 
   @Test
   public void updatesOfPlugin() throws Exception {
-    assertTrue(RepositoryManager.getInstance().getAllCompatibleUpdatesOfPlugin(getIdeVersion(), "org.jetbrains.kotlin").size() > 0);
+    assertTrue(RepositoryManager.INSTANCE.getAllCompatibleUpdatesOfPlugin(getIdeVersion(), "org.jetbrains.kotlin").size() > 0);
   }
 
   @Test
   public void lastUpdate() throws Exception {
-    UpdateInfo info = RepositoryManager.getInstance().getLastCompatibleUpdateOfPlugin(getIdeVersion(), "org.jetbrains.kotlin");
+    UpdateInfo info = RepositoryManager.INSTANCE.getLastCompatibleUpdateOfPlugin(getIdeVersion(), "org.jetbrains.kotlin");
     assertNotNull(info);
     assertTrue(info.getUpdateId() > 20000);
   }
@@ -34,13 +34,13 @@ public class TestRepositoryManager {
 
   @Test
   public void downloadNonExistentPlugin() throws Exception {
-    File id = RepositoryManager.getInstance().getPluginFile(-1000);
+    File id = RepositoryManager.INSTANCE.getPluginFile(-1000);
     assertNull(id);
   }
 
   @Test
   public void downloadExistentPlugin() throws Exception {
-    File info = RepositoryManager.getInstance().getPluginFile(25128); //.gitignore 1.3.3
+    File info = RepositoryManager.INSTANCE.getPluginFile(25128); //.gitignore 1.3.3
     assertNotNull(info);
     assertTrue(info.length() > 0);
   }

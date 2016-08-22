@@ -121,7 +121,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
 
     //request the last versions of the checked plugins. it is used to print "newest" suffix in the check-page.
     val lastUpdates = results.results.map { it.ideDescriptor.ideVersion }.distinct().associate {
-      it to RepositoryManager.getInstance().getLastCompatibleUpdates(it).sortedByDescending { it.updateId }.distinctBy { Triple(it.pluginId, it.pluginName, it.version) }
+      it to RepositoryManager.getLastCompatibleUpdates(it).sortedByDescending { it.updateId }.distinctBy { Triple(it.pluginId, it.pluginName, it.version) }
     }
 
     results.results.groupBy { it.pluginDescriptor.pluginId }.forEach { pidToResults ->
