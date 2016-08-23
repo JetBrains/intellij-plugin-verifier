@@ -8,20 +8,25 @@ import com.intellij.structure.domain.PluginDependency
 import com.jetbrains.pluginverifier.dependencies.MissingReason
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.PluginCache
+import com.jetbrains.pluginverifier.repository.IFileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.jgrapht.graph.DefaultEdge
 import org.slf4j.LoggerFactory
-import java.io.File
 
 object Dependencies {
 
   @JvmStatic
   fun calcDependencies(plugin: Plugin, ide: Ide): Pair<DirectedGraph<Vertex, Edge>, Vertex> {
     val dfs = Dfs(ide)
-    val vertex = dfs.dfs(plugin)
-    return dfs.graph to vertex
+    try {
+      val vertex = dfs.dfs(plugin, null)
+      return dfs.graph to vertex
+    } catch (e: Exception) {
+      dfs.graph.vertexSet().forEach { it.pluginLock?.release() }
+      throw e
+    }
   }
 
   /**
@@ -31,9 +36,9 @@ object Dependencies {
 
     val graph: DirectedGraph<Vertex, Edge> = DefaultDirectedGraph(Edge::class.java)
 
-    internal fun dfs(plugin: Plugin): Vertex {
+    internal fun dfs(plugin: Plugin, pluginLock: IFileLock?): Vertex {
       //current node results
-      val result = Vertex(plugin)
+      val result = Vertex(plugin, pluginLock)
 
       if (graph.containsVertex(result)) {
         //either the plugin is visited or it is in-progress
@@ -46,28 +51,28 @@ object Dependencies {
       for (pd in plugin.moduleDependencies + plugin.dependencies) {
         val isModule = plugin.moduleDependencies.indexOf(pd) != -1
         val depId: String = pd.id
-        var dependency: Plugin?
+        var dependency: Pair<Plugin, IFileLock?>?
 
         //find in already visited plugins
-        dependency = graph.vertexSet().find { depId == it.plugin.pluginId }?.plugin
+        dependency = graph.vertexSet().find { depId == it.plugin.pluginId }?.run { this.plugin to this.pluginLock }
         if (dependency == null) {
           if (isModule) {
             if (isDefaultModule(depId)) {
               continue
             }
-            dependency = ide.getPluginByModule(depId)
+            dependency = ide.getPluginByModule(depId)?.run { this to null }
             if (dependency == null) {
               if (INTELLIJ_MODULES_CONTAINING_PLUGINS.containsKey(depId)) {
                 //try to add the intellij plugin which defines this module
                 val pluginId = INTELLIJ_MODULES_CONTAINING_PLUGINS[depId]!!
-                dependency = ide.getPluginById(pluginId)
+                dependency = ide.getPluginById(pluginId)?.run { this to null }
                 if (dependency == null) {
                   try {
                     val updateInfo = RepositoryManager.getLastCompatibleUpdateOfPlugin(ide.version, pluginId)
                     if (updateInfo != null) {
-                      val pluginFile = RepositoryManager.getPluginFile(updateInfo)
-                      if (pluginFile != null) {
-                        dependency = PluginCache.createPlugin(pluginFile)
+                      val lock = RepositoryManager.getPluginFile(updateInfo)
+                      if (lock != null) {
+                        dependency = PluginCache.createPlugin(lock.getFile()) to lock
                       }
                     }
                   } catch (e: Exception) {
@@ -84,7 +89,7 @@ object Dependencies {
             }
 
           } else {
-            dependency = ide.getPluginById(depId)
+            dependency = ide.getPluginById(depId)?.run { this to null }
 
             if (dependency == null) {
               //try to load plugin
@@ -100,7 +105,7 @@ object Dependencies {
 
               if (updateInfo != null) {
                 //update does really exist in the repo
-                val pluginZip: File?
+                val pluginZip: IFileLock?
                 try {
                   pluginZip = RepositoryManager.getPluginFile(updateInfo)
                 } catch (e: Exception) {
@@ -118,8 +123,9 @@ object Dependencies {
                 }
 
                 try {
-                  dependency = PluginCache.createPlugin(pluginZip)
+                  dependency = PluginCache.createPlugin(pluginZip.getFile()).run { this to pluginZip }
                 } catch (e: Exception) {
+                  pluginZip.release()
                   val message = "Plugin $plugin depends on the other plugin $depId which has some problems"
                   LOG.debug(message, e)
                   missing.put(pd, MissingReason(message))
@@ -141,7 +147,7 @@ object Dependencies {
 
         //recursively traverse the dependency plugin.
         //it could already be in-progress in which case the cycle is detected.
-        val to: Vertex = dfs(dependency)
+        val to: Vertex = dfs(dependency.first, dependency.second)
 
         graph.addEdge(result, to, Edge(pd, result, to))
       }
@@ -181,7 +187,7 @@ object Dependencies {
 
 class Edge(val dependency: PluginDependency, val from: Vertex, val to: Vertex) : DefaultEdge()
 
-data class Vertex(val plugin: Plugin) {
+data class Vertex(val plugin: Plugin, val pluginLock: IFileLock?) {
 
   val missingDependencies: MutableMap<PluginDependency, MissingReason> = hashMapOf()
 
