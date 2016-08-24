@@ -279,7 +279,7 @@ object VManager {
 
         val warnings = ctx.warnings +
             (if (plugin is PluginImpl) plugin.hints.map { Warning(it) } else emptyList()) +
-            (if (cycle != null) listOf(Warning(cycle.joinToString(separator = " -> ") { it.pluginId })) else emptyList())
+            (if (cycle != null) listOf(Warning("Found dependencies cycle: " + cycle.joinToString(separator = " -> ") { it.pluginId })) else emptyList())
 
         if (ctx.problems.isEmpty) {
           pluginLock?.release()
