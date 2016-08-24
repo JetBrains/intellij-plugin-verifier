@@ -183,16 +183,11 @@ class VerifierController {
     def byFile = new PluginDescriptor.ByFile("${params.pluginFile.getOriginalFilename() as String}", "", saved)
     def runner = new CheckRangeRunner(byFile, runnerParams)
 
-    def onSuccess = { def result ->
-      LanguageUtilsKt.deleteLogged(saved)
-      return null
-    }
-    def onError = { def one, def two, def three ->
-      LanguageUtilsKt.deleteLogged(saved)
-      return null
-    }
+    def onSuccess = { def result -> return null }
+    def onError = { def one, def two, def three -> return null }
+    def onCompletion = { def one, def two -> LanguageUtilsKt.deleteLogged(saved); return null }
 
-    def taskId = TaskManager.INSTANCE.enqueue(runner, onSuccess, onError)
+    def taskId = TaskManager.INSTANCE.enqueue(runner, onSuccess, onError, onCompletion)
 
     sendJson(taskId)
     log.info("New Check-Plugin-With-[since;until] is enqueued with taskId=$taskId")
