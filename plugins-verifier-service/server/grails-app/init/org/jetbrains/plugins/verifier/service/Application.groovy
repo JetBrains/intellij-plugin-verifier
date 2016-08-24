@@ -3,7 +3,7 @@ package org.jetbrains.plugins.verifier.service
 import com.google.common.base.Preconditions
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
-import org.jetbrains.plugins.verifier.service.service.ServiceKt
+import org.jetbrains.plugins.verifier.service.service.Service
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -23,9 +23,9 @@ class Application extends GrailsAutoConfiguration {
     setSystemProperties()
 
     LOG.info("Server settings: ${Settings.values().collect { it.key + "=" + it.get() }.join(", ")}")
-    ServiceKt.run()
+    Service.INSTANCE.run()
 
-    def context = GrailsApp.run(Application, args)
+    GrailsApp.run(Application, args)
   }
 
   private static def assertSystemProperties() {
