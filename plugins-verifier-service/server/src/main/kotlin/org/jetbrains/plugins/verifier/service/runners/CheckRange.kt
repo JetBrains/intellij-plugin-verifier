@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.configurations.CheckPluginConfiguration
 import com.jetbrains.pluginverifier.configurations.CheckPluginParams
 import com.jetbrains.pluginverifier.configurations.CheckRangeResults
 import com.jetbrains.pluginverifier.configurations.CheckRangeResults.ResultType.*
+import com.jetbrains.pluginverifier.repository.IFileLock
 import org.jetbrains.plugins.verifier.service.core.BridgeVProgress
 import org.jetbrains.plugins.verifier.service.core.Progress
 import org.jetbrains.plugins.verifier.service.core.Task
@@ -24,14 +25,14 @@ class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
   }
 
   override fun computeResult(progress: Progress): CheckRangeResults {
-    val pair: Pair<Plugin?, VResult?>
+    val createResult: VManager.CreatePluginResult
     try {
-      pair = VManager.createPlugin(pluginToCheck)
+      createResult = VManager.createPlugin(pluginToCheck)
     } catch(e: Exception) {
       LOG.error("Unable to create plugin for $pluginToCheck", e)
       throw e
     }
-    val (plugin: Plugin?, badResult: VResult?) = pair
+    val (plugin: Plugin?, pluginLock: IFileLock?, badResult: VResult?) = createResult
 
     if (badResult != null) {
       return when (badResult) {
@@ -40,57 +41,61 @@ class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
         else -> throw IllegalStateException()
       }
     }
-    plugin!!
-
-    val sinceBuild = plugin.sinceBuild
-    val untilBuild = plugin.untilBuild
-
-    if (sinceBuild == null) {
-      LOG.info("The plugin $pluginToCheck has not specified since-build property")
-      val reason = "The plugin ${plugin.toString()} has not specified the <idea-version> 'since-build' attribute. See  <a href=\"http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html\">Plugin Configuration File - plugin.xml<\\a>"
-      return CheckRangeResults(pluginToCheck, BAD_PLUGIN, VResult.BadPlugin(pluginToCheck, reason), null, null)
-    }
-
-
-
-    LOG.debug("Verifying plugin $plugin against its specified [$sinceBuild; $untilBuild] builds")
-
-
-    val locks: List<IdeFilesManager.IdeLock> = IdeFilesManager.locked({
-      IdeFilesManager.ideList()
-          .filter { sinceBuild.compareTo(it) <= 0 && (untilBuild == null || it.compareTo(untilBuild) <= 0) }
-          .map { IdeFilesManager.getIde(it) }
-          .filterNotNull()
-    })
-    LOG.debug("IDE-s on the server: ${IdeFilesManager.ideList().joinToString()}; IDE-s compatible with [$sinceBuild; $untilBuild]: [${locks.joinToString { it.ide.version.asString() }}]")
-
-    if (locks.isEmpty()) {
-      //TODO: download from the IDE repository.
-      LOG.error("There are no IDEs compatible with the Plugin ${plugin.toString()}; [since; until] = [$sinceBuild; $untilBuild]")
-      return CheckRangeResults(pluginToCheck, NO_COMPATIBLE_IDES, null, null, null)
-    }
-
     try {
-      val ideDescriptors = locks.map { IdeDescriptor.ByInstance(it.ide) }
-      val jdkDescriptor = JdkDescriptor.ByFile(JdkManager.getJdkHome(params.jdkVersion))
-      val pluginDescriptor = PluginDescriptor.ByInstance(plugin)
-      val params = CheckPluginParams(listOf(pluginDescriptor), ideDescriptors, jdkDescriptor, params.vOptions, true, Resolver.getEmptyResolver(), BridgeVProgress(progress))
+      plugin!!
 
-      LOG.debug("CheckPlugin with [since; until] #$taskId arguments: $params")
+      val sinceBuild = plugin.sinceBuild
+      val untilBuild = plugin.untilBuild
 
-      val results: VResults
-      try {
-        results = CheckPluginConfiguration(params).execute().vResults
-      } catch(ie: InterruptedException) {
-        throw ie
-      } catch(e: Exception) {
-        //this is likely the problem of the Verifier itself.
-        LOG.error("Failed to verify the plugin $plugin", e)
-        throw e
+      if (sinceBuild == null) {
+        LOG.info("The plugin $pluginToCheck has not specified since-build property")
+        val reason = "The plugin ${plugin.toString()} has not specified the <idea-version> 'since-build' attribute. See  <a href=\"http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html\">Plugin Configuration File - plugin.xml<\\a>"
+        return CheckRangeResults(pluginToCheck, BAD_PLUGIN, VResult.BadPlugin(pluginToCheck, reason), null, null)
       }
-      return CheckRangeResults(pluginToCheck, CHECKED, null, ideDescriptors, results)
+
+
+
+      LOG.debug("Verifying plugin $plugin against its specified [$sinceBuild; $untilBuild] builds")
+
+
+      val locks: List<IdeFilesManager.IdeLock> = IdeFilesManager.locked({
+        IdeFilesManager.ideList()
+            .filter { sinceBuild.compareTo(it) <= 0 && (untilBuild == null || it.compareTo(untilBuild) <= 0) }
+            .map { IdeFilesManager.getIde(it) }
+            .filterNotNull()
+      })
+      LOG.debug("IDE-s on the server: ${IdeFilesManager.ideList().joinToString()}; IDE-s compatible with [$sinceBuild; $untilBuild]: [${locks.joinToString { it.ide.version.asString() }}]")
+
+      if (locks.isEmpty()) {
+        //TODO: download from the IDE repository.
+        LOG.error("There are no IDEs compatible with the Plugin ${plugin.toString()}; [since; until] = [$sinceBuild; $untilBuild]")
+        return CheckRangeResults(pluginToCheck, NO_COMPATIBLE_IDES, null, null, null)
+      }
+
+      try {
+        val ideDescriptors = locks.map { IdeDescriptor.ByInstance(it.ide) }
+        val jdkDescriptor = JdkDescriptor.ByFile(JdkManager.getJdkHome(params.jdkVersion))
+        val pluginDescriptor = PluginDescriptor.ByInstance(plugin)
+        val params = CheckPluginParams(listOf(pluginDescriptor), ideDescriptors, jdkDescriptor, params.vOptions, true, Resolver.getEmptyResolver(), BridgeVProgress(progress))
+
+        LOG.debug("CheckPlugin with [since; until] #$taskId arguments: $params")
+
+        val results: VResults
+        try {
+          results = CheckPluginConfiguration(params).execute().vResults
+        } catch(ie: InterruptedException) {
+          throw ie
+        } catch(e: Exception) {
+          //this is likely the problem of the Verifier itself.
+          LOG.error("Failed to verify the plugin $plugin", e)
+          throw e
+        }
+        return CheckRangeResults(pluginToCheck, CHECKED, null, ideDescriptors, results)
+      } finally {
+        locks.forEach { it.release() }
+      }
     } finally {
-      locks.forEach { it.release() }
+      pluginLock?.release()
     }
   }
 }

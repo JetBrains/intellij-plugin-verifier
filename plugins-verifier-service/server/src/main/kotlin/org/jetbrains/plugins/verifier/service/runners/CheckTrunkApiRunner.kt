@@ -50,7 +50,6 @@ class CheckTrunkApiRunner(val ideFile: File,
       val pluginsToCheck: List<PluginDescriptor>
       try {
         pluginsToCheck = RepositoryManager
-            .getInstance()
             .getLastCompatibleUpdates(ide.version)
             .map { PluginDescriptor.ByUpdateInfo(it) }
       } catch(e: Exception) {
