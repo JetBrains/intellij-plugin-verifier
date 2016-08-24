@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.core
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.jetbrains.plugins.verifier.service.api.Result
 import org.jetbrains.plugins.verifier.service.api.TaskId
 import org.jetbrains.plugins.verifier.service.api.TaskStatus
@@ -14,11 +15,16 @@ import java.util.concurrent.Future
  * @author Sergey Patrikeev
  */
 object TaskManager : ITaskManager {
-  const val PARALLEL_LIMIT = 8
+
+  const val MAX_RUNNING_TASKS = 100
+
+  private val PARALLEL_LIMIT: Int by lazy {
+    Math.max(8, Runtime.getRuntime().availableProcessors())
+  }
 
   private var counter: Int = 0
 
-  private val service = Executors.newFixedThreadPool(PARALLEL_LIMIT)
+  private val service = Executors.newFixedThreadPool(PARALLEL_LIMIT, ThreadFactoryBuilder().setDaemon(true).setNameFormat("worker-%d").build())
 
   private val tasks: MutableMap<TaskId, Pair<Future<*>, Worker<*>>> = hashMapOf()
 
@@ -55,12 +61,13 @@ object TaskManager : ITaskManager {
   @Synchronized
   override fun <T> enqueue(task: Task<T>,
                            onSuccess: (Result<T>) -> Unit,
-                           onError: (t: Throwable, taskId: TaskId, task: Task<T>) -> Unit): TaskId {
+                           onError: (Throwable, TaskStatus, Task<T>) -> Unit,
+                           onCompletion: (TaskStatus, Task<T>) -> Unit): TaskId {
     val taskId = TaskId(counter++)
 
     task.taskId = taskId
 
-    val worker = Worker(task, taskId, onSuccess, onError)
+    val worker = Worker(task, taskId, onSuccess, onError, onCompletion)
 
     val future = service.submit(worker)
 
@@ -70,7 +77,7 @@ object TaskManager : ITaskManager {
   }
 
   @Synchronized
-  override fun <T> enqueue(task: Task<T>): TaskId = enqueue(task, {}, { t, tid, task -> })
+  override fun <T> enqueue(task: Task<T>): TaskId = enqueue(task, {}, { t, tst, task -> }, { tst, t -> })
 
   @Synchronized
   override fun cancel(taskId: TaskId): Boolean {
@@ -98,7 +105,8 @@ object TaskManager : ITaskManager {
   private class Worker<T>(val task: Task<T>,
                           val taskId: TaskId,
                           val onSuccess: (Result<T>) -> Unit,
-                          val onError: (t: Throwable, taskId: TaskId, task: Task<T>) -> Unit,
+                          val onError: (t: Throwable, taskStatus: TaskStatus, task: Task<T>) -> Unit,
+                          val onCompletion: (taskStatus: TaskStatus, task: Task<T>) -> Unit,
                           @Volatile var result: T? = null,
                           @Volatile var errorMsg: String? = null,
                           @Volatile var state: TaskStatus.State = WAITING,
@@ -123,14 +131,19 @@ object TaskManager : ITaskManager {
       } finally {
         endTime = System.currentTimeMillis()
         onComplete(taskId)
-        LOG.info("Task #$taskId is completed")
+        LOG.info("Task #$taskId is completed with $state")
       }
 
+      //execute callbacks
       val status = TaskStatus(taskId, startTime, endTime, state, progress.getProgress(), progress.getText(), task.presentableName())
-      if (task.isSuccessful()) {
-        onSuccess(Result(status, task.result(), null))
-      } else if (task.isFailed()) {
-        onError(task.exception(), taskId, task)
+      try {
+        if (task.isSuccessful()) {
+          onSuccess(Result(status, task.result(), null))
+        } else if (task.isFailed()) {
+          onError(task.exception(), status, task)
+        }
+      } finally {
+        onCompletion(status, task)
       }
     }
 
@@ -142,7 +155,7 @@ interface ITaskManager {
 
   fun <T> enqueue(task: Task<T>): TaskId
 
-  fun <T> enqueue(task: Task<T>, onSuccess: (Result<T>) -> Unit, onError: (Throwable, TaskId, Task<T>) -> Unit): TaskId
+  fun <T> enqueue(task: Task<T>, onSuccess: (Result<T>) -> Unit, onError: (Throwable, TaskStatus, Task<T>) -> Unit, onCompletion: (TaskStatus, Task<T>) -> Unit): TaskId
 
   fun cancel(taskId: TaskId): Boolean
 
