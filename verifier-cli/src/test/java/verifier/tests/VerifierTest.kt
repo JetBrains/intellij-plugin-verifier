@@ -12,7 +12,7 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.*
-import com.jetbrains.pluginverifier.reference.ClassReference
+import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.VOptionsUtil
 import org.junit.Assert
@@ -52,7 +52,7 @@ class VerifierTest {
       .put(MethodNotFoundProblem("com/intellij/openapi/actionSystem/AnAction", "nonExistingMethod", "()V"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenNonFoundMethod", "()V"))
       .put(AbstractClassInstantiationProblem("misc/BecomeAbstract"), ProblemLocation.fromMethod("mock/plugin/news/NewProblems", "abstractClass", "()V"))
       .put(InterfaceInstantiationProblem("misc/BecomeInterface"), ProblemLocation.fromMethod("mock/plugin/news/NewProblems", "newInterface", "()V"))
-      .put(IncompatibleClassToInterfaceChangeProblem(ClassReference("misc/BecomeInterface")), ProblemLocation.Companion.fromMethod("mock/plugin/news/NewProblems", "newInterface", "()V"))
+      .put(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classFrom("misc/BecomeInterface")), ProblemLocation.Companion.fromMethod("mock/plugin/news/NewProblems", "newInterface", "()V"))
 
 
       .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "getState", "()Ljava/lang/Object;"), ProblemLocation.fromClass("mock/plugin/NotImplementedProblem"))

@@ -4,7 +4,7 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.InheritFromFinalClassProblem
-import com.jetbrains.pluginverifier.reference.ClassReference
+import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.objectweb.asm.tree.ClassNode
 
@@ -13,7 +13,7 @@ class InheritFromFinalClassVerifier : ClassVerifier {
     val superClassName = if (clazz.superName == null) "java/lang/Object" else clazz.superName
     val supClass = VerifierUtil.resolveClassOrProblem(resolver, superClassName, clazz, ctx, { ProblemLocation.fromClass(clazz.name) }) ?: return
     if (VerifierUtil.isFinal(supClass)) {
-      ctx.registerProblem(InheritFromFinalClassProblem(ClassReference(supClass.name)), ProblemLocation.fromClass(clazz.name))
+      ctx.registerProblem(InheritFromFinalClassProblem(SymbolicReference.classFrom(supClass.name)), ProblemLocation.fromClass(clazz.name))
     }
   }
 }

@@ -4,7 +4,7 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.IncompatibleInterfaceToClassChangeProblem
-import com.jetbrains.pluginverifier.reference.ClassReference
+import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.objectweb.asm.tree.ClassNode
 
@@ -19,7 +19,7 @@ class InterfacesVerifier : ClassVerifier {
       val iface = o as String
       val node = VerifierUtil.resolveClassOrProblem(resolver, iface, clazz, ctx, { ProblemLocation.fromClass(clazz.name) }) ?: continue
       if (!VerifierUtil.isInterface(node)) {
-        ctx.registerProblem(IncompatibleInterfaceToClassChangeProblem(ClassReference(iface)), ProblemLocation.fromClass(clazz.name))
+        ctx.registerProblem(IncompatibleInterfaceToClassChangeProblem(SymbolicReference.classFrom(iface)), ProblemLocation.fromClass(clazz.name))
       }
     }
   }

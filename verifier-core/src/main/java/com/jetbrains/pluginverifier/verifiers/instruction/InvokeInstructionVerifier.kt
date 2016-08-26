@@ -4,8 +4,8 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.*
-import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.reference.MethodReference
+import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
@@ -60,7 +60,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       /*
       Otherwise, if the resolved method is a class (static) method, the invokevirtual instruction throws an IncompatibleClassChangeError.
        */
-      ctx.registerProblem(InvokeVirtualOnStaticMethodProblem(MethodReference.from(resolved.definingClass, resolved.methodNode)), getFromMethod())
+      ctx.registerProblem(InvokeVirtualOnStaticMethodProblem(SymbolicReference.methodFrom(resolved.definingClass, resolved.methodNode)), getFromMethod())
     }
   }
 
@@ -216,7 +216,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     Otherwise, if the resolved method is an instance method, the invokestatic instruction throws an IncompatibleClassChangeError.
      */
     if (!VerifierUtil.isStatic(resolved.methodNode)) {
-      ctx.registerProblem(InvokeStaticOnInstanceMethodProblem(MethodReference.from(resolved.definingClass, resolved.methodNode)), getFromMethod())
+      ctx.registerProblem(InvokeStaticOnInstanceMethodProblem(SymbolicReference.methodFrom(resolved.definingClass, resolved.methodNode)), getFromMethod())
     }
   }
 
@@ -296,7 +296,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     }
 
     if (accessProblem != null) {
-      val problem = IllegalMethodAccessProblem(MethodReference.from(definingClass.name, methodNode), accessProblem)
+      val problem = IllegalMethodAccessProblem(SymbolicReference.methodFrom(definingClass.name, methodNode), accessProblem)
       ctx.registerProblem(problem, getFromMethod())
     }
   }
@@ -316,7 +316,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     1) If C is not an interface, interface method resolution throws an IncompatibleClassChangeError.
      */
     if (!VerifierUtil.isInterface(interfaceNode)) {
-      ctx.registerProblem(IncompatibleInterfaceToClassChangeProblem(ClassReference(interfaceNode.name)), getFromMethod())
+      ctx.registerProblem(IncompatibleInterfaceToClassChangeProblem(SymbolicReference.classFrom(interfaceNode.name)), getFromMethod())
       return FAILED_LOOKUP
     }
 
@@ -456,7 +456,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       1) If C is an interface, method resolution throws an IncompatibleClassChangeError.
     */
     if (VerifierUtil.isInterface(classNode)) {
-      ctx.registerProblem(IncompatibleClassToInterfaceChangeProblem(ClassReference(classNode.name)), getFromMethod())
+      ctx.registerProblem(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classFrom(classNode.name)), getFromMethod())
       return FAILED_LOOKUP
     }
 
