@@ -65,20 +65,24 @@ data class DependenciesGraph(@SerializedName("start") val start: DependencyNode,
 
 }
 
-//TODO: write a compact implementation
-private data class DependenciesGraphCompact(@SerializedName("vertices") val vertices: List<DependencyNode>,
+private data class DependenciesGraphCompact(@SerializedName("vertices") val vertices: List<Triple<String, String, Map<PluginDependency, MissingReason>>>,
                                             @SerializedName("startIdx") val startIdx: Int,
                                             @SerializedName("edges") val edges: List<Triple<Int, Int, PluginDependency>>)
 
 internal val dependenciesGraphSerializer = jsonSerializer<DependenciesGraph> {
   val nodeToId: Map<DependencyNode, Int> = it.src.vertices.mapIndexed { i, node -> node to i }.toMap()
 
+  val vertices = it.src.vertices.map { Triple(it.pluginId, it.version, it.missingDependencies) }
+  val startIdx = it.src.vertices.indexOf(it.src.start)
+  val edges = it.src.edges.map { Triple(nodeToId[it.from]!!, nodeToId[it.to]!!, it.dependency) }
   it.context.serialize(
-      DependenciesGraphCompact(it.src.vertices, it.src.vertices.indexOf(it.src.start), it.src.edges.map { Triple(nodeToId[it.from]!!, nodeToId[it.to]!!, it.dependency) })
+      DependenciesGraphCompact(vertices, startIdx, edges)
   )
 }
 
 internal val dependenciesGraphDeserializer = jsonDeserializer<DependenciesGraph> {
   val compact = it.context.deserialize<DependenciesGraphCompact>(it.json)
-  DependenciesGraph(compact.vertices[compact.startIdx], compact.vertices, compact.edges.map { DependencyEdge(compact.vertices[it.first], compact.vertices[it.second], it.third) })
+  val vertices = compact.vertices.map { DependencyNode(it.first, it.second, it.third) }
+  DependenciesGraph(vertices[compact.startIdx], vertices, compact.edges.map { DependencyEdge(vertices[it.first], vertices[it.second], it.third) })
+
 }
