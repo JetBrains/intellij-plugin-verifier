@@ -10,13 +10,13 @@ import org.objectweb.asm.tree.MethodNode
 interface ProblemLocation {
 
   companion object {
-    fun fromClass(className: String) = ClassLocation(className)
+    fun fromClass(className: String): ProblemLocation = ClassLocation(className)
 
-    fun fromMethod(hostClass: String, method: MethodNode) = fromMethod(hostClass, method.name, method.desc)
+    fun fromMethod(hostClass: String, method: MethodNode): ProblemLocation = fromMethod(hostClass, method.name, method.desc)
 
-    fun fromMethod(hostClass: String, methodName: String, methodDescriptor: String) = MethodLocation(hostClass, methodName, methodDescriptor)
+    fun fromMethod(hostClass: String, methodName: String, methodDescriptor: String): ProblemLocation = MethodLocation(hostClass, methodName, methodDescriptor)
 
-    fun fromField(hostClass: String, fieldName: String, fieldDescriptor: String) = FieldLocation(hostClass, fieldName, fieldDescriptor)
+    fun fromField(hostClass: String, fieldName: String, fieldDescriptor: String): ProblemLocation = FieldLocation(hostClass, fieldName, fieldDescriptor)
   }
 }
 

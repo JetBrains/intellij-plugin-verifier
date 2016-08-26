@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
-import com.jetbrains.pluginverifier.location.ClassLocation
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.ClassReference
@@ -135,7 +134,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
         If a match is found, then it is the method to be invoked.
     */
     if (!VerifierUtil.isInterface(classRef) && classRef.superName != null) {
-      var current: ClassNode = VerifierUtil.resolveClassOrProblem(resolver, classRef.superName, classRef, ctx, { ClassLocation(classRef.name) }) ?: return null
+      var current: ClassNode = VerifierUtil.resolveClassOrProblem(resolver, classRef.superName, classRef, ctx, { ProblemLocation.fromClass(classRef.name) }) ?: return null
       while (true) {
         val match = (current.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc }
         if (match != null) {
@@ -144,7 +143,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
 
         val superName = current.superName
         superName ?: break
-        current = VerifierUtil.resolveClassOrProblem(resolver, superName, current, ctx, { ClassLocation(current.name) }) ?: return null
+        current = VerifierUtil.resolveClassOrProblem(resolver, superName, current, ctx, { ProblemLocation.fromClass(current.name) }) ?: return null
       }
     }
 
@@ -153,7 +152,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
        the same name and descriptor as the resolved method, then it is the method to be invoked.
     */
     if (VerifierUtil.isInterface(classRef)) {
-      val objectClass = VerifierUtil.resolveClassOrProblem(resolver, "java/lang/Object", classRef, ctx, { ClassLocation(classRef.name) }) ?: return null
+      val objectClass = VerifierUtil.resolveClassOrProblem(resolver, "java/lang/Object", classRef, ctx, { ProblemLocation.fromClass(classRef.name) }) ?: return null
       val match = (objectClass.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc && VerifierUtil.isPublic(it) }
       if (match != null) {
         return 3 to ResolvedMethod(objectClass, match)
