@@ -20,15 +20,13 @@ import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.dependenciesGraphDeserializer
 import com.jetbrains.pluginverifier.dependencies.dependenciesGraphSerializer
-import com.jetbrains.pluginverifier.location.ClassLocation
-import com.jetbrains.pluginverifier.location.FieldLocation
-import com.jetbrains.pluginverifier.location.MethodLocation
 import com.jetbrains.pluginverifier.location.ProblemLocation
+import com.jetbrains.pluginverifier.location.problemLocationDeserializer
+import com.jetbrains.pluginverifier.location.problemLocationSerializer
 import com.jetbrains.pluginverifier.problems.*
-import com.jetbrains.pluginverifier.reference.ClassReference
-import com.jetbrains.pluginverifier.reference.FieldReference
-import com.jetbrains.pluginverifier.reference.MethodReference
 import com.jetbrains.pluginverifier.reference.SymbolicReference
+import com.jetbrains.pluginverifier.reference.symbolicReferenceDeserializer
+import com.jetbrains.pluginverifier.reference.symbolicReferenceSerializer
 import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.report.checkIdeReportDeserializer
 import com.jetbrains.pluginverifier.report.checkIdeReportSerializer
@@ -42,6 +40,7 @@ import java.lang.reflect.ParameterizedType
 
 object GsonHolder {
   val GSON: Gson = GsonBuilder()
+      .setVersion(1.0)
       //serializes map as Json-array instead of Json-object
       .enableComplexMapKeySerialization()
       .registerTypeHierarchyAdapter(IdeVersion::class.java, IdeVersionTypeAdapter().nullSafe())
@@ -55,14 +54,18 @@ object GsonHolder {
           PluginDependencyImpl(array[0].string, array[1].bool)
         }
       }
+      .registerTypeHierarchyAdapter<ProblemLocation>(problemLocationSerializer)
+      .registerTypeHierarchyAdapter<ProblemLocation>(problemLocationDeserializer)
+      .registerTypeHierarchyAdapter<SymbolicReference>(symbolicReferenceSerializer)
+      .registerTypeHierarchyAdapter<SymbolicReference>(symbolicReferenceDeserializer)
 
       .registerTypeHierarchyAdapter(IdeDescriptor::class.java, IdeDescriptorTypeAdapter().nullSafe())
       .registerTypeAdapterFactory(resultTAF)
       .registerTypeAdapterFactory(problemsTAF)
-      .registerTypeAdapterFactory(locationTAF)
-      .registerTypeAdapterFactory(symbolicReferenceTAF)
       .registerTypeAdapterFactory(pluginDescriptorTAF)
       .registerTypeAdapterFactory(MultimapTypeAdapterFactory())
+      .registerTypeAdapterFactory(PairTypeAdapterFactory())
+      .registerTypeAdapterFactory(TripleTypeAdapterFactory())
 
       //delegate to ByXmlId (we can't serialize File and Ide because it makes no sense)
       .registerTypeAdapter<PluginDescriptor.ByFileLock> {
@@ -86,11 +89,6 @@ object GsonHolder {
       .registerTypeAdapter<DependenciesGraph>(dependenciesGraphDeserializer)
       .create()
 }
-
-private val symbolicReferenceTAF = RuntimeTypeAdapterFactory.of(SymbolicReference::class.java)
-    .registerSubtype(ClassReference::class.java)
-    .registerSubtype(MethodReference::class.java)
-    .registerSubtype(FieldReference::class.java)
 
 private val resultTAF = RuntimeTypeAdapterFactory.of(VResult::class.java)
     .registerSubtype(VResult.Nice::class.java)
@@ -125,11 +123,6 @@ private val problemsTAF = RuntimeTypeAdapterFactory.of(Problem::class.java)
     .registerSubtype(MultipleMethodImplementationsProblem::class.java)
 
 
-private val locationTAF = RuntimeTypeAdapterFactory.of(ProblemLocation::class.java)
-    .registerSubtype(ClassLocation::class.java)
-    .registerSubtype(MethodLocation::class.java)
-    .registerSubtype(FieldLocation::class.java)
-
 private val pluginDescriptorTAF = RuntimeTypeAdapterFactory.of(PluginDescriptor::class.java)
     .registerSubtype(PluginDescriptor.ByXmlId::class.java)
     .registerSubtype(PluginDescriptor.ByUpdateInfo::class.java)
@@ -158,6 +151,74 @@ class IdeVersionTypeAdapter : TypeAdapter<IdeVersion>() {
   override fun read(`in`: JsonReader): IdeVersion {
     return IdeVersion.createIdeVersion(`in`.nextString())
   }
+
+}
+
+class PairTypeAdapterFactory : TypeAdapterFactory {
+
+  override fun <T> create(gson: Gson, typeToken: TypeToken<T>): TypeAdapter<T>? {
+    val type = typeToken.type
+    if (!Pair::class.java.isAssignableFrom(typeToken.rawType) || type !is ParameterizedType) {
+      return null
+    }
+    val types = type.actualTypeArguments
+    @Suppress("UNCHECKED_CAST")
+    return newPairAdapter(gson.getAdapter(TypeToken.get(types[0])), gson.getAdapter(TypeToken.get(types[1]))) as TypeAdapter<T>
+  }
+
+  private fun <A, B> newPairAdapter(firstAdapter: TypeAdapter<A>, secondAdapter: TypeAdapter<B>): TypeAdapter<Pair<A, B>> =
+      object : TypeAdapter<Pair<A, B>>() {
+        override fun write(out: JsonWriter, value: Pair<A, B>) {
+          out.beginArray()
+          firstAdapter.write(out, value.first)
+          secondAdapter.write(out, value.second)
+          out.endArray()
+        }
+
+        override fun read(`in`: JsonReader): Pair<A, B> {
+          `in`.beginArray()
+          val first = firstAdapter.read(`in`)
+          val second = secondAdapter.read(`in`)
+          `in`.endArray()
+          return first to second
+        }
+
+      }.nullSafe()
+
+}
+
+
+class TripleTypeAdapterFactory : TypeAdapterFactory {
+  override fun <T : Any?> create(gson: Gson, typeToken: TypeToken<T>): TypeAdapter<T>? {
+    val type = typeToken.type
+    if (!Triple::class.java.isAssignableFrom(typeToken.rawType) || type !is ParameterizedType) {
+      return null
+    }
+    val types = type.actualTypeArguments
+    @Suppress("UNCHECKED_CAST")
+    return newTripleAdapter(gson.getAdapter(TypeToken.get(types[0])), gson.getAdapter(TypeToken.get(types[1])), gson.getAdapter(TypeToken.get(types[2]))) as TypeAdapter<T>
+  }
+
+  private fun <A, B, C> newTripleAdapter(firstAdapter: TypeAdapter<A>, secondAdapter: TypeAdapter<B>, thirdAdapter: TypeAdapter<C>): TypeAdapter<Triple<A, B, C>> =
+      object : TypeAdapter<Triple<A, B, C>>() {
+        override fun write(out: JsonWriter, value: Triple<A, B, C>) {
+          out.beginArray()
+          firstAdapter.write(out, value.first)
+          secondAdapter.write(out, value.second)
+          thirdAdapter.write(out, value.third)
+          out.endArray()
+        }
+
+        override fun read(`in`: JsonReader): Triple<A, B, C> {
+          `in`.beginArray()
+          val first = firstAdapter.read(`in`)
+          val second = secondAdapter.read(`in`)
+          val third = thirdAdapter.read(`in`)
+          `in`.endArray()
+          return Triple(first, second, third)
+        }
+
+      }.nullSafe()
 
 }
 
