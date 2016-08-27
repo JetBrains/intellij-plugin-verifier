@@ -241,7 +241,13 @@ object DownloadManager {
 
     }
 
-    return registerLock(pluginInCache)
+    val result = registerLock(pluginInCache)
+
+    if (exceedSpace()) {
+      garbageCollection()
+    }
+
+    return result
   }
 
   private fun deleteLogged(file: File) {
