@@ -7,19 +7,24 @@ import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 /**
  * @author Sergey Patrikeev
  */
-enum class Settings(private val key: String) {
+enum class Settings(private val key: String, private val default: String? = null) {
   APP_HOME_DIRECTORY("VERIFIER_SERVICE_HOME_DIRECTORY"),
   JDK_6_HOME("VERIFIER_SERVICE_JDK_6_HOME"),
   JDK_7_HOME("VERIFIER_SERVICE_JDK_7_HOME"),
   JDK_8_HOME("VERIFIER_SERVICE_JDK_8_HOME"),
-  MAX_DISK_SPACE_MB("VERIFIER_SERVICE_MAX_DISK_SPACE");
+  MAX_DISK_SPACE_MB("VERIFIER_SERVICE_MAX_DISK_SPACE"),
+  PLUGIN_REPOSITORY_URL("VERIFIER_SERVICE_PLUGIN_REPOSITORY_URL", "http://plugins.jetbrains.com");
 
   fun get(): String {
     val property = System.getProperty(key)
     if (property != null) {
       return property
     }
-    return Holders.getGrailsApplication().config.getProperty(key) ?: throw IllegalStateException("The property $key should be set")
+    val config = Holders.getGrailsApplication().config.getProperty(key)
+    if (config != null) {
+      return config
+    }
+    return default ?: throw IllegalStateException("The property $key should be set")
   }
 }
 

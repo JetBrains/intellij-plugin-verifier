@@ -47,7 +47,9 @@ private object Service {
   //5 minutes
   private const val SERVICE_PERIOD: Long = 5
 
-  //  private const val REPOSITORY_URL_BASE = "https://plugins.jetbrains.com/"
+  //  private val REPOSITORY_URL_BASE by lazy {
+//    Settings.PLUGIN_REPOSITORY_URL
+//  }
   private const val REPOSITORY_URL_BASE = "http://localhost:8080"
 
   private val verifiableUpdates: MutableMap<UpdateInfo, TaskId> = hashMapOf()
