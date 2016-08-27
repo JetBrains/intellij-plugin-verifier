@@ -1,11 +1,12 @@
 package com.jetbrains.pluginverifier.configurations
 
+import com.google.gson.annotations.SerializedName
 import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.api.VResults
 import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
 
-class CheckPluginResults(val vResults: VResults) : Results {
+data class CheckPluginResults(@SerializedName("results") val vResults: VResults) : Results {
 
   fun printTcLog(groupBy: TeamCityVPrinter.GroupBy, setBuildStatus: Boolean) {
     val tcLog = TeamCityLog(System.out)

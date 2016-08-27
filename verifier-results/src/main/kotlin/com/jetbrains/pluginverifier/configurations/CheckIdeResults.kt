@@ -26,10 +26,10 @@ data class MissingCompatibleUpdate(val pluginId: String, val ideVersion: IdeVers
   override fun toString(): String = "For $pluginId there are no updates compatible with $ideVersion in the Plugin Repository${if (details.isNullOrEmpty()) "" else " ($details)"}"
 }
 
-class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
-                      @SerializedName("results") val vResults: VResults,
-                      @SerializedName("excludedPlugins") val excludedPlugins: Multimap<String, String>,
-                      @SerializedName("noUpdatesProblems") val noCompatibleUpdatesProblems: List<MissingCompatibleUpdate>) : Results {
+data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
+                           @SerializedName("results") val vResults: VResults,
+                           @SerializedName("excludedPlugins") val excludedPlugins: Multimap<String, String>,
+                           @SerializedName("noUpdatesProblems") val noCompatibleUpdatesProblems: List<MissingCompatibleUpdate>) : Results {
 
   fun dumbBrokenPluginsList(dumpBrokenPluginsFile: File) {
     PrintWriter(dumpBrokenPluginsFile.create()).use { out ->
