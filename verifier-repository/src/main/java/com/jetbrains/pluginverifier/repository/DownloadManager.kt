@@ -30,10 +30,10 @@ object DownloadManager {
 
   val TEMP_DOWNLOAD_PREFIX = "currentDownload"
 
-  //95% of maximum available space
-  val SPACE_THRESHOLD = 0.95
+  //90% of maximum available space
+  val SPACE_THRESHOLD = 0.90
 
-  //30 minutes
+  //30 seconds
   private val GC_PERIOD: Long = 30
 
   //8 hours
@@ -45,7 +45,7 @@ object DownloadManager {
             .setDaemon(true)
             .setNameFormat("download-mng-gc-%d")
             .build()
-    ).scheduleAtFixedRate({ garbageCollection() }, GC_PERIOD, GC_PERIOD, TimeUnit.MINUTES)
+    ).scheduleAtFixedRate({ garbageCollection() }, GC_PERIOD, GC_PERIOD, TimeUnit.SECONDS)
   }
 
   private var nextId: Long = 0
