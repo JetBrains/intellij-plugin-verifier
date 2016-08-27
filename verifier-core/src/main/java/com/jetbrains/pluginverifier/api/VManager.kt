@@ -338,13 +338,13 @@ object VManager {
   private fun getDependenciesResolver(ctx: VContext): DependenciesResult {
 
     val plugin = ctx.plugin
-    val graphAndStart: Pair<DirectedGraph<Vertex, Edge>, Vertex>
+    val graphAndStart: Dependencies.Result
     try {
       graphAndStart = Dependencies.calcDependencies(plugin, ctx.ide)
     } catch(e: Exception) {
       throw RuntimeException("Unable to evaluate dependencies of the plugin $plugin with IDE ${ctx.ide}", e)
     }
-    val (graph, startVertex) = graphAndStart
+    val (graph: DirectedGraph<Vertex, Edge>, startVertex: Vertex, allLocks: List<IFileLock>) = graphAndStart
 
     try {
       var cycle: List<Plugin>? = null
@@ -369,9 +369,9 @@ object VManager {
       val resolver = Resolver.createUnionResolver("Plugin ${startVertex.plugin} transitive dependencies resolver", resolvers)
 
       val resGraph = DependenciesGraph(dfsResult.vertex!!, vertices, edges)
-      return DependenciesResult(resolver, resGraph, cycle, graph.vertexSet().map { it.pluginLock }.filterNotNull())
+      return DependenciesResult(resolver, resGraph, cycle, allLocks)
     } catch (e: Exception) {
-      graph.vertexSet().forEach { it.pluginLock?.release() }
+      allLocks.forEach { it.release() }
       throw e
     }
   }

@@ -17,14 +17,16 @@ import org.slf4j.LoggerFactory
 
 object Dependencies {
 
+  data class Result(val graph: DirectedGraph<Vertex, Edge>, val start: Vertex, val allLocks: List<IFileLock>)
+
   @JvmStatic
-  fun calcDependencies(plugin: Plugin, ide: Ide): Pair<DirectedGraph<Vertex, Edge>, Vertex> {
+  fun calcDependencies(plugin: Plugin, ide: Ide): Result {
     val dfs = Dfs(ide)
     try {
-      val vertex = dfs.dfs(plugin, null)
-      return dfs.graph to vertex
+      val vertex = dfs.dfs(plugin)
+      return Result(dfs.graph, vertex, dfs.allLocks)
     } catch (e: Exception) {
-      dfs.graph.vertexSet().forEach { it.pluginLock?.release() }
+      dfs.allLocks.forEach { it.release() }
       throw e
     }
   }
@@ -36,9 +38,11 @@ object Dependencies {
 
     val graph: DirectedGraph<Vertex, Edge> = DefaultDirectedGraph(Edge::class.java)
 
-    internal fun dfs(plugin: Plugin, pluginLock: IFileLock?): Vertex {
+    val allLocks: MutableList<IFileLock> = arrayListOf()
+
+    internal fun dfs(plugin: Plugin): Vertex {
       //current node results
-      val result = Vertex(plugin, pluginLock)
+      val result = Vertex(plugin)
 
       if (graph.containsVertex(result)) {
         //either the plugin is visited or it is in-progress
@@ -51,28 +55,34 @@ object Dependencies {
       for (pd in plugin.moduleDependencies + plugin.dependencies) {
         val isModule = plugin.moduleDependencies.indexOf(pd) != -1
         val depId: String = pd.id
-        var dependency: Pair<Plugin, IFileLock?>?
+        var dependency: Plugin?
 
         //find in already visited plugins
-        dependency = graph.vertexSet().find { depId == it.plugin.pluginId }?.run { this.plugin to this.pluginLock }
+        dependency = graph.vertexSet().find { depId == it.plugin.pluginId }?.plugin
         if (dependency == null) {
           if (isModule) {
             if (isDefaultModule(depId)) {
               continue
             }
-            dependency = ide.getPluginByModule(depId)?.run { this to null }
+            dependency = ide.getPluginByModule(depId)
             if (dependency == null) {
               if (INTELLIJ_MODULES_CONTAINING_PLUGINS.containsKey(depId)) {
                 //try to add the intellij plugin which defines this module
                 val pluginId = INTELLIJ_MODULES_CONTAINING_PLUGINS[depId]!!
-                dependency = ide.getPluginById(pluginId)?.run { this to null }
+                dependency = ide.getPluginById(pluginId)
                 if (dependency == null) {
                   try {
                     val updateInfo = RepositoryManager.getLastCompatibleUpdateOfPlugin(ide.version, pluginId)
                     if (updateInfo != null) {
                       val lock = RepositoryManager.getPluginFile(updateInfo)
                       if (lock != null) {
-                        dependency = PluginCache.createPlugin(lock.getFile()) to lock
+                        try {
+                          dependency = PluginCache.createPlugin(lock.getFile())
+                          allLocks.add(lock)
+                        } catch (e: Exception) {
+                          lock.release()
+                          throw e
+                        }
                       }
                     }
                   } catch (e: Exception) {
@@ -89,7 +99,7 @@ object Dependencies {
             }
 
           } else {
-            dependency = ide.getPluginById(depId)?.run { this to null }
+            dependency = ide.getPluginById(depId)
 
             if (dependency == null) {
               //try to load plugin
@@ -123,7 +133,8 @@ object Dependencies {
                 }
 
                 try {
-                  dependency = PluginCache.createPlugin(pluginZip.getFile()).run { this to pluginZip }
+                  dependency = PluginCache.createPlugin(pluginZip.getFile())
+                  allLocks.add(pluginZip)
                 } catch (e: Exception) {
                   pluginZip.release()
                   val message = "Plugin $plugin depends on the other plugin $depId which has some problems"
@@ -147,7 +158,7 @@ object Dependencies {
 
         //recursively traverse the dependency plugin.
         //it could already be in-progress in which case the cycle is detected.
-        val to: Vertex = dfs(dependency.first, dependency.second)
+        val to: Vertex = dfs(dependency)
 
         graph.addEdge(result, to, Edge(pd, result, to))
       }
@@ -185,9 +196,13 @@ object Dependencies {
 
 }
 
-class Edge(val dependency: PluginDependency, val from: Vertex, val to: Vertex) : DefaultEdge()
+class Edge(val dependency: PluginDependency, val from: Vertex, val to: Vertex) : DefaultEdge() {
+  override fun equals(other: Any?): Boolean = other is Edge && other.dependency == dependency && other.from == from && other.to == to
 
-data class Vertex(val plugin: Plugin, val pluginLock: IFileLock?) {
+  override fun hashCode(): Int = dependency.hashCode() + from.hashCode() + to.hashCode()
+}
+
+data class Vertex(val plugin: Plugin) {
 
   val missingDependencies: MutableMap<PluginDependency, MissingReason> = hashMapOf()
 
