@@ -22,7 +22,7 @@ buildscript {
 
 def serviceVersion = project.hasProperty('myVersion') ? project.myVersion : '1.0'
 
-project.ext.verifierVersion = '1.38'
+project.ext.verifierVersion = '1.39'
 
 configure(allprojects) {
   version = serviceVersion
