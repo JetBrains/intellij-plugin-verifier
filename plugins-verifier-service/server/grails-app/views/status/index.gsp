@@ -44,6 +44,15 @@
         </g:each>
     </ul>
 
+    <h2>Release versions:</h2>
+    <ul>
+        <g:each var="v" in="${ServerStatus.INSTANCE.releaseVersions()}">
+            <li>
+                Trunk #${v.first} -> ${v.second.asString()}
+            </li>
+        </g:each>
+    </ul>
+
 </div>
 
 </body>
