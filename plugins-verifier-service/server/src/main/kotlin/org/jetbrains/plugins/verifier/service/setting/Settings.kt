@@ -32,6 +32,16 @@ object TrunkVersions {
 
   private val versions: MutableMap<Int, IdeVersion> = hashMapOf()
 
+  init {
+    //default settings
+    versions[145] = IdeVersion.createIdeVersion("IU-145.258.11")
+    versions[162] = IdeVersion.createIdeVersion("IU-162.1121.10")
+    versions[163] = IdeVersion.createIdeVersion("IU-163.1914")
+  }
+
+  @Synchronized
+  fun listReleaseVersions(): List<Pair<Int, IdeVersion>> = versions.entries.map { it.key to it.value }
+
   @Synchronized
   fun getReleaseVersion(trunkNumber: Int): IdeVersion? = versions[trunkNumber] ?: IdeFilesManager.ideList().filter { it.baselineVersion == trunkNumber }.sorted().firstOrNull()
 
