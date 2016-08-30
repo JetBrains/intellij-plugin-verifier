@@ -1,5 +1,6 @@
 package com.intellij.structure.impl.utils;
 
+import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.errors.IncorrectPluginException;
 import org.apache.commons.io.FileUtils;
 import org.codehaus.plexus.archiver.AbstractUnArchiver;
@@ -22,9 +23,9 @@ public class PluginExtractor {
   private static final int TEMP_DIR_ATTEMPTS = 10000;
 
   @NotNull
-  public static File extractPlugin(@NotNull String plugin, @NotNull File archive) throws IOException, IncorrectPluginException {
+  public static File extractPlugin(@NotNull Plugin plugin, @NotNull File archive) throws IOException, IncorrectPluginException {
 
-    File tmp = createTempDir("plugin_" + plugin);
+    File tmp = createTempDir("plugin_");
 
     try {
       final AbstractUnArchiver ua = createUnArchiver(archive);
@@ -78,19 +79,19 @@ public class PluginExtractor {
   private synchronized static File createTempDir(String prefix) throws IOException {
     File tmpDirs = getCacheDir();
     String baseName = prefix + "_" + System.currentTimeMillis();
+    IOException lastException = null;
     for (int counter = 0; counter < TEMP_DIR_ATTEMPTS; counter++) {
       File tempDir = new File(tmpDirs, baseName + "_" + counter);
-      if (!tempDir.isDirectory()) {
-        try {
-          FileUtils.forceMkdir(tempDir);
-          return tempDir;
-        } catch (IOException ignored) {
-        }
+      try {
+        FileUtils.forceMkdir(tempDir);
+        return tempDir;
+      } catch (IOException ioe) {
+        lastException = ioe;
       }
     }
-    throw new IllegalStateException("Failed to create directory within "
+    throw new IllegalStateException("Failed to create directory under " + tmpDirs.getAbsolutePath() + " within "
         + TEMP_DIR_ATTEMPTS + " attempts (tried "
-        + baseName + "_0 to " + baseName + "_" + (TEMP_DIR_ATTEMPTS - 1) + ')');
+        + baseName + "_0 to " + baseName + "_" + (TEMP_DIR_ATTEMPTS - 1) + ')', lastException);
   }
 
   @NotNull
@@ -118,7 +119,7 @@ public class PluginExtractor {
     return dir;
   }
 
-  private static void stripTopLevelDirectory(String plugin, @NotNull File dir) throws IOException {
+  private static void stripTopLevelDirectory(Plugin plugin, @NotNull File dir) throws IOException {
     final String[] entries = dir.list();
     if (entries == null || entries.length != 1 || !new File(dir, entries[0]).isDirectory()) {
       return;
@@ -147,7 +148,7 @@ public class PluginExtractor {
     }
 
     if (badEntry != null) {
-      File tempDir = createTempDir(badEntry.getName());
+      File tempDir = createTempDir("tmp_");
       try {
         FileUtils.moveToDirectory(badEntry, tempDir, false);
 
