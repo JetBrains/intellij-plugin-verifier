@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.verifier.service
 
-import com.google.common.base.Preconditions
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
 import org.jetbrains.plugins.verifier.service.service.Service
@@ -30,7 +29,11 @@ class Application extends GrailsAutoConfiguration {
 
   private static def assertSystemProperties() {
     Settings.values().toList().forEach { setting ->
-      Preconditions.checkNotNull(System.getProperty(setting.key), "$setting.key must be specified")
+      try {
+        setting.get()
+      } catch (IllegalStateException e) {
+        throw new IllegalStateException("The property ${setting.key} must be set", e)
+      }
     }
   }
 
@@ -38,6 +41,7 @@ class Application extends GrailsAutoConfiguration {
     String appHomeDir = Settings.APP_HOME_DIRECTORY.get()
     System.setProperty("plugin.verifier.home.dir", appHomeDir + "/verifier")
     System.setProperty("intellij.structure.temp.dir", appHomeDir + "/intellijStructureTmp")
+    System.setProperty("plugin.repository.url", Settings.PLUGIN_REPOSITORY_URL.get())
 
     int diskSpace
     try {

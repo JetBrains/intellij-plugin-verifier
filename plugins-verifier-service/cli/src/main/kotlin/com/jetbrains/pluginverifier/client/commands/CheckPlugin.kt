@@ -36,8 +36,12 @@ class CheckPluginCommand : Command {
 
     val runnerParams = createRunnerParams(opts)
 
-    val results = CheckPlugin(opts.host, ideFiles, pluginFiles, runnerParams).execute()
-    processResults(results, opts)
+    try {
+      val results = CheckPlugin(opts.host, ideFiles, pluginFiles.map { it.getFile() }, runnerParams).execute()
+      processResults(results, opts)
+    } finally {
+      pluginFiles.forEach { it.release() }
+    }
   }
 
 

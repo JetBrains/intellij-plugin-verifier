@@ -1,30 +1,25 @@
 package org.jetbrains.plugins.verifier.service.setting
 
 import com.intellij.structure.domain.IdeVersion
-import grails.util.Holders
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 
 /**
  * @author Sergey Patrikeev
  */
-enum class Settings(private val key: String, private val default: String? = null) {
-  APP_HOME_DIRECTORY("VERIFIER_SERVICE_HOME_DIRECTORY"),
-  JDK_6_HOME("VERIFIER_SERVICE_JDK_6_HOME"),
-  JDK_7_HOME("VERIFIER_SERVICE_JDK_7_HOME"),
-  JDK_8_HOME("VERIFIER_SERVICE_JDK_8_HOME"),
-  MAX_DISK_SPACE_MB("VERIFIER_SERVICE_MAX_DISK_SPACE"),
-  PLUGIN_REPOSITORY_URL("VERIFIER_SERVICE_PLUGIN_REPOSITORY_URL", "http://plugins.jetbrains.com");
+enum class Settings(private val key: String, private val default: (() -> String?)? = null) {
+  APP_HOME_DIRECTORY("verifier.service.home.dir"),
+  JDK_6_HOME("verifier.service.jdk.6.dir", { JDK_8_HOME.get() }),
+  JDK_7_HOME("verifier.service.jdk.7.dir", { JDK_8_HOME.get() }),
+  JDK_8_HOME("verifier.service.jdk.8.dir"),
+  MAX_DISK_SPACE_MB("verifier.service.max.disk.space.mb"),
+  PLUGIN_REPOSITORY_URL("verifier.service.plugin.repository.url", { "http://plugins.jetbrains.com" });
 
   fun get(): String {
     val property = System.getProperty(key)
     if (property != null) {
       return property
     }
-    val config = Holders.getGrailsApplication().config.getProperty(key)
-    if (config != null) {
-      return config
-    }
-    return default ?: throw IllegalStateException("The property $key should be set")
+    return default?.invoke() ?: throw IllegalStateException("The property $key should be set")
   }
 }
 
