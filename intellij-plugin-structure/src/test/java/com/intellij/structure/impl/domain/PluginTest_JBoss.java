@@ -4,6 +4,7 @@ import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginManager;
 import com.intellij.structure.impl.utils.PluginExtractor;
 import com.intellij.structure.utils.TestUtils;
+import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -26,9 +27,15 @@ public class PluginTest_JBoss {
 
   @Test
   public void downloadAndOpenAsDir() throws Exception {
-    File asDir = PluginExtractor.extractPlugin("jboss", TestUtils.downloadPlugin(TestUtils.JBOSS, "jboss.zip"));
-    Plugin plugin = PluginManager.getInstance().createPlugin(asDir);
-    checkPlugin(plugin);
+    File archive = TestUtils.downloadPlugin(TestUtils.JBOSS, "jboss.zip");
+    Plugin plugin = PluginManager.getInstance().createPlugin(archive);
+    File asDir = PluginExtractor.extractPlugin(plugin, archive);
+    try {
+      Plugin pluginDir = PluginManager.getInstance().createPlugin(asDir);
+      checkPlugin(pluginDir);
+    } finally {
+      FileUtils.forceDelete(asDir);
+    }
   }
 
   private void checkPlugin(Plugin plugin) {
