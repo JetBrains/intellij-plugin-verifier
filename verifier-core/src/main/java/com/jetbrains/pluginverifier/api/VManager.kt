@@ -223,7 +223,7 @@ object VManager {
     } catch (ie: InterruptedException) {
       throw ie
     } catch(e: Exception) {
-      val reason = "Unable to read class-files of the plugin"
+      val reason = "Unable to read class-files of the plugin" + if (e.message != null) " ${e.message}" else ""
       LOG.debug(reason, e)
       return null to VResult.BadPlugin(pluginDescriptor, reason)
     }
