@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.configurations
 
 import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.domain.PluginManager
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.repository.IFileLock
@@ -9,10 +10,14 @@ import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.CmdUtil
 import com.jetbrains.pluginverifier.utils.VOptionsUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 
 object CheckPluginParamsParser : ParamsParser {
+
+  private val LOG: Logger = LoggerFactory.getLogger(CheckPluginParamsParser::class.java)
 
   override fun parse(opts: CmdOpts, freeArgs: List<String>): CheckPluginParams {
     if (freeArgs.size <= 1) {
@@ -25,7 +30,23 @@ object CheckPluginParamsParser : ParamsParser {
     val jdkDescriptor = JdkDescriptor.ByFile(CmdUtil.getJdkDir(opts))
     val vOptions = VOptionsUtil.parseOpts(opts)
     val externalClasspath = CmdUtil.getExternalClassPath(opts)
-    return CheckPluginParams(pluginFiles.map { PluginDescriptor.ByFileLock("${it.getFile().nameWithoutExtension}", "", it) }, ideDescriptors, jdkDescriptor, vOptions, true, externalClasspath)
+    val pluginsToCheck = pluginFiles.map {
+      try {
+        val plugin = PluginManager.getInstance().createPlugin(it.getFile())
+        PluginDescriptor.ByInstance(plugin)
+      } catch(e: Exception) {
+        val (id, version) = guessPluginIdAndVersion(it.getFile())
+        LOG.debug("Unable to create plugin for ${it.getFile()}; supposed (id; version) = ($id; $version)", e)
+        PluginDescriptor.ByFileLock(id, version, it)
+      }
+    }
+    return CheckPluginParams(pluginsToCheck, ideDescriptors, jdkDescriptor, vOptions, true, externalClasspath)
+  }
+
+  private fun guessPluginIdAndVersion(file: File): Pair<String, String> {
+    val name = file.nameWithoutExtension
+    val version = name.substringAfterLast('-')
+    return name.substringBeforeLast('-') to version
   }
 
   fun getPluginFiles(pluginToTestArg: String, ideVersions: List<IdeVersion>? = null): List<IFileLock> {
