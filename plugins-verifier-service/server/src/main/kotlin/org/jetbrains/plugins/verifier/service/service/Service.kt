@@ -52,7 +52,12 @@ private object Service {
 //  }
   private const val REPOSITORY_URL_BASE = "http://localhost:8080"
 
+  //10 minutes
+  private const val UPDATE_CHECK_MIN_PAUSE_MILLIS = 10 * 60 * 1000
+
   private val verifiableUpdates: MutableMap<UpdateInfo, TaskId> = hashMapOf()
+  private val lastCheckDate: MutableMap<UpdateInfo, Long> = hashMapOf()
+
 
   private fun makeClient(): OkHttpClient = OkHttpClient.Builder()
       .connectTimeout(5, TimeUnit.MINUTES)
@@ -101,6 +106,12 @@ private object Service {
       LOG.info("Update $updateInfo is currently being verified; ignore verification of this update")
       return
     }
+    val lastCheck = lastCheckDate[updateInfo]
+    if (lastCheck != null && System.currentTimeMillis() - lastCheck < UPDATE_CHECK_MIN_PAUSE_MILLIS) {
+      LOG.info("Update $updateInfo was checked recently; wait at least ${UPDATE_CHECK_MIN_PAUSE_MILLIS / 1000} seconds;")
+      return
+    }
+
     val runner = CheckRangeRunner(PluginDescriptor.ByUpdateInfo(updateInfo), getRunnerParams())
     val taskId = TaskManager.enqueue(
         runner,
@@ -109,6 +120,7 @@ private object Service {
         { tst, task -> onUpdateChecked(task as CheckRangeRunner) }
     )
     verifiableUpdates[updateInfo] = taskId
+    lastCheckDate[updateInfo] = System.currentTimeMillis()
     LOG.info("Check range for $updateInfo is scheduled with taskId #$taskId")
   }
 
