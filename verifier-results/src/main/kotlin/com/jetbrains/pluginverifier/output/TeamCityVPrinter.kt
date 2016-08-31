@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.api.VResults
 import com.jetbrains.pluginverifier.configurations.CheckTrunkApiCompareResult
 import com.jetbrains.pluginverifier.configurations.MissingCompatibleUpdate
 import com.jetbrains.pluginverifier.format.UpdateInfo
+import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import kotlin.comparisons.compareBy
@@ -132,6 +133,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
       tcLog.testSuiteStarted(pluginId).use {
 
         pidToResults.value.groupBy { it.pluginDescriptor.version }.forEach { versionToResults ->
+          val version = versionToResults.key
 
           //multiple plugins might have the same pluginIds and the same versions
           versionToResults.value.forEach { result ->
@@ -144,23 +146,55 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
                 }
                 is VResult.Problems -> {
 
-                  tcLog.testStdErr(testName, result.problems.asMap().entries.joinToString(separator = "\n") {
-                    "#${it.key.getDescription()}\n" +
-                        it.value.joinToString(separator = "\n", prefix = "    at ")
-                  })
-                  result.dependenciesGraph.getMissingNonOptionalDependencies().apply {
-                    if (this.isNotEmpty()) {
-                      val missingPluginsPaths = this.joinToString(separator = "\n", prefix = "   ")
+                  val overview = StringBuilder()
+                  overview.append("Plugin URL: $pluginLink").append('\n')
 
-                      tcLog.testStdErr(testName, "Some problems might be caused by missing non-optional plugins:\n$missingPluginsPaths")
+                  val problems = result.problems
+
+                  overview.append("$pluginId:$version has ${problems.keySet().size} ${"problem".pluralize(problems.keySet().size)}").append('\n')
+
+                  val missingNonOptionals = result.dependenciesGraph.getMissingNonOptionalDependencies()
+                  if (missingNonOptionals.isNotEmpty()) {
+                    overview.append("Some problems might be caused by missing plugins:").append('\n')
+                    missingNonOptionals.forEach {
+                      overview.append("    $it").append('\n')
                     }
                   }
-                  result.dependenciesGraph.start.missingDependencies.filterKeys { it.isOptional }.forEach {
-                    tcLog.testStdErr(testName, "Missing optional plugin ${it.key.id} because ${it.value.reason}")
+
+                  val missingOptionals = result.dependenciesGraph.start.missingDependencies.filterKeys { it.isOptional }
+                  missingOptionals.forEach {
+                    overview.append("Missing optional plugin ${it.key.id} because ${it.value.reason}").append('\n')
                   }
 
-                  tcLog.testFailed(testName, "Plugin URL: $pluginLink\n" + "$pluginId:${result.pluginDescriptor.version} has ${result.problems.keySet().size} ${"problem".pluralize(result.problems.keySet().size)}", "")
+                  val problemsContent: String
 
+                  val notFoundClassesProblems = problems.keySet().filterIsInstance<ClassNotFoundProblem>()
+                  if (missingNonOptionals.isNotEmpty() && notFoundClassesProblems.size > 20) {
+                    //probably these all problems are caused by missing plugin dependencies.
+
+                    val otherProblems: String = problems.asMap()
+                        .filterKeys { it !in notFoundClassesProblems }
+                        .entries.sortedBy { it.key.javaClass.name }
+                        .joinToString(separator = "\n") {
+                          "#${it.key.getDescription()}\n" +
+                              it.value.joinToString(separator = "\n") { "    at $it" }
+                        }
+
+                    problemsContent = "There are too much missing classes (${notFoundClassesProblems.size});\n" +
+                        "it's probably because of missing plugins (${missingNonOptionals.map { it.missing.id }});\n" +
+                        "the following classes are not found: [${notFoundClassesProblems.map { it.unknownClass }.joinToString()}];\n" +
+                        otherProblems
+
+                  } else {
+                    problemsContent = problems.asMap().entries.sortedBy { it.key.javaClass.name }.joinToString(separator = "\n") {
+                      "#${it.key.getDescription()}\n" +
+                          it.value.joinToString(separator = "\n") { "    at $it" }
+                    }
+                  }
+
+                  tcLog.testStdErr(testName, problemsContent)
+
+                  tcLog.testFailed(testName, overview.toString(), "")
                 }
                 is VResult.BadPlugin -> {
                   tcLog.testStdErr(testName, "Plugin is invalid: ${result.reason}")
