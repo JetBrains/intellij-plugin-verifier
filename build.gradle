@@ -12,8 +12,8 @@ buildscript {
   }
 }
 
-def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.40'
-def intellijStructureVersion = '1.32'
+def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.42'
+def intellijStructureVersion = '1.33'
 
 
 configure(allprojects) {
@@ -34,7 +34,7 @@ configure(allprojects) {
   dependencies {
 
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    compile 'com.github.salomonbrys.kotson:kotson:2.2.2'
+    compile 'com.github.salomonbrys.kotson:kotson:2.4.0'
     
     //plugin structure API
     compile group: 'org.jetbrains.intellij.plugins', name: 'intellij-plugin-structure', version: intellijStructureVersion
@@ -46,7 +46,8 @@ configure(allprojects) {
     compile group: 'com.intellij', name: 'annotations', version: '12.0'
     compile group: 'org.ow2.asm', name: 'asm-all', version: '5.0.4'
     compile group: 'com.google.guava', name: 'guava', version: '15.0'
-    compile group: 'commons-io', name: 'commons-io', version: '2.3'
+    compile group: 'commons-io', name: 'commons-io', version: '2.5'
+    compile group: 'com.google.code.gson', name: 'gson', version: '2.7'
   }
 
   repositories {

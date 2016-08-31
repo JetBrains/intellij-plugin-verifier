@@ -50,7 +50,7 @@ configure(allprojects) {
     testCompile 'junit:junit:4.12'
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile group: 'commons-io', name: 'commons-io', version: '2.5'
-    compile 'com.github.salomonbrys.kotson:kotson:2.2.2'
+    compile 'com.github.salomonbrys.kotson:kotson:2.4.0'
     compile 'com.google.code.gson:gson:2.7'
 
     compile 'com.squareup.retrofit2:retrofit:2.1.0'
