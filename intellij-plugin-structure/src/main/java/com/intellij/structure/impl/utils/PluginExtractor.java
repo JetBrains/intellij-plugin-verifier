@@ -82,11 +82,13 @@ public class PluginExtractor {
     IOException lastException = null;
     for (int counter = 0; counter < TEMP_DIR_ATTEMPTS; counter++) {
       File tempDir = new File(tmpDirs, baseName + "_" + counter);
-      try {
-        FileUtils.forceMkdir(tempDir);
-        return tempDir;
-      } catch (IOException ioe) {
-        lastException = ioe;
+      if (!tempDir.exists()) {
+        try {
+          FileUtils.forceMkdir(tempDir);
+          return tempDir;
+        } catch (IOException ioe) {
+          lastException = ioe;
+        }
       }
     }
     throw new IllegalStateException("Failed to create directory under " + tmpDirs.getAbsolutePath() + " within "
