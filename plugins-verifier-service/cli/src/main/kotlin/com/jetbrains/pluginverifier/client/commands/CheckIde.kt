@@ -58,8 +58,6 @@ class CheckIdeCommand : Command {
     val actualIdeVersion = CmdUtil.takeVersionFromCmd(opts)
     val vOptions = VOptionsUtil.parseOpts(opts)
 
-    if (opts.externalClasspath.isNotEmpty()) TODO() //TODO: external jars
-
     val (checkAllBuilds, checkLastBuilds) = CheckIdeParamsParser.parsePluginToCheckList(opts)
     val excludedPlugins = CheckIdeParamsParser.parseExcludedPlugins(opts)
 

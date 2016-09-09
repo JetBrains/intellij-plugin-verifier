@@ -307,7 +307,6 @@ public class JDOMXIncluder {
       throw new XIncludeException(e);
     } catch (IOException e) {
       if (fallbackElement != null) {
-        // TODO[yole] return contents of fallback element (we don't have fallback elements with content ATM)
         return Collections.emptyList();
       }
       if (myIgnoreMissing) {

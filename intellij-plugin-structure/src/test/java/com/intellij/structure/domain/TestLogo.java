@@ -8,8 +8,6 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * TODO: rewrite tests without downloading real plugins.
- *
  * @author Sergey Patrikeev
  */
 public class TestLogo {

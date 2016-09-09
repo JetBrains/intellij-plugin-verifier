@@ -22,7 +22,6 @@ class FilesResolver extends Resolver {
     myPresentableName = presentableName;
     for (File classFile : classFiles) {
       if (classFile.getName().endsWith(".class")) {
-        //TODO: rewrite without reading classes
         ClassNode node = AsmUtil.readClassFromFile(classFile);
         myClass2File.put(node.name, classFile);
       }
