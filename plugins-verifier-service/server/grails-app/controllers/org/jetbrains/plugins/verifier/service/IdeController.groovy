@@ -4,6 +4,8 @@ import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.persistence.GsonHolder
 import grails.converters.JSON
 import kotlin.text.StringsKt
+import org.jetbrains.plugins.verifier.service.core.TaskManager
+import org.jetbrains.plugins.verifier.service.runners.UploadIdeRunner
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.util.LanguageUtilsKt
@@ -17,6 +19,24 @@ class IdeController {
 
   def list() {
     sendJson(IdeFilesManager.INSTANCE.ideList())
+  }
+
+  def uploadFromRepository() {
+    def ideVersion = params.ideVersion as String
+    if (!ideVersion) {
+      sendError(HttpStatus.BAD_REQUEST.value(), "IDE version is empty")
+      return
+    }
+    boolean fromSnapshots = params.snapshots != null
+    boolean isCommunity = params.community != null
+
+    log.info("User is going to UPLOAD the new IDE #$ideVersion ${if (isCommunity) "community" else ""} " +
+        "from the ${if (fromSnapshots) "snapshots" else ""} repository")
+
+    def runner = new UploadIdeRunner(ideVersion, isCommunity, fromSnapshots)
+    def taskId = TaskManager.INSTANCE.enqueue(runner)
+    log.info("Upload IDE #$ideVersion is enqueued with taskId=$taskId")
+    sendJson(taskId)
   }
 
   def upload() {
