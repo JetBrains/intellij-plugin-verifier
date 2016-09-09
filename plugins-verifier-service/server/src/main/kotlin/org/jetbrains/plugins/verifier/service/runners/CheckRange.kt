@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.runners
 
+import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.domain.Plugin
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
@@ -17,7 +18,8 @@ import org.jetbrains.plugins.verifier.service.storage.JdkManager
 import org.slf4j.LoggerFactory
 
 class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
-                       val params: CheckRangeRunnerParams) : Task<CheckRangeResults>() {
+                       val params: CheckRangeRunnerParams,
+                       val ideVersions: List<IdeVersion>? = null) : Task<CheckRangeResults>() {
   override fun presentableName(): String = "CheckPluginWithSinceUntilBuilds"
 
   companion object {
@@ -59,7 +61,7 @@ class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
 
 
       val locks: List<IdeFilesManager.IdeLock> = IdeFilesManager.locked({
-        IdeFilesManager.ideList()
+        (ideVersions ?: IdeFilesManager.ideList())
             .filter { sinceBuild.compareTo(it) <= 0 && (untilBuild == null || it.compareTo(untilBuild) <= 0) }
             .map { IdeFilesManager.getIde(it) }
             .filterNotNull()

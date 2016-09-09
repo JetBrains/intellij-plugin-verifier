@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.verifier.service.service
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.google.gson.annotations.SerializedName
+import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VOptions
 import com.jetbrains.pluginverifier.configurations.CheckRangeResults
@@ -17,6 +19,7 @@ import org.jetbrains.plugins.verifier.service.core.TaskManager
 import org.jetbrains.plugins.verifier.service.params.CheckRangeRunnerParams
 import org.jetbrains.plugins.verifier.service.params.JdkVersion
 import org.jetbrains.plugins.verifier.service.runners.CheckRangeRunner
+import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.util.MultipartUtil
 import org.jetbrains.plugins.verifier.service.util.executeSuccessfully
@@ -47,11 +50,6 @@ private object Service {
   //5 minutes
   private const val SERVICE_PERIOD: Long = 5
 
-  //  private val REPOSITORY_URL_BASE by lazy {
-//    Settings.PLUGIN_REPOSITORY_URL
-//  }
-  private const val REPOSITORY_URL_BASE = "http://localhost:8080"
-
   //10 minutes
   private const val UPDATE_CHECK_MIN_PAUSE_MILLIS = 10 * 60 * 1000
 
@@ -67,7 +65,7 @@ private object Service {
       .build()
 
   val verifier: VerificationApi = Retrofit.Builder()
-      .baseUrl(REPOSITORY_URL_BASE)
+      .baseUrl(Settings.PLUGIN_REPOSITORY_URL.get())
       .addConverterFactory(GsonConverterFactory.create(GsonHolder.GSON))
       .client(makeClient())
       .build()
@@ -91,17 +89,18 @@ private object Service {
 
     try {
       val ideList = IdeFilesManager.ideList()
-      val updatesToCheck = verifier.getUpdatesToCheck(MultipartUtil.createJsonPart("availableIdeList", ideList)).executeSuccessfully().body()
-      LOG.info("Repository connection success. Updates to check (#${updatesToCheck.size}): $updatesToCheck")
+      val availableIdeList = MultipartUtil.createJsonPart("availableIdeList", ideList)
+      val updatesToCheck = verifier.getUpdatesToCheck(availableIdeList).executeSuccessfully().body()
+      LOG.info("Repository connection success. Updates to check (${updatesToCheck.size} of them): $updatesToCheck")
 
-      updatesToCheck.forEach { schedule(it) }
+      updatesToCheck.forEach { schedule(it.updateInfo, it.ideVersions) }
 
     } catch (e: Exception) {
       LOG.error("Failed to schedule updates check", e)
     }
   }
 
-  private fun schedule(updateInfo: UpdateInfo) {
+  private fun schedule(updateInfo: UpdateInfo, versions: List<IdeVersion>) {
     if (updateInfo in verifiableUpdates) {
       LOG.info("Update $updateInfo is currently being verified; ignore verification of this update")
       return
@@ -112,7 +111,7 @@ private object Service {
       return
     }
 
-    val runner = CheckRangeRunner(PluginDescriptor.ByUpdateInfo(updateInfo), getRunnerParams())
+    val runner = CheckRangeRunner(PluginDescriptor.ByUpdateInfo(updateInfo), getRunnerParams(), versions)
     val taskId = TaskManager.enqueue(
         runner,
         { onSuccess(it) },
@@ -158,12 +157,14 @@ private object Service {
 
 }
 
+data class UpdateToCheck(@SerializedName("updateInfo") val updateInfo: UpdateInfo,
+                         @SerializedName("ideVersions") val ideVersions: List<IdeVersion>)
 
 interface VerificationApi {
 
   @Multipart
   @POST("/verification/getUpdatesToCheck")
-  fun getUpdatesToCheck(@Part availableIdeList: MultipartBody.Part): Call<List<UpdateInfo>>
+  fun getUpdatesToCheck(@Part availableIdeList: MultipartBody.Part): Call<List<UpdateToCheck>>
 
   @Multipart
   @POST("/verification/receiveUpdateCheckResult")
