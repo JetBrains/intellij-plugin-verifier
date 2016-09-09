@@ -46,6 +46,7 @@ class VerifierTest {
       .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromClass("mock/plugin/ParentDoesntExist"))
       .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/ParentDoesntExist", "<init>", "()V"))
       .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/arrays/ANewArrayInsn", "foo", "(Ljava/lang/Object;)V"))
+      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessUnknownClassOfArray", "()V"))
       .put(ClassNotFoundProblem("non/existing/DeletedClass"), ProblemLocation.fromMethod("mock/plugin/inheritance/PluginClass", "<init>", "()V"))
       .put(ClassNotFoundProblem("non/existing/DeletedClass"), ProblemLocation.fromClass("mock/plugin/inheritance/PluginClass"))
       .put(InheritFromFinalClassProblem("finals/BecomeFinal"), ProblemLocation.fromClass("mock/plugin/finals/InheritFromFinalClass"))

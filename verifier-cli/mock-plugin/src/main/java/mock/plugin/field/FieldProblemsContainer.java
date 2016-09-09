@@ -38,7 +38,7 @@ public class FieldProblemsContainer {
   }
 
   public void accessUnknownClassOfArray() {
-//    int size = new NonExistingClass[2].length; //TODO
+    int size = new NonExistingClass[2].length;
   }
 
   public void setOnFinalFieldFromNotInitMethod() {
