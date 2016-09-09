@@ -20,7 +20,7 @@ data class MissingPlugin(@SerializedName("pluginId") val pluginId: String) {
 data class DependencyNode(@SerializedName("pluginId") val pluginId: String,
                           @SerializedName("version") val version: String,
                           @SerializedName("missingDeps") val missingDependencies: Map<PluginDependency, MissingReason>) {
-  override fun toString(): String = "$pluginId:$version"
+  override fun toString(): String = if (version.isNotEmpty()) "$pluginId:$version" else pluginId
 }
 
 data class DependencyEdge(@SerializedName("from") val from: DependencyNode,
