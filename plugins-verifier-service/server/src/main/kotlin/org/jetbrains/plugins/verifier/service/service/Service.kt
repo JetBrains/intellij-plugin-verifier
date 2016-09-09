@@ -93,7 +93,7 @@ private object Service {
       val updatesToCheck = verifier.getUpdatesToCheck(availableIdeList).executeSuccessfully().body()
       LOG.info("Repository connection success. Updates to check (${updatesToCheck.size} of them): $updatesToCheck")
 
-      updatesToCheck.forEach { schedule(it.updateInfo, it.ideVersions) }
+      updatesToCheck.filter { it.ideVersions.isNotEmpty() }.forEach { schedule(it.updateInfo, it.ideVersions) }
 
     } catch (e: Exception) {
       LOG.error("Failed to schedule updates check", e)
