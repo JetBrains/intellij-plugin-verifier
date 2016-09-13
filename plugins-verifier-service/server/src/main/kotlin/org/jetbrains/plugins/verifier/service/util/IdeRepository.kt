@@ -36,7 +36,9 @@ object IdeRepository {
     try {
       body = call.executeSuccessfully().body()
     } catch (e: Exception) {
-      throw RuntimeException("Unable to download #$ideVersion (snapshot = $fromSnapshots) (community = $isCommunity)", e)
+      val msg = "Unable to download #$ideVersion (snapshot = $fromSnapshots) (community = $isCommunity)"
+      LOG.error(msg, e)
+      throw e
     }
 
     val tempFile = FileManager.createTempFile(".zip")
