@@ -14,7 +14,7 @@ class Client {
 
   companion object {
 
-    private val COMMANDS = arrayOf(GetResultCommand(), CancelTaskCommand(), CheckIdeCommand(), CheckPluginCommand(), CheckRangeCommand(), CheckTrunkApiCommand())
+    private val COMMANDS = arrayOf(GetResultCommand(), CancelTaskCommand(), CheckIdeCommand(), CheckPluginCommand(), CheckRangeCommand())
 
     private val LOG = LoggerFactory.getLogger(Client::class.java)
 
@@ -29,7 +29,7 @@ class Client {
 
       LOG.debug("Debug mode ON")
 
-      val command = COMMANDS.find { it.name().equals(commandName) } ?: throw IllegalArgumentException("Command $commandName is unknown")
+      val command = COMMANDS.find { it.name() == commandName } ?: throw IllegalArgumentException("Command $commandName is unknown")
       command.execute(opts, freeArgs.drop(1))
     }
 
