@@ -40,6 +40,10 @@ object RepositoryConfiguration {
     return myDefaultProperties.getProperty(propertyName)
   }
 
+  internal val ideRepositoryUrl: String by lazy {
+    getProperty("ide.repository.url")?.trimEnd('/') ?: throw RuntimeException("IDE repository URL is not specified")
+  }
+
   internal val pluginRepositoryUrl: String by lazy {
     getProperty("plugin.repository.url")?.trimEnd('/') ?: throw RuntimeException("Plugin repository URL is not specified")
   }
@@ -56,7 +60,22 @@ object RepositoryConfiguration {
     }
   }
 
-  internal val pluginCacheDir: File
-    get() = File(verifierHomeDir, "cache")
+  private fun createDir(dir: File): File {
+    if (!dir.isDirectory) {
+      FileUtils.forceMkdir(dir)
+      if (!dir.isDirectory) {
+        throw IOException("Failed to create directory $dir")
+      }
+    }
+    return dir
+  }
+
+  internal val downloadDir: File by lazy {
+    createDir(File(verifierHomeDir, "cache"))
+  }
+
+  internal val ideDownloadDir: File by lazy {
+    createDir(File(verifierHomeDir, "idesCache"))
+  }
 
 }

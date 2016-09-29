@@ -20,7 +20,7 @@ object RepositoryManager : PluginRepository {
 
     val url = URL(RepositoryConfiguration.pluginRepositoryUrl + "/manager/allCompatibleUpdates/?build=" + ideVersion)
 
-    return Gson().fromJson<List<UpdateInfo>>(IOUtils.toString(url), updateListType)
+    return Gson().fromJson<List<UpdateInfo>>(IOUtils.toString(url, Charsets.UTF_8), updateListType)
   }
 
   @Throws(IOException::class)
@@ -46,7 +46,7 @@ object RepositoryManager : PluginRepository {
     val urlSb = RepositoryConfiguration.pluginRepositoryUrl + "/manager/originalCompatibleUpdatesByPluginIds/?build=" + ideVersion +
         "&pluginIds=" + URLEncoder.encode(pluginId, "UTF-8")
 
-    return Gson().fromJson<List<UpdateInfo>>(IOUtils.toString(URL(urlSb)), updateListType)
+    return Gson().fromJson<List<UpdateInfo>>(IOUtils.toString(URL(urlSb), Charsets.UTF_8), updateListType)
   }
 
   @Throws(IOException::class)

@@ -67,7 +67,7 @@ object DownloadManager {
   }
 
   private fun deleteUnusedPlugins() {
-    downloadDir
+    RepositoryConfiguration.downloadDir
         .listFiles()!!
         .filterNot { it.name.startsWith(TEMP_DOWNLOAD_PREFIX) }
         .filterNot { it in locksAcquired }
@@ -81,7 +81,7 @@ object DownloadManager {
   }
 
   private fun exceedSpace(): Boolean {
-    val space = FileUtils.sizeOfDirectory(downloadDir).toDouble() / FileUtils.ONE_MB
+    val space = FileUtils.sizeOfDirectory(RepositoryConfiguration.downloadDir).toDouble() / FileUtils.ONE_MB
     val threshold = SPACE_THRESHOLD * RepositoryConfiguration.cacheDirMaxSpaceMb
     if (space > threshold) {
       LOG.warn("Download dir occupied space exceeded: $space > $threshold")
@@ -131,17 +131,6 @@ object DownloadManager {
     }
   }
 
-  private val downloadDir: File by lazy {
-    val downloadDir = RepositoryConfiguration.pluginCacheDir
-    if (!downloadDir.isDirectory) {
-      FileUtils.forceMkdir(downloadDir)
-      if (!downloadDir.isDirectory) {
-        throw IOException("Failed to create download directory: " + downloadDir)
-      }
-    }
-    downloadDir
-  }
-
   private fun getCacheFileName(updateId: Int): String = "$updateId.zip"
 
   /**
@@ -179,10 +168,10 @@ object DownloadManager {
       throw IOException("The repository " + url.host + " problems", e)
     }
 
-    val pluginInCache = File(downloadDir, getCacheFileName(updateId))
+    val pluginInCache = File(RepositoryConfiguration.downloadDir, getCacheFileName(updateId))
 
     if (!pluginInCache.exists() || pluginInCache.length() < BROKEN_ZIP_THRESHOLD) {
-      val currentDownload = File.createTempFile(TEMP_DOWNLOAD_PREFIX, ".zip", downloadDir)
+      val currentDownload = File.createTempFile(TEMP_DOWNLOAD_PREFIX, ".zip", RepositoryConfiguration.downloadDir)
 
       LOG.debug("Downloading {} by url {}... ", updateId, url)
 
