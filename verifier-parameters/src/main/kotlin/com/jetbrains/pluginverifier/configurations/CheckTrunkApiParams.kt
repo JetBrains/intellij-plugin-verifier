@@ -1,21 +1,23 @@
 package com.jetbrains.pluginverifier.configurations
 
+import com.google.common.util.concurrent.AtomicDouble
 import com.intellij.structure.domain.Ide
 import com.jetbrains.pluginverifier.api.JdkDescriptor
 import com.jetbrains.pluginverifier.api.VOptions
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
 import com.jetbrains.pluginverifier.repository.IdeRepository
+import com.jetbrains.pluginverifier.repository.RepositoryConfiguration
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.CmdUtil
 import com.jetbrains.pluginverifier.utils.VOptionsUtil
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
-import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Files
+import java.util.function.Function
 
 /**
  * @author Sergey Patrikeev
@@ -54,10 +56,13 @@ object CheckTrunkApiParamsParser : ParamsParser {
   }
 
   private fun downloadIde(ideVersion: String): File {
+
+    LOG.info("Downloading the IDE #$ideVersion")
     val ideZip = downloadIdeZip(ideVersion)
+    LOG.info("Successfully downloaded to $ideZip")
 
     try {
-      val tempIdeDir = Files.createTempDirectory(FileUtils.getTempDirectory().toPath(), "ide").toFile()
+      val tempIdeDir = Files.createTempDirectory(RepositoryConfiguration.ideDownloadDir.toPath(), "ide").toFile()
 
       try {
         return ideZip.extractTo(tempIdeDir)
@@ -73,19 +78,28 @@ object CheckTrunkApiParamsParser : ParamsParser {
   }
 
   private fun downloadIdeZip(ideVersion: String): File {
-    val tempFile = File.createTempFile("ide", ".zip")
+    val tempFile = File.createTempFile("ide", ".zip", RepositoryConfiguration.ideDownloadDir)
+
+    val lastProgress = AtomicDouble()
+    val progressUpdater = Function<Double, Unit>() {
+      if (it - lastProgress.get() > 0.1) {
+        LOG.info("Downloading progress is ${(it * 100).toInt()}%")
+        lastProgress.set(it)
+      }
+    }
+
     try {
       val isCommunity = ideVersion.startsWith("IC-")
       val rawVersion = ideVersion.substringAfter("IU-").substringAfter("IC-")
 
       val fromReleases = IdeRepository.fetchIndex().find { it.version == rawVersion && it.isCommunity == isCommunity }
       if (fromReleases != null) {
-        return IdeRepository.downloadIde(fromReleases, tempFile)
+        return IdeRepository.downloadIde(fromReleases, tempFile, progressUpdater)
       }
 
       val fromSnapshots = IdeRepository.fetchIndex(true).find { it.version == rawVersion && it.isCommunity == isCommunity }
       if (fromSnapshots != null) {
-        return IdeRepository.downloadIde(fromSnapshots, tempFile)
+        return IdeRepository.downloadIde(fromSnapshots, tempFile, progressUpdater)
       }
 
       throw IllegalArgumentException("The IDE #$rawVersion is not found neither in releases nor in the snapshots IDE repository")

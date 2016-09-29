@@ -40,15 +40,15 @@ object RepositoryConfiguration {
     return myDefaultProperties.getProperty(propertyName)
   }
 
-  internal val ideRepositoryUrl: String by lazy {
+  val ideRepositoryUrl: String by lazy {
     getProperty("ide.repository.url")?.trimEnd('/') ?: throw RuntimeException("IDE repository URL is not specified")
   }
 
-  internal val pluginRepositoryUrl: String by lazy {
+  val pluginRepositoryUrl: String by lazy {
     getProperty("plugin.repository.url")?.trimEnd('/') ?: throw RuntimeException("Plugin repository URL is not specified")
   }
 
-  internal val cacheDirMaxSpaceMb: Int by lazy {
+  val cacheDirMaxSpaceMb: Int by lazy {
     val minimum = 5 * 1024 //5 Gb
     val default = 50 * 1024 //50 Gb
 
@@ -70,11 +70,11 @@ object RepositoryConfiguration {
     return dir
   }
 
-  internal val downloadDir: File by lazy {
+  val downloadDir: File by lazy {
     createDir(File(verifierHomeDir, "cache"))
   }
 
-  internal val ideDownloadDir: File by lazy {
+  val ideDownloadDir: File by lazy {
     createDir(File(verifierHomeDir, "idesCache"))
   }
 
