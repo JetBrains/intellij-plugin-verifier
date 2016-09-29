@@ -3,8 +3,8 @@ package org.jetbrains.plugins.verifier.service.storage
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeManager
 import com.intellij.structure.domain.IdeVersion
-import org.jetbrains.plugins.verifier.service.util.deleteLogged
-import org.jetbrains.plugins.verifier.service.util.extractTo
+import com.jetbrains.pluginverifier.misc.deleteLogged
+import com.jetbrains.pluginverifier.misc.extractTo
 import org.slf4j.LoggerFactory
 import java.io.File
 

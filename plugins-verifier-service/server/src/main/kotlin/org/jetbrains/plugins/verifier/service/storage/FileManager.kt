@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.verifier.service.storage
 
+import com.jetbrains.pluginverifier.misc.deleteLogged
 import org.apache.commons.io.FileUtils
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.util.deleteLogged
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service
 
 import com.intellij.structure.domain.IdeVersion
+import com.jetbrains.pluginverifier.misc.LanguageUtilsKt
 import com.jetbrains.pluginverifier.persistence.GsonHolder
 import grails.converters.JSON
 import kotlin.text.StringsKt
@@ -8,7 +9,6 @@ import org.jetbrains.plugins.verifier.service.core.TaskManager
 import org.jetbrains.plugins.verifier.service.runners.UploadIdeRunner
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
-import org.jetbrains.plugins.verifier.service.util.LanguageUtilsKt
 import org.springframework.http.HttpStatus
 
 class IdeController {

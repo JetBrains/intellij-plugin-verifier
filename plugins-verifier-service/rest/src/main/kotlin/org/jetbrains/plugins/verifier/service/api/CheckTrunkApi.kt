@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.verifier.service.api
 
 import com.jetbrains.pluginverifier.configurations.CheckTrunkApiResults
+import com.jetbrains.pluginverifier.misc.deleteLogged
 import org.jetbrains.plugins.verifier.service.client.parseTaskId
 import org.jetbrains.plugins.verifier.service.client.util.ArchiverUtil
 import org.jetbrains.plugins.verifier.service.client.waitCompletion
 import org.jetbrains.plugins.verifier.service.params.CheckTrunkApiRunnerParams
 import org.jetbrains.plugins.verifier.service.util.MultipartUtil
-import org.jetbrains.plugins.verifier.service.util.deleteLogged
 import org.jetbrains.plugins.verifier.service.util.executeSuccessfully
 import org.slf4j.LoggerFactory
 import java.io.File

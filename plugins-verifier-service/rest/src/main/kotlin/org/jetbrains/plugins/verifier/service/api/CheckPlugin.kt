@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.api
 
 import com.jetbrains.pluginverifier.configurations.CheckPluginResults
+import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.persistence.GsonHolder
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -9,7 +10,6 @@ import org.jetbrains.plugins.verifier.service.client.util.ArchiverUtil
 import org.jetbrains.plugins.verifier.service.client.waitCompletion
 import org.jetbrains.plugins.verifier.service.params.CheckPluginRunnerParams
 import org.jetbrains.plugins.verifier.service.util.MediaTypes
-import org.jetbrains.plugins.verifier.service.util.deleteLogged
 import org.jetbrains.plugins.verifier.service.util.executeSuccessfully
 import org.slf4j.LoggerFactory
 import java.io.File

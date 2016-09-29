@@ -2,6 +2,8 @@ package org.jetbrains.plugins.verifier.service
 
 import com.google.gson.Gson
 import com.jetbrains.pluginverifier.api.PluginDescriptor
+import com.jetbrains.pluginverifier.misc.LanguageUtilsKt
+import com.jetbrains.pluginverifier.misc.UnarchiverUtilKt
 import com.jetbrains.pluginverifier.persistence.GsonHolder
 import kotlin.text.StringsKt
 import org.jetbrains.plugins.verifier.service.api.Result
@@ -16,8 +18,6 @@ import org.jetbrains.plugins.verifier.service.runners.CheckPlugin
 import org.jetbrains.plugins.verifier.service.runners.CheckRangeRunner
 import org.jetbrains.plugins.verifier.service.runners.CheckTrunkApiRunner
 import org.jetbrains.plugins.verifier.service.storage.FileManager
-import org.jetbrains.plugins.verifier.service.util.LanguageUtilsKt
-import org.jetbrains.plugins.verifier.service.util.UnarchiverUtilKt
 import org.springframework.http.HttpStatus
 
 class VerifierController {
@@ -131,7 +131,7 @@ class VerifierController {
     log.info("New Check-Trunk-Api command is enqueued with taskId=$taskId")
   }
 
-  private def File saveIdeTemporarily(ideFile) {
+  private File saveIdeTemporarily(ideFile) {
     if (!ideFile || ideFile.empty) {
       log.error("user attempted to load empty IDE file")
       sendError(HttpStatus.BAD_REQUEST.value(), "IDE file is empty")
@@ -181,11 +181,11 @@ class VerifierController {
     if (!saved) return
     def runnerParams = GSON.fromJson(params.params as String, CheckRangeRunnerParams.class)
     def byFile = new PluginDescriptor.ByFile("${params.pluginFile.getOriginalFilename() as String}", "", saved)
-    def runner = new CheckRangeRunner(byFile, runnerParams)
+    def runner = new CheckRangeRunner(byFile, runnerParams, null)
 
-    def onSuccess = { def result -> return null }
-    def onError = { def one, def two, def three -> return null }
-    def onCompletion = { def one, def two -> LanguageUtilsKt.deleteLogged(saved); return null }
+    def onSuccess = { result -> return null }
+    def onError = { one, two, three -> return null }
+    def onCompletion = { one, two -> LanguageUtilsKt.deleteLogged(saved); return null }
 
     def taskId = TaskManager.INSTANCE.enqueue(runner, onSuccess, onError, onCompletion)
 

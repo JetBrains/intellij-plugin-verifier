@@ -12,6 +12,7 @@ import com.jetbrains.pluginverifier.configurations.BundledPlugins
 import com.jetbrains.pluginverifier.configurations.CheckIdeConfiguration
 import com.jetbrains.pluginverifier.configurations.CheckIdeParams
 import com.jetbrains.pluginverifier.configurations.CheckTrunkApiResults
+import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import org.jetbrains.plugins.verifier.service.core.BridgeVProgress
@@ -22,7 +23,6 @@ import org.jetbrains.plugins.verifier.service.setting.TrunkVersions
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.storage.JdkManager
 import org.jetbrains.plugins.verifier.service.storage.ReportsManager
-import org.jetbrains.plugins.verifier.service.util.deleteLogged
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -108,12 +108,12 @@ class CheckTrunkApiRunner(val ideFile: File,
       val bundledPlugins = getBundledPlugins(majorBuildLock.ide)
       val majorParams = CheckIdeParams(IdeDescriptor.ByInstance(majorBuildLock.ide), jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), runnerParams.vOptions, emptyList(), Resolver.getEmptyResolver(), BridgeVProgress(progress))
       LOG.debug("${presentableName()} major arguments: $majorParams")
-      val ideReport = CheckIdeConfiguration(majorParams).execute().run { CheckIdeReport.createReport(ideVersion, vResults) }
+      val ideReport = CheckIdeConfiguration(majorParams).execute().run { CheckIdeReport.createReport(majorVersion, vResults) }
       return ideReport to bundledPlugins
     } catch (ie: InterruptedException) {
       throw ie
     } catch (e: Exception) {
-      LOG.error("Failed to verify major IDE", e)
+      LOG.error("Failed to verify major IDE $majorVersion", e)
       throw e
     } finally {
       majorBuildLock.release()

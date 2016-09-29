@@ -8,12 +8,12 @@ import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.configurations.CheckPluginConfiguration
 import com.jetbrains.pluginverifier.configurations.CheckPluginParams
 import com.jetbrains.pluginverifier.configurations.CheckPluginResults
+import com.jetbrains.pluginverifier.misc.deleteLogged
 import org.jetbrains.plugins.verifier.service.core.BridgeVProgress
 import org.jetbrains.plugins.verifier.service.core.Progress
 import org.jetbrains.plugins.verifier.service.core.Task
 import org.jetbrains.plugins.verifier.service.params.CheckPluginRunnerParams
 import org.jetbrains.plugins.verifier.service.storage.JdkManager
-import org.jetbrains.plugins.verifier.service.util.deleteLogged
 import org.slf4j.LoggerFactory
 import java.io.File
 
