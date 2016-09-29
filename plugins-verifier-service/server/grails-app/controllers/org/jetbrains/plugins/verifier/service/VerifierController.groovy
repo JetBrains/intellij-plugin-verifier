@@ -12,11 +12,9 @@ import org.jetbrains.plugins.verifier.service.core.TaskManager
 import org.jetbrains.plugins.verifier.service.params.CheckIdeRunnerParams
 import org.jetbrains.plugins.verifier.service.params.CheckPluginRunnerParams
 import org.jetbrains.plugins.verifier.service.params.CheckRangeRunnerParams
-import org.jetbrains.plugins.verifier.service.params.CheckTrunkApiRunnerParams
 import org.jetbrains.plugins.verifier.service.runners.CheckIdeRunner
 import org.jetbrains.plugins.verifier.service.runners.CheckPlugin
 import org.jetbrains.plugins.verifier.service.runners.CheckRangeRunner
-import org.jetbrains.plugins.verifier.service.runners.CheckTrunkApiRunner
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.springframework.http.HttpStatus
 
@@ -119,16 +117,6 @@ class VerifierController {
     def taskId = TaskManager.INSTANCE.enqueue(runner)
     sendJson(taskId)
     log.info("New Check-Ide command is enqueued with taskId=$taskId")
-  }
-
-  def checkTrunkApi() {
-    def saved = saveIdeTemporarily(params.ideFile)
-    if (!saved) return
-    def params = GSON.fromJson(params.params as String, CheckTrunkApiRunnerParams.class)
-    def runner = new CheckTrunkApiRunner(saved, true, params)
-    def taskId = TaskManager.INSTANCE.enqueue(runner)
-    sendJson(taskId)
-    log.info("New Check-Trunk-Api command is enqueued with taskId=$taskId")
   }
 
   private File saveIdeTemporarily(ideFile) {

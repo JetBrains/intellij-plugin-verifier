@@ -4,7 +4,6 @@ import com.intellij.structure.domain.IdeVersion
 import org.apache.commons.io.FileUtils
 import org.jetbrains.plugins.verifier.service.core.TaskManager
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.setting.TrunkVersions
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 
@@ -15,8 +14,6 @@ object ServerStatus {
     result.addAll(diskUsage())
     return result
   }
-
-  fun releaseVersions() = TrunkVersions.listReleaseVersions()
 
   fun appProperties(): List<Pair<String, String>> = Settings.values().map { it.name to it.get() }
 

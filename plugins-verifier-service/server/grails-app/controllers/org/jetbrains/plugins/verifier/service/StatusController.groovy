@@ -1,10 +1,7 @@
 package org.jetbrains.plugins.verifier.service
 
 import com.google.common.collect.ImmutableList
-import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.persistence.GsonHolder
-import kotlin.Pair
-import org.jetbrains.plugins.verifier.service.setting.TrunkVersions
 
 class StatusController {
 
@@ -14,18 +11,6 @@ class StatusController {
 
   def supportedClients() {
     sendJson(SUPPORTED_CLIENTS)
-  }
-
-  def listReleaseVersions() {
-    List<Pair<Integer, IdeVersion>> versions = (141..165).collect {
-      new Pair<Integer, IdeVersion>(it, TrunkVersions.INSTANCE.getReleaseVersion(it))
-    }
-    sendJson(versions)
-  }
-
-  def setReleaseVersion(int trunkNumber, String releaseVersion) {
-    TrunkVersions.INSTANCE.setReleaseVersion(trunkNumber, IdeVersion.createIdeVersion(releaseVersion))
-    listReleaseVersions()
   }
 
   private sendJson(Object obj) {
