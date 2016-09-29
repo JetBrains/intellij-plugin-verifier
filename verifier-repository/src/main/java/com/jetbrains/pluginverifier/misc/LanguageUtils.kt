@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.util
+package com.jetbrains.pluginverifier.misc
 
 import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
@@ -8,7 +8,7 @@ import java.io.File
 /**
  * @author Sergey Patrikeev
  */
-private val LOG = LoggerFactory.getLogger("GlobalLogger")
+private val LOG = LoggerFactory.getLogger("LanguageUtils")
 
 fun <T> T?.notNullize(default: T) = if (this == null) default else this
 

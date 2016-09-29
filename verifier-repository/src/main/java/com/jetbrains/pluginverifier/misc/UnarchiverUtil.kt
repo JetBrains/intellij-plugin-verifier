@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.util
+package com.jetbrains.pluginverifier.misc
 
 import com.google.common.io.Files
 import org.apache.commons.io.FileUtils
