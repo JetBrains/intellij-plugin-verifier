@@ -58,7 +58,7 @@ object DownloadManager {
 
   @Synchronized
   private fun garbageCollection() {
-    LOG.info("It's time for garbage collection!")
+    LOG.debug("It's time for garbage collection!")
 
     releaseOldLocks()
     if (exceedSpace()) {
