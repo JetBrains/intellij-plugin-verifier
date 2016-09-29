@@ -1,9 +1,7 @@
 package com.jetbrains.pluginverifier
 
-import com.jetbrains.pluginverifier.configurations.CheckIdeConfiguration
-import com.jetbrains.pluginverifier.configurations.CheckIdeParamsParser
-import com.jetbrains.pluginverifier.configurations.CheckPluginConfiguration
-import com.jetbrains.pluginverifier.configurations.CheckPluginParamsParser
+import com.jetbrains.pluginverifier.configurations.*
+import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
 import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.utils.CmdOpts
@@ -55,6 +53,23 @@ object PluginVerifierMain {
         if (opts.dumpBrokenPluginsFile != null) {
           checkIdeResults.dumbBrokenPluginsList(File(opts.dumpBrokenPluginsFile))
         }
+      }
+      "check-trunk-api" -> {
+        val params = CheckTrunkApiParamsParser.parse(opts, freeArgs)
+        LOG.info("Check-Trunk-API arguments: $params")
+
+        val checkTrunkApiResults = CheckTrunkApiConfiguration(params).execute()
+
+        if (opts.needTeamCityLog) {
+          val compareResult = CheckTrunkApiCompareResult.create(checkTrunkApiResults)
+          val vPrinter = TeamCityVPrinter(TeamCityLog(System.out), TeamCityVPrinter.GroupBy.parse(opts.group))
+          vPrinter.printIdeCompareResult(compareResult)
+        }
+        if (opts.saveCheckIdeReport != null) {
+          val file = File(opts.saveCheckIdeReport)
+          checkTrunkApiResults.currentReport.saveToFile(file)
+        }
+
       }
       else -> {
         throw IllegalArgumentException("Unsupported command $command")
