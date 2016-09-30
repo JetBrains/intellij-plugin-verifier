@@ -4,6 +4,7 @@ import com.jetbrains.pluginverifier.client.BaseCmdOpts
 import com.jetbrains.pluginverifier.configurations.CheckIdeResults
 import com.jetbrains.pluginverifier.configurations.CheckPluginResults
 import com.jetbrains.pluginverifier.configurations.CheckRangeResults
+import com.jetbrains.pluginverifier.configurations.CheckTrunkApiResults
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import org.jetbrains.plugins.verifier.service.api.GetResult
@@ -32,6 +33,9 @@ class GetResultCommand : Command {
       }
       "check-since-until" -> {
         CheckRangeCommand().processResults(any as CheckRangeResults)
+      }
+      "check-trunk-api" -> {
+        CheckTrunkApiCommand().processResults(any as CheckTrunkApiResults, opts)
       }
       else -> {
         throw IllegalArgumentException("unknown command")
