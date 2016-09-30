@@ -66,7 +66,7 @@ object VManager {
     progress.setProgress(0.0)
     var verified = 0
 
-    val time = System.currentTimeMillis()
+    val startTime = System.currentTimeMillis()
 
     val results = arrayListOf<VResult>()
 
@@ -134,9 +134,9 @@ object VManager {
       }
     }
 
-    val elapsed = "${(System.currentTimeMillis() - time) / 1000} seconds"
+    val elapsed = "${(System.currentTimeMillis() - startTime) / 1000} seconds"
     LOG.debug("The verification has been successfully completed in $elapsed")
-    progress.setText("Finished in $elapsed")
+    progress.setText("The verification is finished in $elapsed")
     progress.setProgress(1.0)
 
     return VResults(results)

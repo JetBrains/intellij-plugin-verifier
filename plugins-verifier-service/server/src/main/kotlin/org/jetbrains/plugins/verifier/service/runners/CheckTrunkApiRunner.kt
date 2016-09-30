@@ -14,10 +14,7 @@ import com.jetbrains.pluginverifier.configurations.CheckTrunkApiResults
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.repository.RepositoryManager
-import org.jetbrains.plugins.verifier.service.core.BridgeVProgress
-import org.jetbrains.plugins.verifier.service.core.Progress
-import org.jetbrains.plugins.verifier.service.core.Task
-import org.jetbrains.plugins.verifier.service.core.TaskManager
+import org.jetbrains.plugins.verifier.service.core.*
 import org.jetbrains.plugins.verifier.service.params.CheckTrunkApiRunnerParams
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.storage.JdkManager
@@ -99,8 +96,24 @@ class CheckTrunkApiRunner(val ideFile: File,
 
         val jdkDescriptor = JdkDescriptor.ByFile(JdkManager.getJdkHome(runnerParams.jdkVersion))
 
-        val majorReport = calcReport(ide, jdkDescriptor, pluginsToCheck, progress)
-        val currentReport = calcReport(majorLock.ide, jdkDescriptor, pluginsToCheck, progress)
+        var firstPart: Boolean = true
+
+        val halfProgress: Progress = object : DefaultProgress() {
+
+          override fun setProgress(value: Double) = if (firstPart) progress.setProgress(value / 2) else progress.setProgress(0.5 + value / 2)
+
+          override fun getProgress(): Double = progress.getProgress()
+
+          override fun getText(): String = progress.getText()
+
+          override fun setText(text: String) = progress.setText(text)
+        }
+
+        val majorReport = calcReport(ide, jdkDescriptor, pluginsToCheck, halfProgress)
+
+        firstPart = false
+
+        val currentReport = calcReport(majorLock.ide, jdkDescriptor, pluginsToCheck, halfProgress)
 
         return CheckTrunkApiResults(majorReport.first, majorReport.second, currentReport.first, currentReport.second)
       } finally {

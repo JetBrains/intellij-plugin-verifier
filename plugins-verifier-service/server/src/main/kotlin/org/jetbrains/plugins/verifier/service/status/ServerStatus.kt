@@ -6,6 +6,7 @@ import org.jetbrains.plugins.verifier.service.core.TaskManager
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
+import java.util.*
 
 object ServerStatus {
   fun parameters(): List<Pair<String, *>> {
@@ -20,7 +21,7 @@ object ServerStatus {
   fun ideFiles(): List<IdeVersion> = IdeFilesManager.ideList().sorted()
 
   fun getRunningTasks(): List<String> = TaskManager.listTasks().map {
-    "${it.taskId.id}) ${it.presentableName} (${it.state} - ${it.progress * 100.0}%) (${it.elapsedTime() / 1000} seconds) ${it.progressText}"
+    "${it.taskId.id}) ${it.presentableName}: Started at ${Date(it.startTime)} (${it.state} - ${it.progress * 100.0}%) (${it.elapsedTime() / 1000} seconds) ${it.progressText}"
   }
 
   private fun diskUsage(): List<Pair<String, *>> {

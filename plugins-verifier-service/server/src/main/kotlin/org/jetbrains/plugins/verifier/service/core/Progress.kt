@@ -17,7 +17,7 @@ interface Progress {
 
 }
 
-class DefaultProgress() : Progress {
+open class DefaultProgress() : Progress {
 
   @Volatile private var progress: Double = 0.0
   @Volatile private var text: String = ""
