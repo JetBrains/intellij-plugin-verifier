@@ -24,7 +24,7 @@ sealed class PluginDescriptor(@SerializedName("pluginId") val pluginId: String,
   abstract override fun hashCode(): Int
 
   class ByUpdateInfo(@SerializedName("updateInfo") val updateInfo: UpdateInfo) : PluginDescriptor(updateInfo.pluginId, updateInfo.version) {
-    override fun equals(other: Any?): Boolean = other is ByUpdateInfo && updateInfo.equals(other.updateInfo)
+    override fun equals(other: Any?): Boolean = other is ByUpdateInfo && updateInfo == other.updateInfo
 
     override fun hashCode(): Int = updateInfo.hashCode()
 
@@ -32,7 +32,7 @@ sealed class PluginDescriptor(@SerializedName("pluginId") val pluginId: String,
   }
 
   class ByXmlId(pluginId: String, version: String) : PluginDescriptor(pluginId, version) {
-    override fun equals(other: Any?): Boolean = other is ByXmlId && pluginId.equals(other.pluginId) && version.equals(other.version)
+    override fun equals(other: Any?): Boolean = other is ByXmlId && pluginId == other.pluginId && version == other.version
 
     override fun hashCode(): Int = pluginId.hashCode() + version.hashCode()
 
@@ -42,14 +42,14 @@ sealed class PluginDescriptor(@SerializedName("pluginId") val pluginId: String,
   class ByFile(pluginId: String, version: String, @Transient val file: File) : PluginDescriptor(pluginId, version) {
     override fun toString(): String = "$file"
 
-    override fun equals(other: Any?): Boolean = other is ByFile && file.equals(other.file)
+    override fun equals(other: Any?): Boolean = other is ByFile && file == other.file
 
     override fun hashCode(): Int = file.hashCode()
 
   }
 
   class ByFileLock(pluginId: String, version: String, @Transient val fileLock: IFileLock) : PluginDescriptor(pluginId, version) {
-    override fun equals(other: Any?): Boolean = other is ByFileLock && fileLock.getFile().equals(other.fileLock.getFile())
+    override fun equals(other: Any?): Boolean = other is ByFileLock && fileLock.getFile() == other.fileLock.getFile()
 
     override fun hashCode(): Int = fileLock.getFile().hashCode()
 
@@ -57,7 +57,7 @@ sealed class PluginDescriptor(@SerializedName("pluginId") val pluginId: String,
   }
 
   class ByInstance(@Transient val plugin: Plugin) : PluginDescriptor(plugin.pluginId!!, plugin.pluginVersion!!) {
-    override fun equals(other: Any?): Boolean = other is ByInstance && plugin.equals(other.plugin)
+    override fun equals(other: Any?): Boolean = other is ByInstance && plugin == other.plugin
 
     override fun hashCode(): Int = plugin.hashCode()
 
@@ -81,7 +81,7 @@ sealed class IdeDescriptor(@SerializedName("version") val ideVersion: IdeVersion
   }
 
   class ByFile(ideVersion: IdeVersion, @Transient val file: File) : IdeDescriptor(ideVersion) {
-    override fun equals(other: Any?): Boolean = other is ByFile && file.equals(other.file)
+    override fun equals(other: Any?): Boolean = other is ByFile && file == other.file
 
     override fun hashCode(): Int = file.hashCode()
 
@@ -90,7 +90,7 @@ sealed class IdeDescriptor(@SerializedName("version") val ideVersion: IdeVersion
   }
 
   class ByVersion(ideVersion: IdeVersion) : IdeDescriptor(ideVersion) {
-    override fun equals(other: Any?): Boolean = other is ByVersion && ideVersion.equals(other.ideVersion)
+    override fun equals(other: Any?): Boolean = other is ByVersion && ideVersion == other.ideVersion
 
     override fun hashCode(): Int = ideVersion.hashCode()
 
@@ -98,7 +98,7 @@ sealed class IdeDescriptor(@SerializedName("version") val ideVersion: IdeVersion
   }
 
   class ByInstance(@Transient val ide: Ide, @Transient val ideResolver: Resolver? = null) : IdeDescriptor(ide.version) {
-    override fun equals(other: Any?): Boolean = other is ByInstance && ideVersion.equals(other.ideVersion) && ide.equals(other.ide)
+    override fun equals(other: Any?): Boolean = other is ByInstance && ideVersion == other.ideVersion && ide == other.ide
 
     override fun hashCode(): Int = ide.hashCode()
 
@@ -115,7 +115,7 @@ sealed class JdkDescriptor() {
   class ByFile(@Transient val file: File) : JdkDescriptor() {
     constructor(path: String) : this(File(path))
 
-    override fun equals(other: Any?): Boolean = other is ByFile && file.equals(other.file)
+    override fun equals(other: Any?): Boolean = other is ByFile && file == other.file
 
     override fun hashCode(): Int = file.hashCode()
 

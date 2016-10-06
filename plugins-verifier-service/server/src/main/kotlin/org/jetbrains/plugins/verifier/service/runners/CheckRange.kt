@@ -44,14 +44,13 @@ class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
       }
     }
     try {
-      plugin!!
 
-      val sinceBuild = plugin.sinceBuild
+      val sinceBuild = plugin!!.sinceBuild
       val untilBuild = plugin.untilBuild
 
       if (sinceBuild == null) {
         LOG.info("The plugin $pluginToCheck has not specified since-build property")
-        val reason = "The plugin ${plugin.toString()} has not specified the <idea-version> 'since-build' attribute. See  <a href=\"http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html\">Plugin Configuration File - plugin.xml<\\a>"
+        val reason = "The plugin $plugin has not specified the <idea-version> 'since-build' attribute. See  <a href=\"http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html\">Plugin Configuration File - plugin.xml<\\a>"
         return CheckRangeResults(pluginToCheck, BAD_PLUGIN, VResult.BadPlugin(pluginToCheck, reason), null, null)
       }
 
@@ -62,7 +61,7 @@ class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
 
       val locks: List<IdeFilesManager.IdeLock> = IdeFilesManager.locked({
         (ideVersions ?: IdeFilesManager.ideList())
-            .filter { sinceBuild.compareTo(it) <= 0 && (untilBuild == null || it.compareTo(untilBuild) <= 0) }
+            .filter { sinceBuild <= it && (untilBuild == null || it <= untilBuild) }
             .map { IdeFilesManager.getIde(it) }
             .filterNotNull()
       })
@@ -70,7 +69,7 @@ class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
 
       if (locks.isEmpty()) {
         //TODO: download from the IDE repository.
-        LOG.error("There are no IDEs compatible with the Plugin ${plugin.toString()}; [since; until] = [$sinceBuild; $untilBuild]")
+        LOG.error("There are no IDEs compatible with the Plugin $plugin; [since; until] = [$sinceBuild; $untilBuild]")
         return CheckRangeResults(pluginToCheck, NO_COMPATIBLE_IDES, null, null, null)
       }
 

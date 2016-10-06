@@ -509,7 +509,7 @@ private object VParamsCreator {
     is PluginDescriptor.ByFileLock -> plugin.fileLock to PluginCache.createPlugin(plugin.fileLock.getFile()) //IncorrectPluginException, IOException
     is PluginDescriptor.ByXmlId -> {
       val updates = withConnectionCheck { RepositoryManager.getAllCompatibleUpdatesOfPlugin(ideVersion!!, plugin.pluginId) }
-      val suitable: UpdateInfo = updates.find { plugin.version.equals(it.version) } ?: throw noSuchUpdate(plugin)
+      val suitable: UpdateInfo = updates.find { plugin.version == it.version } ?: throw noSuchUpdate(plugin)
       val fileLock: IFileLock
       try {
         fileLock = RepositoryManager.getPluginFile(suitable) ?: throw noSuchUpdate(plugin)

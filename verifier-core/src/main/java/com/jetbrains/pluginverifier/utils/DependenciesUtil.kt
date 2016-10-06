@@ -206,7 +206,7 @@ data class Vertex(val plugin: Plugin) {
 
   val missingDependencies: MutableMap<PluginDependency, MissingReason> = hashMapOf()
 
-  override fun equals(other: Any?): Boolean = other is Vertex && plugin.pluginFile.equals(other.plugin.pluginFile)
+  override fun equals(other: Any?): Boolean = other is Vertex && plugin.pluginFile == other.plugin.pluginFile
 
   override fun hashCode(): Int = plugin.pluginFile.hashCode()
 }
