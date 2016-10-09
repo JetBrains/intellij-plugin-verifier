@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory
 class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
                        val params: CheckRangeRunnerParams,
                        val ideVersions: List<IdeVersion>? = null) : Task<CheckRangeResults>() {
-  override fun presentableName(): String = "CheckPluginWithSinceUntilBuilds"
+  override fun presentableName(): String = "Check range for $pluginToCheck"
 
   companion object {
     private val LOG = LoggerFactory.getLogger(CheckRangeRunner::class.java)
