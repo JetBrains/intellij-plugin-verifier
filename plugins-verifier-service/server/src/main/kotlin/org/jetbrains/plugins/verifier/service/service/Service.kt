@@ -56,6 +56,7 @@ private object Service {
   private val verifiableUpdates: MutableMap<UpdateInfo, TaskId> = hashMapOf()
   private val lastCheckDate: MutableMap<UpdateInfo, Long> = hashMapOf()
 
+  private var isRequesting: Boolean = false
 
   private fun makeClient(): OkHttpClient = OkHttpClient.Builder()
       .connectTimeout(5, TimeUnit.MINUTES)
@@ -83,6 +84,13 @@ private object Service {
   @Synchronized
   fun tick() {
     LOG.info("It's time to check more plugins!")
+
+    if (isRequesting) {
+      LOG.info("The server is already requesting new plugins list")
+      return
+    }
+    isRequesting = true
+
     if (isServerTooBusy()) {
       return
     }
@@ -97,6 +105,8 @@ private object Service {
 
     } catch (e: Exception) {
       LOG.error("Failed to schedule updates check", e)
+    } finally {
+      isRequesting = false
     }
   }
 
