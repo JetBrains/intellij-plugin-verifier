@@ -58,16 +58,16 @@ appender('ERRORS_FILE', RollingFileAppender) {
 
 }
 
-boolean isProduction = 'true' == System.getProperty('verifierService.productionMode')
+boolean developmentMode = 'true' == System.getProperty('verifier.service.development.mode')
 def loggers = ['STDOUT', 'ERRORS_FILE', 'FILE']
 
 logger("com.jetbrains.pluginverifier.misc.DownloadManager", ERROR, ['STDOUT', 'FILE'], false)
 logger("com.jetbrains.pluginverifier.repository.RepositoryManager", ERROR, loggers, false)
 logger("com.intellij.structure", ERROR, loggers, false)
-logger("org.jetbrains.plugins.verifier.service", isProduction ? INFO : TRACE, loggers, false)
-logger("com.jetbrains.pluginverifier.api.VManager", isProduction ? INFO : TRACE, loggers, false)
-logger("com.jetbrains.pluginverifier", isProduction ? INFO : TRACE, loggers, false)
-logger("grails.app.controllers", isProduction ? INFO : DEBUG, loggers, false)
-logger("grails.app.services", isProduction ? INFO : DEBUG, loggers, false)
+logger("org.jetbrains.plugins.verifier.service", developmentMode ? TRACE : INFO, loggers, false)
+logger("com.jetbrains.pluginverifier.api.VManager", developmentMode ? DEBUG : INFO, loggers, false)
+logger("com.jetbrains.pluginverifier", developmentMode ? DEBUG : INFO, loggers, false)
+logger("grails.app.controllers", developmentMode ? DEBUG : INFO, loggers, false)
+logger("grails.app.services", developmentMode ? DEBUG : INFO, loggers, false)
 
 root(WARN, loggers)
