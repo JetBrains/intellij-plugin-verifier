@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -513,21 +514,32 @@ public class PluginImpl implements Plugin {
   }
 
   void readExternal(@NotNull URL url, @NotNull Validator validator) throws IncorrectPluginException {
+    Document document;
     try {
-      Document document = JDOMUtil.loadDocument(url);
-      readExternal(document, url, validator);
-    } catch (Exception e) {
-      validator.onCheckedException("Unable to read " + url, e);
+      document = JDOMUtil.loadDocument(url);
+    } catch (JDOMException e) {
+      validator.onCheckedException("Unable to parse xml file " + url, e);
+      return;
+    } catch (IOException e) {
+      validator.onCheckedException("Unable to read xml file " + url, e);
+      return;
     }
+
+    readExternal(document, url, validator);
   }
 
   void readExternal(@NotNull Document document, @NotNull URL url, Validator validator) throws IncorrectPluginException {
     try {
-      document = JDOMXIncluder.resolve(document, url.toExternalForm(), false, new XIncludePluginResolver());
+      document = JDOMXIncluder.resolve(document, url.toExternalForm(), false, getPathResolver());
     } catch (XIncludeException e) {
-      throw new IncorrectPluginException("Unable to read resolve " + url.getFile(), e);
+      throw new IncorrectPluginException("Unable to resolve xml include elements of " + url.getFile(), e);
     }
     checkAndSetEntries(url, document, validator);
+  }
+
+  @NotNull
+  private XIncludePluginResolver getPathResolver() {
+    return new XIncludePluginResolver();
   }
 
   @NotNull
