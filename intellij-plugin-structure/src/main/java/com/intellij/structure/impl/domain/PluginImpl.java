@@ -8,7 +8,6 @@ import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.errors.IncorrectPluginException;
-import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.validators.Validator;
 import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
@@ -30,6 +29,8 @@ import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.structure.impl.utils.StringUtil.*;
 
 public class PluginImpl implements Plugin {
 
@@ -129,15 +130,15 @@ public class PluginImpl implements Plugin {
       myPluginId = myPluginName;
     }
 
-    myUrl = StringUtil.notNullize(rootElement.getAttributeValue("url"));
+    myUrl = notNullize(rootElement.getAttributeValue("url"));
 
     Element vendorElement = rootElement.getChild("vendor");
     if (vendorElement == null) {
       validator.onMissingConfigElement("Invalid " + myFileName + ": element 'vendor' is not found");
     } else {
       myPluginVendor = vendorElement.getTextTrim();
-      myVendorEmail = StringUtil.notNullize(vendorElement.getAttributeValue("email"));
-      myVendorUrl = StringUtil.notNullize(vendorElement.getAttributeValue("url"));
+      myVendorEmail = notNullize(vendorElement.getAttributeValue("email"));
+      myVendorUrl = notNullize(vendorElement.getAttributeValue("url"));
       setLogoContent(descriptorUrl, vendorElement);
     }
 
@@ -160,7 +161,7 @@ public class PluginImpl implements Plugin {
     setDefinedModules(rootElement, validator);
 
     String description = rootElement.getChildTextTrim("description");
-    if (StringUtil.isEmpty(description)) {
+    if (isEmpty(description)) {
       validator.onMissingConfigElement("Invalid " + myFileName + ": description is empty");
     } else {
       myDescription = Jsoup.clean(description, WHITELIST);
@@ -171,7 +172,7 @@ public class PluginImpl implements Plugin {
       Element o = changeNotes.get(0);
       if (o != null) {
         String textTrim = o.getTextTrim();
-        if (!StringUtil.isEmpty(textTrim)) {
+        if (!isEmpty(textTrim)) {
           myNotes = Jsoup.clean(textTrim, WHITELIST);
         }
       }
@@ -182,7 +183,7 @@ public class PluginImpl implements Plugin {
   private String calcDescriptorName(@NotNull URL url) {
     final String path = url.getFile();
     if (path.contains("META-INF/")) {
-      return "META-INF/" + StringUtil.substringAfter(path, "META-INF/");
+      return "META-INF/" + substringAfter(path, "META-INF/");
     }
     return path;
   }
@@ -274,7 +275,7 @@ public class PluginImpl implements Plugin {
 
   private boolean isInterestingName(@NotNull String label) {
     for (String string : INTERESTING_STRINGS) {
-      if (StringUtil.containsIgnoreCase(label, string)) {
+      if (containsIgnoreCase(label, string)) {
         return true;
       }
     }
@@ -535,13 +536,13 @@ public class PluginImpl implements Plugin {
   @Override
   public String toString() {
     String id = myPluginId;
-    if (StringUtil.isEmpty(id)) {
+    if (isEmpty(id)) {
       id = myPluginName;
     }
-    if (StringUtil.isEmpty(id)) {
+    if (isEmpty(id)) {
       id = myUrl;
     }
-    if (StringUtil.isEmpty(id)) {
+    if (isEmpty(id)) {
       id = myFileName;
     }
     return id + (getPluginVersion() != null ? ":" + getPluginVersion() : "");
@@ -553,14 +554,14 @@ public class PluginImpl implements Plugin {
 
   static class PluginXmlPathResolver extends JDOMXIncluder.DefaultPathResolver {
 
-    private final List<URL> myPluginLibJarFiles;
+    private final List<URL> myPluginMetaInfUrls;
 
     private PluginXmlPathResolver() {
-      myPluginLibJarFiles = Collections.emptyList();
+      myPluginMetaInfUrls = Collections.emptyList();
     }
 
-    PluginXmlPathResolver(List<URL> pluginLibJarFiles) {
-      myPluginLibJarFiles = new ArrayList<URL>(pluginLibJarFiles);
+    PluginXmlPathResolver(List<URL> metaInfUrl) {
+      myPluginMetaInfUrls = new ArrayList<URL>(metaInfUrl);
     }
 
     @NotNull
@@ -577,13 +578,22 @@ public class PluginImpl implements Plugin {
     }
 
     @NotNull
+    private URL getMetaInfRelativeUrl(@NotNull URL metaInf, @NotNull String relativePath) throws MalformedURLException {
+      if (relativePath.startsWith("/")) {
+        return new URL(metaInf, ".." + relativePath);
+      } else {
+        return new URL(metaInf, relativePath);
+      }
+    }
+
+    @NotNull
     @Override
     public URL resolvePath(@NotNull String relativePath, @Nullable String base) {
       URL url = defaultResolve(relativePath, base);
       if (!URLUtil.resourceExists(url)) {
-        for (URL jarFile : myPluginLibJarFiles) {
+        for (URL metaInf : myPluginMetaInfUrls) {
           try {
-            URL entryUrl = new URL(jarFile, relativePath);
+            URL entryUrl = getMetaInfRelativeUrl(metaInf, relativePath);
             if (URLUtil.resourceExists(entryUrl)) {
               return entryUrl;
             }
