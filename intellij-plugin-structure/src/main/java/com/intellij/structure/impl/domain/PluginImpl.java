@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -33,6 +32,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PluginImpl implements Plugin {
+
+  static final JDOMXIncluder.PathResolver DEFAULT_PLUGIN_XML_PATH_RESOLVER = new PluginXmlPathResolver();
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginImpl.class);
 
@@ -513,33 +514,13 @@ public class PluginImpl implements Plugin {
     checkAndSetEntries(url, document, validator);
   }
 
-  void readExternal(@NotNull URL url, @NotNull Validator validator) throws IncorrectPluginException {
-    Document document;
+  void readExternal(@NotNull Document document, @NotNull URL documentUrl, Validator validator, JDOMXIncluder.PathResolver pathResolver) {
     try {
-      document = JDOMUtil.loadDocument(url);
-    } catch (JDOMException e) {
-      validator.onCheckedException("Unable to parse xml file " + url, e);
-      return;
-    } catch (IOException e) {
-      validator.onCheckedException("Unable to read xml file " + url, e);
-      return;
-    }
-
-    readExternal(document, url, validator);
-  }
-
-  void readExternal(@NotNull Document document, @NotNull URL url, Validator validator) throws IncorrectPluginException {
-    try {
-      document = JDOMXIncluder.resolve(document, url.toExternalForm(), false, getPathResolver());
+      document = JDOMXIncluder.resolve(document, documentUrl.toExternalForm(), false, pathResolver);
     } catch (XIncludeException e) {
-      throw new IncorrectPluginException("Unable to resolve xml include elements of " + url.getFile(), e);
+      throw new IncorrectPluginException("Unable to resolve xml include elements of " + documentUrl.getFile(), e);
     }
-    checkAndSetEntries(url, document, validator);
-  }
-
-  @NotNull
-  private XIncludePluginResolver getPathResolver() {
-    return new XIncludePluginResolver();
+    checkAndSetEntries(documentUrl, document, validator);
   }
 
   @NotNull
@@ -570,10 +551,20 @@ public class PluginImpl implements Plugin {
     myHints.addAll(hints);
   }
 
-  private static class XIncludePluginResolver extends JDOMXIncluder.DefaultPathResolver {
+  static class PluginXmlPathResolver extends JDOMXIncluder.DefaultPathResolver {
+
+    private final List<URL> myPluginLibJarFiles;
+
+    private PluginXmlPathResolver() {
+      myPluginLibJarFiles = Collections.emptyList();
+    }
+
+    PluginXmlPathResolver(List<URL> pluginLibJarFiles) {
+      myPluginLibJarFiles = new ArrayList<URL>(pluginLibJarFiles);
+    }
+
     @NotNull
-    @Override
-    public URL resolvePath(@NotNull String relativePath, @Nullable String base) {
+    private URL defaultResolve(@NotNull String relativePath, @Nullable String base) {
       if (base != null && relativePath.startsWith("/META-INF/")) {
         //for plugin descriptor the root is a directory containing the META-INF
         try {
@@ -583,6 +574,24 @@ public class PluginImpl implements Plugin {
         }
       }
       return super.resolvePath(relativePath, base);
+    }
+
+    @NotNull
+    @Override
+    public URL resolvePath(@NotNull String relativePath, @Nullable String base) {
+      URL url = defaultResolve(relativePath, base);
+      if (!URLUtil.resourceExists(url)) {
+        for (URL jarFile : myPluginLibJarFiles) {
+          try {
+            URL entryUrl = new URL(jarFile, relativePath);
+            if (URLUtil.resourceExists(entryUrl)) {
+              return entryUrl;
+            }
+          } catch (MalformedURLException ignored) {
+          }
+        }
+      }
+      return url;
     }
   }
 
