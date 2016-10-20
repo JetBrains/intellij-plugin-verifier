@@ -21,6 +21,20 @@ public class StringUtil {
     return text.substring(i + subString.length());
   }
 
+  @Nullable
+  public static String substringBefore(@NotNull String text, @NotNull String subString) {
+    int i = text.indexOf(subString);
+    if (i == -1) return null;
+    return text.substring(0, i);
+  }
+
+  @Nullable
+  public static String substringBeforeIncluding(@NotNull String text, @NotNull String subString) {
+    String before = substringBefore(text, subString);
+    if (before == null) return null;
+    return before + subString;
+  }
+
   @NotNull
   public static String getFileName(@NotNull String path) {
     if (path.length() == 0) return "";
@@ -154,6 +168,13 @@ public class StringUtil {
 
   private static boolean charsEqualIgnoreCase(char a, char b) {
     return a == b || toUpperCase(a) == toUpperCase(b) || toLowerCase(a) == toLowerCase(b);
+  }
+
+  @NotNull
+  public static String trimLeading(@NotNull String string, char symbol) {
+    int index = 0;
+    while (index < string.length() && string.charAt(index) == symbol) index++;
+    return string.substring(index);
   }
 
   @NotNull
