@@ -57,6 +57,16 @@ public class URLUtil {
     return protocol.equals(JAR_PROTOCOL) ? openRecursiveJarStream(url) : url.openStream();
   }
 
+  public static boolean resourceExists(@NotNull URL url) {
+    try {
+      InputStream inputStream = openStream(url);
+      inputStream.close();
+      return true;
+    } catch (IOException e) {
+      return false;
+    }
+  }
+
   @NotNull
   public static InputStream openResourceStream(final URL url) throws IOException {
     try {
