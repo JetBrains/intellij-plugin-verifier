@@ -160,6 +160,12 @@ object VerifierUtil {
 
   fun isPublic(field: FieldNode): Boolean = field.access and Opcodes.ACC_PUBLIC != 0
 
+  fun isDeprecated(classNode: ClassNode): Boolean = classNode.access and Opcodes.ACC_DEPRECATED != 0
+
+  fun isDeprecated(method: MethodNode): Boolean = method.access and Opcodes.ACC_DEPRECATED != 0
+
+  fun isDeprecated(field: FieldNode): Boolean = field.access and Opcodes.ACC_DEPRECATED != 0
+
   fun isDefaultAccess(field: FieldNode): Boolean = !isPublic(field) && !isProtected(field) && !isPrivate(field)
 
   fun isDefaultAccess(method: MethodNode): Boolean = !isPublic(method) && !isProtected(method) && !isPrivate(method)
