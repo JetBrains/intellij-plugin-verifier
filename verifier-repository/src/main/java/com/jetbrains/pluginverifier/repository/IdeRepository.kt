@@ -129,9 +129,9 @@ object IdeRepository {
       .create(RepositoryInterface::class.java)
 
   private fun makeClient(): OkHttpClient = OkHttpClient.Builder()
-      .connectTimeout(5, TimeUnit.MINUTES)
-      .readTimeout(5, TimeUnit.MINUTES)
-      .writeTimeout(5, TimeUnit.MINUTES)
+      .connectTimeout(1, TimeUnit.HOURS)
+      .readTimeout(1, TimeUnit.HOURS)
+      .writeTimeout(1, TimeUnit.HOURS)
       .addInterceptor(HttpLoggingInterceptor().setLevel(if (LOG.isDebugEnabled) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE))
       .build()
 
