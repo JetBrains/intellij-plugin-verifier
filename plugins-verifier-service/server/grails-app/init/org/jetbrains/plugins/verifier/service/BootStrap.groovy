@@ -2,6 +2,7 @@ package org.jetbrains.plugins.verifier.service
 
 import org.jetbrains.plugins.verifier.service.service.Service
 import org.jetbrains.plugins.verifier.service.setting.Settings
+import org.jetbrains.plugins.verifier.service.util.IdeListUpdater
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -23,6 +24,7 @@ class BootStrap {
 
     LOG.info("Server settings: ${Settings.values().collect { it.key + "=" + it.get() }.join(", ")}")
     Service.INSTANCE.run()
+    IdeListUpdater.INSTANCE.run()
   }
 
   def destroy = {

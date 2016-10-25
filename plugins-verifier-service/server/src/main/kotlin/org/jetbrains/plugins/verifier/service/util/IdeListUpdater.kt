@@ -23,7 +23,7 @@ object IdeListUpdater {
   //30 minutes
   private val DOWNLOAD_NEW_IDE_PERIOD: Long = 30
 
-  fun start() {
+  fun run() {
     Executors.newSingleThreadScheduledExecutor(
         ThreadFactoryBuilder()
             .setDaemon(true)
