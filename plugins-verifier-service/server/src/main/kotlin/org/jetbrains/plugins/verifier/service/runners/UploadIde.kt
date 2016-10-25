@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.runners
 
+import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import org.jetbrains.plugins.verifier.service.core.Progress
@@ -13,17 +14,15 @@ import java.util.function.Function
 /**
  * @author Sergey Patrikeev
  */
-class UploadIdeRunner(val ideVersion: String, val isCommunity: Boolean = false, val fromSnapshots: Boolean = false) : Task<Boolean>() {
+class UploadIdeRunner(val ideVersion: IdeVersion, val fromSnapshots: Boolean = false) : Task<Boolean>() {
 
   private val LOG: Logger = LoggerFactory.getLogger(UploadIdeRunner::class.java)
 
-  override fun presentableName(): String = "UploadIde"
+  override fun presentableName(): String = "UploadIde #$ideVersion"
 
   override fun computeResult(progress: Progress): Boolean {
-    val rawVersion = ideVersion.substringAfter("IU-").substringAfter("IC-")
     val artifact = IdeRepository.fetchIndex(fromSnapshots)
-        .find { it.version == rawVersion && it.isCommunity == isCommunity }
-        ?: throw IllegalArgumentException("Unable to find the IDE #$ideVersion (community = $isCommunity) in snapshots = $fromSnapshots")
+        .find { it.version == ideVersion } ?: throw IllegalArgumentException("Unable to find the IDE #$ideVersion in snapshots = $fromSnapshots")
 
     val ideFile = FileManager.createTempFile(".zip")
 
@@ -31,7 +30,7 @@ class UploadIdeRunner(val ideVersion: String, val isCommunity: Boolean = false, 
       try {
         IdeRepository.downloadIde(artifact, ideFile, Function<Double, Unit>() { progress.setProgress(it) })
       } catch(e: Exception) {
-        LOG.error("Unable to download IDE ${artifact.version} community=${artifact.isCommunity} from snapshots=${artifact.snapshots}", e)
+        LOG.error("Unable to download IDE ${artifact.version} community=${artifact.isCommunity} from snapshots=${artifact.isSnapshot}", e)
         throw e
       }
 

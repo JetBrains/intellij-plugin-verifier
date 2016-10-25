@@ -62,7 +62,7 @@ class CheckTrunkApiRunner(val ideFile: File,
       if (majorLock == null) {
         LOG.info("There is no IDE of version $majorIdeVersion; downloading from the repository")
 
-        val uploadIdeRunner = UploadIdeRunner(majorIdeVersion.asString(false, true), majorIdeVersion.productCode == "IC")
+        val uploadIdeRunner = UploadIdeRunner(majorIdeVersion)
 
         val downloadFinished = AtomicBoolean()
 
