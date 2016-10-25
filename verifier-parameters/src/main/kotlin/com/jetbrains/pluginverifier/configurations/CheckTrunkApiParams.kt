@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.configurations
 
 import com.google.common.util.concurrent.AtomicDouble
 import com.intellij.structure.domain.Ide
+import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.JdkDescriptor
 import com.jetbrains.pluginverifier.api.VOptions
 import com.jetbrains.pluginverifier.misc.deleteLogged
@@ -46,7 +47,7 @@ object CheckTrunkApiParamsParser : ParamsParser {
       }
       deleteMajorOnExit = false
     } else if (apiOpts.majorIdeVersion != null) {
-      majorIdeFile = downloadIde(apiOpts.majorIdeVersion!!)
+      majorIdeFile = downloadIde(parseIdeVersion(apiOpts.majorIdeVersion!!))
       deleteMajorOnExit = true
     } else {
       throw IllegalArgumentException("Neither the version (-miv) nor the path to the IDE (-mip) with which to compare API problems are not specified")
@@ -55,7 +56,17 @@ object CheckTrunkApiParamsParser : ParamsParser {
     return CheckTrunkApiParams(ide, majorIdeFile, deleteMajorOnExit, VOptionsUtil.parseOpts(opts), jdkDescriptor)
   }
 
-  private fun downloadIde(ideVersion: String): File {
+  private fun parseIdeVersion(ideVersion: String): IdeVersion {
+    try {
+      return IdeVersion.createIdeVersion(ideVersion.substringAfter("IU-").substringAfter("IC-"))
+    } catch(e: Exception) {
+      LOG.error("Unable to parse major ide version from $ideVersion", e)
+      throw IllegalArgumentException("Please provide valid build number of major IDE version with which to compare API problems; " +
+          "see https://www.jetbrains.com/intellij-repository/releases/", e)
+    }
+  }
+
+  private fun downloadIde(ideVersion: IdeVersion): File {
 
     LOG.info("Downloading the IDE #$ideVersion")
     val ideZip = downloadIdeZip(ideVersion)
@@ -77,7 +88,7 @@ object CheckTrunkApiParamsParser : ParamsParser {
     }
   }
 
-  private fun downloadIdeZip(ideVersion: String): File {
+  private fun downloadIdeZip(ideVersion: IdeVersion): File {
     val tempFile = File.createTempFile("ide", ".zip", RepositoryConfiguration.ideDownloadDir)
 
     val lastProgress = AtomicDouble()
@@ -89,20 +100,17 @@ object CheckTrunkApiParamsParser : ParamsParser {
     }
 
     try {
-      val isCommunity = ideVersion.startsWith("IC-")
-      val rawVersion = ideVersion.substringAfter("IU-").substringAfter("IC-")
-
-      val fromReleases = IdeRepository.fetchIndex().find { it.version == rawVersion && it.isCommunity == isCommunity }
+      val fromReleases = IdeRepository.fetchIndex().find { it.version == ideVersion }
       if (fromReleases != null) {
         return IdeRepository.downloadIde(fromReleases, tempFile, progressUpdater)
       }
 
-      val fromSnapshots = IdeRepository.fetchIndex(true).find { it.version == rawVersion && it.isCommunity == isCommunity }
+      val fromSnapshots = IdeRepository.fetchIndex(true).find { it.version == ideVersion }
       if (fromSnapshots != null) {
         return IdeRepository.downloadIde(fromSnapshots, tempFile, progressUpdater)
       }
 
-      throw IllegalArgumentException("The IDE #$rawVersion is not found neither in releases nor in the snapshots IDE repository")
+      throw IllegalArgumentException("The IDE #$ideVersion is not found neither in releases nor in the snapshots IDE repository")
     } catch (e: Exception) {
       tempFile.deleteLogged()
       throw e
