@@ -1,4 +1,4 @@
-<%@ page import="org.jetbrains.plugins.verifier.service.status.ServerStatus" %>
+<%@ page import="org.jetbrains.plugins.verifier.service.core.TaskManager; org.jetbrains.plugins.verifier.service.status.ServerStatus" %>
 <!doctype html>
 <html>
 <head>
@@ -35,7 +35,7 @@
         </g:each>
     </ul>
 
-    <h2>Currently running tasks:</h2>
+    <h2>Currently running tasks: ${TaskManager.INSTANCE.runningTasksNumber()}</h2>
     <ul>
         <g:each var="c" in="${ServerStatus.INSTANCE.getRunningTasks()}">
             <li>

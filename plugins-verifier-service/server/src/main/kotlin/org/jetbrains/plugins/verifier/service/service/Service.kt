@@ -95,13 +95,14 @@ private object Service {
   fun tick() {
     LOG.info("It's time to check more plugins!")
 
+    if (isServerTooBusy()) return
+
     if (isRequesting) {
       LOG.info("The server is already requesting new plugins list")
       return
     }
-    isRequesting = true
 
-    if (isServerTooBusy()) return
+    isRequesting = true
 
     try {
       val ideList = IdeFilesManager.ideList()
