@@ -75,7 +75,7 @@ private object Service {
   private fun isServerTooBusy(): Boolean {
     val runningNumber = TaskManager.runningTasksNumber()
     if (runningNumber >= TaskManager.MAX_RUNNING_TASKS) {
-      LOG.info("There are too many running tasks $runningNumber >= ${TaskManager.MAX_RUNNING_TASKS}; sleep")
+      LOG.info("There are too many running tasks $runningNumber >= ${TaskManager.MAX_RUNNING_TASKS}")
       return true
     }
     return false
@@ -91,9 +91,7 @@ private object Service {
     }
     isRequesting = true
 
-    if (isServerTooBusy()) {
-      return
-    }
+    if (isServerTooBusy()) return
 
     try {
       val ideList = IdeFilesManager.ideList()
@@ -101,7 +99,12 @@ private object Service {
       val updatesToCheck = verifier.getUpdatesToCheck(availableIdeList).executeSuccessfully().body()
       LOG.info("Repository connection success. Updates to check (${updatesToCheck.size} of them): $updatesToCheck")
 
-      updatesToCheck.filter { it.ideVersions.isNotEmpty() }.forEach { schedule(it.updateInfo, it.ideVersions) }
+      for ((updateInfo, ideVersions) in updatesToCheck.filter { it.ideVersions.isNotEmpty() }) {
+        if (isServerTooBusy()) {
+          break
+        }
+        schedule(updateInfo, ideVersions)
+      }
 
     } catch (e: Exception) {
       LOG.error("Failed to schedule updates check", e)
