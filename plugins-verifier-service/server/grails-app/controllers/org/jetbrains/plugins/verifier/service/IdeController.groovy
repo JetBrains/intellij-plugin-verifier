@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.persistence.GsonHolder
 import grails.converters.JSON
 import kotlin.text.StringsKt
 import org.jetbrains.plugins.verifier.service.core.TaskManager
+import org.jetbrains.plugins.verifier.service.runners.DeleteIdeRunner
 import org.jetbrains.plugins.verifier.service.runners.UploadIdeRunner
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
@@ -22,18 +23,25 @@ class IdeController {
   }
 
   def uploadFromRepository() {
-    def ideVersion = params.ideVersion as String
-    if (!ideVersion) {
+    def version = params.ideVersion as String
+    if (!version) {
       sendError(HttpStatus.BAD_REQUEST.value(), "IDE version is empty")
       return
     }
-    boolean fromSnapshots = params.snapshots != null
-    boolean isCommunity = params.community != null
+    IdeVersion ideVersion
+    try {
+      ideVersion = IdeVersion.createIdeVersion(version)
+    } catch (RuntimeException e) {
+      sendError(HttpStatus.BAD_REQUEST.value(), "Bad IDE version $version: ${e.getLocalizedMessage()}")
+      return
+    }
 
-    log.info("User is going to UPLOAD the new IDE #$ideVersion ${if (isCommunity) "community" else ""} " +
+    boolean fromSnapshots = params.snapshots != null
+
+    log.info("User is going to UPLOAD the new IDE #$ideVersion " +
         "from the ${if (fromSnapshots) "snapshots" else ""} repository")
 
-    def runner = new UploadIdeRunner(ideVersion, isCommunity, fromSnapshots)
+    def runner = new UploadIdeRunner(ideVersion, fromSnapshots)
     def taskId = TaskManager.INSTANCE.enqueue(runner)
     log.info("Upload IDE #$ideVersion is enqueued with taskId=$taskId")
     sendJson(taskId)
@@ -90,9 +98,10 @@ class IdeController {
       sendError(HttpStatus.BAD_REQUEST.value(), "Version $version is incorrect: ${e.message}")
       return
     }
-    IdeFilesManager.INSTANCE.deleteIde(ideVersion)
-    render([success: true] as JSON)
-    log.info("IDE #$version has been successfully deleted")
+    def ideRunner = new DeleteIdeRunner(ideVersion)
+    def taskId = TaskManager.INSTANCE.enqueue(ideRunner)
+    log.info("Delete IDE #$ideVersion is enqueued with taskId=$taskId")
+    sendJson(taskId)
   }
 
   private sendJson(Object obj) {
