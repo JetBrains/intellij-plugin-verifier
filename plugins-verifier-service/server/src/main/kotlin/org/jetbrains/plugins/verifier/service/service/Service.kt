@@ -65,7 +65,7 @@ private object Service {
       .addInterceptor(HttpLoggingInterceptor().setLevel(if (LOG.isDebugEnabled) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE))
       .build()
 
-  val verifier: VerificationApi = Retrofit.Builder()
+  private val verifier: VerificationApi = Retrofit.Builder()
       .baseUrl(Settings.PLUGIN_REPOSITORY_URL.get())
       .addConverterFactory(GsonConverterFactory.create(GsonHolder.GSON))
       .client(makeClient())
@@ -79,6 +79,16 @@ private object Service {
       return true
     }
     return false
+  }
+
+  private val userName: MultipartBody.Part by lazy {
+    val userName = Settings.PLUGIN_REPOSITORY_VERIFIER_USERNAME.get()
+    MultipartUtil.createJsonPart("username", userName)
+  }
+
+  private val password: MultipartBody.Part by lazy {
+    val password = Settings.PLUGIN_REPOSITORY_VERIFIER_PASSWORD.get()
+    MultipartUtil.createJsonPart("password", password)
   }
 
   @Synchronized
@@ -96,7 +106,7 @@ private object Service {
     try {
       val ideList = IdeFilesManager.ideList()
       val availableIdeList = MultipartUtil.createJsonPart("availableIdeList", ideList)
-      val updatesToCheck = verifier.getUpdatesToCheck(availableIdeList).executeSuccessfully().body()
+      val updatesToCheck = verifier.getUpdatesToCheck(availableIdeList, userName, password).executeSuccessfully().body()
       LOG.info("Repository connection success. Updates to check (${updatesToCheck.size} of them): $updatesToCheck")
 
       for ((updateInfo, ideVersions) in updatesToCheck.filter { it.ideVersions.isNotEmpty() }) {
@@ -162,7 +172,7 @@ private object Service {
         "in ${result.taskStatus.elapsedTime() / 1000} s")
 
     try {
-      verifier.sendUpdateCheckResult(results).executeSuccessfully()
+      verifier.sendUpdateCheckResult(results, userName, password).executeSuccessfully()
     } catch(e: Exception) {
       LOG.error("Unable to send check result of the plugin ${results.plugin}", e)
     }
@@ -177,10 +187,14 @@ interface VerificationApi {
 
   @Multipart
   @POST("/verification/getUpdatesToCheck")
-  fun getUpdatesToCheck(@Part availableIdeList: MultipartBody.Part): Call<List<UpdateToCheck>>
+  fun getUpdatesToCheck(@Part availableIdeList: MultipartBody.Part,
+                        @Part userName: MultipartBody.Part,
+                        @Part password: MultipartBody.Part): Call<List<UpdateToCheck>>
 
   @Multipart
   @POST("/verification/receiveUpdateCheckResult")
-  fun sendUpdateCheckResult(@Part("checkResults") checkResult: CheckRangeResults): Call<ResponseBody>
+  fun sendUpdateCheckResult(@Part("checkResults") checkResult: CheckRangeResults,
+                            @Part userName: MultipartBody.Part,
+                            @Part password: MultipartBody.Part): Call<ResponseBody>
 
 }
