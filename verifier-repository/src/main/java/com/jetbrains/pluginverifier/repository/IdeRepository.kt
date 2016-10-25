@@ -2,11 +2,14 @@ package com.jetbrains.pluginverifier.repository
 
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
+import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
 import org.apache.commons.io.FileUtils
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import retrofit2.Call
@@ -18,18 +21,17 @@ import retrofit2.http.Path
 import retrofit2.http.Streaming
 import java.io.File
 import java.io.IOException
+import java.io.InputStream
+import java.net.URL
+import java.net.URLConnection
 import java.util.concurrent.TimeUnit
 import java.util.function.Function
 
-/**
- * Requires a [String] instead of [com.intellij.structure.domain.IdeVersion],
- * because the https://www.jetbrains.com/intellij-repository/snapshots/
- * contains also invalid [IdeVersion]'s: 163.4396-EAP-CANDIDATE-SNAPSHOT,
- * 162.646-EAP-CANDIDATE-SNAPSHOT
- */
-data class AvailableIde(val version: String,
+data class AvailableIde(val version: IdeVersion,
+                        val isRelease: Boolean,
                         val isCommunity: Boolean,
-                        val snapshots: Boolean)
+                        val isSnapshot: Boolean,
+                        val downloadUrl: URL)
 
 object IdeRepository {
 
@@ -52,16 +54,45 @@ object IdeRepository {
     throw RuntimeException("The response status code is ${response.code()}: ${response.errorBody().string()}")
   }
 
+  private fun parseDocument(document: Document, snapshots: Boolean): List<AvailableIde> {
+    val table = document.getElementsByTag("table")[0]
+    val tbody = table.getElementsByTag("tbody")[0]
+    val tableRows = tbody.getElementsByTag("tr")
+
+    val result = arrayListOf<AvailableIde>()
+
+    tableRows.forEach {
+      val columns = it.getElementsByTag("td")
+
+      val version = columns[0].text().trim()
+      val buildNumberString = columns[2].text().trim()
+      val buildNumber = IdeVersion.createIdeVersion(buildNumberString)
+      val isRelease = version != buildNumberString
+
+      val artifacts = columns[3]
+      val ideaIU = artifacts.getElementsContainingOwnText("ideaIU.zip")
+      if (ideaIU.isNotEmpty()) {
+        val downloadIdeaIU = URL(ideaIU[0].attr("href"))
+        result.add(AvailableIde(buildNumber, isRelease, false, snapshots, downloadIdeaIU))
+      }
+
+      val ideaIC = artifacts.getElementsContainingOwnText("ideaIC.zip")
+      if (ideaIC.isNotEmpty()) {
+        val downloadIdeaIC = URL(ideaIC[0].attr("href"))
+        result.add(AvailableIde(buildNumber, isRelease, true, snapshots, downloadIdeaIC))
+      }
+    }
+
+    return result
+  }
+
   fun fetchIndex(snapshots: Boolean = false): List<AvailableIde> {
-    val call = repository.fetchIndex(getRepo(snapshots))
+    val repoUrl = RepositoryConfiguration.ideRepositoryUrl.trimEnd('/') + "/intellij-repository/" + (if (snapshots) "snapshots" else "releases") + "/"
     try {
-      return call.executeSuccessfully().body()
-          .artifacts
-          .filter { it.artifactId == "ideaIU" || it.artifactId == "ideaIC" }
-          .filter { it.packaging == "zip" }
-          .map { AvailableIde(it.version, it.artifactId == "ideaIC", snapshots) }
+      val document = Jsoup.connect(repoUrl).get()
+      return parseDocument(document, snapshots)
     } catch (e: Exception) {
-      LOG.error("Unable to fetch repository ${call.request().url()} index", e)
+      LOG.error("Unable to fetch repository $repoUrl index", e)
       throw e
     }
   }
@@ -69,16 +100,6 @@ object IdeRepository {
   fun downloadIde(availableIde: AvailableIde,
                   saveTo: File,
                   progress: Function<Double, Unit>? = null): File {
-    val ideaName = if (availableIde.isCommunity) "ideaIC" else "ideaIU"
-    val call = repository.downloadFrom(getRepo(availableIde.snapshots), ideaName, availableIde.version)
-    val body: ResponseBody
-    try {
-      body = call.executeSuccessfully().body()
-    } catch (e: Exception) {
-      LOG.error("Unable to download #${availableIde.version} (snapshot = ${availableIde.snapshots}) (community = ${availableIde.isCommunity})", e)
-      throw e
-    }
-
     if (saveTo.exists()) {
       try {
         FileUtils.forceDelete(saveTo)
@@ -87,27 +108,42 @@ object IdeRepository {
       }
     }
 
+    val downloadUrl = availableIde.downloadUrl
+    val connection: URLConnection
     try {
-      copyInputStreamWithProgress(body, saveTo, progress)
+      connection = downloadUrl.openConnection()
+      connection.readTimeout = 60 * 1000
+      connection.connectTimeout = 60 * 1000
+    } catch (e: Exception) {
+      saveTo.deleteLogged()
+      LOG.error("Unable to download IDE by $downloadUrl", e)
+      throw e
+    }
+
+    try {
+      val fileSize = connection.contentLengthLong
+      connection.inputStream.buffered().use { inputStream ->
+        copyInputStreamWithProgress(inputStream, fileSize, saveTo, progress)
+      }
+
       return saveTo
     } catch (e: Exception) {
       saveTo.deleteLogged()
-      LOG.error("Unable to save the IDE #${availableIde.version} (snapshot = ${availableIde.snapshots}) (community = ${availableIde.isCommunity})", e)
+      LOG.error("Unable to save the IDE #${availableIde.version} (snapshot = ${availableIde.isSnapshot}) (community = ${availableIde.isCommunity})", e)
       throw e
     }
   }
 
   private fun getRepo(fromSnapshots: Boolean) = if (fromSnapshots) "snapshots" else "releases"
 
-  private fun copyInputStreamWithProgress(body: ResponseBody, file: File, progress: Function<Double, Unit>?) {
+  private fun copyInputStreamWithProgress(inputStream: InputStream, fileSize: Long, toFile: File, progress: Function<Double, Unit>?) {
     val buffer = ByteArray(4 * 1024)
-    val fileSize = body.contentLength()
     if (fileSize == 0L) {
       throw IllegalArgumentException("File is empty")
     }
 
-    body.byteStream().use { input ->
-      file.outputStream().use { output ->
+    inputStream.use { input ->
+      toFile.outputStream().use { output ->
         var count: Long = 0
         var n: Int
         while (true) {
