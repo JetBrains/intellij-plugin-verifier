@@ -1,7 +1,9 @@
 package org.jetbrains.plugins.verifier.service
 
+import com.jetbrains.pluginverifier.misc.LanguageUtilsKt
 import org.jetbrains.plugins.verifier.service.service.Service
 import org.jetbrains.plugins.verifier.service.setting.Settings
+import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.jetbrains.plugins.verifier.service.util.IdeListUpdater
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -22,6 +24,8 @@ class BootStrap {
     assertSystemProperties()
     setSystemProperties()
 
+    cleanUpTempDirs()
+
     LOG.info("Server settings: ${Settings.values().collect { it.key + "=" + it.get() }.join(", ")}")
     Service.INSTANCE.run()
     IdeListUpdater.INSTANCE.run()
@@ -29,6 +33,10 @@ class BootStrap {
 
   def destroy = {
     LOG.info("Exiting Verifier Service gracefully")
+  }
+
+  private static def cleanUpTempDirs() {
+    LanguageUtilsKt.deleteLogged(FileManager.INSTANCE.tempDirectory)
   }
 
   private static def assertSystemProperties() {
@@ -43,8 +51,9 @@ class BootStrap {
 
   private static void setSystemProperties() {
     String appHomeDir = Settings.APP_HOME_DIRECTORY.get()
+    def structureTemp = new File(FileManager.INSTANCE.tempDirectory, "intellijStructureTmp")
     System.setProperty("plugin.verifier.home.dir", appHomeDir + "/verifier")
-    System.setProperty("intellij.structure.temp.dir", appHomeDir + "/intellijStructureTmp")
+    System.setProperty("intellij.structure.temp.dir", structureTemp.canonicalPath)
     System.setProperty("plugin.repository.url", Settings.PLUGIN_REPOSITORY_URL.get())
 
     int diskSpace
