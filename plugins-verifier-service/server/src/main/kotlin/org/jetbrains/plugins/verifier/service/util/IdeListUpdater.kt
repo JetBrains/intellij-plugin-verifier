@@ -23,6 +23,8 @@ object IdeListUpdater {
   //30 minutes
   private val DOWNLOAD_NEW_IDE_PERIOD: Long = 30
 
+  private val downloadingIdes: MutableSet<IdeVersion> = hashSetOf()
+
   fun run() {
     Executors.newSingleThreadScheduledExecutor(
         ThreadFactoryBuilder()
@@ -65,10 +67,17 @@ object IdeListUpdater {
   }
 
   private fun enqueueUploadIde(ideVersion: IdeVersion) {
+    if (downloadingIdes.contains(ideVersion)) {
+      LOG.info("The IDE #$ideVersion is already downloading")
+      return
+    }
+
     val runner = UploadIdeRunner(ideVersion)
 
-    val taskId = TaskManager.enqueue(runner)
+    val taskId = TaskManager.enqueue(runner, { r -> }, { e, ts, t -> }, { ts, t -> downloadingIdes.remove(ideVersion) })
     LOG.info("Uploading IDE version #$ideVersion is enqueued with taskId=#$taskId")
+
+    downloadingIdes.add(ideVersion)
   }
 
   private fun fetchNewList(): List<IdeVersion> {
