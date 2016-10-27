@@ -34,22 +34,26 @@ object IdeListUpdater {
 
   @Synchronized
   private fun tick() {
-    LOG.info("It's time to upload new IDE versions to the verifier service")
+    try {
+      LOG.info("It's time to upload new IDE versions to the verifier service")
 
-    val alreadyIdes: List<IdeVersion> = IdeFilesManager.ideList()
+      val alreadyIdes: List<IdeVersion> = IdeFilesManager.ideList()
 
-    LOG.info("There are the following IDE on the service now: $alreadyIdes")
+      LOG.info("There are the following IDE on the service now: $alreadyIdes")
 
-    val newList: List<IdeVersion> = fetchNewList()
+      val newList: List<IdeVersion> = fetchNewList()
 
-    LOG.info("The following IDEs should be on the service: $newList")
+      LOG.info("The following IDEs should be on the service: $newList")
 
-    (newList - alreadyIdes).distinct().forEach {
-      enqueueUploadIde(it)
-    }
+      (newList - alreadyIdes).distinct().forEach {
+        enqueueUploadIde(it)
+      }
 
-    (alreadyIdes - newList).distinct().forEach {
-      enqueueDeleteIde(it)
+      (alreadyIdes - newList).distinct().forEach {
+        enqueueDeleteIde(it)
+      }
+    } catch (e: Exception) {
+      LOG.error("Failed to update IDE list", e)
     }
   }
 
