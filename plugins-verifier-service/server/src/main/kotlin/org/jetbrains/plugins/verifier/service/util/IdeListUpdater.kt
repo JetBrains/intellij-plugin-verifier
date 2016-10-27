@@ -44,11 +44,11 @@ object IdeListUpdater {
 
     LOG.info("The following IDEs should be on the service: $newList")
 
-    (newList - alreadyIdes).forEach {
+    (newList - alreadyIdes).distinct().forEach {
       enqueueUploadIde(it)
     }
 
-    (alreadyIdes - newList).forEach {
+    (alreadyIdes - newList).distinct().forEach {
       enqueueDeleteIde(it)
     }
   }
