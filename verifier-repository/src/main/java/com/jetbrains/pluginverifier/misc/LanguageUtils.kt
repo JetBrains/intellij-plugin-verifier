@@ -22,7 +22,9 @@ fun Closeable.closeLogged() {
 
 fun File.deleteLogged(): Boolean {
   try {
-    FileUtils.forceDelete(this)
+    if (exists()) {
+      FileUtils.forceDelete(this)
+    }
     return true
   } catch(e: Exception) {
     LOG.error("Unable to delete $this", e)
