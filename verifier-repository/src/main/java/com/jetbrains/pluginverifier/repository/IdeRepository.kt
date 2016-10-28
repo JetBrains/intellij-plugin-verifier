@@ -112,8 +112,8 @@ object IdeRepository {
     val connection: URLConnection
     try {
       connection = downloadUrl.openConnection()
-      connection.readTimeout = 60 * 1000
-      connection.connectTimeout = 60 * 1000
+      connection.readTimeout = TimeUnit.HOURS.toMillis(1).toInt()
+      connection.connectTimeout = TimeUnit.HOURS.toMillis(1).toInt()
     } catch (e: Exception) {
       saveTo.deleteLogged()
       LOG.error("Unable to download IDE by $downloadUrl", e)
