@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.output.HtmlVPrinter
 import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
+import com.jetbrains.pluginverifier.output.VPrinterOptions
 import com.jetbrains.pluginverifier.utils.ParametersListUtil
 import org.apache.commons.io.FileUtils
 import java.io.File
@@ -46,14 +47,14 @@ data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVers
     }
   }
 
-  fun saveToHtmlFile(htmlFile: File) {
-    HtmlVPrinter(ideVersion, { x -> excludedPlugins.containsEntry(x.first, x.second) }, htmlFile.create()).printResults(vResults)
+  fun saveToHtmlFile(htmlFile: File, vPrinterOptions: VPrinterOptions) {
+    HtmlVPrinter(ideVersion, { x -> excludedPlugins.containsEntry(x.first, x.second) }, htmlFile.create()).printResults(vResults, vPrinterOptions)
   }
 
-  fun printTcLog(groupBy: TeamCityVPrinter.GroupBy, setBuildStatus: Boolean) {
+  fun printTcLog(groupBy: TeamCityVPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: VPrinterOptions) {
     val tcLog = TeamCityLog(System.out)
     val vPrinter = TeamCityVPrinter(tcLog, groupBy)
-    vPrinter.printResults(vResults)
+    vPrinter.printResults(vResults, vPrinterOptions)
     vPrinter.printNoCompatibleUpdatesProblems(noCompatibleUpdatesProblems)
     if (setBuildStatus) {
       val totalProblemsNumber: Int = vResults.results.flatMap {

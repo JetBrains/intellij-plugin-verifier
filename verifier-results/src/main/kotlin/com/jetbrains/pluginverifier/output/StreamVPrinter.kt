@@ -6,7 +6,7 @@ import java.io.PrintStream
 
 class StreamVPrinter(private val out: PrintStream) : VPrinter {
 
-  override fun printResults(results: VResults) {
+  override fun printResults(results: VResults, options: VPrinterOptions) {
     results.results.forEach {
       val ideVersion = it.ideDescriptor.ideVersion
       val plugin = "${it.pluginDescriptor.pluginId}:${it.pluginDescriptor.version}"
@@ -25,6 +25,13 @@ class StreamVPrinter(private val out: PrintStream) : VPrinter {
             if (this.isNotEmpty()) {
               out.println("   Some problems may be caused by missing non-optional dependencies:")
               this.map { it.toString() }.forEach { out.println("        $it") }
+            }
+          }
+          val filtered = it.dependenciesGraph.getMissingOptionalDependencies().filterKeys { !options.ignoreMissingOptionalDependency(it) }
+          if (filtered.isNotEmpty()) {
+            out.println("    Missing optional dependencies:")
+            filtered.forEach {
+              out.println("        ${it.key.id}: ${it.value.reason}")
             }
           }
         }

@@ -25,13 +25,13 @@ class CheckRangeCommand : Command {
     val vOptions = VOptionsUtil.parseOpts(opts)
     val runnerParams = createRunnerParams(jdkVersion, vOptions)
     val results = CheckRange(opts.host, File(freeArgs[0]), runnerParams).execute()
-    processResults(results)
+    processResults(opts, results)
   }
 
   private fun createRunnerParams(jdkVersion: JdkVersion, vOptions: VOptions) = CheckRangeRunnerParams(jdkVersion, vOptions)
 
-  fun processResults(results: CheckRangeResults) {
-    StreamVPrinter(System.out).printResults(results.vResults!!)
+  fun processResults(opts: BaseCmdOpts, results: CheckRangeResults) {
+    StreamVPrinter(System.out).printResults(results.vResults!!, VOptionsUtil.parseVPrinterOptions(opts))
   }
 
 }

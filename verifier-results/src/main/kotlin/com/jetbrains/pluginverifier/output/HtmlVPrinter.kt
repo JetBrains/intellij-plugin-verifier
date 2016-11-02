@@ -16,7 +16,7 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
                    val isExcluded: (Pair<String, String>) -> Boolean,
                    val htmlFile: File) : VPrinter {
 
-  override fun printResults(results: VResults) {
+  override fun printResults(results: VResults, options: VPrinterOptions) {
     PrintWriter(htmlFile).use { out ->
 
       out.append("<html>\n<head>\n  <title>Result of checking $ideVersion</title>\n\n  " +
@@ -77,6 +77,12 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
                           .forEach {
                             createProblemTab(out, "missing non optional dependency: ${it.missing}", listOf(it.toString()))
                           }
+                      vResult.dependenciesGraph.getMissingOptionalDependencies().apply {
+                        val filtered = this.filterKeys { !options.ignoreMissingOptionalDependency(it) }
+                        if (filtered.isNotEmpty()) {
+                          createProblemTab(out, "missing optional dependencies: ${filtered.entries.joinToString { it.key.id }}", filtered.values.map { it.reason })
+                        }
+                      }
                     }
                     is VResult.BadPlugin -> {
                       createProblemTab(out, vResult.reason, listOf(vResult.pluginDescriptor.pluginId))

@@ -7,6 +7,7 @@ import com.intellij.structure.domain.IdeManager
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VOptions
+import com.jetbrains.pluginverifier.output.VPrinterOptions
 import com.sampullara.cli.Argument
 import java.io.BufferedReader
 import java.io.File
@@ -55,7 +56,14 @@ open class CmdOpts(
     var externalClassesPrefixes: Array<String> = arrayOf(),
 
     @set:Argument("save-check-ide-report", alias = "save", description = "Save the check IDE report to this file")
-    var saveCheckIdeReport: String? = null
+    var saveCheckIdeReport: String? = null,
+
+    @set:Argument("ignore-all-missing-optional-dependencies", alias = "ignore-all-missing-opt-deps")
+    var ignoreAllMissingOptionalDeps: Boolean = false,
+
+    @set:Argument("ignore-specific-missing-optional-dependencies", alias = "ignore-specific-missing-opt-deps")
+    var ignoreMissingOptionalDeps: Array<String> = arrayOf()
+
 )
 
 object CmdUtil {
@@ -111,6 +119,9 @@ object CmdUtil {
 }
 
 object VOptionsUtil {
+
+  @JvmStatic
+  fun parsePrinterOptions(opts: CmdOpts): VPrinterOptions = VPrinterOptions(opts.ignoreAllMissingOptionalDeps, opts.ignoreMissingOptionalDeps.toList())
 
   @JvmStatic
   fun parseOpts(opts: CmdOpts): VOptions {

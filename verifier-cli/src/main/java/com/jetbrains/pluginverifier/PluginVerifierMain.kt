@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
 import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.utils.CmdOpts
+import com.jetbrains.pluginverifier.utils.VOptionsUtil
 import com.sampullara.cli.Args
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -32,7 +33,7 @@ object PluginVerifierMain {
 
         val results = CheckPluginConfiguration(params).execute()
         if (opts.needTeamCityLog) {
-          results.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true)
+          results.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true, VOptionsUtil.parsePrinterOptions(opts))
         }
       }
       "check-ide" -> {
@@ -45,10 +46,10 @@ object PluginVerifierMain {
           CheckIdeReport.createReport(checkIdeResults.ideVersion, checkIdeResults.vResults).saveToFile(File(opts.saveCheckIdeReport))
         }
         if (opts.needTeamCityLog) {
-          checkIdeResults.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true)
+          checkIdeResults.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true, VOptionsUtil.parsePrinterOptions(opts))
         }
         if (opts.htmlReportFile != null) {
-          checkIdeResults.saveToHtmlFile(File(opts.htmlReportFile))
+          checkIdeResults.saveToHtmlFile(File(opts.htmlReportFile), VOptionsUtil.parsePrinterOptions(opts))
         }
         if (opts.dumpBrokenPluginsFile != null) {
           checkIdeResults.dumbBrokenPluginsList(File(opts.dumpBrokenPluginsFile))

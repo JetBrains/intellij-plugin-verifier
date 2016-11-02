@@ -32,7 +32,7 @@ class GetResultCommand : Command {
         CheckPluginCommand().processResults(any as CheckPluginResults, opts)
       }
       "check-since-until" -> {
-        CheckRangeCommand().processResults(any as CheckRangeResults)
+        CheckRangeCommand().processResults(opts, any as CheckRangeResults)
       }
       "check-trunk-api" -> {
         CheckTrunkApiCommand().processResults(any as CheckTrunkApiResults, opts)

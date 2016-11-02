@@ -58,15 +58,15 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
   }
 
 
-  override fun printResults(results: VResults) {
+  override fun printResults(results: VResults, options: VPrinterOptions) {
     when (groupBy) {
-      GroupBy.NOT_GROUPED -> notGrouped(results)
-      GroupBy.BY_PROBLEM_TYPE -> groupByProblemType(results)
-      GroupBy.BY_PLUGIN -> groupByPlugin(results)
+      GroupBy.NOT_GROUPED -> notGrouped(results, options)
+      GroupBy.BY_PROBLEM_TYPE -> groupByProblemType(results, options)
+      GroupBy.BY_PLUGIN -> groupByPlugin(results, options)
     }
   }
 
-  private fun notGrouped(results: VResults) {
+  private fun notGrouped(results: VResults, options: VPrinterOptions) {
     //problem1 (in a:1.0, a:1.2, b:1.0)
     //problem2 (in a:1.0, c:1.3)
     //missing dependencies: missing#1 (required for plugin1, plugin2, plugin3)
@@ -104,7 +104,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
   }
 
 
-  private fun groupByPlugin(results: VResults) {
+  private fun groupByPlugin(results: VResults, options: VPrinterOptions) {
     //pluginOne
     //....(1.0)
     //........#invoking unknown method
@@ -161,9 +161,11 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
                     }
                   }
 
-                  val missingOptionals = result.dependenciesGraph.start.missingDependencies.filterKeys { it.isOptional }
-                  missingOptionals.forEach {
-                    overview.append("Missing optional plugin ${it.key.id} because ${it.value.reason}").append('\n')
+                  val missingOptionals = result.dependenciesGraph.getMissingOptionalDependencies().filterKeys { !options.ignoreMissingOptionalDependency(it) }
+                  if (missingOptionals.isNotEmpty()) {
+                    missingOptionals.forEach {
+                      overview.append("Missing optional plugin ${it.key.id}: ${it.value.reason}").append('\n')
+                    }
                   }
 
                   val problemsContent: String
@@ -288,7 +290,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
     }
   }
 
-  private fun groupByProblemType(results: VResults) {
+  private fun groupByProblemType(results: VResults, options: VPrinterOptions) {
     //accessing to unknown class SomeClass
     //....(pluginOne:1.2.0)
     //....(pluginTwo:2.0.0)
@@ -352,7 +354,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
   fun convertNameToPrefix(clazz: Class<Problem>): String {
     val name = clazz.name.substringAfterLast(".")
     var words = name.split("(?=[A-Z])".toRegex())
-    if (words.size == 0) {
+    if (words.isEmpty()) {
       return name.toLowerCase()
     }
     if (words.last() == "Problem") {

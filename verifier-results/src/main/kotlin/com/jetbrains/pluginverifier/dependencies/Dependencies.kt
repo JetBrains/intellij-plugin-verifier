@@ -45,6 +45,8 @@ data class DependenciesGraph(@SerializedName("start") val start: DependencyNode,
     return result
   }
 
+  fun getMissingOptionalDependencies(): Map<PluginDependency, MissingReason> = start.missingDependencies.filterKeys { it.isOptional }
+
   private fun dfs(current: DependencyNode,
                   visited: MutableSet<DependencyNode>,
                   path: Deque<DependencyNode>,
