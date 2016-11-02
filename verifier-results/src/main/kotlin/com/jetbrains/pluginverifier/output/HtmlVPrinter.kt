@@ -20,9 +20,9 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
     PrintWriter(htmlFile).use { out ->
 
       out.append("<html>\n<head>\n  <title>Result of checking $ideVersion</title>\n\n  " +
-          "<link rel='stylesheet' href='http://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css'>\n  " +
-          "<script src='http://code.jquery.com/jquery-1.9.1.js'></script>\n  " +
-          "<script src='http://code.jquery.com/ui/1.10.4/jquery-ui.js'></script>\n  " +
+          "<link rel='stylesheet' href='//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css'>\n  " +
+          "<script src='//code.jquery.com/jquery-1.9.1.js'></script>\n  " +
+          "<script src='//code.jquery.com/ui/1.10.4/jquery-ui.js'></script>\n  " +
           "<style type='text/css'>\n${Resources.toString(HtmlVPrinter::class.java.getResource("/reportCss.css"), Charset.forName("UTF-8"))}  " +
           "</style>\n" +
           "</head>\n\n" +
