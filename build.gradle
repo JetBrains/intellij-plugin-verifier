@@ -12,7 +12,7 @@ buildscript {
   }
 }
 
-def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.47'
+def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.48'
 def intellijStructureVersion = '1.34'
 
 
