@@ -8,7 +8,6 @@ import com.jetbrains.pluginverifier.api.VOptions
 import com.jetbrains.pluginverifier.configurations.CheckRangeResults
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.persistence.GsonHolder
-import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
@@ -21,16 +20,15 @@ import org.jetbrains.plugins.verifier.service.params.JdkVersion
 import org.jetbrains.plugins.verifier.service.runners.CheckRangeRunner
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
-import org.jetbrains.plugins.verifier.service.util.MultipartUtil
 import org.jetbrains.plugins.verifier.service.util.executeSuccessfully
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Multipart
+import retrofit2.http.Body
 import retrofit2.http.POST
-import retrofit2.http.Part
+import retrofit2.http.Query
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -81,14 +79,12 @@ private object Service {
     return false
   }
 
-  private val userName: MultipartBody.Part by lazy {
-    val userName = Settings.PLUGIN_REPOSITORY_VERIFIER_USERNAME.get()
-    MultipartUtil.createJsonPart("username", userName)
+  private val userName: String by lazy {
+    Settings.PLUGIN_REPOSITORY_VERIFIER_USERNAME.get()
   }
 
-  private val password: MultipartBody.Part by lazy {
-    val password = Settings.PLUGIN_REPOSITORY_VERIFIER_PASSWORD.get()
-    MultipartUtil.createJsonPart("password", password)
+  private val password: String by lazy {
+    Settings.PLUGIN_REPOSITORY_VERIFIER_PASSWORD.get()
   }
 
   @Synchronized
@@ -106,8 +102,7 @@ private object Service {
 
     try {
       val ideList = IdeFilesManager.ideList()
-      val availableIdeList = MultipartUtil.createJsonPart("availableIdeList", ideList)
-      val updatesToCheck = verifier.getUpdatesToCheck(availableIdeList, userName, password).executeSuccessfully().body()
+      val updatesToCheck = verifier.getUpdatesToCheck(ideList.toMutableList(), userName, password).executeSuccessfully().body()
       LOG.info("Repository connection success. Updates to check (${updatesToCheck.size} of them): $updatesToCheck")
 
       for ((updateInfo, ideVersions) in updatesToCheck.filter { it.ideVersions.isNotEmpty() }) {
@@ -186,16 +181,14 @@ data class UpdateToCheck(@SerializedName("updateInfo") val updateInfo: UpdateInf
 
 interface VerificationApi {
 
-  @Multipart
   @POST("/verification/getUpdatesToCheck")
-  fun getUpdatesToCheck(@Part availableIdeList: MultipartBody.Part,
-                        @Part userName: MultipartBody.Part,
-                        @Part password: MultipartBody.Part): Call<List<UpdateToCheck>>
+  fun getUpdatesToCheck(@Body availableIdeList: MutableList<IdeVersion>,
+                        @Query("userName") userName: String,
+                        @Query("password") password: String): Call<List<UpdateToCheck>>
 
-  @Multipart
   @POST("/verification/receiveUpdateCheckResult")
-  fun sendUpdateCheckResult(@Part("checkResults") checkResult: CheckRangeResults,
-                            @Part userName: MultipartBody.Part,
-                            @Part password: MultipartBody.Part): Call<ResponseBody>
+  fun sendUpdateCheckResult(@Body checkResult: CheckRangeResults,
+                            @Query("userName") userName: String,
+                            @Query("password") password: String): Call<ResponseBody>
 
 }
