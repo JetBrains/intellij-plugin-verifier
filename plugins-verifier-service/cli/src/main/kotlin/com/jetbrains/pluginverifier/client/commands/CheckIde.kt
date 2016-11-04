@@ -41,10 +41,10 @@ class CheckIdeCommand : Command {
       report.saveToFile(file)
     }
     if (opts.needTeamCityLog) {
-      checkIdeResults.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true, VOptionsUtil.parseVPrinterOptions(opts))
+      checkIdeResults.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true, VOptionsUtil.parsePrinterOptions(opts))
     }
     if (opts.htmlReportFile != null) {
-      checkIdeResults.saveToHtmlFile(File(opts.htmlReportFile), VOptionsUtil.parseVPrinterOptions(opts))
+      checkIdeResults.saveToHtmlFile(File(opts.htmlReportFile), VOptionsUtil.parsePrinterOptions(opts))
     }
     if (opts.dumpBrokenPluginsFile != null) {
       checkIdeResults.dumbBrokenPluginsList(File(opts.dumpBrokenPluginsFile))

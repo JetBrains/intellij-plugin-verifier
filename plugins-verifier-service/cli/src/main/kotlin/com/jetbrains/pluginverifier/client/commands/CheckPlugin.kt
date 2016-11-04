@@ -47,7 +47,7 @@ class CheckPluginCommand : Command {
 
   fun processResults(results: CheckPluginResults, opts: BaseCmdOpts) {
     if (opts.needTeamCityLog) {
-      results.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true, VOptionsUtil.parseVPrinterOptions(opts))
+      results.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true, VOptionsUtil.parsePrinterOptions(opts))
     }
   }
 
