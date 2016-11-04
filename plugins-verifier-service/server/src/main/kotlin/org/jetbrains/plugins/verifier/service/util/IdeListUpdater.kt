@@ -70,7 +70,7 @@ object IdeListUpdater {
     LOG.info("Delete the IDE #$ideVersion because it is not necessary anymore")
     val task = DeleteIdeRunner(ideVersion)
     val taskId = TaskManager.enqueue(task)
-    LOG.info("Delete IDE #$taskId is enqueued with taskId=#$taskId")
+    LOG.info("Delete IDE #$ideVersion is enqueued with taskId=#$taskId")
   }
 
   private fun enqueueUploadIde(availableIde: AvailableIde) {
