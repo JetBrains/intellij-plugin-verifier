@@ -26,7 +26,7 @@ class BootStrap {
 
     cleanUpTempDirs()
 
-    LOG.info("Server settings: ${Settings.values().collect { it.key + "=" + it.get() }.join(", ")}")
+    LOG.info("Server settings: ${Settings.values().findAll { !it.encrypted }.collect { it.key + "=" + it.get() }.join(", ")}")
     Service.INSTANCE.run()
     IdeListUpdater.INSTANCE.run()
   }

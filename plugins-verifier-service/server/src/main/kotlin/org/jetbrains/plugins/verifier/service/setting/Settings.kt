@@ -3,7 +3,9 @@ package org.jetbrains.plugins.verifier.service.setting
 /**
  * @author Sergey Patrikeev
  */
-enum class Settings(private val key: String, private val default: (() -> String?)? = null) {
+enum class Settings(private val key: String,
+                    private val default: (() -> String?)? = null,
+                    val encrypted: Boolean = false) {
   APP_HOME_DIRECTORY("verifier.service.home.dir"),
   JDK_6_HOME("verifier.service.jdk.6.dir", { JDK_8_HOME.get() }),
   JDK_7_HOME("verifier.service.jdk.7.dir", { JDK_8_HOME.get() }),
@@ -12,7 +14,7 @@ enum class Settings(private val key: String, private val default: (() -> String?
   PLUGIN_REPOSITORY_URL("verifier.service.plugin.repository.url", { "http://plugins.jetbrains.com" }),
   IDE_REPOSITORY_URL("verifier.service.ide.repository.url", { "http://www.jetbrains.com" }),
   PLUGIN_REPOSITORY_VERIFIER_USERNAME("verifier.service.plugin.repository.verifier.username"),
-  PLUGIN_REPOSITORY_VERIFIER_PASSWORD("verifier.service.plugin.repository.verifier.password");
+  PLUGIN_REPOSITORY_VERIFIER_PASSWORD("verifier.service.plugin.repository.verifier.password", encrypted = true);
 
   fun get(): String {
     val property = System.getProperty(key)

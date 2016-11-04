@@ -20,7 +20,7 @@ object ServerStatus {
     return result
   }
 
-  fun appProperties(): List<Pair<String, String>> = Settings.values().map { it.name to it.get() }
+  fun appProperties(): List<Pair<String, String>> = Settings.values().filterNot { it.encrypted }.map { it.name to it.get() }
 
   fun ideFiles(): List<IdeVersion> = IdeFilesManager.ideList().sorted()
 
