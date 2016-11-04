@@ -24,7 +24,7 @@ object ServerStatus {
 
   fun ideFiles(): List<IdeVersion> = IdeFilesManager.ideList().sorted()
 
-  fun getRunningTasks(): List<String> = TaskManager.listTasks().map {
+  fun getRunningTasks(): List<String> = TaskManager.listTasks().sortedByDescending { it.startTime }.map {
     "${it.taskId.id}) ${it.presentableName}: Started at ${DATE_FORMAT.format(Date(it.startTime))} (${it.state} - ${it.progress * 100.0}%) (${it.elapsedTime() / 1000} seconds) ${it.progressText}"
   }
 
