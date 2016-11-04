@@ -43,21 +43,28 @@ object IdeListUpdater {
 
       LOG.info("There are the following IDE on the service now: $alreadyIdes")
 
-      val newList: List<IdeVersion> = fetchNewList()
+      val newList: List<AvailableIde> = fetchNewList()
 
-      LOG.info("The following IDEs should be on the service: $newList")
+      LOG.info("The following IDEs should be on the service: ${newList.map { it.version }}")
 
-      (newList - alreadyIdes).distinct().forEach {
-        enqueueUploadIde(it)
+      val shouldBe: List<Pair<AvailableIde, IdeVersion>> = newList.map { it to fullVersion(it.version) }
+
+      shouldBe.filterNot { alreadyIdes.contains(it.second) }.distinctBy { it.second }.forEach {
+        enqueueUploadIde(it.first)
       }
 
-      (alreadyIdes - newList).distinct().forEach {
+      (alreadyIdes - shouldBe.map { it.second }).forEach {
         enqueueDeleteIde(it)
       }
     } catch (e: Exception) {
       LOG.error("Failed to update IDE list", e)
     }
   }
+
+  private fun fullVersion(ideVersion: IdeVersion): IdeVersion =
+      if (ideVersion.productCode.isNullOrEmpty())
+        IdeVersion.createIdeVersion("IU-" + ideVersion.asStringWithoutProductCode())
+      else ideVersion
 
   private fun enqueueDeleteIde(ideVersion: IdeVersion) {
     LOG.info("Delete the IDE #$ideVersion because it is not necessary anymore")
@@ -66,29 +73,30 @@ object IdeListUpdater {
     LOG.info("Delete IDE #$taskId is enqueued with taskId=#$taskId")
   }
 
-  private fun enqueueUploadIde(ideVersion: IdeVersion) {
-    if (downloadingIdes.contains(ideVersion)) {
-      LOG.info("The IDE #$ideVersion is already downloading")
+  private fun enqueueUploadIde(availableIde: AvailableIde) {
+    val version = availableIde.version
+    if (downloadingIdes.contains(version)) {
+      LOG.info("The IDE #$version is already being downloaded")
       return
     }
 
-    val runner = UploadIdeRunner(ideVersion)
+    val runner = UploadIdeRunner(availableIde = availableIde)
 
-    val taskId = TaskManager.enqueue(runner, { r -> }, { e, ts, t -> }, { ts, t -> downloadingIdes.remove(ideVersion) })
-    LOG.info("Uploading IDE version #$ideVersion is enqueued with taskId=#$taskId")
+    val taskId = TaskManager.enqueue(runner, { r -> }, { e, ts, t -> }, { ts, t -> downloadingIdes.remove(version) })
+    LOG.info("Uploading IDE version #$version is enqueued with taskId=#$taskId")
 
-    downloadingIdes.add(ideVersion)
+    downloadingIdes.add(version)
   }
 
-  private fun fetchNewList(): List<IdeVersion> {
-    val availableIde = IdeRepository.fetchIndex()
+  private fun fetchNewList(): List<AvailableIde> {
+    val availableIde: List<AvailableIde> = IdeRepository.fetchIndex()
 
     val branchToVersions: Map<Int, List<AvailableIde>> = availableIde
         .filterNot { it.isCommunity }
         .groupBy { it.version.baselineVersion }
 
-    val lastBranchBuilds = branchToVersions.mapValues { it.value.map { it.version }.max() }.values.filterNotNull()
-    val lastBranchReleases = branchToVersions.mapValues { it.value.filter { it.isRelease }.map { it.version }.max() }.values.filterNotNull()
+    val lastBranchBuilds = branchToVersions.mapValues { it.value.maxBy { it.version } }.values.filterNotNull()
+    val lastBranchReleases = branchToVersions.mapValues { it.value.filter { it.isRelease }.maxBy { it.version } }.values.filterNotNull()
 
     return (lastBranchBuilds + lastBranchReleases)
   }

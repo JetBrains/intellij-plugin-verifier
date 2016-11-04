@@ -41,7 +41,7 @@ class IdeController {
     log.info("User is going to UPLOAD the new IDE #$ideVersion " +
         "from the ${if (fromSnapshots) "snapshots" else ""} repository")
 
-    def runner = new UploadIdeRunner(ideVersion, fromSnapshots)
+    def runner = new UploadIdeRunner(ideVersion, null, fromSnapshots)
     def taskId = TaskManager.INSTANCE.enqueue(runner)
     log.info("Upload IDE #$ideVersion is enqueued with taskId=$taskId")
     sendJson(taskId)
