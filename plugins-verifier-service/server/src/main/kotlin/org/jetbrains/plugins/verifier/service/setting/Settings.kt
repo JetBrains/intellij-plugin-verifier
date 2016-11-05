@@ -11,8 +11,8 @@ enum class Settings(private val key: String,
   JDK_7_HOME("verifier.service.jdk.7.dir", { JDK_8_HOME.get() }),
   JDK_8_HOME("verifier.service.jdk.8.dir"),
   MAX_DISK_SPACE_MB("verifier.service.max.disk.space.mb", { (50 * 1024).toString() }),
-  PLUGIN_REPOSITORY_URL("verifier.service.plugin.repository.url", { "http://plugins.jetbrains.com" }),
-  IDE_REPOSITORY_URL("verifier.service.ide.repository.url", { "http://www.jetbrains.com" }),
+  PLUGIN_REPOSITORY_URL("verifier.service.plugin.repository.url", { "https://plugins.jetbrains.com" }),
+  IDE_REPOSITORY_URL("verifier.service.ide.repository.url", { "https://www.jetbrains.com" }),
   PLUGIN_REPOSITORY_VERIFIER_USERNAME("verifier.service.plugin.repository.verifier.username"),
   PLUGIN_REPOSITORY_VERIFIER_PASSWORD("verifier.service.plugin.repository.verifier.password", encrypted = true);
 

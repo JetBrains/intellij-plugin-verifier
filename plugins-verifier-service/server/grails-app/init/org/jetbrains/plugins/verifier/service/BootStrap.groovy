@@ -54,7 +54,9 @@ class BootStrap {
     def structureTemp = new File(FileManager.INSTANCE.tempDirectory, "intellijStructureTmp")
     System.setProperty("plugin.verifier.home.dir", appHomeDir + "/verifier")
     System.setProperty("intellij.structure.temp.dir", structureTemp.canonicalPath)
-    System.setProperty("plugin.repository.url", Settings.PLUGIN_REPOSITORY_URL.get())
+
+//    System.setProperty("plugin.repository.url", Settings.PLUGIN_REPOSITORY_URL.get()) TODO: uncomment when ready
+    System.setProperty("plugin.repository.url", "https://plugins.jetbrains.com")
 
     int diskSpace
     try {
