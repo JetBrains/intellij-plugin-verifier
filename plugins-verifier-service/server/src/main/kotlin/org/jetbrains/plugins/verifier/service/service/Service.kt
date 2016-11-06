@@ -121,7 +121,7 @@ private object Service {
 
   private fun schedule(updateInfo: UpdateInfo, versions: List<IdeVersion>) {
     if (updateInfo in verifiableUpdates) {
-      LOG.info("Update $updateInfo is currently being verified; ignore verification of this update")
+      LOG.debug("Update $updateInfo is currently being verified; ignore verification of this update")
       return
     }
     val lastCheck = lastCheckDate[updateInfo]
