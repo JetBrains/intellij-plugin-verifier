@@ -4,8 +4,8 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.utils.VerifierUtil
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.MethodNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 
 /**
  * @author Sergey Patrikeev

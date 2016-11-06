@@ -10,10 +10,10 @@ import com.jetbrains.pluginverifier.verifiers.field.FieldTypeVerifier
 import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier
 import com.jetbrains.pluginverifier.verifiers.instruction.*
 import com.jetbrains.pluginverifier.verifiers.method.*
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.FieldNode
-import org.objectweb.asm.tree.MethodNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.AbstractInsnNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 
 val VERIFIERS: List<Verifier> = listOf<Verifier>(ReferencesVerifier)
 

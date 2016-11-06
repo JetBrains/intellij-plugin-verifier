@@ -35,7 +35,7 @@ object PluginCache {
       myCache.put(pluginFile, SoftReference<Plugin>(res))
     }
 
-    return res
+    return res!!
   }
 
 }

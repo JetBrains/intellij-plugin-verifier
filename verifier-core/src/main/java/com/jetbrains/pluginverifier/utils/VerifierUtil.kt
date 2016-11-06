@@ -7,10 +7,10 @@ import com.jetbrains.pluginverifier.problems.AccessType
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.IllegalClassAccessProblem
 import com.jetbrains.pluginverifier.warnings.Warning
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.FieldNode
-import org.objectweb.asm.tree.MethodNode
+import org.jetbrains.intellij.plugins.internal.asm.Opcodes
+import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 import org.slf4j.LoggerFactory
 
 sealed class ClsResolution() {

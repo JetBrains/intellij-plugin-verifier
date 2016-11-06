@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.InheritFromFinalClassProblem
 import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.VerifierUtil
-import org.objectweb.asm.tree.ClassNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 
 class InheritFromFinalClassVerifier : ClassVerifier {
   override fun verify(clazz: ClassNode, resolver: Resolver, ctx: VContext) {

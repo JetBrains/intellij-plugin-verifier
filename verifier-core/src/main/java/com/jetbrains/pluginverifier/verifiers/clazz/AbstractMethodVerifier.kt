@@ -6,8 +6,8 @@ import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem
 import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.VerifierUtil
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.MethodNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 import java.util.*
 
 /**

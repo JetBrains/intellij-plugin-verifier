@@ -5,8 +5,8 @@ import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.utils.VerifierUtil
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.*
+import org.jetbrains.intellij.plugins.internal.asm.Opcodes
+import org.jetbrains.intellij.plugins.internal.asm.tree.*
 
 /**
  * Verifies GETSTATIC, PUTSTATIC, GETFIELD and PUTFIELD instructions

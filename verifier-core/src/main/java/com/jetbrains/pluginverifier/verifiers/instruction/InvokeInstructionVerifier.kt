@@ -7,11 +7,11 @@ import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.MethodReference
 import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.VerifierUtil
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.MethodInsnNode
-import org.objectweb.asm.tree.MethodNode
+import org.jetbrains.intellij.plugins.internal.asm.Opcodes
+import org.jetbrains.intellij.plugins.internal.asm.tree.AbstractInsnNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.MethodInsnNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 import java.util.*
 
 class InvokeInstructionVerifier : InstructionVerifier {
@@ -504,7 +504,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     */
     val methods = currentClass.methods as List<MethodNode>
 
-    val matchByName = methods.firstOrNull() { it.name == methodName }
+    val matchByName = methods.firstOrNull { it.name == methodName }
     if (matchByName != null && VerifierUtil.isSignaturePolymorphic(currentClass.name, matchByName) && methods.count { it.name == methodName } == 1) {
       return LookupResult(false, ResolvedMethod(currentClass, matchByName))
     }

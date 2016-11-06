@@ -5,9 +5,9 @@ import com.github.salomonbrys.kotson.jsonSerializer
 import com.github.salomonbrys.kotson.string
 import com.google.gson.JsonPrimitive
 import com.jetbrains.pluginverifier.utils.MessageUtils
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.FieldNode
-import org.objectweb.asm.tree.MethodNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 
 /**
  * @author Sergey Patrikeev
