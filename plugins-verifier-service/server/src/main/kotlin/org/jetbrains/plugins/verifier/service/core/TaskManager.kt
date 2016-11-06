@@ -128,6 +128,8 @@ object TaskManager : ITaskManager {
           state = TaskStatus.State.ERROR
           errorMsg = "The task #$taskId failed due to ${task.exception().message ?: task.exception().javaClass.name}"
         }
+      } catch (e: Exception) {
+        LOG.error("Unable to compute task #$taskId", e)
       } finally {
         endTime = System.currentTimeMillis()
         onComplete(taskId)
