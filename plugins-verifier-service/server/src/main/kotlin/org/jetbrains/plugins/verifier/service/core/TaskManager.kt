@@ -130,6 +130,9 @@ object TaskManager : ITaskManager {
         }
       } catch (e: Exception) {
         LOG.error("Unable to compute task #$taskId", e)
+      } catch (e: Error) {
+        LOG.error("Fatal error during computation of a task #$taskId", e)
+        throw e
       } finally {
         endTime = System.currentTimeMillis()
         onComplete(taskId)
