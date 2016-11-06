@@ -137,19 +137,20 @@ object TaskManager : ITaskManager {
         endTime = System.currentTimeMillis()
         onComplete(taskId)
         LOG.info("Task #$taskId is completed with $state")
+
+        //execute callbacks
+        val status = TaskStatus(taskId, startTime, endTime, state, progress.getProgress(), progress.getText(), task.presentableName())
+        try {
+          if (task.isSuccessful()) {
+            onSuccess(Result(status, task.result(), null))
+          } else if (task.isFailed()) {
+            onError(task.exception(), status, task)
+          }
+        } finally {
+          onCompletion(status, task)
+        }
       }
 
-      //execute callbacks
-      val status = TaskStatus(taskId, startTime, endTime, state, progress.getProgress(), progress.getText(), task.presentableName())
-      try {
-        if (task.isSuccessful()) {
-          onSuccess(Result(status, task.result(), null))
-        } else if (task.isFailed()) {
-          onError(task.exception(), status, task)
-        }
-      } finally {
-        onCompletion(status, task)
-      }
     }
 
   }
