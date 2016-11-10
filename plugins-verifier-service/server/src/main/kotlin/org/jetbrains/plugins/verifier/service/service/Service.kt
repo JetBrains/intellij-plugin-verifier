@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service
 
+import com.google.common.collect.HashMultimap
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.IdeVersion
@@ -8,6 +9,7 @@ import com.jetbrains.pluginverifier.api.VOptions
 import com.jetbrains.pluginverifier.configurations.CheckRangeResults
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.persistence.GsonHolder
+import com.jetbrains.pluginverifier.repository.RepositoryManager
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
@@ -53,6 +55,7 @@ private object Service {
 
   private val verifiableUpdates: MutableMap<UpdateInfo, TaskId> = hashMapOf()
   private val lastCheckDate: MutableMap<UpdateInfo, Long> = hashMapOf()
+  private val updateInfoCache: MutableMap<Int, UpdateInfo> = hashMapOf()
 
   private var isRequesting: Boolean = false
 
@@ -60,6 +63,7 @@ private object Service {
       .connectTimeout(5, TimeUnit.MINUTES)
       .readTimeout(5, TimeUnit.MINUTES)
       .writeTimeout(5, TimeUnit.MINUTES)
+      .followRedirects(false)
       .addInterceptor(HttpLoggingInterceptor().setLevel(if (LOG.isDebugEnabled) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE))
       .build()
 
@@ -101,15 +105,22 @@ private object Service {
     isRequesting = true
 
     try {
-      val ideList = IdeFilesManager.ideList()
-      val updatesToCheck = verifier.getUpdatesToCheck(ideList.toMutableList(), userName, password).executeSuccessfully().body()
-      LOG.info("Repository connection success. Updates to check (${updatesToCheck.size} of them): $updatesToCheck")
 
-      for ((updateInfo, ideVersions) in updatesToCheck.filter { it.ideVersions.isNotEmpty() }) {
-        if (isServerTooBusy()) {
-          break
+      val tasks = HashMultimap.create<UpdateInfo, IdeVersion>()
+
+      for (ideVersion in IdeFilesManager.ideList()) {
+        updateCache(ideVersion)
+
+        getUpdatesToCheck(ideVersion).updateIds.map { receiveUpdateInfo(it) }.filterNotNull().forEach {
+          tasks.put(it, ideVersion)
         }
-        schedule(updateInfo, ideVersions)
+      }
+
+      for ((updateInfo, ideVersions) in tasks.asMap()) {
+        if (isServerTooBusy()) {
+          return
+        }
+        schedule(updateInfo, ideVersions.toList())
       }
 
     } catch (e: Exception) {
@@ -117,6 +128,27 @@ private object Service {
     } finally {
       isRequesting = false
     }
+  }
+
+  private fun updateCache(ideVersion: IdeVersion) {
+    RepositoryManager.getLastCompatibleUpdates(ideVersion).forEach {
+      updateInfoCache.getOrPut(it.updateId, { it })
+    }
+  }
+
+  private fun receiveUpdateInfo(updateId: Int): UpdateInfo? {
+    try {
+      return updateInfoCache.getOrPut(updateId, { verifier.getUpdateInfo(updateId).executeSuccessfully().body() })
+    } catch(e: Exception) {
+      LOG.error("Unable to get UpdateInfo for Update #$updateId", e)
+      return null
+    }
+  }
+
+  private fun getUpdatesToCheck(ideVersion: IdeVersion): UpdatesToCheck {
+    val updatesToCheck: UpdatesToCheck = verifier.getUpdatesToCheck(ideVersion, userName, password).executeSuccessfully().body()
+    LOG.info("Repository get updates to check with #$ideVersion success: (${updatesToCheck.updateIds.size} of them): $updatesToCheck")
+    return updatesToCheck
   }
 
   private fun schedule(updateInfo: UpdateInfo, versions: List<IdeVersion>) {
@@ -176,19 +208,23 @@ private object Service {
 
 }
 
-data class UpdateToCheck(@SerializedName("updateInfo") val updateInfo: UpdateInfo,
-                         @SerializedName("ideVersions") val ideVersions: List<IdeVersion>)
+data class UpdatesToCheck(@SerializedName("updateIds") val updateIds: MutableList<Int>,
+                          @SerializedName("ideVersion") val ideVersion: IdeVersion)
 
 interface VerificationApi {
 
   @POST("/verification/getUpdatesToCheck")
-  fun getUpdatesToCheck(@Body availableIdeList: MutableList<IdeVersion>,
+  fun getUpdatesToCheck(@Body availableIde: IdeVersion,
                         @Query("userName") userName: String,
-                        @Query("password") password: String): Call<List<UpdateToCheck>>
+                        @Query("password") password: String): Call<UpdatesToCheck>
 
   @POST("/verification/receiveUpdateCheckResult")
   fun sendUpdateCheckResult(@Body checkResult: CheckRangeResults,
                             @Query("userName") userName: String,
                             @Query("password") password: String): Call<ResponseBody>
+
+  @Deprecated("to be deleted!")
+  @POST("/manager/getUpdateInfoById")
+  fun getUpdateInfo(@Query("updateId") updateId: Int): Call<UpdateInfo>
 
 }
