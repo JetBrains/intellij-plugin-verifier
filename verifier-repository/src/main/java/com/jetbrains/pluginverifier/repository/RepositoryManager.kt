@@ -13,12 +13,16 @@ import java.net.URLEncoder
 
 @ThreadSafe
 object RepositoryManager : PluginRepository {
+  override fun getUpdateInfoById(updateId: Int): UpdateInfo {
+    val url = URL("${RepositoryConfiguration.pluginRepositoryUrl}/manager/getUpdateInfoById?updateId=$updateId")
+    return Gson().fromJson<UpdateInfo>(IOUtils.toString(url, Charsets.UTF_8), UpdateInfo::class.java)
+  }
 
   @Throws(IOException::class)
   override fun getLastCompatibleUpdates(ideVersion: IdeVersion): List<UpdateInfo> {
     LOG.debug("Loading list of plugins compatible with $ideVersion... ")
 
-    val url = URL(RepositoryConfiguration.pluginRepositoryUrl + "/manager/allCompatibleUpdates/?build=" + ideVersion)
+    val url = URL("${RepositoryConfiguration.pluginRepositoryUrl}/manager/allCompatibleUpdates/?build=$ideVersion")
 
     return Gson().fromJson<List<UpdateInfo>>(IOUtils.toString(url, Charsets.UTF_8), updateListType)
   }

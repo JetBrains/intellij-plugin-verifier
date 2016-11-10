@@ -26,6 +26,9 @@ interface PluginRepository {
   @Throws(IOException::class)
   fun getPluginFile(update: UpdateInfo): IFileLock?
 
+  @Throws(IOException::class)
+  fun getUpdateInfoById(updateId: Int): UpdateInfo
+
 }
 
 interface IFileLock {
