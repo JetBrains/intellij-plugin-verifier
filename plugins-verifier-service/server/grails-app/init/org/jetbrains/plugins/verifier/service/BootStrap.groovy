@@ -16,6 +16,7 @@ class BootStrap {
 
   //50% of available disk space is for plugins download dir
   private static final double DOWNLOAD_DIR_PROPORTION = 0.5
+  private static final String PUBLIC_PLUGIN_REPOSITORY = "https://plugins.jetbrains.com"
 
 
   def init = { servletContext ->
@@ -55,8 +56,11 @@ class BootStrap {
     System.setProperty("plugin.verifier.home.dir", appHomeDir + "/verifier")
     System.setProperty("intellij.structure.temp.dir", structureTemp.canonicalPath)
 
-//    System.setProperty("plugin.repository.url", Settings.PLUGIN_REPOSITORY_URL.get()) TODO: uncomment when ready
-    System.setProperty("plugin.repository.url", "https://plugins.jetbrains.com")
+    if ("true" == Settings.USE_SAME_REPOSITORY_FOR_DOWNLOADING.get()) {
+      System.setProperty("plugin.repository.url", Settings.PLUGIN_REPOSITORY_URL.get())
+    } else {
+      System.setProperty("plugin.repository.url", PUBLIC_PLUGIN_REPOSITORY)
+    }
 
     int diskSpace
     try {
