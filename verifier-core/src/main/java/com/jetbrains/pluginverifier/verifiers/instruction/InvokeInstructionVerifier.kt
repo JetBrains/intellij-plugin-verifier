@@ -95,9 +95,23 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
         2) The ACC_SUPER flag is set for the class file (§4.1).
 
       Otherwise, let C be the class or interface named by the symbolic reference.
+
+      NOTE! Here is a strange bug in the JVM specification: the second condition above was read by me as
+       (symbolic reference names a class => that class is a superclass of the current class),
+       so I understood conditions as follows:
+
+       1) A
+       2) B => C
+       3) D
+
+       with the if: (A && (not B || C) && D)
+
+       but actually the author wanted to say: (A && (B && C) && D)...
+
+       So I caught up a nasty bug of incorrectly determining the method to be invoked.
     */
     val classRef: ClassNode
-    if (resolved.methodNode.name != "<init>" && (instr.itf || methodOwner == verifiableClass.superName) && VerifierUtil.isSuperFlag(verifiableClass)) {
+    if (resolved.methodNode.name != "<init>" && (!instr.itf && methodOwner == verifiableClass.superName) && VerifierUtil.isSuperFlag(verifiableClass)) {
       classRef = VerifierUtil.resolveClassOrProblem(resolver, verifiableClass.superName, verifiableClass, ctx, { getFromMethod() }) ?: return
     } else {
       classRef = VerifierUtil.resolveClassOrProblem(resolver, methodOwner, verifiableClass, ctx, { getFromMethod() }) ?: return
