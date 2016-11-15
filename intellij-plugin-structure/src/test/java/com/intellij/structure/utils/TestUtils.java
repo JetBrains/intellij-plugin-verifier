@@ -18,9 +18,7 @@ public class TestUtils {
 
   public static final String PHP_URL = "https://plugins.jetbrains.com/plugin/download?pr=&updateId=22827";
   public static final String IDEA_144_3600 = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/144.3600.7/ideaIU-144.3600.7.zip";
-  public static final String RUBY_URL = "https://plugins.jetbrains.com/plugin/download?pr=idea&updateId=22893";
   public static final String GO_URL = "https://plugins.jetbrains.com/plugin/download?pr=&updateId=23807";
-  public static final String SCALA_URL = "https://plugins.jetbrains.com/plugin/download?pr=idea&updateId=23664";
   public static final String KANNOTATOR = "https://plugins.jetbrains.com/plugin/download?pr=&updateId=14852";
   public static final String JBOSS = "https://plugins.jetbrains.com/plugin/download?pr=&updateId=25536";
   public static final String GERRIT = "https://plugins.jetbrains.com/plugin/download?pr=idea&updateId=25853";

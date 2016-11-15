@@ -85,18 +85,6 @@ class VerifierTest {
 
       .put(ChangeFinalFieldProblem("fields/FieldsContainer", "staticFinalField", "I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "setOnStaticFinalFieldFromNotClinitMethod", "()V")).build()
 
-  private val RUBY_ACTUAL_PROBLEMS = ImmutableMultimap.builder<Problem, ProblemLocation>()
-      .put(MethodNotFoundProblem("com/intellij/util/ui/ReloadableComboBoxPanel", "setDataProvider", "(Lcom/intellij/util/ui/ReloadableComboBoxPanel\$DataProvider;)V"), ProblemLocation.fromMethod("org/jetbrains/plugins/ruby/rails/facet/ui/wizard/ui/tabs/RailsAppSampleConfigurableTab", "createUIComponents", "()V"))
-      .put(ClassNotFoundProblem("com/intellij/util/ui/ReloadableComboBoxPanel\$DataProvider"), ProblemLocation.fromClass("org/jetbrains/plugins/ruby/rails/facet/ui/wizard/ui/tabs/RailsAppSampleProvider")).build()
-
-  @Test
-  @Throws(Exception::class)
-  fun testRuby20160127() {
-    val idea = TestData.fetchResource("ideaIU-144.3600.7.zip", true)
-    val rubyPlugin = TestData.fetchResource("ruby-8.0.0.20160127.zip", false)
-    testFoundProblems(idea, rubyPlugin, RUBY_ACTUAL_PROBLEMS, false, false)
-  }
-
   @Test
   @Throws(Exception::class)
   fun testMyPlugin() {

@@ -11,10 +11,6 @@ import java.io.IOException;
  * @author Sergey Patrikeev
  */
 public class TestLogo {
-  @Test
-  public void testScalaLogo() throws Exception {
-    testPluginLogo(TestUtils.downloadPlugin(TestUtils.SCALA_URL, "scala-plugin-logo-test.zip"), 488);
-  }
 
   @Test
   public void testGerritLogo() throws Exception {
