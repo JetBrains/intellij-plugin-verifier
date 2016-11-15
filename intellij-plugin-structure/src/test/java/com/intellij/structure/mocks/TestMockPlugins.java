@@ -80,6 +80,19 @@ public class TestMockPlugins {
     testMock3(getMockPlugin("mock-plugin3-jar-in-zip.zip"));
   }
 
+  private void testMock3IdeCompatibility(Plugin plugin) throws IOException {
+//  <idea-version since-build="141.1009.5" until-build="141.9999999"/>
+    checkCompatible(plugin, "141.1009.5", true);
+    checkCompatible(plugin, "141.99999", true);
+    checkCompatible(plugin, "142.0", false);
+    checkCompatible(plugin, "141.1009.4", false);
+    checkCompatible(plugin, "141", false);
+  }
+
+  private void checkCompatible(Plugin plugin, String version, boolean compatible) {
+    assertEquals(compatible, plugin.isCompatibleWithIde(IdeVersion.createIdeVersion(version)));
+  }
+
   private void testMock3(File pluginFile) throws IOException {
     Plugin plugin = PluginManager.getInstance().createPlugin(pluginFile);
     assertEquals(pluginFile, plugin.getPluginFile());
@@ -90,6 +103,7 @@ public class TestMockPlugins {
     testMock3DependenciesAndModules(plugin);
     testMock3OptDescriptors(plugin);
     testMock3UnderlyingDocument(plugin);
+    testMock3IdeCompatibility(plugin);
   }
 
   private void testMock3UnderlyingDocument(Plugin plugin) {
