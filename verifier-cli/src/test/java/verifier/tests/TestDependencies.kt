@@ -1,9 +1,9 @@
 package verifier.tests
 
 import com.google.common.collect.Lists
-import com.intellij.structure.impl.domain.IdeManagerImpl
+import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.intellij.structure.impl.utils.StringUtil
-import com.jetbrains.pluginverifier.misc.PluginCache
 import com.jetbrains.pluginverifier.utils.Dependencies
 import com.jetbrains.pluginverifier.utils.Edge
 import com.jetbrains.pluginverifier.utils.Vertex
@@ -18,16 +18,18 @@ import java.util.*
  */
 class TestDependencies {
 
-  private val dependencies = Arrays.asList<String>("JavaScriptDebugger:1.0", "com.intellij.copyright:8.1", "JUnit:1.0", "TestNG-J:8.0", "com.jetbrains.plugins.webDeployment:0.1", "AntSupport:1.0", "Coverage:null", "com.intellij.database:1.0", "com.intellij.properties:null", "org.intellij.intelliLang:8.0", "com.intellij.css:null", "JavaScript:1.0", "org.jetbrains.plugins.gradle:144.3742", "com.intellij.persistence:1.0", "org.jetbrains.plugins.terminal:0.1", "com.intellij.java-i18n:144.3742", "ByteCodeViewer:0.1", "org.jetbrains.plugins.remote-run:0.1", "XPathView:4", "org.jetbrains.plugins.haml:null", "cucumber:999.999", "com.intellij.diagram:1.0", "org.jetbrains.plugins.slim:8.0.0.20151215", "org.jetbrains.idea.maven:144.3742", "com.intellij.javaee:1.0", "org.jetbrains.plugins.sass:null", "com.intellij.plugins.watcher:144.988", "org.jetbrains.plugins.yaml:null", "org.intellij.groovy:9.0")
+  private val dependencies = Arrays.asList<String>("first:1.0", "somePlugin:1.0", "moduleContainer:1.0")
 
   @Test
   @Throws(Exception::class)
   fun getDependenciesWithTransitive() {
-    val idea144_3600 = TestData.fetchResource("ideaIU-144.3600.7.zip", true)
-    val pluginFile = TestData.fetchResource("ruby-8.0.0.20160127.zip", false)
+    //defined IDEA plugins
+    val firstPlugin = MockUtil.createMockPlugin("first", "1.0", listOf(PluginDependencyImpl("someModule", false)), listOf(PluginDependencyImpl("somePlugin", false)))
+    val somePlugin = MockUtil.createMockPlugin("somePlugin", "1.0")
+    val moduleContainer = MockUtil.createMockPlugin("moduleContainer", "1.0", definedModules = setOf("someModule"))
 
-    val ide = IdeManagerImpl.getInstance().createIde(idea144_3600)
-    val plugin = PluginCache.createPlugin(pluginFile)
+    val ide = MockUtil.createTestIde(IdeVersion.createIdeVersion("IU-144"), listOf(firstPlugin, somePlugin, moduleContainer))
+    val plugin = MockUtil.createMockPlugin("myPlugin", "1.0", emptyList(), listOf(PluginDependencyImpl("first", true)))
 
     val (graph, vertex) = Dependencies.calcDependencies(plugin, ide)
 
