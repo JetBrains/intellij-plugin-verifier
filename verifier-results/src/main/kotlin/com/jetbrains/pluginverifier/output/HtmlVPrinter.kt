@@ -67,7 +67,7 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
 
                   out.printf("  <div>\n")
 
-                  val exhaustedWhen: Any = when (vResult) {
+                  when (vResult) {
                     is VResult.Nice -> {
                       out.printf("No problems.\n")
                     }
