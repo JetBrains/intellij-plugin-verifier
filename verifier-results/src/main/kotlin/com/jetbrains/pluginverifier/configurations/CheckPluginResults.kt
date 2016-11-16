@@ -35,7 +35,12 @@ data class CheckPluginResults(@SerializedName("results") val vResults: VResults)
   }
 
   fun printToHtml(file: File, vPrinterOptions: VPrinterOptions) {
-    HtmlVPrinter(vResults.results[0].ideDescriptor.ideVersion, { false }, file.create()).printResults(vResults, vPrinterOptions)
+    val ideVersion = vResults.results[0].ideDescriptor.ideVersion
+    if (vResults.results.size > 1) {
+      System.err.println("Warning! HTML report for multiple IDE builds is not supported yet! We are working on it just now...\n" +
+          "Only the result for $ideVersion is saved to file $file")
+    }
+    HtmlVPrinter(ideVersion, { false }, file.create()).printResults(vResults, vPrinterOptions)
   }
 
 }
