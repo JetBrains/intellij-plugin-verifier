@@ -3,9 +3,9 @@ package com.jetbrains.pluginverifier.configurations
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.api.VResults
-import com.jetbrains.pluginverifier.output.TeamCityLog
-import com.jetbrains.pluginverifier.output.TeamCityVPrinter
-import com.jetbrains.pluginverifier.output.VPrinterOptions
+import com.jetbrains.pluginverifier.output.*
+import java.io.File
+import java.io.PrintWriter
 
 data class CheckPluginResults(@SerializedName("results") val vResults: VResults) : Results {
 
@@ -26,6 +26,16 @@ data class CheckPluginResults(@SerializedName("results") val vResults: VResults)
         tcLog.buildStatusFailure("$totalProblemsNumber problem${if (totalProblemsNumber > 0) "s" else ""} found")
       }
     }
+  }
+
+  fun printOnStdout(vPrinterOptions: VPrinterOptions) {
+    val printWriter = PrintWriter(System.out)
+    WriterVPrinter(printWriter).printResults(vResults, vPrinterOptions)
+    printWriter.flush()
+  }
+
+  fun printToHtml(file: File, vPrinterOptions: VPrinterOptions) {
+    HtmlVPrinter(vResults.results[0].ideDescriptor.ideVersion, { false }, file.create()).printResults(vResults, vPrinterOptions)
   }
 
 }

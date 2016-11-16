@@ -60,13 +60,13 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
 
   override fun printResults(results: VResults, options: VPrinterOptions) {
     when (groupBy) {
-      GroupBy.NOT_GROUPED -> notGrouped(results, options)
-      GroupBy.BY_PROBLEM_TYPE -> groupByProblemType(results, options)
+      GroupBy.NOT_GROUPED -> notGrouped(results)
+      GroupBy.BY_PROBLEM_TYPE -> groupByProblemType(results)
       GroupBy.BY_PLUGIN -> groupByPlugin(results, options)
     }
   }
 
-  private fun notGrouped(results: VResults, options: VPrinterOptions) {
+  private fun notGrouped(results: VResults) {
     //problem1 (in a:1.0, a:1.2, b:1.0)
     //problem2 (in a:1.0, c:1.3)
     //missing dependencies: missing#1 (required for plugin1, plugin2, plugin3)
@@ -141,7 +141,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
             val testName = genTestName(result.pluginDescriptor, result.ideDescriptor.ideVersion, lastUpdates)
 
             tcLog.testStarted(testName).use {
-              val exhaustedWhen = when (result) {
+              when (result) {
                 is VResult.Nice -> {/*test is passed.*/
                 }
                 is VResult.Problems -> {
@@ -292,7 +292,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
     }
   }
 
-  private fun groupByProblemType(results: VResults, options: VPrinterOptions) {
+  private fun groupByProblemType(results: VResults) {
     //accessing to unknown class SomeClass
     //....(pluginOne:1.2.0)
     //....(pluginTwo:2.0.0)
