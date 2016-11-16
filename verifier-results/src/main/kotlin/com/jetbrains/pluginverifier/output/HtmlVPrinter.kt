@@ -55,9 +55,9 @@ class HtmlVPrinter(val ideVersion: IdeVersion,
 
                   out.printf("<div class='update %s %s'>\n", if (vResult is VResult.Nice) "updateOk" else "updateHasProblems", if (isExcluded(pluginId to version)) "excluded" else "")
 
-                  out.printf("  <h3><span class='uMarker'>   </span> %s <small>(#%d)</small> %s</h3>\n",
+                  out.printf("  <h3><span class='uMarker'>   </span> %s <small>%s</small> %s</h3>\n",
                       HtmlEscapers.htmlEscaper().escape(version),
-                      if (descriptor is PluginDescriptor.ByUpdateInfo) descriptor.updateInfo.updateId else 0,
+                      if (descriptor is PluginDescriptor.ByUpdateInfo) "(#${descriptor.updateInfo.updateId})" else "",
                       when (vResult) {
                         is VResult.Nice -> ""
                         is VResult.Problems -> "<small>" + vResult.problems.keySet().size + " problems found</small>"
