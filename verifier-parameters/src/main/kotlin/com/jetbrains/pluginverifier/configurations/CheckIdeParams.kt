@@ -31,11 +31,13 @@ data class CheckIdeParams(val ideDescriptor: IdeDescriptor,
 object CheckIdeParamsParser : ParamsParser {
   override fun parse(opts: CmdOpts, freeArgs: List<String>): CheckIdeParams {
     if (freeArgs.isEmpty()) {
-      throw RuntimeException("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"")
+      System.err.println("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"")
+      System.exit(1)
     }
     val ideFile = File(freeArgs[0])
     if (!ideFile.isDirectory) {
-      throw RuntimeException("IDE home is not a directory: " + ideFile)
+      System.err.println("IDE path must be a directory: " + ideFile)
+      System.exit(1)
     }
     val ide = CmdUtil.createIde(ideFile, opts)
 

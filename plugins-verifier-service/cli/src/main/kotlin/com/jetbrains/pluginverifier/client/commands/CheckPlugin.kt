@@ -24,7 +24,8 @@ class CheckPluginCommand : Command {
 
   override fun execute(opts: BaseCmdOpts, freeArgs: List<String>) {
     if (freeArgs.size <= 1) {
-      throw IllegalArgumentException("You have to specify the plugin to check and IDE(s)")
+      System.err.println("You have to specify the plugin to check and IDE(s)")
+      System.exit(1)
     }
     val ideFiles = freeArgs.drop(1).map { File(it) }
     ideFiles.forEach { require(it.isDirectory, { "The IDE must be a directory" }) }

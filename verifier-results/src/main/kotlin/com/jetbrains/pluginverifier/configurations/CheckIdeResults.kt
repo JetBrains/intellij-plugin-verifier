@@ -6,16 +6,13 @@ import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.api.VResults
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
-import com.jetbrains.pluginverifier.output.HtmlVPrinter
-import com.jetbrains.pluginverifier.output.TeamCityLog
-import com.jetbrains.pluginverifier.output.TeamCityVPrinter
-import com.jetbrains.pluginverifier.output.VPrinterOptions
+import com.jetbrains.pluginverifier.output.*
 import com.jetbrains.pluginverifier.utils.ParametersListUtil
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.PrintWriter
 
-private fun File.create(): File {
+fun File.create(): File {
   if (this.parentFile != null) {
     FileUtils.forceMkdir(this.parentFile)
   }
@@ -72,6 +69,12 @@ data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVers
       }
 
     }
+  }
+
+  fun printOnStdOut(vPrinterOptions: VPrinterOptions) {
+    val printWriter = PrintWriter(System.out)
+    WriterVPrinter(printWriter).printResults(vResults, vPrinterOptions)
+    printWriter.flush()
   }
 
 }

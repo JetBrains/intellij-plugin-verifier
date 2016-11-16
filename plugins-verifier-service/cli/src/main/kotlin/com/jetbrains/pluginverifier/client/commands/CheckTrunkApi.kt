@@ -20,7 +20,8 @@ class CheckTrunkApiCommand : Command {
 
   override fun execute(opts: BaseCmdOpts, freeArgs: List<String>) {
     if (freeArgs.isEmpty()) {
-      throw IllegalArgumentException("You have to specify the IDE to check")
+      System.err.println("You have to specify the IDE to check")
+      System.exit(1)
     }
     val ideFile = File(freeArgs[0])
     if (!ideFile.exists()) {

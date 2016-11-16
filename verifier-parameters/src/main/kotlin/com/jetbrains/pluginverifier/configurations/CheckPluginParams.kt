@@ -21,9 +21,10 @@ object CheckPluginParamsParser : ParamsParser {
 
   override fun parse(opts: CmdOpts, freeArgs: List<String>): CheckPluginParams {
     if (freeArgs.size <= 1) {
-      throw RuntimeException("You must specify plugin to check and IDE(s), example:\n" +
+      System.err.println("You must specify plugin to check and IDE(s), example:\n" +
           "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963\n" +
           "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963")
+      System.exit(1)
     }
     val ideDescriptors = freeArgs.drop(1).map { File(it) }.map { IdeDescriptor.ByInstance(CmdUtil.createIde(it, opts)) }
     val pluginFiles = getPluginFiles(freeArgs[0], ideDescriptors.map { it.ideVersion })
