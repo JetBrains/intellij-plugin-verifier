@@ -183,11 +183,6 @@ public class PluginManagerImpl extends PluginManager {
             LOG.debug(msg, e);
           }
 
-//          TODO: in IDEA there is one more attempt to load optional descriptor
-//          URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + '/' + optionalDescriptorName);
-//          if (resource != null) {
-//            optionalDescriptor = loadDescriptorFromResource(resource);
-//          }
         }
       }
 
@@ -443,13 +438,10 @@ public class PluginManagerImpl extends PluginManager {
       }
     }
 
-    //TODO: write a test: in-root-descriptor takes precedence over in-lib-descriptor
-
     //in-root descriptor takes precedence over other descriptors, so don't throw
     //"Multiple plugin.xml" if they are found in the <root>/META-INF/plugin.xml and <root>/lib/some.jar/META-INF/plugin.xml
     if (descriptorRoot != null) {
 
-      //TODO: rewrite
       if (descriptorInner != null) {
         //some plugins have logo-file in the lib-descriptor
         if (descriptorInner.getVendorLogo() != null) {
@@ -463,9 +455,6 @@ public class PluginManagerImpl extends PluginManager {
     if (descriptorInner != null) {
       return descriptorInner;
     }
-
-    //TODO: print illustrative message about why it's not found
-    //(maybe a plugin has an incorrect structure, e.g. a.zip/plugin_name/plugin.jar - without lib/ directory.
 
     validator.onMissingFile("META-INF/" + filePath + " is not found");
     return null;
