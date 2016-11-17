@@ -3,6 +3,7 @@ package org.jetbrains.plugins.verifier.service.status
 import com.intellij.structure.domain.IdeVersion
 import org.apache.commons.io.FileUtils
 import org.jetbrains.plugins.verifier.service.core.TaskManager
+import org.jetbrains.plugins.verifier.service.service.Service
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
@@ -27,6 +28,8 @@ object ServerStatus {
   fun getRunningTasks(): List<String> = TaskManager.listTasks().sortedByDescending { it.startTime }.map {
     "${it.taskId.id}) ${it.presentableName}: Started at ${DATE_FORMAT.format(Date(it.startTime))} (${it.state} - ${it.progress * 100.0}%) (${it.elapsedTime() / 1000} seconds) ${it.progressText}"
   }
+
+  fun updatesMissingCompatibleIde(): String = Service.updatesMissingCompatibleIde.sortedByDescending { it.updateId }.joinToString { "#${it.updateId}" }
 
   private fun diskUsage(): List<Pair<String, *>> {
     val dir = FileManager.getAppHomeDirectory()

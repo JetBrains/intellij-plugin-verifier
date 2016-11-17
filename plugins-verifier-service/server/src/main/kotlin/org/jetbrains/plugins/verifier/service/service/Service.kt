@@ -34,7 +34,7 @@ import retrofit2.http.Query
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-private object Service {
+object Service {
 
   fun run() {
     Executors.newSingleThreadScheduledExecutor(
@@ -56,6 +56,8 @@ private object Service {
   private val verifiableUpdates: MutableMap<UpdateInfo, TaskId> = hashMapOf()
   private val lastCheckDate: MutableMap<UpdateInfo, Long> = hashMapOf()
   private val updateInfoCache: MutableMap<Int, UpdateInfo> = hashMapOf()
+
+  val updatesMissingCompatibleIde: MutableSet<UpdateInfo> = hashSetOf()
 
   private var isRequesting: Boolean = false
 
@@ -165,7 +167,7 @@ private object Service {
     val runner = CheckRangeRunner(PluginDescriptor.ByUpdateInfo(updateInfo), getRunnerParams(), versions)
     val taskId = TaskManager.enqueue(
         runner,
-        { onSuccess(it) },
+        { onSuccess(it, updateInfo) },
         { t, tid, task -> logError(t, tid, task as CheckRangeRunner) },
         { tst, task -> onUpdateChecked(task as CheckRangeRunner) }
     )
@@ -192,12 +194,18 @@ private object Service {
     LOG.error("Unable to check update $updateInfo: taskId = #${taskStatus.taskId}", throwable)
   }
 
-  private fun onSuccess(result: Result<CheckRangeResults>) {
+  private fun onSuccess(result: Result<CheckRangeResults>, updateInfo: UpdateInfo) {
     val results = result.result!!
     LOG.info("Update ${results.plugin} is successfully checked with IDE-s. Result type = ${results.resultType}; " +
         "IDE-s = ${results.checkedIdeList?.joinToString()} " +
         "bad plugin = ${results.badPlugin}; " +
         "in ${result.taskStatus.elapsedTime() / 1000} s")
+
+    if (results.resultType == CheckRangeResults.ResultType.NO_COMPATIBLE_IDES) {
+      updatesMissingCompatibleIde.add(updateInfo)
+    } else {
+      updatesMissingCompatibleIde.remove(updateInfo)
+    }
 
     try {
       verifier.sendUpdateCheckResult(results, userName, password).executeSuccessfully()

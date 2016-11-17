@@ -35,6 +35,8 @@
         </g:each>
     </ul>
 
+    <h2>Updates missing compatible IDE: ${ServerStatus.INSTANCE.updatesMissingCompatibleIde()}</h2>
+
     <h2>Currently running tasks: ${TaskManager.INSTANCE.runningTasksNumber()}</h2>
     <ul>
         <g:each var="c" in="${ServerStatus.INSTANCE.getRunningTasks()}">
