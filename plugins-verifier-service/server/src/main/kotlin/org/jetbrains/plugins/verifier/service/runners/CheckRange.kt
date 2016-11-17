@@ -68,7 +68,6 @@ class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
             "IDE-s compatible with plugin's [$sinceBuild; $untilBuild]: [${locks.joinToString { it.ide.version.asString() }}]")
 
         if (locks.isEmpty()) {
-          //TODO: download from the IDE repository.
           LOG.debug("There are no IDEs compatible with the Plugin $plugin; [since; until] = [$sinceBuild; $untilBuild]")
           return CheckRangeResults(pluginToCheck, NO_COMPATIBLE_IDES, null, null, null)
         }
