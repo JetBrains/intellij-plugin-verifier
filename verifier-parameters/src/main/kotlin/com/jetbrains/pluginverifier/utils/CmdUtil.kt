@@ -90,7 +90,6 @@ object CmdUtil {
     return null
   }
 
-  //TODO: add support of custom JDK ?
   @Throws(IOException::class)
   fun getJdkDir(opts: CmdOpts): File {
     val runtimeDirectory: File
