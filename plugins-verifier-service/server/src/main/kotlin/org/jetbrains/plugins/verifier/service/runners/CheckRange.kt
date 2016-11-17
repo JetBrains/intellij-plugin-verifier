@@ -45,38 +45,53 @@ class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
     }
     try {
 
-      val sinceBuild = plugin!!.sinceBuild
-      val untilBuild = plugin.untilBuild
+      val locks: List<IdeFilesManager.IdeLock>
 
-      if (sinceBuild == null) {
-        LOG.info("The plugin $pluginToCheck has not specified since-build property")
-        val reason = "The plugin $plugin has not specified the <idea-version> 'since-build' attribute. See  <a href=\"http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html\">Plugin Configuration File - plugin.xml<\\a>"
-        return CheckRangeResults(pluginToCheck, BAD_PLUGIN, VResult.BadPlugin(pluginToCheck, reason), null, null)
-      }
+      if (ideVersions == null) {
+        val sinceBuild = plugin!!.sinceBuild
+        val untilBuild = plugin.untilBuild
 
+        if (sinceBuild == null) {
+          LOG.info("The plugin $pluginToCheck has not specified since-build property")
+          val reason = "The plugin $plugin has not specified the <idea-version> 'since-build' attribute. See  <a href=\"http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html\">Plugin Configuration File - plugin.xml<\\a>"
+          return CheckRangeResults(pluginToCheck, BAD_PLUGIN, VResult.BadPlugin(pluginToCheck, reason), null, null)
+        }
 
+        locks = IdeFilesManager.locked {
+          IdeFilesManager.ideList()
+              .filter { sinceBuild <= it && (untilBuild == null || it <= untilBuild) }
+              .map { IdeFilesManager.getIde(it) }
+              .filterNotNull()
+        }
 
-      LOG.debug("Verifying plugin $plugin against its specified [$sinceBuild; $untilBuild] builds")
+        LOG.debug("IDE-s on the server: ${IdeFilesManager.ideList().joinToString()}; " +
+            "IDE-s compatible with plugin's [$sinceBuild; $untilBuild]: [${locks.joinToString { it.ide.version.asString() }}]")
 
+        if (locks.isEmpty()) {
+          //TODO: download from the IDE repository.
+          LOG.debug("There are no IDEs compatible with the Plugin $plugin; [since; until] = [$sinceBuild; $untilBuild]")
+          return CheckRangeResults(pluginToCheck, NO_COMPATIBLE_IDES, null, null, null)
+        }
 
-      val locks: List<IdeFilesManager.IdeLock> = IdeFilesManager.locked({
-        (ideVersions ?: IdeFilesManager.ideList())
-            .filter { sinceBuild <= it && (untilBuild == null || it <= untilBuild) }
-            .map { IdeFilesManager.getIde(it) }
-            .filterNotNull()
-      })
-      LOG.debug("IDE-s on the server: ${IdeFilesManager.ideList().joinToString()}; IDE-s compatible with [$sinceBuild; $untilBuild]: [${locks.joinToString { it.ide.version.asString() }}]")
+      } else {
+        locks = IdeFilesManager.locked {
+          val availableIdes = IdeFilesManager.ideList()
+          ideVersions
+              .filter { availableIdes.contains(it) }
+              .map { IdeFilesManager.getIde(it) }
+              .filterNotNull()
+        }
 
-      if (locks.isEmpty()) {
-        //TODO: download from the IDE repository.
-        LOG.error("There are no IDEs compatible with the Plugin $plugin; [since; until] = [$sinceBuild; $untilBuild]")
-        return CheckRangeResults(pluginToCheck, NO_COMPATIBLE_IDES, null, null, null)
+        if (locks.isEmpty()) {
+          LOG.error("There are no one IDE from $ideVersions on the service: ${IdeFilesManager.ideList()}")
+          return CheckRangeResults(pluginToCheck, NO_COMPATIBLE_IDES, null, null, null)
+        }
       }
 
       try {
         val ideDescriptors = locks.map { IdeDescriptor.ByInstance(it.ide) }
         val jdkDescriptor = JdkDescriptor.ByFile(JdkManager.getJdkHome(params.jdkVersion))
-        val pluginDescriptor = PluginDescriptor.ByInstance(plugin)
+        val pluginDescriptor = PluginDescriptor.ByInstance(plugin!!)
         val params = CheckPluginParams(listOf(pluginDescriptor), ideDescriptors, jdkDescriptor, params.vOptions, true, Resolver.getEmptyResolver(), BridgeVProgress(progress))
 
         LOG.debug("CheckPlugin with [since; until] #$taskId arguments: $params")
