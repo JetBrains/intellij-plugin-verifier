@@ -56,7 +56,7 @@ sealed class PluginDescriptor(@SerializedName("pluginId") val pluginId: String,
     override fun toString(): String = "${fileLock.getFile()}"
   }
 
-  class ByInstance(@Transient val plugin: Plugin) : PluginDescriptor(plugin.pluginId!!, plugin.pluginVersion!!) {
+  class ByInstance(@Transient val plugin: Plugin, @Transient val pluginResolver: Resolver? = null) : PluginDescriptor(plugin.pluginId!!, plugin.pluginVersion!!) {
     override fun equals(other: Any?): Boolean = other is ByInstance && plugin == other.plugin
 
     override fun hashCode(): Int = plugin.hashCode()
