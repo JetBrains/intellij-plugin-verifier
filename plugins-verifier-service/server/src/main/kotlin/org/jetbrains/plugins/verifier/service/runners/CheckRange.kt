@@ -27,14 +27,14 @@ class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
   }
 
   override fun computeResult(progress: Progress): CheckRangeResults {
-    val createResult: VManager.CreatePluginResult
+    val createResult: CreatePluginResult
     try {
-      createResult = VManager.createPlugin(pluginToCheck)
+      createResult = VManager.createPluginWithResolver(pluginToCheck, null)
     } catch(e: Exception) {
       LOG.error("Unable to create plugin for $pluginToCheck", e)
       throw e
     }
-    val (plugin: Plugin?, pluginLock: IFileLock?, badResult: VResult?) = createResult
+    val (plugin: Plugin?, resolver: Resolver?, pluginLock: IFileLock?, badResult: VResult?) = createResult
 
     if (badResult != null) {
       return when (badResult) {
@@ -73,7 +73,7 @@ class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
       try {
         val ideDescriptors = locks.map { IdeDescriptor.ByInstance(it.ide) }
         val jdkDescriptor = JdkDescriptor.ByFile(JdkManager.getJdkHome(params.jdkVersion))
-        val pluginDescriptor = PluginDescriptor.ByInstance(plugin)
+        val pluginDescriptor = PluginDescriptor.ByInstance(plugin, resolver)
         val params = CheckPluginParams(listOf(pluginDescriptor), ideDescriptors, jdkDescriptor, params.vOptions, true, Resolver.getEmptyResolver(), BridgeVProgress(progress))
 
         LOG.debug("CheckPlugin with [since; until] #$taskId arguments: $params")
