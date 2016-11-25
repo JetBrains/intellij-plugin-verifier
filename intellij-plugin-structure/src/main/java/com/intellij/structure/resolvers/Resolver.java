@@ -161,4 +161,12 @@ public abstract class Resolver implements Closeable {
    */
   public abstract boolean containsClass(@NotNull String className);
 
+  /**
+   * Returns the roots from which this resolver loads the classes
+   *
+   * @return roots of the classes
+   */
+  @NotNull
+  public abstract List<File> getClassPath();
+
 }

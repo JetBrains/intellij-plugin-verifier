@@ -2,6 +2,7 @@ package com.intellij.structure.impl.resolvers;
 
 import com.intellij.structure.impl.utils.AsmUtil;
 import com.intellij.structure.resolvers.Resolver;
+import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -17,9 +18,12 @@ class FilesResolver extends Resolver {
 
   private final Map<String, File> myClass2File = new HashMap<String, File>();
   private final String myPresentableName;
+  private final File myRoot;
 
-  FilesResolver(@NotNull String presentableName, @NotNull Collection<File> classFiles) throws IOException {
+  FilesResolver(@NotNull String presentableName, @NotNull File root) throws IOException {
     myPresentableName = presentableName;
+    myRoot = root;
+    Collection<File> classFiles = FileUtils.listFiles(root, new String[]{"class"}, true);
     for (File classFile : classFiles) {
       if (classFile.getName().endsWith(".class")) {
         ClassNode node = AsmUtil.readClassFromFile(classFile);
@@ -57,6 +61,12 @@ class FilesResolver extends Resolver {
   @Override
   public boolean containsClass(@NotNull String className) {
     return myClass2File.containsKey(className);
+  }
+
+  @NotNull
+  @Override
+  public List<File> getClassPath() {
+    return Collections.singletonList(myRoot);
   }
 
   @Override

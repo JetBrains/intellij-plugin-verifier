@@ -5,7 +5,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.io.File;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -41,6 +43,12 @@ public class EmptyResolver extends Resolver {
   @Override
   public boolean containsClass(@NotNull String className) {
     return false;
+  }
+
+  @NotNull
+  @Override
+  public List<File> getClassPath() {
+    return Collections.emptyList();
   }
 
   @Override

@@ -16,6 +16,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -71,13 +72,13 @@ public class TestMockPlugins {
   @Test
   public void testMock3() throws Exception {
     //also read classes
-    testMock3(getMockPlugin("mock-plugin3.jar"));
-    testMock3(getMockPlugin("mock-plugin3jarAsZip.zip"));
-    testMock3(getMockPlugin("mock-plugin3-dir"));
-    testMock3(getMockPlugin("mock-plugin3-lib.zip"));
-    testMock3(getMockPlugin("mock-plugin3-classes"));
-    testMock3(getMockPlugin("mock-plugin3-classes-zip.zip"));
-    testMock3(getMockPlugin("mock-plugin3-jar-in-zip.zip"));
+    testMock3(getMockPlugin("mock-plugin3.jar"), "");
+    testMock3(getMockPlugin("mock-plugin3jarAsZip.zip"), "");
+    testMock3(getMockPlugin("mock-plugin3-dir"), "lib/mock-plugin3.jar");
+    testMock3(getMockPlugin("mock-plugin3-lib.zip"), "lib/mock-plugin3.jar");
+    testMock3(getMockPlugin("mock-plugin3-classes"), "classes");
+    testMock3(getMockPlugin("mock-plugin3-classes-zip.zip"), "classes");
+    testMock3(getMockPlugin("mock-plugin3-jar-in-zip.zip"), "");
   }
 
   private void testMock3IdeCompatibility(Plugin plugin) throws IOException {
@@ -93,10 +94,10 @@ public class TestMockPlugins {
     assertEquals(compatible, plugin.isCompatibleWithIde(IdeVersion.createIdeVersion(version)));
   }
 
-  private void testMock3(File pluginFile) throws IOException {
+  private void testMock3(File pluginFile, String... classPath) throws Exception {
     Plugin plugin = PluginManager.getInstance().createPlugin(pluginFile);
     assertEquals(pluginFile, plugin.getPluginFile());
-    testMock3Classes(plugin);
+    testMock3Classes(plugin, classPath);
     testMock3Configs(plugin);
     testMock3ClassesFromXml(plugin);
     testMock3ExtensionPoints(plugin);
@@ -150,17 +151,38 @@ public class TestMockPlugins {
     assertFalse(set.contains("org.jetbrains.plugins.scala.project.maven.MavenWorkingDirectoryProviderImpl".replace('.', '/')));
   }
 
-  private void testMock3Classes(Plugin plugin) throws IOException {
-    Resolver resolver;
+  private void testMock3Classes(Plugin plugin, String... classPath) throws Exception {
+    Resolver resolver = Resolver.createPluginResolver(plugin);
     try {
-      resolver = Resolver.createPluginResolver(plugin);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+      Set<String> allClasses = resolver.getAllClasses();
+      assertEquals(4, allClasses.size());
+      assertContains(allClasses, "packagename/InFileClassOne", "packagename/ClassOne$ClassOneInnerStatic", "packagename/ClassOne$ClassOneInner", "packagename/InFileClassOne");
+
+      File extracted = getExtractedPath(resolver).getCanonicalFile();
+      assertClassPath(resolver, extracted, classPath);
+    } finally {
+      resolver.close();
     }
-    Set<String> allClasses = resolver.getAllClasses();
-    resolver.close();
-    assertEquals(4, allClasses.size());
-    assertContains(allClasses, "packagename/InFileClassOne", "packagename/ClassOne$ClassOneInnerStatic", "packagename/ClassOne$ClassOneInner", "packagename/InFileClassOne");
+  }
+
+  private void assertClassPath(Resolver resolver, File extracted, String[] classPath) throws IOException {
+    List<File> pluginClassPath = resolver.getClassPath();
+    for (String cp : classPath) {
+      File shouldBe = new File(extracted, cp);
+      boolean found = false;
+      for (File pcp : pluginClassPath) {
+        if (pcp.getCanonicalPath().equals(shouldBe.getCanonicalPath())) {
+          found = true;
+        }
+      }
+      Assert.assertTrue("The class path " + shouldBe + " is not found", found);
+    }
+  }
+
+  private File getExtractedPath(Resolver resolver) throws NoSuchFieldException, IllegalAccessException {
+    Field field = resolver.getClass().getDeclaredField("myPluginFile");
+    field.setAccessible(true);
+    return (File) field.get(resolver);
   }
 
   private <T> void assertContains(Collection<T> collection, T... elem) {

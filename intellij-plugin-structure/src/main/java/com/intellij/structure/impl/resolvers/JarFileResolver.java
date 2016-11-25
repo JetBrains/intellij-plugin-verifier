@@ -11,10 +11,7 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -29,7 +26,10 @@ public class JarFileResolver extends Resolver {
 
   private final Set<String> myClassesNames = new HashSet<String>();
 
+  private final File myOriginalFile;
+
   public JarFileResolver(@NotNull File jarFile) throws IOException {
+    myOriginalFile = jarFile;
     myJarFile = new ZipFile(jarFile);
     preloadClassMap();
   }
@@ -64,6 +64,12 @@ public class JarFileResolver extends Resolver {
   @Override
   public boolean containsClass(@NotNull String className) {
     return myClassesNames.contains(className);
+  }
+
+  @NotNull
+  @Override
+  public List<File> getClassPath() {
+    return Collections.singletonList(myOriginalFile);
   }
 
   @Override

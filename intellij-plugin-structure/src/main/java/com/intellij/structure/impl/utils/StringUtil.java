@@ -131,6 +131,15 @@ public class StringUtil {
   }
 
   @NotNull
+  public static String repeat(@NotNull String s, int count) {
+    StringBuilder sb = new StringBuilder(s.length() * count);
+    for (int i = 0; i < count; i++) {
+      sb.append(s);
+    }
+    return sb.toString();
+  }
+
+  @NotNull
   public static String notNullize(@Nullable String s) {
     return s == null ? "" : s;
   }

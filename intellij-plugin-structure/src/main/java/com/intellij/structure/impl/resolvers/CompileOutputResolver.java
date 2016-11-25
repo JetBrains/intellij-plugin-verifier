@@ -1,187 +1,89 @@
 package com.intellij.structure.impl.resolvers;
 
 import com.intellij.structure.impl.utils.AsmUtil;
+import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
- * @author Sergey Evdokimov
+ * @author Sergey Patrikeev
  */
 class CompileOutputResolver extends Resolver {
 
-  private final String myPresentableName;
-  private final Map<String, PackageDescriptor> myPackageMap = new HashMap<String, PackageDescriptor>();
-  private final Set<String> myAllClasses = new HashSet<String>();
+  private final Map<String, File> allClasses = new HashMap<String, File>();
+  private final Set<File> classPath = new HashSet<File>();
+  private final File myDir;
 
   CompileOutputResolver(@NotNull File dir) throws IOException {
-    myPresentableName = dir.getPath();
-
-    List<DirDescriptor> dirs = new ArrayList<DirDescriptor>();
-
-    File[] children = dir.listFiles();
-    if (children != null) {
-      for (File file : children) {
-        if (file.isDirectory()) {
-          dirs.add(new DirDescriptor(file));
-        }
-      }
+    myDir = dir;
+    Collection<File> classFiles = FileUtils.listFiles(dir, new String[]{"class"}, true);
+    for (File classFile : classFiles) {
+      ClassNode classNode = AsmUtil.readClassFromFile(classFile);
+      allClasses.put(classNode.name, classFile);
+      classPath.add(getClassRoot(classFile.getCanonicalFile(), classNode));
     }
+  }
 
-    for (File file : FileUtils.listFiles(dir, new String[]{"class"}, true)) {
-      ClassNode node = AsmUtil.readClassFromFile(file);
-      myAllClasses.add(node.name);
-    }
-
-    myPackageMap.put("", new PackageDescriptor("", dirs));
+  private File getClassRoot(File classFile, ClassNode classNode) throws IOException {
+    int levelsUp = StringUtil.countChars(classNode.name, '/');
+    String back = StringUtil.repeat("../", levelsUp + 1);
+    return new File(classFile, back).getCanonicalFile();
   }
 
   @Nullable
   @Override
-  public ClassNode findClass(@NotNull String className) {
-    int dotIdx = className.lastIndexOf('/');
-    String packageName = dotIdx == -1 ? "" : className.substring(0, dotIdx);
-    String simpleName = className.substring(dotIdx + 1);
-
-    PackageDescriptor packageDescriptor = getPackageDescriptor(packageName);
-
-    String classFileName = simpleName + ".class";
-
-    for (DirDescriptor descriptor : packageDescriptor.getDirectories()) {
-      File classFile = descriptor.findChild(classFileName);
-      if (classFile != null) {
-        try {
-          InputStream in = null;
-          try {
-            in = new BufferedInputStream(new FileInputStream(classFile));
-            return AsmUtil.readClassNode(classFileName, in);
-
-          } finally {
-            IOUtils.closeQuietly(in);
-          }
-        } catch (IOException ignored) {
-        }
-      }
+  public ClassNode findClass(@NotNull String className) throws IOException {
+    if (!containsClass(className)) {
+      return null;
     }
-    return null;
-
-  }
-
-  @NotNull
-  private PackageDescriptor getPackageDescriptor(String packageName) {
-    PackageDescriptor res = myPackageMap.get(packageName);
-    if (res == null) {
-      int dotIdx = packageName.lastIndexOf('/');
-      String parentPackageName = dotIdx == -1 ? "" : packageName.substring(0, dotIdx);
-      String name = packageName.substring(dotIdx + 1);
-
-      PackageDescriptor parentPackage = getPackageDescriptor(parentPackageName);
-
-      List<DirDescriptor> dirs = new ArrayList<DirDescriptor>();
-
-      for (DirDescriptor descriptor : parentPackage.getDirectories()) {
-        File child = descriptor.findChild(name);
-        if (child != null && child.isDirectory()) {
-          dirs.add(new DirDescriptor(child));
-        }
-      }
-
-      res = new PackageDescriptor(packageName, dirs);
-      myPackageMap.put(packageName, res);
-    }
-
-    return res;
+    return AsmUtil.readClassFromFile(allClasses.get(className));
   }
 
   @Nullable
   @Override
   public Resolver getClassLocation(@NotNull String className) {
-    if (findClass(className) != null) {
-      return this;
+    if (!containsClass(className)) {
+      return null;
     }
-
-    return null;
+    return this;
   }
 
   @NotNull
   @Override
   public Set<String> getAllClasses() {
-    return Collections.unmodifiableSet(myAllClasses);
-  }
-
-  @Override
-  public String toString() {
-    return myPresentableName;
+    return Collections.unmodifiableSet(allClasses.keySet());
   }
 
   @Override
   public boolean isEmpty() {
-    return false;
+    return allClasses.isEmpty();
   }
 
   @Override
   public boolean containsClass(@NotNull String className) {
-    return myAllClasses.contains(className);
+    return allClasses.containsKey(className);
+  }
+
+  @NotNull
+  @Override
+  public List<File> getClassPath() {
+    return new ArrayList<File>(classPath);
   }
 
   @Override
-  public void close() {
+  public void close() throws IOException {
+    //nothing to do
   }
 
-  private static class PackageDescriptor {
-    private final String packageName;
-
-    private List<DirDescriptor> dirs;
-
-    private PackageDescriptor(String packageName, List<DirDescriptor> dirs) {
-      this.packageName = packageName;
-      this.dirs = dirs;
-    }
-
-    List<DirDescriptor> getDirectories() {
-      return dirs;
-    }
-
-    public String getPackageName() {
-      return packageName;
-    }
-  }
-
-  private static class DirDescriptor {
-    private final File dir;
-
-    private Map<String, File> fileMap;
-
-    DirDescriptor(File dir) {
-      this.dir = dir;
-    }
-
-    File findChild(String name) {
-      Map<String, File> map = fileMap;
-      if (map == null) {
-        map = new HashMap<String, File>();
-
-        File[] children = dir.listFiles();
-        if (children != null) {
-          for (File file : children) {
-            map.put(file.getName(), file);
-          }
-        }
-
-        fileMap = map;
-      }
-
-      return map.get(name);
-    }
-
-    public File getDir() {
-      return dir;
-    }
+  @Override
+  public String toString() {
+    return myDir.getPath();
   }
 }

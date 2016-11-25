@@ -12,7 +12,7 @@ apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
 apply plugin: 'com.github.johnrengelman.shadow'
 
-version = '1.35'
+version = '1.36'
 if (project.hasProperty("myVersion")) {
   version = project.myVersion
 }

@@ -6,12 +6,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
+import java.util.List;
 import java.util.Set;
 
 /**
- * @author Sergey Evdokimov
+ * @author Sergey Patrikeev
  */
 public class CacheResolver extends Resolver {
 
@@ -60,6 +62,12 @@ public class CacheResolver extends Resolver {
   @Override
   public boolean containsClass(@NotNull String className) {
     return myDelegate.containsClass(className);
+  }
+
+  @NotNull
+  @Override
+  public List<File> getClassPath() {
+    return myDelegate.getClassPath();
   }
 
   @Override

@@ -17,14 +17,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
-import java.util.regex.Matcher;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-
-import static com.intellij.structure.impl.domain.PluginManagerImpl.getFileEscapedUri;
-import static com.intellij.structure.impl.domain.PluginManagerImpl.isJarOrZip;
 
 /**
  * @author Sergey Patrikeev
@@ -125,107 +122,47 @@ public class PluginResolver extends Resolver {
   }
 
   @NotNull
-  private Resolver loadClasses(@NotNull File file) {
-    if (file.isDirectory()) {
-      return loadClassesFromDir(file);
-    } else if (file.exists() && isJarOrZip(file)) {
-      return loadClassesFromZip(file);
-    }
-    throw new IncorrectPluginException("Plugin is not a correct file type. It must be a directory, a zip or a jar file");
+  @Override
+  public List<File> getClassPath() {
+    return myResolver.getClassPath();
   }
 
-  private Resolver loadClassesFromZip(@NotNull File file) {
-    String zipUrl = getFileEscapedUri(file);
+  @NotNull
+  private Resolver loadClasses(@NotNull File file) throws IncorrectPluginException {
+    if (file.isDirectory()) {
+      return loadClassesFromDir(file);
+    } else if (file.exists() && StringUtil.endsWithIgnoreCase(file.getName(), ".jar")) {
+      return loadClassesFromJar(file);
+    }
+    throw new IncorrectPluginException("Invalid plugin file type: it must be a directory or a jar file");
+  }
 
-    List<Resolver> resolvers = new ArrayList<Resolver>();
-
-    Resolver classesDirResolver = null;
-
-    ZipFile zipFile = null;
+  @NotNull
+  private Resolver loadClassesFromJar(@NotNull File file) {
     try {
-      zipFile = new ZipFile(file);
-      Enumeration<? extends ZipEntry> entries = zipFile.entries();
-      while (entries.hasMoreElements()) {
-        ZipEntry entry = entries.nextElement();
-
-        //check if classes directory
-        Matcher classesDirMatcher = CLASSES_DIR_REGEX.matcher(entry.getName());
-        if (classesDirMatcher.matches()) {
-          String rootDir = entry.getName();
-          try {
-            classesDirResolver = new ZipResolver("Plugin classes directory", zipUrl, rootDir);
-          } catch (IOException e) {
-            throw new IncorrectPluginException("Unable to read plugin classes from " + rootDir, e);
-          }
-          if (!classesDirResolver.isEmpty()) {
-            resolvers.add(classesDirResolver);
-          }
-        }
-
-        //check if jar in lib/ directory
-        Matcher libDirMatcher = LIB_JAR_REGEX.matcher(entry.getName());
-        if (libDirMatcher.matches()) {
-          String innerName = libDirMatcher.group(2);
-          if (innerName != null) {
-            String innerJarUrl = "jar:" + zipUrl + "!/" + StringUtil.trimStart(entry.getName(), "/");
-            ZipResolver innerResolver;
-            try {
-              innerResolver = new ZipResolver(innerName, innerJarUrl, ".");
-            } catch (IOException e) {
-              throw new IncorrectPluginException("Unable to read plugin classes from " + entry.getName(), e);
-            }
-            if (!innerResolver.isEmpty()) {
-              resolvers.add(innerResolver);
-            }
-          }
-        }
-      }
-    } catch (Exception e) {
-      closeResolvers(resolvers);
-      if (e instanceof IncorrectPluginException) throw (IncorrectPluginException) e;
-      throw new IncorrectPluginException("Unable to read plugin classes from " + file.getName(), e);
-    } finally {
-      if (zipFile != null) {
-        try {
-          zipFile.close();
-        } catch (IOException ignored) {
-        }
-      }
+      return Resolver.createJarResolver(file);
+    } catch (IOException e) {
+      throw new IncorrectPluginException("Unable to read the plugin " + myPlugin + " class files", e);
     }
-
-    //check if this zip archive is actually a .jar archive (someone has changed its extension from .jar to .zip)
-    if (classesDirResolver == null) {
-      try {
-        ZipResolver rootResolver = new ZipResolver(file.getName(), zipUrl, ".");
-        if (!rootResolver.isEmpty()) {
-          resolvers.add(rootResolver);
-        }
-      } catch (IOException e) {
-        closeResolvers(resolvers);
-        throw new IncorrectPluginException("Unable to read plugin classes from " + file.getName(), e);
-      }
-    }
-
-
-    return Resolver.createUnionResolver("Plugin resolver of " + getPluginDescriptor(myPlugin), resolvers);
   }
 
   private Resolver loadClassesFromDir(@NotNull File dir) throws IncorrectPluginException {
     File classesDir = new File(dir, "classes");
 
-    Collection<File> classFiles;
+    File root;
     boolean classesDirExists = classesDir.isDirectory();
     if (classesDirExists) {
-      classFiles = FileUtils.listFiles(classesDir, new String[]{"class"}, true);
+      root = classesDir;
     } else {
       //it is possible that a plugin .zip-file is not actually a .zip archive, but a .jar archive (someone has renamed it)
       //so plugin classes will not be in the `classes` dir, but in the root dir itself
-      classFiles = FileUtils.listFiles(dir, new String[]{"class"}, true);
+      root = dir;
     }
 
     Resolver rootResolver;
     try {
-      rootResolver = new FilesResolver("Plugin " + (classesDirExists ? "`classes`" : "root") + " directory of " + getPluginDescriptor(myPlugin), classFiles);
+      String presentableName = "Plugin " + (classesDirExists ? "`classes`" : "root") + " directory of " + getPluginDescriptor(myPlugin);
+      rootResolver = new FilesResolver(presentableName, root);
     } catch (IOException e) {
       throw new IncorrectPluginException("Unable to read " + (classesDirExists ? "`classes`" : "root") + " plugin classes", e);
     }

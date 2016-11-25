@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -73,6 +74,16 @@ public class ContainerResolver extends Resolver {
   @Override
   public boolean containsClass(@NotNull String className) {
     return myClassToResolver.containsKey(className);
+  }
+
+  @NotNull
+  @Override
+  public List<File> getClassPath() {
+    List<File> result = new ArrayList<File>();
+    for (Resolver resolver : myResolvers) {
+      result.addAll(resolver.getClassPath());
+    }
+    return result;
   }
 
   @Override

@@ -57,6 +57,11 @@ public class URLUtil {
     return protocol.equals(JAR_PROTOCOL) ? openRecursiveJarStream(url) : url.openStream();
   }
 
+  @NotNull
+  public static URL fileToUrl(@NotNull File file) throws IOException {
+    return file.getCanonicalFile().toURI().toURL();
+  }
+
   public static boolean resourceExists(@NotNull URL url) {
     try {
       InputStream inputStream = openStream(url);
