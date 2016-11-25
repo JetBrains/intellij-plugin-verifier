@@ -238,7 +238,7 @@ public class PluginResolver extends Resolver {
     File lib = new File(dir, "lib");
     try {
       if (lib.isDirectory()) {
-        Collection<File> jars = JarsUtils.collectJars(lib, Predicates.<File>alwaysTrue(), true);
+        Collection<File> jars = JarsUtils.collectJars(lib, Predicates.<File>alwaysTrue(), false);
         Resolver libResolver = JarsUtils.makeResolver("Plugin `lib` jars: " + lib.getCanonicalPath(), jars);
         if (!libResolver.isEmpty()) {
           resolvers.add(libResolver);
