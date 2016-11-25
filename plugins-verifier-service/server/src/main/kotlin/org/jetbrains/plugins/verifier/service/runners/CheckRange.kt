@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.configurations.CheckPluginConfiguration
 import com.jetbrains.pluginverifier.configurations.CheckPluginParams
 import com.jetbrains.pluginverifier.configurations.CheckRangeResults
 import com.jetbrains.pluginverifier.configurations.CheckRangeResults.ResultType.*
+import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.repository.IFileLock
 import org.jetbrains.plugins.verifier.service.core.BridgeVProgress
 import org.jetbrains.plugins.verifier.service.core.Progress
@@ -94,6 +95,7 @@ class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
       }
     } finally {
       pluginLock?.release()
+      resolver?.closeLogged()
     }
   }
 }
