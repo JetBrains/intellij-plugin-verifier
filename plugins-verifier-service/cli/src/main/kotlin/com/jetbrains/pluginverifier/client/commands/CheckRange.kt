@@ -3,12 +3,13 @@ package com.jetbrains.pluginverifier.client.commands
 import com.jetbrains.pluginverifier.api.VOptions
 import com.jetbrains.pluginverifier.client.BaseCmdOpts
 import com.jetbrains.pluginverifier.configurations.CheckRangeResults
-import com.jetbrains.pluginverifier.output.StreamVPrinter
+import com.jetbrains.pluginverifier.output.WriterVPrinter
 import com.jetbrains.pluginverifier.utils.VOptionsUtil
 import org.jetbrains.plugins.verifier.service.api.CheckRange
 import org.jetbrains.plugins.verifier.service.params.CheckRangeRunnerParams
 import org.jetbrains.plugins.verifier.service.params.JdkVersion
 import java.io.File
+import java.io.PrintWriter
 
 /**
  * @author Sergey Patrikeev
@@ -31,7 +32,7 @@ class CheckRangeCommand : Command {
   private fun createRunnerParams(jdkVersion: JdkVersion, vOptions: VOptions) = CheckRangeRunnerParams(jdkVersion, vOptions)
 
   fun processResults(opts: BaseCmdOpts, results: CheckRangeResults) {
-    StreamVPrinter(System.out).printResults(results.vResults!!, VOptionsUtil.parsePrinterOptions(opts))
+    WriterVPrinter(PrintWriter(System.out)).printResults(results.vResults!!, VOptionsUtil.parsePrinterOptions(opts))
   }
 
 }
