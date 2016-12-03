@@ -1,7 +1,7 @@
 buildscript {
   ext {
     grailsVersion = project.grailsVersion
-    kotlin_version = '1.0.3'
+    kotlin_version = '1.0.5'
   }
   repositories {
     jcenter()
