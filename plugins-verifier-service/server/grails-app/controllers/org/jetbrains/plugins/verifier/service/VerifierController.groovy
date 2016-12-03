@@ -20,7 +20,7 @@ import org.jetbrains.plugins.verifier.service.runners.CheckTrunkApiRunner
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.springframework.http.HttpStatus
 
-class VerifierController {
+class VerifierController implements SaveFileTrait {
 
   private static final Gson GSON = GsonHolder.INSTANCE.GSON
 
@@ -193,40 +193,6 @@ class VerifierController {
     log.info("New Check-Plugin-With-[since;until] is enqueued with taskId=$taskId")
   }
 
-  private File savePluginTemporarily(pluginFile) {
-    if (!pluginFile || pluginFile.empty) {
-      log.error("user attempted to load empty plugin file")
-      sendError(HttpStatus.BAD_REQUEST.value(), "Empty plugin file")
-      return null
-    }
-
-    File tmpFile = FileManager.INSTANCE.createTempFile((pluginFile.getOriginalFilename() as String) + ".zip")
-    try {
-      pluginFile.transferTo(tmpFile)
-    } catch (Exception e) {
-      log.error("Unable to save plugin file to $tmpFile", e)
-      sendError(HttpStatus.BAD_REQUEST.value(), "The plugin file is broken")
-      LanguageUtilsKt.deleteLogged(tmpFile)
-      return null
-    }
-
-    log.info("plugin file saved to ${tmpFile}")
-    return tmpFile
-  }
-
-  private sendError(int statusCode, String msg) {
-    render(status: statusCode, text: msg, encoding: 'utf-8', contentType: 'text/plain')
-  }
-
-  private sendJson(Object obj) {
-    String json
-    if (obj instanceof String) {
-      json = obj as String
-    } else {
-      json = GsonHolder.GSON.toJson(obj)
-    }
-    render(contentType: 'text/json', encoding: 'utf-8', text: json)
-  }
 
   def index() {}
 
