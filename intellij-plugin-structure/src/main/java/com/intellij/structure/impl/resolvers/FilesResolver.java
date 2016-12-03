@@ -14,13 +14,13 @@ import java.util.*;
 /**
  * Created by Sergey Patrikeev
  */
-class FilesResolver extends Resolver {
+public class FilesResolver extends Resolver {
 
   private final Map<String, File> myClass2File = new HashMap<String, File>();
   private final String myPresentableName;
   private final File myRoot;
 
-  FilesResolver(@NotNull String presentableName, @NotNull File root) throws IOException {
+  public FilesResolver(@NotNull String presentableName, @NotNull File root) throws IOException {
     myPresentableName = presentableName;
     myRoot = root;
     Collection<File> classFiles = FileUtils.listFiles(root, new String[]{"class"}, true);
