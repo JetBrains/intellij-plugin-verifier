@@ -41,6 +41,7 @@ dependencies {
   compile "commons-fileupload:commons-fileupload:1.3.1"
 
   compile project(':protocol')
+  compile group: 'org.jetbrains.intellij.plugins', name: 'intellij-feature-extractor', version: '1.0'
   compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-configurations', version: rootProject.verifierVersion
   compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-repository', version: rootProject.verifierVersion
 
