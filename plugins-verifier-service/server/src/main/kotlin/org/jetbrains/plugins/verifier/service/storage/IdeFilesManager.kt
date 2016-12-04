@@ -29,6 +29,7 @@ interface IIdeFilesManager {
 
 }
 
+//TODO: improve IDE cache on high concurrency: don't recreate IDE instance after each lock release.
 object IdeFilesManager : IIdeFilesManager {
 
   private val LOG = LoggerFactory.getLogger(IdeFilesManager::class.java)
@@ -36,11 +37,13 @@ object IdeFilesManager : IIdeFilesManager {
   private val ideCache: MutableMap<IdeVersion, Ide> = hashMapOf()
   private val lockedIdes: MutableMap<IdeVersion, Int> = hashMapOf()
   private val deleteQueue: MutableSet<IdeVersion> = hashSetOf()
+
   class IdeLock(val ide: Ide) : IIdeFilesManager.IIdeLock {
     override fun release() {
       releaseLock(this)
     }
   }
+
   @Synchronized
   private fun releaseLock(lock: IdeLock) {
     val version = lock.ide.version
