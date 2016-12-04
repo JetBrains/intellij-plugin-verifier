@@ -1,6 +1,6 @@
 buildscript {
 
-  ext.kotlin_version = '1.0.3'
+  ext.kotlin_version = '1.0.5'
 
   repositories {
     jcenter()
@@ -13,7 +13,7 @@ buildscript {
 }
 
 def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.54'
-def intellijStructureVersion = '1.35'
+def intellijStructureVersion = '1.36'
 
 
 configure(allprojects) {

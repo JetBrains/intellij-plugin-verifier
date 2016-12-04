@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Grails: server" type="GrailsRunConfigurationType" factoryName="Grails">
+    <setting name="vmparams" value="-Dverifier.service.home.dir=/home/user/.pluginVerifierService -Dverifier.service.jdk.8.dir=/usr/lib/jvm/java-8-oracle -Dverifier.service.plugin.repository.url=http://localhost:8090 -Dverifier.service.plugin.repository.verifier.username=pluginrobot -Dverifier.service.plugin.repository.verifier.password=password" />
+    <setting name="cmdLine" value="run-app" />
+    <setting name="passParentEnv" value="true" />
+    <setting name="grailsApplicationRoot" value="$PROJECT_DIR$/plugins-verifier-service/server" />
+    <setting name="launchBrowser" value="true" />
+    <setting name="launchBrowserUrl" value="" />
+    <setting name="depsClasspath" value="false" />
+    <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+    <method />
+  </configuration>
+</component>
