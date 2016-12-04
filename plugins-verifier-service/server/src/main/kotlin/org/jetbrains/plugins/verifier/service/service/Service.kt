@@ -10,9 +10,7 @@ import com.jetbrains.pluginverifier.configurations.CheckRangeResults
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.persistence.GsonHolder
 import com.jetbrains.pluginverifier.repository.RepositoryManager
-import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
-import okhttp3.logging.HttpLoggingInterceptor
 import org.jetbrains.plugins.verifier.service.api.Result
 import org.jetbrains.plugins.verifier.service.api.TaskId
 import org.jetbrains.plugins.verifier.service.api.TaskStatus
@@ -61,18 +59,10 @@ object Service {
 
   private var isRequesting: Boolean = false
 
-  private fun makeClient(): OkHttpClient = OkHttpClient.Builder()
-      .connectTimeout(5, TimeUnit.MINUTES)
-      .readTimeout(5, TimeUnit.MINUTES)
-      .writeTimeout(5, TimeUnit.MINUTES)
-      .followRedirects(false)
-      .addInterceptor(HttpLoggingInterceptor().setLevel(if (LOG.isDebugEnabled) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE))
-      .build()
-
   private val verifier: VerificationApi = Retrofit.Builder()
       .baseUrl(Settings.PLUGIN_REPOSITORY_URL.get())
       .addConverterFactory(GsonConverterFactory.create(GsonHolder.GSON))
-      .client(makeClient())
+      .client(makeClient(LOG.isDebugEnabled))
       .build()
       .create(VerificationApi::class.java)
 
@@ -113,7 +103,7 @@ object Service {
       for (ideVersion in IdeFilesManager.ideList()) {
         updateCache(ideVersion)
 
-        getUpdatesToCheck(ideVersion).updateIds.map { receiveUpdateInfo(it) }.filterNotNull().forEach {
+        getUpdatesToCheck(ideVersion).updateIds.map { UpdateInfoCache.getUpdateInfo(it) }.filterNotNull().forEach {
           tasks.put(it, ideVersion)
         }
       }
@@ -138,18 +128,9 @@ object Service {
     }
   }
 
-  private fun receiveUpdateInfo(updateId: Int): UpdateInfo? {
-    try {
-      return updateInfoCache.getOrPut(updateId, { verifier.getUpdateInfo(updateId).executeSuccessfully().body() })
-    } catch(e: Exception) {
-      LOG.error("Unable to get UpdateInfo for Update #$updateId", e)
-      return null
-    }
-  }
-
   private fun getUpdatesToCheck(ideVersion: IdeVersion): UpdatesToCheck {
     val updatesToCheck: UpdatesToCheck = verifier.getUpdatesToCheck(ideVersion, userName, password).executeSuccessfully().body()
-    LOG.info("Repository get updates to check with #$ideVersion success: (${updatesToCheck.updateIds.size} of them): $updatesToCheck")
+    LOG.info("Repository get updates to check with #$ideVersion success: (total: ${updatesToCheck.updateIds.size}): $updatesToCheck")
     return updatesToCheck
   }
 
@@ -198,7 +179,7 @@ object Service {
     val results = result.result!!
     LOG.info("Update ${results.plugin} is successfully checked with IDE-s. Result type = ${results.resultType}; " +
         "IDE-s = ${results.checkedIdeList?.joinToString()} " +
-        "bad plugin = ${results.badPlugin}; " +
+        (if (results.badPlugin != null) "bad plugin = ${results.badPlugin}; " else "") +
         "in ${result.taskStatus.elapsedTime() / 1000} s")
 
     if (results.resultType == CheckRangeResults.ResultType.NO_COMPATIBLE_IDES) {
@@ -230,9 +211,5 @@ interface VerificationApi {
   fun sendUpdateCheckResult(@Body checkResult: CheckRangeResults,
                             @Query("userName") userName: String,
                             @Query("password") password: String): Call<ResponseBody>
-
-  @Deprecated("to be deleted!")
-  @POST("/manager/getUpdateInfoById")
-  fun getUpdateInfo(@Query("updateId") updateId: Int): Call<UpdateInfo>
 
 }
