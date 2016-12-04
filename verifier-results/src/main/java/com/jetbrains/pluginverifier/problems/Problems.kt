@@ -12,6 +12,7 @@ interface Problem {
   fun getDescription(): String
 }
 
+//TODO: add a human-readable effect, e.g. (non-static -> static field) : 	A client program may be interrupted by IllegalAccessError exception when attempt to assign new values to the field.
 data class MultipleMethodImplementationsProblem(@SerializedName("method") val method: MethodReference) : Problem {
   constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(MethodReference(hostClass, methodName, methodDescriptor))
 
