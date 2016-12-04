@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service
 
 import com.jetbrains.pluginverifier.misc.LanguageUtilsKt
+import org.jetbrains.plugins.verifier.service.service.FeatureService
 import org.jetbrains.plugins.verifier.service.service.Service
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.storage.FileManager
@@ -28,7 +29,12 @@ class BootStrap {
     cleanUpTempDirs()
 
     LOG.info("Server settings: ${Settings.values().findAll { !it.encrypted }.collect { it.key + "=" + it.get() }.join(", ")}")
-    Service.INSTANCE.run()
+    if (Boolean.parseBoolean(Settings.ENABLE_PLUGIN_VERIFIER_SERVICE.get())) {
+      Service.INSTANCE.run()
+    }
+    if (Boolean.parseBoolean(Settings.ENABLE_FEATURE_EXTRACTOR_SERVICE.get())) {
+      FeatureService.INSTANCE.run()
+    }
     IdeListUpdater.INSTANCE.run()
   }
 
