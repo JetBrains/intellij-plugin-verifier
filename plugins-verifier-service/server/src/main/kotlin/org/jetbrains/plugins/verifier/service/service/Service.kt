@@ -48,8 +48,9 @@ object Service {
   //5 minutes
   private const val SERVICE_PERIOD: Long = 5
 
-  //10 minutes
-  private const val UPDATE_CHECK_MIN_PAUSE_MILLIS = 10 * 60 * 1000
+  private val UPDATE_MISSING_IDE_PAUSE_MILLIS = TimeUnit.DAYS.toMillis(1)
+
+  private val UPDATE_CHECK_MIN_PAUSE_MILLIS = TimeUnit.MINUTES.toMillis(10)
 
   private val verifiableUpdates: MutableMap<UpdateInfo, TaskId> = hashMapOf()
   private val lastCheckDate: MutableMap<UpdateInfo, Long> = hashMapOf()
@@ -140,6 +141,9 @@ object Service {
       return
     }
     val lastCheck = lastCheckDate[updateInfo]
+    if (updatesMissingCompatibleIde.contains(updateInfo) && lastCheck != null && System.currentTimeMillis() - lastCheck < UPDATE_MISSING_IDE_PAUSE_MILLIS) {
+      return
+    }
     if (lastCheck != null && System.currentTimeMillis() - lastCheck < UPDATE_CHECK_MIN_PAUSE_MILLIS) {
       LOG.info("Update $updateInfo was checked recently; wait at least ${UPDATE_CHECK_MIN_PAUSE_MILLIS / 1000} seconds;")
       return
