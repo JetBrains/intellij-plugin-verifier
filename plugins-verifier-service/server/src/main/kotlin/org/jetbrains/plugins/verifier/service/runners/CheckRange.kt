@@ -51,7 +51,7 @@ class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
 
       if (sinceBuild == null) {
         LOG.info("The plugin $pluginToCheck has not specified since-build property")
-        val reason = "The plugin $plugin has not specified the <idea-version> 'since-build' attribute. See  <a href=\"http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html\">Plugin Configuration File - plugin.xml<\\a>"
+        val reason = "The plugin $plugin has not specified the <idea-version since-build=\"\"/> attribute"
         return CheckRangeResults(pluginToCheck, BAD_PLUGIN, VResult.BadPlugin(pluginToCheck, reason), null, null)
       }
 

@@ -60,8 +60,7 @@ class ExtractFeaturesRunner(val pluginDescriptor: PluginDescriptor) : Task<Featu
       val sinceBuild = plugin!!.sinceBuild
 
       if (sinceBuild == null) {
-        val reason = "The plugin $plugin has not specified the <idea-version> 'since-build' attribute. " +
-            "See  <a href=\"http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html\">Plugin Configuration File - plugin.xml<\\a>"
+        val reason = "The plugin $plugin has not specified the <idea-version since-build=\"\"/> attribute"
         return FeaturesResult(pluginDescriptor, FeaturesResult.ResultType.BAD_PLUGIN, badPlugin = VResult.BadPlugin(pluginDescriptor, reason))
       }
 
