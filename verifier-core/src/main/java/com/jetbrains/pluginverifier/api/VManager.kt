@@ -188,14 +188,14 @@ object VManager {
   }
 
   fun createPluginWithResolver(pluginDescriptor: PluginDescriptor, ideVersion: IdeVersion?): CreatePluginResult {
-    val (plugin: Plugin?, pluginResolver: Resolver?, fileLock: IFileLock?, badResult: VResult?) = createPlugin(pluginDescriptor, ideVersion)
+    val (plugin: Plugin?, pluginResolver: Resolver?, closeResolver: Boolean, fileLock: IFileLock?, badResult: VResult?) = createPlugin(pluginDescriptor, ideVersion)
 
     if (badResult != null) {
       return CreatePluginResult(badResult = badResult)
     }
 
     if (pluginResolver != null) {
-      return CreatePluginResult(plugin, pluginResolver, fileLock)
+      return CreatePluginResult(plugin, pluginResolver, closeResolver, fileLock = fileLock)
     }
 
     return appendResolver(fileLock, plugin, pluginDescriptor)
@@ -210,7 +210,7 @@ object VManager {
         return CreatePluginResult(badResult = badResult2)
       }
 
-      return CreatePluginResult(plugin, resolver, fileLock)
+      return CreatePluginResult(plugin, resolver, closeResolver = true, fileLock = fileLock)
     } catch (ie: InterruptedException) {
       fileLock?.release()
       throw ie
@@ -267,48 +267,49 @@ object VManager {
                            params: VParams,
                            ideResolver: Resolver,
                            runtimeResolver: Resolver): Pair<Plugin?, VResult> {
-    val (plugin: Plugin?, pluginResolver: Resolver?, pluginLock: IFileLock?, badResult: VResult?) = createPluginWithResolver(pluginDescriptor, ide.version)
+    val (plugin: Plugin?, pluginResolver: Resolver?, closeResolver: Boolean, pluginLock: IFileLock?, badResult: VResult?) = createPluginWithResolver(pluginDescriptor, ide.version)
     if (badResult != null) {
       return null to badResult
     }
 
     try {
-      pluginResolver!!.use puse@ {
-        val ctx = VContext(plugin!!, pluginDescriptor, ide, ideDescriptor, params.options)
-        val (dependenciesResolver, dependenciesGraph, cycle: List<Plugin>?, pluginLocks: List<IFileLock>) = getDependenciesResolver(ctx)
+      val ctx = VContext(plugin!!, pluginDescriptor, ide, ideDescriptor, params.options)
+      val (dependenciesResolver, dependenciesGraph, cycle: List<Plugin>?, pluginLocks: List<IFileLock>) = getDependenciesResolver(ctx)
 
-        try {
-          dependenciesResolver.use {
-            val checkClasses = getClassesForCheck(plugin, pluginResolver)
-            val classLoader = createClassLoader(dependenciesResolver, ctx, ideResolver, pluginResolver, runtimeResolver, params.externalClassPath)
-            VERIFIERS.forEach { it.verify(ctx, checkClasses, classLoader) }
-          }
-        } catch (ie: InterruptedException) {
-          throw ie
-        } catch (e: Exception) {
-          val message = "Failed to verify $pluginDescriptor with $ideDescriptor"
-          LOG.error(message, e)
-          throw RuntimeException(message, e)
-        } finally {
-          pluginLocks.forEach { it.release() }
+      try {
+        dependenciesResolver.use {
+          val checkClasses = getClassesForCheck(plugin, pluginResolver!!)
+          val classLoader = createClassLoader(dependenciesResolver, ctx, ideResolver, pluginResolver, runtimeResolver, params.externalClassPath)
+          VERIFIERS.forEach { it.verify(ctx, checkClasses, classLoader) }
         }
+      } catch (ie: InterruptedException) {
+        throw ie
+      } catch (e: Exception) {
+        val message = "Failed to verify $pluginDescriptor with $ideDescriptor"
+        LOG.error(message, e)
+        throw RuntimeException(message, e)
+      } finally {
+        pluginLocks.forEach { it.release() }
+      }
 
-        val warnings = ctx.warnings +
-            (if (plugin is PluginImpl) plugin.hints.map { Warning(it) } else emptyList()) +
-            (if (cycle != null) listOf(Warning("Found dependencies cycle: " + cycle.joinToString(separator = " -> ") { it.pluginId })) else emptyList())
+      val warnings = ctx.warnings +
+          (if (plugin is PluginImpl) plugin.hints.map { Warning(it) } else emptyList()) +
+          (if (cycle != null) listOf(Warning("Found dependencies cycle: " + cycle.joinToString(separator = " -> ") { it.pluginId })) else emptyList())
 
-        if (ctx.problems.isEmpty) {
-          pluginLock?.release()
-          return plugin to VResult.Nice(ctx.pluginDescriptor, ctx.ideDescriptor, warnings)
-        } else {
-          pluginLock?.release()
-          return plugin to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.problems, dependenciesGraph, warnings)
-        }
-
+      if (ctx.problems.isEmpty) {
+        pluginLock?.release()
+        return plugin to VResult.Nice(ctx.pluginDescriptor, ctx.ideDescriptor, warnings)
+      } else {
+        pluginLock?.release()
+        return plugin to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.problems, dependenciesGraph, warnings)
       }
     } catch (e: Exception) {
       pluginLock?.release()
       throw e
+    } finally {
+      if (closeResolver) {
+        pluginResolver?.closeLogged()
+      }
     }
   }
 
@@ -496,6 +497,7 @@ data class VContext(
 
 data class CreatePluginResult(val plugin: Plugin? = null,
                               val pluginResolver: Resolver? = null,
+                              val closeResolver: Boolean = false,
                               val fileLock: IFileLock? = null,
                               val badResult: VResult? = null)
 
@@ -525,7 +527,7 @@ private object VParamsCreator {
    */
   @Throws(IncorrectPluginException::class, IOException::class, UpdateNotFoundException::class, RuntimeException::class)
   fun getPlugin(plugin: PluginDescriptor, ideVersion: IdeVersion?): CreatePluginResult = when (plugin) {
-    is PluginDescriptor.ByInstance -> CreatePluginResult(plugin.plugin, plugin.pluginResolver) //already created.
+    is PluginDescriptor.ByInstance -> CreatePluginResult(plugin.plugin, plugin.pluginResolver, closeResolver = false) //already created.
     is PluginDescriptor.ByFile -> CreatePluginResult(PluginCache.createPlugin(plugin.file)) //IncorrectPluginException, IOException
     is PluginDescriptor.ByFileLock -> CreatePluginResult(PluginCache.createPlugin(plugin.fileLock.getFile()), fileLock = plugin.fileLock) //IncorrectPluginException, IOException
     is PluginDescriptor.ByXmlId -> {
