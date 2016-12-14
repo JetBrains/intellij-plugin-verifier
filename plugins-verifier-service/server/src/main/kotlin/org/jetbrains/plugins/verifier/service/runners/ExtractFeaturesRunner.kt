@@ -46,7 +46,7 @@ class ExtractFeaturesRunner(val pluginDescriptor: PluginDescriptor) : Task<Featu
       LOG.error("Unable to create plugin for $pluginDescriptor", e)
       throw e
     }
-    val (plugin: Plugin?, resolver: Resolver?, pluginLock: IFileLock?, badResult: VResult?) = createResult
+    val (plugin: Plugin?, resolver: Resolver?, closeResolver: Boolean, pluginLock: IFileLock?, badResult: VResult?) = createResult
 
     if (badResult != null) {
       return when (badResult) {
@@ -90,7 +90,9 @@ class ExtractFeaturesRunner(val pluginDescriptor: PluginDescriptor) : Task<Featu
 
     } finally {
       pluginLock?.release()
-      resolver?.closeLogged()
+      if (closeResolver) {
+        resolver?.closeLogged()
+      }
     }
   }
 
