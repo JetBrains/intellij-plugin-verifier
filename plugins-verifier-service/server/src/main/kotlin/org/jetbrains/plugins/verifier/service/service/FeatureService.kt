@@ -33,7 +33,7 @@ object FeatureService {
   private val LOG: Logger = LoggerFactory.getLogger(FeatureService::class.java)
 
   private val featuresExtractor: FeaturesApi = Retrofit.Builder()
-      .baseUrl(Settings.PLUGIN_REPOSITORY_URL.get())
+      .baseUrl(Settings.FEATURE_EXTRACTOR_REPOSITORY_URL.get())
       .addConverterFactory(GsonConverterFactory.create(GsonHolder.GSON))
       .client(makeClient(LOG.isDebugEnabled))
       .build()
