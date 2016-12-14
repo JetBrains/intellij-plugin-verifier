@@ -36,6 +36,15 @@ object UpdateInfoCache {
       return updateInfo
     }
     try {
+      val info = api.getUpdateInfo(updateId).executeSuccessfully().body()
+      cache.putIfAbsent(updateId, info)
+      return info
+    } catch (e: Exception) {
+      LOG.error("Unable to get UpdateInfo #$updateId", e)
+      return null
+    }
+    /*
+    try {
       val batchRequestSize = 1000
       val updates = api.getUpdateInfosForIds(updateId, updateId + batchRequestSize).executeSuccessfully().body()
       updates.forEach {
@@ -46,13 +55,16 @@ object UpdateInfoCache {
       LOG.error("Unable to get UpdateInfo for Update #$updateId", e)
       return null
     }
+*/
   }
-
 }
 
 interface GetUpdateInfoApi {
 
   @POST("/manager/getUpdateInfosForIdsBetween")
   fun getUpdateInfosForIds(@Query("startId") startId: Int, @Query("endId") endId: Int): Call<List<UpdateInfo>>
+
+  @POST("/manager/getUpdateInfoById")
+  fun getUpdateInfo(@Query("updateId") updateId: Int): Call<UpdateInfo>
 
 }

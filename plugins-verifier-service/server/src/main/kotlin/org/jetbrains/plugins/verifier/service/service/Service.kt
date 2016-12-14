@@ -103,7 +103,9 @@ object Service {
 
       for (ideVersion in IdeFilesManager.ideList()) {
         updateCache(ideVersion)
+      }
 
+      for (ideVersion in IdeFilesManager.ideList()) {
         getUpdatesToCheck(ideVersion).updateIds.map { UpdateInfoCache.getUpdateInfo(it) }.filterNotNull().forEach {
           tasks.put(it, ideVersion)
         }
