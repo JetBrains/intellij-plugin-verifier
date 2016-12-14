@@ -99,23 +99,23 @@ object Service {
 
     try {
 
-      val tasks = HashMultimap.create<UpdateInfo, IdeVersion>()
+      val tasks = HashMultimap.create<Int, IdeVersion>()
 
       for (ideVersion in IdeFilesManager.ideList()) {
         updateCache(ideVersion)
       }
 
       for (ideVersion in IdeFilesManager.ideList()) {
-        getUpdatesToCheck(ideVersion).updateIds.map { UpdateInfoCache.getUpdateInfo(it) }.filterNotNull().forEach {
+        getUpdatesToCheck(ideVersion).updateIds.forEach {
           tasks.put(it, ideVersion)
         }
       }
 
-      for ((updateInfo, ideVersions) in tasks.asMap()) {
+      for ((updateId, ideVersions) in tasks.asMap()) {
         if (isServerTooBusy()) {
           return
         }
-        schedule(updateInfo, ideVersions.toList())
+        schedule(updateId, ideVersions.toList())
       }
 
     } catch (e: Exception) {
@@ -135,6 +135,11 @@ object Service {
     val updatesToCheck: UpdatesToCheck = verifier.getUpdatesToCheck(ideVersion, userName, password).executeSuccessfully().body()
     LOG.info("Repository get updates to check with #$ideVersion success: (total: ${updatesToCheck.updateIds.size}): $updatesToCheck")
     return updatesToCheck
+  }
+
+  private fun schedule(updateId: Int, versions: List<IdeVersion>) {
+    val updateInfo = UpdateInfoCache.getUpdateInfo(updateId) ?: return
+    schedule(updateInfo, versions)
   }
 
   private fun schedule(updateInfo: UpdateInfo, versions: List<IdeVersion>) {
