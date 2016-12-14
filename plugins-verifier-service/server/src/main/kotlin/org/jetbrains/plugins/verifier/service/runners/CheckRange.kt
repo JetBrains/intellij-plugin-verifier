@@ -35,7 +35,7 @@ class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
       LOG.error("Unable to create plugin for $pluginToCheck", e)
       throw e
     }
-    val (plugin: Plugin?, resolver: Resolver?, pluginLock: IFileLock?, badResult: VResult?) = createResult
+    val (plugin: Plugin?, resolver: Resolver?, closeResolver: Boolean, pluginLock: IFileLock?, badResult: VResult?) = createResult
 
     if (badResult != null) {
       return when (badResult) {
@@ -95,7 +95,9 @@ class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
       }
     } finally {
       pluginLock?.release()
-      resolver?.closeLogged()
+      if (closeResolver) {
+        resolver?.closeLogged()
+      }
     }
   }
 }
