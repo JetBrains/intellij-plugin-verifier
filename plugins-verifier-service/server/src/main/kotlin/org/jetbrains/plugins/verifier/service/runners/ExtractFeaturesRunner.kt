@@ -24,7 +24,8 @@ data class FeaturesResult(@SerializedName("plugin") val plugin: PluginDescriptor
   enum class ResultType {
     NOT_FOUND,
     BAD_PLUGIN,
-    EXTRACTED
+    EXTRACTED_ALL,
+    EXTRACTED_PARTIALLY
   }
 }
 
@@ -79,8 +80,9 @@ class ExtractFeaturesRunner(val pluginDescriptor: PluginDescriptor) : Task<Featu
       }
 
       try {
-        val features = FeaturesExtractor.extractFeatures(ideLock.ide, plugin, resolver)
-        return FeaturesResult(pluginDescriptor, FeaturesResult.ResultType.EXTRACTED, features)
+        val extractorResult = FeaturesExtractor.extractFeatures(ideLock.ide, plugin, resolver)
+        val resultType = if (extractorResult.extractedAll) FeaturesResult.ResultType.EXTRACTED_ALL else FeaturesResult.ResultType.EXTRACTED_PARTIALLY
+        return FeaturesResult(pluginDescriptor, resultType, extractorResult.features)
       } catch (e: Exception) {
         LOG.error("Unable to extract features of the plugin: $pluginDescriptor; taskId = $taskId", e)
         throw e

@@ -47,7 +47,7 @@ class FeatureExtractorTest {
   private fun assertExtractFacets(className: String, listOf: List<String>) {
     val node = readClassNode(className)
     val extractor = FacetTypeExtractor(resolver)
-    val facetTypeId = extractor.extract(node)
+    val facetTypeId = extractor.extract(node).features
     assertEquals(listOf, facetTypeId)
   }
 
@@ -59,7 +59,7 @@ class FeatureExtractorTest {
 
   private fun assertExtractFileTypes(className: String, extensions: List<String>) {
     val node = readClassNode(className)
-    val list: List<String>? = FileTypeExtractor(resolver).extract(node)
+    val list = FileTypeExtractor(resolver).extract(node).features
     assertEquals(extensions, list)
   }
 
@@ -108,7 +108,7 @@ class FeatureExtractorTest {
 
   private fun assertExtractConfiguration(className: String, configuration: String) {
     val node = readClassNode(className)
-    val actual = RunConfigurationExtractor(resolver).extract(node)
+    val actual = RunConfigurationExtractor(resolver).extract(node).features
     assertEquals(listOf(configuration), actual)
   }
 
@@ -129,7 +129,7 @@ class FeatureExtractorTest {
 
   private fun assertExtractArtifactType(className: String, artifactTypes: List<String>) {
     val node = readClassNode(className)
-    val list: List<String>? = ArtifactTypeExtractor(resolver).extract(node)
+    val list = ArtifactTypeExtractor(resolver).extract(node).features
     assertEquals(artifactTypes, list)
   }
 

@@ -15,15 +15,29 @@ private fun FieldNode.isStatic(): Boolean = this.access and Opcodes.ACC_STATIC !
 
 private fun Frame.getOnStack(index: Int): Value? = this.getStack(this.stackSize - 1 - index)
 
-interface Extractor {
-  fun extract(classNode: ClassNode): List<String>?
+abstract class Extractor {
+
+  data class Result(val extractedAll: Boolean, val features: List<String>)
+
+  fun extract(classNode: ClassNode): Result {
+    val list = extractImpl(classNode) ?: return Result(false, emptyList())
+    return Result(extractedAll, list)
+  }
+
+  /**
+   * Whether all features of the plugin were successfully extracted.
+   * If false, it's probably a tricky case which is not supported by the feature extractor.
+   */
+  protected var extractedAll: Boolean = false
+
+  protected abstract fun extractImpl(classNode: ClassNode): List<String>?
 }
 
-class RunConfigurationExtractor(val resolver: Resolver) : Extractor {
+class RunConfigurationExtractor(val resolver: Resolver) : Extractor() {
 
   private val CONFIGURATION_BASE = "com/intellij/execution/configurations/ConfigurationTypeBase"
 
-  override fun extract(classNode: ClassNode): List<String>? {
+  override fun extractImpl(classNode: ClassNode): List<String>? {
     if (classNode.superName == CONFIGURATION_BASE) {
       val init = findMethod(classNode, { it.name == "<init>" }) ?: return null
       val frames = Analyzer(SourceInterpreter()).analyze(classNode.name, init)
@@ -33,6 +47,7 @@ class RunConfigurationExtractor(val resolver: Resolver) : Extractor {
       }
       val value = extractStringValue(frames[superInitIndex].getOnStack(3), resolver, frames.toList(), init.instructions.toArray().toList())
       if (value != null) {
+        extractedAll = true
         return listOf(value)
       }
       return null
@@ -42,16 +57,19 @@ class RunConfigurationExtractor(val resolver: Resolver) : Extractor {
         return null
       }
       val value = extractConstantFunctionValue(classNode, method, resolver)
-      return if (value == null) null else listOf(value)
+      return if (value == null) null else {
+        extractedAll = true
+        listOf(value)
+      }
     }
   }
 }
 
-class FacetTypeExtractor(val resolver: Resolver) : Extractor {
+class FacetTypeExtractor(val resolver: Resolver) : Extractor() {
 
   private val FACET_TYPE = "com/intellij/facet/FacetType"
 
-  override fun extract(classNode: ClassNode): List<String>? {
+  override fun extractImpl(classNode: ClassNode): List<String>? {
     if (classNode.superName != FACET_TYPE) {
       return null
     }
@@ -78,6 +96,7 @@ class FacetTypeExtractor(val resolver: Resolver) : Extractor {
 
             val stringValue = extractStringValue(value, resolver, frames, initMethod.instructions.toArray().toList())
             if (stringValue != null) {
+              extractedAll = true
               return listOf(stringValue)
             }
           }
@@ -88,7 +107,7 @@ class FacetTypeExtractor(val resolver: Resolver) : Extractor {
   }
 }
 
-class FileTypeExtractor(val resolver: Resolver) : Extractor {
+class FileTypeExtractor(val resolver: Resolver) : Extractor() {
 
   private val FILE_TYPE_FACTORY = "com/intellij/openapi/fileTypes/FileTypeFactory"
 
@@ -100,7 +119,7 @@ class FileTypeExtractor(val resolver: Resolver) : Extractor {
 
   private val EXTENSIONS_MATCHER = "com/intellij/openapi/fileTypes/ExtensionFileNameMatcher"
 
-  override fun extract(classNode: ClassNode): List<String>? {
+  override fun extractImpl(classNode: ClassNode): List<String>? {
     if (classNode.superName != FILE_TYPE_FACTORY) {
       return null
     }
@@ -109,32 +128,45 @@ class FileTypeExtractor(val resolver: Resolver) : Extractor {
     val frames = Analyzer(interpreter).analyze(classNode.name, method).toList()
 
     val result = arrayListOf<String>()
+    extractedAll = true
+    var anyFound: Boolean = false
 
     val instructions = method.instructions.toArray().toList()
     instructions.forEachIndexed { index, insn ->
       if (insn is MethodInsnNode) {
 
         if (insn.desc == EXPLICIT_EXTENSION) {
+          anyFound = true
           val frame = frames[index]
           val stringValue = extractStringValue(frame.getOnStack(0), resolver, frames, instructions)
           if (stringValue != null) {
             result.addAll(parse(stringValue))
+          } else {
+            extractedAll = false
           }
         } else if (insn.desc == FILE_TYPE_ONLY) {
+          anyFound = true
           val frame = frames[index]
           val fileTypeInstance = frame.getOnStack(0)
           val fromFileType = getFromFileClass(fileTypeInstance)
           if (fromFileType != null) {
             result.addAll(parse(fromFileType))
+          } else {
+            extractedAll = false
           }
         } else if (insn.desc == FILENAME_MATCHERS) {
+          anyFound = true
           val array = analyzeArray(instructions, index, frames)
           if (array != null) {
             result.addAll(array)
+          } else {
+            extractedAll = false
           }
         }
       }
     }
+
+    extractedAll = extractedAll && anyFound
 
     return result
   }
@@ -326,8 +358,8 @@ object AnalysisUtil {
 
 }
 
-class ArtifactTypeExtractor(val resolver: Resolver) : Extractor {
-  override fun extract(classNode: ClassNode): List<String>? {
+class ArtifactTypeExtractor(val resolver: Resolver) : Extractor() {
+  override fun extractImpl(classNode: ClassNode): List<String>? {
     val init = findMethod(classNode, { it.name == "<init>" }) ?: return null
     val instructions = init.instructions.toArray().toList()
     val superInitIndex = instructions.indexOfLast { it is MethodInsnNode && it.opcode == Opcodes.INVOKESPECIAL && it.name == "<init>" && it.owner == classNode.superName }
@@ -342,6 +374,7 @@ class ArtifactTypeExtractor(val resolver: Resolver) : Extractor {
     val value = frame.getOnStack(argumentsNumber - 1)
     val stringValue = extractStringValue(value, resolver, frames, instructions)
     if (stringValue != null) {
+      extractedAll = true
       return listOf(stringValue)
     }
     return null
