@@ -12,10 +12,7 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/cli/cli_main.iml" filepath="$PROJECT_DIR$/.idea/modules/cli/cli_main.iml" group="cli" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/cli/cli_test.iml" filepath="$PROJECT_DIR$/.idea/modules/cli/cli_test.iml" group="cli" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-feature-extractor.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-feature-extractor.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-feature-extractor.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-feature-extractor.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-feature-extractor_main.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-feature-extractor_main.iml" group="intellij-feature-extractor" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-feature-extractor_main.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-feature-extractor_main.iml" group="intellij-feature-extractor" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-feature-extractor_test.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-feature-extractor_test.iml" group="intellij-feature-extractor" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-feature-extractor_test.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-feature-extractor_test.iml" group="intellij-feature-extractor" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-plugin-structure.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-plugin-structure.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_main.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_main.iml" group="intellij-plugin-structure" />
@@ -40,10 +37,7 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/server/server_main.iml" filepath="$PROJECT_DIR$/.idea/modules/server/server_main.iml" group="server" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/server/server_test.iml" filepath="$PROJECT_DIR$/.idea/modules/server/server_test.iml" group="server" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/test-classes/test-classes.iml" filepath="$PROJECT_DIR$/.idea/modules/test-classes/test-classes.iml" group="test-classes" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/test-classes/test-classes.iml" filepath="$PROJECT_DIR$/.idea/modules/test-classes/test-classes.iml" group="test-classes" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/test-classes/test-classes_main.iml" filepath="$PROJECT_DIR$/.idea/modules/test-classes/test-classes_main.iml" group="test-classes" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/test-classes/test-classes_main.iml" filepath="$PROJECT_DIR$/.idea/modules/test-classes/test-classes_main.iml" group="test-classes" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/test-classes/test-classes_test.iml" filepath="$PROJECT_DIR$/.idea/modules/test-classes/test-classes_test.iml" group="test-classes" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/test-classes/test-classes_test.iml" filepath="$PROJECT_DIR$/.idea/modules/test-classes/test-classes_test.iml" group="test-classes" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli.iml" group="verifier-cli" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_main.iml" group="verifier-cli" />
