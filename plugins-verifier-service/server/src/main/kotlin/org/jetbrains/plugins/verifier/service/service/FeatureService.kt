@@ -91,7 +91,7 @@ object FeatureService {
     isRequesting = true
 
     try {
-      for (it in getUpdatesToExtract().updateIds.map { UpdateInfoCache.getUpdateInfo(it) }.filterNotNull()) {
+      for (it in getUpdatesToExtract().updateIds) {
         if (isServerTooBusy()) {
           return
         }
@@ -105,6 +105,10 @@ object FeatureService {
     }
   }
 
+  private fun schedule(updateId: Int) {
+    val info = UpdateInfoCache.getUpdateInfo(updateId) ?: return
+    schedule(info)
+  }
 
   private fun schedule(updateInfo: UpdateInfo) {
     if (updateInfo in inProgressUpdates) {
