@@ -62,7 +62,12 @@ class RunConfigurationExtractor(resolver: Resolver) : Extractor(resolver) {
     if (classNode.superName == CONFIGURATION_BASE) {
       val init = classNode.findMethod({ it.name == "<init>" }) ?: return null
       val frames = Analyzer(SourceInterpreter()).analyze(classNode.name, init)
-      val superInitIndex = init.instructions.toArray().indexOfLast { it is MethodInsnNode && it.name == "<init>" && it.desc == "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljavax/swing/Icon;)V" }
+      val superInitIndex = init.instructions.toArray().indexOfLast {
+        it is MethodInsnNode
+            && it.name == "<init>"
+            && it.owner == CONFIGURATION_BASE
+            && it.desc == "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljavax/swing/Icon;)V"
+      }
       if (superInitIndex == -1) {
         return null
       }
