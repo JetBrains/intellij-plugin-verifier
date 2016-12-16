@@ -20,6 +20,8 @@ private fun ClassNode.findMethod(predicate: (MethodNode) -> Boolean): MethodNode
 @Suppress("UNCHECKED_CAST")
 private fun ClassNode.findField(predicate: (FieldNode) -> Boolean): FieldNode? = (fields as List<FieldNode>).find(predicate)
 
+private fun MethodNode.instructionsAsList(): List<AbstractInsnNode> = instructions.toArray().toList()
+
 private fun Frame.getOnStack(index: Int): Value? = this.getStack(this.stackSize - 1 - index)
 
 private val LOG: Logger = LoggerFactory.getLogger("FeaturesExtractor")
@@ -58,7 +60,7 @@ class RunConfigurationExtractor(resolver: Resolver) : Extractor(resolver) {
       if (superInitIndex == -1) {
         return null
       }
-      val value = extractStringValue(frames[superInitIndex].getOnStack(3), resolver, frames.toList(), init.instructions.toArray().toList())
+      val value = extractStringValue(frames[superInitIndex].getOnStack(3), resolver, frames.toList(), init.instructionsAsList())
       if (value != null) {
         extractedAll = true
         return listOf(value)
@@ -107,7 +109,7 @@ class FacetTypeExtractor(resolver: Resolver) : Extractor(resolver) {
               return@forEachIndexed
             }
 
-            val stringValue = extractStringValue(value, resolver, frames, initMethod.instructions.toArray().toList())
+            val stringValue = extractStringValue(value, resolver, frames, initMethod.instructionsAsList())
             if (stringValue != null) {
               extractedAll = true
               return listOf(stringValue)
@@ -144,7 +146,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     extractedAll = true
     var anyFound: Boolean = false
 
-    val instructions = method.instructions.toArray().toList()
+    val instructions = method.instructionsAsList()
     instructions.forEachIndexed { index, insn ->
       if (insn is MethodInsnNode) {
 
@@ -286,7 +288,7 @@ object AnalysisUtil {
     val frames = analyzer.analyze(classNode.name, methodNode).toList()
 
     if (producer != null) {
-      return AnalysisUtil.extractStringValue(producer, resolver, frames, methodNode.instructions.toArray().toList())
+      return AnalysisUtil.extractStringValue(producer, resolver, frames, methodNode.instructionsAsList())
     }
 
     return null
@@ -333,7 +335,7 @@ object AnalysisUtil {
     }
     val clinit = classNode.findMethod({ it.name == "<clinit>" }) ?: return null
     val frames = Analyzer(SourceInterpreter()).analyze(classNode.name, clinit)
-    val instructions = clinit.instructions.toArray().toList()
+    val instructions = clinit.instructionsAsList()
     val putStaticInstructionIndex = instructions.indexOfLast { it is FieldInsnNode && it.opcode == Opcodes.PUTSTATIC && it.name == fieldNode.name && it.desc == fieldNode.desc }
     return extractStringValue(frames[putStaticInstructionIndex].getOnStack(0), resolver, frames.toList(), instructions)
   }
@@ -368,7 +370,7 @@ object AnalysisUtil {
 class ArtifactTypeExtractor(resolver: Resolver) : Extractor(resolver) {
   override fun extractImpl(classNode: ClassNode): List<String>? {
     val init = classNode.findMethod({ it.name == "<init>" }) ?: return null
-    val instructions = init.instructions.toArray().toList()
+    val instructions = init.instructionsAsList()
     val superInitIndex = instructions.indexOfLast { it is MethodInsnNode && it.opcode == Opcodes.INVOKESPECIAL && it.name == "<init>" && it.owner == classNode.superName }
     if (superInitIndex == -1) {
       return null
