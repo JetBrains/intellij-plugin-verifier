@@ -215,7 +215,7 @@ class FileTypeExtractor(val resolver: Resolver) : Extractor() {
     return result
   }
 
-  private fun parse(semicoloned: String?): List<String> = semicoloned?.split(';')?.map(String::trim)?.map { "*.$it" } ?: emptyList()
+  private fun parse(semicoloned: String): List<String> = semicoloned.split(';').map(String::trim).filterNot(String::isEmpty).map { "*.$it" }
 
   private fun getFromFileClass(value: Value?): String? {
     if (value !is SourceValue || value.insns == null || value.insns.size != 1) {

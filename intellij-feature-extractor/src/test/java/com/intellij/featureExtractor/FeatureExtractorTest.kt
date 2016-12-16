@@ -124,7 +124,7 @@ class FeatureExtractorTest {
 
   @Test
   fun staticClinitConstant() {
-    assertExtractFileTypes("featureExtractor.StaticInitConstantFileTypeFactory", listOf("*.initialValue"))
+    assertExtractFileTypes("featureExtractor.StaticInitConstantFileTypeFactory", listOf("*.one", "*.two", "*.three"))
   }
 
   private fun assertExtractArtifactType(className: String, artifactTypes: List<String>) {
