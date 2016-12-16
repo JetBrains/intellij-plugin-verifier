@@ -78,7 +78,7 @@ class RunConfigurationExtractor(resolver: Resolver) : Extractor(resolver) {
       }
       return null
     } else {
-      val method = classNode.findMethod({ it.name == "getId" }) ?: return null
+      val method = classNode.findMethod({ it.name == "getId" && Type.getArgumentTypes(it.desc).isEmpty() }) ?: return null
       if (method.isAbstract()) {
         return null
       }
@@ -142,9 +142,11 @@ class FacetTypeExtractor(resolver: Resolver) : Extractor(resolver) {
 class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
 
   private val FILE_TYPE_FACTORY = "com/intellij/openapi/fileTypes/FileTypeFactory"
+  private val FILE_TYPE_CONSUMER = "com/intellij/openapi/fileTypes/FileTypeConsumer"
 
   private val EXPLICIT_EXTENSION = "(Lcom/intellij/openapi/fileTypes/FileType;Ljava/lang/String;)V"
   private val FILE_TYPE_ONLY = "(Lcom/intellij/openapi/fileTypes/FileType;)V"
+
   private val FILENAME_MATCHERS = "(Lcom/intellij/openapi/fileTypes/FileType;[Lcom/intellij/openapi/fileTypes/FileNameMatcher;)V"
 
   private val EXACT_NAME_MATCHER = "com/intellij/openapi/fileTypes/ExactFileNameMatcher"
@@ -155,7 +157,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     if (classNode.superName != FILE_TYPE_FACTORY) {
       return null
     }
-    val method = classNode.findMethod({ it.name == "createFileTypes" && !it.isAbstract() }) ?: return null
+    val method = classNode.findMethod({ it.name == "createFileTypes" && it.desc == "(Lcom/intellij/openapi/fileTypes/FileTypeConsumer;)V" && !it.isAbstract() }) ?: return null
     val interpreter = SourceInterpreter()
     val frames = Analyzer(interpreter).analyze(classNode.name, method).toList()
 
@@ -167,32 +169,35 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     instructions.forEachIndexed { index, insn ->
       if (insn is MethodInsnNode) {
 
-        if (insn.desc == EXPLICIT_EXTENSION) {
-          anyFound = true
-          val frame = frames[index]
-          val stringValue = evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
-          if (stringValue != null) {
-            result.addAll(parse(stringValue))
-          } else {
-            extractedAll = false
-          }
-        } else if (insn.desc == FILE_TYPE_ONLY) {
-          anyFound = true
-          val frame = frames[index]
-          val fileTypeInstance = frame.getOnStack(0)
-          val fromFileType = evaluateExtensionsOfFileType(fileTypeInstance)
-          if (fromFileType != null) {
-            result.addAll(parse(fromFileType))
-          } else {
-            extractedAll = false
-          }
-        } else if (insn.desc == FILENAME_MATCHERS) {
-          anyFound = true
-          val array = computeExtensionsPassedToFileNameMatcherArray(instructions, index, frames)
-          if (array != null) {
-            result.addAll(array)
-          } else {
-            extractedAll = false
+        if (insn.name == "consume" && insn.owner == FILE_TYPE_CONSUMER) {
+
+          if (insn.desc == EXPLICIT_EXTENSION) {
+            anyFound = true
+            val frame = frames[index]
+            val stringValue = evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
+            if (stringValue != null) {
+              result.addAll(parse(stringValue))
+            } else {
+              extractedAll = false
+            }
+          } else if (insn.desc == FILE_TYPE_ONLY) {
+            anyFound = true
+            val frame = frames[index]
+            val fileTypeInstance = frame.getOnStack(0)
+            val fromFileType = evaluateExtensionsOfFileType(fileTypeInstance)
+            if (fromFileType != null) {
+              result.addAll(parse(fromFileType))
+            } else {
+              extractedAll = false
+            }
+          } else if (insn.desc == FILENAME_MATCHERS) {
+            anyFound = true
+            val array = computeExtensionsPassedToFileNameMatcherArray(instructions, index, frames)
+            if (array != null) {
+              result.addAll(array)
+            } else {
+              extractedAll = false
+            }
           }
         }
       }
@@ -258,7 +263,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     }
     val first = value.insns.first() as? TypeInsnNode ?: return null
     val clazz = resolver.findClass(first.desc) ?: return null
-    val method = clazz.findMethod({ it.name == "getDefaultExtension" }) ?: return null
+    val method = clazz.findMethod({ it.name == "getDefaultExtension" && Type.getArgumentTypes(it.desc).isEmpty() }) ?: return null
     return extractConstantFunctionValue(clazz, method, resolver)
   }
 
@@ -356,7 +361,13 @@ object AnalysisUtil {
     val clinit = classNode.findMethod({ it.name == "<clinit>" }) ?: return null
     val frames = Analyzer(SourceInterpreter()).analyze(classNode.name, clinit)
     val instructions = clinit.instructionsAsList()
-    val putStaticInstructionIndex = instructions.indexOfLast { it is FieldInsnNode && it.opcode == Opcodes.PUTSTATIC && it.name == fieldNode.name && it.desc == fieldNode.desc }
+    val putStaticInstructionIndex = instructions.indexOfLast {
+      it is FieldInsnNode
+          && it.opcode == Opcodes.PUTSTATIC
+          && it.owner == classNode.name
+          && it.name == fieldNode.name
+          && it.desc == fieldNode.desc
+    }
     return evaluateConstantString(frames[putStaticInstructionIndex].getOnStack(0), resolver, frames.toList(), instructions)
   }
 
