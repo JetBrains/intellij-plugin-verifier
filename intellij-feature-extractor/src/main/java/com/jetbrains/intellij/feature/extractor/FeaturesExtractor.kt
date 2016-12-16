@@ -108,6 +108,6 @@ object FeaturesExtractor {
   }
 
   private fun pluginImplementors(feature: Feature, plugin: Plugin): List<String> =
-      plugin.extensions[feature.extensionPointName]?.map { it.getAttributeValue("implementation") }?.filterNotNull() ?: emptyList()
+      plugin.extensions[feature.extensionPointName]?.map { it.getAttributeValue("implementation") }?.filterNotNull().orEmpty()
 
 }
