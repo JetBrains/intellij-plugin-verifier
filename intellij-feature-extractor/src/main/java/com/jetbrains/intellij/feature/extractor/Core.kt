@@ -8,6 +8,8 @@ import org.jetbrains.intellij.plugins.internal.asm.Opcodes
 import org.jetbrains.intellij.plugins.internal.asm.Type
 import org.jetbrains.intellij.plugins.internal.asm.tree.*
 import org.jetbrains.intellij.plugins.internal.asm.tree.analysis.*
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 private fun MethodNode.isAbstract(): Boolean = this.access and Opcodes.ACC_ABSTRACT != 0
 
@@ -15,12 +17,18 @@ private fun FieldNode.isStatic(): Boolean = this.access and Opcodes.ACC_STATIC !
 
 private fun Frame.getOnStack(index: Int): Value? = this.getStack(this.stackSize - 1 - index)
 
-abstract class Extractor {
+private val LOG: Logger = LoggerFactory.getLogger("FeaturesExtractor")
+
+abstract class Extractor(val resolver: Resolver) {
 
   data class Result(val extractedAll: Boolean, val features: List<String>)
 
   fun extract(classNode: ClassNode): Result {
-    val list = extractImpl(classNode) ?: return Result(false, emptyList())
+    val list: List<String>? = extractImpl(classNode)
+    if (list == null) {
+      LOG.info("Unable to extract all features of the plugin's implementor ${classNode.name.replace('/', '.')}")
+      return Result(false, emptyList())
+    }
     return Result(extractedAll, list)
   }
 
@@ -33,7 +41,7 @@ abstract class Extractor {
   protected abstract fun extractImpl(classNode: ClassNode): List<String>?
 }
 
-class RunConfigurationExtractor(val resolver: Resolver) : Extractor() {
+class RunConfigurationExtractor(resolver: Resolver) : Extractor(resolver) {
 
   private val CONFIGURATION_BASE = "com/intellij/execution/configurations/ConfigurationTypeBase"
 
@@ -65,7 +73,7 @@ class RunConfigurationExtractor(val resolver: Resolver) : Extractor() {
   }
 }
 
-class FacetTypeExtractor(val resolver: Resolver) : Extractor() {
+class FacetTypeExtractor(resolver: Resolver) : Extractor(resolver) {
 
   private val FACET_TYPE = "com/intellij/facet/FacetType"
 
@@ -107,7 +115,7 @@ class FacetTypeExtractor(val resolver: Resolver) : Extractor() {
   }
 }
 
-class FileTypeExtractor(val resolver: Resolver) : Extractor() {
+class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
 
   private val FILE_TYPE_FACTORY = "com/intellij/openapi/fileTypes/FileTypeFactory"
 
@@ -358,7 +366,7 @@ object AnalysisUtil {
 
 }
 
-class ArtifactTypeExtractor(val resolver: Resolver) : Extractor() {
+class ArtifactTypeExtractor(resolver: Resolver) : Extractor(resolver) {
   override fun extractImpl(classNode: ClassNode): List<String>? {
     val init = findMethod(classNode, { it.name == "<init>" }) ?: return null
     val instructions = init.instructions.toArray().toList()
