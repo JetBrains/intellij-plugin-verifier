@@ -9,4 +9,8 @@ public abstract class ArtifactType {
     myTitle = title;
   }
 
+  public final String getId() {
+    return myId;
+  }
+
 }

@@ -48,6 +48,12 @@ abstract class Extractor(val resolver: Resolver) {
   protected abstract fun extractImpl(classNode: ClassNode): List<String>?
 }
 
+/**
+ * Extracts value returned by ConfigurationType#getId from a class extending ConfigurationType.
+ *
+ * Extracts id of the run configuration
+ * (as if com.intellij.execution.configurations.ConfigurationType.getId() is invoked)
+ */
 class RunConfigurationExtractor(resolver: Resolver) : Extractor(resolver) {
 
   private val CONFIGURATION_BASE = "com/intellij/execution/configurations/ConfigurationTypeBase"
@@ -80,6 +86,9 @@ class RunConfigurationExtractor(resolver: Resolver) : Extractor(resolver) {
   }
 }
 
+/*
+ * Extracts value returned by FacetType#getStringId from a class extending FacetType.
+*/
 class FacetTypeExtractor(resolver: Resolver) : Extractor(resolver) {
 
   private val FACET_TYPE = "com/intellij/facet/FacetType"
@@ -122,6 +131,9 @@ class FacetTypeExtractor(resolver: Resolver) : Extractor(resolver) {
   }
 }
 
+/**
+ * Extracts file extensions passed to consumer of FileTypeFactory.createFileTypes(FileTypeConsumer) from a class extending FileTypeFactory
+ */
 class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
 
   private val FILE_TYPE_FACTORY = "com/intellij/openapi/fileTypes/FileTypeFactory"
@@ -367,6 +379,9 @@ object AnalysisUtil {
 
 }
 
+/**
+ * Extracts value returned by ArtifactType#getId() from a class extending ArtifactType.
+ */
 class ArtifactTypeExtractor(resolver: Resolver) : Extractor(resolver) {
   override fun extractImpl(classNode: ClassNode): List<String>? {
     val init = classNode.findMethod({ it.name == "<init>" }) ?: return null
