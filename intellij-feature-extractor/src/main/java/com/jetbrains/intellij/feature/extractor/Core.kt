@@ -1,8 +1,8 @@
 package com.jetbrains.intellij.feature.extractor
 
 import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.intellij.feature.extractor.AnalysisUtil.evaluateConstantString
 import com.jetbrains.intellij.feature.extractor.AnalysisUtil.extractConstantFunctionValue
-import com.jetbrains.intellij.feature.extractor.AnalysisUtil.extractStringValue
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
 import org.jetbrains.intellij.plugins.internal.asm.Type
 import org.jetbrains.intellij.plugins.internal.asm.tree.*
@@ -66,7 +66,7 @@ class RunConfigurationExtractor(resolver: Resolver) : Extractor(resolver) {
       if (superInitIndex == -1) {
         return null
       }
-      val value = extractStringValue(frames[superInitIndex].getOnStack(3), resolver, frames.toList(), init.instructionsAsList())
+      val value = evaluateConstantString(frames[superInitIndex].getOnStack(3), resolver, frames.toList(), init.instructionsAsList())
       if (value != null) {
         extractedAll = true
         return listOf(value)
@@ -118,7 +118,7 @@ class FacetTypeExtractor(resolver: Resolver) : Extractor(resolver) {
               return@forEachIndexed
             }
 
-            val stringValue = extractStringValue(value, resolver, frames, initMethod.instructionsAsList())
+            val stringValue = evaluateConstantString(value, resolver, frames, initMethod.instructionsAsList())
             if (stringValue != null) {
               extractedAll = true
               return listOf(stringValue)
@@ -165,7 +165,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
         if (insn.desc == EXPLICIT_EXTENSION) {
           anyFound = true
           val frame = frames[index]
-          val stringValue = extractStringValue(frame.getOnStack(0), resolver, frames, instructions)
+          val stringValue = evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
           if (stringValue != null) {
             result.addAll(parse(stringValue))
           } else {
@@ -175,7 +175,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
           anyFound = true
           val frame = frames[index]
           val fileTypeInstance = frame.getOnStack(0)
-          val fromFileType = getFromFileClass(fileTypeInstance)
+          val fromFileType = evaluateExtensionsOfFileType(fileTypeInstance)
           if (fromFileType != null) {
             result.addAll(parse(fromFileType))
           } else {
@@ -183,7 +183,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
           }
         } else if (insn.desc == FILENAME_MATCHERS) {
           anyFound = true
-          val array = analyzeArray(instructions, index, frames)
+          val array = computeExtensionsPassedToFileNameMatcherArray(instructions, index, frames)
           if (array != null) {
             result.addAll(array)
           } else {
@@ -198,14 +198,14 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     return result
   }
 
-  private fun analyzeArray(instructions: List<AbstractInsnNode>, consumerIndex: Int, frames: List<Frame>): List<String>? {
-    val newArrayInsnIndex = instructions.take(consumerIndex).indexOfLast { it is TypeInsnNode && it.opcode == Opcodes.ANEWARRAY }
+  private fun computeExtensionsPassedToFileNameMatcherArray(methodInstructions: List<AbstractInsnNode>, arrayUserInstructionIndex: Int, frames: List<Frame>): List<String>? {
+    val newArrayInsnIndex = methodInstructions.take(arrayUserInstructionIndex).indexOfLast { it is TypeInsnNode && it.opcode == Opcodes.ANEWARRAY }
     if (newArrayInsnIndex == -1) {
       return null
     }
     val result = arrayListOf<String>()
-    for (i in newArrayInsnIndex..consumerIndex) {
-      val insn = instructions[i]
+    for (i in newArrayInsnIndex..arrayUserInstructionIndex) {
+      val insn = methodInstructions[i]
       if (insn is MethodInsnNode && insn.name == "<init>") {
 
         if (insn.owner == EXACT_NAME_MATCHER) {
@@ -218,7 +218,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
           } else {
             continue
           }
-          val stringValue = extractStringValue(value, resolver, frames, instructions)
+          val stringValue = evaluateConstantString(value, resolver, frames, methodInstructions)
 
           if (stringValue != null) {
             result.add(stringValue)
@@ -226,7 +226,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
         } else if (insn.owner == EXTENSIONS_MATCHER) {
           val frame = frames[i]
           if (insn.desc == "(Ljava/lang/String;)V") {
-            val value = extractStringValue(frame.getOnStack(0), resolver, frames, instructions)
+            val value = evaluateConstantString(frame.getOnStack(0), resolver, frames, methodInstructions)
 
             if (value != null) {
               if (insn.owner == EXTENSIONS_MATCHER) {
@@ -244,7 +244,10 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
 
   private fun parse(semicoloned: String): List<String> = semicoloned.split(';').map(String::trim).filterNot(String::isEmpty).map { "*.$it" }
 
-  private fun getFromFileClass(value: Value?): String? {
+  /**
+   * Extract value returned by com.intellij.openapi.fileTypes.FileType.getDefaultExtension
+   */
+  private fun evaluateExtensionsOfFileType(value: Value?): String? {
     if (value !is SourceValue || value.insns == null || value.insns.size != 1) {
       return null
     }
@@ -300,14 +303,14 @@ object AnalysisUtil {
     val frames = analyzer.analyze(classNode.name, methodNode).toList()
 
     if (producer != null) {
-      return AnalysisUtil.extractStringValue(producer, resolver, frames, methodNode.instructionsAsList())
+      return AnalysisUtil.evaluateConstantString(producer, resolver, frames, methodNode.instructionsAsList())
     }
 
     return null
   }
 
 
-  fun extractStringValue(value: Value?, resolver: Resolver, frames: List<Frame>, instructions: List<AbstractInsnNode>): String? {
+  fun evaluateConstantString(value: Value?, resolver: Resolver, frames: List<Frame>, instructions: List<AbstractInsnNode>): String? {
     if (value !is SourceValue) {
       return null
     }
@@ -322,7 +325,7 @@ object AnalysisUtil {
         }
       } else if (producer is MethodInsnNode) {
         if (producer.owner == STRING_BUILDER && producer.name == "toString") {
-          return analyzeStringBuilder(producer, frames, resolver, instructions)
+          return evaluateConcatenatedStringValue(producer, frames, resolver, instructions)
         } else {
           val classNode = resolver.findClass(producer.owner) ?: return null
           val methodNode = classNode.findMethod({ it.name == producer.name && it.desc == producer.desc }) ?: return null
@@ -331,13 +334,13 @@ object AnalysisUtil {
       } else if (producer is FieldInsnNode) {
         val classNode = resolver.findClass(producer.owner) ?: return null
         val fieldNode = classNode.findField({ it.name == producer.name && it.desc == producer.desc }) ?: return null
-        return extractConstantFieldValue(classNode, fieldNode, resolver)
+        return evaluateConstantFieldValue(classNode, fieldNode, resolver)
       }
     }
     return null
   }
 
-  fun extractConstantFieldValue(classNode: ClassNode, fieldNode: FieldNode, resolver: Resolver): String? {
+  fun evaluateConstantFieldValue(classNode: ClassNode, fieldNode: FieldNode, resolver: Resolver): String? {
     if (!fieldNode.isStatic()) {
       return null
     }
@@ -349,14 +352,14 @@ object AnalysisUtil {
     val frames = Analyzer(SourceInterpreter()).analyze(classNode.name, clinit)
     val instructions = clinit.instructionsAsList()
     val putStaticInstructionIndex = instructions.indexOfLast { it is FieldInsnNode && it.opcode == Opcodes.PUTSTATIC && it.name == fieldNode.name && it.desc == fieldNode.desc }
-    return extractStringValue(frames[putStaticInstructionIndex].getOnStack(0), resolver, frames.toList(), instructions)
+    return evaluateConstantString(frames[putStaticInstructionIndex].getOnStack(0), resolver, frames.toList(), instructions)
   }
 
 
-  fun analyzeStringBuilder(producer: MethodInsnNode,
-                           frames: List<Frame>,
-                           resolver: Resolver,
-                           instructions: List<AbstractInsnNode>): String? {
+  fun evaluateConcatenatedStringValue(producer: MethodInsnNode,
+                                      frames: List<Frame>,
+                                      resolver: Resolver,
+                                      instructions: List<AbstractInsnNode>): String? {
     val producerIndex = instructions.indexOf(producer)
     if (producerIndex == -1) {
       return null
@@ -370,7 +373,7 @@ object AnalysisUtil {
       if (insnNode is MethodInsnNode && insnNode.name == "append" && insnNode.owner == STRING_BUILDER) {
         val frame = frames[i]
         val appendValue = frame.getOnStack(0)
-        val value = extractStringValue(appendValue, resolver, frames, instructions) ?: return null
+        val value = evaluateConstantString(appendValue, resolver, frames, instructions) ?: return null
         result.append(value)
       }
     }
@@ -396,7 +399,7 @@ class ArtifactTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     val frames = Analyzer(SourceInterpreter()).analyze(classNode.name, init).toList()
     val frame = frames[superInitIndex]
     val value = frame.getOnStack(argumentsNumber - 1)
-    val stringValue = extractStringValue(value, resolver, frames, instructions)
+    val stringValue = evaluateConstantString(value, resolver, frames, instructions)
     if (stringValue != null) {
       extractedAll = true
       return listOf(stringValue)
