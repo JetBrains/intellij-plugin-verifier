@@ -32,7 +32,7 @@ data class FeatureImplementation(@SerializedName("feature") val feature: Feature
                                  @SerializedName("featureNames") val featureNames: List<String>)
 
 
-enum class Feature(@SerializedName("type") val type: String) {
+enum class Feature(@SerializedName("extensionPointName") val extensionPointName: String) {
   ConfigurationType("com.intellij.configurationType"),
   FacetType("com.intellij.facetType"),
   FileType("com.intellij.fileTypeFactory"),
@@ -108,6 +108,6 @@ object FeaturesExtractor {
   }
 
   private fun pluginImplementors(feature: Feature, plugin: Plugin): List<String> =
-      plugin.extensions[feature.type]?.map { it.getAttributeValue("implementation") }?.filterNotNull() ?: emptyList()
+      plugin.extensions[feature.extensionPointName]?.map { it.getAttributeValue("implementation") }?.filterNotNull() ?: emptyList()
 
 }
