@@ -3,7 +3,6 @@ package com.jetbrains.intellij.feature.extractor
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.intellij.feature.extractor.AnalysisUtil.extractConstantFunctionValue
 import com.jetbrains.intellij.feature.extractor.AnalysisUtil.extractStringValue
-import com.jetbrains.intellij.feature.extractor.AnalysisUtil.findMethod
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
 import org.jetbrains.intellij.plugins.internal.asm.Type
 import org.jetbrains.intellij.plugins.internal.asm.tree.*
@@ -14,6 +13,12 @@ import org.slf4j.LoggerFactory
 private fun MethodNode.isAbstract(): Boolean = this.access and Opcodes.ACC_ABSTRACT != 0
 
 private fun FieldNode.isStatic(): Boolean = this.access and Opcodes.ACC_STATIC != 0
+
+@Suppress("UNCHECKED_CAST")
+private fun ClassNode.findMethod(predicate: (MethodNode) -> Boolean): MethodNode? = (methods as List<MethodNode>).find(predicate)
+
+@Suppress("UNCHECKED_CAST")
+private fun ClassNode.findField(predicate: (FieldNode) -> Boolean): FieldNode? = (fields as List<FieldNode>).find(predicate)
 
 private fun Frame.getOnStack(index: Int): Value? = this.getStack(this.stackSize - 1 - index)
 
@@ -47,7 +52,7 @@ class RunConfigurationExtractor(resolver: Resolver) : Extractor(resolver) {
 
   override fun extractImpl(classNode: ClassNode): List<String>? {
     if (classNode.superName == CONFIGURATION_BASE) {
-      val init = findMethod(classNode, { it.name == "<init>" }) ?: return null
+      val init = classNode.findMethod({ it.name == "<init>" }) ?: return null
       val frames = Analyzer(SourceInterpreter()).analyze(classNode.name, init)
       val superInitIndex = init.instructions.toArray().indexOfLast { it is MethodInsnNode && it.name == "<init>" && it.desc == "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljavax/swing/Icon;)V" }
       if (superInitIndex == -1) {
@@ -60,7 +65,7 @@ class RunConfigurationExtractor(resolver: Resolver) : Extractor(resolver) {
       }
       return null
     } else {
-      val method = findMethod(classNode, { it.name == "getId" }) ?: return null
+      val method = classNode.findMethod({ it.name == "getId" }) ?: return null
       if (method.isAbstract()) {
         return null
       }
@@ -131,7 +136,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     if (classNode.superName != FILE_TYPE_FACTORY) {
       return null
     }
-    val method = findMethod(classNode, { it.name == "createFileTypes" && !it.isAbstract() }) ?: return null
+    val method = classNode.findMethod({ it.name == "createFileTypes" && !it.isAbstract() }) ?: return null
     val interpreter = SourceInterpreter()
     val frames = Analyzer(interpreter).analyze(classNode.name, method).toList()
 
@@ -231,7 +236,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     }
     val first = value.insns.first() as? TypeInsnNode ?: return null
     val clazz = resolver.findClass(first.desc) ?: return null
-    val method = findMethod(clazz, { it.name == "getDefaultExtension" }) ?: return null
+    val method = clazz.findMethod({ it.name == "getDefaultExtension" }) ?: return null
     return extractConstantFunctionValue(clazz, method, resolver)
   }
 
@@ -306,12 +311,12 @@ object AnalysisUtil {
           return analyzeStringBuilder(producer, frames, resolver, instructions)
         } else {
           val classNode = resolver.findClass(producer.owner) ?: return null
-          val methodNode = findMethod(classNode, { it.name == producer.name && it.desc == producer.desc }) ?: return null
+          val methodNode = classNode.findMethod({ it.name == producer.name && it.desc == producer.desc }) ?: return null
           return extractConstantFunctionValue(classNode, methodNode, resolver)
         }
       } else if (producer is FieldInsnNode) {
         val classNode = resolver.findClass(producer.owner) ?: return null
-        val fieldNode = findField(classNode, { it.name == producer.name && it.desc == producer.desc }) ?: return null
+        val fieldNode = classNode.findField({ it.name == producer.name && it.desc == producer.desc }) ?: return null
         return extractConstantFieldValue(classNode, fieldNode, resolver)
       }
     }
@@ -326,7 +331,7 @@ object AnalysisUtil {
     if (fieldNode.value is String) {
       return fieldNode.value as String
     }
-    val clinit = findMethod(classNode, { it.name == "<clinit>" }) ?: return null
+    val clinit = classNode.findMethod({ it.name == "<clinit>" }) ?: return null
     val frames = Analyzer(SourceInterpreter()).analyze(classNode.name, clinit)
     val instructions = clinit.instructions.toArray().toList()
     val putStaticInstructionIndex = instructions.indexOfLast { it is FieldInsnNode && it.opcode == Opcodes.PUTSTATIC && it.name == fieldNode.name && it.desc == fieldNode.desc }
@@ -358,17 +363,11 @@ object AnalysisUtil {
     return result.toString()
   }
 
-  @Suppress("UNCHECKED_CAST")
-  fun findMethod(classNode: ClassNode, predicate: (MethodNode) -> Boolean): MethodNode? = (classNode.methods as List<MethodNode>).find(predicate)
-
-  @Suppress("UNCHECKED_CAST")
-  fun findField(classNode: ClassNode, predicate: (FieldNode) -> Boolean): FieldNode? = (classNode.fields as List<FieldNode>).find(predicate)
-
 }
 
 class ArtifactTypeExtractor(resolver: Resolver) : Extractor(resolver) {
   override fun extractImpl(classNode: ClassNode): List<String>? {
-    val init = findMethod(classNode, { it.name == "<init>" }) ?: return null
+    val init = classNode.findMethod({ it.name == "<init>" }) ?: return null
     val instructions = init.instructions.toArray().toList()
     val superInitIndex = instructions.indexOfLast { it is MethodInsnNode && it.opcode == Opcodes.INVOKESPECIAL && it.name == "<init>" && it.owner == classNode.superName }
     if (superInitIndex == -1) {
