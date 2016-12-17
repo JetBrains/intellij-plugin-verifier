@@ -4,6 +4,7 @@ import com.google.common.collect.Lists
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.intellij.structure.impl.utils.StringUtil
+import com.jetbrains.pluginverifier.utils.DefaultDependencyResolver
 import com.jetbrains.pluginverifier.utils.Dependencies
 import com.jetbrains.pluginverifier.utils.Edge
 import com.jetbrains.pluginverifier.utils.Vertex
@@ -31,12 +32,12 @@ class TestDependencies {
     val ide = MockUtil.createTestIde(IdeVersion.createIdeVersion("IU-144"), listOf(firstPlugin, somePlugin, moduleContainer))
     val plugin = MockUtil.createMockPlugin("myPlugin", "1.0", emptyList(), listOf(PluginDependencyImpl("first", true)))
 
-    val (graph, vertex) = Dependencies.calcDependencies(plugin, ide)
+    val (graph, vertex) = Dependencies.calcDependencies(plugin, DefaultDependencyResolver(ide))
 
     val deps = graph.getTransitiveDependencies(vertex).map { it.plugin }
 
     assertNotNull(deps)
-    assertEquals("Missing transitive dependencies", dependencies.size.toLong(), deps.size.toLong())
+    assertEquals("Missing transitive dependencies", dependencies.size, deps.size)
 
     for (s in dependencies) {
       var found = false

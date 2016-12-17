@@ -70,7 +70,10 @@ class Results {
     assertBlock<VResult>(init, { Assert.assertEquals(init.toString(), it.toString()) })
   }
 
-  private fun someNicePlugin() = VResult.Nice(PluginDescriptor.ByXmlId("pluginId", "version"), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-143.15")), listOf(Warning("warn#1"), Warning("warn#2")))
+  private fun someNicePlugin(): VResult.Nice {
+    val node = DependencyNode("pid", "", emptyMap())
+    return VResult.Nice(PluginDescriptor.ByXmlId("pluginId", "version"), IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-143.15")), listOf(Warning("warn#1"), Warning("warn#2")), DependenciesGraph(node, listOf(node), emptyList()))
+  }
 
   private fun someProblematicPlugin(): VResult.Problems {
     val pluginDescriptor = PluginDescriptor.ByXmlId("pluginId", "version")

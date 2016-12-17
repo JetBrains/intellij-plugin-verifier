@@ -6,7 +6,9 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.Plugin
 import com.intellij.structure.impl.utils.StringUtil
 import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.pluginverifier.dependencies.MissingReason
 import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.repository.IFileLock
 import java.util.regex.Pattern
 
 interface VProgress {
@@ -67,7 +69,14 @@ data class VParams(
      * If set to true the plugins can refer other plugins withing the verification.
      * It's used to check several plugins with dependencies between them.
      */
-    val resolveDependenciesWithin: Boolean = false
+    val resolveDependenciesWithin: Boolean = false,
+
+    /**
+     * If set, this resolver will be used to resolve plugin dependencies.
+     * Otherwise a default resolver which searches the plugin in the IDE
+     * and in the Plugin Repository will be used.
+     */
+    val dependencyResolver: DependencyResolver? = null
 ) {
   override fun toString(): String {
     val todo: Map<IdeDescriptor, List<PluginDescriptor>> = pluginsToCheck.groupBy { it.second }.mapValues { it.value.map { it.first } }
@@ -77,6 +86,16 @@ data class VParams(
   }
 }
 
+interface DependencyResolver {
+  fun resolve(dependencyId: String, isModule: Boolean, dependent: Plugin): Result
+
+  sealed class Result {
+    class Found(val plugin: Plugin) : Result()
+    class Created(val plugin: Plugin, val fileLock: IFileLock) : Result()
+    class NotFound(val reason: MissingReason) : Result()
+    object Skip : Result()
+  }
+}
 
 /**
  * @author Sergey Patrikeev
@@ -108,7 +127,7 @@ data class VOptions(@SerializedName("externalCp") val externalClassPrefixes: Set
 
   fun isExternalClass(className: String): Boolean {
     for (prefix in externalClassPrefixes) {
-      if (prefix.length > 0 && className.startsWith(prefix)) {
+      if (prefix.isNotEmpty() && className.startsWith(prefix)) {
         return true
       }
     }

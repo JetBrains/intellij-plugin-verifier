@@ -20,6 +20,7 @@ import com.jetbrains.pluginverifier.misc.PluginCache
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.IFileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
+import com.jetbrains.pluginverifier.utils.DefaultDependencyResolver
 import com.jetbrains.pluginverifier.utils.Dependencies
 import com.jetbrains.pluginverifier.utils.Edge
 import com.jetbrains.pluginverifier.utils.Vertex
@@ -274,7 +275,8 @@ object VManager {
 
     try {
       val ctx = VContext(plugin!!, pluginDescriptor, ide, ideDescriptor, params.options)
-      val (dependenciesResolver, dependenciesGraph, cycle: List<Plugin>?, pluginLocks: List<IFileLock>) = getDependenciesResolver(ctx)
+      val dependencyResolver = params.dependencyResolver ?: DefaultDependencyResolver(ide)
+      val (dependenciesResolver, dependenciesGraph, cycle: List<Plugin>?, pluginLocks: List<IFileLock>) = getDependenciesResolver(ctx, dependencyResolver)
 
       try {
         dependenciesResolver.use {
@@ -298,7 +300,7 @@ object VManager {
 
       if (ctx.problems.isEmpty) {
         pluginLock?.release()
-        return plugin to VResult.Nice(ctx.pluginDescriptor, ctx.ideDescriptor, warnings)
+        return plugin to VResult.Nice(ctx.pluginDescriptor, ctx.ideDescriptor, warnings, dependenciesGraph)
       } else {
         pluginLock?.release()
         return plugin to VResult.Problems(ctx.pluginDescriptor, ctx.ideDescriptor, ctx.problems, dependenciesGraph, warnings)
@@ -352,12 +354,12 @@ object VManager {
                                         val pluginLocks: List<IFileLock>)
 
 
-  private fun getDependenciesResolver(ctx: VContext): DependenciesResult {
+  private fun getDependenciesResolver(ctx: VContext, dependencyResolver: DependencyResolver): DependenciesResult {
 
     val plugin = ctx.plugin
     val graphAndStart: Dependencies.Result
     try {
-      graphAndStart = Dependencies.calcDependencies(plugin, ctx.ide)
+      graphAndStart = Dependencies.calcDependencies(plugin, dependencyResolver)
     } catch(e: Exception) {
       throw RuntimeException("Unable to evaluate dependencies of the plugin $plugin with IDE ${ctx.ide}", e)
     }

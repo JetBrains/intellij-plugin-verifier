@@ -19,7 +19,8 @@ sealed class VResult(@SerializedName("plugin") val pluginDescriptor: PluginDescr
    */
   class Nice(pluginDescriptor: PluginDescriptor,
              ideDescriptor: IdeDescriptor,
-             @SerializedName("warnings") val warnings: List<Warning>) : VResult(pluginDescriptor, ideDescriptor) {
+             @SerializedName("warnings") val warnings: List<Warning>,
+             @SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph) : VResult(pluginDescriptor, ideDescriptor) {
 
     override fun toString(): String = "VResult.Nice(plugin=$pluginDescriptor, ide=$ideDescriptor, warnings='$warnings')"
   }

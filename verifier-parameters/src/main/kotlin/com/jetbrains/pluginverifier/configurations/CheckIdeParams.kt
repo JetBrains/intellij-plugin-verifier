@@ -25,7 +25,8 @@ data class CheckIdeParams(val ideDescriptor: IdeDescriptor,
                           val vOptions: VOptions,
                           val pluginIdsToCheckExistingBuilds: List<String> = emptyList(),
                           val externalClassPath: Resolver = Resolver.getEmptyResolver(),
-                          val progress: VProgress = DefaultVProgress()) : Params
+                          val progress: VProgress = DefaultVProgress(),
+                          val dependencyResolver: DependencyResolver? = null) : Params
 
 
 object CheckIdeParamsParser : ParamsParser {
