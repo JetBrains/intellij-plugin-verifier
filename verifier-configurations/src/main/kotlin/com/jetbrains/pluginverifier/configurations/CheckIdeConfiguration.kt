@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.repository.RepositoryManager
 class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
   override fun execute(): CheckIdeResults {
     val pluginsToCheck = params.pluginsToCheck.filterNot { params.excludedPlugins.containsEntry(it.pluginId, it.version) }.map { it to params.ideDescriptor }
-    val vParams = VParams(params.jdkDescriptor, pluginsToCheck, params.vOptions, params.externalClassPath)
+    val vParams = VParams(params.jdkDescriptor, pluginsToCheck, params.vOptions, params.externalClassPath, dependencyResolver = params.dependencyResolver)
     val vResults = VManager.verify(vParams, params.progress)
     return CheckIdeResults(params.ideDescriptor.ideVersion, vResults, params.excludedPlugins, getMissingUpdatesProblems())
   }
