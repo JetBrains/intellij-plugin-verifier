@@ -51,7 +51,7 @@ class CheckTrunkApiConfiguration(val params: CheckTrunkApiParams) : Configuratio
       throw RuntimeException("Unable to fetch the list of plugins compatible with ${majorIde.version}", e)
     }
 
-    data class ResolveArguments(val dependencyId: String, val isModule: Boolean, val dependentId: String, val dependentVersion: String)
+    data class ResolveArguments(val dependencyId: String, val isModule: Boolean, val dependentId: String, val dependentVersion: String?)
 
     val memory = hashMapOf<ResolveArguments, DependencyResolver.Result>()
 
