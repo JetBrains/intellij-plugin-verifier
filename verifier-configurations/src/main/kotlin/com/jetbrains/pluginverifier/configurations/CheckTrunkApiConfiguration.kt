@@ -42,10 +42,10 @@ class CheckTrunkApiConfiguration(val params: CheckTrunkApiParams) : Configuratio
     val pluginsToCheck: List<PluginDescriptor>
     try {
       pluginsToCheck = RepositoryManager
-          .getLastCompatibleUpdates(params.ide.version)
+          .getLastCompatibleUpdates(majorIde.version)
           .map { PluginDescriptor.ByUpdateInfo(it) }
     } catch(e: Exception) {
-      throw RuntimeException("Unable to fetch the list of plugins compatible with ${params.ide.version}", e)
+      throw RuntimeException("Unable to fetch the list of plugins compatible with ${majorIde.version}", e)
     }
 
     val majorReport = calcReport(majorIde, pluginsToCheck)
