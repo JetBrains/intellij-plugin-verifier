@@ -52,6 +52,7 @@ object DownloadManager {
 
   private val busyLocks: MutableMap<Long, FileLock> = hashMapOf()
 
+  //it is not used yet
   private val deleteQueue: MutableSet<File> = hashSetOf()
 
   @Synchronized
@@ -65,16 +66,23 @@ object DownloadManager {
   }
 
   private fun deleteUnusedPlugins() {
-    RepositoryConfiguration.downloadDir
+    val updatesToDelete = RepositoryConfiguration.downloadDir
         .listFiles()!!
         .filterNot { it.name.startsWith(TEMP_DOWNLOAD_PREFIX) }
         .filterNot { it in locksAcquired }
         .filter { Ints.tryParse(it.nameWithoutExtension) != null }
         .sortedBy { Ints.tryParse(it.nameWithoutExtension)!! }
-        .forEach { deleteLogged(it) }
+
+    for (update in updatesToDelete) {
+      if (exceedSpace()) {
+        deleteLogged(update)
+      }
+      //already enough space
+      break
+    }
 
     if (exceedSpace()) {
-      LOG.error("The available space after garbage collection is not sufficient!")
+      LOG.warn("The available space after garbage collection is not sufficient!")
     }
   }
 
