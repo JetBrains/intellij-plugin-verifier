@@ -33,11 +33,9 @@ object DownloadManager {
   //90% of maximum available space
   val SPACE_THRESHOLD = 0.90
 
-  //30 seconds
-  private val GC_PERIOD: Long = 30
+  private val GC_PERIOD_MS: Long = TimeUnit.SECONDS.toMillis(30)
 
-  //8 hours
-  private val FORGOTTEN_LOCKS_GC_TIMEOUT_MS: Long = 8 * 60 * 60 * 1000
+  private val FORGOTTEN_LOCKS_GC_TIMEOUT_MS: Long = TimeUnit.HOURS.toMillis(8)
 
   init {
     Executors.newSingleThreadScheduledExecutor(
@@ -45,7 +43,7 @@ object DownloadManager {
             .setDaemon(true)
             .setNameFormat("download-mng-gc-%d")
             .build()
-    ).scheduleAtFixedRate({ garbageCollection() }, GC_PERIOD, GC_PERIOD, TimeUnit.SECONDS)
+    ).scheduleAtFixedRate({ garbageCollection() }, GC_PERIOD_MS, GC_PERIOD_MS, TimeUnit.MILLISECONDS)
   }
 
   private var nextId: Long = 0
