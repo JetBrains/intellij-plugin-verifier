@@ -2,15 +2,22 @@ package com.jetbrains.pluginverifier.repository
 
 import com.google.common.primitives.Ints
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import okhttp3.MediaType
+import okhttp3.OkHttpClient
+import okhttp3.ResponseBody
+import okhttp3.logging.HttpLoggingInterceptor
 import org.apache.commons.io.FileUtils
 import org.apache.http.annotation.ThreadSafe
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import retrofit2.Call
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.http.GET
+import retrofit2.http.Query
+import retrofit2.http.Streaming
 import java.io.File
 import java.io.IOException
-import java.net.HttpURLConnection
-import java.net.MalformedURLException
-import java.net.URL
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -28,16 +35,29 @@ object DownloadManager {
     }
   }
 
-  val TEMP_DOWNLOAD_PREFIX = "currentDownload"
+  private val TEMP_DOWNLOAD_PREFIX = "plugin_"
+
+  private val TEMP_DOWNLOAD_SUFFIX = "_download"
 
   //90% of maximum available space
-  val SPACE_THRESHOLD = 0.90
+  private val SPACE_THRESHOLD = 0.90
 
   private val GC_PERIOD_MS: Long = TimeUnit.SECONDS.toMillis(30)
 
   private val FORGOTTEN_LOCKS_GC_TIMEOUT_MS: Long = TimeUnit.HOURS.toMillis(8)
 
+  private val LOG: Logger = LoggerFactory.getLogger(DownloadManager::class.java)
+
+  private val BROKEN_FILE_THRESHOLD_BYTES = 200
+
+  private val httpDateFormat: DateFormat
+
+  private val JAR_CONTENT_TYPE = MediaType.parse("application/java-archive")
+
   init {
+    httpDateFormat = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US)
+    httpDateFormat.timeZone = TimeZone.getTimeZone("GMT")
+
     Executors.newSingleThreadScheduledExecutor(
         ThreadFactoryBuilder()
             .setDaemon(true)
@@ -55,6 +75,19 @@ object DownloadManager {
   //it is not used yet
   private val deleteQueue: MutableSet<File> = hashSetOf()
 
+  private fun makeClient(needLog: Boolean): OkHttpClient = OkHttpClient.Builder()
+      .connectTimeout(5, TimeUnit.MINUTES)
+      .readTimeout(5, TimeUnit.MINUTES)
+      .writeTimeout(5, TimeUnit.MINUTES)
+      .addInterceptor(HttpLoggingInterceptor().setLevel(if (needLog) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE))
+      .build()
+
+  private val downloadApi: DownloadApi = Retrofit.Builder()
+      .baseUrl(RepositoryConfiguration.pluginRepositoryUrl)
+      .client(makeClient(LOG.isDebugEnabled))
+      .build()
+      .create(DownloadApi::class.java)
+
   @Synchronized
   private fun garbageCollection() {
     LOG.debug("It's time for garbage collection!")
@@ -68,7 +101,7 @@ object DownloadManager {
   private fun deleteUnusedPlugins() {
     val updatesToDelete = RepositoryConfiguration.downloadDir
         .listFiles()!!
-        .filterNot { it.name.startsWith(TEMP_DOWNLOAD_PREFIX) }
+        .filterNot { it.name.startsWith(TEMP_DOWNLOAD_PREFIX) && it.name.endsWith(TEMP_DOWNLOAD_SUFFIX) }
         .filterNot { it in locksAcquired }
         .filter { Ints.tryParse(it.nameWithoutExtension) != null }
         .sortedBy { Ints.tryParse(it.nameWithoutExtension)!! }
@@ -137,120 +170,135 @@ object DownloadManager {
     }
   }
 
-  private fun getCacheFileName(updateId: Int): String = "$updateId.zip"
-
-  /**
-   * Performs necessary redirection
-   */
-  @Throws(IOException::class)
-  private fun getFinalUrl(url: URL): URL {
-    val connection = url.openConnection() as HttpURLConnection
-    connection.instanceFollowRedirects = false
-
-    if (connection.responseCode == HttpURLConnection.HTTP_ACCEPTED) {
-      return url
+  private fun getCachedFile(updateId: Int): File? {
+    val asZip = File(RepositoryConfiguration.downloadDir, "$updateId.zip")
+    if (asZip.exists() && asZip.length() >= BROKEN_FILE_THRESHOLD_BYTES) {
+      return asZip
     }
-
-    if (connection.responseCode == HttpURLConnection.HTTP_MOVED_TEMP || connection.responseCode == HttpURLConnection.HTTP_MOVED_PERM) {
-      val location = connection.getHeaderField("Location")
-      if (location != null) {
-        return URL(location)
-      }
+    val asJar = File(RepositoryConfiguration.downloadDir, "$updateId.jar")
+    if (asJar.exists() && asJar.length() >= BROKEN_FILE_THRESHOLD_BYTES) {
+      return asJar
     }
-    return url
+    return null
   }
 
-  @Throws(MalformedURLException::class)
-  private fun getUrlForUpdate(updateId: Int): URL {
-    return URL(RepositoryConfiguration.pluginRepositoryUrl + "/plugin/download/?noStatistic=true&updateId=" + updateId)
+  private data class PluginFile(val tempFile: File, val name: String)
+
+  private fun doDownload(updateId: Int, tempFile: File): String {
+    val call = downloadApi.downloadFile(updateId)
+
+    val response = call.execute()
+
+    if (!response.isSuccessful) {
+      throw RuntimeException("Unable to download update #$updateId: ${response.code()} - ${response.errorBody().string()}")
+    }
+
+    FileUtils.copyInputStreamToFile(response.body().byteStream(), tempFile)
+
+    val extension = guessExtension(response)
+    return "$updateId.$extension"
+  }
+
+  private fun guessExtension(response: Response<ResponseBody>): String {
+    if (response.body().contentType() == JAR_CONTENT_TYPE) {
+      return "jar"
+    }
+    return "zip"
+  }
+
+  private fun downloadToTempFile(updateId: Int): PluginFile? {
+    val tempFile = File.createTempFile(TEMP_DOWNLOAD_PREFIX, TEMP_DOWNLOAD_SUFFIX, RepositoryConfiguration.downloadDir)
+    LOG.debug("Downloading update #$updateId to $tempFile... ")
+
+    var downloadFail = true
+    try {
+      val name = doDownload(updateId, tempFile)
+
+      if (tempFile.length() < BROKEN_FILE_THRESHOLD_BYTES) {
+        LOG.error("Too small (${tempFile.length()} bytes) file for update #$updateId")
+        return null
+      }
+
+      LOG.debug("Update #$updateId is downloaded")
+      downloadFail = false
+
+      return PluginFile(tempFile, name)
+    } catch (e: Exception) {
+      LOG.error("Error loading plugin #$updateId", e)
+      return null
+    } finally {
+      if (downloadFail) {
+        deleteLogged(tempFile)
+      }
+    }
+  }
+
+  /**
+   *  Provides the thread safety when multiple threads attempt to load the same plugin.
+   */
+  @Synchronized
+  private fun saveDownloaded(pluginFile: PluginFile): File? {
+    val tempFile = pluginFile.tempFile
+
+    val cached = File(RepositoryConfiguration.downloadDir, pluginFile.name)
+
+    var moveFailed = true
+    try {
+      if (cached.exists()) {
+        if (cached.length() >= BROKEN_FILE_THRESHOLD_BYTES) {
+          //the other thread has already downloaded the plugin
+          return cached
+        }
+
+        if (locksAcquired.getOrElse(cached, { 0 }) > 0) {
+          //we can't delete the cached plugin right now => return it too
+          return cached
+        }
+
+        try {
+          //remove the old (possibly broken plugin)
+          FileUtils.forceDelete(cached)
+        } catch (e: Exception) {
+          LOG.error("Unable to delete cached plugin file " + cached, e)
+          throw e
+        }
+      }
+
+      FileUtils.moveFile(tempFile, cached)
+      moveFailed = false
+      return cached
+    } catch (e: Exception) {
+      LOG.error("Unable to move downloaded plugin file $tempFile to $cached", e)
+      throw e
+    } finally {
+      if (moveFailed) {
+        deleteLogged(tempFile)
+      }
+    }
+  }
+
+  private fun downloadFile(updateId: Int): File? {
+    val pluginFile = downloadToTempFile(updateId) ?: return null
+    return saveDownloaded(pluginFile)
   }
 
   @Throws(IOException::class)
   fun getOrLoadUpdate(updateId: Int): IFileLock? {
-    var url = getUrlForUpdate(updateId)
-    try {
-      url = getFinalUrl(url)
-    } catch (e: IOException) {
-      throw IOException("The repository " + url.host + " problems", e)
+    var pluginFile = getCachedFile(updateId)
+
+    if (pluginFile == null || pluginFile.length() < BROKEN_FILE_THRESHOLD_BYTES) {
+      pluginFile = downloadFile(updateId)
     }
 
-    val pluginInCache = File(RepositoryConfiguration.downloadDir, getCacheFileName(updateId))
+    pluginFile ?: return null
 
-    if (!pluginInCache.exists() || pluginInCache.length() < BROKEN_ZIP_THRESHOLD) {
-      val currentDownload = File.createTempFile(TEMP_DOWNLOAD_PREFIX, ".zip", RepositoryConfiguration.downloadDir)
-
-      LOG.debug("Downloading {} by url {}... ", updateId, url)
-
-      var downloadFail = true
-      try {
-        FileUtils.copyURLToFile(url, currentDownload)
-
-        if (currentDownload.length() < BROKEN_ZIP_THRESHOLD) {
-          LOG.error("Broken zip archive by url {} of file {}", url, currentDownload)
-          return null
-        }
-
-        LOG.debug("Plugin {} is downloaded", updateId)
-        downloadFail = false
-      } catch (e: Exception) {
-        LOG.error("Error loading plugin " + updateId + " by " + url.toExternalForm(), e)
-        return null
-      } finally {
-        if (downloadFail) {
-          deleteLogged(currentDownload)
-        }
-      }
-
-      //provides the thread safety while multiple threads attempt to load the same plugin.
-      synchronized(this) {
-        var saveFail = true
-
-        try {
-          if (pluginInCache.exists()) {
-            //has the other thread downloaded the same plugin already?
-            val otherThreadFirst = pluginInCache.length() >= BROKEN_ZIP_THRESHOLD
-
-            //is this file locked now?
-            val cantDeleteNow = locksAcquired.getOrElse(pluginInCache, { 0 }) > 0
-
-            if (otherThreadFirst || cantDeleteNow) {
-              return registerLock(pluginInCache)
-            }
-
-            try {
-              //remove the old (possibly broken plugin)
-              FileUtils.forceDelete(pluginInCache)
-            } catch (e: Exception) {
-              LOG.error("Unable to delete cached plugin file " + pluginInCache, e)
-              throw e
-            }
-          }
-
-          try {
-            FileUtils.moveFile(currentDownload, pluginInCache)
-            saveFail = false
-          } catch (e: Exception) {
-            LOG.error("Unable to move downloaded plugin file $currentDownload to $pluginInCache", e)
-            deleteLogged(pluginInCache)
-            throw e
-          }
-        } finally {
-          if (saveFail) {
-            deleteLogged(currentDownload)
-          }
-        }
-
-      }
-
-    }
-
-    val result = registerLock(pluginInCache)
+    val lock = registerLock(pluginFile)
 
     if (exceedSpace()) {
       garbageCollection()
     }
 
-    return result
+    return lock
   }
 
   private fun deleteLogged(file: File) {
@@ -261,18 +309,16 @@ object DownloadManager {
       } catch (ce: Exception) {
         LOG.error("Unable to delete file " + file, ce)
       }
-
     }
   }
 
-  private val LOG: Logger = LoggerFactory.getLogger(DownloadManager::class.java)
 
-  private val BROKEN_ZIP_THRESHOLD = 200
-  private val httpDateFormat: DateFormat
+}
 
-  init {
-    httpDateFormat = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US)
-    httpDateFormat.timeZone = TimeZone.getTimeZone("GMT")
-  }
+private interface DownloadApi {
+
+  @GET("/plugin/download/?noStatistic=true")
+  @Streaming
+  fun downloadFile(@Query("updateId") updateId: Int): Call<ResponseBody>
 
 }
