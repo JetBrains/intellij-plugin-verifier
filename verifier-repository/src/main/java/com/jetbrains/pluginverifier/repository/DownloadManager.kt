@@ -195,12 +195,17 @@ object DownloadManager {
 
       //provides the thread safety while multiple threads attempt to load the same plugin.
       synchronized(this) {
-        if (pluginInCache.exists()) {
-          if (pluginInCache.length() >= BROKEN_ZIP_THRESHOLD) {
-            return registerLock(pluginInCache)
-          } else {
-            if (locksAcquired.getOrElse(pluginInCache, { 0 }) > 0) {
-              //we can't delete the file right now so the best idea is to return this file too.
+        var saveFail = true
+
+        try {
+          if (pluginInCache.exists()) {
+            //has the other thread downloaded the same plugin already?
+            val otherThreadFirst = pluginInCache.length() >= BROKEN_ZIP_THRESHOLD
+
+            //is this file locked now?
+            val cantDeleteNow = locksAcquired.getOrElse(pluginInCache, { 0 }) > 0
+
+            if (otherThreadFirst || cantDeleteNow) {
               return registerLock(pluginInCache)
             }
 
@@ -209,19 +214,22 @@ object DownloadManager {
               FileUtils.forceDelete(pluginInCache)
             } catch (e: Exception) {
               LOG.error("Unable to delete cached plugin file " + pluginInCache, e)
-              deleteLogged(currentDownload)
               throw e
             }
           }
-        }
 
-        try {
-          FileUtils.moveFile(currentDownload, pluginInCache)
-        } catch (e: Exception) {
-          LOG.error("Unable to move downloaded plugin file $currentDownload to $pluginInCache", e)
-          deleteLogged(currentDownload)
-          deleteLogged(pluginInCache)
-          throw e
+          try {
+            FileUtils.moveFile(currentDownload, pluginInCache)
+            saveFail = false
+          } catch (e: Exception) {
+            LOG.error("Unable to move downloaded plugin file $currentDownload to $pluginInCache", e)
+            deleteLogged(pluginInCache)
+            throw e
+          }
+        } finally {
+          if (saveFail) {
+            deleteLogged(currentDownload)
+          }
         }
 
       }
