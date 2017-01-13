@@ -182,8 +182,6 @@ object DownloadManager {
     return null
   }
 
-  private data class PluginFile(val tempFile: File, val name: String)
-
   private fun doDownload(updateId: Int, tempFile: File): String {
     val call = downloadApi.downloadFile(updateId)
 
@@ -206,53 +204,36 @@ object DownloadManager {
     return "zip"
   }
 
-  private fun downloadToTempFile(updateId: Int): PluginFile? {
-    val tempFile = File.createTempFile(TEMP_DOWNLOAD_PREFIX, TEMP_DOWNLOAD_SUFFIX, RepositoryConfiguration.downloadDir)
+  private fun downloadToTempFile(updateId: Int, tempFile: File): String {
     LOG.debug("Downloading update #$updateId to $tempFile... ")
 
-    var downloadFail = true
-    try {
-      val name = doDownload(updateId, tempFile)
+    val name = doDownload(updateId, tempFile)
 
-      if (tempFile.length() < BROKEN_FILE_THRESHOLD_BYTES) {
-        LOG.error("Too small (${tempFile.length()} bytes) file for update #$updateId")
-        return null
-      }
-
-      LOG.debug("Update #$updateId is downloaded")
-      downloadFail = false
-
-      return PluginFile(tempFile, name)
-    } catch (e: Exception) {
-      LOG.error("Error loading plugin #$updateId", e)
-      return null
-    } finally {
-      if (downloadFail) {
-        deleteLogged(tempFile)
-      }
+    if (tempFile.length() < BROKEN_FILE_THRESHOLD_BYTES) {
+      throw RuntimeException("Too small (${tempFile.length()} bytes) file for update #$updateId")
     }
+
+    LOG.debug("Update #$updateId is downloaded")
+    return name
   }
 
   /**
    *  Provides the thread safety when multiple threads attempt to load the same plugin.
+   *
+   *  @return true if tempFile has been moved to cached, false otherwise
    */
   @Synchronized
-  private fun saveDownloaded(pluginFile: PluginFile): File? {
-    val tempFile = pluginFile.tempFile
-
-    val cached = File(RepositoryConfiguration.downloadDir, pluginFile.name)
-
-    var moveFailed = true
+  private fun moveDownloaded(tempFile: File, cached: File): Boolean {
     try {
       if (cached.exists()) {
         if (cached.length() >= BROKEN_FILE_THRESHOLD_BYTES) {
           //the other thread has already downloaded the plugin
-          return cached
+          return false
         }
 
         if (locksAcquired.getOrElse(cached, { 0 }) > 0) {
           //we can't delete the cached plugin right now => return it too
-          return cached
+          return false
         }
 
         try {
@@ -265,21 +246,26 @@ object DownloadManager {
       }
 
       FileUtils.moveFile(tempFile, cached)
-      moveFailed = false
-      return cached
+      return true
     } catch (e: Exception) {
-      LOG.error("Unable to move downloaded plugin file $tempFile to $cached", e)
+      LOG.error("Unable to move downloaded temp file $tempFile to $cached", e)
       throw e
-    } finally {
-      if (moveFailed) {
-        deleteLogged(tempFile)
-      }
     }
   }
 
-  private fun downloadFile(updateId: Int): File? {
-    val pluginFile = downloadToTempFile(updateId) ?: return null
-    return saveDownloaded(pluginFile)
+  private fun downloadFile(updateId: Int): File {
+    val tempFile = File.createTempFile(TEMP_DOWNLOAD_PREFIX, TEMP_DOWNLOAD_SUFFIX, RepositoryConfiguration.downloadDir)
+    var moved = false
+    try {
+      val fileName = downloadToTempFile(updateId, tempFile)
+      val cached = File(RepositoryConfiguration.downloadDir, fileName)
+      moved = moveDownloaded(tempFile, cached)
+      return cached
+    } finally {
+      if (!moved) {
+        deleteLogged(tempFile)
+      }
+    }
   }
 
   @Throws(IOException::class)
@@ -287,15 +273,23 @@ object DownloadManager {
     var pluginFile = getCachedFile(updateId)
 
     if (pluginFile == null || pluginFile.length() < BROKEN_FILE_THRESHOLD_BYTES) {
-      pluginFile = downloadFile(updateId)
+      try {
+        pluginFile = downloadFile(updateId)
+      } catch (t: Throwable) {
+        LOG.error("Unable to download update #$updateId", t)
+        throw t
+      }
     }
-
-    pluginFile ?: return null
 
     val lock = registerLock(pluginFile)
 
-    if (exceedSpace()) {
-      garbageCollection()
+    try {
+      if (exceedSpace()) {
+        garbageCollection()
+      }
+    } catch (e: Throwable) {
+      lock.release()
+      throw e
     }
 
     return lock
