@@ -188,7 +188,7 @@ object DownloadManager {
     val response = call.execute()
 
     if (!response.isSuccessful) {
-      throw RuntimeException("Unable to download update #$updateId: ${response.code()} - ${response.errorBody().string()}")
+      throw RuntimeException("Unable to download update #$updateId: ${response.code()}")
     }
 
     FileUtils.copyInputStreamToFile(response.body().byteStream(), tempFile)
@@ -277,7 +277,7 @@ object DownloadManager {
         pluginFile = downloadFile(updateId)
       } catch (t: Throwable) {
         LOG.error("Unable to download update #$updateId", t)
-        throw t
+        return null
       }
     }
 
