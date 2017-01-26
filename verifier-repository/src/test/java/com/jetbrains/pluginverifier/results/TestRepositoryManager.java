@@ -16,7 +16,7 @@ public class TestRepositoryManager {
 
   @Test
   public void updatesOfPlugin() throws Exception {
-    assertTrue(RepositoryManager.INSTANCE.getAllCompatibleUpdatesOfPlugin(getIdeVersion(), "org.jetbrains.kotlin").size() > 0);
+    assertTrue(RepositoryManager.INSTANCE.getAllCompatibleUpdatesOfPlugin(getIdeVersion(), "ActionScript Profiler").size() > 0);
   }
 
   @Test
