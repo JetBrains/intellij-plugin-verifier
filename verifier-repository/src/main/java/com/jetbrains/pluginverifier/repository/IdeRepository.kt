@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.repository
 
 import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
+import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
@@ -17,13 +17,12 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
-import retrofit2.http.Path
 import retrofit2.http.Streaming
+import retrofit2.http.Url
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
-import java.net.URLConnection
 import java.util.concurrent.TimeUnit
 import java.util.function.Function
 
@@ -36,23 +35,6 @@ data class AvailableIde(val version: IdeVersion,
 object IdeRepository {
 
   private val LOG: Logger = LoggerFactory.getLogger(IdeRepository::class.java)
-
-  private fun <T> Call<T>.executeSuccessfully(): Response<T> {
-    val server = "${this.request().url().host()}:${this.request().url().port()}"
-    val response: Response<T>?
-    try {
-      response = this.execute()
-    } catch(e: IOException) {
-      throw RuntimeException("The server $server is not available", e)
-    }
-    if (response.isSuccessful) {
-      return response
-    }
-    if (response.code() == 500) {
-      throw RuntimeException("The server $server has faced unexpected problems (500 Internal Server Error)")
-    }
-    throw RuntimeException("The response status code is ${response.code()}: ${response.errorBody().string()}")
-  }
 
   private fun parseDocument(document: Document, snapshots: Boolean): List<AvailableIde> {
     val table = document.getElementsByTag("table")[0]
@@ -89,6 +71,7 @@ object IdeRepository {
   fun fetchIndex(snapshots: Boolean = false): List<AvailableIde> {
     val repoUrl = RepositoryConfiguration.ideRepositoryUrl.trimEnd('/') + "/intellij-repository/" + (if (snapshots) "snapshots" else "releases") + "/"
     try {
+      //Jsoup sets the connection timeouts itself
       val document = Jsoup.connect(repoUrl).get()
       return parseDocument(document, snapshots)
     } catch (e: Exception) {
@@ -108,21 +91,22 @@ object IdeRepository {
       }
     }
 
-    val downloadUrl = availableIde.downloadUrl
-    val connection: URLConnection
+    val call = repository.downloadIde(availableIde.downloadUrl.toExternalForm())
+
+    val fileSize: Long
+    val stream: InputStream
     try {
-      connection = downloadUrl.openConnection()
-      connection.readTimeout = TimeUnit.HOURS.toMillis(1).toInt()
-      connection.connectTimeout = TimeUnit.HOURS.toMillis(1).toInt()
+      val response: Response<ResponseBody> = call.executeSuccessfully()
+      fileSize = response.body().contentLength()
+      stream = response.body().byteStream()
     } catch (e: Exception) {
       saveTo.deleteLogged()
-      LOG.error("Unable to download IDE by $downloadUrl", e)
+      LOG.error("Unable to download IDE by ${availableIde.downloadUrl}", e)
       throw e
     }
 
     try {
-      val fileSize = connection.contentLengthLong
-      connection.inputStream.buffered().use { inputStream ->
+      stream.use { inputStream ->
         copyInputStreamWithProgress(inputStream, fileSize, saveTo, progress)
       }
 
@@ -133,8 +117,6 @@ object IdeRepository {
       throw e
     }
   }
-
-  private fun getRepo(fromSnapshots: Boolean) = if (fromSnapshots) "snapshots" else "releases"
 
   private fun copyInputStreamWithProgress(inputStream: InputStream, fileSize: Long, toFile: File, progress: Function<Double, Unit>?) {
     val buffer = ByteArray(4 * 1024)
@@ -173,25 +155,10 @@ object IdeRepository {
 
 }
 
-private data class RepositoryIndex(@SerializedName("artifacts") val artifacts: List<ArtifactIndex>)
-
-private data class ArtifactIndex(@SerializedName("groupId") val groupId: String,
-                                 @SerializedName("artifactId") val artifactId: String,
-                                 @SerializedName("version") val version: String,
-                                 @SerializedName("classifier") val classifier: String,
-                                 @SerializedName("packaging") val packaging: String,
-                                 @SerializedName("lastModified") val lastModified: String,
-                                 @SerializedName("lastModifiedUnixTimeMs") val lastModifiedUnixTimeMs: Long,
-                                 @SerializedName("eTag") val eTag: String)
-
-
 private interface RepositoryInterface {
 
+  @GET
   @Streaming
-  @GET("/intellij-repository/{repo}/com/jetbrains/intellij/idea/{ideaName}/{ideVersion}/{ideaName}-{ideVersion}.zip")
-  fun downloadFrom(@Path("repo") repo: String, @Path("ideaName") ideaName: String, @Path("ideVersion") ideVersion: String): Call<ResponseBody>
-
-  @GET("/intellij-repository/{repo}/index.json")
-  fun fetchIndex(@Path("repo") repo: String): Call<RepositoryIndex>
+  fun downloadIde(@Url downloadUrl: String): Call<ResponseBody>
 
 }
