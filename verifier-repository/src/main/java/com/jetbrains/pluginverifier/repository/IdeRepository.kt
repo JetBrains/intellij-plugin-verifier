@@ -139,12 +139,12 @@ object IdeRepository {
     }
   }
 
-  private val repository: RepositoryInterface = Retrofit.Builder()
+  private val repository: IdeRepositoryApi = Retrofit.Builder()
       .baseUrl(RepositoryConfiguration.ideRepositoryUrl.trimEnd('/') + '/')
       .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(makeClient())
       .build()
-      .create(RepositoryInterface::class.java)
+      .create(IdeRepositoryApi::class.java)
 
   private fun makeClient(): OkHttpClient = OkHttpClient.Builder()
       .connectTimeout(1, TimeUnit.HOURS)
@@ -155,7 +155,7 @@ object IdeRepository {
 
 }
 
-private interface RepositoryInterface {
+private interface IdeRepositoryApi {
 
   @GET
   @Streaming
