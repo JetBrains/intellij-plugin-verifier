@@ -30,6 +30,10 @@ object UpdateInfoCache {
       .build()
       .create(GetUpdateInfoApi::class.java)
 
+  fun update(updateInfo: UpdateInfo) {
+    cache.putIfAbsent(updateInfo.updateId, updateInfo)
+  }
+
   fun getUpdateInfo(updateId: Int): UpdateInfo? {
     val updateInfo = cache[updateId]
     if (updateInfo != null) {
@@ -37,13 +41,14 @@ object UpdateInfoCache {
     }
     try {
       val info = api.getUpdateInfo(updateId).executeSuccessfully().body()
-      cache.putIfAbsent(updateId, info)
+      update(info)
       return info
     } catch (e: Exception) {
       LOG.error("Unable to get UpdateInfo #$updateId", e)
       return null
     }
     /*
+    todo: use it when ready on the plugins site
     try {
       val batchRequestSize = 1000
       val updates = api.getUpdateInfosForIds(updateId, updateId + batchRequestSize).executeSuccessfully().body()

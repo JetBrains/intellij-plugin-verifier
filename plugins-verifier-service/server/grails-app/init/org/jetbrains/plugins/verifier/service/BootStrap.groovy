@@ -1,10 +1,13 @@
 package org.jetbrains.plugins.verifier.service
 
 import com.jetbrains.pluginverifier.misc.LanguageUtilsKt
+import com.jetbrains.pluginverifier.repository.RepositoryManager
 import org.jetbrains.plugins.verifier.service.service.FeatureService
 import org.jetbrains.plugins.verifier.service.service.Service
+import org.jetbrains.plugins.verifier.service.service.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.storage.FileManager
+import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.util.IdeListUpdater
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -27,6 +30,7 @@ class BootStrap {
     setSystemProperties()
 
     cleanUpTempDirs()
+    prepareUpdateInfoCacheForExistingIdes()
 
     LOG.info("Server settings: ${Settings.values().findAll { !it.encrypted }.collect { it.key + "=" + it.get() }.join(", ")}")
     if (Boolean.parseBoolean(Settings.ENABLE_PLUGIN_VERIFIER_SERVICE.get())) {
@@ -38,15 +42,23 @@ class BootStrap {
     IdeListUpdater.INSTANCE.run()
   }
 
+  def prepareUpdateInfoCacheForExistingIdes() {
+    IdeFilesManager.INSTANCE.ideList().forEach {
+      RepositoryManager.INSTANCE.getLastCompatibleUpdates(it).forEach {
+        UpdateInfoCache.INSTANCE.update(it)
+      }
+    }
+  }
+
   def destroy = {
     LOG.info("Exiting Verifier Service gracefully")
   }
 
-  private static def cleanUpTempDirs() {
+  private static cleanUpTempDirs() {
     LanguageUtilsKt.deleteLogged(FileManager.INSTANCE.tempDirectory)
   }
 
-  private static def assertSystemProperties() {
+  private static assertSystemProperties() {
     Settings.values().toList().forEach { setting ->
       try {
         setting.get()
@@ -78,6 +90,6 @@ class BootStrap {
       throw new IllegalStateException("Too few available disk space: required at least $MIN_DISK_SPACE_MB Mb")
     }
     int downloadDirSpace = diskSpace * DOWNLOAD_DIR_PROPORTION
-    System.setProperty("plugin.verifier.cache.dir.max.space", downloadDirSpace.toString())
+    System.setProperty("plugin.verifier.cache.dir.max.space", String.valueOf(downloadDirSpace))
   }
 }

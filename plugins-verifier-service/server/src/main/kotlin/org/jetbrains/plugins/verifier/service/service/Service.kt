@@ -9,7 +9,6 @@ import com.jetbrains.pluginverifier.api.VOptions
 import com.jetbrains.pluginverifier.configurations.CheckRangeResults
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.persistence.GsonHolder
-import com.jetbrains.pluginverifier.repository.RepositoryManager
 import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.api.Result
 import org.jetbrains.plugins.verifier.service.api.TaskId
@@ -54,7 +53,6 @@ object Service {
 
   private val verifiableUpdates: MutableMap<UpdateInfo, TaskId> = hashMapOf()
   private val lastCheckDate: MutableMap<UpdateInfo, Long> = hashMapOf()
-  private val updateInfoCache: MutableMap<Int, UpdateInfo> = hashMapOf()
 
   val updatesMissingCompatibleIde: MutableSet<UpdateInfo> = hashSetOf()
 
@@ -102,10 +100,6 @@ object Service {
       val tasks = HashMultimap.create<Int, IdeVersion>()
 
       for (ideVersion in IdeFilesManager.ideList()) {
-        updateCache(ideVersion)
-      }
-
-      for (ideVersion in IdeFilesManager.ideList()) {
         getUpdatesToCheck(ideVersion).updateIds.forEach {
           tasks.put(it, ideVersion)
         }
@@ -122,12 +116,6 @@ object Service {
       LOG.error("Failed to schedule updates check", e)
     } finally {
       isRequesting = false
-    }
-  }
-
-  private fun updateCache(ideVersion: IdeVersion) {
-    RepositoryManager.getLastCompatibleUpdates(ideVersion).forEach {
-      updateInfoCache.getOrPut(it.updateId, { it })
     }
   }
 
