@@ -1,30 +1,47 @@
 package com.jetbrains.pluginverifier.repository
 
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.format.UpdateInfo
-import org.apache.commons.io.IOUtils
+import com.jetbrains.pluginverifier.misc.executeSuccessfully
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import org.apache.http.annotation.ThreadSafe
 import org.slf4j.LoggerFactory
+import retrofit2.Call
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.Query
 import java.io.IOException
-import java.net.URL
-import java.net.URLEncoder
+import java.util.concurrent.TimeUnit
+
+private interface RepositoryApi {
+
+  @GET("/manager/getUpdateInfoById")
+  fun getUpdateInfoById(@Query("updateId") updateId: Int): Call<UpdateInfo>
+
+  @GET("/manager/allCompatibleUpdates")
+  fun getLastCompatibleUpdates(@Query("updateId") build: String): Call<List<UpdateInfo>>
+
+  @GET("/manager/originalCompatibleUpdatesByPluginIds")
+  fun getOriginalCompatibleUpdatesByPluginIds(@Query("build") build: String, @Query("pluginIds") pluginId: String): Call<List<UpdateInfo>>
+
+}
 
 @ThreadSafe
 object RepositoryManager : PluginRepository {
+
   override fun getUpdateInfoById(updateId: Int): UpdateInfo {
-    val url = URL("${RepositoryConfiguration.pluginRepositoryUrl}/manager/getUpdateInfoById?updateId=$updateId")
-    return Gson().fromJson<UpdateInfo>(IOUtils.toString(url, Charsets.UTF_8), UpdateInfo::class.java)
+    return repositoryApi.getUpdateInfoById(updateId).executeSuccessfully().body()
   }
 
   @Throws(IOException::class)
   override fun getLastCompatibleUpdates(ideVersion: IdeVersion): List<UpdateInfo> {
     LOG.debug("Loading list of plugins compatible with $ideVersion... ")
 
-    val url = URL("${RepositoryConfiguration.pluginRepositoryUrl}/manager/allCompatibleUpdates/?build=$ideVersion")
-
-    return Gson().fromJson<List<UpdateInfo>>(IOUtils.toString(url, Charsets.UTF_8), updateListType)
+    val updates = repositoryApi.getLastCompatibleUpdates(ideVersion.asString())
+    return updates.executeSuccessfully().body()
   }
 
   @Throws(IOException::class)
@@ -47,10 +64,8 @@ object RepositoryManager : PluginRepository {
   override fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> {
     LOG.debug("Fetching list of all compatible builds of a pluginId $pluginId on IDE $ideVersion")
 
-    val urlSb = RepositoryConfiguration.pluginRepositoryUrl + "/manager/originalCompatibleUpdatesByPluginIds/?build=" + ideVersion +
-        "&pluginIds=" + URLEncoder.encode(pluginId, "UTF-8")
-
-    return Gson().fromJson<List<UpdateInfo>>(IOUtils.toString(URL(urlSb), Charsets.UTF_8), updateListType)
+    val call = repositoryApi.getOriginalCompatibleUpdatesByPluginIds(ideVersion.asString(), pluginId)
+    return call.executeSuccessfully().body()
   }
 
   @Throws(IOException::class)
@@ -63,9 +78,20 @@ object RepositoryManager : PluginRepository {
     return DownloadManager.getOrLoadUpdate(updateId)
   }
 
-
   private val LOG = LoggerFactory.getLogger(RepositoryManager::class.java)
 
-  private val updateListType = object : TypeToken<List<UpdateInfo>>() {}.type
+  private val repositoryApi: RepositoryApi = Retrofit.Builder()
+      .baseUrl(RepositoryConfiguration.pluginRepositoryUrl.trimEnd('/') + '/')
+      .addConverterFactory(GsonConverterFactory.create(Gson()))
+      .client(makeClient())
+      .build()
+      .create(RepositoryApi::class.java)
+
+  private fun makeClient(): OkHttpClient = OkHttpClient.Builder()
+      .connectTimeout(5, TimeUnit.MINUTES)
+      .readTimeout(5, TimeUnit.MINUTES)
+      .writeTimeout(5, TimeUnit.MINUTES)
+      .addInterceptor(HttpLoggingInterceptor().setLevel(if (LOG.isDebugEnabled) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.BASIC))
+      .build()
 
 }
