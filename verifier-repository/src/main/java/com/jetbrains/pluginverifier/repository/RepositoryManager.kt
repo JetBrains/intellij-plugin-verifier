@@ -22,7 +22,7 @@ private interface RepositoryApi {
   fun getUpdateInfoById(@Query("updateId") updateId: Int): Call<UpdateInfo>
 
   @GET("/manager/allCompatibleUpdates")
-  fun getLastCompatibleUpdates(@Query("updateId") build: String): Call<List<UpdateInfo>>
+  fun getLastCompatibleUpdates(@Query("build") build: String): Call<List<UpdateInfo>>
 
   @GET("/manager/originalCompatibleUpdatesByPluginIds")
   fun getOriginalCompatibleUpdatesByPluginIds(@Query("build") build: String, @Query("pluginIds") pluginId: String): Call<List<UpdateInfo>>

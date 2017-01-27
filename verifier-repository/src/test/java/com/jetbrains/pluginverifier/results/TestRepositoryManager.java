@@ -7,6 +7,8 @@ import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.util.List;
+
 import static org.junit.Assert.*;
 
 /**
@@ -24,6 +26,12 @@ public class TestRepositoryManager {
     UpdateInfo info = RepositoryManager.INSTANCE.getLastCompatibleUpdateOfPlugin(getIdeVersion(), "org.jetbrains.kotlin");
     assertNotNull(info);
     assertTrue(info.getUpdateId() > 20000);
+  }
+
+  @Test
+  public void lastCompatibleUpdates() throws Exception {
+    List<UpdateInfo> updates = RepositoryManager.INSTANCE.getLastCompatibleUpdates(IdeVersion.createIdeVersion("IU-163.2112"));
+    assertFalse(updates.isEmpty());
   }
 
   @NotNull
