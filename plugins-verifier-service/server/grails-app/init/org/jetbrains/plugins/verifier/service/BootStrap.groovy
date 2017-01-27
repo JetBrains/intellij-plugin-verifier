@@ -43,10 +43,14 @@ class BootStrap {
   }
 
   def prepareUpdateInfoCacheForExistingIdes() {
-    IdeFilesManager.INSTANCE.ideList().forEach {
-      RepositoryManager.INSTANCE.getLastCompatibleUpdates(it).forEach {
-        UpdateInfoCache.INSTANCE.update(it)
+    try {
+      IdeFilesManager.INSTANCE.ideList().forEach {
+        RepositoryManager.INSTANCE.getLastCompatibleUpdates(it).forEach {
+          UpdateInfoCache.INSTANCE.update(it)
+        }
       }
+    } catch (Exception e) {
+      LOG.error("Unable to prepare update info cache", e)
     }
   }
 
