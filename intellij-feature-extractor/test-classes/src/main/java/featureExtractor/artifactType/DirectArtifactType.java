@@ -1,4 +1,4 @@
-package featureExtractor;
+package featureExtractor.artifactType;
 
 import com.intellij.packaging.artifacts.ArtifactType;
 

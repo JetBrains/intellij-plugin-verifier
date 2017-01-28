@@ -1,4 +1,4 @@
-package featureExtractor;
+package featureExtractor.common;
 
 public class ConstantHolder {
 

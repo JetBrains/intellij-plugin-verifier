@@ -1,4 +1,4 @@
-package featureExtractor;
+package featureExtractor.configurationType;
 
 import com.intellij.execution.configurations.ConfigurationTypeBase;
 

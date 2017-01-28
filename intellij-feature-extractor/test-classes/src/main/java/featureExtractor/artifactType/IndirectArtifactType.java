@@ -1,4 +1,4 @@
-package featureExtractor;
+package featureExtractor.artifactType;
 
 /**
  * @author Sergey Patrikeev

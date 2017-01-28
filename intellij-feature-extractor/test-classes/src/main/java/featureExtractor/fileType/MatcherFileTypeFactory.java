@@ -1,4 +1,4 @@
-package featureExtractor;
+package featureExtractor.fileType;
 
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;

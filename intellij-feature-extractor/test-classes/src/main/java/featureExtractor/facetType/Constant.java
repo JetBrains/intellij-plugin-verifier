@@ -1,4 +1,4 @@
-package featureExtractor;
+package featureExtractor.facetType;
 
 import com.intellij.facet.FacetType;
 
