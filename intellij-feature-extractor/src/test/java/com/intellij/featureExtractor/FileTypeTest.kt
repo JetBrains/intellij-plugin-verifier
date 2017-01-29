@@ -2,6 +2,7 @@ package com.intellij.featureExtractor
 
 import com.jetbrains.intellij.feature.extractor.FileTypeExtractor
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -16,7 +17,9 @@ class FileTypeTest : FeatureExtractorTestBase() {
 
   private fun assertExtractFileTypes(className: String, extensions: List<String>) {
     val node = readClassNode(className)
-    val list = FileTypeExtractor(resolver).extract(node).features
+    val result = FileTypeExtractor(resolver).extract(node)
+    val list = result.features
+    assertTrue(result.extractedAll)
     assertEquals(extensions, list)
   }
 

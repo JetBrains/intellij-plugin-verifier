@@ -3,6 +3,8 @@ package com.jetbrains.intellij.feature.extractor
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.intellij.feature.extractor.AnalysisUtil.evaluateConstantString
 import com.jetbrains.intellij.feature.extractor.AnalysisUtil.extractConstantFunctionValue
+import com.jetbrains.intellij.feature.extractor.AnalysisUtil.takeNumberFromIntInstruction
+import org.jetbrains.intellij.plugins.internal.asm.MethodVisitor
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
 import org.jetbrains.intellij.plugins.internal.asm.Type
 import org.jetbrains.intellij.plugins.internal.asm.tree.*
@@ -23,6 +25,8 @@ private fun ClassNode.findField(predicate: (FieldNode) -> Boolean): FieldNode? =
 private fun MethodNode.instructionsAsList(): List<AbstractInsnNode> = instructions.toArray().toList()
 
 private fun Frame.getOnStack(index: Int): Value? = this.getStack(this.stackSize - 1 - index)
+
+private inline fun <reified T> T.replicate(n: Int): List<T> = Array<T>(n) { this }.toList()
 
 private val LOG: Logger = LoggerFactory.getLogger("FeaturesExtractor")
 
@@ -163,7 +167,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
 
     val result = arrayListOf<String>()
     extractedAll = true
-    var anyFound: Boolean = false
+    var foundAnyConsumeInvocation: Boolean = false
 
     val instructions = method.instructionsAsList()
     instructions.forEachIndexed { index, insn ->
@@ -172,7 +176,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
         if (insn.name == "consume" && insn.owner == FILE_TYPE_CONSUMER) {
 
           if (insn.desc == EXPLICIT_EXTENSION) {
-            anyFound = true
+            foundAnyConsumeInvocation = true
             val frame = frames[index]
             val stringValue = evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
             if (stringValue != null) {
@@ -181,7 +185,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
               extractedAll = false
             }
           } else if (insn.desc == FILE_TYPE_ONLY) {
-            anyFound = true
+            foundAnyConsumeInvocation = true
             val frame = frames[index]
             val fileTypeInstance = frame.getOnStack(0)
             val fromFileType = evaluateExtensionsOfFileType(fileTypeInstance)
@@ -191,10 +195,10 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
               extractedAll = false
             }
           } else if (insn.desc == FILENAME_MATCHERS) {
-            anyFound = true
-            val array = computeExtensionsPassedToFileNameMatcherArray(instructions, index, frames)
-            if (array != null) {
-              result.addAll(array)
+            foundAnyConsumeInvocation = true
+            val extensions = computeExtensionsPassedToFileNameMatcherArray(instructions, index, frames)
+            if (extensions != null) {
+              result.addAll(extensions)
             } else {
               extractedAll = false
             }
@@ -203,51 +207,216 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
       }
     }
 
-    extractedAll = extractedAll && anyFound
+    extractedAll = foundAnyConsumeInvocation && extractedAll
 
     return result
   }
 
-  private fun computeExtensionsPassedToFileNameMatcherArray(methodInstructions: List<AbstractInsnNode>, arrayUserInstructionIndex: Int, frames: List<Frame>): List<String>? {
-    val newArrayInsnIndex = methodInstructions.take(arrayUserInstructionIndex).indexOfLast { it is TypeInsnNode && it.opcode == Opcodes.ANEWARRAY }
-    if (newArrayInsnIndex == -1) {
+  private fun computeExtensionsPassedToFileNameMatcherArray(methodInstructions: List<AbstractInsnNode>,
+                                                            arrayUserInstructionIndex: Int,
+                                                            frames: List<Frame>): List<String>? {
+    val arrayProducer = frames[arrayUserInstructionIndex].getOnStack(0) ?: return null
+    if (arrayProducer !is SourceValue || arrayProducer.insns.size != 1) {
       return null
     }
-    val result = arrayListOf<String>()
-    for (i in newArrayInsnIndex..arrayUserInstructionIndex) {
-      val insn = methodInstructions[i]
-      if (insn is MethodInsnNode && insn.name == "<init>") {
 
-        if (insn.owner == EXACT_NAME_MATCHER) {
-          val frame = frames[i]
-          val value: Value?
-          if (insn.desc == "(Ljava/lang/String;)V") {
-            value = frame.getOnStack(0)
-          } else if (insn.desc == "(Ljava/lang/String;Z)V") {
-            value = frame.getOnStack(1)
-          } else {
-            continue
-          }
-          val stringValue = evaluateConstantString(value, resolver, frames, methodInstructions)
+    val anewArrayInsn = arrayProducer.insns.first()
+    if (anewArrayInsn is TypeInsnNode && anewArrayInsn.opcode == Opcodes.ANEWARRAY) {
+      val newArrayInsnIndex = methodInstructions.indexOf(anewArrayInsn)
+      if (newArrayInsnIndex == -1) {
+        return null
+      }
+      return aggregateFileNameMatcherAsArrayElements(newArrayInsnIndex, arrayUserInstructionIndex, methodInstructions, frames)
+    }
+    return null
+  }
 
-          if (stringValue != null) {
-            result.add(stringValue)
-          }
-        } else if (insn.owner == EXTENSIONS_MATCHER) {
-          val frame = frames[i]
-          if (insn.desc == "(Ljava/lang/String;)V") {
-            val value = evaluateConstantString(frame.getOnStack(0), resolver, frames, methodInstructions)
+  /**
+   * Try to parse the following sequence of instructions:
+   * ICONST_k
+   * ANEWARRAY 'com/intellij/openapi/fileTypes/FileNameMatcher'
+   * <set_element_0>
+   * <set_element_1>
+   * ...
+   * <set_element_(k-1)>
+   * INVOKEINTERFACE com/intellij/openapi/fileTypes/FileTypeConsumer.consume (Lcom/intellij/openapi/fileTypes/FileType;[Lcom/intellij/openapi/fileTypes/FileNameMatcher;)V
+   *
+   * where <set_element_i> consists of the instructions:
+   * DUP
+   * ICONST_i
+   * <block_i>
+   * AASTORE
+   *
+   * where <block_i> represents the element creation. We support only NEW creations (not using the local variables).
+   * e.g. block_i may look like this:
+   *
+   * NEW com/intellij/openapi/fileTypes/ExactFileNameMatcher
+   * DUP
+   * LDC 'someExtension'
+   * INVOKESPECIAL com/intellij/openapi/fileTypes/ExactFileNameMatcher.<init> (Ljava/lang/String;)V
+   *
+   * in general case <block_i> is a set of instructions which constructs or obtains an instance
+   * of the i-th element of the array.
+   */
+  private fun aggregateFileNameMatcherAsArrayElements(newArrayInsnIndex: Int,
+                                                      arrayUserInstructionIndex: Int,
+                                                      methodInstructions: List<AbstractInsnNode>, frames: List<Frame>): List<String> {
+    val dummyValue: AbstractInsnNode = object : AbstractInsnNode(-1) {
+      override fun getType(): Int = -1
 
-            if (value != null) {
-              if (insn.owner == EXTENSIONS_MATCHER) {
-                result.add("*.$value")
-              } else {
-                result.add(value)
+      override fun accept(p0: MethodVisitor?) = Unit
+
+      override fun clone(p0: MutableMap<Any?, Any?>?): AbstractInsnNode = this
+    }
+
+    //insert dummy instructions to the end to prevent ArrayIndexOutOfBoundsException.
+    val insns = methodInstructions + dummyValue.replicate(10)
+
+    //skip the ANEWARRAY instruction
+    var pos = newArrayInsnIndex + 1
+
+    /*
+    * NEW com/intellij/openapi/fileTypes/ExactFileNameMatcher
+    * DUP
+    * LDC | GET_STATIC
+    * INVOKESPECIAL com/intellij/openapi/fileTypes/ExactFileNameMatcher.<init> (Ljava/lang/String;)V
+    */
+    fun tryParseExactMatcherConstructorOfOneArgument(): String? {
+      val oldPos = pos
+      val new = insns[pos++]
+      if (new is TypeInsnNode && new.desc == EXACT_NAME_MATCHER) {
+        if (insns[pos++].opcode == Opcodes.DUP) {
+          val argumentInsn = insns[pos++]
+          if (argumentInsn.opcode == Opcodes.LDC || argumentInsn.opcode == Opcodes.GETSTATIC) {
+            val frame = frames[pos]
+            val initInvoke = insns[pos]
+            pos++
+
+            if (initInvoke is MethodInsnNode
+                && initInvoke.name == "<init>"
+                && initInvoke.owner == EXACT_NAME_MATCHER
+                && initInvoke.desc == "(Ljava/lang/String;)V") {
+              val string = evaluateConstantString(frame.getOnStack(0), resolver, frames, insns)
+              if (string != null) {
+                return string
               }
             }
           }
         }
       }
+      pos = oldPos
+      return null
+    }
+
+    /*
+    * NEW com/intellij/openapi/fileTypes/ExactFileNameMatcher
+    * DUP
+    * LDC | GET_STATIC
+    * ICONST_z
+    * INVOKESPECIAL com/intellij/openapi/fileTypes/ExactFileNameMatcher.<init> (Ljava/lang/String;Z)V
+    */
+    fun tryParseExactMatcherConstructorOfTwoArguments(): String? {
+      val oldPos = pos
+      val new = insns[pos++]
+      if (new is TypeInsnNode && new.desc == EXACT_NAME_MATCHER) {
+        if (insns[pos++].opcode == Opcodes.DUP) {
+          val argumentInsn = insns[pos++]
+          if (argumentInsn.opcode == Opcodes.LDC || argumentInsn.opcode == Opcodes.GETSTATIC) {
+            if (insns[pos].opcode == Opcodes.ICONST_0 || insns[pos].opcode == Opcodes.ICONST_1) {
+              pos++
+
+              val frame = frames[pos]
+              val initInvoke = insns[pos]
+              pos++
+
+              if (initInvoke is MethodInsnNode
+                  && initInvoke.name == "<init>"
+                  && initInvoke.owner == EXACT_NAME_MATCHER
+                  && initInvoke.desc == "(Ljava/lang/String;Z)V") {
+
+                val string = evaluateConstantString(frame.getOnStack(1), resolver, frames, insns)
+                if (string != null) {
+                  return string
+                }
+              }
+            }
+          }
+        }
+      }
+      pos = oldPos
+      return null
+    }
+
+
+    /*
+    * NEW com/intellij/openapi/fileTypes/ExtensionFileNameMatcher
+    * DUP
+    * LDC | GET_STATIC
+    * INVOKESPECIAL com/intellij/openapi/fileTypes/ExtensionFileNameMatcher.<init> (Ljava/lang/String;)V
+    */
+    fun tryParseExtensionMatcher(): String? {
+      val oldPos = pos
+      val new = insns[pos++]
+      if (new is TypeInsnNode && new.desc == EXTENSIONS_MATCHER) {
+        if (insns[pos++].opcode == Opcodes.DUP) {
+          val argumentInsn = insns[pos++]
+          if (argumentInsn.opcode == Opcodes.LDC || argumentInsn.opcode == Opcodes.GETSTATIC) {
+            val initInvoke = insns[pos]
+            val frame = frames[pos]
+            pos++
+
+            if (initInvoke is MethodInsnNode
+                && initInvoke.name == "<init>"
+                && initInvoke.owner == EXTENSIONS_MATCHER
+                && initInvoke.desc == "(Ljava/lang/String;)V") {
+
+              val string = evaluateConstantString(frame.getOnStack(0), resolver, frames, insns)
+              if (string != null) {
+                return "*.$string"
+              }
+            }
+          }
+        }
+      }
+      pos = oldPos
+      return null
+    }
+
+    fun parseBlock(): String? {
+      return tryParseExactMatcherConstructorOfOneArgument()
+          ?: tryParseExactMatcherConstructorOfTwoArguments()
+          ?: tryParseExtensionMatcher()
+          ?: return null
+    }
+
+    val result = arrayListOf<String>()
+
+    /*
+    * DUP
+    * ICONST_i
+    * <block_i>
+    * AASTORE
+    */
+    fun parseSetElement(i: Int): String? {
+      if (insns[pos++].opcode == Opcodes.DUP) {
+        if (i == takeNumberFromIntInstruction(insns[pos++])) {
+          val block = parseBlock() ?: return null
+          if (insns[pos++].opcode == Opcodes.AASTORE) {
+            return block
+          }
+        }
+      }
+      return null
+    }
+
+    var i = 0
+    while (pos < arrayUserInstructionIndex) {
+      val ithElement = parseSetElement(i++)
+      if (ithElement == null) {
+        extractedAll = false
+        return result
+      }
+      result.add(ithElement)
     }
     return result
   }
@@ -273,6 +442,29 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
 object AnalysisUtil {
 
   private val STRING_BUILDER = "java/lang/StringBuilder"
+
+  fun takeNumberFromIntInstruction(instruction: AbstractInsnNode): Int? {
+    if (instruction is InsnNode) {
+      return when (instruction.opcode) {
+        Opcodes.ICONST_M1 -> -1
+        Opcodes.ICONST_0 -> 0
+        Opcodes.ICONST_1 -> 1
+        Opcodes.ICONST_2 -> 2
+        Opcodes.ICONST_3 -> 3
+        Opcodes.ICONST_4 -> 4
+        Opcodes.ICONST_5 -> 5
+        else -> null
+      }
+    }
+    if (instruction is IntInsnNode) {
+      return when (instruction.opcode) {
+        Opcodes.BIPUSH -> instruction.operand
+        else -> null
+      }
+    }
+    return null
+  }
+
 
   fun extractConstantFunctionValue(classNode: ClassNode, methodNode: MethodNode, resolver: Resolver): String? {
     if (methodNode.isAbstract()) {

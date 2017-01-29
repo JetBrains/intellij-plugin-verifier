@@ -10,14 +10,16 @@ import com.intellij.openapi.fileTypes.FileTypeFactory;
  */
 public class MatcherFileTypeFactory extends FileTypeFactory {
 
-  private static String CONSTANT = "fnmconstant";
+  private static String FIRST_EXTENSION = "firstExactName";
+  private static String SECOND_EXTENSION = "secondExactName";
+  private static String THIRD_EXTENSION = "nmextension";
 
   @Override
   public void createFileTypes(FileTypeConsumer consumer) {
     consumer.consume(null,
-        new ExactFileNameMatcher("firstExactName"),
-        new ExactFileNameMatcher("secondExactName", false),
-        new ExtensionFileNameMatcher("nmextension")
+        new ExactFileNameMatcher(FIRST_EXTENSION),
+        new ExactFileNameMatcher(SECOND_EXTENSION, false),
+        new ExtensionFileNameMatcher(THIRD_EXTENSION)
     );
   }
 }
