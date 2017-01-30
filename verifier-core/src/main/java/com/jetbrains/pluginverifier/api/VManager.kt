@@ -357,13 +357,12 @@ object VManager {
   private fun getDependenciesResolver(ctx: VContext, dependencyResolver: DependencyResolver): DependenciesResult {
 
     val plugin = ctx.plugin
-    val graphAndStart: Dependencies.Result
-    try {
-      graphAndStart = Dependencies.calcDependencies(plugin, dependencyResolver)
-    } catch(e: Exception) {
-      throw RuntimeException("Unable to evaluate dependencies of the plugin $plugin with IDE ${ctx.ide}", e)
-    }
-    val (graph: DirectedGraph<Vertex, Edge>, startVertex: Vertex, allLocks: List<IFileLock>) = graphAndStart
+    val (graph: DirectedGraph<Vertex, Edge>, startVertex: Vertex, allLocks: List<IFileLock>) =
+        try {
+          Dependencies.calcDependencies(plugin, dependencyResolver)
+        } catch(e: Exception) {
+          throw RuntimeException("Unable to evaluate dependencies of the plugin $plugin with IDE ${ctx.ide}", e)
+        }
 
     try {
       var cycle: List<Plugin>? = null

@@ -34,17 +34,15 @@ class CheckTrunkApiConfiguration(val params: CheckTrunkApiParams) : Configuratio
   }
 
   private fun doExecute(): CheckTrunkApiResults {
-    val majorIde: Ide
-    try {
-      majorIde = IdeManager.getInstance().createIde(params.majorIdeFile)
+    val majorIde: Ide = try {
+      IdeManager.getInstance().createIde(params.majorIdeFile)
     } catch(e: Exception) {
       LOG.error("Unable to create major IDE from ${params.majorIdeFile}", e)
       throw e
     }
 
-    val pluginsToCheck: List<PluginDescriptor>
-    try {
-      pluginsToCheck = RepositoryManager
+    val pluginsToCheck: List<PluginDescriptor> = try {
+      RepositoryManager
           .getLastCompatibleUpdates(majorIde.version)
           .map { PluginDescriptor.ByUpdateInfo(it) }
     } catch(e: Exception) {

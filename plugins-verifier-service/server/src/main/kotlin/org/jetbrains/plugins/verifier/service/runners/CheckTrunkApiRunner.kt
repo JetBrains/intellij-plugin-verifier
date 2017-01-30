@@ -87,9 +87,8 @@ class CheckTrunkApiRunner(val ideFile: File,
       }
 
       try {
-        val pluginsToCheck: List<PluginDescriptor>
-        try {
-          pluginsToCheck = RepositoryManager.getLastCompatibleUpdates(ide.version).map { PluginDescriptor.ByUpdateInfo(it) }
+        val pluginsToCheck: List<PluginDescriptor> = try {
+          RepositoryManager.getLastCompatibleUpdates(ide.version).map { PluginDescriptor.ByUpdateInfo(it) }
         } catch(e: Exception) {
           throw RuntimeException("Unable to fetch list of plugins compatible with ${ide.version}", e)
         }

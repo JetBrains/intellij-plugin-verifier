@@ -30,12 +30,12 @@ class CheckIdeRunner(val ideFile: File,
 
   override fun computeResult(progress: Progress): CheckIdeResults {
     try {
-      val ide: Ide
-      try {
-        ide = IdeManager.getInstance().createIde(ideFile, runnerParams.actualIdeVersion)
-      } catch(e: Exception) {
-        throw IllegalArgumentException("The supplied IDE $ideFile is broken", e)
-      }
+      val ide: Ide =
+          try {
+            IdeManager.getInstance().createIde(ideFile, runnerParams.actualIdeVersion)
+          } catch(e: Exception) {
+            throw IllegalArgumentException("The supplied IDE $ideFile is broken", e)
+          }
 
       val pluginsToCheck = CheckIdeParamsParser.getDescriptorsToCheck(runnerParams.checkAllBuilds, runnerParams.checkLastBuilds, ide.version)
 

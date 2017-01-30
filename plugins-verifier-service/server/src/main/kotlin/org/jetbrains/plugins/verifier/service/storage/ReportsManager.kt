@@ -16,9 +16,8 @@ object ReportsManager {
   @Synchronized
   fun saveReport(file: File): Boolean {
     LOG.info("Saving report from file $file")
-    val ideReport: CheckIdeReport
-    try {
-      ideReport = CheckIdeReport.loadFromFile(file)
+    val ideReport: CheckIdeReport = try {
+      CheckIdeReport.loadFromFile(file)
     } catch(e: Exception) {
       throw IllegalArgumentException("Report file ${file.name} is invalid", e)
     }

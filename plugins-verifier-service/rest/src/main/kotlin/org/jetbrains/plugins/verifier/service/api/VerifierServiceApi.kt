@@ -10,9 +10,8 @@ abstract class VerifierServiceApi<out T>(val host: String) {
   abstract fun executeImpl(): T
 
   fun execute(): T {
-    val supported: List<String>
-    try {
-      supported = service.statusService.getSupportedClients().executeSuccessfully().body()
+    val supported: List<String> = try {
+      service.statusService.getSupportedClients().executeSuccessfully().body()
     } catch(e: Exception) {
       throw RuntimeException("Plugin verifier service $host is not available", e)
     }

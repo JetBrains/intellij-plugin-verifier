@@ -105,9 +105,8 @@ object IdeFilesManager : IIdeFilesManager {
     }
 
     if (ideFile.isDirectory) {
-      val version: IdeVersion
-      try {
-        version = IdeManager.getInstance().createIde(ideFile).version
+      val version: IdeVersion = try {
+        IdeManager.getInstance().createIde(ideFile).version
       } catch(e: Exception) {
         LOG.error("The IDE file $ideFile is invalid", e)
         throw e
@@ -126,9 +125,8 @@ object IdeFilesManager : IIdeFilesManager {
           throw e
         }
 
-        val version: IdeVersion
-        try {
-          version = IdeManager.getInstance().createIde(tempDirectory).version
+        val version: IdeVersion = try {
+          IdeManager.getInstance().createIde(tempDirectory).version
         } catch(e: Exception) {
           LOG.error("The IDE file $tempDirectory is not a valid IDE", e)
           throw e

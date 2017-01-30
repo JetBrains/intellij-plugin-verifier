@@ -28,14 +28,13 @@ class CheckRangeRunner(val pluginToCheck: PluginDescriptor,
   }
 
   override fun computeResult(progress: Progress): CheckRangeResults {
-    val createResult: CreatePluginResult
-    try {
-      createResult = VManager.createPluginWithResolver(pluginToCheck, null)
-    } catch(e: Exception) {
-      LOG.error("Unable to create plugin for $pluginToCheck", e)
-      throw e
-    }
-    val (plugin: Plugin?, resolver: Resolver?, closeResolver: Boolean, pluginLock: IFileLock?, badResult: VResult?) = createResult
+    val (plugin: Plugin?, resolver: Resolver?, closeResolver: Boolean, pluginLock: IFileLock?, badResult: VResult?) =
+        try {
+          VManager.createPluginWithResolver(pluginToCheck, null)
+        } catch(e: Exception) {
+          LOG.error("Unable to create plugin for $pluginToCheck", e)
+          throw e
+        }
 
     if (badResult != null) {
       return when (badResult) {

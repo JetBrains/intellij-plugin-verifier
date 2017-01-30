@@ -5,7 +5,6 @@ import com.intellij.structure.domain.Plugin
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.intellij.feature.extractor.FeatureImplementation
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor
-import com.jetbrains.pluginverifier.api.CreatePluginResult
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VManager
 import com.jetbrains.pluginverifier.api.VResult
@@ -40,14 +39,13 @@ class ExtractFeaturesRunner(val pluginDescriptor: PluginDescriptor) : Task<Featu
   }
 
   override fun computeResult(progress: Progress): FeaturesResult {
-    val createResult: CreatePluginResult
-    try {
-      createResult = VManager.createPluginWithResolver(pluginDescriptor, null)
-    } catch(e: Exception) {
-      LOG.error("Unable to create plugin for $pluginDescriptor", e)
-      throw e
-    }
-    val (plugin: Plugin?, resolver: Resolver?, closeResolver: Boolean, pluginLock: IFileLock?, badResult: VResult?) = createResult
+    val (plugin: Plugin?, resolver: Resolver?, closeResolver: Boolean, pluginLock: IFileLock?, badResult: VResult?) =
+        try {
+          VManager.createPluginWithResolver(pluginDescriptor, null)
+        } catch(e: Exception) {
+          LOG.error("Unable to create plugin for $pluginDescriptor", e)
+          throw e
+        }
 
     if (badResult != null) {
       return when (badResult) {
