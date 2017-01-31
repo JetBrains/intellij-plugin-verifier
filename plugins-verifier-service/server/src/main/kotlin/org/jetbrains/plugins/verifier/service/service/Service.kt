@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.api.VOptions
 import com.jetbrains.pluginverifier.configurations.CheckRangeResults
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.persistence.GsonHolder
+import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.api.Result
 import org.jetbrains.plugins.verifier.service.api.TaskId
@@ -25,9 +26,9 @@ import org.slf4j.LoggerFactory
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Body
+import retrofit2.http.Multipart
 import retrofit2.http.POST
-import retrofit2.http.Query
+import retrofit2.http.Part
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -120,7 +121,7 @@ object Service {
   }
 
   private fun getUpdatesToCheck(ideVersion: IdeVersion): UpdatesToCheck {
-    val updatesToCheck: UpdatesToCheck = verifier.getUpdatesToCheck(ideVersion, userName, password).executeSuccessfully().body()
+    val updatesToCheck: UpdatesToCheck = getUpdatesToCheck(ideVersion, userName, password).executeSuccessfully().body()
     LOG.info("Repository get updates to check with #$ideVersion success: (total: ${updatesToCheck.updateIds.size}): $updatesToCheck")
     return updatesToCheck
   }
@@ -188,11 +189,17 @@ object Service {
     }
 
     try {
-      verifier.sendUpdateCheckResult(results, userName, password).executeSuccessfully()
+      sendUpdateCheckResult(results, userName, password).executeSuccessfully()
     } catch(e: Exception) {
       LOG.error("Unable to send check result of the plugin ${results.plugin}", e)
     }
   }
+
+  private fun getUpdatesToCheck(availableIde: IdeVersion, userName: String, password: String) =
+      verifier.getUpdatesToCheck(availableIde, createStringRequestBody(userName), createStringRequestBody(password))
+
+  private fun sendUpdateCheckResult(checkResult: CheckRangeResults, userName: String, password: String) =
+      verifier.sendUpdateCheckResult(checkResult, createStringRequestBody(userName), createStringRequestBody(password))
 
 }
 
@@ -202,13 +209,15 @@ data class UpdatesToCheck(@SerializedName("updateIds") val updateIds: MutableLis
 interface VerificationApi {
 
   @POST("/verification/getUpdatesToCheck")
-  fun getUpdatesToCheck(@Body availableIde: IdeVersion,
-                        @Query("userName") userName: String,
-                        @Query("password") password: String): Call<UpdatesToCheck>
+  @Multipart
+  fun getUpdatesToCheck(@Part("availableIde") availableIde: IdeVersion,
+                        @Part("userName") userName: RequestBody,
+                        @Part("password") password: RequestBody): Call<UpdatesToCheck>
 
   @POST("/verification/receiveUpdateCheckResult")
-  fun sendUpdateCheckResult(@Body checkResult: CheckRangeResults,
-                            @Query("userName") userName: String,
-                            @Query("password") password: String): Call<ResponseBody>
+  @Multipart
+  fun sendUpdateCheckResult(@Part("checkResults") checkResult: CheckRangeResults,
+                            @Part("userName") userName: RequestBody,
+                            @Part("password") password: RequestBody): Call<ResponseBody>
 
 }

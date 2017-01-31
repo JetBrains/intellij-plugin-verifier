@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.persistence.GsonHolder
+import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.api.Result
 import org.jetbrains.plugins.verifier.service.api.TaskId
@@ -19,9 +20,9 @@ import org.slf4j.LoggerFactory
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Body
+import retrofit2.http.Multipart
 import retrofit2.http.POST
-import retrofit2.http.Query
+import retrofit2.http.Part
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -158,7 +159,7 @@ object FeatureService {
         "in ${result.taskStatus.elapsedTime() / 1000} s")
 
     try {
-      featuresExtractor.sendExtractedFeatures(results, userName, password).executeSuccessfully()
+      sendExtractedFeatures(results, userName, password).executeSuccessfully()
     } catch(e: Exception) {
       LOG.error("Unable to send check result of the plugin ${results.plugin}", e)
     }
@@ -166,23 +167,33 @@ object FeatureService {
 
 
   private fun getUpdatesToExtract(): UpdatesToExtractFeatures {
-    val updates = featuresExtractor.getUpdatesToExtractFeatures(userName, password).executeSuccessfully().body()
+    val updates = getUpdatesToExtractFeatures(userName, password).executeSuccessfully().body()
     LOG.info("Repository get updates to extract features success: (total: ${updates.updateIds.size}): $updates")
     return updates
   }
+
+  private fun getUpdatesToExtractFeatures(userName: String, password: String) =
+      featuresExtractor.getUpdatesToExtractFeatures(createStringRequestBody(userName), createStringRequestBody(password))
+
+
+  private fun sendExtractedFeatures(extractedFeatures: FeaturesResult, userName: String, password: String) =
+      featuresExtractor.sendExtractedFeatures(extractedFeatures, createStringRequestBody(userName), createStringRequestBody(password))
+
 }
 
 data class UpdatesToExtractFeatures(@SerializedName("updateIds") val updateIds: List<Int>)
 
 interface FeaturesApi {
 
+  @Multipart
   @POST("/feature/getUpdatesToExtractFeatures")
-  fun getUpdatesToExtractFeatures(@Query("userName") userName: String,
-                                  @Query("password") password: String): Call<UpdatesToExtractFeatures>
+  fun getUpdatesToExtractFeatures(@Part("userName") userName: RequestBody,
+                                  @Part("password") password: RequestBody): Call<UpdatesToExtractFeatures>
 
+  @Multipart
   @POST("/feature/receiveExtractedFeatures")
-  fun sendExtractedFeatures(@Body checkResult: FeaturesResult,
-                            @Query("userName") userName: String,
-                            @Query("password") password: String): Call<ResponseBody>
+  fun sendExtractedFeatures(@Part("extractedFeatures") extractedFeatures: FeaturesResult,
+                            @Part("userName") userName: RequestBody,
+                            @Part("password") password: RequestBody): Call<ResponseBody>
 
 }
