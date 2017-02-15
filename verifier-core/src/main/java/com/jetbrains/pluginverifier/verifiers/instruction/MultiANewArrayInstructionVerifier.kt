@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
-import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.tree.AbstractInsnNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
@@ -16,6 +15,6 @@ class MultiANewArrayInstructionVerifier : InstructionVerifier {
   override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, resolver: Resolver, ctx: VContext) {
     if (instr !is MultiANewArrayInsnNode) return
     val descr = VerifierUtil.extractClassNameFromDescr(instr.desc) ?: return
-    VerifierUtil.checkClassExistsOrExternal(resolver, descr, ctx, { ProblemLocation.fromMethod(clazz.name, method) })
+    VerifierUtil.checkClassExistsOrExternal(resolver, descr, ctx, { VerifierUtil.fromMethod(clazz.name, method) })
   }
 }

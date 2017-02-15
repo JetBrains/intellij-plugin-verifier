@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
-import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.Type
 import org.jetbrains.intellij.plugins.internal.asm.tree.AbstractInsnNode
@@ -20,6 +19,6 @@ class LdcInstructionVerifier : InstructionVerifier {
     val descriptor = constant.descriptor
     val className = VerifierUtil.extractClassNameFromDescr(descriptor) ?: return
 
-    VerifierUtil.checkClassExistsOrExternal(resolver, className, ctx, { ProblemLocation.fromMethod(clazz.name, method) })
+    VerifierUtil.checkClassExistsOrExternal(resolver, className, ctx, { VerifierUtil.fromMethod(clazz.name, method) })
   }
 }

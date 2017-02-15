@@ -60,7 +60,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       /*
       Otherwise, if the resolved method is a class (static) method, the invokevirtual instruction throws an IncompatibleClassChangeError.
        */
-      ctx.registerProblem(InvokeVirtualOnStaticMethodProblem(SymbolicReference.methodFrom(resolved.definingClass, resolved.methodNode)), getFromMethod())
+      ctx.registerProblem(InvokeVirtualOnStaticMethodProblem(SymbolicReference.methodFrom(resolved.definingClass.name, resolved.methodNode.name, resolved.methodNode.desc)), getFromMethod())
     }
   }
 
@@ -230,11 +230,11 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     Otherwise, if the resolved method is an instance method, the invokestatic instruction throws an IncompatibleClassChangeError.
      */
     if (!VerifierUtil.isStatic(resolved.methodNode)) {
-      ctx.registerProblem(InvokeStaticOnInstanceMethodProblem(SymbolicReference.methodFrom(resolved.definingClass, resolved.methodNode)), getFromMethod())
+      ctx.registerProblem(InvokeStaticOnInstanceMethodProblem(SymbolicReference.methodFrom(resolved.definingClass.name, resolved.methodNode.name, resolved.methodNode.desc)), getFromMethod())
     }
   }
 
-  private fun getFromMethod() = ProblemLocation.fromMethod(verifiableClass.name, verifiableMethod)
+  private fun getFromMethod() = VerifierUtil.fromMethod(verifiableClass.name, verifiableMethod)
 
   fun resolveInterfaceMethod(): ResolvedMethod? {
     val (fail, resolvedMethod) = resolveInterfaceMethod0(ownerNode!!)
@@ -310,7 +310,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     }
 
     if (accessProblem != null) {
-      val problem = IllegalMethodAccessProblem(SymbolicReference.methodFrom(definingClass.name, methodNode), accessProblem)
+      val problem = IllegalMethodAccessProblem(SymbolicReference.methodFrom(definingClass.name, methodNode.name, methodNode.desc), accessProblem)
       ctx.registerProblem(problem, getFromMethod())
     }
   }

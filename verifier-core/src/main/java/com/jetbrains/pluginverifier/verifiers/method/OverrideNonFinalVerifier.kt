@@ -33,13 +33,13 @@ class OverrideNonFinalVerifier : MethodVerifier {
       return
     }
 
-    var curNode: ClassNode? = VerifierUtil.resolveClassOrProblem(resolver, superClass, clazz, ctx, { ProblemLocation.fromMethod(clazz.name, method) }) ?: return
+    var curNode: ClassNode? = VerifierUtil.resolveClassOrProblem(resolver, superClass, clazz, ctx, { VerifierUtil.fromMethod(clazz.name, method) }) ?: return
 
     while (curNode != null) {
       val first = (curNode.methods as List<MethodNode>).firstOrNull { it.name == method.name && it.desc == method.desc }
       val curName = curNode.name
       if (first != null && VerifierUtil.isFinal(first)) {
-        ctx.registerProblem(OverridingFinalMethodProblem(curName, first.name, first.desc), ProblemLocation.fromMethod(clazz.name, method))
+        ctx.registerProblem(OverridingFinalMethodProblem(curName, first.name, first.desc), VerifierUtil.fromMethod(clazz.name, method))
         return
       }
       val superName = curNode.superName ?: break

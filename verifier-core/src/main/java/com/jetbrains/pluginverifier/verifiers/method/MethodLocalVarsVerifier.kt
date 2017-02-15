@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.verifiers.method
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
-import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.LocalVariableNode
@@ -18,7 +17,7 @@ class MethodLocalVarsVerifier : MethodVerifier {
       val localVariables = method.localVariables as List<LocalVariableNode>
       for (variable in localVariables) {
         val descr = VerifierUtil.extractClassNameFromDescr(variable.desc) ?: continue
-        VerifierUtil.checkClassExistsOrExternal(resolver, descr, ctx, { ProblemLocation.fromMethod(clazz.name, method) })
+        VerifierUtil.checkClassExistsOrExternal(resolver, descr, ctx, { VerifierUtil.fromMethod(clazz.name, method) })
       }
     }
 

@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.verifiers.method
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
-import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.Type
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
@@ -21,6 +20,6 @@ class MethodReturnTypeVerifier : MethodVerifier {
 
     val returnTypeDesc = VerifierUtil.extractClassNameFromDescr(descriptor) ?: return
 
-    VerifierUtil.checkClassExistsOrExternal(resolver, returnTypeDesc, ctx, { ProblemLocation.fromMethod(clazz.name, method) })
+    VerifierUtil.checkClassExistsOrExternal(resolver, returnTypeDesc, ctx, { VerifierUtil.fromMethod(clazz.name, method) })
   }
 }

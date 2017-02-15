@@ -237,4 +237,6 @@ object VerifierUtil {
     return false
   }
 
+  fun fromMethod(hostClass: String, method: MethodNode) = ProblemLocation.fromMethod(hostClass, method.name, method.desc)
+
 }

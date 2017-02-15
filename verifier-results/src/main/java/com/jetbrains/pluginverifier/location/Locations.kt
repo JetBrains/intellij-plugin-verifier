@@ -5,7 +5,6 @@ import com.github.salomonbrys.kotson.jsonSerializer
 import com.github.salomonbrys.kotson.string
 import com.google.gson.JsonPrimitive
 import com.jetbrains.pluginverifier.utils.MessageUtils
-import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 
 /**
  * @author Sergey Patrikeev
@@ -14,8 +13,6 @@ interface ProblemLocation {
 
   companion object {
     fun fromClass(className: String): ClassLocation = ClassLocation(className)
-
-    fun fromMethod(hostClass: String, method: MethodNode): MethodLocation = fromMethod(hostClass, method.name, method.desc)
 
     fun fromMethod(hostClass: String, methodName: String, methodDescriptor: String): MethodLocation = MethodLocation(hostClass, methodName, methodDescriptor)
 

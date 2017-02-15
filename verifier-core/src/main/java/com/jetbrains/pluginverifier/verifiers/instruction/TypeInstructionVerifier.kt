@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
-import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.AbstractClassInstantiationProblem
 import com.jetbrains.pluginverifier.problems.InterfaceInstantiationProblem
 import com.jetbrains.pluginverifier.utils.VerifierUtil
@@ -24,13 +23,13 @@ class TypeInstructionVerifier : InstructionVerifier {
     val desc = instr.desc
     val className = VerifierUtil.extractClassNameFromDescr(desc) ?: return
 
-    val aClass = VerifierUtil.resolveClassOrProblem(resolver, className, clazz, ctx, { ProblemLocation.fromMethod(clazz.name, method) }) ?: return
+    val aClass = VerifierUtil.resolveClassOrProblem(resolver, className, clazz, ctx, { VerifierUtil.fromMethod(clazz.name, method) }) ?: return
 
     if (instr.opcode == Opcodes.NEW) {
       if (VerifierUtil.isInterface(aClass)) {
-        ctx.registerProblem(InterfaceInstantiationProblem(className), ProblemLocation.fromMethod(clazz.name, method))
+        ctx.registerProblem(InterfaceInstantiationProblem(className), VerifierUtil.fromMethod(clazz.name, method))
       } else if (VerifierUtil.isAbstract(aClass)) {
-        ctx.registerProblem(AbstractClassInstantiationProblem(className), ProblemLocation.fromMethod(clazz.name, method))
+        ctx.registerProblem(AbstractClassInstantiationProblem(className), VerifierUtil.fromMethod(clazz.name, method))
       }
     }
 

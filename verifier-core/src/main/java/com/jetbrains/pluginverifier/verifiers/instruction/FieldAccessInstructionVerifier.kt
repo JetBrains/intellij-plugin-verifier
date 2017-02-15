@@ -174,7 +174,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
   }
 
 
-  fun getFromMethod() = ProblemLocation.fromMethod(verifiableClass.name, verifiableMethod)
+  fun getFromMethod() = VerifierUtil.fromMethod(verifiableClass.name, verifiableMethod)
 
   data class LookupResult(val fail: Boolean, val resolvedField: ResolvedField?)
 

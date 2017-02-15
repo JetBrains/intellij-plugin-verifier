@@ -5,9 +5,6 @@ import com.github.salomonbrys.kotson.jsonSerializer
 import com.github.salomonbrys.kotson.string
 import com.google.gson.JsonPrimitive
 import com.jetbrains.pluginverifier.utils.MessageUtils
-import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 
 /**
  * @author Sergey Patrikeev
@@ -16,16 +13,6 @@ interface SymbolicReference {
   companion object {
 
     fun methodFrom(hostClass: String, methodName: String, methodDescriptor: String): MethodReference = MethodReference(hostClass, methodName, methodDescriptor)
-
-    fun methodFrom(hostClass: ClassNode, methodName: String, methodDescriptor: String): MethodReference = methodFrom(hostClass.name, methodName, methodDescriptor)
-
-    fun methodFrom(hostClass: String, method: MethodNode): MethodReference = methodFrom(hostClass, method.name, method.desc)
-
-    fun methodFrom(hostClass: ClassNode, method: MethodNode): MethodReference = methodFrom(hostClass.name, method)
-
-    fun fieldFrom(hostClass: ClassNode, field: FieldNode): FieldReference = fieldFrom(hostClass.name, field)
-
-    fun fieldFrom(hostClass: String, field: FieldNode): FieldReference = fieldFrom(hostClass, field.name, field.desc)
 
     fun fieldFrom(hostClass: String, fieldName: String, fieldDescriptor: String): FieldReference = FieldReference(hostClass, fieldName, fieldDescriptor)
 
