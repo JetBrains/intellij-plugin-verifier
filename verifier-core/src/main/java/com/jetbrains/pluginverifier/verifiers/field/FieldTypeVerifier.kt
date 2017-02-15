@@ -14,6 +14,6 @@ class FieldTypeVerifier : FieldVerifier {
   override fun verify(clazz: ClassNode, field: FieldNode, resolver: Resolver, ctx: VContext) {
     val className = VerifierUtil.extractClassNameFromDescr(field.desc) ?: return
 
-    VerifierUtil.checkClassExistsOrExternal(resolver, className, ctx, { ProblemLocation.fromField(clazz.name, field.name, field.desc) })
+    VerifierUtil.checkClassExistsOrExternal(resolver, className, ctx, { ProblemLocation.fromField(clazz.name, field.name, field.desc, field.signature) })
   }
 }

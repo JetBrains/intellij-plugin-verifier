@@ -17,7 +17,7 @@ interface ProblemLocation {
     fun fromMethod(hostClass: String, methodName: String, methodDescriptor: String, parameterNames: List<String>, signature: String?): MethodLocation
         = MethodLocation(hostClass, methodName, methodDescriptor, parameterNames, signature ?: "")
 
-    fun fromField(hostClass: String, fieldName: String, fieldDescriptor: String): FieldLocation = FieldLocation(hostClass, fieldName, fieldDescriptor)
+    fun fromField(hostClass: String, fieldName: String, fieldDescriptor: String, signature: String?): FieldLocation = FieldLocation(hostClass, fieldName, fieldDescriptor, signature ?: "")
   }
 
 }
@@ -40,7 +40,8 @@ data class MethodLocation(val hostClass: String,
 
 data class FieldLocation(val hostClass: String,
                          val fieldName: String,
-                         val fieldDescriptor: String) : ProblemLocation {
+                         val fieldDescriptor: String,
+                         val signature: String) : ProblemLocation {
   override fun toString(): String = MessageUtils.convertField(fieldName, hostClass)
 }
 
@@ -52,7 +53,7 @@ internal val problemLocationSerializer = jsonSerializer<ProblemLocation> {
   val src = it.src
   return@jsonSerializer when (src) {
     is MethodLocation -> JsonPrimitive("M#${src.hostClass}#${src.methodName}#${src.methodDescriptor}#${src.parameterNames.joinToString("|")}#${src.signature}")
-    is FieldLocation -> JsonPrimitive("F#${src.hostClass}#${src.fieldName}#${src.fieldDescriptor}")
+    is FieldLocation -> JsonPrimitive("F#${src.hostClass}#${src.fieldName}#${src.fieldDescriptor}#${src.signature}")
     is ClassLocation -> JsonPrimitive("C#${src.className}#${src.signature}")
     else -> throw IllegalArgumentException("Unregistered type ${it.src.javaClass.name}: ${it.src}")
   }
@@ -62,7 +63,7 @@ internal val problemLocationDeserializer = jsonDeserializer<ProblemLocation> {
   val parts = it.json.string.split('#')
   return@jsonDeserializer when {
     parts[0] == "M" -> ProblemLocation.fromMethod(parts[1], parts[2], parts[3], parts[4].split("|"), parts[5])
-    parts[0] == "F" -> ProblemLocation.fromField(parts[1], parts[2], parts[3])
+    parts[0] == "F" -> ProblemLocation.fromField(parts[1], parts[2], parts[3], parts[4])
     parts[0] == "C" -> ProblemLocation.fromClass(parts[1], parts[2])
     else -> throw IllegalArgumentException("Unknown type ${it.json.string}")
   }
