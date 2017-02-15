@@ -2,14 +2,17 @@ package com.jetbrains.pluginverifier.utils
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
+import com.jetbrains.pluginverifier.location.MethodLocation
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.AccessType
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.IllegalClassAccessProblem
 import com.jetbrains.pluginverifier.warnings.Warning
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
+import org.jetbrains.intellij.plugins.internal.asm.Type
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.LocalVariableNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 import org.slf4j.LoggerFactory
 
@@ -237,6 +240,19 @@ object VerifierUtil {
     return false
   }
 
-  fun fromMethod(hostClass: String, method: MethodNode) = ProblemLocation.fromMethod(hostClass, method.name, method.desc)
+  @Suppress("UNCHECKED_CAST")
+  fun fromMethod(hostClass: String, method: MethodNode): MethodLocation {
+    val arguments = Type.getArgumentTypes(method.desc)
+    val argumentsNumber = arguments.size
+    val offset = if (isStatic(method)) 0 else 1
+    var parameterNames: List<String> = emptyList()
+    if (method.localVariables != null) {
+      parameterNames = (method.localVariables as List<LocalVariableNode>).map { it.name }.drop(offset).take(argumentsNumber)
+    }
+    if (parameterNames.size != argumentsNumber) {
+      parameterNames = (0..argumentsNumber - 1).map { "arg$it" }
+    }
+    return ProblemLocation.fromMethod(hostClass, method.name, method.desc, parameterNames)
+  }
 
 }

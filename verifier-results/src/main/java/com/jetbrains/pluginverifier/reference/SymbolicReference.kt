@@ -31,7 +31,7 @@ data class MethodReference(val hostClass: String,
 data class FieldReference(val hostClass: String,
                           val fieldName: String,
                           val fieldDescriptor: String) : SymbolicReference {
-  override fun toString(): String = MessageUtils.convertField(fieldName, fieldDescriptor, hostClass)
+  override fun toString(): String = MessageUtils.convertField(fieldName, hostClass)
 
 }
 

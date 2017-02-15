@@ -36,15 +36,14 @@ object MessageUtils {
     return arrayType + "[]".repeat(dims)
   }
 
-
-  private fun convertMethodDescriptor(methodDescriptor: String): Pair<List<String>, String> {
+  fun parseMethodParameters(methodDescriptor: String): List<String> {
     require(methodDescriptor.startsWith("(") && methodDescriptor.contains(')'), { methodDescriptor })
-    val args = arrayListOf<String>()
+    val params = arrayListOf<String>()
     var pos = 1
     while (methodDescriptor[pos] != ')') {
       val char = methodDescriptor[pos]
       if (char in "ZCBSIFJD") {
-        args.add(convertDescriptor(char.toString()))
+        params.add(char.toString())
         pos++
       } else if (char == '[') {
         var end = pos
@@ -54,34 +53,36 @@ object MessageUtils {
         if (methodDescriptor[end] == 'L') {
           end = methodDescriptor.indexOf(';', end)
         }
-        args.add(convertDescriptor(methodDescriptor.substring(pos, end + 1)))
+        params.add(methodDescriptor.substring(pos, end + 1))
         pos = end + 1
       } else {
         require(char == 'L')
         val end = methodDescriptor.indexOf(';', pos)
-        args.add(convertDescriptor(methodDescriptor.substring(pos, end + 1)))
+        params.add(methodDescriptor.substring(pos, end + 1))
         pos = end + 1
       }
     }
-    val returnType = convertDescriptor(methodDescriptor.substring(pos + 1))
-    return args to returnType
+    return params
   }
 
+  private fun convertMethodDescriptor(methodDescriptor: String): Pair<List<String>, String> {
+    val parameters = parseMethodParameters(methodDescriptor).map { convertDescriptor(it) }
+    val returnType = convertDescriptor(methodDescriptor.substringAfter(")"))
+    return parameters to returnType
+  }
 
   /*
     methodName (Ljava/lang/Object;IDF)V -> void methodName(Object, int, double, float)
     className methodName (Ljava/lang/Object;IDF)V -> className.methodName(Object, int, double, float)
   */
-  fun convertMethod(methodName: String, methodDescriptor: String, className: String? = null): String {
-    val methodType = convertMethodDescriptor(methodDescriptor)
-    val nameAndArgs = methodType.first.joinToString(prefix = "$methodName(", postfix = ")")
-    return if (className != null) convertClass(className) + ".$nameAndArgs" else convertClass(methodType.second) + " " + nameAndArgs
+  fun convertMethod(methodName: String, methodDescriptor: String, className: String, parameterNames: List<String>? = null): String {
+    val (parameters, returnType) = convertMethodDescriptor(methodDescriptor)
+    require(parameterNames == null || parameterNames.size == parameters.size, { "Missing parameter names: $methodDescriptor : $parameterNames" })
+    val names = parameterNames ?: (0..parameters.size - 1).map { "arg$it" }
+    val parametersWithNames = parameters.zip(names).map { "${it.first} ${it.second}" }
+    return convertClass(className) + ".$methodName(" + parametersWithNames.joinToString() + ") : $returnType"
   }
 
-  fun convertField(fieldName: String, fieldDescriptor: String, className: String? = null): String =
-      if (className != null)
-        convertClass(className) + ".$fieldName"
-      else
-        convertClass(convertDescriptor(fieldDescriptor)) + " " + fieldName
+  fun convertField(fieldName: String, className: String): String = convertClass(className) + ".$fieldName"
 
 }
