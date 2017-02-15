@@ -245,7 +245,7 @@ object VerifierUtil {
 
   fun fromMethod(hostClass: String, method: MethodNode): MethodLocation {
     val parameterNames = getParameterNames(method)
-    return ProblemLocation.fromMethod(hostClass, method.name, method.desc, parameterNames)
+    return ProblemLocation.fromMethod(hostClass, method.name, method.desc, parameterNames, method.signature)
   }
 
   @Suppress("UNCHECKED_CAST")
