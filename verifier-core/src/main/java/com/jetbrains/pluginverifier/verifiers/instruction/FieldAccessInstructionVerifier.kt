@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
-import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
@@ -200,7 +199,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
      * of the specified class or interface C.
      */
     for (anInterface in currentClass.interfaces as List<String>) {
-      val resolvedIntf = VerifierUtil.resolveClassOrProblem(resolver, anInterface, currentClass, ctx, { ProblemLocation.fromClass(currentClass.name) }) ?: return FAILED_LOOKUP
+      val resolvedIntf = VerifierUtil.resolveClassOrProblem(resolver, anInterface, currentClass, ctx, { VerifierUtil.fromClass(currentClass) }) ?: return FAILED_LOOKUP
 
       val (fail, resolvedField) = resolveFieldSteps(resolvedIntf)
       if (fail) {
@@ -216,7 +215,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
      */
     val superName = currentClass.superName
     if (superName != null) {
-      val resolvedSuper = VerifierUtil.resolveClassOrProblem(resolver, superName, currentClass, ctx, { ProblemLocation.fromClass(currentClass.name) }) ?: return FAILED_LOOKUP
+      val resolvedSuper = VerifierUtil.resolveClassOrProblem(resolver, superName, currentClass, ctx, { VerifierUtil.fromClass(currentClass) }) ?: return FAILED_LOOKUP
       val (fail, resolvedField) = resolveFieldSteps(resolvedSuper)
       if (fail) {
         return FAILED_LOOKUP

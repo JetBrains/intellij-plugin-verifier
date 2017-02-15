@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.verifiers.method
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
-import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.OverridingFinalMethodProblem
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
@@ -43,7 +42,7 @@ class OverrideNonFinalVerifier : MethodVerifier {
         return
       }
       val superName = curNode.superName ?: break
-      val superNode = VerifierUtil.resolveClassOrProblem(resolver, superName, curNode, ctx, { ProblemLocation.fromClass(curName) }) ?: break
+      val superNode = VerifierUtil.resolveClassOrProblem(resolver, superName, curNode, ctx, { VerifierUtil.fromClass(curNode!!) }) ?: break
       curNode = superNode
     }
   }

@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.utils.MessageUtils
 interface ProblemLocation {
 
   companion object {
-    fun fromClass(className: String): ClassLocation = ClassLocation(className)
+    fun fromClass(className: String, signature: String?): ClassLocation = ClassLocation(className, signature ?: "")
 
     fun fromMethod(hostClass: String, methodName: String, methodDescriptor: String, parameterNames: List<String>): MethodLocation = MethodLocation(hostClass, methodName, methodDescriptor, parameterNames)
 
@@ -42,7 +42,7 @@ data class FieldLocation(val hostClass: String,
   override fun toString(): String = MessageUtils.convertField(fieldName, hostClass)
 }
 
-data class ClassLocation(val className: String) : ProblemLocation {
+data class ClassLocation(val className: String, val signature: String) : ProblemLocation {
   override fun toString(): String = MessageUtils.convertClass(className)
 }
 
@@ -51,7 +51,7 @@ internal val problemLocationSerializer = jsonSerializer<ProblemLocation> {
   return@jsonSerializer when (src) {
     is MethodLocation -> JsonPrimitive("M#${src.hostClass}#${src.methodName}#${src.methodDescriptor}#${src.parameterNames.joinToString("|")}")
     is FieldLocation -> JsonPrimitive("F#${src.hostClass}#${src.fieldName}#${src.fieldDescriptor}")
-    is ClassLocation -> JsonPrimitive("C#${src.className}")
+    is ClassLocation -> JsonPrimitive("C#${src.className}#${src.signature}")
     else -> throw IllegalArgumentException("Unregistered type ${it.src.javaClass.name}: ${it.src}")
   }
 }
@@ -61,7 +61,7 @@ internal val problemLocationDeserializer = jsonDeserializer<ProblemLocation> {
   return@jsonDeserializer when {
     parts[0] == "M" -> ProblemLocation.fromMethod(parts[1], parts[2], parts[3], parts[4].split("|"))
     parts[0] == "F" -> ProblemLocation.fromField(parts[1], parts[2], parts[3])
-    parts[0] == "C" -> ProblemLocation.fromClass(parts[1])
+    parts[0] == "C" -> ProblemLocation.fromClass(parts[1], parts[2])
     else -> throw IllegalArgumentException("Unknown type ${it.json.string}")
   }
 }

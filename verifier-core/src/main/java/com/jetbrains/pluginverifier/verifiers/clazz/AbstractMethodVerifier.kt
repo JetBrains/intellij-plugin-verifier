@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.verifiers.clazz
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
-import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem
 import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.VerifierUtil
@@ -22,7 +21,7 @@ class AbstractMethodVerifier : ClassVerifier {
     traverseTree(clazz, resolver, ctx, hashSetOf(), abstractMethods, implementedMethods)
 
     (abstractMethods.keys - implementedMethods.keys).forEach {
-      ctx.registerProblem(MethodNotImplementedProblem(SymbolicReference.methodFrom(abstractMethods[it]!!, it.name, it.descriptor)), ProblemLocation.fromClass(clazz.name))
+      ctx.registerProblem(MethodNotImplementedProblem(SymbolicReference.methodFrom(abstractMethods[it]!!, it.name, it.descriptor)), VerifierUtil.fromClass(clazz))
     }
   }
 
@@ -51,7 +50,7 @@ class AbstractMethodVerifier : ClassVerifier {
 
     (listOf(superName) + (clazz.interfaces as List<String>)).forEach { clsName ->
       if (!visitedClasses.contains(clsName)) {
-        val node = VerifierUtil.resolveClassOrProblem(resolver, clsName, clazz, ctx, { ProblemLocation.fromClass(clazz.name) })
+        val node = VerifierUtil.resolveClassOrProblem(resolver, clsName, clazz, ctx, { VerifierUtil.fromClass(clazz) })
         if (node != null) {
           traverseTree(node, resolver, ctx, visitedClasses, abstractMethods, implementedMethods)
         }

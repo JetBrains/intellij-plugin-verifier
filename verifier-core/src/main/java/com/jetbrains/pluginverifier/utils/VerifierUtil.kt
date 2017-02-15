@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.utils
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
+import com.jetbrains.pluginverifier.location.ClassLocation
 import com.jetbrains.pluginverifier.location.MethodLocation
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.AccessType
@@ -240,8 +241,15 @@ object VerifierUtil {
     return false
   }
 
-  @Suppress("UNCHECKED_CAST")
+  fun fromClass(clazz: ClassNode): ClassLocation = ProblemLocation.fromClass(clazz.name, clazz.signature)
+
   fun fromMethod(hostClass: String, method: MethodNode): MethodLocation {
+    val parameterNames = getParameterNames(method)
+    return ProblemLocation.fromMethod(hostClass, method.name, method.desc, parameterNames)
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun getParameterNames(method: MethodNode): List<String> {
     val arguments = Type.getArgumentTypes(method.desc)
     val argumentsNumber = arguments.size
     val offset = if (isStatic(method)) 0 else 1
@@ -252,7 +260,7 @@ object VerifierUtil {
     if (parameterNames.size != argumentsNumber) {
       parameterNames = (0..argumentsNumber - 1).map { "arg$it" }
     }
-    return ProblemLocation.fromMethod(hostClass, method.name, method.desc, parameterNames)
+    return parameterNames
   }
 
 }
