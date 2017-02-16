@@ -15,9 +15,9 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 class SuperClassVerifier : ClassVerifier {
   override fun verify(clazz: ClassNode, resolver: Resolver, ctx: VContext) {
     val superClassName = if (clazz.superName == null) "java/lang/Object" else clazz.superName
-    val aClass = VerifierUtil.resolveClassOrProblem(resolver, superClassName, clazz, ctx, { VerifierUtil.fromClass(clazz) }) ?: return
+    val aClass = VerifierUtil.resolveClassOrProblem(resolver, superClassName, clazz, ctx, { ctx.fromClass(clazz) }) ?: return
     if (VerifierUtil.isInterface(aClass)) {
-      ctx.registerProblem(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classFrom(superClassName)), VerifierUtil.fromClass(clazz))
+      ctx.registerProblem(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classFrom(superClassName)), ctx.fromClass(clazz))
     }
   }
 }

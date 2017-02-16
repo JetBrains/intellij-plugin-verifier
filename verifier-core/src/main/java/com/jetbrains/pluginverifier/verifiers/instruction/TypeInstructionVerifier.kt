@@ -23,13 +23,13 @@ class TypeInstructionVerifier : InstructionVerifier {
     val desc = instr.desc
     val className = VerifierUtil.extractClassNameFromDescr(desc) ?: return
 
-    val aClass = VerifierUtil.resolveClassOrProblem(resolver, className, clazz, ctx, { VerifierUtil.fromMethod(clazz.name, method) }) ?: return
+    val aClass = VerifierUtil.resolveClassOrProblem(resolver, className, clazz, ctx, { ctx.fromMethod(clazz.name, method) }) ?: return
 
     if (instr.opcode == Opcodes.NEW) {
       if (VerifierUtil.isInterface(aClass)) {
-        ctx.registerProblem(InterfaceInstantiationProblem(className), VerifierUtil.fromMethod(clazz.name, method))
+        ctx.registerProblem(InterfaceInstantiationProblem(className), ctx.fromMethod(clazz.name, method))
       } else if (VerifierUtil.isAbstract(aClass)) {
-        ctx.registerProblem(AbstractClassInstantiationProblem(className), VerifierUtil.fromMethod(clazz.name, method))
+        ctx.registerProblem(AbstractClassInstantiationProblem(className), ctx.fromMethod(clazz.name, method))
       }
     }
 

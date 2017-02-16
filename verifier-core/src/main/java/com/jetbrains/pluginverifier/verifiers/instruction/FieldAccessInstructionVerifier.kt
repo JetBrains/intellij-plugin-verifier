@@ -173,7 +173,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
   }
 
 
-  fun getFromMethod() = VerifierUtil.fromMethod(verifiableClass.name, verifiableMethod)
+  fun getFromMethod() = ctx.fromMethod(verifiableClass.name, verifiableMethod)
 
   data class LookupResult(val fail: Boolean, val resolvedField: ResolvedField?)
 
@@ -199,7 +199,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
      * of the specified class or interface C.
      */
     for (anInterface in currentClass.interfaces as List<String>) {
-      val resolvedIntf = VerifierUtil.resolveClassOrProblem(resolver, anInterface, currentClass, ctx, { VerifierUtil.fromClass(currentClass) }) ?: return FAILED_LOOKUP
+      val resolvedIntf = VerifierUtil.resolveClassOrProblem(resolver, anInterface, currentClass, ctx, { ctx.fromClass(currentClass) }) ?: return FAILED_LOOKUP
 
       val (fail, resolvedField) = resolveFieldSteps(resolvedIntf)
       if (fail) {
@@ -215,7 +215,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
      */
     val superName = currentClass.superName
     if (superName != null) {
-      val resolvedSuper = VerifierUtil.resolveClassOrProblem(resolver, superName, currentClass, ctx, { VerifierUtil.fromClass(currentClass) }) ?: return FAILED_LOOKUP
+      val resolvedSuper = VerifierUtil.resolveClassOrProblem(resolver, superName, currentClass, ctx, { ctx.fromClass(currentClass) }) ?: return FAILED_LOOKUP
       val (fail, resolvedField) = resolveFieldSteps(resolvedSuper)
       if (fail) {
         return FAILED_LOOKUP

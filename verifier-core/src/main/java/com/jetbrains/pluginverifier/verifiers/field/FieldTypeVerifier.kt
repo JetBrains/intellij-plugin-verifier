@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.verifiers.field
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
-import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
@@ -14,6 +13,6 @@ class FieldTypeVerifier : FieldVerifier {
   override fun verify(clazz: ClassNode, field: FieldNode, resolver: Resolver, ctx: VContext) {
     val className = VerifierUtil.extractClassNameFromDescr(field.desc) ?: return
 
-    VerifierUtil.checkClassExistsOrExternal(resolver, className, ctx, { ProblemLocation.fromField(clazz.name, field.name, field.desc, field.signature) })
+    VerifierUtil.checkClassExistsOrExternal(resolver, className, ctx, { ctx.fromField(clazz.name, field) })
   }
 }

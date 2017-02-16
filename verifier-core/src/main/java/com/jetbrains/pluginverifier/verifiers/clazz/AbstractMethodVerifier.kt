@@ -21,7 +21,7 @@ class AbstractMethodVerifier : ClassVerifier {
     traverseTree(clazz, resolver, ctx, hashSetOf(), abstractMethods, implementedMethods)
 
     (abstractMethods.keys - implementedMethods.keys).forEach {
-      ctx.registerProblem(MethodNotImplementedProblem(SymbolicReference.methodFrom(abstractMethods[it]!!, it.name, it.descriptor)), VerifierUtil.fromClass(clazz))
+      ctx.registerProblem(MethodNotImplementedProblem(SymbolicReference.methodFrom(abstractMethods[it]!!, it.name, it.descriptor)), ctx.fromClass(clazz))
     }
   }
 
@@ -50,7 +50,7 @@ class AbstractMethodVerifier : ClassVerifier {
 
     (listOf(superName) + (clazz.interfaces as List<String>)).forEach { clsName ->
       if (!visitedClasses.contains(clsName)) {
-        val node = VerifierUtil.resolveClassOrProblem(resolver, clsName, clazz, ctx, { VerifierUtil.fromClass(clazz) })
+        val node = VerifierUtil.resolveClassOrProblem(resolver, clsName, clazz, ctx, { ctx.fromClass(clazz) })
         if (node != null) {
           traverseTree(node, resolver, ctx, visitedClasses, abstractMethods, implementedMethods)
         }

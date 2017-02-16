@@ -16,9 +16,9 @@ class InterfacesVerifier : ClassVerifier {
   override fun verify(clazz: ClassNode, resolver: Resolver, ctx: VContext) {
     for (o in clazz.interfaces) {
       val iface = o as String
-      val node = VerifierUtil.resolveClassOrProblem(resolver, iface, clazz, ctx, { VerifierUtil.fromClass(clazz) }) ?: continue
+      val node = VerifierUtil.resolveClassOrProblem(resolver, iface, clazz, ctx, { ctx.fromClass(clazz) }) ?: continue
       if (!VerifierUtil.isInterface(node)) {
-        ctx.registerProblem(IncompatibleInterfaceToClassChangeProblem(SymbolicReference.classFrom(iface)), VerifierUtil.fromClass(clazz))
+        ctx.registerProblem(IncompatibleInterfaceToClassChangeProblem(SymbolicReference.classFrom(iface)), ctx.fromClass(clazz))
       }
     }
   }

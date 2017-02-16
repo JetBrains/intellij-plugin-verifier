@@ -15,17 +15,19 @@ import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingReason
 import com.jetbrains.pluginverifier.format.UpdateInfo
-import com.jetbrains.pluginverifier.location.ProblemLocation
+import com.jetbrains.pluginverifier.location.*
 import com.jetbrains.pluginverifier.misc.PluginCache
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.IFileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
-import com.jetbrains.pluginverifier.utils.DefaultDependencyResolver
-import com.jetbrains.pluginverifier.utils.Dependencies
-import com.jetbrains.pluginverifier.utils.Edge
-import com.jetbrains.pluginverifier.utils.Vertex
+import com.jetbrains.pluginverifier.utils.*
 import com.jetbrains.pluginverifier.verifiers.VERIFIERS
 import com.jetbrains.pluginverifier.warnings.Warning
+import org.jetbrains.intellij.plugins.internal.asm.Type
+import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.LocalVariableNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 import org.jgrapht.DirectedGraph
 import org.jgrapht.alg.cycle.JohnsonSimpleCycles
 import org.slf4j.LoggerFactory
@@ -274,15 +276,16 @@ object VManager {
     }
 
     try {
-      val ctx = VContext(plugin!!, pluginDescriptor, ide, ideDescriptor, params.options)
       val dependencyResolver = params.dependencyResolver ?: DefaultDependencyResolver(ide)
-      val (dependenciesResolver, dependenciesGraph, cycle: List<Plugin>?, pluginLocks: List<IFileLock>) = getDependenciesResolver(ctx, dependencyResolver)
+      val (dependenciesResolver, dependenciesGraph, cycle: List<Plugin>?, pluginLocks: List<IFileLock>) = getDependenciesResolver(dependencyResolver, plugin!!, ide)
 
-      try {
+      val ctx = try {
         dependenciesResolver.use {
           val checkClasses = getClassesForCheck(plugin, pluginResolver!!)
-          val classLoader = createClassLoader(dependenciesResolver, ctx, ideResolver, pluginResolver, runtimeResolver, params.externalClassPath)
-          VERIFIERS.forEach { it.verify(ctx, checkClasses, classLoader) }
+          val classLoader = createClassLoader(dependenciesResolver, ideResolver, pluginResolver, runtimeResolver, params.externalClassPath, ide, plugin)
+          val context = VContext(plugin, pluginDescriptor, ide, ideDescriptor, params.options, classLoader)
+          VERIFIERS.forEach { it.verify(context, checkClasses, classLoader) }
+          return@use context
         }
       } catch (ie: InterruptedException) {
         throw ie
@@ -295,7 +298,7 @@ object VManager {
       }
 
       val warnings = ctx.warnings +
-          (if (plugin is PluginImpl) plugin.hints.map { Warning(it) } else emptyList()) +
+          ((plugin as? PluginImpl)?.hints?.map(::Warning) ?: emptyList()) +
           (if (cycle != null) listOf(Warning("Found dependencies cycle: " + cycle.joinToString(separator = " -> ") { it.pluginId })) else emptyList())
 
       if (ctx.problems.isEmpty) {
@@ -354,14 +357,13 @@ object VManager {
                                         val pluginLocks: List<IFileLock>)
 
 
-  private fun getDependenciesResolver(ctx: VContext, dependencyResolver: DependencyResolver): DependenciesResult {
+  private fun getDependenciesResolver(dependencyResolver: DependencyResolver, plugin: Plugin, ide: Ide): DependenciesResult {
 
-    val plugin = ctx.plugin
     val (graph: DirectedGraph<Vertex, Edge>, startVertex: Vertex, allLocks: List<IFileLock>) =
         try {
           Dependencies.calcDependencies(plugin, dependencyResolver)
         } catch(e: Exception) {
-          throw RuntimeException("Unable to evaluate dependencies of the plugin $plugin with IDE ${ctx.ide}", e)
+          throw RuntimeException("Unable to evaluate dependencies of the plugin $plugin with IDE $ide", e)
         }
 
     try {
@@ -447,14 +449,14 @@ object VManager {
 
 
   private fun createClassLoader(dependenciesResolver: Resolver,
-                                context: VContext,
                                 ideResolver: Resolver,
                                 pluginResolver: Resolver,
                                 runtimeResolver: Resolver,
-                                externalClassPath: Resolver): Resolver =
+                                externalClassPath: Resolver,
+                                ide: Ide, plugin: Plugin): Resolver =
       Resolver.createCacheResolver(
           Resolver.createUnionResolver(
-              "Common resolver for plugin " + context.plugin.pluginId + " with its transitive dependencies; ide " + context.ide.version + "; jdk " + runtimeResolver,
+              "Common resolver for plugin " + plugin.pluginId + " with its transitive dependencies; ide " + ide.version + "; jdk " + runtimeResolver,
               listOf(pluginResolver, runtimeResolver, ideResolver, dependenciesResolver, externalClassPath)
           )
       )
@@ -478,7 +480,8 @@ data class VContext(
     val pluginDescriptor: PluginDescriptor,
     val ide: Ide,
     val ideDescriptor: IdeDescriptor,
-    val verifierOptions: VOptions
+    val verifierOptions: VOptions,
+    val resolver: Resolver
 ) {
   val problems: Multimap<Problem, ProblemLocation> = HashMultimap.create()
 
@@ -492,6 +495,60 @@ data class VContext(
 
   fun registerWarning(warning: Warning) {
     warnings.add(warning)
+  }
+
+  private fun getClassPath(className: String): ClassPath {
+    val actualResolver = resolver.getClassLocation(className)
+    require(actualResolver != null, { "Where did the class $className come from?" })
+    if (actualResolver.classPath.size != 1) {
+      //it should not happen, because actually each class-file is coming from a specific resolver
+      //(a specific jar file or maybe a `classes` directory)
+      //but nevertheless process it as being a root of the plugin
+      return ClassPath(ClassPath.Type.ROOT, "root")
+    }
+    val file = actualResolver.classPath.single()
+    if (file.name.endsWith(".jar")) {
+      val parentFile = file.parentFile
+      if (parentFile != null && parentFile.isDirectory && parentFile.name == "lib") {
+        //we only want to remember jar files from the <plugin>/lib/ directory and
+        //don't want a name of the plugin file, because it's unspecified and could be something
+        //like update1234.jar instead of original file name (as defined by the author)
+        return ClassPath(ClassPath.Type.JAR_FILE, file.name)
+      }
+      return ClassPath(ClassPath.Type.ROOT, file.name)
+    }
+    if (file.isDirectory && file.name == "classes") {
+      return ClassPath(ClassPath.Type.CLASSES_DIRECTORY, "classes")
+    }
+    return ClassPath(ClassPath.Type.ROOT, file.name)
+  }
+
+  fun fromClass(clazz: ClassNode): ClassLocation {
+    return ProblemLocation.fromClass(clazz.name, clazz.signature, getClassPath(clazz.name))
+  }
+
+  fun fromMethod(hostClass: String, method: MethodNode): MethodLocation {
+    val parameterNames = getParameterNames(method)
+    return ProblemLocation.fromMethod(hostClass, method.name, method.desc, parameterNames, method.signature, getClassPath(hostClass))
+  }
+
+  fun fromField(hostClass: String, field: FieldNode): FieldLocation {
+    return ProblemLocation.fromField(hostClass, field.name, field.desc, field.signature, getClassPath(hostClass))
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun getParameterNames(method: MethodNode): List<String> {
+    val arguments = Type.getArgumentTypes(method.desc)
+    val argumentsNumber = arguments.size
+    val offset = if (VerifierUtil.isStatic(method)) 0 else 1
+    var parameterNames: List<String> = emptyList()
+    if (method.localVariables != null) {
+      parameterNames = (method.localVariables as List<LocalVariableNode>).map { it.name }.drop(offset).take(argumentsNumber)
+    }
+    if (parameterNames.size != argumentsNumber) {
+      parameterNames = (0..argumentsNumber - 1).map { "arg$it" }
+    }
+    return parameterNames
   }
 
 }

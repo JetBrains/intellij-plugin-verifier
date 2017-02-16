@@ -10,9 +10,9 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 class InheritFromFinalClassVerifier : ClassVerifier {
   override fun verify(clazz: ClassNode, resolver: Resolver, ctx: VContext) {
     val superClassName = if (clazz.superName == null) "java/lang/Object" else clazz.superName
-    val supClass = VerifierUtil.resolveClassOrProblem(resolver, superClassName, clazz, ctx, { VerifierUtil.fromClass(clazz) }) ?: return
+    val supClass = VerifierUtil.resolveClassOrProblem(resolver, superClassName, clazz, ctx, { ctx.fromClass(clazz) }) ?: return
     if (VerifierUtil.isFinal(supClass)) {
-      ctx.registerProblem(InheritFromFinalClassProblem(SymbolicReference.classFrom(supClass.name)), VerifierUtil.fromClass(clazz))
+      ctx.registerProblem(InheritFromFinalClassProblem(SymbolicReference.classFrom(supClass.name)), ctx.fromClass(clazz))
     }
   }
 }

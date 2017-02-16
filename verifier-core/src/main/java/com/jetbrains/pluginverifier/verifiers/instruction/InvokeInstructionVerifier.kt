@@ -147,7 +147,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
         If a match is found, then it is the method to be invoked.
     */
     if (!VerifierUtil.isInterface(classRef) && classRef.superName != null) {
-      var current: ClassNode = VerifierUtil.resolveClassOrProblem(resolver, classRef.superName, classRef, ctx, { VerifierUtil.fromClass(classRef) }) ?: return null
+      var current: ClassNode = VerifierUtil.resolveClassOrProblem(resolver, classRef.superName, classRef, ctx, { ctx.fromClass(classRef) }) ?: return null
       while (true) {
         val match = (current.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc }
         if (match != null) {
@@ -156,7 +156,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
 
         val superName = current.superName
         superName ?: break
-        current = VerifierUtil.resolveClassOrProblem(resolver, superName, current, ctx, { VerifierUtil.fromClass(current) }) ?: return null
+        current = VerifierUtil.resolveClassOrProblem(resolver, superName, current, ctx, { ctx.fromClass(current) }) ?: return null
       }
     }
 
@@ -165,7 +165,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
        the same name and descriptor as the resolved method, then it is the method to be invoked.
     */
     if (VerifierUtil.isInterface(classRef)) {
-      val objectClass = VerifierUtil.resolveClassOrProblem(resolver, "java/lang/Object", classRef, ctx, { VerifierUtil.fromClass(classRef) }) ?: return null
+      val objectClass = VerifierUtil.resolveClassOrProblem(resolver, "java/lang/Object", classRef, ctx, { ctx.fromClass(classRef) }) ?: return null
       val match = (objectClass.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc && VerifierUtil.isPublic(it) }
       if (match != null) {
         return 3 to ResolvedMethod(objectClass, match)
@@ -233,7 +233,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     }
   }
 
-  private fun getFromMethod() = VerifierUtil.fromMethod(verifiableClass.name, verifiableMethod)
+  private fun getFromMethod() = ctx.fromMethod(verifiableClass.name, verifiableMethod)
 
   fun resolveInterfaceMethod(): ResolvedMethod? {
     val (fail, resolvedMethod) = resolveInterfaceMethod0(ownerNode!!)
@@ -347,7 +347,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     interface method reference, which has its ACC_PUBLIC flag set and does not have its ACC_STATIC flag set,
     method lookup succeeds.
     */
-    val objectClass = VerifierUtil.resolveClassOrProblem(resolver, "java/lang/Object", interfaceNode, ctx, { VerifierUtil.fromClass(interfaceNode) }) ?: return FAILED_LOOKUP
+    val objectClass = VerifierUtil.resolveClassOrProblem(resolver, "java/lang/Object", interfaceNode, ctx, { ctx.fromClass(interfaceNode) }) ?: return FAILED_LOOKUP
     val objectMethod = (objectClass.methods as List<MethodNode>).firstOrNull { it.name == methodName && it.desc == methodDescriptor && VerifierUtil.isPublic(it) && !VerifierUtil.isStatic(it) }
     if (objectMethod != null) {
       return LookupResult(false, ResolvedMethod(objectClass, objectMethod))
@@ -421,7 +421,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
 
       (cur.interfaces as List<String>).forEach {
         if (it !in visited) {
-          val resolveClass = VerifierUtil.resolveClassOrProblem(resolver, it, cur, ctx, { VerifierUtil.fromClass(cur) }) ?: return null
+          val resolveClass = VerifierUtil.resolveClassOrProblem(resolver, it, cur, ctx, { ctx.fromClass(cur) }) ?: return null
           visited.add(it)
           queue.add(resolveClass)
         }
@@ -430,7 +430,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       val superName = cur.superName
       if (superName != null) {
         if (superName !in visited) {
-          val resolvedSuper = VerifierUtil.resolveClassOrProblem(resolver, superName, cur, ctx, { VerifierUtil.fromClass(cur) }) ?: return null
+          val resolvedSuper = VerifierUtil.resolveClassOrProblem(resolver, superName, cur, ctx, { ctx.fromClass(cur) }) ?: return null
           visited.add(superName)
           queue.add(resolvedSuper)
         }
@@ -446,7 +446,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     visited.add(currentClass.name)
     (currentClass.interfaces as List<String>).forEach {
       if (it !in visited) {
-        val resolveClass = VerifierUtil.resolveClassOrProblem(resolver, it, currentClass, ctx, { VerifierUtil.fromClass(currentClass) })
+        val resolveClass = VerifierUtil.resolveClassOrProblem(resolver, it, currentClass, ctx, { ctx.fromClass(currentClass) })
         if (resolveClass == null || !dfs0(resolveClass, visited)) {
           return false
         }
@@ -537,7 +537,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
      */
     val superName = currentClass.superName
     if (superName != null) {
-      val resolvedSuper = VerifierUtil.resolveClassOrProblem(resolver, superName, currentClass, ctx, { VerifierUtil.fromClass(currentClass) }) ?: return LookupResult(true, null)
+      val resolvedSuper = VerifierUtil.resolveClassOrProblem(resolver, superName, currentClass, ctx, { ctx.fromClass(currentClass) }) ?: return LookupResult(true, null)
       val (shouldStopLookup, resolvedMethod) = resolveClassMethodStep2(resolvedSuper)
       if (shouldStopLookup) {
         return FAILED_LOOKUP
