@@ -60,6 +60,7 @@ class VerifierTest {
       .put(AbstractClassInstantiationProblem("misc/BecomeAbstract"), fromMethod("mock/plugin/news/NewProblems", "abstractClass", "()V", emptyList(), null, classPath))
       .put(InterfaceInstantiationProblem("misc/BecomeInterface"), fromMethod("mock/plugin/news/NewProblems", "newInterface", "()V", emptyList(), null, classPath))
       .put(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classFrom("misc/BecomeInterface")), fromMethod("mock/plugin/news/NewProblems", "newInterface", "()V", emptyList(), null, classPath))
+      .put(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classFrom("statics/BecomeInterface")), fromMethod("mock/plugin/noproblems/staticMethodOfClassToInterface/UseStaticMethod", "bar", "()V", emptyList(), null, classPath))
 
 
       .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "getState", "()Ljava/lang/Object;"), fromClass("mock/plugin/NotImplementedProblem", null, classPath))
