@@ -10,7 +10,11 @@ import com.intellij.structure.domain.PluginManager
 import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
+import com.jetbrains.pluginverifier.location.ClassPath
 import com.jetbrains.pluginverifier.location.ProblemLocation
+import com.jetbrains.pluginverifier.location.ProblemLocation.Companion.fromClass
+import com.jetbrains.pluginverifier.location.ProblemLocation.Companion.fromField
+import com.jetbrains.pluginverifier.location.ProblemLocation.Companion.fromMethod
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.CmdOpts
@@ -30,68 +34,69 @@ import java.util.regex.Pattern
  * @author Sergey Patrikeev
  */
 class VerifierTest {
-  private val MY_ACTUAL_PROBLEMS = ImmutableMultimap.builder<Problem, ProblemLocation>()
 
-      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromField("mock/plugin/FieldTypeNotFound", "myNonExistingClass", "Lnon/existing/NonExistingClass;", null))
-      .put(ClassNotFoundProblem("non/existing/NonExistingInterface"), ProblemLocation.fromClass("mock/plugin/NotFoundInterface", null))
-      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenReturn", "()Lnon/existing/NonExistingClass;", emptyList(), null))
-      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenArg", "(Lnon/existing/NonExistingClass;)V", listOf("brokenArg"), null))
-      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenLocalVar", "()V", emptyList(), null))
-      .put(ClassNotFoundProblem("non/existing/NonExistingException"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenThrows", "()V", emptyList(), null))
-      .put(ClassNotFoundProblem("non/existing/NonExistingException"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenCatch", "()V", emptyList(), null))
-      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenDotClass", "()V", emptyList(), null))
-      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenMultiArray", "()V", emptyList(), null))
-      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenMultiArray", "()V", emptyList(), null))
-      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenInvocation", "()V", emptyList(), null))
-      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromClass("mock/plugin/ParentDoesntExist", null))
-      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/ParentDoesntExist", "<init>", "()V", emptyList(), null))
-      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/arrays/ANewArrayInsn", "foo", "(JDLjava/lang/Object;)V", listOf("l", "d", "a"), null))
-      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/arrays/ANewArrayInsn", "foo2", "(JDLjava/lang/Object;)V", listOf("l", "d", "a"), null))
-      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessUnknownClassOfArray", "()V", emptyList(), null))
-      .put(ClassNotFoundProblem("non/existing/DeletedClass"), ProblemLocation.fromMethod("mock/plugin/inheritance/PluginClass", "<init>", "()V", emptyList(), null))
-      .put(ClassNotFoundProblem("non/existing/DeletedClass"), ProblemLocation.fromClass("mock/plugin/inheritance/PluginClass", null))
-      .put(InheritFromFinalClassProblem("finals/BecomeFinal"), ProblemLocation.fromClass("mock/plugin/finals/InheritFromFinalClass", null))
-      .put(MethodNotFoundProblem("com/intellij/openapi/actionSystem/AnAction", "nonExistingMethod", "()V"), ProblemLocation.fromMethod("mock/plugin/MethodProblems", "brokenNonFoundMethod", "()V", emptyList(), null))
-      .put(AbstractClassInstantiationProblem("misc/BecomeAbstract"), ProblemLocation.fromMethod("mock/plugin/news/NewProblems", "abstractClass", "()V", emptyList(), null))
-      .put(InterfaceInstantiationProblem("misc/BecomeInterface"), ProblemLocation.fromMethod("mock/plugin/news/NewProblems", "newInterface", "()V", emptyList(), null))
-      .put(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classFrom("misc/BecomeInterface")), ProblemLocation.Companion.fromMethod("mock/plugin/news/NewProblems", "newInterface", "()V", emptyList(), null))
+  private fun MY_ACTUAL_PROBLEMS(classPath: ClassPath) = ImmutableMultimap.builder<Problem, ProblemLocation>()
+
+      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), fromField("mock/plugin/FieldTypeNotFound", "myNonExistingClass", "Lnon/existing/NonExistingClass;", null, classPath))
+      .put(ClassNotFoundProblem("non/existing/NonExistingInterface"), fromClass("mock/plugin/NotFoundInterface", null, classPath))
+      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), fromMethod("mock/plugin/MethodProblems", "brokenReturn", "()Lnon/existing/NonExistingClass;", emptyList(), null, classPath))
+      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), fromMethod("mock/plugin/MethodProblems", "brokenArg", "(Lnon/existing/NonExistingClass;)V", listOf("brokenArg"), null, classPath))
+      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), fromMethod("mock/plugin/MethodProblems", "brokenLocalVar", "()V", emptyList(), null, classPath))
+      .put(ClassNotFoundProblem("non/existing/NonExistingException"), fromMethod("mock/plugin/MethodProblems", "brokenThrows", "()V", emptyList(), null, classPath))
+      .put(ClassNotFoundProblem("non/existing/NonExistingException"), fromMethod("mock/plugin/MethodProblems", "brokenCatch", "()V", emptyList(), null, classPath))
+      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), fromMethod("mock/plugin/MethodProblems", "brokenDotClass", "()V", emptyList(), null, classPath))
+      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), fromMethod("mock/plugin/MethodProblems", "brokenMultiArray", "()V", emptyList(), null, classPath))
+      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), fromMethod("mock/plugin/MethodProblems", "brokenMultiArray", "()V", emptyList(), null, classPath))
+      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), fromMethod("mock/plugin/MethodProblems", "brokenInvocation", "()V", emptyList(), null, classPath))
+      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), fromClass("mock/plugin/ParentDoesntExist", null, classPath))
+      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), fromMethod("mock/plugin/ParentDoesntExist", "<init>", "()V", emptyList(), null, classPath))
+      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), fromMethod("mock/plugin/arrays/ANewArrayInsn", "foo", "(JDLjava/lang/Object;)V", listOf("l", "d", "a"), null, classPath))
+      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), fromMethod("mock/plugin/arrays/ANewArrayInsn", "foo2", "(JDLjava/lang/Object;)V", listOf("l", "d", "a"), null, classPath))
+      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), fromMethod("mock/plugin/field/FieldProblemsContainer", "accessUnknownClassOfArray", "()V", emptyList(), null, classPath))
+      .put(ClassNotFoundProblem("non/existing/DeletedClass"), fromMethod("mock/plugin/inheritance/PluginClass", "<init>", "()V", emptyList(), null, classPath))
+      .put(ClassNotFoundProblem("non/existing/DeletedClass"), fromClass("mock/plugin/inheritance/PluginClass", null, classPath))
+      .put(InheritFromFinalClassProblem("finals/BecomeFinal"), fromClass("mock/plugin/finals/InheritFromFinalClass", null, classPath))
+      .put(MethodNotFoundProblem("com/intellij/openapi/actionSystem/AnAction", "nonExistingMethod", "()V"), fromMethod("mock/plugin/MethodProblems", "brokenNonFoundMethod", "()V", emptyList(), null, classPath))
+      .put(AbstractClassInstantiationProblem("misc/BecomeAbstract"), fromMethod("mock/plugin/news/NewProblems", "abstractClass", "()V", emptyList(), null, classPath))
+      .put(InterfaceInstantiationProblem("misc/BecomeInterface"), fromMethod("mock/plugin/news/NewProblems", "newInterface", "()V", emptyList(), null, classPath))
+      .put(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classFrom("misc/BecomeInterface")), fromMethod("mock/plugin/news/NewProblems", "newInterface", "()V", emptyList(), null, classPath))
 
 
-      .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "getState", "()Ljava/lang/Object;"), ProblemLocation.fromClass("mock/plugin/NotImplementedProblem", null))
-      .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "loadState", "(Ljava/lang/Object;)V"), ProblemLocation.fromClass("mock/plugin/NotImplementedProblem", null))
-      .put(MethodNotImplementedProblem("com/intellij/psi/search/UseScopeEnlarger", "getAdditionalUseScope", "(Lcom/intellij/psi/PsiElement;)Lcom/intellij/psi/search/SearchScope;"), ProblemLocation.fromClass("mock/plugin/abstrackt/NotImplementedAbstractMethod", null))
-      .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "getState", "()Ljava/lang/Object;"), ProblemLocation.fromClass("mock/plugin/private_and_static/PrivateAndStaticNotImplemented", "Ljava/lang/Object;Lcom/intellij/openapi/components/PersistentStateComponent<Ljava/lang/String;>;"))
-      .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "loadState", "(Ljava/lang/Object;)V"), ProblemLocation.fromClass("mock/plugin/private_and_static/PrivateAndStaticNotImplemented", "Ljava/lang/Object;Lcom/intellij/openapi/components/PersistentStateComponent<Ljava/lang/String;>;"))
-      .put(OverridingFinalMethodProblem("com/intellij/openapi/actionSystem/AnAction", "isEnabledInModalContext", "()Z"), ProblemLocation.fromMethod("mock/plugin/OverrideFinalMethodProblem", "isEnabledInModalContext", "()Z", emptyList(), null))
-      .put(IllegalMethodAccessProblem("com/intellij/openapi/diagnostic/LogUtil", "<init>", "()V", AccessType.PRIVATE), ProblemLocation.fromMethod("mock/plugin/AccessChangedProblem", "foo", "()V", emptyList(), null))
-      .put(InvokeVirtualOnStaticMethodProblem("com/intellij/lang/SmartEnterProcessor", "commit", "()V"), ProblemLocation.fromMethod("mock/plugin/invokeVirtualOnStatic/SmartEnterProcessorUser", "main", "()V", emptyList(), null))
-      .put(InvokeStaticOnInstanceMethodProblem("invocation/InvocationProblems", "wasStatic", "()V"), ProblemLocation.fromMethod("mock/plugin/invokeStaticOnInstance/InvocationProblemsUser", "foo", "()V", emptyList(), null))
-      .put(FieldNotFoundProblem("fields/FieldsContainer", "deletedField", "I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessDeletedField", "()V", emptyList(), null))//field problems
+      .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "getState", "()Ljava/lang/Object;"), fromClass("mock/plugin/NotImplementedProblem", null, classPath))
+      .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "loadState", "(Ljava/lang/Object;)V"), fromClass("mock/plugin/NotImplementedProblem", null, classPath))
+      .put(MethodNotImplementedProblem("com/intellij/psi/search/UseScopeEnlarger", "getAdditionalUseScope", "(Lcom/intellij/psi/PsiElement;)Lcom/intellij/psi/search/SearchScope;"), fromClass("mock/plugin/abstrackt/NotImplementedAbstractMethod", null, classPath))
+      .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "getState", "()Ljava/lang/Object;"), fromClass("mock/plugin/private_and_static/PrivateAndStaticNotImplemented", "Ljava/lang/Object;Lcom/intellij/openapi/components/PersistentStateComponent<Ljava/lang/String;>;", classPath))
+      .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "loadState", "(Ljava/lang/Object;)V"), fromClass("mock/plugin/private_and_static/PrivateAndStaticNotImplemented", "Ljava/lang/Object;Lcom/intellij/openapi/components/PersistentStateComponent<Ljava/lang/String;>;", classPath))
+      .put(OverridingFinalMethodProblem("com/intellij/openapi/actionSystem/AnAction", "isEnabledInModalContext", "()Z"), fromMethod("mock/plugin/OverrideFinalMethodProblem", "isEnabledInModalContext", "()Z", emptyList(), null, classPath))
+      .put(IllegalMethodAccessProblem("com/intellij/openapi/diagnostic/LogUtil", "<init>", "()V", AccessType.PRIVATE), fromMethod("mock/plugin/AccessChangedProblem", "foo", "()V", emptyList(), null, classPath))
+      .put(InvokeVirtualOnStaticMethodProblem("com/intellij/lang/SmartEnterProcessor", "commit", "()V"), fromMethod("mock/plugin/invokeVirtualOnStatic/SmartEnterProcessorUser", "main", "()V", emptyList(), null, classPath))
+      .put(InvokeStaticOnInstanceMethodProblem("invocation/InvocationProblems", "wasStatic", "()V"), fromMethod("mock/plugin/invokeStaticOnInstance/InvocationProblemsUser", "foo", "()V", emptyList(), null, classPath))
+      .put(FieldNotFoundProblem("fields/FieldsContainer", "deletedField", "I"), fromMethod("mock/plugin/field/FieldProblemsContainer", "accessDeletedField", "()V", emptyList(), null, classPath))//field problems
 
 //      protected members access check
 //      .put(IllegalFieldAccessProblem("mock/plugin/access/Point3d", "x", "I", AccessType.PROTECTED), ProblemLocation.Companion.fromMethod("mock/plugin/access/Point3d", "delta", "(Laccess/points/Point;)V"))
 //      .put(IllegalFieldAccessProblem("access/AccessProblemBase", "x", "I", AccessType.PROTECTED), ProblemLocation.fromMethod("mock/plugin/access/IllegalAccess", "main", "([Ljava/lang/String;)V"))
 //      .put(IllegalMethodAccessProblem("access/AccessProblemBase", "foo", "()V", AccessType.PROTECTED), ProblemLocation.fromMethod("mock/plugin/access/IllegalAccess", "main", "([Ljava/lang/String;)V"))
 
-      .put(IllegalFieldAccessProblem("fields/FieldsContainer", "privateField", "I", AccessType.PRIVATE), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessPrivateField", "()V", emptyList(), null))
-      .put(IllegalFieldAccessProblem("fields/otherPackage/OtherFieldsContainer", "protectedField", "I", AccessType.PROTECTED), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessProtectedField", "()V", emptyList(), null))
-      .put(IllegalFieldAccessProblem("fields/otherPackage/OtherFieldsContainer", "packageField", "I", AccessType.PACKAGE_PRIVATE), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessPackageField", "()V", emptyList(), null))
-      .put(InstanceAccessOfStaticFieldProblem("fields/FieldsContainer", "staticField", "I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "instanceAccessOnStatic", "()V", emptyList(), null))
-      .put(StaticAccessOfInstanceFieldProblem("fields/FieldsContainer", "instanceField", "I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "staticAccessOnInstance", "()V", emptyList(), null))
-      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "accessUnknownClass", "()V", emptyList(), null))
-      .put(ChangeFinalFieldProblem("fields/FieldsContainer", "finalField", "I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "setOnFinalFieldFromNotInitMethod", "()V", emptyList(), null))
+      .put(IllegalFieldAccessProblem("fields/FieldsContainer", "privateField", "I", AccessType.PRIVATE), fromMethod("mock/plugin/field/FieldProblemsContainer", "accessPrivateField", "()V", emptyList(), null, classPath))
+      .put(IllegalFieldAccessProblem("fields/otherPackage/OtherFieldsContainer", "protectedField", "I", AccessType.PROTECTED), fromMethod("mock/plugin/field/FieldProblemsContainer", "accessProtectedField", "()V", emptyList(), null, classPath))
+      .put(IllegalFieldAccessProblem("fields/otherPackage/OtherFieldsContainer", "packageField", "I", AccessType.PACKAGE_PRIVATE), fromMethod("mock/plugin/field/FieldProblemsContainer", "accessPackageField", "()V", emptyList(), null, classPath))
+      .put(InstanceAccessOfStaticFieldProblem("fields/FieldsContainer", "staticField", "I"), fromMethod("mock/plugin/field/FieldProblemsContainer", "instanceAccessOnStatic", "()V", emptyList(), null, classPath))
+      .put(StaticAccessOfInstanceFieldProblem("fields/FieldsContainer", "instanceField", "I"), fromMethod("mock/plugin/field/FieldProblemsContainer", "staticAccessOnInstance", "()V", emptyList(), null, classPath))
+      .put(ClassNotFoundProblem("non/existing/NonExistingClass"), fromMethod("mock/plugin/field/FieldProblemsContainer", "accessUnknownClass", "()V", emptyList(), null, classPath))
+      .put(ChangeFinalFieldProblem("fields/FieldsContainer", "finalField", "I"), fromMethod("mock/plugin/field/FieldProblemsContainer", "setOnFinalFieldFromNotInitMethod", "()V", emptyList(), null, classPath))
 
       //missing default constructor
-      .put(MethodNotFoundProblem("constructors/DeletedDefaultConstructor", "<init>", "()V"), ProblemLocation.fromMethod("mock/plugin/constructors/MissingDefaultConstructor", "<init>", "()V", emptyList(), null))
+      .put(MethodNotFoundProblem("constructors/DeletedDefaultConstructor", "<init>", "()V"), fromMethod("mock/plugin/constructors/MissingDefaultConstructor", "<init>", "()V", emptyList(), null, classPath))
 
-      .put(ChangeFinalFieldProblem("fields/FieldsContainer", "staticFinalField", "I"), ProblemLocation.fromMethod("mock/plugin/field/FieldProblemsContainer", "setOnStaticFinalFieldFromNotClinitMethod", "()V", emptyList(), null)).build()
+      .put(ChangeFinalFieldProblem("fields/FieldsContainer", "staticFinalField", "I"), fromMethod("mock/plugin/field/FieldProblemsContainer", "setOnStaticFinalFieldFromNotClinitMethod", "()V", emptyList(), null, classPath)).build()
 
   @Test
   @Throws(Exception::class)
   fun testMyPlugin() {
     val ideaFile = File("build/mocks/after-idea")
     val pluginFile = findLatestFile(File("build/mocks"), "mock-plugin")
-    testFoundProblems(ideaFile, pluginFile, MY_ACTUAL_PROBLEMS, true, true)
+    testFoundProblems(ideaFile, pluginFile, MY_ACTUAL_PROBLEMS(ClassPath(ClassPath.Type.ROOT, pluginFile.name)), true, true)
   }
 
 
