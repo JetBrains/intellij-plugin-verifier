@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingReason
+import com.jetbrains.pluginverifier.location.AccessFlags
 import com.jetbrains.pluginverifier.location.ClassPath
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.persistence.GsonHolder
@@ -79,7 +80,8 @@ class Results {
   private fun someProblematicPlugin(): VResult.Problems {
     val pluginDescriptor = PluginDescriptor.ByXmlId("pluginId", "version")
     val ideDescriptor = IdeDescriptor.ByVersion(IdeVersion.createIdeVersion("IU-123.456.789"))
-    val multimap: Multimap<Problem, ProblemLocation> = ImmutableMultimap.of(ClassNotFoundProblem(SymbolicReference.classFrom("NotFoundClass")), ProblemLocation.fromClass("UserOfNotFoundClass", null, ClassPath(ClassPath.Type.JAR_FILE, "some.jar")))
+    val accessFlags = AccessFlags(AccessFlags.Flag.values().map { it.flag }.reduce(Int::or))
+    val multimap: Multimap<Problem, ProblemLocation> = ImmutableMultimap.of(ClassNotFoundProblem(SymbolicReference.classFrom("NotFoundClass")), ProblemLocation.fromClass("UserOfNotFoundClass", null, ClassPath(ClassPath.Type.JAR_FILE, "some.jar"), accessFlags))
 
     val node = DependencyNode("pluginId", "version", mapOf(PluginDependencyImpl("id", false) to MissingReason("reason")))
     val depImpl = PluginDependencyImpl("id2", true)
