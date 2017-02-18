@@ -25,6 +25,8 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
 
   private val REPOSITORY_PLUGIN_ID_BASE = "https://plugins.jetbrains.com/plugin/index?xmlId="
 
+  private val INTELLIJ_MODULES_PREFIX = "com.intellij.modules"
+
   fun printNoCompatibleUpdatesProblems(problems: List<MissingCompatibleUpdate>) {
     when (groupBy) {
       TeamCityVPrinter.GroupBy.NOT_GROUPED -> {
@@ -164,7 +166,8 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
                   val missingOptionals = result.dependenciesGraph.getMissingOptionalDependencies().filterKeys { !options.ignoreMissingOptionalDependency(it) }
                   if (missingOptionals.isNotEmpty()) {
                     missingOptionals.forEach {
-                      overview.append("Missing optional plugin ${it.key.id}: ${it.value.reason}").append('\n')
+                      val pluginOrModule = if (it.key.id.startsWith(INTELLIJ_MODULES_PREFIX)) "module" else "plugin"
+                      overview.append("Missing optional $pluginOrModule ${it.key.id}: ${it.value.reason}").append('\n')
                     }
                   }
 
@@ -273,7 +276,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
     //print missing dependencies
     tcLog.testSuiteStarted("missing plugin dependencies").use {
       compareResult.newMissingProblems.asMap().entries.forEach { missingToProblems ->
-        val type = if (missingToProblems.key.pluginId.startsWith("com.intellij.modules")) "module" else "plugin"
+        val type = if (missingToProblems.key.pluginId.startsWith(INTELLIJ_MODULES_PREFIX)) "module" else "plugin"
         val testName = "(missing $type ${missingToProblems.key})"
         tcLog.testStarted(testName).use {
           tcLog.testFailed(testName, "$type ${missingToProblems.key} is not found in ${compareResult.currentVersion} " +
