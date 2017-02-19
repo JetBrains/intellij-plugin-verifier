@@ -125,7 +125,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     Otherwise, if step 1, step 2, or step 3 of the lookup procedure selects an abstract method, invokespecial throws an AbstractMethodError.
      */
     if (stepNumber in listOf(1, 2, 3) && VerifierUtil.isAbstract(resolvedMethod.methodNode)) {
-      ctx.registerProblem(MethodNotImplementedProblem(methodOwner, methodName, methodDescriptor), getFromMethod())
+      ctx.registerProblem(AbstractMethodInvocationProblem(methodOwner, methodName, methodDescriptor), getFromMethod())
     }
   }
 
@@ -199,7 +199,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     invokespecial throws an AbstractMethodError.
      */
 
-    ctx.registerProblem(MethodNotImplementedProblem(methodOwner, methodName, methodDescriptor), getFromMethod())
+    ctx.registerProblem(AbstractMethodInvocationProblem(methodOwner, methodName, methodDescriptor), getFromMethod())
     return null
   }
 

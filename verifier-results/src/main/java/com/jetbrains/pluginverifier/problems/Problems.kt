@@ -103,6 +103,12 @@ data class MethodNotImplementedProblem(@SerializedName("method") val method: Met
   override fun getDescription(): String = "method isn't implemented $method"
 }
 
+data class AbstractMethodInvocationProblem(@SerializedName("method") val method: MethodReference) : Problem {
+  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(MethodReference(hostClass, methodName, methodDescriptor))
+
+  override fun getDescription(): String = "attempt to invoke an abstract method $method"
+}
+
 data class OverridingFinalMethodProblem(@SerializedName("method") val method: MethodReference) : Problem {
   constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(MethodReference(hostClass, methodName, methodDescriptor))
 

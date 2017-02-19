@@ -68,6 +68,9 @@ class VerifierTest {
       .put(MethodNotImplementedProblem("com/intellij/psi/search/UseScopeEnlarger", "getAdditionalUseScope", "(Lcom/intellij/psi/PsiElement;)Lcom/intellij/psi/search/SearchScope;"), fromClass("mock/plugin/abstrackt/NotImplementedAbstractMethod", null, classPath, AccessFlags(0x21)))
       .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "getState", "()Ljava/lang/Object;"), fromClass("mock/plugin/private_and_static/PrivateAndStaticNotImplemented", "Ljava/lang/Object;Lcom/intellij/openapi/components/PersistentStateComponent<Ljava/lang/String;>;", classPath, AccessFlags(0x21)))
       .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "loadState", "(Ljava/lang/Object;)V"), fromClass("mock/plugin/private_and_static/PrivateAndStaticNotImplemented", "Ljava/lang/Object;Lcom/intellij/openapi/components/PersistentStateComponent<Ljava/lang/String;>;", classPath, AccessFlags(0x21)))
+
+      .put(AbstractMethodInvocationProblem("invokespecial/AbstractParent", "foo", "()V"), fromMethod("mock/plugin/invokespecial/Child", "bar", "()V", emptyList(), null, classPath, AccessFlags(0x1)))
+
       .put(OverridingFinalMethodProblem("com/intellij/openapi/actionSystem/AnAction", "isEnabledInModalContext", "()Z"), fromMethod("mock/plugin/OverrideFinalMethodProblem", "isEnabledInModalContext", "()Z", emptyList(), null, classPath, AccessFlags(0x1)))
       .put(IllegalMethodAccessProblem("com/intellij/openapi/diagnostic/LogUtil", "<init>", "()V", AccessType.PRIVATE), fromMethod("mock/plugin/AccessChangedProblem", "foo", "()V", emptyList(), null, classPath, AccessFlags(0x1)))
       .put(InvokeVirtualOnStaticMethodProblem("com/intellij/lang/SmartEnterProcessor", "commit", "()V"), fromMethod("mock/plugin/invokeVirtualOnStatic/SmartEnterProcessorUser", "main", "()V", emptyList(), null, classPath, AccessFlags(0x1)))
