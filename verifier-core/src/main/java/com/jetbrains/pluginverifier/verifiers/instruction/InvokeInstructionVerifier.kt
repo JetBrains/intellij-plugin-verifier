@@ -218,12 +218,19 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
   }
 
   private fun processInvokeStatic() {
-    val resolved: ResolvedMethod
-    if (instr.itf) {
-      resolved = resolveInterfaceMethod() ?: return
-    } else {
-      resolved = resolveClassMethod() ?: return
-    }
+    /**
+     * That is a weirdness of the JVM 8 specification. Despite knowing the real class pool
+     * item of the invoke instruction (it's either CONSTANT_Methodref_info or CONSTANT_InterfaceMethodref_info)
+     * JVM chooses the way to resolve the corresponding method unconditionally (it does always resolves it as a method
+     * of the class, not interface).
+     * So we must be careful in the resolution steps, because as for JVM 8 Spec the first rule states
+     * that "If C is an interface, method resolution throws an IncompatibleClassChangeError." but actually the C could be
+     * an interface (Java 8 allows static method in interfaces).
+     *
+     * This is a corresponding question on stack-overflow:
+     * http://stackoverflow.com/questions/42294217/binary-compatibility-of-changing-a-class-with-static-methods-to-interface-in-jav
+     */
+    val resolved: ResolvedMethod = resolveClassMethod() ?: return
 
     /*
     Otherwise, if the resolved method is an instance method, the invokestatic instruction throws an IncompatibleClassChangeError.
@@ -469,8 +476,15 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       1) If C is an interface, method resolution throws an IncompatibleClassChangeError.
     */
     if (VerifierUtil.isInterface(classNode)) {
-      ctx.registerProblem(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classFrom(classNode.name)), getFromMethod())
-      return FAILED_LOOKUP
+      /*
+      This additional check which ensures that we are not trying to resolve static interface method at the moment
+      is necessary because actually the JVM 8 spec chooses this algorithm unconditionally for resolving
+      the static methods of both classes and interface.
+      */
+      if (instr.opcode != Opcodes.INVOKESTATIC) {
+        ctx.registerProblem(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classFrom(classNode.name)), getFromMethod())
+        return FAILED_LOOKUP
+      }
     }
 
     /*
