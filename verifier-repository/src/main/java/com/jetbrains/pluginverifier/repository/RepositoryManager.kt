@@ -91,7 +91,7 @@ object RepositoryManager : PluginRepository {
       .connectTimeout(5, TimeUnit.MINUTES)
       .readTimeout(5, TimeUnit.MINUTES)
       .writeTimeout(5, TimeUnit.MINUTES)
-      .addInterceptor(HttpLoggingInterceptor().setLevel(if (LOG.isDebugEnabled) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.BASIC))
+      .addInterceptor(HttpLoggingInterceptor().setLevel(if (LOG.isDebugEnabled) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE))
       .build()
 
 }
