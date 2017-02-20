@@ -173,7 +173,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
   }
 
 
-  fun getFromMethod() = ctx.fromMethod(verifiableClass.name, verifiableMethod)
+  fun getFromMethod() = ctx.fromMethod(verifiableClass, verifiableMethod)
 
   data class LookupResult(val fail: Boolean, val resolvedField: ResolvedField?)
 

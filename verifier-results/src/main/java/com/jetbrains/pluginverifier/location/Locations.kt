@@ -6,7 +6,12 @@ import com.github.salomonbrys.kotson.string
 import com.google.gson.JsonPrimitive
 import com.jetbrains.pluginverifier.utils.CompactJson
 import com.jetbrains.pluginverifier.utils.CompactJson.serialize
-import com.jetbrains.pluginverifier.utils.MessageUtils
+import com.jetbrains.pluginverifier.utils.PresentationUtils
+import com.jetbrains.pluginverifier.utils.PresentationUtils.convertClassSignature
+import com.jetbrains.pluginverifier.utils.PresentationUtils.convertJvmDescriptorToNormalPresentation
+import com.jetbrains.pluginverifier.utils.PresentationUtils.cutPackageConverter
+import com.jetbrains.pluginverifier.utils.PresentationUtils.normalConverter
+import com.jetbrains.pluginverifier.utils.PresentationUtils.splitMethodDescriptorOnRawParametersAndReturnTypes
 
 data class ClassPath(val type: Type, val path: String) {
   enum class Type { ROOT, CLASSES_DIRECTORY, JAR_FILE }
@@ -37,6 +42,8 @@ data class AccessFlags(val flags: Int) {
     DEPRECATED(0x20000) // class, field, method
   }
 
+  fun contains(flag: Flag): Boolean = flags.and(flag.flag) != 0
+
   fun asSet(): Set<Flag> = Flag.values().filter { flags.and(it.flag) != 0 }.toSet()
 }
 
@@ -49,66 +56,95 @@ interface ProblemLocation {
     fun fromClass(className: String,
                   signature: String?,
                   classPath: ClassPath,
-                  accessFlags: AccessFlags): ClassLocation = ClassLocation(className, signature ?: "", classPath, accessFlags)
+                  accessFlags: AccessFlags): ClassLocation
+        = ClassLocation(className, signature ?: "", classPath, accessFlags)
 
-    fun fromMethod(hostClass: String,
+    fun fromMethod(hostClass: ClassLocation,
                    methodName: String,
                    methodDescriptor: String,
                    parameterNames: List<String>,
                    signature: String?,
-                   classPath: ClassPath,
                    accessFlags: AccessFlags): MethodLocation
-        = MethodLocation(hostClass, methodName, methodDescriptor, parameterNames, signature ?: "", classPath, accessFlags)
+        = MethodLocation(hostClass, methodName, methodDescriptor, parameterNames, signature ?: "", accessFlags)
 
-    fun fromField(hostClass: String,
+    fun fromField(hostClass: ClassLocation,
                   fieldName: String,
                   fieldDescriptor: String,
                   signature: String?,
-                  classPath: ClassPath,
-                  accessFlags: AccessFlags): FieldLocation = FieldLocation(hostClass, fieldName, fieldDescriptor, signature ?: "", classPath, accessFlags)
+                  accessFlags: AccessFlags): FieldLocation
+        = FieldLocation(hostClass, fieldName, fieldDescriptor, signature ?: "", accessFlags)
   }
 
 }
 
-data class MethodLocation(val hostClass: String,
+data class MethodLocation(val hostClass: ClassLocation,
                           val methodName: String,
                           val methodDescriptor: String,
                           val parameterNames: List<String>,
                           val signature: String,
-                          val classPath: ClassPath,
                           val accessFlags: AccessFlags) : ProblemLocation {
 
-  init {
-    require(methodDescriptor.startsWith("(") && methodDescriptor.contains(")"), { methodDescriptor })
-    require(parameterNames.size == MessageUtils.parseMethodParameters(methodDescriptor).size,
-        { "Number of method descriptor parameters is not equal to number of parameter names: $methodDescriptor vs. $parameterNames" }
-    )
+  private fun zipWithNames(parametersTypes: List<String>): List<String> {
+    val names: List<String> = if (parameterNames.size == parametersTypes.size) {
+      parameterNames
+    } else {
+      (0..parametersTypes.size - 1).map { "arg$it" }
+    }
+    return parametersTypes.zip(names).map { "${it.first} ${it.second}" }
   }
 
-  override fun toString(): String = MessageUtils.convertMethod(methodName, methodDescriptor, hostClass, parameterNames)
+  override fun toString(): String {
+    val (parametersTypes, returnType) = if (signature.isNotEmpty()) {
+      PresentationUtils.parseMethodSignature(signature, cutPackageConverter)
+    } else {
+      val (paramsTs, returnT) = splitMethodDescriptorOnRawParametersAndReturnTypes(methodDescriptor)
+      (paramsTs.map { convertJvmDescriptorToNormalPresentation(it, cutPackageConverter) }) to (convertJvmDescriptorToNormalPresentation(returnT, cutPackageConverter))
+    }
+    val withNames = zipWithNames(parametersTypes)
+    return hostClass.toString() + ".$methodName" + "(" + withNames.joinToString() + ") : $returnType"
+  }
 }
 
-data class FieldLocation(val hostClass: String,
+data class FieldLocation(val hostClass: ClassLocation,
                          val fieldName: String,
                          val fieldDescriptor: String,
                          val signature: String,
-                         val classPath: ClassPath,
                          val accessFlags: AccessFlags) : ProblemLocation {
-  override fun toString(): String = MessageUtils.convertField(fieldName, hostClass)
+  override fun toString(): String {
+    if (signature.isNotEmpty()) {
+      return hostClass.toString() + ".$fieldName : ${PresentationUtils.convertFieldSignature(signature, cutPackageConverter)}"
+    }
+    val type = convertJvmDescriptorToNormalPresentation(fieldDescriptor, normalConverter)
+    return hostClass.toString() + ".$fieldName : $type"
+  }
 }
 
-data class ClassLocation(val className: String, val signature: String, val classPath: ClassPath, val accessFlags: AccessFlags) : ProblemLocation {
-  override fun toString(): String = MessageUtils.convertClass(className)
+data class ClassLocation(val className: String,
+                         val signature: String,
+                         val classPath: ClassPath,
+                         val accessFlags: AccessFlags) : ProblemLocation {
+  override fun toString(): String {
+    if (signature.isNotEmpty()) {
+      return normalConverter(className) + convertClassSignature(signature, cutPackageConverter)
+    }
+    return normalConverter(className)
+  }
 }
 
 internal val problemLocationSerializer = jsonSerializer<ProblemLocation> {
   val src = it.src
+
   fun serializeClassPath(classPath: ClassPath): String = "${classPath.type.name}|${classPath.path}"
+
   fun serializeAccessFlags(accessFlags: AccessFlags): String = accessFlags.flags.toString()
+
+  fun serializeClassLocation(src: ClassLocation): String =
+      serialize(listOf("C", src.className, src.signature, serializeClassPath(src.classPath), serializeAccessFlags(src.accessFlags)))
+
   return@jsonSerializer when (src) {
-    is MethodLocation -> JsonPrimitive(serialize(listOf("M", src.hostClass, src.methodName, src.methodDescriptor, src.parameterNames.joinToString("|"), src.signature, serializeClassPath(src.classPath), serializeAccessFlags(src.accessFlags))))
-    is FieldLocation -> JsonPrimitive(serialize(listOf("F", src.hostClass, src.fieldName, src.fieldDescriptor, src.signature, serializeClassPath(src.classPath), serializeAccessFlags(src.accessFlags))))
-    is ClassLocation -> JsonPrimitive(serialize(listOf("C", src.className, src.signature, serializeClassPath(src.classPath), serializeAccessFlags(src.accessFlags))))
+    is MethodLocation -> JsonPrimitive(serialize(listOf("M", serializeClassLocation(src.hostClass), src.methodName, src.methodDescriptor, src.parameterNames.joinToString("|"), src.signature, serializeAccessFlags(src.accessFlags))))
+    is FieldLocation -> JsonPrimitive(serialize(listOf("F", serializeClassLocation(src.hostClass), src.fieldName, src.fieldDescriptor, src.signature, serializeAccessFlags(src.accessFlags))))
+    is ClassLocation -> JsonPrimitive(serializeClassLocation(src))
     else -> throw IllegalArgumentException("Unregistered type ${it.src.javaClass.name}: ${it.src}")
   }
 }
@@ -123,10 +159,15 @@ internal val problemLocationDeserializer = jsonDeserializer {
 
   fun deserializeAccessFlags(flags: String) = AccessFlags(flags.toInt())
 
+  fun deserializeClassLocation(string: String): ClassLocation {
+    val classParts = CompactJson.deserialize(string)
+    return ProblemLocation.fromClass(classParts[1], classParts[2], deserializeClassPath(classParts[3]), deserializeAccessFlags(classParts[4]))
+  }
+
   return@jsonDeserializer when {
-    parts[0] == "M" -> ProblemLocation.fromMethod(parts[1], parts[2], parts[3], parts[4].split("|"), parts[5], deserializeClassPath(parts[6]), deserializeAccessFlags(parts[7]))
-    parts[0] == "F" -> ProblemLocation.fromField(parts[1], parts[2], parts[3], parts[4], deserializeClassPath(parts[5]), deserializeAccessFlags(parts[6]))
-    parts[0] == "C" -> ProblemLocation.fromClass(parts[1], parts[2], deserializeClassPath(parts[3]), deserializeAccessFlags(parts[4]))
+    parts[0] == "M" -> ProblemLocation.fromMethod(deserializeClassLocation(parts[1]), parts[2], parts[3], parts[4].split("|"), parts[5], deserializeAccessFlags(parts[6]))
+    parts[0] == "F" -> ProblemLocation.fromField(deserializeClassLocation(parts[1]), parts[2], parts[3], parts[4], deserializeAccessFlags(parts[5]))
+    parts[0] == "C" -> deserializeClassLocation(it.json.string)
     else -> throw IllegalArgumentException("Unknown type ${it.json.string}")
   }
 }

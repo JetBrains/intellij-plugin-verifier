@@ -5,7 +5,10 @@ import com.github.salomonbrys.kotson.jsonSerializer
 import com.github.salomonbrys.kotson.string
 import com.google.gson.JsonPrimitive
 import com.jetbrains.pluginverifier.utils.CompactJson
-import com.jetbrains.pluginverifier.utils.MessageUtils
+import com.jetbrains.pluginverifier.utils.PresentationUtils.convertJvmDescriptorToNormalPresentation
+import com.jetbrains.pluginverifier.utils.PresentationUtils.cutPackageConverter
+import com.jetbrains.pluginverifier.utils.PresentationUtils.normalConverter
+import com.jetbrains.pluginverifier.utils.PresentationUtils.splitMethodDescriptorOnRawParametersAndReturnTypes
 
 /**
  * @author Sergey Patrikeev
@@ -24,7 +27,11 @@ interface SymbolicReference {
 data class MethodReference(val hostClass: String,
                            val methodName: String,
                            val methodDescriptor: String) : SymbolicReference {
-  override fun toString(): String = MessageUtils.convertMethod(methodName, methodDescriptor, hostClass)
+  override fun toString(): String {
+    val (parametersTypes, returnType) = splitMethodDescriptorOnRawParametersAndReturnTypes(methodDescriptor)
+    val (presentableParams, presentableReturn) = (parametersTypes.map { convertJvmDescriptorToNormalPresentation(it, cutPackageConverter) }) to (convertJvmDescriptorToNormalPresentation(returnType, cutPackageConverter))
+    return normalConverter(hostClass) + ".$methodName" + "(" + presentableParams.joinToString() + ") : $presentableReturn"
+  }
 
 }
 
@@ -32,12 +39,15 @@ data class MethodReference(val hostClass: String,
 data class FieldReference(val hostClass: String,
                           val fieldName: String,
                           val fieldDescriptor: String) : SymbolicReference {
-  override fun toString(): String = MessageUtils.convertField(fieldName, hostClass)
+  override fun toString(): String {
+    val type = convertJvmDescriptorToNormalPresentation(fieldDescriptor, cutPackageConverter)
+    return normalConverter(hostClass) + ".$fieldName : $type"
+  }
 
 }
 
 data class ClassReference(val className: String) : SymbolicReference {
-  override fun toString(): String = MessageUtils.convertClass(className)
+  override fun toString(): String = normalConverter(className)
 }
 
 
@@ -47,11 +57,11 @@ internal val symbolicReferenceSerializer = jsonSerializer<SymbolicReference> {
     is MethodReference -> JsonPrimitive(CompactJson.serialize(listOf("M", src.hostClass, src.methodName, src.methodDescriptor)))
     is FieldReference -> JsonPrimitive(CompactJson.serialize(listOf("F", src.hostClass, src.fieldName, src.fieldDescriptor)))
     is ClassReference -> JsonPrimitive(CompactJson.serialize(listOf("C", src.className)))
-    else -> throw IllegalArgumentException("Unknwon type ${src.javaClass.name}: $src")
+    else -> throw IllegalArgumentException("Unknown type ${src.javaClass.name}: $src")
   }
 }
 
-internal val symbolicReferenceDeserializer = jsonDeserializer<SymbolicReference> {
+internal val symbolicReferenceDeserializer = jsonDeserializer {
   val parts = CompactJson.deserialize(it.json.string)
   return@jsonDeserializer when {
     parts[0] == "M" -> SymbolicReference.methodFrom(parts[1], parts[2], parts[3])

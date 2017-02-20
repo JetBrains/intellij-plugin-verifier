@@ -523,18 +523,14 @@ data class VContext(
     return ClassPath(ClassPath.Type.ROOT, file.name)
   }
 
-  fun fromClass(clazz: ClassNode): ClassLocation {
-    return ProblemLocation.fromClass(clazz.name, clazz.signature, getClassPath(clazz.name), AccessFlags(clazz.access))
-  }
+  fun fromClass(clazz: ClassNode): ClassLocation =
+      ProblemLocation.fromClass(clazz.name, clazz.signature, getClassPath(clazz.name), AccessFlags(clazz.access))
 
-  fun fromMethod(hostClass: String, method: MethodNode): MethodLocation {
-    val parameterNames = getParameterNames(method)
-    return ProblemLocation.fromMethod(hostClass, method.name, method.desc, parameterNames, method.signature, getClassPath(hostClass), AccessFlags(method.access))
-  }
+  fun fromMethod(hostClass: ClassNode, method: MethodNode): MethodLocation =
+      ProblemLocation.fromMethod(fromClass(hostClass), method.name, method.desc, getParameterNames(method), method.signature, AccessFlags(method.access))
 
-  fun fromField(hostClass: String, field: FieldNode): FieldLocation {
-    return ProblemLocation.fromField(hostClass, field.name, field.desc, field.signature, getClassPath(hostClass), AccessFlags(field.access))
-  }
+  fun fromField(hostClass: ClassNode, field: FieldNode): FieldLocation =
+      ProblemLocation.fromField(fromClass(hostClass), field.name, field.desc, field.signature, AccessFlags(field.access))
 
   @Suppress("UNCHECKED_CAST")
   private fun getParameterNames(method: MethodNode): List<String> {

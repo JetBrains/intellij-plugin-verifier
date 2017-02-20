@@ -240,7 +240,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     }
   }
 
-  private fun getFromMethod() = ctx.fromMethod(verifiableClass.name, verifiableMethod)
+  private fun getFromMethod() = ctx.fromMethod(verifiableClass, verifiableMethod)
 
   fun resolveInterfaceMethod(): ResolvedMethod? {
     val (fail, resolvedMethod) = resolveInterfaceMethod0(ownerNode!!)

@@ -15,7 +15,7 @@ class MethodThrowsVerifier : MethodVerifier {
     val exceptions = method.exceptions as List<String>
     for (exception in exceptions) {
       val descr = VerifierUtil.extractClassNameFromDescr(exception) ?: continue
-      VerifierUtil.checkClassExistsOrExternal(resolver, descr, ctx, { ctx.fromMethod(clazz.name, method) })
+      VerifierUtil.checkClassExistsOrExternal(resolver, descr, ctx, { ctx.fromMethod(clazz, method) })
     }
   }
 }

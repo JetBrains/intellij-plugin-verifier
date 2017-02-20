@@ -15,6 +15,6 @@ class MultiANewArrayInstructionVerifier : InstructionVerifier {
   override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, resolver: Resolver, ctx: VContext) {
     if (instr !is MultiANewArrayInsnNode) return
     val descr = VerifierUtil.extractClassNameFromDescr(instr.desc) ?: return
-    VerifierUtil.checkClassExistsOrExternal(resolver, descr, ctx, { ctx.fromMethod(clazz.name, method) })
+    VerifierUtil.checkClassExistsOrExternal(resolver, descr, ctx, { ctx.fromMethod(clazz, method) })
   }
 }

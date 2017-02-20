@@ -17,7 +17,7 @@ class MethodLocalVarsVerifier : MethodVerifier {
       val localVariables = method.localVariables as List<LocalVariableNode>
       for (variable in localVariables) {
         val descr = VerifierUtil.extractClassNameFromDescr(variable.desc) ?: continue
-        VerifierUtil.checkClassExistsOrExternal(resolver, descr, ctx, { ctx.fromMethod(clazz.name, method) })
+        VerifierUtil.checkClassExistsOrExternal(resolver, descr, ctx, { ctx.fromMethod(clazz, method) })
       }
     }
 
