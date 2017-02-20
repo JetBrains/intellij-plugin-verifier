@@ -497,9 +497,10 @@ data class VContext(
     warnings.add(warning)
   }
 
-  private fun getClassPath(className: String): ClassPath {
-    val actualResolver = resolver.getClassLocation(className)
-    require(actualResolver != null, { "Where did the class $className come from?" })
+  private fun getClassPath(classNode: ClassNode): ClassPath {
+    val className = classNode.name
+    //todo: handle this case more elegantly
+    val actualResolver = resolver.getClassLocation(className) ?: return ClassPath(ClassPath.Type.ROOT, "root")
     if (actualResolver.classPath.size != 1) {
       //it should not happen, because actually each class-file is coming from a specific resolver
       //(a specific jar file or maybe a `classes` directory)
@@ -524,7 +525,7 @@ data class VContext(
   }
 
   fun fromClass(clazz: ClassNode): ClassLocation =
-      ProblemLocation.fromClass(clazz.name, clazz.signature, getClassPath(clazz.name), AccessFlags(clazz.access))
+      ProblemLocation.fromClass(clazz.name, clazz.signature, getClassPath(clazz), AccessFlags(clazz.access))
 
   fun fromMethod(hostClass: ClassNode, method: MethodNode): MethodLocation =
       ProblemLocation.fromMethod(fromClass(hostClass), method.name, method.desc, getParameterNames(method), method.signature, AccessFlags(method.access))
