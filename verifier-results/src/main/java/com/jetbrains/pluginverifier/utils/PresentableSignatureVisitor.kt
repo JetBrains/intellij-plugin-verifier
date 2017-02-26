@@ -96,7 +96,7 @@ class PresentableSignatureVisitor(val binaryNameConverter: (String) -> String) :
 
   private var seenFormalParameter: Boolean = false
 
-  private var returnType: TypeSignatureVisitor = TypeSignatureVisitor(binaryNameConverter)
+  private lateinit var returnType: TypeSignatureVisitor
 
   private val methodParameters: MutableList<TypeSignatureVisitor> = arrayListOf()
 
