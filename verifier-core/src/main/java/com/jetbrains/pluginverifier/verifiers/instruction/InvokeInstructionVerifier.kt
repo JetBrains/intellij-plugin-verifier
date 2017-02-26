@@ -189,7 +189,8 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     not abstract, invokespecial throws an IncompatibleClassChangeError
     */
     if (filtered.size > 1) {
-      ctx.registerProblem(MultipleMethodImplementationsProblem(methodOwner, methodName, methodDescriptor), getFromMethod())
+      val availableMethods = filtered.map { ctx.fromMethod(it.definingClass, it.methodNode) }
+      ctx.registerProblem(MultipleMethodImplementationsProblem(methodOwner, methodName, methodDescriptor, availableMethods), getFromMethod())
       return null
     }
 
