@@ -14,10 +14,13 @@ import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.output.VPrinterOptions
 import com.jetbrains.pluginverifier.problems.Problem
 import com.sampullara.cli.Argument
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
 import java.io.IOException
+import java.nio.file.Files
 import java.util.regex.Pattern
 
 open class PublicOpts(
@@ -55,6 +58,9 @@ open class PublicOpts(
 open class CmdOpts(
     @set:Argument("ignored-problems", alias = "ip", description = "The problems specified in this file will be ignored. The file must contain lines in form <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>")
     var ignoreProblemsFile: String? = null,
+
+    @set:Argument("save-ignored-problems-to-file", alias = "siptf", description = "The problems listed in the --ignored-problems file will be ignored from the main report, but nevertheless they will be printed into the specified file.")
+    var saveIgnoredProblemsFile: String? = null,
 
     @set:Argument("ide-version", alias = "iv", description = "The actual version of the IDE that will be verified. This value will overwrite the one found in the IDE itself")
     var actualIdeVersion: String? = null,
@@ -139,14 +145,26 @@ object VOptionsUtil {
       problemsToIgnore = getProblemsToIgnoreFromFile(ignoreProblemsFile)
     }
 
-    return VOptions(opts.externalClassesPrefixes.map { it.replace('.', '/') }.toSet(), IgnoredProblemsFilter(problemsToIgnore))
+    val saveIgnoredProblemsFile = if (opts.saveIgnoredProblemsFile != null) File(opts.saveIgnoredProblemsFile) else null
+    if (saveIgnoredProblemsFile != null) {
+      try {
+        Files.deleteIfExists(saveIgnoredProblemsFile.toPath())
+      } catch(e: Exception) {
+        throw RuntimeException("Unable to clean the file $saveIgnoredProblemsFile", e)
+      }
+    }
+
+    return VOptions(opts.externalClassesPrefixes.map { it.replace('.', '/') }.toSet(), IgnoredProblemsFilter(problemsToIgnore, saveIgnoredProblemsFile))
   }
 
-  private class IgnoredProblemsFilter(val problemsToIgnore: Multimap<Pair<String, String>, Pattern> = ImmutableMultimap.of()) : VProblemsFilter {
+  private class IgnoredProblemsFilter(val problemsToIgnore: Multimap<Pair<String, String>, Pattern> = ImmutableMultimap.of(),
+                                      val saveIgnoredProblemsFile: File?) : VProblemsFilter {
 
-    override fun isRelevantProblem(plugin: Plugin, problem: Problem, problemLocation: ProblemLocation): Boolean = !isIgnoredProblem(plugin, problem)
+    private val LOG: Logger = LoggerFactory.getLogger(IgnoredProblemsFilter::class.java)
 
-    private fun isIgnoredProblem(plugin: Plugin, problem: Problem): Boolean {
+    override fun isRelevantProblem(plugin: Plugin, problem: Problem, problemLocation: ProblemLocation): Boolean = !isIgnoredProblem(plugin, problem, problemLocation)
+
+    private fun isIgnoredProblem(plugin: Plugin, problem: Problem, problemLocation: ProblemLocation): Boolean {
       val xmlId = plugin.pluginId
       val version = plugin.pluginVersion
       for ((key, ignoredPattern) in problemsToIgnore.entries()) {
@@ -155,13 +173,31 @@ object VOptionsUtil {
 
         if (xmlId == ignoreXmlId) {
           if (ignoreVersion.isEmpty() || version == ignoreVersion) {
-            if (problem.getDescription().matches(ignoredPattern.toRegex())) {
+            val regex = ignoredPattern.toRegex()
+            if (problem.getDescription().matches(regex)) {
+              appendToIgnoredProblemsFileOrLog(plugin, problem, problemLocation, regex)
               return true
             }
           }
         }
       }
       return false
+    }
+
+    private fun appendToIgnoredProblemsFileOrLog(plugin: Plugin, problem: Problem, problemLocation: ProblemLocation, regex: Regex) {
+      val ap = "Problem of the plugin $plugin was ignored by the ignoring pattern: ${regex.pattern}:\n" +
+          "#" + problem.getDescription() + "\n" +
+          "  at " + problemLocation.toString()
+
+      if (saveIgnoredProblemsFile != null) {
+        try {
+          saveIgnoredProblemsFile.appendText(ap)
+        } catch (e: Exception) {
+          LOG.error("Unable to append the ignored problem to file $saveIgnoredProblemsFile", e)
+        }
+      } else {
+        LOG.info(ap)
+      }
     }
   }
 
