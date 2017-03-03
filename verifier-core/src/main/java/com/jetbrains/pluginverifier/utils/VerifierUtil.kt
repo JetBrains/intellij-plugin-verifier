@@ -182,6 +182,10 @@ object VerifierUtil {
 
   fun isSuperFlag(classNode: ClassNode): Boolean = classNode.access and Opcodes.ACC_SUPER != 0
 
+  fun isSynthetic(method: MethodNode): Boolean = method.access and Opcodes.ACC_SYNTHETIC != 0
+
+  fun isBridgeMethod(method: MethodNode): Boolean = method.access and Opcodes.ACC_BRIDGE != 0
+
   fun haveTheSamePackage(first: ClassNode, second: ClassNode): Boolean = extractPackage(first.name) == extractPackage(second.name)
 
   /**

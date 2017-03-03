@@ -125,7 +125,13 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     Otherwise, if step 1, step 2, or step 3 of the lookup procedure selects an abstract method, invokespecial throws an AbstractMethodError.
      */
     if (stepNumber in listOf(1, 2, 3) && VerifierUtil.isAbstract(resolvedMethod.methodNode)) {
-      ctx.registerProblem(AbstractMethodInvocationProblem(methodOwner, methodName, methodDescriptor), getFromMethod())
+      if (!VerifierUtil.isSynthetic(verifiableMethod) || !VerifierUtil.isBridgeMethod(verifiableMethod)) {
+        /*
+        We intentionally introduce this check because there are the tricky cases when the Java compiler generates
+         faulty bytecode. See PR-707 and a test class mock.plugin.noproblems.bridgeMethod.A
+         */
+        ctx.registerProblem(AbstractMethodInvocationProblem(methodOwner, methodName, methodDescriptor), getFromMethod())
+      }
     }
   }
 
