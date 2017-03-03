@@ -26,23 +26,19 @@ public class ContainerResolver extends Resolver {
 
   @NotNull
   public static Resolver createFromList(@NotNull String presentableName, @NotNull List<Resolver> resolvers) {
-    Resolver nonEmpty = null;
-    for (Resolver pool : resolvers) {
-      if (!pool.isEmpty()) {
-        if (nonEmpty == null) {
-          nonEmpty = pool;
-        } else {
-          return new ContainerResolver(presentableName, resolvers);
-        }
+    List<Resolver> nonEmptyResolvers = new ArrayList<Resolver>();
+    for (Resolver resolver : resolvers) {
+      if (!resolver.isEmpty()) {
+        nonEmptyResolvers.add(resolver);
       }
     }
-    if (nonEmpty == null) {
+    if (nonEmptyResolvers.isEmpty()) {
       return EmptyResolver.INSTANCE;
     }
-    if (resolvers.size() == 1) {
-      return nonEmpty;
+    if (nonEmptyResolvers.size() == 1) {
+      return nonEmptyResolvers.get(0);
     }
-    return nonEmpty;
+    return new ContainerResolver(presentableName, nonEmptyResolvers);
   }
 
   private void fillClassMap() {
