@@ -1,15 +1,11 @@
 package com.jetbrains.pluginverifier.api
 
-import com.google.common.collect.ImmutableMultimap
-import com.google.common.collect.Multimap
-import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.Plugin
-import com.intellij.structure.impl.utils.StringUtil
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.dependencies.MissingReason
+import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.IFileLock
-import java.util.regex.Pattern
 
 interface VProgress {
   fun getProgress(): Double
@@ -97,35 +93,19 @@ interface DependencyResolver {
   }
 }
 
+interface VProblemsFilter {
+  fun isRelevantProblem(plugin: Plugin, problem: Problem, problemLocation: ProblemLocation): Boolean
+
+  object AlwaysTrue : VProblemsFilter {
+    override fun isRelevantProblem(plugin: Plugin, problem: Problem, problemLocation: ProblemLocation): Boolean = true
+  }
+}
+
 /**
  * @author Sergey Patrikeev
  */
-data class VOptions(@SerializedName("externalCp") val externalClassPrefixes: Set<String> = emptySet(),
-                    /**
-                     * Map of _(pluginXmlId, version)_ -> to be ignored _problem pattern_
-                     */
-                    @SerializedName("ignoredProblems") val problemsToIgnore: Multimap<Pair<String, String>, Pattern> = ImmutableMultimap.of()) {
+data class VOptions(val externalClassPrefixes: Set<String> = emptySet(), val problemFilter: VProblemsFilter = VProblemsFilter.AlwaysTrue) {
 
-  fun isIgnoredProblem(plugin: Plugin, problem: Problem): Boolean {
-    val xmlId = plugin.pluginId
-    val version = plugin.pluginVersion
-    for ((key, ignoredPattern) in problemsToIgnore.entries()) {
-      val ignoreXmlId = key.first
-      val ignoreVersion = key.second
-
-      if (StringUtil.equal(xmlId, ignoreXmlId)) {
-        if (StringUtil.isEmpty(ignoreVersion) || StringUtil.equal(version, ignoreVersion)) {
-          if (ignoredPattern.matcher(problem.getDescription()).matches()) {
-            return true
-          }
-        }
-      }
-    }
-    return false
-  }
-
-  fun isExternalClass(className: String): Boolean {
-    return externalClassPrefixes.any { it.isNotEmpty() && className.startsWith(it) }
-  }
+  fun isExternalClass(className: String): Boolean = externalClassPrefixes.any { it.isNotEmpty() && className.startsWith(it) }
 
 }

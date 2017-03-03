@@ -1,13 +1,18 @@
 package com.jetbrains.pluginverifier.utils
 
 import com.google.common.collect.HashMultimap
+import com.google.common.collect.ImmutableMultimap
 import com.google.common.collect.Multimap
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeManager
 import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.domain.Plugin
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VOptions
+import com.jetbrains.pluginverifier.api.VProblemsFilter
+import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.output.VPrinterOptions
+import com.jetbrains.pluginverifier.problems.Problem
 import com.sampullara.cli.Argument
 import java.io.BufferedReader
 import java.io.File
@@ -134,12 +139,35 @@ object VOptionsUtil {
       problemsToIgnore = getProblemsToIgnoreFromFile(ignoreProblemsFile)
     }
 
-    return VOptions(
-        opts.externalClassesPrefixes.map { it.replace('.', '/') }.toSet(),
-        problemsToIgnore
-    )
+    return VOptions(opts.externalClassesPrefixes.map { it.replace('.', '/') }.toSet(), IgnoredProblemsFilter(problemsToIgnore))
   }
 
+  private class IgnoredProblemsFilter(val problemsToIgnore: Multimap<Pair<String, String>, Pattern> = ImmutableMultimap.of()) : VProblemsFilter {
+
+    override fun isRelevantProblem(plugin: Plugin, problem: Problem, problemLocation: ProblemLocation): Boolean = !isIgnoredProblem(plugin, problem)
+
+    private fun isIgnoredProblem(plugin: Plugin, problem: Problem): Boolean {
+      val xmlId = plugin.pluginId
+      val version = plugin.pluginVersion
+      for ((key, ignoredPattern) in problemsToIgnore.entries()) {
+        val ignoreXmlId = key.first
+        val ignoreVersion = key.second
+
+        if (xmlId == ignoreXmlId) {
+          if (ignoreVersion.isEmpty() || version == ignoreVersion) {
+            if (problem.getDescription().matches(ignoredPattern.toRegex())) {
+              return true
+            }
+          }
+        }
+      }
+      return false
+    }
+  }
+
+  /**
+   * @return _(pluginXmlId, version)_ -> to be ignored _problem pattern_
+   */
   fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): Multimap<Pair<String, String>, Pattern> {
     val file = File(ignoreProblemsFile)
     if (!file.exists()) {

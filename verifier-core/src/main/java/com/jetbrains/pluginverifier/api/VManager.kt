@@ -488,7 +488,7 @@ data class VContext(
   val warnings: MutableList<Warning> = arrayListOf()
 
   fun registerProblem(problem: Problem, location: ProblemLocation) {
-    if (!verifierOptions.isIgnoredProblem(plugin, problem)) {
+    if (verifierOptions.problemFilter.isRelevantProblem(plugin, problem, location)) {
       problems.put(problem, location)
     }
   }
