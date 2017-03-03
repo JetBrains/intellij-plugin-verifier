@@ -116,7 +116,7 @@ data class VOptions(@SerializedName("externalCp") val externalClassPrefixes: Set
 
       if (StringUtil.equal(xmlId, ignoreXmlId)) {
         if (StringUtil.isEmpty(ignoreVersion) || StringUtil.equal(version, ignoreVersion)) {
-          if (ignoredPattern.matcher(problem.getDescription().replace('/', '.')).matches()) {
+          if (ignoredPattern.matcher(problem.getDescription()).matches()) {
             return true
           }
         }
