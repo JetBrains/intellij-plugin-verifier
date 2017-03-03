@@ -66,7 +66,7 @@ public class IdeResolverCreator {
     if (IdeManagerImpl.isUltimate(ideaDir)) {
       pools.add(new CompileOutputResolver(IdeManagerImpl.getUltimateClassesRoot(ideaDir)));
       pools.add(getIdeResolverFromLibraries(new File(ideaDir, "community")));
-      pools.add(hardCodedUltimateLibraries(ideaDir));
+      pools.addAll(hardCodedUltimateLibraries(ideaDir));
     } else {
       pools.add(new CompileOutputResolver(IdeManagerImpl.getCommunityClassesRoot(ideaDir)));
     }
@@ -75,18 +75,19 @@ public class IdeResolverCreator {
   }
 
   @NotNull
-  private static Resolver hardCodedUltimateLibraries(File ideaDir) {
+  private static List<Resolver> hardCodedUltimateLibraries(File ideaDir) {
+    List<Resolver> resolvers = new ArrayList<Resolver>();
     for (String libFolder : HARD_CODED_LIB_FOLDERS) {
       File libDir = new File(ideaDir, libFolder);
       if (libDir.isDirectory()) {
         try {
-          return JarsUtils.makeResolver(libDir.getName() + " `lib` dir", JarsUtils.collectJars(libDir, Predicates.<File>alwaysTrue(), false));
+          resolvers.add(JarsUtils.makeResolver(libDir.getName() + " `lib` dir", JarsUtils.collectJars(libDir, Predicates.<File>alwaysTrue(), false)));
         } catch (IOException e) {
           LOG.warn("Unable to read libraries from " + libDir, e);
         }
       }
     }
-    return Resolver.getEmptyResolver();
+    return resolvers;
   }
 
 }
