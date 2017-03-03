@@ -109,10 +109,9 @@ data class VOptions(@SerializedName("externalCp") val externalClassPrefixes: Set
   fun isIgnoredProblem(plugin: Plugin, problem: Problem): Boolean {
     val xmlId = plugin.pluginId
     val version = plugin.pluginVersion
-    for (entry in problemsToIgnore.entries()) {
-      val ignoreXmlId = entry.key.first
-      val ignoreVersion = entry.key.second
-      val ignoredPattern = entry.value
+    for ((key, ignoredPattern) in problemsToIgnore.entries()) {
+      val ignoreXmlId = key.first
+      val ignoreVersion = key.second
 
       if (StringUtil.equal(xmlId, ignoreXmlId)) {
         if (StringUtil.isEmpty(ignoreVersion) || StringUtil.equal(version, ignoreVersion)) {
@@ -126,12 +125,7 @@ data class VOptions(@SerializedName("externalCp") val externalClassPrefixes: Set
   }
 
   fun isExternalClass(className: String): Boolean {
-    for (prefix in externalClassPrefixes) {
-      if (prefix.isNotEmpty() && className.startsWith(prefix)) {
-        return true
-      }
-    }
-    return false
+    return externalClassPrefixes.any { it.isNotEmpty() && className.startsWith(it) }
   }
 
 }
