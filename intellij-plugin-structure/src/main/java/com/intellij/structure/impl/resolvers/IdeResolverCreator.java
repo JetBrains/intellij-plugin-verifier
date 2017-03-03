@@ -23,7 +23,10 @@ import static com.intellij.structure.resolvers.Resolver.createUnionResolver;
  */
 public class IdeResolverCreator {
 
-  private static final String[] HARD_CODED_LIB_FOLDERS = new String[]{"community/android/android/lib"};
+  private static final String[] HARD_CODED_LIB_FOLDERS = new String[] {
+      "community/android/android/lib",
+      "community/plugins/gradle/lib"
+  };
 
   private static final Logger LOG = LoggerFactory.getLogger(IdeResolverCreator.class);
 
