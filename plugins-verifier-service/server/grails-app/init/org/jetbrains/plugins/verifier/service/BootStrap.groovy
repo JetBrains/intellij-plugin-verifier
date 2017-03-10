@@ -39,7 +39,9 @@ class BootStrap {
     if (Boolean.parseBoolean(Settings.ENABLE_FEATURE_EXTRACTOR_SERVICE.get())) {
       FeatureService.INSTANCE.run()
     }
-    IdeListUpdater.INSTANCE.run()
+    if (Boolean.parseBoolean(Settings.ENABLE_IDE_LIST_UPDATER.get())) {
+      IdeListUpdater.INSTANCE.run()
+    }
   }
 
   def prepareUpdateInfoCacheForExistingIdes() {

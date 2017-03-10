@@ -18,7 +18,8 @@ enum class Settings(private val key: String,
   ENABLE_PLUGIN_VERIFIER_SERVICE("verifier.service.enable.plugin.verifier.service", { "false" }),
   PLUGIN_REPOSITORY_VERIFIER_USERNAME("verifier.service.plugin.repository.verifier.username"),
   PLUGIN_REPOSITORY_VERIFIER_PASSWORD("verifier.service.plugin.repository.verifier.password", encrypted = true),
-  USE_SAME_REPOSITORY_FOR_DOWNLOADING("verifier.service.use.same.repository.for.downloading", { "true" });
+  USE_SAME_REPOSITORY_FOR_DOWNLOADING("verifier.service.use.same.repository.for.downloading", { "true" }),
+  ENABLE_IDE_LIST_UPDATER("verifier.service.enable.ide.list.updater", { "true" });
 
   fun get(): String {
     val property = System.getProperty(key)
