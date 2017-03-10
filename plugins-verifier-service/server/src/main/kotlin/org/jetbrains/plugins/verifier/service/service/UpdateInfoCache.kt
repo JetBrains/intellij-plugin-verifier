@@ -39,28 +39,28 @@ object UpdateInfoCache {
     if (updateInfo != null) {
       return updateInfo
     }
-    try {
-      val info = api.getUpdateInfo(updateId).executeSuccessfully().body()
-      update(info)
-      return info
-    } catch (e: Exception) {
-      LOG.error("Unable to get UpdateInfo #$updateId", e)
-      return null
-    }
-    /*
-    todo: use it when ready on the plugins site
+    updateBatch(updateId)
+    return cache[updateId]
+  }
+
+  private fun updateBatch(updateId: Int) {
     try {
       val batchRequestSize = 1000
       val updates = api.getUpdateInfosForIds(updateId, updateId + batchRequestSize).executeSuccessfully().body()
-      updates.forEach {
-        cache.putIfAbsent(it.updateId, it)
-      }
-      return cache[updateId]
+      updates.forEach { update(it) }
     } catch (e: Exception) {
       LOG.error("Unable to get UpdateInfo for Update #$updateId", e)
-      return null
+      updateSingle(updateId)
     }
-*/
+  }
+
+  private fun updateSingle(updateId: Int) {
+    try {
+      val info = api.getUpdateInfo(updateId).executeSuccessfully().body()
+      update(info)
+    } catch (e: Exception) {
+      LOG.error("Unable to get UpdateInfo #$updateId", e)
+    }
   }
 }
 
