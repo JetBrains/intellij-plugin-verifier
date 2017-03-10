@@ -1,12 +1,12 @@
 package com.jetbrains.intellij.feature.extractor
 
+import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeManager
 import com.intellij.structure.domain.Plugin
 import com.intellij.structure.domain.PluginManager
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.persistence.GsonHolder
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -23,7 +23,7 @@ fun main(args: Array<String>) {
   val plugin = PluginManager.getInstance().createPlugin(pluginFile, false)
   val ide = IdeManager.getInstance().createIde(ideaFile)
   val extractorResult = FeaturesExtractor.extractFeatures(ide, plugin)
-  extractorResult.features.forEach { println(GsonHolder.GSON.toJson(it)) }
+  extractorResult.features.forEach { println(Gson().toJson(it)) }
   println("All features extracted: ${extractorResult.extractedAll}")
 }
 

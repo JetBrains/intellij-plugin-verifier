@@ -13,8 +13,7 @@ buildscript {
 }
 
 def extractorVersion = '1.0'
-def intellijStructureVersion = '1.36'
-def verifierVersion = '1.54'
+def intellijStructureVersion = '1.37'
 
 configure(allprojects) {
   apply plugin: 'java'
@@ -41,8 +40,8 @@ configure(allprojects) {
 
 dependencies {
   compile(group: 'org.jetbrains.intellij.plugins', name: 'intellij-plugin-structure', version: intellijStructureVersion, ext: 'jar', classifier: 'all')
-  compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-results', version: verifierVersion
   compile group: 'com.google.guava', name: 'guava', version: '19.0'
+  compile group: 'com.google.code.gson', name: 'gson', version: '2.7'
   compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
   compile group: 'commons-io', name: 'commons-io', version: '2.5'
   compile group: 'commons-io', name: 'commons-io', version: '2.5'
@@ -78,37 +77,3 @@ publishing {
 }
 
 publishToMavenLocal.dependsOn test
-
-/*
-Previously this artifact was dependent on the IDEA distribution.
-
-ext.ideaDevVersion = '163.7743.44'
-ext.ideaCorePath = file("$buildDir/download/ideaCore")
-
-configurations {
-  ideaDependency
-}
-
-dependencies {
-  ideaDependency group: 'com.jetbrains.intellij.idea', name: 'ideaIU', version: ideaDevVersion, ext: 'zip'
-  compile files("${ideaCorePath}/lib/openapi.jar", "${ideaCorePath}/lib/idea.jar", "${ideaCorePath}/lib/util.jar")
-}
-
-task extractIdeaCore {
-  ext.fromFile = { configurations.ideaDependency.files.first() }
-  ext.toDir = ideaCorePath
-  inputs.file fromFile
-  outputs.dir toDir
-
-  doLast {
-    delete ideaCorePath
-    copy {
-      from zipTree(fromFile)
-      into ideaCorePath
-    }
-  }
-}
-
-compileKotlin.dependsOn(extractIdeaCore)
-compileJava.dependsOn(extractIdeaCore)
-*/
