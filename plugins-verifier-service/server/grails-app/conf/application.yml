@@ -1,4 +1,6 @@
----
+server:
+    port: 9999
+
 hibernate:
     cache:
         queries: false
@@ -43,7 +45,7 @@ environments:
                 testWhileIdle: true
                 testOnReturn: false
                 jdbcInterceptors: ConnectionState
-                defaultTransactionIsolation: 2 # TRANSACTION_READ_COMMITTED
+                defaultTransactionIsolation: 2
 
 ---
 ---
