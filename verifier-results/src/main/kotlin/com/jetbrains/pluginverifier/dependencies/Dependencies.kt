@@ -32,7 +32,7 @@ data class DependencyEdge(@SerializedName("from") val from: DependencyNode,
 data class MissingDependencyPath(@SerializedName("path") val path: List<DependencyNode>,
                                  @SerializedName("missing") val missing: PluginDependency,
                                  @SerializedName("reason") val reason: MissingReason) {
-  override fun toString(): String = path.joinToString(" -> ") + missing.id + " because $reason"
+  override fun toString(): String = path.joinToString(" -> ") + " -> " + missing.id + ": $reason"
 }
 
 data class DependenciesGraph(@SerializedName("start") val start: DependencyNode,
