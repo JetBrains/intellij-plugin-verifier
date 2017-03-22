@@ -42,5 +42,5 @@ fun <T> Call<T>.executeSuccessfully(): Response<T> {
     throw RuntimeException("The server $server has faced unexpected problems (500 Internal Server Error)")
   }
   val errorString = response.errorBody().string()
-  throw RuntimeException("The response status code is ${response.code()}: ${if (errorString.length > 100) "(too long error body...)" else errorString}")
+  throw RuntimeException("The response status code is ${response.code()}: ${if (errorString.length > 100) errorString.substring(0, 100) + "..." else errorString}")
 }
