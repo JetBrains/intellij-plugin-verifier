@@ -1,7 +1,7 @@
 buildscript {
   ext {
     grailsVersion = project.grailsVersion
-    kotlin_version = '1.0.5'
+    kotlin_version = '1.1.1'
   }
   repositories {
     jcenter()
@@ -64,32 +64,6 @@ apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
 
-publishing {
-  publications {
-
-    def configurePublication = { MavenPublication pub, String projectName, boolean appendFatJar ->
-
-      def proj = project(projectName)
-      pub.groupId proj.group
-      pub.artifactId proj.name
-      pub.version proj.version
-
-      pub.from proj.components.java
-      pub.artifact proj.sourcesJar
-
-      if (appendFatJar) {
-        pub.artifact proj.shadowJar
-      }
-
-    }
-
-    ClientPublication(MavenPublication) { configurePublication(it, ':cli', true) }
-    RestPublication(MavenPublication) { configurePublication(it, ':rest', false) }
-    ApiPublication(MavenPublication) { configurePublication(it, ':protocol', false) }
-
-  }
-}
-
 publishToMavenLocal.dependsOn test
 
 bintray {
@@ -116,7 +90,7 @@ bintray {
 bintrayUpload.doFirst {
 
   if (!bintray.user || !bintray.key) {
-    throw new StopExecutionException("You must specify (bintrayUser, bintrayApiKey) or (BINTRAY_USER, BINTRAY_API_KEY) properties")
+    throw new RuntimeException("You must specify (bintrayUser, bintrayApiKey) or (BINTRAY_USER, BINTRAY_API_KEY) properties")
   }
 
   println("Uploading Plugin Verifier Service module ${project.name}:${project.version}" + ' to bintray')
