@@ -2,6 +2,8 @@ package org.jetbrains.plugins.verifier.service.service
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
+import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import okhttp3.RequestBody
@@ -152,16 +154,32 @@ object FeatureService {
   }
 
   private fun onSuccess(result: Result<FeaturesResult>) {
-    val results = result.result!!
-    LOG.info("Update ${results.plugin} is successfully processed. Result type = ${results.resultType}; Extracted = ${results.features.size} " +
-        (if (results.badPlugin != null) "bad plugin = ${results.badPlugin}; " else "") +
-        "in ${result.taskStatus.elapsedTime() / 1000} s")
-
+    val extractorResult = result.result!!
+    logSuccess(extractorResult, result)
+    val pluginsResult = convertToPluginsSiteResult(extractorResult)
     try {
-      sendExtractedFeatures(results, userName, password).executeSuccessfully()
+      sendExtractedFeatures(pluginsResult, userName, password).executeSuccessfully()
     } catch(e: Exception) {
-      LOG.error("Unable to send check result of the plugin ${results.plugin}", e)
+      LOG.error("Unable to send check result of the plugin ${extractorResult.plugin}", e)
     }
+  }
+
+  private fun convertToPluginsSiteResult(featuresResult: FeaturesResult): PluginsSiteResult {
+    val updateId = (featuresResult.plugin as PluginDescriptor.ByUpdateInfo).updateInfo.updateId
+    val resultType = featuresResult.resultType
+    if (resultType == FeaturesResult.ResultType.BAD_PLUGIN) {
+      return PluginsSiteResult(updateId, resultType, badPluginReason = featuresResult.badPlugin!!.reason)
+    }
+    return PluginsSiteResult(updateId, resultType, featuresResult.features)
+  }
+
+  private fun logSuccess(featuresResult: FeaturesResult, result: Result<FeaturesResult>) {
+    val plugin = featuresResult.plugin
+    val resultType = featuresResult.resultType
+    val size = featuresResult.features.size
+    val badPlugin = if (featuresResult.badPlugin != null) "bad plugin = ${featuresResult.badPlugin}; " else ""
+    val seconds = result.taskStatus.elapsedTime() / 1000
+    LOG.info("Plugin $plugin is successfully processed:rResult type = $resultType; extracted = $size features; $badPlugin; in $seconds s")
   }
 
 
@@ -175,10 +193,15 @@ object FeatureService {
       featuresExtractor.getUpdatesToExtractFeatures(createStringRequestBody(userName), createStringRequestBody(password))
 
 
-  private fun sendExtractedFeatures(extractedFeatures: FeaturesResult, userName: String, password: String) =
-      featuresExtractor.sendExtractedFeatures(createCompactJsonRequestBody(extractedFeatures), createStringRequestBody(userName), createStringRequestBody(password))
+  private fun sendExtractedFeatures(extractedFeatures: PluginsSiteResult, userName: String, password: String) =
+      featuresExtractor.sendExtractedFeatures(extractedFeatures, createStringRequestBody(userName), createStringRequestBody(password))
 
 }
+
+data class PluginsSiteResult(@SerializedName("updateId") val updateId: Int,
+                             @SerializedName("resultType") val resultType: FeaturesResult.ResultType,
+                             @SerializedName("features") val features: List<ExtensionPointFeatures> = emptyList(),
+                             @SerializedName("badPluginReason") val badPluginReason: String? = null)
 
 interface FeaturesApi {
 
@@ -189,7 +212,7 @@ interface FeaturesApi {
 
   @Multipart
   @POST("/feature/receiveExtractedFeatures")
-  fun sendExtractedFeatures(@Part("extractedFeatures") extractedFeatures: RequestBody,
+  fun sendExtractedFeatures(@Part("extractedFeatures") extractedFeatures: PluginsSiteResult,
                             @Part("userName") userName: RequestBody,
                             @Part("password") password: RequestBody): Call<ResponseBody>
 

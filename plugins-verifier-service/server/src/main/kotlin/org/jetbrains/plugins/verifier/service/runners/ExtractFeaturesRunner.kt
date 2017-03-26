@@ -1,9 +1,8 @@
 package org.jetbrains.plugins.verifier.service.runners
 
-import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.Plugin
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.intellij.feature.extractor.FeatureImplementation
+import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VManager
@@ -16,10 +15,10 @@ import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import org.slf4j.LoggerFactory
 
 
-data class FeaturesResult(@SerializedName("plugin") val plugin: PluginDescriptor,
-                          @SerializedName("resultType") val resultType: ResultType,
-                          @SerializedName("features") val features: List<FeatureImplementation> = emptyList(),
-                          @SerializedName("badPlugin") val badPlugin: VResult.BadPlugin? = null) {
+data class FeaturesResult(val plugin: PluginDescriptor,
+                          val resultType: ResultType,
+                          val features: List<ExtensionPointFeatures> = emptyList(),
+                          val badPlugin: VResult.BadPlugin? = null) {
   enum class ResultType {
     NOT_FOUND,
     BAD_PLUGIN,
