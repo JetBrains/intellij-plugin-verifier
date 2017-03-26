@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.utils
 
-object CompactJson {
+object CompactJsonUtil {
 
   val DELIMITER: String = "#"
 

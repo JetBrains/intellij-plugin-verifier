@@ -90,7 +90,7 @@ object PresentationUtils {
   }
 
   private fun parseMethodParametersTypesByDescriptor(methodDescriptor: String): List<String> {
-    require(methodDescriptor.startsWith("(") && methodDescriptor.contains(')'), { methodDescriptor })
+    require(methodDescriptor.startsWith("(") && methodDescriptor.contains(')'), { "Invalid method descriptor: $methodDescriptor" })
     val rawParameterTypes = arrayListOf<String>()
     var pos = 1
     while (methodDescriptor[pos] != ')') {

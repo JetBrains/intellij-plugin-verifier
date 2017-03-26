@@ -4,10 +4,8 @@ import com.github.salomonbrys.kotson.*
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.LinkedHashMultimap
 import com.google.common.collect.Multimap
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.TypeAdapter
-import com.google.gson.TypeAdapterFactory
+import com.google.gson.*
+import com.google.gson.internal.Streams
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
@@ -32,15 +30,55 @@ import com.jetbrains.pluginverifier.report.checkIdeReportDeserializer
 import com.jetbrains.pluginverifier.report.checkIdeReportSerializer
 import com.jetbrains.pluginverifier.utils.RuntimeTypeAdapterFactory
 import java.io.IOException
+import java.io.StringReader
 import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
 
 /**
  * @author Sergey Patrikeev
  */
 
-object GsonHolder {
-  val GSON: Gson = GsonBuilder()
-      .setVersion(1.0)
+object CompactJson {
+
+  val FORMAT_VERSION: Int = 1
+
+  fun toJson(src: Any): String {
+    val contentTree = GSON.toJsonTree(src)
+    val versionedJson = JsonObject()
+    versionedJson.addProperty(VERSION_PROPERTY, FORMAT_VERSION)
+    versionedJson.add(CONTENT_PROPERTY, contentTree)
+    return GSON.toJson(versionedJson)
+  }
+
+  fun <T> fromJson(json: String, type: Type, checkVersion: Boolean = true): T {
+    val jsonReader = GSON.newJsonReader(StringReader(json))
+    val jsonElement = Streams.parse(jsonReader)
+    val versionedJsonObject = jsonElement.asJsonObject
+    val versionElement = versionedJsonObject.remove(VERSION_PROPERTY)
+    val contentElement = versionedJsonObject.remove(CONTENT_PROPERTY)
+    require(versionElement != null, { "Given string is not a versioned json: missing '$VERSION_PROPERTY' property" })
+    require(contentElement != null, { "Given string is not a versioned json: missing '$CONTENT_PROPERTY' property" })
+    val version = versionElement.asInt
+    if (checkVersion && FORMAT_VERSION != version) {
+      throw IllegalArgumentException("Json version $version is not equal to expected version $FORMAT_VERSION")
+    }
+    val adapter = GSON.getAdapter(TypeToken.get(type))
+    val obj = adapter.fromJsonTree(contentElement)
+    try {
+      @Suppress("UNCHECKED_CAST")
+      return obj as T
+    } catch(e: ClassCastException) {
+      throw IllegalArgumentException("Given json string is of type $type, not expected type $type")
+    }
+  }
+
+  inline fun <reified T : Any> fromJson(json: String): T = fromJson(json, typeToken<T>())
+
+  private val VERSION_PROPERTY = "version"
+
+  private val CONTENT_PROPERTY = "content"
+
+  private val GSON: Gson = GsonBuilder()
       //serializes map as Json-array instead of Json-object
       .enableComplexMapKeySerialization()
       .registerTypeHierarchyAdapter(IdeVersion::class.java, IdeVersionTypeAdapter().nullSafe())

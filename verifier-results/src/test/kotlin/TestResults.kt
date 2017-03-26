@@ -1,4 +1,3 @@
-import com.github.salomonbrys.kotson.fromJson
 import com.google.common.collect.ImmutableMultimap
 import com.google.common.collect.Multimap
 import com.intellij.structure.domain.IdeVersion
@@ -13,7 +12,7 @@ import com.jetbrains.pluginverifier.dependencies.MissingReason
 import com.jetbrains.pluginverifier.location.AccessFlags
 import com.jetbrains.pluginverifier.location.ClassPath
 import com.jetbrains.pluginverifier.location.ProblemLocation
-import com.jetbrains.pluginverifier.persistence.GsonHolder
+import com.jetbrains.pluginverifier.persistence.CompactJson
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.reference.SymbolicReference
@@ -21,9 +20,9 @@ import com.jetbrains.pluginverifier.warnings.Warning
 import org.junit.Assert
 import org.junit.Test
 
-private fun Any.toGson(): String = GsonHolder.GSON.toJson(this)
+private fun Any.toGson(): String = CompactJson.toJson(this)
 
-private inline fun <reified T : Any> String.fromGson() = GsonHolder.GSON.fromJson<T>(this)
+private inline fun <reified T : Any> String.fromGson() = CompactJson.fromJson<T>(this)
 
 
 /**

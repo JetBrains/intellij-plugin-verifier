@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.report
 
-import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.jsonDeserializer
 import com.github.salomonbrys.kotson.jsonSerializer
 import com.google.common.collect.ArrayListMultimap
@@ -13,7 +12,7 @@ import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.api.VResults
 import com.jetbrains.pluginverifier.dependencies.MissingPlugin
 import com.jetbrains.pluginverifier.format.UpdateInfo
-import com.jetbrains.pluginverifier.persistence.GsonHolder
+import com.jetbrains.pluginverifier.persistence.CompactJson
 import com.jetbrains.pluginverifier.persistence.multimapFromMap
 import com.jetbrains.pluginverifier.problems.Problem
 import java.io.File
@@ -49,7 +48,7 @@ data class CheckIdeReport(@SerializedName("ideVersion") val ideVersion: IdeVersi
                           @SerializedName("pluginProblems") val pluginProblems: Multimap<UpdateInfo, Problem>,
                           @SerializedName("missingPlugins") val missingPlugins: Multimap<MissingPlugin, UpdateInfo>) {
   fun saveToFile(file: File) {
-    file.writeText(GsonHolder.GSON.toJson(this))
+    file.writeText(CompactJson.toJson(this))
   }
 
   companion object {
@@ -74,7 +73,7 @@ data class CheckIdeReport(@SerializedName("ideVersion") val ideVersion: IdeVersi
         throw IllegalArgumentException("The supplied file doesn't contain check ide report")
       }
       val s = lines.reduce { s, t -> s + t }
-      return GsonHolder.GSON.fromJson(s)
+      return CompactJson.fromJson(s)
     }
   }
 }

@@ -4,8 +4,8 @@ import com.github.salomonbrys.kotson.jsonDeserializer
 import com.github.salomonbrys.kotson.jsonSerializer
 import com.github.salomonbrys.kotson.string
 import com.google.gson.JsonPrimitive
-import com.jetbrains.pluginverifier.utils.CompactJson
-import com.jetbrains.pluginverifier.utils.CompactJson.serialize
+import com.jetbrains.pluginverifier.utils.CompactJsonUtil
+import com.jetbrains.pluginverifier.utils.CompactJsonUtil.serialize
 import com.jetbrains.pluginverifier.utils.PresentationUtils
 import com.jetbrains.pluginverifier.utils.PresentationUtils.convertClassSignature
 import com.jetbrains.pluginverifier.utils.PresentationUtils.convertJvmDescriptorToNormalPresentation
@@ -150,7 +150,7 @@ internal val problemLocationSerializer = jsonSerializer<ProblemLocation> {
 }
 
 internal val problemLocationDeserializer = jsonDeserializer {
-  val parts = CompactJson.deserialize(it.json.string)
+  val parts = CompactJsonUtil.deserialize(it.json.string)
 
   fun deserializeClassPath(classPath: String): ClassPath {
     val cpParts = classPath.split("|")
@@ -160,7 +160,7 @@ internal val problemLocationDeserializer = jsonDeserializer {
   fun deserializeAccessFlags(flags: String) = AccessFlags(flags.toInt())
 
   fun deserializeClassLocation(string: String): ClassLocation {
-    val classParts = CompactJson.deserialize(string)
+    val classParts = CompactJsonUtil.deserialize(string)
     return ProblemLocation.fromClass(classParts[1], classParts[2], deserializeClassPath(classParts[3]), deserializeAccessFlags(classParts[4]))
   }
 
