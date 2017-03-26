@@ -1,50 +1,14 @@
 package com.jetbrains.intellij.feature.extractor
 
-import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.Ide
-import com.intellij.structure.domain.IdeManager
 import com.intellij.structure.domain.Plugin
-import com.intellij.structure.domain.PluginManager
 import com.intellij.structure.resolvers.Resolver
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.slf4j.LoggerFactory
-import java.io.File
-
-/**
- * @author Sergey Patrikeev
- */
-fun main(args: Array<String>) {
-  if (args.size != 2) {
-    throw IllegalArgumentException("Usage: <plugin> <idea>")
-  }
-  val pluginFile = File(args[0])
-  val ideaFile = File(args[1])
-  val plugin = PluginManager.getInstance().createPlugin(pluginFile, false)
-  val ide = IdeManager.getInstance().createIde(ideaFile)
-  val extractorResult = FeaturesExtractor.extractFeatures(ide, plugin)
-  extractorResult.features.forEach { println(Gson().toJson(it)) }
-  println("All features extracted: ${extractorResult.extractedAll}")
-}
-
-data class FeatureImplementation(@SerializedName("feature") val feature: Feature,
-                                 @SerializedName("implementor") val implementor: String,
-                                 @SerializedName("featureNames") val featureNames: List<String>)
-
-
-enum class Feature(@SerializedName("extensionPointName") val extensionPointName: String) {
-  ConfigurationType("com.intellij.configurationType"),
-  FacetType("com.intellij.facetType"),
-  FileType("com.intellij.fileTypeFactory"),
-  ArtifactType("com.intellij.packaging.artifactType")
-  //TODO: module type: see https://plugins.jetbrains.com/plugin/9238 for example
-}
 
 object FeaturesExtractor {
 
   private val LOG = LoggerFactory.getLogger("FeaturesExtractor")
-
-  data class ExtractorResult(val features: List<FeatureImplementation>, val extractedAll: Boolean)
 
   fun extractFeatures(ide: Ide, plugin: Plugin, createdPluginResolver: Resolver? = null): ExtractorResult {
 
