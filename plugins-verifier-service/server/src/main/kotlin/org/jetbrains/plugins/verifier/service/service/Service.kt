@@ -3,7 +3,6 @@ package org.jetbrains.plugins.verifier.service.service
 import com.google.common.collect.HashMultimap
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VOptions
@@ -101,7 +100,7 @@ object Service {
       val tasks = HashMultimap.create<Int, IdeVersion>()
 
       for (ideVersion in IdeFilesManager.ideList()) {
-        getUpdatesToCheck(ideVersion).updateIds.forEach {
+        getUpdatesToCheck(ideVersion).forEach {
           tasks.put(it, ideVersion)
         }
       }
@@ -120,9 +119,9 @@ object Service {
     }
   }
 
-  private fun getUpdatesToCheck(ideVersion: IdeVersion): UpdatesToCheck {
-    val updatesToCheck: UpdatesToCheck = getUpdatesToCheck(ideVersion, userName, password).executeSuccessfully().body()
-    LOG.info("Repository get updates to check with #$ideVersion success: (total: ${updatesToCheck.updateIds.size}): $updatesToCheck")
+  private fun getUpdatesToCheck(ideVersion: IdeVersion): List<Int> {
+    val updatesToCheck: List<Int> = getUpdatesToCheck(ideVersion, userName, password).executeSuccessfully().body()
+    LOG.info("Repository get updates to check with #$ideVersion success: (total: ${updatesToCheck.size}): $updatesToCheck")
     return updatesToCheck
   }
 
@@ -203,16 +202,13 @@ object Service {
 
 }
 
-data class UpdatesToCheck(@SerializedName("updateIds") val updateIds: MutableList<Int>,
-                          @SerializedName("ideVersion") val ideVersion: IdeVersion)
-
 interface VerificationApi {
 
   @POST("/verification/getUpdatesToCheck")
   @Multipart
   fun getUpdatesToCheck(@Part("availableIde") availableIde: String,
                         @Part("userName") userName: RequestBody,
-                        @Part("password") password: RequestBody): Call<UpdatesToCheck>
+                        @Part("password") password: RequestBody): Call<List<Int>>
 
   @POST("/verification/receiveUpdateCheckResult")
   @Multipart
