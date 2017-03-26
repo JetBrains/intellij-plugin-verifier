@@ -48,6 +48,7 @@ object CompactJson {
     return GSON.toJson(versionedJson)
   }
 
+  @JvmOverloads
   fun <T> fromJson(json: String, type: Type, checkVersion: Boolean = true): T {
     val jsonReader = GSON.newJsonReader(StringReader(json))
     val jsonElement = Streams.parse(jsonReader)
