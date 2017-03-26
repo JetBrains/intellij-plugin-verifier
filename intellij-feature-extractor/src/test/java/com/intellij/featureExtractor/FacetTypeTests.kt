@@ -27,7 +27,7 @@ class FacetTypeTests : FeatureExtractorTestBase() {
   private fun assertExtractFacets(className: String, listOf: List<String>) {
     val node = readClassNode(className)
     val extractor = FacetTypeExtractor(resolver)
-    val facetTypeId = extractor.extract(node).features
+    val facetTypeId = extractor.extract(node).featureNames
     Assert.assertEquals(listOf, facetTypeId)
   }
 

@@ -20,7 +20,7 @@ class ConfigurationTypeTest : FeatureExtractorTestBase() {
 
   private fun assertExtractConfiguration(className: String, configuration: String) {
     val node = readClassNode(className)
-    val actual = RunConfigurationExtractor(resolver).extract(node).features
+    val actual = RunConfigurationExtractor(resolver).extract(node).featureNames
     Assert.assertEquals(listOf(configuration), actual)
   }
 

@@ -11,7 +11,7 @@ class ArtifactTypeTest : FeatureExtractorTestBase() {
 
   private fun assertExtractArtifactType(className: String, artifactTypes: List<String>) {
     val node = readClassNode(className)
-    val list = ArtifactTypeExtractor(resolver).extract(node).features
+    val list = ArtifactTypeExtractor(resolver).extract(node).featureNames
     Assert.assertEquals(artifactTypes, list)
   }
 

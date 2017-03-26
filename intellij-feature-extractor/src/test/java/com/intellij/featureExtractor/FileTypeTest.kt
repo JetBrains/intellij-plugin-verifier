@@ -18,7 +18,7 @@ class FileTypeTest : FeatureExtractorTestBase() {
   private fun assertExtractFileTypes(className: String, extensions: List<String>) {
     val node = readClassNode(className)
     val result = FileTypeExtractor(resolver).extract(node)
-    val list = result.features
+    val list = result.featureNames
     assertTrue(result.extractedAll)
     assertEquals(extensions, list)
   }

@@ -3,6 +3,10 @@ package com.jetbrains.intellij.feature.extractor
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.Plugin
 import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.intellij.feature.extractor.core.ArtifactTypeExtractor
+import com.jetbrains.intellij.feature.extractor.core.FacetTypeExtractor
+import com.jetbrains.intellij.feature.extractor.core.FileTypeExtractor
+import com.jetbrains.intellij.feature.extractor.core.RunConfigurationExtractor
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.slf4j.LoggerFactory
 
@@ -38,40 +42,40 @@ object FeaturesExtractor {
   }
 
   private fun implementations(plugin: Plugin, resolver: Resolver): ExtractorResult {
-    val results = Feature.values().map { implementations(plugin, it, resolver) }
-    return ExtractorResult(results.flatMap { it.features }, results.all { it.extractedAll == true })
+    val allEpFeatures = ExtensionPoint.values().map { epFeatures(plugin, it, resolver) }
+    return ExtractorResult(allEpFeatures.flatMap { it.features }, allEpFeatures.all { it.extractedAll })
   }
 
-  private fun implementations(plugin: Plugin, feature: Feature, resolver: Resolver): ExtractorResult {
-    val implementors = pluginImplementors(feature, plugin)
-    if (implementors.isEmpty()) {
+  private fun epFeatures(plugin: Plugin, extensionPoint: ExtensionPoint, resolver: Resolver): ExtractorResult {
+    val epImplementors = getExtensionPointImplementors(extensionPoint, plugin)
+    if (epImplementors.isEmpty()) {
       return ExtractorResult(emptyList(), true)
     }
-    val implementations = implementors.map { implementation(it, plugin, feature, resolver) }
-    val extractedAll = implementations.all { it != null && it.second }
-    return ExtractorResult(implementations.filterNotNull().map { it.first }.filterNot { it.featureNames.isEmpty() }, extractedAll)
+    val allImplementorsFeatures = epImplementors.map { extractEpFeatures(extensionPoint, it, plugin, resolver) }
+    val extractedAll = allImplementorsFeatures.all { it != null && it.second }
+    return ExtractorResult(allImplementorsFeatures.filterNotNull().map { it.first }.filterNot { it.featureNames.isEmpty() }, extractedAll)
   }
 
-  private fun implementation(implementor: String, plugin: Plugin, feature: Feature, resolver: Resolver): Pair<FeatureImplementation, Boolean>? {
+  private fun extractEpFeatures(extensionPoint: ExtensionPoint, epImplementorClass: String, plugin: Plugin, resolver: Resolver): Pair<ExtensionPointFeatures, Boolean>? {
     val classNode: ClassNode
     try {
-      classNode = resolver.findClass(implementor.replace('.', '/')) ?: return null
+      classNode = resolver.findClass(epImplementorClass.replace('.', '/')) ?: return null
     } catch(e: Exception) {
-      LOG.debug("Unable to get plugin $plugin class file `$implementor`", e)
+      LOG.debug("Unable to get plugin $plugin class file `$epImplementorClass`", e)
       return null
     }
 
-    val extractor = when (feature) {
-      Feature.ConfigurationType -> RunConfigurationExtractor(resolver)
-      Feature.FacetType -> FacetTypeExtractor(resolver)
-      Feature.FileType -> FileTypeExtractor(resolver)
-      Feature.ArtifactType -> ArtifactTypeExtractor(resolver)
+    val extractor = when (extensionPoint) {
+      ExtensionPoint.CONFIGURATION_TYPE -> RunConfigurationExtractor(resolver)
+      ExtensionPoint.FACET_TYPE -> FacetTypeExtractor(resolver)
+      ExtensionPoint.FILE_TYPE -> FileTypeExtractor(resolver)
+      ExtensionPoint.ARTIFACT_TYPE -> ArtifactTypeExtractor(resolver)
     }
     val result = extractor.extract(classNode)
-    return FeatureImplementation(feature, implementor, result.features) to result.extractedAll
+    return ExtensionPointFeatures(extensionPoint, epImplementorClass, result.featureNames) to result.extractedAll
   }
 
-  private fun pluginImplementors(feature: Feature, plugin: Plugin): List<String> =
-      plugin.extensions[feature.extensionPointName]?.map { it.getAttributeValue("implementation") }?.filterNotNull().orEmpty()
+  private fun getExtensionPointImplementors(extensionPoint: ExtensionPoint, plugin: Plugin): List<String> =
+      plugin.extensions[extensionPoint.extensionPointName]?.map { it.getAttributeValue("implementation") }?.filterNotNull().orEmpty()
 
 }

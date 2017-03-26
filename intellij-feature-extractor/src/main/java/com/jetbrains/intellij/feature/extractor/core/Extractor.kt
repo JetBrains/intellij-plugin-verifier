@@ -5,7 +5,7 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 
 abstract class Extractor(val resolver: Resolver) {
 
-  data class Result(val extractedAll: Boolean, val features: List<String>)
+  data class Result(val extractedAll: Boolean, val featureNames: List<String>)
 
   fun extract(classNode: ClassNode): Result {
     val list: List<String>? = extractImpl(classNode)
