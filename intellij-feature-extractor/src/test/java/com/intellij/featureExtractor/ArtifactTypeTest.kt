@@ -1,6 +1,6 @@
 package com.intellij.featureExtractor
 
-import com.jetbrains.intellij.feature.extractor.ArtifactTypeExtractor
+import com.jetbrains.intellij.feature.extractor.core.ArtifactTypeExtractor
 import org.junit.Assert
 import org.junit.Test
 

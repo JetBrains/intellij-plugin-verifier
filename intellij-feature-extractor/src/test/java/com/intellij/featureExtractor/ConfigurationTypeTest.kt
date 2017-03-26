@@ -1,6 +1,6 @@
 package com.intellij.featureExtractor
 
-import com.jetbrains.intellij.feature.extractor.RunConfigurationExtractor
+import com.jetbrains.intellij.feature.extractor.core.RunConfigurationExtractor
 import org.junit.Assert
 import org.junit.Test
 

@@ -1,6 +1,6 @@
 package com.intellij.featureExtractor
 
-import com.jetbrains.intellij.feature.extractor.FileTypeExtractor
+import com.jetbrains.intellij.feature.extractor.core.FileTypeExtractor
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
