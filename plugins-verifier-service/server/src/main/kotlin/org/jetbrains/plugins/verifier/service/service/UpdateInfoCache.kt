@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service
 
+import com.google.gson.Gson
 import com.jetbrains.pluginverifier.format.UpdateInfo
-import com.jetbrains.pluginverifier.persistence.GsonHolder
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.util.executeSuccessfully
 import org.slf4j.Logger
@@ -25,7 +25,7 @@ object UpdateInfoCache {
 
   private val api: GetUpdateInfoApi = Retrofit.Builder()
       .baseUrl(Settings.PLUGIN_REPOSITORY_URL.get())
-      .addConverterFactory(GsonConverterFactory.create(GsonHolder.GSON))
+      .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(makeClient(LOG.isDebugEnabled))
       .build()
       .create(GetUpdateInfoApi::class.java)

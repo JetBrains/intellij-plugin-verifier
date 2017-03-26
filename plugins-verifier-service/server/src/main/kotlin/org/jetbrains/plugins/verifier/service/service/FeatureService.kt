@@ -1,10 +1,9 @@
 package org.jetbrains.plugins.verifier.service.service
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.google.gson.annotations.SerializedName
+import com.google.gson.Gson
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.format.UpdateInfo
-import com.jetbrains.pluginverifier.persistence.GsonHolder
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.api.Result
@@ -35,7 +34,7 @@ object FeatureService {
 
   private val featuresExtractor: FeaturesApi = Retrofit.Builder()
       .baseUrl(Settings.FEATURE_EXTRACTOR_REPOSITORY_URL.get())
-      .addConverterFactory(GsonConverterFactory.create(GsonHolder.GSON))
+      .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(makeClient(LOG.isDebugEnabled))
       .build()
       .create(FeaturesApi::class.java)
@@ -92,7 +91,7 @@ object FeatureService {
     isRequesting = true
 
     try {
-      for (it in getUpdatesToExtract().updateIds) {
+      for (it in getUpdatesToExtract()) {
         if (isServerTooBusy()) {
           return
         }
@@ -166,10 +165,10 @@ object FeatureService {
   }
 
 
-  private fun getUpdatesToExtract(): UpdatesToExtractFeatures {
-    val updates = getUpdatesToExtractFeatures(userName, password).executeSuccessfully().body()
-    LOG.info("Repository get updates to extract features success: (total: ${updates.updateIds.size}): $updates")
-    return updates
+  private fun getUpdatesToExtract(): List<Int> {
+    val updateIds = getUpdatesToExtractFeatures(userName, password).executeSuccessfully().body()
+    LOG.info("Repository get updates to extract features success: (total: ${updateIds.size}): $updateIds")
+    return updateIds
   }
 
   private fun getUpdatesToExtractFeatures(userName: String, password: String) =
@@ -177,22 +176,20 @@ object FeatureService {
 
 
   private fun sendExtractedFeatures(extractedFeatures: FeaturesResult, userName: String, password: String) =
-      featuresExtractor.sendExtractedFeatures(extractedFeatures, createStringRequestBody(userName), createStringRequestBody(password))
+      featuresExtractor.sendExtractedFeatures(createCompactJsonRequestBody(extractedFeatures), createStringRequestBody(userName), createStringRequestBody(password))
 
 }
-
-data class UpdatesToExtractFeatures(@SerializedName("updateIds") val updateIds: List<Int>)
 
 interface FeaturesApi {
 
   @Multipart
   @POST("/feature/getUpdatesToExtractFeatures")
   fun getUpdatesToExtractFeatures(@Part("userName") userName: RequestBody,
-                                  @Part("password") password: RequestBody): Call<UpdatesToExtractFeatures>
+                                  @Part("password") password: RequestBody): Call<List<Int>>
 
   @Multipart
   @POST("/feature/receiveExtractedFeatures")
-  fun sendExtractedFeatures(@Part("extractedFeatures") extractedFeatures: FeaturesResult,
+  fun sendExtractedFeatures(@Part("extractedFeatures") extractedFeatures: RequestBody,
                             @Part("userName") userName: RequestBody,
                             @Part("password") password: RequestBody): Call<ResponseBody>
 

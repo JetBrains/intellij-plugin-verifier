@@ -2,13 +2,13 @@ package org.jetbrains.plugins.verifier.service.service
 
 import com.google.common.collect.HashMultimap
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.VOptions
 import com.jetbrains.pluginverifier.configurations.CheckRangeResults
 import com.jetbrains.pluginverifier.format.UpdateInfo
-import com.jetbrains.pluginverifier.persistence.GsonHolder
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.api.Result
@@ -61,7 +61,7 @@ object Service {
 
   private val verifier: VerificationApi = Retrofit.Builder()
       .baseUrl(Settings.PLUGIN_REPOSITORY_URL.get())
-      .addConverterFactory(GsonConverterFactory.create(GsonHolder.GSON))
+      .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(makeClient(LOG.isDebugEnabled))
       .build()
       .create(VerificationApi::class.java)
@@ -195,11 +195,11 @@ object Service {
     }
   }
 
-  private fun getUpdatesToCheck(availableIde: IdeVersion, userName: String, password: String) =
-      verifier.getUpdatesToCheck(availableIde, createStringRequestBody(userName), createStringRequestBody(password))
+  fun getUpdatesToCheck(availableIde: IdeVersion, userName: String, password: String) =
+      verifier.getUpdatesToCheck(availableIde.asString(), createStringRequestBody(userName), createStringRequestBody(password))
 
   private fun sendUpdateCheckResult(checkResult: CheckRangeResults, userName: String, password: String) =
-      verifier.sendUpdateCheckResult(checkResult, createStringRequestBody(userName), createStringRequestBody(password))
+      verifier.sendUpdateCheckResult(createCompactJsonRequestBody(checkResult), createStringRequestBody(userName), createStringRequestBody(password))
 
 }
 
@@ -210,13 +210,13 @@ interface VerificationApi {
 
   @POST("/verification/getUpdatesToCheck")
   @Multipart
-  fun getUpdatesToCheck(@Part("availableIde") availableIde: IdeVersion,
+  fun getUpdatesToCheck(@Part("availableIde") availableIde: String,
                         @Part("userName") userName: RequestBody,
                         @Part("password") password: RequestBody): Call<UpdatesToCheck>
 
   @POST("/verification/receiveUpdateCheckResult")
   @Multipart
-  fun sendUpdateCheckResult(@Part("checkResults") checkResult: CheckRangeResults,
+  fun sendUpdateCheckResult(@Part("checkResults") checkResult: RequestBody,
                             @Part("userName") userName: RequestBody,
                             @Part("password") password: RequestBody): Call<ResponseBody>
 
