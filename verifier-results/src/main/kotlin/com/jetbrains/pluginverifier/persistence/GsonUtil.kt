@@ -34,9 +34,7 @@ import java.io.StringReader
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 
-/**
- * @author Sergey Patrikeev
- */
+class JsonVersionMismatchedException(msg: String) : RuntimeException(msg)
 
 object CompactJson {
 
@@ -60,7 +58,7 @@ object CompactJson {
     require(contentElement != null, { "Given string is not a versioned json: missing '$CONTENT_PROPERTY' property" })
     val version = versionElement.asInt
     if (checkVersion && FORMAT_VERSION != version) {
-      throw IllegalArgumentException("Json version $version is not equal to expected version $FORMAT_VERSION")
+      throw JsonVersionMismatchedException("Json version $version is not equal to expected version $FORMAT_VERSION")
     }
     val adapter = GSON.getAdapter(TypeToken.get(type))
     val obj = adapter.fromJsonTree(contentElement)
