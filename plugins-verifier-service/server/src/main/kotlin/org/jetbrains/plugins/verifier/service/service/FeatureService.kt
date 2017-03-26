@@ -194,7 +194,7 @@ object FeatureService {
 
 
   private fun sendExtractedFeatures(extractedFeatures: PluginsSiteResult, userName: String, password: String) =
-      featuresExtractor.sendExtractedFeatures(extractedFeatures, createStringRequestBody(userName), createStringRequestBody(password))
+      featuresExtractor.sendExtractedFeatures(createCompactJsonRequestBody(extractedFeatures), createStringRequestBody(userName), createStringRequestBody(password))
 
 }
 
@@ -212,7 +212,7 @@ interface FeaturesApi {
 
   @Multipart
   @POST("/feature/receiveExtractedFeatures")
-  fun sendExtractedFeatures(@Part("extractedFeatures") extractedFeatures: PluginsSiteResult,
+  fun sendExtractedFeatures(@Part("extractedFeatures") extractedFeatures: RequestBody,
                             @Part("userName") userName: RequestBody,
                             @Part("password") password: RequestBody): Call<ResponseBody>
 
