@@ -154,6 +154,9 @@ public class IdeManagerImpl extends IdeManager {
   @NotNull
   @Override
   public Ide createIde(@NotNull File idePath, @Nullable IdeVersion version) throws IOException {
+    if (!idePath.exists()) {
+      throw new IllegalArgumentException("IDE file " + idePath + " is not found");
+    }
     List<Plugin> bundled = new ArrayList<Plugin>();
 
     if (isSourceDir(idePath)) {
