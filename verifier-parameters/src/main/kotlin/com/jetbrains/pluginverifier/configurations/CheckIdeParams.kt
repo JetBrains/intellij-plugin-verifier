@@ -12,6 +12,8 @@ import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.CmdUtil
 import com.jetbrains.pluginverifier.utils.ParametersListUtil
 import com.jetbrains.pluginverifier.utils.VOptionsUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -30,6 +32,9 @@ data class CheckIdeParams(val ideDescriptor: IdeDescriptor,
 
 
 object CheckIdeParamsParser : ParamsParser {
+
+  private val LOG: Logger = LoggerFactory.getLogger(CheckIdeParamsParser::class.java)
+
   override fun parse(opts: CmdOpts, freeArgs: List<String>): CheckIdeParams {
     if (freeArgs.isEmpty()) {
       System.err.println("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"")
@@ -133,8 +138,14 @@ object CheckIdeParamsParser : ParamsParser {
     val epf = opts.excludedPluginsFile ?: return ArrayListMultimap.create<String, String>() //excluded-plugin-file (usually brokenPlugins.txt)
 
     //file containing list of broken plugins (e.g. IDEA-*/lib/resources.jar!/brokenPlugins.txt)
-    BufferedReader(FileReader(File(epf))).use { br ->
-      val m = HashMultimap.create<String, String>()
+    val m = HashMultimap.create<String, String>()
+    val file = File(epf)
+    if (!file.exists()) {
+      LOG.warn("Excluded plugins file $file is not found. Verify all plugins.")
+      return m
+    }
+
+    BufferedReader(FileReader(file)).use { br ->
 
       var s: String?
       while (true) {
