@@ -4,7 +4,6 @@ import com.google.gson.Gson
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.misc.LanguageUtilsKt
 import com.jetbrains.pluginverifier.misc.UnarchiverUtilKt
-import com.jetbrains.pluginverifier.persistence.GsonHolder
 import kotlin.text.StringsKt
 import org.jetbrains.plugins.verifier.service.api.Result
 import org.jetbrains.plugins.verifier.service.api.TaskId
@@ -22,7 +21,7 @@ import org.springframework.http.HttpStatus
 
 class VerifierController implements SaveFileTrait {
 
-  private static final Gson GSON = GsonHolder.INSTANCE.GSON
+  private static final Gson GSON = new Gson()
 
   private TaskId parseTaskId() {
     def taskId

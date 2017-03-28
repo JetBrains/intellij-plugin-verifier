@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service
 
-import com.jetbrains.pluginverifier.persistence.GsonHolder
+import com.google.gson.Gson
 
 /**
  * @author Sergey Patrikeev
@@ -16,7 +16,7 @@ trait SendResponseTrait {
     if (obj instanceof String) {
       json = obj as String
     } else {
-      json = GsonHolder.GSON.toJson(obj)
+      json = new Gson().toJson(obj)
     }
     render(contentType: 'text/json', encoding: 'utf-8', text: json)
   }
