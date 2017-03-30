@@ -123,6 +123,11 @@ public class IdeVersionTest {
     IdeVersion.createIdeVersion(" ");
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testWithTrailingDot(){
+    IdeVersion.createIdeVersion("139.");
+  }
+
   @Test
   public void historicBuild() {
     assertEquals("75.7512", IdeVersion.createIdeVersion("7512").asString());

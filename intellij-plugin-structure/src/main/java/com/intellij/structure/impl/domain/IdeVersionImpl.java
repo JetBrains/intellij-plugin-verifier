@@ -77,6 +77,10 @@ public class IdeVersionImpl extends IdeVersion {
         }
       }
 
+      if (intComponentsList.size() < 2) {
+        throw new IllegalArgumentException("Invalid version number " + version + ": build not specified");
+      }
+
       int[] intComponents = new int[intComponentsList.size()];
       for (int i = 0; i < intComponentsList.size(); i++) {
         intComponents[i] = intComponentsList.get(i);
