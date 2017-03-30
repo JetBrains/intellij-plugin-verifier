@@ -95,11 +95,6 @@ public class PluginBuilder {
         return this;
     }
 
-    public PluginBuilder addHints(@NotNull List<String> hint) {
-        myHints.addAll(hint);
-        return this;
-    }
-
     public PluginBuilder setOptionalDescriptors(@NotNull Map<String, Plugin> optionalDescriptors) {
         myOptionalDescriptors.clear();
         myOptionalDescriptors.putAll(optionalDescriptors);

@@ -62,8 +62,6 @@ public class PluginManagerImpl extends PluginManager {
    */
   private final Map<String, Pair<URL, Document>> myRootXmlDocuments = new HashMap<String, Pair<URL, Document>>();
 
-  private final List<String> myHints = new ArrayList<String>();
-
   private File myPluginFile;
 
   public static boolean isJarOrZip(@NotNull File file) {
@@ -168,7 +166,7 @@ public class PluginManagerImpl extends PluginManager {
               descriptors.put(original, optDescriptor.build());
             } catch (Exception e) {
               String msg = getMissingDepMsg(entry.getKey().getId(), entry.getValue());
-              myHints.add(msg);
+              descriptor.addHint(msg);
               LOG.debug(msg, e);
             }
           }
@@ -180,14 +178,14 @@ public class PluginManagerImpl extends PluginManager {
             PluginBuilder optDescriptor = loadDescriptor(file, optFilePath, optValidator);
             if (optDescriptor == null) {
               String msg = getMissingDepMsg(entry.getKey().getId(), entry.getValue());
-              myHints.add(msg);
+              descriptor.addHint(msg);
               LOG.debug(msg);
             } else {
               descriptors.put(original, optDescriptor.build());
             }
           } catch (Exception e) {
             String msg = getMissingDepMsg(entry.getKey().getId(), entry.getValue());
-            myHints.add(msg);
+            descriptor.addHint(msg);
             LOG.debug(msg, e);
           }
 
@@ -424,7 +422,7 @@ public class PluginManagerImpl extends PluginManager {
           if (descriptorRoot != null) {
             String msg = "Multiple META-INF/" + filePath + " found in the root of the plugin";
             LOG.warn(msg);
-            myHints.add(msg);
+            descriptorRoot.addHint(msg);
           }
           descriptorRoot = inRoot;
           continue;
@@ -642,7 +640,6 @@ public class PluginManagerImpl extends PluginManager {
 
     PluginBuilder builder = loadDescriptor(pluginFile, PLUGIN_XML, validator);
     if (builder != null) {
-      builder.addHints(myHints);
       return builder.build();
     }
     //assert that PluginXmlValidator has thrown an appropriate exception
