@@ -51,7 +51,7 @@ public class PluginExtractor {
         File singleJar = files.iterator().next();
 
         //move this single jar outside from the extracted directory
-        File tmpFile = File.createTempFile("plugin_" + plugin, ".jar", getCacheDir());
+        File tmpFile = File.createTempFile("plugin_" + plugin.getPluginId(), ".jar", getCacheDir());
         try {
           FileUtils.copyFile(singleJar, tmpFile);
           return tmpFile;
