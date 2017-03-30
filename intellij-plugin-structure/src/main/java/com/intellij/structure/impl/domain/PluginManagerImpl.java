@@ -26,7 +26,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -97,15 +104,15 @@ public class PluginManagerImpl extends PluginManager {
    * @throws IncorrectPluginException if plugin is broken
    */
   @Nullable
-  private Plugin loadDescriptor(@NotNull final File file, @NotNull String filePath, @NotNull Validator validator) throws IncorrectPluginException {
+  private PluginBuilder loadDescriptor(@NotNull final File file, @NotNull String filePath, @NotNull Validator validator) throws IncorrectPluginException {
     filePath = toSystemIndependentName(filePath);
 
-    Plugin descriptor;
+    PluginBuilder builder;
 
     if (file.isDirectory()) {
-      descriptor = loadDescriptorFromDir(file, filePath, validator);
+      builder = loadDescriptorFromDir(file, filePath, validator);
     } else if (file.exists() && isJarOrZip(file)) {
-      descriptor = loadDescriptorFromZipOrJarFile(file, filePath, validator, PluginImpl.DEFAULT_PLUGIN_XML_PATH_RESOLVER);
+      builder = loadDescriptorFromZipOrJarFile(file, filePath, validator, PluginImpl.DEFAULT_PLUGIN_XML_PATH_RESOLVER);
     } else {
       if (!file.exists()) {
         validator.onIncorrectStructure("Plugin file is not found " + file);
@@ -115,24 +122,24 @@ public class PluginManagerImpl extends PluginManager {
       return null;
     }
 
-    if (descriptor != null) {
-      resolveOptionalDescriptors(file, filePath, (PluginImpl) descriptor, validator);
+    if (builder != null) {
+      resolveOptionalDescriptors(file, filePath, builder, validator);
     }
 
-    if (descriptor == null) {
+    if (builder == null) {
       validator.onMissingFile("META-INF/" + filePath + " is not found");
     }
 
-    return descriptor;
+    return builder;
   }
 
   private void resolveOptionalDescriptors(@NotNull File file,
                                           @NotNull String filePath,
-                                          @NotNull PluginImpl descriptor,
+                                          @NotNull PluginBuilder descriptor,
                                           @NotNull Validator parentValidator) throws IncorrectPluginException {
-    Map<PluginDependency, String> optionalConfigs = descriptor.getOptionalDependenciesConfigFiles();
+    Map<PluginDependency, String> optionalConfigs = descriptor.getOptionalConfigFiles();
     if (!optionalConfigs.isEmpty()) {
-      Map<String, PluginImpl> descriptors = new HashMap<String, PluginImpl>();
+      Map<String, Plugin> descriptors = new HashMap<String, Plugin>();
 
       List<URL> metaInfBases = getOptionalMetaInfBases();
       JDOMXIncluder.PathResolver pathResolver = new PluginImpl.PluginXmlPathResolver(metaInfBases);
@@ -154,10 +161,11 @@ public class PluginManagerImpl extends PluginManager {
           URL url = xmlPair.getFirst();
           if (url != null) {
             Document document = xmlPair.getSecond();
-            PluginImpl optDescriptor = new PluginImpl(myPluginFile);
+            PluginBuilder optDescriptor = new PluginBuilder(myPluginFile);
             try {
-              optDescriptor.readExternal(document, url, parentValidator.ignoreMissingConfigElement(), pathResolver);
-              descriptors.put(original, optDescriptor);
+              PluginInfoExtractor extractor = new PluginInfoExtractor(optDescriptor, parentValidator.ignoreMissingConfigElement());
+              extractor.readExternal(document, url, pathResolver);
+              descriptors.put(original, optDescriptor.build());
             } catch (Exception e) {
               String msg = getMissingDepMsg(entry.getKey().getId(), entry.getValue());
               myHints.add(msg);
@@ -169,13 +177,13 @@ public class PluginManagerImpl extends PluginManager {
           Validator optValidator = parentValidator.ignoreMissingConfigElement().ignoreMissingFile();
 
           try {
-            PluginImpl optDescriptor = (PluginImpl) loadDescriptor(file, optFilePath, optValidator);
+            PluginBuilder optDescriptor = loadDescriptor(file, optFilePath, optValidator);
             if (optDescriptor == null) {
               String msg = getMissingDepMsg(entry.getKey().getId(), entry.getValue());
               myHints.add(msg);
               LOG.debug(msg);
             } else {
-              descriptors.put(original, optDescriptor);
+              descriptors.put(original, optDescriptor.build());
             }
           } catch (Exception e) {
             String msg = getMissingDepMsg(entry.getKey().getId(), entry.getValue());
@@ -221,7 +229,7 @@ public class PluginManagerImpl extends PluginManager {
    * @throws IncorrectPluginException if incorrect plugin structure
    */
   @Nullable
-  private Plugin loadDescriptorFromEntry(@NotNull ZipEntry entry,
+  private PluginBuilder loadDescriptorFromEntry(@NotNull ZipEntry entry,
                                          @NotNull String filePath,
                                          @NotNull String rootUrl,
                                          @NotNull Validator validator,
@@ -252,9 +260,10 @@ public class PluginManagerImpl extends PluginManager {
       }
 
       if (StringUtil.equal(name, filePath)) {
-        PluginImpl descriptor = new PluginImpl(myPluginFile);
-        descriptor.readExternal(document, url, validator, pathResolver);
-        return descriptor;
+        PluginBuilder builder = new PluginBuilder(myPluginFile);
+        PluginInfoExtractor extractor = new PluginInfoExtractor(builder, validator);
+        extractor.readExternal(document, url, pathResolver);
+        return builder;
       } else {
         //add this .xml for the future check
         Pair<URL, Document> pair = Pair.create(url, document);
@@ -281,9 +290,10 @@ public class PluginManagerImpl extends PluginManager {
           String xmlUrl = rootUrl + entry.getName();
           URL url = new URL(xmlUrl);
 
-          PluginImpl descriptor = new PluginImpl(myPluginFile);
-          descriptor.readExternal(document, url, validator, pathResolver);
-          return descriptor;
+          PluginBuilder builder = new PluginBuilder(myPluginFile);
+          PluginInfoExtractor extractor = new PluginInfoExtractor(builder, validator);
+          extractor.readExternal(document, url, pathResolver);
+          return builder;
         } catch (RuntimeException e) {
           //rethrow a RuntimeException but wrap a checked exception
           throw e;
@@ -297,12 +307,12 @@ public class PluginManagerImpl extends PluginManager {
   }
 
   @Nullable
-  private Plugin loadFromZipStream(@NotNull final ZipInputStream zipStream,
+  private PluginBuilder loadFromZipStream(@NotNull final ZipInputStream zipStream,
                                    @NotNull String zipRootUrl,
                                    @NotNull String filePath,
                                    @NotNull Validator validator,
                                    @NotNull JDOMXIncluder.PathResolver pathResolver) throws IncorrectPluginException {
-    Plugin descriptor = null;
+    PluginBuilder descriptor = null;
 
     try {
       ZipEntry entry;
@@ -311,7 +321,7 @@ public class PluginManagerImpl extends PluginManager {
           continue;
         }
 
-        Plugin inRoot = loadDescriptorFromEntry(entry, filePath, zipRootUrl, validator, pathResolver, new Supplier<InputStream>() {
+        PluginBuilder inRoot = loadDescriptorFromEntry(entry, filePath, zipRootUrl, validator, pathResolver, new Supplier<InputStream>() {
           @Override
           public InputStream get() {
             return zipStream;
@@ -350,14 +360,14 @@ public class PluginManagerImpl extends PluginManager {
    * @throws IncorrectPluginException in case of incorrect plugin structure or missing config elements
    */
   @Nullable
-  private Plugin loadDescriptorFromZipOrJarFile(@NotNull final File file,
+  private PluginBuilder loadDescriptorFromZipOrJarFile(@NotNull final File file,
                                                 @NotNull final String filePath,
                                                 @NotNull final Validator validator,
                                                 @NotNull final JDOMXIncluder.PathResolver pathResolver) throws IncorrectPluginException {
     final String zipRootUrl = getJarRootUrl(file);
 
-    Plugin descriptorRoot = null;
-    Plugin descriptorInner = null;
+    PluginBuilder descriptorRoot = null;
+    PluginBuilder descriptorInner = null;
 
     final ZipFile zipFile;
     try {
@@ -384,7 +394,7 @@ public class PluginManagerImpl extends PluginManager {
           //this is in-root .jar file which will be extracted by the IDE
           ZipInputStream inRootJar = new ZipInputStream(zipFile.getInputStream(entry));
           String inRootJarUrl = getInnerJarRootUrl(zipRootUrl, entry);
-          Plugin plugin = loadFromZipStream(inRootJar, inRootJarUrl, filePath, validator.ignoreMissingFile(), pathResolver);
+          PluginBuilder plugin = loadFromZipStream(inRootJar, inRootJarUrl, filePath, validator.ignoreMissingFile(), pathResolver);
           if (plugin != null) {
             if (descriptorRoot != null) {
               validator.onIncorrectStructure("Multiple META-INF/" + filePath + " found in the root of the plugin");
@@ -395,7 +405,7 @@ public class PluginManagerImpl extends PluginManager {
         }
 
         final Ref<IOException> maybeException = Ref.create();
-        Plugin inRoot = loadDescriptorFromEntry(entry, filePath, zipRootUrl, validator.ignoreMissingFile(), pathResolver, new Supplier<InputStream>() {
+        PluginBuilder inRoot = loadDescriptorFromEntry(entry, filePath, zipRootUrl, validator.ignoreMissingFile(), pathResolver, new Supplier<InputStream>() {
           @Override
           public InputStream get() {
             try {
@@ -422,7 +432,7 @@ public class PluginManagerImpl extends PluginManager {
 
         if (LIB_JAR_REGEX.matcher(entry.getName()).matches()) {
           ZipInputStream inner = new ZipInputStream(zipFile.getInputStream(entry));
-          Plugin innerDescriptor = loadFromZipStream(inner, "jar:" + zipRootUrl + entry.getName() + "!/", filePath, validator.ignoreMissingFile(), innerLibJarsResolver);
+          PluginBuilder innerDescriptor = loadFromZipStream(inner, "jar:" + zipRootUrl + entry.getName() + "!/", filePath, validator.ignoreMissingFile(), innerLibJarsResolver);
           if (innerDescriptor != null) {
             descriptorInner = innerDescriptor;
           }
@@ -444,8 +454,8 @@ public class PluginManagerImpl extends PluginManager {
 
       if (descriptorInner != null) {
         //some plugins have logo-file in the lib-descriptor
-        if (descriptorInner.getVendorLogo() != null) {
-          ((PluginImpl) descriptorRoot).setLogoContent(descriptorInner.getVendorLogo());
+        if (descriptorInner.getMyLogoContent() != null) {
+          descriptorRoot.setLogoContent(descriptorInner.getMyLogoContent());
         }
       }
 
@@ -484,7 +494,7 @@ public class PluginManagerImpl extends PluginManager {
 
 
   @Nullable
-  private Plugin loadDescriptorFromDir(@NotNull final File dir, @NotNull String filePath, @NotNull Validator validator) throws IncorrectPluginException {
+  private PluginBuilder loadDescriptorFromDir(@NotNull final File dir, @NotNull String filePath, @NotNull Validator validator) throws IncorrectPluginException {
     File descriptorFile = new File(dir, "META-INF" + File.separator + StringUtil.toSystemIndependentName(filePath));
     if (descriptorFile.exists()) {
       return loadDescriptorFromDirRoot(dir, filePath, validator, descriptorFile);
@@ -493,10 +503,11 @@ public class PluginManagerImpl extends PluginManager {
   }
 
   @Nullable
-  private Plugin loadDescriptorFromDirRoot(@NotNull File dir, @NotNull String filePath, @NotNull Validator validator, File descriptorFile) {
+  private PluginBuilder loadDescriptorFromDirRoot(@NotNull File dir, @NotNull String filePath, @NotNull Validator validator, File descriptorFile) {
     appendXmlInRoot(filePath, validator, descriptorFile);
 
-    PluginImpl descriptor = new PluginImpl(myPluginFile);
+    PluginBuilder builder = new PluginBuilder(myPluginFile);
+    PluginInfoExtractor extractor = new PluginInfoExtractor(builder, validator);
 
     URL url;
     try {
@@ -511,9 +522,9 @@ public class PluginManagerImpl extends PluginManager {
       return null;
     }
 
-    descriptor.readExternal(document, url, validator, PluginImpl.DEFAULT_PLUGIN_XML_PATH_RESOLVER);
+    extractor.readExternal(document, url, PluginImpl.DEFAULT_PLUGIN_XML_PATH_RESOLVER);
 
-    return descriptor;
+    return builder;
   }
 
   private void appendXmlInRoot(@NotNull String filePath, @NotNull Validator validator, @NotNull File descriptorFile) {
@@ -548,7 +559,7 @@ public class PluginManagerImpl extends PluginManager {
   }
 
   @Nullable
-  private Plugin loadDescriptorFromLibDir(@NotNull final File dir, @NotNull String filePath, @NotNull Validator validator) throws IncorrectPluginException {
+  private PluginBuilder loadDescriptorFromLibDir(@NotNull final File dir, @NotNull String filePath, @NotNull Validator validator) throws IncorrectPluginException {
     File libDir = new File(dir, "lib");
     if (!libDir.isDirectory()) {
       validator.onMissingFile("Plugin `lib` directory is not found");
@@ -572,7 +583,7 @@ public class PluginManagerImpl extends PluginManager {
       }
     });
 
-    Plugin descriptor = null;
+    PluginBuilder descriptor = null;
 
     List<URL> metaInfUrls = getInLibMetaInfUrls(files);
     JDOMXIncluder.PathResolver pathResolver = new PluginImpl.PluginXmlPathResolver(metaInfUrls);
@@ -585,7 +596,7 @@ public class PluginManagerImpl extends PluginManager {
           break;
         }
       } else if (f.isDirectory()) {
-        Plugin descriptor1 = loadDescriptorFromDir(f, filePath, validator.ignoreMissingFile());
+        PluginBuilder descriptor1 = loadDescriptorFromDir(f, filePath, validator.ignoreMissingFile());
         if (descriptor1 != null) {
           if (descriptor != null) {
             validator.onIncorrectStructure("Multiple META-INF/" + filePath + " found");
@@ -629,10 +640,10 @@ public class PluginManagerImpl extends PluginManager {
 
     myPluginFile = pluginFile;
 
-    PluginImpl descriptor = (PluginImpl) loadDescriptor(pluginFile, PLUGIN_XML, validator);
-    if (descriptor != null) {
-      descriptor.addHints(myHints);
-      return descriptor;
+    PluginBuilder builder = loadDescriptor(pluginFile, PLUGIN_XML, validator);
+    if (builder != null) {
+      builder.addHints(myHints);
+      return builder.build();
     }
     //assert that PluginXmlValidator has thrown an appropriate exception
     throw new AssertionError("Unable to create plugin from " + pluginFile);

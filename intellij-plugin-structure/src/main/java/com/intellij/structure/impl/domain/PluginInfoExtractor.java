@@ -1,0 +1,359 @@
+package com.intellij.structure.impl.domain;
+
+import com.google.common.base.Strings;
+import com.intellij.structure.domain.IdeVersion;
+import com.intellij.structure.domain.PluginDependency;
+import com.intellij.structure.errors.IncorrectPluginException;
+import com.intellij.structure.impl.utils.validators.Validator;
+import com.intellij.structure.impl.utils.xml.JDOMUtil;
+import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
+import com.intellij.structure.impl.utils.xml.URLUtil;
+import com.intellij.structure.impl.utils.xml.XIncludeException;
+import org.apache.commons.io.IOUtils;
+import org.jdom2.Attribute;
+import org.jdom2.Content;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
+import org.jdom2.Parent;
+import org.jdom2.Text;
+import org.jetbrains.annotations.NotNull;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Whitelist;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Iterator;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.intellij.structure.impl.utils.StringUtil.containsIgnoreCase;
+import static com.intellij.structure.impl.utils.StringUtil.isEmpty;
+import static com.intellij.structure.impl.utils.StringUtil.notNullize;
+import static com.intellij.structure.impl.utils.StringUtil.substringAfter;
+
+public class PluginInfoExtractor {
+    private static final Logger LOG = LoggerFactory.getLogger(PluginInfoExtractor.class);
+    private static final Whitelist WHITELIST = Whitelist.basicWithImages();
+    private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules.";
+    private static final Pattern JAVA_CLASS_PATTERN = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*");
+    private static final String[] INTERESTING_STRINGS = new String[]{"class", "interface", "implementation", "instance"};
+
+    private final PluginBuilder myBuilder;
+    private final Validator myValidator;
+
+    public PluginInfoExtractor(PluginBuilder builder, Validator myValidator) {
+        myBuilder = builder;
+        this.myValidator = myValidator;
+    }
+
+    public void readExternalFromIdeSources(@NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws IncorrectPluginException {
+        Document document;
+        try {
+            document = JDOMUtil.loadDocument(url);
+        } catch (Exception e) {
+            myValidator.onCheckedException("Unable to read XML document by url " + url.toExternalForm(), e);
+            return;
+        }
+        try {
+            document = JDOMXIncluder.resolve(document, url.toExternalForm(), false, pathResolver);
+        } catch (Exception e) {
+            LOG.error("Unable to resolve xinclude elements", e);
+        }
+        checkAndSetEntries(url, document);
+    }
+
+    public void readExternal(@NotNull Document document, @NotNull URL documentUrl, JDOMXIncluder.PathResolver pathResolver) {
+        try {
+            document = JDOMXIncluder.resolve(document, documentUrl.toExternalForm(), false, pathResolver);
+        } catch (XIncludeException e) {
+            throw new IncorrectPluginException("Unable to resolve xml include elements of " + documentUrl.getFile(), e);
+        }
+        checkAndSetEntries(documentUrl, document);
+    }
+
+    private void checkAndSetEntries(@NotNull URL descriptorUrl, @NotNull Document document) throws IncorrectPluginException {
+        String fileName = calcDescriptorName(descriptorUrl);
+        myBuilder.setUnderlyingDocument(document)
+                .setFileName(fileName);
+
+        Element rootElement = document.getRootElement();
+
+        if (rootElement == null) {
+            myValidator.onIncorrectStructure("Failed to parse " + fileName + ": root element <idea-plugin> is not found");
+            return;
+        }
+
+        if (!"idea-plugin".equals(rootElement.getName())) {
+            myValidator.onIncorrectStructure("Invalid " + fileName + ": root element must be <idea-plugin>, but it is " + rootElement.getName());
+            return;
+        }
+
+        String pluginName = rootElement.getChildTextTrim("name");
+        if (Strings.isNullOrEmpty(pluginName)) {
+            myValidator.onMissingConfigElement("Invalid " + fileName + ": 'name' is not specified");
+        }
+        myBuilder.setPluginName(pluginName);
+
+        String pluginId = rootElement.getChildText("id");
+        if (pluginId == null) {
+            pluginId = pluginName;
+        }
+        myBuilder.setPluginId(pluginId);
+
+        myBuilder.setUrl(notNullize(rootElement.getAttributeValue("url")));
+
+        Element vendorElement = rootElement.getChild("vendor");
+        if (vendorElement == null) {
+            myValidator.onMissingConfigElement("Invalid " + fileName + ": element 'vendor' is not found");
+        } else {
+            myBuilder.setPluginVendor(vendorElement.getTextTrim())
+                    .setVendorEmail(notNullize(vendorElement.getAttributeValue("email")))
+                    .setVendorUrl(notNullize(vendorElement.getAttributeValue("url")));
+            extractLogoContent(descriptorUrl, vendorElement);
+        }
+
+        String pluginVersion = rootElement.getChildTextTrim("version");
+        myBuilder.setPluginVersion(pluginVersion);
+        if (pluginVersion == null) {
+            myValidator.onMissingConfigElement("Invalid " + fileName + ": version is not specified");
+        }
+
+        Element ideaVersionElement = rootElement.getChild("idea-version");
+        if (ideaVersionElement == null) {
+            myValidator.onMissingConfigElement("Invalid " + fileName + ": element 'idea-version' not found");
+        } else {
+            extractSinceUntilBuilds(ideaVersionElement);
+        }
+
+        extractComponents(rootElement);
+
+        extractPluginDependencies(rootElement);
+        extractDefinedModules(rootElement);
+        extractDescription(rootElement);
+        extractChangeNotes(rootElement);
+    }
+
+    private void extractComponents(@NotNull Element rootElement) {
+        extractReferencedClasses(rootElement);
+        extractExtensions(rootElement);
+    /*
+    implement these if necessary
+    setExtensionPoints(rootElement);
+    setActions(rootElement);
+    setAppComponents(rootElement);
+    setProjectComponents(rootElement);
+    setModulesComponents(rootElement);
+    */
+    }
+
+    private void extractLogoContent(@NotNull URL descriptorUrl, Element vendorElement) {
+        String logoUrlString = vendorElement.getAttributeValue("logo");
+        myBuilder.setLogoUrl(logoUrlString);
+        if (logoUrlString != null && !logoUrlString.startsWith("http://") && !logoUrlString.startsWith("https://")) {
+            //the logo url represents a path inside the plugin => try to extract logo content
+            InputStream input = null;
+            try {
+                URL logoUrl;
+                if (logoUrlString.startsWith("/")) {
+                    //myLogoUrl represents a path from the <plugin_root> (where <plugin_root>/META-INF/plugin.xml)
+                    logoUrl = new URL(descriptorUrl, ".." + logoUrlString);
+                } else {
+                    //it's a META-INF/ relative path
+                    logoUrl = new URL(descriptorUrl, logoUrlString);
+                }
+                try {
+                    input = URLUtil.openStream(logoUrl);
+                } catch (Exception e) {
+                    //try the following logo path: <plugin_root>/classes/<logo_url>
+                    if (logoUrlString.startsWith("/")) {
+                        logoUrl = new URL(descriptorUrl, "../classes" + logoUrlString);
+                        input = URLUtil.openStream(logoUrl);
+                    } else {
+                        //this path is unique => no other variants
+                        throw e;
+                    }
+                }
+                myBuilder.setLogoContent(IOUtils.toByteArray(input));
+            } catch (Exception e) {
+                String msg = "Unable to find plugin logo file by path " + logoUrlString + " specified in META-INF/plugin.xml";
+                myBuilder.addHint(msg);
+                LOG.debug(msg, e);
+            } finally {
+                IOUtils.closeQuietly(input);
+            }
+        }
+    }
+
+    private void extractExtensions(Element rootElement) {
+        for (Element extensionsRoot : rootElement.getChildren("extensions")) {
+            for (Element element : extensionsRoot.getChildren()) {
+                myBuilder.addExtension(extractEPName(element), element);
+            }
+        }
+    }
+
+    private static String extractEPName(final Element extensionElement) {
+        String epName = extensionElement.getAttributeValue("point");
+
+        if (epName == null) {
+            final Element parentElement = extensionElement.getParentElement();
+            final String ns = parentElement != null ? parentElement.getAttributeValue("defaultExtensionNs") : null;
+
+            if (ns != null) {
+                epName = ns + '.' + extensionElement.getName();
+            } else {
+                Namespace namespace = extensionElement.getNamespace();
+                epName = namespace.getURI() + '.' + extensionElement.getName();
+            }
+        }
+        return epName;
+    }
+
+    private void extractReferencedClasses(@NotNull Element rootElement) throws IncorrectPluginException {
+        Iterator<Content> descendants = rootElement.getDescendants();
+        while (descendants.hasNext()) {
+            Content next = descendants.next();
+            if (next instanceof Element) {
+                Element element = (Element) next;
+
+                if (isInterestingName(element.getName())) {
+                    checkIfClass(element.getTextNormalize());
+                }
+
+                for (Attribute attribute : element.getAttributes()) {
+                    if (isInterestingName(attribute.getName())) {
+                        checkIfClass(attribute.getValue().trim());
+                    }
+                }
+            }
+            if (next instanceof Text) {
+                Parent parent = next.getParent();
+                if (parent instanceof Element) {
+                    if (isInterestingName(((Element) parent).getName())) {
+                        checkIfClass(((Text) next).getTextTrim());
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean isInterestingName(@NotNull String label) {
+        for (String string : INTERESTING_STRINGS) {
+            if (containsIgnoreCase(label, string)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void checkIfClass(@NotNull String text) {
+        Matcher matcher = JAVA_CLASS_PATTERN.matcher(text);
+        while (matcher.find()) {
+            myBuilder.addReferencedClass(matcher.group().replace('.', '/'));
+        }
+    }
+
+    private void extractSinceUntilBuilds(@NotNull Element ideaVersion) throws IncorrectPluginException {
+        if (ideaVersion.getAttributeValue("min") == null) { // min != null in legacy plugins.
+            String sb = ideaVersion.getAttributeValue("since-build");
+            try {
+                myBuilder.setSinceBuild(IdeVersion.createIdeVersion(sb));
+            } catch (IllegalArgumentException e) {
+                myValidator.onIncorrectStructure("'since-build' attribute in <idea-version> has incorrect value: " + sb +
+                        ". You can see specification of build numbers <a target='_blank' " +
+                        "href='http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges'>hire</a>");
+            }
+
+            String ub = ideaVersion.getAttributeValue("until-build");
+            if (!Strings.isNullOrEmpty(ub)) {
+                if (ub.endsWith(".*")) {
+                    int idx = ub.lastIndexOf('.');
+                    ub = ub.substring(0, idx + 1) + Integer.MAX_VALUE;
+                }
+
+                try {
+                    myBuilder.setUntilBuild(IdeVersion.createIdeVersion(ub));
+                } catch (IllegalArgumentException e) {
+                    myValidator.onIncorrectStructure("<idea-version until-build= /> attribute has incorrect value: " + ub);
+                }
+            }
+        }
+    }
+
+    private void extractPluginDependencies(@NotNull Element rootElement) throws IncorrectPluginException {
+        final List<Element> dependsElements = rootElement.getChildren("depends");
+
+        for (Element dependsElement : dependsElements) {
+            final boolean optional = Boolean.parseBoolean(dependsElement.getAttributeValue("optional", "false"));
+            final String pluginId = dependsElement.getTextTrim();
+
+            if (pluginId == null) {
+                myValidator.onIncorrectStructure("Invalid plugin.xml: invalid dependency tag " + dependsElement);
+                continue;
+            }
+
+            PluginDependency dependency = new PluginDependencyImpl(pluginId, optional);
+            if (pluginId.startsWith(INTELLIJ_MODULES_PREFIX)) {
+                myBuilder.addModuleDependency(dependency);
+            } else {
+                myBuilder.addDependency(dependency);
+            }
+
+            if (optional) {
+                String configFile = dependsElement.getAttributeValue("config-file");
+                if (configFile != null) {
+                    myBuilder.addOptionalConfigFile(dependency, configFile);
+                }
+            }
+
+        }
+    }
+
+    private void extractDefinedModules(@NotNull Element rootElement) {
+        List<Element> children = rootElement.getChildren("module");
+        for (Element module : children) {
+            String value = module.getAttributeValue("value");
+            if (value == null) {
+                myValidator.onIncorrectStructure("Invalid <module> tag: value is not specified");
+                continue;
+            }
+            myBuilder.addDefinedModule(value);
+        }
+    }
+
+    private void extractDescription(@NotNull Element rootElement) {
+        String description = rootElement.getChildTextTrim("description");
+        if (isEmpty(description)) {
+            myValidator.onMissingConfigElement("Invalid file: description is empty");
+        } else {
+            myBuilder.setDescription(Jsoup.clean(description, WHITELIST));
+        }
+    }
+
+    private void extractChangeNotes(@NotNull Element rootElement) {
+        List<Element> changeNotes = rootElement.getChildren("change-notes");
+        if (changeNotes != null && changeNotes.size() > 0) {
+            Element o = changeNotes.get(0);
+            if (o != null) {
+                String textTrim = o.getTextTrim();
+                if (!isEmpty(textTrim)) {
+                    myBuilder.setNotes(Jsoup.clean(textTrim, WHITELIST));
+                }
+            }
+        }
+    }
+
+    @NotNull
+    private String calcDescriptorName(@NotNull URL url) {
+        final String path = url.getFile();
+        if (path.contains("META-INF/")) {
+            return "META-INF/" + substringAfter(path, "META-INF/");
+        }
+        return path;
+    }
+
+}
