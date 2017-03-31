@@ -1,10 +1,12 @@
 package com.intellij.structure.impl.domain;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
+import com.intellij.structure.domain.PluginProblem;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.impl.utils.xml.XIncludeException;
@@ -23,64 +25,114 @@ public class PluginImpl implements Plugin {
 
   static final JDOMXIncluder.PathResolver DEFAULT_PLUGIN_XML_PATH_RESOLVER = new PluginXmlPathResolver();
 
-  private final Set<String> myDefinedModules;
-  private final List<PluginDependency> myDependencies;
-  private final List<PluginDependency> myModuleDependencies;
-  private final Map<PluginDependency, String> myOptionalConfigFiles;
-  private final Map<String, Plugin> myOptionalDescriptors;
-  private final Set<String> myReferencedClasses;
-  private final Multimap<String, Element> myExtensions;
+  private final Set<String> myDefinedModules = new HashSet<String>();
+  private final List<PluginDependency> myDependencies = new ArrayList<PluginDependency>();
+  private final List<PluginDependency> myModuleDependencies = new ArrayList<PluginDependency>();
+  private final Map<PluginDependency, String> myOptionalConfigFiles  = new HashMap<PluginDependency, String>();
+  private final Map<String, Plugin> myOptionalDescriptors = new HashMap<String, Plugin>();
+  private final Set<String> myReferencedClasses = new HashSet<String>();
+  private final Multimap<String, Element> myExtensions = ArrayListMultimap.create();
   @NotNull private final File myPluginFile;
-  private final List<String> myHints;
-  @NotNull private final Document myUnderlyingDocument;
-  @NotNull private final String myFileName;
-  @Nullable private final byte[] myLogoContent;
-  @Nullable private final String myLogoUrl;
-  @Nullable private final String myPluginName;
-  @Nullable private final String myPluginVersion;
-  @Nullable private final String myPluginId;
-  @Nullable private final String myPluginVendor;
-  @Nullable private final String myVendorEmail;
-  @Nullable private final String myVendorUrl;
-  @Nullable private final String myDescription;
-  @Nullable private final String myUrl;
-  @Nullable private final String myNotes;
-  @Nullable private final IdeVersion mySinceBuild;
-  @Nullable private final IdeVersion myUntilBuild;
+  private final List<PluginProblem> myProblems = new ArrayList<PluginProblem>();
+  @NotNull private Document myUnderlyingDocument;
+  @NotNull private String myFileName;
+  @Nullable private byte[] myLogoContent;
+  @Nullable private String myLogoUrl;
+  @Nullable private String myPluginName;
+  @Nullable private String myPluginVersion;
+  @Nullable private String myPluginId;
+  @Nullable private String myPluginVendor;
+  @Nullable private String myVendorEmail;
+  @Nullable private String myVendorUrl;
+  @Nullable private String myDescription;
+  @Nullable private String myUrl;
+  @Nullable private String myNotes;
+  @Nullable private IdeVersion mySinceBuild;
+  @Nullable private IdeVersion myUntilBuild;
 
-  PluginImpl(Set<String> myDefinedModules, List<PluginDependency> myDependencies,
-             List<PluginDependency> myModuleDependencies, Map<PluginDependency, String> myOptionalConfigFiles,
-             Map<String, Plugin> myOptionalDescriptors, Set<String> myReferencedClasses,
-             Multimap<String, Element> myExtensions, @NotNull File pluginFile, List<String> myHints,
-             @NotNull Document myUnderlyingDocument, @NotNull String myFileName, @Nullable byte[] myLogoContent,
-             @Nullable String myLogoUrl, @Nullable String myPluginName, @Nullable String myPluginVersion,
-             @Nullable String myPluginId, @Nullable String myPluginVendor, @Nullable String myVendorEmail,
-             @Nullable String myVendorUrl, @Nullable String myDescription, @Nullable String myUrl,
-             @Nullable String myNotes, @Nullable IdeVersion mySinceBuild, @Nullable IdeVersion myUntilBuild) {
-    this.myDefinedModules = myDefinedModules;
-    this.myDependencies = myDependencies;
-    this.myModuleDependencies = myModuleDependencies;
-    this.myOptionalConfigFiles = myOptionalConfigFiles;
-    this.myOptionalDescriptors = myOptionalDescriptors;
-    this.myReferencedClasses = myReferencedClasses;
-    this.myExtensions = myExtensions;
+  PluginImpl(File pluginFile) {
     myPluginFile = pluginFile;
-    this.myHints = myHints;
+  }
+
+  public void setOptionalDescriptors(@NotNull Map<String, Plugin> optionalDescriptors) {
+    myOptionalDescriptors.clear();
+    myOptionalDescriptors.putAll(optionalDescriptors);
+    for (Plugin optDescriptor : optionalDescriptors.values()) {
+      myExtensions.putAll(optDescriptor.getExtensions());
+    }
+  }
+
+  public void setUnderlyingDocument(@NotNull Document myUnderlyingDocument) {
     this.myUnderlyingDocument = myUnderlyingDocument;
+  }
+
+  public void setFileName(@NotNull String myFileName) {
     this.myFileName = myFileName;
+  }
+
+  public void setLogoContent(@Nullable byte[] myLogoContent) {
     this.myLogoContent = myLogoContent;
+  }
+
+  public void setLogoUrl(@Nullable String myLogoUrl) {
     this.myLogoUrl = myLogoUrl;
+  }
+
+  public void setPluginName(@Nullable String myPluginName) {
     this.myPluginName = myPluginName;
+  }
+
+  public void setPluginVersion(@Nullable String myPluginVersion) {
     this.myPluginVersion = myPluginVersion;
+  }
+
+  public void setPluginId(@Nullable String myPluginId) {
     this.myPluginId = myPluginId;
+  }
+
+  public void setPluginVendor(@Nullable String myPluginVendor) {
     this.myPluginVendor = myPluginVendor;
+  }
+
+  public void setVendorEmail(@Nullable String myVendorEmail) {
     this.myVendorEmail = myVendorEmail;
+  }
+
+  public void setVendorUrl(@Nullable String myVendorUrl) {
     this.myVendorUrl = myVendorUrl;
+  }
+
+  public void setDescription(@Nullable String myDescription) {
     this.myDescription = myDescription;
+  }
+
+  public void setUrl(@Nullable String myUrl) {
     this.myUrl = myUrl;
+  }
+
+  public void setNotes(@Nullable String myNotes) {
     this.myNotes = myNotes;
+  }
+
+  public void setSinceBuild(@Nullable IdeVersion mySinceBuild) {
     this.mySinceBuild = mySinceBuild;
+  }
+
+  public void setUntilBuild(@Nullable IdeVersion myUntilBuild) {
     this.myUntilBuild = myUntilBuild;
+  }
+
+  @Override
+  public List<PluginProblem> getProblems(){
+    return myProblems;
+  }
+
+  public void reportWarning(String message) {
+    myProblems.add(new PluginProblemImpl(message, PluginProblem.Level.WARNING));
+  }
+
+  public void reportError(String message) {
+    myProblems.add(new PluginProblemImpl(message, PluginProblem.Level.ERROR));
   }
 
   @Override
@@ -218,13 +270,32 @@ public class PluginImpl implements Plugin {
   }
 
   @NotNull
-  public List<String> getHints() {
-    return Collections.unmodifiableList(myHints);
-  }
-
-  @NotNull
   Map<PluginDependency, String> getOptionalDependenciesConfigFiles() {
     return Collections.unmodifiableMap(myOptionalConfigFiles);
+  }
+
+  public void addExtension(String epName, Element element) {
+    myExtensions.put(epName, element);
+  }
+
+  public void addReferencedClass(String className) {
+    myReferencedClasses.add(className);
+  }
+
+  public void addModuleDependency(PluginDependency dependency) {
+    myModuleDependencies.add(dependency);
+  }
+
+  public void addDependency(PluginDependency dependency) {
+    myDependencies.add(dependency);
+  }
+
+  public void addOptionalConfigFile(PluginDependency dependency, String configFile) {
+    myOptionalConfigFiles.put(dependency, configFile);
+  }
+
+  public void addDefinedModule(String definedModule) {
+    myDefinedModules.add(definedModule);
   }
 
   @Override

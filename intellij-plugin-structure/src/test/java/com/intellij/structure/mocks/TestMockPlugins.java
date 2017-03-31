@@ -1,12 +1,10 @@
 package com.intellij.structure.mocks;
 
 import com.google.common.collect.Multimap;
-import com.intellij.structure.domain.IdeVersion;
-import com.intellij.structure.domain.Plugin;
-import com.intellij.structure.domain.PluginDependency;
-import com.intellij.structure.domain.PluginManager;
+import com.intellij.structure.domain.*;
 import com.intellij.structure.impl.domain.PluginDependencyImpl;
 import com.intellij.structure.impl.domain.PluginImpl;
+import com.intellij.structure.impl.domain.PluginProblemImpl;
 import com.intellij.structure.resolvers.Resolver;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -66,7 +64,8 @@ public class TestMockPlugins {
 
     assertEquals("change_notes", plugin.getChangeNotes());
 
-    assertContains(((PluginImpl) plugin).getHints(), "Plugin dependency missingDependency config-file missingFile specified in META-INF/plugin.xml is not found");
+    assertContains(plugin.getProblems(),
+        new PluginProblemImpl("Plugin dependency missingDependency config-file missingFile specified in META-INF/plugin.xml is not found", PluginProblem.Level.WARNING));
   }
 
   @Test

@@ -103,11 +103,11 @@ public class IdeManagerImpl extends IdeManager {
             dummyRoot = file;
           }
 
-          PluginBuilder builder = new PluginBuilder(dummyRoot);
+          PluginImpl plugin = new PluginImpl(dummyRoot);
           URL xmlUrl = file.toURI().toURL();
-          PluginInfoExtractor extractor = new PluginInfoExtractor(builder, dummyValidator);
+          PluginInfoExtractor extractor = new PluginInfoExtractor(plugin, dummyValidator);
           extractor.readExternalFromIdeSources(xmlUrl, pathResolver);
-          result.add(builder.build());
+          result.add(plugin);
         } catch (Exception e) {
           LOG.warn("Unable to load dummy plugin from " + file);
         }
