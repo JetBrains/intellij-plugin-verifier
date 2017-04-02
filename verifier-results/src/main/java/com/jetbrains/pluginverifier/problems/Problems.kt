@@ -13,6 +13,8 @@ import com.jetbrains.pluginverifier.reference.SymbolicReference
  */
 interface Problem {
   fun getDescription(): String
+
+  fun effect(): String = ""
 }
 
 //TODO: add a human-readable effect, e.g. (non-static -> static field) : 	A client program may be interrupted by IllegalAccessError exception when attempt to assign new values to the field.
@@ -105,7 +107,7 @@ data class MethodNotImplementedProblem(@SerializedName("method") val method: Met
                                        @SerializedName("incompleteClass") val incompleteClass: ClassLocation) : Problem {
   override fun getDescription(): String = "method isn't implemented $method"
 
-  fun effect() = "Non-abstract class $incompleteClass inherits ${method.hostClass} but doesn't implement the abstract method ${method.methodNameAndParameters()}. This can lead to AbstractMethodError at runtime."
+  override fun effect() = "Non-abstract class $incompleteClass inherits ${method.hostClass} but doesn't implement the abstract method ${method.methodNameAndParameters()}. This can lead to **AbstractMethodError** exception at runtime."
 }
 
 data class AbstractMethodInvocationProblem(@SerializedName("method") val method: MethodReference) : Problem {
@@ -114,10 +116,11 @@ data class AbstractMethodInvocationProblem(@SerializedName("method") val method:
   override fun getDescription(): String = "attempt to invoke an abstract method $method"
 }
 
-data class OverridingFinalMethodProblem(@SerializedName("method") val method: MethodReference) : Problem {
-  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor))
-
+data class OverridingFinalMethodProblem(@SerializedName("method") val method: MethodLocation,
+                                        @SerializedName("invalidClass") val invalidClass: ClassLocation) : Problem {
   override fun getDescription(): String = "overriding final method $method"
+
+  override fun effect() = "Class $invalidClass overrides the final method $method. This can lead to **VerifyError** exception at runtime."
 }
 
 data class InstanceAccessOfStaticFieldProblem(@SerializedName("field") val field: FieldReference) : Problem {

@@ -32,18 +32,19 @@ class OverrideNonFinalVerifier : MethodVerifier {
       return
     }
 
-    var curNode: ClassNode? = VerifierUtil.resolveClassOrProblem(resolver, superClass, clazz, ctx, { ctx.fromMethod(clazz, method) }) ?: return
+    var parent: ClassNode? = VerifierUtil.resolveClassOrProblem(resolver, superClass, clazz, ctx, { ctx.fromMethod(clazz, method) }) ?: return
 
-    while (curNode != null) {
-      val first = (curNode.methods as List<MethodNode>).firstOrNull { it.name == method.name && it.desc == method.desc }
-      val curName = curNode.name
-      if (first != null && VerifierUtil.isFinal(first)) {
-        ctx.registerProblem(OverridingFinalMethodProblem(curName, first.name, first.desc), ctx.fromMethod(clazz, method))
+    while (parent != null) {
+      val sameMethod = (parent.methods as List<MethodNode>).firstOrNull { it.name == method.name && it.desc == method.desc }
+      if (sameMethod != null && VerifierUtil.isFinal(sameMethod)) {
+        val methodLocation = ctx.fromMethod(parent, sameMethod)
+        val thisClass = ctx.fromClass(clazz)
+        ctx.registerProblem(OverridingFinalMethodProblem(methodLocation, thisClass), thisClass)
         return
       }
-      val superName = curNode.superName ?: break
-      val superNode = VerifierUtil.resolveClassOrProblem(resolver, superName, curNode, ctx, { ctx.fromClass(curNode!!) }) ?: break
-      curNode = superNode
+      val superName = parent.superName ?: break
+      val superNode = VerifierUtil.resolveClassOrProblem(resolver, superName, parent, ctx, { ctx.fromClass(parent!!) }) ?: break
+      parent = superNode
     }
   }
 
