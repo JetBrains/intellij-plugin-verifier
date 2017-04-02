@@ -48,7 +48,8 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     Otherwise, if the resolved field is a static field, putfield throws an IncompatibleClassChangeError.
      */
     if (VerifierUtil.isStatic(found.fieldNode)) {
-      ctx.registerProblem(InstanceAccessOfStaticFieldProblem(found.definingClass.name, found.fieldNode.name, found.fieldNode.desc))
+      val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
+      ctx.registerProblem(NonStaticAccessOfStaticFieldProblem(fieldDeclaration, getFromMethod(), Instruction.PUT_FIELD))
     }
 
     /*
@@ -74,7 +75,8 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
 
     //Otherwise, if the resolved field is a static field, getfield throws an IncompatibleClassChangeError.
     if (VerifierUtil.isStatic(found.fieldNode)) {
-      ctx.registerProblem(InstanceAccessOfStaticFieldProblem(found.definingClass.name, found.fieldNode.name, found.fieldNode.desc))
+      val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
+      ctx.registerProblem(NonStaticAccessOfStaticFieldProblem(fieldDeclaration, getFromMethod(), Instruction.GET_FIELD))
     }
   }
 

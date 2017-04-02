@@ -127,10 +127,12 @@ data class OverridingFinalMethodProblem(@SerializedName("method") val method: Me
   override fun effect() = "Class $invalidClass overrides the final method $method. This can lead to **VerifyError** exception at runtime."
 }
 
-data class InstanceAccessOfStaticFieldProblem(@SerializedName("field") val field: FieldReference) : Problem {
-  constructor(hostClass: String, fieldName: String, fieldDescriptor: String) : this(SymbolicReference.fieldOf(hostClass, fieldName, fieldDescriptor))
-
+data class NonStaticAccessOfStaticFieldProblem(@SerializedName("field") val field: FieldLocation,
+                                               @SerializedName("accessor") val accessor: MethodLocation,
+                                               @SerializedName("instruction") val instruction: Instruction) : Problem {
   override fun getDescription(): String = "attempt to perform instance access on a static field $field"
+
+  override fun effect(): String = "Method $accessor has non-static access instruction *$instruction* referencing a static field $field. This can lead to **IncompatibleClassChangeError** exception at runtime."
 }
 
 data class InvokeInterfaceOnStaticMethodProblem(@SerializedName("method") val method: MethodReference) : Problem {
