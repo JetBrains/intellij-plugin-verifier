@@ -37,10 +37,11 @@ data class IllegalInterfaceAccessProblem(@SerializedName("interface") val interf
   override fun getDescription(): String = "illegal access to $classAccess interface $interfaze"
 }
 
-data class AbstractClassInstantiationProblem(@SerializedName("class") val clazz: ClassReference) : Problem {
-  constructor(className: String) : this(ClassReference(className))
+data class AbstractClassInstantiationProblem(@SerializedName("abstractClass") val abstractClass: ClassLocation,
+                                             @SerializedName("creator") val creator: MethodLocation) : Problem {
+  override fun getDescription(): String = "instantiation of an abstract class $abstractClass"
 
-  override fun getDescription(): String = "instantiation of an abstract class $clazz"
+  override fun effect(): String = "Method $creator has instantiation *new* instruction referencing an abstract class $abstractClass. This can lead to **InstantiationError** exception at runtime."
 }
 
 data class ClassNotFoundProblem(@SerializedName("class") val unknownClass: ClassReference) : Problem {
@@ -63,10 +64,11 @@ data class InheritFromFinalClassProblem(@SerializedName("finalClass") val finalC
   override fun getDescription(): String = "cannot inherit from final class $finalClass"
 }
 
-data class InterfaceInstantiationProblem(@SerializedName("class") val clazz: ClassReference) : Problem {
-  constructor(className: String) : this(ClassReference(className))
+data class InterfaceInstantiationProblem(@SerializedName("interface") val interfaze: ClassLocation,
+                                         @SerializedName("creator") val creator: MethodLocation) : Problem {
+  override fun getDescription(): String = "instantiation an interface $interfaze"
 
-  override fun getDescription(): String = "instantiation an interface $clazz"
+  override fun effect(): String = "Method $creator has instantiation *new* instruction referencing an interface $interfaze. This can lead to **InstantiationError** exception at runtime."
 }
 
 data class ChangeFinalFieldProblem(@SerializedName("field") val field: FieldLocation,

@@ -27,9 +27,11 @@ class TypeInstructionVerifier : InstructionVerifier {
 
     if (instr.opcode == Opcodes.NEW) {
       if (VerifierUtil.isInterface(aClass)) {
-        ctx.registerProblem(InterfaceInstantiationProblem(className), ctx.fromMethod(clazz, method))
+        val interfaze = ctx.fromClass(aClass)
+        ctx.registerProblem(InterfaceInstantiationProblem(interfaze, ctx.fromMethod(clazz, method)))
       } else if (VerifierUtil.isAbstract(aClass)) {
-        ctx.registerProblem(AbstractClassInstantiationProblem(className), ctx.fromMethod(clazz, method))
+        val classOrInterface = ctx.fromClass(aClass)
+        ctx.registerProblem(AbstractClassInstantiationProblem(classOrInterface, ctx.fromMethod(clazz, method)))
       }
     }
 
