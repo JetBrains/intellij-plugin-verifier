@@ -17,7 +17,7 @@ class SuperClassVerifier : ClassVerifier {
     val superClassName = if (clazz.superName == null) "java/lang/Object" else clazz.superName
     val aClass = VerifierUtil.resolveClassOrProblem(resolver, superClassName, clazz, ctx, { ctx.fromClass(clazz) }) ?: return
     if (VerifierUtil.isInterface(aClass)) {
-      ctx.registerProblem(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classFrom(superClassName)), ctx.fromClass(clazz))
+      ctx.registerProblem(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classOf(superClassName)), ctx.fromClass(clazz))
     }
   }
 }

@@ -61,7 +61,7 @@ class VerifierTest {
       .put(MethodNotFoundProblem("com/intellij/openapi/actionSystem/AnAction", "nonExistingMethod", "()V"), fromMethod(fromClass("mock/plugin/MethodProblems", null, classPath, AccessFlags(0x21)), "brokenNonFoundMethod", "()V", emptyList(), null, AccessFlags(0x1)))
       .put(AbstractClassInstantiationProblem("misc/BecomeAbstract"), fromMethod(fromClass("mock/plugin/news/NewProblems", null, classPath, AccessFlags(0x21)), "abstractClass", "()V", emptyList(), null, AccessFlags(0x1)))
       .put(InterfaceInstantiationProblem("misc/BecomeInterface"), fromMethod(fromClass("mock/plugin/news/NewProblems", null, classPath, AccessFlags(0x21)), "newInterface", "()V", emptyList(), null, AccessFlags(0x1)))
-      .put(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classFrom("misc/BecomeInterface")), fromMethod(fromClass("mock/plugin/news/NewProblems", null, classPath, AccessFlags(0x21)), "newInterface", "()V", emptyList(), null, AccessFlags(0x1)))
+      .put(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classOf("misc/BecomeInterface")), fromMethod(fromClass("mock/plugin/news/NewProblems", null, classPath, AccessFlags(0x21)), "newInterface", "()V", emptyList(), null, AccessFlags(0x1)))
 
       .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "getState", "()Ljava/lang/Object;"), fromClass("mock/plugin/NotImplementedProblem", null, classPath, AccessFlags(0x21)))
       .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "loadState", "(Ljava/lang/Object;)V"), fromClass("mock/plugin/NotImplementedProblem", null, classPath, AccessFlags(0x21)))

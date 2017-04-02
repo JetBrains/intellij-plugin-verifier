@@ -58,7 +58,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       /*
       Otherwise, if the resolved method is a class (static) method, the invokevirtual instruction throws an IncompatibleClassChangeError.
        */
-      ctx.registerProblem(InvokeVirtualOnStaticMethodProblem(SymbolicReference.methodFrom(resolved.definingClass.name, resolved.methodNode.name, resolved.methodNode.desc)), getFromMethod())
+      ctx.registerProblem(InvokeVirtualOnStaticMethodProblem(SymbolicReference.methodOf(resolved.definingClass.name, resolved.methodNode.name, resolved.methodNode.desc)), getFromMethod())
     }
   }
 
@@ -83,7 +83,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     the invokespecial instruction throws an IncompatibleClassChangeError.
      */
     if (VerifierUtil.isStatic(resolved.methodNode)) {
-      ctx.registerProblem(InvokeSpecialOnStaticMethodProblem(SymbolicReference.methodFrom(methodOwner, methodName, methodDescriptor)), getFromMethod())
+      ctx.registerProblem(InvokeSpecialOnStaticMethodProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)), getFromMethod())
     }
 
     /*
@@ -216,10 +216,10 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     Otherwise, if the resolved method is static or private, the invokeinterface instruction throws an IncompatibleClassChangeError.
      */
     if (VerifierUtil.isPrivate(resolved.methodNode)) {
-      ctx.registerProblem(InvokeInterfaceOnPrivateMethodProblem(SymbolicReference.methodFrom(methodOwner, methodName, methodDescriptor)), getFromMethod())
+      ctx.registerProblem(InvokeInterfaceOnPrivateMethodProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)), getFromMethod())
     }
     if (VerifierUtil.isStatic(resolved.methodNode)) {
-      ctx.registerProblem(InvokeInterfaceOnStaticMethodProblem(SymbolicReference.methodFrom(methodOwner, methodName, methodDescriptor)), getFromMethod())
+      ctx.registerProblem(InvokeInterfaceOnStaticMethodProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)), getFromMethod())
     }
   }
 
@@ -242,7 +242,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     Otherwise, if the resolved method is an instance method, the invokestatic instruction throws an IncompatibleClassChangeError.
      */
     if (!VerifierUtil.isStatic(resolved.methodNode)) {
-      ctx.registerProblem(InvokeStaticOnInstanceMethodProblem(SymbolicReference.methodFrom(resolved.definingClass.name, resolved.methodNode.name, resolved.methodNode.desc)), getFromMethod())
+      ctx.registerProblem(InvokeStaticOnInstanceMethodProblem(SymbolicReference.methodOf(resolved.definingClass.name, resolved.methodNode.name, resolved.methodNode.desc)), getFromMethod())
     }
   }
 
@@ -322,7 +322,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     }
 
     if (accessProblem != null) {
-      val problem = IllegalMethodAccessProblem(SymbolicReference.methodFrom(definingClass.name, methodNode.name, methodNode.desc), accessProblem)
+      val problem = IllegalMethodAccessProblem(SymbolicReference.methodOf(definingClass.name, methodNode.name, methodNode.desc), accessProblem)
       ctx.registerProblem(problem, getFromMethod())
     }
   }
@@ -342,7 +342,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     1) If C is not an interface, interface method resolution throws an IncompatibleClassChangeError.
      */
     if (!VerifierUtil.isInterface(interfaceNode)) {
-      ctx.registerProblem(IncompatibleInterfaceToClassChangeProblem(SymbolicReference.classFrom(interfaceNode.name)), getFromMethod())
+      ctx.registerProblem(IncompatibleInterfaceToClassChangeProblem(SymbolicReference.classOf(interfaceNode.name)), getFromMethod())
       return FAILED_LOOKUP
     }
 
@@ -488,7 +488,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       the static methods of both classes and interface.
       */
       if (instr.opcode != Opcodes.INVOKESTATIC) {
-        ctx.registerProblem(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classFrom(classNode.name)), getFromMethod())
+        ctx.registerProblem(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classOf(classNode.name)), getFromMethod())
         return FAILED_LOOKUP
       }
     }

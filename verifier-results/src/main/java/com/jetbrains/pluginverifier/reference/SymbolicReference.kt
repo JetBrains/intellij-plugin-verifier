@@ -16,11 +16,11 @@ import com.jetbrains.pluginverifier.utils.PresentationUtils.splitMethodDescripto
 interface SymbolicReference {
   companion object {
 
-    fun methodFrom(hostClass: String, methodName: String, methodDescriptor: String): MethodReference = MethodReference(ClassReference(hostClass), methodName, methodDescriptor)
+    fun methodOf(hostClass: String, methodName: String, methodDescriptor: String): MethodReference = MethodReference(ClassReference(hostClass), methodName, methodDescriptor)
 
-    fun fieldFrom(hostClass: String, fieldName: String, fieldDescriptor: String): FieldReference = FieldReference(ClassReference(hostClass), fieldName, fieldDescriptor)
+    fun fieldOf(hostClass: String, fieldName: String, fieldDescriptor: String): FieldReference = FieldReference(ClassReference(hostClass), fieldName, fieldDescriptor)
 
-    fun classFrom(className: String): ClassReference = ClassReference(className)
+    fun classOf(className: String): ClassReference = ClassReference(className)
   }
 }
 
@@ -64,9 +64,9 @@ internal val symbolicReferenceSerializer = jsonSerializer<SymbolicReference> {
 internal val symbolicReferenceDeserializer = jsonDeserializer {
   val parts = CompactJsonUtil.deserialize(it.json.string)
   return@jsonDeserializer when {
-    parts[0] == "M" -> SymbolicReference.methodFrom(parts[1], parts[2], parts[3])
-    parts[0] == "F" -> SymbolicReference.fieldFrom(parts[1], parts[2], parts[3])
-    parts[0] == "C" -> SymbolicReference.classFrom(parts[1])
+    parts[0] == "M" -> SymbolicReference.methodOf(parts[1], parts[2], parts[3])
+    parts[0] == "F" -> SymbolicReference.fieldOf(parts[1], parts[2], parts[3])
+    parts[0] == "C" -> SymbolicReference.classOf(parts[1])
     else -> throw IllegalArgumentException("Unknown type ${it.json.string}")
   }
 }

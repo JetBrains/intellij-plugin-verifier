@@ -12,7 +12,7 @@ class InheritFromFinalClassVerifier : ClassVerifier {
     val superClassName = if (clazz.superName == null) "java/lang/Object" else clazz.superName
     val supClass = VerifierUtil.resolveClassOrProblem(resolver, superClassName, clazz, ctx, { ctx.fromClass(clazz) }) ?: return
     if (VerifierUtil.isFinal(supClass)) {
-      ctx.registerProblem(InheritFromFinalClassProblem(SymbolicReference.classFrom(supClass.name)), ctx.fromClass(clazz))
+      ctx.registerProblem(InheritFromFinalClassProblem(SymbolicReference.classOf(supClass.name)), ctx.fromClass(clazz))
     }
   }
 }

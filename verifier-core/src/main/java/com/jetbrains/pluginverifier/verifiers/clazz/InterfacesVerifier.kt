@@ -18,7 +18,7 @@ class InterfacesVerifier : ClassVerifier {
       val iface = o as String
       val node = VerifierUtil.resolveClassOrProblem(resolver, iface, clazz, ctx, { ctx.fromClass(clazz) }) ?: continue
       if (!VerifierUtil.isInterface(node)) {
-        ctx.registerProblem(IncompatibleInterfaceToClassChangeProblem(SymbolicReference.classFrom(iface)), ctx.fromClass(clazz))
+        ctx.registerProblem(IncompatibleInterfaceToClassChangeProblem(SymbolicReference.classOf(iface)), ctx.fromClass(clazz))
       }
     }
   }

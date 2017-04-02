@@ -21,7 +21,7 @@ class AbstractMethodVerifier : ClassVerifier {
     traverseTree(clazz, resolver, ctx, hashSetOf(), abstractMethods, implementedMethods)
 
     (abstractMethods.keys - implementedMethods.keys).forEach {
-      ctx.registerProblem(MethodNotImplementedProblem(SymbolicReference.methodFrom(abstractMethods[it]!!, it.name, it.descriptor)), ctx.fromClass(clazz))
+      ctx.registerProblem(MethodNotImplementedProblem(SymbolicReference.methodOf(abstractMethods[it]!!, it.name, it.descriptor)), ctx.fromClass(clazz))
     }
   }
 

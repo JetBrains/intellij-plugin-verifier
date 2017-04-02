@@ -17,7 +17,7 @@ interface Problem {
 //TODO: add a human-readable effect, e.g. (non-static -> static field) : 	A client program may be interrupted by IllegalAccessError exception when attempt to assign new values to the field.
 data class MultipleMethodImplementationsProblem(@SerializedName("method") val method: MethodReference,
                                                 @SerializedName("availableMethods") val availableMethods: List<MethodLocation>) : Problem {
-  constructor(hostClass: String, methodName: String, methodDescriptor: String, availableMethods: List<MethodLocation>) : this(SymbolicReference.methodFrom(hostClass, methodName, methodDescriptor), availableMethods)
+  constructor(hostClass: String, methodName: String, methodDescriptor: String, availableMethods: List<MethodLocation>) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor), availableMethods)
 
   override fun getDescription(): String = "multiple default implementations of method $method"
 }
@@ -67,25 +67,25 @@ data class InterfaceInstantiationProblem(@SerializedName("class") val clazz: Cla
 }
 
 data class ChangeFinalFieldProblem(@SerializedName("field") val field: FieldReference) : Problem {
-  constructor(hostClass: String, fieldName: String, fieldDescriptor: String) : this(SymbolicReference.fieldFrom(hostClass, fieldName, fieldDescriptor))
+  constructor(hostClass: String, fieldName: String, fieldDescriptor: String) : this(SymbolicReference.fieldOf(hostClass, fieldName, fieldDescriptor))
 
   override fun getDescription(): String = "attempt to change a final field $field"
 }
 
 data class FieldNotFoundProblem(@SerializedName("field") val field: FieldReference) : Problem {
-  constructor(hostClass: String, fieldName: String, fieldDescriptor: String) : this(SymbolicReference.fieldFrom(hostClass, fieldName, fieldDescriptor))
+  constructor(hostClass: String, fieldName: String, fieldDescriptor: String) : this(SymbolicReference.fieldOf(hostClass, fieldName, fieldDescriptor))
 
   override fun getDescription(): String = "accessing to unknown field $field"
 }
 
 data class IllegalFieldAccessProblem(@SerializedName("field") val field: FieldReference, @SerializedName("access") val fieldAccess: AccessType) : Problem {
-  constructor(hostClass: String, fieldName: String, fieldDescriptor: String, fieldAccess: AccessType) : this(SymbolicReference.fieldFrom(hostClass, fieldName, fieldDescriptor), fieldAccess)
+  constructor(hostClass: String, fieldName: String, fieldDescriptor: String, fieldAccess: AccessType) : this(SymbolicReference.fieldOf(hostClass, fieldName, fieldDescriptor), fieldAccess)
 
   override fun getDescription(): String = "illegal access of $fieldAccess field $field"
 }
 
 data class IllegalMethodAccessProblem(@SerializedName("method") val method: MethodReference, @SerializedName("access") val methodAccess: AccessType) : Problem {
-  constructor(hostClass: String, methodName: String, methodDescriptor: String, methodAccess: AccessType) : this(SymbolicReference.methodFrom(hostClass, methodName, methodDescriptor), methodAccess)
+  constructor(hostClass: String, methodName: String, methodDescriptor: String, methodAccess: AccessType) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor), methodAccess)
 
   override fun getDescription(): String = "illegal invocation of $methodAccess method $method"
 }
@@ -95,31 +95,31 @@ data class InvokeInterfaceOnPrivateMethodProblem(@SerializedName("method") val m
 }
 
 data class MethodNotFoundProblem(@SerializedName("method") val method: MethodReference) : Problem {
-  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodFrom(hostClass, methodName, methodDescriptor))
+  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor))
 
   override fun getDescription(): String = "invoking unknown method $method"
 }
 
 data class MethodNotImplementedProblem(@SerializedName("method") val method: MethodReference) : Problem {
-  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodFrom(hostClass, methodName, methodDescriptor))
+  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor))
 
   override fun getDescription(): String = "method isn't implemented $method"
 }
 
 data class AbstractMethodInvocationProblem(@SerializedName("method") val method: MethodReference) : Problem {
-  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodFrom(hostClass, methodName, methodDescriptor))
+  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor))
 
   override fun getDescription(): String = "attempt to invoke an abstract method $method"
 }
 
 data class OverridingFinalMethodProblem(@SerializedName("method") val method: MethodReference) : Problem {
-  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodFrom(hostClass, methodName, methodDescriptor))
+  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor))
 
   override fun getDescription(): String = "overriding final method $method"
 }
 
 data class InstanceAccessOfStaticFieldProblem(@SerializedName("field") val field: FieldReference) : Problem {
-  constructor(hostClass: String, fieldName: String, fieldDescriptor: String) : this(SymbolicReference.fieldFrom(hostClass, fieldName, fieldDescriptor))
+  constructor(hostClass: String, fieldName: String, fieldDescriptor: String) : this(SymbolicReference.fieldOf(hostClass, fieldName, fieldDescriptor))
 
   override fun getDescription(): String = "attempt to perform instance access on a static field $field"
 }
@@ -133,19 +133,19 @@ data class InvokeSpecialOnStaticMethodProblem(@SerializedName("method") val meth
 }
 
 data class InvokeStaticOnInstanceMethodProblem(@SerializedName("method") val method: MethodReference) : Problem {
-  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodFrom(hostClass, methodName, methodDescriptor))
+  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor))
 
   override fun getDescription(): String = "attempt to perform 'invokestatic' on an instance method $method"
 }
 
 data class InvokeVirtualOnStaticMethodProblem(@SerializedName("method") val method: MethodReference) : Problem {
-  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodFrom(hostClass, methodName, methodDescriptor))
+  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor))
 
   override fun getDescription(): String = "attempt to perform 'invokevirtual' on static method $method"
 }
 
 data class StaticAccessOfInstanceFieldProblem(@SerializedName("field") val field: FieldReference) : Problem {
-  constructor(hostClass: String, fieldName: String, fieldDescriptor: String) : this(SymbolicReference.fieldFrom(hostClass, fieldName, fieldDescriptor))
+  constructor(hostClass: String, fieldName: String, fieldDescriptor: String) : this(SymbolicReference.fieldOf(hostClass, fieldName, fieldDescriptor))
 
   override fun getDescription(): String = "attempt to perform static access on an instance field $field"
 }
