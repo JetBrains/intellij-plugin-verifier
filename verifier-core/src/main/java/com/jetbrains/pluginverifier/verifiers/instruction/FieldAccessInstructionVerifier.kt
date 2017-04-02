@@ -48,7 +48,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     Otherwise, if the resolved field is a static field, putfield throws an IncompatibleClassChangeError.
      */
     if (VerifierUtil.isStatic(found.fieldNode)) {
-      ctx.registerProblem(InstanceAccessOfStaticFieldProblem(found.definingClass.name, found.fieldNode.name, found.fieldNode.desc), getFromMethod())
+      ctx.registerProblem(InstanceAccessOfStaticFieldProblem(found.definingClass.name, found.fieldNode.name, found.fieldNode.desc))
     }
 
     /*
@@ -62,7 +62,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     */
     if (VerifierUtil.isFinal(found.fieldNode)) {
       if (found.definingClass.name != verifiableClass.name) {
-        ctx.registerProblem(ChangeFinalFieldProblem(found.definingClass.name, fieldName, fieldDescriptor), getFromMethod())
+        ctx.registerProblem(ChangeFinalFieldProblem(found.definingClass.name, fieldName, fieldDescriptor))
       }
     }
   }
@@ -72,7 +72,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
 
     //Otherwise, if the resolved field is a static field, getfield throws an IncompatibleClassChangeError.
     if (VerifierUtil.isStatic(found.fieldNode)) {
-      ctx.registerProblem(InstanceAccessOfStaticFieldProblem(found.definingClass.name, found.fieldNode.name, found.fieldNode.desc), getFromMethod())
+      ctx.registerProblem(InstanceAccessOfStaticFieldProblem(found.definingClass.name, found.fieldNode.name, found.fieldNode.desc))
     }
   }
 
@@ -81,7 +81,9 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
 
     //Otherwise, if the resolved field is not a static (class) field or an interface field, putstatic throws an IncompatibleClassChangeError.
     if (!VerifierUtil.isStatic(found.fieldNode)) {
-      ctx.registerProblem(StaticAccessOfInstanceFieldProblem(found.definingClass.name, found.fieldNode.name, found.fieldNode.desc), getFromMethod())
+      val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
+      val methodLocation = getFromMethod()
+      ctx.registerProblem(StaticAccessOfNonStaticFieldProblem(fieldDeclaration, methodLocation, Instruction.PUT_STATIC))
     }
 
     /*
@@ -92,7 +94,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     */
     if (VerifierUtil.isFinal(found.fieldNode)) {
       if (found.definingClass.name != verifiableClass.name) {
-        ctx.registerProblem(ChangeFinalFieldProblem(found.definingClass.name, fieldName, fieldDescriptor), getFromMethod())
+        ctx.registerProblem(ChangeFinalFieldProblem(found.definingClass.name, fieldName, fieldDescriptor))
       }
     }
 
@@ -103,7 +105,9 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
 
     //Otherwise, if the resolved field is not a static (class) field or an interface field, getstatic throws an IncompatibleClassChangeError.
     if (!VerifierUtil.isStatic(found.fieldNode)) {
-      ctx.registerProblem(StaticAccessOfInstanceFieldProblem(found.definingClass.name, found.fieldNode.name, found.fieldNode.desc), getFromMethod())
+      val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
+      val methodLocation = getFromMethod()
+      ctx.registerProblem(StaticAccessOfNonStaticFieldProblem(fieldDeclaration, methodLocation, Instruction.GET_STATIC))
     }
   }
 
@@ -134,7 +138,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     }
 
     if (accessProblem != null) {
-      ctx.registerProblem(IllegalFieldAccessProblem(definingClass.name, fieldNode.name, fieldNode.desc, accessProblem), getFromMethod())
+      ctx.registerProblem(IllegalFieldAccessProblem(definingClass.name, fieldNode.name, fieldNode.desc, accessProblem))
     }
   }
 
@@ -165,7 +169,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
       return null
     }
     if (resolvedField == null) {
-      ctx.registerProblem(FieldNotFoundProblem(fieldOwner, fieldName, fieldDescriptor), getFromMethod())
+      ctx.registerProblem(FieldNotFoundProblem(fieldOwner, fieldName, fieldDescriptor))
     } else {
       checkFieldIsAccessible(resolvedField)
     }

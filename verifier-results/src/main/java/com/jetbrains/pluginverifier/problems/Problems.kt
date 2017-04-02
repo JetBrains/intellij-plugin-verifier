@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.problems
 
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.pluginverifier.location.ClassLocation
+import com.jetbrains.pluginverifier.location.FieldLocation
 import com.jetbrains.pluginverifier.location.MethodLocation
 import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.reference.FieldReference
@@ -17,7 +18,6 @@ interface Problem {
   fun effect(): String = ""
 }
 
-//TODO: add a human-readable effect, e.g. (non-static -> static field) : 	A client program may be interrupted by IllegalAccessError exception when attempt to assign new values to the field.
 data class MultipleMethodImplementationsProblem(@SerializedName("method") val method: MethodReference,
                                                 @SerializedName("availableMethods") val availableMethods: List<MethodLocation>) : Problem {
   constructor(hostClass: String, methodName: String, methodDescriptor: String, availableMethods: List<MethodLocation>) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor), availableMethods)
@@ -149,10 +149,23 @@ data class InvokeVirtualOnStaticMethodProblem(@SerializedName("method") val meth
   override fun getDescription(): String = "attempt to perform 'invokevirtual' on static method $method"
 }
 
-data class StaticAccessOfInstanceFieldProblem(@SerializedName("field") val field: FieldReference) : Problem {
-  constructor(hostClass: String, fieldName: String, fieldDescriptor: String) : this(SymbolicReference.fieldOf(hostClass, fieldName, fieldDescriptor))
-
+data class StaticAccessOfNonStaticFieldProblem(@SerializedName("field") val field: FieldLocation,
+                                               @SerializedName("accessor") val accessor: MethodLocation,
+                                               @SerializedName("instruction") val instruction: Instruction) : Problem {
   override fun getDescription(): String = "attempt to perform static access on an instance field $field"
+
+  override fun effect(): String = "Method $accessor has static access instruction *$instruction* referencing a non-static field $field. This can lead to **IncompatibleClassChangeError** exception at runtime."
+}
+
+enum class Instruction(private val type: String) {
+  GET_STATIC("getstatic"),
+  PUT_STATIC("putstatic"),
+  INVOKE_VIRTUAL("invokevirtual"),
+  INVOKE_INTERFACE("invokespecial"),
+  INVOKE_STATIC("invokestatic"),
+  INVOKE_SPECIAL("invokespecial");
+
+  override fun toString(): String = type
 }
 
 enum class AccessType constructor(private val type: String) {
