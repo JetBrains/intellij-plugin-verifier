@@ -27,10 +27,12 @@ interface SymbolicReference {
 data class MethodReference(val hostClass: ClassReference,
                            val methodName: String,
                            val methodDescriptor: String) : SymbolicReference {
-  override fun toString(): String {
+  override fun toString(): String = "$hostClass.${methodNameAndParameters()}"
+
+  fun methodNameAndParameters(): String {
     val (parametersTypes, returnType) = splitMethodDescriptorOnRawParametersAndReturnTypes(methodDescriptor)
     val (presentableParams, presentableReturn) = (parametersTypes.map { convertJvmDescriptorToNormalPresentation(it, cutPackageConverter) }) to (convertJvmDescriptorToNormalPresentation(returnType, cutPackageConverter))
-    return "$hostClass.$methodName" + "(" + presentableParams.joinToString() + ") : $presentableReturn"
+    return "$methodName(" + presentableParams.joinToString() + ") : $presentableReturn"
   }
 
 }
@@ -39,10 +41,10 @@ data class MethodReference(val hostClass: ClassReference,
 data class FieldReference(val hostClass: ClassReference,
                           val fieldName: String,
                           val fieldDescriptor: String) : SymbolicReference {
-  override fun toString(): String {
-    val type = convertJvmDescriptorToNormalPresentation(fieldDescriptor, cutPackageConverter)
-    return "$hostClass.$fieldName : $type"
-  }
+
+  fun fieldNameAndParameters(): String = "$fieldName : ${convertJvmDescriptorToNormalPresentation(fieldDescriptor, cutPackageConverter)}"
+
+  override fun toString(): String = "$hostClass.${fieldNameAndParameters()}"
 
 }
 

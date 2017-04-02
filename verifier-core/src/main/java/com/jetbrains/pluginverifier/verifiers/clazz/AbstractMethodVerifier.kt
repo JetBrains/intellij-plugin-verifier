@@ -2,12 +2,11 @@ package com.jetbrains.pluginverifier.verifiers.clazz
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
+import com.jetbrains.pluginverifier.location.MethodLocation
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem
-import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
-import java.util.*
 
 /**
  * @author Sergey Patrikeev
@@ -16,12 +15,14 @@ class AbstractMethodVerifier : ClassVerifier {
   override fun verify(clazz: ClassNode, resolver: Resolver, ctx: VContext) {
     if (VerifierUtil.isAbstract(clazz) || VerifierUtil.isInterface(clazz)) return
 
-    val abstractMethods = hashMapOf<Method, String>()
-    val implementedMethods = hashMapOf<Method, String>()
+    val abstractMethods = hashMapOf<Method, MethodLocation>()
+    val implementedMethods = hashMapOf<Method, MethodLocation>()
     traverseTree(clazz, resolver, ctx, hashSetOf(), abstractMethods, implementedMethods)
 
-    (abstractMethods.keys - implementedMethods.keys).forEach {
-      ctx.registerProblem(MethodNotImplementedProblem(SymbolicReference.methodOf(abstractMethods[it]!!, it.name, it.descriptor)), ctx.fromClass(clazz))
+    val classLocation = ctx.fromClass(clazz)
+    (abstractMethods.keys - implementedMethods.keys).forEach { method ->
+      val abstractMethod = abstractMethods[method]!!
+      ctx.registerProblem(MethodNotImplementedProblem(abstractMethod, classLocation), classLocation)
     }
   }
 
@@ -32,14 +33,15 @@ class AbstractMethodVerifier : ClassVerifier {
                            resolver: Resolver,
                            ctx: VContext,
                            visitedClasses: MutableSet<String>,
-                           abstractMethods: HashMap<Method, String>,
-                           implementedMethods: HashMap<Method, String>) {
+                           abstractMethods: MutableMap<Method, MethodLocation>,
+                           implementedMethods: MutableMap<Method, MethodLocation>) {
     (clazz.methods as List<MethodNode>).forEach {
       if (!VerifierUtil.isPrivate(it) && !VerifierUtil.isStatic(it)) {
+        val methodLocation = ctx.fromMethod(clazz, it)
         if (VerifierUtil.isAbstract(it)) {
-          abstractMethods.put(Method(it.name, it.desc), clazz.name)
+          abstractMethods.put(Method(it.name, it.desc), methodLocation)
         } else {
-          implementedMethods.put(Method(it.name, it.desc), clazz.name)
+          implementedMethods.put(Method(it.name, it.desc), methodLocation)
         }
       }
     }

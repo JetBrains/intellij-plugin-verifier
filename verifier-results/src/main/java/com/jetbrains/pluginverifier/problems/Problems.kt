@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.problems
 
 import com.google.gson.annotations.SerializedName
+import com.jetbrains.pluginverifier.location.ClassLocation
 import com.jetbrains.pluginverifier.location.MethodLocation
 import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.reference.FieldReference
@@ -100,10 +101,11 @@ data class MethodNotFoundProblem(@SerializedName("method") val method: MethodRef
   override fun getDescription(): String = "invoking unknown method $method"
 }
 
-data class MethodNotImplementedProblem(@SerializedName("method") val method: MethodReference) : Problem {
-  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor))
-
+data class MethodNotImplementedProblem(@SerializedName("method") val method: MethodLocation,
+                                       @SerializedName("incompleteClass") val incompleteClass: ClassLocation) : Problem {
   override fun getDescription(): String = "method isn't implemented $method"
+
+  fun effect() = "Non-abstract class $incompleteClass inherits ${method.hostClass} but doesn't implement the abstract method ${method.methodNameAndParameters()}. This can lead to AbstractMethodError at runtime."
 }
 
 data class AbstractMethodInvocationProblem(@SerializedName("method") val method: MethodReference) : Problem {
