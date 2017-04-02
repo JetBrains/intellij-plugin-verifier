@@ -7,6 +7,8 @@ import com.google.gson.Gson
  */
 trait SendResponseTrait {
 
+  final Gson GSON = new Gson()
+
   def sendError(int statusCode, String msg) {
     render(status: statusCode, text: msg, encoding: 'utf-8', contentType: 'text/plain')
   }
@@ -16,7 +18,7 @@ trait SendResponseTrait {
     if (obj instanceof String) {
       json = obj as String
     } else {
-      json = new Gson().toJson(obj)
+      json = GSON.toJson(obj)
     }
     render(contentType: 'text/json', encoding: 'utf-8', text: json)
   }
