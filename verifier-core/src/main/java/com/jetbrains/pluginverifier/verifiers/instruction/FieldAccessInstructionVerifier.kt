@@ -62,7 +62,9 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     */
     if (VerifierUtil.isFinal(found.fieldNode)) {
       if (found.definingClass.name != verifiableClass.name) {
-        ctx.registerProblem(ChangeFinalFieldProblem(found.definingClass.name, fieldName, fieldDescriptor))
+        val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
+        val accessor = getFromMethod()
+        ctx.registerProblem(ChangeFinalFieldProblem(fieldDeclaration, accessor, Instruction.PUT_FIELD))
       }
     }
   }
@@ -94,7 +96,9 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     */
     if (VerifierUtil.isFinal(found.fieldNode)) {
       if (found.definingClass.name != verifiableClass.name) {
-        ctx.registerProblem(ChangeFinalFieldProblem(found.definingClass.name, fieldName, fieldDescriptor))
+        val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
+        val accessor = getFromMethod()
+        ctx.registerProblem(ChangeFinalFieldProblem(fieldDeclaration, accessor, Instruction.PUT_STATIC))
       }
     }
 

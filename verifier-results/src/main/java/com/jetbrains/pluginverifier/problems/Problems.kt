@@ -69,10 +69,12 @@ data class InterfaceInstantiationProblem(@SerializedName("class") val clazz: Cla
   override fun getDescription(): String = "instantiation an interface $clazz"
 }
 
-data class ChangeFinalFieldProblem(@SerializedName("field") val field: FieldReference) : Problem {
-  constructor(hostClass: String, fieldName: String, fieldDescriptor: String) : this(SymbolicReference.fieldOf(hostClass, fieldName, fieldDescriptor))
-
+data class ChangeFinalFieldProblem(@SerializedName("field") val field: FieldLocation,
+                                   @SerializedName("accessor") val accessor: MethodLocation,
+                                   @SerializedName("instruction") val instruction: Instruction) : Problem {
   override fun getDescription(): String = "attempt to change a final field $field"
+
+  override fun effect(): String = "Method $accessor has modifying instruction *$instruction* referencing a final field $field. This can lead to **IllegalAccessError** exception at runtime."
 }
 
 data class FieldNotFoundProblem(@SerializedName("field") val field: FieldReference) : Problem {
@@ -160,6 +162,8 @@ data class StaticAccessOfNonStaticFieldProblem(@SerializedName("field") val fiel
 enum class Instruction(private val type: String) {
   GET_STATIC("getstatic"),
   PUT_STATIC("putstatic"),
+  PUT_FIELD("putfield"),
+  GET_FIELD("getfield"),
   INVOKE_VIRTUAL("invokevirtual"),
   INVOKE_INTERFACE("invokespecial"),
   INVOKE_STATIC("invokestatic"),
