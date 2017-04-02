@@ -16,32 +16,32 @@ import com.jetbrains.pluginverifier.utils.PresentationUtils.splitMethodDescripto
 interface SymbolicReference {
   companion object {
 
-    fun methodFrom(hostClass: String, methodName: String, methodDescriptor: String): MethodReference = MethodReference(hostClass, methodName, methodDescriptor)
+    fun methodFrom(hostClass: String, methodName: String, methodDescriptor: String): MethodReference = MethodReference(ClassReference(hostClass), methodName, methodDescriptor)
 
-    fun fieldFrom(hostClass: String, fieldName: String, fieldDescriptor: String): FieldReference = FieldReference(hostClass, fieldName, fieldDescriptor)
+    fun fieldFrom(hostClass: String, fieldName: String, fieldDescriptor: String): FieldReference = FieldReference(ClassReference(hostClass), fieldName, fieldDescriptor)
 
     fun classFrom(className: String): ClassReference = ClassReference(className)
   }
 }
 
-data class MethodReference(val hostClass: String,
+data class MethodReference(val hostClass: ClassReference,
                            val methodName: String,
                            val methodDescriptor: String) : SymbolicReference {
   override fun toString(): String {
     val (parametersTypes, returnType) = splitMethodDescriptorOnRawParametersAndReturnTypes(methodDescriptor)
     val (presentableParams, presentableReturn) = (parametersTypes.map { convertJvmDescriptorToNormalPresentation(it, cutPackageConverter) }) to (convertJvmDescriptorToNormalPresentation(returnType, cutPackageConverter))
-    return normalConverter(hostClass) + ".$methodName" + "(" + presentableParams.joinToString() + ") : $presentableReturn"
+    return "$hostClass.$methodName" + "(" + presentableParams.joinToString() + ") : $presentableReturn"
   }
 
 }
 
 
-data class FieldReference(val hostClass: String,
+data class FieldReference(val hostClass: ClassReference,
                           val fieldName: String,
                           val fieldDescriptor: String) : SymbolicReference {
   override fun toString(): String {
     val type = convertJvmDescriptorToNormalPresentation(fieldDescriptor, cutPackageConverter)
-    return normalConverter(hostClass) + ".$fieldName : $type"
+    return "$hostClass.$fieldName : $type"
   }
 
 }
@@ -54,8 +54,8 @@ data class ClassReference(val className: String) : SymbolicReference {
 internal val symbolicReferenceSerializer = jsonSerializer<SymbolicReference> {
   val src = it.src
   return@jsonSerializer when (src) {
-    is MethodReference -> JsonPrimitive(CompactJsonUtil.serialize(listOf("M", src.hostClass, src.methodName, src.methodDescriptor)))
-    is FieldReference -> JsonPrimitive(CompactJsonUtil.serialize(listOf("F", src.hostClass, src.fieldName, src.fieldDescriptor)))
+    is MethodReference -> JsonPrimitive(CompactJsonUtil.serialize(listOf("M", src.hostClass.className, src.methodName, src.methodDescriptor)))
+    is FieldReference -> JsonPrimitive(CompactJsonUtil.serialize(listOf("F", src.hostClass.className, src.fieldName, src.fieldDescriptor)))
     is ClassReference -> JsonPrimitive(CompactJsonUtil.serialize(listOf("C", src.className)))
     else -> throw IllegalArgumentException("Unknown type ${src.javaClass.name}: $src")
   }

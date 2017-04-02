@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.problems.*
-import com.jetbrains.pluginverifier.reference.MethodReference
 import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
@@ -84,7 +83,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     the invokespecial instruction throws an IncompatibleClassChangeError.
      */
     if (VerifierUtil.isStatic(resolved.methodNode)) {
-      ctx.registerProblem(InvokeSpecialOnStaticMethodProblem(MethodReference(methodOwner, methodName, methodDescriptor)), getFromMethod())
+      ctx.registerProblem(InvokeSpecialOnStaticMethodProblem(SymbolicReference.methodFrom(methodOwner, methodName, methodDescriptor)), getFromMethod())
     }
 
     /*
@@ -217,10 +216,10 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     Otherwise, if the resolved method is static or private, the invokeinterface instruction throws an IncompatibleClassChangeError.
      */
     if (VerifierUtil.isPrivate(resolved.methodNode)) {
-      ctx.registerProblem(InvokeInterfaceOnPrivateMethodProblem(MethodReference(methodOwner, methodName, methodDescriptor)), getFromMethod())
+      ctx.registerProblem(InvokeInterfaceOnPrivateMethodProblem(SymbolicReference.methodFrom(methodOwner, methodName, methodDescriptor)), getFromMethod())
     }
     if (VerifierUtil.isStatic(resolved.methodNode)) {
-      ctx.registerProblem(InvokeInterfaceOnStaticMethodProblem(MethodReference(methodOwner, methodName, methodDescriptor)), getFromMethod())
+      ctx.registerProblem(InvokeInterfaceOnStaticMethodProblem(SymbolicReference.methodFrom(methodOwner, methodName, methodDescriptor)), getFromMethod())
     }
   }
 
