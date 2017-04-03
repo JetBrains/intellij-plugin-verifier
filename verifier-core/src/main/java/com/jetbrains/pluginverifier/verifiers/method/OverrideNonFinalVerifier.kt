@@ -39,7 +39,7 @@ class OverrideNonFinalVerifier : MethodVerifier {
       if (sameMethod != null && VerifierUtil.isFinal(sameMethod)) {
         val methodLocation = ctx.fromMethod(parent, sameMethod)
         val thisClass = ctx.fromClass(clazz)
-        ctx.registerProblem(OverridingFinalMethodProblem(methodLocation, thisClass), thisClass)
+        ctx.registerProblem(OverridingFinalMethodProblem(methodLocation, thisClass))
         return
       }
       val superName = parent.superName ?: break

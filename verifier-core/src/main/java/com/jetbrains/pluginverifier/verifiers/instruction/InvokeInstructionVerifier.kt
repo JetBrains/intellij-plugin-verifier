@@ -32,6 +32,14 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
                                    val methodDescriptor: String = instr.desc) {
   var ownerNode: ClassNode? = null
 
+  val instruction: Instruction = when (instr.opcode) {
+    Opcodes.INVOKEVIRTUAL -> Instruction.INVOKE_VIRTUAL
+    Opcodes.INVOKESPECIAL -> Instruction.INVOKE_SPECIAL
+    Opcodes.INVOKEINTERFACE -> Instruction.INVOKE_INTERFACE
+    Opcodes.INVOKESTATIC -> Instruction.INVOKE_STATIC
+    else -> throw IllegalArgumentException()
+  }
+
   fun verify() {
     if (methodOwner.startsWith("[")) {
       val arrayType = VerifierUtil.extractClassNameFromDescr(methodOwner)
@@ -42,12 +50,12 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     }
     ownerNode = VerifierUtil.resolveClassOrProblem(resolver, methodOwner, verifiableClass, ctx, { getFromMethod() }) ?: return
 
-    when (instr.opcode) {
-      Opcodes.INVOKEVIRTUAL -> processInvokeVirtual()
-      Opcodes.INVOKESPECIAL -> processInvokeSpecial()
-      Opcodes.INVOKEINTERFACE -> processInvokeInterface()
-      Opcodes.INVOKESTATIC -> processInvokeStatic()
-      else -> throw RuntimeException("Unknown opcode for MethodInsnNode ${instr.opcode}: $instr")
+    when (instruction) {
+      Instruction.INVOKE_VIRTUAL -> processInvokeVirtual()
+      Instruction.INVOKE_SPECIAL -> processInvokeSpecial()
+      Instruction.INVOKE_INTERFACE -> processInvokeInterface()
+      Instruction.INVOKE_STATIC -> processInvokeStatic()
+      else -> throw IllegalArgumentException()
     }
   }
 
@@ -58,7 +66,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       /*
       Otherwise, if the resolved method is a class (static) method, the invokevirtual instruction throws an IncompatibleClassChangeError.
        */
-      ctx.registerProblem(InvokeVirtualOnStaticMethodProblem(SymbolicReference.methodOf(resolved.definingClass.name, resolved.methodNode.name, resolved.methodNode.desc)), getFromMethod())
+      ctx.registerProblem(InvokeVirtualOnStaticMethodProblem(SymbolicReference.methodOf(resolved.definingClass.name, resolved.methodNode.name, resolved.methodNode.desc)))
     }
   }
 
@@ -75,7 +83,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     is not the class symbolically referenced by the instruction, a NoSuchMethodError is thrown.
      */
     if (resolved.methodNode.name == "<init>" && resolved.definingClass.name != methodOwner) {
-      ctx.registerProblem(MethodNotFoundProblem(methodOwner, methodName, methodDescriptor), getFromMethod())
+      ctx.registerProblem(MethodNotFoundProblem(methodOwner, methodName, methodDescriptor))
     }
 
     /*
@@ -83,7 +91,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     the invokespecial instruction throws an IncompatibleClassChangeError.
      */
     if (VerifierUtil.isStatic(resolved.methodNode)) {
-      ctx.registerProblem(InvokeSpecialOnStaticMethodProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)), getFromMethod())
+      ctx.registerProblem(InvokeSpecialOnStaticMethodProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)))
     }
 
     /*
@@ -129,7 +137,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
         We intentionally introduce this check because there are the tricky cases when the Java compiler generates
          faulty bytecode. See PR-707 and a test class mock.plugin.noproblems.bridgeMethod.A
          */
-        ctx.registerProblem(AbstractMethodInvocationProblem(methodOwner, methodName, methodDescriptor), getFromMethod())
+        ctx.registerProblem(AbstractMethodInvocationProblem(methodOwner, methodName, methodDescriptor))
       }
     }
   }
@@ -195,7 +203,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     */
     if (filtered.size > 1) {
       val availableMethods = filtered.map { ctx.fromMethod(it.definingClass, it.methodNode) }
-      ctx.registerProblem(MultipleMethodImplementationsProblem(methodOwner, methodName, methodDescriptor, availableMethods), getFromMethod())
+      ctx.registerProblem(MultipleMethodImplementationsProblem(methodOwner, methodName, methodDescriptor, availableMethods))
       return null
     }
 
@@ -205,7 +213,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     invokespecial throws an AbstractMethodError.
      */
 
-    ctx.registerProblem(AbstractMethodInvocationProblem(methodOwner, methodName, methodDescriptor), getFromMethod())
+    ctx.registerProblem(AbstractMethodInvocationProblem(methodOwner, methodName, methodDescriptor))
     return null
   }
 
@@ -216,10 +224,10 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     Otherwise, if the resolved method is static or private, the invokeinterface instruction throws an IncompatibleClassChangeError.
      */
     if (VerifierUtil.isPrivate(resolved.methodNode)) {
-      ctx.registerProblem(InvokeInterfaceOnPrivateMethodProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)), getFromMethod())
+      ctx.registerProblem(InvokeInterfaceOnPrivateMethodProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)))
     }
     if (VerifierUtil.isStatic(resolved.methodNode)) {
-      ctx.registerProblem(InvokeInterfaceOnStaticMethodProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)), getFromMethod())
+      ctx.registerProblem(InvokeInterfaceOnStaticMethodProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)))
     }
   }
 
@@ -242,7 +250,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     Otherwise, if the resolved method is an instance method, the invokestatic instruction throws an IncompatibleClassChangeError.
      */
     if (!VerifierUtil.isStatic(resolved.methodNode)) {
-      ctx.registerProblem(InvokeStaticOnInstanceMethodProblem(SymbolicReference.methodOf(resolved.definingClass.name, resolved.methodNode.name, resolved.methodNode.desc)), getFromMethod())
+      ctx.registerProblem(InvokeStaticOnInstanceMethodProblem(SymbolicReference.methodOf(resolved.definingClass.name, resolved.methodNode.name, resolved.methodNode.desc)))
     }
   }
 
@@ -255,7 +263,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     }
 
     if (resolvedMethod == null) {
-      ctx.registerProblem(MethodNotFoundProblem(methodOwner, methodName, methodDescriptor), getFromMethod())
+      ctx.registerProblem(MethodNotFoundProblem(methodOwner, methodName, methodDescriptor))
       return null
     } else {
       /*
@@ -274,7 +282,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     }
 
     if (resolvedMethod == null) {
-      ctx.registerProblem(MethodNotFoundProblem(methodOwner, methodName, methodDescriptor), getFromMethod())
+      ctx.registerProblem(MethodNotFoundProblem(methodOwner, methodName, methodDescriptor))
       return null
     } else {
       /*
@@ -323,7 +331,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
 
     if (accessProblem != null) {
       val problem = IllegalMethodAccessProblem(SymbolicReference.methodOf(definingClass.name, methodNode.name, methodNode.desc), accessProblem)
-      ctx.registerProblem(problem, getFromMethod())
+      ctx.registerProblem(problem)
     }
   }
 
@@ -342,7 +350,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     1) If C is not an interface, interface method resolution throws an IncompatibleClassChangeError.
      */
     if (!VerifierUtil.isInterface(interfaceNode)) {
-      ctx.registerProblem(IncompatibleInterfaceToClassChangeProblem(SymbolicReference.classOf(interfaceNode.name)), getFromMethod())
+      ctx.registerProblem(IncompatibleInterfaceToClassChangeProblem(SymbolicReference.classOf(interfaceNode.name)))
       return FAILED_LOOKUP
     }
 
@@ -483,12 +491,14 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     */
     if (VerifierUtil.isInterface(classNode)) {
       /*
-      This additional check which ensures that we are not trying to resolve static interface method at the moment
-      is necessary because actually the JVM 8 spec chooses this algorithm unconditionally for resolving
+      This additional if-condition ensures that we are not trying to resolve a static interface method at the moment.
+      It is necessary because actually the JVM 8 spec chooses resolve-class-resolution algorithm unconditionally for resolving
       the static methods of both classes and interface.
       */
       if (instr.opcode != Opcodes.INVOKESTATIC) {
-        ctx.registerProblem(IncompatibleClassToInterfaceChangeProblem(SymbolicReference.classOf(classNode.name)), getFromMethod())
+        val methodReference = SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)
+        val caller = getFromMethod()
+        ctx.registerProblem(InvokeClassMethodOnInterfaceProblem(methodReference, caller, instruction))
         return FAILED_LOOKUP
       }
     }

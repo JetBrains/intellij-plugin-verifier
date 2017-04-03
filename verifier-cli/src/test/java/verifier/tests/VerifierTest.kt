@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.location.AccessFlags
 import com.jetbrains.pluginverifier.location.ProblemLocation
 import com.jetbrains.pluginverifier.problems.*
+import com.jetbrains.pluginverifier.reference.SymbolicReference
 import org.junit.Assert.*
 import org.junit.BeforeClass
 import org.junit.Test
@@ -22,8 +23,15 @@ class VerifierTest {
     @BeforeClass
     @JvmStatic
     fun verifyMockPlugin() {
-      val ideaFile = File("/home/sergey/Documents/work/intellij-plugin-verifier/verifier-cli/build/mocks/after-idea") // File("build/mocks/after-idea")
-      val pluginFile = File("/home/sergey/Documents/work/intellij-plugin-verifier/verifier-cli/build/mocks/mock-plugin-1.0.jar") // File("build/mocks/mock-plugin-1.0.jar")
+      //todo: get rid of this.
+      var ideaFile = File("build/mocks/after-idea")
+      if (!ideaFile.exists()) {
+        ideaFile = File("/home/sergey/Documents/work/intellij-plugin-verifier/verifier-cli/build/mocks/after-idea")
+      }
+      var pluginFile = File("build/mocks/mock-plugin-1.0.jar")
+      if (!pluginFile.exists()) {
+        pluginFile = File("/home/sergey/Documents/work/intellij-plugin-verifier/verifier-cli/build/mocks/mock-plugin-1.0.jar")
+      }
       val verificationResults = TestResultBuilder.buildResult(ideaFile, pluginFile)
       assertTrue(verificationResults.results.size == 1)
       assertTrue(verificationResults.results[0] is VResult.Problems)
@@ -154,6 +162,17 @@ class VerifierTest {
         creator
     )
     assertProblemFound(problem, "Method mock.plugin.news.NewProblems.newInterface() : void has instantiation *new* instruction referencing an interface misc.BecomeInterface. This can lead to **InstantiationError** exception at runtime.")
+
+    val initOnInterfaceMethod = InvokeClassMethodOnInterfaceProblem(
+        SymbolicReference.methodOf(
+            "misc/BecomeInterface",
+            "<init>",
+            "()V"
+        ),
+        creator,
+        Instruction.INVOKE_SPECIAL
+    )
+    assertProblemFound(initOnInterfaceMethod, "Method mock.plugin.news.NewProblems.newInterface() : void has invocation *invokespecial* instruction referencing a *class* method misc.BecomeInterface.<init>() : void, but the method host misc.BecomeInterface is an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.")
   }
 
   @Test
@@ -171,5 +190,36 @@ class VerifierTest {
         Instruction.GET_FIELD
     )
     assertProblemFound(problem, "Method mock.plugin.field.FieldProblemsContainer.instanceAccessOnStatic() : void has non-static access instruction *getfield* referencing a static field fields.FieldsContainer.staticField : int. This can lead to **IncompatibleClassChangeError** exception at runtime.")
+  }
+
+  @Test
+  fun superClassBecameInterface() {
+    val problem = SuperClassBecameInterfaceProblem(
+        EContainer.pluginClass("mock/plugin/inheritance/SuperClassBecameInterface", null, EContainer.PUBLIC_CLASS_AF),
+        ProblemLocation.fromClass("misc/BecomeInterface", null, EContainer.afterIdeaClassPath, AccessFlags(0x601))
+    )
+    assertProblemFound(problem, "Class mock.plugin.inheritance.SuperClassBecameInterface has a *super class* misc.BecomeInterface which is actually an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.")
+  }
+
+  @Test
+  fun resolveClassMethodOnInterface() {
+    val caller = EContainer.pluginMethod(
+        EContainer.pluginClass("mock/plugin/invokeClassMethodOnInterface/Caller", null, EContainer.PUBLIC_CLASS_AF),
+        "call",
+        "(Lmisc/BecomeInterface;)V",
+        listOf("b"),
+        null,
+        EContainer.PUBLIC_METHOD_AF
+    )
+    val problem = InvokeClassMethodOnInterfaceProblem(
+        SymbolicReference.methodOf(
+            "misc/BecomeInterface",
+            "invokeVirtualMethod",
+            "()V"
+        ),
+        caller,
+        Instruction.INVOKE_VIRTUAL
+    )
+    assertProblemFound(problem, "Method mock.plugin.invokeClassMethodOnInterface.Caller.call(BecomeInterface b) : void has invocation *invokevirtual* instruction referencing a *class* method misc.BecomeInterface.invokeVirtualMethod() : void, but the method host misc.BecomeInterface is an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.")
   }
 }

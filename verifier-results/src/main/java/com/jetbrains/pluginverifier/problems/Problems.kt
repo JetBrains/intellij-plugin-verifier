@@ -50,8 +50,19 @@ data class ClassNotFoundProblem(@SerializedName("class") val unknownClass: Class
   override fun getDescription(): String = "accessing to unknown class $unknownClass"
 }
 
-data class IncompatibleClassToInterfaceChangeProblem(@SerializedName("class") val clazz: ClassReference) : Problem {
-  override fun getDescription(): String = "incompatible change of class $clazz to interface"
+data class SuperClassBecameInterfaceProblem(@SerializedName("child") val child: ClassLocation,
+                                            @SerializedName("interface") val interfaze: ClassLocation) : Problem {
+  override fun getDescription(): String = "incompatible change of super class $interfaze to interface"
+
+  override fun effect(): String = "Class $child has a *super class* $interfaze which is actually an *interface*. This can lead to **IncompatibleClassChangeError** at runtime."
+}
+
+data class InvokeClassMethodOnInterfaceProblem(@SerializedName("methodReference") val methodReference: MethodReference,
+                                               @SerializedName("caller") val caller: MethodLocation,
+                                               @SerializedName("instruction") val instruction: Instruction) : Problem {
+  override fun getDescription(): String = "incompatible change of class ${methodReference.hostClass} to interface"
+
+  override fun effect(): String = "Method $caller has invocation *$instruction* instruction referencing a *class* method $methodReference, but the method host ${methodReference.hostClass} is an *interface*. This can lead to **IncompatibleClassChangeError** at runtime."
 }
 
 data class IncompatibleInterfaceToClassChangeProblem(@SerializedName("interface") val interfaze: ClassReference) : Problem {

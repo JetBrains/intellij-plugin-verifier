@@ -22,7 +22,7 @@ class AbstractMethodVerifier : ClassVerifier {
     val classLocation = ctx.fromClass(clazz)
     (abstractMethods.keys - implementedMethods.keys).forEach { method ->
       val abstractMethod = abstractMethods[method]!!
-      ctx.registerProblem(MethodNotImplementedProblem(abstractMethod, classLocation), classLocation)
+      ctx.registerProblem(MethodNotImplementedProblem(abstractMethod, classLocation))
     }
   }
 
