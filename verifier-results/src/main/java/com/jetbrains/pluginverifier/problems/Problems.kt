@@ -144,10 +144,12 @@ data class MethodNotImplementedProblem(@SerializedName("method") val method: Met
   override fun effect() = "Non-abstract class $incompleteClass inherits from ${method.hostClass} but doesn't implement the abstract method ${method.methodNameAndParameters()}. This can lead to **AbstractMethodError** exception at runtime."
 }
 
-data class AbstractMethodInvocationProblem(@SerializedName("method") val method: MethodReference) : Problem {
-  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor))
-
+data class AbstractMethodInvocationProblem(@SerializedName("method") val method: MethodLocation,
+                                           @SerializedName("caller") val caller: MethodLocation,
+                                           @SerializedName("instruction") val instruction: Instruction) : Problem {
   override fun getDescription(): String = "attempt to invoke an abstract method $method"
+
+  override fun effect(): String = "Method $caller contains an *$instruction* instruction referencing a method $method which doesn't have a non-abstract implementation. This can lead to **AbstractMethodError** exception at runtime."
 }
 
 data class OverridingFinalMethodProblem(@SerializedName("method") val method: MethodLocation,

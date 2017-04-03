@@ -7,6 +7,10 @@ public abstract class Child extends AbstractParent {
     super.foo();
   }
 
+  public void zeroMaximallySpecificMethods() {
+    super.deletedBody();
+  }
+
   public void invokeSpecialOnStaticMethod() {
     super.becomeStatic();
   }

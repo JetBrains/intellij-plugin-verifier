@@ -332,6 +332,42 @@ class VerifierTest {
     assertProblemFound(problem, "Method mock.plugin.invokeClassMethodOnInterface.Caller.call3(MethodBecameStatic b) : void contains an *invokeinterface* instruction referencing a static method statics.MethodBecameStatic.becomeStatic() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.")
   }
 
+  @Test
+  fun abstractMethodInvocation() {
+    val caller = EContainer.pluginMethod(EContainer.pluginClass("mock/plugin/invokespecial/Child", null, AccessFlags(0x421)), "bar", "()V", emptyList(), null, EContainer.PUBLIC_METHOD_AF)
 
+    val problem = AbstractMethodInvocationProblem(
+        ProblemLocation.fromMethod(
+            ProblemLocation.fromClass("invokespecial/AbstractParent", null, EContainer.afterIdeaClassPath, AccessFlags(0x421)),
+            "foo",
+            "()V",
+            emptyList(),
+            null,
+            AccessFlags(0x401)
+        ),
+        caller,
+        Instruction.INVOKE_SPECIAL
+    )
+    assertProblemFound(problem, "Method mock.plugin.invokespecial.Child.bar() : void contains an *invokespecial* instruction referencing a method invokespecial.AbstractParent.foo() : void which doesn't have a non-abstract implementation. This can lead to **AbstractMethodError** exception at runtime.")
+  }
+
+  @Test
+  fun abstractMethodInvocationZeroMaximallySpecificMethods() {
+    val caller = EContainer.pluginMethod(EContainer.pluginClass("mock/plugin/invokespecial/Child", null, AccessFlags(0x421)), "zeroMaximallySpecificMethods", "()V", emptyList(), null, EContainer.PUBLIC_METHOD_AF)
+
+    val problem = AbstractMethodInvocationProblem(
+        ProblemLocation.fromMethod(
+            ProblemLocation.fromClass("invokespecial/SuperInterface", null, EContainer.afterIdeaClassPath, AccessFlags(0x601)),
+            "deletedBody",
+            "()V",
+            emptyList(),
+            null,
+            AccessFlags(0x401)
+        ),
+        caller,
+        Instruction.INVOKE_SPECIAL
+    )
+    assertProblemFound(problem, "Method mock.plugin.invokespecial.Child.zeroMaximallySpecificMethods() : void contains an *invokespecial* instruction referencing a method invokespecial.SuperInterface.deletedBody() : void which doesn't have a non-abstract implementation. This can lead to **AbstractMethodError** exception at runtime.")
+  }
 
 }

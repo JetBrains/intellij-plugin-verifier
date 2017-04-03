@@ -73,6 +73,11 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
   }
 
   private fun processInvokeSpecial() {
+    /*
+    The run-time constant pool item at that index must be a symbolic reference to a method or an interface method (§5.1),
+    which gives the name and descriptor (§4.3.3) of the method as well as a symbolic reference
+    to the class or interface in which the method is to be found. The named method is resolved.
+     */
     val resolved: ResolvedMethod
     if (instr.itf) {
       resolved = resolveInterfaceMethod() ?: return
@@ -129,24 +134,26 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     /*
       The actual method to be invoked is selected by the following lookup procedure:
       */
-    val (stepNumber, resolvedMethod) = invokeSpecialLookup(classRef, resolved.methodNode) ?: return
+    val (stepNumber, resolvedMethod) = invokeSpecialLookup(classRef, resolved) ?: return
 
     /*
     Otherwise, if step 1, step 2, or step 3 of the lookup procedure selects an abstract method, invokespecial throws an AbstractMethodError.
      */
     if (stepNumber in listOf(1, 2, 3) && VerifierUtil.isAbstract(resolvedMethod.methodNode)) {
+      /*
+      We intentionally introduce this check because there are the tricky cases when the Java compiler generates
+       faulty bytecode. See PR-707 and a test class mock.plugin.noproblems.bridgeMethod.A
+       */
       if (!VerifierUtil.isSynthetic(verifiableMethod) || !VerifierUtil.isBridgeMethod(verifiableMethod)) {
-        /*
-        We intentionally introduce this check because there are the tricky cases when the Java compiler generates
-         faulty bytecode. See PR-707 and a test class mock.plugin.noproblems.bridgeMethod.A
-         */
-        ctx.registerProblem(AbstractMethodInvocationProblem(methodOwner, methodName, methodDescriptor))
+        val methodDeclaration = ctx.fromMethod(resolvedMethod.definingClass, resolvedMethod.methodNode)
+        ctx.registerProblem(AbstractMethodInvocationProblem(methodDeclaration, getFromMethod(), instruction))
       }
     }
   }
 
 
-  private fun invokeSpecialLookup(classRef: ClassNode, resolvedMethod: MethodNode): Pair<Int, ResolvedMethod>? {
+  private fun invokeSpecialLookup(classRef: ClassNode, resolvedReference: ResolvedMethod): Pair<Int, ResolvedMethod>? {
+    val resolvedMethod = resolvedReference.methodNode
     /*
       1) If C contains a declaration for an instance method with the same name and descriptor as the resolved method,
       then it is the method to be invoked .
@@ -216,7 +223,8 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     invokespecial throws an AbstractMethodError.
      */
 
-    ctx.registerProblem(AbstractMethodInvocationProblem(methodOwner, methodName, methodDescriptor))
+    val methodRef = ctx.fromMethod(resolvedReference.definingClass, resolvedReference.methodNode)
+    ctx.registerProblem(AbstractMethodInvocationProblem(methodRef, getFromMethod(), instruction))
     return null
   }
 

@@ -1,6 +1,6 @@
 package invokespecial;
 
-public abstract class AbstractParent {
+public abstract class AbstractParent implements SuperInterface {
   public static void becomeStatic() {
 
   }
