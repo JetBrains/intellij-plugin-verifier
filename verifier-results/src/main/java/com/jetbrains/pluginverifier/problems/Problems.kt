@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.problems
 
 import com.google.gson.annotations.SerializedName
+import com.jetbrains.pluginverifier.location.AccessFlags
 import com.jetbrains.pluginverifier.location.ClassLocation
 import com.jetbrains.pluginverifier.location.FieldLocation
 import com.jetbrains.pluginverifier.location.MethodLocation
@@ -63,6 +64,16 @@ data class InvokeClassMethodOnInterfaceProblem(@SerializedName("methodReference"
   override fun getDescription(): String = "incompatible change of class ${methodReference.hostClass} to interface"
 
   override fun effect(): String = "Method $caller has invocation *$instruction* instruction referencing a *class* method $methodReference, but the method host ${methodReference.hostClass} is an *interface*. This can lead to **IncompatibleClassChangeError** at runtime."
+}
+
+data class SuperInterfaceBecameClassProblem(@SerializedName("child") val child: ClassLocation,
+                                            @SerializedName("class") val clazz: ClassLocation) : Problem {
+  override fun getDescription(): String = "incompatible change of super interface $clazz to class"
+
+  override fun effect(): String {
+    val type = if (child.accessFlags.contains(AccessFlags.Flag.INTERFACE)) "Interface" else "Class"
+    return "$type $child has a *super interface* $clazz which is actually a *class*. This can lead to **IncompatibleClassChangeError** exception at runtime."
+  }
 }
 
 data class IncompatibleInterfaceToClassChangeProblem(@SerializedName("interface") val interfaze: ClassReference) : Problem {

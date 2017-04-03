@@ -222,4 +222,14 @@ class VerifierTest {
     )
     assertProblemFound(problem, "Method mock.plugin.invokeClassMethodOnInterface.Caller.call(BecomeInterface b) : void has invocation *invokevirtual* instruction referencing a *class* method misc.BecomeInterface.invokeVirtualMethod() : void, but the method host misc.BecomeInterface is an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.")
   }
+
+  @Test
+  fun superInterfaceBecameClass() {
+    val problem = SuperInterfaceBecameClassProblem(
+        EContainer.pluginClass("mock/plugin/inheritance/SuperInterfaceBecomeClass", null, AccessFlags(0x601)),
+        ProblemLocation.fromClass("misc/BecomeClass", null, EContainer.afterIdeaClassPath, EContainer.PUBLIC_CLASS_AF)
+    )
+    assertProblemFound(problem, "Interface mock.plugin.inheritance.SuperInterfaceBecomeClass has a *super interface* misc.BecomeClass which is actually a *class*. This can lead to **IncompatibleClassChangeError** exception at runtime.")
+  }
+
 }

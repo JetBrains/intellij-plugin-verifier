@@ -2,24 +2,21 @@ package com.jetbrains.pluginverifier.verifiers.clazz
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
-import com.jetbrains.pluginverifier.problems.IncompatibleInterfaceToClassChangeProblem
-import com.jetbrains.pluginverifier.reference.SymbolicReference
+import com.jetbrains.pluginverifier.problems.SuperInterfaceBecameClassProblem
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 
 /**
- * Check that all explicitly defined interfaces exists.
+ * Check that all explicitly defined interfaces exist.
 
  * @author Dennis.Ushakov
  */
 class InterfacesVerifier : ClassVerifier {
   override fun verify(clazz: ClassNode, resolver: Resolver, ctx: VContext) {
-    for (o in clazz.interfaces) {
-      val iface = o as String
-      val node = VerifierUtil.resolveClassOrProblem(resolver, iface, clazz, ctx, { ctx.fromClass(clazz) }) ?: continue
-      if (!VerifierUtil.isInterface(node)) {
-        ctx.registerProblem(IncompatibleInterfaceToClassChangeProblem(SymbolicReference.classOf(iface)), ctx.fromClass(clazz))
-      }
-    }
+    clazz.interfaces
+        .filterIsInstance(String::class.java)
+        .mapNotNull { VerifierUtil.resolveClassOrProblem(resolver, it, clazz, ctx, { ctx.fromClass(clazz) }) }
+        .filterNot { VerifierUtil.isInterface(it) }
+        .forEach { ctx.registerProblem(SuperInterfaceBecameClassProblem(ctx.fromClass(clazz), ctx.fromClass(it))) }
   }
 }
