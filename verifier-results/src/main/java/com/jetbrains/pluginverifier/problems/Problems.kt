@@ -127,8 +127,11 @@ data class IllegalMethodAccessProblem(@SerializedName("method") val method: Meth
   override fun getDescription(): String = "illegal invocation of $methodAccess method $method"
 }
 
-data class InvokeInterfaceOnPrivateMethodProblem(@SerializedName("method") val method: MethodReference) : Problem {
-  override fun getDescription(): String = "attempt to perform 'invokeinterface' on private method $method"
+data class InvokeInterfaceOnPrivateMethodProblem(@SerializedName("resolvedMethod") val resolvedMethod: MethodLocation,
+                                                 @SerializedName("caller") val caller: MethodLocation) : Problem {
+  override fun getDescription(): String = "attempt to perform 'invokeinterface' on private method $resolvedMethod"
+
+  override fun effect(): String = "Method $caller contains an *invokeinterface* instruction referencing a private method $resolvedMethod. This can lead to **IncompatibleClassChangeError** exception at runtime."
 }
 
 data class MethodNotFoundProblem(@SerializedName("method") val method: MethodReference) : Problem {

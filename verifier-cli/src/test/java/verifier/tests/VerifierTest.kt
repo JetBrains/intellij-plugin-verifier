@@ -23,6 +23,7 @@ class VerifierTest {
     @BeforeClass
     @JvmStatic
     fun verifyMockPlugin() {
+      prepareTestEnvironment()
       //todo: get rid of this.
       var ideaFile = File("build/mocks/after-idea")
       if (!ideaFile.exists()) {
@@ -38,6 +39,11 @@ class VerifierTest {
       result = verificationResults.results[0] as VResult.Problems
       actualProblems = result.problems
       redundantProblems = actualProblems.toMutableList()
+    }
+
+    private fun prepareTestEnvironment() {
+      System.setProperty("plugin.verifier.test.mode", "true")
+      System.setProperty("plugin.verifier.test.private.interface.method.name", "privateInterfaceMethodTestName")
     }
 
 /*
@@ -369,5 +375,22 @@ class VerifierTest {
     )
     assertProblemFound(problem, "Method mock.plugin.invokespecial.Child.zeroMaximallySpecificMethods() : void contains an *invokespecial* instruction referencing a method invokespecial.SuperInterface.deletedBody() : void which doesn't have a non-abstract implementation. This can lead to **AbstractMethodError** exception at runtime.")
   }
+
+  @Test
+  fun invokeInterfaceOnPrivateMethod() {
+    val problem = InvokeInterfaceOnPrivateMethodProblem(
+        ProblemLocation.fromMethod(
+            ProblemLocation.fromClass("statics/MethodBecameStatic", null, EContainer.afterIdeaClassPath, AccessFlags(0x601)),
+            "privateInterfaceMethodTestName",
+            "()V",
+            emptyList(),
+            null,
+            AccessFlags(0x401)
+        ),
+        EContainer.pluginMethod(EContainer.pluginClass("mock/plugin/invokeClassMethodOnInterface/Caller", null, EContainer.PUBLIC_CLASS_AF), "call4", "(Lstatics/MethodBecameStatic;)V", listOf("b"), null, EContainer.PUBLIC_METHOD_AF)
+    )
+    assertProblemFound(problem, "Method mock.plugin.invokeClassMethodOnInterface.Caller.call4(MethodBecameStatic b) : void contains an *invokeinterface* instruction referencing a private method statics.MethodBecameStatic.privateInterfaceMethodTestName() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.")
+  }
+
 
 }

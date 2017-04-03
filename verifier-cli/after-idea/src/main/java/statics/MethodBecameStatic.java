@@ -6,4 +6,7 @@ public interface MethodBecameStatic {
 
   }
 
+  //  will be "private" at runtime.
+  void privateInterfaceMethodTestName();
+
 }

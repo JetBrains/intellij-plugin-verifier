@@ -16,4 +16,8 @@ public class Caller {
   public void call3(MethodBecameStatic b) {
     b.becomeStatic();
   }
+
+  public void call4(MethodBecameStatic b) {
+    b.privateInterfaceMethodTestName();
+  }
 }

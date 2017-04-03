@@ -231,11 +231,16 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
   private fun processInvokeInterface() {
     val resolved = resolveInterfaceMethod() ?: return
 
+    fun isTestPrivateInterfaceMethod(method: MethodNode): Boolean =
+        System.getProperty("plugin.verifier.test.mode")?.toBoolean() == true
+            && method.name == System.getProperty("plugin.verifier.test.private.interface.method.name")
+
     /*
     Otherwise, if the resolved method is static or private, the invokeinterface instruction throws an IncompatibleClassChangeError.
      */
-    if (VerifierUtil.isPrivate(resolved.methodNode)) {
-      ctx.registerProblem(InvokeInterfaceOnPrivateMethodProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)))
+    if (VerifierUtil.isPrivate(resolved.methodNode) || isTestPrivateInterfaceMethod(resolved.methodNode)) {
+      val resolvedMethod = ctx.fromMethod(resolved.definingClass, resolved.methodNode)
+      ctx.registerProblem(InvokeInterfaceOnPrivateMethodProblem(resolvedMethod, getFromMethod()))
     }
     if (VerifierUtil.isStatic(resolved.methodNode)) {
       val resolvedMethod = ctx.fromMethod(resolved.definingClass, resolved.methodNode)
