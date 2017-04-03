@@ -90,7 +90,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     is not the class symbolically referenced by the instruction, a NoSuchMethodError is thrown.
      */
     if (resolved.methodNode.name == "<init>" && resolved.definingClass.name != methodOwner) {
-      ctx.registerProblem(MethodNotFoundProblem(methodOwner, methodName, methodDescriptor))
+      ctx.registerProblem(MethodNotFoundProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor), getFromMethod(), instruction))
     }
 
     /*
@@ -281,17 +281,16 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       return null
     }
 
-    if (resolvedMethod == null) {
-      ctx.registerProblem(MethodNotFoundProblem(methodOwner, methodName, methodDescriptor))
-      return null
-    } else {
+    if (resolvedMethod != null) {
       /*
        * Otherwise, if method lookup succeeds and the referenced method is not accessible (§5.4.4) to D,
        * method resolution throws an IllegalAccessError.
        */
-      checkMethodIsAccessible(resolvedMethod)
+      return checkMethodIsAccessible(resolvedMethod)
     }
-    return resolvedMethod
+
+    ctx.registerProblem(MethodNotFoundProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor), getFromMethod(), instruction))
+    return null
   }
 
   fun resolveClassMethod(): ResolvedMethod? {
@@ -300,17 +299,16 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       return null
     }
 
-    if (resolvedMethod == null) {
-      ctx.registerProblem(MethodNotFoundProblem(methodOwner, methodName, methodDescriptor))
-      return null
-    } else {
+    if (resolvedMethod != null) {
       /*
        * Otherwise, if method lookup succeeds and the referenced method is not accessible (§5.4.4) to D,
        * method resolution throws an IllegalAccessError.
        */
-      checkMethodIsAccessible(resolvedMethod)
+      return checkMethodIsAccessible(resolvedMethod)
     }
-    return resolvedMethod
+
+    ctx.registerProblem(MethodNotFoundProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor), getFromMethod(), instruction))
+    return null
   }
 
   /**
@@ -323,7 +321,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
    * and is declared by a class in the same run-time package as D.
    * - R is private and is declared in D.
    */
-  fun checkMethodIsAccessible(location: ResolvedMethod) {
+  fun checkMethodIsAccessible(location: ResolvedMethod): ResolvedMethod? {
     val definingClass = location.definingClass
     val methodNode = location.methodNode
 
@@ -351,7 +349,9 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     if (accessProblem != null) {
       val problem = IllegalMethodAccessProblem(SymbolicReference.methodOf(definingClass.name, methodNode.name, methodNode.desc), accessProblem)
       ctx.registerProblem(problem)
+      return null
     }
+    return location
   }
 
   /**

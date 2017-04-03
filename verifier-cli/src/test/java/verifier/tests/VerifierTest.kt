@@ -84,7 +84,7 @@ class VerifierTest {
     )
     val incompleteClass = EContainer.pluginClass("mock/plugin/NotImplementedProblem", null, EContainer.PUBLIC_CLASS_AF)
     assertProblemFound(MethodNotImplementedProblem(notImplementedMethod, incompleteClass),
-        "Non-abstract class mock.plugin.NotImplementedProblem inherits com.intellij.openapi.components.PersistentStateComponent<T> but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime."
+        "Non-abstract class mock.plugin.NotImplementedProblem inherits from com.intellij.openapi.components.PersistentStateComponent<T> but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime."
     )
   }
 
@@ -392,5 +392,37 @@ class VerifierTest {
     assertProblemFound(problem, "Method mock.plugin.invokeClassMethodOnInterface.Caller.call4(MethodBecameStatic b) : void contains an *invokeinterface* instruction referencing a private method statics.MethodBecameStatic.privateInterfaceMethodTestName() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.")
   }
 
+  @Test
+  fun missingDefaultConstructor() {
+    val caller = EContainer.pluginMethod(EContainer.pluginClass("mock/plugin/constructors/MissingDefaultConstructor", null, EContainer.PUBLIC_CLASS_AF), "<init>", "()V", emptyList(), null, EContainer.PUBLIC_METHOD_AF)
+    val problem = MethodNotFoundProblem(
+        SymbolicReference.methodOf("constructors/DeletedDefaultConstructor", "<init>", "()V"),
+        caller,
+        Instruction.INVOKE_SPECIAL
+    )
+    assertProblemFound(problem, "Method mock.plugin.constructors.MissingDefaultConstructor.<init>() : void contains an *invokespecial* instruction referencing an unresolved method constructors.DeletedDefaultConstructor.<init>() : void. This can lead to **NoSuchMethodError** exception at runtime.")
+  }
+
+  @Test
+  fun missingStaticMethod() {
+    val caller = EContainer.pluginMethod(EContainer.pluginClass("mock/plugin/MethodProblems", null, EContainer.PUBLIC_CLASS_AF), "brokenNonFoundMethod", "()V", emptyList(), null, EContainer.PUBLIC_METHOD_AF)
+    val problem = MethodNotFoundProblem(
+        SymbolicReference.methodOf("com/intellij/openapi/actionSystem/AnAction", "nonExistingMethod", "()V"),
+        caller,
+        Instruction.INVOKE_STATIC
+    )
+    assertProblemFound(problem, "Method mock.plugin.MethodProblems.brokenNonFoundMethod() : void contains an *invokestatic* instruction referencing an unresolved method com.intellij.openapi.actionSystem.AnAction.nonExistingMethod() : void. This can lead to **NoSuchMethodError** exception at runtime.")
+  }
+
+  @Test
+  fun missingVirtualMethod() {
+    val caller = EContainer.pluginMethod(EContainer.pluginClass("mock/plugin/non/existing/InvokeRemovedMethod", null, EContainer.PUBLIC_CLASS_AF), "foo", "()V", emptyList(), null, EContainer.PUBLIC_METHOD_AF)
+    val problem = MethodNotFoundProblem(
+        SymbolicReference.methodOf("non/existing/Child", "removedMethod", "()V"),
+        caller,
+        Instruction.INVOKE_VIRTUAL
+    )
+    assertProblemFound(problem, "Method mock.plugin.non.existing.InvokeRemovedMethod.foo() : void contains an *invokevirtual* instruction referencing an unresolved method non.existing.Child.removedMethod() : void. This can lead to **NoSuchMethodError** exception at runtime.")
+  }
 
 }

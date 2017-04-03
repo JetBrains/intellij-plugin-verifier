@@ -134,10 +134,12 @@ data class InvokeInterfaceOnPrivateMethodProblem(@SerializedName("resolvedMethod
   override fun effect(): String = "Method $caller contains an *invokeinterface* instruction referencing a private method $resolvedMethod. This can lead to **IncompatibleClassChangeError** exception at runtime."
 }
 
-data class MethodNotFoundProblem(@SerializedName("method") val method: MethodReference) : Problem {
-  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor))
-
+data class MethodNotFoundProblem(@SerializedName("method") val method: MethodReference,
+                                 @SerializedName("caller") val caller: MethodLocation,
+                                 @SerializedName("instruction") val instruction: Instruction) : Problem {
   override fun getDescription(): String = "invoking unknown method $method"
+
+  override fun effect(): String = "Method $caller contains an *$instruction* instruction referencing an unresolved method $method. This can lead to **NoSuchMethodError** exception at runtime."
 }
 
 data class MethodNotImplementedProblem(@SerializedName("method") val method: MethodLocation,
