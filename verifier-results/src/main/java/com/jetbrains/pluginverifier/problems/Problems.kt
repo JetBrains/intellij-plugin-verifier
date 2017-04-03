@@ -173,10 +173,11 @@ data class InvokeSpecialOnStaticMethodProblem(@SerializedName("method") val meth
   override fun getDescription(): String = "attempt to perform 'invokespecial' on static method $method"
 }
 
-data class InvokeStaticOnInstanceMethodProblem(@SerializedName("method") val method: MethodReference) : Problem {
-  constructor(hostClass: String, methodName: String, methodDescriptor: String) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor))
+data class InvokeStaticOnNonStaticMethodProblem(@SerializedName("resolvedMethod") val resolvedMethod: MethodLocation,
+                                                @SerializedName("caller") val caller: MethodLocation) : Problem {
+  override fun getDescription(): String = "attempt to perform 'invokestatic' on a non-static method $caller"
 
-  override fun getDescription(): String = "attempt to perform 'invokestatic' on an instance method $method"
+  override fun effect(): String = "Method $caller contains an *invokestatic* instruction referencing a non-static method $resolvedMethod. This can lead to **IncompatibleClassChangeError** exception at runtime."
 }
 
 data class InvokeVirtualOnStaticMethodProblem(@SerializedName("method") val method: MethodReference) : Problem {

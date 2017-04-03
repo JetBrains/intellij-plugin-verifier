@@ -264,4 +264,20 @@ class VerifierTest {
     )
     assertProblemFound(problem, "Class mock.plugin.finals.InheritFromFinalClass inherits from a final class finals.BecomeFinal. This can lead to **VerifyError** exception at runtime.")
   }
+
+  @Test
+  fun invokeStaticOnNonStaticMethod() {
+    val problem = InvokeStaticOnNonStaticMethodProblem(
+        ProblemLocation.fromMethod(
+            ProblemLocation.fromClass("invocation/InvocationProblems", null, EContainer.afterIdeaClassPath, EContainer.PUBLIC_CLASS_AF),
+            "wasStatic",
+            "()V",
+            emptyList(),
+            null,
+            EContainer.PUBLIC_METHOD_AF
+        ),
+        EContainer.pluginMethod(EContainer.pluginClass("mock/plugin/invokeStaticOnInstance/InvocationProblemsUser", null, EContainer.PUBLIC_CLASS_AF), "foo", "()V", emptyList(), null, EContainer.PUBLIC_METHOD_AF)
+    )
+    assertProblemFound(problem, "Method mock.plugin.invokeStaticOnInstance.InvocationProblemsUser.foo() : void contains an *invokestatic* instruction referencing a non-static method invocation.InvocationProblems.wasStatic() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.")
+  }
 }

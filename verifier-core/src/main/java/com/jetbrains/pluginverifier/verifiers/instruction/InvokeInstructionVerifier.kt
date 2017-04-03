@@ -250,7 +250,9 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     Otherwise, if the resolved method is an instance method, the invokestatic instruction throws an IncompatibleClassChangeError.
      */
     if (!VerifierUtil.isStatic(resolved.methodNode)) {
-      ctx.registerProblem(InvokeStaticOnInstanceMethodProblem(SymbolicReference.methodOf(resolved.definingClass.name, resolved.methodNode.name, resolved.methodNode.desc)))
+      val methodDeclaration = ctx.fromMethod(resolved.definingClass, resolved.methodNode)
+      val caller = getFromMethod()
+      ctx.registerProblem(InvokeStaticOnNonStaticMethodProblem(methodDeclaration, caller))
     }
   }
 
