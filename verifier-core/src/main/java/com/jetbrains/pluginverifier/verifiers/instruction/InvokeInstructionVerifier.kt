@@ -68,7 +68,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
        */
       val methodDeclaration = ctx.fromMethod(resolved.definingClass, resolved.methodNode)
       val caller = getFromMethod()
-      ctx.registerProblem(InvokeVirtualOnStaticMethodProblem(methodDeclaration, caller))
+      ctx.registerProblem(InvokeNonStaticInstructionOnStaticMethodProblem(methodDeclaration, caller, instruction))
     }
   }
 
@@ -93,7 +93,8 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     the invokespecial instruction throws an IncompatibleClassChangeError.
      */
     if (VerifierUtil.isStatic(resolved.methodNode)) {
-      ctx.registerProblem(InvokeSpecialOnStaticMethodProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)))
+      val resolvedMethod = ctx.fromMethod(resolved.definingClass, resolved.methodNode)
+      ctx.registerProblem(InvokeNonStaticInstructionOnStaticMethodProblem(resolvedMethod, getFromMethod(), instruction))
     }
 
     /*
@@ -229,7 +230,8 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       ctx.registerProblem(InvokeInterfaceOnPrivateMethodProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)))
     }
     if (VerifierUtil.isStatic(resolved.methodNode)) {
-      ctx.registerProblem(InvokeInterfaceOnStaticMethodProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)))
+      val resolvedMethod = ctx.fromMethod(resolved.definingClass, resolved.methodNode)
+      ctx.registerProblem(InvokeNonStaticInstructionOnStaticMethodProblem(resolvedMethod, getFromMethod(), instruction))
     }
   }
 

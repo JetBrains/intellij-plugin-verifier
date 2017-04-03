@@ -283,7 +283,7 @@ class VerifierTest {
 
   @Test
   fun invokeVirtualOnStaticMethod() {
-    val problem = InvokeVirtualOnStaticMethodProblem(
+    val problem = InvokeNonStaticInstructionOnStaticMethodProblem(
         ProblemLocation.fromMethod(
             ProblemLocation.fromClass("com/intellij/lang/SmartEnterProcessor", null, EContainer.afterIdeaClassPath, AccessFlags(0x421)),
             "commit",
@@ -292,8 +292,46 @@ class VerifierTest {
             null,
             AccessFlags(0x9)
         ),
-        EContainer.pluginMethod(EContainer.pluginClass("mock/plugin/invokeVirtualOnStatic/SmartEnterProcessorUser", null, EContainer.PUBLIC_CLASS_AF), "main", "()V", emptyList(), null, EContainer.PUBLIC_METHOD_AF)
+        EContainer.pluginMethod(EContainer.pluginClass("mock/plugin/invokeVirtualOnStatic/SmartEnterProcessorUser", null, EContainer.PUBLIC_CLASS_AF), "main", "()V", emptyList(), null, EContainer.PUBLIC_METHOD_AF),
+        Instruction.INVOKE_VIRTUAL
     )
     assertProblemFound(problem, "Method mock.plugin.invokeVirtualOnStatic.SmartEnterProcessorUser.main() : void contains an *invokevirtual* instruction referencing a static method com.intellij.lang.SmartEnterProcessor.commit() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.")
   }
+
+  @Test
+  fun invokeSpecialOnStaticMethod() {
+    val problem = InvokeNonStaticInstructionOnStaticMethodProblem(
+        ProblemLocation.fromMethod(
+            ProblemLocation.fromClass("invokespecial/AbstractParent", null, EContainer.afterIdeaClassPath, AccessFlags(0x421)),
+            "becomeStatic",
+            "()V",
+            emptyList(),
+            null,
+            AccessFlags(0x9)
+        ),
+        EContainer.pluginMethod(EContainer.pluginClass("mock/plugin/invokespecial/Child", null, AccessFlags(0x421)), "invokeSpecialOnStaticMethod", "()V", emptyList(), null, EContainer.PUBLIC_METHOD_AF),
+        Instruction.INVOKE_SPECIAL
+    )
+    assertProblemFound(problem, "Method mock.plugin.invokespecial.Child.invokeSpecialOnStaticMethod() : void contains an *invokespecial* instruction referencing a static method invokespecial.AbstractParent.becomeStatic() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.")
+  }
+
+  @Test
+  fun invokeInterfaceOnStaticMethod() {
+    val problem = InvokeNonStaticInstructionOnStaticMethodProblem(
+        ProblemLocation.fromMethod(
+            ProblemLocation.fromClass("statics/MethodBecameStatic", null, EContainer.afterIdeaClassPath, AccessFlags(0x601)),
+            "becomeStatic",
+            "()V",
+            emptyList(),
+            null,
+            AccessFlags(0x9)
+        ),
+        EContainer.pluginMethod(EContainer.pluginClass("mock/plugin/invokeClassMethodOnInterface/Caller", null, EContainer.PUBLIC_CLASS_AF), "call3", "(Lstatics/MethodBecameStatic;)V", listOf("b"), null, EContainer.PUBLIC_METHOD_AF),
+        Instruction.INVOKE_INTERFACE
+    )
+    assertProblemFound(problem, "Method mock.plugin.invokeClassMethodOnInterface.Caller.call3(MethodBecameStatic b) : void contains an *invokeinterface* instruction referencing a static method statics.MethodBecameStatic.becomeStatic() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.")
+  }
+
+
+
 }

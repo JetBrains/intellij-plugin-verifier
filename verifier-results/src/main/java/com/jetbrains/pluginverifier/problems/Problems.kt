@@ -165,14 +165,6 @@ data class NonStaticAccessOfStaticFieldProblem(@SerializedName("field") val fiel
   override fun effect(): String = "Method $accessor has non-static access instruction *$instruction* referencing a static field $field. This can lead to **IncompatibleClassChangeError** exception at runtime."
 }
 
-data class InvokeInterfaceOnStaticMethodProblem(@SerializedName("method") val method: MethodReference) : Problem {
-  override fun getDescription(): String = "attempt to perform 'invokeinterface' on static method $method"
-}
-
-data class InvokeSpecialOnStaticMethodProblem(@SerializedName("method") val method: MethodReference) : Problem {
-  override fun getDescription(): String = "attempt to perform 'invokespecial' on static method $method"
-}
-
 data class InvokeStaticOnNonStaticMethodProblem(@SerializedName("resolvedMethod") val resolvedMethod: MethodLocation,
                                                 @SerializedName("caller") val caller: MethodLocation) : Problem {
   override fun getDescription(): String = "attempt to perform 'invokestatic' on a non-static method $caller"
@@ -180,11 +172,12 @@ data class InvokeStaticOnNonStaticMethodProblem(@SerializedName("resolvedMethod"
   override fun effect(): String = "Method $caller contains an *invokestatic* instruction referencing a non-static method $resolvedMethod. This can lead to **IncompatibleClassChangeError** exception at runtime."
 }
 
-data class InvokeVirtualOnStaticMethodProblem(@SerializedName("resolvedMethod") val resolvedMethod: MethodLocation,
-                                              @SerializedName("caller") val caller: MethodLocation) : Problem {
-  override fun getDescription(): String = "attempt to perform 'invokevirtual' on a static method $resolvedMethod"
+data class InvokeNonStaticInstructionOnStaticMethodProblem(@SerializedName("resolvedMethod") val resolvedMethod: MethodLocation,
+                                                           @SerializedName("caller") val caller: MethodLocation,
+                                                           @SerializedName("instruction") val instruction: Instruction) : Problem {
+  override fun getDescription(): String = "attempt to perform '$instruction' on a static method $resolvedMethod"
 
-  override fun effect(): String = "Method $caller contains an *invokevirtual* instruction referencing a static method $resolvedMethod. This can lead to **IncompatibleClassChangeError** exception at runtime."
+  override fun effect(): String = "Method $caller contains an *$instruction* instruction referencing a static method $resolvedMethod. This can lead to **IncompatibleClassChangeError** exception at runtime."
 }
 
 data class StaticAccessOfNonStaticFieldProblem(@SerializedName("field") val field: FieldLocation,
