@@ -63,7 +63,7 @@ data class InvokeClassMethodOnInterfaceProblem(@SerializedName("methodReference"
                                                @SerializedName("instruction") val instruction: Instruction) : Problem {
   override fun getDescription(): String = "incompatible change of class ${methodReference.hostClass} to interface"
 
-  override fun effect(): String = "Method $caller has invocation *$instruction* instruction referencing a *class* method $methodReference, but the method host ${methodReference.hostClass} is an *interface*. This can lead to **IncompatibleClassChangeError** at runtime."
+  override fun effect(): String = "Method $caller has invocation *$instruction* instruction referencing a *class* method $methodReference, but the method's host ${methodReference.hostClass} is an *interface*. This can lead to **IncompatibleClassChangeError** at runtime."
 }
 
 data class SuperInterfaceBecameClassProblem(@SerializedName("child") val child: ClassLocation,
@@ -76,8 +76,12 @@ data class SuperInterfaceBecameClassProblem(@SerializedName("child") val child: 
   }
 }
 
-data class IncompatibleInterfaceToClassChangeProblem(@SerializedName("interface") val interfaze: ClassReference) : Problem {
-  override fun getDescription(): String = "incompatible change of interface $interfaze to class"
+data class InvokeInterfaceMethodOnClassProblem(@SerializedName("methodReference") val methodReference: MethodReference,
+                                               @SerializedName("caller") val caller: MethodLocation,
+                                               @SerializedName("instruction") val instruction: Instruction) : Problem {
+  override fun getDescription(): String = "incompatible change of interface ${methodReference.hostClass} to class"
+
+  override fun effect(): String = "Method $caller has invocation *$instruction* instruction referencing an *interface* method $methodReference, but the method's host ${methodReference.hostClass} is a *class*. This can lead to **IncompatibleClassChangeError** at runtime."
 }
 
 data class InheritFromFinalClassProblem(@SerializedName("finalClass") val finalClass: ClassReference) : Problem {
@@ -191,7 +195,7 @@ enum class Instruction(private val type: String) {
   PUT_FIELD("putfield"),
   GET_FIELD("getfield"),
   INVOKE_VIRTUAL("invokevirtual"),
-  INVOKE_INTERFACE("invokespecial"),
+  INVOKE_INTERFACE("invokeinterface"),
   INVOKE_STATIC("invokestatic"),
   INVOKE_SPECIAL("invokespecial");
 

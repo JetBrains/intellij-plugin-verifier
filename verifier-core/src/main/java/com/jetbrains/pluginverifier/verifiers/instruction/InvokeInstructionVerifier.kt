@@ -350,7 +350,9 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     1) If C is not an interface, interface method resolution throws an IncompatibleClassChangeError.
      */
     if (!VerifierUtil.isInterface(interfaceNode)) {
-      ctx.registerProblem(IncompatibleInterfaceToClassChangeProblem(SymbolicReference.classOf(interfaceNode.name)))
+      val methodReference = SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)
+      val caller = getFromMethod()
+      ctx.registerProblem(InvokeInterfaceMethodOnClassProblem(methodReference, caller, instruction))
       return FAILED_LOOKUP
     }
 
