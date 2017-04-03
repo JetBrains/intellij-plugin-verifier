@@ -280,4 +280,20 @@ class VerifierTest {
     )
     assertProblemFound(problem, "Method mock.plugin.invokeStaticOnInstance.InvocationProblemsUser.foo() : void contains an *invokestatic* instruction referencing a non-static method invocation.InvocationProblems.wasStatic() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.")
   }
+
+  @Test
+  fun invokeVirtualOnStaticMethod() {
+    val problem = InvokeVirtualOnStaticMethodProblem(
+        ProblemLocation.fromMethod(
+            ProblemLocation.fromClass("com/intellij/lang/SmartEnterProcessor", null, EContainer.afterIdeaClassPath, AccessFlags(0x421)),
+            "commit",
+            "()V",
+            emptyList(),
+            null,
+            AccessFlags(0x9)
+        ),
+        EContainer.pluginMethod(EContainer.pluginClass("mock/plugin/invokeVirtualOnStatic/SmartEnterProcessorUser", null, EContainer.PUBLIC_CLASS_AF), "main", "()V", emptyList(), null, EContainer.PUBLIC_METHOD_AF)
+    )
+    assertProblemFound(problem, "Method mock.plugin.invokeVirtualOnStatic.SmartEnterProcessorUser.main() : void contains an *invokevirtual* instruction referencing a static method com.intellij.lang.SmartEnterProcessor.commit() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.")
+  }
 }

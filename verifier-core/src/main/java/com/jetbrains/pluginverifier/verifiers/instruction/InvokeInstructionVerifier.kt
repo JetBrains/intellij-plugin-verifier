@@ -66,7 +66,9 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       /*
       Otherwise, if the resolved method is a class (static) method, the invokevirtual instruction throws an IncompatibleClassChangeError.
        */
-      ctx.registerProblem(InvokeVirtualOnStaticMethodProblem(SymbolicReference.methodOf(resolved.definingClass.name, resolved.methodNode.name, resolved.methodNode.desc)))
+      val methodDeclaration = ctx.fromMethod(resolved.definingClass, resolved.methodNode)
+      val caller = getFromMethod()
+      ctx.registerProblem(InvokeVirtualOnStaticMethodProblem(methodDeclaration, caller))
     }
   }
 
