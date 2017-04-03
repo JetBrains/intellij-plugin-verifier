@@ -255,5 +255,13 @@ class VerifierTest {
   }
 
 
-
+  @Test
+  fun inheritsFromFinalClass() {
+    val pluginClass = EContainer.pluginClass("mock/plugin/finals/InheritFromFinalClass", null, EContainer.PUBLIC_CLASS_AF)
+    val problem = InheritFromFinalClassProblem(
+        pluginClass,
+        ProblemLocation.fromClass("finals/BecomeFinal", null, EContainer.afterIdeaClassPath, AccessFlags(0x31))
+    )
+    assertProblemFound(problem, "Class mock.plugin.finals.InheritFromFinalClass inherits from a final class finals.BecomeFinal. This can lead to **VerifyError** exception at runtime.")
+  }
 }

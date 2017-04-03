@@ -84,10 +84,14 @@ data class InvokeInterfaceMethodOnClassProblem(@SerializedName("methodReference"
   override fun effect(): String = "Method $caller has invocation *$instruction* instruction referencing an *interface* method $methodReference, but the method's host ${methodReference.hostClass} is a *class*. This can lead to **IncompatibleClassChangeError** at runtime."
 }
 
-data class InheritFromFinalClassProblem(@SerializedName("finalClass") val finalClass: ClassReference) : Problem {
-  constructor(className: String) : this(ClassReference(className))
+data class InheritFromFinalClassProblem(@SerializedName("child") val child: ClassLocation,
+                                        @SerializedName("finalClass") val finalClass: ClassLocation) : Problem {
+  override fun getDescription(): String = "inheritance from a final class $finalClass"
 
-  override fun getDescription(): String = "cannot inherit from final class $finalClass"
+  override fun effect(): String {
+    val type = if (child.accessFlags.contains(AccessFlags.Flag.INTERFACE)) "Interface" else "Class"
+    return "$type $child inherits from a final class $finalClass. This can lead to **VerifyError** exception at runtime."
+  }
 }
 
 data class InterfaceInstantiationProblem(@SerializedName("interface") val interfaze: ClassLocation,
@@ -137,7 +141,7 @@ data class MethodNotImplementedProblem(@SerializedName("method") val method: Met
                                        @SerializedName("incompleteClass") val incompleteClass: ClassLocation) : Problem {
   override fun getDescription(): String = "method isn't implemented $method"
 
-  override fun effect() = "Non-abstract class $incompleteClass inherits ${method.hostClass} but doesn't implement the abstract method ${method.methodNameAndParameters()}. This can lead to **AbstractMethodError** exception at runtime."
+  override fun effect() = "Non-abstract class $incompleteClass inherits from ${method.hostClass} but doesn't implement the abstract method ${method.methodNameAndParameters()}. This can lead to **AbstractMethodError** exception at runtime."
 }
 
 data class AbstractMethodInvocationProblem(@SerializedName("method") val method: MethodReference) : Problem {
