@@ -108,7 +108,7 @@ public class PluginManagerImpl extends PluginManager {
     if (file.isDirectory()) {
       plugin = loadDescriptorFromDir(file, filePath, validator);
     } else if (file.exists() && isJarOrZip(file)) {
-      plugin = loadDescriptorFromZipOrJarFile(file, filePath, validator, PluginImpl.DEFAULT_PLUGIN_XML_PATH_RESOLVER);
+      plugin = loadDescriptorFromZipOrJarFile(file, filePath, validator, PluginInfoExtractor.DEFAULT_PLUGIN_XML_PATH_RESOLVER);
     } else {
       if (!file.exists()) {
         validator.onIncorrectStructure("Plugin file is not found " + file);
@@ -138,7 +138,7 @@ public class PluginManagerImpl extends PluginManager {
       Map<String, Plugin> descriptors = new HashMap<String, Plugin>();
 
       List<URL> metaInfBases = getOptionalMetaInfBases();
-      JDOMXIncluder.PathResolver pathResolver = new PluginImpl.PluginXmlPathResolver(metaInfBases);
+      JDOMXIncluder.PathResolver pathResolver = new PluginInfoExtractor.PluginXmlPathResolver(metaInfBases);
 
       for (Map.Entry<PluginDependency, String> entry : optionalConfigs.entrySet()) {
         String optFilePath = entry.getValue();
@@ -377,7 +377,7 @@ public class PluginManagerImpl extends PluginManager {
       List<? extends ZipEntry> entries = Collections.list(zipFile.entries());
 
       List<URL> inLibMetaInfUrls = getInLibMetaInfUrls(zipRootUrl, entries);
-      JDOMXIncluder.PathResolver innerLibJarsResolver = new PluginImpl.PluginXmlPathResolver(inLibMetaInfUrls);
+      JDOMXIncluder.PathResolver innerLibJarsResolver = new PluginInfoExtractor.PluginXmlPathResolver(inLibMetaInfUrls);
 
       for (final ZipEntry entry : entries) {
         if (entry.isDirectory()) {
@@ -518,7 +518,7 @@ public class PluginManagerImpl extends PluginManager {
       return null;
     }
 
-    extractor.readExternal(document, url, PluginImpl.DEFAULT_PLUGIN_XML_PATH_RESOLVER);
+    extractor.readExternal(document, url);
 
     return plugin;
   }
@@ -582,7 +582,7 @@ public class PluginManagerImpl extends PluginManager {
     PluginImpl plugin = null;
 
     List<URL> metaInfUrls = getInLibMetaInfUrls(files);
-    JDOMXIncluder.PathResolver pathResolver = new PluginImpl.PluginXmlPathResolver(metaInfUrls);
+    JDOMXIncluder.PathResolver pathResolver = new PluginInfoExtractor.PluginXmlPathResolver(metaInfUrls);
 
     for (final File f : files) {
       if (isJarOrZip(f)) {

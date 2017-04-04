@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface PluginCreationFail extends PluginCreationResult {
   @NotNull
-  public List<PluginProblem> getErrorsAndWarnings();
+  List<PluginProblem> getErrorsAndWarnings();
 }

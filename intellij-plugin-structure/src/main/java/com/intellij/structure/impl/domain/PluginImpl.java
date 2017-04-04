@@ -23,8 +23,6 @@ import static com.intellij.structure.impl.utils.StringUtil.*;
 
 public class PluginImpl implements Plugin {
 
-  static final JDOMXIncluder.PathResolver DEFAULT_PLUGIN_XML_PATH_RESOLVER = new PluginXmlPathResolver();
-
   private final Set<String> myDefinedModules = new HashSet<String>();
   private final List<PluginDependency> myDependencies = new ArrayList<PluginDependency>();
   private final List<PluginDependency> myModuleDependencies = new ArrayList<PluginDependency>();
@@ -297,59 +295,6 @@ public class PluginImpl implements Plugin {
       id = myFileName;
     }
     return id + (getPluginVersion() != null ? ":" + getPluginVersion() : "");
-  }
-
-  static class PluginXmlPathResolver extends JDOMXIncluder.DefaultPathResolver {
-
-    private final List<URL> myPluginMetaInfUrls;
-
-    private PluginXmlPathResolver() {
-      myPluginMetaInfUrls = Collections.emptyList();
-    }
-
-    PluginXmlPathResolver(List<URL> metaInfUrl) {
-      myPluginMetaInfUrls = new ArrayList<URL>(metaInfUrl);
-    }
-
-    @NotNull
-    private URL defaultResolve(@NotNull String relativePath, @Nullable String base) {
-      if (base != null && relativePath.startsWith("/META-INF/")) {
-        //for plugin descriptor the root is a directory containing the META-INF
-        try {
-          return new URL(new URL(base), ".." + relativePath);
-        } catch (MalformedURLException e) {
-          throw new XIncludeException(e);
-        }
-      }
-      return super.resolvePath(relativePath, base);
-    }
-
-    @NotNull
-    private URL getMetaInfRelativeUrl(@NotNull URL metaInf, @NotNull String relativePath) throws MalformedURLException {
-      if (relativePath.startsWith("/")) {
-        return new URL(metaInf, ".." + relativePath);
-      } else {
-        return new URL(metaInf, relativePath);
-      }
-    }
-
-    @NotNull
-    @Override
-    public URL resolvePath(@NotNull String relativePath, @Nullable String base) {
-      URL url = defaultResolve(relativePath, base);
-      if (!URLUtil.resourceExists(url)) {
-        for (URL metaInf : myPluginMetaInfUrls) {
-          try {
-            URL entryUrl = getMetaInfRelativeUrl(metaInf, relativePath);
-            if (URLUtil.resourceExists(entryUrl)) {
-              return entryUrl;
-            }
-          } catch (MalformedURLException ignored) {
-          }
-        }
-      }
-      return url;
-    }
   }
 
 }
