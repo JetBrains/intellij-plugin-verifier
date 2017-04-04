@@ -1,7 +1,7 @@
 package com.intellij.structure.impl.utils.validators;
 
 import com.intellij.structure.domain.PluginProblem;
-import com.intellij.structure.impl.utils.BiFunction;
+import com.intellij.structure.impl.utils.BiAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,9 +15,9 @@ public abstract class Validator {
   protected List<PluginProblem> myProblems = new ArrayList<PluginProblem>();
 
   private void performAction(@NotNull Event event, @NotNull String message, @Nullable Throwable cause) {
-    BiFunction<String, Throwable, Void> function = supplyAction(event);
-    if (function != null) {
-      function.apply(message, cause);
+    BiAction<String, Throwable> action = supplyAction(event);
+    if (action != null) {
+      action.call(message, cause);
     }
   }
 
@@ -50,13 +50,13 @@ public abstract class Validator {
   }
 
   @Nullable
-  protected abstract BiFunction<String, Throwable, Void> supplyAction(@NotNull Event event);
+  protected abstract BiAction<String, Throwable> supplyAction(@NotNull Event event);
 
   private Validator createIgnoringValidator(@NotNull final Event ignoredEvent) {
     return new Validator() {
       @Nullable
       @Override
-      protected BiFunction<String, Throwable, Void> supplyAction(@NotNull Event event) {
+      protected BiAction<String, Throwable> supplyAction(@NotNull Event event) {
         if (event == ignoredEvent) {
           return null;
         }

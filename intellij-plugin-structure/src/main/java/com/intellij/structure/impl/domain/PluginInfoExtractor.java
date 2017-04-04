@@ -2,7 +2,6 @@ package com.intellij.structure.impl.domain;
 
 import com.google.common.base.Strings;
 import com.intellij.structure.domain.IdeVersion;
-import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.utils.validators.Validator;
@@ -11,13 +10,7 @@ import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.impl.utils.xml.XIncludeException;
 import org.apache.commons.io.IOUtils;
-import org.jdom2.Attribute;
-import org.jdom2.Content;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.Namespace;
-import org.jdom2.Parent;
-import org.jdom2.Text;
+import org.jdom2.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
@@ -35,12 +28,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.structure.impl.utils.StringUtil.containsIgnoreCase;
-import static com.intellij.structure.impl.utils.StringUtil.isEmpty;
-import static com.intellij.structure.impl.utils.StringUtil.notNullize;
-import static com.intellij.structure.impl.utils.StringUtil.substringAfter;
+import static com.intellij.structure.impl.utils.StringUtil.*;
 
-public class PluginInfoExtractor {
+class PluginInfoExtractor {
   static final JDOMXIncluder.PathResolver DEFAULT_PLUGIN_XML_PATH_RESOLVER = new PluginXmlPathResolver();
   private static final Logger LOG = LoggerFactory.getLogger(PluginInfoExtractor.class);
   private static final Whitelist WHITELIST = Whitelist.basicWithImages();
@@ -51,12 +41,29 @@ public class PluginInfoExtractor {
   private final PluginImpl myPlugin;
   private final Validator myValidator;
 
-  public PluginInfoExtractor(PluginImpl plugin, Validator myValidator) {
-    myPlugin = plugin;
-    this.myValidator = myValidator;
+  PluginInfoExtractor(PluginImpl plugin, Validator validator) {
+    this.myPlugin = plugin;
+    this.myValidator = validator;
   }
 
-  public void readExternalFromIdeSources(@NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws IncorrectPluginException {
+  private static String extractEPName(final Element extensionElement) {
+    String epName = extensionElement.getAttributeValue("point");
+
+    if (epName == null) {
+      final Element parentElement = extensionElement.getParentElement();
+      final String ns = parentElement != null ? parentElement.getAttributeValue("defaultExtensionNs") : null;
+
+      if (ns != null) {
+        epName = ns + '.' + extensionElement.getName();
+      } else {
+        Namespace namespace = extensionElement.getNamespace();
+        epName = namespace.getURI() + '.' + extensionElement.getName();
+      }
+    }
+    return epName;
+  }
+
+  void readExternalFromIdeSources(@NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws IncorrectPluginException {
     Document document;
     try {
       document = JDOMUtil.loadDocument(url);
@@ -72,11 +79,11 @@ public class PluginInfoExtractor {
     checkAndSetEntries(url, document);
   }
 
-  public void readExternal(@NotNull Document document, @NotNull URL documentUrl) {
+  void readExternal(@NotNull Document document, @NotNull URL documentUrl) {
     readExternal(document, documentUrl, DEFAULT_PLUGIN_XML_PATH_RESOLVER);
   }
 
-  public void readExternal(@NotNull Document document, @NotNull URL documentUrl, JDOMXIncluder.PathResolver pathResolver) {
+  void readExternal(@NotNull Document document, @NotNull URL documentUrl, JDOMXIncluder.PathResolver pathResolver) {
     try {
       document = JDOMXIncluder.resolve(document, documentUrl.toExternalForm(), false, pathResolver);
     } catch (XIncludeException e) {
@@ -204,23 +211,6 @@ public class PluginInfoExtractor {
         myPlugin.addExtension(extractEPName(element), element);
       }
     }
-  }
-
-  private static String extractEPName(final Element extensionElement) {
-    String epName = extensionElement.getAttributeValue("point");
-
-    if (epName == null) {
-      final Element parentElement = extensionElement.getParentElement();
-      final String ns = parentElement != null ? parentElement.getAttributeValue("defaultExtensionNs") : null;
-
-      if (ns != null) {
-        epName = ns + '.' + extensionElement.getName();
-      } else {
-        Namespace namespace = extensionElement.getNamespace();
-        epName = namespace.getURI() + '.' + extensionElement.getName();
-      }
-    }
-    return epName;
   }
 
   private void extractReferencedClasses(@NotNull Element rootElement) throws IncorrectPluginException {

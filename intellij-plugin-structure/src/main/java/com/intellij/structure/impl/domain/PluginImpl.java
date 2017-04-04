@@ -6,20 +6,15 @@ import com.google.common.collect.Multimaps;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
-import com.intellij.structure.domain.PluginProblem;
-import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
-import com.intellij.structure.impl.utils.xml.URLUtil;
-import com.intellij.structure.impl.utils.xml.XIncludeException;
-import org.jdom2.*;
+import org.jdom2.Document;
+import org.jdom2.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
-import static com.intellij.structure.impl.utils.StringUtil.*;
+import static com.intellij.structure.impl.utils.StringUtil.isEmpty;
 
 public class PluginImpl implements Plugin {
 
@@ -30,93 +25,45 @@ public class PluginImpl implements Plugin {
   private final Map<String, Plugin> myOptionalDescriptors = new HashMap<String, Plugin>();
   private final Set<String> myReferencedClasses = new HashSet<String>();
   private final Multimap<String, Element> myExtensions = ArrayListMultimap.create();
-  @NotNull private final File myPluginFile;
-  @NotNull private Document myUnderlyingDocument;
-  @NotNull private String myFileName;
-  @Nullable private byte[] myLogoContent;
-  @Nullable private String myLogoUrl;
-  @Nullable private String myPluginName;
-  @Nullable private String myPluginVersion;
-  @Nullable private String myPluginId;
-  @Nullable private String myPluginVendor;
-  @Nullable private String myVendorEmail;
-  @Nullable private String myVendorUrl;
-  @Nullable private String myDescription;
-  @Nullable private String myUrl;
-  @Nullable private String myNotes;
-  @Nullable private IdeVersion mySinceBuild;
-  @Nullable private IdeVersion myUntilBuild;
+  private final File myPluginFile;
+  private Document myUnderlyingDocument;
+  private String myFileName;
+  private byte[] myLogoContent;
+  private String myLogoUrl;
+  private String myPluginName;
+  private String myPluginVersion;
+  private String myPluginId;
+  private String myPluginVendor;
+  private String myVendorEmail;
+  private String myVendorUrl;
+  private String myDescription;
+  private String myUrl;
+  private String myNotes;
+  private IdeVersion mySinceBuild;
+  private IdeVersion myUntilBuild;
 
-  PluginImpl(File pluginFile) {
+  PluginImpl(@NotNull File pluginFile) {
     myPluginFile = pluginFile;
   }
 
-  public void setOptionalDescriptors(@NotNull Map<String, Plugin> optionalDescriptors) {
-    myOptionalDescriptors.clear();
-    myOptionalDescriptors.putAll(optionalDescriptors);
-    for (Plugin optDescriptor : optionalDescriptors.values()) {
-      myExtensions.putAll(optDescriptor.getExtensions());
-    }
-  }
-
-  public void setUnderlyingDocument(@NotNull Document myUnderlyingDocument) {
-    this.myUnderlyingDocument = myUnderlyingDocument;
-  }
-
-  public void setFileName(@NotNull String myFileName) {
+  void setFileName(@NotNull String myFileName) {
     this.myFileName = myFileName;
   }
 
-  public void setLogoContent(@Nullable byte[] myLogoContent) {
+  void setLogoContent(@Nullable byte[] myLogoContent) {
     this.myLogoContent = myLogoContent;
   }
 
-  public void setLogoUrl(@Nullable String myLogoUrl) {
+  void setLogoUrl(@Nullable String myLogoUrl) {
     this.myLogoUrl = myLogoUrl;
   }
 
-  public void setPluginName(@Nullable String myPluginName) {
-    this.myPluginName = myPluginName;
-  }
-
-  public void setPluginVersion(@Nullable String myPluginVersion) {
-    this.myPluginVersion = myPluginVersion;
-  }
-
-  public void setPluginId(@Nullable String myPluginId) {
-    this.myPluginId = myPluginId;
-  }
-
-  public void setPluginVendor(@Nullable String myPluginVendor) {
+  void setPluginVendor(@Nullable String myPluginVendor) {
     this.myPluginVendor = myPluginVendor;
   }
 
-  public void setVendorEmail(@Nullable String myVendorEmail) {
-    this.myVendorEmail = myVendorEmail;
-  }
-
-  public void setVendorUrl(@Nullable String myVendorUrl) {
-    this.myVendorUrl = myVendorUrl;
-  }
-
-  public void setDescription(@Nullable String myDescription) {
-    this.myDescription = myDescription;
-  }
-
-  public void setUrl(@Nullable String myUrl) {
-    this.myUrl = myUrl;
-  }
-
-  public void setNotes(@Nullable String myNotes) {
+  void setNotes(@Nullable String myNotes) {
     this.myNotes = myNotes;
-  }
-
-  public void setSinceBuild(@Nullable IdeVersion mySinceBuild) {
-    this.mySinceBuild = mySinceBuild;
-  }
-
-  public void setUntilBuild(@Nullable IdeVersion myUntilBuild) {
-    this.myUntilBuild = myUntilBuild;
   }
 
   @Override
@@ -143,10 +90,18 @@ public class PluginImpl implements Plugin {
     return mySinceBuild;
   }
 
+  void setSinceBuild(@Nullable IdeVersion mySinceBuild) {
+    this.mySinceBuild = mySinceBuild;
+  }
+
   @Override
   @Nullable
   public IdeVersion getUntilBuild() {
     return myUntilBuild;
+  }
+
+  void setUntilBuild(@Nullable IdeVersion myUntilBuild) {
+    this.myUntilBuild = myUntilBuild;
   }
 
   @Override
@@ -163,16 +118,28 @@ public class PluginImpl implements Plugin {
     return myPluginName;
   }
 
+  void setPluginName(@Nullable String myPluginName) {
+    this.myPluginName = myPluginName;
+  }
+
   @Override
   @Nullable
   public String getPluginVersion() {
     return myPluginVersion;
   }
 
+  void setPluginVersion(@Nullable String myPluginVersion) {
+    this.myPluginVersion = myPluginVersion;
+  }
+
   @Nullable
   @Override
   public String getPluginId() {
     return myPluginId;
+  }
+
+  void setPluginId(@Nullable String myPluginId) {
+    this.myPluginId = myPluginId;
   }
 
   @Override
@@ -192,10 +159,18 @@ public class PluginImpl implements Plugin {
     return myDescription;
   }
 
+  void setDescription(@Nullable String myDescription) {
+    this.myDescription = myDescription;
+  }
+
   @Override
   @Nullable
   public String getVendorEmail() {
     return myVendorEmail;
+  }
+
+  void setVendorEmail(@Nullable String myVendorEmail) {
+    this.myVendorEmail = myVendorEmail;
   }
 
   @Override
@@ -204,11 +179,18 @@ public class PluginImpl implements Plugin {
     return myVendorUrl;
   }
 
+  void setVendorUrl(@Nullable String myVendorUrl) {
+    this.myVendorUrl = myVendorUrl;
+  }
 
   @Override
   @Nullable
   public String getUrl() {
     return myUrl;
+  }
+
+  void setUrl(@Nullable String myUrl) {
+    this.myUrl = myUrl;
   }
 
   @Override
@@ -229,6 +211,14 @@ public class PluginImpl implements Plugin {
     return Collections.unmodifiableMap(myOptionalDescriptors);
   }
 
+  void setOptionalDescriptors(@NotNull Map<String, Plugin> optionalDescriptors) {
+    myOptionalDescriptors.clear();
+    myOptionalDescriptors.putAll(optionalDescriptors);
+    for (Plugin optDescriptor : optionalDescriptors.values()) {
+      myExtensions.putAll(optDescriptor.getExtensions());
+    }
+  }
+
   @Override
   @Nullable
   public byte[] getVendorLogo() {
@@ -247,6 +237,10 @@ public class PluginImpl implements Plugin {
     return myUnderlyingDocument.clone();
   }
 
+  void setUnderlyingDocument(@NotNull Document myUnderlyingDocument) {
+    this.myUnderlyingDocument = myUnderlyingDocument;
+  }
+
   @NotNull
   @Override
   public File getPluginFile() {
@@ -258,27 +252,27 @@ public class PluginImpl implements Plugin {
     return Collections.unmodifiableMap(myOptionalConfigFiles);
   }
 
-  public void addExtension(String epName, Element element) {
+  void addExtension(String epName, Element element) {
     myExtensions.put(epName, element);
   }
 
-  public void addReferencedClass(String className) {
+  void addReferencedClass(String className) {
     myReferencedClasses.add(className);
   }
 
-  public void addModuleDependency(PluginDependency dependency) {
+  void addModuleDependency(PluginDependency dependency) {
     myModuleDependencies.add(dependency);
   }
 
-  public void addDependency(PluginDependency dependency) {
+  void addDependency(PluginDependency dependency) {
     myDependencies.add(dependency);
   }
 
-  public void addOptionalConfigFile(PluginDependency dependency, String configFile) {
+  void addOptionalConfigFile(PluginDependency dependency, String configFile) {
     myOptionalConfigFiles.put(dependency, configFile);
   }
 
-  public void addDefinedModule(String definedModule) {
+  void addDefinedModule(String definedModule) {
     myDefinedModules.add(definedModule);
   }
 

@@ -24,14 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -71,7 +64,7 @@ public class PluginManagerImpl extends PluginManager {
   }
 
   @NotNull
-  public static String getFileEscapedUri(@NotNull File file) {
+  private static String getFileEscapedUri(@NotNull File file) {
     return StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
   }
 
@@ -226,11 +219,11 @@ public class PluginManagerImpl extends PluginManager {
    */
   @Nullable
   private PluginImpl loadDescriptorFromEntry(@NotNull ZipEntry entry,
-                                         @NotNull String filePath,
-                                         @NotNull String rootUrl,
-                                         @NotNull Validator validator,
-                                         @NotNull JDOMXIncluder.PathResolver pathResolver,
-                                         @NotNull Supplier<InputStream> entryStreamSupplier) throws IncorrectPluginException {
+                                             @NotNull String filePath,
+                                             @NotNull String rootUrl,
+                                             @NotNull Validator validator,
+                                             @NotNull JDOMXIncluder.PathResolver pathResolver,
+                                             @NotNull Supplier<InputStream> entryStreamSupplier) throws IncorrectPluginException {
     Matcher xmlMatcher = XML_IN_META_INF_PATTERN.matcher(entry.getName());
     if (xmlMatcher.matches()) {
       final String xmlUrl = rootUrl + entry.getName();
@@ -304,10 +297,10 @@ public class PluginManagerImpl extends PluginManager {
 
   @Nullable
   private PluginImpl loadFromZipStream(@NotNull final ZipInputStream zipStream,
-                                   @NotNull String zipRootUrl,
-                                   @NotNull String filePath,
-                                   @NotNull Validator validator,
-                                   @NotNull JDOMXIncluder.PathResolver pathResolver) throws IncorrectPluginException {
+                                       @NotNull String zipRootUrl,
+                                       @NotNull String filePath,
+                                       @NotNull Validator validator,
+                                       @NotNull JDOMXIncluder.PathResolver pathResolver) throws IncorrectPluginException {
     PluginImpl descriptor = null;
 
     try {
@@ -357,9 +350,9 @@ public class PluginManagerImpl extends PluginManager {
    */
   @Nullable
   private PluginImpl loadDescriptorFromZipOrJarFile(@NotNull final File file,
-                                                @NotNull final String filePath,
-                                                @NotNull final Validator validator,
-                                                @NotNull final JDOMXIncluder.PathResolver pathResolver) throws IncorrectPluginException {
+                                                    @NotNull final String filePath,
+                                                    @NotNull final Validator validator,
+                                                    @NotNull final JDOMXIncluder.PathResolver pathResolver) throws IncorrectPluginException {
     final String zipRootUrl = getJarRootUrl(file);
 
     PluginImpl descriptorRoot = null;
@@ -637,11 +630,11 @@ public class PluginManagerImpl extends PluginManager {
     myPluginFile = pluginFile;
 
     PluginImpl plugin = loadDescriptor(pluginFile, PLUGIN_XML, validator);
-    List<PluginProblem> problems =  validator.getProblems();
+    List<PluginProblem> problems = validator.getProblems();
 
     boolean createdSuccessfully = plugin != null;
-    for(PluginProblem problem : problems){
-      if(problem.getLevel() == PluginProblem.Level.ERROR){
+    for (PluginProblem problem : problems) {
+      if (problem.getLevel() == PluginProblem.Level.ERROR) {
         createdSuccessfully = false;
         break;
       }

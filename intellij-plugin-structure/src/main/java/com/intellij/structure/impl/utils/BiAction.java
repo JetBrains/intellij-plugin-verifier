@@ -3,8 +3,8 @@ package com.intellij.structure.impl.utils;
 /**
  * @author Sergey Patrikeev
  */
-public interface BiFunction<T, U, R> {
+public interface BiAction<T, U> {
 
-  R apply(T t, U u);
+  void call(T t, U u);
 
 }
