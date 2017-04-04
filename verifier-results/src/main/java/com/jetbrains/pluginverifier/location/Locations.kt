@@ -7,43 +7,10 @@ import com.jetbrains.pluginverifier.utils.PresentationUtils.cutPackageConverter
 import com.jetbrains.pluginverifier.utils.PresentationUtils.normalConverter
 import com.jetbrains.pluginverifier.utils.PresentationUtils.splitMethodDescriptorOnRawParametersAndReturnTypes
 
-data class ClassPath(val type: Type, val path: String) {
-  enum class Type { ROOT, CLASSES_DIRECTORY, JAR_FILE }
-}
-
-data class AccessFlags(val flags: Int) {
-
-  enum class Flag(val flag: Int) {
-    PUBLIC(0x0001), // class, field, method
-    PRIVATE(0x0002), // class, field, method
-    PROTECTED(0x0004), // class, field, method
-    STATIC(0x0008), // field, method
-    FINAL(0x0010), // class, field, method, parameter
-    SUPER(0x0020), // class
-    SYNCHRONIZED(0x0020), // method
-    VOLATILE(0x0040), // field
-    BRIDGE(0x0040), // method
-    VARARGS(0x0080), // method
-    TRANSIENT(0x0080), // field
-    NATIVE(0x0100), // method
-    INTERFACE(0x0200), // class
-    ABSTRACT(0x0400), // class, method
-    STRICT(0x0800), // method
-    SYNTHETIC(0x1000), // class, field, method, parameter
-    ANNOTATION(0x2000), // class
-    ENUM(0x4000), // class(?) field inner
-    MANDATED(0x8000), // parameter
-    DEPRECATED(0x20000) // class, field, method
-  }
-
-  fun contains(flag: Flag): Boolean = flags.and(flag.flag) != 0
-
-}
-
 /**
  * @author Sergey Patrikeev
  */
-interface ProblemLocation {
+interface Location {
 
   companion object {
     fun fromClass(className: String,
@@ -75,7 +42,7 @@ data class MethodLocation(val hostClass: ClassLocation,
                           val methodDescriptor: String,
                           val parameterNames: List<String>,
                           val signature: String,
-                          val accessFlags: AccessFlags) : ProblemLocation {
+                          val accessFlags: AccessFlags) : Location {
 
   private fun zipWithNames(parametersTypes: List<String>): List<String> {
     val names: List<String> = if (parameterNames.size == parametersTypes.size) {
@@ -104,7 +71,7 @@ data class FieldLocation(val hostClass: ClassLocation,
                          val fieldName: String,
                          val fieldDescriptor: String,
                          val signature: String,
-                         val accessFlags: AccessFlags) : ProblemLocation {
+                         val accessFlags: AccessFlags) : Location {
   fun fieldNameAndType(): String {
     if (signature.isNotEmpty()) {
       return "$fieldName : ${PresentationUtils.convertFieldSignature(signature, cutPackageConverter)}"
@@ -119,7 +86,7 @@ data class FieldLocation(val hostClass: ClassLocation,
 data class ClassLocation(val className: String,
                          val signature: String,
                          val classPath: ClassPath,
-                         val accessFlags: AccessFlags) : ProblemLocation {
+                         val accessFlags: AccessFlags) : Location {
   override fun toString(): String {
     if (signature.isNotEmpty()) {
       return normalConverter(className) + convertClassSignature(signature, cutPackageConverter)

@@ -15,25 +15,23 @@ interface Problem {
   fun getEffect(): String
 }
 
-private fun AccessFlags.classOrInterface(): String = if (this.contains(AccessFlags.Flag.INTERFACE)) "interface" else "class"
-
 data class MultipleDefaultImplementationsProblem(@SerializedName("caller") val caller: MethodLocation,
                                                  @SerializedName("methodReference") val methodReference: MethodReference,
                                                  @SerializedName("instruction") val instruction: Instruction,
                                                  @SerializedName("implementation1") val implementation1: MethodLocation,
                                                  @SerializedName("implementation2") val implementation2: MethodLocation) : Problem {
-  override fun getDescription(): String = "multiple default implementations of method $caller"
+  override fun getDescription(): String = "multiple default implementations of method $methodReference"
 
   override fun getEffect(): String = "Method $caller contains an *$instruction* instruction referencing a method reference $methodReference which has several default implementations: $implementation1 and $implementation2. This can lead to **IncompatibleClassChangeError** exception at runtime."
 }
 
 data class IllegalClassAccessProblem(@SerializedName("unavailableClass") val unavailableClass: ClassLocation,
                                      @SerializedName("access") val access: AccessType,
-                                     @SerializedName("usage") val usage: ProblemLocation) : Problem {
+                                     @SerializedName("usage") val usage: Location) : Problem {
   override fun getDescription(): String = "illegal access to $access class $unavailableClass"
 
   override fun getEffect(): String {
-    val type = unavailableClass.accessFlags.classOrInterface()
+    val type = if (unavailableClass.accessFlags.contains(AccessFlags.Flag.INTERFACE)) "interface" else "class"
     return "${access.toString().capitalize()} $type $unavailableClass is not available at $usage"
   }
 }
@@ -46,7 +44,7 @@ data class AbstractClassInstantiationProblem(@SerializedName("abstractClass") va
 }
 
 data class ClassNotFoundProblem(@SerializedName("class") val unknownClass: ClassReference,
-                                @SerializedName("usage") val usage: ProblemLocation) : Problem {
+                                @SerializedName("usage") val usage: Location) : Problem {
   override fun getDescription(): String = "accessing to unknown class $unknownClass"
 
   override fun getEffect(): String {

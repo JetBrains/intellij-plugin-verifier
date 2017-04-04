@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.reference.FieldReference
 import com.jetbrains.pluginverifier.reference.MethodReference
 import com.jetbrains.pluginverifier.reference.SymbolicReference
 
-internal val problemLocationSerializer = jsonSerializer<ProblemLocation> {
+internal val problemLocationSerializer = jsonSerializer<Location> {
   val src = it.src
 
   fun serializeClassPath(classPath: ClassPath): String = "${classPath.type.name}|${classPath.path}"
@@ -40,12 +40,12 @@ internal val problemLocationDeserializer = jsonDeserializer {
 
   fun deserializeClassLocation(string: String): ClassLocation {
     val classParts = CompactJsonUtil.deserialize(string)
-    return ProblemLocation.fromClass(classParts[1], classParts[2], deserializeClassPath(classParts[3]), deserializeAccessFlags(classParts[4]))
+    return Location.fromClass(classParts[1], classParts[2], deserializeClassPath(classParts[3]), deserializeAccessFlags(classParts[4]))
   }
 
   return@jsonDeserializer when {
-    parts[0] == "M" -> ProblemLocation.fromMethod(deserializeClassLocation(parts[1]), parts[2], parts[3], parts[4].split("|"), parts[5], deserializeAccessFlags(parts[6]))
-    parts[0] == "F" -> ProblemLocation.fromField(deserializeClassLocation(parts[1]), parts[2], parts[3], parts[4], deserializeAccessFlags(parts[5]))
+    parts[0] == "M" -> Location.fromMethod(deserializeClassLocation(parts[1]), parts[2], parts[3], parts[4].split("|"), parts[5], deserializeAccessFlags(parts[6]))
+    parts[0] == "F" -> Location.fromField(deserializeClassLocation(parts[1]), parts[2], parts[3], parts[4], deserializeAccessFlags(parts[5]))
     parts[0] == "C" -> deserializeClassLocation(it.json.string)
     else -> throw IllegalArgumentException("Unknown type ${it.json.string}")
   }
