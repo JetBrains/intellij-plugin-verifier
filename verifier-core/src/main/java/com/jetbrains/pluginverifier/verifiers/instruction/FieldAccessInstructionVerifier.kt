@@ -30,14 +30,22 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
                                    val fieldOwner: String = instr.owner,
                                    val fieldName: String = instr.name,
                                    val fieldDescriptor: String = instr.desc) {
-  fun verify() {
 
-    when (instr.opcode) {
-      Opcodes.PUTFIELD -> processPutField()
-      Opcodes.GETFIELD -> processGetField()
-      Opcodes.PUTSTATIC -> processPutStatic()
-      Opcodes.GETSTATIC -> processGetStatic()
-      else -> throw RuntimeException("Unknown opcode ${instr.opcode} of instruction: $instr")
+  val instruction: Instruction = when (instr.opcode) {
+    Opcodes.PUTFIELD -> Instruction.PUT_FIELD
+    Opcodes.GETFIELD -> Instruction.GET_FIELD
+    Opcodes.PUTSTATIC -> Instruction.PUT_STATIC
+    Opcodes.GETSTATIC -> Instruction.GET_STATIC
+    else -> throw IllegalArgumentException()
+  }
+
+  fun verify() {
+    when (instruction) {
+      Instruction.PUT_FIELD -> processPutField()
+      Instruction.GET_FIELD -> processGetField()
+      Instruction.PUT_STATIC -> processPutStatic()
+      Instruction.GET_STATIC -> processGetStatic()
+      else -> throw IllegalArgumentException()
     }
   }
 
@@ -144,7 +152,8 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     }
 
     if (accessProblem != null) {
-      ctx.registerProblem(IllegalFieldAccessProblem(definingClass.name, fieldNode.name, fieldNode.desc, accessProblem))
+      val fieldDeclaration = ctx.fromField(location.definingClass, location.fieldNode)
+      ctx.registerProblem(IllegalFieldAccessProblem(fieldDeclaration, getFromMethod(), instruction, accessProblem))
     }
   }
 

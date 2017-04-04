@@ -18,11 +18,11 @@ public class FieldProblemsContainer {
   }
 
   public void accessProtectedField() {
-    new OtherFieldsContainer().protectedField = 10;
+    int x = new OtherFieldsContainer().protectedField;
   }
 
   public void accessPackageField() {
-    new OtherFieldsContainer().packageField = 10;
+    int x = new OtherFieldsContainer().packageField;
   }
 
   public void instanceAccessOnStatic() {

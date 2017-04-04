@@ -115,16 +115,22 @@ data class FieldNotFoundProblem(@SerializedName("field") val field: FieldReferen
   override fun getDescription(): String = "accessing to unknown field $field"
 }
 
-data class IllegalFieldAccessProblem(@SerializedName("field") val field: FieldReference, @SerializedName("access") val fieldAccess: AccessType) : Problem {
-  constructor(hostClass: String, fieldName: String, fieldDescriptor: String, fieldAccess: AccessType) : this(SymbolicReference.fieldOf(hostClass, fieldName, fieldDescriptor), fieldAccess)
-
+data class IllegalFieldAccessProblem(@SerializedName("field") val field: FieldLocation,
+                                     @SerializedName("accessor") val accessor: MethodLocation,
+                                     @SerializedName("instruction") val instruction: Instruction,
+                                     @SerializedName("access") val fieldAccess: AccessType) : Problem {
   override fun getDescription(): String = "illegal access of $fieldAccess field $field"
+
+  override fun effect(): String = "Method $accessor contains a *$instruction* instruction referencing a $fieldAccess field $field that a class ${accessor.hostClass} doesn't have access to. This can lead to **IllegalAccessError** exception at runtime."
 }
 
-data class IllegalMethodAccessProblem(@SerializedName("method") val method: MethodReference, @SerializedName("access") val methodAccess: AccessType) : Problem {
-  constructor(hostClass: String, methodName: String, methodDescriptor: String, methodAccess: AccessType) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor), methodAccess)
-
+data class IllegalMethodAccessProblem(@SerializedName("method") val method: MethodLocation,
+                                      @SerializedName("caller") val caller: MethodLocation,
+                                      @SerializedName("instruction") val instruction: Instruction,
+                                      @SerializedName("access") val methodAccess: AccessType) : Problem {
   override fun getDescription(): String = "illegal invocation of $methodAccess method $method"
+
+  override fun effect(): String = "Method $caller contains an *$instruction* instruction referencing a $methodAccess method $method that a class ${caller.hostClass} doesn't have access to. This can lead to **IllegalAccessError** exception at runtime."
 }
 
 data class InvokeInterfaceOnPrivateMethodProblem(@SerializedName("resolvedMethod") val resolvedMethod: MethodLocation,
