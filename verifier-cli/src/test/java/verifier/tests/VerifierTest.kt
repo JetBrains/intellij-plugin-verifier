@@ -633,5 +633,45 @@ class VerifierTest {
     }
   }
 
-
+  @Test
+  fun multipleDefaultMethodsOfInvokeSpecial() {
+    val caller = pluginMethod(
+        pluginClass("mock/plugin/inheritance/SubclassMultipleMethods", null, PUBLIC_CLASS_AF),
+        "baz",
+        "()V",
+        emptyList(),
+        null,
+        PUBLIC_METHOD_AF
+    )
+    val problem = MultipleDefaultImplementationsProblem(
+        caller,
+        SymbolicReference.methodOf("mock/plugin/inheritance/MultipleMethods", "foo", "()V"),
+        Instruction.INVOKE_SPECIAL,
+        ProblemLocation.fromMethod(ProblemLocation.fromClass(
+            "inheritance/MultipleDefaultMethod1",
+            null,
+            afterIdeaClassPath,
+            AccessFlags(0x601)
+        ),
+            "foo",
+            "()V",
+            emptyList(),
+            null,
+            AccessFlags(0x1)
+        ),
+        ProblemLocation.fromMethod(ProblemLocation.fromClass(
+            "inheritance/MultipleDefaultMethod2",
+            null,
+            afterIdeaClassPath,
+            AccessFlags(0x601)
+        ),
+            "foo",
+            "()V",
+            emptyList(),
+            null,
+            AccessFlags(0x1)
+        )
+    )
+    assertProblemFound(problem, "Method mock.plugin.inheritance.SubclassMultipleMethods.baz() : void contains an *invokespecial* instruction referencing a method reference mock.plugin.inheritance.MultipleMethods.foo() : void which has several default implementations: inheritance.MultipleDefaultMethod1.foo() : void and inheritance.MultipleDefaultMethod2.foo() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.")
+  }
 }

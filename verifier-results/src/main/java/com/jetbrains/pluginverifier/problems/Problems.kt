@@ -18,11 +18,14 @@ interface Problem {
 
 private fun AccessFlags.classOrInterface(): String = if (this.contains(AccessFlags.Flag.INTERFACE)) "interface" else "class"
 
-data class MultipleMethodImplementationsProblem(@SerializedName("method") val method: MethodReference,
-                                                @SerializedName("availableMethods") val availableMethods: List<MethodLocation>) : Problem {
-  constructor(hostClass: String, methodName: String, methodDescriptor: String, availableMethods: List<MethodLocation>) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor), availableMethods)
+data class MultipleDefaultImplementationsProblem(@SerializedName("caller") val caller: MethodLocation,
+                                                 @SerializedName("methodReference") val methodReference: MethodReference,
+                                                 @SerializedName("instruction") val instruction: Instruction,
+                                                 @SerializedName("implementation1") val implementation1: MethodLocation,
+                                                 @SerializedName("implementation2") val implementation2: MethodLocation) : Problem {
+  override fun getDescription(): String = "multiple default implementations of method $caller"
 
-  override fun getDescription(): String = "multiple default implementations of method $method"
+  override fun effect(): String = "Method $caller contains an *$instruction* instruction referencing a method reference $methodReference which has several default implementations: $implementation1 and $implementation2. This can lead to **IncompatibleClassChangeError** exception at runtime."
 }
 
 data class IllegalClassAccessProblem(@SerializedName("unavailableClass") val unavailableClass: ClassLocation,

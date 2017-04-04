@@ -212,8 +212,16 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     not abstract, invokespecial throws an IncompatibleClassChangeError
     */
     if (filtered.size > 1) {
-      val availableMethods = filtered.map { ctx.fromMethod(it.definingClass, it.methodNode) }
-      ctx.registerProblem(MultipleMethodImplementationsProblem(methodOwner, methodName, methodDescriptor, availableMethods))
+      val caller = getFromMethod()
+      val methodReference = SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)
+      var implementation1 = ctx.fromMethod(filtered[0].definingClass, filtered[0].methodNode)
+      var implementation2 = ctx.fromMethod(filtered[1].definingClass, filtered[1].methodNode)
+      if (implementation1.hostClass.className > implementation2.hostClass.className) {
+        val tmp = implementation1
+        implementation1 = implementation2
+        implementation2 = tmp
+      }
+      ctx.registerProblem(MultipleDefaultImplementationsProblem(caller, methodReference, instruction, implementation1, implementation2))
       return null
     }
 
@@ -231,6 +239,9 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
   private fun processInvokeInterface() {
     val resolved = resolveInterfaceMethod() ?: return
 
+    /**
+     * It's a workaround for the fact that we can't compile an interface with a private method.
+     */
     fun isTestPrivateInterfaceMethod(method: MethodNode): Boolean =
         System.getProperty("plugin.verifier.test.mode")?.toBoolean() == true
             && method.name == System.getProperty("plugin.verifier.test.private.interface.method.name")
@@ -246,6 +257,48 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       val resolvedMethod = ctx.fromMethod(resolved.definingClass, resolved.methodNode)
       ctx.registerProblem(InvokeNonStaticInstructionOnStaticMethodProblem(resolvedMethod, getFromMethod(), instruction))
     }
+
+    /**
+     * There are the following additional lookup steps performed during the execution of invokevirtual.
+     * The problem is that we don't know the actual type of the objectref at static time, so
+     * we should bypass it using the other checks.
+     */
+
+    /**
+     * Let C be the class of objectref. The actual method to be invoked is selected by the following lookup procedure:
+     *
+     * 1) If C contains a declaration for an instance method with the same name and descriptor as the resolved method, then it is the method to be invoked.
+     *
+     * 2) Otherwise, if C has a superclass, a search for a declaration of an instance method with
+     * the same name and descriptor as the resolved method is performed, starting with the direct
+     * superclass of C and continuing with the direct superclass of that class,
+     * and so forth, until a match is found or no further superclasses exist.
+     * If a match is found, then it is the method to be invoked.
+     *
+     * 3) Otherwise, if there is exactly one maximally-specific method (§5.4.3.3) in the superinterfaces of C that
+     * matches the resolved method's name and descriptor and is not abstract, then it is the method to be invoked.
+     */
+
+    /**
+     * And the corresponding Run-Time checks (we can't check them here because we don't have the objectref's class):
+     *
+     * 1) Otherwise, if the class of objectref does not implement the resolved interface,
+     * invokeinterface throws an IncompatibleClassChangeError.
+     *
+     * 2) Otherwise, if step 1 or step 2 of the lookup procedure selects a method that is
+     * not public, invokeinterface throws an IllegalAccessError.
+     *
+     * 3) Otherwise, if step 1 or step 2 of the lookup procedure selects an abstract
+     * method, invokeinterface throws an AbstractMethodError.
+     *
+     * 4) Otherwise, if step 3 of the lookup procedure determines there are multiple
+     * maximally-specific methods in the superinterfaces of C that match the resolved
+     * method's name and descriptor and are not abstract, invokeinterface throws an IncompatibleClassChangeError.
+     *
+     * 5) Otherwise, if step 3 of the lookup procedure determines there are zero maximally-specific
+     * methods in the superinterfaces of C that match the resolved method's name and
+     * descriptor and are not abstract, invokeinterface throws an AbstractMethodError.
+     */
   }
 
   private fun processInvokeStatic() {
@@ -436,10 +489,10 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
   private fun getMaximallySpecificSuperInterfaceMethods(start: ClassNode): List<ResolvedMethod>? {
     val predicate: (MethodNode) -> Boolean = { it.name == methodName && it.desc == methodDescriptor && !VerifierUtil.isPrivate(it) && !VerifierUtil.isStatic(it) }
     val allMatching = getSuperInterfaceMethods(start, predicate) ?: return null
-    return allMatching.filterIndexed { myIndex, myResolvedMethod ->
+    return allMatching.filterIndexed { index, (definingClass) ->
       var isDeepest = true
       allMatching.forEachIndexed { otherIndex, otherMethod ->
-        if (myIndex != otherIndex && VerifierUtil.isSubclassOf(myResolvedMethod.definingClass, otherMethod.definingClass, resolver, ctx)) {
+        if (index != otherIndex && VerifierUtil.isSubclassOf(definingClass, otherMethod.definingClass, resolver, ctx)) {
           isDeepest = false
         }
       }
