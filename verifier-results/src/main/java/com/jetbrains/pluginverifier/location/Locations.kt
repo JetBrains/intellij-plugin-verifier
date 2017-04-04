@@ -1,11 +1,5 @@
 package com.jetbrains.pluginverifier.location
 
-import com.github.salomonbrys.kotson.jsonDeserializer
-import com.github.salomonbrys.kotson.jsonSerializer
-import com.github.salomonbrys.kotson.string
-import com.google.gson.JsonPrimitive
-import com.jetbrains.pluginverifier.utils.CompactJsonUtil
-import com.jetbrains.pluginverifier.utils.CompactJsonUtil.serialize
 import com.jetbrains.pluginverifier.utils.PresentationUtils
 import com.jetbrains.pluginverifier.utils.PresentationUtils.convertClassSignature
 import com.jetbrains.pluginverifier.utils.PresentationUtils.convertJvmDescriptorToNormalPresentation
@@ -44,7 +38,6 @@ data class AccessFlags(val flags: Int) {
 
   fun contains(flag: Flag): Boolean = flags.and(flag.flag) != 0
 
-  fun asSet(): Set<Flag> = Flag.values().filter { flags.and(it.flag) != 0 }.toSet()
 }
 
 /**
@@ -135,43 +128,3 @@ data class ClassLocation(val className: String,
   }
 }
 
-internal val problemLocationSerializer = jsonSerializer<ProblemLocation> {
-  val src = it.src
-
-  fun serializeClassPath(classPath: ClassPath): String = "${classPath.type.name}|${classPath.path}"
-
-  fun serializeAccessFlags(accessFlags: AccessFlags): String = accessFlags.flags.toString()
-
-  fun serializeClassLocation(src: ClassLocation): String =
-      serialize(listOf("C", src.className, src.signature, serializeClassPath(src.classPath), serializeAccessFlags(src.accessFlags)))
-
-  return@jsonSerializer when (src) {
-    is MethodLocation -> JsonPrimitive(serialize(listOf("M", serializeClassLocation(src.hostClass), src.methodName, src.methodDescriptor, src.parameterNames.joinToString("|"), src.signature, serializeAccessFlags(src.accessFlags))))
-    is FieldLocation -> JsonPrimitive(serialize(listOf("F", serializeClassLocation(src.hostClass), src.fieldName, src.fieldDescriptor, src.signature, serializeAccessFlags(src.accessFlags))))
-    is ClassLocation -> JsonPrimitive(serializeClassLocation(src))
-    else -> throw IllegalArgumentException("Unregistered type ${it.src.javaClass.name}: ${it.src}")
-  }
-}
-
-internal val problemLocationDeserializer = jsonDeserializer {
-  val parts = CompactJsonUtil.deserialize(it.json.string)
-
-  fun deserializeClassPath(classPath: String): ClassPath {
-    val cpParts = classPath.split("|")
-    return ClassPath(ClassPath.Type.valueOf(cpParts[0]), cpParts[1])
-  }
-
-  fun deserializeAccessFlags(flags: String) = AccessFlags(flags.toInt())
-
-  fun deserializeClassLocation(string: String): ClassLocation {
-    val classParts = CompactJsonUtil.deserialize(string)
-    return ProblemLocation.fromClass(classParts[1], classParts[2], deserializeClassPath(classParts[3]), deserializeAccessFlags(classParts[4]))
-  }
-
-  return@jsonDeserializer when {
-    parts[0] == "M" -> ProblemLocation.fromMethod(deserializeClassLocation(parts[1]), parts[2], parts[3], parts[4].split("|"), parts[5], deserializeAccessFlags(parts[6]))
-    parts[0] == "F" -> ProblemLocation.fromField(deserializeClassLocation(parts[1]), parts[2], parts[3], parts[4], deserializeAccessFlags(parts[5]))
-    parts[0] == "C" -> deserializeClassLocation(it.json.string)
-    else -> throw IllegalArgumentException("Unknown type ${it.json.string}")
-  }
-}
