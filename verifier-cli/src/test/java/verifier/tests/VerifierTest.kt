@@ -6,6 +6,7 @@ import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.location.*
 import com.jetbrains.pluginverifier.problems.*
+import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.reference.SymbolicReference
 import org.junit.Assert.*
 import org.junit.BeforeClass
@@ -85,28 +86,6 @@ class VerifierTest {
         accessFlags: AccessFlags
     ): FieldLocation = ProblemLocation.fromField(hostClass, fieldName, fieldDescriptor, signature, accessFlags)
 
-    fun getNoClassProblems(): ImmutableMultimap<Problem, ProblemLocation>? {
-      val cnfp = ClassNotFoundProblem("non/existing/NonExistingClass")
-      return builder()
-          .put(cnfp, pluginField(pluginClass("mock/plugin/FieldTypeNotFound", null, PUBLIC_CLASS_AF), "myNonExistingClass", "Lnon/existing/NonExistingClass;", null, AccessFlags(0x2)))
-          .put(cnfp, pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenReturn", "()Lnon/existing/NonExistingClass;", emptyList(), null, PUBLIC_METHOD_AF))
-          .put(cnfp, pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenArg", "(Lnon/existing/NonExistingClass;)V", listOf("brokenArg"), null, PUBLIC_METHOD_AF))
-          .put(cnfp, pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenLocalVar", "()V", emptyList(), null, PUBLIC_METHOD_AF))
-          .put(cnfp, pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenDotClass", "()V", emptyList(), null, PUBLIC_METHOD_AF))
-          .put(cnfp, pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenMultiArray", "()V", emptyList(), null, PUBLIC_METHOD_AF))
-          .put(cnfp, pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenMultiArray", "()V", emptyList(), null, PUBLIC_METHOD_AF))
-          .put(cnfp, pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenInvocation", "()V", emptyList(), null, PUBLIC_METHOD_AF))
-          .put(cnfp, pluginMethod(pluginClass("mock/plugin/ParentDoesntExist", null, PUBLIC_CLASS_AF), "<init>", "()V", emptyList(), null, PUBLIC_METHOD_AF))
-          .put(cnfp, pluginMethod(pluginClass("mock/plugin/arrays/ANewArrayInsn", null, PUBLIC_CLASS_AF), "foo", "(JDLjava/lang/Object;)V", listOf("l", "d", "a"), null, PUBLIC_METHOD_AF))
-          .put(cnfp, pluginMethod(pluginClass("mock/plugin/arrays/ANewArrayInsn", null, PUBLIC_CLASS_AF), "foo2", "(JDLjava/lang/Object;)V", listOf("l", "d", "a"), null, AccessFlags(0x9)))
-          .put(cnfp, pluginMethod(pluginClass("mock/plugin/field/FieldProblemsContainer", null, PUBLIC_CLASS_AF), "accessUnknownClassOfArray", "()V", emptyList(), null, PUBLIC_METHOD_AF))
-          .put(ClassNotFoundProblem("non/existing/NonExistingException"), pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenThrows", "()V", emptyList(), null, PUBLIC_METHOD_AF))
-          .put(ClassNotFoundProblem("non/existing/NonExistingException"), pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenCatch", "()V", emptyList(), null, PUBLIC_METHOD_AF)).put(ClassNotFoundProblem("non/existing/DeletedClass"), pluginMethod(pluginClass("mock/plugin/inheritance/PluginClass", null, PUBLIC_CLASS_AF), "<init>", "()V", emptyList(), null, PUBLIC_METHOD_AF))
-          .put(ClassNotFoundProblem("non/existing/DeletedClass"), pluginClass("mock/plugin/inheritance/PluginClass", null, PUBLIC_CLASS_AF))
-          .put(ClassNotFoundProblem("non/existing/NonExistingInterface"), pluginClass("mock/plugin/NotFoundInterface", null, AccessFlags(0x601)))
-          .put(cnfp, pluginClass("mock/plugin/ParentDoesntExist", null, PUBLIC_CLASS_AF))
-          .build()
-    }
 
     fun notImplementedProblems(): Multimap<Problem, ProblemLocation> {
       return builder()
@@ -143,7 +122,7 @@ class VerifierTest {
 
 
     fun getExpectedProblems(): Multimap<Problem, ProblemLocation> = builder()
-        .putAll(getNoClassProblems())
+//        .putAll(getNoClassProblems())
         .putAll(notImplementedProblems())
 
 
@@ -151,8 +130,6 @@ class VerifierTest {
 
 //      protected members access check
 
-
-        .put(ClassNotFoundProblem("non/existing/NonExistingClass"), pluginMethod(pluginClass("mock/plugin/field/FieldProblemsContainer", null, PUBLIC_CLASS_AF), "accessUnknownClass", "()V", emptyList(), null, PUBLIC_METHOD_AF))
 
         //missing default constructor
         .build()
@@ -599,7 +576,62 @@ class VerifierTest {
         "Method mock.plugin.field.FieldProblemsContainer.accessPackageField() : void contains a *getfield* instruction referencing a package-private field fields.otherPackage.OtherFieldsContainer.packageField : int that a class mock.plugin.field.FieldProblemsContainer doesn't have access to. This can lead to **IllegalAccessError** exception at runtime.")
   }
 
+  @Test
+  fun nonExistingClassOrInterface() {
+    val nonExistingClassRef = ClassReference("non/existing/NonExistingClass")
+    val nonExistingException = ClassReference("non/existing/NonExistingException")
+    val nonExistingInterface = ClassReference("non/existing/NonExistingInterface")
 
+    val nonExistingClassLocations = listOf(
+        pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenReturn", "()Lnon/existing/NonExistingClass;", emptyList(), null, PUBLIC_METHOD_AF),
+        pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenArg", "(Lnon/existing/NonExistingClass;)V", listOf("brokenArg"), null, PUBLIC_METHOD_AF),
+        pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenLocalVar", "()V", emptyList(), null, PUBLIC_METHOD_AF),
+        pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenDotClass", "()V", emptyList(), null, PUBLIC_METHOD_AF),
+        pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenMultiArray", "()V", emptyList(), null, PUBLIC_METHOD_AF),
+        pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenInvocation", "()V", emptyList(), null, PUBLIC_METHOD_AF),
+
+        pluginMethod(pluginClass("mock/plugin/ParentDoesntExist", null, PUBLIC_CLASS_AF), "<init>", "()V", emptyList(), null, PUBLIC_METHOD_AF),
+
+        pluginMethod(pluginClass("mock/plugin/arrays/ANewArrayInsn", null, PUBLIC_CLASS_AF), "foo", "(JDLjava/lang/Object;)V", listOf("l", "d", "a"), null, PUBLIC_METHOD_AF),
+
+        pluginMethod(pluginClass("mock/plugin/field/FieldProblemsContainer", null, PUBLIC_CLASS_AF), "accessUnknownClassOfArray", "()V", emptyList(), null, PUBLIC_METHOD_AF),
+        pluginMethod(pluginClass("mock/plugin/field/FieldProblemsContainer", null, PUBLIC_CLASS_AF), "accessUnknownClass", "()V", emptyList(), null, PUBLIC_METHOD_AF),
+
+        pluginField(pluginClass("mock/plugin/FieldTypeNotFound", null, PUBLIC_CLASS_AF), "myNonExistingClass", "Lnon/existing/NonExistingClass;", null, AccessFlags(0x2)),
+
+        pluginClass("mock/plugin/ParentDoesntExist", null, PUBLIC_CLASS_AF)
+    )
+
+    val nonExistingExceptionLocations = listOf(
+        pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenThrows", "()V", emptyList(), null, PUBLIC_METHOD_AF),
+        pluginMethod(pluginClass("mock/plugin/MethodProblems", null, PUBLIC_CLASS_AF), "brokenCatch", "()V", emptyList(), null, PUBLIC_METHOD_AF)
+    )
+
+    val nonExistingInterfaceLocations = listOf(
+        pluginClass("mock/plugin/NotFoundInterface", null, AccessFlags(0x601))
+    )
+
+    fun getLocationType(it: ProblemLocation): String = when (it) {
+      is ClassLocation -> "Class"
+      is MethodLocation -> "Method"
+      is FieldLocation -> "Field"
+      else -> throw RuntimeException()
+    }
+
+    fun getMissingClassEffect(className: String, location: ProblemLocation) = "${getLocationType(location)} $location references an unresolved class $className. This can lead to **NoSuchClassError** exception at runtime."
+
+    nonExistingClassLocations.forEach {
+      assertProblemFound(ClassNotFoundProblem(nonExistingClassRef, it), getMissingClassEffect("non.existing.NonExistingClass", it))
+    }
+
+    nonExistingExceptionLocations.forEach {
+      assertProblemFound(ClassNotFoundProblem(nonExistingException, it), getMissingClassEffect("non.existing.NonExistingException", it))
+    }
+
+    nonExistingInterfaceLocations.forEach {
+      assertProblemFound(ClassNotFoundProblem(nonExistingInterface, it), getMissingClassEffect("non.existing.NonExistingInterface", it))
+    }
+  }
 
 
 }

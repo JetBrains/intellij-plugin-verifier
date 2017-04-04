@@ -1,10 +1,7 @@
 package com.jetbrains.pluginverifier.problems
 
 import com.google.gson.annotations.SerializedName
-import com.jetbrains.pluginverifier.location.AccessFlags
-import com.jetbrains.pluginverifier.location.ClassLocation
-import com.jetbrains.pluginverifier.location.FieldLocation
-import com.jetbrains.pluginverifier.location.MethodLocation
+import com.jetbrains.pluginverifier.location.*
 import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.reference.FieldReference
 import com.jetbrains.pluginverifier.reference.MethodReference
@@ -19,6 +16,8 @@ interface Problem {
   fun effect(): String = ""
 }
 
+private fun AccessFlags.classOrInterface(): String = if (this.contains(AccessFlags.Flag.INTERFACE)) "interface" else "class"
+
 data class MultipleMethodImplementationsProblem(@SerializedName("method") val method: MethodReference,
                                                 @SerializedName("availableMethods") val availableMethods: List<MethodLocation>) : Problem {
   constructor(hostClass: String, methodName: String, methodDescriptor: String, availableMethods: List<MethodLocation>) : this(SymbolicReference.methodOf(hostClass, methodName, methodDescriptor), availableMethods)
@@ -26,16 +25,15 @@ data class MultipleMethodImplementationsProblem(@SerializedName("method") val me
   override fun getDescription(): String = "multiple default implementations of method $method"
 }
 
-data class IllegalClassAccessProblem(@SerializedName("class") val clazz: ClassReference, @SerializedName("access") val classAccess: AccessType) : Problem {
-  constructor(className: String, accessType: AccessType) : this(ClassReference(className), accessType)
+data class IllegalClassAccessProblem(@SerializedName("unavailableClass") val unavailableClass: ClassLocation,
+                                     @SerializedName("access") val access: AccessType,
+                                     @SerializedName("usage") val usage: ProblemLocation) : Problem {
+  override fun getDescription(): String = "illegal access to $access class $unavailableClass"
 
-  override fun getDescription(): String = "illegal access to $classAccess class $clazz"
-}
-
-data class IllegalInterfaceAccessProblem(@SerializedName("interface") val interfaze: ClassReference, @SerializedName("access") val classAccess: AccessType) : Problem {
-  constructor(interfaceName: String, accessType: AccessType) : this(ClassReference(interfaceName), accessType)
-
-  override fun getDescription(): String = "illegal access to $classAccess interface $interfaze"
+  override fun effect(): String {
+    val type = unavailableClass.accessFlags.classOrInterface()
+    return "${access.toString().capitalize()} $type $unavailableClass is not available at $usage"
+  }
 }
 
 data class AbstractClassInstantiationProblem(@SerializedName("abstractClass") val abstractClass: ClassLocation,
@@ -45,10 +43,19 @@ data class AbstractClassInstantiationProblem(@SerializedName("abstractClass") va
   override fun effect(): String = "Method $creator has instantiation *new* instruction referencing an abstract class $abstractClass. This can lead to **InstantiationError** exception at runtime."
 }
 
-data class ClassNotFoundProblem(@SerializedName("class") val unknownClass: ClassReference) : Problem {
-  constructor(className: String) : this(ClassReference(className))
-
+data class ClassNotFoundProblem(@SerializedName("class") val unknownClass: ClassReference,
+                                @SerializedName("usage") val usage: ProblemLocation) : Problem {
   override fun getDescription(): String = "accessing to unknown class $unknownClass"
+
+  override fun effect(): String {
+    val type: String = when (usage) {
+      is ClassLocation -> "Class"
+      is MethodLocation -> "Method"
+      is FieldLocation -> "Field"
+      else -> throw IllegalArgumentException()
+    }
+    return "$type $usage references an unresolved class $unknownClass. This can lead to **NoSuchClassError** exception at runtime."
+  }
 }
 
 data class SuperClassBecameInterfaceProblem(@SerializedName("child") val child: ClassLocation,
@@ -214,7 +221,7 @@ enum class Instruction(private val type: String) {
   override fun toString(): String = type
 }
 
-enum class AccessType constructor(private val type: String) {
+enum class AccessType(private val type: String) {
   PUBLIC("public"),
   PROTECTED("protected"),
   PACKAGE_PRIVATE("package-private"),
