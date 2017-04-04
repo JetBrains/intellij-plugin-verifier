@@ -70,7 +70,7 @@ data class SuperClassBecameInterfaceProblem(@SerializedName("child") val child: 
 data class InvokeClassMethodOnInterfaceProblem(@SerializedName("methodReference") val methodReference: MethodReference,
                                                @SerializedName("caller") val caller: MethodLocation,
                                                @SerializedName("instruction") val instruction: Instruction) : Problem {
-  override fun getDescription(): String = "incompatible change of class ${methodReference.hostClass} to interface"
+  override fun getDescription(): String = "incompatible change of class ${methodReference.hostClass} to interface affecting the method ${methodReference.methodNameAndParameters()}"
 
   override fun getEffect(): String = "Method $caller has invocation *$instruction* instruction referencing a *class* method $methodReference, but the method's host ${methodReference.hostClass} is an *interface*. This can lead to **IncompatibleClassChangeError** at runtime."
 }

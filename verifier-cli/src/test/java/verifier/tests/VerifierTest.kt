@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.location.*
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.reference.SymbolicReference
+import org.junit.AfterClass
 import org.junit.Assert.*
 import org.junit.BeforeClass
 import org.junit.Test
@@ -16,7 +17,7 @@ class VerifierTest {
   companion object {
     lateinit var result: VResult.Problems
 
-    lateinit var actualProblems: List<Problem>
+    lateinit var actualProblems: Set<Problem>
 
     lateinit var redundantProblems: MutableList<Problem>
 
@@ -24,14 +25,13 @@ class VerifierTest {
     @JvmStatic
     fun verifyMockPlugin() {
       prepareTestEnvironment()
-      //todo: get rid of this.
       var ideaFile = File("build/mocks/after-idea")
       if (!ideaFile.exists()) {
-        ideaFile = File("/home/sergey/Documents/work/intellij-plugin-verifier/verifier-cli/build/mocks/after-idea")
+        ideaFile = File("verifier-cli/build/mocks/after-idea")
       }
       var pluginFile = File("build/mocks/mock-plugin-1.0.jar")
       if (!pluginFile.exists()) {
-        pluginFile = File("/home/sergey/Documents/work/intellij-plugin-verifier/verifier-cli/build/mocks/mock-plugin-1.0.jar")
+        pluginFile = File("verifier-cli/build/mocks/mock-plugin-1.0.jar")
       }
       val verificationResults = TestResultBuilder.buildResult(ideaFile, pluginFile)
       assertTrue(verificationResults.results.size == 1)
@@ -46,24 +46,21 @@ class VerifierTest {
       System.setProperty("plugin.verifier.test.private.interface.method.name", "privateInterfaceMethodTestName")
     }
 
-    /*
-        todo: enable again.
-        @AfterClass
-        @JvmStatic
-        fun assertNoRedundantProblems() {
-          val builder = StringBuilder()
-          for ((problem, location) in redundantProblems.entries()) {
-            builder.append(problem.getDescription()).append("\n").append(" at ").append(location).append("\n")
-          }
-          assertTrue("Redundant problems: \n$builder", redundantProblems.isEmpty)
-        }
-    */
+    @AfterClass
+    @JvmStatic
+    fun assertNoRedundantProblems() {
+      val message = redundantProblems.joinToString(separator = "\n") { "${it.getDescription()}:\n    ${it.getEffect()}" }
+      assertTrue("Redundant problems: \n$message", redundantProblems.isEmpty())
+    }
+
     val PUBLIC_CLASS_AF = AccessFlags(0x21)
     val PUBLIC_METHOD_AF = AccessFlags(0x1)
     val PUBLIC_INTERFACE_AF = AccessFlags(0x601)
+    val PUBLIC_ABSTRACT_METHOD_AF = AccessFlags(0x401)
+    val PUBLIC_ABSTRACT_CLASS_AF = AccessFlags(0x421)
 
-    val pluginClassPath = ClassPath(ClassPath.Type.ROOT, "mock-plugin-1.0.jar")
-    val afterIdeaClassPath = ClassPath(ClassPath.Type.JAR_FILE, "after-idea-1.0.jar")
+    val PLUGIN_CLASS_PATH = ClassPath(ClassPath.Type.ROOT, "mock-plugin-1.0.jar")
+    val IDEA_CLASS_PATH = ClassPath(ClassPath.Type.JAR_FILE, "after-idea-1.0.jar")
 
     fun pluginMethod(
         hostClass: ClassLocation,
@@ -74,7 +71,7 @@ class VerifierTest {
         accessFlags: AccessFlags
     ): MethodLocation = ProblemLocation.fromMethod(hostClass, methodName, methodDescriptor, parameterNames, signature, accessFlags)
 
-    fun pluginClass(className: String, signature: String?, accessFlags: AccessFlags): ClassLocation = ProblemLocation.fromClass(className, signature, pluginClassPath, accessFlags)
+    fun pluginClass(className: String, signature: String?, accessFlags: AccessFlags): ClassLocation = ProblemLocation.fromClass(className, signature, PLUGIN_CLASS_PATH, accessFlags)
 
     fun pluginField(
         hostClass: ClassLocation,
@@ -100,12 +97,12 @@ class VerifierTest {
   @Test
   fun notImplementedAbstractMethodFromInterface() {
     val notImplementedMethod = ProblemLocation.fromMethod(
-        ProblemLocation.fromClass("com/intellij/openapi/components/PersistentStateComponent", "<T:Ljava/lang/Object;>Ljava/lang/Object;", afterIdeaClassPath, PUBLIC_INTERFACE_AF),
+        ProblemLocation.fromClass("com/intellij/openapi/components/PersistentStateComponent", "<T:Ljava/lang/Object;>Ljava/lang/Object;", IDEA_CLASS_PATH, PUBLIC_INTERFACE_AF),
         "getState",
         "()Ljava/lang/Object;",
         emptyList(),
         "()TT;",
-        AccessFlags(0x401)
+        PUBLIC_ABSTRACT_METHOD_AF
     )
     val incompleteClass = pluginClass("mock/plugin/NotImplementedProblem", null, PUBLIC_CLASS_AF)
     val problem = MethodNotImplementedProblem(notImplementedMethod, incompleteClass)
@@ -115,12 +112,12 @@ class VerifierTest {
   @Test
   fun notImplementedPrivateOverridingFromInterface() {
     val notImplementedMethod = ProblemLocation.fromMethod(
-        ProblemLocation.fromClass("com/intellij/openapi/components/PersistentStateComponent", "<T:Ljava/lang/Object;>Ljava/lang/Object;", afterIdeaClassPath, PUBLIC_INTERFACE_AF),
+        ProblemLocation.fromClass("com/intellij/openapi/components/PersistentStateComponent", "<T:Ljava/lang/Object;>Ljava/lang/Object;", IDEA_CLASS_PATH, PUBLIC_INTERFACE_AF),
         "getState",
         "()Ljava/lang/Object;",
         emptyList(),
         "()TT;",
-        AccessFlags(0x401)
+        PUBLIC_ABSTRACT_METHOD_AF
     )
     val incompleteClass = pluginClass("mock/plugin/private_and_static/PrivateOverridingNotImplemented", "Ljava/lang/Object;Lcom/intellij/openapi/components/PersistentStateComponent<Ljava/lang/String;>;", PUBLIC_CLASS_AF)
     val problem = MethodNotImplementedProblem(notImplementedMethod, incompleteClass)
@@ -130,12 +127,12 @@ class VerifierTest {
   @Test
   fun notImplementedStaticOverridingFromInterface() {
     val notImplementedMethod = ProblemLocation.fromMethod(
-        ProblemLocation.fromClass("com/intellij/openapi/components/PersistentStateComponent", "<T:Ljava/lang/Object;>Ljava/lang/Object;", afterIdeaClassPath, PUBLIC_INTERFACE_AF),
+        ProblemLocation.fromClass("com/intellij/openapi/components/PersistentStateComponent", "<T:Ljava/lang/Object;>Ljava/lang/Object;", IDEA_CLASS_PATH, PUBLIC_INTERFACE_AF),
         "getState",
         "()Ljava/lang/Object;",
         emptyList(),
         "()TT;",
-        AccessFlags(0x401)
+        PUBLIC_ABSTRACT_METHOD_AF
     )
     val incompleteClass = pluginClass("mock/plugin/private_and_static/StaticOverridingNotImplemented", "Ljava/lang/Object;Lcom/intellij/openapi/components/PersistentStateComponent<Ljava/lang/String;>;", PUBLIC_CLASS_AF)
     val problem = MethodNotImplementedProblem(notImplementedMethod, incompleteClass)
@@ -146,12 +143,12 @@ class VerifierTest {
   @Test
   fun notImplementedAbstractMethodFromAbstractClass() {
     val notImplementedMethod = ProblemLocation.fromMethod(
-        ProblemLocation.fromClass("com/intellij/psi/search/UseScopeEnlarger", null, afterIdeaClassPath, AccessFlags(0x421)),
+        ProblemLocation.fromClass("com/intellij/psi/search/UseScopeEnlarger", null, IDEA_CLASS_PATH, PUBLIC_ABSTRACT_CLASS_AF),
         "getAdditionalUseScope",
         "(Lcom/intellij/psi/PsiElement;)Lcom/intellij/psi/search/SearchScope;",
         listOf("arg0"),
         null,
-        AccessFlags(0x401)
+        PUBLIC_ABSTRACT_METHOD_AF
     )
     val incompleteClass = pluginClass("mock/plugin/abstrackt/NotImplementedAbstractMethod", null, PUBLIC_CLASS_AF)
     val problem = MethodNotImplementedProblem(notImplementedMethod, incompleteClass)
@@ -159,11 +156,10 @@ class VerifierTest {
   }
 
 
-
   @Test
   fun overridingFinalMethod() {
     val finalMethod = ProblemLocation.fromMethod(
-        ProblemLocation.fromClass("com/intellij/openapi/actionSystem/AnAction", null, afterIdeaClassPath, AccessFlags(0x421)),
+        ProblemLocation.fromClass("com/intellij/openapi/actionSystem/AnAction", null, IDEA_CLASS_PATH, PUBLIC_ABSTRACT_CLASS_AF),
         "isEnabledInModalContext",
         "()Z",
         emptyList(),
@@ -180,11 +176,11 @@ class VerifierTest {
     val accessor = pluginMethod(pluginClass("mock/plugin/field/FieldProblemsContainer", null, PUBLIC_CLASS_AF), "staticAccessOnInstance", "()V", emptyList(), null, PUBLIC_METHOD_AF)
     val problem = StaticAccessOfNonStaticFieldProblem(
         ProblemLocation.fromField(
-            ProblemLocation.fromClass("fields/FieldsContainer", null, afterIdeaClassPath, PUBLIC_CLASS_AF),
+            ProblemLocation.fromClass("fields/FieldsContainer", null, IDEA_CLASS_PATH, PUBLIC_CLASS_AF),
             "instanceField",
             "I",
             null,
-            AccessFlags(0x1)
+            PUBLIC_METHOD_AF
         ), accessor, Instruction.GET_STATIC
     )
     assertProblemFound(problem, "Method mock.plugin.field.FieldProblemsContainer.staticAccessOnInstance() : void has static access instruction *getstatic* referencing a non-static field fields.FieldsContainer.instanceField : int. This can lead to **IncompatibleClassChangeError** exception at runtime.")
@@ -195,7 +191,7 @@ class VerifierTest {
     val accessor = pluginMethod(pluginClass("mock/plugin/field/FieldProblemsContainer", null, PUBLIC_CLASS_AF), "setOnFinalFieldFromNotInitMethod", "()V", emptyList(), null, PUBLIC_METHOD_AF)
     val problem = ChangeFinalFieldProblem(
         ProblemLocation.fromField(
-            ProblemLocation.fromClass("fields/FieldsContainer", null, afterIdeaClassPath, PUBLIC_CLASS_AF),
+            ProblemLocation.fromClass("fields/FieldsContainer", null, IDEA_CLASS_PATH, PUBLIC_CLASS_AF),
             "finalField",
             "I",
             null,
@@ -210,7 +206,7 @@ class VerifierTest {
     val accessor = pluginMethod(pluginClass("mock/plugin/field/FieldProblemsContainer", null, PUBLIC_CLASS_AF), "setOnStaticFinalFieldFromNotClinitMethod", "()V", emptyList(), null, PUBLIC_METHOD_AF)
     val problem = ChangeFinalFieldProblem(
         ProblemLocation.fromField(
-            ProblemLocation.fromClass("fields/FieldsContainer", null, afterIdeaClassPath, PUBLIC_CLASS_AF),
+            ProblemLocation.fromClass("fields/FieldsContainer", null, IDEA_CLASS_PATH, PUBLIC_CLASS_AF),
             "staticFinalField",
             "I",
             null,
@@ -226,7 +222,7 @@ class VerifierTest {
   fun abstractClassInstantiation() {
     val creator = pluginMethod(pluginClass("mock/plugin/news/NewProblems", null, PUBLIC_CLASS_AF), "abstractClass", "()V", emptyList(), null, PUBLIC_METHOD_AF)
     val problem = AbstractClassInstantiationProblem(
-        ProblemLocation.fromClass("misc/BecomeAbstract", null, afterIdeaClassPath, AccessFlags(0x421)),
+        ProblemLocation.fromClass("misc/BecomeAbstract", null, IDEA_CLASS_PATH, PUBLIC_ABSTRACT_CLASS_AF),
         creator
     )
     assertProblemFound(problem, "Method mock.plugin.news.NewProblems.abstractClass() : void has instantiation *new* instruction referencing an abstract class misc.BecomeAbstract. This can lead to **InstantiationError** exception at runtime.")
@@ -236,7 +232,7 @@ class VerifierTest {
   fun interfaceInstantiation() {
     val creator = pluginMethod(pluginClass("mock/plugin/news/NewProblems", null, PUBLIC_CLASS_AF), "newInterface", "()V", emptyList(), null, PUBLIC_METHOD_AF)
     val problem = InterfaceInstantiationProblem(
-        ProblemLocation.fromClass("misc/BecomeInterface", null, afterIdeaClassPath, AccessFlags(0x601)),
+        ProblemLocation.fromClass("misc/BecomeInterface", null, IDEA_CLASS_PATH, PUBLIC_INTERFACE_AF),
         creator
     )
     assertProblemFound(problem, "Method mock.plugin.news.NewProblems.newInterface() : void has instantiation *new* instruction referencing an interface misc.BecomeInterface. This can lead to **InstantiationError** exception at runtime.")
@@ -258,7 +254,7 @@ class VerifierTest {
     val accessor = pluginMethod(pluginClass("mock/plugin/field/FieldProblemsContainer", null, PUBLIC_CLASS_AF), "instanceAccessOnStatic", "()V", emptyList(), null, PUBLIC_METHOD_AF)
     val problem = NonStaticAccessOfStaticFieldProblem(
         ProblemLocation.fromField(
-            ProblemLocation.fromClass("fields/FieldsContainer", null, afterIdeaClassPath, PUBLIC_CLASS_AF),
+            ProblemLocation.fromClass("fields/FieldsContainer", null, IDEA_CLASS_PATH, PUBLIC_CLASS_AF),
             "staticField",
             "I",
             null,
@@ -274,9 +270,29 @@ class VerifierTest {
   fun superClassBecameInterface() {
     val problem = SuperClassBecameInterfaceProblem(
         pluginClass("mock/plugin/inheritance/SuperClassBecameInterface", null, PUBLIC_CLASS_AF),
-        ProblemLocation.fromClass("misc/BecomeInterface", null, afterIdeaClassPath, AccessFlags(0x601))
+        ProblemLocation.fromClass("misc/BecomeInterface", null, IDEA_CLASS_PATH, AccessFlags(0x601))
     )
     assertProblemFound(problem, "Class mock.plugin.inheritance.SuperClassBecameInterface has a *super class* misc.BecomeInterface which is actually an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.")
+
+    val initCaller = pluginMethod(
+        pluginClass("mock/plugin/inheritance/SuperClassBecameInterface", null, PUBLIC_CLASS_AF),
+        "<init>",
+        "()V",
+        emptyList(),
+        null,
+        PUBLIC_METHOD_AF
+    )
+
+    val initOnInterfaceMethod = InvokeClassMethodOnInterfaceProblem(
+        SymbolicReference.methodOf(
+            "misc/BecomeInterface",
+            "<init>",
+            "()V"
+        ),
+        initCaller,
+        Instruction.INVOKE_SPECIAL
+    )
+    assertProblemFound(initOnInterfaceMethod, "Method mock.plugin.inheritance.SuperClassBecameInterface.<init>() : void has invocation *invokespecial* instruction referencing a *class* method misc.BecomeInterface.<init>() : void, but the method's host misc.BecomeInterface is an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.")
   }
 
   @Test
@@ -304,8 +320,8 @@ class VerifierTest {
   @Test
   fun superInterfaceBecameClass() {
     val problem = SuperInterfaceBecameClassProblem(
-        pluginClass("mock/plugin/inheritance/SuperInterfaceBecomeClass", null, AccessFlags(0x601)),
-        ProblemLocation.fromClass("misc/BecomeClass", null, afterIdeaClassPath, PUBLIC_CLASS_AF)
+        pluginClass("mock/plugin/inheritance/SuperInterfaceBecomeClass", null, PUBLIC_INTERFACE_AF),
+        ProblemLocation.fromClass("misc/BecomeClass", null, IDEA_CLASS_PATH, PUBLIC_CLASS_AF)
     )
     assertProblemFound(problem, "Interface mock.plugin.inheritance.SuperInterfaceBecomeClass has a *super interface* misc.BecomeClass which is actually a *class*. This can lead to **IncompatibleClassChangeError** exception at runtime.")
   }
@@ -338,7 +354,7 @@ class VerifierTest {
     val pluginClass = pluginClass("mock/plugin/finals/InheritFromFinalClass", null, PUBLIC_CLASS_AF)
     val problem = InheritFromFinalClassProblem(
         pluginClass,
-        ProblemLocation.fromClass("finals/BecomeFinal", null, afterIdeaClassPath, AccessFlags(0x31))
+        ProblemLocation.fromClass("finals/BecomeFinal", null, IDEA_CLASS_PATH, AccessFlags(0x31))
     )
     assertProblemFound(problem, "Class mock.plugin.finals.InheritFromFinalClass inherits from a final class finals.BecomeFinal. This can lead to **VerifyError** exception at runtime.")
   }
@@ -347,7 +363,7 @@ class VerifierTest {
   fun invokeStaticOnNonStaticMethod() {
     val problem = InvokeStaticOnNonStaticMethodProblem(
         ProblemLocation.fromMethod(
-            ProblemLocation.fromClass("invocation/InvocationProblems", null, afterIdeaClassPath, PUBLIC_CLASS_AF),
+            ProblemLocation.fromClass("invocation/InvocationProblems", null, IDEA_CLASS_PATH, PUBLIC_CLASS_AF),
             "wasStatic",
             "()V",
             emptyList(),
@@ -363,7 +379,7 @@ class VerifierTest {
   fun invokeVirtualOnStaticMethod() {
     val problem = InvokeNonStaticInstructionOnStaticMethodProblem(
         ProblemLocation.fromMethod(
-            ProblemLocation.fromClass("com/intellij/lang/SmartEnterProcessor", null, afterIdeaClassPath, AccessFlags(0x421)),
+            ProblemLocation.fromClass("com/intellij/lang/SmartEnterProcessor", null, IDEA_CLASS_PATH, PUBLIC_ABSTRACT_CLASS_AF),
             "commit",
             "()V",
             emptyList(),
@@ -380,14 +396,14 @@ class VerifierTest {
   fun invokeSpecialOnStaticMethod() {
     val problem = InvokeNonStaticInstructionOnStaticMethodProblem(
         ProblemLocation.fromMethod(
-            ProblemLocation.fromClass("invokespecial/AbstractParent", null, afterIdeaClassPath, AccessFlags(0x421)),
+            ProblemLocation.fromClass("invokespecial/AbstractParent", null, IDEA_CLASS_PATH, PUBLIC_ABSTRACT_CLASS_AF),
             "becomeStatic",
             "()V",
             emptyList(),
             null,
             AccessFlags(0x9)
         ),
-        pluginMethod(pluginClass("mock/plugin/invokespecial/Child", null, AccessFlags(0x421)), "invokeSpecialOnStaticMethod", "()V", emptyList(), null, PUBLIC_METHOD_AF),
+        pluginMethod(pluginClass("mock/plugin/invokespecial/Child", null, PUBLIC_ABSTRACT_CLASS_AF), "invokeSpecialOnStaticMethod", "()V", emptyList(), null, PUBLIC_METHOD_AF),
         Instruction.INVOKE_SPECIAL
     )
     assertProblemFound(problem, "Method mock.plugin.invokespecial.Child.invokeSpecialOnStaticMethod() : void contains an *invokespecial* instruction referencing a static method invokespecial.AbstractParent.becomeStatic() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.")
@@ -397,7 +413,7 @@ class VerifierTest {
   fun invokeInterfaceOnStaticMethod() {
     val problem = InvokeNonStaticInstructionOnStaticMethodProblem(
         ProblemLocation.fromMethod(
-            ProblemLocation.fromClass("statics/MethodBecameStatic", null, afterIdeaClassPath, AccessFlags(0x601)),
+            ProblemLocation.fromClass("statics/MethodBecameStatic", null, IDEA_CLASS_PATH, PUBLIC_INTERFACE_AF),
             "becomeStatic",
             "()V",
             emptyList(),
@@ -412,16 +428,16 @@ class VerifierTest {
 
   @Test
   fun abstractMethodInvocation() {
-    val caller = pluginMethod(pluginClass("mock/plugin/invokespecial/Child", null, AccessFlags(0x421)), "bar", "()V", emptyList(), null, PUBLIC_METHOD_AF)
+    val caller = pluginMethod(pluginClass("mock/plugin/invokespecial/Child", null, PUBLIC_ABSTRACT_CLASS_AF), "bar", "()V", emptyList(), null, PUBLIC_METHOD_AF)
 
     val problem = AbstractMethodInvocationProblem(
         ProblemLocation.fromMethod(
-            ProblemLocation.fromClass("invokespecial/AbstractParent", null, afterIdeaClassPath, AccessFlags(0x421)),
+            ProblemLocation.fromClass("invokespecial/AbstractParent", null, IDEA_CLASS_PATH, PUBLIC_ABSTRACT_CLASS_AF),
             "foo",
             "()V",
             emptyList(),
             null,
-            AccessFlags(0x401)
+            PUBLIC_ABSTRACT_METHOD_AF
         ),
         caller,
         Instruction.INVOKE_SPECIAL
@@ -431,16 +447,16 @@ class VerifierTest {
 
   @Test
   fun abstractMethodInvocationZeroMaximallySpecificMethods() {
-    val caller = pluginMethod(pluginClass("mock/plugin/invokespecial/Child", null, AccessFlags(0x421)), "zeroMaximallySpecificMethods", "()V", emptyList(), null, PUBLIC_METHOD_AF)
+    val caller = pluginMethod(pluginClass("mock/plugin/invokespecial/Child", null, PUBLIC_ABSTRACT_CLASS_AF), "zeroMaximallySpecificMethods", "()V", emptyList(), null, PUBLIC_METHOD_AF)
 
     val problem = AbstractMethodInvocationProblem(
         ProblemLocation.fromMethod(
-            ProblemLocation.fromClass("invokespecial/SuperInterface", null, afterIdeaClassPath, AccessFlags(0x601)),
+            ProblemLocation.fromClass("invokespecial/SuperInterface", null, IDEA_CLASS_PATH, PUBLIC_INTERFACE_AF),
             "deletedBody",
             "()V",
             emptyList(),
             null,
-            AccessFlags(0x401)
+            PUBLIC_ABSTRACT_METHOD_AF
         ),
         caller,
         Instruction.INVOKE_SPECIAL
@@ -452,12 +468,12 @@ class VerifierTest {
   fun invokeInterfaceOnPrivateMethod() {
     val problem = InvokeInterfaceOnPrivateMethodProblem(
         ProblemLocation.fromMethod(
-            ProblemLocation.fromClass("statics/MethodBecameStatic", null, afterIdeaClassPath, AccessFlags(0x601)),
+            ProblemLocation.fromClass("statics/MethodBecameStatic", null, IDEA_CLASS_PATH, PUBLIC_INTERFACE_AF),
             "privateInterfaceMethodTestName",
             "()V",
             emptyList(),
             null,
-            AccessFlags(0x401)
+            PUBLIC_ABSTRACT_METHOD_AF
         ),
         pluginMethod(pluginClass("mock/plugin/invokeClassMethodOnInterface/Caller", null, PUBLIC_CLASS_AF), "call4", "(Lstatics/MethodBecameStatic;)V", listOf("b"), null, PUBLIC_METHOD_AF)
     )
@@ -497,11 +513,6 @@ class VerifierTest {
     assertProblemFound(problem, "Method mock.plugin.non.existing.InvokeRemovedMethod.foo() : void contains an *invokevirtual* instruction referencing an unresolved method non.existing.Child.removedMethod() : void. This can lead to **NoSuchMethodError** exception at runtime.")
   }
 
-  //    .put(IllegalFieldAccessProblem("mock/plugin/access/Point3d", "x", "I", AccessType.PROTECTED), ProblemLocation.Companion.fromMethod("mock/plugin/access/Point3d", "delta", "(Laccess/points/Point;)V"))
-//      .put(IllegalFieldAccessProblem("access/AccessProblemBase", "x", "I", AccessType.PROTECTED), pluginMethod("mock/plugin/access/IllegalAccess", "main", "([Ljava/lang/String;)V"))
-//      .put(IllegalMethodAccessProblem("access/AccessProblemBase", "foo", "()V", AccessType.PROTECTED), pluginMethod("mock/plugin/access/IllegalAccess", "main", "([Ljava/lang/String;)V"))
-
-
   @Test
   fun constructorBecamePrivate() {
     val caller = pluginMethod(
@@ -516,7 +527,7 @@ class VerifierTest {
         ProblemLocation.fromMethod(ProblemLocation.fromClass(
             "com/intellij/openapi/diagnostic/LogUtil",
             null,
-            afterIdeaClassPath,
+            IDEA_CLASS_PATH,
             PUBLIC_CLASS_AF
         ),
             "<init>",
@@ -534,7 +545,6 @@ class VerifierTest {
 
   @Test
   fun illegalAccessToPrivateOrProtectedOrPackagePrivateField() {
-
     fun accessProblem(methodWithProblem: String, fieldName: String, fieldContainer: String, accessType: AccessType, fieldAccessFlag: AccessFlags): IllegalFieldAccessProblem {
       val accessor = pluginMethod(pluginClass("mock/plugin/field/FieldProblemsContainer", null, PUBLIC_CLASS_AF), methodWithProblem, "()V", emptyList(), null, PUBLIC_METHOD_AF)
 
@@ -543,7 +553,7 @@ class VerifierTest {
               ProblemLocation.fromClass(
                   fieldContainer,
                   null,
-                  afterIdeaClassPath,
+                  IDEA_CLASS_PATH,
                   PUBLIC_CLASS_AF
               ),
               fieldName,
@@ -600,7 +610,7 @@ class VerifierTest {
     )
 
     val nonExistingInterfaceLocations = listOf(
-        pluginClass("mock/plugin/NotFoundInterface", null, AccessFlags(0x601))
+        pluginClass("mock/plugin/NotFoundInterface", null, PUBLIC_INTERFACE_AF)
     )
 
     fun getLocationType(it: ProblemLocation): String = when (it) {
@@ -642,26 +652,26 @@ class VerifierTest {
         ProblemLocation.fromMethod(ProblemLocation.fromClass(
             "inheritance/MultipleDefaultMethod1",
             null,
-            afterIdeaClassPath,
-            AccessFlags(0x601)
+            IDEA_CLASS_PATH,
+            PUBLIC_INTERFACE_AF
         ),
             "foo",
             "()V",
             emptyList(),
             null,
-            AccessFlags(0x1)
+            PUBLIC_METHOD_AF
         ),
         ProblemLocation.fromMethod(ProblemLocation.fromClass(
             "inheritance/MultipleDefaultMethod2",
             null,
-            afterIdeaClassPath,
-            AccessFlags(0x601)
+            IDEA_CLASS_PATH,
+            PUBLIC_INTERFACE_AF
         ),
             "foo",
             "()V",
             emptyList(),
             null,
-            AccessFlags(0x1)
+            PUBLIC_METHOD_AF
         )
     )
     assertProblemFound(problem, "Method mock.plugin.inheritance.SubclassMultipleMethods.baz() : void contains an *invokespecial* instruction referencing a method reference mock.plugin.inheritance.MultipleMethods.foo() : void which has several default implementations: inheritance.MultipleDefaultMethod1.foo() : void and inheritance.MultipleDefaultMethod2.foo() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.")
