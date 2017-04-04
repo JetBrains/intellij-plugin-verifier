@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.problems.*
+import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
 import org.jetbrains.intellij.plugins.internal.asm.tree.*
@@ -184,7 +185,8 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
       return null
     }
     if (resolvedField == null) {
-      ctx.registerProblem(FieldNotFoundProblem(fieldOwner, fieldName, fieldDescriptor))
+      val fieldReference = SymbolicReference.fieldOf(fieldOwner, fieldName, fieldDescriptor)
+      ctx.registerProblem(FieldNotFoundProblem(fieldReference, getFromMethod(), instruction))
     } else {
       checkFieldIsAccessible(resolvedField)
     }

@@ -1,7 +1,5 @@
 package verifier.tests
 
-import com.google.common.collect.ImmutableMultimap
-import com.google.common.collect.Multimap
 import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.location.*
@@ -85,59 +83,6 @@ class VerifierTest {
         signature: String?,
         accessFlags: AccessFlags
     ): FieldLocation = ProblemLocation.fromField(hostClass, fieldName, fieldDescriptor, signature, accessFlags)
-
-
-    fun notImplementedProblems(): Multimap<Problem, ProblemLocation> {
-      return builder()
-          .put(MethodNotImplementedProblem(
-              pluginMethod(
-                  ProblemLocation.fromClass("com/intellij/openapi/components/PersistentStateComponent", "<T:Ljava/lang/Object;>Ljava/lang/Object;", afterIdeaClassPath, PUBLIC_INTERFACE_AF),
-                  "getState",
-                  "()Ljava/lang/Object;",
-                  emptyList(),
-                  "()TT;",
-                  AccessFlags(0x401)
-              ), pluginClass("mock/plugin/NotImplementedProblem", null, PUBLIC_CLASS_AF)
-          ),
-              pluginClass("mock/plugin/NotImplementedProblem", null, PUBLIC_CLASS_AF)
-          )
-          .put(MethodNotImplementedProblem(
-              pluginMethod(
-                  ProblemLocation.fromClass("com/intellij/openapi/components/PersistentStateComponent", "<T:Ljava/lang/Object;>Ljava/lang/Object;", afterIdeaClassPath, PUBLIC_INTERFACE_AF),
-                  "getState",
-                  "()Ljava/lang/Object;",
-                  emptyList(),
-                  "()TT;",
-                  AccessFlags(0x401)
-              ), pluginClass("mock/plugin/private_and_static/PrivateAndStaticNotImplemented", null, PUBLIC_CLASS_AF)
-          ),
-              pluginClass("mock/plugin/private_and_static/PrivateAndStaticNotImplemented", null, PUBLIC_CLASS_AF)
-          )
-          .build()
-    }
-//      .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "loadState", "(Ljava/lang/Object;)V"), fromClass("mock/plugin/NotImplementedProblem", null, classPath, PUBLIC_CLASS_AF))
-//      .put(MethodNotImplementedProblem("com/intellij/psi/search/UseScopeEnlarger", "getAdditionalUseScope", "(Lcom/intellij/psi/PsiElement;)Lcom/intellij/psi/search/SearchScope;"), fromClass("mock/plugin/abstrackt/NotImplementedAbstractMethod", null, classPath, PUBLIC_CLASS_AF))
-//      .put(MethodNotImplementedProblem("com/intellij/openapi/components/PersistentStateComponent", "loadState", "(Ljava/lang/Object;)V"), fromClass("mock/plugin/private_and_static/PrivateAndStaticNotImplemented", "Ljava/lang/Object;Lcom/intellij/openapi/components/PersistentStateComponent<Ljava/lang/String;>;", classPath, PUBLIC_CLASS_AF))
-//      .build()
-
-
-    fun getExpectedProblems(): Multimap<Problem, ProblemLocation> = builder()
-//        .putAll(getNoClassProblems())
-        .putAll(notImplementedProblems())
-
-
-        .put(FieldNotFoundProblem("fields/FieldsContainer", "deletedField", "I"), pluginMethod(pluginClass("mock/plugin/field/FieldProblemsContainer", null, PUBLIC_CLASS_AF), "accessDeletedField", "()V", emptyList(), null, PUBLIC_METHOD_AF))//pluginField problems
-
-//      protected members access check
-
-
-        //missing default constructor
-        .build()
-
-
-    private fun builder(): ImmutableMultimap.Builder<Problem, ProblemLocation> = ImmutableMultimap.builder<Problem, ProblemLocation>()
-
-
   }
 
   @Test
@@ -149,7 +94,7 @@ class VerifierTest {
   private fun assertProblemFound(problem: Problem, expectedEffect: String) {
     assertTrue("${problem.getDescription()} is not found", actualProblems.contains(problem))
     redundantProblems.remove(problem)
-    assertEquals(expectedEffect, problem.effect())
+    assertEquals(expectedEffect, problem.getEffect())
   }
 
   @Test
@@ -163,10 +108,57 @@ class VerifierTest {
         AccessFlags(0x401)
     )
     val incompleteClass = pluginClass("mock/plugin/NotImplementedProblem", null, PUBLIC_CLASS_AF)
-    assertProblemFound(MethodNotImplementedProblem(notImplementedMethod, incompleteClass),
-        "Non-abstract class mock.plugin.NotImplementedProblem inherits from com.intellij.openapi.components.PersistentStateComponent<T> but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime."
-    )
+    val problem = MethodNotImplementedProblem(notImplementedMethod, incompleteClass)
+    assertProblemFound(problem, "Non-abstract class mock.plugin.NotImplementedProblem inherits from com.intellij.openapi.components.PersistentStateComponent<T> but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.")
   }
+
+  @Test
+  fun notImplementedPrivateOverridingFromInterface() {
+    val notImplementedMethod = ProblemLocation.fromMethod(
+        ProblemLocation.fromClass("com/intellij/openapi/components/PersistentStateComponent", "<T:Ljava/lang/Object;>Ljava/lang/Object;", afterIdeaClassPath, PUBLIC_INTERFACE_AF),
+        "getState",
+        "()Ljava/lang/Object;",
+        emptyList(),
+        "()TT;",
+        AccessFlags(0x401)
+    )
+    val incompleteClass = pluginClass("mock/plugin/private_and_static/PrivateOverridingNotImplemented", "Ljava/lang/Object;Lcom/intellij/openapi/components/PersistentStateComponent<Ljava/lang/String;>;", PUBLIC_CLASS_AF)
+    val problem = MethodNotImplementedProblem(notImplementedMethod, incompleteClass)
+    assertProblemFound(problem, "Non-abstract class mock.plugin.private_and_static.PrivateOverridingNotImplemented inherits from com.intellij.openapi.components.PersistentStateComponent<T> but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.")
+  }
+
+  @Test
+  fun notImplementedStaticOverridingFromInterface() {
+    val notImplementedMethod = ProblemLocation.fromMethod(
+        ProblemLocation.fromClass("com/intellij/openapi/components/PersistentStateComponent", "<T:Ljava/lang/Object;>Ljava/lang/Object;", afterIdeaClassPath, PUBLIC_INTERFACE_AF),
+        "getState",
+        "()Ljava/lang/Object;",
+        emptyList(),
+        "()TT;",
+        AccessFlags(0x401)
+    )
+    val incompleteClass = pluginClass("mock/plugin/private_and_static/StaticOverridingNotImplemented", "Ljava/lang/Object;Lcom/intellij/openapi/components/PersistentStateComponent<Ljava/lang/String;>;", PUBLIC_CLASS_AF)
+    val problem = MethodNotImplementedProblem(notImplementedMethod, incompleteClass)
+    assertProblemFound(problem, "Non-abstract class mock.plugin.private_and_static.StaticOverridingNotImplemented inherits from com.intellij.openapi.components.PersistentStateComponent<T> but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.")
+  }
+
+
+  @Test
+  fun notImplementedAbstractMethodFromAbstractClass() {
+    val notImplementedMethod = ProblemLocation.fromMethod(
+        ProblemLocation.fromClass("com/intellij/psi/search/UseScopeEnlarger", null, afterIdeaClassPath, AccessFlags(0x421)),
+        "getAdditionalUseScope",
+        "(Lcom/intellij/psi/PsiElement;)Lcom/intellij/psi/search/SearchScope;",
+        listOf("arg0"),
+        null,
+        AccessFlags(0x401)
+    )
+    val incompleteClass = pluginClass("mock/plugin/abstrackt/NotImplementedAbstractMethod", null, PUBLIC_CLASS_AF)
+    val problem = MethodNotImplementedProblem(notImplementedMethod, incompleteClass)
+    assertProblemFound(problem, "Non-abstract class mock.plugin.abstrackt.NotImplementedAbstractMethod inherits from com.intellij.psi.search.UseScopeEnlarger but doesn't implement the abstract method getAdditionalUseScope(PsiElement arg0) : SearchScope. This can lead to **AbstractMethodError** exception at runtime.")
+  }
+
+
 
   @Test
   fun overridingFinalMethod() {
@@ -673,5 +665,16 @@ class VerifierTest {
         )
     )
     assertProblemFound(problem, "Method mock.plugin.inheritance.SubclassMultipleMethods.baz() : void contains an *invokespecial* instruction referencing a method reference mock.plugin.inheritance.MultipleMethods.foo() : void which has several default implementations: inheritance.MultipleDefaultMethod1.foo() : void and inheritance.MultipleDefaultMethod2.foo() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.")
+  }
+
+  @Test
+  fun fieldNotFound() {
+    val accessor = pluginMethod(pluginClass("mock/plugin/field/FieldProblemsContainer", null, PUBLIC_CLASS_AF), "accessDeletedField", "()V", emptyList(), null, PUBLIC_METHOD_AF)
+    val problem = FieldNotFoundProblem(
+        SymbolicReference.fieldOf("fields/FieldsContainer", "deletedField", "I"),
+        accessor,
+        Instruction.GET_FIELD
+    )
+    assertProblemFound(problem, "Method $accessor contains a *getfield* instruction referencing an unresolved field fields.FieldsContainer.deletedField : int. This can lead to **NoSuchFieldError** exception at runtime.")
   }
 }

@@ -5,7 +5,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 /**
  * @author Sergey Patrikeev
  */
-public class PrivateAndStaticNotImplemented implements PersistentStateComponent<String> {
+public class StaticOverridingNotImplemented implements PersistentStateComponent<String> {
 
   //in PSC there are 2 methods
 
@@ -13,12 +13,5 @@ public class PrivateAndStaticNotImplemented implements PersistentStateComponent<
   public static String getState() {
     return null;
   }
-
-
-  //should be error , because private overriding
-  private void loadState(String state) {
-
-  }
-
 
 }
