@@ -33,7 +33,6 @@ public class PluginImpl implements Plugin {
   private final Set<String> myReferencedClasses = new HashSet<String>();
   private final Multimap<String, Element> myExtensions = ArrayListMultimap.create();
   @NotNull private final File myPluginFile;
-  private final List<PluginProblem> myProblems = new ArrayList<PluginProblem>();
   @NotNull private Document myUnderlyingDocument;
   @NotNull private String myFileName;
   @Nullable private byte[] myLogoContent;
@@ -120,19 +119,6 @@ public class PluginImpl implements Plugin {
 
   public void setUntilBuild(@Nullable IdeVersion myUntilBuild) {
     this.myUntilBuild = myUntilBuild;
-  }
-
-  @Override
-  public List<PluginProblem> getProblems(){
-    return myProblems;
-  }
-
-  public void reportWarning(String message) {
-    myProblems.add(new PluginProblemImpl(message, PluginProblem.Level.WARNING));
-  }
-
-  public void reportError(String message) {
-    myProblems.add(new PluginProblemImpl(message, PluginProblem.Level.ERROR));
   }
 
   @Override

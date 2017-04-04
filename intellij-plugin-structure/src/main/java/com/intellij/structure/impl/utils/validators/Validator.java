@@ -1,13 +1,18 @@
 package com.intellij.structure.impl.utils.validators;
 
+import com.intellij.structure.domain.PluginProblem;
 import com.intellij.structure.impl.utils.BiFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Sergey Patrikeev
  */
 public abstract class Validator {
+  protected List<PluginProblem> myProblems = new ArrayList<PluginProblem>();
 
   private void performAction(@NotNull Event event, @NotNull String message, @Nullable Throwable cause) {
     BiFunction<String, Throwable, Void> function = supplyAction(event);
@@ -24,8 +29,20 @@ public abstract class Validator {
     performAction(Event.MISSING_FILE, message, null);
   }
 
+  public void onMissingLogo(@NotNull String message) throws RuntimeException {
+    performAction(Event.MISSING_LOGO, message, null);
+  }
+
+  public void onMissingDependency(@NotNull String message) throws RuntimeException{
+    performAction(Event.MISSING_DEPENDENCY, message, null);
+  }
+
   public void onIncorrectStructure(@NotNull String message) throws RuntimeException {
     performAction(Event.INCORRECT_STRUCTURE, message, null);
+  }
+
+  public void onMultipleConfigFiles(@NotNull String message) throws RuntimeException {
+    performAction(Event.MULTIPLE_CONFIG_FILE, message, null);
   }
 
   public void onCheckedException(@NotNull String message, @NotNull Exception cause) throws RuntimeException {
@@ -56,12 +73,19 @@ public abstract class Validator {
     return createIgnoringValidator(Event.MISSING_CONFIG_ELEMENT);
   }
 
+  public List<PluginProblem> getProblems() {
+    return myProblems;
+  }
+
 
   enum Event {
     MISSING_FILE,
     INCORRECT_STRUCTURE,
     CHECKED_EXCEPTION,
-    MISSING_CONFIG_ELEMENT
+    MISSING_CONFIG_ELEMENT,
+    MISSING_DEPENDENCY,
+    MULTIPLE_CONFIG_FILE,
+    MISSING_LOGO
   }
 
 }

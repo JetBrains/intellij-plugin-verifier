@@ -64,7 +64,10 @@ public class TestMockPlugins {
 
     assertEquals("change_notes", plugin.getChangeNotes());
 
-    assertContains(plugin.getProblems(),
+  }
+
+  private void testMock3Warnings(List<PluginProblem> problems) {
+    assertContains(problems,
         new PluginProblemImpl("Plugin dependency missingDependency config-file missingFile specified in META-INF/plugin.xml is not found", PluginProblem.Level.WARNING));
   }
 
@@ -94,10 +97,13 @@ public class TestMockPlugins {
   }
 
   private void testMock3(File pluginFile, String... classPath) throws Exception {
-    Plugin plugin = PluginManager.getInstance().createPlugin(pluginFile);
+    PluginCreationResult pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile);
+    assertTrue(pluginCreationResult instanceof PluginCreationSuccess);
+    Plugin plugin = ((PluginCreationSuccess) pluginCreationResult).getPlugin();
     assertEquals(pluginFile, plugin.getPluginFile());
     testMock3Classes(plugin, classPath);
     testMock3Configs(plugin);
+    testMock3Warnings(((PluginCreationSuccess) pluginCreationResult).getWarnings());
     testMock3ClassesFromXml(plugin);
     testMock3ExtensionPoints(plugin);
     testMock3DependenciesAndModules(plugin);

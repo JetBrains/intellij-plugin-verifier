@@ -135,10 +135,13 @@ public class IdeManagerImpl extends IdeManager {
       if (!file.isDirectory())
         continue;
 
-      try {
-        plugins.add(PluginManager.getInstance().createPlugin(file, false));
-      } catch (Exception e) {
-        LOG.warn("Failed to read plugin " + file, e);
+      PluginCreationResult result = PluginManager.getInstance().createPlugin(file, false);
+      if (result instanceof PluginCreationSuccess) {
+        plugins.add(((PluginCreationSuccess) result).getPlugin());
+      } else {
+        for (PluginProblem problem : ((PluginCreationFail) result).getErrorsAndWarnings()) {
+          LOG.warn("Failed to read plugin " + file + ". Problem: " + problem.getMessage());
+        }
       }
     }
 

@@ -1,9 +1,7 @@
 package com.intellij.structure.impl.domain;
 
 import com.google.common.base.Supplier;
-import com.intellij.structure.domain.Plugin;
-import com.intellij.structure.domain.PluginDependency;
-import com.intellij.structure.domain.PluginManager;
+import com.intellij.structure.domain.*;
 import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.utils.Pair;
 import com.intellij.structure.impl.utils.Ref;
@@ -166,7 +164,7 @@ public class PluginManagerImpl extends PluginManager {
               descriptors.put(original, optDescriptor);
             } catch (Exception e) {
               String msg = getMissingDepMsg(entry.getKey().getId(), entry.getValue());
-              descriptor.reportWarning(msg);
+              parentValidator.onMissingDependency(msg);
               LOG.debug(msg, e);
             }
           }
@@ -178,14 +176,14 @@ public class PluginManagerImpl extends PluginManager {
             PluginImpl optDescriptor = loadDescriptor(file, optFilePath, optValidator);
             if (optDescriptor == null) {
               String msg = getMissingDepMsg(entry.getKey().getId(), entry.getValue());
-              descriptor.reportWarning(msg);
+              parentValidator.onMissingDependency(msg);
               LOG.debug(msg);
             } else {
               descriptors.put(original, optDescriptor);
             }
           } catch (Exception e) {
             String msg = getMissingDepMsg(entry.getKey().getId(), entry.getValue());
-            descriptor.reportWarning(msg);
+            parentValidator.onMissingDependency(msg);
             LOG.debug(msg, e);
           }
 
@@ -422,7 +420,7 @@ public class PluginManagerImpl extends PluginManager {
           if (descriptorRoot != null) {
             String msg = "Multiple META-INF/" + filePath + " found in the root of the plugin";
             LOG.warn(msg);
-            descriptorRoot.reportWarning(msg);
+            validator.onMultipleConfigFiles(msg);
           }
           descriptorRoot = inRoot;
           continue;
@@ -630,7 +628,7 @@ public class PluginManagerImpl extends PluginManager {
 
   @NotNull
   @Override
-  public Plugin createPlugin(@NotNull File pluginFile, boolean validatePluginXml) throws IncorrectPluginException {
+  public PluginCreationResult createPlugin(@NotNull File pluginFile, boolean validatePluginXml) throws IncorrectPluginException {
     Validator validator = new PluginXmlValidator();
     if (!validatePluginXml) {
       validator = validator.ignoreMissingConfigElement();
@@ -639,11 +637,19 @@ public class PluginManagerImpl extends PluginManager {
     myPluginFile = pluginFile;
 
     PluginImpl plugin = loadDescriptor(pluginFile, PLUGIN_XML, validator);
-    if (plugin != null) {
-      return plugin;
+    List<PluginProblem> problems =  validator.getProblems();
+
+    boolean createdSuccessfully = plugin != null;
+    for(PluginProblem problem : problems){
+      if(problem.getLevel() == PluginProblem.Level.ERROR){
+        createdSuccessfully = false;
+        break;
+      }
     }
-    //assert that PluginXmlValidator has thrown an appropriate exception
-    throw new AssertionError("Unable to create plugin from " + pluginFile);
+
+    return createdSuccessfully ?
+        new PluginCreationSuccessImpl(plugin, problems) :
+        new PluginCreationFailImpl(validator.getProblems());
   }
 
 

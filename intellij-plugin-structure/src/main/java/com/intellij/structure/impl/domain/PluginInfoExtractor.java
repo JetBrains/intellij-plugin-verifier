@@ -181,7 +181,7 @@ public class PluginInfoExtractor {
                 myPlugin.setLogoContent(IOUtils.toByteArray(input));
             } catch (Exception e) {
                 String msg = "Unable to find plugin logo file by path " + logoUrlString + " specified in META-INF/plugin.xml";
-                myPlugin.reportWarning(msg);
+                myValidator.onMissingLogo(msg);
                 LOG.debug(msg, e);
             } finally {
                 IOUtils.closeQuietly(input);
