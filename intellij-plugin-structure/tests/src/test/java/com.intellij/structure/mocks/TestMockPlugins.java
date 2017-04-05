@@ -3,7 +3,6 @@ package com.intellij.structure.mocks;
 import com.google.common.collect.Multimap;
 import com.intellij.structure.domain.*;
 import com.intellij.structure.impl.domain.PluginDependencyImpl;
-import com.intellij.structure.impl.domain.PluginImpl;
 import com.intellij.structure.impl.domain.PluginProblemImpl;
 import com.intellij.structure.resolvers.Resolver;
 import org.jdom2.Document;
@@ -26,26 +25,17 @@ import static org.junit.Assert.*;
 public class TestMockPlugins {
 
   @NotNull
-  private static File getMocksDir() {
-    return new File("build" + File.separator + "mocks");
-  }
-
-  @NotNull
   private static File getMockPlugin(String mockName) {
-    File file = new File(getMocksDir(), mockName);
-    Assert.assertTrue("mock plugin " + mockName + " is not found in " + file, file.exists());
-    return file;
+    File pluginFile = new File("build" + File.separator + "mocks", mockName);
+    if (!pluginFile.exists()) {
+      pluginFile = new File("intellij-plugin-structure" + File.separator + "tests", pluginFile.getPath());
+    }
+    Assert.assertTrue("mock plugin " + mockName + " is not found in " + pluginFile.getAbsolutePath(), pluginFile.exists());
+    return pluginFile;
   }
 
-  /*@Test
-  public void name() throws Exception {
-    File file = new File("/home/user/Documents/intellij-plugin-verifier/for_tests/scalarR.zip");
-    Plugin plugin = PluginManager.getInstance().createPlugin(file);
-    Set<String> allClassesReferencedFromXml = plugin.getAllClassesReferencedFromXml();
-    System.out.println(allClassesReferencedFromXml);
-  }*/
 
-  private void testMock3Configs(Plugin plugin) {
+  private void testMockConfigs(Plugin plugin) {
     assertEquals("http://kotlinlang.org", plugin.getUrl());
     assertEquals("Kotlin", plugin.getPluginName());
     assertEquals("1.0.0-beta-1038-IJ141-17", plugin.getPluginVersion());
@@ -66,24 +56,24 @@ public class TestMockPlugins {
 
   }
 
-  private void testMock3Warnings(List<PluginProblem> problems) {
+  private void testMockWarnings(List<PluginProblem> problems) {
     assertContains(problems,
         new PluginProblemImpl("Plugin dependency missingDependency config-file missingFile specified in META-INF/plugin.xml is not found", PluginProblem.Level.WARNING));
   }
 
   @Test
-  public void testMock3() throws Exception {
+  public void testMock() throws Exception {
     //also read classes
-    testMock3(getMockPlugin("mock-plugin3.jar"), "");
-    testMock3(getMockPlugin("mock-plugin3jarAsZip.zip"), "");
-    testMock3(getMockPlugin("mock-plugin3-dir"), "lib/mock-plugin3.jar");
-    testMock3(getMockPlugin("mock-plugin3-lib.zip"), "lib/mock-plugin3.jar");
-    testMock3(getMockPlugin("mock-plugin3-classes"), "classes");
-    testMock3(getMockPlugin("mock-plugin3-classes-zip.zip"), "classes");
-    testMock3(getMockPlugin("mock-plugin3-jar-in-zip.zip"), "");
+    testMock(getMockPlugin("mock-plugin.jar"), "");
+    testMock(getMockPlugin("mock-pluginJarAsZip.zip"), "");
+    testMock(getMockPlugin("mock-plugin-dir"), "lib/mock-plugin.jar");
+    testMock(getMockPlugin("mock-plugin-lib.zip"), "lib/mock-plugin.jar");
+    testMock(getMockPlugin("mock-plugin-classes"), "classes");
+    testMock(getMockPlugin("mock-plugin-classes-zip.zip"), "classes");
+    testMock(getMockPlugin("mock-plugin-jar-in-zip.zip"), "");
   }
 
-  private void testMock3IdeCompatibility(Plugin plugin) throws IOException {
+  private void testMockIdeCompatibility(Plugin plugin) throws IOException {
 //  <idea-version since-build="141.1009.5" until-build="141.9999999"/>
     checkCompatible(plugin, "141.1009.5", true);
     checkCompatible(plugin, "141.99999", true);
@@ -96,30 +86,30 @@ public class TestMockPlugins {
     assertEquals(compatible, plugin.isCompatibleWithIde(IdeVersion.createIdeVersion(version)));
   }
 
-  private void testMock3(File pluginFile, String... classPath) throws Exception {
+  private void testMock(File pluginFile, String... classPath) throws Exception {
     PluginCreationResult pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile);
     assertTrue(pluginCreationResult instanceof PluginCreationSuccess);
     Plugin plugin = ((PluginCreationSuccess) pluginCreationResult).getPlugin();
     assertEquals(pluginFile, plugin.getPluginFile());
-    testMock3Classes(plugin, classPath);
-    testMock3Configs(plugin);
-    testMock3Warnings(((PluginCreationSuccess) pluginCreationResult).getWarnings());
-    testMock3ClassesFromXml(plugin);
-    testMock3ExtensionPoints(plugin);
-    testMock3DependenciesAndModules(plugin);
-    testMock3OptDescriptors(plugin);
-    testMock3UnderlyingDocument(plugin);
-    testMock3IdeCompatibility(plugin);
+    testMockClasses(plugin, classPath);
+    testMockConfigs(plugin);
+    testMockWarnings(((PluginCreationSuccess) pluginCreationResult).getWarnings());
+    testMockClassesFromXml(plugin);
+    testMockExtensionPoints(plugin);
+    testMockDependenciesAndModules(plugin);
+    testMockOptDescriptors(plugin);
+    testMockUnderlyingDocument(plugin);
+    testMockIdeCompatibility(plugin);
   }
 
-  private void testMock3UnderlyingDocument(Plugin plugin) {
+  private void testMockUnderlyingDocument(Plugin plugin) {
     Document document = plugin.getUnderlyingDocument();
     Element rootElement = document.getRootElement();
     assertNotNull(rootElement);
     assertEquals("idea-plugin", rootElement.getName());
   }
 
-  private void testMock3OptDescriptors(Plugin plugin) {
+  private void testMockOptDescriptors(Plugin plugin) {
     Map<String, Plugin> optionalDescriptors = plugin.getOptionalDescriptors();
     assertEquals(4, optionalDescriptors.size());
     assertContains(optionalDescriptors.keySet(), "extension.xml", "optionals/optional.xml", "../optionalsDir/otherDirOptional.xml", "/META-INF/referencedFromRoot.xml");
@@ -129,7 +119,7 @@ public class TestMockPlugins {
     assertContains(optionalDescriptors.get("../optionalsDir/otherDirOptional.xml").getAllClassesReferencedFromXml(), "com.intellij.optional.BeanClass".replace('.', '/'));
   }
 
-  private void testMock3DependenciesAndModules(Plugin plugin) {
+  private void testMockDependenciesAndModules(Plugin plugin) {
     assertEquals(6, plugin.getDependencies().size());
     List<PluginDependencyImpl> dependencies = Arrays.asList(new PluginDependencyImpl("JUnit", true), new PluginDependencyImpl("optionalDependency", true), new PluginDependencyImpl("otherDirOptionalDependency", true), new PluginDependencyImpl("mandatoryDependency", false), new PluginDependencyImpl("referenceFromRoot", true), new PluginDependencyImpl("missingDependency", true));
     assertContains(plugin.getDependencies(), (PluginDependency[]) dependencies.toArray());
@@ -140,13 +130,13 @@ public class TestMockPlugins {
     assertEquals(new HashSet<String>(Arrays.asList("one_module", "two_module")), plugin.getDefinedModules());
   }
 
-  private void testMock3ExtensionPoints(Plugin plugin) {
+  private void testMockExtensionPoints(Plugin plugin) {
     Multimap<String, Element> extensions = plugin.getExtensions();
     assertTrue(extensions.containsKey("com.intellij.referenceImporter"));
     assertTrue(extensions.containsKey("org.intellij.scala.scalaTestDefaultWorkingDirectoryProvider"));
   }
 
-  private void testMock3ClassesFromXml(Plugin plugin) {
+  private void testMockClassesFromXml(Plugin plugin) {
     Set<String> set = plugin.getAllClassesReferencedFromXml();
     assertContains(set, "org.jetbrains.kotlin.idea.compiler.JetCompilerManager".replace('.', '/'));
     assertContains(set, "org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages$Extension".replace('.', '/'));
@@ -156,7 +146,7 @@ public class TestMockPlugins {
     assertFalse(set.contains("org.jetbrains.plugins.scala.project.maven.MavenWorkingDirectoryProviderImpl".replace('.', '/')));
   }
 
-  private void testMock3Classes(Plugin plugin, String... classPath) throws Exception {
+  private void testMockClasses(Plugin plugin, String... classPath) throws Exception {
     Resolver resolver = Resolver.createPluginResolver(plugin);
     try {
       Set<String> allClasses = resolver.getAllClasses();

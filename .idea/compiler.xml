@@ -14,8 +14,8 @@
       <module name="intellij-plugin-structure_test" target="1.6" />
       <module name="mock-plugin3_main" target="1.6" />
       <module name="mock-plugin3_test" target="1.6" />
-      <module name="mock-plugin_main" target="1.8" />
-      <module name="mock-plugin_test" target="1.8" />
+      <module name="mock-plugin_main" target="1.6" />
+      <module name="mock-plugin_test" target="1.6" />
       <module name="plugins-verifier-service_main" target="1.8" />
       <module name="plugins-verifier-service_test" target="1.8" />
       <module name="protocol_main" target="1.8" />
@@ -31,6 +31,12 @@
       <module name="server_test" target="1.8" />
       <module name="test-classes_main" target="1.6" />
       <module name="test-classes_test" target="1.6" />
+      <module name="tests-mock-plugin_main" target="1.6" />
+      <module name="tests-mock-plugin_test" target="1.6" />
+      <module name="tests_main" target="1.6" />
+      <module name="tests_test" target="1.6" />
+      <module name="verifier-cli-mock-plugin_main" target="1.8" />
+      <module name="verifier-cli-mock-plugin_test" target="1.8" />
       <module name="verifier-cli_main" target="1.8" />
       <module name="verifier-cli_test" target="1.8" />
       <module name="verifier-configurations_main" target="1.8" />

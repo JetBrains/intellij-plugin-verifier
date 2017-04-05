@@ -12,12 +12,12 @@ apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
 apply plugin: 'com.github.johnrengelman.shadow'
 
-version = '1.37'
-if (project.hasProperty("myVersion")) {
-  version = project.myVersion
+def intellijPluginStructureVersion = '1.37'
+if (project.hasProperty("structureVersion")) {
+  intellijPluginStructureVersion = project.structureVersion
 }
 
-
+version = intellijPluginStructureVersion
 
 allprojects {
   apply plugin: 'java'
@@ -26,6 +26,25 @@ allprojects {
 
   sourceCompatibility = 1.6
   targetCompatibility = 1.6
+
+  repositories {
+    maven { url "http://repo.maven.apache.org/maven2" }
+  }
+
+}
+
+test.dependsOn project("tests").test
+
+dependencies {
+  //mock plugins are used in tests
+  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
+  compile group: 'org.jdom', name: 'jdom', version: '2.0.2'
+  compile group: 'com.google.guava', name: 'guava', version: '19.0'
+  compile group: 'commons-io', name: 'commons-io', version: '2.5'
+  compile group: 'com.intellij', name: 'annotations', version: '12.0'
+  compile group: 'org.ow2.asm', name: 'asm-all', version: '5.0.4'
+  compile group: 'org.jsoup', name: 'jsoup', version: '1.9.2'
+  compile group: 'org.codehaus.plexus', name: 'plexus-archiver', version: '2.3'
 }
 
 //build .jar with sources
@@ -40,9 +59,6 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
   from javadoc.destinationDir
 }
 
-repositories {
-  maven { url "http://repo.maven.apache.org/maven2" }
-}
 
 shadowJar {
   def internalPrefix = 'org.jetbrains.intellij.plugins.internal.'
@@ -76,98 +92,6 @@ publishing {
   }
 }
 
-def separator = File.separator
-def mocksPath = "$buildDir" + separator + "mocks"
-
-task prepareMock3asJar(type: Copy) {
-  //creates mock-plugin3.jar file
-  into mocksPath
-  project(":mock-plugin3") {
-    from tasks.withType(Jar)
-  }
-}
-
-task prepareMock3jarAsZip(type: Zip, dependsOn: prepareMock3asJar) {
-  //creates mock-plugin3jarAsZip.zip which is equivalent to mock-plugin3.jar
-  from zipTree(mocksPath + separator + "mock-plugin3.jar")
-  destinationDir = new File(mocksPath)
-  archiveName = "mock-plugin3jarAsZip.zip"
-}
-
-task prepareMock3asDir(type: Copy) {
-  //create mock-plugin3-dir/ which contains /lib/mock-plugin3.jar inside
-  into mocksPath + separator + "mock-plugin3-dir" + separator + "lib"
-  project(":mock-plugin3") {
-    from tasks.withType(Jar)
-  }
-}
-
-task prepareZipLibMock3(type: Zip, dependsOn: prepareMock3asJar) {
-  //create mock-plugin3-lib.zip which contains /lib/mock-plugin3.jar inside
-  project(":mock-plugin3") {
-    from tasks.withType(Jar)
-  }
-  into "lib"
-  destinationDir = new File(mocksPath)
-  archiveName = "mock-plugin3-lib.zip"
-}
-
-task prepareJarInZip(type: Zip, dependsOn: prepareMock3asJar) {
-  //create mock-plugin3-jar-in-zip.zip which contains /mock-plugin3.jar in the root
-  project(":mock-plugin3") {
-    from tasks.withType(Jar)
-  }
-  //to the root
-//  into "."
-  destinationDir = new File(mocksPath)
-  archiveName = "mock-plugin3-jar-in-zip.zip"
-}
-
-task prepareMock3classes(type: Copy) {
-  //create mock-plugin3-classes/ with /classes/ dir and /META-INF/ dir inside
-  into mocksPath + separator + "mock-plugin3-classes"
-
-  def classesSpec = copySpec {
-    from project(":mock-plugin3").sourceSets.main.output.classesDir
-    into "classes"
-  }
-
-  def pluginXmlSpec = copySpec {
-    from project(":mock-plugin3").sourceSets.main.output.resourcesDir
-    into "."
-  }
-
-  with classesSpec, pluginXmlSpec
-}
-prepareMock3classes.dependsOn project(":mock-plugin3").classes
-
-task prepareZipMock3classesAsZip(type: Zip, dependsOn: prepareMock3classes) {
-  //create mock-plugin3-classes.zip/ which is equivalent to prepareMock3classes but in the .zip
-  from mocksPath + separator + "mock-plugin3-classes" + separator
-  into "mock-plugin3"
-  destinationDir = new File(mocksPath)
-  archiveName = "mock-plugin3-classes-zip.zip"
-}
-
-test.dependsOn prepareMock3asJar, prepareMock3jarAsZip, prepareMock3asDir, prepareZipLibMock3, prepareMock3classes, prepareZipMock3classesAsZip, prepareJarInZip
-publishToMavenLocal.dependsOn test
-
-
-dependencies {
-  //mock plugins are used in tests
-  testRuntime project("mock-plugin3")
-
-  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
-  compile group: 'org.jdom', name: 'jdom', version: '2.0.2'
-  compile group: 'com.google.guava', name: 'guava', version: '19.0'
-  compile group: 'commons-io', name: 'commons-io', version: '2.5'
-  compile group: 'com.intellij', name: 'annotations', version: '12.0'
-  compile group: 'org.ow2.asm', name: 'asm-all', version: '5.0.4'
-  compile group: 'org.jsoup', name: 'jsoup', version: '1.9.2'
-  compile group: 'org.codehaus.plexus', name: 'plexus-archiver', version: '2.3'
-  testCompile group: 'junit', name: 'junit', version: '4.11'
-}
-
 bintray {
   user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
   key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
@@ -198,5 +122,5 @@ bintrayUpload.doFirst {
   println('Uploading IntelliJ structure ' + project.version + ' to bintray')
 }
 
-//run tests before deploying
+publishToMavenLocal.dependsOn test
 bintrayUpload.dependsOn test

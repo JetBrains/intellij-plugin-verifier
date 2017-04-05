@@ -39,7 +39,8 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$/intellij-plugin-structure" />
-            <option value="$PROJECT_DIR$/intellij-plugin-structure/mock-plugin3" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/tests" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/tests/mock-plugin" />
           </set>
         </option>
       </GradleProjectSettings>

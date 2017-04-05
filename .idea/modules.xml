@@ -14,12 +14,9 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-plugin-structure.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-plugin-structure.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_main.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_main.iml" group="intellij-plugin-structure" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_test.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-plugin-structure_test.iml" group="intellij-plugin-structure" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin.iml" group="verifier-cli/mock-plugin" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3.iml" group="mock-plugin3" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3_main.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3_main.iml" group="mock-plugin3" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3_test.iml" filepath="$PROJECT_DIR$/.idea/modules/mock-plugin3/mock-plugin3_test.iml" group="mock-plugin3" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin_main.iml" group="verifier-cli/mock-plugin" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/mock-plugin_test.iml" group="verifier-cli/mock-plugin" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/tests/mock-plugin/mock-plugin.iml" filepath="$PROJECT_DIR$/.idea/modules/tests/mock-plugin/mock-plugin.iml" group="tests/mock-plugin" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/tests/mock-plugin/mock-plugin_main.iml" filepath="$PROJECT_DIR$/.idea/modules/tests/mock-plugin/mock-plugin_main.iml" group="tests/mock-plugin" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/tests/mock-plugin/mock-plugin_test.iml" filepath="$PROJECT_DIR$/.idea/modules/tests/mock-plugin/mock-plugin_test.iml" group="tests/mock-plugin" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/plugins-verifier-service.iml" filepath="$PROJECT_DIR$/.idea/modules/plugins-verifier-service.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/plugins-verifier-service_main.iml" filepath="$PROJECT_DIR$/.idea/modules/plugins-verifier-service_main.iml" group="plugins-verifier-service" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/plugins-verifier-service_test.iml" filepath="$PROJECT_DIR$/.idea/modules/plugins-verifier-service_test.iml" group="plugins-verifier-service" />
@@ -29,7 +26,13 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/test-classes/test-classes.iml" filepath="$PROJECT_DIR$/.idea/modules/test-classes/test-classes.iml" group="test-classes" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/test-classes/test-classes_main.iml" filepath="$PROJECT_DIR$/.idea/modules/test-classes/test-classes_main.iml" group="test-classes" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/test-classes/test-classes_test.iml" filepath="$PROJECT_DIR$/.idea/modules/test-classes/test-classes_test.iml" group="test-classes" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/tests/tests.iml" filepath="$PROJECT_DIR$/.idea/modules/tests/tests.iml" group="tests" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/tests/tests_main.iml" filepath="$PROJECT_DIR$/.idea/modules/tests/tests_main.iml" group="tests" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/tests/tests_test.iml" filepath="$PROJECT_DIR$/.idea/modules/tests/tests_test.iml" group="tests" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli.iml" group="verifier-cli" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/verifier-cli-mock-plugin.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/verifier-cli-mock-plugin.iml" group="verifier-cli/mock-plugin" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/verifier-cli-mock-plugin_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/verifier-cli-mock-plugin_main.iml" group="verifier-cli/mock-plugin" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/verifier-cli-mock-plugin_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/mock-plugin/verifier-cli-mock-plugin_test.iml" group="verifier-cli/mock-plugin" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_main.iml" group="verifier-cli" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/verifier-cli_test.iml" group="verifier-cli" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-configurations/verifier-configurations.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-configurations/verifier-configurations.iml" group="verifier-configurations" />
