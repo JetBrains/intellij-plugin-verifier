@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.errors.IncorrectPluginException;
+import com.intellij.structure.impl.beans.PluginBean;
 import com.intellij.structure.impl.utils.validators.Validator;
 import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
@@ -11,6 +12,8 @@ import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.impl.utils.xml.XIncludeException;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.*;
+import org.jdom2.output.XMLOutputter;
+import org.jdom2.transform.JDOMSource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
@@ -18,6 +21,10 @@ import org.jsoup.safety.Whitelist;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.PropertyException;
+import javax.xml.bind.Unmarshaller;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -93,6 +100,17 @@ class PluginInfoExtractor {
   }
 
   private void checkAndSetEntries(@NotNull URL descriptorUrl, @NotNull Document document) throws IncorrectPluginException {
+    try {
+      JAXBContext jc = JAXBContext.newInstance(PluginBean.class);
+      Unmarshaller unmarshaller = jc.createUnmarshaller();
+      PluginBean value = (PluginBean) unmarshaller.unmarshal(new JDOMSource(document));
+      System.out.print(value.vendor);
+    } catch (PropertyException e) {
+      e.printStackTrace();
+    } catch (JAXBException e) {
+      e.printStackTrace();
+    }
+
     String fileName = calcDescriptorName(descriptorUrl);
     myPlugin.setUnderlyingDocument(document);
     myPlugin.setFileName(fileName);
