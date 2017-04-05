@@ -1,4 +1,4 @@
-package verifier.tests
+package com.jetbrains.pluginverifier.tests
 
 import com.google.common.collect.Lists
 import com.intellij.structure.domain.IdeVersion

@@ -53,6 +53,14 @@
       <module name="verifier-repository_test" target="1.8" />
       <module name="verifier-results_main" target="1.6" />
       <module name="verifier-results_test" target="1.6" />
+      <module name="verifier-test-after-idea_main" target="1.8" />
+      <module name="verifier-test-after-idea_test" target="1.8" />
+      <module name="verifier-test-before-idea_main" target="1.8" />
+      <module name="verifier-test-before-idea_test" target="1.8" />
+      <module name="verifier-test-mock-plugin_main" target="1.8" />
+      <module name="verifier-test-mock-plugin_test" target="1.8" />
+      <module name="verifier-test_main" target="1.8" />
+      <module name="verifier-test_test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

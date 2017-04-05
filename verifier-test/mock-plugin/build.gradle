@@ -1,0 +1,5 @@
+version = '1.0'
+
+dependencies {
+  compile project(':verifier-test:before-idea') //compile with 'before-idea' and run tests with the 'after-idea'
+}

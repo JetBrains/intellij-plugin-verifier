@@ -1,0 +1,37 @@
+dependencies {
+  testRuntime project('mock-plugin')
+  testCompile group: 'org.codehaus.plexus', name: 'plexus-archiver', version: '2.3'
+  compile project(':verifier-configurations')
+}
+
+task prepareMockPlugin(type: Copy) {
+  into "$buildDir/mocks"
+  def mockPluginBuildDir = project('mock-plugin').buildDir
+  from new File(mockPluginBuildDir, "libs/mock-plugin-1.0.jar")
+}
+
+task prepareAfterIdea(type: Copy) {
+  into "$buildDir/mocks/after-idea"
+
+  def libDir = copySpec {
+    def afterIdeaBuildDir = project('after-idea').buildDir
+    from new File(afterIdeaBuildDir, "libs/after-idea-1.0.jar")
+    into "lib"
+  }
+
+  def pluginDir = copySpec {
+    from project('after-idea').file("src/main/resources/META-INF")
+    into "plugins/devkit/META-INF"
+  }
+
+  with libDir, pluginDir
+}
+
+test.dependsOn prepareMockPlugin, prepareAfterIdea
+jar.dependsOn test
+
+shadowJar {
+  manifest {
+    attributes 'Main-Class': 'com.jetbrains.pluginverifier.PluginVerifierMain'
+  }
+}

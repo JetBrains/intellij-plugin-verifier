@@ -10,14 +10,15 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/verifier-cli" />
-            <option value="$PROJECT_DIR$/verifier-cli/after-idea" />
-            <option value="$PROJECT_DIR$/verifier-cli/before-idea" />
-            <option value="$PROJECT_DIR$/verifier-cli/mock-plugin" />
             <option value="$PROJECT_DIR$/verifier-configurations" />
             <option value="$PROJECT_DIR$/verifier-core" />
             <option value="$PROJECT_DIR$/verifier-parameters" />
             <option value="$PROJECT_DIR$/verifier-repository" />
             <option value="$PROJECT_DIR$/verifier-results" />
+            <option value="$PROJECT_DIR$/verifier-test" />
+            <option value="$PROJECT_DIR$/verifier-test/after-idea" />
+            <option value="$PROJECT_DIR$/verifier-test/before-idea" />
+            <option value="$PROJECT_DIR$/verifier-test/mock-plugin" />
           </set>
         </option>
       </GradleProjectSettings>

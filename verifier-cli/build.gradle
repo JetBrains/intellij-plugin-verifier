@@ -1,40 +1,7 @@
 dependencies {
-  //for verifier tests
-  testRuntime project('mock-plugin')
-  testCompile group: 'org.codehaus.plexus', name: 'plexus-archiver', version: '2.3'
-
   runtime group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
-
   compile project(':verifier-configurations')
 }
-
-task prepareMockPlugin(type: Copy) {
-  def path = "$buildDir/mocks"
-  doFirst { println("Copying mock plugin .jar-s to the ${path}") }
-  into path
-  project('mock-plugin') {
-    from tasks.withType(Jar)
-  }
-}
-
-task prepareAfterIdea(type: Copy) {
-  into "$buildDir/mocks/after-idea"
-
-  def libDir = copySpec {
-    from project('after-idea').tasks.withType(Jar)
-    into "lib"
-  }
-
-  def pluginDir = copySpec {
-    from project('after-idea').file("src/main/resources/META-INF")
-    into "plugins/devkit/META-INF"
-  }
-
-  with libDir, pluginDir
-}
-
-test.dependsOn prepareMockPlugin, prepareAfterIdea
-jar.dependsOn test
 
 shadowJar {
   manifest {

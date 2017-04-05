@@ -1,4 +1,4 @@
-package verifier.tests
+package com.jetbrains.pluginverifier.tests
 
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeManager

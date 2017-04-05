@@ -1,4 +1,4 @@
-package verifier.tests
+package com.jetbrains.pluginverifier.tests
 
 import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.jetbrains.pluginverifier.api.VResult

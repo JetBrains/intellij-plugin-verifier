@@ -1,3 +1,0 @@
-dependencies {
-  compile project(':verifier-cli:before-idea') //compile with 'before-idea' and run tests with the 'after-idea'
-}
