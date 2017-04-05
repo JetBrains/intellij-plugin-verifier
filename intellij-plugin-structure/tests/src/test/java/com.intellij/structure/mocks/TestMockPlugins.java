@@ -25,7 +25,7 @@ import static org.junit.Assert.*;
 public class TestMockPlugins {
 
   @NotNull
-  private static File getMockPlugin(String mockName) {
+  private static File getMockPluginFile(String mockName) {
     File pluginFile = new File("build" + File.separator + "mocks", mockName);
     if (!pluginFile.exists()) {
       pluginFile = new File("intellij-plugin-structure" + File.separator + "tests", pluginFile.getPath());
@@ -62,15 +62,39 @@ public class TestMockPlugins {
   }
 
   @Test
-  public void testMock() throws Exception {
-    //also read classes
-    testMock(getMockPlugin("mock-plugin.jar"), "");
-    testMock(getMockPlugin("mock-pluginJarAsZip.zip"), "");
-    testMock(getMockPlugin("mock-plugin-dir"), "lib/mock-plugin.jar");
-    testMock(getMockPlugin("mock-plugin-lib.zip"), "lib/mock-plugin.jar");
-    testMock(getMockPlugin("mock-plugin-classes"), "classes");
-    testMock(getMockPlugin("mock-plugin-classes-zip.zip"), "classes");
-    testMock(getMockPlugin("mock-plugin-jar-in-zip.zip"), "");
+  public void jarInZip() throws Exception {
+    testMock("mock-plugin-jar-in-zip.zip", "");
+  }
+
+  @Test
+  public void classesInZip() throws Exception {
+    testMock("mock-plugin-classes-zip.zip", "classes");
+  }
+
+  @Test
+  public void justClasses() throws Exception {
+    testMock("mock-plugin-classes", "classes");
+  }
+
+  @Test
+  public void libInZip() throws Exception {
+    testMock("mock-plugin-lib.zip", "lib/mock-plugin.jar");
+  }
+
+  @Test
+  public void fromDir() throws Exception {
+    testMock("mock-plugin-dir", "lib/mock-plugin.jar");
+  }
+
+  @Test
+  public void jarAsZip() throws Exception {
+    testMock("mock-pluginJarAsZip.zip", "");
+
+  }
+
+  @Test
+  public void jar() throws Exception {
+    testMock("mock-plugin.jar", "");
   }
 
   private void testMockIdeCompatibility(Plugin plugin) throws IOException {
@@ -86,7 +110,8 @@ public class TestMockPlugins {
     assertEquals(compatible, plugin.isCompatibleWithIde(IdeVersion.createIdeVersion(version)));
   }
 
-  private void testMock(File pluginFile, String... classPath) throws Exception {
+  private void testMock(String pluginPath, String... classPath) throws Exception {
+    File pluginFile = getMockPluginFile(pluginPath);
     PluginCreationResult pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile);
     assertTrue(pluginCreationResult instanceof PluginCreationSuccess);
     Plugin plugin = ((PluginCreationSuccess) pluginCreationResult).getPlugin();
