@@ -2,10 +2,11 @@ package com.jetbrains.pluginverifier.utils
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VContext
-import com.jetbrains.pluginverifier.location.ProblemLocation
+import com.jetbrains.pluginverifier.location.Location
 import com.jetbrains.pluginverifier.problems.AccessType
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.IllegalClassAccessProblem
+import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.warnings.Warning
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
@@ -13,14 +14,12 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 import org.slf4j.LoggerFactory
 
-sealed class ClsResolution() {
+sealed class ClsResolution {
   object NotFound : ClsResolution()
   object ExternalClass : ClsResolution()
-  class IllegalAccess(val accessType: AccessType) : ClsResolution()
+  class IllegalAccess(val resolvedNode: ClassNode, val accessType: AccessType) : ClsResolution()
   class Found(val node: ClassNode) : ClsResolution()
 }
-
-fun VContext.registerMissingClass(clsName: String, problemLocation: ProblemLocation) = this.registerProblem(ClassNotFoundProblem(clsName), problemLocation)
 
 object VerifierUtil {
 
@@ -41,7 +40,7 @@ object VerifierUtil {
       return if (isClassAccessibleToOtherClass(node, lookup)) {
         ClsResolution.Found(node)
       } else {
-        ClsResolution.IllegalAccess(getAccessType(node.access))
+        ClsResolution.IllegalAccess(node, getAccessType(node.access))
       }
     }
     return ClsResolution.NotFound
@@ -51,26 +50,26 @@ object VerifierUtil {
                             className: String,
                             lookup: ClassNode,
                             ctx: VContext,
-                            lookupLocation: (() -> ProblemLocation)): ClassNode? {
-    val resolveClass = resolveClass(resolver, className, lookup, ctx)
-    return when (resolveClass) {
+                            lookupLocation: (() -> Location)): ClassNode? {
+    val resolution = resolveClass(resolver, className, lookup, ctx)
+    return when (resolution) {
       ClsResolution.NotFound -> {
-        ctx.registerMissingClass(className, lookupLocation())
+        ctx.registerProblem(ClassNotFoundProblem(ClassReference(className), lookupLocation.invoke()))
         null
       }
       ClsResolution.ExternalClass -> null
       is ClsResolution.IllegalAccess -> {
-        ctx.registerProblem(IllegalClassAccessProblem(className, resolveClass.accessType), lookupLocation())
+        ctx.registerProblem(IllegalClassAccessProblem(ctx.fromClass(resolution.resolvedNode), resolution.accessType, lookupLocation.invoke()))
         null
       }
-      is ClsResolution.Found -> resolveClass.node
+      is ClsResolution.Found -> resolution.node
     }
   }
 
 
-  fun checkClassExistsOrExternal(resolver: Resolver, className: String, ctx: VContext, registerMissing: (() -> ProblemLocation)) {
+  fun checkClassExistsOrExternal(resolver: Resolver, className: String, ctx: VContext, registerMissing: (() -> Location)) {
     if (!ctx.verifierOptions.isExternalClass(className) && !resolver.containsClass(className)) {
-      ctx.registerProblem(ClassNotFoundProblem(className), registerMissing())
+      ctx.registerProblem(ClassNotFoundProblem(ClassReference(className), registerMissing.invoke()))
     }
   }
 

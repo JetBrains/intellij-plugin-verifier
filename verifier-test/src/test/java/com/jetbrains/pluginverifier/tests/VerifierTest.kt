@@ -27,11 +27,11 @@ class VerifierTest {
       prepareTestEnvironment()
       var ideaFile = File("build/mocks/after-idea")
       if (!ideaFile.exists()) {
-        ideaFile = File("verifier-cli/build/mocks/after-idea")
+        ideaFile = File("verifier-test/build/mocks/after-idea")
       }
       var pluginFile = File("build/mocks/mock-plugin-1.0.jar")
       if (!pluginFile.exists()) {
-        pluginFile = File("verifier-cli/build/mocks/mock-plugin-1.0.jar")
+        pluginFile = File("verifier-test/build/mocks/mock-plugin-1.0.jar")
       }
       val verificationResults = TestResultBuilder.buildResult(ideaFile, pluginFile)
       assertTrue(verificationResults.results.size == 1)
@@ -686,5 +686,22 @@ class VerifierTest {
         Instruction.GET_FIELD
     )
     assertProblemFound(problem, "Method $accessor contains a *getfield* instruction referencing an unresolved field fields.FieldsContainer.deletedField : int. This can lead to **NoSuchFieldError** exception at runtime.")
+  }
+
+  @Test
+  fun illegalAccessToPackagePrivateClass() {
+    val problem = IllegalClassAccessProblem(
+        Location.fromClass("access/other/BecamePackagePrivate", null, IDEA_CLASS_PATH, AccessFlags(0x20)),
+        AccessType.PACKAGE_PRIVATE,
+        pluginMethod(
+            pluginClass("mock/plugin/access/IllegalAccess", null, PUBLIC_CLASS_AF),
+            "classBecamePackagePrivate",
+            "()V",
+            emptyList(),
+            null,
+            PUBLIC_METHOD_AF
+        )
+    )
+    assertProblemFound(problem, "Package-private class access.other.BecamePackagePrivate is not available at mock.plugin.access.IllegalAccess.classBecamePackagePrivate() : void")
   }
 }

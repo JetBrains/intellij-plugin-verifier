@@ -18,17 +18,13 @@ import com.jetbrains.pluginverifier.api.VResult
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.dependenciesGraphDeserializer
 import com.jetbrains.pluginverifier.dependencies.dependenciesGraphSerializer
-import com.jetbrains.pluginverifier.location.ProblemLocation
-import com.jetbrains.pluginverifier.location.problemLocationDeserializer
-import com.jetbrains.pluginverifier.location.problemLocationSerializer
+import com.jetbrains.pluginverifier.location.Location
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.SymbolicReference
-import com.jetbrains.pluginverifier.reference.symbolicReferenceDeserializer
-import com.jetbrains.pluginverifier.reference.symbolicReferenceSerializer
 import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.report.checkIdeReportDeserializer
 import com.jetbrains.pluginverifier.report.checkIdeReportSerializer
-import com.jetbrains.pluginverifier.utils.RuntimeTypeAdapterFactory
+import com.jetbrains.pluginverifier.utils.*
 import java.io.IOException
 import java.io.StringReader
 import java.lang.reflect.ParameterizedType
@@ -91,8 +87,8 @@ object CompactJson {
           PluginDependencyImpl(array[0].string, array[1].bool)
         }
       }
-      .registerTypeHierarchyAdapter<ProblemLocation>(problemLocationSerializer)
-      .registerTypeHierarchyAdapter<ProblemLocation>(problemLocationDeserializer)
+      .registerTypeHierarchyAdapter<Location>(problemLocationSerializer)
+      .registerTypeHierarchyAdapter<Location>(problemLocationDeserializer)
       .registerTypeHierarchyAdapter<SymbolicReference>(symbolicReferenceSerializer)
       .registerTypeHierarchyAdapter<SymbolicReference>(symbolicReferenceDeserializer)
 
@@ -128,27 +124,28 @@ object CompactJson {
 }
 
 private val resultTAF = RuntimeTypeAdapterFactory.of(VResult::class.java)
-    .registerSubtype(VResult.Nice::class.java)
+    .registerSubtype(VResult.OK::class.java)
+    .registerSubtype(VResult.Warnings::class.java)
     .registerSubtype(VResult.Problems::class.java)
-    .registerSubtype(VResult.BadPlugin::class.java)
+    .registerSubtype(VResult.Bad::class.java)
     .registerSubtype(VResult.NotFound::class.java)
 
 //add inheritors
 private val problemsTAF = RuntimeTypeAdapterFactory.of(Problem::class.java)
     .registerSubtype(ChangeFinalFieldProblem::class.java)
-    .registerSubtype(InstanceAccessOfStaticFieldProblem::class.java)
-    .registerSubtype(InvokeInterfaceOnStaticMethodProblem::class.java)
-    .registerSubtype(InvokeSpecialOnStaticMethodProblem::class.java)
-    .registerSubtype(InvokeStaticOnInstanceMethodProblem::class.java)
-    .registerSubtype(InvokeVirtualOnStaticMethodProblem::class.java)
-    .registerSubtype(StaticAccessOfInstanceFieldProblem::class.java)
+    .registerSubtype(NonStaticAccessOfStaticFieldProblem::class.java)
+    .registerSubtype(InvokeStaticOnNonStaticMethodProblem::class.java)
+    .registerSubtype(InvokeNonStaticInstructionOnStaticMethodProblem::class.java)
+    .registerSubtype(StaticAccessOfNonStaticFieldProblem::class.java)
     .registerSubtype(AbstractClassInstantiationProblem::class.java)
     .registerSubtype(ClassNotFoundProblem::class.java)
     .registerSubtype(FieldNotFoundProblem::class.java)
     .registerSubtype(IllegalFieldAccessProblem::class.java)
     .registerSubtype(IllegalMethodAccessProblem::class.java)
-    .registerSubtype(IncompatibleClassToInterfaceChangeProblem::class.java)
-    .registerSubtype(IncompatibleInterfaceToClassChangeProblem::class.java)
+    .registerSubtype(SuperClassBecameInterfaceProblem::class.java)
+    .registerSubtype(InvokeClassMethodOnInterfaceProblem::class.java)
+    .registerSubtype(SuperInterfaceBecameClassProblem::class.java)
+    .registerSubtype(InvokeInterfaceMethodOnClassProblem::class.java)
     .registerSubtype(InterfaceInstantiationProblem::class.java)
     .registerSubtype(InvokeInterfaceOnPrivateMethodProblem::class.java)
     .registerSubtype(MethodNotFoundProblem::class.java)
@@ -157,8 +154,7 @@ private val problemsTAF = RuntimeTypeAdapterFactory.of(Problem::class.java)
     .registerSubtype(OverridingFinalMethodProblem::class.java)
     .registerSubtype(InheritFromFinalClassProblem::class.java)
     .registerSubtype(IllegalClassAccessProblem::class.java)
-    .registerSubtype(IllegalInterfaceAccessProblem::class.java)
-    .registerSubtype(MultipleMethodImplementationsProblem::class.java)
+    .registerSubtype(MultipleDefaultImplementationsProblem::class.java)
 
 
 private val pluginDescriptorTAF = RuntimeTypeAdapterFactory.of(PluginDescriptor::class.java)
