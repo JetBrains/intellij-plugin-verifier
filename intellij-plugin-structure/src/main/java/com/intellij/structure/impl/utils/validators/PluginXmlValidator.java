@@ -6,9 +6,6 @@ import com.intellij.structure.impl.utils.BiAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author Sergey Patrikeev
  */

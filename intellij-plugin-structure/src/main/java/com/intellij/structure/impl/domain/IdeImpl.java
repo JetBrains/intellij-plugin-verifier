@@ -3,7 +3,6 @@ package com.intellij.structure.impl.domain;
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
-import com.intellij.structure.errors.IncorrectPluginException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -21,7 +20,7 @@ class IdeImpl extends Ide {
 
   IdeImpl(@NotNull File idePath,
           @NotNull IdeVersion version,
-          @NotNull List<Plugin> bundledPlugins) throws IOException, IncorrectPluginException {
+          @NotNull List<Plugin> bundledPlugins) throws IOException {
     this(idePath, bundledPlugins, Collections.<Plugin>emptyList(), version);
   }
 

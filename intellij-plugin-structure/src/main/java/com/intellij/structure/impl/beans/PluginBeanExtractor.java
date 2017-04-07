@@ -2,7 +2,6 @@ package com.intellij.structure.impl.beans;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.intellij.structure.errors.IncorrectPluginException;
 import org.jdom2.*;
 import org.jdom2.transform.JDOMSource;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +67,7 @@ public class PluginBeanExtractor {
     return epName;
   }
 
-  private static List<String> extractReferencedClasses(@NotNull Element rootElement) throws IncorrectPluginException {
+  private static List<String> extractReferencedClasses(@NotNull Element rootElement) {
     List<String> referencedClasses = new ArrayList<String>();
     Iterator<Content> descendants = rootElement.getDescendants();
     while (descendants.hasNext()) {

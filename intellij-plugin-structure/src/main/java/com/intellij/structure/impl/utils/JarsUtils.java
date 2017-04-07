@@ -1,6 +1,7 @@
 package com.intellij.structure.impl.utils;
 
 import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.AbstractFileFilter;
@@ -41,9 +42,9 @@ public class JarsUtils {
       }
       try {
         pool.add(Resolver.createJarResolver(jar));
-      } catch (IOException e) {
+      } catch (Throwable e) {
         closeResolvers(pool);
-        throw e;
+        Throwables.propagate(e);
       }
     }
 

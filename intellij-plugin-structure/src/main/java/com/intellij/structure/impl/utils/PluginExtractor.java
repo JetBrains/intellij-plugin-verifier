@@ -1,7 +1,7 @@
 package com.intellij.structure.impl.utils;
 
+import com.google.common.base.Throwables;
 import com.intellij.structure.domain.Plugin;
-import com.intellij.structure.errors.IncorrectPluginException;
 import org.apache.commons.io.FileUtils;
 import org.codehaus.plexus.archiver.AbstractUnArchiver;
 import org.codehaus.plexus.archiver.tar.TarBZip2UnArchiver;
@@ -23,7 +23,7 @@ public class PluginExtractor {
   private static final int TEMP_DIR_ATTEMPTS = 10000;
 
   @NotNull
-  public static File extractPlugin(@NotNull Plugin plugin, @NotNull File archive) throws IOException, IncorrectPluginException {
+  public static File extractPlugin(@NotNull Plugin plugin, @NotNull File archive) throws IOException {
 
     File tmp = createTempDir("plugin_");
 
@@ -32,9 +32,9 @@ public class PluginExtractor {
       ua.enableLogging(new ConsoleLogger(Logger.LEVEL_WARN, ""));
       ua.setDestDirectory(tmp);
       ua.extract();
-    } catch (Exception e) {
+    } catch (Throwable e) {
       FileUtils.deleteQuietly(tmp);
-      throw new IncorrectPluginException("Unable to extract plugin " + plugin + " file " + archive, e);
+      throw Throwables.propagate(e);
     }
 
     /*
@@ -44,7 +44,7 @@ public class PluginExtractor {
     Collection<File> files = FileUtils.listFiles(tmp, new String[]{"jar"}, false);
     if (files.size() > 1) {
       FileUtils.deleteQuietly(tmp);
-      throw new IncorrectPluginException("Plugin " + plugin + " archive contains multiple .jar files representing plugins");
+      throw new IllegalArgumentException("Plugin " + plugin + " archive contains multiple .jar files representing plugins");
     }
     if (files.size() == 1) {
       try {
@@ -55,9 +55,9 @@ public class PluginExtractor {
         try {
           FileUtils.copyFile(singleJar, tmpFile);
           return tmpFile;
-        } catch (Exception e) {
+        } catch (Throwable e) {
           FileUtils.deleteQuietly(tmpFile);
-          throw new IncorrectPluginException("Unable to read plugin " + plugin + " jar file " + singleJar, e);
+          Throwables.propagate(e);
         }
       } finally {
         //delete firstly extracted directory
@@ -67,11 +67,11 @@ public class PluginExtractor {
 
     try {
       stripTopLevelDirectory(plugin, tmp);
-      return tmp;
-    } catch (Exception e) {
+    } catch (Throwable e) {
       FileUtils.deleteQuietly(tmp);
-      throw new IncorrectPluginException("Unable to read plugin " + plugin + " files", e);
+      throw Throwables.propagate(e);
     }
+    return tmp;
   }
 
   //it's synchronized because otherwise there is a possibility of two threads creating the same directory

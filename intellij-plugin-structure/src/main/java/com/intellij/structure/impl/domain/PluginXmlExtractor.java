@@ -1,6 +1,5 @@
 package com.intellij.structure.impl.domain;
 
-import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.impl.utils.xml.XIncludeException;
@@ -17,12 +16,8 @@ import java.util.List;
 class PluginXmlExtractor {
   static final JDOMXIncluder.PathResolver DEFAULT_PLUGIN_XML_PATH_RESOLVER = new PluginXmlPathResolver();
 
-  static Document resolveXIncludes(@NotNull Document document, @NotNull URL documentUrl, JDOMXIncluder.PathResolver pathResolver) throws IncorrectPluginException {
-    try {
-      return JDOMXIncluder.resolve(document, documentUrl.toExternalForm(), false, pathResolver);
-    } catch (XIncludeException e) {
-      throw new IncorrectPluginException("Unable to resolve xml include elements of " + documentUrl.getFile(), e);
-    }
+  static Document resolveXIncludes(@NotNull Document document, @NotNull URL documentUrl, JDOMXIncluder.PathResolver pathResolver) throws XIncludeException {
+    return JDOMXIncluder.resolve(document, documentUrl.toExternalForm(), false, pathResolver);
   }
 
   static class PluginXmlPathResolver extends JDOMXIncluder.DefaultPathResolver {

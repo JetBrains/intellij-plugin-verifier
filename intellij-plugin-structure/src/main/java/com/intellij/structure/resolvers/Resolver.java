@@ -3,7 +3,6 @@ package com.intellij.structure.resolvers;
 
 import com.intellij.structure.domain.Ide;
 import com.intellij.structure.domain.Plugin;
-import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.resolvers.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,10 +31,10 @@ public abstract class Resolver implements Closeable {
    * @param plugin plugin for which resolver should be created
    * @return resolver for the specified plugin
    * @throws IOException if disk error occurs during attempt to read a class-file or to extract a plugin
-   * @throws IncorrectPluginException if the plugin has broken class-files or it has an incorrect directories structure
+   * @throws IllegalArgumentException if the plugin has broken class-files or it has an incorrect directories structure
    */
   @NotNull
-  public static Resolver createPluginResolver(@NotNull Plugin plugin) throws IncorrectPluginException, IOException {
+  public static Resolver createPluginResolver(@NotNull Plugin plugin) throws IOException {
     return PluginResolver.createPluginResolver(plugin);
   }
 

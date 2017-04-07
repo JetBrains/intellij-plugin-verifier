@@ -67,20 +67,8 @@ public class JDOMXIncluder {
     myPathResolver = pathResolver;
   }
 
-  public static Document resolve(Document original, String base) throws XIncludeException {
-    return resolve(original, base, false);
-  }
-
-  public static Document resolve(Document original, String base, boolean ignoreMissing) throws XIncludeException {
-    return resolve(original, base, ignoreMissing, DEFAULT_PATH_RESOLVER);
-  }
-
   public static Document resolve(Document original, String base, boolean ignoreMissing, PathResolver pathResolver) throws XIncludeException {
     return new JDOMXIncluder(ignoreMissing, pathResolver).doResolve(original, base);
-  }
-
-  public static List<Content> resolve(@NotNull Element original, String base) throws XIncludeException {
-    return new JDOMXIncluder(false, DEFAULT_PATH_RESOLVER).doResolve(original, base);
   }
 
   private static boolean isIncludeElement(Element element) {

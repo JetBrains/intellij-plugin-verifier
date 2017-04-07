@@ -2,7 +2,6 @@ package com.intellij.structure.impl.domain;
 
 import com.google.common.io.Files;
 import com.intellij.structure.domain.*;
-import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.beans.PluginBean;
 import com.intellij.structure.impl.beans.PluginBeanExtractor;
 import com.intellij.structure.impl.beans.ReportingValidationEventHandler;
@@ -127,7 +126,7 @@ public class IdeManagerImpl extends IdeManager {
 
         PluginBean bean = PluginBeanExtractor.extractPluginBean(document, new ReportingValidationEventHandler(dummyValidator, relativePath));
         dummyValidator.validateBean(bean, relativePath);
-        if(bean == null || dummyValidator.hasErrors()){
+        if (bean == null || dummyValidator.hasErrors()) {
           LOG.warn("Unable to load dummy plugin from " + relativePath);
           continue;
         }
@@ -197,7 +196,7 @@ public class IdeManagerImpl extends IdeManager {
           version = readBuildNumber(versionFile);
         }
         if (version == null) {
-          throw new IncorrectPluginException("Unable to find IDE version file (build.txt or community/build.txt)");
+          throw new IllegalArgumentException("Unable to find IDE version file (build.txt or community/build.txt)");
         }
       }
     } else {

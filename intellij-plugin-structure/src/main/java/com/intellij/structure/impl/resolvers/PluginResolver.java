@@ -1,8 +1,8 @@
 package com.intellij.structure.impl.resolvers;
 
 import com.google.common.base.Predicates;
+import com.google.common.base.Throwables;
 import com.intellij.structure.domain.Plugin;
-import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.domain.PluginManagerImpl;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.impl.utils.PluginExtractor;
@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * @author Sergey Patrikeev
@@ -29,30 +28,28 @@ import java.util.regex.Pattern;
 public class PluginResolver extends Resolver {
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginResolver.class);
-  private static final Pattern LIB_JAR_REGEX = Pattern.compile("([^/]+/)?lib/([^/]+\\.(jar|zip))");
-  private static final Pattern CLASSES_DIR_REGEX = Pattern.compile("([^/]+/)?classes/");
   @NotNull private final File myPluginFile;
   @NotNull private final Plugin myPlugin;
   private final boolean myDeleteOnClose;
   private final Resolver myResolver;
-  private volatile boolean isClosed;
+  private boolean isClosed;
 
-  private PluginResolver(@NotNull Plugin plugin, @NotNull File extracted, boolean deleteOnClose) throws IncorrectPluginException {
+  private PluginResolver(@NotNull Plugin plugin, @NotNull File extracted, boolean deleteOnClose) throws IOException {
     myPluginFile = extracted;
     myDeleteOnClose = deleteOnClose;
     myPlugin = plugin;
     try {
       myResolver = loadClasses(myPluginFile);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       if (myDeleteOnClose) {
         FileUtils.deleteQuietly(myPluginFile);
       }
-      throw (e instanceof IncorrectPluginException ? ((IncorrectPluginException) e) : new RuntimeException(e));
+      throw Throwables.propagate(e);
     }
   }
 
   @NotNull
-  public static PluginResolver createPluginResolver(@NotNull Plugin plugin) throws IncorrectPluginException, IOException {
+  public static PluginResolver createPluginResolver(@NotNull Plugin plugin) throws IOException {
     File file = plugin.getPluginFile();
     if (!file.exists()) {
       throw new IllegalArgumentException("Plugin file doesn't exist " + file);
@@ -78,7 +75,7 @@ public class PluginResolver extends Resolver {
   }
 
   @Override
-  public void close() throws IOException {
+  public synchronized void close() throws IOException {
     if (isClosed) {
       return;
     }
@@ -128,25 +125,21 @@ public class PluginResolver extends Resolver {
   }
 
   @NotNull
-  private Resolver loadClasses(@NotNull File file) throws IncorrectPluginException {
+  private Resolver loadClasses(@NotNull File file) throws IOException {
     if (file.isDirectory()) {
       return loadClassesFromDir(file);
     } else if (file.exists() && StringUtil.endsWithIgnoreCase(file.getName(), ".jar")) {
       return loadClassesFromJar(file);
     }
-    throw new IncorrectPluginException("Invalid plugin file type: it must be a directory or a jar file");
+    throw new IllegalArgumentException("Invalid plugin file extension: " + file + ". It must be a directory or a jar file");
   }
 
   @NotNull
-  private Resolver loadClassesFromJar(@NotNull File file) {
-    try {
-      return Resolver.createJarResolver(file);
-    } catch (IOException e) {
-      throw new IncorrectPluginException("Unable to read the plugin " + myPlugin + " class files", e);
-    }
+  private Resolver loadClassesFromJar(@NotNull File file) throws IOException {
+    return Resolver.createJarResolver(file);
   }
 
-  private Resolver loadClassesFromDir(@NotNull File dir) throws IncorrectPluginException {
+  private Resolver loadClassesFromDir(@NotNull File dir) throws IOException {
     File classesDir = new File(dir, "classes");
 
     File root;
@@ -159,14 +152,10 @@ public class PluginResolver extends Resolver {
       root = dir;
     }
 
-    Resolver rootResolver;
-    try {
-      String presentableName = "Plugin " + (classesDirExists ? "`classes`" : "root") + " directory of " + getPluginDescriptor(myPlugin);
-      rootResolver = new FilesResolver(presentableName, root);
-    } catch (IOException e) {
-      throw new IncorrectPluginException("Unable to read " + (classesDirExists ? "`classes`" : "root") + " plugin classes", e);
-    }
     List<Resolver> resolvers = new ArrayList<Resolver>();
+
+    String presentableName = "Plugin " + (classesDirExists ? "`classes`" : "root") + " directory of " + getPluginDescriptor(myPlugin);
+    Resolver rootResolver = new FilesResolver(presentableName, root);
     if (!rootResolver.isEmpty()) {
       resolvers.add(rootResolver);
     }
@@ -181,9 +170,9 @@ public class PluginResolver extends Resolver {
           resolvers.add(libResolver);
         }
       }
-    } catch (Exception e) {
+    } catch (Throwable e) {
       closeResolvers(resolvers);
-      throw new IncorrectPluginException("Unable to read `lib` directory " + lib + " of the plugin " + myPlugin, e);
+      Throwables.propagate(e);
     }
 
     return Resolver.createUnionResolver("Plugin resolver " + myPlugin.getPluginId(), resolvers);

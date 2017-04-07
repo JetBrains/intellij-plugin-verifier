@@ -1,6 +1,5 @@
 package com.intellij.structure.domain;
 
-import com.intellij.structure.errors.IncorrectPluginException;
 import com.intellij.structure.impl.domain.PluginManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,11 +17,11 @@ public abstract class PluginManager {
   }
 
   @NotNull
-  final public PluginCreationResult createPlugin(@NotNull File pluginFile) throws IOException, IncorrectPluginException {
+  final public PluginCreationResult createPlugin(@NotNull File pluginFile) throws IOException {
     return createPlugin(pluginFile, true);
   }
 
   @NotNull
-  public abstract PluginCreationResult createPlugin(@NotNull File pluginFile, boolean validatePluginXml) throws IOException, IncorrectPluginException;
+  public abstract PluginCreationResult createPlugin(@NotNull File pluginFile, boolean validatePluginXml) throws IOException;
 
 }
