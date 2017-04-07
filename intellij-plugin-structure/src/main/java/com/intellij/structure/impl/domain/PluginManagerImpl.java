@@ -154,22 +154,18 @@ public class PluginManagerImpl extends PluginManager {
           URL url = xmlPair.getFirst();
           if (url != null) {
             Document document = xmlPair.getSecond();
-            PluginImpl optDescriptor = new PluginImpl(myPluginFile);
             Validator dependencyValidator = new PluginXmlValidator().ignoreMissingConfigElement();
             ValidationEventHandler eventHandler = new ReportingValidationEventHandler(dependencyValidator, optFilePath);
             document = PluginXmlExtractor.readExternal(document, url, pathResolver);
 
             PluginBean bean = PluginBeanExtractor.extractPluginBean(document, eventHandler);
             dependencyValidator.validateBean(bean, optFilePath);
-            if (dependencyValidator.hasErrors()) {
+            if (bean == null || dependencyValidator.hasErrors()) {
               String msg = getMissingDepMsg(entry.getKey().getId(), entry.getValue());
               parentValidator.onMissingDependency(msg);
               continue;
             }
-
-            optDescriptor.setInfoFromBean(bean);
-            optDescriptor.setUnderlyingDocument(document);
-            descriptors.put(original, optDescriptor);
+            descriptors.put(original, new PluginImpl(myPluginFile, document, bean));
           }
         } else {
           //don't complain if the file is not found and don't complain if it has incorrect .xml structure
@@ -259,18 +255,13 @@ public class PluginManagerImpl extends PluginManager {
       }
 
       if (StringUtil.equal(name, filePath)) {
-        PluginImpl plugin = new PluginImpl(myPluginFile);
         document = PluginXmlExtractor.readExternal(document, url, pathResolver);
-        plugin.setUnderlyingDocument(document);
-
         PluginBean bean = PluginBeanExtractor.extractPluginBean(document, new ReportingValidationEventHandler(validator, entry.getName()));
         validator.validateBean(bean, entry.getName());
-        if (validator.hasErrors()) {
+        if (bean == null || validator.hasErrors()) {
           return null;
         }
-
-        plugin.setInfoFromBean(bean);
-        return plugin;
+        return new PluginImpl(myPluginFile, document, bean);
       } else {
         //add this .xml for the future check
         Pair<URL, Document> pair = Pair.create(url, document);
@@ -296,19 +287,13 @@ public class PluginManagerImpl extends PluginManager {
           Document document = JDOMUtil.loadDocument(is);
           String xmlUrl = rootUrl + entry.getName();
           URL url = new URL(xmlUrl);
-
-          PluginImpl plugin = new PluginImpl(myPluginFile);
           document = PluginXmlExtractor.readExternal(document, url, pathResolver);
-          plugin.setUnderlyingDocument(document);
-
           PluginBean bean = PluginBeanExtractor.extractPluginBean(document, new ReportingValidationEventHandler(validator, entry.getName()));
           validator.validateBean(bean, entry.getName());
-          if (validator.hasErrors()) {
+          if (bean == null || validator.hasErrors()) {
             return null;
           }
-
-          plugin.setInfoFromBean(bean);
-          return plugin;
+          return new PluginImpl(myPluginFile, document, bean);
         } catch (RuntimeException e) {
           //rethrow a RuntimeException but wrap a checked exception
           throw e;
@@ -512,9 +497,6 @@ public class PluginManagerImpl extends PluginManager {
   @Nullable
   private PluginImpl loadDescriptorFromDirRoot(@NotNull File dir, @NotNull String filePath, @NotNull Validator validator, File descriptorFile) {
     appendXmlInRoot(filePath, validator, descriptorFile);
-
-    PluginImpl plugin = new PluginImpl(myPluginFile);
-
     URL url;
     try {
       url = descriptorFile.toURI().toURL();
@@ -531,14 +513,10 @@ public class PluginManagerImpl extends PluginManager {
     document = PluginXmlExtractor.readExternal(document, url);
     PluginBean bean = PluginBeanExtractor.extractPluginBean(document, new ReportingValidationEventHandler(validator, filePath));
     validator.validateBean(bean, filePath);
-    if (validator.hasErrors()) {
+    if (bean == null || validator.hasErrors()) {
       return null;
     }
-
-    plugin.setInfoFromBean(bean);
-    plugin.setUnderlyingDocument(document);
-
-    return plugin;
+    return new PluginImpl(myPluginFile, document, bean);
   }
 
   private void appendXmlInRoot(@NotNull String filePath, @NotNull Validator validator, @NotNull File descriptorFile) {
@@ -643,7 +621,6 @@ public class PluginManagerImpl extends PluginManager {
     }
     return inLibJarUrls;
   }
-
 
 
   @NotNull

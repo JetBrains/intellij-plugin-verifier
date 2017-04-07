@@ -46,8 +46,10 @@ public class PluginImpl implements Plugin {
   private IdeVersion mySinceBuild;
   private IdeVersion myUntilBuild;
 
-  PluginImpl(@NotNull File pluginFile) {
+  PluginImpl(@NotNull File pluginFile, @NotNull Document underlyingDocument, @NotNull PluginBean bean){
     myPluginFile = pluginFile;
+    myUnderlyingDocument = underlyingDocument;
+    setInfoFromBean(bean);
   }
 
   @Override
@@ -141,7 +143,7 @@ public class PluginImpl implements Plugin {
     return myUrl;
   }
 
-  void setInfoFromBean(PluginBean bean) {
+  private void setInfoFromBean(PluginBean bean) {
     myPluginName = bean.name;
     myPluginId = bean.id != null ? bean.id : bean.name;
     myUrl = bean.url;

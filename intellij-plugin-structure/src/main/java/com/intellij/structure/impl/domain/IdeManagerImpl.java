@@ -112,20 +112,15 @@ public class IdeManagerImpl extends IdeManager {
       }
 
       try {
-        PluginImpl plugin = new PluginImpl(dummyRoot);
         URL xmlUrl = file.toURI().toURL();
         Document document = PluginXmlExtractor.readExternalFromIdeSources(xmlUrl, pathResolver);
-
         PluginBean bean = PluginBeanExtractor.extractPluginBean(document, new ReportingValidationEventHandler(dummyValidator, relativePath));
         dummyValidator.validateBean(bean, relativePath);
-        if(dummyValidator.hasErrors()){
+        if(bean == null || dummyValidator.hasErrors()){
           LOG.warn("Unable to load dummy plugin from " + relativePath);
           continue;
         }
-
-        plugin.setUnderlyingDocument(document);
-        plugin.setInfoFromBean(bean);
-        result.add(plugin);
+        result.add(new PluginImpl(dummyRoot, document, bean));
       } catch (Exception e) {
         dummyValidator.onCheckedException("Unable to read XML document " + relativePath, e);
       }
