@@ -156,7 +156,7 @@ public class PluginManagerImpl extends PluginManager {
             Document document = xmlPair.getSecond();
             Validator dependencyValidator = new PluginXmlValidator().ignoreMissingConfigElement();
             ValidationEventHandler eventHandler = new ReportingValidationEventHandler(dependencyValidator, optFilePath);
-            document = PluginXmlExtractor.readExternal(document, url, pathResolver);
+            document = PluginXmlExtractor.resolveXIncludes(document, url, pathResolver);
 
             PluginBean bean = PluginBeanExtractor.extractPluginBean(document, eventHandler);
             dependencyValidator.validateBean(bean, optFilePath);
@@ -255,7 +255,7 @@ public class PluginManagerImpl extends PluginManager {
       }
 
       if (StringUtil.equal(name, filePath)) {
-        document = PluginXmlExtractor.readExternal(document, url, pathResolver);
+        document = PluginXmlExtractor.resolveXIncludes(document, url, pathResolver);
         PluginBean bean = PluginBeanExtractor.extractPluginBean(document, new ReportingValidationEventHandler(validator, entry.getName()));
         validator.validateBean(bean, entry.getName());
         if (bean == null || validator.hasErrors()) {
@@ -287,7 +287,7 @@ public class PluginManagerImpl extends PluginManager {
           Document document = JDOMUtil.loadDocument(is);
           String xmlUrl = rootUrl + entry.getName();
           URL url = new URL(xmlUrl);
-          document = PluginXmlExtractor.readExternal(document, url, pathResolver);
+          document = PluginXmlExtractor.resolveXIncludes(document, url, pathResolver);
           PluginBean bean = PluginBeanExtractor.extractPluginBean(document, new ReportingValidationEventHandler(validator, entry.getName()));
           validator.validateBean(bean, entry.getName());
           if (bean == null || validator.hasErrors()) {
@@ -510,7 +510,7 @@ public class PluginManagerImpl extends PluginManager {
       return null;
     }
 
-    document = PluginXmlExtractor.readExternal(document, url);
+    document = PluginXmlExtractor.resolveXIncludes(document, url, PluginXmlExtractor.DEFAULT_PLUGIN_XML_PATH_RESOLVER);
     PluginBean bean = PluginBeanExtractor.extractPluginBean(document, new ReportingValidationEventHandler(validator, filePath));
     validator.validateBean(bean, filePath);
     if (bean == null || validator.hasErrors()) {

@@ -9,6 +9,7 @@ import com.intellij.structure.impl.beans.ReportingValidationEventHandler;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.validators.PluginXmlValidator;
 import com.intellij.structure.impl.utils.validators.Validator;
+import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.impl.utils.xml.XIncludeException;
@@ -113,7 +114,17 @@ public class IdeManagerImpl extends IdeManager {
 
       try {
         URL xmlUrl = file.toURI().toURL();
-        Document document = PluginXmlExtractor.readExternalFromIdeSources(xmlUrl, pathResolver);
+        Document documentByUrl = JDOMUtil.loadDocument(xmlUrl);
+
+        Document document;
+        try {
+          document = PluginXmlExtractor.resolveXIncludes(documentByUrl, xmlUrl, pathResolver);
+        } catch (Exception e) {
+          LOG.warn("Unable to resolve XInclude elements", e);
+          //let's try the document without the resolved xinclude elements
+          document = documentByUrl;
+        }
+
         PluginBean bean = PluginBeanExtractor.extractPluginBean(document, new ReportingValidationEventHandler(dummyValidator, relativePath));
         dummyValidator.validateBean(bean, relativePath);
         if(bean == null || dummyValidator.hasErrors()){
