@@ -3,6 +3,9 @@ package com.intellij.structure.impl.domain;
 import com.google.common.io.Files;
 import com.intellij.structure.domain.*;
 import com.intellij.structure.errors.IncorrectPluginException;
+import com.intellij.structure.impl.beans.PluginBean;
+import com.intellij.structure.impl.beans.PluginBeanExtractor;
+import com.intellij.structure.impl.beans.ReportingValidationEventHandler;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.validators.PluginXmlValidator;
 import com.intellij.structure.impl.utils.validators.Validator;
@@ -12,6 +15,7 @@ import com.intellij.structure.impl.utils.xml.XIncludeException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.jdom2.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -93,24 +97,37 @@ public class IdeManagerImpl extends IdeManager {
     Validator dummyValidator = new PluginXmlValidator().ignoreMissingConfigElement().ignoreMissingFile();
 
     for (File file : files) {
-      if (file.getName().equals("plugin.xml")) {
-        try {
-          File dummyRoot = file.getParentFile();
-          if (dummyRoot != null) {
-            dummyRoot = dummyRoot.getParentFile();
-          }
-          if (dummyRoot == null) {
-            dummyRoot = file;
-          }
+      if (!file.getName().equals("plugin.xml")) {
+        continue;
+      }
 
-          PluginImpl plugin = new PluginImpl(dummyRoot);
-          URL xmlUrl = file.toURI().toURL();
-          PluginInfoExtractor extractor = new PluginInfoExtractor(plugin, dummyValidator);
-          extractor.readExternalFromIdeSources(xmlUrl, pathResolver);
-          result.add(plugin);
-        } catch (Exception e) {
-          LOG.warn("Unable to load dummy plugin from " + file);
+      String relativePath = file.toURI().relativize(root.toURI()).getPath();
+
+      File dummyRoot = file.getParentFile();
+      if (dummyRoot != null) {
+        dummyRoot = dummyRoot.getParentFile();
+      }
+      if (dummyRoot == null) {
+        dummyRoot = file;
+      }
+
+      try {
+        PluginImpl plugin = new PluginImpl(dummyRoot);
+        URL xmlUrl = file.toURI().toURL();
+        Document document = PluginXmlExtractor.readExternalFromIdeSources(xmlUrl, pathResolver);
+
+        PluginBean bean = PluginBeanExtractor.extractPluginBean(document, new ReportingValidationEventHandler(dummyValidator, relativePath));
+        dummyValidator.validateBean(bean, relativePath);
+        if(dummyValidator.hasErrors()){
+          LOG.warn("Unable to load dummy plugin from " + relativePath);
+          continue;
         }
+
+        plugin.setUnderlyingDocument(document);
+        plugin.setInfoFromBean(bean);
+        result.add(plugin);
+      } catch (Exception e) {
+        dummyValidator.onCheckedException("Unable to read XML document " + relativePath, e);
       }
     }
     return result;

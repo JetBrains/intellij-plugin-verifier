@@ -1,15 +1,20 @@
 package com.intellij.structure.impl.domain;
 
-import com.google.common.collect.ArrayListMultimap;
+import com.google.common.base.Strings;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.intellij.structure.domain.IdeVersion;
 import com.intellij.structure.domain.Plugin;
 import com.intellij.structure.domain.PluginDependency;
+import com.intellij.structure.impl.beans.PluginBean;
+import com.intellij.structure.impl.beans.PluginDependencyBean;
+import com.intellij.structure.impl.utils.StringUtil;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Whitelist;
 
 import java.io.File;
 import java.util.*;
@@ -17,19 +22,18 @@ import java.util.*;
 import static com.intellij.structure.impl.utils.StringUtil.isEmpty;
 
 public class PluginImpl implements Plugin {
+  private static final Whitelist WHITELIST = Whitelist.basicWithImages();
+  private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules.";
 
   private final Set<String> myDefinedModules = new HashSet<String>();
   private final List<PluginDependency> myDependencies = new ArrayList<PluginDependency>();
   private final List<PluginDependency> myModuleDependencies = new ArrayList<PluginDependency>();
-  private final Map<PluginDependency, String> myOptionalConfigFiles  = new HashMap<PluginDependency, String>();
+  private final Map<PluginDependency, String> myOptionalConfigFiles = new HashMap<PluginDependency, String>();
   private final Map<String, Plugin> myOptionalDescriptors = new HashMap<String, Plugin>();
   private final Set<String> myReferencedClasses = new HashSet<String>();
-  private final Multimap<String, Element> myExtensions = ArrayListMultimap.create();
+  private Multimap<String, Element> myExtensions;
   private final File myPluginFile;
   private Document myUnderlyingDocument;
-  private String myFileName;
-  private byte[] myLogoContent;
-  private String myLogoUrl;
   private String myPluginName;
   private String myPluginVersion;
   private String myPluginId;
@@ -44,26 +48,6 @@ public class PluginImpl implements Plugin {
 
   PluginImpl(@NotNull File pluginFile) {
     myPluginFile = pluginFile;
-  }
-
-  void setFileName(@NotNull String myFileName) {
-    this.myFileName = myFileName;
-  }
-
-  void setLogoContent(@Nullable byte[] myLogoContent) {
-    this.myLogoContent = myLogoContent;
-  }
-
-  void setLogoUrl(@Nullable String myLogoUrl) {
-    this.myLogoUrl = myLogoUrl;
-  }
-
-  void setPluginVendor(@Nullable String myPluginVendor) {
-    this.myPluginVendor = myPluginVendor;
-  }
-
-  void setNotes(@Nullable String myNotes) {
-    this.myNotes = myNotes;
   }
 
   @Override
@@ -90,18 +74,10 @@ public class PluginImpl implements Plugin {
     return mySinceBuild;
   }
 
-  void setSinceBuild(@Nullable IdeVersion mySinceBuild) {
-    this.mySinceBuild = mySinceBuild;
-  }
-
   @Override
   @Nullable
   public IdeVersion getUntilBuild() {
     return myUntilBuild;
-  }
-
-  void setUntilBuild(@Nullable IdeVersion myUntilBuild) {
-    this.myUntilBuild = myUntilBuild;
   }
 
   @Override
@@ -118,28 +94,16 @@ public class PluginImpl implements Plugin {
     return myPluginName;
   }
 
-  void setPluginName(@Nullable String myPluginName) {
-    this.myPluginName = myPluginName;
-  }
-
   @Override
   @Nullable
   public String getPluginVersion() {
     return myPluginVersion;
   }
 
-  void setPluginVersion(@Nullable String myPluginVersion) {
-    this.myPluginVersion = myPluginVersion;
-  }
-
   @Nullable
   @Override
   public String getPluginId() {
     return myPluginId;
-  }
-
-  void setPluginId(@Nullable String myPluginId) {
-    this.myPluginId = myPluginId;
   }
 
   @Override
@@ -159,18 +123,10 @@ public class PluginImpl implements Plugin {
     return myDescription;
   }
 
-  void setDescription(@Nullable String myDescription) {
-    this.myDescription = myDescription;
-  }
-
   @Override
   @Nullable
   public String getVendorEmail() {
     return myVendorEmail;
-  }
-
-  void setVendorEmail(@Nullable String myVendorEmail) {
-    this.myVendorEmail = myVendorEmail;
   }
 
   @Override
@@ -179,18 +135,54 @@ public class PluginImpl implements Plugin {
     return myVendorUrl;
   }
 
-  void setVendorUrl(@Nullable String myVendorUrl) {
-    this.myVendorUrl = myVendorUrl;
-  }
-
   @Override
   @Nullable
   public String getUrl() {
     return myUrl;
   }
 
-  void setUrl(@Nullable String myUrl) {
-    this.myUrl = myUrl;
+  void setInfoFromBean(PluginBean bean) {
+    myPluginName = bean.name;
+    myPluginId = bean.id != null ? bean.id : bean.name;
+    myUrl = bean.url;
+    myPluginVersion = bean.pluginVersion != null ? bean.pluginVersion.trim() : null;
+    myDefinedModules.addAll(bean.modules);
+    myExtensions = bean.extensions;
+    myReferencedClasses.addAll(bean.classes);
+
+    mySinceBuild = bean.ideaVersion != null ? IdeVersion.createIdeVersion(bean.ideaVersion.sinceBuild) : null;
+    String untilBuild = bean.ideaVersion != null ? bean.ideaVersion.untilBuild : null;
+    if (!Strings.isNullOrEmpty(untilBuild)) {
+      if (untilBuild.endsWith(".*")) {
+        int idx = untilBuild.lastIndexOf('.');
+        untilBuild = untilBuild.substring(0, idx + 1) + Integer.MAX_VALUE;
+      }
+      myUntilBuild = IdeVersion.createIdeVersion(untilBuild);
+    }
+
+    for(PluginDependencyBean dependencyBean : bean.dependencies) {
+      PluginDependency dependency = new PluginDependencyImpl(dependencyBean);
+      if (dependency.getId().startsWith(INTELLIJ_MODULES_PREFIX)) {
+        myModuleDependencies.add(dependency);
+      } else {
+        myDependencies.add(dependency);
+      }
+
+      if(dependency.isOptional() && dependencyBean.configFile != null){
+        myOptionalConfigFiles.put(dependency, dependencyBean.configFile);
+      }
+    }
+    if (bean.vendor != null) {
+      myPluginVendor = bean.vendor.name.trim();
+      myVendorUrl = bean.vendor.url;
+      myVendorEmail = bean.vendor.email;
+    }
+    if(!StringUtil.isEmptyOrSpaces(bean.changeNotes)) {
+      myNotes = Jsoup.clean(bean.changeNotes.trim(), WHITELIST);
+    }
+    if(!StringUtil.isEmptyOrSpaces(bean.description)) {
+      myDescription = Jsoup.clean(bean.description.trim(), WHITELIST);
+    }
   }
 
   @Override
@@ -219,18 +211,6 @@ public class PluginImpl implements Plugin {
     }
   }
 
-  @Override
-  @Nullable
-  public byte[] getVendorLogo() {
-    return myLogoContent == null ? null : myLogoContent.clone();
-  }
-
-  @Nullable
-  @Override
-  public String getVendorLogoUrl() {
-    return myLogoUrl;
-  }
-
   @NotNull
   @Override
   public Document getUnderlyingDocument() {
@@ -252,30 +232,6 @@ public class PluginImpl implements Plugin {
     return Collections.unmodifiableMap(myOptionalConfigFiles);
   }
 
-  void addExtension(String epName, Element element) {
-    myExtensions.put(epName, element);
-  }
-
-  void addReferencedClass(String className) {
-    myReferencedClasses.add(className);
-  }
-
-  void addModuleDependency(PluginDependency dependency) {
-    myModuleDependencies.add(dependency);
-  }
-
-  void addDependency(PluginDependency dependency) {
-    myDependencies.add(dependency);
-  }
-
-  void addOptionalConfigFile(PluginDependency dependency, String configFile) {
-    myOptionalConfigFiles.put(dependency, configFile);
-  }
-
-  void addDefinedModule(String definedModule) {
-    myDefinedModules.add(definedModule);
-  }
-
   @Override
   public String toString() {
     String id = myPluginId;
@@ -284,9 +240,6 @@ public class PluginImpl implements Plugin {
     }
     if (isEmpty(id)) {
       id = myUrl;
-    }
-    if (isEmpty(id)) {
-      id = myFileName;
     }
     return id + (getPluginVersion() != null ? ":" + getPluginVersion() : "");
   }

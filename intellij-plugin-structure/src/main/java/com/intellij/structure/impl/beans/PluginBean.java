@@ -1,10 +1,11 @@
 package com.intellij.structure.impl.beans;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlSeeAlso;
+import com.google.common.collect.Multimap;
+import org.jdom2.Element;
+
+import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.util.ArrayList;
 import java.util.List;
 
 @XmlSeeAlso(ListItemBean.class)
@@ -18,16 +19,19 @@ public class PluginBean {
   @XmlElement(name = "vendor") public PluginVendorBean vendor;
   @XmlElement(name = "idea-version") public IdeaVersionBean ideaVersion;
   @XmlElement(name = "is-internal") public boolean isInternal = true;
-  @XmlElement(name = "depends") public List<PluginDependencyBean> dependencies;
-  @XmlElement(name = "helpset") public List<PluginHelpSetBean> helpSets;
+  @XmlElement(name = "depends") public List<PluginDependencyBean> dependencies = new ArrayList<PluginDependencyBean>();
+  @XmlElement(name = "helpset") public List<PluginHelpSetBean> helpSets = new ArrayList<PluginHelpSetBean>();
   @XmlElement(name = "category") public String category;
   @XmlElement(name = "resource-bundle") public String resourceBundle;
   @XmlElement(name = "change-notes") public String changeNotes;
-  @XmlAttribute(name = "url") public String url;
+  @XmlAttribute(name = "url") public String url = "";
   @XmlAttribute(name = "use-idea-classloader") public boolean useIdeaClassLoader;
   @XmlAttribute(name = "allow-bundled-update") public boolean allowBundledUpdate;
 
   @XmlElement(name = "module")
   @XmlJavaTypeAdapter(ListItemAdapter.class)
-  private List<String> modules;
+  public List<String> modules = new ArrayList<String>();
+
+  @XmlTransient public Multimap<String, Element> extensions;
+  @XmlTransient public List<String> classes;
 }

@@ -6,6 +6,9 @@ import com.intellij.structure.impl.utils.BiAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Sergey Patrikeev
  */
@@ -31,11 +34,9 @@ public class PluginXmlValidator extends Validator {
     switch (event) {
       case MULTIPLE_CONFIG_FILE:
       case MISSING_DEPENDENCY:
-      case MISSING_LOGO:
         return warningReportingAction;
       default:
         return errorReportingAction;
     }
   }
-
 }

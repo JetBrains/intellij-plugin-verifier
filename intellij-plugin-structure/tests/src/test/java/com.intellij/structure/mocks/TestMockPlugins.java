@@ -40,10 +40,6 @@ public class TestMockPlugins {
     assertEquals("Kotlin", plugin.getPluginName());
     assertEquals("1.0.0-beta-1038-IJ141-17", plugin.getPluginVersion());
 
-    assertEquals("/icons/plugin.png", plugin.getVendorLogoUrl());
-    assertNotNull(plugin.getVendorLogo());
-    assertEquals(1, plugin.getVendorLogo().length);
-
     assertEquals("vendor_email", plugin.getVendorEmail());
     assertEquals("http://www.jetbrains.com", plugin.getVendorUrl());
     assertEquals("JetBrains s.r.o.", plugin.getVendor());

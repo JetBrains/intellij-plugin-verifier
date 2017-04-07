@@ -1,6 +1,9 @@
 package com.intellij.structure.impl.utils.validators;
 
+import com.google.common.base.Strings;
 import com.intellij.structure.domain.PluginProblem;
+import com.intellij.structure.impl.beans.PluginBean;
+import com.intellij.structure.impl.beans.PluginDependencyBean;
 import com.intellij.structure.impl.utils.BiAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -8,11 +11,51 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.structure.impl.utils.StringUtil.isEmpty;
+
 /**
  * @author Sergey Patrikeev
  */
 public abstract class Validator {
   protected List<PluginProblem> myProblems = new ArrayList<PluginProblem>();
+
+  public void validateBean(@Nullable PluginBean bean, @NotNull String fileName) {
+    if(bean == null){
+      return;
+    }
+
+    if (Strings.isNullOrEmpty(bean.name)) {
+      onMissingConfigElement("Invalid " + fileName + ": 'name' is not specified");
+    }
+
+    if (bean.pluginVersion == null) {
+      onMissingConfigElement("Invalid " + fileName + ": version is not specified");
+    }
+
+    if (bean.vendor == null) {
+      onMissingConfigElement("Invalid " + fileName + ": element 'vendor' is not found");
+    }
+
+    if (bean.ideaVersion == null) {
+      onMissingConfigElement("Invalid " + fileName + ": element 'idea-version' not found");
+    }
+
+    if (isEmpty(bean.description)) {
+      onMissingConfigElement("Invalid file: description is empty");
+    }
+
+    for (PluginDependencyBean dependencyBean : bean.dependencies) {
+      if (dependencyBean.pluginId == null) {
+        onIncorrectStructure("Invalid plugin.xml: invalid dependency tag " + dependencyBean);
+      }
+    }
+
+    for (String module : bean.modules) {
+      if (module == null) {
+        onIncorrectStructure("Invalid <module> tag: value is not specified");
+      }
+    }
+  }
 
   private void performAction(@NotNull Event event, @NotNull String message, @Nullable Throwable cause) {
     BiAction<String, Throwable> action = supplyAction(event);
@@ -29,10 +72,6 @@ public abstract class Validator {
     performAction(Event.MISSING_FILE, message, null);
   }
 
-  public void onMissingLogo(@NotNull String message) throws RuntimeException {
-    performAction(Event.MISSING_LOGO, message, null);
-  }
-
   public void onMissingDependency(@NotNull String message) throws RuntimeException{
     performAction(Event.MISSING_DEPENDENCY, message, null);
   }
@@ -47,6 +86,13 @@ public abstract class Validator {
 
   public void onCheckedException(@NotNull String message, @NotNull Exception cause) throws RuntimeException {
     performAction(Event.CHECKED_EXCEPTION, message, cause);
+  }
+
+  public boolean hasErrors() {
+    for(PluginProblem problem : getProblems()) {
+      if(problem.getLevel() == PluginProblem.Level.ERROR) return true;
+    }
+    return false;
   }
 
   @Nullable
@@ -73,9 +119,10 @@ public abstract class Validator {
     return createIgnoringValidator(Event.MISSING_CONFIG_ELEMENT);
   }
 
+  @NotNull
   public List<PluginProblem> getProblems() {
     return myProblems;
-  }
+  };
 
 
   enum Event {
@@ -84,8 +131,7 @@ public abstract class Validator {
     CHECKED_EXCEPTION,
     MISSING_CONFIG_ELEMENT,
     MISSING_DEPENDENCY,
-    MULTIPLE_CONFIG_FILE,
-    MISSING_LOGO
+    MULTIPLE_CONFIG_FILE
   }
 
 }
