@@ -1,6 +1,6 @@
 buildscript {
 
-  ext.kotlin_version = '1.0.5'
+  ext.kotlin_version = '1.1.1'
 
   repositories {
     jcenter()
@@ -12,7 +12,7 @@ buildscript {
   }
 }
 
-def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.69'
+def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.71'
 def intellijStructureVersion = '1.37'
 
 
@@ -25,9 +25,6 @@ configure(allprojects) {
 
   version = verifierVersion
 
-  println("Configuring project ${it.name}:${it.version}")
-
-
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
 
@@ -35,7 +32,7 @@ configure(allprojects) {
 
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile 'com.github.salomonbrys.kotson:kotson:2.4.0'
-    
+
     //plugin structure API
     compile(group: 'org.jetbrains.intellij.plugins', name: 'intellij-plugin-structure', version: intellijStructureVersion, ext: 'jar', classifier: 'all')
 
@@ -57,6 +54,9 @@ configure(allprojects) {
       url "http://dl.bintray.com/jetbrains/intellij-plugin-service"
     }
   }
+}
+
+configure(childProjects.values()) {
 
   task sourcesJar(type: Jar) {
     classifier = 'sources'
