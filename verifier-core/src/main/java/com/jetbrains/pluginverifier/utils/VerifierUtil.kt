@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.utils
 
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.Location
 import com.jetbrains.pluginverifier.problems.AccessType
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
@@ -9,8 +8,10 @@ import com.jetbrains.pluginverifier.problems.IllegalClassAccessProblem
 import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.warnings.Warning
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
+import org.jetbrains.intellij.plugins.internal.asm.Type
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
+import org.jetbrains.intellij.plugins.internal.asm.tree.LocalVariableNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 import org.slf4j.LoggerFactory
 
@@ -31,8 +32,8 @@ object VerifierUtil {
    *  3) Finally, access permissions to C are checked.
    *  If C is not accessible (§5.4.4) to D, class or interface resolution throws an IllegalAccessError.
    */
-  private fun resolveClass(resolver: Resolver, className: String, lookup: ClassNode, ctx: VContext): ClsResolution {
-    if (ctx.verifierOptions.isExternalClass(className)) {
+  private fun resolveClass(resolver: Resolver, className: String, lookup: ClassNode, ctx: VerificationContext): ClsResolution {
+    if (ctx.verifierParams.isExternalClass(className)) {
       return ClsResolution.ExternalClass
     }
     val node = findClassNode(resolver, className, ctx)
@@ -49,7 +50,7 @@ object VerifierUtil {
   fun resolveClassOrProblem(resolver: Resolver,
                             className: String,
                             lookup: ClassNode,
-                            ctx: VContext,
+                            ctx: VerificationContext,
                             lookupLocation: (() -> Location)): ClassNode? {
     val resolution = resolveClass(resolver, className, lookup, ctx)
     return when (resolution) {
@@ -66,9 +67,23 @@ object VerifierUtil {
     }
   }
 
+  @Suppress("UNCHECKED_CAST")
+  fun getParameterNames(method: MethodNode): List<String> {
+    val arguments = Type.getArgumentTypes(method.desc)
+    val argumentsNumber = arguments.size
+    val offset = if (VerifierUtil.isStatic(method)) 0 else 1
+    var parameterNames: List<String> = emptyList()
+    if (method.localVariables != null) {
+      parameterNames = (method.localVariables as List<LocalVariableNode>).map { it.name }.drop(offset).take(argumentsNumber)
+    }
+    if (parameterNames.size != argumentsNumber) {
+      parameterNames = (0..argumentsNumber - 1).map { "arg$it" }
+    }
+    return parameterNames
+  }
 
-  fun checkClassExistsOrExternal(resolver: Resolver, className: String, ctx: VContext, registerMissing: (() -> Location)) {
-    if (!ctx.verifierOptions.isExternalClass(className) && !resolver.containsClass(className)) {
+  fun checkClassExistsOrExternal(resolver: Resolver, className: String, ctx: VerificationContext, registerMissing: (() -> Location)) {
+    if (!ctx.verifierParams.isExternalClass(className) && !resolver.containsClass(className)) {
       ctx.registerProblem(ClassNotFoundProblem(ClassReference(className), registerMissing.invoke()))
     }
   }
@@ -81,7 +96,7 @@ object VerifierUtil {
    * @param ctx       context to report a problem of missing class to
    * @return null if not found or exception occurs (in the last case 'failed to read' warning is reported)
    */
-  private fun findClassNode(resolver: Resolver, className: String, ctx: VContext): ClassNode? {
+  private fun findClassNode(resolver: Resolver, className: String, ctx: VerificationContext): ClassNode? {
     try {
       return resolver.findClass(className)
     } catch (e: Exception) {
@@ -213,7 +228,7 @@ object VerifierUtil {
                 secondOwner: ClassNode,
                 secondMethod: MethodNode,
                 resolver: Resolver,
-                ctx: VContext): Boolean {
+                ctx: VerificationContext): Boolean {
     if (firstOwner.name == secondOwner.name && firstMethod.name == secondMethod.name && firstMethod.desc == secondMethod.desc) {
       //the same
       return true
@@ -228,7 +243,7 @@ object VerifierUtil {
         && isAccessible
   }
 
-  fun isSubclassOf(child: ClassNode, possibleParent: ClassNode, resolver: Resolver, ctx: VContext): Boolean {
+  fun isSubclassOf(child: ClassNode, possibleParent: ClassNode, resolver: Resolver, ctx: VerificationContext): Boolean {
     var current: ClassNode? = child
     while (current != null) {
       if (possibleParent.name == current.name) {

@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers
 
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.api.VContext
+import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.InheritFromFinalClassVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier
@@ -15,13 +15,7 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 
-val VERIFIERS: List<Verifier> = listOf<Verifier>(ReferencesVerifier)
-
-abstract class Verifier() {
-  abstract fun verify(ctx: VContext, classesToCheck: Resolver, classLoader: Resolver)
-}
-
-object ReferencesVerifier : Verifier() {
+class ReferencesVerifier(val ctx: VerificationContext) {
 
   private val fieldVerifiers = arrayOf<FieldVerifier>(FieldTypeVerifier())
 
@@ -49,16 +43,16 @@ object ReferencesVerifier : Verifier() {
       FieldAccessInstructionVerifier()
   )
 
-  /**
-   * @throws InterruptedException if the verification was cancelled
-   */
-  @Throws(InterruptedException::class)
-  override fun verify(ctx: VContext, classesToCheck: Resolver, classLoader: Resolver) {
-    classesToCheck.allClasses.forEach {
+  fun verify(classesToCheck: Set<String>, classLoader: Resolver) {
+    classesToCheck.forEach {
       if (Thread.currentThread().isInterrupted) {
         throw InterruptedException("The verification was cancelled")
       }
-      val node = classesToCheck.findClass(it)
+      val node = try {
+        classLoader.findClass(it)
+      } catch (e: Exception) {
+        null
+      }
       if (node != null) {
         verifyClass(classLoader, node, ctx)
       }
@@ -66,7 +60,7 @@ object ReferencesVerifier : Verifier() {
   }
 
   @Suppress("UNCHECKED_CAST")
-  private fun verifyClass(classLoader: Resolver, node: ClassNode, ctx: VContext) {
+  private fun verifyClass(classLoader: Resolver, node: ClassNode, ctx: VerificationContext) {
     for (verifier in classVerifiers) {
       verifier.verify(node, classLoader, ctx)
     }
@@ -77,10 +71,7 @@ object ReferencesVerifier : Verifier() {
         verifier.verify(node, method, classLoader, ctx)
       }
 
-      val instructions = method.instructions
-      val i = instructions.iterator()
-      while (i.hasNext()) {
-        val instruction = i.next()
+      method.instructions.iterator().forEach { instruction ->
         for (verifier in instructionVerifiers) {
           verifier.verify(node, method, instruction as AbstractInsnNode, classLoader, ctx)
         }
