@@ -6,9 +6,6 @@ import com.jetbrains.pluginverifier.format.UpdateInfo
 import java.io.File
 import java.io.IOException
 
-/**
- * @author Sergey Evdokimov
- */
 interface PluginRepository {
 
   @Throws(IOException::class)
@@ -21,17 +18,17 @@ interface PluginRepository {
   fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo>
 
   @Throws(IOException::class)
-  fun getPluginFile(updateId: Int): IFileLock?
+  fun getPluginFile(updateId: Int): FileLock?
 
   @Throws(IOException::class)
-  fun getPluginFile(update: UpdateInfo): IFileLock?
+  fun getPluginFile(update: UpdateInfo): FileLock?
 
   @Throws(IOException::class)
   fun getUpdateInfoById(updateId: Int): UpdateInfo
 
 }
 
-interface IFileLock {
+interface FileLock {
 
   fun getFile(): File
 
@@ -39,7 +36,7 @@ interface IFileLock {
 
 }
 
-data class IdleFileLock(val content: File) : IFileLock {
+data class IdleFileLock(val content: File) : FileLock {
   override fun getFile(): File = content
 
   override fun release() {

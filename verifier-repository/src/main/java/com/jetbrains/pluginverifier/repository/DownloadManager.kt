@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit
 @ThreadSafe
 object DownloadManager {
 
-  private data class FileLock(val locked: File, val id: Long, val lockDate: Long) : IFileLock {
+  private data class FileLockImpl(val locked: File, val id: Long, val lockDate: Long) : FileLock {
     override fun getFile(): File = locked
 
     override fun release() {
@@ -70,7 +70,7 @@ object DownloadManager {
 
   private val locksAcquired: MutableMap<File, Int> = hashMapOf()
 
-  private val busyLocks: MutableMap<Long, FileLock> = hashMapOf()
+  private val busyLocks: MutableMap<Long, FileLockImpl> = hashMapOf()
 
   //it is not used yet
   private val deleteQueue: MutableSet<File> = hashSetOf()
@@ -138,17 +138,17 @@ object DownloadManager {
   }
 
   @Synchronized
-  private fun registerLock(pluginFile: File): IFileLock {
+  private fun registerLock(pluginFile: File): FileLock {
     val id = nextId++
     val cnt = locksAcquired.getOrPut(pluginFile, { 0 })
     locksAcquired.put(pluginFile, cnt + 1)
-    val lock = FileLock(pluginFile, id, System.currentTimeMillis())
+    val lock = FileLockImpl(pluginFile, id, System.currentTimeMillis())
     busyLocks.put(id, lock)
     return lock
   }
 
   @Synchronized
-  private fun releaseLock(lock: FileLock) {
+  private fun releaseLock(lock: FileLockImpl) {
     if (busyLocks.containsKey(lock.id)) {
       busyLocks.remove(lock.id)
       val cnt = locksAcquired[lock.locked]!!
@@ -269,7 +269,7 @@ object DownloadManager {
   }
 
   @Throws(IOException::class)
-  fun getOrLoadUpdate(updateId: Int): IFileLock? {
+  fun getOrLoadUpdate(updateId: Int): FileLock? {
     var pluginFile = getCachedFile(updateId)
 
     if (pluginFile == null || pluginFile.length() < BROKEN_FILE_THRESHOLD_BYTES) {
