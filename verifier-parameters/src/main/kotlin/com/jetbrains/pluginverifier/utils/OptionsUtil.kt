@@ -1,25 +1,18 @@
 package com.jetbrains.pluginverifier.utils
 
 import com.google.common.collect.HashMultimap
-import com.google.common.collect.ImmutableMultimap
 import com.google.common.collect.Multimap
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeManager
 import com.intellij.structure.domain.IdeVersion
-import com.intellij.structure.domain.Plugin
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.api.VOptions
-import com.jetbrains.pluginverifier.api.VProblemsFilter
-import com.jetbrains.pluginverifier.location.ProblemLocation
-import com.jetbrains.pluginverifier.output.VPrinterOptions
-import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.api.IdeDescriptor
+import com.jetbrains.pluginverifier.api.ProblemsFilter
+import com.jetbrains.pluginverifier.output.PrinterOptions
 import com.sampullara.cli.Argument
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
-import java.io.IOException
 import java.nio.file.Files
 import java.util.regex.Pattern
 
@@ -79,15 +72,20 @@ open class CmdOpts(
 
 ) : PublicOpts()
 
-object CmdUtil {
+object OptionsUtil {
 
+  fun parsePrinterOptions(opts: CmdOpts): PrinterOptions = PrinterOptions(opts.ignoreAllMissingOptionalDeps, opts.ignoreMissingOptionalDeps.toList())
 
-  @Throws(IOException::class)
   fun createIde(ideToCheck: File, opts: CmdOpts): Ide {
     return IdeManager.getInstance().createIde(ideToCheck, takeVersionFromCmd(opts))
   }
 
-  @Throws(IOException::class)
+  fun createIdeDescriptor(ideToCheck: File, opts: CmdOpts): IdeDescriptor.ByInstance {
+    val ide = createIde(ideToCheck, opts)
+    val ideResolver = Resolver.createIdeResolver(ide)
+    return IdeDescriptor.ByInstance(ide, ideResolver)
+  }
+
   fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {
     val build = opts.actualIdeVersion
     if (!build.isNullOrBlank()) {
@@ -101,7 +99,6 @@ object CmdUtil {
     return null
   }
 
-  @Throws(IOException::class)
   fun getJdkDir(opts: CmdOpts): File {
     val runtimeDirectory: File
 
@@ -122,21 +119,13 @@ object CmdUtil {
     return runtimeDirectory
   }
 
-  @Throws(IOException::class)
   fun getExternalClassPath(opts: CmdOpts): Resolver =
       Resolver.createUnionResolver("External classpath resolver: ${opts.externalClasspath}",
           opts.externalClasspath.map { Resolver.createJarResolver(File(it)) })
 
+  fun getExternalClassesPrefixes(opts: CmdOpts): List<String> = opts.externalClassesPrefixes.map { it.replace('.', '/') }
 
-}
-
-object VOptionsUtil {
-
-  @JvmStatic
-  fun parsePrinterOptions(opts: CmdOpts): VPrinterOptions = VPrinterOptions(opts.ignoreAllMissingOptionalDeps, opts.ignoreMissingOptionalDeps.toList())
-
-  @JvmStatic
-  fun parseOpts(opts: CmdOpts): VOptions {
+  fun getProblemsFilter(opts: CmdOpts): ProblemsFilter {
 
     var problemsToIgnore: Multimap<Pair<String, String>, Pattern> = HashMultimap.create<Pair<String, String>, Pattern>()
 
@@ -154,57 +143,13 @@ object VOptionsUtil {
       }
     }
 
-    return VOptions(opts.externalClassesPrefixes.map { it.replace('.', '/') }.toSet(), IgnoredProblemsFilter(problemsToIgnore, saveIgnoredProblemsFile))
-  }
-
-  private class IgnoredProblemsFilter(val problemsToIgnore: Multimap<Pair<String, String>, Pattern> = ImmutableMultimap.of(),
-                                      val saveIgnoredProblemsFile: File?) : VProblemsFilter {
-
-    private val LOG: Logger = LoggerFactory.getLogger(IgnoredProblemsFilter::class.java)
-
-    override fun isRelevantProblem(plugin: Plugin, problem: Problem, problemLocation: ProblemLocation): Boolean = !isIgnoredProblem(plugin, problem, problemLocation)
-
-    private fun isIgnoredProblem(plugin: Plugin, problem: Problem, problemLocation: ProblemLocation): Boolean {
-      val xmlId = plugin.pluginId
-      val version = plugin.pluginVersion
-      for ((key, ignoredPattern) in problemsToIgnore.entries()) {
-        val ignoreXmlId = key.first
-        val ignoreVersion = key.second
-
-        if (xmlId == ignoreXmlId) {
-          if (ignoreVersion.isEmpty() || version == ignoreVersion) {
-            val regex = ignoredPattern.toRegex()
-            if (problem.getDescription().matches(regex)) {
-              appendToIgnoredProblemsFileOrLog(plugin, problem, problemLocation, regex)
-              return true
-            }
-          }
-        }
-      }
-      return false
-    }
-
-    private fun appendToIgnoredProblemsFileOrLog(plugin: Plugin, problem: Problem, problemLocation: ProblemLocation, regex: Regex) {
-      val ap = "Problem of the plugin $plugin was ignored by the ignoring pattern: ${regex.pattern}:\n" +
-          "#" + problem.getDescription() + "\n" +
-          "  at " + problemLocation.toString()
-
-      if (saveIgnoredProblemsFile != null) {
-        try {
-          saveIgnoredProblemsFile.appendText(ap)
-        } catch (e: Exception) {
-          LOG.error("Unable to append the ignored problem to file $saveIgnoredProblemsFile", e)
-        }
-      } else {
-        LOG.info(ap)
-      }
-    }
+    return IgnoredProblemsFilter(problemsToIgnore, saveIgnoredProblemsFile)
   }
 
   /**
    * @return _(pluginXmlId, version)_ -> to be ignored _problem pattern_
    */
-  fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): Multimap<Pair<String, String>, Pattern> {
+  private fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): Multimap<Pair<String, String>, Pattern> {
     val file = File(ignoreProblemsFile)
     if (!file.exists()) {
       throw IllegalArgumentException("Ignored problems file doesn't exist " + ignoreProblemsFile)

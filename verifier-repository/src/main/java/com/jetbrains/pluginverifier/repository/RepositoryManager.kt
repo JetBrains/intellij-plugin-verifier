@@ -69,12 +69,12 @@ object RepositoryManager : PluginRepository {
   }
 
   @Throws(IOException::class)
-  override fun getPluginFile(update: UpdateInfo): IFileLock? {
+  override fun getPluginFile(update: UpdateInfo): FileLock? {
     return getPluginFile(update.updateId)
   }
 
   @Throws(IOException::class)
-  override fun getPluginFile(updateId: Int): IFileLock? {
+  override fun getPluginFile(updateId: Int): FileLock? {
     return DownloadManager.getOrLoadUpdate(updateId)
   }
 
