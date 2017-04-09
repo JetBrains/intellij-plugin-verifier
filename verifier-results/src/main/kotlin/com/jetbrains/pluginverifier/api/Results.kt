@@ -1,0 +1,76 @@
+package com.jetbrains.pluginverifier.api
+
+import com.google.gson.annotations.SerializedName
+import com.intellij.structure.domain.IdeVersion
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.format.UpdateInfo
+import com.jetbrains.pluginverifier.misc.pluralize
+import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.warnings.Warning
+
+data class PluginInfo(@SerializedName("pluginId") val pluginId: String,
+                      @SerializedName("version") val version: String,
+                      @SerializedName("updateInfo") val updateInfo: UpdateInfo?)
+
+data class Result(@SerializedName("plugin") val plugin: PluginInfo,
+                  @SerializedName("ideVersion") val ideVersion: IdeVersion,
+                  @SerializedName("verdict") val verdict: Verdict)
+
+sealed class Verdict {
+  /**
+   * Indicates that the Plugin doesn't have compatibility problems with the checked IDE.
+   */
+  class OK(@SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph) : Verdict() {
+    override fun toString() = "OK"
+  }
+
+  /**
+   * The plugin has minor problems listed in [warnings].
+   */
+  class Warnings(@SerializedName("warnings") val warnings: Set<Warning>,
+                 @SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph) : Verdict() {
+    override fun toString(): String = "Found ${warnings.size} " + "warning".pluralize(warnings.size)
+  }
+
+  /**
+   * The plugin has some dependencies which were not found during the verification.
+   * Look at the [dependenciesGraph] for details.
+   *
+   * Note: some of the problems might be caused by the missing dependencies (unresolved classes etc.).
+   * Also the [problems] might be empty if the missed dependencies don't affect the compatibility with the IDE.
+   */
+  class MissingDependencies(@SerializedName("problems") val problems: Set<Problem>,
+                            @SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph,
+                            @SerializedName("warnings") val warnings: Set<Warning>) : Verdict() {
+    override fun toString(): String = "Missing plugins and modules dependencies: ${dependenciesGraph.getMissingDependencies().map { it.missingDependency }.joinToString()}"
+  }
+
+  /**
+   * The Plugin has compatibility problems with the IDE. They are listed in the [problems].
+   */
+  class Problems(@SerializedName("problems") val problems: Set<Problem>,
+                 @SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph,
+                 @SerializedName("warnings") val warnings: Set<Warning>) : Verdict() {
+    override fun toString(): String = "Found ${problems.size} compatibility " + "problem".pluralize(problems.size)
+  }
+
+  /**
+   * The Plugin has a completely incorrect structure (missing plugin.xml, broken class-files, etc...)
+   * The [reason] is a user-friendly description of the problem.
+   */
+  class Bad(@SerializedName("reason") val reason: String) : Verdict() {
+    override fun toString(): String = "Plugin is invalid: $reason"
+  }
+
+  /**
+   * The plugin is not found during the verification.
+   * Look at [reason] for details
+   */
+  class NotFound(@SerializedName("reason") val reason: String) : Verdict() {
+    override fun toString(): String = "Plugin is not found: $reason"
+  }
+
+
+}
+
+
