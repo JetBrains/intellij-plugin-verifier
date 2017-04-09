@@ -4,7 +4,7 @@ import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.IdeVersion
-import com.jetbrains.pluginverifier.dependencies.MissingPlugin
+import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.report.CheckIdeReport
@@ -15,7 +15,7 @@ import com.jetbrains.pluginverifier.report.CheckIdeReport
 data class CheckTrunkApiResults(@SerializedName("majorReport") val majorReport: CheckIdeReport,
                                 @SerializedName("majorPlugins") val majorPlugins: BundledPlugins,
                                 @SerializedName("currentReport") val currentReport: CheckIdeReport,
-                                @SerializedName("currentPlugins") val currentPlugins: BundledPlugins) : Results
+                                @SerializedName("currentPlugins") val currentPlugins: BundledPlugins) : ConfigurationResults
 
 data class BundledPlugins(@SerializedName("pluginIds") val pluginIds: List<String>,
                           @SerializedName("moduleIds") val moduleIds: List<String>)
@@ -23,7 +23,7 @@ data class BundledPlugins(@SerializedName("pluginIds") val pluginIds: List<Strin
 data class CheckTrunkApiCompareResult(@SerializedName("curVersion") val currentVersion: IdeVersion,
                                       @SerializedName("majorVersion") val majorVersion: IdeVersion,
                                       @SerializedName("newProblems") val newProblems: Multimap<UpdateInfo, Problem>,
-                                      @SerializedName("newMissingProblems") val newMissingProblems: Multimap<MissingPlugin, UpdateInfo>) {
+                                      @SerializedName("newMissingProblems") val newMissingProblems: Multimap<MissingDependency, UpdateInfo>) {
   companion object {
     fun create(apiResults: CheckTrunkApiResults): CheckTrunkApiCompareResult {
       val oldProblems = apiResults.majorReport.pluginProblems.values().toSet()

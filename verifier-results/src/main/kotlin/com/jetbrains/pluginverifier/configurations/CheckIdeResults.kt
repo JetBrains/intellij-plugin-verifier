@@ -3,8 +3,8 @@ package com.jetbrains.pluginverifier.configurations
 import com.google.common.collect.Multimap
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.IdeVersion
-import com.jetbrains.pluginverifier.api.VResult
-import com.jetbrains.pluginverifier.api.VResults
+import com.jetbrains.pluginverifier.api.Result
+import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.output.*
 import com.jetbrains.pluginverifier.utils.ParametersListUtil
@@ -25,9 +25,9 @@ data class MissingCompatibleUpdate(val pluginId: String, val ideVersion: IdeVers
 }
 
 data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
-                           @SerializedName("results") val vResults: VResults,
+                           @SerializedName("results") val results: List<Result>,
                            @SerializedName("excludedPlugins") val excludedPlugins: Multimap<String, String>,
-                           @SerializedName("noUpdatesProblems") val noCompatibleUpdatesProblems: List<MissingCompatibleUpdate>) : Results {
+                           @SerializedName("noUpdatesProblems") val noCompatibleUpdatesProblems: List<MissingCompatibleUpdate>) : ConfigurationResults {
 
   fun dumbBrokenPluginsList(dumpBrokenPluginsFile: File) {
     PrintWriter(dumpBrokenPluginsFile.create()).use { out ->
@@ -35,7 +35,7 @@ data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVers
           "// Each line contains plugin ID and list of versions that are broken.\n" +
           "// If plugin name or version contains a space you can quote it like in command line.\n")
 
-      val brokenPlugins = vResults.results.filterNot { it is VResult.Nice }.map { it.pluginDescriptor }.map { it.pluginId to it.version }.distinct()
+      val brokenPlugins = results.filterNot { it.verdict is Verdict.OK }.map { it.plugin }.map { it.pluginId to it.version }.distinct()
       brokenPlugins.groupBy { it.first }.forEach {
         out.print(ParametersListUtil.join(listOf(it.key)))
         out.print("    ")
@@ -44,22 +44,24 @@ data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVers
     }
   }
 
-  fun saveToHtmlFile(htmlFile: File, vPrinterOptions: VPrinterOptions) {
-    HtmlVPrinter(ideVersion, { x -> excludedPlugins.containsEntry(x.first, x.second) }, htmlFile.create()).printResults(vResults, vPrinterOptions)
+  fun saveToHtmlFile(htmlFile: File, vPrinterOptions: PrinterOptions) {
+    HtmlVPrinter(ideVersion, { x -> excludedPlugins.containsEntry(x.first, x.second) }, htmlFile.create()).printResults(results, vPrinterOptions)
   }
 
-  fun printTcLog(groupBy: TeamCityVPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: VPrinterOptions) {
+  fun printTcLog(groupBy: TeamCityVPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: PrinterOptions) {
     val tcLog = TeamCityLog(System.out)
     val vPrinter = TeamCityVPrinter(tcLog, groupBy)
-    vPrinter.printResults(vResults, vPrinterOptions)
+    vPrinter.printResults(results, vPrinterOptions)
     vPrinter.printNoCompatibleUpdatesProblems(noCompatibleUpdatesProblems)
     if (setBuildStatus) {
-      val totalProblemsNumber: Int = vResults.results.flatMap {
-        when (it) {
-          is VResult.Nice -> setOf()
-          is VResult.Problems -> it.problems.keySet() //some problems might be caused by missing dependencies
-          is VResult.BadPlugin -> setOf(Any())
-          is VResult.NotFound -> setOf()
+      val totalProblemsNumber: Int = results.flatMap {
+        when (it.verdict) {
+          is Verdict.OK -> emptySet()
+          is Verdict.Warnings -> emptySet()
+          is Verdict.Problems -> it.verdict.problems //some problems might be caused by missing dependencies
+          is Verdict.Bad -> setOf(Any())
+          is Verdict.NotFound -> emptySet()
+          is Verdict.MissingDependencies -> emptySet()
         }
       }.distinct().size
       if (totalProblemsNumber > 0) {
@@ -71,9 +73,9 @@ data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVers
     }
   }
 
-  fun printOnStdOut(vPrinterOptions: VPrinterOptions) {
+  fun printOnStdOut(vPrinterOptions: PrinterOptions) {
     val printWriter = PrintWriter(System.out)
-    WriterVPrinter(printWriter).printResults(vResults, vPrinterOptions)
+    WriterVPrinter(printWriter).printResults(results, vPrinterOptions)
     printWriter.flush()
   }
 

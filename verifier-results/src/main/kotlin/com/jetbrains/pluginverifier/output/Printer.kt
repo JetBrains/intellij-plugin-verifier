@@ -1,16 +1,16 @@
 package com.jetbrains.pluginverifier.output
 
 import com.intellij.structure.domain.PluginDependency
-import com.jetbrains.pluginverifier.api.VResults
+import com.jetbrains.pluginverifier.api.Result
 
 /**
  * @author Sergey Patrikeev
  */
-interface VPrinter {
-  fun printResults(results: VResults, options: VPrinterOptions)
+interface Printer {
+  fun printResults(results: List<Result>, options: PrinterOptions)
 }
 
-data class VPrinterOptions(private val ignoreAllMissingOptionalDeps: Boolean = false, val ignoreMissingOptionalDeps: List<String> = emptyList()) {
+data class PrinterOptions(private val ignoreAllMissingOptionalDeps: Boolean, val ignoreMissingOptionalDeps: List<String>) {
 
   fun ignoreMissingOptionalDependency(dependency: PluginDependency): Boolean = ignoreAllMissingOptionalDeps || ignoreMissingOptionalDeps.any { it == dependency.id }
 

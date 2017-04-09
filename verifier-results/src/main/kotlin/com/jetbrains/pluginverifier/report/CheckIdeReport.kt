@@ -7,10 +7,9 @@ import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.IdeVersion
-import com.jetbrains.pluginverifier.api.PluginDescriptor
-import com.jetbrains.pluginverifier.api.VResult
-import com.jetbrains.pluginverifier.api.VResults
-import com.jetbrains.pluginverifier.dependencies.MissingPlugin
+import com.jetbrains.pluginverifier.api.Result
+import com.jetbrains.pluginverifier.api.Verdict
+import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.persistence.CompactJson
 import com.jetbrains.pluginverifier.persistence.multimapFromMap
@@ -21,7 +20,7 @@ import java.io.File
 private data class CheckIdeReportCompact(@SerializedName("ideVersion") val ideVersion: IdeVersion,
                                          @SerializedName("pluginProblems") val pluginProblems: Multimap<UpdateInfo, Int>,
                                          @SerializedName("problems") val problems: List<Problem>,
-                                         @SerializedName("missing") val missingPlugins: Multimap<MissingPlugin, UpdateInfo>)
+                                         @SerializedName("missing") val missingPlugins: Multimap<MissingDependency, UpdateInfo>)
 
 internal val checkIdeReportSerializer = jsonSerializer<CheckIdeReport> {
   val problemToId = it.src.pluginProblems.values().distinct().mapIndexed { i, problem -> problem to i }.associateBy({ it.first }, { it.second })
@@ -46,24 +45,24 @@ internal val checkIdeReportDeserializer = jsonDeserializer<CheckIdeReport> {
  */
 data class CheckIdeReport(@SerializedName("ideVersion") val ideVersion: IdeVersion,
                           @SerializedName("pluginProblems") val pluginProblems: Multimap<UpdateInfo, Problem>,
-                          @SerializedName("missingPlugins") val missingPlugins: Multimap<MissingPlugin, UpdateInfo>) {
+                          @SerializedName("missingPlugins") val missingPlugins: Multimap<MissingDependency, UpdateInfo>) {
   fun saveToFile(file: File) {
     file.writeText(CompactJson.toJson(this))
   }
 
   companion object {
 
-    fun createReport(ideVersion: IdeVersion, results: VResults): CheckIdeReport {
-      val pluginResults: Map<UpdateInfo, VResult.Problems> = results.results
-          .filter { ideVersion == it.ideDescriptor.ideVersion }
-          .filterIsInstance(VResult.Problems::class.java)
-          .filter { it.pluginDescriptor is PluginDescriptor.ByUpdateInfo }
-          .associateBy({ (it.pluginDescriptor as PluginDescriptor.ByUpdateInfo).updateInfo })
+    fun createReport(ideVersion: IdeVersion, results: List<Result>): CheckIdeReport {
+      val pluginResults: Map<UpdateInfo, Result> = results
+          .filter { ideVersion == it.ideVersion }
+          .filter { it.verdict is Verdict.Problems }
+          .filter { it.plugin.updateInfo != null }
+          .associateBy({ it.plugin.updateInfo!! })
 
-      val pluginToMissing = pluginResults.mapValues { it.value.dependenciesGraph.vertices.flatMap { it.missingDependencies.keys.map { MissingPlugin(it.id) } }.distinct() }.multimapFromMap()
-      val missingPlugins: Multimap<MissingPlugin, UpdateInfo> = Multimaps.invertFrom(pluginToMissing, ArrayListMultimap.create())
+      val pluginToMissing: Multimap<UpdateInfo, MissingDependency> = pluginResults.mapValues { (it.value.verdict as Verdict.Problems).dependenciesGraph.vertices.flatMap { it.missingDependencies }.distinct() }.multimapFromMap()
+      val missingPlugins: Multimap<MissingDependency, UpdateInfo> = Multimaps.invertFrom(pluginToMissing, ArrayListMultimap.create())
 
-      val pluginProblems = pluginResults.mapValues { it.value.problems.keySet() }.multimapFromMap()
+      val pluginProblems = pluginResults.mapValues { (it.value.verdict as Verdict.Problems).problems }.multimapFromMap()
       return CheckIdeReport(ideVersion, pluginProblems, missingPlugins)
     }
 
