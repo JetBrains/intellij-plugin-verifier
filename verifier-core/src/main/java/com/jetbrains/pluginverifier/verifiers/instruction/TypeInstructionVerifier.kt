@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.problems.AbstractClassInstantiationProblem
 import com.jetbrains.pluginverifier.problems.InterfaceInstantiationProblem
+import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
 import org.jetbrains.intellij.plugins.internal.asm.tree.AbstractInsnNode
@@ -17,7 +17,7 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.TypeInsnNode
  * @author Dennis.Ushakov
  */
 class TypeInstructionVerifier : InstructionVerifier {
-  override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, resolver: Resolver, ctx: VContext) {
+  override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, resolver: Resolver, ctx: VerificationContext) {
     if (instr !is TypeInsnNode) return
 
     val desc = instr.desc

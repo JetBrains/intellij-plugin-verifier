@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.verifiers.clazz
 
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.location.MethodLocation
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem
+import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
@@ -12,7 +12,7 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
  * @author Sergey Patrikeev
  */
 class AbstractMethodVerifier : ClassVerifier {
-  override fun verify(clazz: ClassNode, resolver: Resolver, ctx: VContext) {
+  override fun verify(clazz: ClassNode, resolver: Resolver, ctx: VerificationContext) {
     if (VerifierUtil.isAbstract(clazz) || VerifierUtil.isInterface(clazz)) return
 
     val abstractMethods = hashMapOf<Method, MethodLocation>()
@@ -31,7 +31,7 @@ class AbstractMethodVerifier : ClassVerifier {
   @Suppress("UNCHECKED_CAST")
   private fun traverseTree(clazz: ClassNode,
                            resolver: Resolver,
-                           ctx: VContext,
+                           ctx: VerificationContext,
                            visitedClasses: MutableSet<String>,
                            abstractMethods: MutableMap<Method, MethodLocation>,
                            implementedMethods: MutableMap<Method, MethodLocation>) {

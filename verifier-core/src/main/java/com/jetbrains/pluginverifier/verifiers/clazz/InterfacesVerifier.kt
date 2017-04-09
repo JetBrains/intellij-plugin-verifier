@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers.clazz
 
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.problems.SuperInterfaceBecameClassProblem
+import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 
@@ -12,7 +12,7 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
  * @author Dennis.Ushakov
  */
 class InterfacesVerifier : ClassVerifier {
-  override fun verify(clazz: ClassNode, resolver: Resolver, ctx: VContext) {
+  override fun verify(clazz: ClassNode, resolver: Resolver, ctx: VerificationContext) {
     clazz.interfaces
         .filterIsInstance(String::class.java)
         .mapNotNull { VerifierUtil.resolveClassOrProblem(resolver, it, clazz, ctx, { ctx.fromClass(clazz) }) }

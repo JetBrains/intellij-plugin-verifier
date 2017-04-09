@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.SymbolicReference
+import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
 import org.jetbrains.intellij.plugins.internal.asm.tree.*
@@ -15,7 +15,7 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.*
  */
 class FieldAccessInstructionVerifier : InstructionVerifier {
 
-  override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, resolver: Resolver, ctx: VContext) {
+  override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, resolver: Resolver, ctx: VerificationContext) {
     if (instr is FieldInsnNode) {
       FieldsImplementation(clazz, method, instr, resolver, ctx).verify()
     }
@@ -27,7 +27,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
                                    val verifiableMethod: MethodNode,
                                    val instr: FieldInsnNode,
                                    val resolver: Resolver,
-                                   val ctx: VContext,
+                                   val ctx: VerificationContext,
                                    val fieldOwner: String = instr.owner,
                                    val fieldName: String = instr.name,
                                    val fieldDescriptor: String = instr.desc) {

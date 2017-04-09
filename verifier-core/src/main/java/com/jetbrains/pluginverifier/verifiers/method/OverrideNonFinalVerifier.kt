@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers.method
 
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.problems.OverridingFinalMethodProblem
+import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
@@ -15,7 +15,7 @@ class OverrideNonFinalVerifier : MethodVerifier {
 
 
   @Suppress("UNCHECKED_CAST")
-  override fun verify(clazz: ClassNode, method: MethodNode, resolver: Resolver, ctx: VContext) {
+  override fun verify(clazz: ClassNode, method: MethodNode, resolver: Resolver, ctx: VerificationContext) {
     if (VerifierUtil.isPrivate(method)) return
 
     /*
@@ -28,7 +28,7 @@ class OverrideNonFinalVerifier : MethodVerifier {
 
     val superClass = clazz.superName
 
-    if (superClass == null || superClass.startsWith("[") || ctx.verifierOptions.isExternalClass(superClass)) {
+    if (superClass == null || superClass.startsWith("[") || ctx.verifierParams.isExternalClass(superClass)) {
       return
     }
 

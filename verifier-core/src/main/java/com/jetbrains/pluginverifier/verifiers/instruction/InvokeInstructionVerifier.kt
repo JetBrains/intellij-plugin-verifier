@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.api.VContext
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.SymbolicReference
+import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
 import org.jetbrains.intellij.plugins.internal.asm.tree.AbstractInsnNode
@@ -13,7 +13,7 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 import java.util.*
 
 class InvokeInstructionVerifier : InstructionVerifier {
-  override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, resolver: Resolver, ctx: VContext) {
+  override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, resolver: Resolver, ctx: VerificationContext) {
     if (instr is MethodInsnNode) {
       InvokeImplementation(clazz, method, instr, resolver, ctx).verify()
     }
@@ -26,7 +26,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
                                    val verifiableMethod: MethodNode,
                                    val instr: MethodInsnNode,
                                    val resolver: Resolver,
-                                   val ctx: VContext,
+                                   val ctx: VerificationContext,
                                    val methodOwner: String = instr.owner,
                                    val methodName: String = instr.name,
                                    val methodDescriptor: String = instr.desc) {
