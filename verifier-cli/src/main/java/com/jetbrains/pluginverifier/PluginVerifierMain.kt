@@ -5,8 +5,8 @@ import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
 import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.utils.CmdOpts
+import com.jetbrains.pluginverifier.utils.OptionsUtil
 import com.jetbrains.pluginverifier.utils.PublicOpts
-import com.jetbrains.pluginverifier.utils.VOptionsUtil
 import com.sampullara.cli.Args
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -36,62 +36,64 @@ object PluginVerifierMain {
 
     when (command) {
       "check-plugin" -> {
-        val params = CheckPluginParamsParser.parse(opts, freeArgs)
-        LOG.info("Check-Plugin arguments: $params")
+        CheckPluginParamsParser.parse(opts, freeArgs).use { params ->
+          LOG.info("Check-Plugin arguments: $params")
 
-        val results = CheckPluginConfiguration(params).execute()
-        val vPrinterOptions = VOptionsUtil.parsePrinterOptions(opts)
-        if (opts.needTeamCityLog) {
-          results.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true, vPrinterOptions)
-        } else {
-          results.printOnStdout(vPrinterOptions)
-        }
+          val results = CheckPluginConfiguration(params).execute()
+          val vPrinterOptions = OptionsUtil.parsePrinterOptions(opts)
+          if (opts.needTeamCityLog) {
+            results.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true, vPrinterOptions)
+          } else {
+            results.printOnStdout(vPrinterOptions)
+          }
 
-        if (opts.htmlReportFile != null) {
-          results.printToHtml(File(opts.htmlReportFile), vPrinterOptions)
+          if (opts.htmlReportFile != null) {
+            results.printToHtml(File(opts.htmlReportFile), vPrinterOptions)
+          }
         }
       }
       "check-ide" -> {
-        val params = CheckIdeParamsParser.parse(opts, freeArgs)
-        LOG.info("Check-Ide arguments: $params")
+        CheckIdeParamsParser.parse(opts, freeArgs).use { params ->
+          LOG.info("Check-Ide arguments: $params")
 
-        val checkIdeResults = CheckIdeConfiguration(params).execute()
+          val checkIdeResults = CheckIdeConfiguration(params).execute()
 
-        if (opts.saveCheckIdeReport != null) {
-          CheckIdeReport.createReport(checkIdeResults.ideVersion, checkIdeResults.vResults).saveToFile(File(opts.saveCheckIdeReport))
-        }
+          if (opts.saveCheckIdeReport != null) {
+            CheckIdeReport.createReport(checkIdeResults.ideVersion, checkIdeResults.results).saveToFile(File(opts.saveCheckIdeReport))
+          }
 
-        val vPrinterOptions = VOptionsUtil.parsePrinterOptions(opts)
-        if (opts.needTeamCityLog) {
-          checkIdeResults.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true, vPrinterOptions)
-        } else {
-          checkIdeResults.printOnStdOut(vPrinterOptions)
-        }
+          val vPrinterOptions = OptionsUtil.parsePrinterOptions(opts)
+          if (opts.needTeamCityLog) {
+            checkIdeResults.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true, vPrinterOptions)
+          } else {
+            checkIdeResults.printOnStdOut(vPrinterOptions)
+          }
 
-        if (opts.htmlReportFile != null) {
-          checkIdeResults.saveToHtmlFile(File(opts.htmlReportFile), VOptionsUtil.parsePrinterOptions(opts))
-        }
+          if (opts.htmlReportFile != null) {
+            checkIdeResults.saveToHtmlFile(File(opts.htmlReportFile), OptionsUtil.parsePrinterOptions(opts))
+          }
 
-        if (opts.dumpBrokenPluginsFile != null) {
-          checkIdeResults.dumbBrokenPluginsList(File(opts.dumpBrokenPluginsFile))
+          if (opts.dumpBrokenPluginsFile != null) {
+            checkIdeResults.dumbBrokenPluginsList(File(opts.dumpBrokenPluginsFile))
+          }
         }
       }
       "check-trunk-api" -> {
-        val params = CheckTrunkApiParamsParser.parse(opts, freeArgs)
-        LOG.info("Check-Trunk-API arguments: $params")
+        CheckTrunkApiParamsParser.parse(opts, freeArgs).use { params ->
+          LOG.info("Check-Trunk-API arguments: $params")
 
-        val checkTrunkApiResults = CheckTrunkApiConfiguration(params).execute()
+          val checkTrunkApiResults = CheckTrunkApiConfiguration(params).execute()
 
-        if (opts.needTeamCityLog) {
-          val compareResult = CheckTrunkApiCompareResult.create(checkTrunkApiResults)
-          val vPrinter = TeamCityVPrinter(TeamCityLog(System.out), TeamCityVPrinter.GroupBy.parse(opts.group))
-          vPrinter.printIdeCompareResult(compareResult)
+          if (opts.needTeamCityLog) {
+            val compareResult = CheckTrunkApiCompareResult.create(checkTrunkApiResults)
+            val vPrinter = TeamCityVPrinter(TeamCityLog(System.out), TeamCityVPrinter.GroupBy.parse(opts.group))
+            vPrinter.printIdeCompareResult(compareResult)
+          }
+          if (opts.saveCheckIdeReport != null) {
+            val file = File(opts.saveCheckIdeReport)
+            checkTrunkApiResults.currentReport.saveToFile(file)
+          }
         }
-        if (opts.saveCheckIdeReport != null) {
-          val file = File(opts.saveCheckIdeReport)
-          checkTrunkApiResults.currentReport.saveToFile(file)
-        }
-
       }
       else -> {
         throw IllegalArgumentException("Unsupported command $command")

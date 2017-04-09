@@ -1,21 +1,20 @@
 package com.jetbrains.pluginverifier.configurations
 
 import com.intellij.structure.domain.IdeVersion
-import com.intellij.structure.domain.PluginManager
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
-import com.jetbrains.pluginverifier.repository.IFileLock
+import com.jetbrains.pluginverifier.misc.closeLogged
+import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.IdleFileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.CmdOpts
-import com.jetbrains.pluginverifier.utils.CmdUtil
-import com.jetbrains.pluginverifier.utils.VOptionsUtil
+import com.jetbrains.pluginverifier.utils.OptionsUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 
-object CheckPluginParamsParser : ParamsParser {
+object CheckPluginParamsParser : ConfigurationParamsParser {
 
   private val LOG: Logger = LoggerFactory.getLogger(CheckPluginParamsParser::class.java)
 
@@ -26,22 +25,17 @@ object CheckPluginParamsParser : ParamsParser {
           "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963")
       System.exit(1)
     }
-    val ideDescriptors = freeArgs.drop(1).map(::File).map { IdeDescriptor.ByInstance(CmdUtil.createIde(it, opts)) }
+    val ideDescriptors = freeArgs.drop(1).map(::File).map { OptionsUtil.createIdeDescriptor(it, opts) }
     val pluginFiles = getPluginFiles(freeArgs[0], ideDescriptors.map { it.ideVersion })
-    val jdkDescriptor = JdkDescriptor.ByFile(CmdUtil.getJdkDir(opts))
-    val vOptions = VOptionsUtil.parseOpts(opts)
-    val externalClasspath = CmdUtil.getExternalClassPath(opts)
+    val jdkDescriptor = JdkDescriptor(OptionsUtil.getJdkDir(opts))
+    val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
+    val externalClasspath = OptionsUtil.getExternalClassPath(opts)
+    val problemsFilter = OptionsUtil.getProblemsFilter(opts)
     val pluginsToCheck = pluginFiles.map {
-      try {
-        val plugin = PluginManager.getInstance().createPlugin(it.getFile())
-        PluginDescriptor.ByInstance(plugin)
-      } catch(e: Exception) {
-        val (id, version) = guessPluginIdAndVersion(it.getFile())
-        LOG.debug("Unable to create plugin for ${it.getFile()}; supposed (id; version) = ($id; $version)", e)
-        PluginDescriptor.ByFileLock(id, version, it)
-      }
+      val pluginIdAndVersion = guessPluginIdAndVersion(it.getFile())
+      PluginDescriptor.ByFileLock(pluginIdAndVersion.first, pluginIdAndVersion.second, it)
     }
-    return CheckPluginParams(pluginsToCheck, ideDescriptors, jdkDescriptor, vOptions, externalClasspath)
+    return CheckPluginParams(pluginsToCheck, ideDescriptors, jdkDescriptor, externalClassesPrefixes, problemsFilter, externalClasspath)
   }
 
   private fun guessPluginIdAndVersion(file: File): Pair<String, String> {
@@ -50,7 +44,7 @@ object CheckPluginParamsParser : ParamsParser {
     return name.substringBeforeLast('-') to version
   }
 
-  fun getPluginFiles(pluginToTestArg: String, ideVersions: List<IdeVersion>? = null): List<IFileLock> {
+  fun getPluginFiles(pluginToTestArg: String, ideVersions: List<IdeVersion>? = null): List<FileLock> {
     if (pluginToTestArg.startsWith("@")) {
       val pluginListFile = File(pluginToTestArg.substring(1))
       val pluginPaths = pluginListFile.readLines()
@@ -73,7 +67,7 @@ object CheckPluginParamsParser : ParamsParser {
     }
   }
 
-  fun fetchPlugins(ideVersion: IdeVersion, pluginListFile: File, pluginPaths: List<String>): List<IFileLock> =
+  fun fetchPlugins(ideVersion: IdeVersion, pluginListFile: File, pluginPaths: List<String>): List<FileLock> =
       pluginPaths
           .map(String::trim)
           .filter(String::isNotEmpty)
@@ -92,7 +86,7 @@ object CheckPluginParamsParser : ParamsParser {
             }
           }.flatten()
 
-  fun downloadPluginBuilds(pluginId: String, ideVersion: IdeVersion): List<IFileLock> =
+  fun downloadPluginBuilds(pluginId: String, ideVersion: IdeVersion): List<FileLock> =
       RepositoryManager
           .getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId)
           .map { RepositoryManager.getPluginFile(it)!! }
@@ -103,6 +97,10 @@ object CheckPluginParamsParser : ParamsParser {
 data class CheckPluginParams(val pluginDescriptors: List<PluginDescriptor>,
                              val ideDescriptors: List<IdeDescriptor.ByInstance>,
                              val jdkDescriptor: JdkDescriptor,
-                             val vOptions: VOptions,
+                             val externalClassesPrefixes: List<String>,
+                             val problemsFilter: ProblemsFilter,
                              val externalClasspath: Resolver = Resolver.getEmptyResolver(),
-                             val progress: VProgress = DefaultVProgress()) : Params
+                             val progress: Progress = DefaultProgress()) : ConfigurationParams {
+
+  override fun close() = ideDescriptors.forEach { it.ideResolver?.closeLogged() }
+}

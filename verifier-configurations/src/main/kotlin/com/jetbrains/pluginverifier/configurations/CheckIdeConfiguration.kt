@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.configurations
 
 import com.intellij.structure.domain.IdeVersion
-import com.jetbrains.pluginverifier.api.VManager
-import com.jetbrains.pluginverifier.api.VParams
+import com.jetbrains.pluginverifier.api.Verifier
+import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 
@@ -10,8 +10,8 @@ import com.jetbrains.pluginverifier.repository.RepositoryManager
 class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
   override fun execute(): CheckIdeResults {
     val pluginsToCheck = params.pluginsToCheck.filterNot { params.excludedPlugins.containsEntry(it.pluginId, it.version) }.map { it to params.ideDescriptor }
-    val vParams = VParams(params.jdkDescriptor, pluginsToCheck, params.vOptions, params.externalClassPath)
-    val vResults = VManager.verify(vParams, params.progress)
+    val vParams = VerifierParams(params.jdkDescriptor, pluginsToCheck, params.externalClassesPrefixes, params.problemsFilter, params.externalClassPath, params.dependencyResolver)
+    val vResults = Verifier(vParams).verify(params.progress)
     return CheckIdeResults(params.ideDescriptor.ideVersion, vResults, params.excludedPlugins, getMissingUpdatesProblems())
   }
 

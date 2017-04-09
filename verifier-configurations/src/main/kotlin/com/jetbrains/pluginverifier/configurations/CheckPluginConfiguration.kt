@@ -6,23 +6,21 @@ import com.jetbrains.pluginverifier.api.*
 class CheckPluginConfiguration(val params: CheckPluginParams) : Configuration {
 
   override fun execute(): CheckPluginResults {
-    val results = arrayListOf<VResult>()
-    params.ideDescriptors.forEach { ideDescriptor ->
+    val results = arrayListOf<Result>()
+    for (ideDescriptor in params.ideDescriptors) {
       var extendedIdeDescriptor = ideDescriptor
-      params.pluginDescriptors.forEach { pluginDescriptor ->
-        val singleCheck = listOf(pluginDescriptor to extendedIdeDescriptor)
-        val vParams = VParams(params.jdkDescriptor, singleCheck, params.vOptions, params.externalClasspath)
-        val singleResult = VManager.verify(vParams, params.progress).results.single()
-        results.add(singleResult)
-
-        val checkedPlugin = singleResult.pluginDescriptor
-        if (checkedPlugin is PluginDescriptor.ByInstance) {
-          val expandedIde = extendedIdeDescriptor.ide.getExpandedIde(checkedPlugin.plugin)
+      for (pluginDescriptor in params.pluginDescriptors) {
+        val singlePluginCheck = listOf(pluginDescriptor to extendedIdeDescriptor)
+        val vParams = VerifierParams(params.jdkDescriptor, singlePluginCheck, params.externalClassesPrefixes, params.problemsFilter, params.externalClasspath)
+        val result: Result = Verifier(vParams).verify(params.progress).single()
+        results.add(result)
+        if (pluginDescriptor is PluginDescriptor.ByInstance) {
+          val expandedIde = extendedIdeDescriptor.ide.getExpandedIde(pluginDescriptor.plugin)
           extendedIdeDescriptor = IdeDescriptor.ByInstance(expandedIde, extendedIdeDescriptor.ideResolver)
         }
       }
     }
-    return CheckPluginResults(VResults(results))
+    return CheckPluginResults(results)
   }
 
 

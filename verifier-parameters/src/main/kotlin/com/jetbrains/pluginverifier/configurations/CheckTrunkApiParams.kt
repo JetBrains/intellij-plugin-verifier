@@ -4,14 +4,13 @@ import com.google.common.util.concurrent.AtomicDouble
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.api.JdkDescriptor
-import com.jetbrains.pluginverifier.api.VOptions
+import com.jetbrains.pluginverifier.api.ProblemsFilter
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.RepositoryConfiguration
 import com.jetbrains.pluginverifier.utils.CmdOpts
-import com.jetbrains.pluginverifier.utils.CmdUtil
-import com.jetbrains.pluginverifier.utils.VOptionsUtil
+import com.jetbrains.pluginverifier.utils.OptionsUtil
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import org.slf4j.Logger
@@ -23,7 +22,7 @@ import java.util.function.Function
 /**
  * @author Sergey Patrikeev
  */
-object CheckTrunkApiParamsParser : ParamsParser {
+object CheckTrunkApiParamsParser : ConfigurationParamsParser {
 
   private val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiParamsParser::class.java)
 
@@ -34,8 +33,8 @@ object CheckTrunkApiParamsParser : ParamsParser {
       throw IllegalArgumentException("The IDE to be checked is not specified")
     }
 
-    val ide = CmdUtil.createIde(File(args[0]), opts)
-    val jdkDescriptor = JdkDescriptor.ByFile(CmdUtil.getJdkDir(opts))
+    val ide = OptionsUtil.createIde(File(args[0]), opts)
+    val jdkDescriptor = JdkDescriptor(OptionsUtil.getJdkDir(opts))
 
     val majorIdeFile: File
     val deleteMajorOnExit: Boolean
@@ -53,7 +52,10 @@ object CheckTrunkApiParamsParser : ParamsParser {
       throw IllegalArgumentException("Neither the version (-miv) nor the path to the IDE (-mip) with which to compare API problems are not specified")
     }
 
-    return CheckTrunkApiParams(ide, majorIdeFile, deleteMajorOnExit, VOptionsUtil.parseOpts(opts), jdkDescriptor)
+    val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
+    val problemsFilter = OptionsUtil.getProblemsFilter(opts)
+
+    return CheckTrunkApiParams(ide, majorIdeFile, deleteMajorOnExit, externalClassesPrefixes, problemsFilter, jdkDescriptor)
   }
 
   private fun parseIdeVersion(ideVersion: String): IdeVersion {
@@ -92,7 +94,7 @@ object CheckTrunkApiParamsParser : ParamsParser {
     val tempFile = File.createTempFile("ide", ".zip", RepositoryConfiguration.ideDownloadDir)
 
     val lastProgress = AtomicDouble()
-    val progressUpdater = Function<Double, Unit>() {
+    val progressUpdater = Function<Double, Unit> {
       if (it - lastProgress.get() > 0.1) {
         LOG.info("Downloading progress is ${(it * 100).toInt()}%")
         lastProgress.set(it)
@@ -123,8 +125,15 @@ object CheckTrunkApiParamsParser : ParamsParser {
 data class CheckTrunkApiParams(val ide: Ide,
                                val majorIdeFile: File,
                                val deleteMajorIdeOnExit: Boolean,
-                               val vOptions: VOptions,
-                               val jdkDescriptor: JdkDescriptor) : Params
+                               val externalClassesPrefixes: List<String>,
+                               val problemsFilter: ProblemsFilter,
+                               val jdkDescriptor: JdkDescriptor) : ConfigurationParams {
+  override fun close() {
+    if (deleteMajorIdeOnExit) {
+      majorIdeFile.deleteLogged()
+    }
+  }
+}
 
 class CheckTrunkApiOpts {
   @set:Argument("major-ide-version", alias = "miv", description = "The IDE version with which to compare API problems")

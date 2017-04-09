@@ -7,34 +7,34 @@ import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.format.UpdateInfo
+import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.CmdOpts
-import com.jetbrains.pluginverifier.utils.CmdUtil
+import com.jetbrains.pluginverifier.utils.OptionsUtil
 import com.jetbrains.pluginverifier.utils.ParametersListUtil
-import com.jetbrains.pluginverifier.utils.VOptionsUtil
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
 import java.io.IOException
 
 
-data class CheckIdeParams(val ideDescriptor: IdeDescriptor,
+data class CheckIdeParams(val ideDescriptor: IdeDescriptor.ByInstance,
                           val jdkDescriptor: JdkDescriptor,
                           val pluginsToCheck: List<PluginDescriptor>,
                           val excludedPlugins: Multimap<String, String>,
-                          val vOptions: VOptions,
-                          val pluginIdsToCheckExistingBuilds: List<String> = emptyList(),
-                          val externalClassPath: Resolver = Resolver.getEmptyResolver(),
-                          val progress: VProgress = DefaultVProgress(),
-                          val dependencyResolver: DependencyResolver? = null) : Params
+                          val pluginIdsToCheckExistingBuilds: List<String>,
+                          val externalClassPath: Resolver,
+                          val externalClassesPrefixes: List<String>,
+                          val problemsFilter: ProblemsFilter,
+                          val progress: Progress = DefaultProgress(),
+                          val dependencyResolver: DependencyResolver? = null) : ConfigurationParams {
+  override fun close() {
+    ideDescriptor.ideResolver?.closeLogged()
+  }
+}
 
 
-object CheckIdeParamsParser : ParamsParser {
-
-  private val LOG: Logger = LoggerFactory.getLogger(CheckIdeParamsParser::class.java)
-
+object CheckIdeParamsParser : ConfigurationParamsParser {
   override fun parse(opts: CmdOpts, freeArgs: List<String>): CheckIdeParams {
     if (freeArgs.isEmpty()) {
       System.err.println("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"")
@@ -45,19 +45,20 @@ object CheckIdeParamsParser : ParamsParser {
       System.err.println("IDE path must be a directory: " + ideFile)
       System.exit(1)
     }
-    val ide = CmdUtil.createIde(ideFile, opts)
+    val ideDescriptor = OptionsUtil.createIdeDescriptor(ideFile, opts)
 
-    val jdkDescriptor = JdkDescriptor.ByFile(CmdUtil.getJdkDir(opts))
-    val vOptions = VOptionsUtil.parseOpts(opts)
-    val externalClassPath = CmdUtil.getExternalClassPath(opts)
+    val jdkDescriptor = JdkDescriptor(OptionsUtil.getJdkDir(opts))
+    val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
+    val externalClassPath = OptionsUtil.getExternalClassPath(opts)
+    val problemsFilter = OptionsUtil.getProblemsFilter(opts)
 
     val (checkAllBuilds, checkLastBuilds) = parsePluginToCheckList(opts)
 
     val excludedPlugins = parseExcludedPlugins(opts)
 
-    val pluginsToCheck = getDescriptorsToCheck(checkAllBuilds, checkLastBuilds, ide.version)
+    val pluginsToCheck = getDescriptorsToCheck(checkAllBuilds, checkLastBuilds, ideDescriptor.ide.version)
 
-    return CheckIdeParams(IdeDescriptor.ByInstance(ide), jdkDescriptor, pluginsToCheck, excludedPlugins, vOptions, checkAllBuilds, externalClassPath)
+    return CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, excludedPlugins, externalClassesPrefixes, externalClassPath, checkAllBuilds, problemsFilter)
   }
 
   /**
@@ -110,9 +111,12 @@ object CheckIdeParamsParser : ParamsParser {
   }
 
 
-  fun getDescriptorsToCheck(checkAllBuilds: List<String>, checkLastBuilds: List<String>, ideVersion: IdeVersion): List<PluginDescriptor> {
+  fun getDescriptorsToCheck(checkAllBuilds: List<String>, checkLastBuilds: List<String>, ideVersion: IdeVersion): List<PluginDescriptor> =
+      getUpdateInfosToCheck(checkAllBuilds, checkLastBuilds, ideVersion).map { PluginDescriptor.ByUpdateInfo(it) }
+
+  private fun getUpdateInfosToCheck(checkAllBuilds: List<String>, checkLastBuilds: List<String>, ideVersion: IdeVersion): List<UpdateInfo> {
     if (checkAllBuilds.isEmpty() && checkLastBuilds.isEmpty()) {
-      return RepositoryManager.getLastCompatibleUpdates(ideVersion).map { PluginDescriptor.ByUpdateInfo(it) }
+      return RepositoryManager.getLastCompatibleUpdates(ideVersion)
     } else {
       val myActualUpdatesToCheck = arrayListOf<UpdateInfo>()
 
@@ -126,7 +130,7 @@ object CheckIdeParamsParser : ParamsParser {
             .firstOrNull()
       }.filterNotNull().toCollection(myActualUpdatesToCheck)
 
-      return myActualUpdatesToCheck.map { PluginDescriptor.ByUpdateInfo(it) }
+      return myActualUpdatesToCheck
     }
   }
 
@@ -138,14 +142,8 @@ object CheckIdeParamsParser : ParamsParser {
     val epf = opts.excludedPluginsFile ?: return ArrayListMultimap.create<String, String>() //excluded-plugin-file (usually brokenPlugins.txt)
 
     //file containing list of broken plugins (e.g. IDEA-*/lib/resources.jar!/brokenPlugins.txt)
-    val m = HashMultimap.create<String, String>()
-    val file = File(epf)
-    if (!file.exists()) {
-      LOG.warn("Excluded plugins file $file is not found. Verify all plugins.")
-      return m
-    }
-
-    BufferedReader(FileReader(file)).use { br ->
+    BufferedReader(FileReader(File(epf))).use { br ->
+      val m = HashMultimap.create<String, String>()
 
       var s: String?
       while (true) {

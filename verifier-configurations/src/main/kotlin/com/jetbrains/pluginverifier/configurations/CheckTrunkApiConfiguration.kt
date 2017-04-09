@@ -4,10 +4,10 @@ import com.google.common.collect.ImmutableMultimap
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeManager
 import com.intellij.structure.domain.Plugin
+import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.DependencyResolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginDescriptor
-import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.DefaultDependencyResolver
@@ -23,17 +23,6 @@ class CheckTrunkApiConfiguration(val params: CheckTrunkApiParams) : Configuratio
   }
 
   override fun execute(): CheckTrunkApiResults {
-    try {
-      return doExecute()
-    } finally {
-      if (params.deleteMajorIdeOnExit) {
-        params.majorIdeFile.deleteLogged()
-      }
-    }
-
-  }
-
-  private fun doExecute(): CheckTrunkApiResults {
     val majorIde: Ide = try {
       IdeManager.getInstance().createIde(params.majorIdeFile)
     } catch(e: Exception) {
@@ -86,8 +75,8 @@ class CheckTrunkApiConfiguration(val params: CheckTrunkApiParams) : Configuratio
 
   private fun calcReport(ide: Ide, pluginsToCheck: List<PluginDescriptor>, dependencyResolver: DependencyResolver?): Pair<BundledPlugins, CheckIdeReport> {
     try {
-      val checkIdeParams = CheckIdeParams(IdeDescriptor.ByInstance(ide), params.jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), params.vOptions, dependencyResolver = dependencyResolver)
-      val ideReport = CheckIdeConfiguration(checkIdeParams).execute().run { CheckIdeReport.createReport(ide.version, vResults) }
+      val checkIdeParams = CheckIdeParams(IdeDescriptor.ByInstance(ide), params.jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), emptyList(), Resolver.getEmptyResolver(), params.externalClassesPrefixes, params.problemsFilter, dependencyResolver = dependencyResolver)
+      val ideReport = CheckIdeConfiguration(checkIdeParams).execute().run { CheckIdeReport.createReport(ide.version, results) }
       return getBundledPlugins(ide) to ideReport
     } catch(e: Exception) {
       LOG.error("Failed to verify the IDE ${ide.version}", e)
