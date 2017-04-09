@@ -12,12 +12,8 @@ import com.google.gson.stream.JsonWriter
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.domain.PluginDependency
 import com.intellij.structure.impl.domain.PluginDependencyImpl
-import com.jetbrains.pluginverifier.api.IdeDescriptor
-import com.jetbrains.pluginverifier.api.PluginDescriptor
-import com.jetbrains.pluginverifier.api.VResult
+import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.dependencies.dependenciesGraphDeserializer
-import com.jetbrains.pluginverifier.dependencies.dependenciesGraphSerializer
 import com.jetbrains.pluginverifier.location.Location
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.SymbolicReference
@@ -92,30 +88,12 @@ object CompactJson {
       .registerTypeHierarchyAdapter<SymbolicReference>(symbolicReferenceSerializer)
       .registerTypeHierarchyAdapter<SymbolicReference>(symbolicReferenceDeserializer)
 
-      .registerTypeHierarchyAdapter(IdeDescriptor::class.java, IdeDescriptorTypeAdapter().nullSafe())
-      .registerTypeAdapterFactory(resultTAF)
+      .registerTypeAdapterFactory(verdictTAF)
       .registerTypeAdapterFactory(problemsTAF)
-      .registerTypeAdapterFactory(pluginDescriptorTAF)
       .registerTypeAdapterFactory(MultimapTypeAdapterFactory())
       .registerTypeAdapterFactory(PairTypeAdapterFactory())
       .registerTypeAdapterFactory(TripleTypeAdapterFactory())
 
-      //delegate to ByXmlId (we can't serialize File and Ide because it makes no sense)
-      .registerTypeAdapter<PluginDescriptor.ByFileLock> {
-        serialize {
-          it.context.serialize(PluginDescriptor.ByXmlId(it.src.pluginId, it.src.version))
-        }
-      }
-      .registerTypeAdapter<PluginDescriptor.ByFile> {
-        serialize {
-          it.context.serialize(PluginDescriptor.ByXmlId(it.src.pluginId, it.src.version))
-        }
-      }
-      .registerTypeAdapter<PluginDescriptor.ByInstance> {
-        serialize {
-          it.context.serialize(PluginDescriptor.ByXmlId(it.src.pluginId, it.src.version))
-        }
-      }
       .registerTypeAdapter<CheckIdeReport>(checkIdeReportSerializer)
       .registerTypeAdapter<CheckIdeReport>(checkIdeReportDeserializer)
       .registerTypeAdapter<DependenciesGraph>(dependenciesGraphSerializer)
@@ -123,12 +101,13 @@ object CompactJson {
       .create()
 }
 
-private val resultTAF = RuntimeTypeAdapterFactory.of(VResult::class.java)
-    .registerSubtype(VResult.OK::class.java)
-    .registerSubtype(VResult.Warnings::class.java)
-    .registerSubtype(VResult.Problems::class.java)
-    .registerSubtype(VResult.Bad::class.java)
-    .registerSubtype(VResult.NotFound::class.java)
+private val verdictTAF = RuntimeTypeAdapterFactory.of(Verdict::class.java)
+    .registerSubtype(Verdict.OK::class.java)
+    .registerSubtype(Verdict.Warnings::class.java)
+    .registerSubtype(Verdict.MissingDependencies::class.java)
+    .registerSubtype(Verdict.Problems::class.java)
+    .registerSubtype(Verdict.Bad::class.java)
+    .registerSubtype(Verdict.NotFound::class.java)
 
 //add inheritors
 private val problemsTAF = RuntimeTypeAdapterFactory.of(Problem::class.java)
@@ -156,23 +135,6 @@ private val problemsTAF = RuntimeTypeAdapterFactory.of(Problem::class.java)
     .registerSubtype(IllegalClassAccessProblem::class.java)
     .registerSubtype(MultipleDefaultImplementationsProblem::class.java)
 
-
-private val pluginDescriptorTAF = RuntimeTypeAdapterFactory.of(PluginDescriptor::class.java)
-    .registerSubtype(PluginDescriptor.ByXmlId::class.java)
-    .registerSubtype(PluginDescriptor.ByUpdateInfo::class.java)
-//    .registerSubtype(PluginDescriptor.ByFile::class.java) //this class is serialized as ByXmlId
-//    .registerSubtype(PluginDescriptor.ByInstance::class.java) //this class is serialized as ByXmlId
-
-class IdeDescriptorTypeAdapter : TypeAdapter<IdeDescriptor>() {
-  override fun read(`in`: JsonReader): IdeDescriptor {
-    val nextString = `in`.nextString()
-    return if ("0" == nextString) IdeDescriptor.AnyIde else IdeDescriptor.ByVersion(IdeVersion.createIdeVersion(nextString))
-  }
-
-  override fun write(out: JsonWriter, value: IdeDescriptor) {
-    out.value(value.ideVersion.asString())
-  }
-}
 
 class IdeVersionTypeAdapter : TypeAdapter<IdeVersion>() {
 

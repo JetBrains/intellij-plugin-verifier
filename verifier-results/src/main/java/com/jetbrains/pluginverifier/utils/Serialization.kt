@@ -4,6 +4,12 @@ import com.github.salomonbrys.kotson.jsonDeserializer
 import com.github.salomonbrys.kotson.jsonSerializer
 import com.github.salomonbrys.kotson.string
 import com.google.gson.JsonPrimitive
+import com.google.gson.annotations.SerializedName
+import com.intellij.structure.domain.PluginDependency
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.DependencyEdge
+import com.jetbrains.pluginverifier.dependencies.DependencyNode
+import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.location.*
 import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.reference.FieldReference
@@ -69,4 +75,24 @@ internal val symbolicReferenceDeserializer = jsonDeserializer {
     parts[0] == "C" -> SymbolicReference.Companion.classOf(parts[1])
     else -> throw IllegalArgumentException("Unknown type ${it.json.string}")
   }
+}
+
+private data class DependenciesGraphCompactVersion(@SerializedName("vertices") val vertices: List<Triple<String, String, List<MissingDependency>>>,
+                                                   @SerializedName("startIdx") val startIdx: Int,
+                                                   @SerializedName("edges") val edges: List<Triple<Int, Int, PluginDependency>>)
+
+internal val dependenciesGraphSerializer = jsonSerializer<DependenciesGraph> {
+  val nodeToId: Map<DependencyNode, Int> = it.src.vertices.mapIndexed { i, node -> node to i }.toMap()
+
+  val vertices = it.src.vertices.map { Triple(it.id, it.version, it.missingDependencies) }
+  val startIdx = it.src.vertices.indexOf(it.src.start)
+  val edges = it.src.edges.map { Triple(nodeToId[it.from]!!, nodeToId[it.to]!!, it.dependency) }
+  it.context.serialize(DependenciesGraphCompactVersion(vertices, startIdx, edges))
+}
+
+internal val dependenciesGraphDeserializer = jsonDeserializer<DependenciesGraph> {
+  val compact = it.context.deserialize<DependenciesGraphCompactVersion>(it.json)
+  val vertices = compact.vertices.map { DependencyNode(it.first, it.second, it.third) }
+  DependenciesGraph(vertices[compact.startIdx], vertices, compact.edges.map { DependencyEdge(vertices[it.first], vertices[it.second], it.third) })
+
 }
