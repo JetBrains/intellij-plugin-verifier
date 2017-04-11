@@ -4,179 +4,104 @@ import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeVersion
 import com.intellij.structure.domain.Plugin
 import com.intellij.structure.domain.PluginDependency
-import org.apache.commons.io.FileUtils
+import com.jetbrains.pluginverifier.api.JdkDescriptor
+import org.jetbrains.intellij.plugins.internal.guava.collect.ArrayListMultimap
 import org.jetbrains.intellij.plugins.internal.guava.collect.Multimap
 import org.jetbrains.intellij.plugins.internal.jdom.Document
 import org.jetbrains.intellij.plugins.internal.jdom.Element
 import java.io.File
+import java.nio.file.Files
 
 object MockUtil {
+
+  fun getJdkDescriptor(): JdkDescriptor.ByFile {
+    val jdkPath = System.getenv("JAVA_HOME") ?: "/usr/lib/jvm/java-8-oracle"
+    return JdkDescriptor.ByFile(jdkPath)
+  }
 
   fun createMockPlugin(pluginId: String,
                        pluginVersion: String,
                        moduleDependencies: List<PluginDependency> = emptyList(),
                        dependencies: List<PluginDependency> = emptyList(),
-                       definedModules: Set<String> = emptySet()): MockPluginAdapter {
-    val tempPluginFile = File.createTempFile("testPlugin", "testPlugin", FileUtils.getTempDirectory())
-    tempPluginFile.deleteOnExit()
-
-    return object : MockPluginAdapter() {
-      override fun getPluginId(): String = pluginId
-
-      override fun getPluginVersion(): String = pluginVersion
-
-      override fun getModuleDependencies(): List<PluginDependency> = moduleDependencies
-
-      override fun getDependencies(): List<PluginDependency> = dependencies
-
-      override fun getDefinedModules(): Set<String> = definedModules
-
-      override fun getPluginFile(): File = tempPluginFile
-    }
+                       definedModules: Set<String> = emptySet()): MockPlugin {
+    val tempPluginDir = Files.createTempDirectory("mock-plugin").toFile()
+    tempPluginDir.deleteOnExit()
+    return MockPlugin(pluginId, pluginVersion, dependencies, moduleDependencies, definedModules, tempPluginDir)
   }
 
-  fun createTestIde(ideVersion: IdeVersion, bundledPlugins: List<Plugin>): Ide = object : MockIdeAdapter() {
-    override fun getBundledPlugins(): List<Plugin> = bundledPlugins
+  fun createTestIde(ideVersion: IdeVersion,
+                    bundledPlugins: List<Plugin> = emptyList(),
+                    customPlugins: List<Plugin> = emptyList()): Ide {
+    val tempIdeDir = Files.createTempDirectory("mock-ide").toFile()
+    tempIdeDir.deleteOnExit()
+    return MockIde(ideVersion, bundledPlugins, customPlugins, tempIdeDir)
+  }
+
+  class MockIde(private val ideVersion: IdeVersion,
+                private val bundled: List<Plugin> = emptyList(),
+                private val custom: List<Plugin> = emptyList(),
+                private val ideFile: File) : Ide() {
+
+    override fun getCustomPlugins(): List<Plugin> = custom
+
+    override fun getBundledPlugins(): List<Plugin> = bundled
 
     override fun getVersion(): IdeVersion = ideVersion
-  }
 
-/*
-  fun createPlugin() {
-    val root = File("for_tests" + File.separator + "testIde")
-    val metaInf1 = File(root, "plugins" + File.separator + "pluginOne" + File.separator + "META-INF")
-    val metaInf2 = File(root, "plugins" + File.separator + "pluginTwo" + File.separator + "META-INF")
+    override fun getExpandedIde(plugin: Plugin): Ide = MockIde(ideVersion, bundled, custom + listOf(plugin), ideFile)
 
-    metaInf1.mkdirs()
-    metaInf2.mkdirs()
-    File(metaInf1, "plugin.xml").writeText(getPluginXmlContent("pluginOne"))
-    File(metaInf2, "plugin.xml").writeText(getPluginXmlContent("pluginTwo"))
-    val buildXml = File(root, "build.txt")
-    buildXml.parentFile.mkdirs()
-    buildXml.writeText(ideVersion)
-    return IdeManager.getInstance().createIde(root)
-  }
-
-  private fun getPluginXmlContent(id: String): String = """<idea-plugin version="2">
-    <id>$id</id>
-    <name>$id</name>
-    <version>1.0</version>
-    <vendor email="no.com" url="http://www.no.com">vendor</vendor>
-    <description><![CDATA[]]></description>
-    <idea-version since-build="131"/>
-</idea-plugin>
-"""
-*/
-
-  open class MockIdeAdapter() : Ide() {
-    override fun getCustomPlugins(): List<Plugin> = emptyList()
-
-    override fun getBundledPlugins(): List<Plugin> {
-      throw UnsupportedOperationException("not implemented")
-    }
-
-    override fun getIdePath(): File {
-      throw UnsupportedOperationException("not implemented")
-    }
-
-    override fun getVersion(): IdeVersion {
-      throw UnsupportedOperationException("not implemented")
-    }
-
-    override fun getExpandedIde(plugin: Plugin?): Ide {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getIdePath(): File = ideFile
 
   }
 
-  open class MockPluginAdapter() : Plugin {
-    override fun getPluginId(): String {
-      throw UnsupportedOperationException("not implemented")
-    }
+  class MockPlugin(private val pluginId: String,
+                   private val pluginVersion: String,
+                   private val dependencies: List<PluginDependency>,
+                   private val moduleDependencies: List<PluginDependency>,
+                   private val definedModules: Set<String>,
+                   private val pluginFile: File) : Plugin {
+    override fun getPluginId(): String = pluginId
 
-    override fun getPluginVersion(): String {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getPluginVersion(): String = pluginVersion
 
-    override fun getModuleDependencies(): List<PluginDependency>? {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getModuleDependencies(): List<PluginDependency> = moduleDependencies
 
-    override fun getVendor(): String {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getVendor(): String = "vendor"
 
-    override fun getChangeNotes(): String {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getChangeNotes(): String = "changeNotes"
 
-    override fun getVendorLogo(): ByteArray {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getVendorLogo(): ByteArray = byteArrayOf()
 
-    override fun getUnderlyingDocument(): Document {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getUnderlyingDocument(): Document = Document()
 
-    override fun getAllClassesReferencedFromXml(): MutableSet<String>? {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getAllClassesReferencedFromXml(): Set<String>? = emptySet()
 
-    override fun getExtensions(): Multimap<String, Element> {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getExtensions(): Multimap<String, Element> = ArrayListMultimap.create()
 
-    override fun isCompatibleWithIde(ideVersion: IdeVersion?): Boolean {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun isCompatibleWithIde(ideVersion: IdeVersion?): Boolean = true
 
-    override fun getDescription(): String {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getDescription(): String = "description"
 
-    override fun getUrl(): String {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getUrl(): String = "url"
 
-    override fun getVendorEmail(): String {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getVendorEmail(): String = "vendor email"
 
-    override fun getVendorUrl(): String {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getVendorUrl(): String = "vendor url"
 
-    override fun getVendorLogoUrl(): String {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getVendorLogoUrl(): String = "vendorLogoUrl"
 
-    override fun getPluginName(): String {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getPluginName(): String = "name"
 
-    override fun getUntilBuild(): IdeVersion {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getSinceBuild(): IdeVersion = IdeVersion.createIdeVersion("IU-171")
 
-    override fun getSinceBuild(): IdeVersion {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getUntilBuild(): IdeVersion = IdeVersion.createIdeVersion("IU-1")
 
-    override fun getPluginFile(): File {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getPluginFile(): File = pluginFile
 
-    override fun getDefinedModules(): Set<String>? {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getDefinedModules(): Set<String> = definedModules
 
-    override fun getDependencies(): List<PluginDependency>? {
-      throw UnsupportedOperationException("not implemented")
-    }
+    override fun getDependencies(): List<PluginDependency> = dependencies
 
-    override fun getOptionalDescriptors(): MutableMap<String, Plugin>? {
-      throw UnsupportedOperationException("not implemented")
-    }
-
+    override fun getOptionalDescriptors(): Map<String, Plugin> = emptyMap()
   }
 }

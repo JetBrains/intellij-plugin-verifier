@@ -153,9 +153,6 @@ object Dependencies {
     }
   }
 
-  /**
-   * @param ide IDE against which to resolve dependencies.
-   */
   private class Dfs(val resolver: DependencyResolver) {
 
     val graph: DirectedGraph<Vertex, Edge> = DefaultDirectedGraph(Edge::class.java)
@@ -226,7 +223,4 @@ data class Vertex(val plugin: Plugin) {
 
   val missingDependencies: MutableMap<PluginDependency, MissingReason> = hashMapOf()
 
-  override fun equals(other: Any?): Boolean = other is Vertex && plugin.pluginFile == other.plugin.pluginFile
-
-  override fun hashCode(): Int = plugin.pluginFile.hashCode()
 }

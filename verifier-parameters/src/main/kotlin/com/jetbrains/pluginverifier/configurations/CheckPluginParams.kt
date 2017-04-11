@@ -26,7 +26,7 @@ object CheckPluginParamsParser : ParamsParser {
           "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963")
       System.exit(1)
     }
-    val ideDescriptors = freeArgs.drop(1).map { File(it) }.map { IdeDescriptor.ByInstance(CmdUtil.createIde(it, opts)) }
+    val ideDescriptors = freeArgs.drop(1).map(::File).map { IdeDescriptor.ByInstance(CmdUtil.createIde(it, opts)) }
     val pluginFiles = getPluginFiles(freeArgs[0], ideDescriptors.map { it.ideVersion })
     val jdkDescriptor = JdkDescriptor.ByFile(CmdUtil.getJdkDir(opts))
     val vOptions = VOptionsUtil.parseOpts(opts)
@@ -41,7 +41,7 @@ object CheckPluginParamsParser : ParamsParser {
         PluginDescriptor.ByFileLock(id, version, it)
       }
     }
-    return CheckPluginParams(pluginsToCheck, ideDescriptors, jdkDescriptor, vOptions, true, externalClasspath)
+    return CheckPluginParams(pluginsToCheck, ideDescriptors, jdkDescriptor, vOptions, externalClasspath)
   }
 
   private fun guessPluginIdAndVersion(file: File): Pair<String, String> {
@@ -75,8 +75,8 @@ object CheckPluginParamsParser : ParamsParser {
 
   fun fetchPlugins(ideVersion: IdeVersion, pluginListFile: File, pluginPaths: List<String>): List<IFileLock> =
       pluginPaths
-          .map { it.trim() }
-          .filter { it.isNotEmpty() }
+          .map(String::trim)
+          .filter(String::isNotEmpty)
           .map {
             if (it.startsWith("id:")) {
               downloadPluginBuilds(it.substringAfter("id:"), ideVersion)
@@ -101,9 +101,8 @@ object CheckPluginParamsParser : ParamsParser {
 }
 
 data class CheckPluginParams(val pluginDescriptors: List<PluginDescriptor>,
-                             val ideDescriptors: List<IdeDescriptor>,
+                             val ideDescriptors: List<IdeDescriptor.ByInstance>,
                              val jdkDescriptor: JdkDescriptor,
                              val vOptions: VOptions,
-                             val resolveDependenciesWithin: Boolean = false,
                              val externalClasspath: Resolver = Resolver.getEmptyResolver(),
                              val progress: VProgress = DefaultVProgress()) : Params

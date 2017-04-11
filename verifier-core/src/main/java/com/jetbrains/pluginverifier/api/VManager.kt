@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.api
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
-import com.google.common.util.concurrent.MoreExecutors
 import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeManager
 import com.intellij.structure.domain.IdeVersion
@@ -80,11 +79,11 @@ object VManager {
       params.pluginsToCheck.groupBy { it.second }.entries.forEach { ideToPlugins ->
         val ideDescriptor = ideToPlugins.key
 
-        var ide: Ide = createIde(ideDescriptor)
+        val ide: Ide = createIde(ideDescriptor)
         val (closeIdeResolver: Boolean, ideResolver: Resolver) = ideResolverPair(ide, ideDescriptor)
 
         try {
-          val executor = if (params.resolveDependenciesWithin) MoreExecutors.newDirectExecutorService() else Executors.newFixedThreadPool(getWorkersNumber())
+          val executor = Executors.newFixedThreadPool(getWorkersNumber())
           val ecp = ExecutorCompletionService<VCallableResult>(executor)
           val futures = ideToPlugins.value.map { it.first }.map { ecp.submit(VCallable(it, ideDescriptor, ide, params, ideResolver, runtimeResolver)) }
           val totalN = futures.size
@@ -111,10 +110,6 @@ object VManager {
                   }
 
                   results.add(result.vResult)
-
-                  if (params.resolveDependenciesWithin && result.plugin != null) {
-                    ide = ide.getExpandedIde(result.plugin)
-                  }
 
                   progress.setProgress(((++verified).toDouble()) / pluginsNumber)
                   val statusString = "${result.vResult.pluginDescriptor} has been verified with $ideDescriptor. Result: ${presentableResult(result.vResult)}"

@@ -22,6 +22,7 @@ import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.VOptionsUtil
 import org.junit.Assert
 import org.junit.Test
+import verifier.tests.MockUtil.getJdkDescriptor
 import java.io.File
 import java.io.FileNotFoundException
 import java.util.regex.Pattern
@@ -145,16 +146,13 @@ class VerifierTest {
     val plugin = PluginManager.getInstance().createPlugin(pluginFile)
 
 
-    var jdkPath: String? = System.getenv("JAVA_HOME")
-    if (jdkPath == null) {
-      jdkPath = "/usr/lib/jvm/java-8-oracle"
-    }
+    val jdkDescriptor = getJdkDescriptor()
 
     Resolver.createIdeResolver(ide).use { ideResolver ->
       val pluginDescriptor = PluginDescriptor.ByInstance(plugin)
       val ideDescriptor = IdeDescriptor.ByInstance(ide, ideResolver)
       val vOptions = VOptionsUtil.parseOpts(CmdOpts())
-      val results = VManager.verify(VParams(JdkDescriptor.ByFile(jdkPath!!), listOf(Pair<PluginDescriptor, IdeDescriptor>(pluginDescriptor, ideDescriptor)), vOptions, Resolver.getEmptyResolver(), true))
+      val results = VManager.verify(VParams(jdkDescriptor, listOf(Pair<PluginDescriptor, IdeDescriptor>(pluginDescriptor, ideDescriptor)), vOptions, Resolver.getEmptyResolver()))
       val result = results.results[0]
       Assert.assertTrue(result is VResult.Problems)
 

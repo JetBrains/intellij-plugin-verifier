@@ -17,7 +17,7 @@ interface VProgress {
   fun setText(text: String)
 }
 
-class DefaultVProgress() : VProgress {
+class DefaultVProgress : VProgress {
   @Volatile private var progress: Double = 0.0
 
   @Volatile private var text: String = ""
@@ -60,12 +60,6 @@ data class VParams(
      * The Resolver for external classes. The verification can refer to them.
      */
     val externalClassPath: Resolver = Resolver.getEmptyResolver(),
-
-    /**
-     * If set to true the plugins can refer other plugins withing the verification.
-     * It's used to check several plugins with dependencies between them.
-     */
-    val resolveDependenciesWithin: Boolean = false,
 
     /**
      * If set, this resolver will be used to resolve plugin dependencies.
