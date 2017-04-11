@@ -10,7 +10,7 @@ interface VPrinter {
   fun printResults(results: VResults, options: VPrinterOptions)
 }
 
-data class VPrinterOptions(private val ignoreAllMissingOptionalDeps: Boolean, val ignoreMissingOptionalDeps: List<String>) {
+data class VPrinterOptions(private val ignoreAllMissingOptionalDeps: Boolean = false, val ignoreMissingOptionalDeps: List<String> = emptyList()) {
 
   fun ignoreMissingOptionalDependency(dependency: PluginDependency): Boolean = ignoreAllMissingOptionalDeps || ignoreMissingOptionalDeps.any { it == dependency.id }
 

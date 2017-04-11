@@ -13,7 +13,10 @@ import com.jetbrains.pluginverifier.configurations.MissingCompatibleUpdate
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.RepositoryManager
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import kotlin.comparisons.compareBy
 import kotlin.comparisons.thenBy
 
@@ -21,7 +24,13 @@ import kotlin.comparisons.thenBy
 /**
  * @author Sergey Patrikeev
  */
-class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter {
+class TeamCityVPrinter(val tcLog: TeamCityLog,
+                       val groupBy: GroupBy,
+                       val pluginRepository: PluginRepository = RepositoryManager) : VPrinter {
+
+  companion object {
+    private val LOG: Logger = LoggerFactory.getLogger(TeamCityVPrinter::class.java)
+  }
 
   private val REPOSITORY_PLUGIN_ID_BASE = "https://plugins.jetbrains.com/plugin/index?xmlId="
 
@@ -122,10 +131,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
     //pluginTwo
     //...and so on...
 
-    //request the last versions of the checked plugins. it is used to print "newest" suffix in the check-page.
-    val lastUpdates = results.results.map { it.ideDescriptor.ideVersion }.distinct().associate {
-      it to RepositoryManager.getLastCompatibleUpdates(it).sortedByDescending { it.updateId }.distinctBy { Triple(it.pluginId, it.pluginName, it.version) }
-    }
+    val lastUpdates = requestLatestVersionsOfUpdatesForEachCheckedIde(results.results.map { it.ideDescriptor.ideVersion }.distinct())
 
     results.results.groupBy { it.pluginDescriptor.pluginId }.forEach { pidToResults ->
       val pluginId = pidToResults.key
@@ -221,15 +227,29 @@ class TeamCityVPrinter(val tcLog: TeamCityLog, val groupBy: GroupBy) : VPrinter 
     }
   }
 
+  private fun requestLatestVersionsOfUpdatesForEachCheckedIde(ideVersions: List<IdeVersion>): Map<IdeVersion, List<UpdateInfo>> =
+      ideVersions.associate { ideVersion ->
+        val lastCompatibleUpdates: List<UpdateInfo> = try {
+          val repository: PluginRepository = pluginRepository
+          repository.getLastCompatibleUpdates(ideVersion)
+        } catch(e: Exception) {
+          LOG.warn("Unable to connect to Plugins Repository to get latest versions of plugins for $ideVersion", e)
+          emptyList()
+        }
+        ideVersion to lastCompatibleUpdates.sortedByDescending { it.updateId }.distinctBy { it.pluginId }
+      }
+
   private fun String.pluralize(times: Int): String {
     if (times < 0) throw IllegalArgumentException("Negative value")
     if (times == 0) return ""
     if (times == 1) return this else return this + "s"
   }
 
-  private fun genTestName(pluginDescriptor: PluginDescriptor, ideVersion: IdeVersion, lastUpdates: Map<IdeVersion, List<UpdateInfo>>): String {
-    val relevant = lastUpdates[ideVersion] ?: return "(${pluginDescriptor.version})"
+  private fun genTestName(pluginDescriptor: PluginDescriptor,
+                          ideVersion: IdeVersion,
+                          lastUpdates: Map<IdeVersion, List<UpdateInfo>>): String {
     val simple = "(${pluginDescriptor.version})"
+    val relevant = lastUpdates[ideVersion] ?: return simple
     val newest = "(${pluginDescriptor.version} - newest)"
     return when (pluginDescriptor) {
       is PluginDescriptor.ByUpdateInfo -> if (relevant.find { pluginDescriptor.updateInfo.updateId == it.updateId } != null) newest else simple
