@@ -14,24 +14,24 @@ import static java.lang.Character.toUpperCase;
 
 public class StringUtil {
 
-  @Nullable
+  @NotNull
   public static String substringAfter(@NotNull String text, @NotNull String subString) {
     int i = text.indexOf(subString);
-    if (i == -1) return null;
+    if (i == -1) return text;
     return text.substring(i + subString.length());
   }
 
-  @Nullable
-  public static String substringBefore(@NotNull String text, @NotNull String subString) {
+  @NotNull
+  private static String substringBefore(@NotNull String text, @NotNull String subString) {
     int i = text.indexOf(subString);
-    if (i == -1) return null;
+    if (i == -1) return text;
     return text.substring(0, i);
   }
 
-  @Nullable
+  @NotNull
   public static String substringBeforeIncluding(@NotNull String text, @NotNull String subString) {
     String before = substringBefore(text, subString);
-    if (before == null) return null;
+    if (before == null) return text;
     return before + subString;
   }
 

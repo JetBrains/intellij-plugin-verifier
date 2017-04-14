@@ -235,6 +235,12 @@ public class URLUtil {
   }
 
   @NotNull
+  public static URL getJarEntryURL(@NotNull File file, @NotNull String pathInJar) throws MalformedURLException {
+    String fileURL = getFileEscapedUri(file);
+    return new URL(JAR_PROTOCOL + ':' + fileURL + JAR_SEPARATOR + StringUtil.trimLeading(pathInJar, '/'));
+  }
+
+  @NotNull
   public static String[] splitUrl(@NotNull String path) {
     while (path.startsWith("jar:")) {
       path = StringUtil.trimStart(path, "jar:");
@@ -245,4 +251,8 @@ public class URLUtil {
     return path.split("\\!/");
   }
 
+  @NotNull
+  public static String getFileEscapedUri(@NotNull File file) {
+    return StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
+  }
 }

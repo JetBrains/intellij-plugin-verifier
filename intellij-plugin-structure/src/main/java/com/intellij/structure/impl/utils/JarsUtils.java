@@ -2,6 +2,7 @@ package com.intellij.structure.impl.utils;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
+import com.google.common.io.Files;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.AbstractFileFilter;
@@ -59,6 +60,22 @@ public class JarsUtils {
         LOG.error("Unable to close resolver " + opened, ce);
       }
     }
+  }
+
+  private static boolean hasExtension(@NotNull File file, @NotNull String extension) {
+    return file.isFile() && extension.equals(Files.getFileExtension(file.getName()));
+  }
+
+  public static boolean isJarOrZip(@NotNull File file) {
+    return isJar(file) || isZip(file);
+  }
+
+  public static boolean isZip(@NotNull File file) {
+    return hasExtension(file, "zip");
+  }
+
+  public static boolean isJar(@NotNull File file) {
+    return hasExtension(file, "jar");
   }
 
 }
