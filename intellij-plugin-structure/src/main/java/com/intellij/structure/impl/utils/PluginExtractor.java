@@ -1,7 +1,6 @@
 package com.intellij.structure.impl.utils;
 
 import com.google.common.base.Throwables;
-import com.intellij.structure.domain.Plugin;
 import org.apache.commons.io.FileUtils;
 import org.codehaus.plexus.archiver.AbstractUnArchiver;
 import org.codehaus.plexus.archiver.tar.TarBZip2UnArchiver;
@@ -23,35 +22,28 @@ public class PluginExtractor {
   private static final int TEMP_DIR_ATTEMPTS = 10000;
 
   @NotNull
-  public static File extractPlugin(@NotNull Plugin plugin, @NotNull File archive) throws IOException {
-
-    File tmp = createTempDir("plugin_");
-
-    try {
-      final AbstractUnArchiver ua = createUnArchiver(archive);
-      ua.enableLogging(new ConsoleLogger(Logger.LEVEL_WARN, ""));
-      ua.setDestDirectory(tmp);
-      ua.extract();
-    } catch (Throwable e) {
-      FileUtils.deleteQuietly(tmp);
-      throw Throwables.propagate(e);
+  public static File extractPlugin(@NotNull File archive) throws IOException {
+    if (!JarsUtils.isZip(archive)) {
+      throw new IllegalArgumentException("Must be a zip archive: " + archive);
     }
+
+    File tempFile = extractPluginToTemporaryDirectory(archive);
 
     /*
       Check if the given .zip file actually contains a single .jar entry (a.zip!/b.jar!/META-INF/plugin.xml)
       If so we should return this single .jar file because it is actually a plugin.
     */
-    Collection<File> files = FileUtils.listFiles(tmp, new String[]{"jar"}, false);
+    Collection<File> files = FileUtils.listFiles(tempFile, new String[]{"jar"}, false);
     if (files.size() > 1) {
-      FileUtils.deleteQuietly(tmp);
-      throw new IllegalArgumentException("Plugin " + plugin + " archive contains multiple .jar files representing plugins");
+      FileUtils.deleteQuietly(tempFile);
+      throw new IllegalArgumentException("Plugin archive contains multiple .jar files representing plugins");
     }
     if (files.size() == 1) {
       try {
         File singleJar = files.iterator().next();
 
         //move this single jar outside from the extracted directory
-        File tmpFile = File.createTempFile("plugin_" + plugin.getPluginId(), ".jar", getCacheDir());
+        File tmpFile = File.createTempFile("plugin_", ".jar", getCacheDir());
         try {
           FileUtils.copyFile(singleJar, tmpFile);
           return tmpFile;
@@ -61,12 +53,27 @@ public class PluginExtractor {
         }
       } finally {
         //delete firstly extracted directory
-        FileUtils.deleteQuietly(tmp);
+        FileUtils.deleteQuietly(tempFile);
       }
     }
 
     try {
-      stripTopLevelDirectory(plugin, tmp);
+      stripTopLevelDirectory(tempFile);
+    } catch (Throwable e) {
+      FileUtils.deleteQuietly(tempFile);
+      throw Throwables.propagate(e);
+    }
+    return tempFile;
+  }
+
+  @NotNull
+  private static File extractPluginToTemporaryDirectory(@NotNull File pluginZip) throws IOException {
+    File tmp = createTempDir("plugin_");
+    try {
+      final AbstractUnArchiver ua = createUnArchiver(pluginZip);
+      ua.enableLogging(new ConsoleLogger(Logger.LEVEL_WARN, ""));
+      ua.setDestDirectory(tmp);
+      ua.extract();
     } catch (Throwable e) {
       FileUtils.deleteQuietly(tmp);
       throw Throwables.propagate(e);
@@ -121,7 +128,7 @@ public class PluginExtractor {
     return dir;
   }
 
-  private static void stripTopLevelDirectory(Plugin plugin, @NotNull File dir) throws IOException {
+  private static void stripTopLevelDirectory(@NotNull File dir) throws IOException {
     final String[] entries = dir.list();
     if (entries == null || entries.length != 1 || !new File(dir, entries[0]).isDirectory()) {
       return;
@@ -157,7 +164,7 @@ public class PluginExtractor {
         //assert the plugin-directory is empty now
         File[] files = topLevelEntry.listFiles();
         if (files != null && files.length > 0) {
-          throw new IOException("Unable to strip plugin " + plugin + " directory " + dir + " [topLevelEntry=" + topLevelEntry + "]");
+          throw new IOException("Unable to strip plugin directory " + dir + " [topLevelEntry=" + topLevelEntry + "]");
         }
 
         FileUtils.forceDelete(topLevelEntry);
