@@ -1,5 +1,6 @@
-package com.intellij.structure.domain;
+package com.intellij.structure.plugin;
 
+import com.intellij.structure.problems.PluginProblem;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

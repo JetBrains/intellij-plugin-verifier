@@ -1,4 +1,4 @@
-package com.intellij.structure.domain;
+package com.intellij.structure.plugin;
 
 import com.intellij.structure.impl.domain.PluginManagerImpl;
 import org.jetbrains.annotations.NotNull;
@@ -18,10 +18,10 @@ public abstract class PluginManager {
 
   @NotNull
   final public PluginCreationResult createPlugin(@NotNull File pluginFile) throws IOException {
-    return createPlugin(pluginFile, true);
+    return createPlugin(pluginFile, false);
   }
 
   @NotNull
-  public abstract PluginCreationResult createPlugin(@NotNull File pluginFile, boolean validatePluginXml) throws IOException;
+  public abstract PluginCreationResult createPlugin(@NotNull File pluginFile, boolean readClassFiles) throws IOException;
 
 }

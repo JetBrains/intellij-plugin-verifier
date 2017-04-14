@@ -1,6 +1,7 @@
-package com.intellij.structure.domain;
+package com.intellij.structure.plugin;
 
 import com.google.common.collect.Multimap;
+import com.intellij.structure.ide.IdeVersion;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +67,6 @@ public interface Plugin {
   @NotNull
   Document getUnderlyingDocument();
 
-  @NotNull
-  File getPluginFile();
+  @Nullable
+  File getOriginalFile();
 }
