@@ -5,7 +5,6 @@ import com.google.common.collect.Multimap;
 import org.jdom2.*;
 import org.jdom2.transform.JDOMSource;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -23,20 +22,16 @@ public class PluginBeanExtractor {
   private static final Pattern JAVA_CLASS_PATTERN = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*");
   private static final String[] INTERESTING_STRINGS = new String[]{"class", "interface", "implementation", "instance"};
 
-  @Nullable
-  public static PluginBean extractPluginBean(Document document, ValidationEventHandler validationEventHandler) {
-    PluginBean bean = null;
-    try {
-      JAXBContext jc = JAXBContext.newInstance(PluginBean.class);
-      Unmarshaller unmarshaller = jc.createUnmarshaller();
-      unmarshaller.setEventHandler(validationEventHandler);
-      bean = (PluginBean) unmarshaller.unmarshal(new JDOMSource(document));
+  @NotNull
+  public static PluginBean extractPluginBean(Document document, ValidationEventHandler validationEventHandler) throws JAXBException {
+    JAXBContext jc = JAXBContext.newInstance(PluginBean.class);
+    Unmarshaller unmarshaller = jc.createUnmarshaller();
+    unmarshaller.setEventHandler(validationEventHandler);
 
-      Element rootElement = document.getRootElement();
-      bean.extensions = extractExtensions(rootElement);
-      bean.classes = extractReferencedClasses(rootElement);
-    } catch (JAXBException ignored) {
-    }
+    Element rootElement = document.getRootElement();
+    PluginBean bean = (PluginBean) unmarshaller.unmarshal(new JDOMSource(document));
+    bean.extensions = extractExtensions(rootElement);
+    bean.classes = extractReferencedClasses(rootElement);
     return bean;
   }
 
