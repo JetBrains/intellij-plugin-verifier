@@ -2,7 +2,7 @@ package com.intellij.structure.impl.resolvers;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-import com.intellij.structure.domain.Ide;
+import com.intellij.structure.ide.Ide;
 import com.intellij.structure.impl.domain.IdeManagerImpl;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.resolvers.Resolver;
@@ -67,8 +67,10 @@ public class IdeResolverCreator {
       pools.add(new CompileOutputResolver(IdeManagerImpl.getUltimateClassesRoot(ideaDir)));
       pools.add(getIdeResolverFromLibraries(new File(ideaDir, "community")));
       pools.addAll(hardCodedUltimateLibraries(ideaDir));
-    } else {
+    } else if (IdeManagerImpl.isCommunity(ideaDir)) {
       pools.add(new CompileOutputResolver(IdeManagerImpl.getCommunityClassesRoot(ideaDir)));
+    } else {
+      throw new IllegalArgumentException("Incorrect IDEA sources: " + ideaDir + ". It must be Community or Ultimate sources root with compiled class files");
     }
 
     return createUnionResolver("Idea dir: " + ideaDir.getCanonicalPath(), pools);
