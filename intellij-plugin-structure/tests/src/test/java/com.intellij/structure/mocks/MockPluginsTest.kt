@@ -116,7 +116,7 @@ class MockPluginsTest {
   private fun testMockPluginStructureAndConfiguration(pluginPath: String, vararg classesPath: String) {
     val pluginFile = getMockPluginFile(pluginPath)
 
-    val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile, true)
+    val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile, true, true)
     assertThat(pluginCreationResult, instanceOf<Any>(PluginCreationSuccess::class.java))
     val pluginCreationSuccess = pluginCreationResult as PluginCreationSuccess
     val plugin = pluginCreationSuccess.plugin
