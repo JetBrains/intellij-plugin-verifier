@@ -3,12 +3,12 @@ package com.intellij.structure.impl.domain;
 import com.google.common.base.Strings;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
-import com.intellij.structure.domain.IdeVersion;
-import com.intellij.structure.domain.Plugin;
-import com.intellij.structure.domain.PluginDependency;
+import com.intellij.structure.ide.IdeVersion;
 import com.intellij.structure.impl.beans.PluginBean;
 import com.intellij.structure.impl.beans.PluginDependencyBean;
 import com.intellij.structure.impl.utils.StringUtil;
+import com.intellij.structure.plugin.Plugin;
+import com.intellij.structure.plugin.PluginDependency;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ public class PluginImpl implements Plugin {
   private final Map<String, Plugin> myOptionalDescriptors = new HashMap<String, Plugin>();
   private final Set<String> myReferencedClasses = new HashSet<String>();
   private Multimap<String, Element> myExtensions;
-  private final File myPluginFile;
+  private File myOriginalFile;
   private Document myUnderlyingDocument;
   private String myPluginName;
   private String myPluginVersion;
@@ -46,8 +46,7 @@ public class PluginImpl implements Plugin {
   private IdeVersion mySinceBuild;
   private IdeVersion myUntilBuild;
 
-  PluginImpl(@NotNull File pluginFile, @NotNull Document underlyingDocument, @NotNull PluginBean bean){
-    myPluginFile = pluginFile;
+  PluginImpl(@NotNull Document underlyingDocument, @NotNull PluginBean bean) {
     myUnderlyingDocument = underlyingDocument;
     setInfoFromBean(bean);
   }
@@ -162,7 +161,7 @@ public class PluginImpl implements Plugin {
       myUntilBuild = IdeVersion.createIdeVersion(untilBuild);
     }
 
-    for(PluginDependencyBean dependencyBean : bean.dependencies) {
+    for (PluginDependencyBean dependencyBean : bean.dependencies) {
       PluginDependency dependency = new PluginDependencyImpl(dependencyBean);
       if (dependency.getId().startsWith(INTELLIJ_MODULES_PREFIX)) {
         myModuleDependencies.add(dependency);
@@ -170,7 +169,7 @@ public class PluginImpl implements Plugin {
         myDependencies.add(dependency);
       }
 
-      if(dependency.isOptional() && dependencyBean.configFile != null){
+      if (dependency.isOptional() && dependencyBean.configFile != null) {
         myOptionalConfigFiles.put(dependency, dependencyBean.configFile);
       }
     }
@@ -179,10 +178,10 @@ public class PluginImpl implements Plugin {
       myVendorUrl = bean.vendor.url;
       myVendorEmail = bean.vendor.email;
     }
-    if(!StringUtil.isEmptyOrSpaces(bean.changeNotes)) {
+    if (!StringUtil.isEmptyOrSpaces(bean.changeNotes)) {
       myNotes = Jsoup.clean(bean.changeNotes.trim(), WHITELIST);
     }
-    if(!StringUtil.isEmptyOrSpaces(bean.description)) {
+    if (!StringUtil.isEmptyOrSpaces(bean.description)) {
       myDescription = Jsoup.clean(bean.description.trim(), WHITELIST);
     }
   }
@@ -205,12 +204,9 @@ public class PluginImpl implements Plugin {
     return Collections.unmodifiableMap(myOptionalDescriptors);
   }
 
-  void setOptionalDescriptors(@NotNull Map<String, Plugin> optionalDescriptors) {
-    myOptionalDescriptors.clear();
-    myOptionalDescriptors.putAll(optionalDescriptors);
-    for (Plugin optDescriptor : optionalDescriptors.values()) {
-      myExtensions.putAll(optDescriptor.getExtensions());
-    }
+  void addOptionalDescriptor(@NotNull String configurationFile, @NotNull Plugin optionalPlugin) {
+    myOptionalDescriptors.put(configurationFile, optionalPlugin);
+    myExtensions.putAll(optionalPlugin.getExtensions());
   }
 
   @NotNull
@@ -219,14 +215,14 @@ public class PluginImpl implements Plugin {
     return myUnderlyingDocument.clone();
   }
 
-  void setUnderlyingDocument(@NotNull Document myUnderlyingDocument) {
-    this.myUnderlyingDocument = myUnderlyingDocument;
+  @Nullable
+  @Override
+  public File getOriginalFile() {
+    return myOriginalFile;
   }
 
-  @NotNull
-  @Override
-  public File getPluginFile() {
-    return myPluginFile;
+  void setOriginalPluginFile(@NotNull File originalFile) {
+    myOriginalFile = originalFile;
   }
 
   @NotNull

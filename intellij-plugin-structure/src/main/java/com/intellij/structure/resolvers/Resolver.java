@@ -1,9 +1,9 @@
 package com.intellij.structure.resolvers;
 
 
-import com.intellij.structure.domain.Ide;
-import com.intellij.structure.domain.Plugin;
+import com.intellij.structure.ide.Ide;
 import com.intellij.structure.impl.resolvers.*;
+import com.intellij.structure.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -35,7 +35,7 @@ public abstract class Resolver implements Closeable {
    */
   @NotNull
   public static Resolver createPluginResolver(@NotNull Plugin plugin) throws IOException {
-    return PluginResolver.createPluginResolver(plugin);
+    return plugin.getOriginalFile() == null ? getEmptyResolver() : PluginResolver.createPluginResolver(plugin.getOriginalFile());
   }
 
   /**
