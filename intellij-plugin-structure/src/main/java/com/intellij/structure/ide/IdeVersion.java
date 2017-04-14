@@ -1,4 +1,4 @@
-package com.intellij.structure.domain;
+package com.intellij.structure.ide;
 
 import com.intellij.structure.impl.domain.IdeVersionImpl;
 import org.jetbrains.annotations.NotNull;

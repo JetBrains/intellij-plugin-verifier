@@ -1,6 +1,7 @@
-package com.intellij.structure.domain;
+package com.intellij.structure.ide;
 
 import com.intellij.structure.impl.utils.StringUtil;
+import com.intellij.structure.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
