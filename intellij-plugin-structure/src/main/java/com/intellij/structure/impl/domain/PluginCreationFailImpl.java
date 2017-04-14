@@ -1,8 +1,7 @@
 package com.intellij.structure.impl.domain;
 
-import com.intellij.structure.domain.PluginCreationFail;
-import com.intellij.structure.domain.PluginCreationResult;
-import com.intellij.structure.domain.PluginProblem;
+import com.intellij.structure.plugin.PluginCreationFail;
+import com.intellij.structure.problems.PluginProblem;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

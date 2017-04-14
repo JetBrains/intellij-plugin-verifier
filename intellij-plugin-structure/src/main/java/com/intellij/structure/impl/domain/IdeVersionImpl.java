@@ -1,6 +1,6 @@
 package com.intellij.structure.impl.domain;
 
-import com.intellij.structure.domain.IdeVersion;
+import com.intellij.structure.ide.IdeVersion;
 import com.intellij.structure.impl.utils.StringUtil;
 import org.jetbrains.annotations.NotNull;
 

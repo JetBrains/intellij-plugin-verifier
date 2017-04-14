@@ -1,7 +1,7 @@
 package com.intellij.structure.impl.domain;
 
-import com.intellij.structure.domain.PluginDependency;
 import com.intellij.structure.impl.beans.PluginDependencyBean;
+import com.intellij.structure.plugin.PluginDependency;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

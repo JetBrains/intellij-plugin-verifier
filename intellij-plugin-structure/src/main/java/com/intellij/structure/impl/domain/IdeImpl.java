@@ -1,8 +1,8 @@
 package com.intellij.structure.impl.domain;
 
-import com.intellij.structure.domain.Ide;
-import com.intellij.structure.domain.IdeVersion;
-import com.intellij.structure.domain.Plugin;
+import com.intellij.structure.ide.Ide;
+import com.intellij.structure.ide.IdeVersion;
+import com.intellij.structure.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
