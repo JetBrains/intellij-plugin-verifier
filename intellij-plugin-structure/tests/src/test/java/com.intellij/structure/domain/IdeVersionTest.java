@@ -1,6 +1,7 @@
 package com.intellij.structure.domain;
 
 
+import com.intellij.structure.ide.IdeVersion;
 import org.junit.Assert;
 import org.junit.Test;
 
