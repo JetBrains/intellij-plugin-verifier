@@ -1,82 +1,8 @@
 dependencies {
   testCompile project(":")
   testRuntime project("mock-plugin")
-  testCompile group: 'junit', name: 'junit', version: '4.11'
+  testCompile 'junit:junit:4.11'
+  testCompile 'org.hamcrest:hamcrest-library:1.3'
 }
 
-def separator = File.separator
-def mocksPath = "$buildDir" + separator + "mocks"
-
-task prepareMockAsJar(type: Copy) {
-  //creates mock-plugin.jar file
-  into mocksPath
-  project("mock-plugin") {
-    from tasks.withType(Jar)
-  }
-}
-
-task prepareMockJarAsZip(type: Zip, dependsOn: prepareMockAsJar) {
-  //creates mock-pluginjarAsZip.zip which is equivalent to mock-plugin.jar
-  project("mock-plugin") {
-    from zipTree(mocksPath + separator + "mock-plugin.jar")
-  }
-  destinationDir = new File(mocksPath)
-  archiveName = "mock-pluginJarAsZip.zip"
-}
-
-task prepareMockAsDir(type: Copy) {
-  //create mock-plugin-dir/ which contains /lib/mock-plugin.jar inside
-  project("mock-plugin") {
-    from tasks.withType(Jar)
-  }
-  into mocksPath + separator + "mock-plugin-dir" + separator + "lib"
-}
-
-task prepareZipLibMock(type: Zip, dependsOn: prepareMockAsJar) {
-  //create mock-plugin-lib.zip which contains /lib/mock-plugin.jar inside
-  project("mock-plugin") {
-    from tasks.withType(Jar)
-  }
-  into "lib"
-  destinationDir = new File(mocksPath)
-  archiveName = "mock-plugin-lib.zip"
-}
-
-task prepareJarInZip(type: Zip, dependsOn: prepareMockAsJar) {
-  //create mock-plugin-jar-in-zip.zip which contains /mock-plugin.jar in the root
-  project("mock-plugin") {
-    from tasks.withType(Jar)
-  }
-  //to the root
-//  into "."
-  destinationDir = new File(mocksPath)
-  archiveName = "mock-plugin-jar-in-zip.zip"
-}
-
-task prepareMockClasses(type: Copy) {
-  //create mock-plugin-classes/ with /classes/ dir and /META-INF/ dir inside
-  into mocksPath + separator + "mock-plugin-classes"
-
-  def classesSpec = copySpec {
-    from project("mock-plugin").sourceSets.main.output.classesDir
-    into "classes"
-  }
-
-  def pluginXmlSpec = copySpec {
-    from project("mock-plugin").sourceSets.main.output.resourcesDir
-    into "."
-  }
-
-  with classesSpec, pluginXmlSpec
-}
-prepareMockClasses.dependsOn classes
-
-task prepareZipMockClassesAsZip(type: Zip, dependsOn: prepareMockClasses) {
-  //create mock-plugin-classes.zip/ which is equivalent to prepareMockClasses but in the .zip
-  from mocksPath + separator + "mock-plugin-classes" + separator
-  into "mock-plugin"
-  destinationDir = new File(mocksPath)
-  archiveName = "mock-plugin-classes-zip.zip"
-}
-
-test.dependsOn prepareMockAsJar, prepareMockJarAsZip, prepareMockAsDir, prepareZipLibMock, prepareJarInZip, prepareMockClasses, prepareZipMockClassesAsZip
+test.dependsOn 'mock-plugin:prepareAllMocks'

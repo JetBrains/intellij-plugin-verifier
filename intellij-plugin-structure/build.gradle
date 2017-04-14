@@ -1,10 +1,14 @@
 buildscript {
+
+  ext.kotlin_version = '1.1.1'
+
   repositories {
     jcenter()
   }
   dependencies {
     classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
     classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   }
 }
 
@@ -21,6 +25,7 @@ version = intellijPluginStructureVersion
 
 allprojects {
   apply plugin: 'java'
+  apply plugin: 'kotlin'
 
   group = 'org.jetbrains.intellij.plugins'
 
@@ -36,7 +41,7 @@ allprojects {
 test.dependsOn project("tests").test
 
 dependencies {
-  //mock plugins are used in tests
+  compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
   compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
   compile group: 'org.jdom', name: 'jdom', version: '2.0.2'
   compile group: 'com.google.guava', name: 'guava', version: '19.0'
