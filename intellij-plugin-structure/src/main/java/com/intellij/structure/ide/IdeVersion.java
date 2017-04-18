@@ -20,6 +20,15 @@ public abstract class IdeVersion implements Comparable<IdeVersion> {
     return IdeVersionImpl.fromString(version);
   }
 
+  public static boolean isValidIdeVersion(@NotNull String version) throws IllegalArgumentException {
+    try {
+      IdeVersionImpl.fromString(version);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
   /**
    * Returns a string presentation of {@code this} version.
    * For the details of the presentation form refer to

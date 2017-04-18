@@ -1,5 +1,6 @@
 package com.intellij.structure.mocks
 
+import com.intellij.structure.impl.beans.IdeaVersionBean
 import com.intellij.structure.plugin.PluginCreationFail
 import com.intellij.structure.plugin.PluginManager
 import com.intellij.structure.problems.*
@@ -9,6 +10,7 @@ import org.codehaus.plexus.logging.console.ConsoleLogger
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.instanceOf
 import org.junit.Assert.assertThat
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
@@ -61,6 +63,11 @@ class InvalidPluginsTest {
   private fun assertExpectedProblems(pluginFile: File, expectedProblems: List<PluginProblem>) {
     val creationFail = getFailedResult(pluginFile)
     assertThat(creationFail.errorsAndWarnings, `is`(expectedProblems))
+  }
+
+  private fun checkProblemDetected(pluginFile: File, expectedProblem: PluginProblem) {
+    val creationFail = getFailedResult(pluginFile)
+    assertTrue(expectedProblem in creationFail.errorsAndWarnings)
   }
 
   private fun getFailedResult(pluginFile: File): PluginCreationFail {
@@ -158,6 +165,37 @@ class InvalidPluginsTest {
       """, listOf(InvalidModuleBean("plugin.xml")))
   }
 
+  @Test
+  fun `missing since build`() {
+    `test invalid plugin xml`("""<idea-plugin>
+          <idea-version/>
+      </idea-plugin>
+      """, SinceBuildNotSpecified("plugin.xml"))
+  }
+
+  @Test
+  fun `invalid since build`() {
+    `test invalid plugin xml`("""<idea-plugin>
+          <idea-version since-build="131./>
+      </idea-plugin>
+      """, InvalidSinceBuild("plugin.xml"))
+  }
+
+  @Test
+  fun `invalid until build`() {
+    `test invalid plugin xml`("""<idea-plugin>
+          <idea-version until-build="131."/>
+      </idea-plugin>
+      """, InvalidUntilBuild("plugin.xml"))
+  }
+
+  private fun `test invalid plugin xml`(pluginXmlContent: String, expectedProblems: PluginProblem) {
+    val pluginFolder = temporaryFolder.newFolder()
+    val metaInf = File(pluginFolder, "META-INF")
+    metaInf.mkdirs()
+    File(metaInf, "plugin.xml").writeText(pluginXmlContent)
+    checkProblemDetected(pluginFolder, expectedProblems)
+  }
 
   private fun `test invalid plugin xml`(pluginXmlContent: String, expectedProblems: List<PluginProblem>) {
     val pluginFolder = temporaryFolder.newFolder()

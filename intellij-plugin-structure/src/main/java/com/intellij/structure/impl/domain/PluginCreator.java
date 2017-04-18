@@ -1,6 +1,8 @@
 package com.intellij.structure.impl.domain;
 
 import com.google.common.base.Strings;
+import com.intellij.structure.ide.IdeVersion;
+import com.intellij.structure.impl.beans.IdeaVersionBean;
 import com.intellij.structure.impl.beans.PluginBean;
 import com.intellij.structure.impl.beans.PluginBeanExtractor;
 import com.intellij.structure.impl.beans.PluginDependencyBean;
@@ -73,9 +75,7 @@ final class PluginCreator {
         registerProblem(new VendorIsNotSpecified(myDescriptorPath));
       }
 
-      if (bean.ideaVersion == null) {
-        registerProblem(new IdeaVersionIsNotSpecified(myDescriptorPath));
-      }
+      validateIdeaVersion(bean.ideaVersion);
 
       if (isEmpty(bean.description)) {
         registerProblem(new EmptyDescription(myDescriptorPath));
@@ -166,6 +166,25 @@ final class PluginCreator {
         LOG.warn("Unable to read plugin class files " + jarOrDirectory, e);
         registerProblem(new UnableToReadPluginClassFiles(jarOrDirectory));
       }
+    }
+  }
+
+  private void validateIdeaVersion(IdeaVersionBean versionBean) {
+    if(versionBean == null) {
+      registerProblem(new IdeaVersionIsNotSpecified(myDescriptorPath));
+      return;
+    }
+
+    if(versionBean.sinceBuild == null){
+      registerProblem(new InvalidSinceBuild(myDescriptorPath));
+    } else {
+      if(!IdeVersion.isValidIdeVersion(versionBean.sinceBuild)){
+        registerProblem(new InvalidSinceBuild(myDescriptorPath));
+      }
+    }
+
+    if(versionBean.untilBuild != null && !IdeVersion.isValidIdeVersion(versionBean.untilBuild)) {
+      registerProblem(new InvalidUntilBuild(myDescriptorPath));
     }
   }
 

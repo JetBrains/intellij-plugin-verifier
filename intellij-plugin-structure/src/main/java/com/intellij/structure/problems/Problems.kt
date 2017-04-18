@@ -90,58 +90,57 @@ data class UnableToReadDescriptor(val descriptorPath: String) : PluginProblem {
 
 }
 
-data class PluginNameIsNotSpecified(val descriptorPath: String) : PluginProblem {
-
-  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
-
-  override val message: String = "Invalid plugin descriptor $descriptorPath: <name> is not specified"
-
+abstract class InvalidDescriptorProblem(detailedMessage: String) : PluginProblem {
+  abstract val descriptorPath: String
+  override val message: String = "Invalid plugin descriptor $descriptorPath: $detailedMessage"
 }
 
-data class VersionIsNotSpecified(val descriptorPath: String) : PluginProblem {
-
+data class PluginNameIsNotSpecified(override val descriptorPath: String) :
+    InvalidDescriptorProblem("<name> is not specified") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
-
-  override val message: String = "Invalid plugin descriptor $descriptorPath: <version> is not specified"
-
 }
 
-data class VendorIsNotSpecified(val descriptorPath: String) : PluginProblem {
-
+data class VersionIsNotSpecified(override val descriptorPath: String) :
+    InvalidDescriptorProblem("<version> is not specified") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
-
-  override val message: String = "Invalid plugin descriptor $descriptorPath: <vendor> is not specified"
-
 }
 
-data class IdeaVersionIsNotSpecified(val descriptorPath: String) : PluginProblem {
-
+data class VendorIsNotSpecified(override val descriptorPath: String) :
+    InvalidDescriptorProblem("<vendor> is not specified") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
-
-  override val message: String = "Invalid plugin descriptor $descriptorPath: <idea-version> is not specified"
-
 }
 
-data class EmptyDescription(val descriptorPath: String) : PluginProblem {
-
+data class IdeaVersionIsNotSpecified(override val descriptorPath: String) :
+    InvalidDescriptorProblem("<idea-version> is not specified") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
-
-  override val message: String = "Invalid plugin descriptor $descriptorPath: <description> is empty"
-
 }
 
-data class InvalidDependencyBean(val descriptorPath: String) : PluginProblem {
-
+data class EmptyDescription(override val descriptorPath: String) :
+    InvalidDescriptorProblem("<description> is empty") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
-
-  override val message: String = "Invalid plugin descriptor $descriptorPath: dependency id is not specified"
-
 }
 
-data class InvalidModuleBean(val descriptorPath: String) : PluginProblem {
-
+data class InvalidDependencyBean(override val descriptorPath: String) :
+  InvalidDescriptorProblem("dependency id is not specified"){
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
+}
 
-  override val message: String = "Invalid plugin descriptor $descriptorPath: module is not specified"
+data class InvalidModuleBean(override val descriptorPath: String) :
+    InvalidDescriptorProblem("module is not specified") {
+  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
+}
 
+data class SinceBuildNotSpecified(override val descriptorPath: String) :
+    InvalidDescriptorProblem("since build not specified") {
+  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
+}
+
+data class InvalidSinceBuild(override val descriptorPath: String) :
+    InvalidDescriptorProblem("invalid since build") {
+  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
+}
+
+data class InvalidUntilBuild(override val descriptorPath: String) :
+    InvalidDescriptorProblem("invalid since build") {
+  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 }
