@@ -2,11 +2,9 @@ package com.intellij.structure.impl.domain;
 
 import com.google.common.base.Strings;
 import com.intellij.structure.ide.IdeVersion;
-import com.intellij.structure.impl.beans.IdeaVersionBean;
-import com.intellij.structure.impl.beans.PluginBean;
-import com.intellij.structure.impl.beans.PluginBeanExtractor;
-import com.intellij.structure.impl.beans.PluginDependencyBean;
+import com.intellij.structure.impl.beans.*;
 import com.intellij.structure.impl.resolvers.PluginResolver;
+import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.plugin.PluginCreationResult;
 import com.intellij.structure.plugin.PluginCreationSuccess;
@@ -71,10 +69,7 @@ final class PluginCreator {
         registerProblem(new VersionIsNotSpecified(myDescriptorPath));
       }
 
-      if (bean.vendor == null) {
-        registerProblem(new VendorIsNotSpecified(myDescriptorPath));
-      }
-
+      validateVendor(bean.vendor);
       validateIdeaVersion(bean.ideaVersion);
 
       if (isEmpty(bean.description)) {
@@ -169,6 +164,16 @@ final class PluginCreator {
     }
   }
 
+  private void validateVendor(PluginVendorBean vendorBean) {
+    if (vendorBean == null) {
+      registerProblem(new VendorIsNotSpecified(myDescriptorPath));
+    } else {
+      if(StringUtil.isEmptyOrSpaces(vendorBean.name)) {
+        registerProblem(new VendorIsEmpty(myDescriptorPath));
+      }
+    }
+  }
+
   private void validateIdeaVersion(IdeaVersionBean versionBean) {
     if(versionBean == null) {
       registerProblem(new IdeaVersionIsNotSpecified(myDescriptorPath));
@@ -176,7 +181,7 @@ final class PluginCreator {
     }
 
     if(versionBean.sinceBuild == null){
-      registerProblem(new InvalidSinceBuild(myDescriptorPath));
+      registerProblem(new SinceBuildNotSpecified(myDescriptorPath));
     } else {
       if(!IdeVersion.isValidIdeVersion(versionBean.sinceBuild)){
         registerProblem(new InvalidSinceBuild(myDescriptorPath));

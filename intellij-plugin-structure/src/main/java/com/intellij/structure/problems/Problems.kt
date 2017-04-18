@@ -110,6 +110,11 @@ data class VendorIsNotSpecified(override val descriptorPath: String) :
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 }
 
+data class VendorIsEmpty(override val descriptorPath: String) :
+    InvalidDescriptorProblem("<vendor> element is blank or empty") {
+  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
+}
+
 data class IdeaVersionIsNotSpecified(override val descriptorPath: String) :
     InvalidDescriptorProblem("<idea-version> is not specified") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR

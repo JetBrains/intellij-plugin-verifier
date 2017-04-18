@@ -176,7 +176,7 @@ class InvalidPluginsTest {
   @Test
   fun `invalid since build`() {
     `test invalid plugin xml`("""<idea-plugin>
-          <idea-version since-build="131./>
+          <idea-version since-build="131."/>
       </idea-plugin>
       """, InvalidSinceBuild("plugin.xml"))
   }
@@ -187,6 +187,14 @@ class InvalidPluginsTest {
           <idea-version until-build="131."/>
       </idea-plugin>
       """, InvalidUntilBuild("plugin.xml"))
+  }
+
+  @Test
+  fun `empty vendor`() {
+    `test invalid plugin xml`("""<idea-plugin>
+          <vendor></vendor>
+      </idea-plugin>
+      """, VendorIsEmpty("plugin.xml"))
   }
 
   private fun `test invalid plugin xml`(pluginXmlContent: String, expectedProblems: PluginProblem) {
