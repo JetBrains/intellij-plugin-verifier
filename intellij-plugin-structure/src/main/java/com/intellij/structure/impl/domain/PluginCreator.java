@@ -4,6 +4,7 @@ import com.intellij.structure.ide.IdeVersion;
 import com.intellij.structure.impl.beans.*;
 import com.intellij.structure.impl.resolvers.PluginResolver;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
+import com.intellij.structure.plugin.Plugin;
 import com.intellij.structure.plugin.PluginCreationResult;
 import com.intellij.structure.plugin.PluginCreationSuccess;
 import com.intellij.structure.plugin.PluginDependency;
@@ -67,7 +68,7 @@ final class PluginCreator {
       validateId(bean.id);
       validateName(bean.name);
       validateDescription(bean.description);
-      validateChangeNotes(bean.description);
+      validateChangeNotes(bean.changeNotes);
       validateVendor(bean.vendor);
       validateIdeaVersion(bean.ideaVersion);
 
@@ -82,6 +83,12 @@ final class PluginCreator {
           registerProblem(new InvalidModuleBean(myDescriptorPath));
         }
       }
+    }
+  }
+
+  private void validatePlugin(Plugin plugin){
+    if(plugin.getDefinedModules().isEmpty()) {
+      registerProblem(new NoModuleDependencies(myDescriptorPath));
     }
   }
 
@@ -106,7 +113,9 @@ final class PluginCreator {
       Document document = PluginXmlExtractor.resolveXIncludes(originalDocument, documentUrl, pathResolver);
       PluginBean bean = PluginBeanExtractor.extractPluginBean(document, new ReportingValidationEventHandler());
       validateDescriptor(bean);
-      return new PluginImpl(document, bean);
+      PluginImpl plugin =new PluginImpl(document, bean);
+      validatePlugin(plugin);
+      return plugin;
     } catch (Exception e) {
       LOG.error("Unable to read plugin descriptor " + myDescriptorPath, e);
       registerProblem(new UnableToReadDescriptor(myDescriptorPath));
@@ -172,6 +181,8 @@ final class PluginCreator {
       registerProblem(new PropertyNotSpecified(myDescriptorPath, "name"));
     } else if (name.equals("Plugin display name here")) {
       registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "name"));
+    } else if (name.contains("plugin")) {
+      registerProblem(new PluginWordInPluginName(myDescriptorPath));
     }
   }
 

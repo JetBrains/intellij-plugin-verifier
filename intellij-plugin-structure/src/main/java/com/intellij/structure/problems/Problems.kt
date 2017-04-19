@@ -162,3 +162,14 @@ data class InvalidUntilBuild(override val descriptorPath: String) :
     InvalidDescriptorProblem("invalid since build") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 }
+
+data class PluginWordInPluginName(override val descriptorPath: String)  :
+    InvalidDescriptorProblem("plugin name should not contain 'plugin'") {
+  override val level: PluginProblem.Level = PluginProblem.Level.WARNING
+}
+
+data class NoModuleDependencies(val descriptorPath: String): PluginProblem {
+  override val level: PluginProblem.Level = PluginProblem.Level.WARNING
+  override val message: String = "Descriptor $descriptorPath does not include any module dependency tags. " +
+      "Plugin assumed to be a legacy plugin and is loaded only in IntelliJ IDEA."
+}
