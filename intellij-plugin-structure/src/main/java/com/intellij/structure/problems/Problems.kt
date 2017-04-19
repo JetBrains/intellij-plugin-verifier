@@ -117,7 +117,25 @@ data class NonLatinDescription(val descriptorPath: String) : PluginProblem{
 
 data class ShortDescription(val descriptorPath: String) : PluginProblem{
   override val level: PluginProblem.Level = PluginProblem.Level.WARNING
-  override val message: String = "Your description is too short"
+  override val message: String = "your description is too short"
+}
+
+data class DefaultDescription(override val descriptorPath: String) :
+    InvalidDescriptorProblem("description shouldn't have 'Enter short description for your plugin here.' or " +
+        "'most HTML tags may be used'" ) {
+  override val level: PluginProblem.Level = PluginProblem.Level.WARNING
+}
+
+data class ShortChangeNotes(override val descriptorPath: String) :
+    InvalidDescriptorProblem("change-notes are too short " +
+        "'most HTML tags may be used'" ) {
+  override val level: PluginProblem.Level = PluginProblem.Level.WARNING
+}
+
+data class DefaultChangeNotes(override val descriptorPath: String) :
+    InvalidDescriptorProblem("change-notes shouldn't have 'Add change notes here' or " +
+        "'most HTML tags may be used'" ) {
+  override val level: PluginProblem.Level = PluginProblem.Level.WARNING
 }
 
 data class InvalidDependencyBean(override val descriptorPath: String) :

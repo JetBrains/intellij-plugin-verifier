@@ -67,6 +67,7 @@ final class PluginCreator {
       validateId(bean.id);
       validateName(bean.name);
       validateDescription(bean.description);
+      validateChangeNotes(bean.description);
       validateVendor(bean.vendor);
       validateIdeaVersion(bean.ideaVersion);
 
@@ -159,23 +160,23 @@ final class PluginCreator {
   }
 
   private void validateId(@Nullable String id) {
-    if(isEmpty(id)) {
+    if (isEmpty(id)) {
       registerProblem(new PropertyNotSpecified(myDescriptorPath, "id"));
-    } else if(id.equals("com.your.company.unique.plugin.id")) {
+    } else if (id.equals("com.your.company.unique.plugin.id")) {
       registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "id"));
     }
   }
 
   private void validateName(@Nullable String name) {
-    if(isEmpty(name)) {
+    if (isEmpty(name)) {
       registerProblem(new PropertyNotSpecified(myDescriptorPath, "name"));
-    } else if(name.equals("Plugin display name here")) {
+    } else if (name.equals("Plugin display name here")) {
       registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "name"));
     }
   }
 
   private void validateDescription(@Nullable String description) {
-    if(isEmpty(description)) {
+    if (isEmpty(description)) {
       registerProblem(new EmptyDescription(myDescriptorPath));
       return;
     }
@@ -186,8 +187,24 @@ final class PluginCreator {
       registerProblem(new NonLatinDescription(myDescriptorPath));
     }
 
-    if(description.length() < 40) {
+    if (description.length() < 40) {
       registerProblem(new ShortDescription(myDescriptorPath));
+    }
+
+    if (description.contains("Enter short description for your plugin here.") ||
+        description.contains("most HTML tags may be used")) {
+      registerProblem(new DefaultDescription(myDescriptorPath));
+    }
+  }
+
+  private void validateChangeNotes(String changeNotes) {
+    if (changeNotes.length() < 40) {
+      registerProblem(new ShortChangeNotes(myDescriptorPath));
+    }
+
+    if (changeNotes.contains("Add change notes here") ||
+        changeNotes.contains("most HTML tags may be used")) {
+      registerProblem(new DefaultChangeNotes(myDescriptorPath));
     }
   }
 
@@ -197,34 +214,34 @@ final class PluginCreator {
       return;
     }
 
-    if(vendorBean.name.equals("YourCompany")) {
+    if (vendorBean.name.equals("YourCompany")) {
       registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "vendor"));
     }
 
-    if(vendorBean.url.equals("http://www.yourcompany.com")) {
+    if (vendorBean.url.equals("http://www.yourcompany.com")) {
       registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "vendor url"));
     }
 
-    if(vendorBean.email.equals("support@yourcompany.com")) {
+    if (vendorBean.email.equals("support@yourcompany.com")) {
       registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "vendor email"));
     }
   }
 
   private void validateIdeaVersion(IdeaVersionBean versionBean) {
-    if(versionBean == null) {
+    if (versionBean == null) {
       registerProblem(new PropertyNotSpecified(myDescriptorPath, "idea-version"));
       return;
     }
 
-    if(versionBean.sinceBuild == null){
+    if (versionBean.sinceBuild == null) {
       registerProblem(new SinceBuildNotSpecified(myDescriptorPath));
     } else {
-      if(!IdeVersion.isValidIdeVersion(versionBean.sinceBuild)){
+      if (!IdeVersion.isValidIdeVersion(versionBean.sinceBuild)) {
         registerProblem(new InvalidSinceBuild(myDescriptorPath));
       }
     }
 
-    if(versionBean.untilBuild != null && !IdeVersion.isValidIdeVersion(versionBean.untilBuild)) {
+    if (versionBean.untilBuild != null && !IdeVersion.isValidIdeVersion(versionBean.untilBuild)) {
       registerProblem(new InvalidUntilBuild(myDescriptorPath));
     }
   }
