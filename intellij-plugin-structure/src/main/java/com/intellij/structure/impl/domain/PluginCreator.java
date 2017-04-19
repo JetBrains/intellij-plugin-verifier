@@ -1,10 +1,8 @@
 package com.intellij.structure.impl.domain;
 
-import com.google.common.base.Strings;
 import com.intellij.structure.ide.IdeVersion;
 import com.intellij.structure.impl.beans.*;
 import com.intellij.structure.impl.resolvers.PluginResolver;
-import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.plugin.PluginCreationResult;
 import com.intellij.structure.plugin.PluginCreationSuccess;
@@ -26,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.structure.impl.utils.StringUtil.isEmpty;
+import static com.intellij.structure.impl.utils.StringUtil.isEmptyOrSpaces;
 
 /**
  * @author Sergey Patrikeev
@@ -61,20 +60,15 @@ final class PluginCreator {
 
   private void validateDescriptor(PluginBean bean) {
     if (myValidateDescriptor) {
-      if (Strings.isNullOrEmpty(bean.name)) {
-        registerProblem(new PluginNameIsNotSpecified(myDescriptorPath));
-      }
-
       if (bean.pluginVersion == null) {
-        registerProblem(new VersionIsNotSpecified(myDescriptorPath));
+        registerProblem(new PropertyNotSpecified(myDescriptorPath, "version"));
       }
 
+      validateId(bean.id);
+      validateName(bean.name);
+      validateDescription(bean.description);
       validateVendor(bean.vendor);
       validateIdeaVersion(bean.ideaVersion);
-
-      if (isEmpty(bean.description)) {
-        registerProblem(new EmptyDescription(myDescriptorPath));
-      }
 
       for (PluginDependencyBean dependencyBean : bean.dependencies) {
         if (isEmpty(dependencyBean.pluginId)) {
@@ -164,19 +158,61 @@ final class PluginCreator {
     }
   }
 
+  private void validateId(@Nullable String id) {
+    if(isEmpty(id)) {
+      registerProblem(new PropertyNotSpecified(myDescriptorPath, "id"));
+    } else if(id.equals("com.your.company.unique.plugin.id")) {
+      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "id"));
+    }
+  }
+
+  private void validateName(@Nullable String name) {
+    if(isEmpty(name)) {
+      registerProblem(new PropertyNotSpecified(myDescriptorPath, "name"));
+    } else if(name.equals("Plugin display name here")) {
+      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "name"));
+    }
+  }
+
+  private void validateDescription(@Nullable String description) {
+    if(isEmpty(description)) {
+      registerProblem(new EmptyDescription(myDescriptorPath));
+      return;
+    }
+
+    String latinSymbols = description.replaceAll("[A-Za-z]", "");
+    String nonAsciiSymbols = description.replaceAll("[\\x20-\\x7E]", "");
+    if (nonAsciiSymbols.length() > 40 && latinSymbols.length() < 40) {
+      registerProblem(new NonLatinDescription(myDescriptorPath));
+    }
+
+    if(description.length() < 40) {
+      registerProblem(new ShortDescription(myDescriptorPath));
+    }
+  }
+
   private void validateVendor(PluginVendorBean vendorBean) {
-    if (vendorBean == null) {
-      registerProblem(new VendorIsNotSpecified(myDescriptorPath));
-    } else {
-      if(StringUtil.isEmptyOrSpaces(vendorBean.name)) {
-        registerProblem(new VendorIsEmpty(myDescriptorPath));
-      }
+    if (isEmptyOrSpaces(vendorBean.name)) {
+      registerProblem(new PropertyNotSpecified(myDescriptorPath, "vendor"));
+      return;
+    }
+
+    if(vendorBean.name.equals("YourCompany")) {
+      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "vendor"));
+    }
+
+    if(vendorBean.url.equals("http://www.yourcompany.com")) {
+      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "vendor url"));
+    }
+
+    if(vendorBean.email.equals("support@yourcompany.com")) {
+      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "vendor email"));
     }
   }
 
   private void validateIdeaVersion(IdeaVersionBean versionBean) {
     if(versionBean == null) {
-      registerProblem(new IdeaVersionIsNotSpecified(myDescriptorPath));
+      registerProblem(new PropertyNotSpecified(myDescriptorPath, "idea-version"));
       return;
     }
 

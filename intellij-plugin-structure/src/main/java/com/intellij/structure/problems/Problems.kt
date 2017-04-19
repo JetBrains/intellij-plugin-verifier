@@ -95,34 +95,29 @@ abstract class InvalidDescriptorProblem(detailedMessage: String) : PluginProblem
   override val message: String = "Invalid plugin descriptor $descriptorPath: $detailedMessage"
 }
 
-data class PluginNameIsNotSpecified(override val descriptorPath: String) :
-    InvalidDescriptorProblem("<name> is not specified") {
-  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
+data class PropertyNotSpecified(override val descriptorPath: String, val propertyName: String):
+    InvalidDescriptorProblem("<$propertyName> is not specified"){
+  override val level = PluginProblem.Level.ERROR
 }
 
-data class VersionIsNotSpecified(override val descriptorPath: String) :
-    InvalidDescriptorProblem("<version> is not specified") {
-  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
-}
-
-data class VendorIsNotSpecified(override val descriptorPath: String) :
-    InvalidDescriptorProblem("<vendor> is not specified") {
-  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
-}
-
-data class VendorIsEmpty(override val descriptorPath: String) :
-    InvalidDescriptorProblem("<vendor> element is blank or empty") {
-  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
-}
-
-data class IdeaVersionIsNotSpecified(override val descriptorPath: String) :
-    InvalidDescriptorProblem("<idea-version> is not specified") {
-  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
+data class PropertyWithDefaultValue(override val descriptorPath: String, val propertyName: String) :
+    InvalidDescriptorProblem("$propertyName has default value"){
+  override val level = PluginProblem.Level.ERROR
 }
 
 data class EmptyDescription(override val descriptorPath: String) :
     InvalidDescriptorProblem("<description> is empty") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
+}
+
+data class NonLatinDescription(val descriptorPath: String) : PluginProblem{
+  override val level: PluginProblem.Level = PluginProblem.Level.WARNING
+  override val message: String = "Please make sure to provide the description in English"
+}
+
+data class ShortDescription(val descriptorPath: String) : PluginProblem{
+  override val level: PluginProblem.Level = PluginProblem.Level.WARNING
+  override val message: String = "Your description is too short"
 }
 
 data class InvalidDependencyBean(override val descriptorPath: String) :

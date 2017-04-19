@@ -92,13 +92,13 @@ class InvalidPluginsTest {
   @Test
   fun `plugin name is not specified`() {
     `test invalid plugin xml`("""<idea-plugin>
-          <id>someId</id>
+          <id></id>
           <version>someVersion</version>
           <vendor email="vendor.com" url="url">vendor</vendor>
           <description>d</description>
           <idea-version since-build="131"/>
       </idea-plugin>
-      """, listOf(PluginNameIsNotSpecified("plugin.xml")))
+      """, listOf(PropertyNotSpecified("plugin.xml", "name")))
   }
 
   @Test
@@ -110,7 +110,7 @@ class InvalidPluginsTest {
           <description>d</description>
           <idea-version since-build="131"/>
       </idea-plugin>
-      """, listOf(VendorIsNotSpecified("plugin.xml")))
+      """, listOf(PropertyNotSpecified("plugin.xml", "vendor")))
   }
 
   @Test
@@ -122,7 +122,7 @@ class InvalidPluginsTest {
           <description>d</description>
           <idea-version since-build="131"/>
       </idea-plugin>
-      """, listOf(VersionIsNotSpecified("plugin.xml")))
+      """, listOf(PropertyNotSpecified("plugin.xml", "version")))
   }
 
   @Test
@@ -134,7 +134,7 @@ class InvalidPluginsTest {
           <vendor email="vendor.com" url="url">vendor</vendor>
           <description>d</description>
       </idea-plugin>
-      """, listOf(IdeaVersionIsNotSpecified("plugin.xml")))
+      """, listOf(PropertyNotSpecified("plugin.xml", "idea-version")))
   }
 
   @Test
@@ -194,7 +194,46 @@ class InvalidPluginsTest {
     `test invalid plugin xml`("""<idea-plugin>
           <vendor></vendor>
       </idea-plugin>
-      """, VendorIsEmpty("plugin.xml"))
+      """, PropertyNotSpecified("plugin.xml", "vendor"))
+  }
+
+  @Test
+  fun `non latin description`() {
+    `test invalid plugin xml`("""<idea-plugin>
+          <description>Описание без английского</description>
+      </idea-plugin>
+      """, NonLatinDescription("plugin.xml"))
+  }
+
+  @Test
+  fun `default values`() {
+    `test invalid plugin xml`("""<idea-plugin>
+      <id>com.your.company.unique.plugin.id</id>
+      <name>Plugin display name here</name>
+      <version>1.0</version>
+      <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
+      <description><![CDATA[
+        Enter short description for your plugin here.<br>
+        <em>most HTML tags may be used</em>
+      ]]></description>
+      <change-notes><![CDATA[
+          Add change notes here.<br>
+          <em>most HTML tags may be used</em>
+        ]]>
+      </change-notes>
+      <idea-version since-build="145.0"/>
+      <extensions defaultExtensionNs="com.intellij">
+      </extensions>
+      <actions>
+      </actions>
+    </idea-plugin>
+      """, listOf(
+        PropertyWithDefaultValue("plugin.xml", "id"),
+        PropertyWithDefaultValue("plugin.xml", "name"),
+        PropertyWithDefaultValue("plugin.xml", "vendor"),
+        PropertyWithDefaultValue("plugin.xml", "vendor url"),
+        PropertyWithDefaultValue("plugin.xml", "vendor email"))
+    )
   }
 
   private fun `test invalid plugin xml`(pluginXmlContent: String, expectedProblems: PluginProblem) {
