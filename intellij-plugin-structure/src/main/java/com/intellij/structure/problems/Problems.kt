@@ -90,85 +90,84 @@ data class UnableToReadDescriptor(val descriptorPath: String) : PluginProblem {
 
 }
 
-abstract class InvalidDescriptorProblem(detailedMessage: String) : PluginProblem {
-  abstract val descriptorPath: String
+abstract class InvalidDescriptorProblem(descriptorPath: String, detailedMessage: String) : PluginProblem {
   override val message: String = "Invalid plugin descriptor $descriptorPath: $detailedMessage"
 }
 
-data class PropertyNotSpecified(override val descriptorPath: String, val propertyName: String):
-    InvalidDescriptorProblem("<$propertyName> is not specified"){
+data class PropertyNotSpecified(val descriptorPath: String, val propertyName: String) :
+    InvalidDescriptorProblem(descriptorPath, "<$propertyName> is not specified") {
   override val level = PluginProblem.Level.ERROR
 }
 
-data class PropertyWithDefaultValue(override val descriptorPath: String, val propertyName: String) :
-    InvalidDescriptorProblem("$propertyName has default value"){
+data class PropertyWithDefaultValue(val descriptorPath: String, val propertyName: String) :
+    InvalidDescriptorProblem(descriptorPath, "$propertyName has default value") {
   override val level = PluginProblem.Level.ERROR
 }
 
-data class EmptyDescription(override val descriptorPath: String) :
-    InvalidDescriptorProblem("<description> is empty") {
+data class EmptyDescription(val descriptorPath: String) :
+    InvalidDescriptorProblem(descriptorPath, "<description> is empty") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 }
 
-data class NonLatinDescription(val descriptorPath: String) : PluginProblem{
+data class NonLatinDescription(val descriptorPath: String) : PluginProblem {
   override val level: PluginProblem.Level = PluginProblem.Level.WARNING
   override val message: String = "Please make sure to provide the description in English"
 }
 
-data class ShortDescription(val descriptorPath: String) : PluginProblem{
+data class ShortDescription(val descriptorPath: String) : PluginProblem {
   override val level: PluginProblem.Level = PluginProblem.Level.WARNING
   override val message: String = "your description is too short"
 }
 
-data class DefaultDescription(override val descriptorPath: String) :
-    InvalidDescriptorProblem("description shouldn't have 'Enter short description for your plugin here.' or " +
-        "'most HTML tags may be used'" ) {
+data class DefaultDescription(val descriptorPath: String) :
+    InvalidDescriptorProblem(descriptorPath, "description shouldn't have 'Enter short description for your plugin here.' or " +
+        "'most HTML tags may be used'") {
   override val level: PluginProblem.Level = PluginProblem.Level.WARNING
 }
 
-data class ShortChangeNotes(override val descriptorPath: String) :
-    InvalidDescriptorProblem("change-notes are too short " +
-        "'most HTML tags may be used'" ) {
+data class ShortChangeNotes(val descriptorPath: String) :
+    InvalidDescriptorProblem(descriptorPath, "change-notes are too short " +
+        "'most HTML tags may be used'") {
   override val level: PluginProblem.Level = PluginProblem.Level.WARNING
 }
 
-data class DefaultChangeNotes(override val descriptorPath: String) :
-    InvalidDescriptorProblem("change-notes shouldn't have 'Add change notes here' or " +
-        "'most HTML tags may be used'" ) {
+data class DefaultChangeNotes(val descriptorPath: String) :
+    InvalidDescriptorProblem(descriptorPath, "change-notes shouldn't have 'Add change notes here' or " +
+        "'most HTML tags may be used'") {
   override val level: PluginProblem.Level = PluginProblem.Level.WARNING
 }
 
-data class InvalidDependencyBean(override val descriptorPath: String) :
-  InvalidDescriptorProblem("dependency id is not specified"){
+data class InvalidDependencyBean(val descriptorPath: String) :
+    InvalidDescriptorProblem(descriptorPath, "dependency id is not specified") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 }
 
-data class InvalidModuleBean(override val descriptorPath: String) :
-    InvalidDescriptorProblem("module is not specified") {
+data class InvalidModuleBean(val descriptorPath: String) :
+    InvalidDescriptorProblem(descriptorPath, "module is not specified") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 }
 
-data class SinceBuildNotSpecified(override val descriptorPath: String) :
-    InvalidDescriptorProblem("since build not specified") {
+data class SinceBuildNotSpecified(val descriptorPath: String) :
+    InvalidDescriptorProblem(descriptorPath, "since build not specified") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 }
 
-data class InvalidSinceBuild(override val descriptorPath: String) :
-    InvalidDescriptorProblem("invalid since build") {
+data class InvalidSinceBuild(val descriptorPath: String) :
+    InvalidDescriptorProblem(descriptorPath, "invalid since build") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 }
 
-data class InvalidUntilBuild(override val descriptorPath: String) :
-    InvalidDescriptorProblem("invalid since build") {
+data class InvalidUntilBuild(val descriptorPath: String) :
+    InvalidDescriptorProblem(descriptorPath, "invalid since build") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 }
 
-data class PluginWordInPluginName(override val descriptorPath: String)  :
-    InvalidDescriptorProblem("plugin name should not contain 'plugin'") {
+data class PluginWordInPluginName(val descriptorPath: String) :
+    InvalidDescriptorProblem(descriptorPath, "plugin name should not contain 'plugin'") {
   override val level: PluginProblem.Level = PluginProblem.Level.WARNING
 }
 
-data class NoModuleDependencies(val descriptorPath: String): PluginProblem {
+data class NoModuleDependencies(val descriptorPath: String) : PluginProblem {
   override val level: PluginProblem.Level = PluginProblem.Level.WARNING
   override val message: String = "Descriptor $descriptorPath does not include any module dependency tags. " +
       "Plugin assumed to be a legacy plugin and is loaded only in IntelliJ IDEA."
