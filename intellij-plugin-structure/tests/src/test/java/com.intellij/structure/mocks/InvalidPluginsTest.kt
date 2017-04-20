@@ -1,7 +1,7 @@
 package com.intellij.structure.mocks
 
-import com.intellij.structure.impl.beans.IdeaVersionBean
 import com.intellij.structure.plugin.PluginCreationFail
+import com.intellij.structure.plugin.PluginCreationSuccess
 import com.intellij.structure.plugin.PluginManager
 import com.intellij.structure.problems.*
 import org.codehaus.plexus.archiver.jar.JarArchiver
@@ -10,7 +10,6 @@ import org.codehaus.plexus.logging.console.ConsoleLogger
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.instanceOf
 import org.junit.Assert.assertThat
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
@@ -65,9 +64,10 @@ class InvalidPluginsTest {
     assertThat(creationFail.errorsAndWarnings, `is`(expectedProblems))
   }
 
-  private fun checkProblemDetected(pluginFile: File, expectedProblem: PluginProblem) {
-    val creationFail = getFailedResult(pluginFile)
-    assertTrue(expectedProblem in creationFail.errorsAndWarnings)
+  private fun getSuccessResult(pluginFile: File): PluginCreationSuccess {
+    val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile)
+    assertThat(pluginCreationResult, instanceOf(PluginCreationSuccess::class.java))
+    return pluginCreationResult as PluginCreationSuccess
   }
 
   private fun getFailedResult(pluginFile: File): PluginCreationFail {
@@ -78,131 +78,121 @@ class InvalidPluginsTest {
 
   @Test
   fun `plugin description is empty`() {
-    `test invalid plugin xml`("""<idea-plugin>
-          <id>someId</id>
-          <name>someName</name>
-          <version>someVersion</version>
-          <vendor email="vendor.com" url="url">vendor</vendor>
-          <description></description>
-          <idea-version since-build="131"/>
-      </idea-plugin>
-      """, listOf(EmptyDescription("plugin.xml")))
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          description = "<description></description>"
+        },
+        listOf(EmptyDescription("plugin.xml")))
   }
 
   @Test
   fun `plugin name is not specified`() {
-    `test invalid plugin xml`("""<idea-plugin>
-          <id></id>
-          <version>someVersion</version>
-          <vendor email="vendor.com" url="url">vendor</vendor>
-          <description>d</description>
-          <idea-version since-build="131"/>
-      </idea-plugin>
-      """, listOf(PropertyNotSpecified("plugin.xml", "name")))
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          name = ""
+        },
+        listOf(PropertyNotSpecified("plugin.xml", "name")))
+  }
+
+  @Test
+  fun `plugin id is not specified but it is equal to name`() {
+    val pluginXmlContent = perfectXmlBuilder.modify {
+      id = ""
+    }
+    val pluginFolder = getTempPluginFolder(pluginXmlContent)
+    val successResult = getSuccessResult(pluginFolder)
+    val plugin = successResult.plugin
+    assertThat(plugin.pluginId, `is`(plugin.pluginName))
   }
 
   @Test
   fun `plugin vendor is not specified`() {
-    `test invalid plugin xml`("""<idea-plugin>
-          <id>someId</id>
-          <name>someId</name>
-          <version>someVersion</version>
-          <description>d</description>
-          <idea-version since-build="131"/>
-      </idea-plugin>
-      """, listOf(PropertyNotSpecified("plugin.xml", "vendor")))
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          vendor = ""
+        },
+        listOf(PropertyNotSpecified("plugin.xml", "vendor")))
   }
 
   @Test
   fun `plugin version is not specified`() {
-    `test invalid plugin xml`("""<idea-plugin>
-          <id>someId</id>
-          <name>someName</name>
-          <vendor email="vendor.com" url="url">vendor</vendor>
-          <description>d</description>
-          <idea-version since-build="131"/>
-      </idea-plugin>
-      """, listOf(PropertyNotSpecified("plugin.xml", "version")))
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          version = ""
+        }
+        , listOf(PropertyNotSpecified("plugin.xml", "version")))
   }
 
   @Test
   fun `idea version is not specified`() {
-    `test invalid plugin xml`("""<idea-plugin>
-          <id>someId</id>
-          <name>someName</name>
-          <version>someVersion</version>
-          <vendor email="vendor.com" url="url">vendor</vendor>
-          <description>d</description>
-      </idea-plugin>
-      """, listOf(PropertyNotSpecified("plugin.xml", "idea-version")))
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          ideaVersion = ""
+        },
+        listOf(PropertyNotSpecified("plugin.xml", "idea-version")))
   }
 
   @Test
   fun `invalid dependency bean`() {
-    `test invalid plugin xml`("""<idea-plugin>
-          <id>someId</id>
-          <name>someName</name>
-          <version>someVersion</version>
-          <vendor email="vendor.com" url="url">vendor</vendor>
-          <description>d</description>
-          <idea-version since-build="131"/>
-          <depends></depends>
-      </idea-plugin>
-      """, listOf(InvalidDependencyBean("plugin.xml")))
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          depends = listOf("")
+        },
+        listOf(InvalidDependencyBean("plugin.xml")))
   }
 
   @Test
   fun `invalid module bean`() {
-    `test invalid plugin xml`("""<idea-plugin>
-          <id>someId</id>
-          <name>someName</name>
-          <version>someVersion</version>
-          <vendor email="vendor.com" url="url">vendor</vendor>
-          <description>d</description>
-          <idea-version since-build="131"/>
-          <module></module>
-      </idea-plugin>
-      """, listOf(InvalidModuleBean("plugin.xml")))
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          modules = listOf("")
+        },
+        listOf(InvalidModuleBean("plugin.xml")))
   }
 
   @Test
   fun `missing since build`() {
-    `test invalid plugin xml`("""<idea-plugin>
-          <idea-version/>
-      </idea-plugin>
-      """, SinceBuildNotSpecified("plugin.xml"))
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          ideaVersion = "<idea-version/>"
+        },
+        listOf(SinceBuildNotSpecified("plugin.xml")))
   }
 
   @Test
   fun `invalid since build`() {
-    `test invalid plugin xml`("""<idea-plugin>
-          <idea-version since-build="131."/>
-      </idea-plugin>
-      """, InvalidSinceBuild("plugin.xml"))
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          ideaVersion = """<idea-version since-build="131."/>"""
+        },
+        listOf(InvalidSinceBuild("plugin.xml", "131.")))
   }
 
   @Test
   fun `invalid until build`() {
-    `test invalid plugin xml`("""<idea-plugin>
-          <idea-version until-build="131."/>
-      </idea-plugin>
-      """, InvalidUntilBuild("plugin.xml"))
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          ideaVersion = """<idea-version since-build="131.1" until-build="141."/>"""
+        },
+        listOf(InvalidUntilBuild("plugin.xml", "141.")))
   }
 
   @Test
   fun `empty vendor`() {
-    `test invalid plugin xml`("""<idea-plugin>
-          <vendor></vendor>
-      </idea-plugin>
-      """, PropertyNotSpecified("plugin.xml", "vendor"))
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          vendor = """<vendor></vendor>"""
+        },
+        listOf(PropertyNotSpecified("plugin.xml", "vendor")))
   }
 
   @Test
   fun `non latin description`() {
-    `test invalid plugin xml`("""<idea-plugin>
-          <description>Описание без английского</description>
-      </idea-plugin>
-      """, NonLatinDescription("plugin.xml"))
+    `test plugin xml warnings`(
+        perfectXmlBuilder.modify {
+          description = "<description>Описание без английского, но достаточно длинное</description>"
+        },
+        listOf(NonLatinDescription("plugin.xml")))
   }
 
   @Test
@@ -230,69 +220,81 @@ class InvalidPluginsTest {
       """, listOf(
         PropertyWithDefaultValue("plugin.xml", "id"),
         PropertyWithDefaultValue("plugin.xml", "name"),
+        DefaultDescription("plugin.xml"),
+        DefaultChangeNotes("plugin.xml"),
         PropertyWithDefaultValue("plugin.xml", "vendor"),
         PropertyWithDefaultValue("plugin.xml", "vendor url"),
-        PropertyWithDefaultValue("plugin.xml", "vendor email"))
-    )
+        PropertyWithDefaultValue("plugin.xml", "vendor email")
+    ))
   }
 
-  private fun `test invalid plugin xml`(pluginXmlContent: String, expectedProblems: PluginProblem) {
-    val pluginFolder = temporaryFolder.newFolder()
-    val metaInf = File(pluginFolder, "META-INF")
-    metaInf.mkdirs()
-    File(metaInf, "plugin.xml").writeText(pluginXmlContent)
-    checkProblemDetected(pluginFolder, expectedProblems)
+  private fun `test plugin xml warnings`(pluginXmlContent: String, expectedWarnings: List<PluginProblem>) {
+    val pluginFolder = getTempPluginFolder(pluginXmlContent)
+    val successResult = getSuccessResult(pluginFolder)
+    assertThat(successResult.warnings, `is`(expectedWarnings))
   }
 
   private fun `test invalid plugin xml`(pluginXmlContent: String, expectedProblems: List<PluginProblem>) {
+    val pluginFolder = getTempPluginFolder(pluginXmlContent)
+    assertExpectedProblems(pluginFolder, expectedProblems)
+  }
+
+  private fun getTempPluginFolder(pluginXmlContent: String): File {
     val pluginFolder = temporaryFolder.newFolder()
     val metaInf = File(pluginFolder, "META-INF")
     metaInf.mkdirs()
     File(metaInf, "plugin.xml").writeText(pluginXmlContent)
-    assertExpectedProblems(pluginFolder, expectedProblems)
+    return pluginFolder
   }
 
   @Test
-  fun `plugin has multiple plugin descriptors in lib directory`() {
+  fun `plugin has multiple plugin descriptors in lib directory where descriptor might miss mandatory elements`() {
     /*
       plugin/
       plugin/lib
       plugin/lib/one.jar!/META-INF/plugin.xml
       plugin/lib/two.jar!/META-INF/plugin.xml
     */
-    val pluginOneContent = """<idea-plugin>
-        <id>one</id>
-        <name>one</name>
-        <version>one</version>
-        <vendor email="vendor.com" url="url">one</vendor>
-        <description>one</description>
-        <idea-version since-build="131"/>
-    </idea-plugin>
-    """
+    val validPluginXmlOne = perfectXmlBuilder.modify {
+      id = """<id>one</id>"""
+      name = "<name>one</name>"
+      version = "<version>one</version>"
+    }
+    val invalidPluginXmlOne = perfectXmlBuilder.modify {
+      version = ""
+    }
 
-    val pluginTwoContent = """<idea-plugin>
-        <id>two</id>
-        <name>two</name>
-        <version>two</version>
-        <vendor email="vendor.com" url="url">two</vendor>
-        <description>two</description>
-        <idea-version since-build="131"/>
-    </idea-plugin>
-    """
+    val firstDescriptors = listOf(validPluginXmlOne, invalidPluginXmlOne)
 
-    val pluginFolder = temporaryFolder.newFolder()
-    val lib = File(pluginFolder, "lib")
-    lib.mkdirs()
+    val validPluginXmlTwo = perfectXmlBuilder.modify {
+      id = """<id>two</id>"""
+      name = """<name>two</name>"""
+      version = """<version>two</version>"""
+    }
+    val invalidPluginXmlTwo = perfectXmlBuilder.modify {
+      version = ""
+    }
+    val secondDescriptors = listOf(validPluginXmlTwo, invalidPluginXmlTwo)
 
-    val oneMetaInf = temporaryFolder.newFolder("one", "META-INF")
-    File(oneMetaInf, "plugin.xml").writeText(pluginOneContent)
-    archiveDirectoryInto(oneMetaInf, File(lib, "one.jar"))
+    var testNumber = 0
+    for (firstDescriptor in firstDescriptors) {
+      for (secondDescriptor in secondDescriptors) {
+        testNumber++
+        val pluginFolder = temporaryFolder.newFolder(testNumber.toString())
+        val lib = File(pluginFolder, "lib")
+        lib.mkdirs()
 
-    val twoMetaInf = temporaryFolder.newFolder("two", "META-INF")
-    File(twoMetaInf, "plugin.xml").writeText(pluginTwoContent)
-    archiveDirectoryInto(twoMetaInf, File(lib, "two.jar"))
+        val oneMetaInf = temporaryFolder.newFolder("one$testNumber", "META-INF")
+        File(oneMetaInf, "plugin.xml").writeText(firstDescriptor)
+        archiveDirectoryInto(oneMetaInf, File(lib, "one.jar"))
 
-    assertExpectedProblems(pluginFolder, listOf(MultiplePluginDescriptorsInLibDirectory("one.jar", "two.jar")))
+        val twoMetaInf = temporaryFolder.newFolder("two$testNumber", "META-INF")
+        File(twoMetaInf, "plugin.xml").writeText(secondDescriptor)
+        archiveDirectoryInto(twoMetaInf, File(lib, "two.jar"))
+
+        assertExpectedProblems(pluginFolder, listOf(MultiplePluginDescriptorsInLibDirectory("one.jar", "two.jar")))
+      }
+    }
   }
 
   private fun archiveDirectoryInto(directory: File, destinationJar: File) {

@@ -6,7 +6,7 @@ import com.intellij.structure.impl.utils.JarsUtils
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.plugin.PluginCreationSuccess
 import com.intellij.structure.plugin.PluginManager
-import com.intellij.structure.problems.MissingOptionalDependency
+import com.intellij.structure.problems.MissingOptionalDependencyConfigurationFile
 import com.intellij.structure.problems.PluginProblem
 import com.intellij.structure.resolvers.Resolver
 import org.hamcrest.CoreMatchers.*
@@ -54,7 +54,7 @@ class MockPluginsTest {
 
   private fun testMockWarnings(problems: List<PluginProblem>) {
     assertContains(problems,
-        listOf(MissingOptionalDependency(PluginDependencyImpl("missingDependency", true), "missingFile"))
+        listOf(MissingOptionalDependencyConfigurationFile("plugin.xml", PluginDependencyImpl("missingDependency", true), "missingFile"))
     )
   }
 

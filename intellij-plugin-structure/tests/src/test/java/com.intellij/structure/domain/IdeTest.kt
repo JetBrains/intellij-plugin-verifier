@@ -2,6 +2,7 @@ package com.intellij.structure.domain
 
 import com.intellij.structure.ide.IdeManager
 import com.intellij.structure.ide.IdeVersion
+import com.intellij.structure.mocks.perfectXmlBuilder
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.collection.IsCollectionWithSize.hasSize
 import org.junit.Assert.assertThat
@@ -33,15 +34,7 @@ class IdeTest {
 
   @Test
   fun `create idea from binaries`() {
-    val bundledPluginXmlContent = """<idea-plugin>
-          <id>someId</id>
-          <name>someName</name>
-          <version>someVersion</version>
-          <vendor email="vendor.com" url="url">vendor</vendor>
-          <description>d</description>
-          <idea-version since-build="131"/>
-      </idea-plugin>
-      """
+    val bundledPluginXmlContent = perfectXmlBuilder.asString()
 
     val ideaFolder = temporaryFolder.newFolder("idea")
     File(ideaFolder, "build.txt").writeText("IU-163.1.2.3")
@@ -61,15 +54,7 @@ class IdeTest {
 
   @Test
   fun `create idea from ultimate compiled sources`() {
-    val bundledPluginXmlContent = """<idea-plugin>
-          <id>someId</id>
-          <name>someName</name>
-          <version>someVersion</version>
-          <vendor email="vendor.com" url="url">vendor</vendor>
-          <description>d</description>
-          <idea-version since-build="131"/>
-      </idea-plugin>
-      """
+    val bundledPluginXmlContent = perfectXmlBuilder.asString()
 
     val ideaFolder = temporaryFolder.newFolder("idea")
     File(ideaFolder, "build.txt").writeText("IU-163.1.2.3")
