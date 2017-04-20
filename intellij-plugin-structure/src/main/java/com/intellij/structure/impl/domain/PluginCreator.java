@@ -244,7 +244,7 @@ final class PluginCreator {
 
   private void validateDescription(@Nullable String description) {
     if (isEmpty(description)) {
-      registerProblem(new EmptyDescription(myDescriptorPath));
+      registerProblem(new PropertyNotSpecified(myDescriptorPath, "<description>"));
       return;
     }
 
