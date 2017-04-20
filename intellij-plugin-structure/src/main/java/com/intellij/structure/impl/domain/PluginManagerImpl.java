@@ -53,7 +53,7 @@ public class PluginManagerImpl extends PluginManager {
       zipFile = new ZipFile(jarFile);
     } catch (Exception e) {
       LOG.debug("Unable to read jar file " + jarFile, e);
-      return new PluginCreator(descriptorPath, new UnableToReadJarFile(jarFile));
+      return new PluginCreator(descriptorPath, new UnableToReadJarFile(jarFile), jarFile);
     }
 
     try {
@@ -64,13 +64,13 @@ public class PluginManagerImpl extends PluginManager {
           URL documentUrl = URLUtil.getJarEntryURL(jarFile, zipEntryName);
           InputStream documentStream = zipFile.getInputStream(entry);
           Document document = JDOMUtil.loadDocument(documentStream);
-          return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, pathResolver);
+          return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, pathResolver, jarFile);
         } catch (Exception e) {
           LOG.debug("Unable to read file " + descriptorPath);
-          return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorPath));
+          return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorPath), jarFile);
         }
       } else {
-        return new PluginCreator(descriptorPath, new PluginDescriptorIsNotFound(descriptorPath));
+        return new PluginCreator(descriptorPath, new PluginDescriptorIsNotFound(descriptorPath), jarFile);
       }
     } finally {
       try {
@@ -92,32 +92,35 @@ public class PluginManagerImpl extends PluginManager {
   private PluginCreator loadDescriptorFromDir(@NotNull File pluginDirectory, @NotNull String filePath, boolean validateDescriptor) {
     File descriptorFile = new File(pluginDirectory, "META-INF" + File.separator + filePath);
     if (descriptorFile.exists()) {
-      return loadDescriptorFromDirectoryRoot(filePath, descriptorFile, validateDescriptor);
+      return loadDescriptorFromDescriptorFile(filePath, pluginDirectory, descriptorFile, validateDescriptor);
     } else {
       return loadDescriptorFromLibDirectory(pluginDirectory, filePath, validateDescriptor);
     }
   }
 
-  private PluginCreator loadDescriptorFromDirectoryRoot(@NotNull String descriptorPath, File descriptorFile, boolean validateDescriptor) {
+  private PluginCreator loadDescriptorFromDescriptorFile(@NotNull String descriptorPath,
+                                                         @NotNull File pluginDirectory,
+                                                         @NotNull File descriptorFile,
+                                                         boolean validateDescriptor) {
     try {
       URL documentUrl = URLUtil.fileToUrl(descriptorFile);
       Document document = JDOMUtil.loadDocument(documentUrl);
-      return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, myPathResolver);
+      return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, myPathResolver, pluginDirectory);
     } catch (Exception e) {
       LOG.debug("Unable to read plugin descriptor " + descriptorFile, e);
-      return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorFile.getPath()));
+      return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorFile.getPath()), pluginDirectory);
     }
   }
 
   private PluginCreator loadDescriptorFromLibDirectory(@NotNull final File root, @NotNull String descriptorPath, boolean validateDescriptor) {
     File libDir = new File(root, "lib");
     if (!libDir.isDirectory()) {
-      return new PluginCreator(descriptorPath, new PluginDescriptorIsNotFound(descriptorPath));
+      return new PluginCreator(descriptorPath, new PluginDescriptorIsNotFound(descriptorPath), root);
     }
 
     final File[] files = libDir.listFiles();
     if (files == null || files.length == 0) {
-      return new PluginCreator(descriptorPath, new PluginLibDirectoryIsEmpty(libDir));
+      return new PluginCreator(descriptorPath, new PluginLibDirectoryIsEmpty(libDir), root);
     }
     sortFilesWithRespectToRootDirectoryName(root, files);
 
@@ -125,7 +128,6 @@ public class PluginManagerImpl extends PluginManager {
     JDOMXIncluder.PathResolver pathResolver = new PluginXmlExtractor.PluginXmlPathResolver(metaInfUrls);
 
     PluginCreator result = null;
-    File resultFile = null;
 
     for (final File file : files) {
       PluginCreator innerCreator;
@@ -137,21 +139,20 @@ public class PluginManagerImpl extends PluginManager {
         continue;
       }
 
-      if (innerCreator.isSuccess()) {
+      if (innerCreator.isSuccess() || innerCreator.hasOnlyInvalidDescriptorErrors()) {
         if (result != null) {
-          String first = resultFile.getName();
-          String second = file.getName();
-          result.registerProblem(new MultiplePluginDescriptorsInLibDirectory(first, second));
+          String firstDescriptor = result.getActualFile().getName();
+          String secondDescriptor = innerCreator.getActualFile().getName();
+          return new PluginCreator(descriptorPath, new MultiplePluginDescriptorsInLibDirectory(firstDescriptor, secondDescriptor), root);
         } else {
           result = innerCreator;
-          resultFile = file;
         }
       }
     }
     if (result != null) {
       return result;
     }
-    return new PluginCreator(descriptorPath, new PluginDescriptorIsNotFound(descriptorPath));
+    return new PluginCreator(descriptorPath, new PluginDescriptorIsNotFound(descriptorPath), root);
   }
 
   private void sortFilesWithRespectToRootDirectoryName(@NotNull final File root, File[] files) {
@@ -196,7 +197,7 @@ public class PluginManagerImpl extends PluginManager {
     } else if (JarsUtils.isJar(jarOrDirectory)) {
       pluginCreator = loadDescriptorFromJarFile(jarOrDirectory, descriptorPath, myPathResolver, validateDescriptor);
     } else {
-      return new PluginCreator(descriptorPath, new IncorrectPluginFile(jarOrDirectory));
+      return new PluginCreator(descriptorPath, new IncorrectPluginFile(jarOrDirectory), jarOrDirectory);
     }
     return resolveOptionalDependencies(jarOrDirectory, pluginCreator);
   }
@@ -238,7 +239,7 @@ public class PluginManagerImpl extends PluginManager {
       extracted = PluginExtractor.extractPlugin(zipPlugin);
     } catch (Exception e) {
       LOG.error("Unable to extract plugin file " + zipPlugin, e);
-      return new PluginCreator(PLUGIN_XML, new UnableToExtractZip(zipPlugin));
+      return new PluginCreator(PLUGIN_XML, new UnableToExtractZip(zipPlugin), zipPlugin);
     }
     return createPluginAndReadClassFilesIfNecessary(extracted, readClassFiles);
   }

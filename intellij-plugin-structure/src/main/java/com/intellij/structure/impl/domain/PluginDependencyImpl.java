@@ -1,6 +1,5 @@
 package com.intellij.structure.impl.domain;
 
-import com.intellij.structure.impl.beans.PluginDependencyBean;
 import com.intellij.structure.plugin.PluginDependency;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,11 +11,6 @@ public class PluginDependencyImpl implements PluginDependency {
   public PluginDependencyImpl(@NotNull String id, @Nullable final Boolean isOptional) {
     myId = id;
     myIsOptional = isOptional == null ? false : isOptional;
-  }
-
-  public PluginDependencyImpl(@NotNull PluginDependencyBean bean) {
-    myId = bean.pluginId;
-    myIsOptional = bean.optional;
   }
 
   @Override

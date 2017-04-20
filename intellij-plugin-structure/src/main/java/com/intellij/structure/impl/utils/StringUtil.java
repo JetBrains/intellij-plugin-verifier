@@ -8,6 +8,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.lang.Character.toLowerCase;
 import static java.lang.Character.toUpperCase;
@@ -119,6 +121,14 @@ public class StringUtil {
     return true;
   }
 
+  public static int numberOfPatternMatches(@NotNull String text, Pattern pattern) {
+    Matcher matcher = pattern.matcher(text);
+    int count = 0;
+    while (matcher.find()) {
+      count++;
+    }
+    return count;
+  }
 
   @NotNull
   public static String toSystemIndependentName(@NonNls @NotNull String fileName) {

@@ -1,11 +1,12 @@
 package com.intellij.structure.impl.domain;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.intellij.structure.ide.IdeVersion;
+import com.intellij.structure.impl.beans.IdeaVersionBean;
 import com.intellij.structure.impl.beans.PluginBean;
 import com.intellij.structure.impl.beans.PluginDependencyBean;
+import com.intellij.structure.impl.beans.PluginVendorBean;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.plugin.Plugin;
 import com.intellij.structure.plugin.PluginDependency;
@@ -151,32 +152,41 @@ public class PluginImpl implements Plugin {
     myExtensions = bean.extensions;
     myReferencedClasses.addAll(bean.classes);
 
-    mySinceBuild = bean.ideaVersion != null ? IdeVersion.createIdeVersion(bean.ideaVersion.sinceBuild) : null;
-    String untilBuild = bean.ideaVersion != null ? bean.ideaVersion.untilBuild : null;
-    if (!Strings.isNullOrEmpty(untilBuild)) {
-      if (untilBuild.endsWith(".*")) {
-        int idx = untilBuild.lastIndexOf('.');
-        untilBuild = untilBuild.substring(0, idx + 1) + Integer.MAX_VALUE;
-      }
-      myUntilBuild = IdeVersion.createIdeVersion(untilBuild);
-    }
-
-    for (PluginDependencyBean dependencyBean : bean.dependencies) {
-      PluginDependency dependency = new PluginDependencyImpl(dependencyBean);
-      if (dependency.getId().startsWith(INTELLIJ_MODULES_PREFIX)) {
-        myModuleDependencies.add(dependency);
-      } else {
-        myDependencies.add(dependency);
-      }
-
-      if (dependency.isOptional() && dependencyBean.configFile != null) {
-        myOptionalConfigFiles.put(dependency, dependencyBean.configFile);
+    IdeaVersionBean ideaVersionBean = bean.ideaVersion;
+    if (ideaVersionBean != null) {
+      mySinceBuild = ideaVersionBean.sinceBuild != null ? IdeVersion.createIdeVersion(ideaVersionBean.sinceBuild) : null;
+      String untilBuild = ideaVersionBean.untilBuild;
+      if (!StringUtil.isEmpty(untilBuild)) {
+        if (untilBuild.endsWith(".*")) {
+          int idx = untilBuild.lastIndexOf('.');
+          untilBuild = untilBuild.substring(0, idx + 1) + Integer.MAX_VALUE;
+        }
+        myUntilBuild = IdeVersion.createIdeVersion(untilBuild);
       }
     }
-    if (bean.vendor != null) {
-      myPluginVendor = bean.vendor.name.trim();
-      myVendorUrl = bean.vendor.url;
-      myVendorEmail = bean.vendor.email;
+
+    if (bean.dependencies != null) {
+      for (PluginDependencyBean dependencyBean : bean.dependencies) {
+        if (dependencyBean.pluginId != null) {
+          PluginDependency dependency = new PluginDependencyImpl(dependencyBean.pluginId, dependencyBean.optional);
+          if (dependency.getId().startsWith(INTELLIJ_MODULES_PREFIX)) {
+            myModuleDependencies.add(dependency);
+          } else {
+            myDependencies.add(dependency);
+          }
+
+          if (dependency.isOptional() && dependencyBean.configFile != null) {
+            myOptionalConfigFiles.put(dependency, dependencyBean.configFile);
+          }
+        }
+      }
+    }
+
+    PluginVendorBean vendorBean = bean.vendor;
+    if (vendorBean != null) {
+      myPluginVendor = vendorBean.name != null ? vendorBean.name.trim() : null;
+      myVendorUrl = vendorBean.url;
+      myVendorEmail = vendorBean.email;
     }
     if (!StringUtil.isEmptyOrSpaces(bean.changeNotes)) {
       myNotes = Jsoup.clean(bean.changeNotes.trim(), WHITELIST);
