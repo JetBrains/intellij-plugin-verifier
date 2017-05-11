@@ -1,12 +1,10 @@
 package com.intellij.structure.mocks
 
+import com.intellij.structure.impl.utils.ZipUtil
 import com.intellij.structure.plugin.PluginCreationFail
 import com.intellij.structure.plugin.PluginCreationSuccess
 import com.intellij.structure.plugin.PluginManager
 import com.intellij.structure.problems.*
-import org.codehaus.plexus.archiver.jar.JarArchiver
-import org.codehaus.plexus.logging.Logger
-import org.codehaus.plexus.logging.console.ConsoleLogger
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.instanceOf
 import org.junit.Assert.assertThat
@@ -286,22 +284,15 @@ class InvalidPluginsTest {
 
         val oneMetaInf = temporaryFolder.newFolder("one$testNumber", "META-INF")
         File(oneMetaInf, "plugin.xml").writeText(firstDescriptor)
-        archiveDirectoryInto(oneMetaInf, File(lib, "one.jar"))
+        ZipUtil.archiveDirectory(oneMetaInf, File(lib, "one.jar"))
 
         val twoMetaInf = temporaryFolder.newFolder("two$testNumber", "META-INF")
         File(twoMetaInf, "plugin.xml").writeText(secondDescriptor)
-        archiveDirectoryInto(twoMetaInf, File(lib, "two.jar"))
+        ZipUtil.archiveDirectory(twoMetaInf, File(lib, "two.jar"))
 
         assertExpectedProblems(pluginFolder, listOf(MultiplePluginDescriptorsInLibDirectory("one.jar", "two.jar")))
       }
     }
   }
 
-  private fun archiveDirectoryInto(directory: File, destinationJar: File) {
-    val jarArchiver = JarArchiver()
-    jarArchiver.enableLogging(ConsoleLogger(Logger.LEVEL_ERROR, "Unarchive logger"))
-    jarArchiver.addDirectory(directory, directory.name + "/")
-    jarArchiver.destFile = destinationJar
-    jarArchiver.createArchive()
-  }
 }

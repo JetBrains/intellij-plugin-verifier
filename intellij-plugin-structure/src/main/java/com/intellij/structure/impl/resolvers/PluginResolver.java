@@ -2,11 +2,11 @@ package com.intellij.structure.impl.resolvers;
 
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
+import com.intellij.structure.impl.extractor.*;
+import com.intellij.structure.impl.utils.FileUtil;
 import com.intellij.structure.impl.utils.JarsUtils;
-import com.intellij.structure.impl.utils.PluginExtractor;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.resolvers.Resolver;
-import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -26,20 +26,16 @@ import java.util.Set;
 public class PluginResolver extends Resolver {
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginResolver.class);
-  @NotNull private final File myPluginFile;
-  private final boolean myDeleteOnClose;
+  private final ExtractedPluginFile myExtractedPluginFile;
   private final Resolver myResolver;
   private boolean isClosed;
 
-  public PluginResolver(@NotNull File extracted, boolean deleteOnClose) throws IOException {
-    myPluginFile = extracted;
-    myDeleteOnClose = deleteOnClose;
+  public PluginResolver(@NotNull ExtractedPluginFile extractedPluginFile) throws IOException {
+    myExtractedPluginFile = extractedPluginFile;
     try {
-      myResolver = loadClasses(myPluginFile);
+      myResolver = loadClasses(myExtractedPluginFile.getActualPluginFile());
     } catch (Throwable e) {
-      if (myDeleteOnClose) {
-        FileUtils.deleteQuietly(myPluginFile);
-      }
+      FileUtil.closeQuietly(extractedPluginFile);
       throw Throwables.propagate(e);
     }
   }
@@ -51,15 +47,15 @@ public class PluginResolver extends Resolver {
     }
     if (pluginFile.isDirectory() || JarsUtils.isJarOrZip(pluginFile)) {
       if (JarsUtils.isZip(pluginFile)) {
-        File extracted = PluginExtractor.extractPlugin(pluginFile);
-        try {
-          return new PluginResolver(extracted, true);
-        } catch (RuntimeException e) {
-          FileUtils.deleteQuietly(extracted);
-          throw e;
+        ExtractorResult extractorResult = PluginExtractor.INSTANCE.extractPlugin(pluginFile);
+        if (extractorResult instanceof ExtractorSuccess) {
+          ExtractedPluginFile extractedPluginFile = ((ExtractorSuccess) extractorResult).getExtractedPlugin();
+          return new PluginResolver(extractedPluginFile);
+        } else {
+          throw new IOException(((ExtractorFail) extractorResult).getPluginProblem().getMessage());
         }
       }
-      return new PluginResolver(pluginFile, false);
+      return new PluginResolver(new ExtractedPluginFile(pluginFile, null));
     }
     throw new IllegalArgumentException("Incorrect plugin file type " + pluginFile + ": expected a directory, a .zip or a .jar archive");
   }
@@ -74,9 +70,7 @@ public class PluginResolver extends Resolver {
     try {
       myResolver.close();
     } finally {
-      if (myDeleteOnClose) {
-        FileUtils.deleteQuietly(myPluginFile);
-      }
+      myExtractedPluginFile.close();
     }
   }
 

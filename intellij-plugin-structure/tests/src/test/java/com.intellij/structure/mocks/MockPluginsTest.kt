@@ -2,8 +2,10 @@ package com.intellij.structure.mocks
 
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.impl.domain.PluginDependencyImpl
+import com.intellij.structure.impl.extractor.ExtractedPluginFile
 import com.intellij.structure.impl.utils.JarsUtils
 import com.intellij.structure.plugin.Plugin
+import com.intellij.structure.plugin.PluginCreationFail
 import com.intellij.structure.plugin.PluginCreationSuccess
 import com.intellij.structure.plugin.PluginManager
 import com.intellij.structure.problems.MissingOptionalDependencyConfigurationFile
@@ -117,7 +119,10 @@ class MockPluginsTest {
     val pluginFile = getMockPluginFile(pluginPath)
 
     val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile, true, true)
-    assertThat(pluginCreationResult, instanceOf<Any>(PluginCreationSuccess::class.java))
+    if (pluginCreationResult is PluginCreationFail) {
+      val message = pluginCreationResult.errorsAndWarnings.joinToString(separator = "\n") { it.message }
+      fail(message)
+    }
     val pluginCreationSuccess = pluginCreationResult as PluginCreationSuccess
     val plugin = pluginCreationSuccess.plugin
 
@@ -216,9 +221,9 @@ class MockPluginsTest {
   }
 
   private fun getExtractedPluginPath(resolver: Resolver): File {
-    val field = resolver.javaClass.getDeclaredField("myPluginFile")
+    val field = resolver.javaClass.getDeclaredField("myExtractedPluginFile")
     field.isAccessible = true
-    return field.get(resolver) as File
+    return (field.get(resolver) as ExtractedPluginFile).actualPluginFile
   }
 
   private fun <T> assertContains(collection: Collection<T>, elem: T) = assertContains(collection, listOf(elem))

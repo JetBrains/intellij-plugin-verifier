@@ -2,7 +2,9 @@ package com.intellij.structure.impl.domain;
 
 import com.intellij.structure.ide.IdeVersion;
 import com.intellij.structure.impl.beans.*;
+import com.intellij.structure.impl.extractor.ExtractedPluginFile;
 import com.intellij.structure.impl.resolvers.PluginResolver;
+import com.intellij.structure.impl.utils.FileUtil;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.plugin.Plugin;
@@ -211,14 +213,16 @@ final class PluginCreator {
     }
   }
 
-  public void readClassFiles(@NotNull File jarOrDirectory, boolean deleteOnResolverClose) {
+  public void readClassFiles(@NotNull ExtractedPluginFile extractedPluginFile) {
     if (myPlugin != null) {
       try {
-        myResolver = new PluginResolver(jarOrDirectory, deleteOnResolverClose);
+        myResolver = new PluginResolver(extractedPluginFile);
       } catch (Exception e) {
-        LOG.warn("Unable to read plugin class files " + jarOrDirectory, e);
-        registerProblem(new UnableToReadPluginClassFiles(jarOrDirectory));
+        LOG.error("Unable to read plugin class files " + extractedPluginFile.getActualPluginFile(), e);
+        registerProblem(new UnableToReadPluginClassFiles(extractedPluginFile.getActualPluginFile()));
       }
+    } else {
+      FileUtil.closeQuietly(extractedPluginFile);
     }
   }
 

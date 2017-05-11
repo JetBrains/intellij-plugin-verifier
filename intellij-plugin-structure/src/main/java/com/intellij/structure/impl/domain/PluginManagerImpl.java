@@ -1,7 +1,7 @@
 package com.intellij.structure.impl.domain;
 
+import com.intellij.structure.impl.extractor.*;
 import com.intellij.structure.impl.utils.JarsUtils;
-import com.intellij.structure.impl.utils.PluginExtractor;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
@@ -10,7 +10,6 @@ import com.intellij.structure.plugin.PluginCreationResult;
 import com.intellij.structure.plugin.PluginDependency;
 import com.intellij.structure.plugin.PluginManager;
 import com.intellij.structure.problems.*;
-import org.apache.commons.io.FileUtils;
 import org.jdom2.Document;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -233,31 +232,36 @@ public class PluginManagerImpl extends PluginManager {
 
   @NotNull
   private PluginCreator extractZipAndCreatePlugin(@NotNull File zipPlugin,
-                                                  boolean readClassFiles) {
-    File extracted;
+                                                  boolean readClassFiles,
+                                                  boolean validateDescriptor) {
+    ExtractorResult extractorResult;
     try {
-      extracted = PluginExtractor.extractPlugin(zipPlugin);
+      extractorResult = PluginExtractor.INSTANCE.extractPlugin(zipPlugin);
     } catch (Exception e) {
-      LOG.error("Unable to extract plugin file " + zipPlugin, e);
       return new PluginCreator(PLUGIN_XML, new UnableToExtractZip(zipPlugin), zipPlugin);
     }
-    return createPluginAndReadClassFilesIfNecessary(extracted, readClassFiles);
+    if (extractorResult instanceof ExtractorSuccess) {
+      ExtractedPluginFile extractedPluginFile = ((ExtractorSuccess) extractorResult).getExtractedPlugin();
+      return createPluginAndReadClasses(extractedPluginFile, readClassFiles, validateDescriptor);
+    } else {
+      return new PluginCreator(PLUGIN_XML, ((ExtractorFail) extractorResult).getPluginProblem(), zipPlugin);
+    }
   }
 
   @NotNull
-  private PluginCreator createPluginAndReadClassFilesIfNecessary(File extractedPlugin, boolean readClassFiles) {
+  private PluginCreator createPluginAndReadClasses(ExtractedPluginFile extractedPluginFile, boolean readClassFiles, boolean validateDescriptor) {
     try {
-      PluginCreator pluginCreator = loadDescriptorFromJarOrDirectory(extractedPlugin, PLUGIN_XML, true);
+      PluginCreator pluginCreator = loadDescriptorFromJarOrDirectory(extractedPluginFile.getActualPluginFile(), PLUGIN_XML, validateDescriptor);
       if (readClassFiles) {
-        pluginCreator.readClassFiles(extractedPlugin, true);
+        pluginCreator.readClassFiles(extractedPluginFile);
       }
       return pluginCreator;
     } finally {
       if (!readClassFiles) {
         try {
-          FileUtils.forceDelete(extractedPlugin);
+          extractedPluginFile.close();
         } catch (IOException e) {
-          LOG.warn("Unable to delete temporary extracted plugin file " + extractedPlugin, e);
+          LOG.warn("Unable to delete temporary extracted plugin file " + extractedPluginFile, e);
         }
       }
     }
@@ -271,11 +275,11 @@ public class PluginManagerImpl extends PluginManager {
     }
     PluginCreator pluginCreator;
     if (JarsUtils.isZip(pluginFile)) {
-      pluginCreator = extractZipAndCreatePlugin(pluginFile, readClassFiles);
+      pluginCreator = extractZipAndCreatePlugin(pluginFile, readClassFiles, validateDescriptor);
     } else {
       pluginCreator = loadDescriptorFromJarOrDirectory(pluginFile, PLUGIN_XML, validateDescriptor);
       if (readClassFiles) {
-        pluginCreator.readClassFiles(pluginFile, false);
+        pluginCreator.readClassFiles(new ExtractedPluginFile(pluginFile, null));
       }
     }
     pluginCreator.setOriginalFile(pluginFile);
