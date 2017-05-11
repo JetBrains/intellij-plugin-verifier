@@ -267,7 +267,8 @@ final class PluginCreator {
 
   private void validateChangeNotes(String changeNotes) {
     if (isEmptyOrSpaces(changeNotes)) {
-      registerProblem(new PropertyNotSpecified(myDescriptorPath, "change-notes"));
+      //Too many plugins don't specify the change-notes, so it's too strict to require them.
+      //But if specified, let's check that the change-notes are long enough.
       return;
     }
 
