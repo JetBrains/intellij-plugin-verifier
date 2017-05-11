@@ -1,14 +1,16 @@
 package com.intellij.structure.problems
 
-interface PluginProblem {
+abstract class PluginProblem {
 
-  val level: Level
+  abstract val level: Level
 
-  val message: String
+  abstract val message: String
 
   enum class Level {
     ERROR,
     WARNING
   }
+
+  override fun toString(): String = message
 
 }

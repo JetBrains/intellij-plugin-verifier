@@ -2,7 +2,7 @@ package com.intellij.structure.problems
 
 import java.io.File
 
-data class IncorrectPluginFile(val file: File) : PluginProblem {
+data class IncorrectPluginFile(val file: File) : PluginProblem() {
 
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 
@@ -10,7 +10,7 @@ data class IncorrectPluginFile(val file: File) : PluginProblem {
 
 }
 
-data class PluginZipIsEmpty(val pluginZip: File) : PluginProblem {
+data class PluginZipIsEmpty(val pluginZip: File) : PluginProblem() {
 
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 
@@ -18,7 +18,7 @@ data class PluginZipIsEmpty(val pluginZip: File) : PluginProblem {
 
 }
 
-data class PluginZipContainsUnknownFile(val pluginZip: File, val fileName: String) : PluginProblem {
+data class PluginZipContainsUnknownFile(val pluginZip: File, val fileName: String) : PluginProblem() {
 
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 
@@ -26,7 +26,7 @@ data class PluginZipContainsUnknownFile(val pluginZip: File, val fileName: Strin
 
 }
 
-data class UnableToExtractZip(val pluginFile: File) : PluginProblem {
+data class UnableToExtractZip(val pluginFile: File) : PluginProblem() {
 
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 
@@ -34,7 +34,7 @@ data class UnableToExtractZip(val pluginFile: File) : PluginProblem {
 
 }
 
-data class UnableToReadPluginClassFiles(val pluginFile: File) : PluginProblem {
+data class UnableToReadPluginClassFiles(val pluginFile: File) : PluginProblem() {
 
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 
@@ -42,7 +42,7 @@ data class UnableToReadPluginClassFiles(val pluginFile: File) : PluginProblem {
 
 }
 
-data class UnableToReadJarFile(val jarFile: File) : PluginProblem {
+data class UnableToReadJarFile(val jarFile: File) : PluginProblem() {
 
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 
@@ -50,7 +50,7 @@ data class UnableToReadJarFile(val jarFile: File) : PluginProblem {
 
 }
 
-data class PluginLibDirectoryIsEmpty(val libDirectory: File) : PluginProblem {
+data class PluginLibDirectoryIsEmpty(val libDirectory: File) : PluginProblem() {
 
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 

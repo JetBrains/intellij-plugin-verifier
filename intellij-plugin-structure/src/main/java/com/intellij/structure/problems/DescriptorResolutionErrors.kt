@@ -1,7 +1,7 @@
 package com.intellij.structure.problems
 
 data class MultiplePluginDescriptorsInLibDirectory(val firstFileName: String,
-                                                   val secondFileName: String) : PluginProblem {
+                                                   val secondFileName: String) : PluginProblem() {
 
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 
@@ -10,7 +10,7 @@ data class MultiplePluginDescriptorsInLibDirectory(val firstFileName: String,
 }
 
 
-data class PluginDescriptorIsNotFound(val descriptorPath: String) : PluginProblem {
+data class PluginDescriptorIsNotFound(val descriptorPath: String) : PluginProblem() {
 
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 
@@ -18,7 +18,7 @@ data class PluginDescriptorIsNotFound(val descriptorPath: String) : PluginProble
 
 }
 
-data class UnableToResolveXIncludeElements(val descriptorPath: String) : PluginProblem {
+data class UnableToResolveXIncludeElements(val descriptorPath: String) : PluginProblem() {
 
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 
@@ -26,7 +26,7 @@ data class UnableToResolveXIncludeElements(val descriptorPath: String) : PluginP
 
 }
 
-data class UnableToReadDescriptor(val descriptorPath: String) : PluginProblem {
+data class UnableToReadDescriptor(val descriptorPath: String) : PluginProblem() {
 
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 
