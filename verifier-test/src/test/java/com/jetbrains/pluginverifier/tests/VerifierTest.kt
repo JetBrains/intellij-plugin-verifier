@@ -1,7 +1,8 @@
 package com.jetbrains.pluginverifier.tests
 
 import com.intellij.structure.impl.domain.PluginDependencyImpl
-import com.jetbrains.pluginverifier.api.VResult
+import com.jetbrains.pluginverifier.api.Verdict
+import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.location.*
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.ClassReference
@@ -15,7 +16,7 @@ import java.io.File
 class VerifierTest {
 
   companion object {
-    lateinit var result: VResult.Problems
+    lateinit var result: Verdict.MissingDependencies
 
     lateinit var actualProblems: Set<Problem>
 
@@ -29,14 +30,16 @@ class VerifierTest {
       if (!ideaFile.exists()) {
         ideaFile = File("verifier-test/build/mocks/after-idea")
       }
+      assertTrue(ideaFile.exists())
       var pluginFile = File("build/mocks/mock-plugin-1.0.jar")
       if (!pluginFile.exists()) {
         pluginFile = File("verifier-test/build/mocks/mock-plugin-1.0.jar")
       }
-      val verificationResults = TestResultBuilder.buildResult(ideaFile, pluginFile)
-      assertTrue(verificationResults.results.size == 1)
-      assertTrue(verificationResults.results[0] is VResult.Problems)
-      result = verificationResults.results[0] as VResult.Problems
+      assertTrue(pluginFile.exists())
+      val verificationResults = ResultBuilder.doIdeaAndPluginVerification(ideaFile, pluginFile)
+      assertTrue(verificationResults.size == 1)
+      assertTrue(verificationResults[0].verdict is Verdict.MissingDependencies)
+      result = verificationResults[0].verdict as Verdict.MissingDependencies
       actualProblems = result.problems
       redundantProblems = actualProblems.toMutableList()
     }
@@ -84,8 +87,11 @@ class VerifierTest {
 
   @Test
   fun checkMissingDeps() {
-    assertFalse(result.dependenciesGraph.start.missingDependencies.isEmpty())
-    assertTrue(result.dependenciesGraph.start.missingDependencies.containsKey(PluginDependencyImpl("MissingPlugin", true)))
+    val missingDependencies = result.missingDependencies
+    assertFalse(missingDependencies.isEmpty())
+    println(missingDependencies)
+    val expectedDep = MissingDependency(PluginDependencyImpl("MissingPlugin", true), false, "Plugin MissingPlugin doesn't have a build compatible with IU-145.500")
+    assertTrue(expectedDep in missingDependencies)
   }
 
   private fun assertProblemFound(problem: Problem, expectedFullDescription: String, expectedShortDescription: String) {

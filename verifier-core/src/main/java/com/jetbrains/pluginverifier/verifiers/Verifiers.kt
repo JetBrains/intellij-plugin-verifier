@@ -15,7 +15,7 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 
-class ReferencesVerifier(val ctx: VerificationContext) {
+class BytecodeVerifier(val ctx: VerificationContext) {
 
   private val fieldVerifiers = arrayOf<FieldVerifier>(FieldTypeVerifier())
 

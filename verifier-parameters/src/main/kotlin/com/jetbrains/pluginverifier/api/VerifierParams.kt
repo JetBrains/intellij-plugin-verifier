@@ -37,12 +37,7 @@ data class VerifierParams(
      * Otherwise a default resolver which searches the plugin in the IDE
      * and in the Plugin Repository will be used.
      */
-    val dependencyResolver: DependencyResolver? = null,
-
-    /**
-     * The number of concurrent workers
-     */
-    val concurrentWorkers: Int = Runtime.getRuntime().availableProcessors()
+    val dependencyResolver: DependencyResolver? = null
 ) {
   fun isExternalClass(className: String): Boolean = externalClassesPrefixes.any { it.isNotEmpty() && className.startsWith(it) }
 }

@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.api
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.domain.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.problems.Problem
@@ -41,11 +42,12 @@ sealed class Verdict {
    * Note: some of the problems might be caused by the missing dependencies (unresolved classes etc.).
    * Also the [problems] might be empty if the missed dependencies don't affect the compatibility with the IDE.
    */
-  class MissingDependencies(@SerializedName("problems") val problems: Set<Problem>,
+  class MissingDependencies(@SerializedName("missingDeps") val missingDependencies: List<MissingDependency>,
+                            @SerializedName("problems") val problems: Set<Problem>,
                             @SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph,
                             @SerializedName("warnings") val warnings: Set<Warning>) : Verdict() {
     override fun toString(): String = "Missing plugins and modules dependencies: " +
-        "${dependenciesGraph.getMissingDependencies().map { it.missingDependency }.joinToString()}; " +
+        "${missingDependencies.joinToString()}; " +
         "and ${problems.size} " + "problem".pluralize(problems.size) + ": ${problems.take(10).map { it.getShortDescription() }}..."
   }
 
