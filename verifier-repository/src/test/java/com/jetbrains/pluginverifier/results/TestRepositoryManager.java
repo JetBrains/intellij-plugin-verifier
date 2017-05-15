@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.results;
 
 import com.intellij.structure.domain.IdeVersion;
 import com.jetbrains.pluginverifier.format.UpdateInfo;
-import com.jetbrains.pluginverifier.repository.IFileLock;
+import com.jetbrains.pluginverifier.repository.FileLock;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -41,13 +41,13 @@ public class TestRepositoryManager {
 
   @Test
   public void downloadNonExistentPlugin() throws Exception {
-    IFileLock id = RepositoryManager.INSTANCE.getPluginFile(-1000);
+    FileLock id = RepositoryManager.INSTANCE.getPluginFile(-1000);
     assertNull(id);
   }
 
   @Test
   public void downloadExistentPlugin() throws Exception {
-    IFileLock info = RepositoryManager.INSTANCE.getPluginFile(25128); //.gitignore 1.3.3
+    FileLock info = RepositoryManager.INSTANCE.getPluginFile(25128); //.gitignore 1.3.3
     assertNotNull(info);
     assertTrue(info.getFile().length() > 0);
     info.release();
