@@ -12,6 +12,7 @@ import com.intellij.structure.plugin.PluginManager;
 import com.intellij.structure.problems.*;
 import org.jdom2.Document;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,11 +57,10 @@ public class PluginManagerImpl extends PluginManager {
     }
 
     try {
-      String zipEntryName = getZipEntryName(descriptorPath);
-      ZipEntry entry = zipFile.getEntry(zipEntryName);
+      ZipEntry entry = getEntry(zipFile, descriptorPath);
       if (entry != null) {
         try {
-          URL documentUrl = URLUtil.getJarEntryURL(jarFile, zipEntryName);
+          URL documentUrl = URLUtil.getJarEntryURL(jarFile, entry.getName());
           InputStream documentStream = zipFile.getInputStream(entry);
           Document document = JDOMUtil.loadDocument(documentStream);
           return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, pathResolver, jarFile);
@@ -78,6 +78,13 @@ public class PluginManagerImpl extends PluginManager {
         LOG.debug("Unable to close jar file " + jarFile, e);
       }
     }
+  }
+
+  @Nullable
+  private ZipEntry getEntry(@NotNull ZipFile zipFile, @NotNull String descriptorPath) {
+    String zipEntryName = getZipEntryName(descriptorPath);
+    ZipEntry entry = zipFile.getEntry(zipEntryName);
+    return entry != null ? entry : zipFile.getEntry(zipEntryName.replace(File.separator, "/"));
   }
 
   @NotNull
