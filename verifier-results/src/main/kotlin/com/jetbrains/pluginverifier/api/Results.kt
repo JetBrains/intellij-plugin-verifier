@@ -10,7 +10,9 @@ import com.jetbrains.pluginverifier.warnings.Warning
 
 data class PluginInfo(@SerializedName("pluginId") val pluginId: String,
                       @SerializedName("version") val version: String,
-                      @SerializedName("updateInfo") val updateInfo: UpdateInfo?)
+                      @SerializedName("updateInfo") val updateInfo: UpdateInfo?) {
+  override fun toString(): String = "$pluginId:$version" + (updateInfo?.updateId ?: "")
+}
 
 data class Result(@SerializedName("plugin") val plugin: PluginInfo,
                   @SerializedName("ideVersion") val ideVersion: IdeVersion,
@@ -42,7 +44,9 @@ sealed class Verdict {
   class MissingDependencies(@SerializedName("problems") val problems: Set<Problem>,
                             @SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph,
                             @SerializedName("warnings") val warnings: Set<Warning>) : Verdict() {
-    override fun toString(): String = "Missing plugins and modules dependencies: ${dependenciesGraph.getMissingDependencies().map { it.missingDependency }.joinToString()}"
+    override fun toString(): String = "Missing plugins and modules dependencies: " +
+        "${dependenciesGraph.getMissingDependencies().map { it.missingDependency }.joinToString()}; " +
+        "and ${problems.size} " + "problem".pluralize(problems.size) + ": ${problems.take(10).map { it.getShortDescription() }}..."
   }
 
   /**
