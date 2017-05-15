@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.configurations
 
 import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.domain.PluginManager
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.misc.closeLogged
@@ -32,8 +33,15 @@ object CheckPluginParamsParser : ConfigurationParamsParser {
     val externalClasspath = OptionsUtil.getExternalClassPath(opts)
     val problemsFilter = OptionsUtil.getProblemsFilter(opts)
     val pluginsToCheck = pluginFiles.map {
-      val pluginIdAndVersion = guessPluginIdAndVersion(it.getFile())
-      PluginDescriptor.ByFileLock(pluginIdAndVersion.first, pluginIdAndVersion.second, it)
+      try {
+        val plugin = PluginManager.getInstance().createPlugin(it.getFile())
+        val pluginResolver = Resolver.createPluginResolver(plugin)
+        PluginDescriptor.ByInstance(plugin, pluginResolver)
+      } catch (e: Exception) {
+        //the plugin is not opened, but we wan't to show a failure result (the verifier will provide a message)
+        val pluginIdAndVersion = guessPluginIdAndVersion(it.getFile())
+        PluginDescriptor.ByFileLock(pluginIdAndVersion.first, pluginIdAndVersion.second, it)
+      }
     }
     return CheckPluginParams(pluginsToCheck, ideDescriptors, jdkDescriptor, externalClassesPrefixes, problemsFilter, externalClasspath)
   }
@@ -102,5 +110,5 @@ data class CheckPluginParams(val pluginDescriptors: List<PluginDescriptor>,
                              val externalClasspath: Resolver = Resolver.getEmptyResolver(),
                              val progress: Progress = DefaultProgress()) : ConfigurationParams {
 
-  override fun close() = ideDescriptors.forEach { it.ideResolver?.closeLogged() }
+  override fun close() = ideDescriptors.forEach { it.ideResolver.closeLogged() }
 }

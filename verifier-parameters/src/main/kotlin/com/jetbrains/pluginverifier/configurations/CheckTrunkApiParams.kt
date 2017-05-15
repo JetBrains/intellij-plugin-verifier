@@ -1,10 +1,11 @@
 package com.jetbrains.pluginverifier.configurations
 
 import com.google.common.util.concurrent.AtomicDouble
-import com.intellij.structure.domain.Ide
 import com.intellij.structure.domain.IdeVersion
+import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.JdkDescriptor
 import com.jetbrains.pluginverifier.api.ProblemsFilter
+import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
 import com.jetbrains.pluginverifier.repository.IdeRepository
@@ -33,7 +34,7 @@ object CheckTrunkApiParamsParser : ConfigurationParamsParser {
       throw IllegalArgumentException("The IDE to be checked is not specified")
     }
 
-    val ide = OptionsUtil.createIde(File(args[0]), opts)
+    val ideDescriptor = OptionsUtil.createIdeDescriptor(File(args[0]), opts)
     val jdkDescriptor = JdkDescriptor(OptionsUtil.getJdkDir(opts))
 
     val majorIdeFile: File
@@ -55,7 +56,7 @@ object CheckTrunkApiParamsParser : ConfigurationParamsParser {
     val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
     val problemsFilter = OptionsUtil.getProblemsFilter(opts)
 
-    return CheckTrunkApiParams(ide, majorIdeFile, deleteMajorOnExit, externalClassesPrefixes, problemsFilter, jdkDescriptor)
+    return CheckTrunkApiParams(ideDescriptor, majorIdeFile, externalClassesPrefixes, problemsFilter, jdkDescriptor, deleteMajorOnExit)
   }
 
   private fun parseIdeVersion(ideVersion: String): IdeVersion {
@@ -122,15 +123,19 @@ object CheckTrunkApiParamsParser : ConfigurationParamsParser {
 }
 
 
-data class CheckTrunkApiParams(val ide: Ide,
+data class CheckTrunkApiParams(val ideDescriptor: IdeDescriptor.ByInstance,
                                val majorIdeFile: File,
-                               val deleteMajorIdeOnExit: Boolean,
                                val externalClassesPrefixes: List<String>,
                                val problemsFilter: ProblemsFilter,
-                               val jdkDescriptor: JdkDescriptor) : ConfigurationParams {
+                               val jdkDescriptor: JdkDescriptor,
+                               private val deleteMajorIdeOnExit: Boolean) : ConfigurationParams {
   override fun close() {
-    if (deleteMajorIdeOnExit) {
-      majorIdeFile.deleteLogged()
+    try {
+      if (deleteMajorIdeOnExit) {
+        majorIdeFile.deleteLogged()
+      }
+    } finally {
+      ideDescriptor.ideResolver.closeLogged()
     }
   }
 }

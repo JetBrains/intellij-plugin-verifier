@@ -29,7 +29,7 @@ data class CheckIdeParams(val ideDescriptor: IdeDescriptor.ByInstance,
                           val progress: Progress = DefaultProgress(),
                           val dependencyResolver: DependencyResolver? = null) : ConfigurationParams {
   override fun close() {
-    ideDescriptor.ideResolver?.closeLogged()
+    ideDescriptor.ideResolver.closeLogged()
   }
 }
 

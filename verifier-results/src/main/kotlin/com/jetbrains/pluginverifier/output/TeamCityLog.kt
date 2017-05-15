@@ -2,11 +2,14 @@ package com.jetbrains.pluginverifier.output
 
 import java.io.Closeable
 import java.io.PrintStream
+import java.io.PrintWriter
 
 /**
  * @author Sergey Evdokimov
  */
-class TeamCityLog(private val out: PrintStream) {
+class TeamCityLog(private val out: PrintWriter) {
+
+  constructor(printStream: PrintStream) : this(PrintWriter(printStream, true))
 
   fun messageError(text: String) {
     out.printf("##teamcity[message text='%s' status='ERROR']\n", escape(text))

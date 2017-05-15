@@ -18,10 +18,10 @@ data class CheckPluginResults(@SerializedName("results") val results: List<Resul
         when (it.verdict) {
           is Verdict.OK -> emptySet()
           is Verdict.Warnings -> emptySet()
-          is Verdict.Problems -> it.verdict.problems //some problems might be caused by missing dependencies
+          is Verdict.Problems -> it.verdict.problems
+          is Verdict.MissingDependencies -> it.verdict.problems  //some problems might be caused by missing dependencies
           is Verdict.Bad -> setOf(Any())
           is Verdict.NotFound -> emptySet()
-          is Verdict.MissingDependencies -> emptySet()
         }
       }.distinct().size
       if (totalProblemsNumber > 0) {
@@ -42,7 +42,7 @@ data class CheckPluginResults(@SerializedName("results") val results: List<Resul
       System.err.println("Warning! HTML report for multiple IDE builds is not supported yet! We are working on it just now...\n" +
           "Only the result for $ideVersion is saved to file $file")
     }
-    HtmlVPrinter(ideVersion, { false }, file.create()).printResults(results, vPrinterOptions)
+    HtmlPrinter(ideVersion, { false }, file.create()).printResults(results, vPrinterOptions)
   }
 
 }
