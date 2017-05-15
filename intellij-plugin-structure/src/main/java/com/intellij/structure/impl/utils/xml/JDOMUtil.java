@@ -90,7 +90,15 @@ public class JDOMUtil {
 
   @NotNull
   public static Document loadDocument(URL url) throws JDOMException, IOException {
-    return loadDocument(URLUtil.openStream(url));
+    InputStream stream = null;
+    try {
+      stream = URLUtil.openStream(url);
+      return loadDocument(stream);
+    } finally {
+      if(stream != null) {
+        stream.close();
+      }
+    }
   }
 
   /**
@@ -124,7 +132,15 @@ public class JDOMUtil {
 
   @NotNull
   static Document loadResourceDocument(URL url) throws JDOMException, IOException {
-    return loadDocument(URLUtil.openResourceStream(url));
+    InputStream stream = null;
+    try{
+      stream = URLUtil.openResourceStream(url);
+      return loadDocument(stream);
+    } finally {
+      if(stream != null){
+        stream.close();
+      }
+    }
   }
 
   public static boolean isEmpty(@NotNull Element element) {
