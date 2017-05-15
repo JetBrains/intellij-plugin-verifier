@@ -80,7 +80,7 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           description = "<description></description>"
         },
-        listOf(EmptyDescription("plugin.xml")))
+        listOf(PropertyNotSpecified("plugin.xml", "description")))
   }
 
   @Test

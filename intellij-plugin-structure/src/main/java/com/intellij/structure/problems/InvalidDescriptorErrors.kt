@@ -14,11 +14,6 @@ data class PropertyWithDefaultValue(val descriptorPath: String, val propertyName
   override val level = PluginProblem.Level.ERROR
 }
 
-data class EmptyDescription(val descriptorPath: String) :
-    InvalidDescriptorProblem(descriptorPath, "<description> is empty") {
-  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
-}
-
 data class InvalidDependencyBean(val descriptorPath: String) :
     InvalidDescriptorProblem(descriptorPath, "dependency id is not specified") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
