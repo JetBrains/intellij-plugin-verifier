@@ -2,9 +2,7 @@ package com.jetbrains.pluginverifier.utils
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
-import com.intellij.structure.domain.Ide
-import com.intellij.structure.domain.IdeManager
-import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.ProblemsFilter

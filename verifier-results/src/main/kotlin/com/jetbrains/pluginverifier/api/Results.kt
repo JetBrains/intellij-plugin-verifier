@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.api
 
 import com.google.gson.annotations.SerializedName
-import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.format.UpdateInfo

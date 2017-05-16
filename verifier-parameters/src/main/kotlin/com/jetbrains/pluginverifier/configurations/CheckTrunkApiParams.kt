@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.configurations
 
 import com.google.common.util.concurrent.AtomicDouble
-import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.JdkDescriptor
 import com.jetbrains.pluginverifier.api.ProblemsFilter

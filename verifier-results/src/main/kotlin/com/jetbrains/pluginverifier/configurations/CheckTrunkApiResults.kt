@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.configurations
 import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
 import com.google.gson.annotations.SerializedName
-import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.problems.Problem

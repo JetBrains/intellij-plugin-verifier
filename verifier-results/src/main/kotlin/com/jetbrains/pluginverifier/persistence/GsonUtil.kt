@@ -9,8 +9,7 @@ import com.google.gson.internal.Streams
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
-import com.intellij.structure.domain.IdeVersion
-import com.intellij.structure.domain.PluginDependency
+import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph

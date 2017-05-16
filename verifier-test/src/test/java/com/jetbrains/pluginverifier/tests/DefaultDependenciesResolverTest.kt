@@ -1,8 +1,7 @@
 package com.jetbrains.pluginverifier.tests
 
 import com.google.common.collect.Lists
-import com.intellij.structure.domain.IdeVersion
-import com.intellij.structure.domain.Plugin
+import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.dependencies.DepEdge

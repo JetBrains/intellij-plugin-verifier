@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.api
 
-import com.intellij.structure.domain.Ide
-import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import java.io.File
 

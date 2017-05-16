@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.configurations
 
-import com.intellij.structure.domain.IdeVersion
-import com.intellij.structure.domain.PluginManager
+import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.misc.closeLogged

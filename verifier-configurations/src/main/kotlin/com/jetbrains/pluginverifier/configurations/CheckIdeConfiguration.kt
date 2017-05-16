@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.configurations
 
-import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.Verifier
 import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.format.UpdateInfo

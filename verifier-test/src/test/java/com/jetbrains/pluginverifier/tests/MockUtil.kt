@@ -1,9 +1,6 @@
 package com.jetbrains.pluginverifier.tests
 
-import com.intellij.structure.domain.Ide
-import com.intellij.structure.domain.IdeVersion
-import com.intellij.structure.domain.Plugin
-import com.intellij.structure.domain.PluginDependency
+import com.intellij.structure.ide.IdeVersion
 import org.jetbrains.intellij.plugins.internal.guava.collect.Multimap
 import org.jetbrains.intellij.plugins.internal.jdom.Document
 import org.jetbrains.intellij.plugins.internal.jdom.Element

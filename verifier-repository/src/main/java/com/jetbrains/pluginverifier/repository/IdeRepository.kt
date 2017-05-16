@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.repository
 
 import com.google.gson.Gson
-import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import okhttp3.OkHttpClient

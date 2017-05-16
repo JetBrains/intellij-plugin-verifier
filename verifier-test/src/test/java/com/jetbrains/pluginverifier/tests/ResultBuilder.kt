@@ -1,9 +1,6 @@
 package com.jetbrains.pluginverifier.tests
 
-import com.intellij.structure.domain.Ide
-import com.intellij.structure.domain.IdeManager
-import com.intellij.structure.domain.IdeVersion
-import com.intellij.structure.domain.PluginManager
+import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.utils.CmdOpts

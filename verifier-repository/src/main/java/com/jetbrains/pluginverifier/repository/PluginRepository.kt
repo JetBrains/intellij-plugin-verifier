@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.repository
 
-import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.format.UpdateInfo
 
 import java.io.File
