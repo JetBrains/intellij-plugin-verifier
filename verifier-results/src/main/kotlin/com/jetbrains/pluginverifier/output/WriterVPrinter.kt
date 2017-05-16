@@ -1,42 +1,60 @@
 package com.jetbrains.pluginverifier.output
 
-import com.jetbrains.pluginverifier.api.VResult
-import com.jetbrains.pluginverifier.api.VResults
+import com.intellij.structure.domain.IdeVersion
+import com.jetbrains.pluginverifier.api.Result
+import com.jetbrains.pluginverifier.api.Verdict
+import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.misc.pluralize
+import com.jetbrains.pluginverifier.problems.Problem
 import java.io.PrintWriter
 
-class WriterVPrinter(private val out: PrintWriter) : VPrinter {
+class WriterVPrinter(private val out: PrintWriter) : Printer {
 
-  override fun printResults(results: VResults, options: VPrinterOptions) {
-    results.results.forEach {
-      val ideVersion = it.ideDescriptor.ideVersion
-      val plugin = "${it.pluginDescriptor.pluginId}:${it.pluginDescriptor.version}"
-      when (it) {
-        is VResult.Nice -> out.println("With IDE #$ideVersion the plugin $plugin is OK")
-        is VResult.Problems -> {
-          val problemsCnt = it.problems.keySet().size
-          out.println("With IDE #$ideVersion the plugin $plugin has $problemsCnt problem${if (problemsCnt > 1) "s" else ""}:")
-          it.problems.asMap().forEach {
-            out.println("    #${it.key.getDescription()}")
-            it.value.forEach {
-              out.println("        at $it")
-            }
-          }
-          it.dependenciesGraph.getMissingNonOptionalDependencies().apply {
-            if (this.isNotEmpty()) {
-              out.println("   Some problems might be caused by missing non-optional dependencies:")
-              this.map { it.toString() }.forEach { out.println("        $it") }
-            }
-          }
-          val filtered = it.dependenciesGraph.getMissingOptionalDependencies().filterKeys { !options.ignoreMissingOptionalDependency(it) }
-          if (filtered.isNotEmpty()) {
-            out.println("    Missing optional dependencies:")
-            filtered.forEach {
-              out.println("        ${it.key.id}: ${it.value.reason}")
-            }
-          }
-        }
-        is VResult.BadPlugin -> out.println("The plugin $plugin is broken: ${it.reason}")
-        is VResult.NotFound -> out.println("The plugin $plugin is not found in the Plugin Repository (https://plugins.jetbrains.com): ${it.reason}")
+  override fun printResults(results: List<Result>, options: PrinterOptions) {
+    results.forEach { (plugin, ideVersion, verdict) ->
+      val idAndVersion = "${plugin.pluginId}:${plugin.version}"
+      when (verdict) {
+        is Verdict.OK -> out.println("With IDE #$ideVersion the plugin $idAndVersion is OK")
+        is Verdict.Warnings -> out.println("With IDE #$ideVersion the plugin $idAndVersion has ${verdict.warnings.size} warnings: ${verdict.warnings.joinToString(separator = "\n", prefix = "    ")}")
+        is Verdict.Problems -> printProblems(ideVersion, idAndVersion, verdict.problems)
+        is Verdict.MissingDependencies -> printMissingDependencies(options, verdict, ideVersion, idAndVersion)
+        is Verdict.Bad -> out.println("The plugin $idAndVersion is broken: ${verdict.reason}")
+        is Verdict.NotFound -> out.println("The plugin $idAndVersion is not found: ${verdict.reason}")
+      }
+    }
+  }
+
+  private fun printMissingDependencies(options: PrinterOptions, verdict: Verdict.MissingDependencies, ideVersion: IdeVersion, plugin: String) {
+    val mandatoryDependencies = verdict.missingDependencies.filterNot { it.dependency.isOptional }
+    printMissingMandatoryDependencies(mandatoryDependencies)
+
+    val optionalDependencies = verdict.missingDependencies.filter { it.dependency.isOptional && !options.ignoreMissingOptionalDependency(it.dependency) }
+    printMissingOptionalDependencies(optionalDependencies)
+
+    printProblems(ideVersion, plugin, verdict.problems)
+  }
+
+  private fun printMissingMandatoryDependencies(missingMandatory: List<MissingDependency>) {
+    if (missingMandatory.isNotEmpty()) {
+      out.println("   Some problems might be caused by missing non-optional dependencies:")
+      missingMandatory.map { it.toString() }.forEach { out.println("        $it") }
+    }
+  }
+
+  private fun printMissingOptionalDependencies(missingOptional: List<MissingDependency>) {
+    if (missingOptional.isNotEmpty()) {
+      out.println("    Missing optional dependencies:")
+      missingOptional.forEach { out.println("        ${it.dependency}: ${it.missingReason}") }
+    }
+  }
+
+  private fun printProblems(ideVersion: IdeVersion, plugin: String, problems: Set<Problem>) {
+    val problemsCnt = problems.size
+    out.println("With IDE #$ideVersion the plugin $plugin has $problemsCnt " + "problem".pluralize(problemsCnt))
+    problems.groupBy({ it.getShortDescription() }, { it.getFullDescription() }).forEach {
+      out.println("    #${it.key}")
+      it.value.forEach { effect ->
+        out.println("        at $effect")
       }
     }
   }
