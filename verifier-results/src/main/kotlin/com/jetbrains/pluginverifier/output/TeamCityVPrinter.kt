@@ -14,6 +14,7 @@ import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -22,15 +23,15 @@ import org.slf4j.LoggerFactory
 /**
  * @author Sergey Patrikeev
  */
-class TeamCityVPrinter(private val tcLog: TeamCityLog, private val groupBy: GroupBy) : Printer {
+class TeamCityVPrinter(private val tcLog: TeamCityLog,
+                       private val groupBy: GroupBy,
+                       private val repository: PluginRepository = RepositoryManager) : Printer {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(TeamCityVPrinter::class.java)
   }
 
   private val REPOSITORY_PLUGIN_ID_BASE = "https://plugins.jetbrains.com/plugin/index?xmlId="
-
-  private val INTELLIJ_MODULES_PREFIX = "com.intellij.modules"
 
   fun printNoCompatibleUpdatesProblems(problems: List<MissingCompatibleUpdate>) {
     when (groupBy) {
@@ -243,8 +244,8 @@ class TeamCityVPrinter(private val tcLog: TeamCityLog, private val groupBy: Grou
           .distinct()
           .associate { ideVersion ->
             try {
-              val lastCompatibleUpdates = RepositoryManager.getLastCompatibleUpdates(ideVersion)
-              ideVersion to lastCompatibleUpdates.sortedByDescending { it.updateId }.distinctBy { Triple(it.pluginId, it.pluginName, it.version) }
+              val lastCompatibleUpdates = repository.getLastCompatibleUpdates(ideVersion)
+              ideVersion to lastCompatibleUpdates.sortedByDescending { it.updateId }.distinctBy { it.pluginId }
             } catch(e: Exception) {
               LOG.info("Unable to determine the last compatible updates of IDE $ideVersion")
               ideVersion to emptyList<UpdateInfo>()
@@ -288,9 +289,9 @@ class TeamCityVPrinter(private val tcLog: TeamCityLog, private val groupBy: Grou
         typeToProblems.value.forEach { problem ->
           tcLog.testSuiteStarted(problem.getShortDescription()).use {
             problemToUpdates.get(problem).forEach { plugin ->
-              val testName = "(${plugin.pluginId}:${plugin.version})"
+              val testName = "($plugin)"
               tcLog.testStarted(testName).use {
-                val pluginUrl = REPOSITORY_PLUGIN_ID_BASE + plugin.pluginId
+                val pluginUrl = getPluginLink(plugin)
                 tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problem.getFullDescription())
               }
             }
@@ -357,7 +358,9 @@ class TeamCityVPrinter(private val tcLog: TeamCityLog, private val groupBy: Grou
     printMissingDependenciesAsTests(results)
   }
 
-  private fun getPluginLink(pluginInfo: PluginInfo): String = REPOSITORY_PLUGIN_ID_BASE + pluginInfo
+  private fun getPluginLink(pluginInfo: PluginInfo): String = REPOSITORY_PLUGIN_ID_BASE + pluginInfo.pluginId
+
+  private fun getPluginLink(updateInfo: UpdateInfo): String = REPOSITORY_PLUGIN_ID_BASE + updateInfo.pluginId
 
   private fun printMissingDependenciesAsTests(results: List<Result>) {
     val missingToRequired = collectMissingDependenciesForRequiringPlugins(results)

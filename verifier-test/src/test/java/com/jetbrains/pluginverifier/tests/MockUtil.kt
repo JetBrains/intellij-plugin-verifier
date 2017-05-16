@@ -35,7 +35,7 @@ object MockUtil {
     }
   }
 
-  fun createMockIde(ideVersion: IdeVersion, bundledPlugins: List<Plugin>): Ide = object : MockIdeAdapter() {
+  fun createMockIde(ideVersion: IdeVersion, bundledPlugins: List<Plugin>): Ide = object : MockIdeAdapter(ideVersion, bundledPlugins) {
     override fun getBundledPlugins(): List<Plugin> = bundledPlugins
 
     override fun getVersion(): IdeVersion = ideVersion
@@ -43,23 +43,24 @@ object MockUtil {
 
 }
 
-open class MockIdeAdapter : Ide() {
-  override fun getCustomPlugins(): List<Plugin> = emptyList()
+open class MockIdeAdapter(val ideVersion: IdeVersion,
+                          private val bundledPlugins: List<Plugin> = emptyList(),
+                          private var customPlugins: List<Plugin> = emptyList()) : Ide() {
 
-  override fun getBundledPlugins(): List<Plugin> {
-    throw UnsupportedOperationException("not implemented")
-  }
+  override fun getCustomPlugins(): List<Plugin> = customPlugins
+
+  override fun getBundledPlugins(): List<Plugin> = bundledPlugins
 
   override fun getIdePath(): File {
     throw UnsupportedOperationException("not implemented")
   }
 
-  override fun getVersion(): IdeVersion {
-    throw UnsupportedOperationException("not implemented")
-  }
+  override fun getVersion(): IdeVersion = ideVersion
 
-  override fun getExpandedIde(plugin: Plugin?): Ide {
-    throw UnsupportedOperationException("not implemented")
+  override fun getExpandedIde(plugin: Plugin): Ide {
+    val newPlugins = ArrayList(customPlugins)
+    newPlugins.add(plugin)
+    return MockIdeAdapter(ideVersion, newPlugins)
   }
 
 }
@@ -93,8 +94,8 @@ open class MockPluginAdapter : Plugin {
     throw UnsupportedOperationException("not implemented")
   }
 
-  override fun getAllClassesReferencedFromXml(): MutableSet<String>? {
-    throw UnsupportedOperationException("not implemented")
+  override fun getAllClassesReferencedFromXml(): Set<String>? {
+    return emptySet()
   }
 
   override fun getExtensions(): Multimap<String, Element> {
@@ -149,8 +150,8 @@ open class MockPluginAdapter : Plugin {
     throw UnsupportedOperationException("not implemented")
   }
 
-  override fun getOptionalDescriptors(): MutableMap<String, Plugin>? {
-    throw UnsupportedOperationException("not implemented")
+  override fun getOptionalDescriptors(): Map<String, Plugin>? {
+    return emptyMap()
   }
 
 }
