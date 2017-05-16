@@ -38,7 +38,14 @@ fun File.deleteLogged(): Boolean {
 fun String.pluralize(times: Int): String {
   if (times < 0) throw IllegalArgumentException("Negative value")
   if (times == 0) return ""
-  if (times == 1) return this else return this + "s"
+  if (times == 1) {
+    return this
+  } else {
+    if (this.endsWith("y")) {
+      return this.dropLast(1) + "ies"
+    }
+    return this + "s"
+  }
 }
 
 fun <T> Call<T>.executeSuccessfully(): Response<T> {

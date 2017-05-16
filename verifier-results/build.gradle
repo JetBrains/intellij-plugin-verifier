@@ -4,4 +4,10 @@ targetCompatibility = 1.6
 dependencies {
   compile project(':verifier-repository')
   compile 'org.jgrapht:jgrapht-core:0.9.2'
+  compile "org.jetbrains.kotlinx:kotlinx-html-jvm:0.6.3"
+}
+
+repositories {
+  jcenter()
+  mavenLocal()
 }

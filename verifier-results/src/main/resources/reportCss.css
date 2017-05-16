@@ -1,4 +1,4 @@
-.errorDetails {
+.shortDescription {
     padding: 2px;
 }
 
@@ -39,11 +39,11 @@
     color: #f00;
 }
 
-.errorDetails a {
+.shortDescription a {
     color: #2B587A !important;
 }
 
-.errLoc {
+.longDescription {
     display: none;
     margin-left: 100px;
     padding: 2px;
