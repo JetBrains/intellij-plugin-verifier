@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.warnings.Warning
 data class PluginInfo(@SerializedName("pluginId") val pluginId: String,
                       @SerializedName("version") val version: String,
                       @SerializedName("updateInfo") val updateInfo: UpdateInfo?) {
-  override fun toString(): String = "$pluginId:$version" + (updateInfo?.updateId ?: "")
+  override fun toString(): String = updateInfo?.toString() ?: "$pluginId:$version"
 }
 
 data class Result(@SerializedName("plugin") val plugin: PluginInfo,
@@ -23,15 +23,15 @@ sealed class Verdict {
   /**
    * Indicates that the Plugin doesn't have compatibility problems with the checked IDE.
    */
-  class OK(@SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph) : Verdict() {
+  data class OK(@SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph) : Verdict() {
     override fun toString() = "OK"
   }
 
   /**
    * The plugin has minor problems listed in [warnings].
    */
-  class Warnings(@SerializedName("warnings") val warnings: Set<Warning>,
-                 @SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph) : Verdict() {
+  data class Warnings(@SerializedName("warnings") val warnings: Set<Warning>,
+                      @SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph) : Verdict() {
     override fun toString(): String = "Found ${warnings.size} " + "warning".pluralize(warnings.size)
   }
 
@@ -42,10 +42,10 @@ sealed class Verdict {
    * Note: some of the problems might be caused by the missing dependencies (unresolved classes etc.).
    * Also the [problems] might be empty if the missed dependencies don't affect the compatibility with the IDE.
    */
-  class MissingDependencies(@SerializedName("missingDeps") val missingDependencies: List<MissingDependency>,
-                            @SerializedName("problems") val problems: Set<Problem>,
-                            @SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph,
-                            @SerializedName("warnings") val warnings: Set<Warning>) : Verdict() {
+  data class MissingDependencies(@SerializedName("missingDeps") val missingDependencies: List<MissingDependency>,
+                                 @SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph,
+                                 @SerializedName("problems") val problems: Set<Problem>,
+                                 @SerializedName("warnings") val warnings: Set<Warning>) : Verdict() {
     override fun toString(): String = "Missing plugins and modules dependencies: " +
         "${missingDependencies.joinToString()}; " +
         "and ${problems.size} " + "problem".pluralize(problems.size) + ": ${problems.take(10).map { it.getShortDescription() }}..."
@@ -54,9 +54,9 @@ sealed class Verdict {
   /**
    * The Plugin has compatibility problems with the IDE. They are listed in the [problems].
    */
-  class Problems(@SerializedName("problems") val problems: Set<Problem>,
-                 @SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph,
-                 @SerializedName("warnings") val warnings: Set<Warning>) : Verdict() {
+  data class Problems(@SerializedName("problems") val problems: Set<Problem>,
+                      @SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph,
+                      @SerializedName("warnings") val warnings: Set<Warning>) : Verdict() {
     override fun toString(): String = "Found ${problems.size} compatibility " + "problem".pluralize(problems.size)
   }
 
@@ -64,7 +64,7 @@ sealed class Verdict {
    * The Plugin has a completely incorrect structure (missing plugin.xml, broken class-files, etc...)
    * The [reason] is a user-friendly description of the problem.
    */
-  class Bad(@SerializedName("reason") val reason: String) : Verdict() {
+  data class Bad(@SerializedName("reason") val reason: String) : Verdict() {
     override fun toString(): String = "Plugin is invalid: $reason"
   }
 
@@ -72,7 +72,7 @@ sealed class Verdict {
    * The plugin is not found during the verification.
    * Look at [reason] for details
    */
-  class NotFound(@SerializedName("reason") val reason: String) : Verdict() {
+  data class NotFound(@SerializedName("reason") val reason: String) : Verdict() {
     override fun toString(): String = "Plugin is not found: $reason"
   }
 
