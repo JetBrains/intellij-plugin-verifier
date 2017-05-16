@@ -136,7 +136,7 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
   private fun getAppropriateVerdict(context: VerificationContext, dependenciesGraph: DependenciesGraph): Verdict {
     val missingDependencies = dependenciesGraph.start.missingDependencies
     if (missingDependencies.isNotEmpty()) {
-      return Verdict.MissingDependencies(missingDependencies, context.problems, dependenciesGraph, context.warnings)
+      return Verdict.MissingDependencies(missingDependencies, dependenciesGraph, context.problems, context.warnings)
     }
 
     if (context.problems.isNotEmpty()) {

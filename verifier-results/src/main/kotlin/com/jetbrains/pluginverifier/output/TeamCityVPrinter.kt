@@ -1,32 +1,28 @@
 package com.jetbrains.pluginverifier.output
 
-import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
 import com.intellij.structure.domain.IdeVersion
-import com.jetbrains.pluginverifier.api.PluginDescriptor
-import com.jetbrains.pluginverifier.api.VResult
-import com.jetbrains.pluginverifier.api.VResults
+import com.jetbrains.pluginverifier.api.PluginInfo
+import com.jetbrains.pluginverifier.api.Result
+import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.configurations.CheckTrunkApiCompareResult
 import com.jetbrains.pluginverifier.configurations.MissingCompatibleUpdate
+import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.format.UpdateInfo
+import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.Problem
-import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import kotlin.comparisons.compareBy
-import kotlin.comparisons.thenBy
 
 
 /**
  * @author Sergey Patrikeev
  */
-class TeamCityVPrinter(val tcLog: TeamCityLog,
-                       val groupBy: GroupBy,
-                       val pluginRepository: PluginRepository = RepositoryManager) : VPrinter {
+class TeamCityVPrinter(private val tcLog: TeamCityLog, private val groupBy: GroupBy) : Printer {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(TeamCityVPrinter::class.java)
@@ -69,7 +65,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog,
   }
 
 
-  override fun printResults(results: VResults, options: VPrinterOptions) {
+  override fun printResults(results: List<Result>, options: PrinterOptions) {
     when (groupBy) {
       GroupBy.NOT_GROUPED -> notGrouped(results)
       GroupBy.BY_PROBLEM_TYPE -> groupByProblemType(results)
@@ -77,184 +73,194 @@ class TeamCityVPrinter(val tcLog: TeamCityLog,
     }
   }
 
-  private fun notGrouped(results: VResults) {
+  private fun notGrouped(results: List<Result>) {
     //problem1 (in a:1.0, a:1.2, b:1.0)
     //problem2 (in a:1.0, c:1.3)
     //missing dependencies: missing#1 (required for plugin1, plugin2, plugin3)
     //missing dependencies: missing#2 (required for plugin2, plugin4)
 
-    val affected = ArrayListMultimap.create<Problem, PluginDescriptor>()
+    printProblemAndAffectedPluginsAsBuildProblem(results)
+    printMissingDependenciesAndRequiredPluginsAsBuildProblem(results)
+  }
 
-    results.results
-        .forEach { res ->
-          if (res is VResult.Problems) {
-            res.problems.keySet().forEach {
-              affected.put(it, res.pluginDescriptor)
-            }
-          }
-        }
-
-    affected.asMap().forEach {
-      val plugins = it.value.sortedWith(compareBy<PluginDescriptor>({ it.pluginId }).thenBy { it.version })
-
-      tcLog.buildProblem(it.key.getDescription() + " (in " + plugins.joinToString { it.pluginId + ":" + it.version } + ")")
+  private fun printProblemAndAffectedPluginsAsBuildProblem(results: List<Result>) {
+    val shortDescriptionToResults: Multimap<String, Result> = HashMultimap.create()
+    results.forEach { result ->
+      getProblemsOfVerdict(result.verdict).forEach {
+        shortDescriptionToResults.put(it.getShortDescription(), result)
+      }
     }
+    shortDescriptionToResults.asMap().forEach { description, results ->
+      val allPluginsWithThisProblem = results.map { it.plugin }
+      tcLog.buildProblem(description + " (in ${allPluginsWithThisProblem.joinToString()})")
+    }
+  }
 
-    results.results.filterIsInstance<VResult.Problems>()
-        .flatMap { descr -> descr.dependenciesGraph.getMissingNonOptionalDependencies().map { it.missing.id to descr.pluginDescriptor } }
-        .groupBy({ it.first }, { it.second })
-        .filterValues { it.isNotEmpty() }
-        .apply {
-          if (this.isNotEmpty()) {
-            this.forEach {
-              tcLog.buildProblem("Missing dependency ${it.key} (required for ${it.value.joinToString()})")
-            }
-          }
-        }
+  private fun getProblemsOfVerdict(verdict: Verdict): Collection<Problem> = when (verdict) {
+    is Verdict.Problems -> verdict.problems
+    is Verdict.MissingDependencies -> verdict.problems
+    is Verdict.OK -> emptyList()
+    is Verdict.Warnings -> emptyList()
+    is Verdict.Bad -> emptyList()
+    is Verdict.NotFound -> emptyList()
+  }
 
+  private fun printMissingDependenciesAndRequiredPluginsAsBuildProblem(results: List<Result>) {
+    val missingToRequired = collectMissingDependenciesForRequiringPlugins(results)
+    missingToRequired.asMap().entries.forEach {
+      tcLog.buildProblem("Missing dependency ${it.key} (required for ${it.value.joinToString()})")
+    }
+  }
+
+  private fun collectMissingDependenciesForRequiringPlugins(results: List<Result>): Multimap<MissingDependency, PluginInfo> {
+    val missingToRequiring = HashMultimap.create<MissingDependency, PluginInfo>()
+    results.filter { it.verdict is Verdict.MissingDependencies }.forEach {
+      (it.verdict as Verdict.MissingDependencies).missingDependencies.forEach { missingDependency ->
+        missingToRequiring.put(missingDependency, it.plugin)
+      }
+    }
+    return missingToRequiring
   }
 
 
-  private fun groupByPlugin(results: VResults, options: VPrinterOptions) {
+  private fun groupByPlugin(results: List<Result>, options: PrinterOptions) {
     //pluginOne
     //....(1.0)
     //........#invoking unknown method
-    //............at someClass
+    //............someClass
     //........#accessing to unknown class
-    //............at another class
+    //............another class
     //....(1.2)
     //........#invoking unknown method
-    //............at someClass
+    //............someClass
     //........missing non-optional dependency dep#1
     //........missing non-optional dependency pluginOne:1.2 -> otherPlugin:3.3 -> dep#2 (it doesn't have a compatible build with IDE #IU-162.1121.10)
     //........missing optional dependency dep#3
     //pluginTwo
     //...and so on...
-
-    val lastUpdates = requestLatestVersionsOfUpdatesForEachCheckedIde(results.results.map { it.ideDescriptor.ideVersion }.distinct())
-
-    results.results.groupBy { it.pluginDescriptor.pluginId }.forEach { pidToResults ->
-      val pluginId = pidToResults.key
-      val pluginLink = REPOSITORY_PLUGIN_ID_BASE + pluginId
-
-      //<plugin_id>
-      tcLog.testSuiteStarted(pluginId).use {
-
-        pidToResults.value.groupBy { it.pluginDescriptor.version }.forEach { versionToResults ->
-          val version = versionToResults.key
-
-          //multiple plugins might have the same pluginIds and the same versions
-          versionToResults.value.forEach { result ->
-
-            val testName = genTestName(result.pluginDescriptor, result.ideDescriptor.ideVersion, lastUpdates)
-
-            tcLog.testStarted(testName).use {
-              when (result) {
-                is VResult.Nice -> {/*test is passed.*/
-                }
-                is VResult.Problems -> {
-
-                  val overview = StringBuilder()
-                  overview.append("Plugin URL: $pluginLink").append('\n')
-
-                  val problems = result.problems
-
-                  overview.append("$pluginId:$version has ${problems.keySet().size} ${"problem".pluralize(problems.keySet().size)}").append('\n')
-
-                  val missingNonOptionals = result.dependenciesGraph.getMissingNonOptionalDependencies()
-                  if (missingNonOptionals.isNotEmpty()) {
-                    overview.append("Some problems might be caused by missing plugins:").append('\n')
-                    missingNonOptionals.forEach {
-                      overview.append("    $it").append('\n')
-                    }
-                  }
-
-                  val missingOptionals = result.dependenciesGraph.getMissingOptionalDependencies().filterKeys { !options.ignoreMissingOptionalDependency(it) }
-                  if (missingOptionals.isNotEmpty()) {
-                    missingOptionals.forEach {
-                      val pluginOrModule = if (it.key.id.startsWith(INTELLIJ_MODULES_PREFIX)) "module" else "plugin"
-                      overview.append("Missing optional $pluginOrModule ${it.key.id}: ${it.value.reason}").append('\n')
-                    }
-                  }
-
-                  val problemsContent: String
-
-                  val notFoundClassesProblems = problems.keySet().filterIsInstance<ClassNotFoundProblem>()
-                  if (missingNonOptionals.isNotEmpty() && notFoundClassesProblems.size > 20) {
-                    //probably these all problems are caused by missing plugin dependencies.
-
-                    val otherProblems: String = problems.asMap()
-                        .filterKeys { it !in notFoundClassesProblems }
-                        .entries.sortedBy { it.key.javaClass.name }
-                        .joinToString(separator = "\n") {
-                          "#${it.key.getDescription()}\n" +
-                              it.value.joinToString(separator = "\n") { "    at $it" }
-                        }
-
-                    problemsContent = "There are too much missing classes (${notFoundClassesProblems.size});\n" +
-                        "it's probably because of missing plugins (${missingNonOptionals.map { it.missing.id }});\n" +
-                        "the following classes are not found: [${notFoundClassesProblems.map { it.unknownClass }.joinToString()}];\n" +
-                        otherProblems
-
-                  } else {
-                    problemsContent = problems.asMap().entries.sortedBy { it.key.javaClass.name }.joinToString(separator = "\n") {
-                      "#${it.key.getDescription()}\n" +
-                          it.value.joinToString(separator = "\n") { "    at $it" }
-                    }
-                  }
-
-                  tcLog.testStdErr(testName, problemsContent)
-
-                  tcLog.testFailed(testName, overview.toString(), "")
-                }
-                is VResult.BadPlugin -> {
-                  tcLog.testStdErr(testName, "Plugin is invalid: ${result.reason}")
-
-                  tcLog.testFailed(testName, "Plugin is invalid: ${result.reason}", "")
-                }
-                is VResult.NotFound -> {
-                  /*Suppose it is ok*/
-                }
-
-              }
-            }
-
-          }
-        }
-
-      }
-
+    val lastUpdates: Map<IdeVersion, List<UpdateInfo>> = requestLastVersionsOfCheckedPlugins(results)
+    results.groupBy { it.plugin.pluginId }.forEach { (pluginId, pluginResults) ->
+      printResultsForSpecificPluginId(options, pluginId, pluginResults, lastUpdates)
     }
   }
 
-  private fun requestLatestVersionsOfUpdatesForEachCheckedIde(ideVersions: List<IdeVersion>): Map<IdeVersion, List<UpdateInfo>> =
-      ideVersions.associate { ideVersion ->
-        val lastCompatibleUpdates: List<UpdateInfo> = try {
-          val repository: PluginRepository = pluginRepository
-          repository.getLastCompatibleUpdates(ideVersion)
-        } catch(e: Exception) {
-          LOG.warn("Unable to connect to Plugins Repository to get latest versions of plugins for $ideVersion", e)
-          emptyList()
+  private fun printResultsForSpecificPluginId(options: PrinterOptions,
+                                              pluginId: String,
+                                              pluginResults: List<Result>,
+                                              lastUpdates: Map<IdeVersion, List<UpdateInfo>>) {
+    tcLog.testSuiteStarted(pluginId).use {
+      pluginResults.groupBy { it.plugin.version }.forEach { versionToVerdicts ->
+        versionToVerdicts.value.forEach { (plugin, ideVersion, verdict) ->
+          val testName = genTestName(plugin, ideVersion, lastUpdates)
+          printResultOfSpecificVersion(plugin, verdict, testName, options)
         }
-        ideVersion to lastCompatibleUpdates.sortedByDescending { it.updateId }.distinctBy { it.pluginId }
       }
-
-  private fun String.pluralize(times: Int): String {
-    if (times < 0) throw IllegalArgumentException("Negative value")
-    if (times == 0) return ""
-    if (times == 1) return this else return this + "s"
+    }
   }
 
-  private fun genTestName(pluginDescriptor: PluginDescriptor,
+  private fun printResultOfSpecificVersion(plugin: PluginInfo,
+                                           verdict: Verdict,
+                                           testName: String,
+                                           options: PrinterOptions) {
+    tcLog.testStarted(testName).use {
+      when (verdict) {
+        is Verdict.Problems -> printProblems(plugin, testName, verdict.problems)
+        is Verdict.MissingDependencies -> printMissingDependencies(plugin, verdict, testName, options)
+        is Verdict.Bad -> printBadPluginResult(verdict, testName)
+      }
+    }
+  }
+
+  private fun printMissingDependencies(plugin: PluginInfo,
+                                       verdict: Verdict.MissingDependencies,
+                                       testName: String,
+                                       options: PrinterOptions) {
+    val problems = verdict.problems
+    val pluginLink = getPluginLink(plugin)
+    val overview = "Plugin URL: $pluginLink" + "\n" +
+        "$plugin has ${problems.size} ${"problem".pluralize(problems.size)}" + "\n" +
+        getMissingDependenciesOverview(options, verdict) + "\n"
+    val problemsContent = getMissingDependenciesProblemsContent(verdict)
+    tcLog.testStdErr(testName, overview)
+    tcLog.testFailed(testName, problemsContent, "")
+  }
+
+  private fun printBadPluginResult(verdict: Verdict.Bad, versionTestName: String) {
+    val message = "Plugin is invalid: ${verdict.reason}"
+    tcLog.testStdErr(versionTestName, message)
+    tcLog.testFailed(versionTestName, message, "")
+  }
+
+  private fun printProblems(plugin: PluginInfo,
+                            testName: String,
+                            problems: Set<Problem>) {
+    val pluginLink = getPluginLink(plugin)
+    val overview = "Plugin URL: $pluginLink\n$plugin has ${problems.size} ${"problem".pluralize(problems.size)}\n"
+    val problemsContent = getProblemsContent(problems)
+    tcLog.testStdErr(testName, problemsContent)
+    tcLog.testFailed(testName, overview, "")
+  }
+
+  private fun getProblemsContent(problems: Set<Problem>): String = problems.joinToString(separator = "\n") {
+    "#${it.getShortDescription()}\n    ${it.getFullDescription()}"
+  }
+
+  private fun getMissingDependenciesProblemsContent(verdict: Verdict.MissingDependencies): String {
+    val problems = verdict.problems
+    val missingDependencies = verdict.missingDependencies
+
+    val notFoundClassesProblems = problems.filterIsInstance<ClassNotFoundProblem>()
+    if (missingDependencies.isNotEmpty() && notFoundClassesProblems.size > 20) {
+      return getTooMuchUnknownClassesWarning(missingDependencies, notFoundClassesProblems, problems)
+    } else {
+      return getProblemsContent(problems)
+    }
+  }
+
+  private fun getTooMuchUnknownClassesWarning(missingDependencies: List<MissingDependency>,
+                                              notFoundClassesProblems: List<ClassNotFoundProblem>,
+                                              problems: Set<Problem>): String {
+    val otherProblems: String = getProblemsContent(problems.filterNot { it in notFoundClassesProblems }.sortedBy { it.javaClass.name }.toSet())
+    return "There are too much missing classes (${notFoundClassesProblems.size});\n" +
+        "it's probably because of missing plugins (${missingDependencies.map { it.dependency }.joinToString()});\n" +
+        "the following classes are not found: [${notFoundClassesProblems.map { it.unresolved }.joinToString()}];\n" +
+        otherProblems
+  }
+
+  private fun getMissingDependenciesOverview(options: PrinterOptions, verdict: Verdict.MissingDependencies): String {
+    val builder = StringBuilder()
+    builder.append("Some problems might be caused by missing plugins:").append('\n')
+    verdict.missingDependencies.filterNot { it.dependency.isOptional }.forEach { builder.append("    $it").append('\n') }
+    verdict.missingDependencies.filter { it.dependency.isOptional && !options.ignoreMissingOptionalDependency(it.dependency) }.forEach {
+      builder.append("Missing ${it.dependency}: ${it.missingReason}").append('\n')
+    }
+    return builder.toString()
+  }
+
+  private fun requestLastVersionsOfCheckedPlugins(results: List<Result>): Map<IdeVersion, List<UpdateInfo>> =
+      results
+          .map { it.ideVersion }
+          .distinct()
+          .associate { ideVersion ->
+            try {
+              val lastCompatibleUpdates = RepositoryManager.getLastCompatibleUpdates(ideVersion)
+              ideVersion to lastCompatibleUpdates.sortedByDescending { it.updateId }.distinctBy { Triple(it.pluginId, it.pluginName, it.version) }
+            } catch(e: Exception) {
+              LOG.info("Unable to determine the last compatible updates of IDE $ideVersion")
+              ideVersion to emptyList<UpdateInfo>()
+            }
+          }
+
+  private fun genTestName(pluginInfo: PluginInfo,
                           ideVersion: IdeVersion,
                           lastUpdates: Map<IdeVersion, List<UpdateInfo>>): String {
-    val simple = "(${pluginDescriptor.version})"
-    val relevant = lastUpdates[ideVersion] ?: return simple
-    val newest = "(${pluginDescriptor.version} - newest)"
-    return when (pluginDescriptor) {
-      is PluginDescriptor.ByUpdateInfo -> if (relevant.find { pluginDescriptor.updateInfo.updateId == it.updateId } != null) newest else simple
-      else -> if (relevant.find { pluginDescriptor.pluginId == it.pluginId && pluginDescriptor.version == it.version } != null) newest else simple
+    val onlyVersion = "(${pluginInfo.version})"
+    val relevant = lastUpdates[ideVersion] ?: return onlyVersion
+    val newest = "(${pluginInfo.version} - newest)"
+    if (pluginInfo.updateInfo != null) {
+      return if (relevant.any { pluginInfo.updateInfo.updateId == it.updateId }) newest else onlyVersion
     }
+    return if (relevant.find { pluginInfo.pluginId == it.pluginId && pluginInfo.version == it.version } != null) newest else onlyVersion
   }
 
   fun printIdeCompareResult(compareResult: CheckTrunkApiCompareResult) {
@@ -274,18 +280,18 @@ class TeamCityVPrinter(val tcLog: TeamCityLog,
     //....(missing plugin onePlugin)
     //.........onePlugin is required for plugin#1
     //...and so on....
-    val problemToUpdates: Multimap<Problem, UpdateInfo> = Multimaps.invertFrom(compareResult.newProblems, ArrayListMultimap.create())
+    val problemToUpdates: Multimap<Problem, UpdateInfo> = Multimaps.invertFrom(compareResult.newProblems, HashMultimap.create())
 
     compareResult.newProblems.values().distinct().groupBy { it.javaClass }.forEach { typeToProblems ->
-      val prefix = convertNameToPrefix(typeToProblems.key)
+      val prefix = convertProblemClassNameToSentence(typeToProblems.key)
       tcLog.testSuiteStarted("($prefix)").use {
         typeToProblems.value.forEach { problem ->
-          tcLog.testSuiteStarted(problem.getDescription()).use {
+          tcLog.testSuiteStarted(problem.getShortDescription()).use {
             problemToUpdates.get(problem).forEach { plugin ->
               val testName = "(${plugin.pluginId}:${plugin.version})"
               tcLog.testStarted(testName).use {
                 val pluginUrl = REPOSITORY_PLUGIN_ID_BASE + plugin.pluginId
-                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problem.getDescription())
+                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problem.getFullDescription())
               }
             }
           }
@@ -296,10 +302,10 @@ class TeamCityVPrinter(val tcLog: TeamCityLog,
     //print missing dependencies
     tcLog.testSuiteStarted("missing plugin dependencies").use {
       compareResult.newMissingProblems.asMap().entries.forEach { missingToProblems ->
-        val type = if (missingToProblems.key.pluginId.startsWith(INTELLIJ_MODULES_PREFIX)) "module" else "plugin"
-        val testName = "(missing $type ${missingToProblems.key})"
+        val missingDependency = missingToProblems.key
+        val testName = "(missing $missingDependency)"
         tcLog.testStarted(testName).use {
-          tcLog.testFailed(testName, "$type ${missingToProblems.key} is not found in ${compareResult.currentVersion} " +
+          tcLog.testFailed(testName, "$missingDependency is not found in ${compareResult.currentVersion} " +
               "but it is required for the following plugins: [${missingToProblems.value.map { it.pluginId }.joinToString()}]", "")
         }
       }
@@ -315,7 +321,7 @@ class TeamCityVPrinter(val tcLog: TeamCityLog,
     }
   }
 
-  private fun groupByProblemType(results: VResults) {
+  private fun groupByProblemType(results: List<Result>) {
     //accessing to unknown class SomeClass
     //....(pluginOne:1.2.0)
     //....(pluginTwo:2.0.0)
@@ -324,29 +330,23 @@ class TeamCityVPrinter(val tcLog: TeamCityLog,
     //missing dependencies
     //....(missing#1)
     //.........Required for plugin1, plugin2, plugin3
-    val affected: Multimap<Problem, PluginDescriptor> = HashMultimap.create()
-    results.results.forEach { result ->
-      when (result) {
-        is VResult.Nice -> {
-        }
-        is VResult.Problems -> result.problems.keySet().forEach { affected.put(it, result.pluginDescriptor) }
-        is VResult.BadPlugin -> {
-        }
-        is VResult.NotFound -> {
-        }
+    val problemToDetectingResult: Multimap<Problem, Result> = HashMultimap.create()
+    results.forEach { result ->
+      getProblemsOfVerdict(result.verdict).forEach {
+        problemToDetectingResult.put(it, result)
       }
     }
 
-    affected.keySet().groupBy { it.javaClass }.forEach { typeToProblems ->
-      val prefix = convertNameToPrefix(typeToProblems.key)
+    problemToDetectingResult.keySet().groupBy { it.javaClass }.forEach { typeToProblems ->
+      val prefix = convertProblemClassNameToSentence(typeToProblems.key)
       tcLog.testSuiteStarted("($prefix)").use {
         typeToProblems.value.forEach { problem ->
-          affected.get(problem).forEach { plugin ->
-            tcLog.testSuiteStarted(problem.getDescription()).use {
-              val testName = "(${plugin.pluginId}:${plugin.version})"
+          problemToDetectingResult.get(problem).forEach { (plugin) ->
+            tcLog.testSuiteStarted(problem.getShortDescription()).use {
+              val testName = "($plugin)"
               tcLog.testStarted(testName).use {
-                val pluginUrl = REPOSITORY_PLUGIN_ID_BASE + plugin.pluginId
-                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problem.getDescription())
+                val pluginUrl = getPluginLink(plugin)
+                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: $plugin", problem.getFullDescription())
               }
             }
           }
@@ -354,29 +354,30 @@ class TeamCityVPrinter(val tcLog: TeamCityLog,
       }
     }
 
-    results.results.filterIsInstance<VResult.Problems>()
-        .flatMap { descr -> descr.dependenciesGraph.getMissingNonOptionalDependencies().map { it.missing.id to descr.pluginDescriptor } }
-        .groupBy({ it.first }, { it.second })
-        .filterValues { it.isNotEmpty() }
-        .apply {
-          if (this.isNotEmpty()) {
-            tcLog.testSuiteStarted("(missing dependencies)").use {
-              this.forEach { entry ->
-                val testName = "(${entry.key})"
-                tcLog.testStarted(testName).use {
-                  tcLog.testFailed(testName, "Required for ${entry.value.joinToString()}", "")
-                }
-              }
-            }
+    printMissingDependenciesAsTests(results)
+  }
+
+  private fun getPluginLink(pluginInfo: PluginInfo): String = REPOSITORY_PLUGIN_ID_BASE + pluginInfo
+
+  private fun printMissingDependenciesAsTests(results: List<Result>) {
+    val missingToRequired = collectMissingDependenciesForRequiringPlugins(results)
+    if (!missingToRequired.isEmpty) {
+      tcLog.testSuiteStarted("(missing dependencies)").use {
+        missingToRequired.asMap().entries.forEach { entry ->
+          val testName = "(${entry.key})"
+          tcLog.testStarted(testName).use {
+            tcLog.testFailed(testName, "Required for ${entry.value.joinToString()}", "")
           }
         }
+      }
+    }
   }
 
 
   /**
    * Converts string like "com.some.package.name.MyClassNameProblem" to "my class name"
    */
-  fun convertNameToPrefix(clazz: Class<Problem>): String {
+  private fun convertProblemClassNameToSentence(clazz: Class<Problem>): String {
     val name = clazz.name.substringAfterLast(".")
     var words = name.split("(?=[A-Z])".toRegex())
     if (words.isEmpty()) {
