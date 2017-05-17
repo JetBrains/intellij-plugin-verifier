@@ -98,7 +98,12 @@ public class IdeManagerImpl extends IdeManager {
           File pluginDirectory = metaInf.getParentFile();
           if (pluginDirectory.isDirectory()) {
             try {
-              PluginCreationResult creationResult = new PluginManagerImpl(pathResolver).createPlugin(pluginDirectory, false, false);
+              if (!pluginDirectory.exists()) {
+                throw new IllegalArgumentException("Plugin file " + pluginDirectory + " does not exist");
+              }
+              PluginCreator pluginCreator = new PluginManagerImpl(pathResolver).getPluginCreatorWithResult(pluginDirectory, false);
+              pluginCreator.setOriginalFile(pluginDirectory);
+              PluginCreationResult creationResult = pluginCreator.getPluginCreationResult();
               if (creationResult instanceof PluginCreationSuccess) {
                 result.add(((PluginCreationSuccess) creationResult).getPlugin());
               }
@@ -145,7 +150,12 @@ public class IdeManagerImpl extends IdeManager {
       if (!file.isDirectory())
         continue;
 
-      PluginCreationResult result = new PluginManagerImpl().createPlugin(file, true, true);
+      if (!file.exists()) {
+        throw new IllegalArgumentException("Plugin file " + file + " does not exist");
+      }
+      PluginCreator pluginCreator = new PluginManagerImpl().getPluginCreatorWithResult(file, true);
+      pluginCreator.setOriginalFile(file);
+      PluginCreationResult result = pluginCreator.getPluginCreationResult();
       if (result instanceof PluginCreationSuccess) {
         plugins.add(((PluginCreationSuccess) result).getPlugin());
       } else {

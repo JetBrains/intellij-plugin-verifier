@@ -3,26 +3,18 @@ package com.intellij.structure.impl.domain;
 import com.intellij.structure.plugin.Plugin;
 import com.intellij.structure.plugin.PluginCreationSuccess;
 import com.intellij.structure.problems.PluginProblem;
-import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.List;
 
-public class PluginCreationSuccessImpl implements PluginCreationSuccess, Closeable {
+public class PluginCreationSuccessImpl implements PluginCreationSuccess {
   @NotNull private final Plugin myPlugin;
   @NotNull private final List<PluginProblem> myWarnings;
-  @Nullable
-  private final Resolver myResolver;
 
   public PluginCreationSuccessImpl(@NotNull Plugin plugin,
-                                   @NotNull List<PluginProblem> warnings,
-                                   @Nullable Resolver resolver) {
+                                   @NotNull List<PluginProblem> warnings) {
     myPlugin = plugin;
     myWarnings = warnings;
-    myResolver = resolver;
 
     for (PluginProblem warning : myWarnings) {
       if (warning.getLevel() == PluginProblem.Level.ERROR) {
@@ -37,21 +29,10 @@ public class PluginCreationSuccessImpl implements PluginCreationSuccess, Closeab
     return myPlugin;
   }
 
-  @Nullable
-  public Resolver getClassesResolver() {
-    return myResolver;
-  }
-
   @Override
   @NotNull
   public List<PluginProblem> getWarnings() {
     return myWarnings;
   }
 
-  @Override
-  public void close() throws IOException {
-    if (myResolver != null) {
-      myResolver.close();
-    }
-  }
 }

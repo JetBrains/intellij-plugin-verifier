@@ -243,7 +243,6 @@ public class PluginManagerImpl extends PluginManager {
 
   @NotNull
   private PluginCreator extractZipAndCreatePlugin(@NotNull File zipPlugin,
-                                                  boolean readClassFiles,
                                                   boolean validateDescriptor) {
     ExtractorResult extractorResult;
     try {
@@ -253,49 +252,36 @@ public class PluginManagerImpl extends PluginManager {
     }
     if (extractorResult instanceof ExtractorSuccess) {
       ExtractedPluginFile extractedPluginFile = ((ExtractorSuccess) extractorResult).getExtractedPlugin();
-      return createPluginAndReadClasses(extractedPluginFile, readClassFiles, validateDescriptor);
+      try {
+        return loadDescriptorFromJarOrDirectory(extractedPluginFile.getActualPluginFile(), PLUGIN_XML, validateDescriptor);
+      } finally {
+        extractedPluginFile.close();
+      }
     } else {
       return new PluginCreator(PLUGIN_XML, ((ExtractorFail) extractorResult).getPluginProblem(), zipPlugin);
     }
   }
 
   @NotNull
-  private PluginCreator createPluginAndReadClasses(ExtractedPluginFile extractedPluginFile, boolean readClassFiles, boolean validateDescriptor) {
-    try {
-      PluginCreator pluginCreator = loadDescriptorFromJarOrDirectory(extractedPluginFile.getActualPluginFile(), PLUGIN_XML, validateDescriptor);
-      if (readClassFiles) {
-        pluginCreator.readClassFiles(extractedPluginFile);
-      }
-      return pluginCreator;
-    } finally {
-      if (!readClassFiles) {
-        extractedPluginFile.close();
-      }
-    }
-  }
-
-  @NotNull
   @Override
   public PluginCreationResult createPlugin(@NotNull File pluginFile) throws IOException {
-    return createPlugin(pluginFile, false, true);
+    PluginCreator pluginCreator = getPluginCreatorWithResult(pluginFile, true);
+    pluginCreator.setOriginalFile(pluginFile);
+    return pluginCreator.getPluginCreationResult();
   }
 
   @NotNull
-  public PluginCreationResult createPlugin(@NotNull File pluginFile, boolean readClassFiles, boolean validateDescriptor) {
+  public PluginCreator getPluginCreatorWithResult(@NotNull File pluginFile, boolean validateDescriptor) {
     if (!pluginFile.exists()) {
       throw new IllegalArgumentException("Plugin file " + pluginFile + " does not exist");
     }
     PluginCreator pluginCreator;
     if (JarsUtils.isZip(pluginFile)) {
-      pluginCreator = extractZipAndCreatePlugin(pluginFile, readClassFiles, validateDescriptor);
+      pluginCreator = extractZipAndCreatePlugin(pluginFile, validateDescriptor);
     } else {
-      pluginCreator = loadDescriptorFromJarOrDirectory(pluginFile, PLUGIN_XML, validateDescriptor);
-      if (readClassFiles) {
-        pluginCreator.readClassFiles(new ExtractedPluginFile(pluginFile, null));
-      }
+      pluginCreator = loadDescriptorFromJarOrDirectory(pluginFile, PLUGIN_XML, true);
     }
-    pluginCreator.setOriginalFile(pluginFile);
-    return pluginCreator.getPluginCreationResult();
+    return pluginCreator;
   }
 
 }

@@ -2,9 +2,6 @@ package com.intellij.structure.impl.domain;
 
 import com.intellij.structure.ide.IdeVersion;
 import com.intellij.structure.impl.beans.*;
-import com.intellij.structure.impl.extractor.ExtractedPluginFile;
-import com.intellij.structure.impl.resolvers.PluginResolver;
-import com.intellij.structure.impl.utils.FileUtil;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.plugin.Plugin;
@@ -12,7 +9,6 @@ import com.intellij.structure.plugin.PluginCreationResult;
 import com.intellij.structure.plugin.PluginCreationSuccess;
 import com.intellij.structure.plugin.PluginDependency;
 import com.intellij.structure.problems.*;
-import com.intellij.structure.resolvers.Resolver;
 import org.jdom2.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +38,6 @@ final class PluginCreator {
   private final String myDescriptorPath;
   private final boolean myValidateDescriptor;
   private final File myActualFile;
-  private Resolver myResolver;
 
   PluginCreator(String descriptorPath,
                 boolean validateDescriptor,
@@ -199,7 +194,7 @@ final class PluginCreator {
     if (hasErrors()) {
       return new PluginCreationFailImpl(myProblems);
     }
-    return new PluginCreationSuccessImpl(myPlugin, myProblems, myResolver);
+    return new PluginCreationSuccessImpl(myPlugin, myProblems);
   }
 
   @NotNull
@@ -210,19 +205,6 @@ final class PluginCreator {
   public void setOriginalFile(File originalFile) {
     if (myPlugin != null) {
       myPlugin.setOriginalPluginFile(originalFile);
-    }
-  }
-
-  public void readClassFiles(@NotNull ExtractedPluginFile extractedPluginFile) {
-    if (myPlugin != null) {
-      try {
-        myResolver = new PluginResolver(extractedPluginFile);
-      } catch (Exception e) {
-        LOG.error("Unable to read plugin class files " + extractedPluginFile.getActualPluginFile(), e);
-        registerProblem(new UnableToReadPluginClassFiles(extractedPluginFile.getActualPluginFile()));
-      }
-    } else {
-      FileUtil.closeQuietly(extractedPluginFile);
     }
   }
 
