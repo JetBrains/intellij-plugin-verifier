@@ -19,6 +19,7 @@ import com.intellij.structure.impl.utils.StringUtil;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -29,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 public class URLUtil {
@@ -173,68 +173,51 @@ public class URLUtil {
    * @throws IOException if URL is malformed or unable to open a stream
    */
   @NotNull
-  public static InputStream openRecursiveJarStream(@NotNull URL url) throws IOException {
+  private static InputStream openRecursiveJarStream(@NotNull URL url) throws IOException {
     String[] paths = splitUrl(url.toExternalForm());
     if (paths.length == 0) {
       throw new MalformedURLException(url.toExternalForm());
     }
+    File baseJarFile = new File(unquote(paths[0]));
+    ZipInputStream baseJarStream = new ZipInputStream(new BufferedInputStream(FileUtils.openInputStream(baseJarFile)));
     if (paths.length == 1) {
-      try {
-        return new ZipInputStream(new BufferedInputStream(FileUtils.openInputStream(new File(unquote(paths[0])))));
-      } catch (FileNotFoundException e) {
-        throw new MalformedURLException(url.toExternalForm());
-      }
+      return baseJarStream;
     }
-
-    ZipInputStream zin = new ZipInputStream(new FileInputStream(unquote(paths[0])));
-    ZipEntry entry = null;
-    for (ZipEntry e; (e = zin.getNextEntry()) != null;) {
-      if (e.getName().equals(paths[1])) {
-        entry = e;
-        break;
-      }
-    }
-
-    if (entry == null) {
-      throw new FileNotFoundException("Entry " + Arrays.toString(paths) + " is not found");
-    }
-
-    InputStream result = zin;
-    if (isJarOrZipEntry(entry.getName())) {
-      result = new ZipInputStream(result);
-    }
-
-    if (paths.length == 2) {
-      return result;
-    }
-
-    if (!isJarOrZipEntry(entry.getName())) {
-      throw new IOException("Entry " + entry.getName() + " inside " + paths[0] + " is not a .zip nor .jar archive.");
-    }
-
-    return openRecursiveJarStream((ZipInputStream) result, paths, 2);
+    return openRecursiveJarStream(baseJarStream, Arrays.copyOfRange(paths, 1, paths.length));
   }
 
   @NotNull
-  private static InputStream openRecursiveJarStream(@NotNull final ZipInputStream zipStream, String[] entries, int pos) throws IOException {
-    final String entry = entries[pos];
-
-    ZipEntry zipEntry;
-    while ((zipEntry = zipStream.getNextEntry()) != null) {
-      if (StringUtil.equal(zipEntry.getName(), entry)) {
-
-        if (pos == entries.length - 1) {
-          if (isJarOrZipEntry(entry)) {
-            return new ZipInputStream(zipStream);
+  private static InputStream openRecursiveJarStream(@NotNull final ZipInputStream baseZipStream,
+                                                    @NotNull String[] innerJarEntries) throws IOException {
+    ZipInputStream currentStream = baseZipStream;
+    for (int i = 0; i < innerJarEntries.length; i++) {
+      String entryName = innerJarEntries[i];
+      ZipEntry entry = findEntryByName(currentStream, entryName);
+      if (entry == null) {
+        baseZipStream.close();
+        throw new FileNotFoundException(Arrays.toString(innerJarEntries));
+      } else {
+        if (isJarOrZipEntry(entryName)) {
+          currentStream = new ZipInputStream(currentStream);
+        } else {
+          if (i != innerJarEntries.length - 1) {
+            baseZipStream.close();
+            throw new FileNotFoundException("Entry " + entryName + " is neither .zip nor .jar archive: " + Arrays.toString(innerJarEntries));
           }
-          return zipStream;
         }
-
-        return openRecursiveJarStream(new ZipInputStream(zipStream), entries, pos + 1);
       }
     }
+    return currentStream;
+  }
 
-    throw new FileNotFoundException("Entry " + Arrays.toString(entries) + " is not found");
+  @Nullable
+  private static ZipEntry findEntryByName(ZipInputStream zipStream, String entryName) throws IOException {
+    for (ZipEntry e; (e = zipStream.getNextEntry()) != null; ) {
+      if (e.getName().equals(entryName)) {
+        return e;
+      }
+    }
+    return null;
   }
 
   private static boolean isJarOrZipEntry(String entry) {
