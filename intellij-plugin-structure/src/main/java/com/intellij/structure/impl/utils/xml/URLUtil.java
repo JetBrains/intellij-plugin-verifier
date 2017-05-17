@@ -186,26 +186,33 @@ public class URLUtil {
       }
     }
 
-    ZipFile zipFile = new ZipFile(unquote(paths[0]));
-    ZipEntry entry = zipFile.getEntry(paths[1]);
+    ZipInputStream zin = new ZipInputStream(new FileInputStream(unquote(paths[0])));
+    ZipEntry entry = null;
+    for (ZipEntry e; (e = zin.getNextEntry()) != null;) {
+      if (e.getName().equals(paths[1])) {
+        entry = e;
+        break;
+      }
+    }
+
     if (entry == null) {
       throw new FileNotFoundException("Entry " + Arrays.toString(paths) + " is not found");
     }
 
-    InputStream inputStream = zipFile.getInputStream(entry);
+    InputStream result = zin;
     if (isJarOrZipEntry(entry.getName())) {
-      inputStream = new ZipInputStream(inputStream);
+      result = new ZipInputStream(result);
     }
 
     if (paths.length == 2) {
-      return inputStream;
+      return result;
     }
 
     if (!isJarOrZipEntry(entry.getName())) {
       throw new IOException("Entry " + entry.getName() + " inside " + paths[0] + " is not a .zip nor .jar archive.");
     }
 
-    return openRecursiveJarStream((ZipInputStream) inputStream, paths, 2);
+    return openRecursiveJarStream((ZipInputStream) result, paths, 2);
   }
 
   @NotNull
