@@ -17,11 +17,6 @@ public abstract class PluginManager {
   }
 
   @NotNull
-  final public PluginCreationResult createPlugin(@NotNull File pluginFile) throws IOException {
-    return createPlugin(pluginFile, false, true);
-  }
-
-  @NotNull
-  public abstract PluginCreationResult createPlugin(@NotNull File pluginFile, boolean readClassFiles, boolean validateDescriptor) throws IOException;
+  public abstract PluginCreationResult createPlugin(@NotNull File pluginFile) throws IOException;
 
 }

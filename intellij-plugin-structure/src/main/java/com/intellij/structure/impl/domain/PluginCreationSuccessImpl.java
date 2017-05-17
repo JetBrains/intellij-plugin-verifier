@@ -7,9 +7,11 @@ import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
 
-public class PluginCreationSuccessImpl implements PluginCreationSuccess {
+public class PluginCreationSuccessImpl implements PluginCreationSuccess, Closeable {
   @NotNull private final Plugin myPlugin;
   @NotNull private final List<PluginProblem> myWarnings;
   @Nullable
@@ -36,7 +38,6 @@ public class PluginCreationSuccessImpl implements PluginCreationSuccess {
   }
 
   @Nullable
-  @Override
   public Resolver getClassesResolver() {
     return myResolver;
   }
@@ -45,5 +46,12 @@ public class PluginCreationSuccessImpl implements PluginCreationSuccess {
   @NotNull
   public List<PluginProblem> getWarnings() {
     return myWarnings;
+  }
+
+  @Override
+  public void close() throws IOException {
+    if (myResolver != null) {
+      myResolver.close();
+    }
   }
 }

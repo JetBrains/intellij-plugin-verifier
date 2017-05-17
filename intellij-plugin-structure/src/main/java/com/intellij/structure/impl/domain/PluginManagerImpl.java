@@ -276,6 +276,11 @@ public class PluginManagerImpl extends PluginManager {
 
   @NotNull
   @Override
+  public PluginCreationResult createPlugin(@NotNull File pluginFile) throws IOException {
+    return createPlugin(pluginFile, false, true);
+  }
+
+  @NotNull
   public PluginCreationResult createPlugin(@NotNull File pluginFile, boolean readClassFiles, boolean validateDescriptor) {
     if (!pluginFile.exists()) {
       throw new IllegalArgumentException("Plugin file " + pluginFile + " does not exist");

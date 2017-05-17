@@ -8,7 +8,10 @@ import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.impl.utils.xml.XIncludeException;
-import com.intellij.structure.plugin.*;
+import com.intellij.structure.plugin.Plugin;
+import com.intellij.structure.plugin.PluginCreationFail;
+import com.intellij.structure.plugin.PluginCreationResult;
+import com.intellij.structure.plugin.PluginCreationSuccess;
 import com.intellij.structure.problems.PluginProblem;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
@@ -142,7 +145,7 @@ public class IdeManagerImpl extends IdeManager {
       if (!file.isDirectory())
         continue;
 
-      PluginCreationResult result = PluginManager.getInstance().createPlugin(file, true, true);
+      PluginCreationResult result = new PluginManagerImpl().createPlugin(file, true, true);
       if (result instanceof PluginCreationSuccess) {
         plugins.add(((PluginCreationSuccess) result).getPlugin());
       } else {

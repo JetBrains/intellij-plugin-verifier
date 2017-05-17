@@ -1,13 +1,13 @@
 package com.intellij.structure.mocks
 
 import com.intellij.structure.ide.IdeVersion
+import com.intellij.structure.impl.domain.PluginCreationSuccessImpl
 import com.intellij.structure.impl.domain.PluginDependencyImpl
+import com.intellij.structure.impl.domain.PluginManagerImpl
 import com.intellij.structure.impl.extractor.ExtractedPluginFile
 import com.intellij.structure.impl.utils.JarsUtils
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.plugin.PluginCreationFail
-import com.intellij.structure.plugin.PluginCreationSuccess
-import com.intellij.structure.plugin.PluginManager
 import com.intellij.structure.problems.MissingOptionalDependencyConfigurationFile
 import com.intellij.structure.problems.PluginProblem
 import com.intellij.structure.resolvers.Resolver
@@ -118,15 +118,15 @@ class MockPluginsTest {
   private fun testMockPluginStructureAndConfiguration(pluginPath: String, vararg classesPath: String) {
     val pluginFile = getMockPluginFile(pluginPath)
 
-    val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile, true, true)
+    val pluginCreationResult = PluginManagerImpl().createPlugin(pluginFile, true, true)
     if (pluginCreationResult is PluginCreationFail) {
       val message = pluginCreationResult.errorsAndWarnings.joinToString(separator = "\n") { it.message }
       fail(message)
     }
-    val pluginCreationSuccess = pluginCreationResult as PluginCreationSuccess
+    val pluginCreationSuccess = pluginCreationResult as PluginCreationSuccessImpl
     val plugin = pluginCreationSuccess.plugin
 
-    pluginCreationSuccess.classesResolver.use { classesResolver ->
+    pluginCreationSuccess.classesResolver!!.use { classesResolver ->
       assertThat(classesResolver, `is`(not(nullValue())))
       assertEquals(pluginFile, plugin.originalFile)
       testMockConfigs(plugin)
@@ -140,7 +140,7 @@ class MockPluginsTest {
       testMockClasses(classesResolver, *classesPath)
     }
 
-    val extractedPluginPath = getExtractedPluginPath(pluginCreationSuccess.classesResolver)
+    val extractedPluginPath = getExtractedPluginPath(pluginCreationSuccess.classesResolver!!)
     if (JarsUtils.isZip(pluginFile)) {
       assertThat(extractedPluginPath.exists(), `is`(false))
     }
