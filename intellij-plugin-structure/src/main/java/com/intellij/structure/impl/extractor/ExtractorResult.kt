@@ -10,7 +10,6 @@ import java.io.IOException
 
 data class ExtractedPluginFile(val actualPluginFile: File,
                                val fileToDelete: File?) : Closeable {
-  @Throws(IOException::class)
   override fun close() {
     if (fileToDelete != null) {
       FileUtils.deleteQuietly(fileToDelete)

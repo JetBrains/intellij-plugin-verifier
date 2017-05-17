@@ -10,6 +10,7 @@ import com.intellij.structure.plugin.PluginCreationResult;
 import com.intellij.structure.plugin.PluginDependency;
 import com.intellij.structure.plugin.PluginManager;
 import com.intellij.structure.problems.*;
+import org.apache.commons.io.IOUtils;
 import org.jdom2.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,14 +60,17 @@ public class PluginManagerImpl extends PluginManager {
     try {
       ZipEntry entry = getEntry(zipFile, descriptorPath);
       if (entry != null) {
+        InputStream documentStream = null;
         try {
           URL documentUrl = URLUtil.getJarEntryURL(jarFile, entry.getName());
-          InputStream documentStream = zipFile.getInputStream(entry);
+          documentStream = zipFile.getInputStream(entry);
           Document document = JDOMUtil.loadDocument(documentStream);
           return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, pathResolver, jarFile);
         } catch (Exception e) {
           LOG.debug("Unable to read file " + descriptorPath);
           return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorPath), jarFile);
+        } finally {
+          IOUtils.closeQuietly(documentStream);
         }
       } else {
         return new PluginCreator(descriptorPath, new PluginDescriptorIsNotFound(descriptorPath), jarFile);
@@ -265,11 +269,7 @@ public class PluginManagerImpl extends PluginManager {
       return pluginCreator;
     } finally {
       if (!readClassFiles) {
-        try {
-          extractedPluginFile.close();
-        } catch (IOException e) {
-          LOG.warn("Unable to delete temporary extracted plugin file " + extractedPluginFile, e);
-        }
+        extractedPluginFile.close();
       }
     }
   }
