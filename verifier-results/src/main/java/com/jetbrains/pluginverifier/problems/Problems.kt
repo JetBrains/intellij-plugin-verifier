@@ -209,25 +209,3 @@ data class StaticAccessOfNonStaticFieldProblem(@SerializedName("field") val fiel
 
   override fun getFullDescription(): String = "Method $accessor has static access instruction *$instruction* referencing a non-static field $field. This can lead to **IncompatibleClassChangeError** exception at runtime."
 }
-
-enum class Instruction(private val type: String) {
-  GET_STATIC("getstatic"),
-  PUT_STATIC("putstatic"),
-  PUT_FIELD("putfield"),
-  GET_FIELD("getfield"),
-  INVOKE_VIRTUAL("invokevirtual"),
-  INVOKE_INTERFACE("invokeinterface"),
-  INVOKE_STATIC("invokestatic"),
-  INVOKE_SPECIAL("invokespecial");
-
-  override fun toString(): String = type
-}
-
-enum class AccessType(private val type: String) {
-  PUBLIC("public"),
-  PROTECTED("protected"),
-  PACKAGE_PRIVATE("package-private"),
-  PRIVATE("private");
-
-  override fun toString(): String = type
-}
