@@ -1,20 +1,24 @@
 package com.jetbrains.pluginverifier.dependencies
 
-import com.intellij.structure.domain.Plugin
-import com.intellij.structure.domain.PluginDependency
-import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.api.DependencyResolver
-import com.jetbrains.pluginverifier.repository.FileLock
+import com.intellij.structure.plugin.PluginDependency
+import com.jetbrains.pluginverifier.dependency.DependencyResolver
+import com.jetbrains.pluginverifier.misc.closeLogged
+import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.jgrapht.graph.DefaultEdge
+import java.io.Closeable
 
 data class DepEdge(val dependency: PluginDependency) : DefaultEdge()
 
-data class DepVertex(val plugin: Plugin, val resolver: Resolver, val fileLock: FileLock?) {
-
+data class DepVertex(val creationOk: CreatePluginResult.OK) : Closeable {
   val missingDependencies: MutableList<MissingDependency> = arrayListOf()
 
+  override fun equals(other: Any?): Boolean = other is DepVertex && creationOk.success.plugin == other.creationOk.success.plugin
+
+  override fun hashCode(): Int = creationOk.success.plugin.hashCode()
+
+  override fun close() = creationOk.close()
 }
 
 class DepGraphBuilder(private val dependencyResolver: DependencyResolver) {
@@ -23,13 +27,13 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) {
 
   private val graph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
 
-  fun build(plugin: Plugin, pluginResolver: Resolver): Result {
-    val startVertex = DepVertex(plugin, pluginResolver, null)
+  fun build(creationOk: CreatePluginResult.OK): Result {
+    val startVertex = DepVertex(creationOk)
     try {
       traverseDependencies(startVertex)
       return Result(graph, startVertex)
     } catch (e: Throwable) {
-      graph.vertexSet().mapNotNull { it.fileLock }.forEach { it.release() }
+      graph.vertexSet().forEach { it.closeLogged() }
       throw e
     }
   }
@@ -37,19 +41,18 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) {
   private fun findDependencyOrFillMissingReason(pluginDependency: PluginDependency, isModule: Boolean, current: DepVertex): DepVertex? =
       getResolvedDependency(pluginDependency) ?: resolveDependency(current, isModule, pluginDependency)
 
-  private fun getResolvedDependency(pluginDependency: PluginDependency): DepVertex? = graph.vertexSet().find { pluginDependency.id == it.plugin.pluginId }
+  private fun getResolvedDependency(pluginDependency: PluginDependency): DepVertex? = graph.vertexSet().find { pluginDependency.id == it.creationOk.success.plugin.pluginId }
 
   private fun resolveDependency(current: DepVertex, isModule: Boolean, pluginDependency: PluginDependency): DepVertex? {
-    val resolved = dependencyResolver.resolve(pluginDependency.id, isModule, current.plugin)
+    val resolved = dependencyResolver.resolve(pluginDependency.id, isModule, current.creationOk.success.plugin)
     return when (resolved) {
-      is DependencyResolver.Result.Found -> DepVertex(resolved.plugin, resolved.resolver, resolved.fileLock)
+      is DependencyResolver.Result.Found -> DepVertex(resolved.pluginCreateOk)
       is DependencyResolver.Result.NotFound -> {
         current.missingDependencies.add(MissingDependency(pluginDependency, isModule, resolved.reason))
-        return null
+        null
       }
-      DependencyResolver.Result.Skip -> {
-        return null
-      }
+      DependencyResolver.Result.Skip -> null
+      is DependencyResolver.Result.ProblematicDependency -> return null
     }
   }
 
@@ -58,8 +61,9 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) {
       return
     }
     graph.addVertex(current)
-    for (pluginDependency in current.plugin.moduleDependencies + current.plugin.dependencies) {
-      val isModule = pluginDependency in current.plugin.moduleDependencies
+    val plugin = current.creationOk.success.plugin
+    for (pluginDependency in plugin.moduleDependencies + plugin.dependencies) {
+      val isModule = pluginDependency in plugin.moduleDependencies
       val dependency = findDependencyOrFillMissingReason(pluginDependency, isModule, current) ?: continue
       traverseDependencies(dependency)
       graph.addEdge(current, dependency, DepEdge(pluginDependency))

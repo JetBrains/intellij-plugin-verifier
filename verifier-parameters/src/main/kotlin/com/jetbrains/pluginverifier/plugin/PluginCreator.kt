@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.plugin
 
+import com.intellij.structure.impl.domain.PluginCreationSuccessImpl
+import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.plugin.PluginCreationFail
 import com.intellij.structure.plugin.PluginCreationSuccess
 import com.intellij.structure.plugin.PluginManager
@@ -36,7 +38,7 @@ object PluginCreator {
     if (pluginCreationResult is PluginCreationSuccess) {
       try {
         val pluginResolver = Resolver.createPluginResolver(pluginCreationResult.plugin)
-        return CreatePluginResult.OK(pluginFileLock, pluginCreationResult, pluginResolver)
+        return CreatePluginResult.OK(pluginCreationResult, pluginResolver, pluginFileLock)
       } catch (e: Throwable) {
         pluginFileLock.release()
         throw e
@@ -46,4 +48,8 @@ object PluginCreator {
     }
   }
 
+  fun createResolverForExistingPlugin(plugin: Plugin): CreatePluginResult.OK {
+    val resolver = Resolver.createPluginResolver(plugin)
+    return CreatePluginResult.OK(PluginCreationSuccessImpl(plugin, emptyList()), resolver, null)
+  }
 }

@@ -1,74 +1,71 @@
 package com.jetbrains.pluginverifier.utils
 
-import com.intellij.structure.domain.Ide
-import com.intellij.structure.domain.Plugin
-import com.intellij.structure.impl.domain.PluginImpl
+import com.intellij.structure.ide.Ide
+import com.intellij.structure.plugin.Plugin
+import com.intellij.structure.problems.PluginProblem
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.dependencies.*
+import com.jetbrains.pluginverifier.misc.closeLogged
+import com.jetbrains.pluginverifier.plugin.CreatePluginResult
+import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.warnings.Warning
 import org.jgrapht.DirectedGraph
-import org.slf4j.LoggerFactory
 import java.util.concurrent.Callable
 
 class VerificationWorker(val pluginDescriptor: PluginDescriptor,
+                         val ideDescriptor: IdeDescriptor,
                          val ide: Ide,
                          val ideResolver: Resolver,
                          val runtimeResolver: Resolver,
-                         val params: VerifierParams) : Callable<Result> {
+                         val params: VerifierParams) : Callable<VerificationResult> {
 
   private val dependencyResolver = params.dependencyResolver ?: DefaultDependencyResolver(ide)
 
   private val graphBuilder = DepGraphBuilder(dependencyResolver)
 
   private lateinit var plugin: Plugin
-
   private lateinit var pluginResolver: Resolver
+  private lateinit var warnings: List<PluginProblem>
 
-  companion object {
-    private val LOG = LoggerFactory.getLogger(VerificationWorker::class.java)
-  }
-
-  override fun call(): Result {
-    if (Thread.currentThread().isInterrupted) {
-      throw InterruptedException()
-    }
-    try {
-      return createAndVerifyPlugin()
-    } catch (e: Throwable) {
-      LOG.error("Unable to verify $pluginDescriptor with $ide", e)
-      throw e
-    }
-  }
-
-  private fun createAndVerifyPlugin(): Result {
-    val createPluginResult = VerificationUtil.createPluginAndResolver(pluginDescriptor, ide.version)
+  override fun call(): VerificationResult {
+    val createPluginResult = PluginCreator.createPlugin(pluginDescriptor)
     createPluginResult.use {
-      val (pluginInstance, resolver, badCreation) = createPluginResult
-      if (badCreation != null) {
-        return badCreation
+      return when (createPluginResult) {
+        is CreatePluginResult.BadPlugin -> {
+          VerificationResult.BadPlugin(pluginDescriptor, ideDescriptor, createPluginResult.pluginCreationFail.errorsAndWarnings)
+        }
+        is CreatePluginResult.OK -> {
+          val verdict = getVerificationVerdict(createPluginResult)
+          val pluginInfo = getPluginInfo(createPluginResult, pluginDescriptor)
+          VerificationResult.Verified(pluginDescriptor, ideDescriptor, verdict, pluginInfo)
+        }
+        is CreatePluginResult.NotFound -> {
+          VerificationResult.NotFound(pluginDescriptor, ideDescriptor, createPluginResult.reason)
+        }
       }
-
-      plugin = pluginInstance!!
-      pluginResolver = resolver!!
-
-      LOG.info("Verifying $plugin with $ide")
-      return verifyPlugin()
     }
   }
 
-  fun verifyPlugin(): Result {
-    val (graph, start) = graphBuilder.build(plugin, pluginResolver)
+  private fun getPluginInfo(createPluginResult: CreatePluginResult.OK, pluginDescriptor: PluginDescriptor): PluginInfo =
+      PluginInfo(createPluginResult.success.plugin.pluginId, createPluginResult.success.plugin.pluginVersion, (pluginDescriptor as? PluginDescriptor.ByUpdateInfo)?.updateInfo)
+
+  fun getVerificationVerdict(creationOk: CreatePluginResult.OK): Verdict {
+    plugin = creationOk.success.plugin
+    warnings = creationOk.success.warnings
+    pluginResolver = creationOk.resolver
+
+    val (graph, start) = graphBuilder.build(creationOk)
     val context: VerificationContext = try {
       runVerifier(graph)
     } finally {
-      graph.vertexSet().mapNotNull { it.fileLock }.forEach { it.release() }
+      graph.vertexSet().forEach { it.closeLogged() }
     }
 
     val apiGraph = DepGraph2ApiGraphConverter.convert(graph, start)
     addCycleAndOtherWarnings(apiGraph, context)
-    return getAppropriateResult(context, apiGraph)
+    return getAppropriateVerdict(context, apiGraph)
   }
 
   private fun addCycleAndOtherWarnings(apiGraph: DependenciesGraph, context: VerificationContext) {
@@ -79,19 +76,15 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
       context.registerWarning(Warning("The plugin $plugin is on the dependencies cycle: $cycle"))
     }
 
-    //todo: replace with new structure API
-    val pluginImpl = plugin as? PluginImpl
-    if (pluginImpl != null && pluginImpl.hints.isNotEmpty()) {
-      pluginImpl.hints.forEach {
-        context.registerWarning(Warning(it))
-      }
+    warnings.forEach {
+      context.registerWarning(Warning(it.message))
     }
   }
 
   private fun runVerifier(graph: DirectedGraph<DepVertex, DepEdge>): VerificationContext {
     val resolver = getDependenciesClassesResolver(graph)
     val checkClasses = getClassesForCheck()
-    val classLoader = createClassLoader(resolver, ideResolver, pluginResolver, runtimeResolver, params.externalClassPath, ide, plugin)
+    val classLoader = createClassLoader(resolver, ideResolver, runtimeResolver, params.externalClassPath, ide)
     classLoader.use {
       return runVerifier(classLoader, ide, params, plugin, checkClasses)
     }
@@ -99,10 +92,9 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
 
   private fun createClassLoader(dependenciesResolver: Resolver,
                                 ideResolver: Resolver,
-                                pluginResolver: Resolver,
                                 runtimeResolver: Resolver,
                                 externalClassPath: Resolver,
-                                ide: Ide, plugin: Plugin): Resolver =
+                                ide: Ide): Resolver =
       Resolver.createCacheResolver(
           Resolver.createUnionResolver(
               "Common resolver for plugin " + plugin.pluginId + " with its transitive dependencies; ide " + ide.version + "; jdk " + runtimeResolver,
@@ -120,18 +112,7 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
   }
 
   private fun getDependenciesClassesResolver(graph: DirectedGraph<DepVertex, DepEdge>): Resolver =
-      Resolver.createUnionResolver("Plugin $plugin dependencies resolvers", graph.vertexSet().map { it.resolver }.filterNotNull())
-
-  private fun getPluginInfoByDescriptor(pluginDescriptor: PluginDescriptor): PluginInfo = when (pluginDescriptor) {
-    is PluginDescriptor.ByUpdateInfo -> PluginInfo(pluginDescriptor.pluginId, pluginDescriptor.version, pluginDescriptor.updateInfo)
-    else -> PluginInfo(pluginDescriptor.pluginId, pluginDescriptor.version, null)
-  }
-
-  private fun getAppropriateResult(ctx: VerificationContext, dependenciesGraph: DependenciesGraph): Result {
-    val ideVersion = ide.version
-    val pluginInfo = getPluginInfoByDescriptor(pluginDescriptor)
-    return Result(pluginInfo, ideVersion, getAppropriateVerdict(ctx, dependenciesGraph))
-  }
+      Resolver.createUnionResolver("Plugin $plugin dependencies resolvers", graph.vertexSet().map { it.creationOk.resolver }.filterNotNull())
 
   private fun getAppropriateVerdict(context: VerificationContext, dependenciesGraph: DependenciesGraph): Verdict {
     val missingDependencies = dependenciesGraph.start.missingDependencies

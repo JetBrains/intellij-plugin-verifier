@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.api
 
 import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.pluginverifier.ide.IdeCreator
 import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.utils.VerificationUtil
 import com.jetbrains.pluginverifier.utils.VerificationWorker
 import org.slf4j.LoggerFactory
 import java.util.concurrent.*
@@ -16,7 +16,7 @@ class Verifier(val params: VerifierParams) {
     private val LOG = LoggerFactory.getLogger(Verifier::class.java)
   }
 
-  fun verify(progress: Progress = DefaultProgress()): List<Result> {
+  fun verify(progress: Progress = DefaultProgress()): List<VerificationResult> {
     val startMessage = "Verification of " + "plugin".pluralize(params.pluginsToCheck.size) + " is starting"
     LOG.debug(startMessage)
 
@@ -33,25 +33,23 @@ class Verifier(val params: VerifierParams) {
     }
   }
 
-  private fun runVerifierUnderProgress(progress: Progress): List<Result> {
+  private fun runVerifierUnderProgress(progress: Progress): List<VerificationResult> {
     val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
-    val completionService = ExecutorCompletionService<Result>(executor)
+    val completionService = ExecutorCompletionService<VerificationResult>(executor)
 
-    val results = arrayListOf<Result>()
+    val results = arrayListOf<VerificationResult>()
     try {
       createJdkResolver().use { runtimeResolver ->
         val ideToPlugins = params.pluginsToCheck.groupBy({ it.second }, { it.first }).entries
 
-        ideToPlugins.forEach { ideToPlugins ->
-          val ideDescriptor = ideToPlugins.key
-
-          VerificationUtil.createIdeAndResolver(ideDescriptor).use { (ide, ideResolver) ->
-            val futures = ideToPlugins.value.map { pluginDescriptor ->
-              val worker = VerificationWorker(pluginDescriptor, ide, ideResolver, runtimeResolver, params)
+        ideToPlugins.forEach { (ideDescriptor, plugins) ->
+          IdeCreator.create(ideDescriptor).use { (ide, ideResolver) ->
+            val futures = plugins.map { pluginDescriptor ->
+              val worker = VerificationWorker(pluginDescriptor, ideDescriptor, ide, ideResolver, runtimeResolver, params)
               completionService.submit(worker)
             }
 
-            results.addAll(waitForWorkersCompletion(executor, completionService, ideDescriptor, progress, futures))
+            results.addAll(waitForWorkersCompletion(executor, completionService, progress, futures))
           }
         }
       }
@@ -65,12 +63,11 @@ class Verifier(val params: VerifierParams) {
   private fun createJdkResolver() = Resolver.createJdkResolver(params.jdkDescriptor.file)
 
   private fun waitForWorkersCompletion(executor: ExecutorService,
-                                       completionService: ExecutorCompletionService<Result>,
-                                       ideDescriptor: IdeDescriptor,
+                                       completionService: ExecutorCompletionService<VerificationResult>,
                                        progress: Progress,
-                                       futures: List<Future<Result>>): List<Result> {
+                                       futures: List<Future<VerificationResult>>): List<VerificationResult> {
     var verified = 0
-    val results = arrayListOf<Result>()
+    val results = arrayListOf<VerificationResult>()
     val workers = futures.size
     (1..workers).forEach fori@ {
       while (true) {
@@ -84,7 +81,7 @@ class Verifier(val params: VerifierParams) {
           val result = future.get()
           results.add(result)
           progress.setProgress(((++verified).toDouble()) / workers)
-          val statusString = "${result.plugin} has been verified with $ideDescriptor. Result: $result"
+          val statusString = "${result.pluginDescriptor} has been verified with ${result.ideDescriptor}. Result: $result"
           progress.setText(statusString)
           LOG.trace("$statusString; Finished $verified out of $workers workers")
           break

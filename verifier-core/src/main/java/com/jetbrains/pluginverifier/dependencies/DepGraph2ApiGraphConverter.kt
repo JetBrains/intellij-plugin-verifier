@@ -19,7 +19,7 @@ object DepGraph2ApiGraphConverter {
       )
 
   private fun getDependencyNodeByVertex(vertex: DepVertex): DependencyNode =
-      DependencyNode(vertex.plugin.pluginId ?: "", vertex.plugin.pluginVersion ?: "", vertex.missingDependencies)
+      DependencyNode(vertex.creationOk.success.plugin.pluginId ?: "", vertex.creationOk.success.plugin.pluginVersion ?: "", vertex.missingDependencies)
 
 
 }

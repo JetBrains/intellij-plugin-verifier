@@ -2,14 +2,13 @@ package com.jetbrains.pluginverifier.utils
 
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.ImmutableMap
-import com.intellij.structure.domain.Ide
-import com.intellij.structure.domain.Plugin
-import com.intellij.structure.domain.PluginManager
-import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.api.DependencyResolver
+import com.intellij.structure.ide.Ide
+import com.intellij.structure.plugin.Plugin
+import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.format.UpdateInfo
+import com.jetbrains.pluginverifier.plugin.CreatePluginResult
+import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.repository.FileLock
-import com.jetbrains.pluginverifier.repository.IdleFileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import org.slf4j.LoggerFactory
 
@@ -50,22 +49,21 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
     }
   }
 
-  private fun tryCreatePluginResolver(plugin: Plugin, fileLock: FileLock): DependencyResolver.Result {
-    try {
-      val resolver = Resolver.createPluginResolver(plugin)
-      return DependencyResolver.Result.Found(plugin, resolver, fileLock)
+  private fun createDependencyResultByExistingPlugin(plugin: Plugin): DependencyResolver.Result {
+    val pluginCreateOk = try {
+      PluginCreator.createResolverForExistingPlugin(plugin)
     } catch(e: Throwable) {
-      fileLock.release()
       val reason = "Unable to read classes of plugin $plugin"
       LOG.error(reason, e)
       return DependencyResolver.Result.NotFound(reason)
     }
+    return DependencyResolver.Result.Found(pluginCreateOk)
   }
 
   private fun resolvePlugin(dependencyId: String): DependencyResolver.Result {
     val byId = ide.getPluginById(dependencyId)
     if (byId != null) {
-      return tryCreatePluginResolver(byId, IdleFileLock(byId.pluginFile))
+      return createDependencyResultByExistingPlugin(byId)
     }
 
     //try to load plugin
@@ -88,30 +86,18 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
   }
 
   private fun downloadAndOpenPlugin(updateInfo: UpdateInfo): DependencyResolver.Result {
-    val pluginZip: FileLock? = try {
-      RepositoryManager.getPluginFile(updateInfo)
-    } catch (e: Exception) {
-      val message = "Unable to download plugin $updateInfo from the Plugin Repository"
-      LOG.info(message, e)
-      return DependencyResolver.Result.NotFound(message)
-    }
+    val pluginZip: FileLock = RepositoryManager.getPluginFile(updateInfo)
+        ?: return DependencyResolver.Result.NotFound("Plugin $updateInfo is not found in the Plugin Repository")
+    return getResultForDependencyByFileLock(pluginZip)
+  }
 
-    if (pluginZip == null) {
-      val reason = "Plugin $updateInfo is not found in the Plugin Repository"
-      LOG.info(reason)
-      return DependencyResolver.Result.NotFound(reason)
+  private fun getResultForDependencyByFileLock(pluginLock: FileLock): DependencyResolver.Result {
+    val dependencyCreationResult = PluginCreator.createPluginByFileLock(pluginLock)
+    return when (dependencyCreationResult) {
+      is CreatePluginResult.OK -> DependencyResolver.Result.Found(dependencyCreationResult)
+      is CreatePluginResult.BadPlugin -> DependencyResolver.Result.ProblematicDependency(dependencyCreationResult)
+      is CreatePluginResult.NotFound -> DependencyResolver.Result.NotFound(dependencyCreationResult.reason)
     }
-
-    val dependency = try {
-      PluginManager.getInstance().createPlugin(pluginZip.getFile())
-    } catch (e: Throwable) {
-      pluginZip.release()
-      val message = "Plugin $updateInfo is invalid"
-      LOG.info(message, e)
-      return DependencyResolver.Result.NotFound(message)
-    }
-
-    return tryCreatePluginResolver(dependency, pluginZip)
   }
 
   private fun resolveModule(dependencyId: String): DependencyResolver.Result {
@@ -120,7 +106,7 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
     }
     val byModule = ide.getPluginByModule(dependencyId)
     if (byModule != null) {
-      return tryCreatePluginResolver(byModule, IdleFileLock(byModule.pluginFile))
+      return createDependencyResultByExistingPlugin(byModule)
     }
 
     if (dependencyId in INTELLIJ_MODULE_TO_CONTAINING_PLUGIN) {
@@ -129,7 +115,7 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
 
       val definingPlugin = ide.getPluginById(pluginId)
       if (definingPlugin != null) {
-        return tryCreatePluginResolver(definingPlugin, IdleFileLock(definingPlugin.pluginFile))
+        return createDependencyResultByExistingPlugin(definingPlugin)
       }
 
       try {
@@ -137,13 +123,7 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
         if (updateInfo != null) {
           val lock = RepositoryManager.getPluginFile(updateInfo)
           if (lock != null) {
-            val dependency = try {
-              PluginManager.getInstance().createPlugin(lock.getFile())
-            } catch (e: Throwable) {
-              lock.release()
-              throw e
-            }
-            return tryCreatePluginResolver(dependency, lock)
+            return getResultForDependencyByFileLock(lock)
           }
         }
       } catch (e: Throwable) {

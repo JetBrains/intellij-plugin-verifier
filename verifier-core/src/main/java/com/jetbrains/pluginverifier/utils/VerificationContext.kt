@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.utils
 
-import com.intellij.structure.domain.Ide
-import com.intellij.structure.domain.Plugin
+import com.intellij.structure.ide.Ide
+import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.location.*
