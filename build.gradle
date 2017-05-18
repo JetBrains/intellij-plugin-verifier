@@ -12,8 +12,8 @@ buildscript {
   }
 }
 
-def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.71'
-def intellijStructureVersion = '1.37'
+def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.72'
+def intellijStructureVersion = '1.38'
 
 
 configure(allprojects) {
