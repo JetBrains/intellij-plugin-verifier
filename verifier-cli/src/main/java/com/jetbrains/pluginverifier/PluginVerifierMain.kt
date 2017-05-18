@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier
 
 import com.jetbrains.pluginverifier.configurations.*
 import com.jetbrains.pluginverifier.output.TeamCityLog
-import com.jetbrains.pluginverifier.output.TeamCityVPrinter
+import com.jetbrains.pluginverifier.output.TeamCityPrinter
 import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.OptionsUtil
@@ -40,15 +40,15 @@ object PluginVerifierMain {
           LOG.info("Check-Plugin arguments: $params")
 
           val results = CheckPluginConfiguration(params).execute()
-          val vPrinterOptions = OptionsUtil.parsePrinterOptions(opts)
+          val printerOptions = OptionsUtil.parsePrinterOptions(opts)
           if (opts.needTeamCityLog) {
-            results.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true, vPrinterOptions)
+            results.printTcLog(TeamCityPrinter.GroupBy.parse(opts.group), true, printerOptions)
           } else {
-            results.printOnStdout(vPrinterOptions)
+            results.printOnStdout(printerOptions)
           }
 
           if (opts.htmlReportFile != null) {
-            results.printToHtml(File(opts.htmlReportFile), vPrinterOptions)
+            results.printToHtml(File(opts.htmlReportFile), printerOptions)
           }
         }
       }
@@ -62,11 +62,11 @@ object PluginVerifierMain {
             CheckIdeReport.createReport(checkIdeResults.ideVersion, checkIdeResults.results).saveToFile(File(opts.saveCheckIdeReport))
           }
 
-          val vPrinterOptions = OptionsUtil.parsePrinterOptions(opts)
+          val printerOptions = OptionsUtil.parsePrinterOptions(opts)
           if (opts.needTeamCityLog) {
-            checkIdeResults.printTcLog(TeamCityVPrinter.GroupBy.parse(opts.group), true, vPrinterOptions)
+            checkIdeResults.printTcLog(TeamCityPrinter.GroupBy.parse(opts.group), true, printerOptions)
           } else {
-            checkIdeResults.printOnStdOut(vPrinterOptions)
+            checkIdeResults.printOnStdOut(printerOptions)
           }
 
           if (opts.htmlReportFile != null) {
@@ -86,7 +86,7 @@ object PluginVerifierMain {
 
           if (opts.needTeamCityLog) {
             val compareResult = CheckTrunkApiCompareResult.create(checkTrunkApiResults)
-            val vPrinter = TeamCityVPrinter(TeamCityLog(System.out), TeamCityVPrinter.GroupBy.parse(opts.group))
+            val vPrinter = TeamCityPrinter(TeamCityLog(System.out), TeamCityPrinter.GroupBy.parse(opts.group))
             vPrinter.printIdeCompareResult(compareResult)
           }
           if (opts.saveCheckIdeReport != null) {

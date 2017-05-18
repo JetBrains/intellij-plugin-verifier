@@ -23,22 +23,22 @@ import org.slf4j.LoggerFactory
 /**
  * @author Sergey Patrikeev
  */
-class TeamCityVPrinter(private val tcLog: TeamCityLog,
-                       private val groupBy: GroupBy,
-                       private val repository: PluginRepository = RepositoryManager) : Printer {
+class TeamCityPrinter(private val tcLog: TeamCityLog,
+                      private val groupBy: GroupBy,
+                      private val repository: PluginRepository = RepositoryManager) : Printer {
 
   companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(TeamCityVPrinter::class.java)
+    private val LOG: Logger = LoggerFactory.getLogger(TeamCityPrinter::class.java)
   }
 
   private val REPOSITORY_PLUGIN_ID_BASE = "https://plugins.jetbrains.com/plugin/index?xmlId="
 
   fun printNoCompatibleUpdatesProblems(problems: List<MissingCompatibleUpdate>) {
     when (groupBy) {
-      TeamCityVPrinter.GroupBy.NOT_GROUPED -> {
+      TeamCityPrinter.GroupBy.NOT_GROUPED -> {
         problems.forEach { tcLog.buildProblem(it.toString()) }
       }
-      TeamCityVPrinter.GroupBy.BY_PLUGIN -> {
+      TeamCityPrinter.GroupBy.BY_PLUGIN -> {
         problems.forEach { problem ->
           tcLog.testSuiteStarted(problem.pluginId).use {
             val testName = "(no compatible update)"
@@ -49,7 +49,7 @@ class TeamCityVPrinter(private val tcLog: TeamCityLog,
           }
         }
       }
-      TeamCityVPrinter.GroupBy.BY_PROBLEM_TYPE -> {
+      TeamCityPrinter.GroupBy.BY_PROBLEM_TYPE -> {
         tcLog.testSuiteStarted("(no compatible update)").use {
           problems.forEach { problem ->
             tcLog.testSuiteStarted(problem.pluginId).use {

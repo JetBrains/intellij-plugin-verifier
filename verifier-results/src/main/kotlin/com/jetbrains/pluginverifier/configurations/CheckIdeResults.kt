@@ -36,9 +36,9 @@ data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVers
     HtmlPrinter(ideVersion, { x -> excludedPlugins.containsEntry(x.first, x.second) }, htmlFile.create()).printResults(results, vPrinterOptions)
   }
 
-  fun printTcLog(groupBy: TeamCityVPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: PrinterOptions) {
+  fun printTcLog(groupBy: TeamCityPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: PrinterOptions) {
     val tcLog = TeamCityLog(System.out)
-    val vPrinter = TeamCityVPrinter(tcLog, groupBy)
+    val vPrinter = TeamCityPrinter(tcLog, groupBy)
     vPrinter.printResults(results, vPrinterOptions)
     vPrinter.printNoCompatibleUpdatesProblems(noCompatibleUpdatesProblems)
     if (setBuildStatus) {

@@ -9,9 +9,9 @@ import java.io.PrintWriter
 
 data class CheckPluginResults(val results: List<Result>) : ConfigurationResults {
 
-  fun printTcLog(groupBy: TeamCityVPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: PrinterOptions) {
+  fun printTcLog(groupBy: TeamCityPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: PrinterOptions) {
     val tcLog = TeamCityLog(System.out)
-    val vPrinter = TeamCityVPrinter(tcLog, groupBy)
+    val vPrinter = TeamCityPrinter(tcLog, groupBy)
     vPrinter.printResults(results, vPrinterOptions)
     if (setBuildStatus) {
       val totalProblemsNumber = results.flatMap {

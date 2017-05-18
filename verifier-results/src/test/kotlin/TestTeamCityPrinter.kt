@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.output.PrinterOptions
 import com.jetbrains.pluginverifier.output.TeamCityLog
-import com.jetbrains.pluginverifier.output.TeamCityVPrinter
+import com.jetbrains.pluginverifier.output.TeamCityPrinter
 import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import org.junit.Assert
@@ -81,7 +81,7 @@ class TestTeamCityPrinter {
     val output = ByteArrayOutputStream().use { bos ->
       PrintStream(bos, true, "utf-8").use { printStream ->
         val teamCityLog = TeamCityLog(printStream)
-        val teamCityVPrinter = TeamCityVPrinter(teamCityLog, TeamCityVPrinter.GroupBy.BY_PLUGIN, pluginRepository)
+        val teamCityVPrinter = TeamCityPrinter(teamCityLog, TeamCityPrinter.GroupBy.BY_PLUGIN, pluginRepository)
         teamCityVPrinter.printResults(
             pluginInfos.map {
               Result(
