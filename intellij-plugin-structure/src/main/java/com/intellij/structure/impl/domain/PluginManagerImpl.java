@@ -153,6 +153,11 @@ public class PluginManagerImpl extends PluginManager {
         if (result != null) {
           String firstDescriptor = result.getActualFile().getName();
           String secondDescriptor = innerCreator.getActualFile().getName();
+          if (firstDescriptor.compareTo(secondDescriptor) > 0) {
+            String temp = firstDescriptor;
+            firstDescriptor = secondDescriptor;
+            secondDescriptor = temp;
+          }
           return new PluginCreator(descriptorPath, new MultiplePluginDescriptorsInLibDirectory(firstDescriptor, secondDescriptor), root);
         } else {
           result = innerCreator;
