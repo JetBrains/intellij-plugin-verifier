@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.method
 
 import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.utils.VerifierUtil
+import com.jetbrains.pluginverifier.utils.checkClassExistsOrExternal
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.TryCatchBlockNode
@@ -16,7 +17,7 @@ class MethodTryCatchVerifier : MethodVerifier {
     for (block in blocks) {
       val catchException = block.type ?: continue
       val descr = VerifierUtil.extractClassNameFromDescr(catchException) ?: continue
-      VerifierUtil.checkClassExistsOrExternal(descr, ctx, { ctx.fromMethod(clazz, method) })
+      ctx.checkClassExistsOrExternal(descr, { ctx.fromMethod(clazz, method) })
     }
   }
 }

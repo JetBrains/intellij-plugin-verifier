@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.method
 
 import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.utils.VerifierUtil
+import com.jetbrains.pluginverifier.utils.checkClassExistsOrExternal
 import org.jetbrains.intellij.plugins.internal.asm.Type
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
@@ -15,7 +16,7 @@ class MethodArgumentTypesVerifier : MethodVerifier {
     val argumentTypes = methodType.argumentTypes
     for (type in argumentTypes) {
       val argDescr = VerifierUtil.extractClassNameFromDescr(type.descriptor) ?: continue
-      VerifierUtil.checkClassExistsOrExternal(argDescr, ctx, { ctx.fromMethod(clazz, method) })
+      ctx.checkClassExistsOrExternal(argDescr, { ctx.fromMethod(clazz, method) })
     }
 
 

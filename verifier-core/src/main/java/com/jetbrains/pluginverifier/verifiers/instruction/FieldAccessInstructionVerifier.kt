@@ -4,6 +4,8 @@ import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.utils.VerifierUtil
+import com.jetbrains.pluginverifier.utils.checkClassExistsOrExternal
+import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
 import org.jetbrains.intellij.plugins.internal.asm.tree.*
 
@@ -171,12 +173,12 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
       //check that the array type exists
       val arrayType = VerifierUtil.extractClassNameFromDescr(fieldOwner)
       if (arrayType != null) {
-        VerifierUtil.checkClassExistsOrExternal(arrayType, ctx, { getFromMethod() })
+        ctx.checkClassExistsOrExternal(arrayType, { getFromMethod() })
       }
       return null
     }
 
-    val resolveClass = VerifierUtil.resolveClassOrProblem(fieldOwner, verifiableClass, ctx, { getFromMethod() }) ?: return null
+    val resolveClass = ctx.resolveClassOrProblem(fieldOwner, verifiableClass, { getFromMethod() }) ?: return null
 
     val (fail, resolvedField) = resolveFieldSteps(resolveClass)
     if (fail) {
@@ -218,7 +220,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
      * of the specified class or interface C.
      */
     for (anInterface in currentClass.interfaces as List<String>) {
-      val resolvedIntf = VerifierUtil.resolveClassOrProblem(anInterface, currentClass, ctx, { ctx.fromClass(currentClass) }) ?: return FAILED_LOOKUP
+      val resolvedIntf = ctx.resolveClassOrProblem(anInterface, currentClass, { ctx.fromClass(currentClass) }) ?: return FAILED_LOOKUP
 
       val (fail, resolvedField) = resolveFieldSteps(resolvedIntf)
       if (fail) {
@@ -234,7 +236,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
      */
     val superName = currentClass.superName
     if (superName != null) {
-      val resolvedSuper = VerifierUtil.resolveClassOrProblem(superName, currentClass, ctx, { ctx.fromClass(currentClass) }) ?: return FAILED_LOOKUP
+      val resolvedSuper = ctx.resolveClassOrProblem(superName, currentClass, { ctx.fromClass(currentClass) }) ?: return FAILED_LOOKUP
       val (fail, resolvedField) = resolveFieldSteps(resolvedSuper)
       if (fail) {
         return FAILED_LOOKUP

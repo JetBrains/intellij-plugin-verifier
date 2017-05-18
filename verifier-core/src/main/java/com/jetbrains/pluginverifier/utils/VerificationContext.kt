@@ -33,7 +33,6 @@ data class VerificationContext(
 
   private fun getClassPath(classNode: ClassNode): ClassPath {
     val className = classNode.name
-    //todo: handle this case more elegantly
     val actualResolver = resolver.getClassLocation(className) ?: return ClassPath(ClassPath.Type.ROOT, "root")
     if (actualResolver.classPath.size != 1) {
       //it should not happen, because actually each class-file is coming from a specific resolver

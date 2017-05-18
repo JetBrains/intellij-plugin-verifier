@@ -4,6 +4,7 @@ import com.jetbrains.pluginverifier.problems.AbstractClassInstantiationProblem
 import com.jetbrains.pluginverifier.problems.InterfaceInstantiationProblem
 import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.utils.VerifierUtil
+import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
 import org.jetbrains.intellij.plugins.internal.asm.tree.AbstractInsnNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
@@ -22,7 +23,7 @@ class TypeInstructionVerifier : InstructionVerifier {
     val desc = instr.desc
     val className = VerifierUtil.extractClassNameFromDescr(desc) ?: return
 
-    val aClass = VerifierUtil.resolveClassOrProblem(className, clazz, ctx, { ctx.fromMethod(clazz, method) }) ?: return
+    val aClass = ctx.resolveClassOrProblem(className, clazz, { ctx.fromMethod(clazz, method) }) ?: return
 
     if (instr.opcode == Opcodes.NEW) {
       if (VerifierUtil.isInterface(aClass)) {

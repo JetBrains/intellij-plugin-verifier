@@ -4,6 +4,7 @@ import com.jetbrains.pluginverifier.location.MethodLocation
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem
 import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.utils.VerifierUtil
+import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 
@@ -50,7 +51,7 @@ class AbstractMethodVerifier : ClassVerifier {
 
     (listOf(superName) + (clazz.interfaces as List<String>)).forEach { clsName ->
       if (!visitedClasses.contains(clsName)) {
-        val node = VerifierUtil.resolveClassOrProblem(clsName, clazz, ctx, { ctx.fromClass(clazz) })
+        val node = ctx.resolveClassOrProblem(clsName, clazz, { ctx.fromClass(clazz) })
         if (node != null) {
           traverseTree(node, ctx, visitedClasses, abstractMethods, implementedMethods)
         }
