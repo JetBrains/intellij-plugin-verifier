@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
-import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.VerificationContext
@@ -13,9 +12,9 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 import java.util.*
 
 class InvokeInstructionVerifier : InstructionVerifier {
-  override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, resolver: Resolver, ctx: VerificationContext) {
+  override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, ctx: VerificationContext) {
     if (instr is MethodInsnNode) {
-      InvokeImplementation(clazz, method, instr, resolver, ctx).verify()
+      InvokeImplementation(clazz, method, instr, ctx).verify()
     }
   }
 
@@ -25,7 +24,6 @@ class InvokeInstructionVerifier : InstructionVerifier {
 private class InvokeImplementation(val verifiableClass: ClassNode,
                                    val verifiableMethod: MethodNode,
                                    val instr: MethodInsnNode,
-                                   val resolver: Resolver,
                                    val ctx: VerificationContext,
                                    val methodOwner: String = instr.owner,
                                    val methodName: String = instr.name,
@@ -44,11 +42,11 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     if (methodOwner.startsWith("[")) {
       val arrayType = VerifierUtil.extractClassNameFromDescr(methodOwner)
       if (arrayType != null) {
-        VerifierUtil.checkClassExistsOrExternal(resolver, arrayType, ctx, { getFromMethod() })
+        VerifierUtil.checkClassExistsOrExternal(arrayType, ctx, { getFromMethod() })
       }
       return
     }
-    ownerNode = VerifierUtil.resolveClassOrProblem(resolver, methodOwner, verifiableClass, ctx, { getFromMethod() }) ?: return
+    ownerNode = VerifierUtil.resolveClassOrProblem(methodOwner, verifiableClass, ctx, { getFromMethod() }) ?: return
 
     when (instruction) {
       Instruction.INVOKE_VIRTUAL -> processInvokeVirtual()
@@ -126,9 +124,9 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     */
     val classRef: ClassNode
     if (resolved.methodNode.name != "<init>" && (!instr.itf && methodOwner == verifiableClass.superName) && VerifierUtil.isSuperFlag(verifiableClass)) {
-      classRef = VerifierUtil.resolveClassOrProblem(resolver, verifiableClass.superName, verifiableClass, ctx, { getFromMethod() }) ?: return
+      classRef = VerifierUtil.resolveClassOrProblem(verifiableClass.superName, verifiableClass, ctx, { getFromMethod() }) ?: return
     } else {
-      classRef = VerifierUtil.resolveClassOrProblem(resolver, methodOwner, verifiableClass, ctx, { getFromMethod() }) ?: return
+      classRef = VerifierUtil.resolveClassOrProblem(methodOwner, verifiableClass, ctx, { getFromMethod() }) ?: return
     }
 
     /*
@@ -170,7 +168,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
         If a match is found, then it is the method to be invoked.
     */
     if (!VerifierUtil.isInterface(classRef) && classRef.superName != null) {
-      var current: ClassNode = VerifierUtil.resolveClassOrProblem(resolver, classRef.superName, classRef, ctx, { ctx.fromClass(classRef) }) ?: return null
+      var current: ClassNode = VerifierUtil.resolveClassOrProblem(classRef.superName, classRef, ctx, { ctx.fromClass(classRef) }) ?: return null
       while (true) {
         val match = (current.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc }
         if (match != null) {
@@ -179,7 +177,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
 
         val superName = current.superName
         superName ?: break
-        current = VerifierUtil.resolveClassOrProblem(resolver, superName, current, ctx, { ctx.fromClass(current) }) ?: return null
+        current = VerifierUtil.resolveClassOrProblem(superName, current, ctx, { ctx.fromClass(current) }) ?: return null
       }
     }
 
@@ -188,7 +186,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
        the same name and descriptor as the resolved method, then it is the method to be invoked.
     */
     if (VerifierUtil.isInterface(classRef)) {
-      val objectClass = VerifierUtil.resolveClassOrProblem(resolver, "java/lang/Object", classRef, ctx, { ctx.fromClass(classRef) }) ?: return null
+      val objectClass = VerifierUtil.resolveClassOrProblem("java/lang/Object", classRef, ctx, { ctx.fromClass(classRef) }) ?: return null
       val match = (objectClass.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc && VerifierUtil.isPublic(it) }
       if (match != null) {
         return 3 to ResolvedMethod(objectClass, match)
@@ -387,7 +385,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       }
     } else if (VerifierUtil.isProtected(methodNode)) {
       if (!VerifierUtil.haveTheSamePackage(verifiableClass, definingClass)) {
-        if (!VerifierUtil.isSubclassOf(verifiableClass, definingClass, resolver, ctx)) {
+        if (!VerifierUtil.isSubclassOf(verifiableClass, definingClass, ctx)) {
           accessProblem = AccessType.PROTECTED
         }
       }
@@ -443,7 +441,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     interface method reference, which has its ACC_PUBLIC flag set and does not have its ACC_STATIC flag set,
     method lookup succeeds.
     */
-    val objectClass = VerifierUtil.resolveClassOrProblem(resolver, "java/lang/Object", interfaceNode, ctx, { ctx.fromClass(interfaceNode) }) ?: return FAILED_LOOKUP
+    val objectClass = VerifierUtil.resolveClassOrProblem("java/lang/Object", interfaceNode, ctx, { ctx.fromClass(interfaceNode) }) ?: return FAILED_LOOKUP
     val objectMethod = (objectClass.methods as List<MethodNode>).firstOrNull { it.name == methodName && it.desc == methodDescriptor && VerifierUtil.isPublic(it) && !VerifierUtil.isStatic(it) }
     if (objectMethod != null) {
       return LookupResult(false, ResolvedMethod(objectClass, objectMethod))
@@ -492,7 +490,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     return allMatching.filterIndexed { index, (definingClass) ->
       var isDeepest = true
       allMatching.forEachIndexed { otherIndex, otherMethod ->
-        if (index != otherIndex && VerifierUtil.isSubclassOf(definingClass, otherMethod.definingClass, resolver, ctx)) {
+        if (index != otherIndex && VerifierUtil.isSubclassOf(definingClass, otherMethod.definingClass, ctx)) {
           isDeepest = false
         }
       }
@@ -517,7 +515,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
 
       (cur.interfaces as List<String>).forEach {
         if (it !in visited) {
-          val resolveClass = VerifierUtil.resolveClassOrProblem(resolver, it, cur, ctx, { ctx.fromClass(cur) }) ?: return null
+          val resolveClass = VerifierUtil.resolveClassOrProblem(it, cur, ctx, { ctx.fromClass(cur) }) ?: return null
           visited.add(it)
           queue.add(resolveClass)
         }
@@ -526,29 +524,13 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       val superName = cur.superName
       if (superName != null) {
         if (superName !in visited) {
-          val resolvedSuper = VerifierUtil.resolveClassOrProblem(resolver, superName, cur, ctx, { ctx.fromClass(cur) }) ?: return null
+          val resolvedSuper = VerifierUtil.resolveClassOrProblem(superName, cur, ctx, { ctx.fromClass(cur) }) ?: return null
           visited.add(superName)
           queue.add(resolvedSuper)
         }
       }
     }
     return result
-  }
-
-  /**
-   * @return true if success, false otherwise
-   */
-  private fun dfs0(currentClass: ClassNode, visited: MutableSet<String>): Boolean {
-    visited.add(currentClass.name)
-    (currentClass.interfaces as List<String>).forEach {
-      if (it !in visited) {
-        val resolveClass = VerifierUtil.resolveClassOrProblem(resolver, it, currentClass, ctx, { ctx.fromClass(currentClass) })
-        if (resolveClass == null || !dfs0(resolveClass, visited)) {
-          return false
-        }
-      }
-    }
-    return true
   }
 
   /**
@@ -642,7 +624,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
      */
     val superName = currentClass.superName
     if (superName != null) {
-      val resolvedSuper = VerifierUtil.resolveClassOrProblem(resolver, superName, currentClass, ctx, { ctx.fromClass(currentClass) }) ?: return LookupResult(true, null)
+      val resolvedSuper = VerifierUtil.resolveClassOrProblem(superName, currentClass, ctx, { ctx.fromClass(currentClass) }) ?: return LookupResult(true, null)
       val (shouldStopLookup, resolvedMethod) = resolveClassMethodStep2(resolvedSuper)
       if (shouldStopLookup) {
         return FAILED_LOOKUP

@@ -137,7 +137,7 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
                           plugin: Plugin,
                           checkClasses: Set<String>): VerificationContext {
     val context = VerificationContext(plugin, ide, params, classLoader)
-    BytecodeVerifier(context).verify(checkClasses, classLoader)
+    BytecodeVerifier(context).verify(checkClasses)
     return context
   }
 

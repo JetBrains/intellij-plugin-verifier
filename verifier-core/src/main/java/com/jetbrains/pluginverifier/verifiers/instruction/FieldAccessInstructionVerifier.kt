@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
-import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.VerificationContext
@@ -15,9 +14,9 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.*
  */
 class FieldAccessInstructionVerifier : InstructionVerifier {
 
-  override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, resolver: Resolver, ctx: VerificationContext) {
+  override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, ctx: VerificationContext) {
     if (instr is FieldInsnNode) {
-      FieldsImplementation(clazz, method, instr, resolver, ctx).verify()
+      FieldsImplementation(clazz, method, instr, ctx).verify()
     }
   }
 
@@ -26,7 +25,6 @@ class FieldAccessInstructionVerifier : InstructionVerifier {
 private class FieldsImplementation(val verifiableClass: ClassNode,
                                    val verifiableMethod: MethodNode,
                                    val instr: FieldInsnNode,
-                                   val resolver: Resolver,
                                    val ctx: VerificationContext,
                                    val fieldOwner: String = instr.owner,
                                    val fieldName: String = instr.name,
@@ -141,7 +139,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
         }
       VerifierUtil.isProtected(fieldNode) -> {
         if (!VerifierUtil.haveTheSamePackage(verifiableClass, definingClass)) {
-          if (!VerifierUtil.isSubclassOf(verifiableClass, definingClass, resolver, ctx)) {
+          if (!VerifierUtil.isSubclassOf(verifiableClass, definingClass, ctx)) {
             accessProblem = AccessType.PROTECTED
           }
         }
@@ -173,12 +171,12 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
       //check that the array type exists
       val arrayType = VerifierUtil.extractClassNameFromDescr(fieldOwner)
       if (arrayType != null) {
-        VerifierUtil.checkClassExistsOrExternal(resolver, arrayType, ctx, { getFromMethod() })
+        VerifierUtil.checkClassExistsOrExternal(arrayType, ctx, { getFromMethod() })
       }
       return null
     }
 
-    val resolveClass = VerifierUtil.resolveClassOrProblem(resolver, fieldOwner, verifiableClass, ctx, { getFromMethod() }) ?: return null
+    val resolveClass = VerifierUtil.resolveClassOrProblem(fieldOwner, verifiableClass, ctx, { getFromMethod() }) ?: return null
 
     val (fail, resolvedField) = resolveFieldSteps(resolveClass)
     if (fail) {
@@ -220,7 +218,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
      * of the specified class or interface C.
      */
     for (anInterface in currentClass.interfaces as List<String>) {
-      val resolvedIntf = VerifierUtil.resolveClassOrProblem(resolver, anInterface, currentClass, ctx, { ctx.fromClass(currentClass) }) ?: return FAILED_LOOKUP
+      val resolvedIntf = VerifierUtil.resolveClassOrProblem(anInterface, currentClass, ctx, { ctx.fromClass(currentClass) }) ?: return FAILED_LOOKUP
 
       val (fail, resolvedField) = resolveFieldSteps(resolvedIntf)
       if (fail) {
@@ -236,7 +234,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
      */
     val superName = currentClass.superName
     if (superName != null) {
-      val resolvedSuper = VerifierUtil.resolveClassOrProblem(resolver, superName, currentClass, ctx, { ctx.fromClass(currentClass) }) ?: return FAILED_LOOKUP
+      val resolvedSuper = VerifierUtil.resolveClassOrProblem(superName, currentClass, ctx, { ctx.fromClass(currentClass) }) ?: return FAILED_LOOKUP
       val (fail, resolvedField) = resolveFieldSteps(resolvedSuper)
       if (fail) {
         return FAILED_LOOKUP

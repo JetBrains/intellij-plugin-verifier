@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers.clazz
 
-import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.location.MethodLocation
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem
 import com.jetbrains.pluginverifier.utils.VerificationContext
@@ -12,12 +11,12 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
  * @author Sergey Patrikeev
  */
 class AbstractMethodVerifier : ClassVerifier {
-  override fun verify(clazz: ClassNode, resolver: Resolver, ctx: VerificationContext) {
+  override fun verify(clazz: ClassNode, ctx: VerificationContext) {
     if (VerifierUtil.isAbstract(clazz) || VerifierUtil.isInterface(clazz)) return
 
     val abstractMethods = hashMapOf<Method, MethodLocation>()
     val implementedMethods = hashMapOf<Method, MethodLocation>()
-    traverseTree(clazz, resolver, ctx, hashSetOf(), abstractMethods, implementedMethods)
+    traverseTree(clazz, ctx, hashSetOf(), abstractMethods, implementedMethods)
 
     val classLocation = ctx.fromClass(clazz)
     (abstractMethods.keys - implementedMethods.keys).forEach { method ->
@@ -30,7 +29,6 @@ class AbstractMethodVerifier : ClassVerifier {
 
   @Suppress("UNCHECKED_CAST")
   private fun traverseTree(clazz: ClassNode,
-                           resolver: Resolver,
                            ctx: VerificationContext,
                            visitedClasses: MutableSet<String>,
                            abstractMethods: MutableMap<Method, MethodLocation>,
@@ -52,9 +50,9 @@ class AbstractMethodVerifier : ClassVerifier {
 
     (listOf(superName) + (clazz.interfaces as List<String>)).forEach { clsName ->
       if (!visitedClasses.contains(clsName)) {
-        val node = VerifierUtil.resolveClassOrProblem(resolver, clsName, clazz, ctx, { ctx.fromClass(clazz) })
+        val node = VerifierUtil.resolveClassOrProblem(clsName, clazz, ctx, { ctx.fromClass(clazz) })
         if (node != null) {
-          traverseTree(node, resolver, ctx, visitedClasses, abstractMethods, implementedMethods)
+          traverseTree(node, ctx, visitedClasses, abstractMethods, implementedMethods)
         }
       }
     }

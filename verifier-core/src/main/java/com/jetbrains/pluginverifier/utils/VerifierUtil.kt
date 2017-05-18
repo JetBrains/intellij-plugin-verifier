@@ -32,11 +32,11 @@ object VerifierUtil {
    *  3) Finally, access permissions to C are checked.
    *  If C is not accessible (§5.4.4) to D, class or interface resolution throws an IllegalAccessError.
    */
-  private fun resolveClass(resolver: Resolver, className: String, lookup: ClassNode, ctx: VerificationContext): ClsResolution {
+  private fun resolveClass(className: String, lookup: ClassNode, ctx: VerificationContext): ClsResolution {
     if (ctx.verifierParams.isExternalClass(className)) {
       return ClsResolution.ExternalClass
     }
-    val node = findClassNode(resolver, className, ctx)
+    val node = findClassNode(className, ctx)
     if (node != null) {
       return if (isClassAccessibleToOtherClass(node, lookup)) {
         ClsResolution.Found(node)
@@ -47,12 +47,11 @@ object VerifierUtil {
     return ClsResolution.NotFound
   }
 
-  fun resolveClassOrProblem(resolver: Resolver,
-                            className: String,
+  fun resolveClassOrProblem(className: String,
                             lookup: ClassNode,
                             ctx: VerificationContext,
                             lookupLocation: (() -> Location)): ClassNode? {
-    val resolution = resolveClass(resolver, className, lookup, ctx)
+    val resolution = resolveClass(className, lookup, ctx)
     return when (resolution) {
       ClsResolution.NotFound -> {
         ctx.registerProblem(ClassNotFoundProblem(ClassReference(className), lookupLocation.invoke()))
@@ -82,8 +81,8 @@ object VerifierUtil {
     return parameterNames
   }
 
-  fun checkClassExistsOrExternal(resolver: Resolver, className: String, ctx: VerificationContext, registerMissing: (() -> Location)) {
-    if (!ctx.verifierParams.isExternalClass(className) && !resolver.containsClass(className)) {
+  fun checkClassExistsOrExternal(className: String, ctx: VerificationContext, registerMissing: (() -> Location)) {
+    if (!ctx.verifierParams.isExternalClass(className) && !ctx.resolver.containsClass(className)) {
       ctx.registerProblem(ClassNotFoundProblem(ClassReference(className), registerMissing.invoke()))
     }
   }
@@ -91,14 +90,13 @@ object VerifierUtil {
   /**
    * Finds a class with the given name in the given resolver
    *
-   * @param resolver  resolver to search in
    * @param className className in binary form
    * @param ctx       context to report a problem of missing class to
    * @return null if not found or exception occurs (in the last case 'failed to read' warning is reported)
    */
-  private fun findClassNode(resolver: Resolver, className: String, ctx: VerificationContext): ClassNode? {
+  private fun findClassNode(className: String, ctx: VerificationContext): ClassNode? {
     try {
-      return resolver.findClass(className)
+      return ctx.resolver.findClass(className)
     } catch (e: Exception) {
       LOG.debug("Unable to read a class file $className", e)
       ctx.registerWarning(Warning("Unable to read a class $className using ASM (<a href=\"http://asm.ow2.org\"></a>). Probably it has invalid class-file. Try to recompile the plugin"))
@@ -237,20 +235,20 @@ object VerifierUtil {
         isProtected(firstMethod) ||
         (isDefaultAccess(firstMethod) && haveTheSamePackage(firstOwner, secondOwner))
 
-    return isSubclassOf(firstOwner, secondOwner, resolver, ctx)
+    return isSubclassOf(firstOwner, secondOwner, ctx)
         && firstMethod.name == secondMethod.name && firstMethod.desc == secondMethod.desc
         && !isPrivate(firstMethod)
         && isAccessible
   }
 
-  fun isSubclassOf(child: ClassNode, possibleParent: ClassNode, resolver: Resolver, ctx: VerificationContext): Boolean {
+  fun isSubclassOf(child: ClassNode, possibleParent: ClassNode, ctx: VerificationContext): Boolean {
     var current: ClassNode? = child
     while (current != null) {
       if (possibleParent.name == current.name) {
         return true
       }
       val superName = current.superName ?: return false
-      current = findClassNode(resolver, superName, ctx)
+      current = findClassNode(superName, ctx)
     }
     return false
   }

@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers.method
 
-import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.Type
@@ -11,7 +10,7 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
  * @author Sergey Patrikeev
  */
 class MethodReturnTypeVerifier : MethodVerifier {
-  override fun verify(clazz: ClassNode, method: MethodNode, resolver: Resolver, ctx: VerificationContext) {
+  override fun verify(clazz: ClassNode, method: MethodNode, ctx: VerificationContext) {
     val methodType = Type.getType(method.desc)
     val returnType = methodType.returnType
 
@@ -20,6 +19,6 @@ class MethodReturnTypeVerifier : MethodVerifier {
 
     val returnTypeDesc = VerifierUtil.extractClassNameFromDescr(descriptor) ?: return
 
-    VerifierUtil.checkClassExistsOrExternal(resolver, returnTypeDesc, ctx, { ctx.fromMethod(clazz, method) })
+    VerifierUtil.checkClassExistsOrExternal(returnTypeDesc, ctx, { ctx.fromMethod(clazz, method) })
   }
 }

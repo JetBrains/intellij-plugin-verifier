@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers
 
-import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.InheritFromFinalClassVerifier
@@ -43,37 +42,37 @@ class BytecodeVerifier(val ctx: VerificationContext) {
       FieldAccessInstructionVerifier()
   )
 
-  fun verify(classesToCheck: Set<String>, classLoader: Resolver) {
+  fun verify(classesToCheck: Set<String>) {
     classesToCheck.forEach {
       if (Thread.currentThread().isInterrupted) {
         throw InterruptedException("The verification was cancelled")
       }
       val node = try {
-        classLoader.findClass(it)
+        ctx.resolver.findClass(it)
       } catch (e: Exception) {
         null
       }
       if (node != null) {
-        verifyClass(classLoader, node, ctx)
+        verifyClass(node, ctx)
       }
     }
   }
 
   @Suppress("UNCHECKED_CAST")
-  private fun verifyClass(classLoader: Resolver, node: ClassNode, ctx: VerificationContext) {
+  private fun verifyClass(node: ClassNode, ctx: VerificationContext) {
     for (verifier in classVerifiers) {
-      verifier.verify(node, classLoader, ctx)
+      verifier.verify(node, ctx)
     }
 
     val methods = node.methods as List<MethodNode>
     for (method in methods) {
       for (verifier in methodVerifiers) {
-        verifier.verify(node, method, classLoader, ctx)
+        verifier.verify(node, method, ctx)
       }
 
       method.instructions.iterator().forEach { instruction ->
         for (verifier in instructionVerifiers) {
-          verifier.verify(node, method, instruction as AbstractInsnNode, classLoader, ctx)
+          verifier.verify(node, method, instruction as AbstractInsnNode, ctx)
         }
       }
     }
@@ -81,7 +80,7 @@ class BytecodeVerifier(val ctx: VerificationContext) {
     val fields = node.fields as List<FieldNode>
     for (field in fields) {
       for (verifier in fieldVerifiers) {
-        verifier.verify(node, field, classLoader, ctx)
+        verifier.verify(node, field, ctx)
       }
     }
   }

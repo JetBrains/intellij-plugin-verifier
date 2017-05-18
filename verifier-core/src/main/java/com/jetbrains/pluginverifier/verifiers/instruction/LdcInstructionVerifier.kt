@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
-import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.utils.VerifierUtil
 import org.jetbrains.intellij.plugins.internal.asm.Type
@@ -10,7 +9,7 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.LdcInsnNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 
 class LdcInstructionVerifier : InstructionVerifier {
-  override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, resolver: Resolver, ctx: VerificationContext) {
+  override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, ctx: VerificationContext) {
     if (instr !is LdcInsnNode) return
 
     val constant = instr.cst
@@ -19,6 +18,6 @@ class LdcInstructionVerifier : InstructionVerifier {
     val descriptor = constant.descriptor
     val className = VerifierUtil.extractClassNameFromDescr(descriptor) ?: return
 
-    VerifierUtil.checkClassExistsOrExternal(resolver, className, ctx, { ctx.fromMethod(clazz, method) })
+    VerifierUtil.checkClassExistsOrExternal(className, ctx, { ctx.fromMethod(clazz, method) })
   }
 }

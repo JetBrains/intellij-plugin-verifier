@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers.method
 
-import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.problems.OverridingFinalMethodProblem
 import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.utils.VerifierUtil
@@ -15,7 +14,7 @@ class OverrideNonFinalVerifier : MethodVerifier {
 
 
   @Suppress("UNCHECKED_CAST")
-  override fun verify(clazz: ClassNode, method: MethodNode, resolver: Resolver, ctx: VerificationContext) {
+  override fun verify(clazz: ClassNode, method: MethodNode, ctx: VerificationContext) {
     if (VerifierUtil.isPrivate(method)) return
 
     /*
@@ -32,7 +31,7 @@ class OverrideNonFinalVerifier : MethodVerifier {
       return
     }
 
-    var parent: ClassNode? = VerifierUtil.resolveClassOrProblem(resolver, superClass, clazz, ctx, { ctx.fromMethod(clazz, method) }) ?: return
+    var parent: ClassNode? = VerifierUtil.resolveClassOrProblem(superClass, clazz, ctx, { ctx.fromMethod(clazz, method) }) ?: return
 
     while (parent != null) {
       val sameMethod = (parent.methods as List<MethodNode>).firstOrNull { it.name == method.name && it.desc == method.desc }
@@ -43,7 +42,7 @@ class OverrideNonFinalVerifier : MethodVerifier {
         return
       }
       val superName = parent.superName ?: break
-      val superNode = VerifierUtil.resolveClassOrProblem(resolver, superName, parent, ctx, { ctx.fromClass(parent!!) }) ?: break
+      val superNode = VerifierUtil.resolveClassOrProblem(superName, parent, ctx, { ctx.fromClass(parent!!) }) ?: break
       parent = superNode
     }
   }
