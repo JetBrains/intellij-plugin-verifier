@@ -4,13 +4,13 @@ dependencies {
   compile project(':verifier-configurations')
 }
 
-task prepareMockPlugin(type: Copy) {
+task prepareMockPlugin(type: Copy, dependsOn: ':verifier-test:mock-plugin:build') {
   into "$buildDir/mocks"
   def mockPluginBuildDir = project('mock-plugin').buildDir
   from new File(mockPluginBuildDir, "libs/mock-plugin-1.0.jar")
 }
 
-task prepareAfterIdea(type: Copy) {
+task prepareAfterIdea(type: Copy, dependsOn: ':verifier-test:after-idea:build') {
   into "$buildDir/mocks/after-idea"
 
   def libDir = copySpec {
