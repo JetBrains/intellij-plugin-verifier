@@ -202,9 +202,11 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
     tcLog.testFailed(testName, overview, "")
   }
 
-  private fun getProblemsContent(problems: Set<Problem>): String = problems.joinToString(separator = "\n") {
-    "#${it.getShortDescription()}\n    ${it.getFullDescription()}"
-  }
+  private fun getProblemsContent(problems: Set<Problem>): String =
+      problems.groupBy({ it.getShortDescription() }, { it.getFullDescription() }).entries
+          .joinToString(separator = "\n") { (short, fulls) ->
+            "#$short\n" + fulls.joinToString(separator = "\n") { "    $it" }
+          }
 
   private fun getMissingDependenciesProblemsContent(verdict: Verdict.MissingDependencies): String {
     val problems = verdict.problems

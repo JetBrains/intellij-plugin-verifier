@@ -809,7 +809,7 @@ class VerifierTest {
         )
     )
     assertProblemFound(problem,
-        "Package-private class access.other.BecamePackagePrivate is not available at mock.plugin.access.IllegalAccess.classBecamePackagePrivate() : void",
+        "Package-private class access.other.BecamePackagePrivate is not available at mock.plugin.access.IllegalAccess.classBecamePackagePrivate() : void. This can lead to **IllegalAccessError** exception at runtime.",
         "Illegal access to package-private class access.other.BecamePackagePrivate"
     )
   }

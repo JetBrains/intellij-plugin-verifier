@@ -53,8 +53,8 @@ class WriterVPrinter(private val out: PrintWriter) : Printer {
     out.println("With IDE #$ideVersion the plugin $plugin has $problemsCnt " + "problem".pluralize(problemsCnt))
     problems.groupBy({ it.getShortDescription() }, { it.getFullDescription() }).forEach {
       out.println("    #${it.key}")
-      it.value.forEach { effect ->
-        out.println("        at $effect")
+      it.value.forEach { fullDescription ->
+        out.println("        $fullDescription")
       }
     }
   }
