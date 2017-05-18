@@ -17,7 +17,6 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 import retrofit2.http.Streaming
 import java.io.File
-import java.io.IOException
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -268,7 +267,6 @@ object DownloadManager {
     }
   }
 
-  @Throws(IOException::class)
   fun getOrLoadUpdate(updateId: Int): FileLock? {
     var pluginFile = getCachedFile(updateId)
 

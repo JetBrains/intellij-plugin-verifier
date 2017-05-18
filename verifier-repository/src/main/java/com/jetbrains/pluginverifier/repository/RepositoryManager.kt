@@ -13,7 +13,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 private interface RepositoryApi {
@@ -36,7 +35,6 @@ object RepositoryManager : PluginRepository {
     return repositoryApi.getUpdateInfoById(updateId).executeSuccessfully().body()
   }
 
-  @Throws(IOException::class)
   override fun getLastCompatibleUpdates(ideVersion: IdeVersion): List<UpdateInfo> {
     LOG.debug("Loading list of plugins compatible with $ideVersion... ")
 
@@ -44,7 +42,6 @@ object RepositoryManager : PluginRepository {
     return updates.executeSuccessfully().body()
   }
 
-  @Throws(IOException::class)
   override fun getLastCompatibleUpdateOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? {
     LOG.debug("Fetching last compatible update of plugin {} with ide {}", pluginId, ideVersion)
 
@@ -60,7 +57,6 @@ object RepositoryManager : PluginRepository {
     return result
   }
 
-  @Throws(IOException::class)
   override fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> {
     LOG.debug("Fetching list of all compatible builds of a pluginId $pluginId on IDE $ideVersion")
 
@@ -68,12 +64,10 @@ object RepositoryManager : PluginRepository {
     return call.executeSuccessfully().body()
   }
 
-  @Throws(IOException::class)
   override fun getPluginFile(update: UpdateInfo): FileLock? {
     return getPluginFile(update.updateId)
   }
 
-  @Throws(IOException::class)
   override fun getPluginFile(updateId: Int): FileLock? {
     return DownloadManager.getOrLoadUpdate(updateId)
   }

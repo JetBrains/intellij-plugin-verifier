@@ -23,6 +23,14 @@ fun Closeable.closeLogged() {
   }
 }
 
+fun File.create(): File {
+  if (this.parentFile != null) {
+    FileUtils.forceMkdir(this.parentFile)
+  }
+  this.createNewFile()
+  return this
+}
+
 fun File.deleteLogged(): Boolean {
   try {
     if (exists()) {
