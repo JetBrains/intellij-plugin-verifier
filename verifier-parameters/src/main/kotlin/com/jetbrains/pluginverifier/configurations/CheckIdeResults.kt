@@ -3,29 +3,17 @@ package com.jetbrains.pluginverifier.configurations
 import com.google.common.collect.Multimap
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.ide.IdeVersion
-import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.Verdict
+import com.jetbrains.pluginverifier.api.VerificationResult
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
+import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.output.*
 import com.jetbrains.pluginverifier.utils.ParametersListUtil
-import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.PrintWriter
 
-fun File.create(): File {
-  if (this.parentFile != null) {
-    FileUtils.forceMkdir(this.parentFile)
-  }
-  this.createNewFile()
-  return this
-}
-
-data class MissingCompatibleUpdate(val pluginId: String, val ideVersion: IdeVersion, val details: String) {
-  override fun toString(): String = "For $pluginId there are no updates compatible with $ideVersion in the Plugin Repository${if (details.isNullOrEmpty()) "" else " ($details)"}"
-}
-
 data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
-                           @SerializedName("results") val results: List<Result>,
+                           @SerializedName("results") val results: List<VerificationResult>,
                            @SerializedName("excludedPlugins") val excludedPlugins: Multimap<String, String>,
                            @SerializedName("noUpdatesProblems") val noCompatibleUpdatesProblems: List<MissingCompatibleUpdate>) : ConfigurationResults {
 
@@ -35,7 +23,7 @@ data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVers
           "// Each line contains plugin ID and list of versions that are broken.\n" +
           "// If plugin name or version contains a space you can quote it like in command line.\n")
 
-      val brokenPlugins = results.filterNot { it.verdict is Verdict.OK }.map { it.plugin }.map { it.pluginId to it.version }.distinct()
+      val brokenPlugins = results.filterIsInstance<VerificationResult.Verified>().filterNot { it.verdict is Verdict.OK }.map { it.pluginInfo }.map { it.pluginId to it.version }.distinct()
       brokenPlugins.groupBy { it.first }.forEach {
         out.print(ParametersListUtil.join(listOf(it.key)))
         out.print("    ")
@@ -54,7 +42,7 @@ data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVers
     vPrinter.printResults(results, vPrinterOptions)
     vPrinter.printNoCompatibleUpdatesProblems(noCompatibleUpdatesProblems)
     if (setBuildStatus) {
-      val totalProblemsNumber: Int = results.flatMap {
+      val totalProblemsNumber: Int = results.filterIsInstance<VerificationResult.Verified>().flatMap {
         when (it.verdict) {
           is Verdict.OK -> emptySet()
           is Verdict.Warnings -> emptySet()

@@ -6,6 +6,7 @@ import com.google.common.collect.Multimap
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
+import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.repository.RepositoryManager
@@ -29,7 +30,9 @@ data class CheckIdeParams(val ideDescriptor: IdeDescriptor.ByInstance,
                           val progress: Progress = DefaultProgress(),
                           val dependencyResolver: DependencyResolver? = null) : ConfigurationParams {
   override fun close() {
-    ideDescriptor.ideResolver.closeLogged()
+    ideDescriptor.closeLogged()
+    pluginsToCheck.forEach { it.closeLogged() }
+    externalClassPath.closeLogged()
   }
 }
 
@@ -46,19 +49,22 @@ object CheckIdeParamsParser : ConfigurationParamsParser {
       System.exit(1)
     }
     val ideDescriptor = OptionsUtil.createIdeDescriptor(ideFile, opts)
+    try {
+      val jdkDescriptor = JdkDescriptor(OptionsUtil.getJdkDir(opts))
+      val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
+      val externalClassPath = OptionsUtil.getExternalClassPath(opts)
+      val problemsFilter = OptionsUtil.getProblemsFilter(opts)
 
-    val jdkDescriptor = JdkDescriptor(OptionsUtil.getJdkDir(opts))
-    val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
-    val externalClassPath = OptionsUtil.getExternalClassPath(opts)
-    val problemsFilter = OptionsUtil.getProblemsFilter(opts)
+      val (checkAllBuilds, checkLastBuilds) = parsePluginToCheckList(opts)
 
-    val (checkAllBuilds, checkLastBuilds) = parsePluginToCheckList(opts)
+      val excludedPlugins = parseExcludedPlugins(opts)
 
-    val excludedPlugins = parseExcludedPlugins(opts)
-
-    val pluginsToCheck = getDescriptorsToCheck(checkAllBuilds, checkLastBuilds, ideDescriptor.ide.version)
-
-    return CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, excludedPlugins, externalClassesPrefixes, externalClassPath, checkAllBuilds, problemsFilter)
+      val pluginsToCheck = getDescriptorsToCheck(checkAllBuilds, checkLastBuilds, ideDescriptor.ideVersion)
+      return CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, excludedPlugins, externalClassesPrefixes, externalClassPath, checkAllBuilds, problemsFilter)
+    } catch (e: Throwable) {
+      ideDescriptor.closeLogged()
+      throw e
+    }
   }
 
   /**

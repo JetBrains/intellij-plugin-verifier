@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.api
 
-import com.intellij.structure.domain.Plugin
+import com.intellij.structure.plugin.Plugin
 import com.jetbrains.pluginverifier.problems.Problem
 
 interface ProblemsFilter {

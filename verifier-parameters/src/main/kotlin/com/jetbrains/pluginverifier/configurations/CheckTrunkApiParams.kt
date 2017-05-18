@@ -5,7 +5,6 @@ import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.JdkDescriptor
 import com.jetbrains.pluginverifier.api.ProblemsFilter
-import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
 import com.jetbrains.pluginverifier.repository.IdeRepository
@@ -56,7 +55,8 @@ object CheckTrunkApiParamsParser : ConfigurationParamsParser {
     val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
     val problemsFilter = OptionsUtil.getProblemsFilter(opts)
 
-    return CheckTrunkApiParams(ideDescriptor, majorIdeFile, externalClassesPrefixes, problemsFilter, jdkDescriptor, deleteMajorOnExit)
+    val majorIdeDescriptor = OptionsUtil.createIdeDescriptor(majorIdeFile, opts)
+    return CheckTrunkApiParams(ideDescriptor, majorIdeDescriptor, externalClassesPrefixes, problemsFilter, jdkDescriptor, deleteMajorOnExit)
   }
 
   private fun parseIdeVersion(ideVersion: String): IdeVersion {
@@ -124,18 +124,16 @@ object CheckTrunkApiParamsParser : ConfigurationParamsParser {
 
 
 data class CheckTrunkApiParams(val ideDescriptor: IdeDescriptor.ByInstance,
-                               val majorIdeFile: File,
+                               val majorIdeDescriptor: IdeDescriptor.ByInstance,
                                val externalClassesPrefixes: List<String>,
                                val problemsFilter: ProblemsFilter,
                                val jdkDescriptor: JdkDescriptor,
                                private val deleteMajorIdeOnExit: Boolean) : ConfigurationParams {
   override fun close() {
     try {
-      if (deleteMajorIdeOnExit) {
-        majorIdeFile.deleteLogged()
-      }
+      ideDescriptor.close()
     } finally {
-      ideDescriptor.ideResolver.closeLogged()
+      majorIdeDescriptor.close()
     }
   }
 }

@@ -1,10 +1,12 @@
+import com.intellij.structure.ide.Ide
 import com.intellij.structure.ide.IdeVersion
-import com.jetbrains.pluginverifier.api.PluginInfo
-import com.jetbrains.pluginverifier.api.Result
-import com.jetbrains.pluginverifier.api.Verdict
+import com.intellij.structure.plugin.Plugin
+import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.format.UpdateInfo
+import com.jetbrains.pluginverifier.ide.CreateIdeResult
 import com.jetbrains.pluginverifier.output.PrinterOptions
 import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityVPrinter
@@ -13,6 +15,7 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import org.junit.Assert
 import org.junit.Test
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.IOException
 import java.io.PrintStream
 
@@ -76,6 +79,19 @@ class TestTeamCityPrinter {
 """, output)
   }
 
+  private fun getDummyIde(ideVersion: IdeVersion) = object : Ide() {
+    override fun getVersion(): IdeVersion = ideVersion
+
+    override fun getIdePath(): File = TODO()
+
+    override fun getExpandedIde(plugin: Plugin?): Ide = TODO()
+
+    override fun getCustomPlugins(): MutableList<Plugin> = TODO()
+
+    override fun getBundledPlugins(): MutableList<Plugin> = TODO()
+
+  }
+
   private fun getTeamCityOutput(pluginRepository: PluginRepository, pluginInfos: List<PluginInfo>): String {
     val dependencyNode = DependencyNode("id", "version", emptyList())
     val output = ByteArrayOutputStream().use { bos ->
@@ -84,10 +100,11 @@ class TestTeamCityPrinter {
         val teamCityVPrinter = TeamCityVPrinter(teamCityLog, TeamCityVPrinter.GroupBy.BY_PLUGIN, pluginRepository)
         teamCityVPrinter.printResults(
             pluginInfos.map {
-              Result(
-                  it,
-                  IdeVersion.createIdeVersion("IU-145"),
-                  Verdict.OK(DependenciesGraph(dependencyNode, listOf(dependencyNode), emptyList()))
+              VerificationResult.Verified(
+                  PluginDescriptor.ByUpdateInfo(UpdateInfo("", "", "", 1, "")),
+                  IdeDescriptor.ByInstance(CreateIdeResult(getDummyIde(IdeVersion.createIdeVersion("IU-145")), Resolver.getEmptyResolver())),
+                  Verdict.OK(DependenciesGraph(dependencyNode, listOf(dependencyNode), emptyList())),
+                  it
               )
             },
             PrinterOptions(false, emptyList())

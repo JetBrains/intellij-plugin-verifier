@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.utils
 
 import com.google.common.collect.ImmutableMultimap
 import com.google.common.collect.Multimap
-import com.intellij.structure.domain.Plugin
+import com.intellij.structure.plugin.Plugin
 import com.jetbrains.pluginverifier.api.ProblemsFilter
 import com.jetbrains.pluginverifier.problems.Problem
 import org.slf4j.Logger

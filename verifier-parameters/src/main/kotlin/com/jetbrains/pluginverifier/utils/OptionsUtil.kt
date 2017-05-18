@@ -6,6 +6,7 @@ import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.ProblemsFilter
+import com.jetbrains.pluginverifier.ide.IdeCreator
 import com.jetbrains.pluginverifier.output.PrinterOptions
 import com.sampullara.cli.Argument
 import java.io.BufferedReader
@@ -74,14 +75,10 @@ object OptionsUtil {
 
   fun parsePrinterOptions(opts: CmdOpts): PrinterOptions = PrinterOptions(opts.ignoreAllMissingOptionalDeps, opts.ignoreMissingOptionalDeps.toList())
 
-  fun createIde(ideToCheck: File, opts: CmdOpts): Ide {
-    return IdeManager.getInstance().createIde(ideToCheck, takeVersionFromCmd(opts))
-  }
-
-  fun createIdeDescriptor(ideToCheck: File, opts: CmdOpts): IdeDescriptor.ByInstance {
-    val ide = createIde(ideToCheck, opts)
-    val ideResolver = Resolver.createIdeResolver(ide)
-    return IdeDescriptor.ByInstance(ide, ideResolver)
+  fun createIdeDescriptor(ideToCheckFile: File, opts: CmdOpts): IdeDescriptor.ByInstance {
+    val ideVersion = takeVersionFromCmd(opts)
+    val createIdeResult = IdeCreator.createByFile(ideToCheckFile, ideVersion)
+    return IdeDescriptor.ByInstance(createIdeResult)
   }
 
   fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {

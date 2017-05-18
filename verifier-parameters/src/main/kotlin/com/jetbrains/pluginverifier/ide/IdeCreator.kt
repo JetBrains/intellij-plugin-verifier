@@ -13,9 +13,6 @@ object IdeCreator {
 
   fun create(ideDescriptor: IdeDescriptor): CreateIdeResult = when (ideDescriptor) {
     is IdeDescriptor.ByInstance -> ideDescriptor.createIdeResult
-    is IdeDescriptor.ByFile -> {
-      createByFile(ideDescriptor.file, null)
-    }
   }
 
   fun createByFile(file: File, ideVersion: IdeVersion?): CreateIdeResult {

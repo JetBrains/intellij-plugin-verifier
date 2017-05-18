@@ -1,18 +1,31 @@
 package com.jetbrains.pluginverifier.api
 
-import com.intellij.structure.domain.Plugin
-import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.format.UpdateInfo
+import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.repository.FileLock
+import java.io.Closeable
 
-/**
- * Descriptor of the plugin to be checked
- */
-sealed class PluginDescriptor(val pluginId: String, val version: String) {
+sealed class PluginDescriptor : Closeable {
 
-  class ByUpdateInfo(val updateInfo: UpdateInfo) : PluginDescriptor(updateInfo.pluginId, updateInfo.version)
+  abstract val presentableName: String
 
-  class ByFileLock(pluginId: String, version: String, val fileLock: FileLock) : PluginDescriptor(pluginId, version)
+  override fun toString(): String = presentableName
 
-  class ByInstance(val plugin: Plugin, val resolver: Resolver) : PluginDescriptor(plugin.pluginId ?: "", plugin.pluginVersion ?: "")
+  data class ByUpdateInfo(val updateInfo: UpdateInfo) : PluginDescriptor() {
+    override val presentableName: String = updateInfo.toString()
+
+    override fun close() = Unit
+  }
+
+  data class ByFileLock(val fileLock: FileLock) : PluginDescriptor() {
+    override val presentableName: String = fileLock.getFile().toString()
+
+    override fun close() = fileLock.release()
+  }
+
+  data class ByInstance(val createOk: CreatePluginResult.OK) : PluginDescriptor() {
+    override val presentableName: String = createOk.success.plugin.toString()
+
+    override fun close() = createOk.close()
+  }
 }

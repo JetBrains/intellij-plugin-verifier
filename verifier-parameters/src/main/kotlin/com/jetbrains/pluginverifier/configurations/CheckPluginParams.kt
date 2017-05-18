@@ -9,14 +9,10 @@ import com.jetbrains.pluginverifier.repository.IdleFileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.OptionsUtil
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 
 object CheckPluginParamsParser : ConfigurationParamsParser {
-
-  private val LOG: Logger = LoggerFactory.getLogger(CheckPluginParamsParser::class.java)
 
   override fun parse(opts: CmdOpts, freeArgs: List<String>): CheckPluginParams {
     if (freeArgs.size <= 1) {
@@ -26,32 +22,16 @@ object CheckPluginParamsParser : ConfigurationParamsParser {
       System.exit(1)
     }
     val ideDescriptors = freeArgs.drop(1).map(::File).map { OptionsUtil.createIdeDescriptor(it, opts) }
-    val pluginFiles = getPluginFiles(freeArgs[0], ideDescriptors.map { it.ideVersion })
+    val pluginFileLocks = getPluginFileLocks(freeArgs[0], ideDescriptors.map { it.ideVersion })
     val jdkDescriptor = JdkDescriptor(OptionsUtil.getJdkDir(opts))
     val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
     val externalClasspath = OptionsUtil.getExternalClassPath(opts)
     val problemsFilter = OptionsUtil.getProblemsFilter(opts)
-    val pluginsToCheck = pluginFiles.map {
-      try {
-        val plugin = PluginManager.getInstance().createPlugin(it.getFile())
-        val pluginResolver = Resolver.createPluginResolver(plugin)
-        PluginDescriptor.ByInstance(plugin, pluginResolver)
-      } catch (e: Exception) {
-        //the plugin is not opened, but we wan't to show a failure result (the verifier will provide a message)
-        val pluginIdAndVersion = guessPluginIdAndVersion(it.getFile())
-        PluginDescriptor.ByFileLock(pluginIdAndVersion.first, pluginIdAndVersion.second, it)
-      }
-    }
+    val pluginsToCheck = pluginFileLocks.map { PluginDescriptor.ByFileLock(it) }
     return CheckPluginParams(pluginsToCheck, ideDescriptors, jdkDescriptor, externalClassesPrefixes, problemsFilter, externalClasspath)
   }
 
-  private fun guessPluginIdAndVersion(file: File): Pair<String, String> {
-    val name = file.nameWithoutExtension
-    val version = name.substringAfterLast('-')
-    return name.substringBeforeLast('-') to version
-  }
-
-  fun getPluginFiles(pluginToTestArg: String, ideVersions: List<IdeVersion>? = null): List<FileLock> {
+  private fun getPluginFileLocks(pluginToTestArg: String, ideVersions: List<IdeVersion>? = null): List<FileLock> {
     if (pluginToTestArg.startsWith("@")) {
       val pluginListFile = File(pluginToTestArg.substring(1))
       val pluginPaths = pluginListFile.readLines()
@@ -109,5 +89,11 @@ data class CheckPluginParams(val pluginDescriptors: List<PluginDescriptor>,
                              val externalClasspath: Resolver = Resolver.getEmptyResolver(),
                              val progress: Progress = DefaultProgress()) : ConfigurationParams {
 
-  override fun close() = ideDescriptors.forEach { it.ideResolver.closeLogged() }
+  override fun close() {
+    try {
+      ideDescriptors.forEach { it.createIdeResult.closeLogged() }
+    } finally {
+      pluginDescriptors.forEach { (it as? PluginDescriptor.ByFileLock)?.fileLock?.release() }
+    }
+  }
 }

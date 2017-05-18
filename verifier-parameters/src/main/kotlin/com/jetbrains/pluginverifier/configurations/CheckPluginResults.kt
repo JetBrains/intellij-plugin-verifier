@@ -1,20 +1,20 @@
 package com.jetbrains.pluginverifier.configurations
 
-import com.google.gson.annotations.SerializedName
-import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.Verdict
+import com.jetbrains.pluginverifier.api.VerificationResult
+import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.output.*
 import java.io.File
 import java.io.PrintWriter
 
-data class CheckPluginResults(@SerializedName("results") val results: List<Result>) : ConfigurationResults {
+data class CheckPluginResults(val results: List<VerificationResult>) : ConfigurationResults {
 
   fun printTcLog(groupBy: TeamCityVPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: PrinterOptions) {
     val tcLog = TeamCityLog(System.out)
     val vPrinter = TeamCityVPrinter(tcLog, groupBy)
     vPrinter.printResults(results, vPrinterOptions)
     if (setBuildStatus) {
-      val totalProblemsNumber = results.flatMap {
+      val totalProblemsNumber = results.filterIsInstance<VerificationResult.Verified>().flatMap {
         when (it.verdict) {
           is Verdict.OK -> emptySet()
           is Verdict.Warnings -> emptySet()
@@ -37,7 +37,7 @@ data class CheckPluginResults(@SerializedName("results") val results: List<Resul
   }
 
   fun printToHtml(file: File, vPrinterOptions: PrinterOptions) {
-    val ideVersion = results[0].ideVersion
+    val ideVersion = results[0].ideDescriptor.ideVersion
     if (results.size > 1) {
       System.err.println("Warning! HTML report for multiple IDE builds is not supported yet! We are working on it just now...\n" +
           "Only the result for $ideVersion is saved to file $file")
