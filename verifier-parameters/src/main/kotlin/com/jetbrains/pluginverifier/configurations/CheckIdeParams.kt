@@ -19,7 +19,7 @@ import java.io.FileReader
 import java.io.IOException
 
 
-data class CheckIdeParams(val ideDescriptor: IdeDescriptor.ByInstance,
+data class CheckIdeParams(val ideDescriptor: IdeDescriptor,
                           val jdkDescriptor: JdkDescriptor,
                           val pluginsToCheck: List<PluginDescriptor>,
                           val excludedPlugins: Multimap<String, String>,

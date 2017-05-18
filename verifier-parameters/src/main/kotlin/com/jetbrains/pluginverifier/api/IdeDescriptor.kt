@@ -4,11 +4,10 @@ import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.ide.CreateIdeResult
 import java.io.Closeable
 
-sealed class IdeDescriptor(val ideVersion: IdeVersion) : Closeable {
-
-  class ByInstance(val createIdeResult: CreateIdeResult) : IdeDescriptor(createIdeResult.ide.version) {
-    override fun close() = createIdeResult.close()
-  }
+data class IdeDescriptor(val createIdeResult: CreateIdeResult) : Closeable {
+  val ideVersion: IdeVersion = createIdeResult.ide.version
 
   override fun toString(): String = "$ideVersion"
+
+  override fun close() = createIdeResult.close()
 }

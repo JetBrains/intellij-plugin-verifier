@@ -75,10 +75,10 @@ object OptionsUtil {
 
   fun parsePrinterOptions(opts: CmdOpts): PrinterOptions = PrinterOptions(opts.ignoreAllMissingOptionalDeps, opts.ignoreMissingOptionalDeps.toList())
 
-  fun createIdeDescriptor(ideToCheckFile: File, opts: CmdOpts): IdeDescriptor.ByInstance {
+  fun createIdeDescriptor(ideToCheckFile: File, opts: CmdOpts): IdeDescriptor {
     val ideVersion = takeVersionFromCmd(opts)
     val createIdeResult = IdeCreator.createByFile(ideToCheckFile, ideVersion)
-    return IdeDescriptor.ByInstance(createIdeResult)
+    return IdeDescriptor(createIdeResult)
   }
 
   fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {

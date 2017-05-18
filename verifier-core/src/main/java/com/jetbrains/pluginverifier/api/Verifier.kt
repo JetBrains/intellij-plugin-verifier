@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.api
 
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.ide.IdeCreator
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.utils.VerificationWorker
 import org.slf4j.LoggerFactory
@@ -43,9 +42,9 @@ class Verifier(val params: VerifierParams) {
         val ideToPlugins = params.pluginsToCheck.groupBy({ it.second }, { it.first }).entries
 
         ideToPlugins.forEach { (ideDescriptor, plugins) ->
-          IdeCreator.create(ideDescriptor).use { (ide, ideResolver) ->
+          ideDescriptor.use {
             val futures = plugins.map { pluginDescriptor ->
-              val worker = VerificationWorker(pluginDescriptor, ideDescriptor, ide, ideResolver, runtimeResolver, params)
+              val worker = VerificationWorker(pluginDescriptor, ideDescriptor, runtimeResolver, params)
               completionService.submit(worker)
             }
 

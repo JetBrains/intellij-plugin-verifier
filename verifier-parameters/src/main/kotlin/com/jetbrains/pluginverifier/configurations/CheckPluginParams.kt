@@ -82,7 +82,7 @@ object CheckPluginParamsParser : ConfigurationParamsParser {
 }
 
 data class CheckPluginParams(val pluginDescriptors: List<PluginDescriptor>,
-                             val ideDescriptors: List<IdeDescriptor.ByInstance>,
+                             val ideDescriptors: List<IdeDescriptor>,
                              val jdkDescriptor: JdkDescriptor,
                              val externalClassesPrefixes: List<String>,
                              val problemsFilter: ProblemsFilter,

@@ -19,7 +19,7 @@ object ResultBuilder {
     createIdeResult.use {
       val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(CmdOpts())
       val problemsFilter = OptionsUtil.getProblemsFilter(CmdOpts())
-      val singleToCheck = listOf(pluginDescriptor to IdeDescriptor.ByInstance(createIdeResult))
+      val singleToCheck = listOf(pluginDescriptor to IdeDescriptor(createIdeResult))
       val vParams = VerifierParams(JdkDescriptor(File(jdkPath)), singleToCheck, externalClassesPrefixes, problemsFilter)
       return Verifier(vParams).verify()
     }

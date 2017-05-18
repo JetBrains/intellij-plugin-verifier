@@ -34,7 +34,7 @@ class TestCheckPluginDependents {
     val secondDescriptor = PluginDescriptor.ByInstance(CreatePluginResult.OK(PluginCreationSuccessImpl(second, emptyList()), Resolver.getEmptyResolver(), null))
 
     val ide = MockUtil.createMockIde(IdeVersion.createIdeVersion("IU-163"), emptyList())
-    val ideDescriptor = IdeDescriptor.ByInstance(CreateIdeResult(ide, Resolver.getEmptyResolver()))
+    val ideDescriptor = IdeDescriptor(CreateIdeResult(ide, Resolver.getEmptyResolver()))
     val jdkDescriptor = JdkDescriptor(temporaryFolder.newFolder())
 
     //when

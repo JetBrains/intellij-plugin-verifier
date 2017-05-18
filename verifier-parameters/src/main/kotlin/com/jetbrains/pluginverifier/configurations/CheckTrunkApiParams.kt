@@ -123,8 +123,8 @@ object CheckTrunkApiParamsParser : ConfigurationParamsParser {
 }
 
 
-data class CheckTrunkApiParams(val ideDescriptor: IdeDescriptor.ByInstance,
-                               val majorIdeDescriptor: IdeDescriptor.ByInstance,
+data class CheckTrunkApiParams(val ideDescriptor: IdeDescriptor,
+                               val majorIdeDescriptor: IdeDescriptor,
                                val externalClassesPrefixes: List<String>,
                                val problemsFilter: ProblemsFilter,
                                val jdkDescriptor: JdkDescriptor,

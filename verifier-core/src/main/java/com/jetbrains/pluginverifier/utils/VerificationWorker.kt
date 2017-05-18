@@ -16,12 +16,10 @@ import java.util.concurrent.Callable
 
 class VerificationWorker(val pluginDescriptor: PluginDescriptor,
                          val ideDescriptor: IdeDescriptor,
-                         val ide: Ide,
-                         val ideResolver: Resolver,
                          val runtimeResolver: Resolver,
                          val params: VerifierParams) : Callable<VerificationResult> {
 
-  private val dependencyResolver = params.dependencyResolver ?: DefaultDependencyResolver(ide)
+  private val dependencyResolver = params.dependencyResolver ?: DefaultDependencyResolver(ideDescriptor.createIdeResult.ide)
 
   private val graphBuilder = DepGraphBuilder(dependencyResolver)
 
@@ -84,9 +82,9 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
   private fun runVerifier(graph: DirectedGraph<DepVertex, DepEdge>): VerificationContext {
     val resolver = getDependenciesClassesResolver(graph)
     val checkClasses = getClassesForCheck()
-    val classLoader = createClassLoader(resolver, ideResolver, runtimeResolver, params.externalClassPath, ide)
+    val classLoader = createClassLoader(resolver, ideDescriptor.createIdeResult.ideResolver, runtimeResolver, params.externalClassPath, ideDescriptor.createIdeResult.ide)
     classLoader.use {
-      return runVerifier(classLoader, ide, params, plugin, checkClasses)
+      return runVerifier(classLoader, ideDescriptor.createIdeResult.ide, params, plugin, checkClasses)
     }
   }
 
