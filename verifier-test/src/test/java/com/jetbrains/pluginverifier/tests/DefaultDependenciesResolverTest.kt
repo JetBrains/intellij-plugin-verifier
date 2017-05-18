@@ -2,11 +2,14 @@ package com.jetbrains.pluginverifier.tests
 
 import com.google.common.collect.Lists
 import com.intellij.structure.ide.IdeVersion
+import com.intellij.structure.impl.domain.PluginCreationSuccessImpl
 import com.intellij.structure.impl.domain.PluginDependencyImpl
+import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.dependencies.DepEdge
 import com.jetbrains.pluginverifier.dependencies.DepGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.DepVertex
+import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.tests.MockUtil.createMockPlugin
 import com.jetbrains.pluginverifier.utils.DefaultDependencyResolver
 import org.jgrapht.DirectedGraph
@@ -39,9 +42,10 @@ class DefaultDependenciesResolverTest {
 
     val plugin = createMockPlugin("myPlugin", "1.0", emptyList(), listOf(PluginDependencyImpl("test", true)))
 
-    val (graph, vertex) = DepGraphBuilder(DefaultDependencyResolver(ide)).build(plugin, Resolver.getEmptyResolver())
+    val success = CreatePluginResult.OK(PluginCreationSuccessImpl(plugin, emptyList()), Resolver.getEmptyResolver(), null)
+    val (graph, vertex) = DepGraphBuilder(DefaultDependencyResolver(ide)).build(success)
 
-    val deps: List<Plugin> = getTransitiveDependencies(graph, vertex).map { it.plugin }
+    val deps: List<Plugin> = getTransitiveDependencies(graph, vertex).map { it.creationOk.success.plugin }
     assertEquals(deps.map { it.pluginId }.toSet(), setOf("test", "somePlugin", "moduleContainer"))
   }
 

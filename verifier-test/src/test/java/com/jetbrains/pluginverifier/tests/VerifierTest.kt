@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.tests
 
 import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.jetbrains.pluginverifier.api.Verdict
+import com.jetbrains.pluginverifier.api.VerificationResult
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.location.*
 import com.jetbrains.pluginverifier.problems.*
@@ -38,8 +39,8 @@ class VerifierTest {
       assertTrue(pluginFile.exists())
       val verificationResults = ResultBuilder.doIdeaAndPluginVerification(ideaFile, pluginFile)
       assertTrue(verificationResults.size == 1)
-      assertTrue(verificationResults[0].verdict is Verdict.MissingDependencies)
-      result = verificationResults[0].verdict as Verdict.MissingDependencies
+      assertTrue(verificationResults[0] is VerificationResult.Verified)
+      result = (verificationResults[0] as VerificationResult.Verified).verdict as Verdict.MissingDependencies
       actualProblems = result.problems
       redundantProblems = actualProblems.toMutableList()
     }

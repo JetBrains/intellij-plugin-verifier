@@ -1,6 +1,9 @@
 package com.jetbrains.pluginverifier.tests
 
+import com.intellij.structure.ide.Ide
 import com.intellij.structure.ide.IdeVersion
+import com.intellij.structure.plugin.Plugin
+import com.intellij.structure.plugin.PluginDependency
 import org.jetbrains.intellij.plugins.internal.guava.collect.Multimap
 import org.jetbrains.intellij.plugins.internal.jdom.Document
 import org.jetbrains.intellij.plugins.internal.jdom.Element
@@ -28,7 +31,7 @@ object MockUtil {
 
       override fun getDefinedModules(): Set<String> = definedModules
 
-      override fun getPluginFile(): File = tempPluginFile
+      override fun getOriginalFile(): File = tempPluginFile
     }
   }
 
@@ -83,10 +86,6 @@ open class MockPluginAdapter : Plugin {
     throw UnsupportedOperationException("not implemented")
   }
 
-  override fun getVendorLogo(): ByteArray {
-    throw UnsupportedOperationException("not implemented")
-  }
-
   override fun getUnderlyingDocument(): Document {
     throw UnsupportedOperationException("not implemented")
   }
@@ -119,10 +118,6 @@ open class MockPluginAdapter : Plugin {
     throw UnsupportedOperationException("not implemented")
   }
 
-  override fun getVendorLogoUrl(): String {
-    throw UnsupportedOperationException("not implemented")
-  }
-
   override fun getPluginName(): String {
     throw UnsupportedOperationException("not implemented")
   }
@@ -135,7 +130,7 @@ open class MockPluginAdapter : Plugin {
     throw UnsupportedOperationException("not implemented")
   }
 
-  override fun getPluginFile(): File {
+  override fun getOriginalFile(): File {
     throw UnsupportedOperationException("not implemented")
   }
 
