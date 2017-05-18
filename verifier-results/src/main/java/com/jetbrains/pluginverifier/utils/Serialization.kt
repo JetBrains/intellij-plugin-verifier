@@ -5,7 +5,7 @@ import com.github.salomonbrys.kotson.jsonSerializer
 import com.github.salomonbrys.kotson.string
 import com.google.gson.JsonPrimitive
 import com.google.gson.annotations.SerializedName
-import com.intellij.structure.domain.PluginDependency
+import com.intellij.structure.plugin.PluginDependency
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode

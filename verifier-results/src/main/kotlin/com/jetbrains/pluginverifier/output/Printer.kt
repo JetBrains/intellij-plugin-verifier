@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.output
 
-import com.intellij.structure.domain.PluginDependency
+import com.intellij.structure.plugin.PluginDependency
 import com.jetbrains.pluginverifier.api.Result
 
 /**

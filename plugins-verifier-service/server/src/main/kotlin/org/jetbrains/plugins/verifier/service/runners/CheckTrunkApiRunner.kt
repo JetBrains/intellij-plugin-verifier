@@ -66,7 +66,7 @@ class CheckTrunkApiRunner(val ideFile: File,
 
         val downloadFinished = AtomicBoolean()
 
-        val downloadId = TaskManager.enqueue(uploadIdeRunner, {}, { t, st, task -> }, { st, task -> downloadFinished.set(true) })
+        val downloadId = TaskManager.enqueue(uploadIdeRunner, {}, { _, _, _ -> }, { _, _ -> downloadFinished.set(true) })
 
         val startTime = System.currentTimeMillis()
 

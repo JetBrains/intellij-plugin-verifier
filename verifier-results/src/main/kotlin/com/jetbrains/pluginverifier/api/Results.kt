@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.api
 
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.ide.IdeVersion
+import com.intellij.structure.problems.PluginProblem
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.format.UpdateInfo
@@ -61,11 +62,10 @@ sealed class Verdict {
   }
 
   /**
-   * The Plugin has a completely incorrect structure (missing plugin.xml, broken class-files, etc...)
-   * The [reason] is a user-friendly description of the problem.
+   * The Plugin has an incorrect structure.
    */
-  data class Bad(@SerializedName("reason") val reason: String) : Verdict() {
-    override fun toString(): String = "Plugin is invalid: $reason"
+  data class Bad(@SerializedName("pluginProblems") val pluginProblems: List<PluginProblem>) : Verdict() {
+    override fun toString(): String = "Plugin is invalid: $pluginProblems"
   }
 
   /**

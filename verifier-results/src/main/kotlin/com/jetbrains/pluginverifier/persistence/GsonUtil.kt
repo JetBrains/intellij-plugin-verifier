@@ -11,6 +11,7 @@ import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.impl.domain.PluginDependencyImpl
+import com.intellij.structure.plugin.PluginDependency
 import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.location.Location

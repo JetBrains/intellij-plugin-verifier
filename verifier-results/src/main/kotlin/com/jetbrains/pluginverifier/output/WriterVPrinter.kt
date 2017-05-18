@@ -18,7 +18,7 @@ class WriterVPrinter(private val out: PrintWriter) : Printer {
         is Verdict.Warnings -> out.println("With IDE #$ideVersion the plugin $idAndVersion has ${verdict.warnings.size} warnings: ${verdict.warnings.joinToString(separator = "\n", prefix = "    ")}")
         is Verdict.Problems -> printProblems(ideVersion, idAndVersion, verdict.problems)
         is Verdict.MissingDependencies -> printMissingDependencies(options, verdict, ideVersion, idAndVersion)
-        is Verdict.Bad -> out.println("The plugin $idAndVersion is broken: ${verdict.reason}")
+        is Verdict.Bad -> out.println("The plugin $idAndVersion is broken: ${verdict.pluginProblems.joinToString()}")
         is Verdict.NotFound -> out.println("The plugin $idAndVersion is not found: ${verdict.reason}")
       }
     }

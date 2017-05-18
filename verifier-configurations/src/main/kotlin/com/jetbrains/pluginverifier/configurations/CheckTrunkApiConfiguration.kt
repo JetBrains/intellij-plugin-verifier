@@ -1,13 +1,12 @@
 package com.jetbrains.pluginverifier.configurations
 
 import com.google.common.collect.ImmutableMultimap
-import com.intellij.structure.domain.Ide
-import com.intellij.structure.domain.IdeManager
-import com.intellij.structure.domain.Plugin
+import com.intellij.structure.ide.Ide
+import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.api.DependencyResolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginDescriptor
+import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.DefaultDependencyResolver
@@ -23,26 +22,14 @@ class CheckTrunkApiConfiguration(val params: CheckTrunkApiParams) : Configuratio
   }
 
   override fun execute(): CheckTrunkApiResults {
-    val majorIde: Ide = try {
-      IdeManager.getInstance().createIde(params.majorIdeFile)
-    } catch(e: Exception) {
-      LOG.error("Unable to create major IDE from ${params.majorIdeFile}", e)
-      throw e
-    }
-
-    val majorIdeResolver: Resolver = try {
-      Resolver.createIdeResolver(majorIde)
-    } catch (e: Exception) {
-      LOG.error("Unable to read major IDE classes", e)
-      throw e
-    }
+    val majorIdeDescriptor = params.majorIdeDescriptor
 
     val pluginsToCheck: List<PluginDescriptor> = try {
       RepositoryManager
-          .getLastCompatibleUpdates(majorIde.version)
+          .getLastCompatibleUpdates(majorIdeDescriptor.ideVersion)
           .map { PluginDescriptor.ByUpdateInfo(it) }
     } catch(e: Exception) {
-      throw RuntimeException("Unable to fetch the list of plugins compatible with ${majorIde.version}", e)
+      throw RuntimeException("Unable to fetch the list of plugins compatible with ${majorIdeDescriptor.ideVersion}", e)
     }
 
     data class ResolveArguments(val dependencyId: String, val isModule: Boolean, val dependentId: String, val dependentVersion: String?)
@@ -51,7 +38,7 @@ class CheckTrunkApiConfiguration(val params: CheckTrunkApiParams) : Configuratio
 
     val majorResolver = object : DependencyResolver {
 
-      private val default = DefaultDependencyResolver(majorIde)
+      private val default = DefaultDependencyResolver(majorIdeDescriptor.createIdeResult.ide)
 
       override fun resolve(dependencyId: String, isModule: Boolean, dependent: Plugin): DependencyResolver.Result {
         val result = default.resolve(dependencyId, isModule, dependent)
@@ -60,19 +47,19 @@ class CheckTrunkApiConfiguration(val params: CheckTrunkApiParams) : Configuratio
       }
     }
 
-    val (majorBundled, majorReport) = calcReport(majorIde, majorIdeResolver, pluginsToCheck, majorResolver)
+    val (majorBundled, majorReport) = calcReport(majorIdeDescriptor, pluginsToCheck, majorResolver)
 
     val ideDescriptor = params.ideDescriptor
     val currentResolver = object : DependencyResolver {
 
-      private val fallback = DefaultDependencyResolver(ideDescriptor.ide)
+      private val fallback = DefaultDependencyResolver(ideDescriptor.createIdeResult.ide)
 
       override fun resolve(dependencyId: String, isModule: Boolean, dependent: Plugin): DependencyResolver.Result {
         return memory[ResolveArguments(dependencyId, isModule, dependent.pluginId, dependent.pluginVersion)] ?: fallback.resolve(dependencyId, isModule, dependent)
       }
     }
 
-    val (currentBundled, currentReport) = calcReport(ideDescriptor.ide, ideDescriptor.ideResolver, pluginsToCheck, currentResolver)
+    val (currentBundled, currentReport) = calcReport(ideDescriptor, pluginsToCheck, currentResolver)
 
     return CheckTrunkApiResults(majorReport, majorBundled, currentReport, currentBundled)
   }
@@ -81,13 +68,13 @@ class CheckTrunkApiConfiguration(val params: CheckTrunkApiParams) : Configuratio
       BundledPlugins(ide.bundledPlugins.map { it.pluginId }.distinct(), ide.bundledPlugins.flatMap { it.definedModules }.distinct())
 
 
-  private fun calcReport(ide: Ide, ideResolver: Resolver, pluginsToCheck: List<PluginDescriptor>, dependencyResolver: DependencyResolver?): Pair<BundledPlugins, CheckIdeReport> {
+  private fun calcReport(ideDescriptor: IdeDescriptor.ByInstance, pluginsToCheck: List<PluginDescriptor>, dependencyResolver: DependencyResolver?): Pair<BundledPlugins, CheckIdeReport> {
     try {
-      val checkIdeParams = CheckIdeParams(IdeDescriptor.ByInstance(ide, ideResolver), params.jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), emptyList(), Resolver.getEmptyResolver(), params.externalClassesPrefixes, params.problemsFilter, dependencyResolver = dependencyResolver)
-      val ideReport = CheckIdeConfiguration(checkIdeParams).execute().run { CheckIdeReport.createReport(ide.version, results) }
-      return getBundledPlugins(ide) to ideReport
+      val checkIdeParams = CheckIdeParams(ideDescriptor, params.jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), emptyList(), Resolver.getEmptyResolver(), params.externalClassesPrefixes, params.problemsFilter, dependencyResolver = dependencyResolver)
+      val ideReport = CheckIdeConfiguration(checkIdeParams).execute().run { CheckIdeReport.createReport(ideDescriptor.ideVersion, results) }
+      return getBundledPlugins(ideDescriptor.createIdeResult.ide) to ideReport
     } catch(e: Exception) {
-      LOG.error("Failed to verify the IDE ${ide.version}", e)
+      LOG.error("Failed to verify the IDE ${ideDescriptor.ideVersion}", e)
       throw e
     }
   }

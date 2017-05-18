@@ -1,20 +1,20 @@
 package com.jetbrains.pluginverifier.configurations
 
+import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.Verdict
-import com.jetbrains.pluginverifier.api.VerificationResult
 import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.output.*
 import java.io.File
 import java.io.PrintWriter
 
-data class CheckPluginResults(val results: List<VerificationResult>) : ConfigurationResults {
+data class CheckPluginResults(val results: List<Result>) : ConfigurationResults {
 
   fun printTcLog(groupBy: TeamCityVPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: PrinterOptions) {
     val tcLog = TeamCityLog(System.out)
     val vPrinter = TeamCityVPrinter(tcLog, groupBy)
     vPrinter.printResults(results, vPrinterOptions)
     if (setBuildStatus) {
-      val totalProblemsNumber = results.filterIsInstance<VerificationResult.Verified>().flatMap {
+      val totalProblemsNumber = results.flatMap {
         when (it.verdict) {
           is Verdict.OK -> emptySet()
           is Verdict.Warnings -> emptySet()
@@ -37,7 +37,7 @@ data class CheckPluginResults(val results: List<VerificationResult>) : Configura
   }
 
   fun printToHtml(file: File, vPrinterOptions: PrinterOptions) {
-    val ideVersion = results[0].ideDescriptor.ideVersion
+    val ideVersion = results[0].ideVersion
     if (results.size > 1) {
       System.err.println("Warning! HTML report for multiple IDE builds is not supported yet! We are working on it just now...\n" +
           "Only the result for $ideVersion is saved to file $file")

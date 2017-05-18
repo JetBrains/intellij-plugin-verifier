@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.dependencies
 
 import com.google.gson.annotations.SerializedName
-import com.intellij.structure.domain.PluginDependency
+import com.intellij.structure.plugin.PluginDependency
 import java.util.*
 import kotlin.collections.ArrayList
 

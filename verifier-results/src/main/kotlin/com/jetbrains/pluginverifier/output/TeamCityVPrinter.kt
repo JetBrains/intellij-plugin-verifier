@@ -187,7 +187,7 @@ class TeamCityVPrinter(private val tcLog: TeamCityLog,
   }
 
   private fun printBadPluginResult(verdict: Verdict.Bad, versionTestName: String) {
-    val message = "Plugin is invalid: ${verdict.reason}"
+    val message = "Plugin is invalid: ${verdict.pluginProblems.joinToString()}"
     tcLog.testStdErr(versionTestName, message)
     tcLog.testFailed(versionTestName, message, "")
   }

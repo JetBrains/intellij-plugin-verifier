@@ -45,7 +45,7 @@ class TestCheckPluginDependents {
     //then
     val secondPluginResult = verify.results[1]
 
-    val dependenciesGraph = ((secondPluginResult as VerificationResult.Verified).verdict as Verdict.OK).dependenciesGraph
+    val dependenciesGraph = (secondPluginResult.verdict as Verdict.OK).dependenciesGraph
 
     val firstNode = DependencyNode("p1", "1", emptyList())
     val secondNode = DependencyNode("p2", "2", emptyList())

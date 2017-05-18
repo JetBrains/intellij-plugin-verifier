@@ -1,19 +1,41 @@
 package com.jetbrains.pluginverifier.configurations
 
 import com.intellij.structure.ide.IdeVersion
+import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.Verifier
 import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.format.UpdateInfo
+import com.jetbrains.pluginverifier.misc.closeLogged
+import com.jetbrains.pluginverifier.plugin.CreatePluginResult
+import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.repository.RepositoryManager
+import com.jetbrains.pluginverifier.utils.VerificationResultToApiResultConverter
 
 
 class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
+
+  private var allPluginsToCheck: List<CreatePluginResult> = emptyList()
+
   override fun execute(): CheckIdeResults {
-    val pluginsToCheck = params.pluginsToCheck.filterNot { params.excludedPlugins.containsEntry(it.pluginId, it.version) }.map { it to params.ideDescriptor }
-    val vParams = VerifierParams(params.jdkDescriptor, pluginsToCheck, params.externalClassesPrefixes, params.problemsFilter, params.externalClassPath, params.dependencyResolver)
-    val vResults = Verifier(vParams).verify(params.progress)
-    return CheckIdeResults(params.ideDescriptor.ideVersion, vResults, params.excludedPlugins, getMissingUpdatesProblems())
+    allPluginsToCheck = params.pluginsToCheck.map { PluginCreator.createPlugin(it) }
+    try {
+      return doExecute()
+    } finally {
+      allPluginsToCheck.forEach { it.closeLogged() }
+    }
   }
+
+  private fun doExecute(): CheckIdeResults {
+    val pluginsToCheck = getNotExcludedPlugins().map { it to params.ideDescriptor }
+    val verifierParams = VerifierParams(params.jdkDescriptor, pluginsToCheck, params.externalClassesPrefixes, params.problemsFilter, params.externalClassPath, params.dependencyResolver)
+    val results = Verifier(verifierParams).verify(params.progress)
+    return CheckIdeResults(params.ideDescriptor.ideVersion, VerificationResultToApiResultConverter().convert(results), params.excludedPlugins, getMissingUpdatesProblems())
+  }
+
+  private fun getNotExcludedPlugins(): List<PluginDescriptor.ByInstance> = allPluginsToCheck
+      .filterIsInstance<CreatePluginResult.OK>()
+      .filterNot { params.excludedPlugins.containsEntry(it.success.plugin.pluginId, it.success.plugin.pluginVersion) }
+      .map { PluginDescriptor.ByInstance(it) }
 
   private fun getMissingUpdatesProblems(): List<MissingCompatibleUpdate> {
     val ideVersion = params.ideDescriptor.ideVersion
@@ -47,7 +69,6 @@ class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
       } catch (e: Exception) {
         return null
       }
-
     }
     return null
   }

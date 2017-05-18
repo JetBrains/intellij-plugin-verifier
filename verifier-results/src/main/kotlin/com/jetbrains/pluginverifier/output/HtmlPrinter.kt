@@ -5,9 +5,9 @@ import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.Verdict
-import com.jetbrains.pluginverifier.configurations.create
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
+import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.problems.Problem
 import java.io.File
@@ -113,7 +113,7 @@ class HtmlPrinter(val ideVersion: IdeVersion,
         printProblems(verdict.problems)
       }
       is Verdict.Bad -> {
-        createProblemTab(verdict.reason, plugin.pluginId)
+        createProblemTab(verdict.pluginProblems.joinToString(), plugin.pluginId)
       }
       is Verdict.NotFound -> {
         +"The plugin $plugin is not found in the Repository"
