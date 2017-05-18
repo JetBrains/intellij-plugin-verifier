@@ -28,8 +28,7 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
   private lateinit var warnings: List<PluginProblem>
 
   override fun call(): VerificationResult {
-    val createPluginResult = PluginCreator.createPlugin(pluginDescriptor)
-    createPluginResult.use {
+    PluginCreator.createPlugin(pluginDescriptor).use { createPluginResult ->
       return when (createPluginResult) {
         is CreatePluginResult.BadPlugin -> {
           VerificationResult.BadPlugin(pluginDescriptor, ideDescriptor, createPluginResult.pluginCreationFail.errorsAndWarnings)
@@ -55,15 +54,11 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
     pluginResolver = creationOk.resolver
 
     val (graph, start) = graphBuilder.build(creationOk)
-    val context: VerificationContext = try {
-      runVerifier(graph)
+    try {
+      return runVerifier(graph, start)
     } finally {
       graph.vertexSet().forEach { it.closeLogged() }
     }
-
-    val apiGraph = DepGraph2ApiGraphConverter.convert(graph, start)
-    addCycleAndOtherWarnings(apiGraph, context)
-    return getAppropriateVerdict(context, apiGraph)
   }
 
   private fun addCycleAndOtherWarnings(apiGraph: DependenciesGraph, context: VerificationContext) {
@@ -79,13 +74,16 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
     }
   }
 
-  private fun runVerifier(graph: DirectedGraph<DepVertex, DepEdge>): VerificationContext {
+  private fun runVerifier(graph: DirectedGraph<DepVertex, DepEdge>, start: DepVertex): Verdict {
     val resolver = getDependenciesClassesResolver(graph)
     val checkClasses = getClassesForCheck()
     val classLoader = createClassLoader(resolver, ideDescriptor.createIdeResult.ideResolver, runtimeResolver, params.externalClassPath, ideDescriptor.createIdeResult.ide)
-    classLoader.use {
-      return runVerifier(classLoader, ideDescriptor.createIdeResult.ide, params, plugin, checkClasses)
+    val context = classLoader.use {
+      getVerificationContext(classLoader, ideDescriptor.createIdeResult.ide, params, plugin, checkClasses)
     }
+    val apiGraph = DepGraph2ApiGraphConverter.convert(graph, start)
+    addCycleAndOtherWarnings(apiGraph, context)
+    return getAppropriateVerdict(context, apiGraph)
   }
 
   private fun createClassLoader(dependenciesResolver: Resolver,
@@ -110,7 +108,7 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
   }
 
   private fun getDependenciesClassesResolver(graph: DirectedGraph<DepVertex, DepEdge>): Resolver =
-      Resolver.createUnionResolver("Plugin $plugin dependencies resolvers", graph.vertexSet().map { it.creationOk.resolver }.filterNotNull())
+      Resolver.createUnionResolver("Plugin $plugin dependencies resolvers", graph.vertexSet().map { it.creationOk.resolver })
 
   private fun getAppropriateVerdict(context: VerificationContext, dependenciesGraph: DependenciesGraph): Verdict {
     val missingDependencies = dependenciesGraph.start.missingDependencies
@@ -129,11 +127,11 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
     return Verdict.OK(dependenciesGraph)
   }
 
-  private fun runVerifier(classLoader: Resolver,
-                          ide: Ide,
-                          params: VerifierParams,
-                          plugin: Plugin,
-                          checkClasses: Set<String>): VerificationContext {
+  private fun getVerificationContext(classLoader: Resolver,
+                                     ide: Ide,
+                                     params: VerifierParams,
+                                     plugin: Plugin,
+                                     checkClasses: Set<String>): VerificationContext {
     val context = VerificationContext(plugin, ide, params, classLoader)
     BytecodeVerifier(context).verify(checkClasses)
     return context

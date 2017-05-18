@@ -30,8 +30,8 @@ class TestCheckPluginDependents {
     //given
     val first = MockUtil.createMockPlugin("p1", "1", emptyList(), emptyList())
     val second = MockUtil.createMockPlugin("p2", "2", emptyList(), listOf(PluginDependencyImpl("p1", false)))
-    val firstDescriptor = PluginDescriptor.ByInstance(CreatePluginResult.OK(PluginCreationSuccessImpl(first, emptyList()), Resolver.getEmptyResolver(), null))
-    val secondDescriptor = PluginDescriptor.ByInstance(CreatePluginResult.OK(PluginCreationSuccessImpl(second, emptyList()), Resolver.getEmptyResolver(), null))
+    val firstDescriptor = PluginDescriptor.ByInstance(CreatePluginResult.OK(PluginCreationSuccessImpl(first, emptyList()), Resolver.getEmptyResolver()))
+    val secondDescriptor = PluginDescriptor.ByInstance(CreatePluginResult.OK(PluginCreationSuccessImpl(second, emptyList()), Resolver.getEmptyResolver()))
 
     val ide = MockUtil.createMockIde(IdeVersion.createIdeVersion("IU-163"), emptyList())
     val ideDescriptor = IdeDescriptor(CreateIdeResult(ide, Resolver.getEmptyResolver()))

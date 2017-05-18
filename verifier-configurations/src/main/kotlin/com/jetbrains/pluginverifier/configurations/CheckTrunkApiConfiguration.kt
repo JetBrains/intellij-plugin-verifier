@@ -10,16 +10,11 @@ import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.DefaultDependencyResolver
-import org.slf4j.LoggerFactory
 
 /**
  * @author Sergey Patrikeev
  */
 class CheckTrunkApiConfiguration(val params: CheckTrunkApiParams) : Configuration {
-
-  companion object {
-    private val LOG = LoggerFactory.getLogger(CheckTrunkApiConfiguration::class.java)
-  }
 
   override fun execute(): CheckTrunkApiResults {
     val majorIdeDescriptor = params.majorIdeDescriptor
@@ -69,14 +64,9 @@ class CheckTrunkApiConfiguration(val params: CheckTrunkApiParams) : Configuratio
 
 
   private fun calcReport(ideDescriptor: IdeDescriptor, pluginsToCheck: List<PluginDescriptor>, dependencyResolver: DependencyResolver?): Pair<BundledPlugins, CheckIdeReport> {
-    try {
-      val checkIdeParams = CheckIdeParams(ideDescriptor, params.jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), emptyList(), Resolver.getEmptyResolver(), params.externalClassesPrefixes, params.problemsFilter, dependencyResolver = dependencyResolver)
-      val ideReport = CheckIdeConfiguration(checkIdeParams).execute().run { CheckIdeReport.createReport(ideDescriptor.ideVersion, results) }
-      return getBundledPlugins(ideDescriptor.createIdeResult.ide) to ideReport
-    } catch(e: Exception) {
-      LOG.error("Failed to verify the IDE ${ideDescriptor.ideVersion}", e)
-      throw e
-    }
+    val checkIdeParams = CheckIdeParams(ideDescriptor, params.jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), emptyList(), Resolver.getEmptyResolver(), params.externalClassesPrefixes, params.problemsFilter, dependencyResolver = dependencyResolver)
+    val ideReport = CheckIdeConfiguration(checkIdeParams).execute().run { CheckIdeReport.createReport(ideDescriptor.ideVersion, results) }
+    return getBundledPlugins(ideDescriptor.createIdeResult.ide) to ideReport
   }
 
 }

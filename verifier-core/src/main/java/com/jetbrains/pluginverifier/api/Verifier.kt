@@ -42,14 +42,11 @@ class Verifier(val params: VerifierParams) {
         val ideToPlugins = params.pluginsToCheck.groupBy({ it.second }, { it.first }).entries
 
         ideToPlugins.forEach { (ideDescriptor, plugins) ->
-          ideDescriptor.use {
-            val futures = plugins.map { pluginDescriptor ->
-              val worker = VerificationWorker(pluginDescriptor, ideDescriptor, runtimeResolver, params)
-              completionService.submit(worker)
-            }
-
-            results.addAll(waitForWorkersCompletion(executor, completionService, progress, futures))
+          val futures = plugins.map { pluginDescriptor ->
+            val worker = VerificationWorker(pluginDescriptor, ideDescriptor, runtimeResolver, params)
+            completionService.submit(worker)
           }
+          results.addAll(waitForWorkersCompletion(executor, completionService, progress, futures))
         }
       }
     } finally {

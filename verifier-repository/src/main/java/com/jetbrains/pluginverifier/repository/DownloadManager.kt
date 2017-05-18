@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit
 @ThreadSafe
 object DownloadManager {
 
-  private data class FileLockImpl(val locked: File, val id: Long, val lockDate: Long) : FileLock {
+  private data class FileLockImpl(val locked: File, val id: Long, val lockDate: Long) : FileLock() {
     override fun getFile(): File = locked
 
     override fun release() {

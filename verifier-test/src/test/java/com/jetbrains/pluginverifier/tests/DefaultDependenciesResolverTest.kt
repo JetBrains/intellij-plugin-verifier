@@ -42,7 +42,7 @@ class DefaultDependenciesResolverTest {
 
     val plugin = createMockPlugin("myPlugin", "1.0", emptyList(), listOf(PluginDependencyImpl("test", true)))
 
-    val success = CreatePluginResult.OK(PluginCreationSuccessImpl(plugin, emptyList()), Resolver.getEmptyResolver(), null)
+    val success = CreatePluginResult.OK(PluginCreationSuccessImpl(plugin, emptyList()), Resolver.getEmptyResolver())
     val (graph, vertex) = DepGraphBuilder(DefaultDependencyResolver(ide)).build(success)
 
     val deps: List<Plugin> = getTransitiveDependencies(graph, vertex).map { it.creationOk.success.plugin }

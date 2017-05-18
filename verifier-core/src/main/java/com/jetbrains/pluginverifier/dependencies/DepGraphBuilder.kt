@@ -47,6 +47,7 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) {
     val resolved = dependencyResolver.resolve(pluginDependency.id, isModule, current.creationOk.success.plugin)
     return when (resolved) {
       is DependencyResolver.Result.Found -> DepVertex(resolved.pluginCreateOk)
+      is DependencyResolver.Result.Downloaded -> DepVertex(resolved.pluginCreateOk)
       is DependencyResolver.Result.NotFound -> {
         current.missingDependencies.add(MissingDependency(pluginDependency, isModule, resolved.reason))
         null

@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.closeLogged
+import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.OptionsUtil
@@ -48,22 +49,20 @@ object CheckIdeParamsParser : ConfigurationParamsParser {
       System.err.println("IDE path must be a directory: " + ideFile)
       System.exit(1)
     }
-    val ideDescriptor = OptionsUtil.createIdeDescriptor(ideFile, opts)
-    try {
+    OptionsUtil.createIdeDescriptor(ideFile, opts).closeOnException { ideDescriptor ->
       val jdkDescriptor = JdkDescriptor(OptionsUtil.getJdkDir(opts))
       val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
-      val externalClassPath = OptionsUtil.getExternalClassPath(opts)
-      val problemsFilter = OptionsUtil.getProblemsFilter(opts)
+      OptionsUtil.getExternalClassPath(opts).closeOnException { externalClassPath ->
+        val problemsFilter = OptionsUtil.getProblemsFilter(opts)
 
-      val (checkAllBuilds, checkLastBuilds) = parsePluginToCheckList(opts)
+        val (checkAllBuilds, checkLastBuilds) = parsePluginToCheckList(opts)
 
-      val excludedPlugins = parseExcludedPlugins(opts)
+        val excludedPlugins = parseExcludedPlugins(opts)
 
-      val pluginsToCheck = getDescriptorsToCheck(checkAllBuilds, checkLastBuilds, ideDescriptor.ideVersion)
-      return CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, excludedPlugins, externalClassesPrefixes, externalClassPath, checkAllBuilds, problemsFilter)
-    } catch (e: Throwable) {
-      ideDescriptor.closeLogged()
-      throw e
+        getDescriptorsToCheck(checkAllBuilds, checkLastBuilds, ideDescriptor.ideVersion).closeOnException { pluginsToCheck ->
+          return CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, excludedPlugins, externalClassesPrefixes, externalClassPath, checkAllBuilds, problemsFilter)
+        }
+      }
     }
   }
 

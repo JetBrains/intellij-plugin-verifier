@@ -13,13 +13,29 @@ import java.io.IOException
  */
 private val LOG = LoggerFactory.getLogger("LanguageUtils")
 
-fun <T> T?.notNullize(default: T) = if (this == null) default else this
-
-fun Closeable.closeLogged() {
+fun <T : Closeable?> T.closeLogged() {
   try {
-    this.close()
+    this?.close()
   } catch(e: Exception) {
     LOG.error("Unable to close $this", e)
+  }
+}
+
+inline fun <T : Closeable?, R> List<T>.closeOnException(block: (List<T>) -> R): R {
+  try {
+    return block(this)
+  } catch (e: Throwable) {
+    this.forEach { t: T -> t?.closeLogged() }
+    throw e
+  }
+}
+
+inline fun <T : Closeable?, R> T.closeOnException(block: (T) -> R): R {
+  try {
+    return block(this)
+  } catch (e: Throwable) {
+    this?.closeLogged()
+    throw e
   }
 }
 

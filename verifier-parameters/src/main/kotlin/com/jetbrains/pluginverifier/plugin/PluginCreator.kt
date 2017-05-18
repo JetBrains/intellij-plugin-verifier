@@ -10,46 +10,42 @@ import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
+import com.jetbrains.pluginverifier.utils.CloseIgnoringResolver
+import java.io.File
 
 object PluginCreator {
 
   fun createPlugin(pluginDescriptor: PluginDescriptor): CreatePluginResult = when (pluginDescriptor) {
-    is PluginDescriptor.ByFileLock -> createPluginByFileLock(pluginDescriptor.fileLock)
-    is PluginDescriptor.ByUpdateInfo -> createPluginByUpdateInfo(pluginDescriptor)
-    is PluginDescriptor.ByInstance -> pluginDescriptor.createOk
+    is PluginDescriptor.ByFileLock -> createPluginByFile(pluginDescriptor.fileLock.getFile())
+    is PluginDescriptor.ByUpdateInfo -> createPluginByUpdateInfo(pluginDescriptor.updateInfo)
+    is PluginDescriptor.ByInstance -> copyCreationResult(pluginDescriptor.createOk)
+  }
+
+  private fun copyCreationResult(createOk: CreatePluginResult.OK): CreatePluginResult {
+    val copyResolver = CloseIgnoringResolver(createOk.resolver)
+    return CreatePluginResult.OK(createOk.success, copyResolver)
   }
 
   private fun downloadPluginByUpdateInfo(updateInfo: UpdateInfo): FileLock? = RepositoryManager.getPluginFile(updateInfo)
 
-  private fun createPluginByUpdateInfo(pluginDescriptor: PluginDescriptor.ByUpdateInfo): CreatePluginResult {
-    val pluginFileLock = downloadPluginByUpdateInfo(pluginDescriptor.updateInfo)
-        ?: return CreatePluginResult.NotFound("Plugin $pluginDescriptor is not found in the Plugin Repository")
-    return createPluginByFileLock(pluginFileLock)
+  private fun createPluginByUpdateInfo(updateInfo: UpdateInfo): CreatePluginResult {
+    val pluginFileLock = downloadPluginByUpdateInfo(updateInfo)
+        ?: return CreatePluginResult.NotFound("Plugin $updateInfo is not found in the Plugin Repository")
+    return createPluginByFile(pluginFileLock.getFile())
   }
 
-  fun createPluginByFileLock(pluginFileLock: FileLock): CreatePluginResult {
-    val pluginCreationResult = try {
-      PluginManager.getInstance().createPlugin(pluginFileLock.getFile())
-    } catch(e: Throwable) {
-      pluginFileLock.release()
-      throw e
-    }
-
+  fun createPluginByFile(pluginFile: File): CreatePluginResult {
+    val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile)
     if (pluginCreationResult is PluginCreationSuccess) {
-      try {
-        val pluginResolver = Resolver.createPluginResolver(pluginCreationResult.plugin)
-        return CreatePluginResult.OK(pluginCreationResult, pluginResolver, pluginFileLock)
-      } catch (e: Throwable) {
-        pluginFileLock.release()
-        throw e
-      }
+      val pluginResolver = Resolver.createPluginResolver(pluginCreationResult.plugin)
+      return CreatePluginResult.OK(pluginCreationResult, pluginResolver)
     } else {
       return CreatePluginResult.BadPlugin(pluginCreationResult as PluginCreationFail)
     }
   }
 
-  fun createResolverForExistingPlugin(plugin: Plugin): CreatePluginResult.OK {
+  fun createResolverForExistingPlugin(plugin: Plugin): CreatePluginResult {
     val resolver = Resolver.createPluginResolver(plugin)
-    return CreatePluginResult.OK(PluginCreationSuccessImpl(plugin, emptyList()), resolver, null)
+    return CreatePluginResult.OK(PluginCreationSuccessImpl(plugin, emptyList()), resolver)
   }
 }

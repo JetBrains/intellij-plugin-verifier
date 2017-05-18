@@ -6,6 +6,7 @@ import com.intellij.structure.ide.Ide
 import com.intellij.structure.plugin.Plugin
 import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.format.UpdateInfo
+import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.repository.FileLock
@@ -50,14 +51,12 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
   }
 
   private fun createDependencyResultByExistingPlugin(plugin: Plugin): DependencyResolver.Result {
-    val pluginCreateOk = try {
-      PluginCreator.createResolverForExistingPlugin(plugin)
-    } catch(e: Throwable) {
-      val reason = "Unable to read classes of plugin $plugin"
-      LOG.error(reason, e)
-      return DependencyResolver.Result.NotFound(reason)
+    val pluginCreateResult = PluginCreator.createResolverForExistingPlugin(plugin)
+    return when (pluginCreateResult) {
+      is CreatePluginResult.OK -> DependencyResolver.Result.Found(pluginCreateResult)
+      is CreatePluginResult.BadPlugin -> DependencyResolver.Result.ProblematicDependency(pluginCreateResult)
+      is CreatePluginResult.NotFound -> DependencyResolver.Result.NotFound(pluginCreateResult.reason)
     }
-    return DependencyResolver.Result.Found(pluginCreateOk)
   }
 
   private fun resolvePlugin(dependencyId: String): DependencyResolver.Result {
@@ -65,38 +64,34 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
     if (byId != null) {
       return createDependencyResultByExistingPlugin(byId)
     }
-
-    //try to load plugin
-    val updateInfo: UpdateInfo? = try {
-      RepositoryManager.getLastCompatibleUpdateOfPlugin(ide.version, dependencyId)
-    } catch (e: Exception) {
-      val message = "Unable to download plugin $dependencyId from the Plugin Repository"
-      LOG.info(message, e)
-      return DependencyResolver.Result.NotFound(message)
-    }
-
-    if (updateInfo != null) {
-      //update does really exist in the repo
-      return downloadAndOpenPlugin(updateInfo)
-    }
-
-    val message = "Plugin $dependencyId doesn't have a build compatible with ${ide.version}"
-    LOG.debug(message)
-    return DependencyResolver.Result.NotFound(message)
+    val lastUpdate: UpdateInfo = RepositoryManager.getLastCompatibleUpdateOfPlugin(ide.version, dependencyId)
+        ?: return DependencyResolver.Result.NotFound("Plugin $dependencyId doesn't have a build compatible with ${ide.version}")
+    return downloadAndOpenPlugin(lastUpdate)
   }
 
   private fun downloadAndOpenPlugin(updateInfo: UpdateInfo): DependencyResolver.Result {
     val pluginZip: FileLock = RepositoryManager.getPluginFile(updateInfo)
         ?: return DependencyResolver.Result.NotFound("Plugin $updateInfo is not found in the Plugin Repository")
-    return getResultForDependencyByFileLock(pluginZip)
+    return getDependencyResultWithFileLock(pluginZip)
   }
 
-  private fun getResultForDependencyByFileLock(pluginLock: FileLock): DependencyResolver.Result {
-    val dependencyCreationResult = PluginCreator.createPluginByFileLock(pluginLock)
+  private fun getDependencyResultWithFileLock(pluginLock: FileLock): DependencyResolver.Result {
+    val pluginFile = pluginLock.getFile()
+    val dependencyCreationResult = pluginLock.closeOnException {
+      PluginCreator.createPluginByFile(pluginFile)
+    }
     return when (dependencyCreationResult) {
-      is CreatePluginResult.OK -> DependencyResolver.Result.Found(dependencyCreationResult)
-      is CreatePluginResult.BadPlugin -> DependencyResolver.Result.ProblematicDependency(dependencyCreationResult)
-      is CreatePluginResult.NotFound -> DependencyResolver.Result.NotFound(dependencyCreationResult.reason)
+      is CreatePluginResult.OK -> {
+        DependencyResolver.Result.Downloaded(dependencyCreationResult, pluginLock)
+      }
+      is CreatePluginResult.BadPlugin -> {
+        pluginLock.release()
+        DependencyResolver.Result.ProblematicDependency(dependencyCreationResult)
+      }
+      is CreatePluginResult.NotFound -> {
+        pluginLock.release()
+        DependencyResolver.Result.NotFound(dependencyCreationResult.reason)
+      }
     }
   }
 
@@ -123,7 +118,7 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
         if (updateInfo != null) {
           val lock = RepositoryManager.getPluginFile(updateInfo)
           if (lock != null) {
-            return getResultForDependencyByFileLock(lock)
+            return getDependencyResultWithFileLock(lock)
           }
         }
       } catch (e: Throwable) {

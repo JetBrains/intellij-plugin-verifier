@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.repository
 
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.format.UpdateInfo
+import java.io.Closeable
 import java.io.File
 
 interface PluginRepository {
@@ -20,15 +21,16 @@ interface PluginRepository {
 
 }
 
-interface FileLock {
+abstract class FileLock : Closeable {
 
-  fun getFile(): File
+  abstract fun getFile(): File
 
-  fun release()
+  abstract fun release()
 
+  override fun close(): Unit = release()
 }
 
-data class IdleFileLock(val content: File) : FileLock {
+data class IdleFileLock(val content: File) : FileLock() {
   override fun getFile(): File = content
 
   override fun release() {
