@@ -37,10 +37,9 @@ class VerifierTest {
         pluginFile = File("verifier-test/build/mocks/mock-plugin-1.0.jar")
       }
       assertTrue(pluginFile.exists())
-      val verificationResults = ResultBuilder.doIdeaAndPluginVerification(ideaFile, pluginFile)
-      assertTrue(verificationResults.size == 1)
-      assertTrue(verificationResults[0] is VerificationResult.Verified)
-      result = (verificationResults[0] as VerificationResult.Verified).verdict as Verdict.MissingDependencies
+      val verificationResult = ResultBuilder.doIdeaAndPluginVerification(ideaFile, pluginFile)
+      assertTrue(verificationResult is VerificationResult.Verified)
+      result = (verificationResult as VerificationResult.Verified).verdict as Verdict.MissingDependencies
       actualProblems = result.problems
       redundantProblems = actualProblems.toMutableList()
     }

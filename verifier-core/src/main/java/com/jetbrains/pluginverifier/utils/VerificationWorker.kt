@@ -7,6 +7,7 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.dependencies.*
 import com.jetbrains.pluginverifier.misc.closeLogged
+import com.jetbrains.pluginverifier.misc.withDebug
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
@@ -34,12 +35,8 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
   }
 
   override fun call(): VerificationResult {
-    LOG.debug("Plugin $pluginDescriptor verification with $ideDescriptor is starting")
-    val startTime = System.currentTimeMillis()
-    try {
+    withDebug(LOG, "Verification $pluginDescriptor with $ideDescriptor") {
       return createPluginAndDoVerification()
-    } finally {
-      LOG.debug("Plugin $pluginDescriptor is verified in " + (System.currentTimeMillis() - startTime) / 1000 + " seconds")
     }
   }
 

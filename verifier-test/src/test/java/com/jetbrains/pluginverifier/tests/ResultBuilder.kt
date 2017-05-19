@@ -12,16 +12,19 @@ object ResultBuilder {
 
   private val MOCK_IDE_VERSION = IdeVersion.createIdeVersion("IU-145.500")
 
-  fun doIdeaAndPluginVerification(ideaFile: File, pluginFile: File): List<VerificationResult> {
+  fun doIdeaAndPluginVerification(ideaFile: File, pluginFile: File): VerificationResult {
     val createIdeResult = IdeCreator.createByFile(ideaFile, MOCK_IDE_VERSION)
     val pluginDescriptor = PluginDescriptor.ByFileLock(IdleFileLock(pluginFile))
     val jdkPath = System.getenv("JAVA_HOME") ?: "/usr/lib/jvm/java-8-oracle"
     createIdeResult.use {
       val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(CmdOpts())
       val problemsFilter = OptionsUtil.getProblemsFilter(CmdOpts())
-      val singleToCheck = listOf(pluginDescriptor to IdeDescriptor(createIdeResult))
-      val vParams = VerifierParams(JdkDescriptor(File(jdkPath)), singleToCheck, externalClassesPrefixes, problemsFilter)
-      return Verifier(vParams).verify()
+      val verifierParams = VerifierParams(JdkDescriptor(File(jdkPath)), externalClassesPrefixes, problemsFilter)
+      val verifier = Verifier(verifierParams)
+      verifier.use {
+        verifier.verify(pluginDescriptor, IdeDescriptor(createIdeResult))
+        return verifier.getVerificationResults(DefaultProgress()).single()
+      }
     }
   }
 

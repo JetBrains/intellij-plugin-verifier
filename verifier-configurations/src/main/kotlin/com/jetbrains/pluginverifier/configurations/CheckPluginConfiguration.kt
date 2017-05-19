@@ -51,9 +51,13 @@ class CheckPluginConfiguration(val params: CheckPluginParams) : Configuration {
   private fun doVerification(pluginDescriptor: PluginDescriptor,
                              ideDescriptor: IdeDescriptor,
                              dependencyResolver: DependencyResolver): VerificationResult {
-    val singlePluginCheck = listOf(pluginDescriptor to ideDescriptor)
-    val vParams = VerifierParams(params.jdkDescriptor, singlePluginCheck, params.externalClassesPrefixes, params.problemsFilter, params.externalClasspath, dependencyResolver)
-    return Verifier(vParams).verify(params.progress).single()
+    val verifierParams = VerifierParams(params.jdkDescriptor, params.externalClassesPrefixes, params.problemsFilter, params.externalClasspath, dependencyResolver)
+    val verifier = Verifier(verifierParams)
+    verifier.use {
+      verifier.verify(pluginDescriptor, ideDescriptor)
+      val results = verifier.getVerificationResults(params.progress)
+      return results.single()
+    }
   }
 
 }

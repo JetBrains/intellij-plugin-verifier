@@ -14,11 +14,6 @@ data class VerifierParams(
     val jdkDescriptor: JdkDescriptor,
 
     /**
-     * The pairs of _(plugin, ide)_ which will be verified.
-     */
-    val pluginsToCheck: List<Pair<PluginDescriptor, IdeDescriptor>>,
-
-    /**
      * Ignore missing classes having the listed packages
      */
     val externalClassesPrefixes: List<String> = emptyList(),

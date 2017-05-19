@@ -29,10 +29,14 @@ class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
   }
 
   private fun doExecute(notExcludedPlugins: List<PluginDescriptor>): CheckIdeResults {
-    val pluginsToCheck = notExcludedPlugins.map { it to params.ideDescriptor }
-    val verifierParams = VerifierParams(params.jdkDescriptor, pluginsToCheck, params.externalClassesPrefixes, params.problemsFilter, params.externalClassPath, params.dependencyResolver)
-    val results = Verifier(verifierParams).verify(params.progress)
-    return CheckIdeResults(params.ideDescriptor.ideVersion, VerificationResultToApiResultConverter().convert(results), params.excludedPlugins, getMissingUpdatesProblems())
+    val verifierParams = VerifierParams(params.jdkDescriptor, params.externalClassesPrefixes, params.problemsFilter, params.externalClassPath, params.dependencyResolver)
+    val apiResultConverter = VerificationResultToApiResultConverter()
+    val verifier = Verifier(verifierParams)
+    verifier.use {
+      notExcludedPlugins.forEach { verifier.verify(it, params.ideDescriptor) }
+      val results = verifier.getVerificationResults(params.progress)
+      return CheckIdeResults(params.ideDescriptor.ideVersion, apiResultConverter.convert(results), params.excludedPlugins, getMissingUpdatesProblems())
+    }
   }
 
   private fun getMissingUpdatesProblems(): List<MissingCompatibleUpdate> {
