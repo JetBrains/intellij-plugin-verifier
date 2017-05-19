@@ -4,7 +4,10 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.utils.VerificationWorker
 import org.slf4j.LoggerFactory
-import java.util.concurrent.*
+import java.util.concurrent.ExecutorCompletionService
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 /**
  * @author Sergey Patrikeev
@@ -47,7 +50,7 @@ class Verifier(val params: VerifierParams) {
             val worker = VerificationWorker(pluginDescriptor, ideDescriptor, runtimeResolver, params)
             completionService.submit(worker)
           }
-          results.addAll(waitForWorkersCompletion(executor, completionService, progress, futures))
+          results.addAll(waitForWorkersCompletion(completionService, progress, futures))
         }
       }
     } finally {
@@ -59,8 +62,7 @@ class Verifier(val params: VerifierParams) {
 
   private fun createJdkResolver() = Resolver.createJdkResolver(params.jdkDescriptor.homeDir)
 
-  private fun waitForWorkersCompletion(executor: ExecutorService,
-                                       completionService: ExecutorCompletionService<VerificationResult>,
+  private fun waitForWorkersCompletion(completionService: ExecutorCompletionService<VerificationResult>,
                                        progress: Progress,
                                        futures: List<Future<VerificationResult>>): List<VerificationResult> {
     var verified = 0
@@ -69,18 +71,12 @@ class Verifier(val params: VerifierParams) {
     (1..workers).forEach fori@ {
       while (true) {
         if (Thread.currentThread().isInterrupted) {
-          executor.shutdownNow()
           throw InterruptedException()
         }
 
         val future = completionService.poll(500, TimeUnit.MILLISECONDS)
         if (future != null) {
-          val result = try {
-            future.get()
-          } catch (e: Throwable) {
-            executor.shutdownNow()
-            throw e
-          }
+          val result = future.get()
           results.add(result)
           progress.setProgress(((++verified).toDouble()) / workers)
           val resultString = getVerificationResultText(result)

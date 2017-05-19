@@ -132,7 +132,7 @@ data class CheckTrunkApiParams(val ideDescriptor: IdeDescriptor,
   override fun presentableText(): String = """Check Trunk API Configuration Parameters:
 Trunk IDE to be checked: $ideDescriptor
 Release IDE to compare API with: $majorIdeDescriptor
-External classes prefixes: ${externalClassesPrefixes.joinToString()}
+External classes prefixes: [${externalClassesPrefixes.joinToString()}]
 JDK: $jdkDescriptor
 """
 

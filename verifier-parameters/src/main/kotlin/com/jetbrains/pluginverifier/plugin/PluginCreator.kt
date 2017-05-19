@@ -1,10 +1,12 @@
 package com.jetbrains.pluginverifier.plugin
 
+import com.intellij.structure.impl.domain.PluginCreationFailImpl
 import com.intellij.structure.impl.domain.PluginCreationSuccessImpl
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.plugin.PluginCreationFail
 import com.intellij.structure.plugin.PluginCreationSuccess
 import com.intellij.structure.plugin.PluginManager
+import com.intellij.structure.problems.UnableToReadPluginClassFiles
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.format.UpdateInfo
@@ -45,7 +47,11 @@ object PluginCreator {
   }
 
   fun createResolverForExistingPlugin(plugin: Plugin): CreatePluginResult {
-    val resolver = Resolver.createPluginResolver(plugin)
+    val resolver = try {
+      Resolver.createPluginResolver(plugin)
+    } catch (e: Exception) {
+      return CreatePluginResult.BadPlugin(PluginCreationFailImpl(listOf(UnableToReadPluginClassFiles(plugin.originalFile))))
+    }
     return CreatePluginResult.OK(PluginCreationSuccessImpl(plugin, emptyList()), resolver)
   }
 }
