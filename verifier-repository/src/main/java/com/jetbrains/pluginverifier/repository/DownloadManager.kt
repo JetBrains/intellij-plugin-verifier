@@ -19,6 +19,7 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 import retrofit2.http.Streaming
 import java.io.File
+import java.io.IOException
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -200,10 +201,9 @@ object DownloadManager {
   }
 
   private fun downloadToTempFile(updateId: Int, tempFile: File): String {
-    LOG.debug("Downloading update #$updateId to temp file $tempFile... ")
     val updateFileName = doDownload(updateId, tempFile)
     if (tempFile.length() < BROKEN_FILE_THRESHOLD_BYTES) {
-      throw RuntimeException("Too small (${tempFile.length()} bytes) file for update #$updateId")
+      throw IOException("Too small update #$updateId size: ${tempFile.length()} bytes")
     }
     return updateFileName
   }
@@ -214,7 +214,7 @@ object DownloadManager {
    *  @return true if tempFile has been moved to cached, false otherwise
    */
   @Synchronized
-  private fun moveDownloaded(updateId: Int, tempFile: File, cached: File): Boolean {
+  private fun moveDownloaded(tempFile: File, cached: File): Boolean {
     if (cached.exists()) {
       if (cached.length() >= BROKEN_FILE_THRESHOLD_BYTES) {
         //the other thread has already downloaded the plugin
@@ -229,23 +229,21 @@ object DownloadManager {
     }
 
     FileUtils.moveFile(tempFile, cached)
-    LOG.debug("Update #$updateId is downloaded to $cached")
     return true
   }
 
   private fun downloadFile(updateId: Int): File {
+    LOG.debug("Downloading update #$updateId")
     val tempFile = File.createTempFile(TEMP_DOWNLOAD_PREFIX, TEMP_DOWNLOAD_SUFFIX, RepositoryConfiguration.downloadDir)
-    var moved = false
-    try {
-      val updateFileName = downloadToTempFile(updateId, tempFile)
-      val cachedUpdate = File(RepositoryConfiguration.downloadDir, updateFileName)
-      moved = moveDownloaded(updateId, tempFile, cachedUpdate)
-      return cachedUpdate
-    } finally {
-      if (!moved) {
-        tempFile.deleteLogged()
-      }
+    val updateFileName = downloadToTempFile(updateId, tempFile)
+    val cachedUpdate = File(RepositoryConfiguration.downloadDir, updateFileName)
+    if (moveDownloaded(tempFile, cachedUpdate)) {
+      LOG.debug("Update #$updateId is saved to $cachedUpdate")
+    } else {
+      LOG.debug("Update #$updateId is concurrently loaded by another thread to $cachedUpdate")
+      tempFile.deleteLogged()
     }
+    return cachedUpdate
   }
 
   fun getOrLoadUpdate(updateId: Int): FileLock? {
