@@ -9,8 +9,8 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Sergey Patrikeev
@@ -50,12 +50,12 @@ public class CacheResolver extends Resolver {
 
   @NotNull
   @Override
-  public Set<String> getAllClasses() {
+  public Iterator<String> getAllClasses() {
     return myDelegate.getAllClasses();
   }
 
   @Override
-  public boolean isEmpty() {
+  public boolean isEmpty() throws IOException {
     return myDelegate.isEmpty();
   }
 

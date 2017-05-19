@@ -4,9 +4,12 @@ import com.intellij.structure.plugin.PluginDependency
 import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
+import com.jetbrains.pluginverifier.plugin.PluginCreator
 import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.jgrapht.graph.DefaultEdge
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.Closeable
 
 data class DepEdge(val dependency: PluginDependency) : DefaultEdge()
@@ -27,8 +30,14 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) {
 
   private val graph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
 
+  companion object {
+    private val LOG: Logger = LoggerFactory.getLogger(DepGraphBuilder::class.java)
+  }
+
   fun build(creationOk: CreatePluginResult.OK): Result {
-    val startVertex = DepVertex(creationOk)
+    LOG.debug("Building dependencies graph for ${creationOk.success.plugin}")
+    val copiedResultOk = PluginCreator.getUncloseableOkResult(creationOk)
+    val startVertex = DepVertex(copiedResultOk)
     try {
       traverseDependencies(startVertex)
       return Result(graph, startVertex)

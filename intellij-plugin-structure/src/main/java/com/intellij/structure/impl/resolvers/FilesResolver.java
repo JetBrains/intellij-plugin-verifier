@@ -1,5 +1,6 @@
 package com.intellij.structure.impl.resolvers;
 
+import com.google.common.collect.Iterators;
 import com.intellij.structure.impl.utils.AsmUtil;
 import com.intellij.structure.resolvers.Resolver;
 import org.apache.commons.io.FileUtils;
@@ -14,7 +15,7 @@ import java.util.*;
 /**
  * Created by Sergey Patrikeev
  */
-public class FilesResolver extends Resolver {
+public final class FilesResolver extends Resolver {
 
   private final Map<String, File> myClass2File = new HashMap<String, File>();
   private final String myPresentableName;
@@ -49,8 +50,8 @@ public class FilesResolver extends Resolver {
 
   @NotNull
   @Override
-  public Set<String> getAllClasses() {
-    return Collections.unmodifiableSet(myClass2File.keySet());
+  public Iterator<String> getAllClasses() {
+    return Iterators.unmodifiableIterator(myClass2File.keySet().iterator());
   }
 
   @Override

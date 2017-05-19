@@ -1,5 +1,8 @@
 package com.intellij.structure.impl.resolvers;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -7,25 +10,25 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Dennis.Ushakov
  */
-public class ContainerResolver extends Resolver {
+public final class ContainerResolver extends Resolver {
 
   private final List<Resolver> myResolvers;
-  private final Map<String, Resolver> myClassToResolver = new HashMap<String, Resolver>();
   private final String myPresentableName;
 
   private ContainerResolver(@NotNull String presentableName, @NotNull List<Resolver> resolvers) {
     myResolvers = new ArrayList<Resolver>(resolvers);
     myPresentableName = presentableName;
-    fillClassMap();
   }
 
   @NotNull
-  public static Resolver createFromList(@NotNull String presentableName, @NotNull List<Resolver> resolvers) {
+  public static Resolver createFromList(@NotNull String presentableName, @NotNull List<Resolver> resolvers) throws IOException {
     List<Resolver> nonEmptyResolvers = new ArrayList<Resolver>();
     for (Resolver resolver : resolvers) {
       if (!resolver.isEmpty()) {
@@ -41,20 +44,16 @@ public class ContainerResolver extends Resolver {
     return new ContainerResolver(presentableName, nonEmptyResolvers);
   }
 
-  private void fillClassMap() {
-    //the class will be mapped to the first containing resolver
-    for (int i = myResolvers.size() - 1; i >= 0; i--) {
-      Resolver resolver = myResolvers.get(i);
-      for (String aClass : resolver.getAllClasses()) {
-        myClassToResolver.put(aClass, resolver);
-      }
-    }
-  }
-
   @NotNull
   @Override
-  public Set<String> getAllClasses() {
-    return Collections.unmodifiableSet(myClassToResolver.keySet());
+  public Iterator<String> getAllClasses() {
+    List<Iterator<String>> listOfIterators = Lists.transform(myResolvers, new Function<Resolver, Iterator<String>>() {
+      @Override
+      public Iterator<String> apply(Resolver input) {
+        return input.getAllClasses();
+      }
+    });
+    return Iterators.concat(listOfIterators.iterator());
   }
 
   @Override
@@ -63,13 +62,23 @@ public class ContainerResolver extends Resolver {
   }
 
   @Override
-  public boolean isEmpty() {
-    return myClassToResolver.isEmpty();
+  public boolean isEmpty() throws IOException {
+    for (Resolver resolver : myResolvers) {
+      if (!resolver.isEmpty()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
-  public boolean containsClass(@NotNull String className) {
-    return myClassToResolver.containsKey(className);
+  public boolean containsClass(@NotNull final String className) {
+    for (Resolver resolver : myResolvers) {
+      if (resolver.containsClass(className)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
@@ -85,15 +94,24 @@ public class ContainerResolver extends Resolver {
   @Override
   @Nullable
   public ClassNode findClass(@NotNull String className) throws IOException {
-    Resolver resolver = myClassToResolver.get(className);
-    return resolver == null ? null : resolver.findClass(className);
+    for (Resolver resolver : myResolvers) {
+      ClassNode classNode = resolver.findClass(className);
+      if (classNode != null) {
+        return classNode;
+      }
+    }
+    return null;
   }
 
   @Override
   @Nullable
   public Resolver getClassLocation(@NotNull String className) {
-    Resolver resolver = myClassToResolver.get(className);
-    return resolver == null ? null : resolver.getClassLocation(className);
+    for (Resolver resolver : myResolvers) {
+      if (resolver.containsClass(className)) {
+        return resolver;
+      }
+    }
+    return null;
   }
 
   @Override

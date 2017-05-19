@@ -1,6 +1,6 @@
 buildscript {
 
-  ext.kotlin_version = '1.1.1'
+  ext.kotlin_version = '1.1.2-2'
 
   repositories {
     jcenter()
@@ -41,7 +41,7 @@ allprojects {
 test.dependsOn project("tests").test
 
 dependencies {
-  compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+  compileOnly "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
   compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
   compile group: 'org.jdom', name: 'jdom', version: '2.0.2'
   compile group: 'com.google.guava', name: 'guava', version: '19.0'

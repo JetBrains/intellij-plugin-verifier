@@ -16,7 +16,7 @@ class CloseIgnoringResolver(private val delegate: Resolver) : Resolver() {
 
   override fun getClassLocation(className: String?): Resolver = delegate.getClassLocation(className)
 
-  override fun getAllClasses(): MutableSet<String> = delegate.allClasses
+  override fun getAllClasses(): Iterator<String> = delegate.allClasses
 
   override fun getClassPath(): MutableList<File> = delegate.classPath
 

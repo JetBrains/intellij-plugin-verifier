@@ -17,8 +17,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Sergey Patrikeev
@@ -88,12 +88,12 @@ public class PluginResolver extends Resolver {
 
   @NotNull
   @Override
-  public Set<String> getAllClasses() {
+  public Iterator<String> getAllClasses() {
     return myResolver.getAllClasses();
   }
 
   @Override
-  public boolean isEmpty() {
+  public boolean isEmpty() throws IOException {
     return myResolver.isEmpty();
   }
 

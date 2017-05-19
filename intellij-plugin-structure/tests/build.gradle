@@ -3,6 +3,7 @@ dependencies {
   testRuntime project("mock-plugin")
   testCompile 'junit:junit:4.11'
   testCompile 'org.hamcrest:hamcrest-library:1.3'
+  compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
 
 test.dependsOn 'mock-plugin:prepareAllMocks'

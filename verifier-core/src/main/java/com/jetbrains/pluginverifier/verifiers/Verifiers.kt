@@ -13,8 +13,14 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.AbstractInsnNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class BytecodeVerifier(val ctx: VerificationContext) {
+
+  companion object {
+    private val LOG: Logger = LoggerFactory.getLogger(BytecodeVerifier::class.java)
+  }
 
   private val fieldVerifiers = arrayOf<FieldVerifier>(FieldTypeVerifier())
 
@@ -42,18 +48,26 @@ class BytecodeVerifier(val ctx: VerificationContext) {
       FieldAccessInstructionVerifier()
   )
 
-  fun verify(classesToCheck: Set<String>) {
-    classesToCheck.forEach {
+  fun verify(classesToCheck: Iterator<String>) {
+    var lastNVerified = 0
+    for (className in classesToCheck) {
       if (Thread.currentThread().isInterrupted) {
         throw InterruptedException("The verification was cancelled")
       }
       val node = try {
-        ctx.resolver.findClass(it)
+        ctx.resolver.findClass(className)
       } catch (e: Exception) {
         null
       }
       if (node != null) {
-        verifyClass(node, ctx)
+        try {
+          verifyClass(node, ctx)
+        } finally {
+          lastNVerified++
+          if (lastNVerified % 1000 == 0) {
+            LOG.debug("Verification ${ctx.plugin} and ${ctx.ide}: finished verification of $lastNVerified classes")
+          }
+        }
       }
     }
   }

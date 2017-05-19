@@ -199,7 +199,7 @@ class MockPluginsTest {
   }
 
   private fun testMockClasses(resolver: Resolver, vararg classPath: String) {
-    val allClasses = resolver.allClasses
+    val allClasses = resolver.allClasses.asSequence().toList()
     assertEquals(4, allClasses.size.toLong())
     assertContains(allClasses, listOf("packagename/InFileClassOne", "packagename/ClassOne\$ClassOneInnerStatic", "packagename/ClassOne\$ClassOneInner", "packagename/InFileClassOne"))
 

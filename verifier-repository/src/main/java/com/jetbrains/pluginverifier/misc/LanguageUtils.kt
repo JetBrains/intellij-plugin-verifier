@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.misc
 
 import org.apache.commons.io.FileUtils
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import retrofit2.Call
 import retrofit2.Response
@@ -45,6 +46,17 @@ fun File.create(): File {
   }
   this.createNewFile()
   return this
+}
+
+inline fun <R> withDebug(logger: Logger, taskName: String, block: () -> R): R {
+  val startTime = System.currentTimeMillis()
+  logger.debug(taskName + " is starting")
+  try {
+    return block()
+  } finally {
+    val elapsedTime = System.currentTimeMillis() - startTime
+    logger.debug(taskName + " is finished in ${elapsedTime / 1000} seconds")
+  }
 }
 
 fun File.deleteLogged(): Boolean {

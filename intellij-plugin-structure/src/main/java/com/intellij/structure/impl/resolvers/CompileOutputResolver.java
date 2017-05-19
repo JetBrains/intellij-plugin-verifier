@@ -1,5 +1,6 @@
 package com.intellij.structure.impl.resolvers;
 
+import com.google.common.collect.Iterators;
 import com.intellij.structure.impl.utils.AsmUtil;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.resolvers.Resolver;
@@ -57,8 +58,8 @@ class CompileOutputResolver extends Resolver {
 
   @NotNull
   @Override
-  public Set<String> getAllClasses() {
-    return Collections.unmodifiableSet(allClasses.keySet());
+  public Iterator<String> getAllClasses() {
+    return Iterators.unmodifiableIterator(allClasses.keySet().iterator());
   }
 
   @Override

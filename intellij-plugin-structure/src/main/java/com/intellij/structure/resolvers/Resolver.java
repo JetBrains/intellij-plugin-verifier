@@ -11,8 +11,8 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 /**
  * <p>Provides an access to the byte-code of a class by its name via the {@link #findClass(String)}.
@@ -76,7 +76,7 @@ public abstract class Resolver implements Closeable {
    * @return a combining resolver
    */
   @NotNull
-  public static Resolver createUnionResolver(@NotNull String presentableName, @NotNull List<Resolver> resolvers) {
+  public static Resolver createUnionResolver(@NotNull String presentableName, @NotNull List<Resolver> resolvers) throws IOException {
     return ContainerResolver.createFromList(presentableName, resolvers);
   }
 
@@ -142,14 +142,14 @@ public abstract class Resolver implements Closeable {
    * @return all the classes names in the <i>binary</i> form.
    */
   @NotNull
-  public abstract Set<String> getAllClasses();
+  public abstract Iterator<String> getAllClasses();
 
   /**
    * Checks whether this resolver contains any class. Classes can be obtained through {@link #getAllClasses()}.
    *
    * @return true if this resolver is not empty, false otherwise
    */
-  public abstract boolean isEmpty();
+  public abstract boolean isEmpty() throws IOException;
 
   /**
    * Returns true if {@code this} Resolver contains the given class. It may be faster

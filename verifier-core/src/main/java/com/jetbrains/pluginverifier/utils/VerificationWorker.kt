@@ -118,7 +118,7 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
           )
       )
 
-  private fun getClassesForCheck(): Set<String> {
+  private fun getClassesForCheck(): Iterator<String> {
     val resolver = Resolver.createUnionResolver("Plugin classes for check",
         (plugin.allClassesReferencedFromXml + plugin.optionalDescriptors.flatMap { it.value.allClassesReferencedFromXml })
             .map { pluginResolver.getClassLocation(it) }
@@ -151,7 +151,7 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
                                      ide: Ide,
                                      params: VerifierParams,
                                      plugin: Plugin,
-                                     checkClasses: Set<String>): VerificationContext {
+                                     checkClasses: Iterator<String>): VerificationContext {
     val context = VerificationContext(plugin, ide, params, classLoader)
     BytecodeVerifier(context).verify(checkClasses)
     return context

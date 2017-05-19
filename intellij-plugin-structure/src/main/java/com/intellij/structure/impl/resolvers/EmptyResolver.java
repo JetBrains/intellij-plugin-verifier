@@ -1,5 +1,6 @@
 package com.intellij.structure.impl.resolvers;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -7,8 +8,8 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Sergey Patrikeev
@@ -31,8 +32,8 @@ public class EmptyResolver extends Resolver {
 
   @Override
   @NotNull
-  public Set<String> getAllClasses() {
-    return Collections.emptySet();
+  public Iterator<String> getAllClasses() {
+    return ImmutableSet.<String>of().iterator();
   }
 
   @Override
