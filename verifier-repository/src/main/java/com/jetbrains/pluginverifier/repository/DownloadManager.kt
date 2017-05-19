@@ -64,7 +64,7 @@ object DownloadManager {
             .setDaemon(true)
             .setNameFormat("download-mng-gc-%d")
             .build()
-    ).scheduleAtFixedRate({ garbageCollection() }, GC_PERIOD_MS, GC_PERIOD_MS, TimeUnit.MILLISECONDS)
+    ).scheduleAtFixedRate({ cleanUpdatesCache() }, GC_PERIOD_MS, GC_PERIOD_MS, TimeUnit.MILLISECONDS)
   }
 
   private var nextId: Long = 0
@@ -90,8 +90,8 @@ object DownloadManager {
       .create(DownloadApi::class.java)
 
   @Synchronized
-  private fun garbageCollection() {
-    LOG.info("It's time for garbage collection!")
+  private fun cleanUpdatesCache() {
+    LOG.info("It's time to remove unused updates from cache")
 
     releaseOldLocks()
     if (exceedSpace()) {
@@ -200,12 +200,11 @@ object DownloadManager {
   }
 
   private fun downloadToTempFile(updateId: Int, tempFile: File): String {
-    LOG.debug("Downloading update #$updateId to $tempFile... ")
+    LOG.debug("Downloading update #$updateId to temp file $tempFile... ")
     val updateFileName = doDownload(updateId, tempFile)
     if (tempFile.length() < BROKEN_FILE_THRESHOLD_BYTES) {
       throw RuntimeException("Too small (${tempFile.length()} bytes) file for update #$updateId")
     }
-    LOG.debug("Update #$updateId is downloaded to $tempFile")
     return updateFileName
   }
 
@@ -215,7 +214,7 @@ object DownloadManager {
    *  @return true if tempFile has been moved to cached, false otherwise
    */
   @Synchronized
-  private fun moveDownloaded(tempFile: File, cached: File): Boolean {
+  private fun moveDownloaded(updateId: Int, tempFile: File, cached: File): Boolean {
     if (cached.exists()) {
       if (cached.length() >= BROKEN_FILE_THRESHOLD_BYTES) {
         //the other thread has already downloaded the plugin
@@ -230,6 +229,7 @@ object DownloadManager {
     }
 
     FileUtils.moveFile(tempFile, cached)
+    LOG.debug("Update #$updateId is downloaded to $cached")
     return true
   }
 
@@ -239,7 +239,7 @@ object DownloadManager {
     try {
       val updateFileName = downloadToTempFile(updateId, tempFile)
       val cachedUpdate = File(RepositoryConfiguration.downloadDir, updateFileName)
-      moved = moveDownloaded(tempFile, cachedUpdate)
+      moved = moveDownloaded(updateId, tempFile, cachedUpdate)
       return cachedUpdate
     } finally {
       if (!moved) {
@@ -264,7 +264,7 @@ object DownloadManager {
 
     try {
       if (exceedSpace()) {
-        garbageCollection()
+        cleanUpdatesCache()
       }
     } catch (e: Throwable) {
       lock.release()

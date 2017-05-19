@@ -20,7 +20,7 @@ data class DependencyNode(@SerializedName("id") val id: String,
 data class DependencyEdge(@SerializedName("from") val from: DependencyNode,
                           @SerializedName("to") val to: DependencyNode,
                           @SerializedName("dependency") val dependency: PluginDependency) {
-  override fun toString(): String = "$from -> $to$" + (if (dependency.isOptional) " (optional)" else "")
+  override fun toString(): String = "$from -> $to" + (if (dependency.isOptional) " (optional)" else "")
 }
 
 data class MissingDependencyPath(@SerializedName("path") val path: List<DependencyNode>,

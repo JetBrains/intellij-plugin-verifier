@@ -16,7 +16,7 @@ class Verifier(val params: VerifierParams) {
   }
 
   fun verify(progress: Progress = DefaultProgress()): List<VerificationResult> {
-    val startMessage = "Verification of " + "plugin".pluralize(params.pluginsToCheck.size) + " is starting"
+    val startMessage = "Verification of ${params.pluginsToCheck.size} " + "plugin".pluralize(params.pluginsToCheck.size) + " is starting"
     LOG.info(startMessage)
 
     val startTime = System.currentTimeMillis()

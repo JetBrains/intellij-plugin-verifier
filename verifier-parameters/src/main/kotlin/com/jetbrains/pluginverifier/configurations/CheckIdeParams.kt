@@ -42,6 +42,8 @@ Excluded plugins: ${excludedPlugins.entries().joinToString { "${it.key}:${it.val
     pluginsToCheck.forEach { it.closeLogged() }
     externalClassPath.closeLogged()
   }
+
+  override fun toString(): String = presentableText()
 }
 
 

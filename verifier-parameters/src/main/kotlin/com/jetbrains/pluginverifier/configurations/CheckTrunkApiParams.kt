@@ -143,6 +143,8 @@ JDK: $jdkDescriptor
       majorIdeDescriptor.close()
     }
   }
+
+  override fun toString(): String = presentableText()
 }
 
 class CheckTrunkApiOpts {

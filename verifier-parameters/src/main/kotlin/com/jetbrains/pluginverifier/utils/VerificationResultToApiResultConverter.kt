@@ -9,7 +9,13 @@ import java.io.File
 class VerificationResultToApiResultConverter {
 
   fun convert(results: List<VerificationResult>): List<Result> = results.map {
-    Result(getPluginInfoByDescriptor(it.pluginDescriptor), it.ideDescriptor.ideVersion, getVerdictByVerification(it))
+    Result(getPluginInfoByVerification(it), it.ideDescriptor.ideVersion, getVerdictByVerification(it))
+  }
+
+  private fun getPluginInfoByVerification(verificationResult: VerificationResult): PluginInfo = when (verificationResult) {
+    is VerificationResult.Verified -> verificationResult.pluginInfo
+    is VerificationResult.BadPlugin -> getPluginInfoByDescriptor(verificationResult.pluginDescriptor)
+    is VerificationResult.NotFound -> getPluginInfoByDescriptor(verificationResult.pluginDescriptor)
   }
 
   private fun getVerdictByVerification(verificationResult: VerificationResult): Verdict = when (verificationResult) {

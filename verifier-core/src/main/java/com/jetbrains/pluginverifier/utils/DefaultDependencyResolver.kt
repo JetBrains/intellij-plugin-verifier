@@ -76,9 +76,8 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
   }
 
   private fun getDependencyResultWithFileLock(pluginLock: FileLock): DependencyResolver.Result {
-    val pluginFile = pluginLock.getFile()
     val dependencyCreationResult = pluginLock.closeOnException {
-      PluginCreator.createPluginByFile(pluginFile)
+      PluginCreator.createPluginByFile(pluginLock.getFile())
     }
     return when (dependencyCreationResult) {
       is CreatePluginResult.OK -> {

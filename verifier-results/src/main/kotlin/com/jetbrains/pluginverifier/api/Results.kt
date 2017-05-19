@@ -47,9 +47,7 @@ sealed class Verdict {
                                  @SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph,
                                  @SerializedName("problems") val problems: Set<Problem>,
                                  @SerializedName("warnings") val warnings: Set<Warning>) : Verdict() {
-    override fun toString(): String = "Missing plugins and modules dependencies: " +
-        "${missingDependencies.joinToString()}; " +
-        "and ${problems.size} " + "problem".pluralize(problems.size) + ": ${problems.take(10).map { it.getShortDescription() }}..."
+    override fun toString(): String = "Missing ${missingDependencies.size} plugins and modules " + "dependency".pluralize(missingDependencies.size) + " and ${problems.size} " + "problem".pluralize(problems.size)
   }
 
   /**
@@ -58,7 +56,7 @@ sealed class Verdict {
   data class Problems(@SerializedName("problems") val problems: Set<Problem>,
                       @SerializedName("depsGraph") val dependenciesGraph: DependenciesGraph,
                       @SerializedName("warnings") val warnings: Set<Warning>) : Verdict() {
-    override fun toString(): String = "Found ${problems.size} compatibility " + "problem".pluralize(problems.size)
+    override fun toString(): String = "Found ${problems.size} compatibility " + "problem".pluralize(problems.size) + " and ${warnings.size} " + "warning".pluralize(warnings.size)
   }
 
   /**
