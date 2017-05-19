@@ -1,5 +1,6 @@
 package com.intellij.structure.impl.domain;
 
+import com.google.common.base.Joiner;
 import com.google.common.io.Files;
 import com.intellij.structure.ide.Ide;
 import com.intellij.structure.ide.IdeManager;
@@ -153,15 +154,14 @@ public class IdeManagerImpl extends IdeManager {
       if (!file.exists()) {
         throw new IllegalArgumentException("Plugin file " + file + " does not exist");
       }
-      PluginCreator pluginCreator = new PluginManagerImpl().getPluginCreatorWithResult(file, true);
+      PluginCreator pluginCreator = new PluginManagerImpl().getPluginCreatorWithResult(file, false);
       pluginCreator.setOriginalFile(file);
       PluginCreationResult result = pluginCreator.getPluginCreationResult();
       if (result instanceof PluginCreationSuccess) {
         plugins.add(((PluginCreationSuccess) result).getPlugin());
       } else {
-        for (PluginProblem problem : ((PluginCreationFail) result).getErrorsAndWarnings()) {
-          LOG.warn("Failed to read plugin " + file + ". Problem: " + problem.getMessage());
-        }
+        List<PluginProblem> problems = ((PluginCreationFail) result).getErrorsAndWarnings();
+        LOG.warn("Failed to read plugin " + file + ". Problems: " + Joiner.on(", ").join(problems));
       }
     }
 

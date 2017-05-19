@@ -284,7 +284,7 @@ public class PluginManagerImpl extends PluginManager {
     if (JarsUtils.isZip(pluginFile)) {
       pluginCreator = extractZipAndCreatePlugin(pluginFile, validateDescriptor);
     } else {
-      pluginCreator = loadDescriptorFromJarOrDirectory(pluginFile, PLUGIN_XML, true);
+      pluginCreator = loadDescriptorFromJarOrDirectory(pluginFile, PLUGIN_XML, validateDescriptor);
     }
     return pluginCreator;
   }

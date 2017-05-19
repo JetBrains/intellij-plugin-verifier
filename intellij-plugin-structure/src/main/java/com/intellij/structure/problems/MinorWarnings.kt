@@ -16,7 +16,7 @@ data class NonLatinDescription(val descriptorPath: String) : PluginProblem() {
 
 data class ShortDescription(val descriptorPath: String) : PluginProblem() {
   override val level: PluginProblem.Level = PluginProblem.Level.WARNING
-  override val message: String = "your description is too short"
+  override val message: String = "Description is too short"
 }
 
 

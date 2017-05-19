@@ -2,6 +2,8 @@ package com.intellij.structure.domain
 
 import com.intellij.structure.ide.IdeManager
 import com.intellij.structure.ide.IdeVersion
+import com.intellij.structure.mocks.PluginXmlBuilder
+import com.intellij.structure.mocks.modify
 import com.intellij.structure.mocks.perfectXmlBuilder
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.collection.IsCollectionWithSize.hasSize
@@ -78,5 +80,31 @@ class IdeTest {
     val plugin = ide.bundledPlugins[0]!!
     assertThat(plugin.pluginId, `is`("someId"))
     assertThat(plugin.originalFile, `is`(bundledFolder))
+  }
+
+  @Test
+  fun `plugins bundled to idea might not have valid descriptors`() {
+    val incompleteDescriptor = PluginXmlBuilder().modify {
+      name = "<name>Bundled</name>"
+      id = "<id>Bundled</id>"
+      vendor = "<vendor>JetBrains</vendor>"
+      description = "<description>Short</description>"
+      changeNotes = "<change-notes>Short</change-notes>"
+    }
+
+    val ideaFolder = temporaryFolder.newFolder("idea")
+    File(ideaFolder, "build.txt").writeText("IU-163.1.2.3")
+
+    val pluginsFolder = File(ideaFolder, "plugins")
+    val bundledPluginFolder = File(pluginsFolder, "Bundled")
+    val bundledXml = File(bundledPluginFolder, "META-INF/plugin.xml")
+    bundledXml.parentFile.mkdirs()
+    bundledXml.writeText(incompleteDescriptor)
+
+    val ide = IdeManager.getInstance().createIde(ideaFolder)
+    assertThat(ide.version, `is`(IdeVersion.createIdeVersion("IU-163.1.2.3")))
+    assertThat(ide.bundledPlugins, hasSize(1))
+    val plugin = ide.bundledPlugins[0]!!
+    assertThat(plugin.pluginId, `is`("Bundled"))
   }
 }
