@@ -75,7 +75,12 @@ class Verifier(val params: VerifierParams) {
 
         val future = completionService.poll(500, TimeUnit.MILLISECONDS)
         if (future != null) {
-          val result = future.get()
+          val result = try {
+            future.get()
+          } catch (e: Throwable) {
+            executor.shutdownNow()
+            throw e
+          }
           results.add(result)
           progress.setProgress(((++verified).toDouble()) / workers)
           val resultString = getVerificationResultText(result)
