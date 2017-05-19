@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.api
 
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.misc.closeLogged
-import com.jetbrains.pluginverifier.misc.withDebug
 import com.jetbrains.pluginverifier.utils.VerificationWorker
 import org.slf4j.LoggerFactory
 import java.io.Closeable
@@ -29,13 +28,8 @@ class Verifier(val params: VerifierParams) : Closeable {
   private val futures: MutableList<Future<VerificationResult>> = arrayListOf()
 
   fun verify(pluginDescriptor: PluginDescriptor, ideDescriptor: IdeDescriptor): Future<VerificationResult> {
-    withDebug(LOG, "Verification of $pluginDescriptor with $ideDescriptor") {
-      return submitVerificationTask(pluginDescriptor, ideDescriptor)
-    }
-  }
-
-  private fun submitVerificationTask(pluginDescriptor: PluginDescriptor, ideDescriptor: IdeDescriptor): Future<VerificationResult> {
-    val future = completionService.submit(VerificationWorker(pluginDescriptor, ideDescriptor, runtimeResolver, params))
+    val worker = VerificationWorker(pluginDescriptor, ideDescriptor, runtimeResolver, params)
+    val future = completionService.submit(worker)
     futures.add(future)
     return future
   }

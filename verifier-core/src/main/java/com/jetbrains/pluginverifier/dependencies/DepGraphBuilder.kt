@@ -36,7 +36,7 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) {
 
   fun build(creationOk: CreatePluginResult.OK): Result {
     LOG.debug("Building dependencies graph for ${creationOk.success.plugin}")
-    val copiedResultOk = PluginCreator.getUncloseableOkResult(creationOk)
+    val copiedResultOk = PluginCreator.getNonCloseableOkResult(creationOk)
     val startVertex = DepVertex(copiedResultOk)
     try {
       traverseDependencies(startVertex)

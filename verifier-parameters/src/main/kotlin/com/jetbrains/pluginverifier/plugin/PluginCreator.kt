@@ -13,21 +13,17 @@ import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.CloseIgnoringResolver
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.File
 
 object PluginCreator {
 
-  private val LOG: Logger = LoggerFactory.getLogger(PluginCreator::class.java)
-
   fun createPlugin(pluginDescriptor: PluginDescriptor): CreatePluginResult = when (pluginDescriptor) {
     is PluginDescriptor.ByFileLock -> createPluginByFile(pluginDescriptor.fileLock.getFile())
     is PluginDescriptor.ByUpdateInfo -> createPluginByUpdateInfo(pluginDescriptor.updateInfo)
-    is PluginDescriptor.ByInstance -> getUncloseableOkResult(pluginDescriptor.createOk)
+    is PluginDescriptor.ByInstance -> getNonCloseableOkResult(pluginDescriptor.createOk)
   }
 
-  fun getUncloseableOkResult(createOk: CreatePluginResult.OK): CreatePluginResult.OK {
+  fun getNonCloseableOkResult(createOk: CreatePluginResult.OK): CreatePluginResult.OK {
     val copyResolver = CloseIgnoringResolver(createOk.resolver)
     return CreatePluginResult.OK(createOk.success, copyResolver)
   }
@@ -41,7 +37,6 @@ object PluginCreator {
   }
 
   fun createPluginByFile(pluginFile: File): CreatePluginResult {
-    LOG.debug("Create plugin from $pluginFile")
     val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile)
     if (pluginCreationResult is PluginCreationSuccess) {
       val pluginResolver = Resolver.createPluginResolver(pluginCreationResult.plugin)
@@ -52,7 +47,6 @@ object PluginCreator {
   }
 
   fun createResolverForExistingPlugin(plugin: Plugin): CreatePluginResult {
-    LOG.debug("Create resolver for $plugin")
     val resolver = try {
       Resolver.createPluginResolver(plugin)
     } catch (e: Exception) {
