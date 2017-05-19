@@ -4,6 +4,7 @@ import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.misc.closeLogged
+import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.IdleFileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
@@ -23,12 +24,16 @@ object CheckPluginParamsParser : ConfigurationParamsParser {
     }
     val ideDescriptors = freeArgs.drop(1).map(::File).map { OptionsUtil.createIdeDescriptor(it, opts) }
     val pluginFileLocks = getPluginFileLocks(freeArgs[0], ideDescriptors.map { it.ideVersion })
-    val jdkDescriptor = JdkDescriptor(OptionsUtil.getJdkDir(opts))
-    val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
-    val externalClasspath = OptionsUtil.getExternalClassPath(opts)
-    val problemsFilter = OptionsUtil.getProblemsFilter(opts)
-    val pluginsToCheck = pluginFileLocks.map { PluginDescriptor.ByFileLock(it) }
-    return CheckPluginParams(pluginsToCheck, ideDescriptors, jdkDescriptor, externalClassesPrefixes, problemsFilter, externalClasspath)
+    pluginFileLocks.closeOnException {
+      val jdkDescriptor = JdkDescriptor(OptionsUtil.getJdkDir(opts))
+      val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
+      val externalClasspath = OptionsUtil.getExternalClassPath(opts)
+      externalClasspath.closeOnException {
+        val problemsFilter = OptionsUtil.getProblemsFilter(opts)
+        val pluginsToCheck = pluginFileLocks.map { PluginDescriptor.ByFileLock(it) }
+        return CheckPluginParams(pluginsToCheck, ideDescriptors, jdkDescriptor, externalClassesPrefixes, problemsFilter, externalClasspath)
+      }
+    }
   }
 
   private fun getPluginFileLocks(pluginToTestArg: String, ideVersions: List<IdeVersion>? = null): List<FileLock> {
@@ -88,6 +93,13 @@ data class CheckPluginParams(val pluginDescriptors: List<PluginDescriptor>,
                              val problemsFilter: ProblemsFilter,
                              val externalClasspath: Resolver = Resolver.getEmptyResolver(),
                              val progress: Progress = DefaultProgress()) : ConfigurationParams {
+
+  override fun presentableText(): String = """Check Plugin Configuration parameters:
+  JDK: $jdkDescriptor
+  Plugins to be checked: ${pluginDescriptors.joinToString()}
+  IDE builds to be checked: ${ideDescriptors.joinToString()}
+  External classes prefixes: ${externalClassesPrefixes.joinToString()}
+  """
 
   override fun close() {
     try {

@@ -30,6 +30,13 @@ data class CheckIdeParams(val ideDescriptor: IdeDescriptor,
                           val problemsFilter: ProblemsFilter,
                           val progress: Progress = DefaultProgress(),
                           val dependencyResolver: DependencyResolver? = null) : ConfigurationParams {
+  override fun presentableText(): String = """Check IDE configuration parameters:
+IDE to be checked: $ideDescriptor
+JDK: $jdkDescriptor
+Plugins to be checked: ${pluginsToCheck.joinToString()}
+Excluded plugins: ${excludedPlugins.entries().joinToString { "${it.key}:${it.value}" }}
+"""
+
   override fun close() {
     ideDescriptor.closeLogged()
     pluginsToCheck.forEach { it.closeLogged() }

@@ -37,7 +37,7 @@ object PluginVerifierMain {
     when (command) {
       "check-plugin" -> {
         CheckPluginParamsParser.parse(opts, freeArgs).use { params ->
-          LOG.info("Check-Plugin arguments: $params")
+          LOG.info("Verification parameters: $params")
 
           val results = CheckPluginConfiguration(params).execute()
           val printerOptions = OptionsUtil.parsePrinterOptions(opts)
@@ -54,7 +54,7 @@ object PluginVerifierMain {
       }
       "check-ide" -> {
         CheckIdeParamsParser.parse(opts, freeArgs).use { params ->
-          LOG.info("Check-Ide arguments: $params")
+          LOG.info("Verification parameters: $params")
 
           val checkIdeResults = CheckIdeConfiguration(params).execute()
 
@@ -80,7 +80,7 @@ object PluginVerifierMain {
       }
       "check-trunk-api" -> {
         CheckTrunkApiParamsParser.parse(opts, freeArgs).use { params ->
-          LOG.info("Check-Trunk-API arguments: $params")
+          LOG.info("Verification Parameters: $params")
 
           val checkTrunkApiResults = CheckTrunkApiConfiguration(params).execute()
 

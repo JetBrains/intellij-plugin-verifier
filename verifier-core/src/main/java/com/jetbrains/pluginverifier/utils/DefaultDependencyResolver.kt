@@ -105,7 +105,6 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
     }
 
     if (dependencyId in INTELLIJ_MODULE_TO_CONTAINING_PLUGIN) {
-      //try to add the intellij plugin which defines this module
       val pluginId = INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[dependencyId]!!
 
       val definingPlugin = ide.getPluginById(pluginId)

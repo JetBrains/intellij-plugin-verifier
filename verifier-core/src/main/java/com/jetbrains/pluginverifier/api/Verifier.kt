@@ -17,7 +17,7 @@ class Verifier(val params: VerifierParams) {
 
   fun verify(progress: Progress = DefaultProgress()): List<VerificationResult> {
     val startMessage = "Verification of " + "plugin".pluralize(params.pluginsToCheck.size) + " is starting"
-    LOG.debug(startMessage)
+    LOG.info(startMessage)
 
     val startTime = System.currentTimeMillis()
     progress.setText(startMessage)
@@ -26,8 +26,9 @@ class Verifier(val params: VerifierParams) {
       return runVerifierUnderProgress(progress)
     } finally {
       val elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000
-      LOG.debug("The verification has been successfully completed in $elapsedSeconds seconds")
-      progress.setText("The verification is finished in $elapsedSeconds seconds")
+      val finishMessage = "Verification finished in $elapsedSeconds seconds"
+      LOG.info(finishMessage)
+      progress.setText(finishMessage)
       progress.setProgress(1.0)
     }
   }
@@ -56,7 +57,7 @@ class Verifier(val params: VerifierParams) {
     return results
   }
 
-  private fun createJdkResolver() = Resolver.createJdkResolver(params.jdkDescriptor.file)
+  private fun createJdkResolver() = Resolver.createJdkResolver(params.jdkDescriptor.homeDir)
 
   private fun waitForWorkersCompletion(executor: ExecutorService,
                                        completionService: ExecutorCompletionService<VerificationResult>,
@@ -77,14 +78,21 @@ class Verifier(val params: VerifierParams) {
           val result = future.get()
           results.add(result)
           progress.setProgress(((++verified).toDouble()) / workers)
-          val statusString = "${result.pluginDescriptor} has been verified with ${result.ideDescriptor}. Result: $result"
-          progress.setText(statusString)
-          LOG.trace("$statusString; Finished $verified out of $workers workers")
+          val resultString = getVerificationResultText(result)
+          progress.setText(resultString)
+          LOG.info("Worker $verified/$workers finished. $resultString")
           break
         }
       }
     }
     return results
   }
+
+  private fun getVerificationResultText(result: VerificationResult): String =
+      "Plugin ${result.pluginDescriptor} has been verified with ${result.ideDescriptor}. " + when (result) {
+        is VerificationResult.Verified -> "Verified: ${result.verdict}"
+        is VerificationResult.BadPlugin -> "Broken plugin: ${result.problems.joinToString()}"
+        is VerificationResult.NotFound -> "Not found: ${result.reason}"
+      }
 
 }

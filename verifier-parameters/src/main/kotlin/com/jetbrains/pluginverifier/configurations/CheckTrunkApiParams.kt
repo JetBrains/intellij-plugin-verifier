@@ -49,7 +49,7 @@ object CheckTrunkApiParamsParser : ConfigurationParamsParser {
       majorIdeFile = downloadIde(parseIdeVersion(apiOpts.majorIdeVersion!!))
       deleteMajorOnExit = true
     } else {
-      throw IllegalArgumentException("Neither the version (-miv) nor the path to the IDE (-mip) with which to compare API problems are not specified")
+      throw IllegalArgumentException("Neither the version (-miv) nor the path to the IDE (-mip) with which to compare API problems specified")
     }
 
     val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
@@ -129,6 +129,13 @@ data class CheckTrunkApiParams(val ideDescriptor: IdeDescriptor,
                                val problemsFilter: ProblemsFilter,
                                val jdkDescriptor: JdkDescriptor,
                                private val deleteMajorIdeOnExit: Boolean) : ConfigurationParams {
+  override fun presentableText(): String = """Check Trunk API Configuration Parameters:
+Trunk IDE to be checked: $ideDescriptor
+Release IDE to compare API with: $majorIdeDescriptor
+External classes prefixes: ${externalClassesPrefixes.joinToString()}
+JDK: $jdkDescriptor
+"""
+
   override fun close() {
     try {
       ideDescriptor.close()

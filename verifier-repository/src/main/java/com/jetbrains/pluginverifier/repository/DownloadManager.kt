@@ -2,6 +2,8 @@ package com.jetbrains.pluginverifier.repository
 
 import com.google.common.primitives.Ints
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.jetbrains.pluginverifier.misc.deleteLogged
+import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
@@ -83,13 +85,13 @@ object DownloadManager {
 
   private val downloadApi: DownloadApi = Retrofit.Builder()
       .baseUrl(RepositoryConfiguration.pluginRepositoryUrl)
-      .client(makeClient(LOG.isDebugEnabled))
+      .client(makeClient(LOG.isTraceEnabled))
       .build()
       .create(DownloadApi::class.java)
 
   @Synchronized
   private fun garbageCollection() {
-    LOG.debug("It's time for garbage collection!")
+    LOG.info("It's time for garbage collection!")
 
     releaseOldLocks()
     if (exceedSpace()) {
@@ -105,9 +107,11 @@ object DownloadManager {
         .filter { Ints.tryParse(it.nameWithoutExtension) != null }
         .sortedBy { Ints.tryParse(it.nameWithoutExtension)!! }
 
+    LOG.info("Unused updates to be deleted: {}", updatesToDelete.joinToString())
+
     for (update in updatesToDelete) {
       if (exceedSpace()) {
-        deleteLogged(update)
+        update.deleteLogged()
       }
       //already enough space
       break
@@ -122,7 +126,7 @@ object DownloadManager {
     val space = FileUtils.sizeOfDirectory(RepositoryConfiguration.downloadDir).toDouble() / FileUtils.ONE_MB
     val threshold = SPACE_THRESHOLD * RepositoryConfiguration.cacheDirMaxSpaceMb
     if (space > threshold) {
-      LOG.warn("Download dir occupied space exceeded: $space > $threshold")
+      LOG.warn("Download directory occupied to much space: $space > $threshold")
     }
     return space > threshold
   }
@@ -161,11 +165,11 @@ object DownloadManager {
   }
 
   @Synchronized
-  private fun onResourceRelease(file: File) {
-    if (file in deleteQueue) {
-      deleteQueue.remove(file)
-      LOG.debug("Deleting the plugin file $file")
-      deleteLogged(file)
+  private fun onResourceRelease(updateFile: File) {
+    if (updateFile in deleteQueue) {
+      deleteQueue.remove(updateFile)
+      LOG.debug("Deleting update: $updateFile")
+      updateFile.deleteLogged()
     }
   }
 
@@ -182,16 +186,8 @@ object DownloadManager {
   }
 
   private fun doDownload(updateId: Int, tempFile: File): String {
-    val call = downloadApi.downloadFile(updateId)
-
-    val response = call.execute()
-
-    if (!response.isSuccessful) {
-      throw RuntimeException("Unable to download update #$updateId: ${response.code()}")
-    }
-
+    val response = downloadApi.downloadFile(updateId).executeSuccessfully()
     FileUtils.copyInputStreamToFile(response.body().byteStream(), tempFile)
-
     val extension = guessExtension(response)
     return "$updateId.$extension"
   }
@@ -205,15 +201,12 @@ object DownloadManager {
 
   private fun downloadToTempFile(updateId: Int, tempFile: File): String {
     LOG.debug("Downloading update #$updateId to $tempFile... ")
-
-    val name = doDownload(updateId, tempFile)
-
+    val updateFileName = doDownload(updateId, tempFile)
     if (tempFile.length() < BROKEN_FILE_THRESHOLD_BYTES) {
       throw RuntimeException("Too small (${tempFile.length()} bytes) file for update #$updateId")
     }
-
-    LOG.debug("Update #$updateId is downloaded")
-    return name
+    LOG.debug("Update #$updateId is downloaded to $tempFile")
+    return updateFileName
   }
 
   /**
@@ -223,46 +216,34 @@ object DownloadManager {
    */
   @Synchronized
   private fun moveDownloaded(tempFile: File, cached: File): Boolean {
-    try {
-      if (cached.exists()) {
-        if (cached.length() >= BROKEN_FILE_THRESHOLD_BYTES) {
-          //the other thread has already downloaded the plugin
-          return false
-        }
-
-        if (locksAcquired.getOrElse(cached, { 0 }) > 0) {
-          //we can't delete the cached plugin right now => return it too
-          return false
-        }
-
-        try {
-          //remove the old (possibly broken plugin)
-          FileUtils.forceDelete(cached)
-        } catch (e: Exception) {
-          LOG.error("Unable to delete cached plugin file " + cached, e)
-          throw e
-        }
+    if (cached.exists()) {
+      if (cached.length() >= BROKEN_FILE_THRESHOLD_BYTES) {
+        //the other thread has already downloaded the plugin
+        return false
       }
 
-      FileUtils.moveFile(tempFile, cached)
-      return true
-    } catch (e: Exception) {
-      LOG.error("Unable to move downloaded temp file $tempFile to $cached", e)
-      throw e
+      if (locksAcquired.getOrElse(cached, { 0 }) > 0) {
+        //we can't delete the cached plugin right now
+        return false
+      }
+      FileUtils.forceDelete(cached)
     }
+
+    FileUtils.moveFile(tempFile, cached)
+    return true
   }
 
   private fun downloadFile(updateId: Int): File {
     val tempFile = File.createTempFile(TEMP_DOWNLOAD_PREFIX, TEMP_DOWNLOAD_SUFFIX, RepositoryConfiguration.downloadDir)
     var moved = false
     try {
-      val fileName = downloadToTempFile(updateId, tempFile)
-      val cached = File(RepositoryConfiguration.downloadDir, fileName)
-      moved = moveDownloaded(tempFile, cached)
-      return cached
+      val updateFileName = downloadToTempFile(updateId, tempFile)
+      val cachedUpdate = File(RepositoryConfiguration.downloadDir, updateFileName)
+      moved = moveDownloaded(tempFile, cachedUpdate)
+      return cachedUpdate
     } finally {
       if (!moved) {
-        deleteLogged(tempFile)
+        tempFile.deleteLogged()
       }
     }
   }
@@ -273,8 +254,8 @@ object DownloadManager {
     if (pluginFile == null || pluginFile.length() < BROKEN_FILE_THRESHOLD_BYTES) {
       try {
         pluginFile = downloadFile(updateId)
-      } catch (t: Throwable) {
-        LOG.error("Unable to download update #$updateId", t)
+      } catch (e: Exception) {
+        LOG.info("Unable to download update #$updateId", e)
         return null
       }
     }
@@ -292,19 +273,6 @@ object DownloadManager {
 
     return lock
   }
-
-  private fun deleteLogged(file: File) {
-    LOG.debug("Deleting {}", file)
-    if (file.exists()) {
-      try {
-        FileUtils.forceDelete(file)
-      } catch (ce: Exception) {
-        LOG.error("Unable to delete file " + file, ce)
-      }
-    }
-  }
-
-
 }
 
 private interface DownloadApi {

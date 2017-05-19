@@ -7,7 +7,6 @@ import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.apache.http.annotation.ThreadSafe
-import org.slf4j.LoggerFactory
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -31,48 +30,21 @@ private interface RepositoryApi {
 @ThreadSafe
 object RepositoryManager : PluginRepository {
 
-  override fun getUpdateInfoById(updateId: Int): UpdateInfo {
-    return repositoryApi.getUpdateInfoById(updateId).executeSuccessfully().body()
-  }
+  override fun getUpdateInfoById(updateId: Int): UpdateInfo =
+      repositoryApi.getUpdateInfoById(updateId).executeSuccessfully().body()
 
-  override fun getLastCompatibleUpdates(ideVersion: IdeVersion): List<UpdateInfo> {
-    LOG.debug("Loading list of plugins compatible with $ideVersion... ")
+  override fun getLastCompatibleUpdates(ideVersion: IdeVersion): List<UpdateInfo> =
+      repositoryApi.getLastCompatibleUpdates(ideVersion.asString()).executeSuccessfully().body()
 
-    val updates = repositoryApi.getLastCompatibleUpdates(ideVersion.asString())
-    return updates.executeSuccessfully().body()
-  }
+  override fun getLastCompatibleUpdateOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? =
+      getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId).maxBy { it.updateId }
 
-  override fun getLastCompatibleUpdateOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? {
-    LOG.debug("Fetching last compatible update of plugin {} with ide {}", pluginId, ideVersion)
+  override fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> =
+      repositoryApi.getOriginalCompatibleUpdatesByPluginIds(ideVersion.asString(), pluginId).executeSuccessfully().body()
 
-    //search the given number in the all compatible updates
-    val all = getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId)
-    var result: UpdateInfo? = null
-    for (info in all) {
-      if (result == null || result.updateId < info.updateId) {
-        result = info
-      }
-    }
+  override fun getPluginFile(update: UpdateInfo): FileLock? = getPluginFile(update.updateId)
 
-    return result
-  }
-
-  override fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> {
-    LOG.debug("Fetching list of all compatible builds of a pluginId $pluginId on IDE $ideVersion")
-
-    val call = repositoryApi.getOriginalCompatibleUpdatesByPluginIds(ideVersion.asString(), pluginId)
-    return call.executeSuccessfully().body()
-  }
-
-  override fun getPluginFile(update: UpdateInfo): FileLock? {
-    return getPluginFile(update.updateId)
-  }
-
-  override fun getPluginFile(updateId: Int): FileLock? {
-    return DownloadManager.getOrLoadUpdate(updateId)
-  }
-
-  private val LOG = LoggerFactory.getLogger(RepositoryManager::class.java)
+  override fun getPluginFile(updateId: Int): FileLock? = DownloadManager.getOrLoadUpdate(updateId)
 
   private val repositoryApi: RepositoryApi = Retrofit.Builder()
       .baseUrl(RepositoryConfiguration.pluginRepositoryUrl.trimEnd('/') + '/')
@@ -85,7 +57,7 @@ object RepositoryManager : PluginRepository {
       .connectTimeout(5, TimeUnit.MINUTES)
       .readTimeout(5, TimeUnit.MINUTES)
       .writeTimeout(5, TimeUnit.MINUTES)
-      .addInterceptor(HttpLoggingInterceptor().setLevel(if (LOG.isDebugEnabled) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE))
+      .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.NONE))
       .build()
 
 }
