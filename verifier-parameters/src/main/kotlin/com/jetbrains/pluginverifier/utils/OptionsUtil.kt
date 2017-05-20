@@ -60,9 +60,6 @@ open class CmdOpts(
     @set:Argument("external-classpath", alias = "ex-cp", delimiter = ":", description = "The classes from external libraries. The Verifier will not report 'No such class' for such classes.")
     var externalClasspath: Array<String> = arrayOf(),
 
-    @set:Argument("save-check-ide-report", alias = "save", description = "Save the check IDE report to this file")
-    var saveCheckIdeReport: String? = null,
-
     @set:Argument("ignore-all-missing-optional-dependencies", alias = "ignore-all-missing-opt-deps", description = "If specified, all the optional missing plugins will not be treated as problems")
     var ignoreAllMissingOptionalDeps: Boolean = false,
 

@@ -32,7 +32,7 @@ data class CheckPluginResults(val results: List<Result>) : ConfigurationResults 
 
   fun printOnStdout(vPrinterOptions: PrinterOptions) {
     val printWriter = PrintWriter(System.out)
-    WriterVPrinter(printWriter).printResults(results, vPrinterOptions)
+    WriterPrinter(printWriter).printResults(results, vPrinterOptions)
     printWriter.flush()
   }
 

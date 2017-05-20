@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.output
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
-import com.google.common.collect.Multimaps
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Result
@@ -267,7 +266,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
     return if (relevant.find { pluginInfo.pluginId == it.pluginId && pluginInfo.version == it.version } != null) newest else onlyVersion
   }
 
-  fun printIdeCompareResult(compareResult: CheckTrunkApiCompareResult) {
+  fun printTrunkApiCompareResult(compareResult: CheckTrunkApiCompareResult) {
     //accessing to unknown class
     //....firstClass
     //.........pluginOne:1.0
@@ -284,18 +283,27 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
     //....(missing plugin onePlugin)
     //.........onePlugin is required for plugin#1
     //...and so on....
-    val problemToUpdates: Multimap<Problem, UpdateInfo> = Multimaps.invertFrom(compareResult.newProblems, HashMultimap.create())
+    val problemToPlugins: Multimap<Problem, PluginInfo> = compareResult.newProblemToPlugin
 
-    compareResult.newProblems.values().distinct().groupBy { it.javaClass }.forEach { typeToProblems ->
-      val prefix = convertProblemClassNameToSentence(typeToProblems.key)
-      tcLog.testSuiteStarted("($prefix)").use {
-        typeToProblems.value.forEach { problem ->
-          tcLog.testSuiteStarted(problem.getShortDescription().toString()).use {
-            problemToUpdates.get(problem).forEach { plugin ->
-              val testName = "($plugin)"
-              tcLog.testStarted(testName).use {
-                val pluginUrl = getPluginLink(plugin)
-                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problem.getFullDescription().toString())
+    val allProblems: Set<Problem> = problemToPlugins.keySet()
+
+    val trunkVersion = compareResult.trunkVersion
+    val releaseVersion = compareResult.releaseVersion
+
+    allProblems.groupBy { it.javaClass }.forEach { (problemClass, allProblemsOfClass) ->
+      val problemTypeSuite = convertProblemClassNameToSentence(problemClass)
+      tcLog.testSuiteStarted("($problemTypeSuite)").use {
+        allProblemsOfClass.groupBy { it.getShortDescription() }.forEach { (shortDescription, problemsWithShortDescription) ->
+          problemsWithShortDescription.forEach { problem ->
+            val shortProblemDescriptionSuite = shortDescription.toString()
+            tcLog.testSuiteStarted(shortProblemDescriptionSuite).use {
+              problemToPlugins.get(problem).forEach { plugin ->
+                val testName = "($plugin)"
+                tcLog.testStarted(testName).use {
+                  val pluginUrl = getPluginLink(plugin)
+                  val problemDetails = "${problem.getFullDescription()}\nThis problem is detected in $trunkVersion but not in $releaseVersion"
+                  tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problemDetails)
+                }
               }
             }
           }
@@ -304,24 +312,26 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
     }
 
     //print missing dependencies
+    val missingProblems = compareResult.newMissingProblems
     tcLog.testSuiteStarted("missing plugin dependencies").use {
-      compareResult.newMissingProblems.asMap().entries.forEach { missingToProblems ->
-        val missingDependency = missingToProblems.key
+      missingProblems.asMap().entries.forEach { (missingDependency, dependentPlugins) ->
         val testName = "(missing $missingDependency)"
         tcLog.testStarted(testName).use {
-          tcLog.testFailed(testName, "$missingDependency is not found in ${compareResult.currentVersion} " +
-              "but it is required for the following plugins: [${missingToProblems.value.map { it.pluginId }.joinToString()}]", "")
+          tcLog.testFailed(testName, "$missingDependency is not found in $trunkVersion " +
+              "but it is required for the following plugins: [${dependentPlugins.joinToString()}]", "This problem takes place in $trunkVersion but not in $releaseVersion")
         }
       }
     }
 
 
-    val newProblemsCnt = problemToUpdates.keySet().size + compareResult.newMissingProblems.keySet().size
-    val text = "Done, %d new %s in %s compared to %s".format(newProblemsCnt, "problem".pluralize(newProblemsCnt), compareResult.currentVersion, compareResult.majorVersion)
+    val newProblemsCnt = allProblems.size
+    val newMissingDependenciesCnt = missingProblems.keySet().size
     if (newProblemsCnt > 0) {
-      tcLog.buildStatusFailure(text)
+      tcLog.buildStatusFailure("$newProblemsCnt new " + "problem".pluralize(newProblemsCnt) + " detected in $trunkVersion compared to $releaseVersion")
+    } else if (newMissingDependenciesCnt > 0) {
+      tcLog.buildStatusFailure("$newMissingDependenciesCnt new missing " + "dependency".pluralize(newMissingDependenciesCnt) + " detected in $trunkVersion compared to $releaseVersion")
     } else {
-      tcLog.buildStatusSuccess(text)
+      tcLog.buildStatusSuccess("No new compatibility problems found in $trunkVersion compared to $releaseVersion")
     }
   }
 
@@ -362,8 +372,6 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
   }
 
   private fun getPluginLink(pluginInfo: PluginInfo): String = REPOSITORY_PLUGIN_ID_BASE + pluginInfo.pluginId
-
-  private fun getPluginLink(updateInfo: UpdateInfo): String = REPOSITORY_PLUGIN_ID_BASE + updateInfo.pluginId
 
   private fun printMissingDependenciesAsTests(results: List<Result>) {
     val missingToRequired = collectMissingDependenciesForRequiringPlugins(results)

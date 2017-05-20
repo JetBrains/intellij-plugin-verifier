@@ -23,7 +23,7 @@ class CheckPluginConfiguration : Configuration<CheckPluginParams, CheckPluginRes
     override fun resolve(dependencyId: String, isModule: Boolean, dependent: Plugin): DependencyResolver.Result {
       val foundPlugin = findPluginInListOfPluginsToCheck(dependencyId)
       if (foundPlugin != null) {
-        return DependencyResolver.Result.Found(foundPlugin)
+        return DependencyResolver.Result.FoundLocally(foundPlugin)
       }
       return DefaultDependencyResolver(ide).resolve(dependencyId, isModule, dependent)
     }

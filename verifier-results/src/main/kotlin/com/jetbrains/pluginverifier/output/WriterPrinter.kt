@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.warnings.Warning
 import java.io.PrintWriter
 
-class WriterVPrinter(private val out: PrintWriter) : Printer {
+class WriterPrinter(private val out: PrintWriter) : Printer {
 
   override fun printResults(results: List<Result>, options: PrinterOptions) {
     results.forEach { (plugin, ideVersion, verdict) ->

@@ -53,7 +53,7 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
   private fun createDependencyResultByExistingPlugin(plugin: Plugin): DependencyResolver.Result {
     val pluginCreateResult = PluginCreator.createResolverForExistingPlugin(plugin)
     return when (pluginCreateResult) {
-      is CreatePluginResult.OK -> DependencyResolver.Result.Found(pluginCreateResult)
+      is CreatePluginResult.OK -> DependencyResolver.Result.FoundLocally(pluginCreateResult)
       is CreatePluginResult.BadPlugin -> DependencyResolver.Result.ProblematicDependency(pluginCreateResult)
       is CreatePluginResult.NotFound -> DependencyResolver.Result.NotFound(pluginCreateResult.reason)
     }
@@ -72,16 +72,16 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
   private fun downloadAndOpenPlugin(updateInfo: UpdateInfo): DependencyResolver.Result {
     val pluginZip: FileLock = RepositoryManager.getPluginFile(updateInfo)
         ?: return DependencyResolver.Result.NotFound("Plugin $updateInfo is not found in the Plugin Repository")
-    return getDependencyResultWithFileLock(pluginZip)
+    return getDependencyResultByDownloadedUpdate(pluginZip, updateInfo)
   }
 
-  private fun getDependencyResultWithFileLock(pluginLock: FileLock): DependencyResolver.Result {
+  fun getDependencyResultByDownloadedUpdate(pluginLock: FileLock, updateInfo: UpdateInfo): DependencyResolver.Result {
     val dependencyCreationResult = pluginLock.closeOnException {
       PluginCreator.createPluginByFile(pluginLock.getFile())
     }
     return when (dependencyCreationResult) {
       is CreatePluginResult.OK -> {
-        DependencyResolver.Result.Downloaded(dependencyCreationResult, pluginLock)
+        DependencyResolver.Result.Downloaded(dependencyCreationResult, updateInfo, pluginLock)
       }
       is CreatePluginResult.BadPlugin -> {
         pluginLock.release()
@@ -116,7 +116,7 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
         if (updateInfo != null) {
           val lock = RepositoryManager.getPluginFile(updateInfo)
           if (lock != null) {
-            return getDependencyResultWithFileLock(lock)
+            return getDependencyResultByDownloadedUpdate(lock, updateInfo)
           }
         }
       } catch (e: Throwable) {

@@ -121,25 +121,25 @@ class CheckTrunkApiParamsParser : ConfigurationParamsParser<CheckTrunkApiParams>
 }
 
 
-data class CheckTrunkApiParams(val ideDescriptor: IdeDescriptor,
-                               val majorIdeDescriptor: IdeDescriptor,
+data class CheckTrunkApiParams(val trunkDescriptor: IdeDescriptor,
+                               val releaseDescriptor: IdeDescriptor,
                                val externalClassesPrefixes: List<String>,
                                val problemsFilter: ProblemsFilter,
                                val jdkDescriptor: JdkDescriptor,
                                private val deleteMajorIdeOnExit: Boolean,
                                val progress: Progress = DefaultProgress()) : ConfigurationParams {
   override fun presentableText(): String = """Check Trunk API Configuration Parameters:
-Trunk IDE to be checked: $ideDescriptor
-Release IDE to compare API with: $majorIdeDescriptor
+Trunk IDE to be checked: $trunkDescriptor
+Release IDE to compare API with: $releaseDescriptor
 External classes prefixes: [${externalClassesPrefixes.joinToString()}]
 JDK: $jdkDescriptor
 """
 
   override fun close() {
     try {
-      ideDescriptor.close()
+      trunkDescriptor.close()
     } finally {
-      majorIdeDescriptor.close()
+      releaseDescriptor.close()
     }
   }
 

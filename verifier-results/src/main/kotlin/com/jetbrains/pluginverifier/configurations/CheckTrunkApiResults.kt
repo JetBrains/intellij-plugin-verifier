@@ -1,36 +1,15 @@
 package com.jetbrains.pluginverifier.configurations
 
-import com.google.common.collect.Multimap
-import com.google.common.collect.Multimaps
 import com.google.gson.annotations.SerializedName
-import com.intellij.structure.ide.IdeVersion
-import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.problems.Problem
-import com.jetbrains.pluginverifier.report.CheckIdeReport
-import com.jetbrains.pluginverifier.repository.UpdateInfo
 
 /**
  * @author Sergey Patrikeev
  */
-data class CheckTrunkApiResults(@SerializedName("majorReport") val majorReport: CheckIdeReport,
-                                @SerializedName("majorPlugins") val majorPlugins: BundledPlugins,
-                                @SerializedName("currentReport") val currentReport: CheckIdeReport,
-                                @SerializedName("currentPlugins") val currentPlugins: BundledPlugins) : ConfigurationResults
+data class CheckTrunkApiResults(@SerializedName("trunkResults") val trunkResults: CheckIdeResults,
+                                @SerializedName("trunkBundledPlugins") val trunkBundledPlugins: BundledPlugins,
+                                @SerializedName("releaseResults") val releaseResults: CheckIdeResults,
+                                @SerializedName("releaseBundledPlugins") val releaseBundledPlugins: BundledPlugins) : ConfigurationResults
 
 data class BundledPlugins(@SerializedName("pluginIds") val pluginIds: List<String>,
                           @SerializedName("moduleIds") val moduleIds: List<String>)
 
-data class CheckTrunkApiCompareResult(@SerializedName("curVersion") val currentVersion: IdeVersion,
-                                      @SerializedName("majorVersion") val majorVersion: IdeVersion,
-                                      @SerializedName("newProblems") val newProblems: Multimap<UpdateInfo, Problem>,
-                                      @SerializedName("newMissingProblems") val newMissingProblems: Multimap<MissingDependency, UpdateInfo>) {
-  companion object {
-    fun create(apiResults: CheckTrunkApiResults): CheckTrunkApiCompareResult {
-      val oldProblems = apiResults.majorReport.pluginProblems.values().toSet()
-      val newProblems = Multimaps.filterValues(apiResults.currentReport.pluginProblems, { it !in oldProblems })
-      val newMissingProblems = Multimaps.filterEntries(apiResults.currentReport.missingPlugins, { it !in apiResults.majorReport.missingPlugins.entries() })
-      val relatedProblems = Multimaps.filterKeys(newProblems, { !newMissingProblems.containsValue(it) })
-      return CheckTrunkApiCompareResult(apiResults.currentReport.ideVersion, apiResults.majorReport.ideVersion, relatedProblems, newMissingProblems)
-    }
-  }
-}

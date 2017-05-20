@@ -32,8 +32,8 @@ data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVers
     }
   }
 
-  fun saveToHtmlFile(htmlFile: File, vPrinterOptions: PrinterOptions) {
-    HtmlPrinter(ideVersion, { x -> excludedPlugins.containsEntry(x.first, x.second) }, htmlFile.create()).printResults(results, vPrinterOptions)
+  fun saveToHtmlFile(htmlFile: File, printerOptions: PrinterOptions) {
+    HtmlPrinter(ideVersion, { x -> excludedPlugins.containsEntry(x.first, x.second) }, htmlFile.create()).printResults(results, printerOptions)
   }
 
   fun printTcLog(groupBy: TeamCityPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: PrinterOptions) {
@@ -63,7 +63,7 @@ data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVers
 
   fun printOnStdOut(vPrinterOptions: PrinterOptions) {
     val printWriter = PrintWriter(System.out)
-    WriterVPrinter(printWriter).printResults(results, vPrinterOptions)
+    WriterPrinter(printWriter).printResults(results, vPrinterOptions)
     printWriter.flush()
   }
 

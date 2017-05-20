@@ -17,9 +17,6 @@ import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.location.Location
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.SymbolicReference
-import com.jetbrains.pluginverifier.report.CheckIdeReport
-import com.jetbrains.pluginverifier.report.checkIdeReportDeserializer
-import com.jetbrains.pluginverifier.report.checkIdeReportSerializer
 import com.jetbrains.pluginverifier.utils.*
 import java.io.IOException
 import java.io.StringReader
@@ -94,8 +91,6 @@ object CompactJson {
       .registerTypeAdapterFactory(PairTypeAdapterFactory())
       .registerTypeAdapterFactory(TripleTypeAdapterFactory())
 
-      .registerTypeAdapter<CheckIdeReport>(checkIdeReportSerializer)
-      .registerTypeAdapter<CheckIdeReport>(checkIdeReportDeserializer)
       .registerTypeAdapter<DependenciesGraph>(dependenciesGraphSerializer)
       .registerTypeAdapter<DependenciesGraph>(dependenciesGraphDeserializer)
       .create()
