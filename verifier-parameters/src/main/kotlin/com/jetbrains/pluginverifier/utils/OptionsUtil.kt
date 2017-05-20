@@ -77,8 +77,7 @@ object OptionsUtil {
 
   fun createIdeDescriptor(ideToCheckFile: File, opts: CmdOpts): IdeDescriptor {
     val ideVersion = takeVersionFromCmd(opts)
-    val createIdeResult = IdeCreator.createByFile(ideToCheckFile, ideVersion)
-    return IdeDescriptor(createIdeResult)
+    return IdeCreator.createByFile(ideToCheckFile, ideVersion)
   }
 
   fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {

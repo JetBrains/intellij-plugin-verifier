@@ -96,7 +96,7 @@ data class CheckPluginParams(val pluginDescriptors: List<PluginDescriptor>,
 
   override fun close() {
     try {
-      ideDescriptors.forEach { it.createIdeResult.closeLogged() }
+      ideDescriptors.forEach { it.closeLogged() }
     } finally {
       pluginDescriptors.forEach { (it as? PluginDescriptor.ByFileLock)?.fileLock?.release() }
     }

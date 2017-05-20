@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.ide
 import com.intellij.structure.ide.IdeManager
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.pluginverifier.api.IdeDescriptor
 import java.io.File
 
 /**
@@ -10,10 +11,10 @@ import java.io.File
  */
 object IdeCreator {
 
-  fun createByFile(file: File, ideVersion: IdeVersion?): CreateIdeResult {
+  fun createByFile(file: File, ideVersion: IdeVersion?): IdeDescriptor {
     val ide = IdeManager.getInstance().createIde(file, ideVersion)
     val ideResolver = Resolver.createIdeResolver(ide)
-    return CreateIdeResult(ide, ideResolver)
+    return IdeDescriptor(ide, ideResolver)
   }
 
 }

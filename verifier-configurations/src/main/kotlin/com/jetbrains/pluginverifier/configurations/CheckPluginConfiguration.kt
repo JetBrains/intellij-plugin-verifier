@@ -46,7 +46,7 @@ class CheckPluginConfiguration : Configuration<CheckPluginParams, CheckPluginRes
   private fun doExecute(): CheckPluginResults {
     val results = arrayListOf<Result>()
     params.ideDescriptors.forEach { ideDescriptor ->
-      val dependencyResolver = getDependencyResolver(ideDescriptor.createIdeResult.ide)
+      val dependencyResolver = getDependencyResolver(ideDescriptor.ide)
       params.pluginDescriptors.mapTo(results) {
         doVerification(it, ideDescriptor, dependencyResolver)
       }

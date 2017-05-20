@@ -9,7 +9,6 @@ import com.jetbrains.pluginverifier.configurations.CheckPluginConfiguration
 import com.jetbrains.pluginverifier.configurations.CheckPluginParams
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
-import com.jetbrains.pluginverifier.ide.CreateIdeResult
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import org.junit.Assert
 import org.junit.Rule
@@ -34,7 +33,7 @@ class TestCheckPluginDependents {
     val secondDescriptor = PluginDescriptor.ByInstance(CreatePluginResult.OK(PluginCreationSuccessImpl(second, emptyList()), Resolver.getEmptyResolver()))
 
     val ide = MockUtil.createMockIde(IdeVersion.createIdeVersion("IU-163"), emptyList())
-    val ideDescriptor = IdeDescriptor(CreateIdeResult(ide, Resolver.getEmptyResolver()))
+    val ideDescriptor = IdeDescriptor(ide, Resolver.getEmptyResolver())
     val jdkDescriptor = JdkDescriptor(temporaryFolder.newFolder())
 
     //when

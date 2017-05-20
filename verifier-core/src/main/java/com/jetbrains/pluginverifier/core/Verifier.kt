@@ -1,12 +1,10 @@
 package com.jetbrains.pluginverifier.core
 
-import com.intellij.structure.ide.Ide
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.problems.PluginProblem
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.dependencies.*
-import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.withDebug
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
@@ -24,10 +22,6 @@ class Verifier(val pluginDescriptor: PluginDescriptor,
                val ideDescriptor: IdeDescriptor,
                val runtimeResolver: Resolver,
                val params: VerifierParams) : Callable<Result> {
-
-  private val dependencyResolver = params.dependencyResolver ?: DefaultDependencyResolver(ideDescriptor.createIdeResult.ide)
-
-  private val graphBuilder = DepGraphBuilder(dependencyResolver)
 
   private lateinit var plugin: Plugin
   private lateinit var pluginResolver: Resolver
@@ -83,20 +77,19 @@ class Verifier(val pluginDescriptor: PluginDescriptor,
     return PluginInfo(plugin.pluginId, plugin.pluginVersion, (pluginDescriptor as? PluginDescriptor.ByUpdateInfo)?.updateInfo)
   }
 
-  fun getVerificationVerdict(creationOk: CreatePluginResult.OK): Verdict {
+  private fun getVerificationVerdict(creationOk: CreatePluginResult.OK): Verdict {
     plugin = creationOk.success.plugin
     warnings = creationOk.success.warnings
     pluginResolver = creationOk.resolver
 
-    val (graph, start) = graphBuilder.build(creationOk)
-    val apiGraph = DepGraph2ApiGraphConverter.convert(graph, start)
-    logDebugGraph(plugin, apiGraph)
-    try {
+    val dependencyResolver = params.dependencyResolver ?: DefaultDependencyResolver(ideDescriptor.ide)
+    DepGraphBuilder(dependencyResolver).use { graphBuilder ->
+      val (graph, start) = graphBuilder.build(creationOk)
+      val apiGraph = DepGraph2ApiGraphConverter.convert(graph, start)
+      logDebugGraph(plugin, apiGraph)
       val context = runVerifier(graph)
       addCycleAndOtherWarnings(apiGraph, context)
       return getAppropriateVerdict(context, apiGraph)
-    } finally {
-      graph.vertexSet().forEach { it.closeLogged() }
     }
   }
 
@@ -132,27 +125,22 @@ class Verifier(val pluginDescriptor: PluginDescriptor,
 
   private fun runVerifier(graph: DirectedGraph<DepVertex, DepEdge>): VerificationContext {
     val dependenciesResolver = getDependenciesClassesResolver(graph)
-    val checkClasses = getClassesForCheck()
-    val createIdeResult = ideDescriptor.createIdeResult
-    val classLoader = getVerificationClassLoader(dependenciesResolver, createIdeResult.ideResolver, runtimeResolver, params.externalClassPath, createIdeResult.ide)
+    val checkClasses = getClassesOfPluginToCheck()
+    val classLoader = getVerificationClassLoader(dependenciesResolver)
     return classLoader.use {
-      BytecodeVerifier(params, plugin, createIdeResult.ide, classLoader).verify(checkClasses)
+      BytecodeVerifier(params, plugin, classLoader, ideDescriptor.ideVersion).verify(checkClasses)
     }
   }
 
-  private fun getVerificationClassLoader(dependenciesResolver: Resolver,
-                                         ideResolver: Resolver,
-                                         runtimeResolver: Resolver,
-                                         externalClassPath: Resolver,
-                                         ide: Ide): Resolver =
+  private fun getVerificationClassLoader(dependenciesResolver: Resolver): Resolver =
       CloseIgnoringResolver(Resolver.createCacheResolver(
           Resolver.createUnionResolver(
-              "Common resolver for plugin " + plugin.pluginId + " with its transitive dependencies; ide " + ide.version + "; jdk " + runtimeResolver,
-              listOf(pluginResolver, runtimeResolver, ideResolver, dependenciesResolver, externalClassPath)
+              "Common resolver for plugin $plugin; IDE #${ideDescriptor.ideVersion}; JDK $runtimeResolver",
+              listOf(pluginResolver, runtimeResolver, ideDescriptor.ideResolver, dependenciesResolver, params.externalClassPath)
           )
       ))
 
-  private fun getClassesForCheck(): Iterator<String> {
+  private fun getClassesOfPluginToCheck(): Iterator<String> {
     val resolver = Resolver.createUnionResolver("Plugin classes for check",
         (plugin.allClassesReferencedFromXml + plugin.optionalDescriptors.flatMap { it.value.allClassesReferencedFromXml })
             .map { pluginResolver.getClassLocation(it) }

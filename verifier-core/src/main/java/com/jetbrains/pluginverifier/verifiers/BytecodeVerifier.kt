@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers
 
-import com.intellij.structure.ide.Ide
+import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VerifierParams
@@ -21,14 +21,14 @@ import org.slf4j.LoggerFactory
 
 class BytecodeVerifier(verifierParams: VerifierParams,
                        plugin: Plugin,
-                       ide: Ide,
-                       classLoader: Resolver) {
+                       classLoader: Resolver,
+                       private val ideVersion: IdeVersion) {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(BytecodeVerifier::class.java)
   }
 
-  private val verificationContext: VerificationContext = VerificationContext(plugin, ide, verifierParams, classLoader)
+  private val verificationContext: VerificationContext = VerificationContext(plugin, verifierParams, classLoader)
 
   private val fieldVerifiers = arrayOf<FieldVerifier>(FieldTypeVerifier())
 
@@ -56,29 +56,36 @@ class BytecodeVerifier(verifierParams: VerifierParams,
       FieldAccessInstructionVerifier()
   )
 
+  private var totalVerifiedClasses: Int = 0
+
   fun verify(classesToCheck: Iterator<String>): VerificationContext {
-    var lastNVerified = 0
+    totalVerifiedClasses = 0
     for (className in classesToCheck) {
-      if (Thread.currentThread().isInterrupted) {
-        throw InterruptedException("The verification was cancelled")
-      }
-      val node = try {
-        verificationContext.resolver.findClass(className)
-      } catch (e: Exception) {
-        null
-      }
-      if (node != null) {
-        try {
-          verifyClass(node, verificationContext)
-        } finally {
-          lastNVerified++
-          if (lastNVerified % 1000 == 0) {
-            LOG.debug("'${verificationContext.plugin}' and #${verificationContext.ide}: finished $lastNVerified classes")
-          }
-        }
+      checkCancelled()
+      verifyClass(className)
+      totalVerifiedClasses++
+      if (totalVerifiedClasses % 1000 == 0) {
+        LOG.debug("'${verificationContext.plugin}' and #$ideVersion: finished $totalVerifiedClasses classes")
       }
     }
     return verificationContext
+  }
+
+  private fun checkCancelled() {
+    if (Thread.currentThread().isInterrupted) {
+      throw InterruptedException("The verification was cancelled")
+    }
+  }
+
+  private fun verifyClass(className: String) {
+    val node = try {
+      verificationContext.resolver.findClass(className)
+    } catch (e: Exception) {
+      null
+    }
+    if (node != null) {
+      verifyClass(node, verificationContext)
+    }
   }
 
   @Suppress("UNCHECKED_CAST")

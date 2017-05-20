@@ -14,43 +14,38 @@ import java.io.Closeable
 
 data class DepEdge(val dependency: PluginDependency) : DefaultEdge()
 
-data class DepVertex(val creationOk: CreatePluginResult.OK) : Closeable {
+data class DepVertex(val creationOk: CreatePluginResult.OK) {
   val missingDependencies: MutableList<MissingDependency> = arrayListOf()
 
   override fun equals(other: Any?): Boolean = other is DepVertex && creationOk.success.plugin == other.creationOk.success.plugin
 
   override fun hashCode(): Int = creationOk.success.plugin.hashCode()
 
-  override fun close() = creationOk.close()
 }
 
-class DepGraphBuilder(private val dependencyResolver: DependencyResolver) {
+class DepGraphBuilder(private val dependencyResolver: DependencyResolver) : Closeable {
+  companion object {
+    private val LOG: Logger = LoggerFactory.getLogger(DepGraphBuilder::class.java)
+  }
 
   data class Result(val graph: DirectedGraph<DepVertex, DepEdge>, val start: DepVertex)
 
   private val graph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
 
-  companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(DepGraphBuilder::class.java)
-  }
-
   fun build(creationOk: CreatePluginResult.OK): Result {
     LOG.debug("Building dependencies graph for ${creationOk.success.plugin}")
     val copiedResultOk = PluginCreator.getNonCloseableOkResult(creationOk)
     val startVertex = DepVertex(copiedResultOk)
-    try {
-      traverseDependencies(startVertex)
-      return Result(graph, startVertex)
-    } catch (e: Throwable) {
-      graph.vertexSet().forEach { it.closeLogged() }
-      throw e
-    }
+    traverseDependencies(startVertex)
+    return Result(graph, startVertex)
   }
 
-  private fun findDependencyOrFillMissingReason(pluginDependency: PluginDependency, isModule: Boolean, current: DepVertex): DepVertex? =
-      getResolvedDependency(pluginDependency) ?: resolveDependency(current, isModule, pluginDependency)
+  override fun close() = graph.vertexSet().forEach { it.creationOk.closeLogged() }
 
-  private fun getResolvedDependency(pluginDependency: PluginDependency): DepVertex? = graph.vertexSet().find { pluginDependency.id == it.creationOk.success.plugin.pluginId }
+  private fun findDependencyOrFillMissingReason(pluginDependency: PluginDependency, isModule: Boolean, current: DepVertex): DepVertex? =
+      getAlreadyResolvedDependency(pluginDependency) ?: resolveDependency(current, isModule, pluginDependency)
+
+  private fun getAlreadyResolvedDependency(pluginDependency: PluginDependency): DepVertex? = graph.vertexSet().find { pluginDependency.id == it.creationOk.success.plugin.pluginId }
 
   private fun resolveDependency(current: DepVertex, isModule: Boolean, pluginDependency: PluginDependency): DepVertex? {
     val resolved = dependencyResolver.resolve(pluginDependency.id, isModule, current.creationOk.success.plugin)

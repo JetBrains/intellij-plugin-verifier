@@ -31,7 +31,6 @@ fun VerificationContext.resolveClass(className: String, lookup: ClassNode): ClsR
   if (verifierParams.isExternalClass(className)) {
     return ClsResolution.ExternalClass
   }
-//  val node = findClassNode(className)
   val node = try {
     resolver.findClass(className)
   } catch (e: Exception) {

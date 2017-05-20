@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers
 
-import com.intellij.structure.ide.Ide
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VerifierParams
@@ -14,7 +13,6 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 
 data class VerificationContext(
     val plugin: Plugin,
-    val ide: Ide,
     val verifierParams: VerifierParams,
     val resolver: Resolver
 ) {
