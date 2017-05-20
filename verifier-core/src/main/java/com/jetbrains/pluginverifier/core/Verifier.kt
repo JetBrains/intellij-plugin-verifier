@@ -17,12 +17,13 @@ import com.jetbrains.pluginverifier.warnings.Warning
 import org.jgrapht.DirectedGraph
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.util.concurrent.Callable
 
 class Verifier(val pluginDescriptor: PluginDescriptor,
                val ideDescriptor: IdeDescriptor,
                val runtimeResolver: Resolver,
-               val params: VerifierParams) : Callable<VerificationResult> {
+               val params: VerifierParams) : Callable<Result> {
 
   private val dependencyResolver = params.dependencyResolver ?: DefaultDependencyResolver(ideDescriptor.createIdeResult.ide)
 
@@ -36,33 +37,48 @@ class Verifier(val pluginDescriptor: PluginDescriptor,
     private val LOG: Logger = LoggerFactory.getLogger(Verifier::class.java)
   }
 
-  override fun call(): VerificationResult {
-    withDebug(LOG, "Verification $pluginDescriptor with $ideDescriptor") {
+  override fun call(): Result {
+    withDebug(LOG, "Verify $pluginDescriptor with $ideDescriptor") {
       return createPluginAndDoVerification()
     }
   }
 
-  private fun createPluginAndDoVerification(): VerificationResult {
-    PluginCreator.createPlugin(pluginDescriptor).use { createPluginResult ->
-      return doPluginVerification(createPluginResult)
+  private fun createPluginAndDoVerification(): Result = PluginCreator.createPlugin(pluginDescriptor).use { createPluginResult ->
+    when (createPluginResult) {
+      is CreatePluginResult.BadPlugin -> {
+        val pluginInfo = getPluginInfoByDescriptor(pluginDescriptor)
+        Result(pluginInfo, ideDescriptor.ideVersion, Verdict.Bad(createPluginResult.pluginCreationFail.errorsAndWarnings))
+      }
+      is CreatePluginResult.NotFound -> {
+        val pluginInfo = getPluginInfoByDescriptor(pluginDescriptor)
+        Result(pluginInfo, ideDescriptor.ideVersion, Verdict.NotFound(createPluginResult.reason))
+      }
+      is CreatePluginResult.OK -> {
+        val verdict = getVerificationVerdict(createPluginResult)
+        val pluginInfo = getPluginInfoByPluginInstance(createPluginResult, pluginDescriptor)
+        Result(pluginInfo, ideDescriptor.ideVersion, verdict)
+      }
     }
   }
 
-  private fun doPluginVerification(createPluginResult: CreatePluginResult): VerificationResult = when (createPluginResult) {
-    is CreatePluginResult.BadPlugin -> {
-      VerificationResult.BadPlugin(pluginDescriptor, ideDescriptor, createPluginResult.pluginCreationFail.errorsAndWarnings)
+  private fun getPluginInfoByDescriptor(pluginDescriptor: PluginDescriptor): PluginInfo = when (pluginDescriptor) {
+    is PluginDescriptor.ByUpdateInfo -> PluginInfo(pluginDescriptor.updateInfo.pluginId, pluginDescriptor.updateInfo.version, pluginDescriptor.updateInfo)
+    is PluginDescriptor.ByFileLock -> {
+      val (pluginId, version) = guessPluginIdAndVersion(pluginDescriptor.fileLock.getFile())
+      PluginInfo(pluginId, version, null)
     }
-    is CreatePluginResult.OK -> {
-      val verdict = getVerificationVerdict(createPluginResult)
-      val pluginInfo = getPluginInfo(createPluginResult, pluginDescriptor)
-      VerificationResult.Verified(pluginDescriptor, ideDescriptor, verdict, pluginInfo)
-    }
-    is CreatePluginResult.NotFound -> {
-      VerificationResult.NotFound(pluginDescriptor, ideDescriptor, createPluginResult.reason)
+    is PluginDescriptor.ByInstance -> {
+      PluginInfo(pluginDescriptor.createOk.success.plugin.pluginId, pluginDescriptor.createOk.success.plugin.pluginVersion, null)
     }
   }
 
-  private fun getPluginInfo(createPluginResult: CreatePluginResult.OK, pluginDescriptor: PluginDescriptor): PluginInfo {
+  private fun guessPluginIdAndVersion(file: File): Pair<String, String> {
+    val name = file.nameWithoutExtension
+    val version = name.substringAfterLast('-')
+    return name.substringBeforeLast('-') to version
+  }
+
+  private fun getPluginInfoByPluginInstance(createPluginResult: CreatePluginResult.OK, pluginDescriptor: PluginDescriptor): PluginInfo {
     val plugin = createPluginResult.success.plugin
     return PluginInfo(plugin.pluginId, plugin.pluginVersion, (pluginDescriptor as? PluginDescriptor.ByUpdateInfo)?.updateInfo)
   }

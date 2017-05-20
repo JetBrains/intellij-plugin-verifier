@@ -35,7 +35,7 @@ class VerifierExecutor(val params: VerifierParams) : Closeable {
           .build()
   )
 
-  private val completionService = ExecutorCompletionService<VerificationResult>(executor)
+  private val completionService = ExecutorCompletionService<Result>(executor)
 
   init {
     LOG.info("Created verifier with $concurrentWorkers " + " worker".pluralize(concurrentWorkers))
@@ -47,12 +47,12 @@ class VerifierExecutor(val params: VerifierParams) : Closeable {
     return maxOf(1, minOf(maxByMemory, maxByCpu)).toInt()
   }
 
-  fun verify(tasks: List<Pair<PluginDescriptor, IdeDescriptor>>, progress: Progress): List<VerificationResult> {
+  fun verify(tasks: List<Pair<PluginDescriptor, IdeDescriptor>>, progress: Progress): List<Result> {
     tasks.forEach {
       val worker = Verifier(it.first, it.second, runtimeResolver, params)
       completionService.submit(worker)
     }
-    return getVerificationResults(tasks.size, progress)
+    return getResults(tasks.size, progress)
   }
 
   override fun close() {
@@ -60,9 +60,9 @@ class VerifierExecutor(val params: VerifierParams) : Closeable {
     executor.shutdownNow()
   }
 
-  private fun getVerificationResults(tasks: Int, progress: Progress): List<VerificationResult> {
+  private fun getResults(tasks: Int, progress: Progress): List<Result> {
     var verified = 0
-    val results = arrayListOf<VerificationResult>()
+    val results = arrayListOf<Result>()
     (1..tasks).forEach fori@ {
       while (true) {
         if (Thread.currentThread().isInterrupted) {
@@ -74,7 +74,7 @@ class VerifierExecutor(val params: VerifierParams) : Closeable {
           val result = future.get()
           results.add(result)
           progress.setProgress(((++verified).toDouble()) / tasks)
-          val resultString = getVerificationResultText(result)
+          val resultString = result.toString()
           progress.setText(resultString)
           LOG.info("$verified/$tasks plugins finished. $resultString")
           break
@@ -83,12 +83,5 @@ class VerifierExecutor(val params: VerifierParams) : Closeable {
     }
     return results
   }
-
-  private fun getVerificationResultText(result: VerificationResult): String =
-      "Plugin ${result.pluginDescriptor} has been verified with ${result.ideDescriptor}. " + when (result) {
-        is VerificationResult.Verified -> "Result: ${result.verdict}"
-        is VerificationResult.BadPlugin -> "Broken plugin: ${result.problems.joinToString()}"
-        is VerificationResult.NotFound -> "Not found: ${result.reason}"
-      }
 
 }

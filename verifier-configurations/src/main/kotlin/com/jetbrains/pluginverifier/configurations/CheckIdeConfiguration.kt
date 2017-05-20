@@ -8,7 +8,6 @@ import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.utils.VerificationResultToApiResultConverter
 
 
 class CheckIdeConfiguration : Configuration<CheckIdeParams, CheckIdeResults> {
@@ -21,29 +20,32 @@ class CheckIdeConfiguration : Configuration<CheckIdeParams, CheckIdeResults> {
     return doExecute(notExcludedPlugins)
   }
 
-  private fun isExcluded(pluginDescriptor: PluginDescriptor): Boolean {
-    return when (pluginDescriptor) {
-      is PluginDescriptor.ByUpdateInfo -> params.excludedPlugins.containsEntry(pluginDescriptor.updateInfo.pluginId, pluginDescriptor.updateInfo.version)
-      is PluginDescriptor.ByInstance -> params.excludedPlugins.containsEntry(pluginDescriptor.createOk.success.plugin.pluginId, pluginDescriptor.createOk.success.plugin.pluginVersion)
-      is PluginDescriptor.ByFileLock -> {
-        PluginCreator.createPluginByFile(pluginDescriptor.fileLock.getFile()).use { createPluginResult ->
-          if (createPluginResult is CreatePluginResult.OK) {
-            val plugin = createPluginResult.success.plugin
-            return params.excludedPlugins.containsEntry(plugin.pluginId, plugin.pluginVersion)
-          }
-          return true
+  private fun isExcluded(pluginDescriptor: PluginDescriptor): Boolean = when (pluginDescriptor) {
+    is PluginDescriptor.ByUpdateInfo -> {
+      val updateInfo = pluginDescriptor.updateInfo
+      params.excludedPlugins.containsEntry(updateInfo.pluginId, updateInfo.version)
+    }
+    is PluginDescriptor.ByInstance -> {
+      val plugin = pluginDescriptor.createOk.success.plugin
+      params.excludedPlugins.containsEntry(plugin.pluginId, plugin.pluginVersion)
+    }
+    is PluginDescriptor.ByFileLock -> {
+      PluginCreator.createPluginByFile(pluginDescriptor.fileLock.getFile()).use { createPluginResult ->
+        if (createPluginResult is CreatePluginResult.OK) {
+          val plugin = createPluginResult.success.plugin
+          return params.excludedPlugins.containsEntry(plugin.pluginId, plugin.pluginVersion)
         }
+        return true
       }
     }
   }
 
   private fun doExecute(notExcludedPlugins: List<PluginDescriptor>): CheckIdeResults {
     val verifierParams = VerifierParams(params.jdkDescriptor, params.externalClassesPrefixes, params.problemsFilter, params.externalClassPath, params.dependencyResolver)
-    val apiResultConverter = VerificationResultToApiResultConverter()
     val verifier = VerifierExecutor(verifierParams)
     verifier.use {
       val results = verifier.verify(notExcludedPlugins.map { it to params.ideDescriptor }, params.progress)
-      return CheckIdeResults(params.ideDescriptor.ideVersion, apiResultConverter.convert(results), params.excludedPlugins, getMissingUpdatesProblems())
+      return CheckIdeResults(params.ideDescriptor.ideVersion, results, params.excludedPlugins, getMissingUpdatesProblems())
     }
   }
 

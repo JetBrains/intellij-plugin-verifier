@@ -4,7 +4,7 @@ import com.intellij.structure.ide.Ide
 import com.intellij.structure.plugin.Plugin
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginDescriptor
-import com.jetbrains.pluginverifier.api.VerificationResult
+import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.core.VerifierExecutor
 import com.jetbrains.pluginverifier.dependencies.DefaultDependencyResolver
@@ -12,7 +12,6 @@ import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
-import com.jetbrains.pluginverifier.utils.VerificationResultToApiResultConverter
 
 class CheckPluginConfiguration : Configuration<CheckPluginParams, CheckPluginResults> {
 
@@ -45,19 +44,19 @@ class CheckPluginConfiguration : Configuration<CheckPluginParams, CheckPluginRes
   }
 
   private fun doExecute(): CheckPluginResults {
-    val results = arrayListOf<VerificationResult>()
+    val results = arrayListOf<Result>()
     params.ideDescriptors.forEach { ideDescriptor ->
       val dependencyResolver = getDependencyResolver(ideDescriptor.createIdeResult.ide)
       params.pluginDescriptors.mapTo(results) {
         doVerification(it, ideDescriptor, dependencyResolver)
       }
     }
-    return CheckPluginResults(VerificationResultToApiResultConverter().convert(results))
+    return CheckPluginResults(results)
   }
 
   private fun doVerification(pluginDescriptor: PluginDescriptor,
                              ideDescriptor: IdeDescriptor,
-                             dependencyResolver: DependencyResolver): VerificationResult {
+                             dependencyResolver: DependencyResolver): Result {
     val verifierParams = VerifierParams(params.jdkDescriptor, params.externalClassesPrefixes, params.problemsFilter, params.externalClasspath, dependencyResolver)
     val verifier = VerifierExecutor(verifierParams)
     verifier.use {

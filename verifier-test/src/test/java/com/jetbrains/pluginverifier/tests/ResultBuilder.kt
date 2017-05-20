@@ -13,7 +13,7 @@ object ResultBuilder {
 
   private val MOCK_IDE_VERSION = IdeVersion.createIdeVersion("IU-145.500")
 
-  fun doIdeaAndPluginVerification(ideaFile: File, pluginFile: File): VerificationResult {
+  fun doIdeaAndPluginVerification(ideaFile: File, pluginFile: File): Result {
     val createIdeResult = IdeCreator.createByFile(ideaFile, MOCK_IDE_VERSION)
     val pluginDescriptor = PluginDescriptor.ByFileLock(IdleFileLock(pluginFile))
     val jdkPath = System.getenv("JAVA_HOME") ?: "/usr/lib/jvm/java-8-oracle"

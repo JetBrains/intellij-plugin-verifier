@@ -44,23 +44,26 @@ class CheckTrunkApiConfiguration : Configuration<CheckTrunkApiParams, CheckTrunk
     params = parameters
     val majorIdeDescriptor = parameters.majorIdeDescriptor
     val pluginsToCheck = getPluginsToCheck(majorIdeDescriptor.ideVersion)
-    val (majorBundled, majorReport) = calcReport(majorIdeDescriptor, pluginsToCheck, getDependencyResolverOfMajorIde())
+    val (majorBundled, majorReport) = runCheckIdeConfiguration(majorIdeDescriptor, pluginsToCheck, getDependencyResolverOfMajorIde())
     val ideDescriptor = parameters.ideDescriptor
-    val (currentBundled, currentReport) = calcReport(ideDescriptor, pluginsToCheck, getDependencyResolverOfCurrentIde())
+    val (currentBundled, currentReport) = runCheckIdeConfiguration(ideDescriptor, pluginsToCheck, getDependencyResolverOfCurrentIde())
     return CheckTrunkApiResults(majorReport, majorBundled, currentReport, currentBundled)
   }
 
-  private fun getPluginsToCheck(ideVersion: IdeVersion): List<PluginDescriptor> = RepositoryManager
-        .getLastCompatibleUpdates(ideVersion)
-        .map { PluginDescriptor.ByUpdateInfo(it) }
+  private fun getPluginsToCheck(ideVersion: IdeVersion): List<PluginDescriptor.ByUpdateInfo> = RepositoryManager
+      .getLastCompatibleUpdates(ideVersion)
+      .map { PluginDescriptor.ByUpdateInfo(it) }
 
   private fun getBundledPlugins(ide: Ide): BundledPlugins =
       BundledPlugins(ide.bundledPlugins.map { it.pluginId }.distinct(), ide.bundledPlugins.flatMap { it.definedModules }.distinct())
 
 
-  private fun calcReport(ideDescriptor: IdeDescriptor, pluginsToCheck: List<PluginDescriptor>, dependencyResolver: DependencyResolver?): Pair<BundledPlugins, CheckIdeReport> {
-    val checkIdeParams = CheckIdeParams(ideDescriptor, params.jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), emptyList(), Resolver.getEmptyResolver(), params.externalClassesPrefixes, params.problemsFilter, dependencyResolver = dependencyResolver)
-    val ideReport = CheckIdeConfiguration().execute(checkIdeParams).run { CheckIdeReport.createReport(ideDescriptor.ideVersion, results) }
+  private fun runCheckIdeConfiguration(ideDescriptor: IdeDescriptor,
+                                       pluginsToCheck: List<PluginDescriptor>,
+                                       dependencyResolver: DependencyResolver?): Pair<BundledPlugins, CheckIdeReport> {
+    val checkIdeParams = CheckIdeParams(ideDescriptor, params.jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), emptyList(), Resolver.getEmptyResolver(), params.externalClassesPrefixes, params.problemsFilter, params.progress, dependencyResolver)
+    val checkIdeResults = CheckIdeConfiguration().execute(checkIdeParams)
+    val ideReport = CheckIdeReport.createReport(ideDescriptor.ideVersion, checkIdeResults.results)
     return getBundledPlugins(ideDescriptor.createIdeResult.ide) to ideReport
   }
 

@@ -2,9 +2,7 @@ package com.jetbrains.pluginverifier.configurations
 
 import com.google.common.util.concurrent.AtomicDouble
 import com.intellij.structure.ide.IdeVersion
-import com.jetbrains.pluginverifier.api.IdeDescriptor
-import com.jetbrains.pluginverifier.api.JdkDescriptor
-import com.jetbrains.pluginverifier.api.ProblemsFilter
+import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
 import com.jetbrains.pluginverifier.repository.IdeRepository
@@ -128,7 +126,8 @@ data class CheckTrunkApiParams(val ideDescriptor: IdeDescriptor,
                                val externalClassesPrefixes: List<String>,
                                val problemsFilter: ProblemsFilter,
                                val jdkDescriptor: JdkDescriptor,
-                               private val deleteMajorIdeOnExit: Boolean) : ConfigurationParams {
+                               private val deleteMajorIdeOnExit: Boolean,
+                               val progress: Progress = DefaultProgress()) : ConfigurationParams {
   override fun presentableText(): String = """Check Trunk API Configuration Parameters:
 Trunk IDE to be checked: $ideDescriptor
 Release IDE to compare API with: $majorIdeDescriptor
