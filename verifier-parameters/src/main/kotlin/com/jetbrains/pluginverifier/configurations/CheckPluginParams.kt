@@ -41,8 +41,8 @@ object CheckPluginParamsParser : ConfigurationParamsParser {
       return ideVersions!!.map { fetchPlugins(it, pluginListFile, pluginPaths) }.flatten().map { PluginDescriptor.ByFileLock(it) }
     } else if (pluginToTestArg.matches("#\\d+".toRegex())) {
       val updateId = Integer.parseInt(pluginToTestArg.drop(1))
-      val pluginLock = RepositoryManager.getPluginFile(updateId) ?: throw RuntimeException("No such plugin $pluginToTestArg")
-      return listOf(PluginDescriptor.ByFileLock(pluginLock))
+      val updateInfo = RepositoryManager.getUpdateInfoById(updateId)
+      return listOf(PluginDescriptor.ByUpdateInfo(updateInfo))
     } else {
       val file = File(pluginToTestArg)
       if (!file.exists()) {

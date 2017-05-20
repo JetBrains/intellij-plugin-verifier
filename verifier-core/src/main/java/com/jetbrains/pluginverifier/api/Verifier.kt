@@ -1,7 +1,9 @@
 package com.jetbrains.pluginverifier.api
 
 import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.closeLogged
+import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.utils.VerificationWorker
 import org.slf4j.LoggerFactory
 import java.io.Closeable
@@ -17,15 +19,29 @@ class Verifier(val params: VerifierParams) : Closeable {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(Verifier::class.java)
+
+    private val AVERAGE_AMOUNT_OF_MEMORY_BY_PLUGIN_VERIFICATION_IN_MB = 200
   }
 
   private val runtimeResolver = Resolver.createJdkResolver(params.jdkDescriptor.homeDir)
 
-  private val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
+  private val concurrentWorkers = estimateNumberOfConcurrentWorkers()
+
+  private val executor = Executors.newFixedThreadPool(concurrentWorkers)
 
   private val completionService = ExecutorCompletionService<VerificationResult>(executor)
 
   private val futures: MutableList<Future<VerificationResult>> = arrayListOf()
+
+  init {
+    LOG.info("Created verifier with $concurrentWorkers " + " worker".pluralize(concurrentWorkers))
+  }
+
+  private fun estimateNumberOfConcurrentWorkers(): Int {
+    val maxByMemory = Runtime.getRuntime().maxMemory().bytesToMegabytes() / AVERAGE_AMOUNT_OF_MEMORY_BY_PLUGIN_VERIFICATION_IN_MB
+    val maxByCpu = Runtime.getRuntime().availableProcessors().toLong()
+    return maxOf(1, minOf(maxByMemory, maxByCpu)).toInt()
+  }
 
   fun verify(pluginDescriptor: PluginDescriptor, ideDescriptor: IdeDescriptor): Future<VerificationResult> {
     val worker = VerificationWorker(pluginDescriptor, ideDescriptor, runtimeResolver, params)

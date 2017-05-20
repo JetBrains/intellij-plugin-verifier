@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.repository
 
 import com.google.common.primitives.Ints
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import okhttp3.MediaType
@@ -44,6 +45,8 @@ object DownloadManager {
   //90% of maximum available space
   private val SPACE_THRESHOLD = 0.90
 
+  private val MAXIMUM_CACHE_SPACE_MB = SPACE_THRESHOLD * RepositoryConfiguration.cacheDirMaxSpaceMb
+
   private val GC_PERIOD_MS: Long = TimeUnit.SECONDS.toMillis(30)
 
   private val FORGOTTEN_LOCKS_GC_TIMEOUT_MS: Long = TimeUnit.HOURS.toMillis(8)
@@ -65,7 +68,7 @@ object DownloadManager {
             .setDaemon(true)
             .setNameFormat("download-mng-gc-%d")
             .build()
-    ).scheduleAtFixedRate({ cleanUpdatesCache() }, GC_PERIOD_MS, GC_PERIOD_MS, TimeUnit.MILLISECONDS)
+    ).scheduleAtFixedRate({ releaseOldLocksAndDeleteUnusedPlugins() }, GC_PERIOD_MS, GC_PERIOD_MS, TimeUnit.MILLISECONDS)
   }
 
   private var nextId: Long = 0
@@ -91,8 +94,8 @@ object DownloadManager {
       .create(DownloadApi::class.java)
 
   @Synchronized
-  private fun cleanUpdatesCache() {
-    LOG.info("It's time to remove unused updates from cache")
+  private fun releaseOldLocksAndDeleteUnusedPlugins() {
+    LOG.info("It's time to remove unused plugins from cache. Cache usages: ${getCacheSpaceMb()} Mb; Maximum usage: $MAXIMUM_CACHE_SPACE_MB")
 
     releaseOldLocks()
     if (exceedSpace()) {
@@ -124,13 +127,16 @@ object DownloadManager {
   }
 
   private fun exceedSpace(): Boolean {
-    val space = FileUtils.sizeOfDirectory(RepositoryConfiguration.downloadDir).toDouble() / FileUtils.ONE_MB
-    val threshold = SPACE_THRESHOLD * RepositoryConfiguration.cacheDirMaxSpaceMb
-    if (space > threshold) {
-      LOG.warn("Download directory occupied to much space: $space > $threshold")
+    val space = getCacheSpaceMb()
+    if (space > MAXIMUM_CACHE_SPACE_MB) {
+      LOG.warn("Cache directory ${RepositoryConfiguration.downloadDir} occupied to much space: $space > $MAXIMUM_CACHE_SPACE_MB")
+      return true
+    } else {
+      return false
     }
-    return space > threshold
   }
+
+  private fun getCacheSpaceMb() = FileUtils.sizeOfDirectory(RepositoryConfiguration.downloadDir).bytesToMegabytes()
 
   private fun releaseOldLocks() {
     busyLocks.values
@@ -262,7 +268,7 @@ object DownloadManager {
 
     try {
       if (exceedSpace()) {
-        cleanUpdatesCache()
+        releaseOldLocksAndDeleteUnusedPlugins()
       }
     } catch (e: Throwable) {
       lock.release()

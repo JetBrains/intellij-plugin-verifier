@@ -101,3 +101,5 @@ fun <T> Call<T>.executeSuccessfully(): Response<T> {
   val errorString = response.errorBody().string()
   throw RuntimeException("The response status code is ${response.code()}: ${if (errorString.length > 100) "(too long error body...)" else errorString}")
 }
+
+fun Long.bytesToMegabytes(): Long = this / FileUtils.ONE_MB
