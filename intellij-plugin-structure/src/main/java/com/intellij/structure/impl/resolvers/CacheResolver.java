@@ -55,7 +55,7 @@ public class CacheResolver extends Resolver {
   }
 
   @Override
-  public boolean isEmpty() throws IOException {
+  public boolean isEmpty() {
     return myDelegate.isEmpty();
   }
 

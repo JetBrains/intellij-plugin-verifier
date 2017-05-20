@@ -93,7 +93,7 @@ public class PluginResolver extends Resolver {
   }
 
   @Override
-  public boolean isEmpty() throws IOException {
+  public boolean isEmpty() {
     return myResolver.isEmpty();
   }
 

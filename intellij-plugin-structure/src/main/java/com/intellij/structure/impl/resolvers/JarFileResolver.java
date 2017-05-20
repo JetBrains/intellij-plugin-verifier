@@ -1,7 +1,5 @@
 package com.intellij.structure.impl.resolvers;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicates;
 import com.google.common.collect.Iterators;
 import com.intellij.structure.impl.utils.AsmUtil;
 import com.intellij.structure.impl.utils.StringUtil;
@@ -14,14 +12,9 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import static com.google.common.collect.Iterators.*;
 
 /**
  * @author Dennis.Ushakov
@@ -32,29 +25,34 @@ public final class JarFileResolver extends Resolver {
 
   private final ZipFile myJarFile;
 
+  private final Set<String> myClasses;
+
   private final File myOriginalFile;
 
   public JarFileResolver(@NotNull File jarFile) throws IOException {
     myOriginalFile = jarFile;
     myJarFile = new ZipFile(jarFile);
+    myClasses = readClasses();
   }
 
-  private Iterator<String> getClasses() {
+  private Set<String> readClasses() {
     Enumeration<? extends ZipEntry> entries = myJarFile.entries();
-    Function<ZipEntry, String> mapper = new Function<ZipEntry, String>() {
-      @Override
-      public String apply(ZipEntry input) {
-        String entryName = input.getName();
-        return entryName.endsWith(CLASS_SUFFIX) ? StringUtil.trimEnd(entryName, CLASS_SUFFIX) : null;
+    Set<String> classes = new HashSet<String>();
+    ZipEntry entry;
+    while (entries.hasMoreElements()) {
+      entry = entries.nextElement();
+      String entryName = entry.getName();
+      if (entryName.endsWith(CLASS_SUFFIX)) {
+        classes.add(StringUtil.trimEnd(entryName, CLASS_SUFFIX));
       }
-    };
-    return filter(transform(forEnumeration(entries), mapper), Predicates.notNull());
+    }
+    return classes;
   }
 
   @NotNull
   @Override
   public Iterator<String> getAllClasses() {
-    return Iterators.unmodifiableIterator(getClasses());
+    return Iterators.unmodifiableIterator(myClasses.iterator());
   }
 
   @Override
@@ -63,13 +61,13 @@ public final class JarFileResolver extends Resolver {
   }
 
   @Override
-  public boolean isEmpty() throws IOException {
-    return !Iterators.any(getAllClasses(), Predicates.<String>alwaysTrue());
+  public boolean isEmpty() {
+    return myClasses.isEmpty();
   }
 
   @Override
   public boolean containsClass(@NotNull String className) {
-    return myJarFile.getEntry(className + CLASS_SUFFIX) != null;
+    return myClasses.contains(className);
   }
 
   @NotNull
@@ -81,7 +79,7 @@ public final class JarFileResolver extends Resolver {
   @Override
   @Nullable
   public ClassNode findClass(@NotNull String className) throws IOException {
-    return evaluateNode(className);
+    return myClasses.contains(className) ? evaluateNode(className) : null;
   }
 
   @Nullable

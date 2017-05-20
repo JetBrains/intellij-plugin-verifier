@@ -62,7 +62,7 @@ public final class ContainerResolver extends Resolver {
   }
 
   @Override
-  public boolean isEmpty() throws IOException {
+  public boolean isEmpty() {
     for (Resolver resolver : myResolvers) {
       if (!resolver.isEmpty()) {
         return false;

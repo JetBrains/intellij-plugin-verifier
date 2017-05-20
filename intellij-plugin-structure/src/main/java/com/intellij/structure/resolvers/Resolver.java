@@ -74,6 +74,7 @@ public abstract class Resolver implements Closeable {
    * @param presentableName some name determining the union resolver name (it can be obtained via the {@link #toString()})
    * @param resolvers       list of the resolvers according to the class-path order
    * @return a combining resolver
+   * @throws IOException if some of the listed resolvers fails to read class files
    */
   @NotNull
   public static Resolver createUnionResolver(@NotNull String presentableName, @NotNull List<Resolver> resolvers) throws IOException {
@@ -149,7 +150,7 @@ public abstract class Resolver implements Closeable {
    *
    * @return true if this resolver is not empty, false otherwise
    */
-  public abstract boolean isEmpty() throws IOException;
+  public abstract boolean isEmpty();
 
   /**
    * Returns true if {@code this} Resolver contains the given class. It may be faster
