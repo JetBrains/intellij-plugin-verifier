@@ -22,7 +22,7 @@ import java.util.function.Function
 /**
  * @author Sergey Patrikeev
  */
-object CheckTrunkApiParamsParser : ConfigurationParamsParser {
+class CheckTrunkApiParamsParser : ConfigurationParamsParser<CheckTrunkApiParams> {
 
   private val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiParamsParser::class.java)
 

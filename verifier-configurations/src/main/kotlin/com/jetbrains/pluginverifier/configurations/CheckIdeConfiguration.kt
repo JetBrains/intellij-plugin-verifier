@@ -11,10 +11,13 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.utils.VerificationResultToApiResultConverter
 
 
-class CheckIdeConfiguration(val params: CheckIdeParams) : Configuration {
+class CheckIdeConfiguration : Configuration<CheckIdeParams, CheckIdeResults> {
 
-  override fun execute(): CheckIdeResults {
-    val notExcludedPlugins = params.pluginsToCheck.filterNot { isExcluded(it) }
+  private lateinit var params: CheckIdeParams
+
+  override fun execute(parameters: CheckIdeParams): CheckIdeResults {
+    params = parameters
+    val notExcludedPlugins = parameters.pluginsToCheck.filterNot { isExcluded(it) }
     return doExecute(notExcludedPlugins)
   }
 

@@ -39,8 +39,8 @@ class TestCheckPluginDependents {
 
     //when
     val params: CheckPluginParams = CheckPluginParams(listOf(firstDescriptor, secondDescriptor), listOf(ideDescriptor), jdkDescriptor, emptyList(), ProblemsFilter.AlwaysTrue)
-    val configuration = CheckPluginConfiguration(params)
-    val verify = configuration.execute()
+    val configuration = CheckPluginConfiguration()
+    val verify = configuration.execute(params)
 
     //then
     val secondPluginResult = verify.results[1]

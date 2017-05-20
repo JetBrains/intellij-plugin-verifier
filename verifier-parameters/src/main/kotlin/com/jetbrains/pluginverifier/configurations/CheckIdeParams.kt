@@ -47,7 +47,7 @@ Excluded plugins: [${excludedPlugins.entries().joinToString { "${it.key}:${it.va
 }
 
 
-object CheckIdeParamsParser : ConfigurationParamsParser {
+class CheckIdeParamsParser : ConfigurationParamsParser<CheckIdeParams> {
   override fun parse(opts: CmdOpts, freeArgs: List<String>): CheckIdeParams {
     if (freeArgs.isEmpty()) {
       System.err.println("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"")

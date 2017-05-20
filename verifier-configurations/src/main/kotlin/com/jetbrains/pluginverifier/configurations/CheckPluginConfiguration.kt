@@ -14,9 +14,11 @@ import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.utils.VerificationResultToApiResultConverter
 
-class CheckPluginConfiguration(val params: CheckPluginParams) : Configuration {
+class CheckPluginConfiguration : Configuration<CheckPluginParams, CheckPluginResults> {
 
   private var allPluginsToCheck: List<CreatePluginResult> = emptyList()
+
+  private lateinit var params: CheckPluginParams
 
   private fun getDependencyResolver(ide: Ide): DependencyResolver = object : DependencyResolver {
     override fun resolve(dependencyId: String, isModule: Boolean, dependent: Plugin): DependencyResolver.Result {
@@ -32,8 +34,9 @@ class CheckPluginConfiguration(val params: CheckPluginParams) : Configuration {
         .find { it.success.plugin.pluginId == dependencyId }
   }
 
-  override fun execute(): CheckPluginResults {
-    allPluginsToCheck = params.pluginDescriptors.map { PluginCreator.createPlugin(it) }
+  override fun execute(parameters: CheckPluginParams): CheckPluginResults {
+    params = parameters
+    allPluginsToCheck = parameters.pluginDescriptors.map { PluginCreator.createPlugin(it) }
     try {
       return doExecute()
     } finally {

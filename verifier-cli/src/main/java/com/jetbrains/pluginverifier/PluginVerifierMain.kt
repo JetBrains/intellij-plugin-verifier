@@ -1,19 +1,20 @@
 package com.jetbrains.pluginverifier
 
-import com.jetbrains.pluginverifier.configurations.*
-import com.jetbrains.pluginverifier.output.TeamCityLog
-import com.jetbrains.pluginverifier.output.TeamCityPrinter
-import com.jetbrains.pluginverifier.report.CheckIdeReport
+import com.jetbrains.pluginverifier.configurations.Configuration
+import com.jetbrains.pluginverifier.configurations.ConfigurationParams
+import com.jetbrains.pluginverifier.configurations.ConfigurationParamsParser
+import com.jetbrains.pluginverifier.configurations.ConfigurationResults
 import com.jetbrains.pluginverifier.utils.CmdOpts
-import com.jetbrains.pluginverifier.utils.OptionsUtil
 import com.jetbrains.pluginverifier.utils.PublicOpts
 import com.sampullara.cli.Args
 import org.slf4j.LoggerFactory
-import java.io.File
 
+@Suppress("UNCHECKED_CAST")
 object PluginVerifierMain {
 
   private val LOG = LoggerFactory.getLogger(PluginVerifierMain.javaClass)
+
+  private val runners = listOf(CheckPluginRunner(), CheckIdeRunner(), CheckTrunkApiRunner())
 
   @JvmStatic fun main(args: Array<String>) {
     val opts = CmdOpts()
@@ -34,71 +35,20 @@ object PluginVerifierMain {
     val command = freeArgs[0]
     freeArgs = freeArgs.drop(1)
 
-    when (command) {
-      "check-plugin" -> {
-        CheckPluginParamsParser.parse(opts, freeArgs).use { params ->
-          LOG.info("Verification parameters: $params")
-
-          val results = CheckPluginConfiguration(params).execute()
-          val printerOptions = OptionsUtil.parsePrinterOptions(opts)
-          if (opts.needTeamCityLog) {
-            results.printTcLog(TeamCityPrinter.GroupBy.parse(opts.group), true, printerOptions)
-          } else {
-            results.printOnStdout(printerOptions)
-          }
-
-          if (opts.htmlReportFile != null) {
-            results.printToHtml(File(opts.htmlReportFile), printerOptions)
-          }
-        }
-      }
-      "check-ide" -> {
-        CheckIdeParamsParser.parse(opts, freeArgs).use { params ->
-          LOG.info("Verification parameters: $params")
-
-          val checkIdeResults = CheckIdeConfiguration(params).execute()
-
-          if (opts.saveCheckIdeReport != null) {
-            CheckIdeReport.createReport(checkIdeResults.ideVersion, checkIdeResults.results).saveToFile(File(opts.saveCheckIdeReport))
-          }
-
-          val printerOptions = OptionsUtil.parsePrinterOptions(opts)
-          if (opts.needTeamCityLog) {
-            checkIdeResults.printTcLog(TeamCityPrinter.GroupBy.parse(opts.group), true, printerOptions)
-          } else {
-            checkIdeResults.printOnStdOut(printerOptions)
-          }
-
-          if (opts.htmlReportFile != null) {
-            checkIdeResults.saveToHtmlFile(File(opts.htmlReportFile), OptionsUtil.parsePrinterOptions(opts))
-          }
-
-          if (opts.dumpBrokenPluginsFile != null) {
-            checkIdeResults.dumbBrokenPluginsList(File(opts.dumpBrokenPluginsFile))
-          }
-        }
-      }
-      "check-trunk-api" -> {
-        CheckTrunkApiParamsParser.parse(opts, freeArgs).use { params ->
-          LOG.info("Verification Parameters: $params")
-
-          val checkTrunkApiResults = CheckTrunkApiConfiguration(params).execute()
-
-          if (opts.needTeamCityLog) {
-            val compareResult = CheckTrunkApiCompareResult.create(checkTrunkApiResults)
-            val vPrinter = TeamCityPrinter(TeamCityLog(System.out), TeamCityPrinter.GroupBy.parse(opts.group))
-            vPrinter.printIdeCompareResult(compareResult)
-          }
-          if (opts.saveCheckIdeReport != null) {
-            val file = File(opts.saveCheckIdeReport)
-            checkTrunkApiResults.currentReport.saveToFile(file)
-          }
-        }
-      }
-      else -> {
-        throw IllegalArgumentException("Unsupported command $command")
-      }
+    val runner = findRunner(command)
+    val paramsParser = runner.getParamsParser()
+    val parameters = paramsParser.parse(opts, freeArgs)
+    parameters.use {
+      LOG.info("Verification parameters: $parameters")
+      val configuration = runner.getConfiguration() as Configuration<ConfigurationParams, ConfigurationResults>
+      val results = configuration.execute(parameters)
+      runner.printResults(results, opts)
     }
   }
+
+  private fun findRunner(command: String?) =
+      runners.find { command == it.commandName } as? ConfigurationRunner<ConfigurationParams, ConfigurationParamsParser<ConfigurationParams>, ConfigurationResults, *>
+          ?: throw IllegalArgumentException("Unsupported command: $command. Supported commands: ${runners.map { it.commandName }}")
+
 
 }

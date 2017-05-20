@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.OptionsUtil
 import java.io.File
 
-object CheckPluginParamsParser : ConfigurationParamsParser {
+class CheckPluginParamsParser : ConfigurationParamsParser<CheckPluginParams> {
 
   override fun parse(opts: CmdOpts, freeArgs: List<String>): CheckPluginParams {
     if (freeArgs.size <= 1) {
