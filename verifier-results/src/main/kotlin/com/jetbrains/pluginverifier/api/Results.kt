@@ -18,7 +18,9 @@ data class PluginInfo(@SerializedName("pluginId") val pluginId: String,
 
 data class Result(@SerializedName("plugin") val plugin: PluginInfo,
                   @SerializedName("ideVersion") val ideVersion: IdeVersion,
-                  @SerializedName("verdict") val verdict: Verdict)
+                  @SerializedName("verdict") val verdict: Verdict) {
+  override fun toString(): String = "Plugin $plugin and #$ideVersion: $verdict"
+}
 
 sealed class Verdict {
   /**
