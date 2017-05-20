@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.utils
+package com.jetbrains.pluginverifier.core
 
 import com.intellij.structure.ide.Ide
 import com.intellij.structure.plugin.Plugin
@@ -10,17 +10,19 @@ import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.withDebug
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
+import com.jetbrains.pluginverifier.utils.CloseIgnoringResolver
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.warnings.Warning
 import org.jgrapht.DirectedGraph
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Callable
 
-class VerificationWorker(val pluginDescriptor: PluginDescriptor,
-                         val ideDescriptor: IdeDescriptor,
-                         val runtimeResolver: Resolver,
-                         val params: VerifierParams) : Callable<VerificationResult> {
+class Verifier(val pluginDescriptor: PluginDescriptor,
+               val ideDescriptor: IdeDescriptor,
+               val runtimeResolver: Resolver,
+               val params: VerifierParams) : Callable<VerificationResult> {
 
   private val dependencyResolver = params.dependencyResolver ?: DefaultDependencyResolver(ideDescriptor.createIdeResult.ide)
 
@@ -31,7 +33,7 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
   private lateinit var warnings: List<PluginProblem>
 
   companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(VerificationWorker::class.java)
+    private val LOG: Logger = LoggerFactory.getLogger(Verifier::class.java)
   }
 
   override fun call(): VerificationResult {

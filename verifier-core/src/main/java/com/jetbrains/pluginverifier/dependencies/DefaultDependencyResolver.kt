@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.utils
+package com.jetbrains.pluginverifier.dependencies
 
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.ImmutableMap

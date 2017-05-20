@@ -2,9 +2,9 @@ package com.jetbrains.pluginverifier.verifiers.clazz
 
 import com.jetbrains.pluginverifier.location.MethodLocation
 import com.jetbrains.pluginverifier.problems.MethodNotImplementedProblem
-import com.jetbrains.pluginverifier.utils.VerificationContext
-import com.jetbrains.pluginverifier.utils.VerifierUtil
+import com.jetbrains.pluginverifier.utils.BytecodeUtil
 import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 
@@ -13,7 +13,7 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
  */
 class AbstractMethodVerifier : ClassVerifier {
   override fun verify(clazz: ClassNode, ctx: VerificationContext) {
-    if (VerifierUtil.isAbstract(clazz) || VerifierUtil.isInterface(clazz)) return
+    if (BytecodeUtil.isAbstract(clazz) || BytecodeUtil.isInterface(clazz)) return
 
     val abstractMethods = hashMapOf<Method, MethodLocation>()
     val implementedMethods = hashMapOf<Method, MethodLocation>()
@@ -35,9 +35,9 @@ class AbstractMethodVerifier : ClassVerifier {
                            abstractMethods: MutableMap<Method, MethodLocation>,
                            implementedMethods: MutableMap<Method, MethodLocation>) {
     (clazz.methods as List<MethodNode>).forEach {
-      if (!VerifierUtil.isPrivate(it) && !VerifierUtil.isStatic(it)) {
+      if (!BytecodeUtil.isPrivate(it) && !BytecodeUtil.isStatic(it)) {
         val methodLocation = ctx.fromMethod(clazz, it)
-        if (VerifierUtil.isAbstract(it)) {
+        if (BytecodeUtil.isAbstract(it)) {
           abstractMethods.put(Method(it.name, it.desc), methodLocation)
         } else {
           implementedMethods.put(Method(it.name, it.desc), methodLocation)

@@ -2,7 +2,11 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.SymbolicReference
-import com.jetbrains.pluginverifier.utils.*
+import com.jetbrains.pluginverifier.utils.BytecodeUtil
+import com.jetbrains.pluginverifier.utils.checkClassExistsOrExternal
+import com.jetbrains.pluginverifier.utils.isSubclassOf
+import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
 import org.jetbrains.intellij.plugins.internal.asm.tree.AbstractInsnNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
@@ -39,7 +43,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
 
   fun verify() {
     if (methodOwner.startsWith("[")) {
-      val arrayType = VerifierUtil.extractClassNameFromDescr(methodOwner)
+      val arrayType = BytecodeUtil.extractClassNameFromDescr(methodOwner)
       if (arrayType != null) {
         ctx.checkClassExistsOrExternal(arrayType, { getFromMethod() })
       }
@@ -59,7 +63,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
   private fun processInvokeVirtual() {
     val resolved = resolveClassMethod() ?: return
 
-    if (VerifierUtil.isStatic(resolved.methodNode)) {
+    if (BytecodeUtil.isStatic(resolved.methodNode)) {
       /*
       Otherwise, if the resolved method is a class (static) method, the invokevirtual instruction throws an IncompatibleClassChangeError.
        */
@@ -94,7 +98,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     Otherwise, if the resolved method is a class (static) method,
     the invokespecial instruction throws an IncompatibleClassChangeError.
      */
-    if (VerifierUtil.isStatic(resolved.methodNode)) {
+    if (BytecodeUtil.isStatic(resolved.methodNode)) {
       val resolvedMethod = ctx.fromMethod(resolved.definingClass, resolved.methodNode)
       ctx.registerProblem(InvokeNonStaticInstructionOnStaticMethodProblem(resolvedMethod, getFromMethod(), instruction))
     }
@@ -122,7 +126,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
        So I caught up a nasty bug of incorrectly determining the method to be invoked.
     */
     val classRef: ClassNode
-    if (resolved.methodNode.name != "<init>" && (!instr.itf && methodOwner == verifiableClass.superName) && VerifierUtil.isSuperFlag(verifiableClass)) {
+    if (resolved.methodNode.name != "<init>" && (!instr.itf && methodOwner == verifiableClass.superName) && BytecodeUtil.isSuperFlag(verifiableClass)) {
       classRef = ctx.resolveClassOrProblem(verifiableClass.superName, verifiableClass, { getFromMethod() }) ?: return
     } else {
       classRef = ctx.resolveClassOrProblem(methodOwner, verifiableClass, { getFromMethod() }) ?: return
@@ -136,12 +140,12 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     /*
     Otherwise, if step 1, step 2, or step 3 of the lookup procedure selects an abstract method, invokespecial throws an AbstractMethodError.
      */
-    if (stepNumber in listOf(1, 2, 3) && VerifierUtil.isAbstract(resolvedMethod.methodNode)) {
+    if (stepNumber in listOf(1, 2, 3) && BytecodeUtil.isAbstract(resolvedMethod.methodNode)) {
       /*
       We intentionally introduce this check because there are the tricky cases when the Java compiler generates
        faulty bytecode. See PR-707 and a test class mock.plugin.noproblems.bridgeMethod.A
        */
-      if (!VerifierUtil.isSynthetic(verifiableMethod) || !VerifierUtil.isBridgeMethod(verifiableMethod)) {
+      if (!BytecodeUtil.isSynthetic(verifiableMethod) || !BytecodeUtil.isBridgeMethod(verifiableMethod)) {
         val methodDeclaration = ctx.fromMethod(resolvedMethod.definingClass, resolvedMethod.methodNode)
         ctx.registerProblem(AbstractMethodInvocationProblem(methodDeclaration, getFromMethod(), instruction))
       }
@@ -166,7 +170,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
         direct superclass of that class, and so forth, until a match is found or no further superclasses exist.
         If a match is found, then it is the method to be invoked.
     */
-    if (!VerifierUtil.isInterface(classRef) && classRef.superName != null) {
+    if (!BytecodeUtil.isInterface(classRef) && classRef.superName != null) {
       var current: ClassNode = ctx.resolveClassOrProblem(classRef.superName, classRef, { ctx.fromClass(classRef) }) ?: return null
       while (true) {
         val match = (current.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc }
@@ -184,9 +188,9 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
        3) Otherwise, if C is an interface and the class Object contains a declaration of a public instance method with
        the same name and descriptor as the resolved method, then it is the method to be invoked.
     */
-    if (VerifierUtil.isInterface(classRef)) {
+    if (BytecodeUtil.isInterface(classRef)) {
       val objectClass = ctx.resolveClassOrProblem("java/lang/Object", classRef, { ctx.fromClass(classRef) }) ?: return null
-      val match = (objectClass.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc && VerifierUtil.isPublic(it) }
+      val match = (objectClass.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc && BytecodeUtil.isPublic(it) }
       if (match != null) {
         return 3 to ResolvedMethod(objectClass, match)
       }
@@ -197,7 +201,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
        matches the resolved method's name and descriptor and is not abstract, then it is the method to be invoked.
      */
     val interfaceMethods = getMaximallySpecificSuperInterfaceMethods(classRef) ?: return null
-    val filtered = interfaceMethods.filter { it.methodNode.name == resolvedMethod.name && it.methodNode.desc == resolvedMethod.desc && !VerifierUtil.isAbstract(it.methodNode) }
+    val filtered = interfaceMethods.filter { it.methodNode.name == resolvedMethod.name && it.methodNode.desc == resolvedMethod.desc && !BytecodeUtil.isAbstract(it.methodNode) }
 
     if (filtered.size == 1) {
       return 4 to filtered.single()
@@ -246,11 +250,11 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     /*
     Otherwise, if the resolved method is static or private, the invokeinterface instruction throws an IncompatibleClassChangeError.
      */
-    if (VerifierUtil.isPrivate(resolved.methodNode) || isTestPrivateInterfaceMethod(resolved.methodNode)) {
+    if (BytecodeUtil.isPrivate(resolved.methodNode) || isTestPrivateInterfaceMethod(resolved.methodNode)) {
       val resolvedMethod = ctx.fromMethod(resolved.definingClass, resolved.methodNode)
       ctx.registerProblem(InvokeInterfaceOnPrivateMethodProblem(resolvedMethod, getFromMethod()))
     }
-    if (VerifierUtil.isStatic(resolved.methodNode)) {
+    if (BytecodeUtil.isStatic(resolved.methodNode)) {
       val resolvedMethod = ctx.fromMethod(resolved.definingClass, resolved.methodNode)
       ctx.registerProblem(InvokeNonStaticInstructionOnStaticMethodProblem(resolvedMethod, getFromMethod(), instruction))
     }
@@ -316,7 +320,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     /*
     Otherwise, if the resolved method is an instance method, the invokestatic instruction throws an IncompatibleClassChangeError.
      */
-    if (!VerifierUtil.isStatic(resolved.methodNode)) {
+    if (!BytecodeUtil.isStatic(resolved.methodNode)) {
       val methodDeclaration = ctx.fromMethod(resolved.definingClass, resolved.methodNode)
       val caller = getFromMethod()
       ctx.registerProblem(InvokeStaticOnNonStaticMethodProblem(methodDeclaration, caller))
@@ -377,20 +381,20 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
 
     var accessProblem: AccessType? = null
 
-    if (VerifierUtil.isPrivate(methodNode)) {
+    if (BytecodeUtil.isPrivate(methodNode)) {
       if (verifiableClass.name != definingClass.name) {
         //accessing to private method of the other class
         accessProblem = AccessType.PRIVATE
       }
-    } else if (VerifierUtil.isProtected(methodNode)) {
-      if (!VerifierUtil.haveTheSamePackage(verifiableClass, definingClass)) {
+    } else if (BytecodeUtil.isProtected(methodNode)) {
+      if (!BytecodeUtil.haveTheSamePackage(verifiableClass, definingClass)) {
         if (!ctx.isSubclassOf(verifiableClass, definingClass)) {
           accessProblem = AccessType.PROTECTED
         }
       }
 
-    } else if (VerifierUtil.isDefaultAccess(methodNode)) {
-      if (!VerifierUtil.haveTheSamePackage(definingClass, verifiableClass)) {
+    } else if (BytecodeUtil.isDefaultAccess(methodNode)) {
+      if (!BytecodeUtil.haveTheSamePackage(definingClass, verifiableClass)) {
         //accessing to the method which is not available in the other package
         accessProblem = AccessType.PACKAGE_PRIVATE
       }
@@ -419,7 +423,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     /*
     1) If C is not an interface, interface method resolution throws an IncompatibleClassChangeError.
      */
-    if (!VerifierUtil.isInterface(interfaceNode)) {
+    if (!BytecodeUtil.isInterface(interfaceNode)) {
       val methodReference = SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)
       val caller = getFromMethod()
       ctx.registerProblem(InvokeInterfaceMethodOnClassProblem(methodReference, caller, instruction))
@@ -441,7 +445,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     method lookup succeeds.
     */
     val objectClass = ctx.resolveClassOrProblem("java/lang/Object", interfaceNode, { ctx.fromClass(interfaceNode) }) ?: return FAILED_LOOKUP
-    val objectMethod = (objectClass.methods as List<MethodNode>).firstOrNull { it.name == methodName && it.desc == methodDescriptor && VerifierUtil.isPublic(it) && !VerifierUtil.isStatic(it) }
+    val objectMethod = (objectClass.methods as List<MethodNode>).firstOrNull { it.name == methodName && it.desc == methodDescriptor && BytecodeUtil.isPublic(it) && !BytecodeUtil.isStatic(it) }
     if (objectMethod != null) {
       return LookupResult(false, ResolvedMethod(objectClass, objectMethod))
     }
@@ -452,7 +456,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     have its ACC_ABSTRACT flag set, then this method is chosen and method lookup succeeds.
      */
     val maximallySpecificSuperInterfaceMethods = getMaximallySpecificSuperInterfaceMethods(interfaceNode) ?: return FAILED_LOOKUP
-    val single = maximallySpecificSuperInterfaceMethods.singleOrNull { it.methodNode.name == methodName && it.methodNode.desc == methodDescriptor && !VerifierUtil.isAbstract(it.methodNode) }
+    val single = maximallySpecificSuperInterfaceMethods.singleOrNull { it.methodNode.name == methodName && it.methodNode.desc == methodDescriptor && !BytecodeUtil.isAbstract(it.methodNode) }
     if (single != null) {
       return LookupResult(false, single)
     }
@@ -461,7 +465,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     5) Otherwise, if any superinterface of C declares a method with the name and descriptor specified by the method
     reference that has neither its ACC_PRIVATE flag nor its ACC_STATIC flag set, one of these is arbitrarily chosen and method lookup succeeds.
      */
-    val matchings = getSuperInterfaceMethods(interfaceNode, { it.name == methodName && it.desc == methodDescriptor && !VerifierUtil.isPrivate(it) && !VerifierUtil.isStatic(it) }) ?: return FAILED_LOOKUP
+    val matchings = getSuperInterfaceMethods(interfaceNode, { it.name == methodName && it.desc == methodDescriptor && !BytecodeUtil.isPrivate(it) && !BytecodeUtil.isStatic(it) }) ?: return FAILED_LOOKUP
     if (matchings.isNotEmpty()) {
       return LookupResult(false, matchings.first())
     }
@@ -484,7 +488,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
    * method of C with the specified name and descriptor that is declared in a subinterface of I.
    */
   private fun getMaximallySpecificSuperInterfaceMethods(start: ClassNode): List<ResolvedMethod>? {
-    val predicate: (MethodNode) -> Boolean = { it.name == methodName && it.desc == methodDescriptor && !VerifierUtil.isPrivate(it) && !VerifierUtil.isStatic(it) }
+    val predicate: (MethodNode) -> Boolean = { it.name == methodName && it.desc == methodDescriptor && !BytecodeUtil.isPrivate(it) && !BytecodeUtil.isStatic(it) }
     val allMatching = getSuperInterfaceMethods(start, predicate) ?: return null
     return allMatching.filterIndexed { index, (definingClass) ->
       var isDeepest = true
@@ -545,7 +549,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     /*
       1) If C is an interface, method resolution throws an IncompatibleClassChangeError.
     */
-    if (VerifierUtil.isInterface(classNode)) {
+    if (BytecodeUtil.isInterface(classNode)) {
       /*
       This additional if-condition ensures that we are not trying to resolve a static interface method at the moment.
       It is necessary because actually the JVM 8 spec chooses resolve-class-resolution algorithm unconditionally for resolving
@@ -604,7 +608,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     val methods = currentClass.methods as List<MethodNode>
 
     val matchByName = methods.firstOrNull { it.name == methodName }
-    if (matchByName != null && VerifierUtil.isSignaturePolymorphic(currentClass.name, matchByName) && methods.count { it.name == methodName } == 1) {
+    if (matchByName != null && BytecodeUtil.isSignaturePolymorphic(currentClass.name, matchByName) && methods.count { it.name == methodName } == 1) {
       return LookupResult(false, ResolvedMethod(currentClass, matchByName))
     }
 
@@ -642,7 +646,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     flag set, then this method is chosen and method lookup succeeds.
      */
     val maximallySpecificSuperInterfaceMethods = getMaximallySpecificSuperInterfaceMethods(currentClass) ?: return FAILED_LOOKUP
-    val single = maximallySpecificSuperInterfaceMethods.singleOrNull { it.methodNode.name == methodName && it.methodNode.desc == methodDescriptor && !VerifierUtil.isAbstract(it.methodNode) }
+    val single = maximallySpecificSuperInterfaceMethods.singleOrNull { it.methodNode.name == methodName && it.methodNode.desc == methodDescriptor && !BytecodeUtil.isAbstract(it.methodNode) }
     if (single != null) {
       return LookupResult(false, single)
     }
@@ -652,7 +656,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     by the method reference that has neither its ACC_PRIVATE flag nor its ACC_STATIC
     flag set, one of these is arbitrarily chosen and method lookup succeeds.
      */
-    val matchings = getSuperInterfaceMethods(currentClass, { it.name == methodName && it.desc == methodDescriptor && !VerifierUtil.isPrivate(it) && !VerifierUtil.isStatic(it) }) ?: return FAILED_LOOKUP
+    val matchings = getSuperInterfaceMethods(currentClass, { it.name == methodName && it.desc == methodDescriptor && !BytecodeUtil.isPrivate(it) && !BytecodeUtil.isStatic(it) }) ?: return FAILED_LOOKUP
     if (matchings.isNotEmpty()) {
       return LookupResult(false, matchings.first())
     }

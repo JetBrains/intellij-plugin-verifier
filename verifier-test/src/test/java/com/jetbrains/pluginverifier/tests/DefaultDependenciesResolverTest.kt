@@ -6,12 +6,12 @@ import com.intellij.structure.impl.domain.PluginCreationSuccessImpl
 import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.pluginverifier.dependencies.DefaultDependencyResolver
 import com.jetbrains.pluginverifier.dependencies.DepEdge
 import com.jetbrains.pluginverifier.dependencies.DepGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.DepVertex
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.tests.MockUtil.createMockPlugin
-import com.jetbrains.pluginverifier.utils.DefaultDependencyResolver
 import org.jgrapht.DirectedGraph
 import org.jgrapht.traverse.DepthFirstIterator
 import org.junit.Assert.assertEquals

@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.utils
+package com.jetbrains.pluginverifier.verifiers
 
 import com.intellij.structure.ide.Ide
 import com.intellij.structure.plugin.Plugin
@@ -6,6 +6,7 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.location.*
 import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.utils.BytecodeUtil
 import com.jetbrains.pluginverifier.warnings.Warning
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
@@ -61,7 +62,7 @@ data class VerificationContext(
       Location.fromClass(clazz.name, clazz.signature, getClassPath(clazz), AccessFlags(clazz.access))
 
   fun fromMethod(hostClass: ClassNode, method: MethodNode): MethodLocation =
-      Location.fromMethod(fromClass(hostClass), method.name, method.desc, VerifierUtil.getParameterNames(method), method.signature, AccessFlags(method.access))
+      Location.fromMethod(fromClass(hostClass), method.name, method.desc, BytecodeUtil.getParameterNames(method), method.signature, AccessFlags(method.access))
 
   fun fromField(hostClass: ClassNode, field: FieldNode): FieldLocation =
       Location.fromField(fromClass(hostClass), field.name, field.desc, field.signature, AccessFlags(field.access))

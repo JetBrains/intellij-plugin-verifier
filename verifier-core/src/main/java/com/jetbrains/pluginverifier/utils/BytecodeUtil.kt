@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.utils
 
 import com.jetbrains.pluginverifier.problems.AccessType
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
 import org.jetbrains.intellij.plugins.internal.asm.Type
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
@@ -8,7 +9,7 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.LocalVariableNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 
-object VerifierUtil {
+object BytecodeUtil {
 
   @Suppress("UNCHECKED_CAST")
   fun getParameterNames(method: MethodNode): List<String> {

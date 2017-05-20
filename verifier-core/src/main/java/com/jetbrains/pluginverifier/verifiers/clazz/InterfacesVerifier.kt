@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.verifiers.clazz
 
 import com.jetbrains.pluginverifier.problems.SuperInterfaceBecameClassProblem
-import com.jetbrains.pluginverifier.utils.VerificationContext
-import com.jetbrains.pluginverifier.utils.VerifierUtil
+import com.jetbrains.pluginverifier.utils.BytecodeUtil
 import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 
 /**
@@ -16,7 +16,7 @@ class InterfacesVerifier : ClassVerifier {
     clazz.interfaces
         .filterIsInstance(String::class.java)
         .mapNotNull { ctx.resolveClassOrProblem(it, clazz, { ctx.fromClass(clazz) }) }
-        .filterNot { VerifierUtil.isInterface(it) }
+        .filterNot { BytecodeUtil.isInterface(it) }
         .forEach { ctx.registerProblem(SuperInterfaceBecameClassProblem(ctx.fromClass(clazz), ctx.fromClass(it))) }
   }
 }

@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.tests
 
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.*
+import com.jetbrains.pluginverifier.core.VerifierExecutor
 import com.jetbrains.pluginverifier.ide.IdeCreator
 import com.jetbrains.pluginverifier.repository.IdleFileLock
 import com.jetbrains.pluginverifier.utils.CmdOpts
@@ -20,10 +21,10 @@ object ResultBuilder {
       val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(CmdOpts())
       val problemsFilter = OptionsUtil.getProblemsFilter(CmdOpts())
       val verifierParams = VerifierParams(JdkDescriptor(File(jdkPath)), externalClassesPrefixes, problemsFilter)
-      val verifier = Verifier(verifierParams)
+      val verifier = VerifierExecutor(verifierParams)
       verifier.use {
-        verifier.verify(pluginDescriptor, IdeDescriptor(createIdeResult))
-        return verifier.getVerificationResults(DefaultProgress()).single()
+        val results = verifier.verify(listOf(pluginDescriptor to IdeDescriptor(createIdeResult)), DefaultProgress())
+        return results.single()
       }
     }
   }

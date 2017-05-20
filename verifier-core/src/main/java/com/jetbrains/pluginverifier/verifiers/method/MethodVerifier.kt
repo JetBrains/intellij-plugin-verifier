@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.method
 
-import com.jetbrains.pluginverifier.utils.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 

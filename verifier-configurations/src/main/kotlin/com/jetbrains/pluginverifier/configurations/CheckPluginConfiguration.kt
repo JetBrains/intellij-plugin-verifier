@@ -2,12 +2,16 @@ package com.jetbrains.pluginverifier.configurations
 
 import com.intellij.structure.ide.Ide
 import com.intellij.structure.plugin.Plugin
-import com.jetbrains.pluginverifier.api.*
+import com.jetbrains.pluginverifier.api.IdeDescriptor
+import com.jetbrains.pluginverifier.api.PluginDescriptor
+import com.jetbrains.pluginverifier.api.VerificationResult
+import com.jetbrains.pluginverifier.api.VerifierParams
+import com.jetbrains.pluginverifier.core.VerifierExecutor
+import com.jetbrains.pluginverifier.dependencies.DefaultDependencyResolver
 import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
-import com.jetbrains.pluginverifier.utils.DefaultDependencyResolver
 import com.jetbrains.pluginverifier.utils.VerificationResultToApiResultConverter
 
 class CheckPluginConfiguration(val params: CheckPluginParams) : Configuration {
@@ -52,10 +56,9 @@ class CheckPluginConfiguration(val params: CheckPluginParams) : Configuration {
                              ideDescriptor: IdeDescriptor,
                              dependencyResolver: DependencyResolver): VerificationResult {
     val verifierParams = VerifierParams(params.jdkDescriptor, params.externalClassesPrefixes, params.problemsFilter, params.externalClasspath, dependencyResolver)
-    val verifier = Verifier(verifierParams)
+    val verifier = VerifierExecutor(verifierParams)
     verifier.use {
-      verifier.verify(pluginDescriptor, ideDescriptor)
-      val results = verifier.getVerificationResults(params.progress)
+      val results = verifier.verify(listOf(pluginDescriptor to ideDescriptor), params.progress)
       return results.single()
     }
   }

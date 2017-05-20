@@ -1,25 +1,24 @@
-package com.jetbrains.pluginverifier.api
+package com.jetbrains.pluginverifier.core
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.utils.VerificationWorker
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.util.concurrent.ExecutorCompletionService
 import java.util.concurrent.Executors
-import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
 /**
  * @author Sergey Patrikeev
  */
-class Verifier(val params: VerifierParams) : Closeable {
+class VerifierExecutor(val params: VerifierParams) : Closeable {
 
   companion object {
-    private val LOG = LoggerFactory.getLogger(Verifier::class.java)
+    private val LOG = LoggerFactory.getLogger(VerifierExecutor::class.java)
 
     //todo: scale this better.
     private val AVERAGE_AMOUNT_OF_MEMORY_BY_PLUGIN_VERIFICATION_IN_MB = 200
@@ -38,8 +37,6 @@ class Verifier(val params: VerifierParams) : Closeable {
 
   private val completionService = ExecutorCompletionService<VerificationResult>(executor)
 
-  private val futures: MutableList<Future<VerificationResult>> = arrayListOf()
-
   init {
     LOG.info("Created verifier with $concurrentWorkers " + " worker".pluralize(concurrentWorkers))
   }
@@ -50,11 +47,12 @@ class Verifier(val params: VerifierParams) : Closeable {
     return maxOf(1, minOf(maxByMemory, maxByCpu)).toInt()
   }
 
-  fun verify(pluginDescriptor: PluginDescriptor, ideDescriptor: IdeDescriptor): Future<VerificationResult> {
-    val worker = VerificationWorker(pluginDescriptor, ideDescriptor, runtimeResolver, params)
-    val future = completionService.submit(worker)
-    futures.add(future)
-    return future
+  fun verify(tasks: List<Pair<PluginDescriptor, IdeDescriptor>>, progress: Progress): List<VerificationResult> {
+    tasks.forEach {
+      val worker = Verifier(it.first, it.second, runtimeResolver, params)
+      completionService.submit(worker)
+    }
+    return getVerificationResults(tasks.size, progress)
   }
 
   override fun close() {
@@ -62,10 +60,9 @@ class Verifier(val params: VerifierParams) : Closeable {
     executor.shutdownNow()
   }
 
-  fun getVerificationResults(progress: Progress): List<VerificationResult> {
+  private fun getVerificationResults(tasks: Int, progress: Progress): List<VerificationResult> {
     var verified = 0
     val results = arrayListOf<VerificationResult>()
-    val tasks = futures.size
     (1..tasks).forEach fori@ {
       while (true) {
         if (Thread.currentThread().isInterrupted) {

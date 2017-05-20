@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
-import com.jetbrains.pluginverifier.utils.VerificationContext
-import com.jetbrains.pluginverifier.utils.VerifierUtil
+import com.jetbrains.pluginverifier.utils.BytecodeUtil
 import com.jetbrains.pluginverifier.utils.checkClassExistsOrExternal
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.jetbrains.intellij.plugins.internal.asm.Type
 import org.jetbrains.intellij.plugins.internal.asm.tree.AbstractInsnNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
@@ -17,7 +17,7 @@ class LdcInstructionVerifier : InstructionVerifier {
     if (constant !is Type) return
 
     val descriptor = constant.descriptor
-    val className = VerifierUtil.extractClassNameFromDescr(descriptor) ?: return
+    val className = BytecodeUtil.extractClassNameFromDescr(descriptor) ?: return
 
     ctx.checkClassExistsOrExternal(className, { ctx.fromMethod(clazz, method) })
   }

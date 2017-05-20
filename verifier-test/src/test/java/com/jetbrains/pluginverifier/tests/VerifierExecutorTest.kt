@@ -8,13 +8,14 @@ import com.jetbrains.pluginverifier.location.*
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.reference.SymbolicReference
+import org.hamcrest.core.Is.`is`
 import org.junit.AfterClass
 import org.junit.Assert.*
 import org.junit.BeforeClass
 import org.junit.Test
 import java.io.File
 
-class VerifierTest {
+class VerifierExecutorTest {
 
   companion object {
     lateinit var result: Verdict.MissingDependencies
@@ -97,8 +98,8 @@ class VerifierTest {
   private fun assertProblemFound(problem: Problem, expectedFullDescription: String, expectedShortDescription: String) {
     assertTrue("${problem.getShortDescription()} is not found", actualProblems.contains(problem))
     redundantProblems.remove(problem)
-    assertEquals(expectedFullDescription, problem.getFullDescription())
-    assertEquals(expectedShortDescription, problem.getShortDescription())
+    assertThat(expectedShortDescription, `is`(problem.getShortDescription().toString()))
+    assertThat(expectedFullDescription, `is`(problem.getFullDescription().toString()))
   }
 
   @Test

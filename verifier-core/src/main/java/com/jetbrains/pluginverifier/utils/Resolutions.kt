@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.IllegalClassAccessProblem
 import com.jetbrains.pluginverifier.problems.InvalidClassFileProblem
 import com.jetbrains.pluginverifier.reference.ClassReference
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -38,10 +39,10 @@ fun VerificationContext.resolveClass(className: String, lookup: ClassNode): ClsR
     return ClsResolution.InvalidClassFile("Unable to read class-file $className using ASM Java Bytecode engineering library. Internal error: ${e.message}")
   }
   if (node != null) {
-    return if (VerifierUtil.isClassAccessibleToOtherClass(node, lookup)) {
+    return if (BytecodeUtil.isClassAccessibleToOtherClass(node, lookup)) {
       ClsResolution.Found(node)
     } else {
-      ClsResolution.IllegalAccess(node, VerifierUtil.getAccessType(node.access))
+      ClsResolution.IllegalAccess(node, BytecodeUtil.getAccessType(node.access))
     }
   }
   return ClsResolution.NotFound
