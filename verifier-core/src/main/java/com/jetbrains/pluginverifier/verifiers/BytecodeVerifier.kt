@@ -1,5 +1,9 @@
 package com.jetbrains.pluginverifier.verifiers
 
+import com.intellij.structure.ide.Ide
+import com.intellij.structure.plugin.Plugin
+import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.utils.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.InheritFromFinalClassVerifier
@@ -16,11 +20,16 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class BytecodeVerifier(val ctx: VerificationContext) {
+class BytecodeVerifier(verifierParams: VerifierParams,
+                       plugin: Plugin,
+                       ide: Ide,
+                       classLoader: Resolver) {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(BytecodeVerifier::class.java)
   }
+
+  private val verificationContext: VerificationContext = VerificationContext(plugin, ide, verifierParams, classLoader)
 
   private val fieldVerifiers = arrayOf<FieldVerifier>(FieldTypeVerifier())
 
@@ -48,28 +57,29 @@ class BytecodeVerifier(val ctx: VerificationContext) {
       FieldAccessInstructionVerifier()
   )
 
-  fun verify(classesToCheck: Iterator<String>) {
+  fun verify(classesToCheck: Iterator<String>): VerificationContext {
     var lastNVerified = 0
     for (className in classesToCheck) {
       if (Thread.currentThread().isInterrupted) {
         throw InterruptedException("The verification was cancelled")
       }
       val node = try {
-        ctx.resolver.findClass(className)
+        verificationContext.resolver.findClass(className)
       } catch (e: Exception) {
         null
       }
       if (node != null) {
         try {
-          verifyClass(node, ctx)
+          verifyClass(node, verificationContext)
         } finally {
           lastNVerified++
           if (lastNVerified % 1000 == 0) {
-            LOG.debug("Verification ${ctx.plugin} and ${ctx.ide}: finished verification of $lastNVerified classes")
+            LOG.debug("Verification ${verificationContext.plugin} and ${verificationContext.ide}: finished verification of $lastNVerified classes")
           }
         }
       }
     }
+    return verificationContext
   }
 
   @Suppress("UNCHECKED_CAST")

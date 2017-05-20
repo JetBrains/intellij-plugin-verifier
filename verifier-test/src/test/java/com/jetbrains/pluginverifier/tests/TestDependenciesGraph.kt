@@ -48,7 +48,7 @@ class TestDependenciesGraph {
 
   @Test
   fun testAtLeastOnePathToMissingDependency() {
-    val paths = SIMPLE_GRAPH_WITH_NO_CYCLES.getMissingDependencies()
+    val paths = SIMPLE_GRAPH_WITH_NO_CYCLES.getMissingDependencyPaths()
     assertTrue(paths.isNotEmpty())
     val one = MissingDependencyPath(listOf(a, b, d), missing("E", true, false, "broken download url"))
     val two = MissingDependencyPath(listOf(a, c, d), missing("E", true, false, "broken download url"))

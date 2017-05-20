@@ -1,11 +1,6 @@
 package com.jetbrains.pluginverifier.utils
 
-import com.jetbrains.pluginverifier.location.Location
 import com.jetbrains.pluginverifier.problems.AccessType
-import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
-import com.jetbrains.pluginverifier.problems.IllegalClassAccessProblem
-import com.jetbrains.pluginverifier.reference.ClassReference
-import com.jetbrains.pluginverifier.warnings.Warning
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
 import org.jetbrains.intellij.plugins.internal.asm.Type
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
@@ -13,77 +8,13 @@ import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.LocalVariableNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 
-sealed class ClsResolution {
-  object NotFound : ClsResolution()
-  object ExternalClass : ClsResolution()
-  class IllegalAccess(val resolvedNode: ClassNode, val accessType: AccessType) : ClsResolution()
-  class Found(val node: ClassNode) : ClsResolution()
-}
-
-/**
- * To resolve an unresolved symbolic reference from D to a class or interface C denoted by N, the following steps are performed:
- * ...<JVM-related stuff>...
- *  3) Finally, access permissions to C are checked.
- *  If C is not accessible (§5.4.4) to D, class or interface resolution throws an IllegalAccessError.
- */
-fun VerificationContext.resolveClass(className: String, lookup: ClassNode): ClsResolution {
-  if (verifierParams.isExternalClass(className)) {
-    return ClsResolution.ExternalClass
-  }
-  val node = findClassNode(className)
-  if (node != null) {
-    return if (VerifierUtil.isClassAccessibleToOtherClass(node, lookup)) {
-      ClsResolution.Found(node)
-    } else {
-      ClsResolution.IllegalAccess(node, VerifierUtil.getAccessType(node.access))
-    }
-  }
-  return ClsResolution.NotFound
-}
-
-
-fun VerificationContext.resolveClassOrProblem(className: String,
-                                              lookup: ClassNode,
-                                              lookupLocation: () -> Location): ClassNode? {
-  val resolution = this.resolveClass(className, lookup)
-  return when (resolution) {
-    ClsResolution.NotFound -> {
-      registerProblem(ClassNotFoundProblem(ClassReference(className), lookupLocation.invoke()))
-      null
-    }
-    ClsResolution.ExternalClass -> null
-    is ClsResolution.IllegalAccess -> {
-      registerProblem(IllegalClassAccessProblem(fromClass(resolution.resolvedNode), resolution.accessType, lookupLocation.invoke()))
-      null
-    }
-    is ClsResolution.Found -> resolution.node
-  }
-}
-
-private fun VerificationContext.findClassNode(className: String): ClassNode? {
-  try {
-    return resolver.findClass(className)
-  } catch (e: Exception) {
-    registerWarning(Warning("Unable to read a class $className using ASM (<a href=\"http://asm.ow2.org\"></a>). Probably it has invalid class-file. Try to recompile the plugin"))
-    return null
-  }
-
-}
-
-fun VerificationContext.checkClassExistsOrExternal(className: String, registerMissing: () -> Location) {
-  if (!verifierParams.isExternalClass(className) && !resolver.containsClass(className)) {
-    registerProblem(ClassNotFoundProblem(ClassReference(className), registerMissing.invoke()))
-  }
-}
-
-
 object VerifierUtil {
 
   @Suppress("UNCHECKED_CAST")
   fun getParameterNames(method: MethodNode): List<String> {
     val arguments = Type.getArgumentTypes(method.desc)
     val argumentsNumber = arguments.size
-    val offset = if (VerifierUtil.isStatic(method)) 0 else 1
+    val offset = if (isStatic(method)) 0 else 1
     var parameterNames: List<String> = emptyList()
     if (method.localVariables != null) {
       parameterNames = (method.localVariables as List<LocalVariableNode>).map { it.name }.drop(offset).take(argumentsNumber)
@@ -222,22 +153,10 @@ object VerifierUtil {
         isProtected(firstMethod) ||
         (isDefaultAccess(firstMethod) && haveTheSamePackage(firstOwner, secondOwner))
 
-    return isSubclassOf(firstOwner, secondOwner, ctx)
+    return ctx.isSubclassOf(firstOwner, secondOwner)
         && firstMethod.name == secondMethod.name && firstMethod.desc == secondMethod.desc
         && !isPrivate(firstMethod)
         && isAccessible
-  }
-
-  fun isSubclassOf(child: ClassNode, possibleParent: ClassNode, ctx: VerificationContext): Boolean {
-    var current: ClassNode? = child
-    while (current != null) {
-      if (possibleParent.name == current.name) {
-        return true
-      }
-      val superName = current.superName ?: return false
-      current = ctx.findClassNode(superName)
-    }
-    return false
   }
 
 }

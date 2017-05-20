@@ -34,7 +34,7 @@ data class DependenciesGraph(@SerializedName("start") val start: DependencyNode,
 
   fun getCycles(): List<List<DependencyNode>> = DependenciesGraphCycleFinder(this).findAllCycles().map { it.reversed() }
 
-  fun getMissingDependencies(): List<MissingDependencyPath> {
+  fun getMissingDependencyPaths(): List<MissingDependencyPath> {
     val breadCrumbs: Deque<DependencyNode> = LinkedList()
     val result: MutableList<MissingDependencyPath> = arrayListOf()
     val onVisit: (DependencyNode) -> Unit = {

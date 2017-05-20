@@ -72,7 +72,7 @@ class Verifier(val params: VerifierParams) : Closeable {
           progress.setProgress(((++verified).toDouble()) / tasks)
           val resultString = getVerificationResultText(result)
           progress.setText(resultString)
-          LOG.info("Worker $verified/$tasks finished. $resultString")
+          LOG.info("Verified $verified/$tasks finished. $resultString")
           break
         }
       }

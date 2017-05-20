@@ -2,10 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.SymbolicReference
-import com.jetbrains.pluginverifier.utils.VerificationContext
-import com.jetbrains.pluginverifier.utils.VerifierUtil
-import com.jetbrains.pluginverifier.utils.checkClassExistsOrExternal
-import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
+import com.jetbrains.pluginverifier.utils.*
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
 import org.jetbrains.intellij.plugins.internal.asm.tree.*
 
@@ -141,7 +138,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
         }
       VerifierUtil.isProtected(fieldNode) -> {
         if (!VerifierUtil.haveTheSamePackage(verifiableClass, definingClass)) {
-          if (!VerifierUtil.isSubclassOf(verifiableClass, definingClass, ctx)) {
+          if (!ctx.isSubclassOf(verifiableClass, definingClass)) {
             accessProblem = AccessType.PROTECTED
           }
         }

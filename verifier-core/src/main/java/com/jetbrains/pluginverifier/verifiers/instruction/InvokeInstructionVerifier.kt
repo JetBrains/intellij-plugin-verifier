@@ -2,10 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.SymbolicReference
-import com.jetbrains.pluginverifier.utils.VerificationContext
-import com.jetbrains.pluginverifier.utils.VerifierUtil
-import com.jetbrains.pluginverifier.utils.checkClassExistsOrExternal
-import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
+import com.jetbrains.pluginverifier.utils.*
 import org.jetbrains.intellij.plugins.internal.asm.Opcodes
 import org.jetbrains.intellij.plugins.internal.asm.tree.AbstractInsnNode
 import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
@@ -387,7 +384,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       }
     } else if (VerifierUtil.isProtected(methodNode)) {
       if (!VerifierUtil.haveTheSamePackage(verifiableClass, definingClass)) {
-        if (!VerifierUtil.isSubclassOf(verifiableClass, definingClass, ctx)) {
+        if (!ctx.isSubclassOf(verifiableClass, definingClass)) {
           accessProblem = AccessType.PROTECTED
         }
       }
@@ -492,7 +489,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     return allMatching.filterIndexed { index, (definingClass) ->
       var isDeepest = true
       allMatching.forEachIndexed { otherIndex, otherMethod ->
-        if (index != otherIndex && VerifierUtil.isSubclassOf(definingClass, otherMethod.definingClass, ctx)) {
+        if (index != otherIndex && ctx.isSubclassOf(definingClass, otherMethod.definingClass)) {
           isDeepest = false
         }
       }

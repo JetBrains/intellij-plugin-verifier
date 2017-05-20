@@ -45,7 +45,7 @@ object DownloadManager {
   //90% of maximum available space
   private val SPACE_THRESHOLD = 0.90
 
-  private val MAXIMUM_CACHE_SPACE_MB = SPACE_THRESHOLD * RepositoryConfiguration.cacheDirMaxSpaceMb
+  private val MAXIMUM_CACHE_SPACE_MB = SPACE_THRESHOLD * RepositoryConfiguration.cacheDirMaxSpaceMb.toLong()
 
   private val GC_PERIOD_MS: Long = TimeUnit.SECONDS.toMillis(30)
 
@@ -95,7 +95,7 @@ object DownloadManager {
 
   @Synchronized
   private fun releaseOldLocksAndDeleteUnusedPlugins() {
-    LOG.info("It's time to remove unused plugins from cache. Cache usages: ${getCacheSpaceMb()} Mb; Maximum usage: $MAXIMUM_CACHE_SPACE_MB")
+    LOG.info("It's time to remove unused plugins from cache. Cache usages: ${getCacheSpaceMb()} Mb; Maximum usage: $MAXIMUM_CACHE_SPACE_MB Mb")
 
     releaseOldLocks()
     if (exceedSpace()) {

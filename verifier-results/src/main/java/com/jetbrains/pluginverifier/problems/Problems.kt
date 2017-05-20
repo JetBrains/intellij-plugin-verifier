@@ -263,3 +263,12 @@ data class StaticAccessOfNonStaticFieldProblem(@SerializedName("field") val fiel
 
   override fun fullDescriptionParams() = listOf(accessor, instruction, field)
 }
+
+data class InvalidClassFileProblem(@SerializedName("brokenClass") val brokenClass: ClassReference,
+                                   @SerializedName("usage") val usage: Location,
+                                   @SerializedName("reason") val reason: String) : Problem("invalid.class.file") {
+  override fun shortDescriptionParams(): List<Any> = listOf(brokenClass)
+
+  override fun fullDescriptionParams(): List<Any> = listOf(brokenClass, usage, reason)
+
+}

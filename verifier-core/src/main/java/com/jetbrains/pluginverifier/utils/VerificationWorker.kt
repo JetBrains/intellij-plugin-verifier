@@ -71,13 +71,28 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
     pluginResolver = creationOk.resolver
 
     val (graph, start) = graphBuilder.build(creationOk)
+    val apiGraph = DepGraph2ApiGraphConverter.convert(graph, start)
+    logDebugGraph(plugin, apiGraph)
     try {
       val context = runVerifier(graph)
-      val apiGraph = DepGraph2ApiGraphConverter.convert(graph, start)
       addCycleAndOtherWarnings(apiGraph, context)
       return getAppropriateVerdict(context, apiGraph)
     } finally {
       graph.vertexSet().forEach { it.closeLogged() }
+    }
+  }
+
+  private fun logDebugGraph(plugin: Plugin, dependenciesGraph: DependenciesGraph) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Dependencies graph for $plugin: start at ${dependenciesGraph.start}; vertices: ${dependenciesGraph.vertices.size}")
+      val directMissingDeps = dependenciesGraph.start.missingDependencies
+      if (directMissingDeps.isNotEmpty()) {
+        LOG.debug("  direct missing dependencies: ${directMissingDeps.joinToString()}")
+      }
+      val missingPaths = dependenciesGraph.getMissingDependencyPaths()
+      if (missingPaths.isNotEmpty()) {
+        LOG.debug("  all missing transitive dependencies: ${missingPaths.joinToString()}")
+      }
     }
   }
 
@@ -95,25 +110,26 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
   }
 
   private fun runVerifier(graph: DirectedGraph<DepVertex, DepEdge>): VerificationContext {
-    val resolver = getDependenciesClassesResolver(graph)
+    val dependenciesResolver = getDependenciesClassesResolver(graph)
     val checkClasses = getClassesForCheck()
-    val classLoader = createClassLoader(resolver, ideDescriptor.createIdeResult.ideResolver, runtimeResolver, params.externalClassPath, ideDescriptor.createIdeResult.ide)
-    classLoader.use {
-      return getVerificationContext(classLoader, ideDescriptor.createIdeResult.ide, params, plugin, checkClasses)
+    val createIdeResult = ideDescriptor.createIdeResult
+    val classLoader = getVerificationClassLoader(dependenciesResolver, createIdeResult.ideResolver, runtimeResolver, params.externalClassPath, createIdeResult.ide)
+    return classLoader.use {
+      BytecodeVerifier(params, plugin, createIdeResult.ide, classLoader).verify(checkClasses)
     }
   }
 
-  private fun createClassLoader(dependenciesResolver: Resolver,
-                                ideResolver: Resolver,
-                                runtimeResolver: Resolver,
-                                externalClassPath: Resolver,
-                                ide: Ide): Resolver =
-      Resolver.createCacheResolver(
+  private fun getVerificationClassLoader(dependenciesResolver: Resolver,
+                                         ideResolver: Resolver,
+                                         runtimeResolver: Resolver,
+                                         externalClassPath: Resolver,
+                                         ide: Ide): Resolver =
+      CloseIgnoringResolver(Resolver.createCacheResolver(
           Resolver.createUnionResolver(
               "Common resolver for plugin " + plugin.pluginId + " with its transitive dependencies; ide " + ide.version + "; jdk " + runtimeResolver,
               listOf(pluginResolver, runtimeResolver, ideResolver, dependenciesResolver, externalClassPath)
           )
-      )
+      ))
 
   private fun getClassesForCheck(): Iterator<String> {
     val resolver = Resolver.createUnionResolver("Plugin classes for check",
@@ -142,16 +158,6 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
     }
 
     return Verdict.OK(dependenciesGraph)
-  }
-
-  private fun getVerificationContext(classLoader: Resolver,
-                                     ide: Ide,
-                                     params: VerifierParams,
-                                     plugin: Plugin,
-                                     checkClasses: Iterator<String>): VerificationContext {
-    val context = VerificationContext(plugin, ide, params, classLoader)
-    BytecodeVerifier(context).verify(checkClasses)
-    return context
   }
 
 }

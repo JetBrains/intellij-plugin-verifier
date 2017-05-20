@@ -60,7 +60,7 @@ class WriterVPrinter(private val out: PrintWriter) : Printer {
 
   private fun printWarnings(ideVersion: IdeVersion, plugin: PluginInfo, warnings: Set<Warning>) {
     val warningsSize = warnings.size
-    out.println("With IDE #$ideVersion the plugin $plugin has $warningsSize " + "warning".pluralize(warningsSize))
+    out.println("With IDE #$ideVersion plugin $plugin has $warningsSize " + "warning".pluralize(warningsSize))
     warnings.forEach {
       out.println("    #${it.message}")
     }
@@ -68,7 +68,7 @@ class WriterVPrinter(private val out: PrintWriter) : Printer {
 
   private fun printProblems(ideVersion: IdeVersion, plugin: PluginInfo, problems: Set<Problem>) {
     val problemsCnt = problems.size
-    out.println("With IDE #$ideVersion the plugin $plugin has $problemsCnt " + "problem".pluralize(problemsCnt))
+    out.println("With IDE #$ideVersion plugin $plugin has $problemsCnt " + "problem".pluralize(problemsCnt))
     problems.groupBy({ it.getShortDescription() }, { it.getFullDescription() }).forEach {
       out.println("    #${it.key}")
       it.value.forEach { fullDescription ->

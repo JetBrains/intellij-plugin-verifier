@@ -73,8 +73,7 @@ fun File.deleteLogged(): Boolean {
 
 fun String.pluralize(times: Int): String {
   if (times < 0) throw IllegalArgumentException("Negative value")
-  if (times == 0) return ""
-  if (times == 1) {
+  if (times <= 1) {
     return this
   } else {
     if (this.endsWith("y")) {
