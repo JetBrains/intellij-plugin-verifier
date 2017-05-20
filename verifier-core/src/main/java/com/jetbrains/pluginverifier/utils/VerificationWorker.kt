@@ -84,15 +84,18 @@ class VerificationWorker(val pluginDescriptor: PluginDescriptor,
 
   private fun logDebugGraph(plugin: Plugin, dependenciesGraph: DependenciesGraph) {
     if (LOG.isDebugEnabled) {
-      LOG.debug("Dependencies graph for $plugin: start at ${dependenciesGraph.start}; vertices: ${dependenciesGraph.vertices.size}")
-      val directMissingDeps = dependenciesGraph.start.missingDependencies
-      if (directMissingDeps.isNotEmpty()) {
-        LOG.debug("  direct missing dependencies: ${directMissingDeps.joinToString()}")
+      val message = buildString {
+        appendln("Dependencies graph for $plugin: start at ${dependenciesGraph.start}; vertices: ${dependenciesGraph.vertices.size}")
+        val directMissingDeps = dependenciesGraph.start.missingDependencies
+        if (directMissingDeps.isNotEmpty()) {
+          appendln("  direct missing dependencies: ${directMissingDeps.joinToString()}")
+        }
+        val missingPaths = dependenciesGraph.getMissingDependencyPaths()
+        if (missingPaths.isNotEmpty()) {
+          appendln("  all missing transitive dependencies: ${missingPaths.joinToString()}")
+        }
       }
-      val missingPaths = dependenciesGraph.getMissingDependencyPaths()
-      if (missingPaths.isNotEmpty()) {
-        LOG.debug("  all missing transitive dependencies: ${missingPaths.joinToString()}")
-      }
+      LOG.debug(message)
     }
   }
 

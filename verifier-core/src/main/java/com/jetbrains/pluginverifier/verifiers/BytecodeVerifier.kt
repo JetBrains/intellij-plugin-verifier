@@ -74,7 +74,7 @@ class BytecodeVerifier(verifierParams: VerifierParams,
         } finally {
           lastNVerified++
           if (lastNVerified % 1000 == 0) {
-            LOG.debug("Verification ${verificationContext.plugin} and ${verificationContext.ide}: finished verification of $lastNVerified classes")
+            LOG.debug("'${verificationContext.plugin}' and #${verificationContext.ide}: finished $lastNVerified classes")
           }
         }
       }

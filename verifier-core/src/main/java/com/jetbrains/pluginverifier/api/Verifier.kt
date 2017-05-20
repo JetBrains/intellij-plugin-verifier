@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.api
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.closeLogged
@@ -27,7 +28,12 @@ class Verifier(val params: VerifierParams) : Closeable {
 
   private val concurrentWorkers = estimateNumberOfConcurrentWorkers()
 
-  private val executor = Executors.newFixedThreadPool(concurrentWorkers)
+  private val executor = Executors.newFixedThreadPool(concurrentWorkers,
+      ThreadFactoryBuilder()
+          .setDaemon(true)
+          .setNameFormat("verifier-%d")
+          .build()
+  )
 
   private val completionService = ExecutorCompletionService<VerificationResult>(executor)
 
