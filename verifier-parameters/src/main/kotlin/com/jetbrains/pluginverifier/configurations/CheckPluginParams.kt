@@ -41,7 +41,7 @@ object CheckPluginParamsParser : ConfigurationParamsParser {
       return ideVersions!!.map { fetchPlugins(it, pluginListFile, pluginPaths) }.flatten().map { PluginDescriptor.ByFileLock(it) }
     } else if (pluginToTestArg.matches("#\\d+".toRegex())) {
       val updateId = Integer.parseInt(pluginToTestArg.drop(1))
-      val updateInfo = RepositoryManager.getUpdateInfoById(updateId)
+      val updateInfo = RepositoryManager.getUpdateInfoById(updateId) ?: throw IllegalArgumentException("Update #$updateId is not found in the Plugin Repository")
       return listOf(PluginDescriptor.ByUpdateInfo(updateInfo))
     } else {
       val file = File(pluginToTestArg)

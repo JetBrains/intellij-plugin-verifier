@@ -134,6 +134,7 @@ private val problemsTAF = RuntimeTypeAdapterFactory.of(Problem::class.java)
     .registerSubtype(InheritFromFinalClassProblem::class.java)
     .registerSubtype(IllegalClassAccessProblem::class.java)
     .registerSubtype(MultipleDefaultImplementationsProblem::class.java)
+    .registerSubtype(InvalidClassFileProblem::class.java)
 
 
 class IdeVersionTypeAdapter : TypeAdapter<IdeVersion>() {

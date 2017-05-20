@@ -79,7 +79,7 @@ class Verifier(val params: VerifierParams) : Closeable {
           progress.setProgress(((++verified).toDouble()) / tasks)
           val resultString = getVerificationResultText(result)
           progress.setText(resultString)
-          LOG.info("Verified $verified/$tasks finished. $resultString")
+          LOG.info("$verified/$tasks plugins finished. $resultString")
           break
         }
       }
@@ -89,7 +89,7 @@ class Verifier(val params: VerifierParams) : Closeable {
 
   private fun getVerificationResultText(result: VerificationResult): String =
       "Plugin ${result.pluginDescriptor} has been verified with ${result.ideDescriptor}. " + when (result) {
-        is VerificationResult.Verified -> "Verified: ${result.verdict}"
+        is VerificationResult.Verified -> "Result: ${result.verdict}"
         is VerificationResult.BadPlugin -> "Broken plugin: ${result.problems.joinToString()}"
         is VerificationResult.NotFound -> "Not found: ${result.reason}"
       }

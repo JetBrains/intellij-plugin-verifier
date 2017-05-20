@@ -180,7 +180,7 @@ object DownloadManager {
     }
   }
 
-  private fun getCachedFile(updateId: Int): File? {
+  private fun getCachedFile(updateId: UpdateInfo): File? {
     val asZip = File(RepositoryConfiguration.downloadDir, "$updateId.zip")
     if (asZip.exists() && asZip.length() >= BROKEN_FILE_THRESHOLD_BYTES) {
       return asZip
@@ -192,7 +192,8 @@ object DownloadManager {
     return null
   }
 
-  private fun doDownload(updateId: Int, tempFile: File): String {
+  private fun doDownload(updateInfo: UpdateInfo, tempFile: File): String {
+    val updateId = updateInfo.updateId
     val response = downloadApi.downloadFile(updateId).executeSuccessfully()
     FileUtils.copyInputStreamToFile(response.body().byteStream(), tempFile)
     val extension = guessExtension(response)
@@ -206,10 +207,10 @@ object DownloadManager {
     return "zip"
   }
 
-  private fun downloadToTempFile(updateId: Int, tempFile: File): String {
-    val updateFileName = doDownload(updateId, tempFile)
+  private fun downloadToTempFile(updateInfo: UpdateInfo, tempFile: File): String {
+    val updateFileName = doDownload(updateInfo, tempFile)
     if (tempFile.length() < BROKEN_FILE_THRESHOLD_BYTES) {
-      throw IOException("Too small update #$updateId size: ${tempFile.length()} bytes")
+      throw IOException("Too small update $updateInfo size: ${tempFile.length()} bytes")
     }
     return updateFileName
   }
@@ -238,28 +239,28 @@ object DownloadManager {
     return true
   }
 
-  private fun downloadFile(updateId: Int): File {
-    LOG.debug("Downloading update #$updateId")
+  private fun downloadFile(updateInfo: UpdateInfo): File {
+    LOG.debug("Downloading update $updateInfo")
     val tempFile = File.createTempFile(TEMP_DOWNLOAD_PREFIX, TEMP_DOWNLOAD_SUFFIX, RepositoryConfiguration.downloadDir)
-    val updateFileName = downloadToTempFile(updateId, tempFile)
+    val updateFileName = downloadToTempFile(updateInfo, tempFile)
     val cachedUpdate = File(RepositoryConfiguration.downloadDir, updateFileName)
     if (moveDownloaded(tempFile, cachedUpdate)) {
-      LOG.debug("Update #$updateId is saved to $cachedUpdate")
+      LOG.debug("Update $updateInfo is saved to $cachedUpdate")
     } else {
-      LOG.debug("Update #$updateId is concurrently loaded by another thread to $cachedUpdate")
+      LOG.debug("Update $updateInfo is concurrently loaded by another thread to $cachedUpdate")
       tempFile.deleteLogged()
     }
     return cachedUpdate
   }
 
-  fun getOrLoadUpdate(updateId: Int): FileLock? {
-    var pluginFile = getCachedFile(updateId)
+  fun getOrLoadUpdate(updateInfo: UpdateInfo): FileLock? {
+    var pluginFile = getCachedFile(updateInfo)
 
     if (pluginFile == null || pluginFile.length() < BROKEN_FILE_THRESHOLD_BYTES) {
       try {
-        pluginFile = downloadFile(updateId)
+        pluginFile = downloadFile(updateInfo)
       } catch (e: Exception) {
-        LOG.info("Unable to download update #$updateId", e)
+        LOG.info("Unable to download update $updateInfo", e)
         return null
       }
     }

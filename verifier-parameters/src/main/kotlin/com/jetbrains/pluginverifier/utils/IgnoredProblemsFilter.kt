@@ -27,7 +27,7 @@ class IgnoredProblemsFilter(val problemsToIgnore: Multimap<Pair<String, String>,
       if (xmlId == ignoreXmlId) {
         if (ignoreVersion.isEmpty() || version == ignoreVersion) {
           val regex = ignoredPattern.toRegex()
-          if (problem.getShortDescription().matches(regex)) {
+          if (problem.getShortDescription().toString().matches(regex)) {
             appendToIgnoredProblemsFileOrLog(plugin, problem, regex)
             return true
           }

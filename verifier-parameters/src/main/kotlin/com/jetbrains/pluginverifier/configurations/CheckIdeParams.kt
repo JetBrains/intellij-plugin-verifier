@@ -7,10 +7,10 @@ import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.dependency.DependencyResolver
-import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.repository.RepositoryManager
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.OptionsUtil
 import com.jetbrains.pluginverifier.utils.ParametersListUtil

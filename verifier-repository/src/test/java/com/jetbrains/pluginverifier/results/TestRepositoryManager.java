@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.results;
 
 import com.intellij.structure.ide.IdeVersion;
-import com.jetbrains.pluginverifier.format.UpdateInfo;
 import com.jetbrains.pluginverifier.repository.FileLock;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
+import com.jetbrains.pluginverifier.repository.UpdateInfo;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -41,16 +41,18 @@ public class TestRepositoryManager {
 
   @Test
   public void downloadNonExistentPlugin() throws Exception {
-    FileLock id = RepositoryManager.INSTANCE.getPluginFile(-1000);
-    assertNull(id);
+    UpdateInfo updateInfo = RepositoryManager.INSTANCE.getUpdateInfoById(-1000);
+    assertNull(updateInfo);
   }
 
   @Test
   public void downloadExistentPlugin() throws Exception {
-    FileLock info = RepositoryManager.INSTANCE.getPluginFile(25128); //.gitignore 1.3.3
-    assertNotNull(info);
-    assertTrue(info.getFile().length() > 0);
-    info.release();
+    UpdateInfo updateInfo = RepositoryManager.INSTANCE.getUpdateInfoById(25128); //.gitignore 1.3.3
+    assertNotNull(updateInfo);
+    FileLock fileLock = RepositoryManager.INSTANCE.getPluginFile(updateInfo);
+    assertNotNull(fileLock);
+    assertTrue(fileLock.getFile().length() > 0);
+    fileLock.release();
   }
 
 }

@@ -5,9 +5,9 @@ import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.problems.PluginProblem
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.warnings.Warning
 
 data class PluginInfo(@SerializedName("pluginId") val pluginId: String,

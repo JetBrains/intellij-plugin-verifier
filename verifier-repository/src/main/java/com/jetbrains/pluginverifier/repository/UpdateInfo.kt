@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.format
+package com.jetbrains.pluginverifier.repository
 
 import com.google.gson.annotations.SerializedName
 

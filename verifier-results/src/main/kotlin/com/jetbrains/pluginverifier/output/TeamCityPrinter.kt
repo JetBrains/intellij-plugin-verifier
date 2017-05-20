@@ -11,12 +11,12 @@ import com.jetbrains.pluginverifier.configurations.CheckTrunkApiCompareResult
 import com.jetbrains.pluginverifier.configurations.MissingCompatibleUpdate
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.descriptions.ShortDescription
-import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.RepositoryManager
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

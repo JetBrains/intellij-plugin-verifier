@@ -10,10 +10,10 @@ import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.persistence.CompactJson
 import com.jetbrains.pluginverifier.persistence.multimapFromMap
 import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 import java.io.File
 
 

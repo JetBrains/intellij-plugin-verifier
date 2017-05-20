@@ -5,9 +5,9 @@ import com.google.common.collect.Multimaps
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.report.CheckIdeReport
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 
 /**
  * @author Sergey Patrikeev

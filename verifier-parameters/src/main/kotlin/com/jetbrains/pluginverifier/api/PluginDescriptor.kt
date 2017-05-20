@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.api
 
-import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.repository.FileLock
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 import java.io.Closeable
 
 sealed class PluginDescriptor : Closeable {

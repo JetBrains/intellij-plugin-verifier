@@ -5,12 +5,12 @@ import com.google.common.collect.ImmutableMap
 import com.intellij.structure.ide.Ide
 import com.intellij.structure.plugin.Plugin
 import com.jetbrains.pluginverifier.dependency.DependencyResolver
-import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.slf4j.LoggerFactory
 
 class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {

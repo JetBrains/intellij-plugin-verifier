@@ -4,10 +4,10 @@ import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.api.Verifier
 import com.jetbrains.pluginverifier.api.VerifierParams
-import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.repository.RepositoryManager
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.utils.VerificationResultToApiResultConverter
 
 

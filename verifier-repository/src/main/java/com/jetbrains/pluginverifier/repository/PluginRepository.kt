@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.repository
 
 import com.intellij.structure.ide.IdeVersion
-import com.jetbrains.pluginverifier.format.UpdateInfo
 import java.io.Closeable
 import java.io.File
 
@@ -13,11 +12,9 @@ interface PluginRepository {
 
   fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo>
 
-  fun getPluginFile(updateId: Int): FileLock?
-
   fun getPluginFile(update: UpdateInfo): FileLock?
 
-  fun getUpdateInfoById(updateId: Int): UpdateInfo
+  fun getUpdateInfoById(updateId: Int): UpdateInfo?
 
 }
 

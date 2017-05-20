@@ -34,7 +34,7 @@ fun VerificationContext.resolveClass(className: String, lookup: ClassNode): ClsR
   val node = try {
     resolver.findClass(className)
   } catch (e: Exception) {
-    ClassFileLogger.debug("Unable to read class {}", e, className)
+    ClassFileLogger.debug("Unable to read class $className", e)
     return ClsResolution.InvalidClassFile("Unable to read class-file $className using ASM Java Bytecode engineering library. Internal error: ${e.message}")
   }
   if (node != null) {

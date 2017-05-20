@@ -2,10 +2,10 @@ package com.jetbrains.pluginverifier.repository
 
 import com.google.gson.Gson
 import com.intellij.structure.ide.IdeVersion
-import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import org.apache.http.HttpStatus
 import org.apache.http.annotation.ThreadSafe
 import retrofit2.Call
 import retrofit2.Retrofit
@@ -30,8 +30,17 @@ private interface RepositoryApi {
 @ThreadSafe
 object RepositoryManager : PluginRepository {
 
-  override fun getUpdateInfoById(updateId: Int): UpdateInfo =
-      repositoryApi.getUpdateInfoById(updateId).executeSuccessfully().body()
+  override fun getUpdateInfoById(updateId: Int): UpdateInfo? {
+    val call = repositoryApi.getUpdateInfoById(updateId)
+    val response = call.execute()
+    if (response.isSuccessful) {
+      return response.body()
+    } else if (response.code() == HttpStatus.SC_NOT_FOUND) {
+      return null
+    } else {
+      throw RuntimeException("Unable to get update info #$updateId: ${response.code()}")
+    }
+  }
 
   override fun getLastCompatibleUpdates(ideVersion: IdeVersion): List<UpdateInfo> =
       repositoryApi.getLastCompatibleUpdates(ideVersion.asString()).executeSuccessfully().body()
@@ -42,9 +51,7 @@ object RepositoryManager : PluginRepository {
   override fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> =
       repositoryApi.getOriginalCompatibleUpdatesByPluginIds(ideVersion.asString(), pluginId).executeSuccessfully().body()
 
-  override fun getPluginFile(update: UpdateInfo): FileLock? = getPluginFile(update.updateId)
-
-  override fun getPluginFile(updateId: Int): FileLock? = DownloadManager.getOrLoadUpdate(updateId)
+  override fun getPluginFile(update: UpdateInfo): FileLock? = DownloadManager.getOrLoadUpdate(update)
 
   private val repositoryApi: RepositoryApi = Retrofit.Builder()
       .baseUrl(RepositoryConfiguration.pluginRepositoryUrl.trimEnd('/') + '/')
