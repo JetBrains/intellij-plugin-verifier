@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.configurations.CheckTrunkApiCompareResult
 import com.jetbrains.pluginverifier.configurations.MissingCompatibleUpdate
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.descriptions.ShortDescription
 import com.jetbrains.pluginverifier.format.UpdateInfo
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
@@ -85,7 +86,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
   }
 
   private fun printProblemAndAffectedPluginsAsBuildProblem(results: List<Result>) {
-    val shortDescriptionToResults: Multimap<String, Result> = HashMultimap.create()
+    val shortDescriptionToResults: Multimap<ShortDescription, Result> = HashMultimap.create()
     results.forEach { result ->
       getProblemsOfVerdict(result.verdict).forEach {
         shortDescriptionToResults.put(it.getShortDescription(), result)
@@ -93,7 +94,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
     }
     shortDescriptionToResults.asMap().forEach { description, results ->
       val allPluginsWithThisProblem = results.map { it.plugin }
-      tcLog.buildProblem(description + " (in ${allPluginsWithThisProblem.joinToString()})")
+      tcLog.buildProblem(description.toString() + " (in ${allPluginsWithThisProblem.joinToString()})")
     }
   }
 
@@ -289,12 +290,12 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
       val prefix = convertProblemClassNameToSentence(typeToProblems.key)
       tcLog.testSuiteStarted("($prefix)").use {
         typeToProblems.value.forEach { problem ->
-          tcLog.testSuiteStarted(problem.getShortDescription()).use {
+          tcLog.testSuiteStarted(problem.getShortDescription().toString()).use {
             problemToUpdates.get(problem).forEach { plugin ->
               val testName = "($plugin)"
               tcLog.testStarted(testName).use {
                 val pluginUrl = getPluginLink(plugin)
-                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problem.getFullDescription())
+                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problem.getFullDescription().toString())
               }
             }
           }
@@ -345,11 +346,11 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
       tcLog.testSuiteStarted("($prefix)").use {
         typeToProblems.value.forEach { problem ->
           problemToDetectingResult.get(problem).forEach { (plugin) ->
-            tcLog.testSuiteStarted(problem.getShortDescription()).use {
+            tcLog.testSuiteStarted(problem.getShortDescription().toString()).use {
               val testName = "($plugin)"
               tcLog.testStarted(testName).use {
                 val pluginUrl = getPluginLink(plugin)
-                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: $plugin", problem.getFullDescription())
+                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: $plugin", problem.getFullDescription().toString())
               }
             }
           }

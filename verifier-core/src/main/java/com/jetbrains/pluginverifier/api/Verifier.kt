@@ -21,6 +21,7 @@ class Verifier(val params: VerifierParams) : Closeable {
   companion object {
     private val LOG = LoggerFactory.getLogger(Verifier::class.java)
 
+    //todo: scale this better.
     private val AVERAGE_AMOUNT_OF_MEMORY_BY_PLUGIN_VERIFICATION_IN_MB = 200
   }
 

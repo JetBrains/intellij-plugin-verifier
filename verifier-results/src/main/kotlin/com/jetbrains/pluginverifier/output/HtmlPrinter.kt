@@ -6,6 +6,8 @@ import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.descriptions.FullDescription
+import com.jetbrains.pluginverifier.descriptions.ShortDescription
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.misc.pluralize
@@ -113,7 +115,7 @@ class HtmlPrinter(val ideVersion: IdeVersion,
         printProblems(verdict.problems)
       }
       is Verdict.Bad -> {
-        createProblemTab(verdict.pluginProblems.joinToString(), plugin.pluginId)
+        printShortAndFullDescription(verdict.pluginProblems.joinToString(), plugin.pluginId)
       }
       is Verdict.NotFound -> {
         +"The plugin $plugin is not found in the Repository"
@@ -129,7 +131,7 @@ class HtmlPrinter(val ideVersion: IdeVersion,
   }
 
   private fun HtmlBuilder.printMissingDependencies(nonOptionals: List<MissingDependency>) {
-    nonOptionals.forEach { createProblemTab("missing dependency: $it", it.missingReason) }
+    nonOptionals.forEach { printShortAndFullDescription("missing dependency: $it", it.missingReason) }
   }
 
   private fun loadReportScript() = Resources.toString(HtmlPrinter::class.java.getResource("/reportScript.js"), Charset.forName("UTF-8"))
@@ -140,7 +142,11 @@ class HtmlPrinter(val ideVersion: IdeVersion,
     problems.forEach { createProblemTab(it.getShortDescription(), it.getFullDescription()) }
   }
 
-  private fun HtmlBuilder.createProblemTab(shortDescription: String, longDescription: String) {
+  private fun HtmlBuilder.createProblemTab(shortDescription: ShortDescription, longDescription: FullDescription) {
+    printShortAndFullDescription(shortDescription.toString(), longDescription.toString())
+  }
+
+  private fun HtmlBuilder.printShortAndFullDescription(shortDescription: String, fullDescription: String) {
     div(classes = "shortDescription") {
       +shortDescription
       +" "
@@ -148,7 +154,7 @@ class HtmlPrinter(val ideVersion: IdeVersion,
         +"details"
       }
       div(classes = "longDescription") {
-        +longDescription
+        +fullDescription
       }
     }
   }

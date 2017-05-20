@@ -2,34 +2,34 @@ package com.jetbrains.pluginverifier.problems
 
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.pluginverifier.descriptions.DescriptionsBundle
+import com.jetbrains.pluginverifier.descriptions.FullDescription
+import com.jetbrains.pluginverifier.descriptions.ShortDescription
 import com.jetbrains.pluginverifier.location.*
 import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.reference.FieldReference
 import com.jetbrains.pluginverifier.reference.MethodReference
 import org.jetbrains.annotations.PropertyKey
-import java.text.MessageFormat
 
 /**
  * @author Sergey Patrikeev
  */
 abstract class Problem(@PropertyKey(resourceBundle = "long.descriptions") val messageKey: String) {
 
-  fun getShortDescription(): String {
+  fun getShortDescription(): ShortDescription {
     val shortTemplate = DescriptionsBundle.getShortDescription(messageKey)
-    return MessageFormat.format(shortTemplate, *shortDescriptionParams().toTypedArray())
+    return ShortDescription(shortTemplate, shortDescriptionParams())
   }
 
-  fun getFullDescription(): String {
+  fun getFullDescription(): FullDescription {
     val descriptionParams = fullDescriptionParams()
     val fullTemplate = DescriptionsBundle.getFullDescription(messageKey)
-    val fullMessage = MessageFormat.format(fullTemplate, *descriptionParams.toTypedArray())
     val effect = DescriptionsBundle.getEffect(messageKey)
-    return fullMessage + ". " + effect
+    return FullDescription(fullTemplate, effect, descriptionParams)
   }
 
-  abstract fun fullDescriptionParams(): List<Any>
+  protected abstract fun fullDescriptionParams(): List<Any>
 
-  abstract fun shortDescriptionParams(): List<Any>
+  protected abstract fun shortDescriptionParams(): List<Any>
 
 }
 
