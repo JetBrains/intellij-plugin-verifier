@@ -324,7 +324,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
     }
 
 
-    val newProblemsCnt = allProblems.size
+    val newProblemsCnt = allProblems.distinctBy { it.getShortDescription() }.size
     val newMissingDependenciesCnt = missingProblems.keySet().size
     if (newProblemsCnt > 0) {
       tcLog.buildStatusFailure("$newProblemsCnt new " + "problem".pluralize(newProblemsCnt) + " detected in $trunkVersion compared to $releaseVersion")
