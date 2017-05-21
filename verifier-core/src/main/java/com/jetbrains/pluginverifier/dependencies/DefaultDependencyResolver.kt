@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.dependencies
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.ImmutableMap
 import com.intellij.structure.ide.Ide
+import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.plugin.Plugin
 import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.misc.closeOnException
@@ -11,13 +12,10 @@ import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import org.slf4j.LoggerFactory
 
 class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
 
   companion object {
-    private val LOG = LoggerFactory.getLogger(DefaultDependencyResolver::class.java)
-
     /**
      * The list of IntelliJ plugins which define some modules
      * (e.g. the plugin "org.jetbrains.plugins.ruby" defines a module "com.intellij.modules.ruby")
@@ -64,8 +62,12 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
     if (byId != null) {
       return createDependencyResultByExistingPlugin(byId)
     }
-    val lastUpdate: UpdateInfo = RepositoryManager.getLastCompatibleUpdateOfPlugin(ide.version, dependencyId)
-        ?: return DependencyResolver.Result.NotFound("Plugin $dependencyId doesn't have a build compatible with ${ide.version}")
+    return downloadLastCompatibleUpdate(dependencyId, ide.version)
+  }
+
+  private fun downloadLastCompatibleUpdate(pluginId: String, ideVersion: IdeVersion): DependencyResolver.Result {
+    val lastUpdate: UpdateInfo = RepositoryManager.getLastCompatibleUpdateOfPlugin(ideVersion, pluginId)
+        ?: return DependencyResolver.Result.NotFound("Plugin $pluginId doesn't have a build compatible with $ideVersion")
     return downloadAndOpenPlugin(lastUpdate)
   }
 
@@ -75,7 +77,7 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
     return getDependencyResultByDownloadedUpdate(pluginZip, updateInfo)
   }
 
-  fun getDependencyResultByDownloadedUpdate(pluginLock: FileLock, updateInfo: UpdateInfo): DependencyResolver.Result {
+  private fun getDependencyResultByDownloadedUpdate(pluginLock: FileLock, updateInfo: UpdateInfo): DependencyResolver.Result {
     val dependencyCreationResult = pluginLock.closeOnException {
       PluginCreator.createPluginByFile(pluginLock.getFile())
     }
@@ -104,28 +106,11 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
     }
 
     if (dependencyId in INTELLIJ_MODULE_TO_CONTAINING_PLUGIN) {
-      val pluginId = INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[dependencyId]!!
-
-      val definingPlugin = ide.getPluginById(pluginId)
-      if (definingPlugin != null) {
-        return createDependencyResultByExistingPlugin(definingPlugin)
-      }
-
-      try {
-        val updateInfo = RepositoryManager.getLastCompatibleUpdateOfPlugin(ide.version, pluginId)
-        if (updateInfo != null) {
-          val lock = RepositoryManager.getPluginFile(updateInfo)
-          if (lock != null) {
-            return getDependencyResultByDownloadedUpdate(lock, updateInfo)
-          }
-        }
-      } catch (e: Throwable) {
-        LOG.error("Unable to add the dependent $pluginId defining the IntelliJ-module $dependencyId", e)
-      }
+      val knownPluginId = INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[dependencyId]!!
+      return resolvePlugin(knownPluginId)
     }
 
-    val reason = "Module $dependencyId is not found in ${ide.version}"
-    return DependencyResolver.Result.NotFound(reason)
+    return DependencyResolver.Result.NotFound("Module $dependencyId is not found in ${ide.version}")
   }
 
 }
