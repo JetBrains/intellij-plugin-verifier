@@ -9,15 +9,15 @@ data class DependenciesGraphWalker(val graph: DependenciesGraph,
   fun walk(current: DependencyNode): DependenciesGraphWalker {
     visited.add(current)
     try {
-      onVisit.invoke(current)
-      graph.edges.filter { it.from == current }.map { it.to }.forEach {
-        if (it !in visited) {
-          walk(it)
+      onVisit(current)
+      graph.edges.filter { it.from == current }.map { it.to }.forEach { to ->
+        if (to !in visited) {
+          walk(to)
         }
       }
       return this
     } finally {
-      onExit.invoke(current)
+      onExit(current)
     }
   }
 

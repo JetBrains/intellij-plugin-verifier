@@ -86,27 +86,10 @@ class Verifier(val pluginDescriptor: PluginDescriptor,
     DepGraphBuilder(dependencyResolver).use { graphBuilder ->
       val (graph, start) = graphBuilder.build(creationOk)
       val apiGraph = DepGraph2ApiGraphConverter.convert(graph, start)
-      logDebugGraph(plugin, apiGraph)
+      LOG.debug("Dependencies graph for $plugin: $apiGraph")
       val context = runVerifier(graph)
       addCycleAndOtherWarnings(apiGraph, context)
       return getAppropriateVerdict(context, apiGraph)
-    }
-  }
-
-  private fun logDebugGraph(plugin: Plugin, dependenciesGraph: DependenciesGraph) {
-    if (LOG.isDebugEnabled) {
-      val message = buildString {
-        appendln("Dependencies graph for $plugin: start at ${dependenciesGraph.start}; vertices: ${dependenciesGraph.vertices.size}")
-        val directMissingDeps = dependenciesGraph.start.missingDependencies
-        if (directMissingDeps.isNotEmpty()) {
-          appendln("  direct missing dependencies: ${directMissingDeps.joinToString()}")
-        }
-        val missingPaths = dependenciesGraph.getMissingDependencyPaths()
-        if (missingPaths.isNotEmpty()) {
-          appendln("  all missing transitive dependencies: ${missingPaths.joinToString()}")
-        }
-      }
-      LOG.debug(message)
     }
   }
 

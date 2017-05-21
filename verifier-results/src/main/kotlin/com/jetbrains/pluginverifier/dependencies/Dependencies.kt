@@ -8,7 +8,7 @@ import kotlin.collections.ArrayList
 data class MissingDependency(@SerializedName("dependency") val dependency: PluginDependency,
                              @SerializedName("isModule") val isModule: Boolean,
                              @SerializedName("missingReason") val missingReason: String) {
-  override fun toString(): String = "${if (isModule) "module" else "plugin"} $dependency"
+  override fun toString(): String = "${if (isModule) "module" else "plugin"} $dependency: $missingReason"
 }
 
 data class DependencyNode(@SerializedName("id") val id: String,
@@ -20,12 +20,12 @@ data class DependencyNode(@SerializedName("id") val id: String,
 data class DependencyEdge(@SerializedName("from") val from: DependencyNode,
                           @SerializedName("to") val to: DependencyNode,
                           @SerializedName("dependency") val dependency: PluginDependency) {
-  override fun toString(): String = "$from -> $to" + (if (dependency.isOptional) " (optional)" else "")
+  override fun toString(): String = if (dependency.isOptional) "$from ---optional---> $to" else "$from ---> $to"
 }
 
 data class MissingDependencyPath(@SerializedName("path") val path: List<DependencyNode>,
                                  @SerializedName("missingDependency") val missingDependency: MissingDependency) {
-  override fun toString(): String = path.joinToString(" -> ") + " -> " + missingDependency + ": ${missingDependency.missingReason}"
+  override fun toString(): String = path.joinToString(" ---X--> ") + " ---X--> " + missingDependency
 }
 
 data class DependenciesGraph(@SerializedName("start") val start: DependencyNode,
@@ -47,5 +47,21 @@ data class DependenciesGraph(@SerializedName("start") val start: DependencyNode,
     DependenciesGraphWalker(this, onVisit, onExit).walk(start)
     return result
   }
+
+  override fun toString(): String = buildString {
+    append("Start: $start; Vertices: ${vertices.size}; Edges: ${edges.size};")
+    DependenciesGraphWalker(this@DependenciesGraph, { node ->
+      val edgesFromNode = edges.filter { node == it.from }
+      if (edgesFromNode.isNotEmpty()) {
+        appendln()
+        append(edgesFromNode.joinToString())
+      }
+      if (node.missingDependencies.isNotEmpty()) {
+        appendln()
+        append(node.missingDependencies.joinToString())
+      }
+    }, {}).walk(start)
+  }
+
 
 }
