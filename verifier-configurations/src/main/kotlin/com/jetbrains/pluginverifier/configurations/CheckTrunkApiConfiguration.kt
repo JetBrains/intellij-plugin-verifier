@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.configurations
 
 import com.google.common.collect.ImmutableMultimap
-import com.intellij.structure.ide.Ide
+import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
@@ -10,70 +10,67 @@ import com.jetbrains.pluginverifier.dependencies.DefaultDependencyResolver
 import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * @author Sergey Patrikeev
  */
 class CheckTrunkApiConfiguration : Configuration<CheckTrunkApiParams, CheckTrunkApiResults> {
 
-  private data class ResolveArguments(val dependencyId: String, val isModule: Boolean, val dependentId: String, val dependentVersion: String?)
-
-  private var rememberedDependencyUpdates: MutableMap<ResolveArguments, UpdateInfo> = hashMapOf()
+  companion object {
+    private val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiConfiguration::class.java)
+  }
 
   private lateinit var params: CheckTrunkApiParams
+  private lateinit var trunkVersion: IdeVersion
+  private lateinit var releaseVersion: IdeVersion
 
-  private fun getDependencyResolverForTrunkIde() = object : DependencyResolver {
-    private val defaultResolver = DefaultDependencyResolver(params.trunkDescriptor.ide)
+  private fun getCustomizedDependencyResolver() = object : DependencyResolver {
+    private val trunkResolver = DefaultDependencyResolver(params.trunkDescriptor.ide)
+    private val releaseResolver = DefaultDependencyResolver(params.releaseDescriptor.ide)
 
     override fun resolve(dependencyId: String, isModule: Boolean, dependent: Plugin): DependencyResolver.Result {
-      val result = defaultResolver.resolve(dependencyId, isModule, dependent)
-      val arguments = ResolveArguments(dependencyId, isModule, dependent.pluginId, dependent.pluginVersion)
-      if (result is DependencyResolver.Result.Downloaded) {
-        rememberedDependencyUpdates[arguments] = result.updateInfo
+      val result = trunkResolver.resolve(dependencyId, isModule, dependent)
+      return if (result is DependencyResolver.Result.NotFound) {
+        releaseResolver.resolve(dependencyId, isModule, dependent)
+      } else {
+        result
       }
-      return result
     }
   }
 
-  private fun getDependencyResolverForReleaseIde() = object : DependencyResolver {
-    private val defaultResolver = DefaultDependencyResolver(params.releaseDescriptor.ide)
-
-    override fun resolve(dependencyId: String, isModule: Boolean, dependent: Plugin): DependencyResolver.Result {
-      val updateInfo = rememberedDependencyUpdates[ResolveArguments(dependencyId, isModule, dependent.pluginId, dependent.pluginVersion)]
-          ?: return defaultResolver.resolve(dependencyId, isModule, dependent)
-
-      val pluginLock = RepositoryManager.getPluginFile(updateInfo) ?: return defaultResolver.resolve(dependencyId, isModule, dependent)
-      return defaultResolver.getDependencyResultByDownloadedUpdate(pluginLock, updateInfo)
-    }
-  }
-
-  private fun getPluginsToCheck(): List<UpdateInfo> {
-    val lastUpdatesCompatibleWithTrunk = RepositoryManager.getLastCompatibleUpdates(params.trunkDescriptor.ideVersion)
-    val updatesCompatibleWithRelease = RepositoryManager.getLastCompatibleUpdates(params.releaseDescriptor.ideVersion)
+  private fun getUpdatesToCheck(): List<UpdateInfo> {
+    val lastUpdatesCompatibleWithTrunk = RepositoryManager.getLastCompatibleUpdates(trunkVersion)
+    val updatesCompatibleWithRelease = RepositoryManager.getLastCompatibleUpdates(releaseVersion)
     val trunkCompatiblePluginIds = lastUpdatesCompatibleWithTrunk.map { it.pluginId }.toSet()
     return lastUpdatesCompatibleWithTrunk + updatesCompatibleWithRelease.filterNot { it.pluginId in trunkCompatiblePluginIds }
   }
 
   override fun execute(parameters: CheckTrunkApiParams): CheckTrunkApiResults {
     params = parameters
-    val pluginsToCheck = getPluginsToCheck().map { PluginDescriptor.ByUpdateInfo(it) }
-    val trunkResults = runCheckIdeConfiguration(params.trunkDescriptor, pluginsToCheck, getDependencyResolverForTrunkIde())
-    val trunkBundled = getBundledPlugins(params.trunkDescriptor.ide)
+    trunkVersion = params.trunkDescriptor.ideVersion
+    releaseVersion = params.trunkDescriptor.ideVersion
 
-    val releaseResults = runCheckIdeConfiguration(params.releaseDescriptor, pluginsToCheck, getDependencyResolverForReleaseIde())
-    val releaseBundled = getBundledPlugins(params.releaseDescriptor.ide)
+    val updatesToCheck = getUpdatesToCheck()
 
-    return CheckTrunkApiResults(trunkResults, trunkBundled, releaseResults, releaseBundled)
+    LOG.debug("The following updates will be checked with both #$trunkVersion and #$releaseVersion\n" +
+        "The dependencies will be resolved against #$trunkVersion or against #$releaseVersion (if not found): " + updatesToCheck.joinToString())
+
+    val dependencyResolver = getCustomizedDependencyResolver()
+
+    val trunkResults = runCheckIdeConfiguration(params.trunkDescriptor, updatesToCheck, dependencyResolver)
+    val releaseResults = runCheckIdeConfiguration(params.releaseDescriptor, updatesToCheck, dependencyResolver)
+
+    return CheckTrunkApiResults(trunkResults, releaseResults)
   }
-
-  private fun getBundledPlugins(ide: Ide): BundledPlugins =
-      BundledPlugins(ide.bundledPlugins.map { it.pluginId }.distinct(), ide.bundledPlugins.flatMap { it.definedModules }.distinct())
 
 
   private fun runCheckIdeConfiguration(ideDescriptor: IdeDescriptor,
-                                       pluginsToCheck: List<PluginDescriptor>,
-                                       dependencyResolver: DependencyResolver?): CheckIdeResults {
-    val checkIdeParams = CheckIdeParams(ideDescriptor, params.jdkDescriptor, pluginsToCheck, ImmutableMultimap.of(), emptyList(), Resolver.getEmptyResolver(), params.externalClassesPrefixes, params.problemsFilter, params.progress, dependencyResolver)
+                                       updatesToCheck: List<UpdateInfo>,
+                                       dependencyResolver: DependencyResolver): CheckIdeResults {
+    val pluginsDescriptors = updatesToCheck.map { PluginDescriptor.ByUpdateInfo(it) }
+    val checkIdeParams = CheckIdeParams(ideDescriptor, params.jdkDescriptor, pluginsDescriptors, ImmutableMultimap.of(), emptyList(), Resolver.getEmptyResolver(), params.externalClassesPrefixes, params.problemsFilter, params.progress, dependencyResolver)
     return CheckIdeConfiguration().execute(checkIdeParams)
   }
 
