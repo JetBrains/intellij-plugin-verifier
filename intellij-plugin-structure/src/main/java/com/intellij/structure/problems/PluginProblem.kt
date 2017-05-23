@@ -11,6 +11,6 @@ abstract class PluginProblem {
     WARNING
   }
 
-  override fun toString(): String = message
+  final override fun toString(): String = message
 
 }
