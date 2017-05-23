@@ -17,7 +17,7 @@ import java.io.File
 import java.io.PrintWriter
 import java.nio.charset.Charset
 
-class HtmlPrinter(val ideVersion: IdeVersion,
+class HtmlPrinter(val ideVersions: List<IdeVersion>,
                   val isExcluded: (PluginIdAndVersion) -> Boolean,
                   val htmlFile: File) : Printer {
 
@@ -34,14 +34,14 @@ class HtmlPrinter(val ideVersion: IdeVersion,
     htmlBuilder.apply {
       html {
         head {
-          title("Verification result of IDE #$ideVersion")
+          title("Verification result of IDE ${ideVersions.joinToString()}")
           script(src = "//code.jquery.com/jquery-1.9.1.js")
           script(src = "//code.jquery.com/ui/1.10.4/jquery-ui.js")
           link(rel = "stylesheet", href = "//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css")
           style(type = "text/css") { unsafe(loadReportCss()) }
         }
         body {
-          h2 { +ideVersion.toString() }
+          h2 { +ideVersions.joinToString() }
           label {
             unsafe("""<input id="problematicOnlyCB" type="checkbox" onchange="if ($('#problematicOnlyCB').is(':checked')) {$('body').addClass('problematicOnly')} else {$('body').removeClass('problematicOnly')}">""")
             +"Show problematic plugins only"

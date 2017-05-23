@@ -37,12 +37,8 @@ data class CheckPluginResults(val results: List<Result>) : ConfigurationResults 
   }
 
   fun printToHtml(file: File, vPrinterOptions: PrinterOptions) {
-    val ideVersion = results[0].ideVersion
-    if (results.size > 1) {
-      System.err.println("Warning! HTML report for multiple IDE builds is not supported yet! We are working on it just now...\n" +
-          "Only the result for $ideVersion is saved to file $file")
-    }
-    HtmlPrinter(ideVersion, { false }, file.create()).printResults(results, vPrinterOptions)
+    val ideVersions = results.map { it.ideVersion }.distinct()
+    HtmlPrinter(ideVersions, { false }, file.create()).printResults(results, vPrinterOptions)
   }
 
 }
