@@ -1,8 +1,5 @@
 package com.jetbrains.pluginverifier.configurations
 
-import com.google.common.collect.ArrayListMultimap
-import com.google.common.collect.HashMultimap
-import com.google.common.collect.Multimap
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
@@ -12,8 +9,8 @@ import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.utils.CmdOpts
+import com.jetbrains.pluginverifier.utils.IdeResourceUtil
 import com.jetbrains.pluginverifier.utils.OptionsUtil
-import com.jetbrains.pluginverifier.utils.ParametersListUtil
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -23,7 +20,7 @@ import java.io.IOException
 data class CheckIdeParams(val ideDescriptor: IdeDescriptor,
                           val jdkDescriptor: JdkDescriptor,
                           val pluginsToCheck: List<PluginDescriptor>,
-                          val excludedPlugins: Multimap<String, String>,
+                          val excludedPlugins: List<PluginIdAndVersion>,
                           val pluginIdsToCheckExistingBuilds: List<String>,
                           val externalClassPath: Resolver,
                           val externalClassesPrefixes: List<String>,
@@ -34,7 +31,7 @@ data class CheckIdeParams(val ideDescriptor: IdeDescriptor,
 IDE to be checked: $ideDescriptor
 JDK: $jdkDescriptor
 Plugins to be checked: [${pluginsToCheck.joinToString()}]
-Excluded plugins: [${excludedPlugins.entries().joinToString { "${it.key}:${it.value}" }}]
+Excluded plugins: [${excludedPlugins.joinToString()}]
 """
 
   override fun close() {
@@ -148,37 +145,10 @@ class CheckIdeParamsParser : ConfigurationParamsParser<CheckIdeParams> {
     }
   }
 
-  /**
-   * Plugin Id -> Versions
-   */
-  @Throws(IOException::class)
-  fun parseExcludedPlugins(opts: CmdOpts): Multimap<String, String> {
-    val epf = opts.excludedPluginsFile ?: return ArrayListMultimap.create<String, String>() //excluded-plugin-file (usually brokenPlugins.txt)
-
-    //file containing list of broken plugins (e.g. IDEA-*/lib/resources.jar!/brokenPlugins.txt)
-    BufferedReader(FileReader(File(epf))).use { br ->
-      val m = HashMultimap.create<String, String>()
-
-      var s: String?
-      while (true) {
-        s = br.readLine()
-        if (s == null) break
-        s = s.trim { it <= ' ' }
-        if (s.startsWith("//")) continue //it is a comment
-
-        val tokens = ParametersListUtil.parse(s)
-        if (tokens.isEmpty()) continue
-
-        if (tokens.size == 1) {
-          throw IOException(epf + " is broken. The line contains plugin name, but does not contain version: " + s)
-        }
-
-        val pluginId = tokens[0]
-
-        m.putAll(pluginId, tokens.subList(1, tokens.size)) //"plugin id" -> [all its builds]
-      }
-
-      return m
+  fun parseExcludedPlugins(opts: CmdOpts): List<PluginIdAndVersion> {
+    val epf = opts.excludedPluginsFile ?: return emptyList()
+    File(epf).bufferedReader().use { br ->
+      return IdeResourceUtil.getBrokenPluginsByLines(br.readLines())
     }
   }
 

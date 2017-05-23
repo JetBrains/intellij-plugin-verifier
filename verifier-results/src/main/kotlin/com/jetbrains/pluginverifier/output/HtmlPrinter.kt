@@ -5,6 +5,7 @@ import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.Verdict
+import com.jetbrains.pluginverifier.configurations.PluginIdAndVersion
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.descriptions.FullDescription
 import com.jetbrains.pluginverifier.descriptions.ShortDescription
@@ -17,7 +18,7 @@ import java.io.PrintWriter
 import java.nio.charset.Charset
 
 class HtmlPrinter(val ideVersion: IdeVersion,
-                  val isExcluded: (Pair<String, String>) -> Boolean,
+                  val isExcluded: (PluginIdAndVersion) -> Boolean,
                   val htmlFile: File) : Printer {
 
   private lateinit var htmlBuilder: HtmlBuilder
@@ -66,7 +67,7 @@ class HtmlPrinter(val ideVersion: IdeVersion,
       }
       div {
         pluginResults
-            .filterNot { isExcluded(it.plugin.pluginId to it.plugin.version) }
+            .filterNot { isExcluded(PluginIdAndVersion(it.plugin.pluginId, it.plugin.version)) }
             .sortedWith(compareBy(VersionComparatorUtil.COMPARATOR, { it.plugin.version }))
             .associateBy({ it.plugin }, { it.verdict })
             .forEach { (plugin, verdict) -> printPluginVerdict(verdict, pluginId, plugin, options) }
@@ -76,7 +77,7 @@ class HtmlPrinter(val ideVersion: IdeVersion,
 
   private fun HtmlBuilder.printPluginVerdict(verdict: Verdict, pluginId: String, plugin: PluginInfo, options: PrinterOptions) {
     val verdictStyle = if (verdict is Verdict.OK) "updateOk" else "updateHasProblems"
-    val excludedStyle = if (isExcluded(pluginId to plugin.version)) "excluded" else ""
+    val excludedStyle = if (isExcluded(PluginIdAndVersion(pluginId, plugin.version))) "excluded" else ""
     div(classes = "update $verdictStyle $excludedStyle") {
       h3 {
         printUpdateHeader(plugin, verdict, pluginId)
@@ -161,7 +162,7 @@ class HtmlPrinter(val ideVersion: IdeVersion,
 
   private fun pluginHasProblems(pluginResults: List<Result>): Boolean =
       pluginResults
-          .filterNot { isExcluded.invoke(it.plugin.pluginId to it.plugin.version) }
+          .filterNot { isExcluded(PluginIdAndVersion(it.plugin.pluginId, it.plugin.version)) }
           .filterNot { it.verdict is Verdict.OK }
           .isNotEmpty()
 

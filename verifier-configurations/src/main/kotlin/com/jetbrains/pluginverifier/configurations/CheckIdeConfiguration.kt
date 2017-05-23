@@ -23,17 +23,17 @@ class CheckIdeConfiguration : Configuration<CheckIdeParams, CheckIdeResults> {
   private fun isExcluded(pluginDescriptor: PluginDescriptor): Boolean = when (pluginDescriptor) {
     is PluginDescriptor.ByUpdateInfo -> {
       val updateInfo = pluginDescriptor.updateInfo
-      params.excludedPlugins.containsEntry(updateInfo.pluginId, updateInfo.version)
+      PluginIdAndVersion(updateInfo.pluginId, updateInfo.version) in params.excludedPlugins
     }
     is PluginDescriptor.ByInstance -> {
       val plugin = pluginDescriptor.createOk.success.plugin
-      params.excludedPlugins.containsEntry(plugin.pluginId, plugin.pluginVersion)
+      PluginIdAndVersion(plugin.pluginId ?: "", plugin.pluginVersion ?: "") in params.excludedPlugins
     }
     is PluginDescriptor.ByFileLock -> {
       PluginCreator.createPluginByFile(pluginDescriptor.fileLock.getFile()).use { createPluginResult ->
         if (createPluginResult is CreatePluginResult.OK) {
           val plugin = createPluginResult.success.plugin
-          return params.excludedPlugins.containsEntry(plugin.pluginId, plugin.pluginVersion)
+          return PluginIdAndVersion(plugin.pluginId ?: "", plugin.pluginVersion ?: "") in params.excludedPlugins
         }
         return true
       }
@@ -53,7 +53,7 @@ class CheckIdeConfiguration : Configuration<CheckIdeParams, CheckIdeResults> {
     val ideVersion = params.ideDescriptor.ideVersion
     val existingUpdatesForIde = RepositoryManager
         .getLastCompatibleUpdates(ideVersion)
-        .filterNot { params.excludedPlugins.containsEntry(it.pluginId, it.version) }
+        .filterNot { PluginIdAndVersion(it.pluginId, it.version) in params.excludedPlugins }
         .map { it.pluginId }
         .filterNotNull()
         .toSet()

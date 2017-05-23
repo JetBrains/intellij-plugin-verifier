@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.configurations
 
-import com.google.common.collect.ImmutableMultimap
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.resolvers.Resolver
@@ -10,6 +9,7 @@ import com.jetbrains.pluginverifier.dependencies.DefaultDependencyResolver
 import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.utils.IdeResourceUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -59,18 +59,25 @@ class CheckTrunkApiConfiguration : Configuration<CheckTrunkApiParams, CheckTrunk
 
     val dependencyResolver = getCustomizedDependencyResolver()
 
-    val trunkResults = runCheckIdeConfiguration(params.trunkDescriptor, updatesToCheck, dependencyResolver)
-    val releaseResults = runCheckIdeConfiguration(params.releaseDescriptor, updatesToCheck, dependencyResolver)
+    val excludedPlugins = getBrokenPluginsWhichShouldBeIgnored()
+    val trunkResults = runCheckIdeConfiguration(params.trunkDescriptor, updatesToCheck, dependencyResolver, excludedPlugins)
+    val releaseResults = runCheckIdeConfiguration(params.releaseDescriptor, updatesToCheck, dependencyResolver, excludedPlugins)
 
     return CheckTrunkApiResults(trunkResults, releaseResults)
   }
 
+  private fun getBrokenPluginsWhichShouldBeIgnored(): List<PluginIdAndVersion> {
+    val trunkBrokenPlugins = IdeResourceUtil.getBrokenPluginsListedInBuild(params.trunkDescriptor.ide) ?: emptyList()
+    val releaseBrokenPlugins = IdeResourceUtil.getBrokenPluginsListedInBuild(params.releaseDescriptor.ide) ?: emptyList()
+    return (trunkBrokenPlugins + releaseBrokenPlugins).distinct()
+  }
 
   private fun runCheckIdeConfiguration(ideDescriptor: IdeDescriptor,
                                        updatesToCheck: List<UpdateInfo>,
-                                       dependencyResolver: DependencyResolver): CheckIdeResults {
+                                       dependencyResolver: DependencyResolver,
+                                       excludedPlugins: List<PluginIdAndVersion>): CheckIdeResults {
     val pluginsDescriptors = updatesToCheck.map { PluginDescriptor.ByUpdateInfo(it) }
-    val checkIdeParams = CheckIdeParams(ideDescriptor, params.jdkDescriptor, pluginsDescriptors, ImmutableMultimap.of(), emptyList(), Resolver.getEmptyResolver(), params.externalClassesPrefixes, params.problemsFilter, params.progress, dependencyResolver)
+    val checkIdeParams = CheckIdeParams(ideDescriptor, params.jdkDescriptor, pluginsDescriptors, excludedPlugins, emptyList(), Resolver.getEmptyResolver(), params.externalClassesPrefixes, params.problemsFilter, params.progress, dependencyResolver)
     return CheckIdeConfiguration().execute(checkIdeParams)
   }
 

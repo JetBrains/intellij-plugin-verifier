@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.configurations
 
-import com.google.common.collect.Multimap
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.Result
@@ -14,7 +13,7 @@ import java.io.PrintWriter
 
 data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
                            @SerializedName("results") val results: List<Result>,
-                           @SerializedName("excludedPlugins") val excludedPlugins: Multimap<String, String>,
+                           @SerializedName("excludedPlugins") val excludedPlugins: List<PluginIdAndVersion>,
                            @SerializedName("noUpdatesProblems") val noCompatibleUpdatesProblems: List<MissingCompatibleUpdate>) : ConfigurationResults {
 
   fun dumbBrokenPluginsList(dumpBrokenPluginsFile: File) {
@@ -33,7 +32,7 @@ data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVers
   }
 
   fun saveToHtmlFile(htmlFile: File, printerOptions: PrinterOptions) {
-    HtmlPrinter(ideVersion, { x -> excludedPlugins.containsEntry(x.first, x.second) }, htmlFile.create()).printResults(results, printerOptions)
+    HtmlPrinter(ideVersion, { (pluginId, pluginVersion) -> PluginIdAndVersion(pluginId, pluginVersion) in excludedPlugins }, htmlFile.create()).printResults(results, printerOptions)
   }
 
   fun printTcLog(groupBy: TeamCityPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: PrinterOptions) {
