@@ -32,7 +32,7 @@ data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVers
   }
 
   fun saveToHtmlFile(htmlFile: File, printerOptions: PrinterOptions) {
-    HtmlPrinter(ideVersion, { (pluginId, pluginVersion) -> PluginIdAndVersion(pluginId, pluginVersion) in excludedPlugins }, htmlFile.create()).printResults(results, printerOptions)
+    HtmlPrinter(listOf(ideVersion), { (pluginId, pluginVersion) -> PluginIdAndVersion(pluginId, pluginVersion) in excludedPlugins }, htmlFile.create()).printResults(results, printerOptions)
   }
 
   fun printTcLog(groupBy: TeamCityPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: PrinterOptions) {
