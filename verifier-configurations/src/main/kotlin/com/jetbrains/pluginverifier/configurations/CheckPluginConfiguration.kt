@@ -28,9 +28,13 @@ class CheckPluginConfiguration : Configuration<CheckPluginParams, CheckPluginRes
       return DefaultDependencyResolver(ide).resolve(dependencyId, isModule, dependent)
     }
 
-    private fun findPluginInListOfPluginsToCheck(dependencyId: String): CreatePluginResult.OK? = allPluginsToCheck
-        .filterIsInstance<CreatePluginResult.OK>()
-        .find { it.success.plugin.pluginId == dependencyId }
+    private fun findPluginInListOfPluginsToCheck(dependencyId: String): CreatePluginResult.OK? {
+      val inListOfPluginsToCheck = allPluginsToCheck
+          .filterIsInstance<CreatePluginResult.OK>()
+          .find { it.success.plugin.pluginId == dependencyId }
+          ?: return null
+      return PluginCreator.getNonCloseableOkResult(inListOfPluginsToCheck)
+    }
   }
 
   override fun execute(parameters: CheckPluginParams): CheckPluginResults {
