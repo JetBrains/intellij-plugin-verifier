@@ -54,11 +54,11 @@ data class DependenciesGraph(@SerializedName("start") val start: DependencyNode,
       val edgesFromNode = edges.filter { node == it.from }
       if (edgesFromNode.isNotEmpty()) {
         appendln()
-        append(edgesFromNode.joinToString())
+        append("From $node to [${edgesFromNode.map { edge -> edge.to.toString() + if (edge.dependency.isOptional) " (optional)" else "" }.joinToString()}]")
       }
       if (node.missingDependencies.isNotEmpty()) {
         appendln()
-        append(node.missingDependencies.joinToString())
+        append("Missing dependencies of $node: " + node.missingDependencies.joinToString())
       }
     }, {}).walk(start)
   }
