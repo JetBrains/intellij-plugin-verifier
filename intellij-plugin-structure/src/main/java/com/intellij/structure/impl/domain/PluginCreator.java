@@ -12,6 +12,7 @@ import com.intellij.structure.problems.*;
 import org.jdom2.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,8 +68,8 @@ final class PluginCreator {
       validateId(bean.id);
       validateName(bean.name);
       validateVersion(bean.pluginVersion);
-      validateDescription(bean.description);
-      validateChangeNotes(bean.changeNotes);
+      validateDescription(bean.getDescription());
+      validateChangeNotes(bean.getChangeNotes());
       validateVendor(bean.vendor);
       validateIdeaVersion(bean.ideaVersion);
 
@@ -224,24 +225,26 @@ final class PluginCreator {
     }
   }
 
-  private void validateDescription(@Nullable String description) {
-    if (isEmpty(description)) {
+  private void validateDescription(@Nullable String htmlDescription) {
+    if (isEmpty(htmlDescription)) {
       registerProblem(new PropertyNotSpecified(myDescriptorPath, "description"));
       return;
     }
 
-    if (description.length() < 40) {
+    String textDescription = Jsoup.parseBodyFragment(htmlDescription).text();
+
+    if (textDescription.length() < 40) {
       registerProblem(new ShortDescription(myDescriptorPath));
       return;
     }
 
-    if (description.contains("Enter short description for your plugin here.") ||
-        description.contains("most HTML tags may be used")) {
+    if (textDescription.contains("Enter short description for your plugin here.") ||
+        textDescription.contains("most HTML tags may be used")) {
       registerProblem(new DefaultDescription(myDescriptorPath));
       return;
     }
 
-    int latinSymbols = StringUtil.numberOfPatternMatches(description, Pattern.compile("[A-Za-z]|\\s"));
+    int latinSymbols = StringUtil.numberOfPatternMatches(textDescription, Pattern.compile("[A-Za-z]|\\s"));
     if (latinSymbols < 40) {
       registerProblem(new NonLatinDescription(myDescriptorPath));
     }

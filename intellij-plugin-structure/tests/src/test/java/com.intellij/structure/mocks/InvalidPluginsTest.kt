@@ -194,6 +194,17 @@ class InvalidPluginsTest {
   }
 
   @Test
+  fun `html description`() {
+    `test plugin xml warnings`(
+        perfectXmlBuilder.modify {
+          description = """<description><![CDATA[
+          <a href=\"https://github.com/myamazinguserprofile/myamazingproject\">short text</a>
+          ]]></description>"""
+        },
+        listOf(ShortDescription("plugin.xml")))
+  }
+
+  @Test
   fun `default values`() {
     `test invalid plugin xml`("""<idea-plugin>
       <id>com.your.company.unique.plugin.id</id>

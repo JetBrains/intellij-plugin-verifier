@@ -188,12 +188,8 @@ public class PluginImpl implements Plugin {
       myVendorUrl = vendorBean.url;
       myVendorEmail = vendorBean.email;
     }
-    if (!StringUtil.isEmptyOrSpaces(bean.changeNotes)) {
-      myNotes = Jsoup.clean(bean.changeNotes.trim(), WHITELIST);
-    }
-    if (!StringUtil.isEmptyOrSpaces(bean.description)) {
-      myDescription = Jsoup.clean(bean.description.trim(), WHITELIST);
-    }
+    myNotes = bean.getChangeNotes();
+    myDescription = bean.getDescription();
   }
 
   @Override
