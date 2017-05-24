@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.ValidationEventHandler;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -23,10 +22,9 @@ public class PluginBeanExtractor {
   private static final String[] INTERESTING_STRINGS = new String[]{"class", "interface", "implementation", "instance"};
 
   @NotNull
-  public static PluginBean extractPluginBean(Document document, ValidationEventHandler validationEventHandler) throws JAXBException {
+  public static PluginBean extractPluginBean(Document document) throws JAXBException {
     JAXBContext jc = JAXBContext.newInstance(PluginBean.class);
     Unmarshaller unmarshaller = jc.createUnmarshaller();
-    unmarshaller.setEventHandler(validationEventHandler);
 
     Element rootElement = document.getRootElement();
     PluginBean bean = (PluginBean) unmarshaller.unmarshal(new JDOMSource(document));

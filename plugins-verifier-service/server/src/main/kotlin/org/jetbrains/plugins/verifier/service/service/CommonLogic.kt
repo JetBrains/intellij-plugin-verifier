@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service
 
-import com.jetbrains.pluginverifier.persistence.CompactJson
+import com.google.gson.Gson
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody
@@ -24,4 +24,5 @@ val JSON_MEDIA_TYPE: MediaType = MediaType.parse("application/json")
 
 fun createStringRequestBody(string: String): RequestBody = RequestBody.create(STRING_MEDIA_TYPE, string)
 
-fun createCompactJsonRequestBody(obj: Any): RequestBody = RequestBody.create(JSON_MEDIA_TYPE, CompactJson.toJson(obj))
+//replace with CompactJson
+fun createCompactJsonRequestBody(obj: Any): RequestBody = RequestBody.create(JSON_MEDIA_TYPE, Gson().toJson(obj))

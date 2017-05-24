@@ -13,8 +13,6 @@ import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.ValidationEvent;
-import javax.xml.bind.ValidationEventHandler;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
@@ -151,7 +149,7 @@ final class PluginCreator {
   @Nullable
   private PluginBean readDocumentIntoXmlBean(@NotNull Document document) {
     try {
-      return PluginBeanExtractor.extractPluginBean(document, new ReportingValidationEventHandler());
+      return PluginBeanExtractor.extractPluginBean(document);
     } catch (Exception e) {
       LOG.debug("Unable to read plugin descriptor " + myDescriptorPath, e);
       registerProblem(new UnableToReadDescriptor(myDescriptorPath));
@@ -305,15 +303,4 @@ final class PluginCreator {
     }
   }
 
-  private static class ReportingValidationEventHandler implements ValidationEventHandler {
-    @Override
-    public boolean handleEvent(ValidationEvent event) {
-      return true;
-      //todo: fix
-      /*String reason = event.getMessage();
-      if (reason.contains("unexpected element")) return true;
-      registerProblem(new UnableToParseDescriptor(descriptorPath, reason));
-      return true;*/
-    }
-  }
 }
