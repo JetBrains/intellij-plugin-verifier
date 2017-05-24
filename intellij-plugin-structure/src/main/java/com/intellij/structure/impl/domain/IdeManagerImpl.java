@@ -99,9 +99,6 @@ public class IdeManagerImpl extends IdeManager {
           File pluginDirectory = metaInf.getParentFile();
           if (pluginDirectory.isDirectory()) {
             try {
-              if (!pluginDirectory.exists()) {
-                throw new IllegalArgumentException("Plugin file " + pluginDirectory + " does not exist");
-              }
               PluginCreator pluginCreator = new PluginManagerImpl(pathResolver).getPluginCreatorWithResult(pluginDirectory, false);
               pluginCreator.setOriginalFile(pluginDirectory);
               PluginCreationResult creationResult = pluginCreator.getPluginCreationResult();
@@ -148,20 +145,16 @@ public class IdeManagerImpl extends IdeManager {
     List<Plugin> plugins = new ArrayList<Plugin>();
 
     for (File file : files) {
-      if (!file.isDirectory())
-        continue;
-
-      if (!file.exists()) {
-        throw new IllegalArgumentException("Plugin file " + file + " does not exist");
-      }
-      PluginCreator pluginCreator = new PluginManagerImpl().getPluginCreatorWithResult(file, false);
-      pluginCreator.setOriginalFile(file);
-      PluginCreationResult result = pluginCreator.getPluginCreationResult();
-      if (result instanceof PluginCreationSuccess) {
-        plugins.add(((PluginCreationSuccess) result).getPlugin());
-      } else {
-        List<PluginProblem> problems = ((PluginCreationFail) result).getErrorsAndWarnings();
-        LOG.warn("Failed to read plugin " + file + ". Problems: " + Joiner.on(", ").join(problems));
+      if (file.isDirectory()) {
+        PluginCreator pluginCreator = new PluginManagerImpl().getPluginCreatorWithResult(file, false);
+        pluginCreator.setOriginalFile(file);
+        PluginCreationResult result = pluginCreator.getPluginCreationResult();
+        if (result instanceof PluginCreationSuccess) {
+          plugins.add(((PluginCreationSuccess) result).getPlugin());
+        } else {
+          List<PluginProblem> problems = ((PluginCreationFail) result).getErrorsAndWarnings();
+          LOG.warn("Failed to read plugin " + file + ". Problems: " + Joiner.on(", ").join(problems));
+        }
       }
     }
 
