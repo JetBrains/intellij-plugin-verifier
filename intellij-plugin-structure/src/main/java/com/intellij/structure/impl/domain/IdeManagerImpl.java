@@ -115,7 +115,7 @@ public class IdeManagerImpl extends IdeManager {
       PluginCreator pluginCreator = new PluginManagerImpl(pathResolver).getPluginCreatorWithResult(pluginDirectory, false);
       pluginCreator.setOriginalFile(pluginDirectory);
       PluginCreationResult creationResult = pluginCreator.getPluginCreationResult();
-      if (creationResult instanceof PluginCreationSuccess) {
+      if (creationResult.isSuccess()) {
         return ((PluginCreationSuccess) creationResult).getPlugin();
       } else {
         List<PluginProblem> problems = ((PluginCreationFail) creationResult).getErrorsAndWarnings();

@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.tests
 
 import com.intellij.structure.ide.IdeVersion
-import com.intellij.structure.impl.domain.PluginCreationSuccessImpl
 import com.intellij.structure.impl.domain.PluginDependencyImpl
+import com.intellij.structure.plugin.PluginCreationSuccess
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.configurations.CheckPluginConfiguration
@@ -29,8 +29,8 @@ class TestCheckPluginDependents {
     //given
     val first = MockUtil.createMockPlugin("p1", "1", emptyList(), emptyList())
     val second = MockUtil.createMockPlugin("p2", "2", emptyList(), listOf(PluginDependencyImpl("p1", false)))
-    val firstDescriptor = PluginDescriptor.ByInstance(CreatePluginResult.OK(PluginCreationSuccessImpl(first, emptyList()), Resolver.getEmptyResolver()))
-    val secondDescriptor = PluginDescriptor.ByInstance(CreatePluginResult.OK(PluginCreationSuccessImpl(second, emptyList()), Resolver.getEmptyResolver()))
+    val firstDescriptor = PluginDescriptor.ByInstance(CreatePluginResult.OK(PluginCreationSuccess(first, emptyList()), Resolver.getEmptyResolver()))
+    val secondDescriptor = PluginDescriptor.ByInstance(CreatePluginResult.OK(PluginCreationSuccess(second, emptyList()), Resolver.getEmptyResolver()))
 
     val ide = MockUtil.createMockIde(IdeVersion.createIdeVersion("IU-163"), emptyList())
     val ideDescriptor = IdeDescriptor(ide, Resolver.getEmptyResolver())

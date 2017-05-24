@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.plugin
 
-import com.intellij.structure.impl.domain.PluginCreationFailImpl
-import com.intellij.structure.impl.domain.PluginCreationSuccessImpl
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.plugin.PluginCreationFail
 import com.intellij.structure.plugin.PluginCreationSuccess
@@ -50,8 +48,8 @@ object PluginCreator {
     val resolver = try {
       Resolver.createPluginResolver(plugin)
     } catch (e: Exception) {
-      return CreatePluginResult.BadPlugin(PluginCreationFailImpl(listOf(UnableToReadPluginClassFiles(plugin.originalFile))))
+      return CreatePluginResult.BadPlugin(PluginCreationFail(listOf(UnableToReadPluginClassFiles(plugin.originalFile))))
     }
-    return CreatePluginResult.OK(PluginCreationSuccessImpl(plugin, emptyList()), resolver)
+    return CreatePluginResult.OK(PluginCreationSuccess(plugin, emptyList()), resolver)
   }
 }
