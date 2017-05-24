@@ -20,7 +20,7 @@ public abstract class IdeVersion implements Comparable<IdeVersion> {
     return IdeVersionImpl.fromString(version);
   }
 
-  public static boolean isValidIdeVersion(@NotNull String version) throws IllegalArgumentException {
+  public static boolean isValidIdeVersion(@NotNull String version) {
     try {
       IdeVersionImpl.fromString(version);
       return true;
