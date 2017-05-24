@@ -38,11 +38,15 @@ public class PluginManagerImpl extends PluginManager {
   private final JDOMXIncluder.PathResolver myPathResolver;
 
   public PluginManagerImpl() {
-    myPathResolver = PluginXmlExtractor.DEFAULT_PLUGIN_XML_PATH_RESOLVER;
+    this(null);
   }
 
-  public PluginManagerImpl(JDOMXIncluder.PathResolver pathResolver) {
-    myPathResolver = pathResolver;
+  public PluginManagerImpl(@Nullable JDOMXIncluder.PathResolver pathResolver) {
+    if (pathResolver == null) {
+      myPathResolver = PluginXmlExtractor.DEFAULT_PLUGIN_XML_PATH_RESOLVER;
+    } else {
+      myPathResolver = pathResolver;
+    }
   }
 
   private PluginCreator loadDescriptorFromJarFile(@NotNull File jarFile,

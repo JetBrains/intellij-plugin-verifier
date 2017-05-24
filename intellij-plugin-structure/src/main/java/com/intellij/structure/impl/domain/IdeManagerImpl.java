@@ -98,21 +98,33 @@ public class IdeManagerImpl extends IdeManager {
         if ("META-INF".equals(metaInf.getName()) && metaInf.isDirectory() && metaInf.getParentFile() != null) {
           File pluginDirectory = metaInf.getParentFile();
           if (pluginDirectory.isDirectory()) {
-            try {
-              PluginCreator pluginCreator = new PluginManagerImpl(pathResolver).getPluginCreatorWithResult(pluginDirectory, false);
-              pluginCreator.setOriginalFile(pluginDirectory);
-              PluginCreationResult creationResult = pluginCreator.getPluginCreationResult();
-              if (creationResult instanceof PluginCreationSuccess) {
-                result.add(((PluginCreationSuccess) creationResult).getPlugin());
-              }
-            } catch (Exception e) {
-              LOG.debug("Unable to create plugin from sources: " + pluginDirectory, e);
+            Plugin plugin = createDummyPluginFromDirectory(pluginDirectory, pathResolver);
+            if (plugin != null) {
+              result.add(plugin);
             }
           }
         }
       }
     }
     return result;
+  }
+
+  @Nullable
+  private static Plugin createDummyPluginFromDirectory(@NotNull File pluginDirectory, @Nullable JDOMXIncluder.PathResolver pathResolver) {
+    try {
+      PluginCreator pluginCreator = new PluginManagerImpl(pathResolver).getPluginCreatorWithResult(pluginDirectory, false);
+      pluginCreator.setOriginalFile(pluginDirectory);
+      PluginCreationResult creationResult = pluginCreator.getPluginCreationResult();
+      if (creationResult instanceof PluginCreationSuccess) {
+        return ((PluginCreationSuccess) creationResult).getPlugin();
+      } else {
+        List<PluginProblem> problems = ((PluginCreationFail) creationResult).getErrorsAndWarnings();
+        LOG.debug("Failed to read plugin " + pluginDirectory + ". Problems: " + Joiner.on(", ").join(problems));
+      }
+    } catch (Exception e) {
+      LOG.debug("Unable to create plugin from sources: " + pluginDirectory, e);
+    }
+    return null;
   }
 
   @NotNull
@@ -146,14 +158,9 @@ public class IdeManagerImpl extends IdeManager {
 
     for (File file : files) {
       if (file.isDirectory()) {
-        PluginCreator pluginCreator = new PluginManagerImpl().getPluginCreatorWithResult(file, false);
-        pluginCreator.setOriginalFile(file);
-        PluginCreationResult result = pluginCreator.getPluginCreationResult();
-        if (result instanceof PluginCreationSuccess) {
-          plugins.add(((PluginCreationSuccess) result).getPlugin());
-        } else {
-          List<PluginProblem> problems = ((PluginCreationFail) result).getErrorsAndWarnings();
-          LOG.warn("Failed to read plugin " + file + ". Problems: " + Joiner.on(", ").join(problems));
+        Plugin plugin = createDummyPluginFromDirectory(file, null);
+        if (plugin != null) {
+          plugins.add(plugin);
         }
       }
     }
