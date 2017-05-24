@@ -18,14 +18,6 @@ data class PluginDescriptorIsNotFound(val descriptorPath: String) : PluginProble
 
 }
 
-data class UnableToResolveXIncludeElements(val descriptorPath: String) : PluginProblem() {
-
-  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
-
-  override val message: String = "Unable to resolve x-include elements of descriptor $descriptorPath"
-
-}
-
 data class UnableToReadDescriptor(val descriptorPath: String) : PluginProblem() {
 
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR

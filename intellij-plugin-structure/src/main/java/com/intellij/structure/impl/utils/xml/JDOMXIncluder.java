@@ -31,8 +31,6 @@ import java.util.regex.Pattern;
 
 public class JDOMXIncluder {
 
-  public static final PathResolver DEFAULT_PATH_RESOLVER = new DefaultPathResolver();
-
   @NonNls
   private static final String HTTP_WWW_W3_ORG_2001_XINCLUDE = "http://www.w3.org/2001/XInclude";
   @NonNls

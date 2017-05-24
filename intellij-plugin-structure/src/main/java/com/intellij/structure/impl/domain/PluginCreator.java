@@ -142,8 +142,8 @@ final class PluginCreator {
     try {
       return PluginXmlExtractor.resolveXIncludes(originalDocument, documentUrl, pathResolver);
     } catch (Exception e) {
-      LOG.error("Unable to resolve x-include elements " + myDescriptorPath, e);
-      registerProblem(new UnableToResolveXIncludeElements(myDescriptorPath));
+      LOG.debug("Unable to resolve x-include elements of descriptor " + myDescriptorPath, e);
+      registerProblem(new UnresolvedXIncludeElements(myDescriptorPath));
       return null;
     }
   }
@@ -153,7 +153,7 @@ final class PluginCreator {
     try {
       return PluginBeanExtractor.extractPluginBean(document, new ReportingValidationEventHandler());
     } catch (Exception e) {
-      LOG.error("Unable to read plugin descriptor " + myDescriptorPath, e);
+      LOG.debug("Unable to read plugin descriptor " + myDescriptorPath, e);
       registerProblem(new UnableToReadDescriptor(myDescriptorPath));
       return null;
     }

@@ -1,6 +1,8 @@
 package com.intellij.structure.mocks
 
 data class PluginXmlBuilder(
+    var ideaPluginTagOpen: String = "<idea-plugin>",
+    var ideaPluginTagClose: String = "</idea-plugin>",
     var id: String = "",
     var name: String = "",
     var version: String = "",
@@ -9,11 +11,12 @@ data class PluginXmlBuilder(
     var changeNotes: String = "",
     var ideaVersion: String = "",
     var modules: List<String> = emptyList(),
-    var depends: List<String> = emptyList()
+    var depends: List<String> = emptyList(),
+    var additionalContent: String = ""
 ) {
 
-  fun asString(): String =
-      """<idea-plugin>
+  fun asString(): String = """
+  $ideaPluginTagOpen
   $id
   $name
   $version
@@ -23,7 +26,9 @@ data class PluginXmlBuilder(
   $ideaVersion
   ${modules.map { "<module>$it</module>" }.joinToString(separator = "\n")}
   ${depends.map { "<depends>$it</depends>" }.joinToString(separator = "\n")}
-</idea-plugin>"""
+  $additionalContent
+  $ideaPluginTagClose
+"""
 }
 
 val perfectXmlBuilder: PluginXmlBuilder = PluginXmlBuilder().apply {

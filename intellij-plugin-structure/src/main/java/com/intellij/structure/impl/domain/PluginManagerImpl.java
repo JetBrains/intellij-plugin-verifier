@@ -12,6 +12,7 @@ import com.intellij.structure.plugin.PluginManager;
 import com.intellij.structure.problems.*;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.Document;
+import org.jdom2.input.JDOMParseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -35,6 +36,7 @@ public class PluginManagerImpl extends PluginManager {
   private static final Logger LOG = LoggerFactory.getLogger(PluginManagerImpl.class);
   private static final String PLUGIN_XML = "plugin.xml";
 
+  @NotNull
   private final JDOMXIncluder.PathResolver myPathResolver;
 
   public PluginManagerImpl() {
@@ -120,9 +122,13 @@ public class PluginManagerImpl extends PluginManager {
       URL documentUrl = URLUtil.fileToUrl(descriptorFile);
       Document document = JDOMUtil.loadDocument(documentUrl);
       return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, myPathResolver, pluginDirectory);
+    } catch (JDOMParseException e) {
+      int lineNumber = e.getLineNumber();
+      String message = lineNumber != -1 ? "unexpected element on line " + lineNumber : "unexpected elements";
+      return new PluginCreator(descriptorPath, new UnexpectedDescriptorElements(descriptorPath, message), pluginDirectory);
     } catch (Exception e) {
-      LOG.debug("Unable to read plugin descriptor " + descriptorFile, e);
-      return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorFile.getPath()), pluginDirectory);
+      LOG.debug("Unable to read plugin descriptor " + descriptorPath + " of plugin " + descriptorFile, e);
+      return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorPath), pluginDirectory);
     }
   }
 
@@ -141,7 +147,7 @@ public class PluginManagerImpl extends PluginManager {
     List<URL> metaInfUrls = getInLibMetaInfUrls(files);
     JDOMXIncluder.PathResolver pathResolver = new PluginXmlExtractor.PluginXmlPathResolver(metaInfUrls);
 
-    PluginCreator result = null;
+    PluginCreator okOrPartiallyBrokenResult = null;
 
     for (final File file : files) {
       PluginCreator innerCreator;
@@ -154,24 +160,26 @@ public class PluginManagerImpl extends PluginManager {
       }
 
       if (innerCreator.isSuccess() || innerCreator.hasOnlyInvalidDescriptorErrors()) {
-        if (result != null) {
-          String firstDescriptor = result.getActualFile().getName();
-          String secondDescriptor = innerCreator.getActualFile().getName();
-          if (firstDescriptor.compareTo(secondDescriptor) > 0) {
-            String temp = firstDescriptor;
-            firstDescriptor = secondDescriptor;
-            secondDescriptor = temp;
-          }
-          return new PluginCreator(descriptorPath, new MultiplePluginDescriptorsInLibDirectory(firstDescriptor, secondDescriptor), root);
+        if (okOrPartiallyBrokenResult == null) {
+          okOrPartiallyBrokenResult = innerCreator;
         } else {
-          result = innerCreator;
+          return getMultipleDescriptorsResult(root, descriptorPath, okOrPartiallyBrokenResult.getActualFile().getName(), innerCreator.getActualFile().getName());
         }
       }
     }
-    if (result != null) {
-      return result;
+    if (okOrPartiallyBrokenResult != null) {
+      return okOrPartiallyBrokenResult;
     }
     return new PluginCreator(descriptorPath, new PluginDescriptorIsNotFound(descriptorPath), root);
+  }
+
+  private PluginCreator getMultipleDescriptorsResult(File root, String descriptorPath, String firstDescriptor, String secondDescriptor) {
+    if (firstDescriptor.compareTo(secondDescriptor) > 0) {
+      String temp = firstDescriptor;
+      firstDescriptor = secondDescriptor;
+      secondDescriptor = temp;
+    }
+    return new PluginCreator(descriptorPath, new MultiplePluginDescriptorsInLibDirectory(firstDescriptor, secondDescriptor), root);
   }
 
   private void sortFilesWithRespectToRootDirectoryName(@NotNull final File root, File[] files) {

@@ -98,14 +98,6 @@ public class JDOMUtil {
     }
   }
 
-  /**
-   * Load a document from the specified InputStream
-   *
-   * @param stream stream
-   * @return document
-   * @throws JDOMException if error
-   * @throws IOException   if error
-   */
   @NotNull
   public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
     //to prevent closing the supplied stream from finally-block

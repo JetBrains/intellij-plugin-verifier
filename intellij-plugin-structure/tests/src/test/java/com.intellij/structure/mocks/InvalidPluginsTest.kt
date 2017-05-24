@@ -306,4 +306,21 @@ class InvalidPluginsTest {
     }
   }
 
+  @Test
+  fun `completely invalid plugin descriptor`() {
+    `test invalid plugin xml`(
+        "abracadabra",
+        listOf(UnexpectedDescriptorElements("plugin.xml", "unexpected element on line 1"))
+    )
+  }
+
+  @Test
+  fun `plugin specifies unresolved xinclude element`() {
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          ideaPluginTagOpen = """<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">"""
+          additionalContent = """<xi:include href="/META-INF/missing.xml" xpointer="xpointer(/idea-plugin/*)"/>"""
+        }, listOf(UnresolvedXIncludeElements("plugin.xml"))
+    )
+  }
 }

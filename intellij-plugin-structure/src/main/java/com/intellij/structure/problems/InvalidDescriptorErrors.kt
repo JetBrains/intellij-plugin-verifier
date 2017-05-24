@@ -38,3 +38,11 @@ data class InvalidUntilBuild(val descriptorPath: String, val untilBuild: String)
     InvalidDescriptorProblem(descriptorPath, "invalid until build: $untilBuild") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 }
+
+data class UnexpectedDescriptorElements(val descriptorPath: String, val errorMessage: String) : InvalidDescriptorProblem(descriptorPath, errorMessage) {
+  override val level: Level = Level.ERROR
+}
+
+data class UnresolvedXIncludeElements(val descriptorPath: String) : InvalidDescriptorProblem(descriptorPath, "unresolved xinclude elements") {
+  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
+}
