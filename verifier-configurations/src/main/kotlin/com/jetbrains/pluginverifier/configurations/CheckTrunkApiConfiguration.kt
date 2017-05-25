@@ -52,7 +52,8 @@ class CheckTrunkApiConfiguration : Configuration<CheckTrunkApiParams, CheckTrunk
     trunkVersion = params.trunkDescriptor.ideVersion
     releaseVersion = params.trunkDescriptor.ideVersion
 
-    val updatesToCheck = getUpdatesToCheck()
+//    val updatesToCheck = getUpdatesToCheck()
+    val updatesToCheck = listOf(RepositoryManager.getUpdateInfoById(15984)!!)
 
     LOG.debug("The following updates will be checked with both #$trunkVersion and #$releaseVersion\n" +
         "The dependencies will be resolved against #$trunkVersion or against #$releaseVersion (if not found): " + updatesToCheck.joinToString())

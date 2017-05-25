@@ -17,19 +17,25 @@ sealed class Problem(@PropertyKey(resourceBundle = "long.descriptions") val mess
 
   fun getShortDescription(): ShortDescription {
     val shortTemplate = DescriptionsBundle.getShortDescription(messageKey)
-    return ShortDescription(shortTemplate, shortDescriptionParams())
+    return ShortDescription(shortTemplate, shortDescriptionParams().map { it.toString() })
   }
 
   fun getFullDescription(): FullDescription {
     val descriptionParams = fullDescriptionParams()
     val fullTemplate = DescriptionsBundle.getFullDescription(messageKey)
     val effect = DescriptionsBundle.getEffect(messageKey)
-    return FullDescription(fullTemplate, effect, descriptionParams)
+    return FullDescription(fullTemplate, effect, descriptionParams.map { it.toString() })
   }
 
   protected abstract fun fullDescriptionParams(): List<Any>
 
   protected abstract fun shortDescriptionParams(): List<Any>
+
+  final override fun toString(): String = getFullDescription().toString()
+
+  final override fun equals(other: Any?): Boolean = other is Problem && getFullDescription() == other.getFullDescription()
+
+  final override fun hashCode(): Int = getFullDescription().hashCode()
 
 }
 

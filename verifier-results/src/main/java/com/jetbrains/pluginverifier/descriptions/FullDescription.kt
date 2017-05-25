@@ -7,7 +7,7 @@ import java.text.MessageFormat
  */
 data class FullDescription(private val template: String,
                            private val effect: String,
-                           private val params: List<Any>) {
+                           private val params: List<String>) {
   override fun toString(): String {
     val fullMessage = MessageFormat.format(template, *params.toTypedArray())
     return fullMessage + ". " + effect
