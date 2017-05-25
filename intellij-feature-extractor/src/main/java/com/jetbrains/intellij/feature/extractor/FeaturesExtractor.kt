@@ -1,7 +1,7 @@
 package com.jetbrains.intellij.feature.extractor
 
-import com.intellij.structure.domain.Ide
-import com.intellij.structure.domain.Plugin
+import com.intellij.structure.ide.Ide
+import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.intellij.feature.extractor.core.ArtifactTypeExtractor
 import com.jetbrains.intellij.feature.extractor.core.FacetTypeExtractor
@@ -14,12 +14,12 @@ object FeaturesExtractor {
 
   private val LOG = LoggerFactory.getLogger("FeaturesExtractor")
 
-  fun extractFeatures(ide: Ide, plugin: Plugin, createdPluginResolver: Resolver? = null): ExtractorResult {
+  fun extractFeatures(ide: Ide, plugin: Plugin): ExtractorResult {
 
     val bundledResolvers = createBundledPluginResolvers(ide)
 
     Resolver.createUnionResolver("IDE $ide bundled plugins", bundledResolvers).use { bundledPlugins ->
-      (createdPluginResolver ?: Resolver.createPluginResolver(plugin)).use { pluginResolver ->
+      (Resolver.createPluginResolver(plugin)).use { pluginResolver ->
         Resolver.createIdeResolver(ide).use { ideResolver ->
           val resolver = Resolver.createUnionResolver("$ide $plugin", listOf(pluginResolver, ideResolver, bundledPlugins))
           return implementations(plugin, resolver)

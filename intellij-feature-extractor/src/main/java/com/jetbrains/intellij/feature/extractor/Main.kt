@@ -1,8 +1,10 @@
 package com.jetbrains.intellij.feature.extractor
 
 import com.google.gson.Gson
-import com.intellij.structure.domain.IdeManager
-import com.intellij.structure.domain.PluginManager
+import com.intellij.structure.ide.IdeManager
+import com.intellij.structure.plugin.PluginCreationFail
+import com.intellij.structure.plugin.PluginCreationSuccess
+import com.intellij.structure.plugin.PluginManager
 import java.io.File
 
 /**
@@ -14,9 +16,13 @@ fun main(args: Array<String>) {
   }
   val pluginFile = File(args[0])
   val ideaFile = File(args[1])
-  val plugin = PluginManager.getInstance().createPlugin(pluginFile, false)
-  val ide = IdeManager.getInstance().createIde(ideaFile)
-  val extractorResult = FeaturesExtractor.extractFeatures(ide, plugin)
-  extractorResult.features.forEach { println(Gson().toJson(it)) }
-  println("All features extracted: ${extractorResult.extractedAll}")
+  val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile)
+  if (pluginCreationResult.isSuccess) {
+    val ide = IdeManager.getInstance().createIde(ideaFile)
+    val extractorResult = FeaturesExtractor.extractFeatures(ide, (pluginCreationResult as PluginCreationSuccess).plugin)
+    extractorResult.features.forEach { println(Gson().toJson(it)) }
+    println("All features extracted: ${extractorResult.extractedAll}")
+  } else {
+    println("Plugin is invalid: " + (pluginCreationResult as PluginCreationFail).errorsAndWarnings.joinToString())
+  }
 }
