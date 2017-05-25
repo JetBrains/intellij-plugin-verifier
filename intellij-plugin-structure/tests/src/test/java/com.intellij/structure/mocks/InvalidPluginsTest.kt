@@ -182,6 +182,21 @@ class InvalidPluginsTest {
           vendor = """<vendor></vendor>"""
         },
         listOf(PropertyNotSpecified("plugin.xml", "vendor")))
+
+    `test valid plugin xml`(
+        perfectXmlBuilder.modify {
+          vendor = """<vendor>Vendor name</vendor>"""
+        })
+
+    `test valid plugin xml`(
+        perfectXmlBuilder.modify {
+          vendor = """<vendor url="http://vendor.url"></vendor>"""
+        })
+
+    `test valid plugin xml`(
+        perfectXmlBuilder.modify {
+          vendor = """<vendor email="vendor@email.com"></vendor>"""
+        })
   }
 
   @Test
@@ -246,6 +261,11 @@ class InvalidPluginsTest {
   private fun `test invalid plugin xml`(pluginXmlContent: String, expectedProblems: List<PluginProblem>) {
     val pluginFolder = getTempPluginFolder(pluginXmlContent)
     assertExpectedProblems(pluginFolder, expectedProblems)
+  }
+
+  private fun `test valid plugin xml`(pluginXmlContent: String) {
+    val pluginFolder = getTempPluginFolder(pluginXmlContent)
+    getSuccessResult(pluginFolder)
   }
 
   private fun getTempPluginFolder(pluginXmlContent: String): File {

@@ -264,7 +264,14 @@ final class PluginCreator {
   }
 
   private void validateVendor(PluginVendorBean vendorBean) {
-    if (vendorBean == null || isEmptyOrSpaces(vendorBean.name)) {
+    if (vendorBean == null) {
+      registerProblem(new PropertyNotSpecified(myDescriptorPath, "vendor"));
+      return;
+    }
+
+    if (isEmptyOrSpaces(vendorBean.url) &&
+        isEmptyOrSpaces(vendorBean.email) &&
+        isEmptyOrSpaces(vendorBean.name)) {
       registerProblem(new PropertyNotSpecified(myDescriptorPath, "vendor"));
       return;
     }
