@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.runners
 
-import com.intellij.structure.domain.Ide
-import com.intellij.structure.domain.IdeManager
+import com.intellij.structure.ide.Ide
+import com.intellij.structure.ide.IdeManager
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.JdkDescriptor

@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.util
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.repository.AvailableIde
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import org.jetbrains.plugins.verifier.service.core.TaskManager

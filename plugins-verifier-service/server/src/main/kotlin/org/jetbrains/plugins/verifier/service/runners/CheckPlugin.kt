@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.runners
 
-import com.intellij.structure.domain.IdeManager
+import com.intellij.structure.ide.IdeManager
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.JdkDescriptor
@@ -32,7 +32,7 @@ class CheckPlugin(val runnerParams: CheckPluginRunnerParams,
 
   override fun computeResult(progress: Progress): CheckPluginResults {
     try {
-      val jdkDescriptor = JdkDescriptor.ByFile(JdkManager.getJdkHome(runnerParams.jdkVersion))
+      val jdkDescriptor = JdkDescriptor(JdkManager.getJdkHome(runnerParams.jdkVersion))
       val pluginDescriptors = pluginFiles.map { PluginDescriptor.ByFile(it.nameWithoutExtension, "", it) }
       val ideDescriptors = ideFiles.map { IdeManager.getInstance().createIde(it) }.map { IdeDescriptor.ByInstance(it) }
       val params = CheckPluginParams(pluginDescriptors, ideDescriptors, jdkDescriptor, runnerParams.vOptions, true, Resolver.getEmptyResolver(), BridgeVProgress(progress))

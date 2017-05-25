@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.jetbrains.pluginverifier.api.PluginDescriptor
 import com.jetbrains.pluginverifier.misc.LanguageUtilsKt
 import com.jetbrains.pluginverifier.misc.UnarchiverUtilKt
+import com.jetbrains.pluginverifier.repository.IdleFileLock
 import kotlin.text.StringsKt
 import org.jetbrains.plugins.verifier.service.api.Result
 import org.jetbrains.plugins.verifier.service.api.TaskId
@@ -179,7 +180,7 @@ class VerifierController implements SaveFileTrait {
     File saved = savePluginTemporarily(params.pluginFile)
     if (!saved) return
     def runnerParams = GSON.fromJson(params.params as String, CheckRangeRunnerParams.class)
-    def byFile = new PluginDescriptor.ByFile("${params.pluginFile.getOriginalFilename() as String}", "", saved)
+    def byFile = new PluginDescriptor.ByFileLock(new IdleFileLock(saved))
     def runner = new CheckRangeRunner(byFile, runnerParams, null)
 
     def onSuccess = { result -> return null }

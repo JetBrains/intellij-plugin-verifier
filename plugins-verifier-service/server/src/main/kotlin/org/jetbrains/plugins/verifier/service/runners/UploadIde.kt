@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.runners
 
-import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.repository.AvailableIde
 import com.jetbrains.pluginverifier.repository.IdeRepository

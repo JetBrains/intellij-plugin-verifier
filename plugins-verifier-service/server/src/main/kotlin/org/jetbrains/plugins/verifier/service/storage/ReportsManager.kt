@@ -1,8 +1,7 @@
 package org.jetbrains.plugins.verifier.service.storage
 
-import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.report.CheckIdeReport
 import org.slf4j.LoggerFactory
 import java.io.File
 

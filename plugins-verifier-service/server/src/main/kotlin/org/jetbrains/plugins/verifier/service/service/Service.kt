@@ -3,11 +3,10 @@ package org.jetbrains.plugins.verifier.service.service
 import com.google.common.collect.HashMultimap
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.google.gson.Gson
-import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginDescriptor
-import com.jetbrains.pluginverifier.api.VOptions
 import com.jetbrains.pluginverifier.configurations.CheckRangeResults
-import com.jetbrains.pluginverifier.format.UpdateInfo
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.api.Result

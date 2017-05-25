@@ -5,7 +5,7 @@ import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.pluginverifier.api.PluginDescriptor
-import com.jetbrains.pluginverifier.format.UpdateInfo
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.api.Result

@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.status
 
-import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.ide.IdeVersion
 import org.apache.commons.io.FileUtils
 import org.jetbrains.plugins.verifier.service.core.TaskManager
 import org.jetbrains.plugins.verifier.service.service.Service

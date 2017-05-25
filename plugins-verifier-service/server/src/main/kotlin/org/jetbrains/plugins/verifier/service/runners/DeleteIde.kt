@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.runners
 
-import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.ide.IdeVersion
 import org.jetbrains.plugins.verifier.service.core.Progress
 import org.jetbrains.plugins.verifier.service.core.Task
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager

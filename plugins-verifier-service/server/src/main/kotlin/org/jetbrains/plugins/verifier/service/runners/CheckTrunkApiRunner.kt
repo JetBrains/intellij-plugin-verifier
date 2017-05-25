@@ -1,18 +1,16 @@
 package org.jetbrains.plugins.verifier.service.runners
 
 import com.google.common.collect.ImmutableMultimap
-import com.intellij.structure.domain.Ide
-import com.intellij.structure.domain.IdeManager
-import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.ide.Ide
+import com.intellij.structure.ide.IdeManager
+import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.JdkDescriptor
 import com.jetbrains.pluginverifier.api.PluginDescriptor
-import com.jetbrains.pluginverifier.configurations.BundledPlugins
 import com.jetbrains.pluginverifier.configurations.CheckIdeConfiguration
 import com.jetbrains.pluginverifier.configurations.CheckIdeParams
 import com.jetbrains.pluginverifier.configurations.CheckTrunkApiResults
 import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.report.CheckIdeReport
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import org.jetbrains.plugins.verifier.service.core.*
 import org.jetbrains.plugins.verifier.service.params.CheckTrunkApiRunnerParams
@@ -93,7 +91,7 @@ class CheckTrunkApiRunner(val ideFile: File,
           throw RuntimeException("Unable to fetch list of plugins compatible with ${ide.version}", e)
         }
 
-        val jdkDescriptor = JdkDescriptor.ByFile(JdkManager.getJdkHome(runnerParams.jdkVersion))
+        val jdkDescriptor = JdkDescriptor(JdkManager.getJdkHome(runnerParams.jdkVersion))
 
         var firstPart: Boolean = true
 
@@ -126,7 +124,7 @@ class CheckTrunkApiRunner(val ideFile: File,
   }
 
   private fun calcReport(ide: Ide,
-                         jdkDescriptor: JdkDescriptor.ByFile,
+                         jdkDescriptor: JdkDescriptor,
                          pluginsToCheck: List<PluginDescriptor>,
                          progress: Progress): Pair<CheckIdeReport, BundledPlugins> {
     try {

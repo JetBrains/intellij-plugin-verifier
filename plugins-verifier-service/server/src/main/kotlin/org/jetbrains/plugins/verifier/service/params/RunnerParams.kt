@@ -2,8 +2,7 @@ package org.jetbrains.plugins.verifier.service.params
 
 import com.google.common.collect.Multimap
 import com.google.gson.annotations.SerializedName
-import com.intellij.structure.domain.IdeVersion
-import com.jetbrains.pluginverifier.api.VOptions
+import com.intellij.structure.ide.IdeVersion
 
 enum class JdkVersion {
   JAVA_6_ORACLE,
