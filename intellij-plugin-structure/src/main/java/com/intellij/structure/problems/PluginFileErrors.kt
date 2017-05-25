@@ -34,14 +34,6 @@ data class UnableToExtractZip(val pluginFile: File) : PluginProblem() {
 
 }
 
-data class UnableToReadPluginClassFiles(val pluginFile: File) : PluginProblem() {
-
-  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
-
-  override val message: String = "Unable to read plugin class files: ${pluginFile.name}"
-
-}
-
 data class UnableToReadJarFile(val jarFile: File) : PluginProblem() {
 
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
