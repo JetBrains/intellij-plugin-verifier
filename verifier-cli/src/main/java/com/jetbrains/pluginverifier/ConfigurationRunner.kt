@@ -86,10 +86,10 @@ class CheckTrunkApiRunner : ConfigurationRunner<CheckTrunkApiParams, CheckTrunkA
       printer.printTrunkApiCompareResult(compareResult)
     }
     if (opts.htmlReportFile != null) {
-      val trunkHtmlReportFileName = opts.htmlReportFile + "-trunk-${results.trunkResults.ideVersion}"
+      val trunkHtmlReportFileName = opts.htmlReportFile + "-trunk-${results.trunkResults.ideVersion}.html"
       saveIdeReportToHtmlFile(results.trunkResults, trunkHtmlReportFileName)
 
-      val releaseHtmlReportFileName = opts.htmlReportFile + "-release-${results.releaseResults.ideVersion}"
+      val releaseHtmlReportFileName = opts.htmlReportFile + "-release-${results.releaseResults.ideVersion}.html"
       saveIdeReportToHtmlFile(results.releaseResults, releaseHtmlReportFileName)
     }
   }
