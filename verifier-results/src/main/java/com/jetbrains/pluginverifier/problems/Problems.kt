@@ -13,7 +13,7 @@ import org.jetbrains.annotations.PropertyKey
 /**
  * @author Sergey Patrikeev
  */
-abstract class Problem(@PropertyKey(resourceBundle = "long.descriptions") val messageKey: String) {
+sealed class Problem(@PropertyKey(resourceBundle = "long.descriptions") val messageKey: String) {
 
   fun getShortDescription(): ShortDescription {
     val shortTemplate = DescriptionsBundle.getShortDescription(messageKey)
