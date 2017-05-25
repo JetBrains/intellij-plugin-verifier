@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service
 
-import com.intellij.structure.domain.IdeVersion
+import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.misc.LanguageUtilsKt
 import grails.converters.JSON
 import kotlin.text.StringsKt

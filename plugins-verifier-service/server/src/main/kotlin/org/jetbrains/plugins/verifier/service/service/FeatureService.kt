@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.pluginverifier.api.PluginDescriptor
+import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -124,12 +125,13 @@ object FeatureService {
       return
     }
 
-    val runner = ExtractFeaturesRunner(PluginDescriptor.ByUpdateInfo(updateInfo))
+    val pluginInfo = PluginInfo(updateInfo.pluginId, updateInfo.version, updateInfo)
+    val runner = ExtractFeaturesRunner(PluginDescriptor.ByUpdateInfo(updateInfo), pluginInfo)
     val taskId = TaskManager.enqueue(
         runner,
         { onSuccess(it) },
         { t, tid, task -> logError(t, tid, task as ExtractFeaturesRunner) },
-        { tst, task -> onUpdateExtracted(task as ExtractFeaturesRunner) }
+        { _, task -> onUpdateExtracted(task as ExtractFeaturesRunner) }
     )
     inProgressUpdates[updateInfo] = taskId
     lastCheckDate[updateInfo] = System.currentTimeMillis()
@@ -165,10 +167,10 @@ object FeatureService {
   }
 
   private fun convertToPluginsSiteResult(featuresResult: FeaturesResult): PluginsSiteResult {
-    val updateId = (featuresResult.plugin as PluginDescriptor.ByUpdateInfo).updateInfo.updateId
+    val updateId = featuresResult.plugin.updateInfo!!.updateId
     val resultType = featuresResult.resultType
     if (resultType == FeaturesResult.ResultType.BAD_PLUGIN) {
-      return PluginsSiteResult(updateId, resultType, badPluginReason = featuresResult.badPlugin!!.reason)
+      return PluginsSiteResult(updateId, resultType)
     }
     return PluginsSiteResult(updateId, resultType, featuresResult.features)
   }
@@ -177,9 +179,8 @@ object FeatureService {
     val plugin = featuresResult.plugin
     val resultType = featuresResult.resultType
     val size = featuresResult.features.size
-    val badPlugin = if (featuresResult.badPlugin != null) "bad plugin = ${featuresResult.badPlugin}; " else ""
     val seconds = result.taskStatus.elapsedTime() / 1000
-    LOG.info("Plugin $plugin is successfully processed:rResult type = $resultType; extracted = $size features; $badPlugin; in $seconds s")
+    LOG.info("Plugin $plugin is successfully processed; Result type = $resultType; extracted = $size features; in $seconds s")
   }
 
 
@@ -200,8 +201,7 @@ object FeatureService {
 
 data class PluginsSiteResult(@SerializedName("updateId") val updateId: Int,
                              @SerializedName("resultType") val resultType: FeaturesResult.ResultType,
-                             @SerializedName("features") val features: List<ExtensionPointFeatures> = emptyList(),
-                             @SerializedName("badPluginReason") val badPluginReason: String? = null)
+                             @SerializedName("features") val features: List<ExtensionPointFeatures> = emptyList())
 
 interface FeaturesApi {
 

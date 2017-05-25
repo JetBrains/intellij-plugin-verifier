@@ -5,7 +5,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.google.gson.Gson
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginDescriptor
-import com.jetbrains.pluginverifier.configurations.CheckRangeResults
+import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -15,6 +15,7 @@ import org.jetbrains.plugins.verifier.service.api.TaskStatus
 import org.jetbrains.plugins.verifier.service.core.TaskManager
 import org.jetbrains.plugins.verifier.service.params.CheckRangeRunnerParams
 import org.jetbrains.plugins.verifier.service.params.JdkVersion
+import org.jetbrains.plugins.verifier.service.runners.CheckRangeResults
 import org.jetbrains.plugins.verifier.service.runners.CheckRangeRunner
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
@@ -143,19 +144,21 @@ object Service {
       return
     }
 
-    val runner = CheckRangeRunner(PluginDescriptor.ByUpdateInfo(updateInfo), getRunnerParams(), versions)
+    val pluginInfo: PluginInfo = PluginInfo(updateInfo.pluginId, updateInfo.version, updateInfo)
+    val pluginDescriptor = PluginDescriptor.ByUpdateInfo(updateInfo)
+    val runner = CheckRangeRunner(pluginInfo, pluginDescriptor, getRunnerParams(), versions)
     val taskId = TaskManager.enqueue(
         runner,
         { onSuccess(it, updateInfo) },
         { t, tid, task -> logError(t, tid, task as CheckRangeRunner) },
-        { tst, task -> onUpdateChecked(task as CheckRangeRunner) }
+        { _, task -> onUpdateChecked(task as CheckRangeRunner) }
     )
     verifiableUpdates[updateInfo] = taskId
     lastCheckDate[updateInfo] = System.currentTimeMillis()
     LOG.info("Check range for $updateInfo is scheduled with taskId #$taskId")
   }
 
-  private fun getRunnerParams(): CheckRangeRunnerParams = CheckRangeRunnerParams(JdkVersion.JAVA_8_ORACLE, VOptions())
+  private fun getRunnerParams(): CheckRangeRunnerParams = CheckRangeRunnerParams(JdkVersion.JAVA_8_ORACLE)
 
   @Synchronized
   private fun releaseUpdate(updateInfo: UpdateInfo) {
@@ -164,20 +167,19 @@ object Service {
   }
 
   private fun onUpdateChecked(task: CheckRangeRunner) {
-    val updateInfo = (task.pluginToCheck as PluginDescriptor.ByUpdateInfo).updateInfo
+    val updateInfo = (task.pluginDescriptor as PluginDescriptor.ByUpdateInfo).updateInfo
     releaseUpdate(updateInfo)
   }
 
   private fun logError(throwable: Throwable, taskStatus: TaskStatus, task: CheckRangeRunner) {
-    val updateInfo = (task.pluginToCheck as PluginDescriptor.ByUpdateInfo).updateInfo
+    val updateInfo = (task.pluginDescriptor as PluginDescriptor.ByUpdateInfo).updateInfo
     LOG.error("Unable to check update $updateInfo: taskId = #${taskStatus.taskId}", throwable)
   }
 
   private fun onSuccess(result: Result<CheckRangeResults>, updateInfo: UpdateInfo) {
     val results = result.result!!
     LOG.info("Update ${results.plugin} is successfully checked with IDE-s. Result type = ${results.resultType}; " +
-        "IDE-s = ${results.checkedIdeList?.joinToString()} " +
-        (if (results.badPlugin != null) "bad plugin = ${results.badPlugin}; " else "") +
+        "IDE-s = ${results.checkedIdeList.joinToString()} " +
         "in ${result.taskStatus.elapsedTime() / 1000} s")
 
     if (results.resultType == CheckRangeResults.ResultType.NO_COMPATIBLE_IDES) {

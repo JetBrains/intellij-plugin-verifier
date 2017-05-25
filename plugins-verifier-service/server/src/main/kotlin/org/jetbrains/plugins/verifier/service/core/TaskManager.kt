@@ -77,7 +77,7 @@ object TaskManager : ITaskManager {
   }
 
   @Synchronized
-  override fun <T> enqueue(task: Task<T>): TaskId = enqueue(task, {}, { t, tst, task -> }, { tst, t -> })
+  override fun <T> enqueue(task: Task<T>): TaskId = enqueue(task, {}, { _, _, _ -> }, { _, _ -> })
 
   @Synchronized
   override fun cancel(taskId: TaskId): Boolean {

@@ -1,53 +1,45 @@
 package org.jetbrains.plugins.verifier.service.storage
 
-import com.intellij.structure.ide.Ide
 import com.intellij.structure.ide.IdeManager
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
 import org.slf4j.LoggerFactory
+import java.io.Closeable
 import java.io.File
 
 /**
  * @author Sergey Patrikeev
  */
-interface IIdeFilesManager {
+abstract class IdeFileLock : Closeable {
+  abstract fun getIdeFile(): File
 
-  fun <R> locked(block: () -> R): R
+  abstract fun release()
 
-  fun ideList(): List<IdeVersion>
-
-  fun getIde(version: IdeVersion): IIdeLock?
-
-  fun addIde(ideFile: File): Boolean
-
-  fun deleteIde(version: IdeVersion)
-
-  interface IIdeLock {
-    fun release()
-  }
-
+  final override fun close() = release()
 }
 
 //TODO: improve IDE cache on high concurrency: don't recreate IDE instance after each lock release.
-object IdeFilesManager : IIdeFilesManager {
+object IdeFilesManager {
 
   private val LOG = LoggerFactory.getLogger(IdeFilesManager::class.java)
 
-  private val ideCache: MutableMap<IdeVersion, Ide> = hashMapOf()
+  private val ideCache: MutableMap<IdeVersion, File> = hashMapOf()
   private val lockedIdes: MutableMap<IdeVersion, Int> = hashMapOf()
   private val deleteQueue: MutableSet<IdeVersion> = hashSetOf()
 
-  class IdeLock(val ide: Ide) : IIdeFilesManager.IIdeLock {
-    override fun release() {
-      releaseLock(this)
-    }
+  private data class IdeFileLockImpl(private val ide: File) : IdeFileLock(), Closeable {
+
+    override fun getIdeFile(): File = ide
+
+    override fun release() = releaseLock(this)
+
   }
 
   @Synchronized
-  private fun releaseLock(lock: IdeLock) {
-    val version = lock.ide.version
-    var cnt = lockedIdes.getOrElse(version, { throw AssertionError("Unregistered lock!") })
+  private fun releaseLock(lock: IdeFileLockImpl) {
+    val version = IdeVersion.createIdeVersion(lock.getIdeFile().name)
+    var cnt = lockedIdes[version] ?: return
     cnt--
     if (cnt == 0) {
       lockedIdes.remove(version)
@@ -59,7 +51,7 @@ object IdeFilesManager : IIdeFilesManager {
   }
 
   @Synchronized
-  override fun <R> locked(block: () -> R): R = block()
+  fun <R> locked(block: () -> R): R = block()
 
   private fun onRelease(version: IdeVersion) {
     if (deleteQueue.contains(version)) {
@@ -73,23 +65,23 @@ object IdeFilesManager : IIdeFilesManager {
   }
 
   @Synchronized
-  override fun ideList(): List<IdeVersion> = FileManager.getFilesOfType(FileType.IDE).map { it -> IdeVersion.createIdeVersion(it.name) }.toList()
+  fun ideList(): List<IdeVersion> = FileManager.getFilesOfType(FileType.IDE).map { it -> IdeVersion.createIdeVersion(it.name) }.toList()
 
   @Synchronized
-  override fun getIde(version: IdeVersion): IdeLock? {
+  fun getIde(version: IdeVersion): IdeFileLock? {
     val ideFile = FileManager.getFileByName(version.asString(), FileType.IDE)
     if (!ideFile.isDirectory) {
       return null
     }
 
-    val ide = ideCache.getOrPut(version, { IdeManager.getInstance().createIde(ideFile) })
+    val ide = ideCache.getOrPut(version, { ideFile })
     val cnt = lockedIdes.getOrPut(version, { 0 })
     lockedIdes.put(version, cnt + 1)
-    return IdeLock(ide)
+    return IdeFileLockImpl(ide)
   }
 
   @Synchronized
-  override fun deleteIde(version: IdeVersion) {
+  fun deleteIde(version: IdeVersion) {
     LOG.info("Deleting IDE #$version")
     deleteQueue.add(version)
     if (!lockedIdes.contains(version)) {
@@ -98,7 +90,7 @@ object IdeFilesManager : IIdeFilesManager {
   }
 
   @Synchronized
-  override fun addIde(ideFile: File): Boolean {
+  fun addIde(ideFile: File): Boolean {
     LOG.info("Adding IDE from file $ideFile")
     if (!ideFile.exists()) {
       throw IllegalArgumentException("The IDE file $ideFile doesn't exist")

@@ -32,7 +32,7 @@ object PluginCreator {
 
   private fun downloadPluginByUpdateInfo(updateInfo: UpdateInfo): FileLock? = RepositoryManager.getPluginFile(updateInfo)
 
-  private fun createPluginByUpdateInfo(updateInfo: UpdateInfo): CreatePluginResult {
+  fun createPluginByUpdateInfo(updateInfo: UpdateInfo): CreatePluginResult {
     val pluginFileLock = downloadPluginByUpdateInfo(updateInfo)
         ?: return CreatePluginResult.NotFound("Plugin $updateInfo is not found in the Plugin Repository")
     return createPluginByFile(pluginFileLock.getFile())

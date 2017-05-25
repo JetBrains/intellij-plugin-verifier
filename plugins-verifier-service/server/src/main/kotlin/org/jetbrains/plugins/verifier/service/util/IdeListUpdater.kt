@@ -82,7 +82,7 @@ object IdeListUpdater {
 
     val runner = UploadIdeRunner(availableIde = availableIde)
 
-    val taskId = TaskManager.enqueue(runner, { r -> }, { e, ts, t -> }, { ts, t -> downloadingIdes.remove(version) })
+    val taskId = TaskManager.enqueue(runner, { }, { _, _, _ -> }, { _, _ -> downloadingIdes.remove(version) })
     LOG.info("Uploading IDE version #$version is enqueued with taskId=#$taskId")
 
     downloadingIdes.add(version)

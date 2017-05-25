@@ -2,6 +2,7 @@ package org.jetbrains.plugins.verifier.service
 
 import com.google.gson.Gson
 import com.jetbrains.pluginverifier.api.PluginDescriptor
+import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.misc.LanguageUtilsKt
 import com.jetbrains.pluginverifier.misc.UnarchiverUtilKt
 import com.jetbrains.pluginverifier.repository.IdleFileLock
@@ -12,11 +13,9 @@ import org.jetbrains.plugins.verifier.service.core.TaskManager
 import org.jetbrains.plugins.verifier.service.params.CheckIdeRunnerParams
 import org.jetbrains.plugins.verifier.service.params.CheckPluginRunnerParams
 import org.jetbrains.plugins.verifier.service.params.CheckRangeRunnerParams
-import org.jetbrains.plugins.verifier.service.params.CheckTrunkApiRunnerParams
 import org.jetbrains.plugins.verifier.service.runners.CheckIdeRunner
 import org.jetbrains.plugins.verifier.service.runners.CheckPlugin
 import org.jetbrains.plugins.verifier.service.runners.CheckRangeRunner
-import org.jetbrains.plugins.verifier.service.runners.CheckTrunkApiRunner
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.springframework.http.HttpStatus
 
@@ -121,16 +120,8 @@ class VerifierController implements SaveFileTrait {
     log.info("New Check-Ide command is enqueued with taskId=$taskId")
   }
 
-  def checkTrunkApi() {
-    def saved = saveIdeTemporarily(params.ideFile)
-    if (!saved) return
-    def params = GSON.fromJson(params.params as String, CheckTrunkApiRunnerParams.class)
-    def runner = new CheckTrunkApiRunner(saved, true, params)
-    def taskId = TaskManager.INSTANCE.enqueue(runner)
-    sendJson(taskId)
-    log.info("New Check-Trunk-Api command is enqueued with taskId=$taskId")
-  }
-
+  @SuppressWarnings("GroovyVariableNotAssigned")
+  //probably a bug in Groovy plugin
   private File saveIdeTemporarily(ideFile) {
     if (!ideFile || ideFile.empty) {
       log.error("user attempted to load empty IDE file")
@@ -180,8 +171,9 @@ class VerifierController implements SaveFileTrait {
     File saved = savePluginTemporarily(params.pluginFile)
     if (!saved) return
     def runnerParams = GSON.fromJson(params.params as String, CheckRangeRunnerParams.class)
-    def byFile = new PluginDescriptor.ByFileLock(new IdleFileLock(saved))
-    def runner = new CheckRangeRunner(byFile, runnerParams, null)
+    def pluginInfo = new PluginInfo(saved.name, "1.0", null)
+    def pluginDescriptor = new PluginDescriptor.ByFileLock(new IdleFileLock(saved))
+    def runner = new CheckRangeRunner(pluginInfo, pluginDescriptor, runnerParams, null)
 
     def onSuccess = { result -> return null }
     def onError = { one, two, three -> return null }

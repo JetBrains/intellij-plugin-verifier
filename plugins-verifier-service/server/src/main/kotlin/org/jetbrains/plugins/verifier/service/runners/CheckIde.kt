@@ -1,14 +1,16 @@
 package org.jetbrains.plugins.verifier.service.runners
 
-import com.intellij.structure.ide.Ide
-import com.intellij.structure.ide.IdeManager
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.JdkDescriptor
+import com.jetbrains.pluginverifier.api.PluginDescriptor
+import com.jetbrains.pluginverifier.api.ProblemsFilter
 import com.jetbrains.pluginverifier.configurations.CheckIdeConfiguration
 import com.jetbrains.pluginverifier.configurations.CheckIdeParams
 import com.jetbrains.pluginverifier.configurations.CheckIdeParamsParser
 import com.jetbrains.pluginverifier.configurations.CheckIdeResults
+import com.jetbrains.pluginverifier.ide.IdeCreator
+import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import org.jetbrains.plugins.verifier.service.core.BridgeVProgress
 import org.jetbrains.plugins.verifier.service.core.Progress
@@ -30,25 +32,26 @@ class CheckIdeRunner(val ideFile: File,
 
   override fun computeResult(progress: Progress): CheckIdeResults {
     try {
-      val ide: Ide =
-          try {
-            IdeManager.getInstance().createIde(ideFile, runnerParams.actualIdeVersion)
-          } catch(e: Exception) {
-            throw IllegalArgumentException("The supplied IDE $ideFile is broken", e)
-          }
-
-      val pluginsToCheck = CheckIdeParamsParser.getDescriptorsToCheck(runnerParams.checkAllBuilds, runnerParams.checkLastBuilds, ide.version)
-
-      val jdkDescriptor = JdkDescriptor.ByFile(JdkManager.getJdkHome(runnerParams.jdkVersion))
-      val checkIdeParams = CheckIdeParams(IdeDescriptor.ByInstance(ide), jdkDescriptor, pluginsToCheck, runnerParams.excludedPlugins, runnerParams.vOptions, runnerParams.pluginIdsToCheckExistingBuilds, Resolver.getEmptyResolver(), BridgeVProgress(progress))
-
-      LOG.debug("CheckIde #$taskId arguments: $checkIdeParams")
-
-      return CheckIdeConfiguration(checkIdeParams).execute()
+      val ideDescriptor: IdeDescriptor = IdeCreator.createByFile(ideFile, runnerParams.actualIdeVersion)
+      val pluginsToCheck = CheckIdeParamsParser().getDescriptorsToCheck(runnerParams.checkAllBuilds, runnerParams.checkLastBuilds, ideDescriptor.ideVersion)
+      return doCheckIde(ideDescriptor, pluginsToCheck, progress)
     } finally {
       if (deleteOnCompletion) {
         ideFile.deleteLogged()
       }
+    }
+  }
+
+  private fun doCheckIde(ideDescriptor: IdeDescriptor,
+                         pluginsToCheck: List<PluginDescriptor>,
+                         progress: Progress): CheckIdeResults {
+    try {
+      val jdkDescriptor = JdkDescriptor(JdkManager.getJdkHome(runnerParams.jdkVersion))
+      val checkIdeParams = CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, runnerParams.excludedPlugins, runnerParams.pluginIdsToCheckExistingBuilds, Resolver.getEmptyResolver(), emptyList(), ProblemsFilter.AlwaysTrue, BridgeVProgress(progress))
+      LOG.debug("CheckIde #$taskId arguments: $checkIdeParams")
+      return CheckIdeConfiguration().execute(checkIdeParams)
+    } finally {
+      pluginsToCheck.forEach { it.closeLogged() }
     }
   }
 

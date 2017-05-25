@@ -1,18 +1,17 @@
-package com.jetbrains.pluginverifier.configurations
+package org.jetbrains.plugins.verifier.service.runners
 
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Result
-import com.jetbrains.pluginverifier.api.Verdict
+import com.jetbrains.pluginverifier.configurations.ConfigurationResults
 
 /**
  * @author Sergey Patrikeev
  */
 data class CheckRangeResults(@SerializedName("plugin") val plugin: PluginInfo,
                              @SerializedName("type") val resultType: ResultType,
-                             @SerializedName("badPlugin") val badPlugin: Verdict.Bad?,
-                             @SerializedName("checkedIdeList") val checkedIdeList: List<IdeVersion>?,
+                             @SerializedName("checkedIdeList") val checkedIdeList: List<IdeVersion>,
                              @SerializedName("results") val result: List<Result>) : ConfigurationResults {
 
   enum class ResultType {
