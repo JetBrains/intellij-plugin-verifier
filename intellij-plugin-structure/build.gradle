@@ -16,7 +16,7 @@ apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
 apply plugin: 'com.github.johnrengelman.shadow'
 
-def intellijPluginStructureVersion = '1.38'
+def intellijPluginStructureVersion = '2.1'
 if (project.hasProperty("structureVersion")) {
   intellijPluginStructureVersion = project.structureVersion
 }
