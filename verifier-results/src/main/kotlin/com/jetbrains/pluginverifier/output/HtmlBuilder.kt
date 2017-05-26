@@ -20,6 +20,12 @@ class HtmlBuilder(val output: PrintWriter) {
 
   fun html(block: () -> Unit) = tag("html", block)
 
+  fun p(block: () -> Unit) = tag("p", block)
+
+  fun br() {
+    output.appendln("<br/>")
+  }
+
   fun body(block: () -> Unit) = tag("body", block)
 
   fun head(block: () -> Unit) = tag("head", block)

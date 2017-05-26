@@ -21,6 +21,26 @@
     color: #f00;
 }
 
+.warnings .uMarker {
+    background: #ffeb00;
+    color: #ffeb00;
+}
+
+.missingDeps .uMarker {
+    background: #7fd8ff;
+    color: #7fd8ff;
+}
+
+.badPlugin .uMarker {
+    background: #5f3103;
+    color: #5f3103;
+}
+
+.notFound .uMarker {
+    background: #e5c2ef;
+    color: #e5c2ef;
+}
+
 .excluded .uMarker {
     background: #888 !important;
 }
@@ -37,6 +57,26 @@
 .pluginHasProblem .pMarker {
     background: #f00;
     color: #f00;
+}
+
+.warnings .pMarker {
+    background: #ffeb00;
+    color: #ffeb00;
+}
+
+.missingDeps .pMarker {
+    background: #7fd8ff;
+    color: #7fd8ff;
+}
+
+.badPlugin .pMarker {
+    background: #5f3103;
+    color: #5f3103;
+}
+
+.notFound .pMarker {
+    background: #e5c2ef;
+    color: #e5c2ef;
 }
 
 .shortDescription a {

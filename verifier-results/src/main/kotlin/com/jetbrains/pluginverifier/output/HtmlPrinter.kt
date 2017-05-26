@@ -13,6 +13,7 @@ import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.warnings.Warning
 import java.io.File
 import java.io.PrintWriter
 import java.nio.charset.Charset
@@ -60,7 +61,7 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
   }
 
   private fun HtmlBuilder.appendPluginResults(pluginResults: List<Result>, pluginId: String, options: PrinterOptions) {
-    div(classes = "plugin " + if (pluginHasProblems(pluginResults)) "pluginHasProblem" else "pluginOk") {
+    div(classes = "plugin " + getPluginStyle(pluginResults)) {
       h3 {
         span(classes = "pMarker") { +"    " }
         +pluginId
@@ -75,15 +76,41 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
     }
   }
 
+  private fun getPluginStyle(pluginResults: List<Result>): String {
+    val verdicts = pluginResults
+        .filterNot { isExcluded(PluginIdAndVersion(it.plugin.pluginId, it.plugin.version)) }
+        .map { it.verdict }
+    if (verdicts.any { it is Verdict.Problems }) {
+      return "pluginHasProblems"
+    }
+    if (verdicts.any { it is Verdict.MissingDependencies }) {
+      return "missingDeps"
+    }
+    if (verdicts.any { it is Verdict.Bad }) {
+      return "badPlugin"
+    }
+    if (verdicts.any { it is Verdict.Warnings }) {
+      return "warnings"
+    }
+    return "pluginOk"
+  }
+
   private fun HtmlBuilder.printPluginVerdict(verdict: Verdict, pluginId: String, plugin: PluginInfo, options: PrinterOptions) {
-    val verdictStyle = if (verdict is Verdict.OK) "updateOk" else "updateHasProblems"
+    val verdictStyle = when (verdict) {
+      is Verdict.OK -> "updateOk"
+      is Verdict.Warnings -> "warnings"
+      is Verdict.MissingDependencies -> "missingDeps"
+      is Verdict.Problems -> "updateHasProblems"
+      is Verdict.Bad -> "badPlugin"
+      is Verdict.NotFound -> "notFound"
+    }
     val excludedStyle = if (isExcluded(PluginIdAndVersion(pluginId, plugin.version))) "excluded" else ""
     div(classes = "update $verdictStyle $excludedStyle") {
       h3 {
         printUpdateHeader(plugin, verdict, pluginId)
       }
       div {
-        printVerdict(verdict, plugin, options)
+        printVerificationResult(verdict, plugin, options)
       }
     }
   }
@@ -94,8 +121,8 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
     small { +if (plugin.updateInfo != null) "(#${plugin.updateInfo.updateId})" else "" }
     small {
       +when (verdict) {
-        is Verdict.OK -> ""
-        is Verdict.Warnings -> ""
+        is Verdict.OK -> "OK"
+        is Verdict.Warnings -> "${verdict.warnings.size} " + "warning".pluralize(verdict.warnings.size) + " found"
         is Verdict.Problems -> "${verdict.problems.size} " + "problem".pluralize(verdict.problems.size) + " found"
         is Verdict.MissingDependencies -> "Plugin has " +
             "${verdict.missingDependencies.size} missing " + "dependency".pluralize(verdict.missingDependencies.size) + " and " +
@@ -106,27 +133,29 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
     }
   }
 
-  private fun HtmlBuilder.printVerdict(verdict: Verdict, plugin: PluginInfo, options: PrinterOptions) {
+  private fun HtmlBuilder.printVerificationResult(verdict: Verdict, plugin: PluginInfo, options: PrinterOptions) {
     when (verdict) {
-      is Verdict.OK -> {
-        +"No problems."
-      }
-      is Verdict.Warnings -> +"${verdict.warnings.size} ${"warning".pluralize(verdict.warnings.size)}"
-      is Verdict.Problems -> {
-        printProblems(verdict.problems)
-      }
-      is Verdict.Bad -> {
-        printShortAndFullDescription(verdict.pluginProblems.joinToString(), plugin.pluginId)
-      }
-      is Verdict.NotFound -> {
-        +"The plugin $plugin is not found in the Repository"
-      }
-      is Verdict.MissingDependencies -> {
-        printProblems(verdict.problems)
+      is Verdict.OK -> +"No problems."
+      is Verdict.Warnings -> printWarnings(verdict.warnings)
+      is Verdict.Problems -> printProblems(verdict.problems)
+      is Verdict.Bad -> printShortAndFullDescription(verdict.pluginProblems.joinToString(), plugin.pluginId)
+      is Verdict.NotFound -> +"The plugin $plugin is not found in the Repository"
+      is Verdict.MissingDependencies -> printMissingDependenciesResult(verdict, options)
+    }
+  }
 
-        val missingDependencies = verdict.missingDependencies
-        printMissingDependencies(missingDependencies.filterNot { it.dependency.isOptional })
-        printMissingDependencies(missingDependencies.filter { it.dependency.isOptional && !options.ignoreMissingOptionalDependency(it.dependency) })
+  private fun HtmlBuilder.printMissingDependenciesResult(verdict: Verdict.MissingDependencies, options: PrinterOptions) {
+    printProblems(verdict.problems)
+    val missingDependencies = verdict.missingDependencies
+    printMissingDependencies(missingDependencies.filterNot { it.dependency.isOptional })
+    printMissingDependencies(missingDependencies.filter { it.dependency.isOptional && !options.ignoreMissingOptionalDependency(it.dependency) })
+  }
+
+  private fun HtmlBuilder.printWarnings(warnings: Set<Warning>) {
+    p {
+      warnings.forEach {
+        +it.toString()
+        br()
       }
     }
   }
@@ -159,12 +188,6 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
       }
     }
   }
-
-  private fun pluginHasProblems(pluginResults: List<Result>): Boolean =
-      pluginResults
-          .filterNot { isExcluded(PluginIdAndVersion(it.plugin.pluginId, it.plugin.version)) }
-          .filterNot { it.verdict is Verdict.OK }
-          .isNotEmpty()
 
 }
 
