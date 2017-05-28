@@ -2,7 +2,7 @@ package org.jetbrains.plugins.verifier.service.runners
 
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor
-import com.jetbrains.pluginverifier.api.PluginDescriptor
+import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.ide.IdeCreator
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
@@ -12,11 +12,11 @@ import org.jetbrains.plugins.verifier.service.core.Task
 import org.jetbrains.plugins.verifier.service.storage.IdeFileLock
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 
-class ExtractFeaturesRunner(val pluginDescriptor: PluginDescriptor, val pluginInfo: PluginInfo) : Task<FeaturesResult>() {
-  override fun presentableName(): String = "Features extraction of $pluginDescriptor"
+class ExtractFeaturesRunner(val pluginCoordinate: PluginCoordinate, val pluginInfo: PluginInfo) : Task<FeaturesResult>() {
+  override fun presentableName(): String = "Features extraction of $pluginCoordinate"
 
   override fun computeResult(progress: Progress): FeaturesResult {
-    val createPluginResult = PluginCreator.createPlugin(pluginDescriptor)
+    val createPluginResult = PluginCreator.createPlugin(pluginCoordinate)
     createPluginResult.use {
       return when (createPluginResult) {
         is CreatePluginResult.OK -> doFeatureExtraction(createPluginResult)
@@ -27,7 +27,7 @@ class ExtractFeaturesRunner(val pluginDescriptor: PluginDescriptor, val pluginIn
   }
 
   private fun doFeatureExtraction(createPluginResult: CreatePluginResult.OK): FeaturesResult {
-    val plugin = createPluginResult.success.plugin
+    val plugin = createPluginResult.plugin
 
     val sinceBuild = plugin.sinceBuild!!
     val untilBuild = plugin.untilBuild

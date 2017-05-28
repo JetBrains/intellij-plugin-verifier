@@ -3,14 +3,13 @@ package org.jetbrains.plugins.verifier.service.runners
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.JdkDescriptor
-import com.jetbrains.pluginverifier.api.PluginDescriptor
+import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.ProblemsFilter
 import com.jetbrains.pluginverifier.configurations.CheckIdeConfiguration
 import com.jetbrains.pluginverifier.configurations.CheckIdeParams
 import com.jetbrains.pluginverifier.configurations.CheckIdeParamsParser
 import com.jetbrains.pluginverifier.configurations.CheckIdeResults
 import com.jetbrains.pluginverifier.ide.IdeCreator
-import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import org.jetbrains.plugins.verifier.service.core.BridgeVProgress
 import org.jetbrains.plugins.verifier.service.core.Progress
@@ -43,16 +42,12 @@ class CheckIdeRunner(val ideFile: File,
   }
 
   private fun doCheckIde(ideDescriptor: IdeDescriptor,
-                         pluginsToCheck: List<PluginDescriptor>,
+                         pluginsToCheck: List<PluginCoordinate>,
                          progress: Progress): CheckIdeResults {
-    try {
-      val jdkDescriptor = JdkDescriptor(JdkManager.getJdkHome(runnerParams.jdkVersion))
-      val checkIdeParams = CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, runnerParams.excludedPlugins, runnerParams.pluginIdsToCheckExistingBuilds, Resolver.getEmptyResolver(), emptyList(), ProblemsFilter.AlwaysTrue, BridgeVProgress(progress))
-      LOG.debug("CheckIde #$taskId arguments: $checkIdeParams")
-      return CheckIdeConfiguration().execute(checkIdeParams)
-    } finally {
-      pluginsToCheck.forEach { it.closeLogged() }
-    }
+    val jdkDescriptor = JdkDescriptor(JdkManager.getJdkHome(runnerParams.jdkVersion))
+    val checkIdeParams = CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, runnerParams.excludedPlugins, runnerParams.pluginIdsToCheckExistingBuilds, Resolver.getEmptyResolver(), emptyList(), ProblemsFilter.AlwaysTrue, BridgeVProgress(progress))
+    LOG.debug("CheckIde #$taskId arguments: $checkIdeParams")
+    return CheckIdeConfiguration().execute(checkIdeParams)
   }
 
 }

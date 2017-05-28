@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.configurations
 import com.intellij.structure.ide.Ide
 import com.intellij.structure.plugin.Plugin
 import com.jetbrains.pluginverifier.api.IdeDescriptor
-import com.jetbrains.pluginverifier.api.PluginDescriptor
+import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.core.VerifierExecutor
@@ -39,7 +39,7 @@ class CheckPluginConfiguration : Configuration<CheckPluginParams, CheckPluginRes
 
   override fun execute(parameters: CheckPluginParams): CheckPluginResults {
     params = parameters
-    allPluginsToCheck = parameters.pluginDescriptors.map { PluginCreator.createPlugin(it) }
+    allPluginsToCheck = parameters.pluginCoordinates.map { PluginCreator.createPlugin(it) }
     try {
       return doExecute()
     } finally {
@@ -51,20 +51,20 @@ class CheckPluginConfiguration : Configuration<CheckPluginParams, CheckPluginRes
     val results = arrayListOf<Result>()
     params.ideDescriptors.forEach { ideDescriptor ->
       val dependencyResolver = getDependencyResolver(ideDescriptor.ide)
-      params.pluginDescriptors.mapTo(results) {
+      params.pluginCoordinates.mapTo(results) {
         doVerification(it, ideDescriptor, dependencyResolver)
       }
     }
     return CheckPluginResults(results)
   }
 
-  private fun doVerification(pluginDescriptor: PluginDescriptor,
+  private fun doVerification(pluginCoordinate: PluginCoordinate,
                              ideDescriptor: IdeDescriptor,
                              dependencyResolver: DependencyResolver): Result {
     val verifierParams = VerifierParams(params.jdkDescriptor, params.externalClassesPrefixes, params.problemsFilter, params.externalClasspath, dependencyResolver)
     val verifier = VerifierExecutor(verifierParams)
     verifier.use {
-      val results = verifier.verify(listOf(pluginDescriptor to ideDescriptor), params.progress)
+      val results = verifier.verify(listOf(pluginCoordinate to ideDescriptor), params.progress)
       return results.single()
     }
   }

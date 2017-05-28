@@ -19,17 +19,17 @@ import org.jetbrains.plugins.verifier.service.storage.JdkManager
 import org.slf4j.LoggerFactory
 
 class CheckRangeRunner(val pluginInfo: PluginInfo,
-                       val pluginDescriptor: PluginDescriptor,
+                       val pluginCoordinate: PluginCoordinate,
                        val params: CheckRangeRunnerParams,
                        val ideVersions: List<IdeVersion>? = null) : Task<CheckRangeResults>() {
-  override fun presentableName(): String = "Check $pluginDescriptor with IDE from [since; until]"
+  override fun presentableName(): String = "Check $pluginCoordinate with IDE from [since; until]"
 
   companion object {
     private val LOG = LoggerFactory.getLogger(CheckRangeRunner::class.java)
   }
 
   private fun doRangeVerification(createOk: CreatePluginResult.OK, progress: Progress): CheckRangeResults {
-    val plugin = createOk.success.plugin
+    val plugin = createOk.plugin
     val sinceBuild = plugin.sinceBuild!!
     val untilBuild = plugin.untilBuild
 
@@ -52,7 +52,7 @@ class CheckRangeRunner(val pluginInfo: PluginInfo,
 
     val ideDescriptors = ideLocks.map { IdeCreator.createByFile(it.getIdeFile(), null) }
     val jdkDescriptor = JdkDescriptor(JdkManager.getJdkHome(params.jdkVersion))
-    val params = CheckPluginParams(listOf(pluginDescriptor), ideDescriptors, jdkDescriptor, emptyList(), ProblemsFilter.AlwaysTrue, Resolver.getEmptyResolver(), BridgeVProgress(progress))
+    val params = CheckPluginParams(listOf(pluginCoordinate), ideDescriptors, jdkDescriptor, emptyList(), ProblemsFilter.AlwaysTrue, Resolver.getEmptyResolver(), BridgeVProgress(progress))
 
     LOG.debug("CheckPlugin with [since; until] #$taskId arguments: $params")
 
@@ -68,7 +68,7 @@ class CheckRangeRunner(val pluginInfo: PluginInfo,
         .filterNotNull()
   }
 
-  override fun computeResult(progress: Progress): CheckRangeResults = PluginCreator.createPlugin(pluginDescriptor).use { createPluginResult ->
+  override fun computeResult(progress: Progress): CheckRangeResults = PluginCreator.createPlugin(pluginCoordinate).use { createPluginResult ->
     when (createPluginResult) {
       is CreatePluginResult.NotFound -> CheckRangeResults(pluginInfo, CheckRangeResults.ResultType.NOT_FOUND, emptyList(), emptyList())
       is CreatePluginResult.BadPlugin -> CheckRangeResults(pluginInfo, CheckRangeResults.ResultType.BAD_PLUGIN, emptyList(), emptyList())

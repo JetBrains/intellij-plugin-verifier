@@ -4,7 +4,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
-import com.jetbrains.pluginverifier.api.PluginDescriptor
+import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.RequestBody
@@ -126,7 +126,7 @@ object FeatureService {
     }
 
     val pluginInfo = PluginInfo(updateInfo.pluginId, updateInfo.version, updateInfo)
-    val runner = ExtractFeaturesRunner(PluginDescriptor.ByUpdateInfo(updateInfo), pluginInfo)
+    val runner = ExtractFeaturesRunner(PluginCoordinate.ByUpdateInfo(updateInfo), pluginInfo)
     val taskId = TaskManager.enqueue(
         runner,
         { onSuccess(it) },
@@ -139,7 +139,7 @@ object FeatureService {
   }
 
   private fun onUpdateExtracted(task: ExtractFeaturesRunner) {
-    val updateInfo = (task.pluginDescriptor as PluginDescriptor.ByUpdateInfo).updateInfo
+    val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
     releaseUpdate(updateInfo)
   }
 
@@ -151,7 +151,7 @@ object FeatureService {
 
 
   private fun logError(throwable: Throwable, taskStatus: TaskStatus, task: ExtractFeaturesRunner) {
-    val updateInfo = (task.pluginDescriptor as PluginDescriptor.ByUpdateInfo).updateInfo
+    val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
     LOG.error("Unable to extract features of the update $updateInfo: taskId = #${taskStatus.taskId}", throwable)
   }
 

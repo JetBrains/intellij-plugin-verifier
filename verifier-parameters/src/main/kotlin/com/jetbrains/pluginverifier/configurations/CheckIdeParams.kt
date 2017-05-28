@@ -19,7 +19,7 @@ import java.io.IOException
 
 data class CheckIdeParams(val ideDescriptor: IdeDescriptor,
                           val jdkDescriptor: JdkDescriptor,
-                          val pluginsToCheck: List<PluginDescriptor>,
+                          val pluginsToCheck: List<PluginCoordinate>,
                           val excludedPlugins: List<PluginIdAndVersion>,
                           val pluginIdsToCheckExistingBuilds: List<String>,
                           val externalClassPath: Resolver,
@@ -120,8 +120,8 @@ class CheckIdeParamsParser : ConfigurationParamsParser<CheckIdeParams> {
   }
 
 
-  fun getDescriptorsToCheck(checkAllBuilds: List<String>, checkLastBuilds: List<String>, ideVersion: IdeVersion): List<PluginDescriptor> =
-      getUpdateInfosToCheck(checkAllBuilds, checkLastBuilds, ideVersion).map { PluginDescriptor.ByUpdateInfo(it) }
+  fun getDescriptorsToCheck(checkAllBuilds: List<String>, checkLastBuilds: List<String>, ideVersion: IdeVersion): List<PluginCoordinate> =
+      getUpdateInfosToCheck(checkAllBuilds, checkLastBuilds, ideVersion).map { PluginCoordinate.ByUpdateInfo(it) }
 
   private fun getUpdateInfosToCheck(checkAllBuilds: List<String>, checkLastBuilds: List<String>, ideVersion: IdeVersion): List<UpdateInfo> {
     if (checkAllBuilds.isEmpty() && checkLastBuilds.isEmpty()) {

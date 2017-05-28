@@ -47,7 +47,7 @@ class VerifierExecutor(val params: VerifierParams) : Closeable {
     return maxOf(1, minOf(maxByMemory, maxByCpu)).toInt()
   }
 
-  fun verify(tasks: List<Pair<PluginDescriptor, IdeDescriptor>>, progress: Progress): List<Result> {
+  fun verify(tasks: List<Pair<PluginCoordinate, IdeDescriptor>>, progress: Progress): List<Result> {
     tasks.forEach {
       val worker = Verifier(it.first, it.second, runtimeResolver, params)
       completionService.submit(worker)

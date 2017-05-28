@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.configurations
 
 import com.intellij.structure.ide.IdeVersion
-import com.jetbrains.pluginverifier.api.PluginDescriptor
+import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.core.VerifierExecutor
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
@@ -20,13 +20,13 @@ class CheckIdeConfiguration : Configuration<CheckIdeParams, CheckIdeResults> {
     return doExecute(notExcludedPlugins)
   }
 
-  private fun isExcluded(pluginDescriptor: PluginDescriptor): Boolean = when (pluginDescriptor) {
-    is PluginDescriptor.ByUpdateInfo -> {
-      val updateInfo = pluginDescriptor.updateInfo
+  private fun isExcluded(pluginCoordinate: PluginCoordinate): Boolean = when (pluginCoordinate) {
+    is PluginCoordinate.ByUpdateInfo -> {
+      val updateInfo = pluginCoordinate.updateInfo
       PluginIdAndVersion(updateInfo.pluginId, updateInfo.version) in params.excludedPlugins
     }
-    is PluginDescriptor.ByFile -> {
-      PluginCreator.createPluginByFile(pluginDescriptor.pluginFile).use { createPluginResult ->
+    is PluginCoordinate.ByFile -> {
+      PluginCreator.createPluginByFile(pluginCoordinate.pluginFile).use { createPluginResult ->
         if (createPluginResult is CreatePluginResult.OK) {
           val plugin = createPluginResult.plugin
           return PluginIdAndVersion(plugin.pluginId ?: "", plugin.pluginVersion ?: "") in params.excludedPlugins
@@ -36,7 +36,7 @@ class CheckIdeConfiguration : Configuration<CheckIdeParams, CheckIdeResults> {
     }
   }
 
-  private fun doExecute(notExcludedPlugins: List<PluginDescriptor>): CheckIdeResults {
+  private fun doExecute(notExcludedPlugins: List<PluginCoordinate>): CheckIdeResults {
     val verifierParams = VerifierParams(params.jdkDescriptor, params.externalClassesPrefixes, params.problemsFilter, params.externalClassPath, params.dependencyResolver)
     val verifier = VerifierExecutor(verifierParams)
     verifier.use {

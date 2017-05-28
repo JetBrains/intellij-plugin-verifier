@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.concurrent.Callable
 
-class Verifier(val pluginDescriptor: PluginDescriptor,
+class Verifier(val pluginCoordinate: PluginCoordinate,
                val ideDescriptor: IdeDescriptor,
                val runtimeResolver: Resolver,
                val params: VerifierParams) : Callable<Result> {
@@ -32,33 +32,33 @@ class Verifier(val pluginDescriptor: PluginDescriptor,
   }
 
   override fun call(): Result {
-    withDebug(LOG, "Verify $pluginDescriptor with $ideDescriptor") {
+    withDebug(LOG, "Verify $pluginCoordinate with $ideDescriptor") {
       return createPluginAndDoVerification()
     }
   }
 
-  private fun createPluginAndDoVerification(): Result = PluginCreator.createPlugin(pluginDescriptor).use { createPluginResult ->
+  private fun createPluginAndDoVerification(): Result = PluginCreator.createPlugin(pluginCoordinate).use { createPluginResult ->
     when (createPluginResult) {
       is CreatePluginResult.BadPlugin -> {
-        val pluginInfo = getPluginInfoByDescriptor(pluginDescriptor)
+        val pluginInfo = getPluginInfoByCoordinate(pluginCoordinate)
         Result(pluginInfo, ideDescriptor.ideVersion, Verdict.Bad(createPluginResult.pluginErrorsAndWarnings))
       }
       is CreatePluginResult.NotFound -> {
-        val pluginInfo = getPluginInfoByDescriptor(pluginDescriptor)
+        val pluginInfo = getPluginInfoByCoordinate(pluginCoordinate)
         Result(pluginInfo, ideDescriptor.ideVersion, Verdict.NotFound(createPluginResult.reason))
       }
       is CreatePluginResult.OK -> {
         val verdict = getVerificationVerdict(createPluginResult)
-        val pluginInfo = getPluginInfoByPluginInstance(createPluginResult, pluginDescriptor)
+        val pluginInfo = getPluginInfoByPluginInstance(createPluginResult, pluginCoordinate)
         Result(pluginInfo, ideDescriptor.ideVersion, verdict)
       }
     }
   }
 
-  private fun getPluginInfoByDescriptor(pluginDescriptor: PluginDescriptor): PluginInfo = when (pluginDescriptor) {
-    is PluginDescriptor.ByUpdateInfo -> PluginInfo(pluginDescriptor.updateInfo.pluginId, pluginDescriptor.updateInfo.version, pluginDescriptor.updateInfo)
-    is PluginDescriptor.ByFile -> {
-      val (pluginId, version) = guessPluginIdAndVersion(pluginDescriptor.pluginFile)
+  private fun getPluginInfoByCoordinate(pluginCoordinate: PluginCoordinate): PluginInfo = when (pluginCoordinate) {
+    is PluginCoordinate.ByUpdateInfo -> PluginInfo(pluginCoordinate.updateInfo.pluginId, pluginCoordinate.updateInfo.version, pluginCoordinate.updateInfo)
+    is PluginCoordinate.ByFile -> {
+      val (pluginId, version) = guessPluginIdAndVersion(pluginCoordinate.pluginFile)
       PluginInfo(pluginId, version, null)
     }
   }
@@ -69,9 +69,9 @@ class Verifier(val pluginDescriptor: PluginDescriptor,
     return name.substringBeforeLast('-') to version
   }
 
-  private fun getPluginInfoByPluginInstance(createPluginResult: CreatePluginResult.OK, pluginDescriptor: PluginDescriptor): PluginInfo {
+  private fun getPluginInfoByPluginInstance(createPluginResult: CreatePluginResult.OK, pluginCoordinate: PluginCoordinate): PluginInfo {
     val plugin = createPluginResult.plugin
-    return PluginInfo(plugin.pluginId, plugin.pluginVersion, (pluginDescriptor as? PluginDescriptor.ByUpdateInfo)?.updateInfo)
+    return PluginInfo(plugin.pluginId, plugin.pluginVersion, (pluginCoordinate as? PluginCoordinate.ByUpdateInfo)?.updateInfo)
   }
 
   private fun getVerificationVerdict(creationOk: CreatePluginResult.OK): Verdict {

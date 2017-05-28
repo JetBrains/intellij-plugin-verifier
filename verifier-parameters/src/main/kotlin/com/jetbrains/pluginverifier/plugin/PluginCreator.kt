@@ -6,7 +6,7 @@ import com.intellij.structure.plugin.PluginCreationSuccess
 import com.intellij.structure.plugin.PluginManager
 import com.intellij.structure.problems.PluginProblem
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.api.PluginDescriptor
+import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -19,9 +19,9 @@ object PluginCreator {
 
   private val LOG: Logger = LoggerFactory.getLogger(PluginCreator::class.java)
 
-  fun createPlugin(pluginDescriptor: PluginDescriptor): CreatePluginResult = when (pluginDescriptor) {
-    is PluginDescriptor.ByFile -> createPluginByFile(pluginDescriptor.pluginFile)
-    is PluginDescriptor.ByUpdateInfo -> createPluginByUpdateInfo(pluginDescriptor.updateInfo)
+  fun createPlugin(pluginCoordinate: PluginCoordinate): CreatePluginResult = when (pluginCoordinate) {
+    is PluginCoordinate.ByFile -> createPluginByFile(pluginCoordinate.pluginFile)
+    is PluginCoordinate.ByUpdateInfo -> createPluginByUpdateInfo(pluginCoordinate.updateInfo)
   }
 
   fun getNonCloseableOkResult(createOk: CreatePluginResult.OK): CreatePluginResult.OK {

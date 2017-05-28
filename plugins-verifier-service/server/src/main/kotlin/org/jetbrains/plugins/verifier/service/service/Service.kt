@@ -4,7 +4,7 @@ import com.google.common.collect.HashMultimap
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.google.gson.Gson
 import com.intellij.structure.ide.IdeVersion
-import com.jetbrains.pluginverifier.api.PluginDescriptor
+import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.RequestBody
@@ -145,8 +145,8 @@ object Service {
     }
 
     val pluginInfo: PluginInfo = PluginInfo(updateInfo.pluginId, updateInfo.version, updateInfo)
-    val pluginDescriptor = PluginDescriptor.ByUpdateInfo(updateInfo)
-    val runner = CheckRangeRunner(pluginInfo, pluginDescriptor, getRunnerParams(), versions)
+    val pluginCoordinate = PluginCoordinate.ByUpdateInfo(updateInfo)
+    val runner = CheckRangeRunner(pluginInfo, pluginCoordinate, getRunnerParams(), versions)
     val taskId = TaskManager.enqueue(
         runner,
         { onSuccess(it, updateInfo) },
@@ -167,12 +167,12 @@ object Service {
   }
 
   private fun onUpdateChecked(task: CheckRangeRunner) {
-    val updateInfo = (task.pluginDescriptor as PluginDescriptor.ByUpdateInfo).updateInfo
+    val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
     releaseUpdate(updateInfo)
   }
 
   private fun logError(throwable: Throwable, taskStatus: TaskStatus, task: CheckRangeRunner) {
-    val updateInfo = (task.pluginDescriptor as PluginDescriptor.ByUpdateInfo).updateInfo
+    val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
     LOG.error("Unable to check update $updateInfo: taskId = #${taskStatus.taskId}", throwable)
   }
 

@@ -20,17 +20,17 @@ class CheckPluginParamsParser : ConfigurationParamsParser<CheckPluginParams> {
       System.exit(1)
     }
     val ideDescriptors = freeArgs.drop(1).map(::File).map { OptionsUtil.createIdeDescriptor(it, opts) }
-    val pluginDescriptors = getPluginDescriptorsToCheck(freeArgs[0], ideDescriptors.map { it.ideVersion })
+    val coordinates = getPluginsToCheck(freeArgs[0], ideDescriptors.map { it.ideVersion })
     val jdkDescriptor = JdkDescriptor(OptionsUtil.getJdkDir(opts))
     val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
     val externalClasspath = OptionsUtil.getExternalClassPath(opts)
     externalClasspath.closeOnException {
       val problemsFilter = OptionsUtil.getProblemsFilter(opts)
-      return CheckPluginParams(pluginDescriptors, ideDescriptors, jdkDescriptor, externalClassesPrefixes, problemsFilter, externalClasspath)
+      return CheckPluginParams(coordinates, ideDescriptors, jdkDescriptor, externalClassesPrefixes, problemsFilter, externalClasspath)
     }
   }
 
-  private fun getPluginDescriptorsToCheck(pluginToTestArg: String, ideVersions: List<IdeVersion>? = null): List<PluginDescriptor> {
+  private fun getPluginsToCheck(pluginToTestArg: String, ideVersions: List<IdeVersion>? = null): List<PluginCoordinate> {
     if (pluginToTestArg.startsWith("@")) {
       val pluginListFile = File(pluginToTestArg.substring(1))
       val pluginPaths = pluginListFile.readLines()
@@ -38,17 +38,17 @@ class CheckPluginParamsParser : ConfigurationParamsParser<CheckPluginParams> {
     } else if (pluginToTestArg.matches("#\\d+".toRegex())) {
       val updateId = Integer.parseInt(pluginToTestArg.drop(1))
       val updateInfo = RepositoryManager.getUpdateInfoById(updateId) ?: throw IllegalArgumentException("Update #$updateId is not found in the Plugin Repository")
-      return listOf(PluginDescriptor.ByUpdateInfo(updateInfo))
+      return listOf(PluginCoordinate.ByUpdateInfo(updateInfo))
     } else {
       val file = File(pluginToTestArg)
       if (!file.exists()) {
         throw IllegalArgumentException("The file $file doesn't exist")
       }
-      return listOf(PluginDescriptor.ByFile(file))
+      return listOf(PluginCoordinate.ByFile(file))
     }
   }
 
-  fun fetchPlugins(ideVersion: IdeVersion, pluginListFile: File, pluginPaths: List<String>): List<PluginDescriptor> =
+  fun fetchPlugins(ideVersion: IdeVersion, pluginListFile: File, pluginPaths: List<String>): List<PluginCoordinate> =
       pluginPaths
           .map(String::trim)
           .filter(String::isNotEmpty)
@@ -63,19 +63,19 @@ class CheckPluginParamsParser : ConfigurationParamsParser<CheckPluginParams> {
               if (!pluginFile.exists()) {
                 throw RuntimeException("Plugin file '" + it + "' specified in '" + pluginListFile.absolutePath + "' doesn't exist")
               }
-              listOf(PluginDescriptor.ByFile(pluginFile))
+              listOf(PluginCoordinate.ByFile(pluginFile))
             }
           }
 
-  fun downloadPluginBuilds(pluginId: String, ideVersion: IdeVersion): List<PluginDescriptor> =
+  fun downloadPluginBuilds(pluginId: String, ideVersion: IdeVersion): List<PluginCoordinate> =
       RepositoryManager
           .getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId)
-          .map { PluginDescriptor.ByUpdateInfo(it) }
+          .map { PluginCoordinate.ByUpdateInfo(it) }
 
 
 }
 
-data class CheckPluginParams(val pluginDescriptors: List<PluginDescriptor>,
+data class CheckPluginParams(val pluginCoordinates: List<PluginCoordinate>,
                              val ideDescriptors: List<IdeDescriptor>,
                              val jdkDescriptor: JdkDescriptor,
                              val externalClassesPrefixes: List<String>,
@@ -85,7 +85,7 @@ data class CheckPluginParams(val pluginDescriptors: List<PluginDescriptor>,
 
   override fun presentableText(): String = """Check Plugin Configuration parameters:
   JDK: $jdkDescriptor
-  Plugins to be checked: [${pluginDescriptors.joinToString()}]
+  Plugins to be checked: [${pluginCoordinates.joinToString()}]
   IDE builds to be checked: [${ideDescriptors.joinToString()}]
   External classes prefixes: [${externalClassesPrefixes.joinToString()}]
   """

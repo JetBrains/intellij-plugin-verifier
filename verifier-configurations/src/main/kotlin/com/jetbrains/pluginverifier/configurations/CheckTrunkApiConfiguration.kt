@@ -4,7 +4,7 @@ import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
-import com.jetbrains.pluginverifier.api.PluginDescriptor
+import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.dependencies.DefaultDependencyResolver
 import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.repository.RepositoryManager
@@ -76,8 +76,8 @@ class CheckTrunkApiConfiguration : Configuration<CheckTrunkApiParams, CheckTrunk
                                        updatesToCheck: List<UpdateInfo>,
                                        dependencyResolver: DependencyResolver,
                                        excludedPlugins: List<PluginIdAndVersion>): CheckIdeResults {
-    val pluginsDescriptors = updatesToCheck.map { PluginDescriptor.ByUpdateInfo(it) }
-    val checkIdeParams = CheckIdeParams(ideDescriptor, params.jdkDescriptor, pluginsDescriptors, excludedPlugins, emptyList(), Resolver.getEmptyResolver(), params.externalClassesPrefixes, params.problemsFilter, params.progress, dependencyResolver)
+    val pluginCoordinates = updatesToCheck.map { PluginCoordinate.ByUpdateInfo(it) }
+    val checkIdeParams = CheckIdeParams(ideDescriptor, params.jdkDescriptor, pluginCoordinates, excludedPlugins, emptyList(), Resolver.getEmptyResolver(), params.externalClassesPrefixes, params.problemsFilter, params.progress, dependencyResolver)
     return CheckIdeConfiguration().execute(checkIdeParams)
   }
 

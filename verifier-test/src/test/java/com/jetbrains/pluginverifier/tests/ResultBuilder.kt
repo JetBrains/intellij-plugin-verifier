@@ -14,7 +14,7 @@ object ResultBuilder {
 
   fun doIdeaAndPluginVerification(ideaFile: File, pluginFile: File): Result {
     val ideDescriptor = IdeCreator.createByFile(ideaFile, MOCK_IDE_VERSION)
-    val pluginDescriptor = PluginDescriptor.ByFile(pluginFile)
+    val pluginCoordinate = PluginCoordinate.ByFile(pluginFile)
     val jdkPath = System.getenv("JAVA_HOME") ?: "/usr/lib/jvm/java-8-oracle"
     ideDescriptor.use {
       val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(CmdOpts())
@@ -22,7 +22,7 @@ object ResultBuilder {
       val verifierParams = VerifierParams(JdkDescriptor(File(jdkPath)), externalClassesPrefixes, problemsFilter)
       val verifier = VerifierExecutor(verifierParams)
       verifier.use {
-        val results = verifier.verify(listOf(pluginDescriptor to ideDescriptor), DefaultProgress())
+        val results = verifier.verify(listOf(pluginCoordinate to ideDescriptor), DefaultProgress())
         return results.single()
       }
     }
