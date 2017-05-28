@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.repository
 
 import com.google.common.primitives.Ints
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import okhttp3.MediaType
@@ -38,20 +37,13 @@ object DownloadManager {
     }
   }
 
+  val LOG: Logger = LoggerFactory.getLogger(DownloadManager::class.java)
+
   private val TEMP_DOWNLOAD_PREFIX = "plugin_"
 
   private val TEMP_DOWNLOAD_SUFFIX = "_download"
 
-  //90% of maximum available space
-  private val SPACE_THRESHOLD = 0.90
-
-  private val MAXIMUM_CACHE_SPACE_MB = SPACE_THRESHOLD * RepositoryConfiguration.cacheDirMaxSpaceMb.toLong()
-
-  private val GC_PERIOD_MS: Long = TimeUnit.SECONDS.toMillis(30)
-
   private val FORGOTTEN_LOCKS_GC_TIMEOUT_MS: Long = TimeUnit.HOURS.toMillis(8)
-
-  private val LOG: Logger = LoggerFactory.getLogger(DownloadManager::class.java)
 
   private val BROKEN_FILE_THRESHOLD_BYTES = 200
 
@@ -68,7 +60,7 @@ object DownloadManager {
             .setDaemon(true)
             .setNameFormat("download-mng-gc-%d")
             .build()
-    ).scheduleAtFixedRate({ releaseOldLocksAndDeleteUnusedPlugins() }, GC_PERIOD_MS, GC_PERIOD_MS, TimeUnit.MILLISECONDS)
+    ).scheduleAtFixedRate({ releaseOldLocksAndDeleteUnusedPlugins() }, 5, 30, TimeUnit.SECONDS)
   }
 
   private var nextId: Long = 0
@@ -79,6 +71,8 @@ object DownloadManager {
 
   //it is not used yet
   private val deleteQueue: MutableSet<File> = hashSetOf()
+
+  private val spaceWatcher = FreeDiskSpaceWatcher(RepositoryConfiguration.downloadDir, RepositoryConfiguration.downloadDirMaxSpace)
 
   private fun makeClient(needLog: Boolean): OkHttpClient = OkHttpClient.Builder()
       .connectTimeout(5, TimeUnit.MINUTES)
@@ -95,10 +89,11 @@ object DownloadManager {
 
   @Synchronized
   private fun releaseOldLocksAndDeleteUnusedPlugins() {
-    LOG.info("It's time to remove unused plugins from cache. Cache usages: ${getCacheSpaceMb()} Mb; Maximum usage: $MAXIMUM_CACHE_SPACE_MB Mb")
+    LOG.info("It's time to remove unused plugins from cache. Cache usages: ${spaceWatcher.getSpaceUsageMb()} Mb; " +
+        "Estimated available space: ${spaceWatcher.estimateAvailableSpace()} Mb")
 
     releaseOldLocks()
-    if (exceedSpace()) {
+    if (spaceWatcher.isLowSpace()) {
       deleteUnusedPlugins()
     }
   }
@@ -109,34 +104,23 @@ object DownloadManager {
         .filterNot { it.name.startsWith(TEMP_DOWNLOAD_PREFIX) && it.name.endsWith(TEMP_DOWNLOAD_SUFFIX) }
         .filterNot { it in locksAcquired }
         .filter { Ints.tryParse(it.nameWithoutExtension) != null }
-        .sortedBy { Ints.tryParse(it.nameWithoutExtension)!! }
+        .sortedByDescending { it.length() }
 
     LOG.info("Unused updates to be deleted: {}", updatesToDelete.joinToString())
 
     for (update in updatesToDelete) {
-      if (exceedSpace()) {
+      if (spaceWatcher.isLowSpace()) {
         update.deleteLogged()
       }
       //already enough space
       break
     }
 
-    if (exceedSpace()) {
+    if (spaceWatcher.isLowSpace()) {
       LOG.warn("The available space after garbage collection is not sufficient!")
     }
   }
 
-  private fun exceedSpace(): Boolean {
-    val space = getCacheSpaceMb()
-    if (space > MAXIMUM_CACHE_SPACE_MB) {
-      LOG.warn("Cache directory ${RepositoryConfiguration.downloadDir} occupied to much space: $space > $MAXIMUM_CACHE_SPACE_MB")
-      return true
-    } else {
-      return false
-    }
-  }
-
-  private fun getCacheSpaceMb() = FileUtils.sizeOfDirectory(RepositoryConfiguration.downloadDir).bytesToMegabytes()
 
   private fun releaseOldLocks() {
     busyLocks.values
@@ -280,7 +264,7 @@ object DownloadManager {
     val lock = registerLock(pluginFile)
 
     try {
-      if (exceedSpace()) {
+      if (spaceWatcher.isLowSpace()) {
         releaseOldLocksAndDeleteUnusedPlugins()
       }
     } catch (e: Throwable) {

@@ -48,16 +48,8 @@ object RepositoryConfiguration {
     getProperty("plugin.repository.url")?.trimEnd('/') ?: throw RuntimeException("Plugin repository URL is not specified")
   }
 
-  val cacheDirMaxSpaceMb: Int by lazy {
-    val minimum = 5 * 1024 //5 Gb
-    val default = 50 * 1024 //50 Gb
-
-    val prop = getProperty("plugin.verifier.cache.dir.max.space") ?: return@lazy default
-    try {
-      return@lazy Math.max(Integer.parseInt(prop), minimum)
-    } catch (e: Exception) {
-      return@lazy default
-    }
+  val downloadDirMaxSpace: Long? by lazy {
+    return@lazy getProperty("plugin.verifier.cache.dir.max.space")?.toLong()
   }
 
   private fun createDir(dir: File): File {
