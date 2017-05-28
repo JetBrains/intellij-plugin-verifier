@@ -8,7 +8,6 @@ import org.jetbrains.intellij.plugins.internal.guava.collect.Multimap
 import org.jetbrains.intellij.plugins.internal.jdom.Document
 import org.jetbrains.intellij.plugins.internal.jdom.Element
 import java.io.File
-import java.nio.file.Files
 
 object MockUtil {
 
@@ -17,8 +16,6 @@ object MockUtil {
                        moduleDependencies: List<PluginDependency> = emptyList(),
                        dependencies: List<PluginDependency> = emptyList(),
                        definedModules: Set<String> = emptySet()): MockPluginAdapter {
-    val tempPluginFile = Files.createTempDirectory("mockPlugin").toFile()
-    tempPluginFile.deleteOnExit()
 
     return object : MockPluginAdapter() {
       override fun getPluginId(): String = pluginId
@@ -31,7 +28,7 @@ object MockUtil {
 
       override fun getDefinedModules(): Set<String> = definedModules
 
-      override fun getOriginalFile(): File = tempPluginFile
+      override fun getOriginalFile(): File? = null
     }
   }
 
@@ -130,7 +127,7 @@ open class MockPluginAdapter : Plugin {
     throw UnsupportedOperationException("not implemented")
   }
 
-  override fun getOriginalFile(): File {
+  override fun getOriginalFile(): File? {
     throw UnsupportedOperationException("not implemented")
   }
 

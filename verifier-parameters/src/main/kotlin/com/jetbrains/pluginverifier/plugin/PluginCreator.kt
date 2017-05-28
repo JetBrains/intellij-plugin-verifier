@@ -48,7 +48,7 @@ object PluginCreator {
     }
   }
 
-  fun createResolverForExistingPlugin(plugin: Plugin): CreatePluginResult {
+  fun createResultByExistingPlugin(plugin: Plugin): CreatePluginResult {
     val resolver = try {
       Resolver.createPluginResolver(plugin)
     } catch (e: Exception) {

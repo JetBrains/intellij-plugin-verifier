@@ -4,13 +4,12 @@ import com.google.common.collect.Lists
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.intellij.structure.plugin.Plugin
-import com.intellij.structure.plugin.PluginCreationSuccess
-import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.dependencies.DefaultDependencyResolver
 import com.jetbrains.pluginverifier.dependencies.DepEdge
 import com.jetbrains.pluginverifier.dependencies.DepGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.DepVertex
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
+import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.tests.MockUtil.createMockPlugin
 import org.jgrapht.DirectedGraph
 import org.jgrapht.traverse.DepthFirstIterator
@@ -42,7 +41,7 @@ class DefaultDependenciesResolverTest {
 
     val plugin = createMockPlugin("myPlugin", "1.0", emptyList(), listOf(PluginDependencyImpl("test", true)))
 
-    val success = CreatePluginResult.OK(PluginCreationSuccess(plugin, emptyList()), Resolver.getEmptyResolver())
+    val success = PluginCreator.createResultByExistingPlugin(plugin) as CreatePluginResult.OK
     val (graph, vertex) = DepGraphBuilder(DefaultDependencyResolver(ide)).build(success)
 
     val deps: List<Plugin> = getTransitiveDependencies(graph, vertex).map { it.creationOk.success.plugin }

@@ -106,7 +106,7 @@ object DownloadManager {
         .filter { Ints.tryParse(it.nameWithoutExtension) != null }
         .sortedByDescending { it.length() }
 
-    LOG.info("Unused updates to be deleted: {}", updatesToDelete.joinToString())
+    LOG.info("Unused updates to be deleted: [{}]", updatesToDelete.joinToString())
 
     for (update in updatesToDelete) {
       if (spaceWatcher.isLowSpace()) {

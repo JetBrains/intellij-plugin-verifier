@@ -49,7 +49,7 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
   }
 
   private fun createDependencyResultByExistingPlugin(plugin: Plugin): DependencyResolver.Result {
-    val pluginCreateResult = PluginCreator.createResolverForExistingPlugin(plugin)
+    val pluginCreateResult = PluginCreator.createResultByExistingPlugin(plugin)
     return when (pluginCreateResult) {
       is CreatePluginResult.OK -> DependencyResolver.Result.FoundLocally(pluginCreateResult)
       is CreatePluginResult.BadPlugin -> DependencyResolver.Result.ProblematicDependency(pluginCreateResult)
