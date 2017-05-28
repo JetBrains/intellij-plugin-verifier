@@ -20,7 +20,7 @@ object PluginCreator {
   private val LOG: Logger = LoggerFactory.getLogger(PluginCreator::class.java)
 
   fun createPlugin(pluginDescriptor: PluginDescriptor): CreatePluginResult = when (pluginDescriptor) {
-    is PluginDescriptor.ByFileLock -> createPluginByFile(pluginDescriptor.fileLock.getFile())
+    is PluginDescriptor.ByFile -> createPluginByFile(pluginDescriptor.pluginFile)
     is PluginDescriptor.ByUpdateInfo -> createPluginByUpdateInfo(pluginDescriptor.updateInfo)
     is PluginDescriptor.ByInstance -> getNonCloseableOkResult(pluginDescriptor.createOk)
   }

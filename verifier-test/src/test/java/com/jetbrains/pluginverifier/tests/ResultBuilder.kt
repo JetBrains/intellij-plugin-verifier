@@ -4,7 +4,6 @@ import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.core.VerifierExecutor
 import com.jetbrains.pluginverifier.ide.IdeCreator
-import com.jetbrains.pluginverifier.repository.IdleFileLock
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.OptionsUtil
 import java.io.File
@@ -15,7 +14,7 @@ object ResultBuilder {
 
   fun doIdeaAndPluginVerification(ideaFile: File, pluginFile: File): Result {
     val ideDescriptor = IdeCreator.createByFile(ideaFile, MOCK_IDE_VERSION)
-    val pluginDescriptor = PluginDescriptor.ByFileLock(IdleFileLock(pluginFile))
+    val pluginDescriptor = PluginDescriptor.ByFile(pluginFile)
     val jdkPath = System.getenv("JAVA_HOME") ?: "/usr/lib/jvm/java-8-oracle"
     ideDescriptor.use {
       val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(CmdOpts())

@@ -5,8 +5,6 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.closeOnException
-import com.jetbrains.pluginverifier.repository.FileLock
-import com.jetbrains.pluginverifier.repository.IdleFileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.OptionsUtil
@@ -38,7 +36,7 @@ class CheckPluginParamsParser : ConfigurationParamsParser<CheckPluginParams> {
     if (pluginToTestArg.startsWith("@")) {
       val pluginListFile = File(pluginToTestArg.substring(1))
       val pluginPaths = pluginListFile.readLines()
-      return ideVersions!!.map { fetchPlugins(it, pluginListFile, pluginPaths) }.flatten().map { PluginDescriptor.ByFileLock(it) }
+      return ideVersions!!.flatMap { fetchPlugins(it, pluginListFile, pluginPaths) }
     } else if (pluginToTestArg.matches("#\\d+".toRegex())) {
       val updateId = Integer.parseInt(pluginToTestArg.drop(1))
       val updateInfo = RepositoryManager.getUpdateInfoById(updateId) ?: throw IllegalArgumentException("Update #$updateId is not found in the Plugin Repository")
@@ -48,15 +46,15 @@ class CheckPluginParamsParser : ConfigurationParamsParser<CheckPluginParams> {
       if (!file.exists()) {
         throw IllegalArgumentException("The file $file doesn't exist")
       }
-      return listOf(PluginDescriptor.ByFileLock(IdleFileLock(file)))
+      return listOf(PluginDescriptor.ByFile(file))
     }
   }
 
-  fun fetchPlugins(ideVersion: IdeVersion, pluginListFile: File, pluginPaths: List<String>): List<FileLock> =
+  fun fetchPlugins(ideVersion: IdeVersion, pluginListFile: File, pluginPaths: List<String>): List<PluginDescriptor> =
       pluginPaths
           .map(String::trim)
           .filter(String::isNotEmpty)
-          .map {
+          .flatMap {
             if (it.startsWith("id:")) {
               downloadPluginBuilds(it.substringAfter("id:"), ideVersion)
             } else {
@@ -67,14 +65,14 @@ class CheckPluginParamsParser : ConfigurationParamsParser<CheckPluginParams> {
               if (!pluginFile.exists()) {
                 throw RuntimeException("Plugin file '" + it + "' specified in '" + pluginListFile.absolutePath + "' doesn't exist")
               }
-              listOf(IdleFileLock(pluginFile))
+              listOf(PluginDescriptor.ByFile(pluginFile))
             }
-          }.flatten()
+          }
 
-  fun downloadPluginBuilds(pluginId: String, ideVersion: IdeVersion): List<FileLock> =
+  fun downloadPluginBuilds(pluginId: String, ideVersion: IdeVersion): List<PluginDescriptor> =
       RepositoryManager
           .getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId)
-          .map { RepositoryManager.getPluginFile(it)!! }
+          .map { PluginDescriptor.ByUpdateInfo(it) }
 
 
 }
@@ -98,7 +96,7 @@ data class CheckPluginParams(val pluginDescriptors: List<PluginDescriptor>,
     try {
       ideDescriptors.forEach { it.closeLogged() }
     } finally {
-      pluginDescriptors.forEach { (it as? PluginDescriptor.ByFileLock)?.fileLock?.release() }
+      pluginDescriptors.forEach { it.closeLogged() }
     }
   }
 

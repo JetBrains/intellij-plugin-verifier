@@ -26,12 +26,3 @@ abstract class FileLock : Closeable {
 
   override fun close(): Unit = release()
 }
-
-data class IdleFileLock(val content: File) : FileLock() {
-  override fun getFile(): File = content
-
-  override fun release() {
-    //do nothing.
-  }
-
-}

@@ -57,8 +57,8 @@ class Verifier(val pluginDescriptor: PluginDescriptor,
 
   private fun getPluginInfoByDescriptor(pluginDescriptor: PluginDescriptor): PluginInfo = when (pluginDescriptor) {
     is PluginDescriptor.ByUpdateInfo -> PluginInfo(pluginDescriptor.updateInfo.pluginId, pluginDescriptor.updateInfo.version, pluginDescriptor.updateInfo)
-    is PluginDescriptor.ByFileLock -> {
-      val (pluginId, version) = guessPluginIdAndVersion(pluginDescriptor.fileLock.getFile())
+    is PluginDescriptor.ByFile -> {
+      val (pluginId, version) = guessPluginIdAndVersion(pluginDescriptor.pluginFile)
       PluginInfo(pluginId, version, null)
     }
     is PluginDescriptor.ByInstance -> {
