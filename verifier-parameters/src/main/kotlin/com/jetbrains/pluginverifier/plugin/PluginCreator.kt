@@ -27,7 +27,7 @@ object PluginCreator {
 
   fun getNonCloseableOkResult(createOk: CreatePluginResult.OK): CreatePluginResult.OK {
     val copyResolver = CloseIgnoringResolver(createOk.resolver)
-    return CreatePluginResult.OK(createOk.success, copyResolver)
+    return CreatePluginResult.OK(createOk.plugin, createOk.warnings, copyResolver)
   }
 
   private fun downloadPluginByUpdateInfo(updateInfo: UpdateInfo): FileLock? = RepositoryManager.getPluginFile(updateInfo)
@@ -42,9 +42,9 @@ object PluginCreator {
     val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile)
     if (pluginCreationResult is PluginCreationSuccess) {
       val pluginResolver = Resolver.createPluginResolver(pluginCreationResult.plugin)
-      return CreatePluginResult.OK(pluginCreationResult, pluginResolver)
+      return CreatePluginResult.OK(pluginCreationResult.plugin, pluginCreationResult.warnings, pluginResolver)
     } else {
-      return CreatePluginResult.BadPlugin(pluginCreationResult as PluginCreationFail)
+      return CreatePluginResult.BadPlugin((pluginCreationResult as PluginCreationFail).errorsAndWarnings)
     }
   }
 
@@ -53,9 +53,9 @@ object PluginCreator {
       Resolver.createPluginResolver(plugin)
     } catch (e: Exception) {
       LOG.debug("Unable to read plugin $plugin class files", e)
-      return CreatePluginResult.BadPlugin(PluginCreationFail(listOf(UnableToReadPluginClassFilesProblem)))
+      return CreatePluginResult.BadPlugin(listOf(UnableToReadPluginClassFilesProblem))
     }
-    return CreatePluginResult.OK(PluginCreationSuccess(plugin, emptyList()), resolver)
+    return CreatePluginResult.OK(plugin, emptyList(), resolver)
   }
 
   object UnableToReadPluginClassFilesProblem : PluginProblem() {

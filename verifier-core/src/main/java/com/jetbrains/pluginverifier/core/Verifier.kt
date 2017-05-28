@@ -41,7 +41,7 @@ class Verifier(val pluginDescriptor: PluginDescriptor,
     when (createPluginResult) {
       is CreatePluginResult.BadPlugin -> {
         val pluginInfo = getPluginInfoByDescriptor(pluginDescriptor)
-        Result(pluginInfo, ideDescriptor.ideVersion, Verdict.Bad(createPluginResult.pluginCreationFail.errorsAndWarnings))
+        Result(pluginInfo, ideDescriptor.ideVersion, Verdict.Bad(createPluginResult.pluginErrorsAndWarnings))
       }
       is CreatePluginResult.NotFound -> {
         val pluginInfo = getPluginInfoByDescriptor(pluginDescriptor)
@@ -62,7 +62,7 @@ class Verifier(val pluginDescriptor: PluginDescriptor,
       PluginInfo(pluginId, version, null)
     }
     is PluginDescriptor.ByInstance -> {
-      PluginInfo(pluginDescriptor.createOk.success.plugin.pluginId, pluginDescriptor.createOk.success.plugin.pluginVersion, null)
+      PluginInfo(pluginDescriptor.createOk.plugin.pluginId, pluginDescriptor.createOk.plugin.pluginVersion, null)
     }
   }
 
@@ -73,13 +73,13 @@ class Verifier(val pluginDescriptor: PluginDescriptor,
   }
 
   private fun getPluginInfoByPluginInstance(createPluginResult: CreatePluginResult.OK, pluginDescriptor: PluginDescriptor): PluginInfo {
-    val plugin = createPluginResult.success.plugin
+    val plugin = createPluginResult.plugin
     return PluginInfo(plugin.pluginId, plugin.pluginVersion, (pluginDescriptor as? PluginDescriptor.ByUpdateInfo)?.updateInfo)
   }
 
   private fun getVerificationVerdict(creationOk: CreatePluginResult.OK): Verdict {
-    plugin = creationOk.success.plugin
-    warnings = creationOk.success.warnings
+    plugin = creationOk.plugin
+    warnings = creationOk.warnings
     pluginResolver = creationOk.resolver
 
     val dependencyResolver = params.dependencyResolver ?: DefaultDependencyResolver(ideDescriptor.ide)

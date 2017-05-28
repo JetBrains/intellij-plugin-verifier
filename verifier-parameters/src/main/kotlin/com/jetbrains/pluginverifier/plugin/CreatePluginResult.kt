@@ -1,16 +1,16 @@
 package com.jetbrains.pluginverifier.plugin
 
-import com.intellij.structure.plugin.PluginCreationFail
-import com.intellij.structure.plugin.PluginCreationSuccess
+import com.intellij.structure.plugin.Plugin
+import com.intellij.structure.problems.PluginProblem
 import com.intellij.structure.resolvers.Resolver
 import java.io.Closeable
 
 sealed class CreatePluginResult : Closeable {
-  data class OK internal constructor(val success: PluginCreationSuccess, val resolver: Resolver) : CreatePluginResult() {
+  data class OK internal constructor(val plugin: Plugin, val warnings: List<PluginProblem>, val resolver: Resolver) : CreatePluginResult() {
     override fun close() = resolver.close()
   }
 
-  data class BadPlugin internal constructor(val pluginCreationFail: PluginCreationFail) : CreatePluginResult() {
+  data class BadPlugin internal constructor(val pluginErrorsAndWarnings: List<PluginProblem>) : CreatePluginResult() {
     override fun close() = Unit
   }
 

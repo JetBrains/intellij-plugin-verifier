@@ -26,7 +26,7 @@ sealed class PluginDescriptor : Closeable {
   }
 
   data class ByInstance(val createOk: CreatePluginResult.OK) : PluginDescriptor() {
-    override val presentableName: String = createOk.success.plugin.toString()
+    override val presentableName: String = createOk.plugin.toString()
 
     override fun close() = createOk.close()
 

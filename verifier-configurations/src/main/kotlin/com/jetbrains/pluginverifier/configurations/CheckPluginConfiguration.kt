@@ -31,7 +31,7 @@ class CheckPluginConfiguration : Configuration<CheckPluginParams, CheckPluginRes
     private fun findPluginInListOfPluginsToCheck(dependencyId: String): CreatePluginResult.OK? {
       val inListOfPluginsToCheck = allPluginsToCheck
           .filterIsInstance<CreatePluginResult.OK>()
-          .find { it.success.plugin.pluginId == dependencyId }
+          .find { it.plugin.pluginId == dependencyId }
           ?: return null
       return PluginCreator.getNonCloseableOkResult(inListOfPluginsToCheck)
     }

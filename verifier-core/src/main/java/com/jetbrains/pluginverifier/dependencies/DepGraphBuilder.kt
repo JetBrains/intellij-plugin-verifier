@@ -17,9 +17,9 @@ data class DepEdge(val dependency: PluginDependency) : DefaultEdge()
 data class DepVertex(val creationOk: CreatePluginResult.OK) {
   val missingDependencies: MutableList<MissingDependency> = arrayListOf()
 
-  override fun equals(other: Any?): Boolean = other is DepVertex && creationOk.success.plugin == other.creationOk.success.plugin
+  override fun equals(other: Any?): Boolean = other is DepVertex && creationOk.plugin == other.creationOk.plugin
 
-  override fun hashCode(): Int = creationOk.success.plugin.hashCode()
+  override fun hashCode(): Int = creationOk.plugin.hashCode()
 
 }
 
@@ -33,7 +33,7 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) : Clos
   private val graph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
 
   fun build(creationOk: CreatePluginResult.OK): Result {
-    LOG.debug("Building dependencies graph for ${creationOk.success.plugin}")
+    LOG.debug("Building dependencies graph for ${creationOk.plugin}")
     val copiedResultOk = PluginCreator.getNonCloseableOkResult(creationOk)
     val startVertex = DepVertex(copiedResultOk)
     traverseDependencies(startVertex)
@@ -45,10 +45,10 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) : Clos
   private fun findDependencyOrFillMissingReason(pluginDependency: PluginDependency, isModule: Boolean, current: DepVertex): DepVertex? =
       getAlreadyResolvedDependency(pluginDependency) ?: resolveDependency(current, isModule, pluginDependency)
 
-  private fun getAlreadyResolvedDependency(pluginDependency: PluginDependency): DepVertex? = graph.vertexSet().find { pluginDependency.id == it.creationOk.success.plugin.pluginId }
+  private fun getAlreadyResolvedDependency(pluginDependency: PluginDependency): DepVertex? = graph.vertexSet().find { pluginDependency.id == it.creationOk.plugin.pluginId }
 
   private fun resolveDependency(current: DepVertex, isModule: Boolean, pluginDependency: PluginDependency): DepVertex? {
-    val resolved = dependencyResolver.resolve(pluginDependency.id, isModule, current.creationOk.success.plugin)
+    val resolved = dependencyResolver.resolve(pluginDependency.id, isModule, current.creationOk.plugin)
     return when (resolved) {
       is DependencyResolver.Result.FoundLocally -> DepVertex(resolved.pluginCreateOk)
       is DependencyResolver.Result.Downloaded -> DepVertex(resolved.pluginCreateOk)
@@ -66,7 +66,7 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) : Clos
       return
     }
     graph.addVertex(current)
-    val plugin = current.creationOk.success.plugin
+    val plugin = current.creationOk.plugin
     for (pluginDependency in plugin.moduleDependencies + plugin.dependencies) {
       val isModule = pluginDependency in plugin.moduleDependencies
       val dependency = findDependencyOrFillMissingReason(pluginDependency, isModule, current) ?: continue
