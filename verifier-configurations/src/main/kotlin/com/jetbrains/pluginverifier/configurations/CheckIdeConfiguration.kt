@@ -25,10 +25,6 @@ class CheckIdeConfiguration : Configuration<CheckIdeParams, CheckIdeResults> {
       val updateInfo = pluginDescriptor.updateInfo
       PluginIdAndVersion(updateInfo.pluginId, updateInfo.version) in params.excludedPlugins
     }
-    is PluginDescriptor.ByInstance -> {
-      val plugin = pluginDescriptor.createOk.plugin
-      PluginIdAndVersion(plugin.pluginId ?: "", plugin.pluginVersion ?: "") in params.excludedPlugins
-    }
     is PluginDescriptor.ByFile -> {
       PluginCreator.createPluginByFile(pluginDescriptor.pluginFile).use { createPluginResult ->
         if (createPluginResult is CreatePluginResult.OK) {

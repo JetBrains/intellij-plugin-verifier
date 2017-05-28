@@ -61,9 +61,6 @@ class Verifier(val pluginDescriptor: PluginDescriptor,
       val (pluginId, version) = guessPluginIdAndVersion(pluginDescriptor.pluginFile)
       PluginInfo(pluginId, version, null)
     }
-    is PluginDescriptor.ByInstance -> {
-      PluginInfo(pluginDescriptor.createOk.plugin.pluginId, pluginDescriptor.createOk.plugin.pluginVersion, null)
-    }
   }
 
   private fun guessPluginIdAndVersion(file: File): Pair<String, String> {

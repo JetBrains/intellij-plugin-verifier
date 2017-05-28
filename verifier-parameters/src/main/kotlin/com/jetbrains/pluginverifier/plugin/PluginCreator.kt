@@ -22,7 +22,6 @@ object PluginCreator {
   fun createPlugin(pluginDescriptor: PluginDescriptor): CreatePluginResult = when (pluginDescriptor) {
     is PluginDescriptor.ByFile -> createPluginByFile(pluginDescriptor.pluginFile)
     is PluginDescriptor.ByUpdateInfo -> createPluginByUpdateInfo(pluginDescriptor.updateInfo)
-    is PluginDescriptor.ByInstance -> getNonCloseableOkResult(pluginDescriptor.createOk)
   }
 
   fun getNonCloseableOkResult(createOk: CreatePluginResult.OK): CreatePluginResult.OK {

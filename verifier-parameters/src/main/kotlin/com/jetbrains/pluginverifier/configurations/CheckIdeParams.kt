@@ -36,7 +36,6 @@ Excluded plugins: [${excludedPlugins.joinToString()}]
 
   override fun close() {
     ideDescriptor.closeLogged()
-    pluginsToCheck.forEach { it.closeLogged() }
     externalClassPath.closeLogged()
   }
 
@@ -65,9 +64,8 @@ class CheckIdeParamsParser : ConfigurationParamsParser<CheckIdeParams> {
 
         val excludedPlugins = parseExcludedPlugins(opts)
 
-        getDescriptorsToCheck(checkAllBuilds, checkLastBuilds, ideDescriptor.ideVersion).closeOnException { pluginsToCheck ->
-          return CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, excludedPlugins, externalClassesPrefixes, externalClassPath, checkAllBuilds, problemsFilter)
-        }
+        val pluginsToCheck = getDescriptorsToCheck(checkAllBuilds, checkLastBuilds, ideDescriptor.ideVersion)
+        return CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, excludedPlugins, externalClassesPrefixes, externalClassPath, checkAllBuilds, problemsFilter)
       }
     }
   }

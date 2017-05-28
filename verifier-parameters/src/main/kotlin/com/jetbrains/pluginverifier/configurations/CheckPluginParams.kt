@@ -21,14 +21,12 @@ class CheckPluginParamsParser : ConfigurationParamsParser<CheckPluginParams> {
     }
     val ideDescriptors = freeArgs.drop(1).map(::File).map { OptionsUtil.createIdeDescriptor(it, opts) }
     val pluginDescriptors = getPluginDescriptorsToCheck(freeArgs[0], ideDescriptors.map { it.ideVersion })
-    pluginDescriptors.closeOnException {
-      val jdkDescriptor = JdkDescriptor(OptionsUtil.getJdkDir(opts))
-      val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
-      val externalClasspath = OptionsUtil.getExternalClassPath(opts)
-      externalClasspath.closeOnException {
-        val problemsFilter = OptionsUtil.getProblemsFilter(opts)
-        return CheckPluginParams(pluginDescriptors, ideDescriptors, jdkDescriptor, externalClassesPrefixes, problemsFilter, externalClasspath)
-      }
+    val jdkDescriptor = JdkDescriptor(OptionsUtil.getJdkDir(opts))
+    val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
+    val externalClasspath = OptionsUtil.getExternalClassPath(opts)
+    externalClasspath.closeOnException {
+      val problemsFilter = OptionsUtil.getProblemsFilter(opts)
+      return CheckPluginParams(pluginDescriptors, ideDescriptors, jdkDescriptor, externalClassesPrefixes, problemsFilter, externalClasspath)
     }
   }
 
@@ -93,11 +91,7 @@ data class CheckPluginParams(val pluginDescriptors: List<PluginDescriptor>,
   """
 
   override fun close() {
-    try {
-      ideDescriptors.forEach { it.closeLogged() }
-    } finally {
-      pluginDescriptors.forEach { it.closeLogged() }
-    }
+    ideDescriptors.forEach { it.closeLogged() }
   }
 
   override fun toString(): String = presentableText()
