@@ -19,9 +19,6 @@ class VerifierExecutor(val params: VerifierParams) : Closeable {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(VerifierExecutor::class.java)
-
-    //todo: scale this better.
-    private val AVERAGE_AMOUNT_OF_MEMORY_BY_PLUGIN_VERIFICATION_IN_MB = 200
   }
 
   private val runtimeResolver = Resolver.createJdkResolver(params.jdkDescriptor.homeDir)
@@ -42,9 +39,11 @@ class VerifierExecutor(val params: VerifierParams) : Closeable {
   }
 
   private fun estimateNumberOfConcurrentWorkers(): Int {
-    val maxByMemory = Runtime.getRuntime().maxMemory().bytesToMegabytes() / AVERAGE_AMOUNT_OF_MEMORY_BY_PLUGIN_VERIFICATION_IN_MB
-    val maxByCpu = Runtime.getRuntime().availableProcessors().toLong()
-    return maxOf(1, minOf(maxByMemory, maxByCpu)).toInt()
+    val availableMemory = Runtime.getRuntime().maxMemory().bytesToMegabytes()
+    val availableCpu = Runtime.getRuntime().availableProcessors().toLong()
+    LOG.info("Available memory: $availableMemory Mb; Available CPU = $availableCpu")
+    val maxByMemory = availableMemory / 200
+    return maxOf(4, minOf(maxByMemory, availableCpu)).toInt()
   }
 
   fun verify(tasks: List<Pair<PluginCoordinate, IdeDescriptor>>, progress: Progress): List<Result> {
