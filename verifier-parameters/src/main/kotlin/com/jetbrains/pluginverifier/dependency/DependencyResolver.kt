@@ -1,37 +1,42 @@
 package com.jetbrains.pluginverifier.dependency
 
 import com.intellij.structure.plugin.Plugin
-import com.jetbrains.pluginverifier.plugin.CreatePluginResult
+import com.intellij.structure.plugin.PluginDependency
+import com.intellij.structure.problems.PluginProblem
+import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import java.io.Closeable
 
 interface DependencyResolver {
 
-  fun resolve(dependencyId: String, isModule: Boolean, dependent: Plugin): Result
+  fun resolve(dependency: PluginDependency, isModule: Boolean): Result
 
   sealed class Result : Closeable {
-    class FoundLocally(val pluginCreateOk: CreatePluginResult.OK) : Result() {
-      override fun close() = pluginCreateOk.close()
+    data class FoundReady(val plugin: Plugin, val resolver: Resolver) : Result() {
+      //resolver must not be closed because it belongs to client.
+      override fun close() = Unit
     }
 
-    class Downloaded(val pluginCreateOk: CreatePluginResult.OK,
-                     val updateInfo: UpdateInfo,
-                     private val pluginFileLock: FileLock) : Result() {
+    data class CreatedResolver(val plugin: Plugin, val resolver: Resolver) : Result() {
+      override fun close() = resolver.close()
+    }
+
+    data class Downloaded(val plugin: Plugin,
+                          val resolver: Resolver,
+                          val updateInfo: UpdateInfo,
+                          private val pluginFileLock: FileLock) : Result() {
       override fun close() {
-        try {
-          pluginCreateOk.close()
-        } finally {
-          pluginFileLock.close()
-        }
+        pluginFileLock.release()
+        resolver.close()
       }
     }
 
-    class ProblematicDependency(val badPluginCreation: CreatePluginResult.BadPlugin) : Result() {
-      override fun close() = badPluginCreation.close()
+    data class ProblematicDependency(val pluginErrorsAndWarnings: List<PluginProblem>) : Result() {
+      override fun close() = Unit
     }
 
-    class NotFound(val reason: String) : Result() {
+    data class NotFound(val reason: String) : Result() {
       override fun close() = Unit
     }
 
