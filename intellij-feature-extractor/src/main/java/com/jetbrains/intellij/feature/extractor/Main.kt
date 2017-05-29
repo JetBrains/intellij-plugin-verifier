@@ -17,12 +17,13 @@ fun main(args: Array<String>) {
   val pluginFile = File(args[0])
   val ideaFile = File(args[1])
   val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile)
-  if (pluginCreationResult.isSuccess) {
-    val ide = IdeManager.getInstance().createIde(ideaFile)
-    val extractorResult = FeaturesExtractor.extractFeatures(ide, (pluginCreationResult as PluginCreationSuccess).plugin)
-    extractorResult.features.forEach { println(Gson().toJson(it)) }
-    println("All features extracted: ${extractorResult.extractedAll}")
-  } else {
-    println("Plugin is invalid: " + (pluginCreationResult as PluginCreationFail).errorsAndWarnings.joinToString())
+  when (pluginCreationResult) {
+    is PluginCreationSuccess -> {
+      val ide = IdeManager.getInstance().createIde(ideaFile)
+      val extractorResult = FeaturesExtractor.extractFeatures(ide, pluginCreationResult.plugin)
+      extractorResult.features.forEach { println(Gson().toJson(it)) }
+      println("All features extracted: ${extractorResult.extractedAll}")
+    }
+    is PluginCreationFail -> println("Plugin is invalid: " + pluginCreationResult.errorsAndWarnings.joinToString())
   }
 }
