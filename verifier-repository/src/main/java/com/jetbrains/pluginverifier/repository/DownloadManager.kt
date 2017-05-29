@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.repository
 
 import com.google.common.primitives.Ints
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import okhttp3.MediaType
@@ -109,15 +110,16 @@ object DownloadManager {
     LOG.info("Unused updates to be deleted: [{}]", updatesToDelete.joinToString())
 
     for (update in updatesToDelete) {
-      if (spaceWatcher.isLowSpace()) {
-        update.deleteLogged()
+      if (spaceWatcher.isEnoughSpace()) {
+        LOG.debug("Enough space after cleanup: ${spaceWatcher.estimateAvailableSpace()} Mb")
+        break
       }
-      //already enough space
-      break
+      LOG.debug("Deleting unused update $update with size ${update.length().bytesToMegabytes()} Mb")
+      update.deleteLogged()
     }
 
     if (spaceWatcher.isLowSpace()) {
-      LOG.warn("The available space after garbage collection is not sufficient!")
+      LOG.warn("Available space after cleanup is not sufficient!: ${spaceWatcher.estimateAvailableSpace()} Mb")
     }
   }
 

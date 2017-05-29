@@ -19,6 +19,8 @@ class FreeDiskSpaceWatcher(val watchDir: File, val maximumByParameterMb: Long?) 
 
   fun getSpaceUsageMb() = FileUtils.sizeOfDirectory(watchDir).bytesToMegabytes()
 
+  fun isEnoughSpace() = estimateAvailableSpace() > LOW_THRESHOLD * 2
+
   fun estimateAvailableSpace(): Long {
     val realUsageMb = getSpaceUsageMb()
     if (maximumByParameterMb != null) {
