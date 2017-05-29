@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.configurations
 
 import com.intellij.structure.ide.Ide
-import com.intellij.structure.plugin.Plugin
+import com.intellij.structure.plugin.PluginDependency
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.Result
@@ -20,20 +20,19 @@ class CheckPluginConfiguration : Configuration<CheckPluginParams, CheckPluginRes
   private lateinit var params: CheckPluginParams
 
   private fun getDependencyResolver(ide: Ide): DependencyResolver = object : DependencyResolver {
-    override fun resolve(dependencyId: String, isModule: Boolean, dependent: Plugin): DependencyResolver.Result {
-      val foundPlugin = findPluginInListOfPluginsToCheck(dependencyId)
-      if (foundPlugin != null) {
-        return DependencyResolver.Result.FoundLocally(foundPlugin)
-      }
-      return DefaultDependencyResolver(ide).resolve(dependencyId, isModule, dependent)
+
+    private val defaultDependencyResolver = DefaultDependencyResolver(ide)
+
+    override fun resolve(dependency: PluginDependency, isModule: Boolean): DependencyResolver.Result {
+      return findPluginInListOfPluginsToCheck(dependency) ?: defaultDependencyResolver.resolve(dependency, isModule)
     }
 
-    private fun findPluginInListOfPluginsToCheck(dependencyId: String): CreatePluginResult.OK? {
-      val inListOfPluginsToCheck = allPluginsToCheck
+    private fun findPluginInListOfPluginsToCheck(dependency: PluginDependency): DependencyResolver.Result.FoundReady? {
+      val createdPlugin = allPluginsToCheck
           .filterIsInstance<CreatePluginResult.OK>()
-          .find { it.plugin.pluginId == dependencyId }
+          .find { it.plugin.pluginId == dependency.id }
           ?: return null
-      return PluginCreator.getNonCloseableOkResult(inListOfPluginsToCheck)
+      return DependencyResolver.Result.FoundReady(createdPlugin.plugin, createdPlugin.resolver)
     }
   }
 

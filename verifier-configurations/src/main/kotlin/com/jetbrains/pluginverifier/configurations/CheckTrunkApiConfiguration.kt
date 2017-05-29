@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.configurations
 
 import com.intellij.structure.ide.IdeVersion
-import com.intellij.structure.plugin.Plugin
+import com.intellij.structure.plugin.PluginDependency
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginCoordinate
@@ -30,10 +30,10 @@ class CheckTrunkApiConfiguration : Configuration<CheckTrunkApiParams, CheckTrunk
     private val trunkResolver = DefaultDependencyResolver(params.trunkDescriptor.ide)
     private val releaseResolver = DefaultDependencyResolver(params.releaseDescriptor.ide)
 
-    override fun resolve(dependencyId: String, isModule: Boolean, dependent: Plugin): DependencyResolver.Result {
-      val result = trunkResolver.resolve(dependencyId, isModule, dependent)
+    override fun resolve(dependency: PluginDependency, isModule: Boolean): DependencyResolver.Result {
+      val result = trunkResolver.resolve(dependency, isModule)
       return if (result is DependencyResolver.Result.NotFound) {
-        releaseResolver.resolve(dependencyId, isModule, dependent)
+        releaseResolver.resolve(dependency, isModule)
       } else {
         result
       }

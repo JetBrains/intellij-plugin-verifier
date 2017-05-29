@@ -5,8 +5,8 @@ import com.google.common.collect.ImmutableMap
 import com.intellij.structure.ide.Ide
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.plugin.Plugin
+import com.intellij.structure.plugin.PluginDependency
 import com.jetbrains.pluginverifier.dependency.DependencyResolver
-import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.repository.FileLock
@@ -40,19 +40,19 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
 
   }
 
-  override fun resolve(dependencyId: String, isModule: Boolean, dependent: Plugin): DependencyResolver.Result {
+  override fun resolve(dependency: PluginDependency, isModule: Boolean): DependencyResolver.Result {
     if (isModule) {
-      return resolveModule(dependencyId)
+      return resolveModule(dependency.id)
     } else {
-      return resolvePlugin(dependencyId)
+      return resolvePlugin(dependency.id)
     }
   }
 
   private fun createDependencyResultByExistingPlugin(plugin: Plugin): DependencyResolver.Result {
     val pluginCreateResult = PluginCreator.createResultByExistingPlugin(plugin)
     return when (pluginCreateResult) {
-      is CreatePluginResult.OK -> DependencyResolver.Result.FoundLocally(pluginCreateResult)
-      is CreatePluginResult.BadPlugin -> DependencyResolver.Result.ProblematicDependency(pluginCreateResult)
+      is CreatePluginResult.OK -> DependencyResolver.Result.CreatedResolver(pluginCreateResult.plugin, pluginCreateResult.resolver)
+      is CreatePluginResult.BadPlugin -> DependencyResolver.Result.ProblematicDependency(pluginCreateResult.pluginErrorsAndWarnings)
       is CreatePluginResult.NotFound -> DependencyResolver.Result.NotFound(pluginCreateResult.reason)
     }
   }
@@ -72,22 +72,20 @@ class DefaultDependencyResolver(val ide: Ide) : DependencyResolver {
   }
 
   private fun downloadAndOpenPlugin(updateInfo: UpdateInfo): DependencyResolver.Result {
-    val pluginZip: FileLock = RepositoryManager.getPluginFile(updateInfo)
+    val pluginLock: FileLock = RepositoryManager.getPluginFile(updateInfo)
         ?: return DependencyResolver.Result.NotFound("Plugin $updateInfo is not found in the Plugin Repository")
-    return getDependencyResultByDownloadedUpdate(pluginZip, updateInfo)
+    return getDependencyResultByDownloadedUpdate(pluginLock, updateInfo)
   }
 
   private fun getDependencyResultByDownloadedUpdate(pluginLock: FileLock, updateInfo: UpdateInfo): DependencyResolver.Result {
-    val dependencyCreationResult = pluginLock.closeOnException {
-      PluginCreator.createPluginByFile(pluginLock.getFile())
-    }
+    val dependencyCreationResult = PluginCreator.createPluginByFileLock(pluginLock)
     return when (dependencyCreationResult) {
       is CreatePluginResult.OK -> {
-        DependencyResolver.Result.Downloaded(dependencyCreationResult, updateInfo, pluginLock)
+        DependencyResolver.Result.Downloaded(dependencyCreationResult.plugin, dependencyCreationResult.resolver, updateInfo, pluginLock)
       }
       is CreatePluginResult.BadPlugin -> {
         pluginLock.release()
-        DependencyResolver.Result.ProblematicDependency(dependencyCreationResult)
+        DependencyResolver.Result.ProblematicDependency(dependencyCreationResult.pluginErrorsAndWarnings)
       }
       is CreatePluginResult.NotFound -> {
         pluginLock.release()

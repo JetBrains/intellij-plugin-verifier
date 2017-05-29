@@ -1,18 +1,12 @@
 package com.jetbrains.pluginverifier.tests
 
-import com.google.common.collect.Lists
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.impl.domain.PluginDependencyImpl
-import com.intellij.structure.plugin.Plugin
+import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.dependencies.DefaultDependencyResolver
-import com.jetbrains.pluginverifier.dependencies.DepEdge
+import com.jetbrains.pluginverifier.dependencies.DepGraph2ApiGraphConverter
 import com.jetbrains.pluginverifier.dependencies.DepGraphBuilder
-import com.jetbrains.pluginverifier.dependencies.DepVertex
-import com.jetbrains.pluginverifier.plugin.CreatePluginResult
-import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.tests.MockUtil.createMockPlugin
-import org.jgrapht.DirectedGraph
-import org.jgrapht.traverse.DepthFirstIterator
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -41,18 +35,11 @@ class DefaultDependenciesResolverTest {
 
     val plugin = createMockPlugin("myPlugin", "1.0", emptyList(), listOf(PluginDependencyImpl("test", true)))
 
-    val success = PluginCreator.createResultByExistingPlugin(plugin) as CreatePluginResult.OK
-    val (graph, vertex) = DepGraphBuilder(DefaultDependencyResolver(ide)).build(success)
+    val (graph, start) = DepGraphBuilder(DefaultDependencyResolver(ide)).build(plugin, Resolver.getEmptyResolver())
+    val dependenciesGraph = DepGraph2ApiGraphConverter.convert(graph, start)
 
-    val deps: List<Plugin> = getTransitiveDependencies(graph, vertex).map { it.creationOk.plugin }
-    assertEquals(deps.map { it.pluginId }.toSet(), setOf("test", "somePlugin", "moduleContainer"))
-  }
-
-  private fun getTransitiveDependencies(graph: DirectedGraph<DepVertex, DepEdge>, start: DepVertex): List<DepVertex> {
-    val iterator = DepthFirstIterator(graph, start)
-    if (!iterator.hasNext()) return emptyList()
-    iterator.next() //skip the start
-    return Lists.newArrayList(iterator)
+    val deps: List<String> = dependenciesGraph.vertices.map { it.id }
+    assertEquals(setOf("myPlugin", "test", "somePlugin", "moduleContainer"), deps.toSet())
   }
 
 }

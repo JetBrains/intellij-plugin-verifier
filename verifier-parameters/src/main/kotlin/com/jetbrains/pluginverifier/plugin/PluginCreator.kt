@@ -7,10 +7,10 @@ import com.intellij.structure.plugin.PluginManager
 import com.intellij.structure.problems.PluginProblem
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.PluginCoordinate
+import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.utils.CloseIgnoringResolver
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -24,26 +24,35 @@ object PluginCreator {
     is PluginCoordinate.ByUpdateInfo -> createPluginByUpdateInfo(pluginCoordinate.updateInfo)
   }
 
-  fun getNonCloseableOkResult(createOk: CreatePluginResult.OK): CreatePluginResult.OK {
-    val copyResolver = CloseIgnoringResolver(createOk.resolver)
-    return CreatePluginResult.OK(createOk.plugin, createOk.warnings, copyResolver)
-  }
-
   private fun downloadPluginByUpdateInfo(updateInfo: UpdateInfo): FileLock? = RepositoryManager.getPluginFile(updateInfo)
 
   fun createPluginByUpdateInfo(updateInfo: UpdateInfo): CreatePluginResult {
     val pluginFileLock = downloadPluginByUpdateInfo(updateInfo)
         ?: return CreatePluginResult.NotFound("Plugin $updateInfo is not found in the Plugin Repository")
-    return createPluginByFile(pluginFileLock.getFile())
+    return createPluginByFileLock(pluginFileLock)
   }
 
-  fun createPluginByFile(pluginFile: File): CreatePluginResult {
-    val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile)
-    if (pluginCreationResult is PluginCreationSuccess) {
-      val pluginResolver = Resolver.createPluginResolver(pluginCreationResult.plugin)
-      return CreatePluginResult.OK(pluginCreationResult.plugin, pluginCreationResult.warnings, pluginResolver)
-    } else {
-      return CreatePluginResult.BadPlugin((pluginCreationResult as PluginCreationFail).errorsAndWarnings)
+  private data class IdleFileLock(private val backedFile: File) : FileLock() {
+    override fun release() = Unit
+
+    override fun getFile(): File = backedFile
+  }
+
+  fun createPluginByFile(pluginFile: File) = createPluginResultByFileAndRegisterLock(pluginFile, IdleFileLock(pluginFile))
+
+  fun createPluginByFileLock(pluginFileLock: FileLock): CreatePluginResult =
+      createPluginResultByFileAndRegisterLock(pluginFileLock.getFile(), pluginFileLock)
+
+  private fun createPluginResultByFileAndRegisterLock(pluginFile: File, pluginFileLock: FileLock): CreatePluginResult {
+    pluginFileLock.closeOnException {
+      val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile)
+      if (pluginCreationResult is PluginCreationSuccess) {
+        val pluginResolver = Resolver.createPluginResolver(pluginCreationResult.plugin)
+        return CreatePluginResult.OK(pluginCreationResult.plugin, pluginCreationResult.warnings, pluginResolver, pluginFileLock)
+      } else {
+        pluginFileLock.close()
+        return CreatePluginResult.BadPlugin((pluginCreationResult as PluginCreationFail).errorsAndWarnings)
+      }
     }
   }
 
@@ -54,7 +63,7 @@ object PluginCreator {
       LOG.debug("Unable to read plugin $plugin class files", e)
       return CreatePluginResult.BadPlugin(listOf(UnableToReadPluginClassFilesProblem))
     }
-    return CreatePluginResult.OK(plugin, emptyList(), resolver)
+    return CreatePluginResult.OK(plugin, emptyList(), resolver, IdleFileLock(File("")))
   }
 
   object UnableToReadPluginClassFilesProblem : PluginProblem() {

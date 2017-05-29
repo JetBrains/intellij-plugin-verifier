@@ -5,10 +5,10 @@ import com.intellij.structure.problems.PluginProblem
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.dependencies.*
+import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.misc.withDebug
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
-import com.jetbrains.pluginverifier.utils.CloseIgnoringResolver
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.warnings.Warning
@@ -81,7 +81,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
 
     val dependencyResolver = params.dependencyResolver ?: DefaultDependencyResolver(ideDescriptor.ide)
     DepGraphBuilder(dependencyResolver).use { graphBuilder ->
-      val (graph, start) = graphBuilder.build(creationOk)
+      val (graph, start) = graphBuilder.build(creationOk.plugin, creationOk.resolver)
       val apiGraph = DepGraph2ApiGraphConverter.convert(graph, start)
       LOG.debug("Dependencies graph for $plugin: $apiGraph")
       val context = runVerifier(graph)
@@ -107,18 +107,16 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
     val dependenciesResolver = getDependenciesClassesResolver(graph)
     val checkClasses = getClassesOfPluginToCheck()
     val classLoader = getVerificationClassLoader(dependenciesResolver)
-    return classLoader.use {
-      BytecodeVerifier(params, plugin, classLoader, ideDescriptor.ideVersion).verify(checkClasses)
-    }
+    //don't close classLoader because it consists of client-resolvers.
+    return BytecodeVerifier(params, plugin, classLoader, ideDescriptor.ideVersion).verify(checkClasses)
   }
 
-  private fun getVerificationClassLoader(dependenciesResolver: Resolver): Resolver =
-      CloseIgnoringResolver(Resolver.createCacheResolver(
+  private fun getVerificationClassLoader(dependenciesResolver: Resolver): Resolver = Resolver.createCacheResolver(
           Resolver.createUnionResolver(
               "Common resolver for plugin $plugin; IDE #${ideDescriptor.ideVersion}; JDK $runtimeResolver",
               listOf(pluginResolver, runtimeResolver, ideDescriptor.ideResolver, dependenciesResolver, params.externalClassPath)
           )
-      ))
+  )
 
   private fun getClassesOfPluginToCheck(): Iterator<String> {
     val resolver = Resolver.createUnionResolver("Plugin classes for check",
@@ -129,8 +127,19 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
     return if (resolver.isEmpty) pluginResolver.allClasses else resolver.allClasses
   }
 
-  private fun getDependenciesClassesResolver(graph: DirectedGraph<DepVertex, DepEdge>): Resolver =
-      Resolver.createUnionResolver("Plugin $plugin dependencies resolvers", graph.vertexSet().map { it.creationOk.resolver })
+  private fun getDependenciesClassesResolver(graph: DirectedGraph<DepVertex, DepEdge>): Resolver {
+    val resolvers = graph.vertexSet().map { getResolverByResult(it.resolveResult) }.filterNotNull()
+    return Resolver.createUnionResolver("Plugin $plugin dependencies resolvers", resolvers)
+  }
+
+  private fun getResolverByResult(result: DependencyResolver.Result): Resolver? = when (result) {
+    is DependencyResolver.Result.FoundReady -> result.resolver
+    is DependencyResolver.Result.CreatedResolver -> result.resolver
+    is DependencyResolver.Result.Downloaded -> result.resolver
+    is DependencyResolver.Result.ProblematicDependency -> null
+    is DependencyResolver.Result.NotFound -> null
+    DependencyResolver.Result.Skip -> null
+  }
 
   private fun getAppropriateVerdict(context: VerificationContext, dependenciesGraph: DependenciesGraph): Verdict {
     val missingDependencies = dependenciesGraph.start.missingDependencies
