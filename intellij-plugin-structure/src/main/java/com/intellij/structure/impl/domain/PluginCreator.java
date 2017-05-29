@@ -104,7 +104,7 @@ final class PluginCreator {
 
   public void addOptionalDescriptor(PluginDependency pluginDependency, String configurationFile, PluginCreator optionalCreator) {
     PluginCreationResult pluginCreationResult = optionalCreator.getPluginCreationResult();
-    if (pluginCreationResult.isSuccess()) {
+    if (pluginCreationResult instanceof PluginCreationSuccess) {
       myPlugin.addOptionalDescriptor(configurationFile, ((PluginCreationSuccess) pluginCreationResult).getPlugin());
     } else {
       registerProblem(new MissingOptionalDependencyConfigurationFile(myDescriptorPath, pluginDependency, configurationFile));
