@@ -6,6 +6,8 @@ import org.jgrapht.DirectedGraph
 
 object DepGraph2ApiGraphConverter {
 
+  private val DEFAULT_VERSION = "VERSION"
+
   fun convert(graph: DirectedGraph<DepVertex, DepEdge>, startVertex: DepVertex): DependenciesGraph {
     val startNode = getDependencyNodeByVertex(startVertex, graph)!!
     val vertices = graph.vertexSet().map { getDependencyNodeByVertex(it, graph) }.filterNotNull()
@@ -43,9 +45,9 @@ object DepGraph2ApiGraphConverter {
     val missingDependencies = graph.outgoingEdgesOf(vertex).map { getMissingDependency(it) }.filterNotNull()
     val resolveResult = vertex.resolveResult
     return when (resolveResult) {
-      is DependencyResolver.Result.FoundReady -> DependencyNode(resolveResult.plugin.pluginId, resolveResult.plugin.pluginVersion, missingDependencies)
-      is DependencyResolver.Result.CreatedResolver -> DependencyNode(resolveResult.plugin.pluginId, resolveResult.plugin.pluginVersion, missingDependencies)
-      is DependencyResolver.Result.Downloaded -> DependencyNode(resolveResult.plugin.pluginId, resolveResult.plugin.pluginVersion, missingDependencies)
+      is DependencyResolver.Result.FoundReady -> DependencyNode(resolveResult.plugin.pluginId ?: vertex.id, resolveResult.plugin.pluginVersion ?: DEFAULT_VERSION, missingDependencies)
+      is DependencyResolver.Result.CreatedResolver -> DependencyNode(resolveResult.plugin.pluginId ?: vertex.id, resolveResult.plugin.pluginVersion ?: DEFAULT_VERSION, missingDependencies)
+      is DependencyResolver.Result.Downloaded -> DependencyNode(resolveResult.plugin.pluginId ?: vertex.id, resolveResult.plugin.pluginVersion ?: DEFAULT_VERSION, missingDependencies)
       is DependencyResolver.Result.ProblematicDependency -> null
       is DependencyResolver.Result.NotFound -> null
       DependencyResolver.Result.Skip -> null

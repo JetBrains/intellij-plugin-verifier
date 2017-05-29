@@ -37,7 +37,7 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) : Clos
   fun build(plugin: Plugin, resolver: Resolver): Pair<DirectedGraph<DepVertex, DepEdge>, DepVertex> {
     LOG.debug("Building dependencies graph for $plugin")
     val startResult = DependencyResolver.Result.FoundReady(plugin, resolver)
-    val startVertex = DepVertex(plugin.pluginId, startResult)
+    val startVertex = DepVertex(plugin.pluginId ?: "", startResult)
     traverseDependencies(startVertex)
     return graph to startVertex
   }
