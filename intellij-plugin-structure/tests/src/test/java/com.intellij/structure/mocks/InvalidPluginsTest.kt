@@ -200,6 +200,15 @@ class InvalidPluginsTest {
   }
 
   @Test
+  fun `wildcard in old ide`() {
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          ideaVersion = """<idea-version since-build="129.0.*"/>"""
+        },
+        listOf(InvalidSinceBuild("plugin.xml", "129.0.*")))
+  }
+
+  @Test
   fun `non latin description`() {
     `test plugin xml warnings`(
         perfectXmlBuilder.modify {

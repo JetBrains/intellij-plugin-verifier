@@ -299,7 +299,12 @@ final class PluginCreator {
     if (sinceBuild == null) {
       registerProblem(new SinceBuildNotSpecified(myDescriptorPath));
     } else {
-      if (!IdeVersion.isValidIdeVersion(sinceBuild)) {
+      try {
+        IdeVersion sinceBuildParsed = IdeVersion.createIdeVersion(sinceBuild);
+        if (sinceBuildParsed.getBaselineVersion() < 130 && sinceBuild.endsWith(".*")) {
+          registerProblem(new InvalidSinceBuild(myDescriptorPath, sinceBuild));
+        }
+      } catch (Exception e) {
         registerProblem(new InvalidSinceBuild(myDescriptorPath, sinceBuild));
       }
     }
