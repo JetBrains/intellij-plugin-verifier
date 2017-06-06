@@ -8,23 +8,34 @@ import java.io.PrintWriter
  */
 class HtmlBuilder(val output: PrintWriter) {
   fun tag(tagName: String, block: () -> Unit = {}, attr: Map<String, String> = emptyMap()) {
-    val open = if (attr.isEmpty()) {
+    val renderedAttributes = renderAttributes(attr)
+    val open = if (renderedAttributes.isEmpty()) {
       "<$tagName>"
     } else {
-      "<$tagName " + attr.filterValues { it.isNotEmpty() }.entries.joinToString(separator = " ") { "${it.key}=\"${it.value}\"" } + ">"
+      "<$tagName $renderedAttributes>"
     }
     output.println(open)
     block()
     output.println("</$tagName>")
   }
 
+  private fun renderAttributes(attr: Map<String, String>) =
+      attr.filterValues { it.isNotEmpty() }.entries.joinToString(separator = " ") { "${it.key}=\"${it.value}\"" }
+
+  fun closedTag(tagName: String, attr: Map<String, String> = emptyMap()) {
+    val renderedAttributes = renderAttributes(attr)
+    output.println(if (renderedAttributes.isEmpty()) {
+      "<$tagName/>"
+    } else {
+      "<$tagName $renderedAttributes/>"
+    })
+  }
+
   fun html(block: () -> Unit) = tag("html", block)
 
   fun p(block: () -> Unit) = tag("p", block)
 
-  fun br() {
-    output.appendln("<br/>")
-  }
+  fun br() = closedTag("br")
 
   fun body(block: () -> Unit) = tag("body", block)
 
@@ -40,9 +51,9 @@ class HtmlBuilder(val output: PrintWriter) {
 
   fun title(text: String) = tag("title", { output.println(text) })
 
-  fun script(src: String = "", block: () -> Unit = {}) = tag("script", block, mapOf("src" to src))
+  fun script(src: String = "", type: String = "", block: () -> Unit = {}) = tag("script", block, mapOf("src" to src, "type" to type))
 
-  fun link(rel: String = "", href: String = "", block: () -> Unit = {}) = tag("link", block, mapOf("rel" to rel, "href" to href))
+  fun link(rel: String = "", href: String = "", type: String = "") = closedTag("link", mapOf("rel" to rel, "href" to href, "type" to type))
 
   fun unsafe(text: String) = output.println(text)
 

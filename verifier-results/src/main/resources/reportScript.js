@@ -5,7 +5,7 @@ $(".update").accordion({active: false, collapsible: true, heightStyle: 'content'
 $(".detailsLink").click(function () {
     var longDiv = $(this).parent().find(".longDescription");
 
-    if (longDiv.css('display') != 'block') {
+    if (longDiv.css('display') !== 'block') {
         longDiv.css('display', 'block')
     }
     else {

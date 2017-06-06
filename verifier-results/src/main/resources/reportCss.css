@@ -54,7 +54,7 @@
     color: #0f0;
 }
 
-.pluginHasProblem .pMarker {
+.pluginHasProblems .pMarker {
     background: #f00;
     color: #f00;
 }
