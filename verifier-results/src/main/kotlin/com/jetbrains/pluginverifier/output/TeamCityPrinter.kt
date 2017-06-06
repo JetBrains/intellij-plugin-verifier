@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.configurations.MissingCompatibleUpdate
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.descriptions.ShortDescription
 import com.jetbrains.pluginverifier.misc.pluralize
+import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -177,13 +178,26 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
                                        testName: String,
                                        options: PrinterOptions) {
     val problems = verdict.problems
-    val pluginLink = getPluginLink(plugin)
-    val overview = "Plugin URL: $pluginLink" + "\n" +
-        "$plugin has ${problems.size} ${"problem".pluralize(problems.size)}" + "\n" +
-        getMissingDependenciesOverview(options, verdict) + "\n"
-    val problemsContent = getMissingDependenciesProblemsContent(verdict)
-    tcLog.testStdErr(testName, overview)
-    tcLog.testFailed(testName, problemsContent, "")
+    val missingDependencies = verdict.missingDependencies
+    if (problems.isNotEmpty() || missingDependencies.any { !it.dependency.isOptional }) {
+      val pluginLink = getPluginLink(plugin)
+      val overview = buildString {
+        append("Plugin URL: $pluginLink").append("\n")
+        if (problems.isNotEmpty()) {
+          append("$plugin has ${"problem".pluralizeWithNumber(problems.size)}\n")
+        }
+        if (missingDependencies.isNotEmpty()) {
+          if (problems.isNotEmpty()) {
+            append("Some problems might be caused by missing plugins:").append('\n')
+          }
+          appendMissingDependencies(missingDependencies.filterNot { it.dependency.isOptional })
+          appendMissingDependencies(missingDependencies.filter { it.dependency.isOptional && !options.ignoreMissingOptionalDependency(it.dependency) })
+        }
+      }
+      val problemsContent = getMissingDependenciesProblemsContent(verdict)
+      tcLog.testStdErr(testName, overview)
+      tcLog.testFailed(testName, problemsContent, "")
+    }
   }
 
   private fun printBadPluginResult(verdict: Verdict.Bad, versionTestName: String) {
@@ -230,10 +244,8 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
         "\nrelevant problems: $otherProblems"
   }
 
-  private fun getMissingDependenciesOverview(options: PrinterOptions, verdict: Verdict.MissingDependencies): String = buildString {
-    append("Some problems might be caused by missing plugins:").append('\n')
-    verdict.missingDependencies.filterNot { it.dependency.isOptional }.forEach { append("    $it").append('\n') }
-    verdict.missingDependencies.filter { it.dependency.isOptional && !options.ignoreMissingOptionalDependency(it.dependency) }.forEach {
+  private fun StringBuilder.appendMissingDependencies(missingDeps: List<MissingDependency>) {
+    missingDeps.forEach {
       append("Missing ${it.dependency}: ${it.missingReason}").append('\n')
     }
   }

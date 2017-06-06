@@ -71,6 +71,8 @@ fun File.deleteLogged(): Boolean {
   }
 }
 
+fun String.pluralizeWithNumber(times: Int): String = "$times " + this.pluralize(times)
+
 fun String.pluralize(times: Int): String {
   if (times < 0) throw IllegalArgumentException("Negative value")
   if (times <= 1) {
