@@ -214,30 +214,28 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
 
     val notFoundClassesProblems = problems.filterIsInstance<ClassNotFoundProblem>()
     if (missingDependencies.isNotEmpty() && notFoundClassesProblems.size > 20) {
-      return getTooMuchUnknownClassesWarning(missingDependencies, notFoundClassesProblems, problems)
+      return getTooManyUnknownClassesProblems(missingDependencies, notFoundClassesProblems, problems)
     } else {
       return getProblemsContent(problems)
     }
   }
 
-  private fun getTooMuchUnknownClassesWarning(missingDependencies: List<MissingDependency>,
-                                              notFoundClassesProblems: List<ClassNotFoundProblem>,
-                                              problems: Set<Problem>): String {
+  private fun getTooManyUnknownClassesProblems(missingDependencies: List<MissingDependency>,
+                                               notFoundClassesProblems: List<ClassNotFoundProblem>,
+                                               problems: Set<Problem>): String {
     val otherProblems: String = getProblemsContent(problems.filterNot { it in notFoundClassesProblems }.sortedBy { it.javaClass.name }.toSet())
     return "There are too much missing classes (${notFoundClassesProblems.size});\n" +
         "it's probably because of missing plugins (${missingDependencies.map { it.dependency }.joinToString()});\n" +
-        "the following classes are not found: [${notFoundClassesProblems.map { it.unresolved }.joinToString()}];\n" +
-        otherProblems
+        "some not-found classes: [${notFoundClassesProblems.take(20).map { it.unresolved }.joinToString()}...];\n" +
+        "\nrelevant problems: $otherProblems"
   }
 
-  private fun getMissingDependenciesOverview(options: PrinterOptions, verdict: Verdict.MissingDependencies): String {
-    val builder = StringBuilder()
-    builder.append("Some problems might be caused by missing plugins:").append('\n')
-    verdict.missingDependencies.filterNot { it.dependency.isOptional }.forEach { builder.append("    $it").append('\n') }
+  private fun getMissingDependenciesOverview(options: PrinterOptions, verdict: Verdict.MissingDependencies): String = buildString {
+    append("Some problems might be caused by missing plugins:").append('\n')
+    verdict.missingDependencies.filterNot { it.dependency.isOptional }.forEach { append("    $it").append('\n') }
     verdict.missingDependencies.filter { it.dependency.isOptional && !options.ignoreMissingOptionalDependency(it.dependency) }.forEach {
-      builder.append("Missing ${it.dependency}: ${it.missingReason}").append('\n')
+      append("Missing ${it.dependency}: ${it.missingReason}").append('\n')
     }
-    return builder.toString()
   }
 
   private fun requestLastVersionsOfCheckedPlugins(results: List<Result>): Map<IdeVersion, List<UpdateInfo>> =
