@@ -1,7 +1,6 @@
 package com.intellij.structure.impl.extractor
 
 import com.intellij.structure.impl.utils.FileUtil
-import com.intellij.structure.impl.utils.JarsUtils
 import com.intellij.structure.impl.utils.ZipUtil
 import com.intellij.structure.problems.PluginProblem
 import com.intellij.structure.problems.PluginZipContainsUnknownFile
@@ -17,7 +16,7 @@ object PluginExtractor {
 
   @Throws(IOException::class)
   fun extractPlugin(pluginZip: File): ExtractorResult {
-    if (!JarsUtils.isZip(pluginZip)) {
+    if (!FileUtil.isZip(pluginZip)) {
       throw IllegalArgumentException("Must be a zip archive: " + pluginZip)
     }
 

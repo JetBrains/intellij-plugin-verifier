@@ -1,5 +1,6 @@
 package com.intellij.structure.impl.utils;
 
+import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,5 +66,21 @@ public class FileUtil {
     throw new IllegalStateException("Failed to create directory under " + parent.getAbsolutePath() + " within "
         + TEMP_DIR_ATTEMPTS + " attempts (tried "
         + baseName + "_0 to " + baseName + "_" + (TEMP_DIR_ATTEMPTS - 1) + ')', lastException);
+  }
+
+  private static boolean hasExtension(@NotNull File file, @NotNull String extension) {
+    return file.isFile() && extension.equals(Files.getFileExtension(file.getName()));
+  }
+
+  public static boolean isJarOrZip(@NotNull File file) {
+    return isJar(file) || isZip(file);
+  }
+
+  public static boolean isZip(@NotNull File file) {
+    return hasExtension(file, "zip");
+  }
+
+  public static boolean isJar(@NotNull File file) {
+    return hasExtension(file, "jar");
   }
 }

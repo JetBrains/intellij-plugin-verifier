@@ -2,6 +2,8 @@ def separator = File.separator
 def mocksPath = "$buildDir" + separator + "mocks"
 def mocksFile = new File(mocksPath)
 
+version = '1.0'
+
 task prepareMockAsJar(type: Copy) {
   //creates mock-plugin.jar file
   into mocksPath
@@ -10,7 +12,7 @@ task prepareMockAsJar(type: Copy) {
 
 task prepareMockJarAsZip(type: Zip, dependsOn: jar) {
   //creates mock-pluginjarAsZip.zip which is equivalent to mock-plugin.jar
-  from zipTree(mocksPath + separator + "mock-plugin.jar")
+  from zipTree(mocksPath + separator + "mock-plugin-1.0.jar")
   destinationDir = mocksFile
   archiveName = "mock-pluginJarAsZip.zip"
 }

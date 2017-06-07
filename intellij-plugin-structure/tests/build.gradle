@@ -1,5 +1,6 @@
 dependencies {
   testCompile project(":")
+  testCompile project(":structure-classes")
   testRuntime project("mock-plugin")
   testCompile 'junit:junit:4.11'
   testCompile 'org.hamcrest:hamcrest-library:1.3'

@@ -14,7 +14,6 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 
 import java.io.File;

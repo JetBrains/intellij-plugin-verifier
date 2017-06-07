@@ -45,8 +45,8 @@ public class PluginResolver extends Resolver {
     if (!pluginFile.exists()) {
       throw new IllegalArgumentException("Plugin file doesn't exist " + pluginFile);
     }
-    if (pluginFile.isDirectory() || JarsUtils.isJarOrZip(pluginFile)) {
-      if (JarsUtils.isZip(pluginFile)) {
+    if (pluginFile.isDirectory() || FileUtil.isJarOrZip(pluginFile)) {
+      if (FileUtil.isZip(pluginFile)) {
         ExtractorResult extractorResult = PluginExtractor.INSTANCE.extractPlugin(pluginFile);
         if (extractorResult instanceof ExtractorSuccess) {
           ExtractedPluginFile extractedPluginFile = ((ExtractorSuccess) extractorResult).getExtractedPlugin();
@@ -120,7 +120,7 @@ public class PluginResolver extends Resolver {
 
   @NotNull
   private Resolver loadClassesFromJar(@NotNull File file) throws IOException {
-    return Resolver.createJarResolver(file);
+    return createJarResolver(file);
   }
 
   private Resolver loadClassesFromDir(@NotNull File dir) throws IOException {
@@ -159,7 +159,7 @@ public class PluginResolver extends Resolver {
       Throwables.propagate(e);
     }
 
-    return Resolver.createUnionResolver("Plugin resolver", resolvers);
+    return createUnionResolver("Plugin resolver", resolvers);
   }
 
   private void closeResolvers(List<Resolver> resolvers) {

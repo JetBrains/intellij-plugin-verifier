@@ -3,7 +3,7 @@ package com.intellij.structure.mocks
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.intellij.structure.impl.extractor.ExtractedPluginFile
-import com.intellij.structure.impl.utils.JarsUtils
+import com.intellij.structure.impl.utils.FileUtil
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.plugin.PluginCreationFail
 import com.intellij.structure.plugin.PluginCreationSuccess
@@ -77,12 +77,12 @@ class MockPluginsTest {
 
   @Test
   fun `plugin jar packed in lib directory of zip archive`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-lib.zip", "lib/mock-plugin.jar")
+    testMockPluginStructureAndConfiguration("mock-plugin-lib.zip", "lib/mock-plugin-1.0.jar")
   }
 
   @Test
   fun `directory with lib subdirectory containing jar file`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-dir", "lib/mock-plugin.jar")
+    testMockPluginStructureAndConfiguration("mock-plugin-dir", "lib/mock-plugin-1.0.jar")
   }
 
   @Test
@@ -93,13 +93,13 @@ class MockPluginsTest {
   @Test
   @Throws(Exception::class)
   fun `single jar file`() {
-    testMockPluginStructureAndConfiguration("mock-plugin.jar", "")
+    testMockPluginStructureAndConfiguration("mock-plugin-1.0.jar", "")
   }
 
   @Test
   @Throws(Exception::class)
   fun `plugin directory with lib containing jar file - packed in zip archive`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-directory-with-lib-in-zip.zip", "lib/mock-plugin.jar")
+    testMockPluginStructureAndConfiguration("mock-plugin-directory-with-lib-in-zip.zip", "lib/mock-plugin-1.0.jar")
   }
 
   private fun testMockIdeCompatibility(plugin: Plugin) {
@@ -142,7 +142,7 @@ class MockPluginsTest {
     }
 
     val extractedPluginPath = getExtractedPluginPath(classesResolver)
-    if (JarsUtils.isZip(pluginFile)) {
+    if (FileUtil.isZip(pluginFile)) {
       assertThat(extractedPluginPath.exists(), `is`(false))
     }
   }

@@ -1,4 +1,6 @@
 rootProject.name = 'intellij-plugin-structure'
+include 'structure-base'
+include 'structure-classes'
 include 'tests'
 include 'tests:mock-plugin'
 

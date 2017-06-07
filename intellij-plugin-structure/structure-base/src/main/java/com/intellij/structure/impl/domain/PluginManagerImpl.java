@@ -1,7 +1,7 @@
 package com.intellij.structure.impl.domain;
 
 import com.intellij.structure.impl.extractor.*;
-import com.intellij.structure.impl.utils.JarsUtils;
+import com.intellij.structure.impl.utils.FileUtil;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
@@ -151,7 +151,7 @@ public class PluginManagerImpl extends PluginManager {
 
     for (final File file : files) {
       PluginCreator innerCreator;
-      if (JarsUtils.isJarOrZip(file)) {
+      if (FileUtil.isJarOrZip(file)) {
         innerCreator = loadDescriptorFromJarFile(file, descriptorPath, pathResolver, validateDescriptor);
       } else if (file.isDirectory()) {
         innerCreator = loadDescriptorFromDir(file, descriptorPath, validateDescriptor);
@@ -201,7 +201,7 @@ public class PluginManagerImpl extends PluginManager {
   private List<URL> getInLibMetaInfUrls(File[] files) {
     List<URL> inLibJarUrls = new ArrayList<URL>();
     for (File file : files) {
-      if (JarsUtils.isJarOrZip(file)) {
+      if (FileUtil.isJarOrZip(file)) {
         try {
           String metaInfUrl = URLUtil.getJarEntryURL(file, "META-INF").toExternalForm();
           inLibJarUrls.add(new URL(metaInfUrl));
@@ -221,7 +221,7 @@ public class PluginManagerImpl extends PluginManager {
     PluginCreator pluginCreator;
     if (jarOrDirectory.isDirectory()) {
       pluginCreator = loadDescriptorFromDir(jarOrDirectory, descriptorPath, validateDescriptor);
-    } else if (JarsUtils.isJar(jarOrDirectory)) {
+    } else if (FileUtil.isJar(jarOrDirectory)) {
       pluginCreator = loadDescriptorFromJarFile(jarOrDirectory, descriptorPath, myPathResolver, validateDescriptor);
     } else {
       return new PluginCreator(descriptorPath, new IncorrectPluginFile(jarOrDirectory), jarOrDirectory);
@@ -293,7 +293,7 @@ public class PluginManagerImpl extends PluginManager {
       throw new IllegalArgumentException("Plugin file " + pluginFile + " does not exist");
     }
     PluginCreator pluginCreator;
-    if (JarsUtils.isZip(pluginFile)) {
+    if (FileUtil.isZip(pluginFile)) {
       pluginCreator = extractZipAndCreatePlugin(pluginFile, validateDescriptor);
     } else {
       pluginCreator = loadDescriptorFromJarOrDirectory(pluginFile, PLUGIN_XML, validateDescriptor);

@@ -25,9 +25,9 @@ object IdeResolverCreator {
   fun createIdeResolver(ide: Ide): Resolver {
     val idePath = ide.idePath
     if (IdeManagerImpl.isSourceDir(idePath)) {
-      return IdeResolverCreator.getIdeaResolverFromSources(idePath)
+      return getIdeaResolverFromSources(idePath)
     } else {
-      return IdeResolverCreator.getIdeResolverFromLibraries(idePath)
+      return getIdeResolverFromLibraries(idePath)
     }
   }
 
@@ -50,11 +50,11 @@ object IdeResolverCreator {
     pools.add(getIdeResolverFromLibraries(ideaDir))
 
     if (IdeManagerImpl.isUltimate(ideaDir)) {
-      pools.add(CompileOutputResolver(IdeManagerImpl.getUltimateClassesRoot(ideaDir)))
+      pools.add(CompileOutputResolver(IdeManagerImpl.Companion.getUltimateClassesRoot(ideaDir)))
       pools.add(getIdeResolverFromLibraries(File(ideaDir, "community")))
       pools.addAll(hardCodedUltimateLibraries(ideaDir))
     } else if (IdeManagerImpl.isCommunity(ideaDir)) {
-      pools.add(CompileOutputResolver(IdeManagerImpl.getCommunityClassesRoot(ideaDir)))
+      pools.add(CompileOutputResolver(IdeManagerImpl.Companion.getCommunityClassesRoot(ideaDir)))
     } else {
       throw IllegalArgumentException("Incorrect IDEA sources: $ideaDir. It must be Community or Ultimate sources root with compiled class files")
     }

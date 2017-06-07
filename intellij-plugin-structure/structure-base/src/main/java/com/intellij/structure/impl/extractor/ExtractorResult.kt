@@ -3,9 +3,7 @@ package com.intellij.structure.impl.extractor
 import com.intellij.structure.problems.PluginProblem
 import org.apache.commons.io.FileUtils
 import java.io.Closeable
-
 import java.io.File
-import java.io.IOException
 
 
 data class ExtractedPluginFile(val actualPluginFile: File,

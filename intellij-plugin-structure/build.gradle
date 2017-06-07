@@ -7,27 +7,21 @@ buildscript {
   }
   dependencies {
     classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
-    classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   }
 }
 
-apply plugin: 'com.jfrog.bintray'
-apply plugin: 'maven-publish'
-apply plugin: 'com.github.johnrengelman.shadow'
-
-def intellijPluginStructureVersion = '2.1'
+def intellijPluginStructureVersion = '2.4'
 if (project.hasProperty("structureVersion")) {
   intellijPluginStructureVersion = project.structureVersion
 }
 
-version = intellijPluginStructureVersion
+configure(allprojects) {
+  group = 'org.jetbrains.intellij.plugins'
+  version = intellijPluginStructureVersion
 
-allprojects {
   apply plugin: 'java'
   apply plugin: 'kotlin'
-
-  group = 'org.jetbrains.intellij.plugins'
 
   sourceCompatibility = 1.6
   targetCompatibility = 1.6
@@ -36,64 +30,44 @@ allprojects {
     maven { url "http://repo.maven.apache.org/maven2" }
   }
 
+  dependencies {
+    compileOnly "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile group: 'com.intellij', name: 'annotations', version: '12.0'
+    compile group: 'com.google.guava', name: 'guava', version: '19.0'
+    compile group: 'commons-io', name: 'commons-io', version: '2.5'
+  }
+
+  //build .jar with sources
+  task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+  }
+
+  artifacts {
+    archives sourcesJar
+  }
 }
 
-test.dependsOn project("tests").test
-
-dependencies {
-  compileOnly "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
-  compile group: 'org.jdom', name: 'jdom', version: '2.0.2'
-  compile group: 'com.google.guava', name: 'guava', version: '19.0'
-  compile group: 'commons-io', name: 'commons-io', version: '2.5'
-  compile group: 'com.intellij', name: 'annotations', version: '12.0'
-  compile group: 'org.ow2.asm', name: 'asm-all', version: '5.0.4'
-  compile group: 'org.jsoup', name: 'jsoup', version: '1.9.2'
-  compile group: 'org.codehaus.plexus', name: 'plexus-archiver', version: '2.3'
-}
-
-//build .jar with sources
-task sourcesJar(type: Jar, dependsOn: classes) {
-  classifier = 'sources'
-  from sourceSets.main.allSource
-}
-
-//build .jar with javadoc
-task javadocJar(type: Jar, dependsOn: javadoc) {
-  classifier = 'javadoc'
-  from javadoc.destinationDir
-}
-
-
-shadowJar {
-  def internalPrefix = 'org.jetbrains.intellij.plugins.internal.'
-
-  relocate('org.objectweb.asm', internalPrefix + 'asm') {}
-  relocate('org.apache.commons', internalPrefix + 'apachecommons') {}
-  relocate('com.google.common', internalPrefix + 'guava') {}
-  relocate('org.jdom2', internalPrefix + 'jdom') {}
-  relocate('org.jetbrains.annotations', internalPrefix + 'jetbrainsannotation') {}
-  relocate('org.apache.http', internalPrefix + 'apachehttp') {}
-}
-jar.finalizedBy(shadowJar)
-
-artifacts {
-  archives sourcesJar
-  archives javadocJar
-  archives shadowJar
-}
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven-publish'
 
 publishing {
   publications {
-    MyPublication(MavenPublication) {
-      from components.java
-      artifact shadowJar
-      artifact sourcesJar
-      artifact javadocJar
-      groupId project.group
-      artifactId project.name
-      version project.version
+
+    def configurePublication = { MavenPublication pub, String projectName ->
+
+      def proj = project(projectName)
+      pub.groupId proj.group
+      pub.artifactId proj.name
+      pub.version proj.version
+
+      pub.from proj.components.java
+      proj.artifacts
+      pub.artifact proj.sourcesJar
     }
+
+    BasePublication(MavenPublication) { configurePublication(it, ':structure-base') }
+    ClassesPublication(MavenPublication) { configurePublication(it, ':structure-classes') }
   }
 }
 
@@ -103,7 +77,7 @@ bintray {
 
 
   publish = true
-  publications = ['MyPublication']
+  publications = ['BasePublication', 'ClassesPublication']
 
   pkg {
     repo = 'intellij-plugin-service'
@@ -127,5 +101,6 @@ bintrayUpload.doFirst {
   println('Uploading IntelliJ structure ' + project.version + ' to bintray')
 }
 
+build.dependsOn project("tests").test
 publishToMavenLocal.dependsOn test
 bintrayUpload.dependsOn test

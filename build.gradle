@@ -13,7 +13,7 @@ buildscript {
 }
 
 def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.85'
-def intellijStructureVersion = '2.1'
+def intellijStructureVersion = '2.4'
 
 
 configure(allprojects) {
@@ -34,7 +34,7 @@ configure(allprojects) {
     compile 'com.github.salomonbrys.kotson:kotson:2.4.0'
 
     //plugin structure API
-    compile(group: 'org.jetbrains.intellij.plugins', name: 'intellij-plugin-structure', version: intellijStructureVersion, ext: 'jar', classifier: 'all')
+    compile "org.jetbrains.intellij.plugins:structure-classes:$intellijStructureVersion"
 
     testCompile group: 'junit', name: 'junit', version: '4.11'
 
