@@ -1,9 +1,9 @@
 package com.jetbrains.intellij.feature.extractor.core
 
 import com.intellij.structure.resolvers.Resolver
-import org.jetbrains.intellij.plugins.internal.asm.Opcodes
-import org.jetbrains.intellij.plugins.internal.asm.tree.*
-import org.jetbrains.intellij.plugins.internal.asm.tree.analysis.*
+import org.objectweb.asm.Opcodes
+import org.objectweb.asm.tree.*
+import org.objectweb.asm.tree.analysis.*
 
 object AnalysisUtil {
 

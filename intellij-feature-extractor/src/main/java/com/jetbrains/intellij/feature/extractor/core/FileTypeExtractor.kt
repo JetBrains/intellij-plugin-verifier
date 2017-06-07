@@ -1,14 +1,14 @@
 package com.jetbrains.intellij.feature.extractor.core
 
 import com.intellij.structure.resolvers.Resolver
-import org.jetbrains.intellij.plugins.internal.asm.MethodVisitor
-import org.jetbrains.intellij.plugins.internal.asm.Opcodes
-import org.jetbrains.intellij.plugins.internal.asm.Type
-import org.jetbrains.intellij.plugins.internal.asm.tree.AbstractInsnNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.MethodInsnNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.TypeInsnNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.analysis.*
+import org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Type
+import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.TypeInsnNode
+import org.objectweb.asm.tree.analysis.*
 
 /**
  * Extracts file extensions passed to consumer of FileTypeFactory.createFileTypes(FileTypeConsumer) from a class extending FileTypeFactory

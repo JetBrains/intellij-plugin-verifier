@@ -1,12 +1,12 @@
 package com.jetbrains.intellij.feature.extractor.core
 
 import com.intellij.structure.resolvers.Resolver
-import org.jetbrains.intellij.plugins.internal.asm.Opcodes
-import org.jetbrains.intellij.plugins.internal.asm.Type
-import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.MethodInsnNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.analysis.Analyzer
-import org.jetbrains.intellij.plugins.internal.asm.tree.analysis.SourceInterpreter
+import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Type
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.analysis.Analyzer
+import org.objectweb.asm.tree.analysis.SourceInterpreter
 
 /**
  * Extracts value returned by ArtifactType#getId() from a class extending ArtifactType.

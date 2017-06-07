@@ -4,7 +4,7 @@ import com.jetbrains.pluginverifier.problems.SuperInterfaceBecameClassProblem
 import com.jetbrains.pluginverifier.utils.BytecodeUtil
 import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
+import org.objectweb.asm.tree.ClassNode
 
 /**
  * Check that all explicitly defined interfaces exist.

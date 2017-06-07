@@ -1,10 +1,10 @@
 package com.intellij.featureExtractor
 
 import com.jetbrains.intellij.feature.extractor.core.AnalysisUtil
-import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
 import org.junit.Assert
 import org.junit.Test
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.MethodNode
 
 /**
  * @author Sergey Patrikeev

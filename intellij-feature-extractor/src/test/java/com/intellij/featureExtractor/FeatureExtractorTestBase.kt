@@ -2,9 +2,9 @@ package com.intellij.featureExtractor
 
 import com.intellij.structure.impl.resolvers.FilesResolver
 import com.intellij.structure.resolvers.Resolver
-import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
 import org.junit.After
 import org.junit.Before
+import org.objectweb.asm.tree.ClassNode
 import java.io.File
 
 open class FeatureExtractorTestBase {
@@ -21,6 +21,6 @@ open class FeatureExtractorTestBase {
     resolver.close()
   }
 
-  fun readClassNode(className: String): ClassNode = resolver.findClass(className.replace('.', '/'))
+  fun readClassNode(className: String): ClassNode = resolver.findClass(className.replace('.', '/'))!!
 
 }

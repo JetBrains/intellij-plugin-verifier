@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers.field
 
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FieldNode
 
 /**
  * @author Dennis.Ushakov

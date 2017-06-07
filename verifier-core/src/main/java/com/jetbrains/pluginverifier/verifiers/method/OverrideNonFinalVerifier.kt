@@ -4,8 +4,8 @@ import com.jetbrains.pluginverifier.problems.OverridingFinalMethodProblem
 import com.jetbrains.pluginverifier.utils.BytecodeUtil
 import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.MethodNode
 
 
 /**

@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.utils
 
-import org.jetbrains.intellij.plugins.internal.asm.signature.SignatureReader
+import org.objectweb.asm.signature.SignatureReader
 
 object PresentationUtils {
 

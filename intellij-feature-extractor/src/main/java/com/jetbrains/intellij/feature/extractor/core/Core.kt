@@ -1,12 +1,12 @@
 package com.jetbrains.intellij.feature.extractor.core
 
-import org.jetbrains.intellij.plugins.internal.asm.Opcodes
-import org.jetbrains.intellij.plugins.internal.asm.tree.AbstractInsnNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.analysis.Frame
-import org.jetbrains.intellij.plugins.internal.asm.tree.analysis.Value
+import org.objectweb.asm.Opcodes
+import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FieldNode
+import org.objectweb.asm.tree.MethodNode
+import org.objectweb.asm.tree.analysis.Frame
+import org.objectweb.asm.tree.analysis.Value
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

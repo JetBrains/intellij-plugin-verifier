@@ -1,12 +1,12 @@
 package com.jetbrains.pluginverifier.tests
 
+import com.google.common.collect.Multimap
 import com.intellij.structure.ide.Ide
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.plugin.PluginDependency
-import org.jetbrains.intellij.plugins.internal.guava.collect.Multimap
-import org.jetbrains.intellij.plugins.internal.jdom.Document
-import org.jetbrains.intellij.plugins.internal.jdom.Element
+import org.jdom2.Document
+import org.jdom2.Element
 import java.io.File
 
 object MockUtil {
@@ -71,7 +71,7 @@ open class MockPluginAdapter : Plugin {
     throw UnsupportedOperationException("not implemented")
   }
 
-  override fun getModuleDependencies(): List<PluginDependency>? {
+  override fun getModuleDependencies(): List<PluginDependency> {
     throw UnsupportedOperationException("not implemented")
   }
 
@@ -87,7 +87,7 @@ open class MockPluginAdapter : Plugin {
     throw UnsupportedOperationException("not implemented")
   }
 
-  override fun getAllClassesReferencedFromXml(): Set<String>? {
+  override fun getAllClassesReferencedFromXml(): Set<String> {
     return emptySet()
   }
 
@@ -95,7 +95,7 @@ open class MockPluginAdapter : Plugin {
     throw UnsupportedOperationException("not implemented")
   }
 
-  override fun isCompatibleWithIde(ideVersion: IdeVersion?): Boolean {
+  override fun isCompatibleWithIde(ideVersion: IdeVersion): Boolean {
     throw UnsupportedOperationException("not implemented")
   }
 
@@ -131,15 +131,15 @@ open class MockPluginAdapter : Plugin {
     throw UnsupportedOperationException("not implemented")
   }
 
-  override fun getDefinedModules(): Set<String>? {
+  override fun getDefinedModules(): Set<String> {
     throw UnsupportedOperationException("not implemented")
   }
 
-  override fun getDependencies(): List<PluginDependency>? {
+  override fun getDependencies(): List<PluginDependency> {
     throw UnsupportedOperationException("not implemented")
   }
 
-  override fun getOptionalDescriptors(): Map<String, Plugin>? {
+  override fun getOptionalDescriptors(): Map<String, Plugin> {
     return emptyMap()
   }
 

@@ -7,9 +7,9 @@ import com.jetbrains.pluginverifier.location.*
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.utils.BytecodeUtil
 import com.jetbrains.pluginverifier.warnings.Warning
-import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.FieldNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FieldNode
+import org.objectweb.asm.tree.MethodNode
 
 data class VerificationContext(
     val plugin: Plugin,

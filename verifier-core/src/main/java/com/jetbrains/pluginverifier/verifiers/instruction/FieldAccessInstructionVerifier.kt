@@ -7,8 +7,8 @@ import com.jetbrains.pluginverifier.utils.checkClassExistsOrExternal
 import com.jetbrains.pluginverifier.utils.isSubclassOf
 import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import org.jetbrains.intellij.plugins.internal.asm.Opcodes
-import org.jetbrains.intellij.plugins.internal.asm.tree.*
+import org.objectweb.asm.Opcodes
+import org.objectweb.asm.tree.*
 
 /**
  * Verifies GETSTATIC, PUTSTATIC, GETFIELD and PUTFIELD instructions

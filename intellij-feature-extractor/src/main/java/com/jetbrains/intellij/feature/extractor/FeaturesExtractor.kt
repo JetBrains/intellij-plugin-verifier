@@ -7,7 +7,7 @@ import com.jetbrains.intellij.feature.extractor.core.ArtifactTypeExtractor
 import com.jetbrains.intellij.feature.extractor.core.FacetTypeExtractor
 import com.jetbrains.intellij.feature.extractor.core.FileTypeExtractor
 import com.jetbrains.intellij.feature.extractor.core.RunConfigurationExtractor
-import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
+import org.objectweb.asm.tree.ClassNode
 import org.slf4j.LoggerFactory
 
 object FeaturesExtractor {

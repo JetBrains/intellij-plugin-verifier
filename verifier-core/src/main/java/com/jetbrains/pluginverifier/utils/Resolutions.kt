@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.problems.IllegalClassAccessProblem
 import com.jetbrains.pluginverifier.problems.InvalidClassFileProblem
 import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
+import org.objectweb.asm.tree.ClassNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

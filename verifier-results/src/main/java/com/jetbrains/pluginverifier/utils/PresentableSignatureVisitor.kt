@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.utils
 
-import org.jetbrains.intellij.plugins.internal.asm.Opcodes
-import org.jetbrains.intellij.plugins.internal.asm.signature.SignatureVisitor
+import org.objectweb.asm.Opcodes
+import org.objectweb.asm.signature.SignatureVisitor
 
 /*
 These are the complete signature rules:

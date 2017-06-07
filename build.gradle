@@ -33,7 +33,6 @@ configure(allprojects) {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile 'com.github.salomonbrys.kotson:kotson:2.4.0'
 
-    //plugin structure API
     compile "org.jetbrains.intellij.plugins:structure-classes:$intellijStructureVersion"
 
     testCompile group: 'junit', name: 'junit', version: '4.11'

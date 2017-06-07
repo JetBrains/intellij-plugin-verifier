@@ -7,11 +7,11 @@ import com.jetbrains.pluginverifier.utils.checkClassExistsOrExternal
 import com.jetbrains.pluginverifier.utils.isSubclassOf
 import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import org.jetbrains.intellij.plugins.internal.asm.Opcodes
-import org.jetbrains.intellij.plugins.internal.asm.tree.AbstractInsnNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.MethodInsnNode
-import org.jetbrains.intellij.plugins.internal.asm.tree.MethodNode
+import org.objectweb.asm.Opcodes
+import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.MethodNode
 import java.util.*
 
 class InvokeInstructionVerifier : InstructionVerifier {

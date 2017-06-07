@@ -1,7 +1,7 @@
 package com.jetbrains.intellij.feature.extractor.core
 
 import com.intellij.structure.resolvers.Resolver
-import org.jetbrains.intellij.plugins.internal.asm.tree.ClassNode
+import org.objectweb.asm.tree.ClassNode
 
 abstract class Extractor(val resolver: Resolver) {
 
