@@ -39,6 +39,11 @@ data class InvalidUntilBuild(val descriptorPath: String, val untilBuild: String)
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 }
 
+data class SinceBuildGraterThenUntil(val descriptorPath: String) :
+    InvalidDescriptorProblem(descriptorPath, "since build greater then until build") {
+  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
+}
+
 data class UnexpectedDescriptorElements(val descriptorPath: String, val errorMessage: String) : InvalidDescriptorProblem(descriptorPath, errorMessage) {
   override val level: Level = Level.ERROR
 }

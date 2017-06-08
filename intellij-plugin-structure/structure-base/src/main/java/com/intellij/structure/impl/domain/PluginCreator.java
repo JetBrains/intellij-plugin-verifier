@@ -96,6 +96,10 @@ final class PluginCreator {
     if (plugin.getModuleDependencies().isEmpty()) {
       registerProblem(new NoModuleDependencies(myDescriptorPath));
     }
+
+    if(plugin.getUntilBuild() != null && plugin.getSinceBuild().compareTo(plugin.getUntilBuild()) > 0) {
+      registerProblem(new SinceBuildGraterThenUntil(myDescriptorPath));
+    }
   }
 
   public Map<PluginDependency, String> getOptionalDependenciesConfigurationFiles() {

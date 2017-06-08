@@ -19,6 +19,7 @@ public interface Plugin {
 
   IdeVersion getSinceBuild();
 
+  @Nullable
   IdeVersion getUntilBuild();
 
   boolean isCompatibleWithIde(@NotNull IdeVersion ideVersion);

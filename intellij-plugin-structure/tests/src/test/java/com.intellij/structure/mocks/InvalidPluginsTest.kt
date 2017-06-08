@@ -176,6 +176,15 @@ class InvalidPluginsTest {
   }
 
   @Test
+  fun `since build less then until `() {
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          ideaVersion = """<idea-version since-build="131.1" until-build="120.1"/>"""
+        },
+        listOf(SinceBuildGraterThenUntil("plugin.xml")))
+  }
+
+  @Test
   fun `empty vendor`() {
     `test invalid plugin xml`(
         perfectXmlBuilder.modify {
