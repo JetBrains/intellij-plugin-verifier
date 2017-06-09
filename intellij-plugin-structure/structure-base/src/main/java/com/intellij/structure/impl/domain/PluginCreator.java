@@ -97,8 +97,10 @@ final class PluginCreator {
       registerProblem(new NoModuleDependencies(myDescriptorPath));
     }
 
-    if(plugin.getUntilBuild() != null && plugin.getSinceBuild().compareTo(plugin.getUntilBuild()) > 0) {
-      registerProblem(new SinceBuildGraterThenUntil(myDescriptorPath));
+    IdeVersion sinceBuild = plugin.getSinceBuild();
+    IdeVersion untilBuild = plugin.getUntilBuild();
+    if (sinceBuild != null && untilBuild != null && sinceBuild.compareTo(untilBuild) > 0) {
+      registerProblem(new SinceBuildGreaterThanUntilBuild(myDescriptorPath, sinceBuild, untilBuild));
     }
   }
 

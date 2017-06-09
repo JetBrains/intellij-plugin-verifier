@@ -1,5 +1,7 @@
 package com.intellij.structure.problems
 
+import com.intellij.structure.ide.IdeVersion
+
 abstract class InvalidDescriptorProblem(descriptorPath: String, detailedMessage: String) : PluginProblem() {
   override val message: String = "Invalid plugin descriptor $descriptorPath: $detailedMessage"
 }
@@ -39,8 +41,8 @@ data class InvalidUntilBuild(val descriptorPath: String, val untilBuild: String)
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 }
 
-data class SinceBuildGraterThenUntil(val descriptorPath: String) :
-    InvalidDescriptorProblem(descriptorPath, "since build greater then until build") {
+data class SinceBuildGreaterThanUntilBuild(val descriptorPath: String, val sinceBuild: IdeVersion, val untilBuild: IdeVersion) :
+    InvalidDescriptorProblem(descriptorPath, "since build $sinceBuild is greater than until build $untilBuild") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 }
 

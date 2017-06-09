@@ -1,5 +1,6 @@
 package com.intellij.structure.mocks
 
+import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.impl.utils.ZipUtil
 import com.intellij.structure.plugin.PluginCreationFail
 import com.intellij.structure.plugin.PluginCreationSuccess
@@ -181,7 +182,7 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           ideaVersion = """<idea-version since-build="131.1" until-build="120.1"/>"""
         },
-        listOf(SinceBuildGraterThenUntil("plugin.xml")))
+        listOf(SinceBuildGreaterThanUntilBuild("plugin.xml", IdeVersion.createIdeVersion("131.1"), IdeVersion.createIdeVersion("120.1"))))
   }
 
   @Test
