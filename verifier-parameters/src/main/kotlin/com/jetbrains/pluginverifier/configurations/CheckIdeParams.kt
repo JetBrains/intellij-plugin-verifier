@@ -129,15 +129,15 @@ class CheckIdeParamsParser : ConfigurationParamsParser<CheckIdeParams> {
     } else {
       val myActualUpdatesToCheck = arrayListOf<UpdateInfo>()
 
-      checkAllBuilds.map {
+      checkAllBuilds.flatMapTo(myActualUpdatesToCheck) {
         RepositoryManager.getAllCompatibleUpdatesOfPlugin(ideVersion, it)
-      }.flatten().toCollection(myActualUpdatesToCheck)
+      }
 
-      checkLastBuilds.distinct().map {
+      checkLastBuilds.distinct().mapNotNullTo(myActualUpdatesToCheck) {
         RepositoryManager.getAllCompatibleUpdatesOfPlugin(ideVersion, it)
             .sortedByDescending { it.updateId }
             .firstOrNull()
-      }.filterNotNull().toCollection(myActualUpdatesToCheck)
+      }
 
       return myActualUpdatesToCheck
     }

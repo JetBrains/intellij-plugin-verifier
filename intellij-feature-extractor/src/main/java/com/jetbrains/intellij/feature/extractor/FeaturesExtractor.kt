@@ -76,6 +76,6 @@ object FeaturesExtractor {
   }
 
   private fun getExtensionPointImplementors(extensionPoint: ExtensionPoint, plugin: Plugin): List<String> =
-      plugin.extensions[extensionPoint.extensionPointName]?.map { it.getAttributeValue("implementation") }?.filterNotNull().orEmpty()
+      plugin.extensions[extensionPoint.extensionPointName]?.mapNotNull { it.getAttributeValue("implementation") }.orEmpty()
 
 }

@@ -50,8 +50,7 @@ class CheckIdeConfiguration : Configuration<CheckIdeParams, CheckIdeResults> {
     val existingUpdatesForIde = RepositoryManager
         .getLastCompatibleUpdates(ideVersion)
         .filterNot { PluginIdAndVersion(it.pluginId, it.version) in params.excludedPlugins }
-        .map { it.pluginId }
-        .filterNotNull()
+        .mapNotNull { it.pluginId }
         .toSet()
 
     return params.pluginIdsToCheckExistingBuilds.distinct()

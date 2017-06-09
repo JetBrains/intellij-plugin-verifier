@@ -64,8 +64,7 @@ class CheckRangeRunner(val pluginInfo: PluginInfo,
   private fun getIdesMatchingSinceUntilBuild(sinceBuild: IdeVersion, untilBuild: IdeVersion?): List<IdeFileLock> = IdeFilesManager.locked {
     (ideVersions ?: IdeFilesManager.ideList())
         .filter { sinceBuild <= it && (untilBuild == null || it <= untilBuild) }
-        .map { IdeFilesManager.getIde(it) }
-        .filterNotNull()
+        .mapNotNull { IdeFilesManager.getIde(it) }
   }
 
   override fun computeResult(progress: Progress): CheckRangeResults = PluginCreator.createPlugin(pluginCoordinate).use { createPluginResult ->

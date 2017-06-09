@@ -10,8 +10,8 @@ object DepGraph2ApiGraphConverter {
 
   fun convert(graph: DirectedGraph<DepVertex, DepEdge>, startVertex: DepVertex): DependenciesGraph {
     val startNode = getDependencyNodeByVertex(startVertex, graph)!!
-    val vertices = graph.vertexSet().map { getDependencyNodeByVertex(it, graph) }.filterNotNull()
-    val edges = graph.edgeSet().map { getDependencyEdgeByEdge(graph, it) }.filterNotNull()
+    val vertices = graph.vertexSet().mapNotNull { getDependencyNodeByVertex(it, graph) }
+    val edges = graph.edgeSet().mapNotNull { getDependencyEdgeByEdge(graph, it) }
     return DependenciesGraph(startNode, vertices, edges)
   }
 
@@ -42,7 +42,7 @@ object DepGraph2ApiGraphConverter {
   }
 
   private fun getDependencyNodeByVertex(vertex: DepVertex, graph: DirectedGraph<DepVertex, DepEdge>): DependencyNode? {
-    val missingDependencies = graph.outgoingEdgesOf(vertex).map { getMissingDependency(it) }.filterNotNull()
+    val missingDependencies = graph.outgoingEdgesOf(vertex).mapNotNull { getMissingDependency(it) }
     val resolveResult = vertex.resolveResult
     return when (resolveResult) {
       is DependencyResolver.Result.FoundReady -> DependencyNode(resolveResult.plugin.pluginId ?: vertex.id, resolveResult.plugin.pluginVersion ?: DEFAULT_VERSION, missingDependencies)

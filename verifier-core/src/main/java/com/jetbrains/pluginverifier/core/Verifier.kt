@@ -38,20 +38,19 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
   }
 
   private fun createPluginAndDoVerification(): Result = PluginCreator.createPlugin(pluginCoordinate).use { createPluginResult ->
-    when (createPluginResult) {
-      is CreatePluginResult.BadPlugin -> {
-        val pluginInfo = getPluginInfoByCoordinate(pluginCoordinate)
-        Result(pluginInfo, ideDescriptor.ideVersion, Verdict.Bad(createPluginResult.pluginErrorsAndWarnings))
-      }
-      is CreatePluginResult.NotFound -> {
-        val pluginInfo = getPluginInfoByCoordinate(pluginCoordinate)
-        Result(pluginInfo, ideDescriptor.ideVersion, Verdict.NotFound(createPluginResult.reason))
-      }
-      is CreatePluginResult.OK -> {
-        val verdict = getVerificationVerdict(createPluginResult)
-        val pluginInfo = getPluginInfoByPluginInstance(createPluginResult, pluginCoordinate)
-        Result(pluginInfo, ideDescriptor.ideVersion, verdict)
-      }
+    val (pluginInfo, verdict) = getPluginInfoByAndVerdict(createPluginResult)
+    Result(pluginInfo, ideDescriptor.ideVersion, verdict)
+  }
+
+  private fun getPluginInfoByAndVerdict(createPluginResult: CreatePluginResult) = when (createPluginResult) {
+    is CreatePluginResult.BadPlugin -> {
+      getPluginInfoByCoordinate(pluginCoordinate) to Verdict.Bad(createPluginResult.pluginErrorsAndWarnings)
+    }
+    is CreatePluginResult.NotFound -> {
+      getPluginInfoByCoordinate(pluginCoordinate) to Verdict.NotFound(createPluginResult.reason)
+    }
+    is CreatePluginResult.OK -> {
+      getPluginInfoByPluginInstance(createPluginResult, pluginCoordinate) to getVerificationVerdict(createPluginResult)
     }
   }
 
@@ -112,23 +111,22 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
   }
 
   private fun getVerificationClassLoader(dependenciesResolver: Resolver): Resolver = Resolver.createCacheResolver(
-          Resolver.createUnionResolver(
-              "Common resolver for plugin $plugin; IDE #${ideDescriptor.ideVersion}; JDK $runtimeResolver",
-              listOf(pluginResolver, runtimeResolver, ideDescriptor.ideResolver, dependenciesResolver, params.externalClassPath)
-          )
+      Resolver.createUnionResolver(
+          "Common resolver for plugin $plugin; IDE #${ideDescriptor.ideVersion}; JDK $runtimeResolver",
+          listOf(pluginResolver, runtimeResolver, ideDescriptor.ideResolver, dependenciesResolver, params.externalClassPath)
+      )
   )
 
   private fun getClassesOfPluginToCheck(): Iterator<String> {
     val resolver = Resolver.createUnionResolver("Plugin classes for check",
         (plugin.allClassesReferencedFromXml + plugin.optionalDescriptors.flatMap { it.value.allClassesReferencedFromXml })
-            .map { pluginResolver.getClassLocation(it) }
-            .filterNotNull()
+            .mapNotNull { pluginResolver.getClassLocation(it) }
             .distinct())
     return if (resolver.isEmpty) pluginResolver.allClasses else resolver.allClasses
   }
 
   private fun getDependenciesClassesResolver(graph: DirectedGraph<DepVertex, DepEdge>): Resolver {
-    val resolvers = graph.vertexSet().map { getResolverByResult(it.resolveResult) }.filterNotNull()
+    val resolvers = graph.vertexSet().mapNotNull { getResolverByResult(it.resolveResult) }
     return Resolver.createUnionResolver("Plugin $plugin dependencies resolvers", resolvers)
   }
 
