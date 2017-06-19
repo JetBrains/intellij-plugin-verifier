@@ -16,14 +16,18 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Files
-import java.util.function.Function
 
 /**
  * @author Sergey Patrikeev
  */
 class CheckTrunkApiParamsParser : ConfigurationParamsParser<CheckTrunkApiParams> {
 
-  private val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiParamsParser::class.java)
+  companion object {
+
+    private val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiParamsParser::class.java)
+
+    private val IDE_DOWNLOAD_ATTEMPTS = 3
+  }
 
   override fun parse(opts: CmdOpts, freeArgs: List<String>): CheckTrunkApiParams {
     val apiOpts = CheckTrunkApiOpts()
@@ -71,7 +75,7 @@ class CheckTrunkApiParamsParser : ConfigurationParamsParser<CheckTrunkApiParams>
   private fun downloadIde(ideVersion: IdeVersion): File {
 
     LOG.info("Downloading the IDE #$ideVersion")
-    val ideZip = downloadIdeZip(ideVersion)
+    val ideZip = tryDownloadIde(ideVersion)
     LOG.info("Successfully downloaded to $ideZip")
 
     try {
@@ -90,11 +94,24 @@ class CheckTrunkApiParamsParser : ConfigurationParamsParser<CheckTrunkApiParams>
     }
   }
 
+  private fun tryDownloadIde(ideVersion: IdeVersion): File {
+    for (attempt in 1..IDE_DOWNLOAD_ATTEMPTS) {
+      val ideZip = try {
+        downloadIdeZip(ideVersion)
+      } catch (e: Exception) {
+        LOG.error("Attempt #$attempt to download IDE is failed", e)
+        continue
+      }
+      return ideZip
+    }
+    throw RuntimeException("Unable to download IDE $ideVersion in $IDE_DOWNLOAD_ATTEMPTS attempts")
+  }
+
   private fun downloadIdeZip(ideVersion: IdeVersion): File {
     val tempFile = File.createTempFile("ide", ".zip", RepositoryConfiguration.ideDownloadDir)
 
     val lastProgress = AtomicDouble()
-    val progressUpdater = Function<Double, Unit> {
+    val progressUpdater: (Double) -> Unit = {
       if (it - lastProgress.get() > 0.1) {
         LOG.info("Downloading progress is ${(it * 100).toInt()}%")
         lastProgress.set(it)

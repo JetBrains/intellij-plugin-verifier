@@ -24,7 +24,6 @@ import java.io.IOException
 import java.io.InputStream
 import java.net.URL
 import java.util.concurrent.TimeUnit
-import java.util.function.Function
 
 data class AvailableIde(val version: IdeVersion,
                         val isRelease: Boolean,
@@ -82,7 +81,7 @@ object IdeRepository {
 
   fun downloadIde(availableIde: AvailableIde,
                   saveTo: File,
-                  progress: Function<Double, Unit>? = null): File {
+                  progress: ((Double) -> Unit)? = null): File {
     if (saveTo.exists()) {
       try {
         FileUtils.forceDelete(saveTo)
@@ -118,7 +117,7 @@ object IdeRepository {
     }
   }
 
-  private fun copyInputStreamWithProgress(inputStream: InputStream, fileSize: Long, toFile: File, progress: Function<Double, Unit>?) {
+  private fun copyInputStreamWithProgress(inputStream: InputStream, fileSize: Long, toFile: File, progress: ((Double) -> Unit)?) {
     val buffer = ByteArray(4 * 1024)
     if (fileSize == 0L) {
       throw IllegalArgumentException("File is empty")
@@ -133,7 +132,9 @@ object IdeRepository {
           if (n == -1) break
           output.write(buffer, 0, n)
           count += n
-          progress?.apply(count.toDouble() / fileSize)
+          if (progress != null) {
+            progress(count.toDouble() / fileSize)
+          }
         }
       }
     }
