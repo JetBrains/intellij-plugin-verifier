@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.configurations
 import com.google.common.util.concurrent.AtomicDouble
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.*
+import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
 import com.jetbrains.pluginverifier.repository.IdeRepository
@@ -54,7 +55,7 @@ class CheckTrunkApiParamsParser : ConfigurationParamsParser<CheckTrunkApiParams>
     val problemsFilter = OptionsUtil.getProblemsFilter(opts)
 
     val majorIdeDescriptor = OptionsUtil.createIdeDescriptor(majorIdeFile, opts)
-    return CheckTrunkApiParams(ideDescriptor, majorIdeDescriptor, externalClassesPrefixes, problemsFilter, jdkDescriptor, deleteMajorOnExit)
+    return CheckTrunkApiParams(ideDescriptor, majorIdeDescriptor, externalClassesPrefixes, problemsFilter, jdkDescriptor, deleteMajorOnExit, majorIdeFile)
   }
 
   private fun parseIdeVersion(ideVersion: String): IdeVersion {
@@ -127,6 +128,7 @@ data class CheckTrunkApiParams(val trunkDescriptor: IdeDescriptor,
                                val problemsFilter: ProblemsFilter,
                                val jdkDescriptor: JdkDescriptor,
                                private val deleteMajorIdeOnExit: Boolean,
+                               private val majorIdeFile: File,
                                val progress: Progress = DefaultProgress()) : ConfigurationParams {
   override fun presentableText(): String = """Check Trunk API Configuration Parameters:
 Trunk IDE to be checked: $trunkDescriptor
@@ -136,10 +138,10 @@ JDK: $jdkDescriptor
 """
 
   override fun close() {
-    try {
-      trunkDescriptor.close()
-    } finally {
-      releaseDescriptor.close()
+    trunkDescriptor.closeLogged()
+    releaseDescriptor.closeLogged()
+    if (deleteMajorIdeOnExit) {
+      majorIdeFile.deleteLogged()
     }
   }
 
