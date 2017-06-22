@@ -107,8 +107,9 @@ public final class ContainerResolver extends Resolver {
   @Nullable
   public Resolver getClassLocation(@NotNull String className) {
     for (Resolver resolver : myResolvers) {
-      if (resolver.containsClass(className)) {
-        return resolver;
+      Resolver location = resolver.getClassLocation(className);
+      if (location != null) {
+        return location;
       }
     }
     return null;
