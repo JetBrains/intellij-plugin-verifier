@@ -273,7 +273,7 @@ class VerifierExecutorTest {
         "Instantiation of an interface misc.BecomeInterface"
     )
 
-    val initOnInterfaceMethod = InvokeClassMethodOnInterfaceProblem(
+    val initOnInterfaceMethod = MethodNotFoundProblem(
         SymbolicReference.methodOf(
             "misc/BecomeInterface",
             "<init>",
@@ -283,8 +283,8 @@ class VerifierExecutorTest {
         Instruction.INVOKE_SPECIAL
     )
     assertProblemFound(initOnInterfaceMethod,
-        "Method mock.plugin.news.NewProblems.newInterface() : void has invocation *invokespecial* instruction referencing a *class* method misc.BecomeInterface.<init>() : void, but the method's host misc.BecomeInterface is an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.",
-        "Incompatible change of class misc.BecomeInterface to interface"
+        "Method mock.plugin.news.NewProblems.newInterface() : void contains an *invokespecial* instruction referencing an unresolved method misc.BecomeInterface.<init>() : void. This can lead to **NoSuchMethodError** exception at runtime.",
+        "Invocation of unresolved method misc.BecomeInterface.<init>() : void"
     )
   }
 
@@ -328,7 +328,7 @@ class VerifierExecutorTest {
         PUBLIC_METHOD_AF
     )
 
-    val initOnInterfaceMethod = InvokeClassMethodOnInterfaceProblem(
+    val initOnInterfaceMethod = MethodNotFoundProblem(
         SymbolicReference.methodOf(
             "misc/BecomeInterface",
             "<init>",
@@ -338,8 +338,8 @@ class VerifierExecutorTest {
         Instruction.INVOKE_SPECIAL
     )
     assertProblemFound(initOnInterfaceMethod,
-        "Method mock.plugin.inheritance.SuperClassBecameInterface.<init>() : void has invocation *invokespecial* instruction referencing a *class* method misc.BecomeInterface.<init>() : void, but the method's host misc.BecomeInterface is an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.",
-        "Incompatible change of class misc.BecomeInterface to interface"
+        "Method mock.plugin.inheritance.SuperClassBecameInterface.<init>() : void contains an *invokespecial* instruction referencing an unresolved method misc.BecomeInterface.<init>() : void. This can lead to **NoSuchMethodError** exception at runtime.",
+        "Invocation of unresolved method misc.BecomeInterface.<init>() : void"
     )
   }
 

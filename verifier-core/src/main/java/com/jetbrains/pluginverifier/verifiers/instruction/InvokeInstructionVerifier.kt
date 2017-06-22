@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.BytecodeUtil
+import com.jetbrains.pluginverifier.utils.BytecodeUtil.isInterface
 import com.jetbrains.pluginverifier.utils.checkClassExistsOrExternal
 import com.jetbrains.pluginverifier.utils.isSubclassOf
 import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
@@ -31,7 +32,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
                                    val methodOwner: String = instr.owner,
                                    val methodName: String = instr.name,
                                    val methodDescriptor: String = instr.desc) {
-  var ownerNode: ClassNode? = null
+  private lateinit var ownerNode: ClassNode
 
   val instruction: Instruction = when (instr.opcode) {
     Opcodes.INVOKEVIRTUAL -> Instruction.INVOKE_VIRTUAL
@@ -80,7 +81,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     to the class or interface in which the method is to be found. The named method is resolved.
      */
     val resolved: ResolvedMethod
-    if (instr.itf) {
+    if (isInterface(ownerNode)) {
       resolved = resolveInterfaceMethod() ?: return
     } else {
       resolved = resolveClassMethod() ?: return
@@ -126,7 +127,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
        So I caught up a nasty bug of incorrectly determining the method to be invoked.
     */
     val classRef: ClassNode
-    if (resolved.methodNode.name != "<init>" && (!instr.itf && methodOwner == verifiableClass.superName) && BytecodeUtil.isSuperFlag(verifiableClass)) {
+    if (resolved.methodNode.name != "<init>" && (!isInterface(ownerNode) && methodOwner == verifiableClass.superName) && BytecodeUtil.isSuperFlag(verifiableClass)) {
       classRef = ctx.resolveClassOrProblem(verifiableClass.superName, verifiableClass, { getFromMethod() }) ?: return
     } else {
       classRef = ctx.resolveClassOrProblem(methodOwner, verifiableClass, { getFromMethod() }) ?: return
@@ -170,7 +171,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
         direct superclass of that class, and so forth, until a match is found or no further superclasses exist.
         If a match is found, then it is the method to be invoked.
     */
-    if (!BytecodeUtil.isInterface(classRef) && classRef.superName != null) {
+    if (!isInterface(classRef) && classRef.superName != null) {
       var current: ClassNode = ctx.resolveClassOrProblem(classRef.superName, classRef, { ctx.fromClass(classRef) }) ?: return null
       while (true) {
         val match = (current.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc }
@@ -188,7 +189,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
        3) Otherwise, if C is an interface and the class Object contains a declaration of a public instance method with
        the same name and descriptor as the resolved method, then it is the method to be invoked.
     */
-    if (BytecodeUtil.isInterface(classRef)) {
+    if (isInterface(classRef)) {
       val objectClass = ctx.resolveClassOrProblem("java/lang/Object", classRef, { ctx.fromClass(classRef) }) ?: return null
       val match = (objectClass.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc && BytecodeUtil.isPublic(it) }
       if (match != null) {
@@ -330,7 +331,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
   private fun getFromMethod() = ctx.fromMethod(verifiableClass, verifiableMethod)
 
   fun resolveInterfaceMethod(): ResolvedMethod? {
-    val (fail, resolvedMethod) = resolveInterfaceMethod0(ownerNode!!)
+    val (fail, resolvedMethod) = resolveInterfaceMethod0(ownerNode)
     if (fail) {
       return null
     }
@@ -348,7 +349,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
   }
 
   fun resolveClassMethod(): ResolvedMethod? {
-    val (fail, resolvedMethod) = resolveClassMethod0(ownerNode!!)
+    val (fail, resolvedMethod) = resolveClassMethod0(ownerNode)
     if (fail) {
       return null
     }
@@ -423,7 +424,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     /*
     1) If C is not an interface, interface method resolution throws an IncompatibleClassChangeError.
      */
-    if (!BytecodeUtil.isInterface(interfaceNode)) {
+    if (!isInterface(interfaceNode)) {
       val methodReference = SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)
       val caller = getFromMethod()
       ctx.registerProblem(InvokeInterfaceMethodOnClassProblem(methodReference, caller, instruction))
@@ -549,7 +550,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     /*
       1) If C is an interface, method resolution throws an IncompatibleClassChangeError.
     */
-    if (BytecodeUtil.isInterface(classNode)) {
+    if (isInterface(classNode)) {
       /*
       This additional if-condition ensures that we are not trying to resolve a static interface method at the moment.
       It is necessary because actually the JVM 8 spec chooses resolve-class-resolution algorithm unconditionally for resolving
