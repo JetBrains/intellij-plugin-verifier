@@ -6,6 +6,7 @@ import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.ProblemsFilter
+import com.jetbrains.pluginverifier.configurations.PluginIdAndVersion
 import com.jetbrains.pluginverifier.ide.IdeCreator
 import com.jetbrains.pluginverifier.output.PrinterOptions
 import com.sampullara.cli.Argument
@@ -118,11 +119,11 @@ object OptionsUtil {
 
   fun getProblemsFilter(opts: CmdOpts): ProblemsFilter {
 
-    var problemsToIgnore: Multimap<Pair<String, String>, Pattern> = HashMultimap.create<Pair<String, String>, Pattern>()
-
     val ignoreProblemsFile = opts.ignoreProblemsFile
-    if (ignoreProblemsFile != null) {
-      problemsToIgnore = getProblemsToIgnoreFromFile(ignoreProblemsFile)
+    val problemsToIgnore = if (ignoreProblemsFile != null) {
+      getProblemsToIgnoreFromFile(ignoreProblemsFile)
+    } else {
+      HashMultimap.create()
     }
 
     val saveIgnoredProblemsFile = if (opts.saveIgnoredProblemsFile != null) File(opts.saveIgnoredProblemsFile) else null
@@ -140,13 +141,13 @@ object OptionsUtil {
   /**
    * @return _(pluginXmlId, version)_ -> to be ignored _problem pattern_
    */
-  private fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): Multimap<Pair<String, String>, Pattern> {
+  private fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): Multimap<PluginIdAndVersion, Pattern> {
     val file = File(ignoreProblemsFile)
     if (!file.exists()) {
       throw IllegalArgumentException("Ignored problems file doesn't exist " + ignoreProblemsFile)
     }
 
-    val m = HashMultimap.create<Pair<String, String>, Pattern>()
+    val m = HashMultimap.create<PluginIdAndVersion, Pattern>()
     try {
       BufferedReader(FileReader(file)).use { br ->
         var s: String?
@@ -158,14 +159,16 @@ object OptionsUtil {
           val tokens = s.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 
           if (tokens.size != 3) {
-            throw IllegalArgumentException("incorrect problem line $s\nthe line must be in the form: <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>\n<plugin_version> may be empty (which means that a problem will be ignored in all the versions of the plugin)\nexample 'org.jetbrains.kotlin::accessing to unknown class org/jetbrains/kotlin/compiler/.*' - ignore all the missing classes from org.jetbrains.kotlin.compiler package")
+            throw IllegalArgumentException("incorrect problem line $s\nthe line must be in the form: <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>\n" +
+                "<plugin_version> may be empty (which means that a problem will be ignored in all the versions of the plugin)\n" +
+                "example: org.jetbrains.kotlin::access to unresolved class org.jetbrains.kotlin.compiler.*")
           }
 
           val pluginId = tokens[0].trim { it <= ' ' }
           val pluginVersion = tokens[1].trim { it <= ' ' }
           val ignorePattern = tokens[2].trim { it <= ' ' }.replace('/', '.')
 
-          m.put(pluginId to pluginVersion, Pattern.compile(ignorePattern))
+          m.put(PluginIdAndVersion(pluginId, pluginVersion), Pattern.compile(ignorePattern))
         }
       }
     } catch (e: Exception) {

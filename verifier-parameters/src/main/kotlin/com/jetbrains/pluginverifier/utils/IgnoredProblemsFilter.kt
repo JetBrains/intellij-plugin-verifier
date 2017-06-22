@@ -4,13 +4,14 @@ import com.google.common.collect.ImmutableMultimap
 import com.google.common.collect.Multimap
 import com.intellij.structure.plugin.Plugin
 import com.jetbrains.pluginverifier.api.ProblemsFilter
+import com.jetbrains.pluginverifier.configurations.PluginIdAndVersion
 import com.jetbrains.pluginverifier.problems.Problem
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.regex.Pattern
 
-class IgnoredProblemsFilter(val problemsToIgnore: Multimap<Pair<String, String>, Pattern> = ImmutableMultimap.of(),
+class IgnoredProblemsFilter(val problemsToIgnore: Multimap<PluginIdAndVersion, Pattern> = ImmutableMultimap.of(),
                             val saveIgnoredProblemsFile: File?) : ProblemsFilter {
 
   private val LOG: Logger = LoggerFactory.getLogger(IgnoredProblemsFilter::class.java)
@@ -21,8 +22,7 @@ class IgnoredProblemsFilter(val problemsToIgnore: Multimap<Pair<String, String>,
     val xmlId = plugin.pluginId
     val version = plugin.pluginVersion
     for ((key, ignoredPattern) in problemsToIgnore.entries()) {
-      val ignoreXmlId = key.first
-      val ignoreVersion = key.second
+      val (ignoreXmlId, ignoreVersion) = key
 
       if (xmlId == ignoreXmlId) {
         if (ignoreVersion.isEmpty() || version == ignoreVersion) {
