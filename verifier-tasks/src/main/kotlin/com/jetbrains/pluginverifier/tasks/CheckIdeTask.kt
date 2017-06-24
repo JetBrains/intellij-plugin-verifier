@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.tasks
 
-import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.core.VerifierExecutor

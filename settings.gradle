@@ -9,5 +9,5 @@ include 'verifier-test:before-idea'
 include 'verifier-test:mock-plugin'
 include 'verifier-core'
 include 'verifier-parameters'
-include 'verifier-configurations'
+include 'verifier-tasks'
 

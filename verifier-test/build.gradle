@@ -1,7 +1,7 @@
 dependencies {
   testRuntime project('mock-plugin')
   testCompile group: 'org.codehaus.plexus', name: 'plexus-archiver', version: '2.3'
-  compile project(':verifier-configurations')
+  compile project(':verifier-tasks')
 }
 
 task prepareMockPlugin(type: Copy, dependsOn: ':verifier-test:mock-plugin:build') {

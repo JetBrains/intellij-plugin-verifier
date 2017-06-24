@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.tasks
 
-import com.intellij.structure.ide.Ide
-import com.intellij.structure.plugin.PluginDependency
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.Result

@@ -107,7 +107,7 @@ publishing {
 
     VerifierCliPublication(MavenPublication) { configurePublication(it, ':verifier-cli') }
     VerifierParameters(MavenPublication) { configurePublication(it, ':verifier-parameters') }
-    VerifierConfigurations(MavenPublication) { configurePublication(it, ':verifier-configurations') }
+    VerifierConfigurations(MavenPublication) { configurePublication(it, ':verifier-tasks') }
     RepositoryPublication(MavenPublication) { configurePublication(it, ':verifier-repository') }
     ResultsPublication(MavenPublication) { configurePublication(it, ':verifier-results') }
     VerifierCorePublication(MavenPublication) { configurePublication(it, ':verifier-core') }
