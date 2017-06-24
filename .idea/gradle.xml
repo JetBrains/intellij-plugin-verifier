@@ -10,11 +10,11 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/verifier-cli" />
-            <option value="$PROJECT_DIR$/verifier-configurations" />
             <option value="$PROJECT_DIR$/verifier-core" />
             <option value="$PROJECT_DIR$/verifier-parameters" />
             <option value="$PROJECT_DIR$/verifier-repository" />
             <option value="$PROJECT_DIR$/verifier-results" />
+            <option value="$PROJECT_DIR$/verifier-tasks" />
             <option value="$PROJECT_DIR$/verifier-test" />
             <option value="$PROJECT_DIR$/verifier-test/after-idea" />
             <option value="$PROJECT_DIR$/verifier-test/before-idea" />
@@ -23,7 +23,7 @@
         </option>
       </GradleProjectSettings>
       <GradleProjectSettings>
-        <option name="distributionType" value="WRAPPED" />
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/intellij-feature-extractor" />
         <option name="gradleHome" value="$USER_HOME$/opt/gradle" />
         <option name="modules">
@@ -40,6 +40,8 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$/intellij-plugin-structure" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-base" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-classes" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/tests" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/tests/mock-plugin" />
           </set>

@@ -29,6 +29,10 @@
       <module name="server_integrationTest" target="1.8" />
       <module name="server_main" target="1.8" />
       <module name="server_test" target="1.8" />
+      <module name="structure-base_main" target="1.6" />
+      <module name="structure-base_test" target="1.6" />
+      <module name="structure-classes_main" target="1.6" />
+      <module name="structure-classes_test" target="1.6" />
       <module name="test-classes_main" target="1.6" />
       <module name="test-classes_test" target="1.6" />
       <module name="tests-mock-plugin_main" target="1.6" />
@@ -53,6 +57,8 @@
       <module name="verifier-repository_test" target="1.8" />
       <module name="verifier-results_main" target="1.6" />
       <module name="verifier-results_test" target="1.6" />
+      <module name="verifier-tasks_main" target="1.8" />
+      <module name="verifier-tasks_test" target="1.8" />
       <module name="verifier-test-after-idea_main" target="1.8" />
       <module name="verifier-test-after-idea_test" target="1.8" />
       <module name="verifier-test-before-idea_main" target="1.8" />
