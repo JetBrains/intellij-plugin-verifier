@@ -5,9 +5,9 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.closeOnException
+import com.jetbrains.pluginverifier.options.CmdOpts
+import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.repository.RepositoryManager
-import com.jetbrains.pluginverifier.utils.CmdOpts
-import com.jetbrains.pluginverifier.utils.OptionsUtil
 import java.io.File
 
 class CheckPluginParamsParser : ConfigurationParamsParser<CheckPluginParams> {
@@ -19,13 +19,13 @@ class CheckPluginParamsParser : ConfigurationParamsParser<CheckPluginParams> {
           "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963")
       System.exit(1)
     }
-    val ideDescriptors = freeArgs.drop(1).map(::File).map { OptionsUtil.createIdeDescriptor(it, opts) }
+    val ideDescriptors = freeArgs.drop(1).map(::File).map { OptionsParser.createIdeDescriptor(it, opts) }
     val coordinates = getPluginsToCheck(freeArgs[0], ideDescriptors.map { it.ideVersion })
-    val jdkDescriptor = JdkDescriptor(OptionsUtil.getJdkDir(opts))
-    val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
-    val externalClasspath = OptionsUtil.getExternalClassPath(opts)
+    val jdkDescriptor = JdkDescriptor(OptionsParser.getJdkDir(opts))
+    val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
+    val externalClasspath = OptionsParser.getExternalClassPath(opts)
     externalClasspath.closeOnException {
-      val problemsFilter = OptionsUtil.getProblemsFilter(opts)
+      val problemsFilter = OptionsParser.getProblemsFilter(opts)
       return CheckPluginParams(coordinates, ideDescriptors, jdkDescriptor, externalClassesPrefixes, problemsFilter, externalClasspath)
     }
   }

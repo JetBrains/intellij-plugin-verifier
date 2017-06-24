@@ -6,11 +6,11 @@ import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.closeOnException
+import com.jetbrains.pluginverifier.options.CmdOpts
+import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.utils.CmdOpts
 import com.jetbrains.pluginverifier.utils.IdeResourceUtil
-import com.jetbrains.pluginverifier.utils.OptionsUtil
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -54,11 +54,11 @@ class CheckIdeParamsParser : ConfigurationParamsParser<CheckIdeParams> {
       System.err.println("IDE path must be a directory: " + ideFile)
       System.exit(1)
     }
-    OptionsUtil.createIdeDescriptor(ideFile, opts).closeOnException { ideDescriptor ->
-      val jdkDescriptor = JdkDescriptor(OptionsUtil.getJdkDir(opts))
-      val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
-      OptionsUtil.getExternalClassPath(opts).closeOnException { externalClassPath ->
-        val problemsFilter = OptionsUtil.getProblemsFilter(opts)
+    OptionsParser.createIdeDescriptor(ideFile, opts).closeOnException { ideDescriptor ->
+      val jdkDescriptor = JdkDescriptor(OptionsParser.getJdkDir(opts))
+      val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
+      OptionsParser.getExternalClassPath(opts).closeOnException { externalClassPath ->
+        val problemsFilter = OptionsParser.getProblemsFilter(opts)
 
         val (checkAllBuilds, checkLastBuilds) = parsePluginToCheckList(opts)
 

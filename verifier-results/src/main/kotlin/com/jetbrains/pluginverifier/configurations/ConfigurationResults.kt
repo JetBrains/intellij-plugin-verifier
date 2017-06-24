@@ -1,3 +1,7 @@
 package com.jetbrains.pluginverifier.configurations
 
-interface ConfigurationResults
+import com.jetbrains.pluginverifier.output.PrinterOptions
+
+interface ConfigurationResults {
+  fun printResults(printerOptions: PrinterOptions)
+}

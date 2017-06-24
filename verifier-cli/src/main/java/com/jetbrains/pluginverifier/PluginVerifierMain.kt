@@ -4,12 +4,12 @@ import com.jetbrains.pluginverifier.configurations.Configuration
 import com.jetbrains.pluginverifier.configurations.ConfigurationParams
 import com.jetbrains.pluginverifier.configurations.ConfigurationParamsParser
 import com.jetbrains.pluginverifier.configurations.ConfigurationResults
-import com.jetbrains.pluginverifier.utils.CmdOpts
-import com.jetbrains.pluginverifier.utils.PublicOpts
+import com.jetbrains.pluginverifier.options.CmdOpts
+import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.options.PublicOpts
 import com.sampullara.cli.Args
 import org.slf4j.LoggerFactory
 
-@Suppress("UNCHECKED_CAST")
 object PluginVerifierMain {
 
   private val LOG = LoggerFactory.getLogger(PluginVerifierMain.javaClass)
@@ -40,12 +40,15 @@ object PluginVerifierMain {
     val parameters = paramsParser.parse(opts, freeArgs)
     parameters.use {
       LOG.info("Verification parameters: $parameters")
+      @Suppress("UNCHECKED_CAST")
       val configuration = runner.getConfiguration(parameters) as Configuration<ConfigurationParams, ConfigurationResults>
       val results = configuration.execute()
-      runner.printResults(results, opts)
+      val printerOptions = OptionsParser.parsePrinterOptions(opts)
+      results.printResults(printerOptions)
     }
   }
 
+  @Suppress("UNCHECKED_CAST")
   private fun findRunner(command: String?) =
       runners.find { command == it.commandName } as? ConfigurationRunner<ConfigurationParams, ConfigurationParamsParser<ConfigurationParams>, ConfigurationResults, *>
           ?: throw IllegalArgumentException("Unsupported command: $command. Supported commands: ${runners.map { it.commandName }}")

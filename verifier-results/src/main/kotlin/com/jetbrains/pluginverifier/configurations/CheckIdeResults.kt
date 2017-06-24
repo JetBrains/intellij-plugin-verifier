@@ -16,6 +16,22 @@ data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVers
                            @SerializedName("excludedPlugins") val excludedPlugins: List<PluginIdAndVersion>,
                            @SerializedName("noUpdatesProblems") val noCompatibleUpdatesProblems: List<MissingCompatibleUpdate>) : ConfigurationResults {
 
+  override fun printResults(printerOptions: PrinterOptions) {
+    if (printerOptions.needTeamCityLog) {
+      printTcLog(TeamCityPrinter.GroupBy.parse(printerOptions.teamCityGroupType), true, printerOptions)
+    } else {
+      printOnStdOut(printerOptions)
+    }
+
+    if (printerOptions.htmlReportFile != null) {
+      saveToHtmlFile(File(printerOptions.htmlReportFile), printerOptions)
+    }
+
+    if (printerOptions.dumpBrokenPluginsFile != null) {
+      dumbBrokenPluginsList(File(printerOptions.dumpBrokenPluginsFile))
+    }
+  }
+
   fun dumbBrokenPluginsList(dumpBrokenPluginsFile: File) {
     PrintWriter(dumpBrokenPluginsFile.create()).use { out ->
       out.println("// This file contains list of broken plugins.\n" +

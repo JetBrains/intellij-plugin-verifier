@@ -6,10 +6,10 @@ import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
+import com.jetbrains.pluginverifier.options.CmdOpts
+import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.RepositoryConfiguration
-import com.jetbrains.pluginverifier.utils.CmdOpts
-import com.jetbrains.pluginverifier.utils.OptionsUtil
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import org.slf4j.Logger
@@ -36,8 +36,8 @@ class CheckTrunkApiParamsParser : ConfigurationParamsParser<CheckTrunkApiParams>
       throw IllegalArgumentException("The IDE to be checked is not specified")
     }
 
-    val ideDescriptor = OptionsUtil.createIdeDescriptor(File(args[0]), opts)
-    val jdkDescriptor = JdkDescriptor(OptionsUtil.getJdkDir(opts))
+    val ideDescriptor = OptionsParser.createIdeDescriptor(File(args[0]), opts)
+    val jdkDescriptor = JdkDescriptor(OptionsParser.getJdkDir(opts))
 
     val majorIdeFile: File
     val deleteMajorOnExit: Boolean
@@ -55,10 +55,10 @@ class CheckTrunkApiParamsParser : ConfigurationParamsParser<CheckTrunkApiParams>
       throw IllegalArgumentException("Neither the version (-miv) nor the path to the IDE (-mip) with which to compare API problems specified")
     }
 
-    val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(opts)
-    val problemsFilter = OptionsUtil.getProblemsFilter(opts)
+    val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
+    val problemsFilter = OptionsParser.getProblemsFilter(opts)
 
-    val majorIdeDescriptor = OptionsUtil.createIdeDescriptor(majorIdeFile, opts)
+    val majorIdeDescriptor = OptionsParser.createIdeDescriptor(majorIdeFile, opts)
     return CheckTrunkApiParams(ideDescriptor, majorIdeDescriptor, externalClassesPrefixes, problemsFilter, jdkDescriptor, deleteMajorOnExit, majorIdeFile)
   }
 

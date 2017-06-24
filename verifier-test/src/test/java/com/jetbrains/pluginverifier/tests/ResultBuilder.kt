@@ -4,8 +4,8 @@ import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.core.VerifierExecutor
 import com.jetbrains.pluginverifier.ide.IdeCreator
-import com.jetbrains.pluginverifier.utils.CmdOpts
-import com.jetbrains.pluginverifier.utils.OptionsUtil
+import com.jetbrains.pluginverifier.options.CmdOpts
+import com.jetbrains.pluginverifier.options.OptionsParser
 import java.io.File
 
 object ResultBuilder {
@@ -17,8 +17,8 @@ object ResultBuilder {
     val pluginCoordinate = PluginCoordinate.ByFile(pluginFile)
     val jdkPath = System.getenv("JAVA_HOME") ?: "/usr/lib/jvm/java-8-oracle"
     ideDescriptor.use {
-      val externalClassesPrefixes = OptionsUtil.getExternalClassesPrefixes(CmdOpts())
-      val problemsFilter = OptionsUtil.getProblemsFilter(CmdOpts())
+      val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
+      val problemsFilter = OptionsParser.getProblemsFilter(CmdOpts())
       val verifierParams = VerifierParams(JdkDescriptor(File(jdkPath)), externalClassesPrefixes, problemsFilter)
       val verifier = VerifierExecutor(verifierParams)
       verifier.use {

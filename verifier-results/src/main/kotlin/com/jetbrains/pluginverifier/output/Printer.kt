@@ -10,8 +10,14 @@ interface Printer {
   fun printResults(results: List<Result>, options: PrinterOptions)
 }
 
-data class PrinterOptions(private val ignoreAllMissingOptionalDeps: Boolean, val ignoreMissingOptionalDeps: List<String>) {
+data class PrinterOptions(val ignoreAllMissingOptionalDeps: Boolean = false,
+                          val ignoreMissingOptionalDeps: List<String> = emptyList(),
+                          val needTeamCityLog: Boolean = false,
+                          val teamCityGroupType: String? = null,
+                          val htmlReportFile: String? = null,
+                          val dumpBrokenPluginsFile: String? = null) {
 
-  fun ignoreMissingOptionalDependency(dependency: PluginDependency): Boolean = ignoreAllMissingOptionalDeps || ignoreMissingOptionalDeps.any { it == dependency.id }
+  fun ignoreMissingOptionalDependency(dependency: PluginDependency): Boolean =
+      ignoreAllMissingOptionalDeps || ignoreMissingOptionalDeps.any { it == dependency.id }
 
 }

@@ -86,7 +86,7 @@ class TestTeamCityPrinter {
                   Verdict.OK(DependenciesGraph(dependencyNode, listOf(dependencyNode), emptyList()))
               )
             },
-            PrinterOptions(false, emptyList())
+            PrinterOptions()
         )
       }
       bos.toString("utf-8")

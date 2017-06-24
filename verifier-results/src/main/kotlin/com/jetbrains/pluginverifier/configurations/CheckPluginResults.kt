@@ -9,6 +9,18 @@ import java.io.PrintWriter
 
 data class CheckPluginResults(val results: List<Result>) : ConfigurationResults {
 
+  override fun printResults(printerOptions: PrinterOptions) {
+    if (printerOptions.needTeamCityLog) {
+      printTcLog(TeamCityPrinter.GroupBy.parse(printerOptions.teamCityGroupType), true, printerOptions)
+    } else {
+      printOnStdout(printerOptions)
+    }
+
+    if (printerOptions.htmlReportFile != null) {
+      printToHtml(File(printerOptions.htmlReportFile), printerOptions)
+    }
+  }
+
   fun printTcLog(groupBy: TeamCityPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: PrinterOptions) {
     val tcLog = TeamCityLog(System.out)
     val vPrinter = TeamCityPrinter(tcLog, groupBy)
