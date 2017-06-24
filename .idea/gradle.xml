@@ -54,7 +54,6 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$/plugins-verifier-service" />
-            <option value="$PROJECT_DIR$/plugins-verifier-service/server" />
           </set>
         </option>
       </GradleProjectSettings>

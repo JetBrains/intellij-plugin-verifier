@@ -19,9 +19,12 @@ import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.*
 import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
 import java.io.StringReader
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
+import java.nio.charset.StandardCharsets
 
 class JsonVersionMismatchedException(msg: String) : RuntimeException(msg)
 
@@ -36,6 +39,8 @@ object CompactJson {
     versionedJson.add(CONTENT_PROPERTY, contentTree)
     return GSON.toJson(versionedJson)
   }
+
+  inline fun <reified T : Any> fromJson(inputStream: InputStream): T = GSON.fromJson(InputStreamReader(inputStream, StandardCharsets.UTF_8), typeToken<T>())
 
   @JvmOverloads
   fun <T> fromJson(json: String, type: Type, checkVersion: Boolean = true): T {
@@ -66,7 +71,7 @@ object CompactJson {
 
   private val CONTENT_PROPERTY = "content"
 
-  private val GSON: Gson = GsonBuilder()
+  val GSON: Gson = GsonBuilder()
       //serializes map as Json-array instead of Json-object
       .enableComplexMapKeySerialization()
       .registerTypeHierarchyAdapter(IdeVersion::class.java, IdeVersionTypeAdapter().nullSafe())

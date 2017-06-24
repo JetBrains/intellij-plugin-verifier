@@ -28,6 +28,7 @@ configure(allprojects) {
   version = serviceVersion
   group "org.jetbrains.intellij.plugins.verifier"
 
+  apply plugin: "war"
   apply plugin: 'kotlin'
   apply plugin: 'idea'
   apply plugin: 'java'
@@ -56,6 +57,17 @@ configure(allprojects) {
     compile 'com.squareup.retrofit2:retrofit:2.1.0'
     compile 'com.squareup.retrofit2:converter-gson:2.1.0'
     compile 'com.squareup.okhttp3:logging-interceptor:3.3.1'
+
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.24'
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
+
+    compile "commons-fileupload:commons-fileupload:1.3.1"
+
+    compile group: 'org.jetbrains.intellij.plugins', name: 'intellij-feature-extractor', version: '1.0'
+    compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-tasks', version: rootProject.verifierVersion
+    compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-repository', version: rootProject.verifierVersion
+
+    compile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
   }
 
 }

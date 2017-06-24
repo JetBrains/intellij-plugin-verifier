@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.tasks
 
+import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.core.VerifierExecutor
@@ -7,7 +8,6 @@ import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-
 
 class CheckIdeTask(parameters: CheckIdeParams) : Task<CheckIdeParams, CheckIdeResult>(parameters) {
 
