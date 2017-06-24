@@ -8,7 +8,7 @@ import com.intellij.structure.plugin.PluginManager
 import java.io.File
 
 /**
- * @author Sergey Patrikeev
+ * Command-line entry point of feature extractor.
  */
 fun main(args: Array<String>) {
   if (args.size != 2) {

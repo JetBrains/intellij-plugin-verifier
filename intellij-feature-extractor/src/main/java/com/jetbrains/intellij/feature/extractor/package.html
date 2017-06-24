@@ -1,0 +1,36 @@
+<html>
+<head></head>
+<body>
+Feature extractor is a tool used by the <a href="https://plugins.jetbrains.com">plugins repository</a>
+for determining a set of additional features supported by plugin.
+
+The features are specified using IntelliJ API. There are four main types of features:
+
+<ol>
+    <li>Configuration types<br>
+        A plugin author implements interface <code>com.intellij.execution.configurations.ConfigurationType</code>
+        and specifies the <code>id</code> of the configuration type as return value of <code>getId()</code>
+    </li>
+    <li>Facet types<br>
+        A plugin author implements abstract class <code>com.intellij.facet.FacetType</code> as passes the
+        facet type <code>id</code> as a second parameter to one of <code>FacetType</code>'s constructor.
+    </li>
+    <li>File extensions<br>
+        A plugin author implements abstract class <code>com.intellij.openapi.fileTypes.FileTypeFactory</code>
+        and feeds the <code>com.intellij.openapi.fileTypes.FileTypeConsumer</code> to the only abstract method
+        with support file extensions.
+    </li>
+    <li>Artifact types<br>
+        A plugin author implements abstract class <code>com.intellij.packaging.artifacts.ArtifactType</code>
+        and passes the artifact <code>id</code> as first parameter to <code>ArtifactType</code>'s constructor.
+    </li>
+</ol>
+
+In most cases the features are specified as string constants. The tool extracts the constant values from class files
+using bytecode analysis.
+There are tricky cases which are hard to analyse without running the plugin's code. In such cases the feature extractor
+may return incomplete results.
+
+@see <a href="https://plugins.jetbrains.com/feature">Extracted plugin features</a>
+</body>
+</html>

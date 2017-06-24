@@ -3,6 +3,7 @@ package com.jetbrains.intellij.feature.extractor
 import com.intellij.structure.ide.Ide
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.intellij.feature.extractor.FeaturesExtractor.extractFeatures
 import com.jetbrains.intellij.feature.extractor.core.ArtifactTypeExtractor
 import com.jetbrains.intellij.feature.extractor.core.FacetTypeExtractor
 import com.jetbrains.intellij.feature.extractor.core.FileTypeExtractor
@@ -10,6 +11,13 @@ import com.jetbrains.intellij.feature.extractor.core.RunConfigurationExtractor
 import org.objectweb.asm.tree.ClassNode
 import org.slf4j.LoggerFactory
 
+/**
+ * Main feature extractor entry point.
+ *
+ * Use [extractFeatures] to extract the plugin features. The class analyses the
+ * plugin class-files. Some classes may refer to the platform API constant.
+ * This is why the method also takes IDE build (presumably with which the plugin is compatible) as parameter.
+ */
 object FeaturesExtractor {
 
   private val LOG = LoggerFactory.getLogger("FeaturesExtractor")
