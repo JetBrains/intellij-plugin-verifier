@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.configurations
+package com.jetbrains.pluginverifier.tasks
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap

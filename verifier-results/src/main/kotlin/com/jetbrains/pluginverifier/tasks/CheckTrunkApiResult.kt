@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.configurations
+package com.jetbrains.pluginverifier.tasks
 
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.pluginverifier.output.PrinterOptions

@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.configurations
+package com.jetbrains.pluginverifier.tasks
 
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.plugin.PluginDependency

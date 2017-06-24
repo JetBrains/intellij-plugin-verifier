@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.configurations
+package com.jetbrains.pluginverifier.tasks
 
 import com.google.common.util.concurrent.AtomicDouble
 import com.intellij.structure.ide.IdeVersion

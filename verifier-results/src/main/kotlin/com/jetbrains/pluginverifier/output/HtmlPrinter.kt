@@ -5,7 +5,6 @@ import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.Verdict
-import com.jetbrains.pluginverifier.configurations.PluginIdAndVersion
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.descriptions.FullDescription
 import com.jetbrains.pluginverifier.descriptions.ShortDescription
@@ -13,6 +12,7 @@ import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.tasks.PluginIdAndVersion
 import com.jetbrains.pluginverifier.warnings.Warning
 import java.io.File
 import java.io.PrintWriter

@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier
 
-import com.jetbrains.pluginverifier.configurations.Task
-import com.jetbrains.pluginverifier.configurations.TaskParameters
-import com.jetbrains.pluginverifier.configurations.TaskParametersBuilder
-import com.jetbrains.pluginverifier.configurations.TaskResult
+import com.jetbrains.pluginverifier.tasks.Task
+import com.jetbrains.pluginverifier.tasks.TaskParameters
+import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
+import com.jetbrains.pluginverifier.tasks.TaskResult
 
 /**
  * @author Sergey Patrikeev

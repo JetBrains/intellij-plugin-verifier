@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.configurations
+package com.jetbrains.pluginverifier.tasks
 
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginCoordinate
@@ -44,8 +44,7 @@ class CheckIdeTask(parameters: CheckIdeParams) : Task<CheckIdeParams, CheckIdeRe
 
   private fun getMissingUpdatesProblems(): List<MissingCompatibleUpdate> {
     val ideVersion = parameters.ideDescriptor.ideVersion
-    val existingUpdatesForIde = RepositoryManager
-        .getLastCompatibleUpdates(ideVersion)
+    val existingUpdatesForIde = RepositoryManager.getLastCompatibleUpdates(ideVersion)
         .filterNot { PluginIdAndVersion(it.pluginId, it.version) in parameters.excludedPlugins }
         .mapNotNull { it.pluginId }
         .toSet()

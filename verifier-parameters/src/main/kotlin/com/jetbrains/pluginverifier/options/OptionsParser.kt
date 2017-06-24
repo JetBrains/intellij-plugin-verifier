@@ -6,9 +6,9 @@ import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.ProblemsFilter
-import com.jetbrains.pluginverifier.configurations.PluginIdAndVersion
 import com.jetbrains.pluginverifier.ide.IdeCreator
 import com.jetbrains.pluginverifier.output.PrinterOptions
+import com.jetbrains.pluginverifier.tasks.PluginIdAndVersion
 import com.jetbrains.pluginverifier.utils.IgnoredProblemsFilter
 import java.io.BufferedReader
 import java.io.File

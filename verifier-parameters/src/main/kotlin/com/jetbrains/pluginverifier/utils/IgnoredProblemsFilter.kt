@@ -4,8 +4,8 @@ import com.google.common.collect.ImmutableMultimap
 import com.google.common.collect.Multimap
 import com.intellij.structure.plugin.Plugin
 import com.jetbrains.pluginverifier.api.ProblemsFilter
-import com.jetbrains.pluginverifier.configurations.PluginIdAndVersion
 import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.tasks.PluginIdAndVersion
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File

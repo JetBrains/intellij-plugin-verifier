@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier
 
-import com.jetbrains.pluginverifier.configurations.CheckPluginParams
-import com.jetbrains.pluginverifier.configurations.CheckPluginParamsBuilder
-import com.jetbrains.pluginverifier.configurations.CheckPluginResult
-import com.jetbrains.pluginverifier.configurations.CheckPluginTask
+import com.jetbrains.pluginverifier.tasks.CheckPluginParams
+import com.jetbrains.pluginverifier.tasks.CheckPluginParamsBuilder
+import com.jetbrains.pluginverifier.tasks.CheckPluginResult
+import com.jetbrains.pluginverifier.tasks.CheckPluginTask
 
 class CheckPluginRunner : TaskRunner<CheckPluginParams, CheckPluginParamsBuilder, CheckPluginResult, CheckPluginTask>() {
   override val commandName: String = "check-plugin"

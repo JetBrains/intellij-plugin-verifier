@@ -6,8 +6,6 @@ import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.Verdict
-import com.jetbrains.pluginverifier.configurations.CheckTrunkApiCompareResult
-import com.jetbrains.pluginverifier.configurations.MissingCompatibleUpdate
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.descriptions.ShortDescription
 import com.jetbrains.pluginverifier.misc.pluralize
@@ -17,6 +15,8 @@ import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.tasks.CheckTrunkApiCompareResult
+import com.jetbrains.pluginverifier.tasks.MissingCompatibleUpdate
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

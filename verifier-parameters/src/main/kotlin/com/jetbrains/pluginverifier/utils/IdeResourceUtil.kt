@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.utils
 
 import com.intellij.structure.ide.Ide
-import com.jetbrains.pluginverifier.configurations.PluginIdAndVersion
+import com.jetbrains.pluginverifier.tasks.PluginIdAndVersion
 import java.io.File
 import java.util.jar.JarFile
 
