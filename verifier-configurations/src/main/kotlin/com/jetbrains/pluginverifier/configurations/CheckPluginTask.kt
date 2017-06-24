@@ -13,7 +13,7 @@ import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 
-class CheckPluginConfiguration(parameters: CheckPluginParams) : Configuration<CheckPluginParams, CheckPluginResults>(parameters) {
+class CheckPluginTask(parameters: CheckPluginParams) : Task<CheckPluginParams, CheckPluginResult>(parameters) {
 
   private var allPluginsToCheck: List<CreatePluginResult> = emptyList()
 
@@ -34,7 +34,7 @@ class CheckPluginConfiguration(parameters: CheckPluginParams) : Configuration<Ch
     }
   }
 
-  override fun execute(): CheckPluginResults {
+  override fun execute(): CheckPluginResult {
     allPluginsToCheck = parameters.pluginCoordinates.map { PluginCreator.createPlugin(it) }
     try {
       return doExecute()
@@ -43,7 +43,7 @@ class CheckPluginConfiguration(parameters: CheckPluginParams) : Configuration<Ch
     }
   }
 
-  private fun doExecute(): CheckPluginResults {
+  private fun doExecute(): CheckPluginResult {
     val results = arrayListOf<Result>()
     parameters.ideDescriptors.forEach { ideDescriptor ->
       val dependencyResolver = getDependencyResolver(ideDescriptor.ide)
@@ -51,7 +51,7 @@ class CheckPluginConfiguration(parameters: CheckPluginParams) : Configuration<Ch
         doVerification(it, ideDescriptor, dependencyResolver)
       }
     }
-    return CheckPluginResults(results)
+    return CheckPluginResult(results)
   }
 
   private fun doVerification(pluginCoordinate: PluginCoordinate,

@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier
 
-import com.jetbrains.pluginverifier.configurations.Configuration
-import com.jetbrains.pluginverifier.configurations.ConfigurationParams
-import com.jetbrains.pluginverifier.configurations.ConfigurationParamsBuilder
-import com.jetbrains.pluginverifier.configurations.ConfigurationResults
+import com.jetbrains.pluginverifier.configurations.Task
+import com.jetbrains.pluginverifier.configurations.TaskParameters
+import com.jetbrains.pluginverifier.configurations.TaskParametersBuilder
+import com.jetbrains.pluginverifier.configurations.TaskResult
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PublicOpts
@@ -41,7 +41,7 @@ object PluginVerifierMain {
     parameters.use {
       LOG.info("Verification parameters: $parameters")
       @Suppress("UNCHECKED_CAST")
-      val configuration = runner.getConfiguration(parameters) as Configuration<ConfigurationParams, ConfigurationResults>
+      val configuration = runner.getTask(parameters) as Task<TaskParameters, TaskResult>
       val results = configuration.execute()
       val printerOptions = OptionsParser.parsePrinterOptions(opts)
       results.printResults(printerOptions)
@@ -50,7 +50,7 @@ object PluginVerifierMain {
 
   @Suppress("UNCHECKED_CAST")
   private fun findRunner(command: String?) =
-      runners.find { command == it.commandName } as? ConfigurationRunner<ConfigurationParams, ConfigurationParamsBuilder<ConfigurationParams>, ConfigurationResults, *>
+      runners.find { command == it.commandName } as? TaskRunner<TaskParameters, TaskParametersBuilder<TaskParameters>, TaskResult, *>
           ?: throw IllegalArgumentException("Unsupported command: $command. Supported commands: ${runners.map { it.commandName }}")
 
 

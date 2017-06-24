@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.output.*
 import java.io.File
 import java.io.PrintWriter
 
-data class CheckPluginResults(val results: List<Result>) : ConfigurationResults {
+data class CheckPluginResult(val results: List<Result>) : TaskResult {
 
   override fun printResults(printerOptions: PrinterOptions) {
     if (printerOptions.needTeamCityLog) {

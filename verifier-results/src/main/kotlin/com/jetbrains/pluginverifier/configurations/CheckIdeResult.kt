@@ -11,10 +11,10 @@ import com.jetbrains.pluginverifier.utils.ParametersListUtil
 import java.io.File
 import java.io.PrintWriter
 
-data class CheckIdeResults(@SerializedName("ideVersion") val ideVersion: IdeVersion,
-                           @SerializedName("results") val results: List<Result>,
-                           @SerializedName("excludedPlugins") val excludedPlugins: List<PluginIdAndVersion>,
-                           @SerializedName("noUpdatesProblems") val noCompatibleUpdatesProblems: List<MissingCompatibleUpdate>) : ConfigurationResults {
+data class CheckIdeResult(@SerializedName("ideVersion") val ideVersion: IdeVersion,
+                          @SerializedName("results") val results: List<Result>,
+                          @SerializedName("excludedPlugins") val excludedPlugins: List<PluginIdAndVersion>,
+                          @SerializedName("noUpdatesProblems") val noCompatibleUpdatesProblems: List<MissingCompatibleUpdate>) : TaskResult {
 
   override fun printResults(printerOptions: PrinterOptions) {
     if (printerOptions.needTeamCityLog) {

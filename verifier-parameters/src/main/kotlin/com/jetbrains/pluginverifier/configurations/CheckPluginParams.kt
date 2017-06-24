@@ -10,7 +10,7 @@ data class CheckPluginParams(val pluginCoordinates: List<PluginCoordinate>,
                              val externalClassesPrefixes: List<String>,
                              val problemsFilter: ProblemsFilter,
                              val externalClasspath: Resolver = Resolver.getEmptyResolver(),
-                             val progress: Progress = DefaultProgress()) : ConfigurationParams {
+                             val progress: Progress = DefaultProgress()) : TaskParameters {
 
   override fun presentableText(): String = """Check Plugin Configuration parameters:
   JDK: $jdkDescriptor

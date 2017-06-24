@@ -13,7 +13,7 @@ data class CheckTrunkApiParams(val trunkDescriptor: IdeDescriptor,
                                val jdkDescriptor: JdkDescriptor,
                                private val deleteMajorIdeOnExit: Boolean,
                                private val majorIdeFile: File,
-                               val progress: Progress = DefaultProgress()) : ConfigurationParams {
+                               val progress: Progress = DefaultProgress()) : TaskParameters {
   override fun presentableText(): String = """Check Trunk API Configuration Parameters:
 Trunk IDE to be checked: $trunkDescriptor
 Release IDE to compare API with: $releaseDescriptor

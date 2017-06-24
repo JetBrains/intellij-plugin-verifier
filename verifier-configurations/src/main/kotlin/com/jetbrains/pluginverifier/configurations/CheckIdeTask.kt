@@ -10,9 +10,9 @@ import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 
 
-class CheckIdeConfiguration(parameters: CheckIdeParams) : Configuration<CheckIdeParams, CheckIdeResults>(parameters) {
+class CheckIdeTask(parameters: CheckIdeParams) : Task<CheckIdeParams, CheckIdeResult>(parameters) {
 
-  override fun execute(): CheckIdeResults {
+  override fun execute(): CheckIdeResult {
     val notExcludedPlugins = parameters.pluginsToCheck.filterNot { isExcluded(it) }
     return doExecute(notExcludedPlugins)
   }
@@ -33,12 +33,12 @@ class CheckIdeConfiguration(parameters: CheckIdeParams) : Configuration<CheckIde
     }
   }
 
-  private fun doExecute(notExcludedPlugins: List<PluginCoordinate>): CheckIdeResults {
+  private fun doExecute(notExcludedPlugins: List<PluginCoordinate>): CheckIdeResult {
     val verifierParams = VerifierParams(parameters.jdkDescriptor, parameters.externalClassesPrefixes, parameters.problemsFilter, parameters.externalClassPath, parameters.dependencyResolver)
     val verifier = VerifierExecutor(verifierParams)
     verifier.use {
       val results = verifier.verify(notExcludedPlugins.map { it to parameters.ideDescriptor }, parameters.progress)
-      return CheckIdeResults(parameters.ideDescriptor.ideVersion, results, parameters.excludedPlugins, getMissingUpdatesProblems())
+      return CheckIdeResult(parameters.ideDescriptor.ideVersion, results, parameters.excludedPlugins, getMissingUpdatesProblems())
     }
   }
 

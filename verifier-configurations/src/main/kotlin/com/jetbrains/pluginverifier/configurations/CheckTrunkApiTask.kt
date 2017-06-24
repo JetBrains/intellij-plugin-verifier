@@ -16,10 +16,10 @@ import org.slf4j.LoggerFactory
 /**
  * @author Sergey Patrikeev
  */
-class CheckTrunkApiConfiguration(parameters: CheckTrunkApiParams) : Configuration<CheckTrunkApiParams, CheckTrunkApiResults>(parameters) {
+class CheckTrunkApiTask(parameters: CheckTrunkApiParams) : Task<CheckTrunkApiParams, CheckTrunkApiResult>(parameters) {
 
   companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiConfiguration::class.java)
+    private val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiTask::class.java)
   }
 
   private fun getCustomizedDependencyResolver() = object : DependencyResolver {
@@ -43,7 +43,7 @@ class CheckTrunkApiConfiguration(parameters: CheckTrunkApiParams) : Configuratio
     return lastUpdatesCompatibleWithTrunk + updatesCompatibleWithRelease.filterNot { it.pluginId in trunkCompatiblePluginIds }
   }
 
-  override fun execute(): CheckTrunkApiResults {
+  override fun execute(): CheckTrunkApiResult {
     val trunkVersion = parameters.trunkDescriptor.ideVersion
     val releaseVersion = parameters.trunkDescriptor.ideVersion
 
@@ -58,7 +58,7 @@ class CheckTrunkApiConfiguration(parameters: CheckTrunkApiParams) : Configuratio
     val trunkResults = runCheckIdeConfiguration(parameters.trunkDescriptor, updatesToCheck, dependencyResolver, excludedPlugins)
     val releaseResults = runCheckIdeConfiguration(parameters.releaseDescriptor, updatesToCheck, dependencyResolver, excludedPlugins)
 
-    return CheckTrunkApiResults(trunkResults, releaseResults)
+    return CheckTrunkApiResult(trunkResults, releaseResults)
   }
 
   private fun getBrokenPluginsWhichShouldBeIgnored(): List<PluginIdAndVersion> {
@@ -70,10 +70,10 @@ class CheckTrunkApiConfiguration(parameters: CheckTrunkApiParams) : Configuratio
   private fun runCheckIdeConfiguration(ideDescriptor: IdeDescriptor,
                                        updatesToCheck: List<UpdateInfo>,
                                        dependencyResolver: DependencyResolver,
-                                       excludedPlugins: List<PluginIdAndVersion>): CheckIdeResults {
+                                       excludedPlugins: List<PluginIdAndVersion>): CheckIdeResult {
     val pluginCoordinates = updatesToCheck.map { PluginCoordinate.ByUpdateInfo(it) }
     val checkIdeParams = CheckIdeParams(ideDescriptor, parameters.jdkDescriptor, pluginCoordinates, excludedPlugins, emptyList(), Resolver.getEmptyResolver(), parameters.externalClassesPrefixes, parameters.problemsFilter, parameters.progress, dependencyResolver)
-    return CheckIdeConfiguration(checkIdeParams).execute()
+    return CheckIdeTask(checkIdeParams).execute()
   }
 
 }

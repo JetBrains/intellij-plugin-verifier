@@ -42,7 +42,7 @@ data class CheckTrunkApiCompareResult(@SerializedName("trunkVersion") val trunkV
       return missingDependencyToDependentPlugins
     }
 
-    fun create(trunkApiResults: CheckTrunkApiResults): CheckTrunkApiCompareResult {
+    fun create(trunkApiResults: CheckTrunkApiResult): CheckTrunkApiCompareResult {
       val trunkProblemToPlugin: Multimap<Problem, PluginInfo> = getProblemsOfAllResults(trunkApiResults.trunkResults.results)
       val releaseProblemToPlugin: Multimap<Problem, PluginInfo> = getProblemsOfAllResults(trunkApiResults.releaseResults.results)
 

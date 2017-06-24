@@ -9,7 +9,7 @@ import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import java.io.File
 
-class CheckPluginParamsBuilder : ConfigurationParamsBuilder<CheckPluginParams> {
+class CheckPluginParamsBuilder : TaskParametersBuilder<CheckPluginParams> {
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckPluginParams {
     if (freeArgs.size <= 1) {

@@ -9,8 +9,8 @@ import java.io.File
 /**
  * @author Sergey Patrikeev
  */
-data class CheckTrunkApiResults(@SerializedName("trunkResults") val trunkResults: CheckIdeResults,
-                                @SerializedName("releaseResults") val releaseResults: CheckIdeResults) : ConfigurationResults {
+data class CheckTrunkApiResult(@SerializedName("trunkResults") val trunkResults: CheckIdeResult,
+                               @SerializedName("releaseResults") val releaseResults: CheckIdeResult) : TaskResult {
 
   override fun printResults(printerOptions: PrinterOptions) {
     if (printerOptions.needTeamCityLog) {
@@ -27,7 +27,7 @@ data class CheckTrunkApiResults(@SerializedName("trunkResults") val trunkResults
     }
   }
 
-  private fun saveIdeReportToHtmlFile(checkIdeResults: CheckIdeResults, htmlFileName: String, printerOptions: PrinterOptions) {
+  private fun saveIdeReportToHtmlFile(checkIdeResults: CheckIdeResult, htmlFileName: String, printerOptions: PrinterOptions) {
     checkIdeResults.saveToHtmlFile(File(htmlFileName), printerOptions)
   }
 

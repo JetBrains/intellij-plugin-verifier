@@ -19,7 +19,7 @@ import java.nio.file.Files
 /**
  * @author Sergey Patrikeev
  */
-class CheckTrunkApiParamsBuilder : ConfigurationParamsBuilder<CheckTrunkApiParams> {
+class CheckTrunkApiParamsBuilder : TaskParametersBuilder<CheckTrunkApiParams> {
 
   companion object {
 

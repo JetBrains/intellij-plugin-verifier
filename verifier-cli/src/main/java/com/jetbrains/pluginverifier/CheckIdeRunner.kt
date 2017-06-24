@@ -1,15 +1,15 @@
 package com.jetbrains.pluginverifier
 
-import com.jetbrains.pluginverifier.configurations.CheckIdeConfiguration
 import com.jetbrains.pluginverifier.configurations.CheckIdeParams
 import com.jetbrains.pluginverifier.configurations.CheckIdeParamsBuilder
-import com.jetbrains.pluginverifier.configurations.CheckIdeResults
+import com.jetbrains.pluginverifier.configurations.CheckIdeResult
+import com.jetbrains.pluginverifier.configurations.CheckIdeTask
 
-class CheckIdeRunner : ConfigurationRunner<CheckIdeParams, CheckIdeParamsBuilder, CheckIdeResults, CheckIdeConfiguration>() {
+class CheckIdeRunner : TaskRunner<CheckIdeParams, CheckIdeParamsBuilder, CheckIdeResult, CheckIdeTask>() {
   override val commandName: String = "check-ide"
 
   override fun getParamsParser(): CheckIdeParamsBuilder = CheckIdeParamsBuilder()
 
-  override fun getConfiguration(parameters: CheckIdeParams): CheckIdeConfiguration = CheckIdeConfiguration(parameters)
+  override fun getTask(parameters: CheckIdeParams): CheckIdeTask = CheckIdeTask(parameters)
 
 }
