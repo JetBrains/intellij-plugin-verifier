@@ -10,7 +10,6 @@ import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.function.Function
 
 /**
  * @author Sergey Patrikeev
@@ -32,7 +31,7 @@ class UploadIdeRunner(val ideVersion: IdeVersion? = null, val availableIde: Avai
 
     try {
       try {
-        IdeRepository.downloadIde(artifact, ideFile, Function<Double, Unit> { progress.setProgress(it) })
+        IdeRepository.downloadIde(artifact, ideFile, { progress.setProgress(it) })
       } catch(e: Exception) {
         LOG.error("Unable to download IDE ${artifact.version} community=${artifact.isCommunity} from snapshots=${artifact.isSnapshot}", e)
         throw e

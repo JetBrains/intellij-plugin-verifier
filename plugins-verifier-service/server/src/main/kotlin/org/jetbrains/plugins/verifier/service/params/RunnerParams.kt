@@ -2,7 +2,7 @@ package org.jetbrains.plugins.verifier.service.params
 
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.ide.IdeVersion
-import com.jetbrains.pluginverifier.configurations.PluginIdAndVersion
+import com.jetbrains.pluginverifier.tasks.PluginIdAndVersion
 
 enum class JdkVersion {
   JAVA_6_ORACLE,

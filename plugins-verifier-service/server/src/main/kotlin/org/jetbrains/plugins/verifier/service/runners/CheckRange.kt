@@ -4,11 +4,11 @@ import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
-import com.jetbrains.pluginverifier.configurations.CheckPluginConfiguration
-import com.jetbrains.pluginverifier.configurations.CheckPluginParams
 import com.jetbrains.pluginverifier.ide.IdeCreator
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
+import com.jetbrains.pluginverifier.tasks.CheckPluginParams
+import com.jetbrains.pluginverifier.tasks.CheckPluginTask
 import org.jetbrains.plugins.verifier.service.core.BridgeVProgress
 import org.jetbrains.plugins.verifier.service.core.Progress
 import org.jetbrains.plugins.verifier.service.core.Task
@@ -56,7 +56,7 @@ class CheckRangeRunner(val pluginInfo: PluginInfo,
 
     LOG.debug("CheckPlugin with [since; until] #$taskId arguments: $params")
 
-    val checkPluginResults = CheckPluginConfiguration().execute(params)
+    val checkPluginResults = CheckPluginTask(params).execute()
     val results: List<Result> = checkPluginResults.results
     return CheckRangeResults(pluginInfo, CheckRangeResults.ResultType.CHECKED, ideDescriptors.map { it.ideVersion }, results)
   }

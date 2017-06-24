@@ -4,7 +4,8 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Result
-import com.jetbrains.pluginverifier.configurations.ConfigurationResults
+import com.jetbrains.pluginverifier.output.PrinterOptions
+import com.jetbrains.pluginverifier.tasks.TaskResult
 
 /**
  * @author Sergey Patrikeev
@@ -12,7 +13,8 @@ import com.jetbrains.pluginverifier.configurations.ConfigurationResults
 data class CheckRangeResults(@SerializedName("plugin") val plugin: PluginInfo,
                              @SerializedName("type") val resultType: ResultType,
                              @SerializedName("checkedIdeList") val checkedIdeList: List<IdeVersion>,
-                             @SerializedName("results") val result: List<Result>) : ConfigurationResults {
+                             @SerializedName("results") val result: List<Result>) : TaskResult {
+  override fun printResults(printerOptions: PrinterOptions) = Unit
 
   enum class ResultType {
     NOT_FOUND,

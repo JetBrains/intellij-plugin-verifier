@@ -9,11 +9,7 @@ import kotlin.text.StringsKt
 import org.jetbrains.plugins.verifier.service.api.Result
 import org.jetbrains.plugins.verifier.service.api.TaskId
 import org.jetbrains.plugins.verifier.service.core.TaskManager
-import org.jetbrains.plugins.verifier.service.params.CheckIdeRunnerParams
-import org.jetbrains.plugins.verifier.service.params.CheckPluginRunnerParams
 import org.jetbrains.plugins.verifier.service.params.CheckRangeRunnerParams
-import org.jetbrains.plugins.verifier.service.runners.CheckIdeRunner
-import org.jetbrains.plugins.verifier.service.runners.CheckPlugin
 import org.jetbrains.plugins.verifier.service.runners.CheckRangeRunner
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.springframework.http.HttpStatus
@@ -68,59 +64,7 @@ class VerifierController implements SaveFileTrait {
     sendJson(canceled)
   }
 
-  def checkPlugin() {
-    def runnerParams = GSON.fromJson(params.params as String, CheckPluginRunnerParams.class)
-    log.info("Runner params: $runnerParams")
-
-    def pluginFiles = new ArrayList<File>()
-    def ideFiles = new ArrayList<File>()
-
-    try {
-      params.findAll { (it.key as String).startsWith("plugin_") }.each {
-        File file = savePluginTemporarily(it.value)
-        if (file == null) {
-          pluginFiles.forEach { LanguageUtilsKt.deleteLogged(it) }
-          return
-        } else {
-          pluginFiles.add(file)
-        }
-      }
-
-      params.findAll { (it.key as String).startsWith("ide_") }.each {
-        File file = saveIdeTemporarily(it.value)
-        if (file == null) {
-          pluginFiles.forEach { LanguageUtilsKt.deleteLogged(it) }
-          ideFiles.forEach { LanguageUtilsKt.deleteLogged(it) }
-          return
-        } else {
-          ideFiles.add(file)
-        }
-      }
-
-      def runner = new CheckPlugin(runnerParams, ideFiles, pluginFiles)
-      def taskId = TaskManager.INSTANCE.enqueue(runner)
-      log.info("New Check-Plugin command is enqueued with taskId=$taskId")
-      sendJson(taskId)
-
-    } catch (Exception e) {
-      log.error("Unable to save the ide and plugins files", e)
-      pluginFiles.each { LanguageUtilsKt.deleteLogged(it) }
-      ideFiles.each { LanguageUtilsKt.deleteLogged(it) }
-    }
-  }
-
-  def checkIde() {
-    def saved = saveIdeTemporarily(params.ideFile)
-    if (!saved) return
-    def params = GSON.fromJson(params.params as String, CheckIdeRunnerParams.class)
-    def runner = new CheckIdeRunner(saved, true, params)
-    def taskId = TaskManager.INSTANCE.enqueue(runner)
-    sendJson(taskId)
-    log.info("New Check-Ide command is enqueued with taskId=$taskId")
-  }
-
   @SuppressWarnings("GroovyVariableNotAssigned")
-  //probably a bug in Groovy plugin
   private File saveIdeTemporarily(ideFile) {
     if (!ideFile || ideFile.empty) {
       log.error("user attempted to load empty IDE file")
