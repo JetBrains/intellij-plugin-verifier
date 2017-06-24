@@ -22,9 +22,6 @@ class CheckTrunkApiConfiguration(parameters: CheckTrunkApiParams) : Configuratio
     private val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiConfiguration::class.java)
   }
 
-  private lateinit var trunkVersion: IdeVersion
-  private lateinit var releaseVersion: IdeVersion
-
   private fun getCustomizedDependencyResolver() = object : DependencyResolver {
     private val trunkResolver = DefaultDependencyResolver(parameters.trunkDescriptor.ide)
     private val releaseResolver = DefaultDependencyResolver(parameters.releaseDescriptor.ide)
@@ -39,7 +36,7 @@ class CheckTrunkApiConfiguration(parameters: CheckTrunkApiParams) : Configuratio
     }
   }
 
-  private fun getUpdatesToCheck(): List<UpdateInfo> {
+  private fun getUpdatesToCheck(trunkVersion: IdeVersion, releaseVersion: IdeVersion): List<UpdateInfo> {
     val lastUpdatesCompatibleWithTrunk = RepositoryManager.getLastCompatibleUpdates(trunkVersion)
     val updatesCompatibleWithRelease = RepositoryManager.getLastCompatibleUpdates(releaseVersion)
     val trunkCompatiblePluginIds = lastUpdatesCompatibleWithTrunk.map { it.pluginId }.toSet()
@@ -47,10 +44,10 @@ class CheckTrunkApiConfiguration(parameters: CheckTrunkApiParams) : Configuratio
   }
 
   override fun execute(): CheckTrunkApiResults {
-    trunkVersion = parameters.trunkDescriptor.ideVersion
-    releaseVersion = parameters.trunkDescriptor.ideVersion
+    val trunkVersion = parameters.trunkDescriptor.ideVersion
+    val releaseVersion = parameters.trunkDescriptor.ideVersion
 
-    val updatesToCheck = getUpdatesToCheck()
+    val updatesToCheck = getUpdatesToCheck(trunkVersion, releaseVersion)
 
     LOG.debug("The following updates will be checked with both #$trunkVersion and #$releaseVersion\n" +
         "The dependencies will be resolved against #$trunkVersion or against #$releaseVersion (if not found): " + updatesToCheck.joinToString())

@@ -22,16 +22,14 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
                   val isExcluded: (PluginIdAndVersion) -> Boolean,
                   val htmlFile: File) : Printer {
 
-  private lateinit var htmlBuilder: HtmlBuilder
-
   override fun printResults(results: List<Result>, options: PrinterOptions) {
     PrintWriter(htmlFile.create()).use {
-      htmlBuilder = HtmlBuilder(it)
-      doPrintResults(results, options)
+      val htmlBuilder = HtmlBuilder(it)
+      doPrintResults(htmlBuilder, results, options)
     }
   }
 
-  private fun doPrintResults(results: List<Result>, options: PrinterOptions) {
+  private fun doPrintResults(htmlBuilder: HtmlBuilder, results: List<Result>, options: PrinterOptions) {
     htmlBuilder.apply {
       html {
         head {

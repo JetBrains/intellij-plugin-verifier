@@ -34,7 +34,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
                                    val methodDescriptor: String = instr.desc) {
   private lateinit var ownerNode: ClassNode
 
-  val instruction: Instruction = when (instr.opcode) {
+  private val instruction: Instruction = when (instr.opcode) {
     Opcodes.INVOKEVIRTUAL -> Instruction.INVOKE_VIRTUAL
     Opcodes.INVOKESPECIAL -> Instruction.INVOKE_SPECIAL
     Opcodes.INVOKEINTERFACE -> Instruction.INVOKE_INTERFACE

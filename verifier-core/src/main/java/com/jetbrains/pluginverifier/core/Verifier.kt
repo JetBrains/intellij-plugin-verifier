@@ -23,10 +23,6 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
                val runtimeResolver: Resolver,
                val params: VerifierParams) : Callable<Result> {
 
-  private lateinit var plugin: Plugin
-  private lateinit var pluginResolver: Resolver
-  private lateinit var warnings: List<PluginProblem>
-
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(Verifier::class.java)
   }
@@ -74,22 +70,22 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
   }
 
   private fun getVerificationVerdict(creationOk: CreatePluginResult.OK): Verdict {
-    plugin = creationOk.plugin
-    warnings = creationOk.warnings
-    pluginResolver = creationOk.resolver
+    val plugin = creationOk.plugin
+    val warnings = creationOk.warnings
+    val pluginResolver = creationOk.resolver
 
     val dependencyResolver = params.dependencyResolver ?: DefaultDependencyResolver(ideDescriptor.ide)
     DepGraphBuilder(dependencyResolver).use { graphBuilder ->
       val (graph, start) = graphBuilder.build(creationOk.plugin, creationOk.resolver)
       val apiGraph = DepGraph2ApiGraphConverter.convert(graph, start)
       LOG.debug("Dependencies graph for $plugin: $apiGraph")
-      val context = runVerifier(graph)
-      addCycleAndOtherWarnings(apiGraph, context)
+      val context = runVerifier(graph, plugin, pluginResolver)
+      addCycleAndOtherWarnings(apiGraph, context, plugin, warnings)
       return getAppropriateVerdict(context, apiGraph)
     }
   }
 
-  private fun addCycleAndOtherWarnings(apiGraph: DependenciesGraph, context: VerificationContext) {
+  private fun addCycleAndOtherWarnings(apiGraph: DependenciesGraph, context: VerificationContext, plugin: Plugin, warnings: List<PluginProblem>) {
     val cycles = apiGraph.getCycles()
     if (cycles.isNotEmpty()) {
       val nodes = cycles[0]
@@ -102,22 +98,22 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
     }
   }
 
-  private fun runVerifier(graph: DirectedGraph<DepVertex, DepEdge>): VerificationContext {
+  private fun runVerifier(graph: DirectedGraph<DepVertex, DepEdge>, plugin: Plugin, pluginResolver: Resolver): VerificationContext {
     val dependenciesResolver = getDependenciesClassesResolver(graph)
-    val checkClasses = getClassesOfPluginToCheck()
-    val classLoader = getVerificationClassLoader(dependenciesResolver)
+    val checkClasses = getClassesOfPluginToCheck(plugin, pluginResolver)
+    val classLoader = getVerificationClassLoader(dependenciesResolver, plugin, pluginResolver)
     //don't close classLoader because it consists of client-resolvers.
     return BytecodeVerifier(params, plugin, classLoader, ideDescriptor.ideVersion).verify(checkClasses)
   }
 
-  private fun getVerificationClassLoader(dependenciesResolver: Resolver): Resolver = Resolver.createCacheResolver(
+  private fun getVerificationClassLoader(dependenciesResolver: Resolver, plugin: Plugin, pluginResolver: Resolver): Resolver = Resolver.createCacheResolver(
       Resolver.createUnionResolver(
           "Common resolver for plugin $plugin; IDE #${ideDescriptor.ideVersion}; JDK $runtimeResolver",
           listOf(pluginResolver, runtimeResolver, ideDescriptor.ideResolver, dependenciesResolver, params.externalClassPath)
       )
   )
 
-  private fun getClassesOfPluginToCheck(): Iterator<String> {
+  private fun getClassesOfPluginToCheck(plugin: Plugin, pluginResolver: Resolver): Iterator<String> {
     val resolver = Resolver.createUnionResolver("Plugin classes for check",
         (plugin.allClassesReferencedFromXml + plugin.optionalDescriptors.flatMap { it.value.allClassesReferencedFromXml })
             .mapNotNull { pluginResolver.getClassLocation(it) }
@@ -127,7 +123,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
 
   private fun getDependenciesClassesResolver(graph: DirectedGraph<DepVertex, DepEdge>): Resolver {
     val resolvers = graph.vertexSet().mapNotNull { getResolverByResult(it.resolveResult) }
-    return Resolver.createUnionResolver("Plugin $plugin dependencies resolvers", resolvers)
+    return Resolver.createUnionResolver("Plugin dependencies resolver", resolvers)
   }
 
   private fun getResolverByResult(result: DependencyResolver.Result): Resolver? = when (result) {
