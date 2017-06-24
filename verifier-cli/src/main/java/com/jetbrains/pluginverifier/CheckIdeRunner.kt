@@ -14,7 +14,7 @@ class CheckIdeRunner : ConfigurationRunner<CheckIdeParams, CheckIdeParamsParser,
 
   override fun getParamsParser(): CheckIdeParamsParser = CheckIdeParamsParser()
 
-  override fun getConfiguration(): CheckIdeConfiguration = CheckIdeConfiguration()
+  override fun getConfiguration(parameters: CheckIdeParams): CheckIdeConfiguration = CheckIdeConfiguration(parameters)
 
   override fun printResults(results: CheckIdeResults, opts: CmdOpts) {
     val printerOptions = OptionsUtil.parsePrinterOptions(opts)

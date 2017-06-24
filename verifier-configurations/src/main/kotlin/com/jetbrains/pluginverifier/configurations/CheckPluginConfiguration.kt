@@ -13,11 +13,9 @@ import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 
-class CheckPluginConfiguration : Configuration<CheckPluginParams, CheckPluginResults> {
+class CheckPluginConfiguration(parameters: CheckPluginParams) : Configuration<CheckPluginParams, CheckPluginResults>(parameters) {
 
   private var allPluginsToCheck: List<CreatePluginResult> = emptyList()
-
-  private lateinit var params: CheckPluginParams
 
   private fun getDependencyResolver(ide: Ide): DependencyResolver = object : DependencyResolver {
 
@@ -36,8 +34,7 @@ class CheckPluginConfiguration : Configuration<CheckPluginParams, CheckPluginRes
     }
   }
 
-  override fun execute(parameters: CheckPluginParams): CheckPluginResults {
-    params = parameters
+  override fun execute(): CheckPluginResults {
     allPluginsToCheck = parameters.pluginCoordinates.map { PluginCreator.createPlugin(it) }
     try {
       return doExecute()
@@ -48,9 +45,9 @@ class CheckPluginConfiguration : Configuration<CheckPluginParams, CheckPluginRes
 
   private fun doExecute(): CheckPluginResults {
     val results = arrayListOf<Result>()
-    params.ideDescriptors.forEach { ideDescriptor ->
+    parameters.ideDescriptors.forEach { ideDescriptor ->
       val dependencyResolver = getDependencyResolver(ideDescriptor.ide)
-      params.pluginCoordinates.mapTo(results) {
+      parameters.pluginCoordinates.mapTo(results) {
         doVerification(it, ideDescriptor, dependencyResolver)
       }
     }
@@ -60,10 +57,10 @@ class CheckPluginConfiguration : Configuration<CheckPluginParams, CheckPluginRes
   private fun doVerification(pluginCoordinate: PluginCoordinate,
                              ideDescriptor: IdeDescriptor,
                              dependencyResolver: DependencyResolver): Result {
-    val verifierParams = VerifierParams(params.jdkDescriptor, params.externalClassesPrefixes, params.problemsFilter, params.externalClasspath, dependencyResolver)
+    val verifierParams = VerifierParams(parameters.jdkDescriptor, parameters.externalClassesPrefixes, parameters.problemsFilter, parameters.externalClasspath, dependencyResolver)
     val verifier = VerifierExecutor(verifierParams)
     verifier.use {
-      val results = verifier.verify(listOf(pluginCoordinate to ideDescriptor), params.progress)
+      val results = verifier.verify(listOf(pluginCoordinate to ideDescriptor), parameters.progress)
       return results.single()
     }
   }

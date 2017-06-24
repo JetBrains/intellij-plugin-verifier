@@ -40,8 +40,8 @@ object PluginVerifierMain {
     val parameters = paramsParser.parse(opts, freeArgs)
     parameters.use {
       LOG.info("Verification parameters: $parameters")
-      val configuration = runner.getConfiguration() as Configuration<ConfigurationParams, ConfigurationResults>
-      val results = configuration.execute(parameters)
+      val configuration = runner.getConfiguration(parameters) as Configuration<ConfigurationParams, ConfigurationResults>
+      val results = configuration.execute()
       runner.printResults(results, opts)
     }
   }

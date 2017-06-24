@@ -12,7 +12,7 @@ class CheckTrunkApiRunner : ConfigurationRunner<CheckTrunkApiParams, CheckTrunkA
 
   override fun getParamsParser(): CheckTrunkApiParamsParser = CheckTrunkApiParamsParser()
 
-  override fun getConfiguration(): CheckTrunkApiConfiguration = CheckTrunkApiConfiguration()
+  override fun getConfiguration(parameters: CheckTrunkApiParams): CheckTrunkApiConfiguration = CheckTrunkApiConfiguration(parameters)
 
   override fun printResults(results: CheckTrunkApiResults, opts: CmdOpts) {
     if (opts.needTeamCityLog) {

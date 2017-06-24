@@ -15,7 +15,7 @@ abstract class ConfigurationRunner<P : ConfigurationParams, out PP : Configurati
 
   abstract fun getParamsParser(): PP
 
-  abstract fun getConfiguration(): C
+  abstract fun getConfiguration(parameters: P): C
 
   abstract fun printResults(results: R, opts: CmdOpts)
 

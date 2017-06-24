@@ -1,5 +1,5 @@
 package com.jetbrains.pluginverifier.configurations
 
-interface Configuration<in Params : ConfigurationParams, out Results : ConfigurationResults> {
-  fun execute(parameters: Params): Results
+abstract class Configuration<Params : ConfigurationParams, out Results : ConfigurationResults>(protected val parameters: Params) {
+  abstract fun execute(): Results
 }

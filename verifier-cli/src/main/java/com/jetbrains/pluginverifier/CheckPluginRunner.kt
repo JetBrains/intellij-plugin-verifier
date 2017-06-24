@@ -14,7 +14,7 @@ class CheckPluginRunner : ConfigurationRunner<CheckPluginParams, CheckPluginPara
 
   override fun getParamsParser(): CheckPluginParamsParser = CheckPluginParamsParser()
 
-  override fun getConfiguration(): CheckPluginConfiguration = CheckPluginConfiguration()
+  override fun getConfiguration(parameters: CheckPluginParams): CheckPluginConfiguration = CheckPluginConfiguration(parameters)
 
   override fun printResults(results: CheckPluginResults, opts: CmdOpts) {
     val printerOptions = OptionsUtil.parsePrinterOptions(opts)

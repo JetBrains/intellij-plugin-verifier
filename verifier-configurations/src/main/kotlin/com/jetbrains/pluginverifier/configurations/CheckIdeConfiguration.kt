@@ -10,12 +10,9 @@ import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 
 
-class CheckIdeConfiguration : Configuration<CheckIdeParams, CheckIdeResults> {
+class CheckIdeConfiguration(parameters: CheckIdeParams) : Configuration<CheckIdeParams, CheckIdeResults>(parameters) {
 
-  private lateinit var params: CheckIdeParams
-
-  override fun execute(parameters: CheckIdeParams): CheckIdeResults {
-    params = parameters
+  override fun execute(): CheckIdeResults {
     val notExcludedPlugins = parameters.pluginsToCheck.filterNot { isExcluded(it) }
     return doExecute(notExcludedPlugins)
   }
@@ -23,13 +20,13 @@ class CheckIdeConfiguration : Configuration<CheckIdeParams, CheckIdeResults> {
   private fun isExcluded(pluginCoordinate: PluginCoordinate): Boolean = when (pluginCoordinate) {
     is PluginCoordinate.ByUpdateInfo -> {
       val updateInfo = pluginCoordinate.updateInfo
-      PluginIdAndVersion(updateInfo.pluginId, updateInfo.version) in params.excludedPlugins
+      PluginIdAndVersion(updateInfo.pluginId, updateInfo.version) in parameters.excludedPlugins
     }
     is PluginCoordinate.ByFile -> {
       PluginCreator.createPluginByFile(pluginCoordinate.pluginFile).use { createPluginResult ->
         if (createPluginResult is CreatePluginResult.OK) {
           val plugin = createPluginResult.plugin
-          return PluginIdAndVersion(plugin.pluginId ?: "", plugin.pluginVersion ?: "") in params.excludedPlugins
+          return PluginIdAndVersion(plugin.pluginId ?: "", plugin.pluginVersion ?: "") in parameters.excludedPlugins
         }
         return true
       }
@@ -37,23 +34,23 @@ class CheckIdeConfiguration : Configuration<CheckIdeParams, CheckIdeResults> {
   }
 
   private fun doExecute(notExcludedPlugins: List<PluginCoordinate>): CheckIdeResults {
-    val verifierParams = VerifierParams(params.jdkDescriptor, params.externalClassesPrefixes, params.problemsFilter, params.externalClassPath, params.dependencyResolver)
+    val verifierParams = VerifierParams(parameters.jdkDescriptor, parameters.externalClassesPrefixes, parameters.problemsFilter, parameters.externalClassPath, parameters.dependencyResolver)
     val verifier = VerifierExecutor(verifierParams)
     verifier.use {
-      val results = verifier.verify(notExcludedPlugins.map { it to params.ideDescriptor }, params.progress)
-      return CheckIdeResults(params.ideDescriptor.ideVersion, results, params.excludedPlugins, getMissingUpdatesProblems())
+      val results = verifier.verify(notExcludedPlugins.map { it to parameters.ideDescriptor }, parameters.progress)
+      return CheckIdeResults(parameters.ideDescriptor.ideVersion, results, parameters.excludedPlugins, getMissingUpdatesProblems())
     }
   }
 
   private fun getMissingUpdatesProblems(): List<MissingCompatibleUpdate> {
-    val ideVersion = params.ideDescriptor.ideVersion
+    val ideVersion = parameters.ideDescriptor.ideVersion
     val existingUpdatesForIde = RepositoryManager
         .getLastCompatibleUpdates(ideVersion)
-        .filterNot { PluginIdAndVersion(it.pluginId, it.version) in params.excludedPlugins }
+        .filterNot { PluginIdAndVersion(it.pluginId, it.version) in parameters.excludedPlugins }
         .mapNotNull { it.pluginId }
         .toSet()
 
-    return params.pluginIdsToCheckExistingBuilds.distinct()
+    return parameters.pluginIdsToCheckExistingBuilds.distinct()
         .filterNot { existingUpdatesForIde.contains(it) }
         .map {
           val buildForCommunity = getUpdateCompatibleWithCommunityEdition(it, ideVersion)
