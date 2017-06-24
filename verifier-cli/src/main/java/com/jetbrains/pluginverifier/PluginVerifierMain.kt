@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier
 
 import com.jetbrains.pluginverifier.configurations.Configuration
 import com.jetbrains.pluginverifier.configurations.ConfigurationParams
-import com.jetbrains.pluginverifier.configurations.ConfigurationParamsParser
+import com.jetbrains.pluginverifier.configurations.ConfigurationParamsBuilder
 import com.jetbrains.pluginverifier.configurations.ConfigurationResults
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
@@ -37,7 +37,7 @@ object PluginVerifierMain {
 
     val runner = findRunner(command)
     val paramsParser = runner.getParamsParser()
-    val parameters = paramsParser.parse(opts, freeArgs)
+    val parameters = paramsParser.build(opts, freeArgs)
     parameters.use {
       LOG.info("Verification parameters: $parameters")
       @Suppress("UNCHECKED_CAST")
@@ -50,7 +50,7 @@ object PluginVerifierMain {
 
   @Suppress("UNCHECKED_CAST")
   private fun findRunner(command: String?) =
-      runners.find { command == it.commandName } as? ConfigurationRunner<ConfigurationParams, ConfigurationParamsParser<ConfigurationParams>, ConfigurationResults, *>
+      runners.find { command == it.commandName } as? ConfigurationRunner<ConfigurationParams, ConfigurationParamsBuilder<ConfigurationParams>, ConfigurationResults, *>
           ?: throw IllegalArgumentException("Unsupported command: $command. Supported commands: ${runners.map { it.commandName }}")
 
 
