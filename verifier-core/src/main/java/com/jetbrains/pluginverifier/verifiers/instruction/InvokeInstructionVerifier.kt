@@ -32,8 +32,6 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
                                    val methodOwner: String = instr.owner,
                                    val methodName: String = instr.name,
                                    val methodDescriptor: String = instr.desc) {
-  private lateinit var ownerNode: ClassNode
-
   private val instruction: Instruction = when (instr.opcode) {
     Opcodes.INVOKEVIRTUAL -> Instruction.INVOKE_VIRTUAL
     Opcodes.INVOKESPECIAL -> Instruction.INVOKE_SPECIAL
@@ -50,19 +48,19 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       }
       return
     }
-    ownerNode = ctx.resolveClassOrProblem(methodOwner, verifiableClass, { getFromMethod() }) ?: return
+    val ownerNode = ctx.resolveClassOrProblem(methodOwner, verifiableClass, { getFromMethod() }) ?: return
 
     when (instruction) {
-      Instruction.INVOKE_VIRTUAL -> processInvokeVirtual()
-      Instruction.INVOKE_SPECIAL -> processInvokeSpecial()
-      Instruction.INVOKE_INTERFACE -> processInvokeInterface()
-      Instruction.INVOKE_STATIC -> processInvokeStatic()
+      Instruction.INVOKE_VIRTUAL -> processInvokeVirtual(ownerNode)
+      Instruction.INVOKE_SPECIAL -> processInvokeSpecial(ownerNode)
+      Instruction.INVOKE_INTERFACE -> processInvokeInterface(ownerNode)
+      Instruction.INVOKE_STATIC -> processInvokeStatic(ownerNode)
       else -> throw IllegalArgumentException()
     }
   }
 
-  private fun processInvokeVirtual() {
-    val resolved = resolveClassMethod() ?: return
+  private fun processInvokeVirtual(ownerNode: ClassNode) {
+    val resolved = resolveClassMethod(ownerNode) ?: return
 
     if (BytecodeUtil.isStatic(resolved.methodNode)) {
       /*
@@ -74,7 +72,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     }
   }
 
-  private fun processInvokeSpecial() {
+  private fun processInvokeSpecial(ownerNode: ClassNode) {
     /*
     The run-time constant pool item at that index must be a symbolic reference to a method or an interface method (§5.1),
     which gives the name and descriptor (§4.3.3) of the method as well as a symbolic reference
@@ -82,9 +80,9 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
      */
     val resolved: ResolvedMethod
     if (isInterface(ownerNode)) {
-      resolved = resolveInterfaceMethod() ?: return
+      resolved = resolveInterfaceMethod(ownerNode) ?: return
     } else {
-      resolved = resolveClassMethod() ?: return
+      resolved = resolveClassMethod(ownerNode) ?: return
     }
 
     /*
@@ -238,8 +236,8 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     return null
   }
 
-  private fun processInvokeInterface() {
-    val resolved = resolveInterfaceMethod() ?: return
+  private fun processInvokeInterface(ownerNode: ClassNode) {
+    val resolved = resolveInterfaceMethod(ownerNode) ?: return
 
     /**
      * It's a workaround for the fact that we can't compile an interface with a private method.
@@ -303,7 +301,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
      */
   }
 
-  private fun processInvokeStatic() {
+  private fun processInvokeStatic(ownerNode: ClassNode) {
     /**
      * That is a weirdness of the JVM 8 specification. Despite knowing the real class pool
      * item of the invoke instruction (it's either CONSTANT_Methodref_info or CONSTANT_InterfaceMethodref_info)
@@ -316,7 +314,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
      * This is a corresponding question on stack-overflow:
      * http://stackoverflow.com/questions/42294217/binary-compatibility-of-changing-a-class-with-static-methods-to-interface-in-jav
      */
-    val resolved: ResolvedMethod = resolveClassMethod() ?: return
+    val resolved: ResolvedMethod = resolveClassMethod(ownerNode) ?: return
 
     /*
     Otherwise, if the resolved method is an instance method, the invokestatic instruction throws an IncompatibleClassChangeError.
@@ -330,7 +328,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
 
   private fun getFromMethod() = ctx.fromMethod(verifiableClass, verifiableMethod)
 
-  fun resolveInterfaceMethod(): ResolvedMethod? {
+  fun resolveInterfaceMethod(ownerNode: ClassNode): ResolvedMethod? {
     val (fail, resolvedMethod) = resolveInterfaceMethod0(ownerNode)
     if (fail) {
       return null
@@ -348,7 +346,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     return null
   }
 
-  fun resolveClassMethod(): ResolvedMethod? {
+  fun resolveClassMethod(ownerNode: ClassNode): ResolvedMethod? {
     val (fail, resolvedMethod) = resolveClassMethod0(ownerNode)
     if (fail) {
       return null
@@ -493,8 +491,8 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     val allMatching = getSuperInterfaceMethods(start, predicate) ?: return null
     return allMatching.filterIndexed { index, (definingClass) ->
       var isDeepest = true
-      allMatching.forEachIndexed { otherIndex, otherMethod ->
-        if (index != otherIndex && ctx.isSubclassOf(definingClass, otherMethod.definingClass)) {
+      allMatching.forEachIndexed { otherIndex, (otherDefiningClass) ->
+        if (index != otherIndex && ctx.isSubclassOf(definingClass, otherDefiningClass)) {
           isDeepest = false
         }
       }

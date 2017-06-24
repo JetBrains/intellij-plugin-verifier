@@ -96,7 +96,7 @@ class PresentableSignatureVisitor(val binaryNameConverter: (String) -> String) :
 
   private var seenFormalParameter: Boolean = false
 
-  private lateinit var returnType: TypeSignatureVisitor
+  private var returnType: TypeSignatureVisitor? = null
 
   private val methodParameters: MutableList<TypeSignatureVisitor> = arrayListOf()
 
@@ -131,7 +131,7 @@ class PresentableSignatureVisitor(val binaryNameConverter: (String) -> String) :
   override fun visitReturnType(): SignatureVisitor {
     endFormals()
     returnType = TypeSignatureVisitor(binaryNameConverter)
-    return returnType
+    return returnType!!
   }
 
   override fun visitExceptionType(): SignatureVisitor = IGNORING_VISITOR
@@ -156,7 +156,7 @@ class PresentableSignatureVisitor(val binaryNameConverter: (String) -> String) :
 
   fun getClassFormalTypeParameters(): String = formalTypeParameters.toString()
 
-  fun getReturnType(): String = returnType.getResult()
+  fun getReturnType(): String = returnType?.getResult() ?: throw IllegalArgumentException("Exptected method signature")
 
   fun getMethodParameterTypes(): List<String> = methodParameters.map { it.getResult() }
 
