@@ -2,10 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/after-idea/after-idea.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/after-idea/after-idea.iml" group="verifier-test/after-idea" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-test/after-idea/after-idea.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-test/after-idea/after-idea.iml" group="verifier-test/after-idea" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-test/after-idea/after-idea_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-test/after-idea/after-idea_main.iml" group="verifier-test/after-idea" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-test/after-idea/after-idea_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-test/after-idea/after-idea_test.iml" group="verifier-test/after-idea" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-cli/before-idea/before-idea.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-cli/before-idea/before-idea.iml" group="verifier-test/before-idea" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-test/before-idea/before-idea.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-test/before-idea/before-idea.iml" group="verifier-test/before-idea" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-test/before-idea/before-idea_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-test/before-idea/before-idea_main.iml" group="verifier-test/before-idea" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-test/before-idea/before-idea_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-test/before-idea/before-idea_test.iml" group="verifier-test/before-idea" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/intellij-feature-extractor.iml" filepath="$PROJECT_DIR$/.idea/modules/intellij-feature-extractor.iml" />
@@ -50,7 +50,7 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-results/verifier-results.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-results/verifier-results.iml" group="verifier-results" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-results/verifier-results_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-results/verifier-results_main.iml" group="verifier-results" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-results/verifier-results_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-results/verifier-results_test.iml" group="verifier-results" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-configurations/verifier-tasks.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-configurations/verifier-tasks.iml" group="verifier-tasks" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-tasks/verifier-tasks.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-tasks/verifier-tasks.iml" group="verifier-tasks" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-tasks/verifier-tasks_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-tasks/verifier-tasks_main.iml" group="verifier-tasks" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-tasks/verifier-tasks_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-tasks/verifier-tasks_test.iml" group="verifier-tasks" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-test/verifier-test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-test/verifier-test.iml" group="verifier-test" />

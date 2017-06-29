@@ -6,63 +6,36 @@
       <module name="after-idea_test" target="1.8" />
       <module name="before-idea_main" target="1.8" />
       <module name="before-idea_test" target="1.8" />
-      <module name="cli_main" target="1.8" />
-      <module name="cli_test" target="1.8" />
       <module name="intellij-feature-extractor_main" target="1.6" />
       <module name="intellij-feature-extractor_test" target="1.6" />
       <module name="intellij-plugin-structure_main" target="1.6" />
       <module name="intellij-plugin-structure_test" target="1.6" />
-      <module name="mock-plugin3_main" target="1.6" />
-      <module name="mock-plugin3_test" target="1.6" />
       <module name="mock-plugin_main" target="1.6" />
       <module name="mock-plugin_test" target="1.6" />
       <module name="plugins-verifier-service_main" target="1.8" />
       <module name="plugins-verifier-service_test" target="1.8" />
-      <module name="protocol_main" target="1.8" />
-      <module name="protocol_test" target="1.8" />
-      <module name="repository_main" target="1.8" />
-      <module name="repository_test" target="1.8" />
-      <module name="rest-client_main" target="1.8" />
-      <module name="rest-client_test" target="1.8" />
-      <module name="rest_main" target="1.8" />
-      <module name="rest_test" target="1.8" />
-      <module name="server_integrationTest" target="1.8" />
-      <module name="server_main" target="1.8" />
-      <module name="server_test" target="1.8" />
       <module name="structure-base_main" target="1.6" />
       <module name="structure-base_test" target="1.6" />
       <module name="structure-classes_main" target="1.6" />
       <module name="structure-classes_test" target="1.6" />
       <module name="test-classes_main" target="1.6" />
       <module name="test-classes_test" target="1.6" />
-      <module name="tests-mock-plugin_main" target="1.6" />
-      <module name="tests-mock-plugin_test" target="1.6" />
       <module name="tests_main" target="1.6" />
       <module name="tests_test" target="1.6" />
-      <module name="verifier-cli-mock-plugin_main" target="1.8" />
-      <module name="verifier-cli-mock-plugin_test" target="1.8" />
       <module name="verifier-cli_main" target="1.8" />
       <module name="verifier-cli_test" target="1.8" />
-      <module name="verifier-configurations_main" target="1.8" />
-      <module name="verifier-configurations_test" target="1.8" />
       <module name="verifier-core_main" target="1.8" />
       <module name="verifier-core_test" target="1.8" />
       <module name="verifier-parameters_main" target="1.8" />
       <module name="verifier-parameters_test" target="1.8" />
       <module name="verifier-parent_main" target="1.8" />
       <module name="verifier-parent_test" target="1.8" />
-      <module name="verifier-problems_main" target="1.6" />
-      <module name="verifier-problems_test" target="1.6" />
       <module name="verifier-repository_main" target="1.8" />
       <module name="verifier-repository_test" target="1.8" />
       <module name="verifier-results_main" target="1.6" />
       <module name="verifier-results_test" target="1.6" />
       <module name="verifier-tasks_main" target="1.8" />
       <module name="verifier-tasks_test" target="1.8" />
-      <module name="verifier-test-after-idea_main" target="1.8" />
-      <module name="verifier-test-after-idea_test" target="1.8" />
-      <module name="verifier-test-before-idea_main" target="1.8" />
-      <module name="verifier-test-before-idea_test" target="1.8" />
       <module name="verifier-test-mock-plugin_main" target="1.8" />
       <module name="verifier-test-mock-plugin_test" target="1.8" />
       <module name="verifier-test_main" target="1.8" />

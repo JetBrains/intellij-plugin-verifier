@@ -9,6 +9,7 @@ import org.objectweb.asm.tree.MethodNode
 /**
  * @author Sergey Patrikeev
  */
+@Suppress("UNCHECKED_CAST")
 class AnalysisUtilTest : FeatureExtractorTestBase() {
   @Test
   fun constantFunction() {

@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author mike
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings("unchecked")
 public class JDOMUtil {
   private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
   private static final char[] EMPTY_CHAR_ARRAY = new char[0];
@@ -141,10 +141,12 @@ public class JDOMUtil {
   private static class EmptyTextFilter extends AbstractFilter {
     @Override
     public Object filter(Object obj) {
-      if (!(obj instanceof Text) || !((Text) obj).getText().trim().isEmpty()) {
-        return obj;
+      if (obj instanceof Text) {
+        if (((Text) obj).getText().trim().isEmpty()) {
+          return null;
+        }
       }
-      return null;
+      return obj;
     }
   }
 }
