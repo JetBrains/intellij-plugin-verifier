@@ -43,7 +43,7 @@ class CheckTrunkApiParamsBuilder : TaskParametersBuilder<CheckTrunkApiParams> {
     } else if (apiOpts.majorIdeVersion != null) {
       val ideVersion = parseIdeVersion(apiOpts.majorIdeVersion!!)
       majorIdeFile = downloadIdeByVersion(ideVersion)
-      deleteMajorOnExit = apiOpts.deleteMajorIdeOnExit
+      deleteMajorOnExit = !apiOpts.saveMajorIdeFile
     } else {
       throw IllegalArgumentException("Neither the version (-miv) nor the path to the IDE (-mip) with which to compare API problems specified")
     }
@@ -75,12 +75,12 @@ class CheckTrunkApiParamsBuilder : TaskParametersBuilder<CheckTrunkApiParams> {
     }
   }
 
-  private class CheckTrunkApiOpts {
+  class CheckTrunkApiOpts {
     @set:Argument("major-ide-version", alias = "miv", description = "The IDE version with which to compare API problems")
     var majorIdeVersion: String? = null
 
-    @set:Argument("delete-major-ide-file", alias = "dmif", description = "Whether to delete a downloaded release IDE on completion")
-    var deleteMajorIdeOnExit: Boolean = true
+    @set:Argument("save-major-ide-file", alias = "smif", description = "Whether to save a downloaded release IDE in cache directory for use in later verifications")
+    var saveMajorIdeFile: Boolean = false
 
     @set:Argument("major-ide-path", alias = "mip", description = "The path to the IDE with which to compare API problems")
     var majorIdePath: String? = null
