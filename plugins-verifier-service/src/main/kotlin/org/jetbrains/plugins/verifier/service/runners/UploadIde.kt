@@ -14,7 +14,9 @@ import org.slf4j.LoggerFactory
 /**
  * @author Sergey Patrikeev
  */
-class UploadIdeRunner(val ideVersion: IdeVersion? = null, val availableIde: AvailableIde? = null, val fromSnapshots: Boolean = false) : Task<Boolean>() {
+class UploadIdeRunner(val ideVersion: IdeVersion? = null,
+                      val availableIde: AvailableIde? = null,
+                      val fromSnapshots: Boolean = false) : Task<Boolean>() {
 
   init {
     require(ideVersion != null || availableIde != null, { "Ide version to be uploaded is not specified" })
@@ -31,7 +33,7 @@ class UploadIdeRunner(val ideVersion: IdeVersion? = null, val availableIde: Avai
 
     try {
       try {
-        IdeRepository.downloadIde(artifact, ideFile, { progress.setProgress(it) })
+        IdeRepository.getOrDownloadIde(artifact, { progress.setProgress(it) })
       } catch(e: Exception) {
         LOG.error("Unable to download IDE ${artifact.version} community=${artifact.isCommunity} from snapshots=${artifact.isSnapshot}", e)
         throw e

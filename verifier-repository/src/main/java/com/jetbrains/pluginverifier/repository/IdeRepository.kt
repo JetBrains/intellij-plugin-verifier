@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
+import com.jetbrains.pluginverifier.misc.extractTo
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
@@ -13,27 +14,30 @@ import org.jsoup.nodes.Document
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import retrofit2.Call
-import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Streaming
 import retrofit2.http.Url
 import java.io.File
-import java.io.IOException
 import java.io.InputStream
 import java.net.URL
+import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
 data class AvailableIde(val version: IdeVersion,
                         val isRelease: Boolean,
                         val isCommunity: Boolean,
                         val isSnapshot: Boolean,
-                        val downloadUrl: URL)
+                        val downloadUrl: URL) {
+  override fun toString(): String = version.toString() + if (isSnapshot) " (snapshot)" else ""
+}
 
 object IdeRepository {
 
   private val LOG: Logger = LoggerFactory.getLogger(IdeRepository::class.java)
+
+  private val IDE_DOWNLOAD_ATTEMPTS = 3
 
   private fun parseDocument(document: Document, snapshots: Boolean): List<AvailableIde> {
     val table = document.getElementsByTag("table")[0]
@@ -79,52 +83,102 @@ object IdeRepository {
     }
   }
 
-  fun downloadIde(availableIde: AvailableIde,
-                  saveTo: File,
-                  progress: ((Double) -> Unit)? = null): File {
-    if (saveTo.exists()) {
-      try {
-        FileUtils.forceDelete(saveTo)
+  private fun getIdeDirForVersion(ideVersion: IdeVersion) = File(RepositoryConfiguration.ideDownloadDir, ideVersion.toString())
+
+  private fun tryDownloadIde(availableIde: AvailableIde, progress: (Double) -> Unit): File {
+    for (attempt in 1..IDE_DOWNLOAD_ATTEMPTS) {
+      val ide = try {
+        downloadAndExtractIde(availableIde, progress)
       } catch (e: Exception) {
-        throw IOException("Unable to delete the existing file to which the IDE should be saved", e)
+        LOG.error("Attempt #$attempt to download IDE is failed", e)
+        continue
       }
+      return ide
     }
+    throw RuntimeException("Unable to download IDE $availableIde in $IDE_DOWNLOAD_ATTEMPTS attempts")
+  }
 
-    val call = repository.downloadIde(availableIde.downloadUrl.toExternalForm())
-
-    val fileSize: Long
-    val stream: InputStream
+  private fun downloadAndExtractIde(availableIde: AvailableIde, progress: (Double) -> Unit): File {
+    val tempIdeZip = File.createTempFile("ide-${availableIde.version}", ".zip", RepositoryConfiguration.ideDownloadDir)
     try {
-      val response: Response<ResponseBody> = call.executeSuccessfully()
-      fileSize = response.body().contentLength()
-      stream = response.body().byteStream()
-    } catch (e: Exception) {
-      saveTo.deleteLogged()
-      LOG.error("Unable to download IDE by ${availableIde.downloadUrl}", e)
-      throw e
-    }
-
-    try {
-      stream.use { inputStream ->
-        copyInputStreamWithProgress(inputStream, fileSize, saveTo, progress)
-      }
-
-      return saveTo
-    } catch (e: Exception) {
-      saveTo.deleteLogged()
-      LOG.error("Unable to save the IDE #${availableIde.version} (snapshot = ${availableIde.isSnapshot}) (community = ${availableIde.isCommunity})", e)
-      throw e
+      return downloadIdeToTempZipAndExtract(availableIde, tempIdeZip, progress)
+    } finally {
+      tempIdeZip.deleteLogged()
     }
   }
 
-  private fun copyInputStreamWithProgress(inputStream: InputStream, fileSize: Long, toFile: File, progress: ((Double) -> Unit)?) {
+  private fun downloadIdeToTempZipAndExtract(availableIde: AvailableIde, tempZip: File, progress: (Double) -> Unit): File {
+    downloadIdeZipTo(availableIde, tempZip, progress)
+
+    val tempIdeDir = Files.createTempDirectory(RepositoryConfiguration.ideDownloadDir.toPath(), "ide").toFile()
+    try {
+      return extractIdeZipToTempDirectoryAndMove(tempZip, tempIdeDir, availableIde)
+    } finally {
+      tempIdeDir.deleteLogged()
+    }
+  }
+
+  private fun extractIdeZipToTempDirectoryAndMove(tempZip: File, tempIdeDir: File, availableIde: AvailableIde): File {
+    tempZip.extractTo(tempIdeDir)
+    synchronized(this) {
+      val ideDir = getIdeDirForVersion(availableIde.version)
+      if (!ideDir.exists()) {
+        FileUtils.moveDirectory(tempIdeDir, ideDir)
+      }
+      return ideDir
+    }
+  }
+
+  fun getOrDownloadIde(ideVersion: IdeVersion, progressUpdater: (Double) -> Unit): File {
+    val fromReleases = IdeRepository.fetchIndex(snapshots = false).find { it.version == ideVersion }
+    if (fromReleases != null) {
+      return getOrDownloadIde(fromReleases, progressUpdater)
+    }
+
+    val fromSnapshots = IdeRepository.fetchIndex(snapshots = true).find { it.version == ideVersion }
+    if (fromSnapshots != null) {
+      return getOrDownloadIde(fromSnapshots, progressUpdater)
+    }
+
+    throw IllegalArgumentException("IDE #$ideVersion is not found neither in https://www.jetbrains.com/intellij-repository/releases/ nor in https://www.jetbrains.com/intellij-repository/releases/")
+  }
+
+  fun getOrDownloadIde(availableIde: AvailableIde, progress: (Double) -> Unit): File {
+    val ideVersion = availableIde.version
+    val ideDir = getIdeDirForVersion(ideVersion)
+    if (ideDir.isDirectory && ideDir.list().orEmpty().isNotEmpty()) {
+      LOG.info("IDE #$ideVersion is found in $ideDir")
+      return ideDir
+    } else {
+      LOG.info("Downloading IDE $availableIde")
+      val downloadedIde = tryDownloadIde(availableIde, progress)
+      LOG.info("Successfully downloaded to $downloadedIde")
+      return downloadedIde
+    }
+  }
+
+
+  private fun downloadIdeZipTo(availableIde: AvailableIde, saveTo: File, progress: ((Double) -> Unit)) {
+    val downloadUrl = availableIde.downloadUrl.toExternalForm()
+    val response = repository.downloadIde(downloadUrl).executeSuccessfully()
+    val expectedSize = response.body().contentLength()
+    val stream = response.body().byteStream()
+    stream.use { inputStream ->
+      copyInputStreamWithProgress(inputStream, expectedSize, saveTo, progress)
+    }
+  }
+
+  private fun copyInputStreamWithProgress(inputStream: InputStream,
+                                          expectedSize: Long,
+                                          toFile: File,
+                                          progress: (Double) -> Unit) {
     val buffer = ByteArray(4 * 1024)
-    if (fileSize == 0L) {
+    if (expectedSize == 0L) {
       throw IllegalArgumentException("File is empty")
     }
 
     inputStream.use { input ->
-      toFile.outputStream().use { output ->
+      toFile.outputStream().buffered().use { output ->
         var count: Long = 0
         var n: Int
         while (true) {
@@ -132,9 +186,7 @@ object IdeRepository {
           if (n == -1) break
           output.write(buffer, 0, n)
           count += n
-          if (progress != null) {
-            progress(count.toDouble() / fileSize)
-          }
+          progress(count.toDouble() / expectedSize)
         }
       }
     }

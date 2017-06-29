@@ -23,8 +23,8 @@ internal val problemLocationSerializer = jsonSerializer<Location> {
 
   fun serializeAccessFlags(accessFlags: AccessFlags): String = accessFlags.flags.toString()
 
-  fun serializeClassLocation(src: ClassLocation): String =
-      CompactJsonUtil.serialize(listOf("C", src.className, src.signature, serializeClassPath(src.classPath), serializeAccessFlags(src.accessFlags)))
+  fun serializeClassLocation(clsLocation: ClassLocation): String =
+      CompactJsonUtil.serialize(listOf("C", clsLocation.className, clsLocation.signature, serializeClassPath(clsLocation.classPath), serializeAccessFlags(clsLocation.accessFlags)))
 
   return@jsonSerializer when (src) {
     is MethodLocation -> JsonPrimitive(CompactJsonUtil.serialize(listOf("M", serializeClassLocation(src.hostClass), src.methodName, src.methodDescriptor, src.parameterNames.joinToString("|"), src.signature, serializeAccessFlags(src.accessFlags))))

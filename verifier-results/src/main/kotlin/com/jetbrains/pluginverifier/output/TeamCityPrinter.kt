@@ -92,8 +92,8 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
         shortDescriptionToResults.put(it.getShortDescription(), result)
       }
     }
-    shortDescriptionToResults.asMap().forEach { description, results ->
-      val allPluginsWithThisProblem = results.map { it.plugin }
+    shortDescriptionToResults.asMap().forEach { description, descriptionResults ->
+      val allPluginsWithThisProblem = descriptionResults.map { it.plugin }
       tcLog.buildProblem(description.toString() + " (in ${allPluginsWithThisProblem.joinToString()})")
     }
   }
