@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.runners
+package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.plugin.Plugin
@@ -9,26 +9,26 @@ import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.tasks.CheckPluginParams
 import com.jetbrains.pluginverifier.tasks.CheckPluginTask
-import org.jetbrains.plugins.verifier.service.core.BridgeVProgress
-import org.jetbrains.plugins.verifier.service.core.Progress
-import org.jetbrains.plugins.verifier.service.core.Task
+import org.jetbrains.plugins.verifier.service.ide.IdeFileLock
+import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.params.CheckRangeRunnerParams
-import org.jetbrains.plugins.verifier.service.storage.IdeFileLock
-import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
+import org.jetbrains.plugins.verifier.service.progress.BridgeVerifierProgress
+import org.jetbrains.plugins.verifier.service.progress.TaskProgress
 import org.jetbrains.plugins.verifier.service.storage.JdkManager
+import org.jetbrains.plugins.verifier.service.tasks.Task
 import org.slf4j.LoggerFactory
 
-class CheckRangeRunner(val pluginInfo: PluginInfo,
-                       val pluginCoordinate: PluginCoordinate,
-                       val params: CheckRangeRunnerParams,
-                       val ideVersions: List<IdeVersion>? = null) : Task<CheckRangeResults>() {
+class CheckPluginSinceUntilRangeTask(val pluginInfo: PluginInfo,
+                                     val pluginCoordinate: PluginCoordinate,
+                                     val params: CheckRangeRunnerParams,
+                                     val ideVersions: List<IdeVersion>? = null) : Task<CheckRangeResults>() {
   override fun presentableName(): String = "Check $pluginCoordinate with IDE from [since; until]"
 
   companion object {
-    private val LOG = LoggerFactory.getLogger(CheckRangeRunner::class.java)
+    private val LOG = LoggerFactory.getLogger(CheckPluginSinceUntilRangeTask::class.java)
   }
 
-  private fun doRangeVerification(createOk: CreatePluginResult.OK, progress: Progress): CheckRangeResults {
+  private fun doRangeVerification(createOk: CreatePluginResult.OK, progress: TaskProgress): CheckRangeResults {
     val plugin = createOk.plugin
     val sinceBuild = plugin.sinceBuild!!
     val untilBuild = plugin.untilBuild
@@ -43,7 +43,7 @@ class CheckRangeRunner(val pluginInfo: PluginInfo,
     }
   }
 
-  private fun checkRangeResults(sinceBuild: IdeVersion, untilBuild: IdeVersion?, ideLocks: List<IdeFileLock>, plugin: Plugin, progress: Progress): CheckRangeResults {
+  private fun checkRangeResults(sinceBuild: IdeVersion, untilBuild: IdeVersion?, ideLocks: List<IdeFileLock>, plugin: Plugin, progress: TaskProgress): CheckRangeResults {
     LOG.debug("IDE-s on the server: ${IdeFilesManager.ideList().joinToString()}; IDE-s compatible with [$sinceBuild; $untilBuild]: [${ideLocks.joinToString { it.getIdeFile().name }}}]")
     if (ideLocks.isEmpty()) {
       LOG.info("There are no IDEs compatible with the Plugin $plugin; [since; until] = [$sinceBuild; $untilBuild]")
@@ -52,7 +52,7 @@ class CheckRangeRunner(val pluginInfo: PluginInfo,
 
     val ideDescriptors = ideLocks.map { IdeCreator.createByFile(it.getIdeFile(), null) }
     val jdkDescriptor = JdkDescriptor(JdkManager.getJdkHome(params.jdkVersion))
-    val params = CheckPluginParams(listOf(pluginCoordinate), ideDescriptors, jdkDescriptor, emptyList(), ProblemsFilter.AlwaysTrue, Resolver.getEmptyResolver(), BridgeVProgress(progress))
+    val params = CheckPluginParams(listOf(pluginCoordinate), ideDescriptors, jdkDescriptor, emptyList(), ProblemsFilter.AlwaysTrue, Resolver.getEmptyResolver(), BridgeVerifierProgress(progress))
 
     LOG.debug("CheckPlugin with [since; until] #$taskId arguments: $params")
 
@@ -67,7 +67,7 @@ class CheckRangeRunner(val pluginInfo: PluginInfo,
         .mapNotNull { IdeFilesManager.getIde(it) }
   }
 
-  override fun computeResult(progress: Progress): CheckRangeResults = PluginCreator.createPlugin(pluginCoordinate).use { createPluginResult ->
+  override fun computeResult(progress: TaskProgress): CheckRangeResults = PluginCreator.createPlugin(pluginCoordinate).use { createPluginResult ->
     when (createPluginResult) {
       is CreatePluginResult.NotFound -> CheckRangeResults(pluginInfo, CheckRangeResults.ResultType.NOT_FOUND, emptyList(), emptyList())
       is CreatePluginResult.BadPlugin -> CheckRangeResults(pluginInfo, CheckRangeResults.ResultType.BAD_PLUGIN, emptyList(), emptyList())

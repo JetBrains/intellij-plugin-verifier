@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.runners
+package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.google.gson.annotations.SerializedName
 import com.intellij.structure.ide.IdeVersion

@@ -1,62 +1,35 @@
-package org.jetbrains.plugins.verifier.service.service
+package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.google.common.collect.HashMultimap
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.google.gson.Gson
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import okhttp3.RequestBody
-import okhttp3.ResponseBody
-import org.jetbrains.plugins.verifier.service.api.Result
-import org.jetbrains.plugins.verifier.service.api.TaskId
-import org.jetbrains.plugins.verifier.service.api.TaskStatus
-import org.jetbrains.plugins.verifier.service.core.TaskManager
+import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.params.CheckRangeRunnerParams
 import org.jetbrains.plugins.verifier.service.params.JdkVersion
-import org.jetbrains.plugins.verifier.service.runners.CheckRangeResults
-import org.jetbrains.plugins.verifier.service.runners.CheckRangeRunner
+import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
-import org.jetbrains.plugins.verifier.service.util.executeSuccessfully
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import retrofit2.Call
+import org.jetbrains.plugins.verifier.service.tasks.TaskId
+import org.jetbrains.plugins.verifier.service.tasks.TaskManager
+import org.jetbrains.plugins.verifier.service.tasks.TaskResult
+import org.jetbrains.plugins.verifier.service.tasks.TaskStatus
+import org.jetbrains.plugins.verifier.service.util.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Multipart
-import retrofit2.http.POST
-import retrofit2.http.Part
-import java.util.concurrent.Executors
+import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.TimeUnit
 
-object Service {
-
-  fun run() {
-    Executors.newSingleThreadScheduledExecutor(
-        ThreadFactoryBuilder()
-            .setDaemon(true)
-            .setNameFormat("service-%d")
-            .build()
-    ).scheduleAtFixedRate({ Service.tick() }, 0, SERVICE_PERIOD, TimeUnit.MINUTES)
-  }
-
-  private val LOG: Logger = LoggerFactory.getLogger(Service::class.java)
-
-  //5 minutes
-  private const val SERVICE_PERIOD: Long = 5
+class VerifierService(taskManager: TaskManager) : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES, taskManager) {
 
   private val UPDATE_MISSING_IDE_PAUSE_MILLIS = TimeUnit.DAYS.toMillis(1)
 
   private val UPDATE_CHECK_MIN_PAUSE_MILLIS = TimeUnit.MINUTES.toMillis(10)
 
   private val verifiableUpdates: MutableMap<UpdateInfo, TaskId> = hashMapOf()
+
   private val lastCheckDate: MutableMap<UpdateInfo, Long> = hashMapOf()
-
-  val updatesMissingCompatibleIde: MutableSet<UpdateInfo> = hashSetOf()
-
-  private var isRequesting: Boolean = false
 
   private val verifier: VerificationApi = Retrofit.Builder()
       .baseUrl(Settings.PLUGIN_REPOSITORY_URL.get())
@@ -64,15 +37,6 @@ object Service {
       .client(makeClient(LOG.isDebugEnabled))
       .build()
       .create(VerificationApi::class.java)
-
-  private fun isServerTooBusy(): Boolean {
-    val runningNumber = TaskManager.runningTasksNumber()
-    if (runningNumber >= TaskManager.MAX_RUNNING_TASKS) {
-      LOG.info("There are too many running tasks $runningNumber >= ${TaskManager.MAX_RUNNING_TASKS}")
-      return true
-    }
-    return false
-  }
 
   private val userName: String by lazy {
     Settings.PLUGIN_REPOSITORY_VERIFIER_USERNAME.get()
@@ -83,39 +47,22 @@ object Service {
   }
 
   @Synchronized
-  fun tick() {
-    LOG.info("It's time to check more plugins!")
+  override fun doTick() {
+    LOG.info("It's time to check the plugins")
 
-    if (isServerTooBusy()) return
+    val tasks = HashMultimap.create<Int, IdeVersion>()
 
-    if (isRequesting) {
-      LOG.info("The server is already requesting new plugins list")
-      return
+    for (ideVersion in IdeFilesManager.ideList()) {
+      getUpdatesToCheck(ideVersion).forEach {
+        tasks.put(it, ideVersion)
+      }
     }
 
-    isRequesting = true
-
-    try {
-
-      val tasks = HashMultimap.create<Int, IdeVersion>()
-
-      for (ideVersion in IdeFilesManager.ideList()) {
-        getUpdatesToCheck(ideVersion).forEach {
-          tasks.put(it, ideVersion)
-        }
+    for ((updateId, ideVersions) in tasks.asMap()) {
+      if (taskManager.isBusy()) {
+        return
       }
-
-      for ((updateId, ideVersions) in tasks.asMap()) {
-        if (isServerTooBusy()) {
-          return
-        }
-        schedule(updateId, ideVersions.toList())
-      }
-
-    } catch (e: Exception) {
-      LOG.error("Failed to schedule updates check", e)
-    } finally {
-      isRequesting = false
+      schedule(updateId, ideVersions.toList())
     }
   }
 
@@ -146,12 +93,12 @@ object Service {
 
     val pluginInfo: PluginInfo = PluginInfo(updateInfo.pluginId, updateInfo.version, updateInfo)
     val pluginCoordinate = PluginCoordinate.ByUpdateInfo(updateInfo)
-    val runner = CheckRangeRunner(pluginInfo, pluginCoordinate, getRunnerParams(), versions)
-    val taskId = TaskManager.enqueue(
+    val runner = CheckPluginSinceUntilRangeTask(pluginInfo, pluginCoordinate, getRunnerParams(), versions)
+    val taskId = taskManager.enqueue(
         runner,
         { onSuccess(it, updateInfo) },
-        { t, tid, task -> logError(t, tid, task as CheckRangeRunner) },
-        { _, task -> onUpdateChecked(task as CheckRangeRunner) }
+        { t, tid, task -> logError(t, tid, task as CheckPluginSinceUntilRangeTask) },
+        { _, task -> onUpdateChecked(task as CheckPluginSinceUntilRangeTask) }
     )
     verifiableUpdates[updateInfo] = taskId
     lastCheckDate[updateInfo] = System.currentTimeMillis()
@@ -166,17 +113,19 @@ object Service {
     verifiableUpdates.remove(updateInfo)
   }
 
-  private fun onUpdateChecked(task: CheckRangeRunner) {
+  private fun onUpdateChecked(task: CheckPluginSinceUntilRangeTask) {
     val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
     releaseUpdate(updateInfo)
   }
 
-  private fun logError(throwable: Throwable, taskStatus: TaskStatus, task: CheckRangeRunner) {
+  private fun logError(throwable: Throwable, taskStatus: TaskStatus, task: CheckPluginSinceUntilRangeTask) {
     val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
     LOG.error("Unable to check update $updateInfo: taskId = #${taskStatus.taskId}", throwable)
   }
 
-  private fun onSuccess(result: Result<CheckRangeResults>, updateInfo: UpdateInfo) {
+  val updatesMissingCompatibleIde = ConcurrentSkipListSet<UpdateInfo>()
+
+  private fun onSuccess(result: TaskResult<CheckRangeResults>, updateInfo: UpdateInfo) {
     val results = result.result!!
     LOG.info("Update ${results.plugin} is successfully checked with IDE-s. Result type = ${results.resultType}; " +
         "IDE-s = ${results.checkedIdeList.joinToString()} " +
@@ -195,26 +144,10 @@ object Service {
     }
   }
 
-  fun getUpdatesToCheck(availableIde: IdeVersion, userName: String, password: String) =
+  private fun getUpdatesToCheck(availableIde: IdeVersion, userName: String, password: String) =
       verifier.getUpdatesToCheck(availableIde.asString(), createStringRequestBody(userName), createStringRequestBody(password))
 
   private fun sendUpdateCheckResult(checkResult: CheckRangeResults, userName: String, password: String) =
       verifier.sendUpdateCheckResult(createCompactJsonRequestBody(checkResult), createStringRequestBody(userName), createStringRequestBody(password))
-
-}
-
-interface VerificationApi {
-
-  @POST("/verification/getUpdatesToCheck")
-  @Multipart
-  fun getUpdatesToCheck(@Part("availableIde") availableIde: String,
-                        @Part("userName") userName: RequestBody,
-                        @Part("password") password: RequestBody): Call<List<Int>>
-
-  @POST("/verification/receiveUpdateCheckResult")
-  @Multipart
-  fun sendUpdateCheckResult(@Part("checkResults") checkResult: RequestBody,
-                            @Part("userName") userName: RequestBody,
-                            @Part("password") password: RequestBody): Call<ResponseBody>
 
 }

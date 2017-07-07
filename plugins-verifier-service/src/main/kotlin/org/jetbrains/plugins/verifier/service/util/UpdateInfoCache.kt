@@ -1,9 +1,8 @@
-package org.jetbrains.plugins.verifier.service.service
+package org.jetbrains.plugins.verifier.service.util
 
 import com.google.gson.Gson
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.util.executeSuccessfully
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import retrofit2.Call
@@ -64,7 +63,7 @@ object UpdateInfoCache {
   }
 }
 
-interface GetUpdateInfoApi {
+private interface GetUpdateInfoApi {
 
   @POST("/manager/getUpdateInfosForIdsBetween")
   fun getUpdateInfosForIds(@Query("startId") startId: Int, @Query("endId") endId: Int): Call<List<UpdateInfo>>

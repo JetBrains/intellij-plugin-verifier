@@ -1,13 +1,6 @@
-package org.jetbrains.plugins.verifier.service.api
+package org.jetbrains.plugins.verifier.service.tasks
 
 import com.google.gson.annotations.SerializedName
-
-/**
- * @author Sergey Patrikeev
- */
-data class TaskId(@SerializedName("id") val id: Int) {
-  override fun toString(): String = id.toString()
-}
 
 data class TaskStatus(@SerializedName("taskId") val taskId: TaskId,
                       @SerializedName("startTime") val startTime: Long,
@@ -31,7 +24,3 @@ data class TaskStatus(@SerializedName("taskId") val taskId: TaskId,
   }
 
 }
-
-data class Result<out T>(@SerializedName("taskStatus") val taskStatus: TaskStatus,
-                         @SerializedName("result") val result: T?,
-                         @SerializedName("errorMsg") val errorMessage: String?)

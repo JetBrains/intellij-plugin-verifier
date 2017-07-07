@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.runners
+package org.jetbrains.plugins.verifier.service.service.featureExtractor
 
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor
@@ -7,15 +7,15 @@ import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.ide.IdeCreator
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
-import org.jetbrains.plugins.verifier.service.core.Progress
-import org.jetbrains.plugins.verifier.service.core.Task
-import org.jetbrains.plugins.verifier.service.storage.IdeFileLock
-import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
+import org.jetbrains.plugins.verifier.service.ide.IdeFileLock
+import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
+import org.jetbrains.plugins.verifier.service.progress.TaskProgress
+import org.jetbrains.plugins.verifier.service.tasks.Task
 
 class ExtractFeaturesRunner(val pluginCoordinate: PluginCoordinate, val pluginInfo: PluginInfo) : Task<FeaturesResult>() {
   override fun presentableName(): String = "Features extraction of $pluginCoordinate"
 
-  override fun computeResult(progress: Progress): FeaturesResult {
+  override fun computeResult(progress: TaskProgress): FeaturesResult {
     val createPluginResult = PluginCreator.createPlugin(pluginCoordinate)
     createPluginResult.use {
       return when (createPluginResult) {

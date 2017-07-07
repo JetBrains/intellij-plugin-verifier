@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.runners
+package org.jetbrains.plugins.verifier.service.service.featureExtractor
 
 import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.pluginverifier.api.PluginInfo

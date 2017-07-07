@@ -42,9 +42,9 @@ class TestTeamCityPrinter {
 
     override fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> = updateInfos.toList()
 
-    override fun getPluginFile(update: UpdateInfo): FileLock? = TODO()
+    override fun getPluginFile(update: UpdateInfo): FileLock? = throw UnsupportedOperationException()
 
-    override fun getUpdateInfoById(updateId: Int): UpdateInfo = TODO()
+    override fun getUpdateInfoById(updateId: Int): UpdateInfo = throw UnsupportedOperationException()
   }
 
   @Test

@@ -1,63 +1,40 @@
 package org.jetbrains.plugins.verifier.service.util
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.repository.AvailableIde
 import com.jetbrains.pluginverifier.repository.IdeRepository
-import org.jetbrains.plugins.verifier.service.core.TaskManager
-import org.jetbrains.plugins.verifier.service.runners.DeleteIdeRunner
-import org.jetbrains.plugins.verifier.service.runners.UploadIdeRunner
-import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import java.util.concurrent.Executors
+import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
+import org.jetbrains.plugins.verifier.service.service.BaseService
+import org.jetbrains.plugins.verifier.service.service.ide.DeleteIdeRunner
+import org.jetbrains.plugins.verifier.service.service.ide.UploadIdeRunner
+import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import java.util.concurrent.TimeUnit
 
 /**
  * @author Sergey Patrikeev
  */
-object IdeListUpdater {
-
-  private val LOG: Logger = LoggerFactory.getLogger(IdeListUpdater::class.java)
-
-  //30 minutes
-  private val DOWNLOAD_NEW_IDE_PERIOD: Long = 30
+class IdeListUpdater(taskManager: TaskManager) : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES, taskManager) {
 
   private val downloadingIdes: MutableSet<IdeVersion> = hashSetOf()
 
-  fun run() {
-    Executors.newSingleThreadScheduledExecutor(
-        ThreadFactoryBuilder()
-            .setDaemon(true)
-            .setNameFormat("ide-repository-%d")
-            .build()
-    ).scheduleAtFixedRate({ IdeListUpdater.tick() }, 0, DOWNLOAD_NEW_IDE_PERIOD, TimeUnit.MINUTES)
-  }
-
   @Synchronized
-  private fun tick() {
-    try {
-      LOG.info("It's time to upload new IDE versions to the verifier service")
+  override fun doTick() {
+    val alreadyIdes: List<IdeVersion> = IdeFilesManager.ideList()
 
-      val alreadyIdes: List<IdeVersion> = IdeFilesManager.ideList()
+    LOG.info("There are the following IDE on the service now: $alreadyIdes")
 
-      LOG.info("There are the following IDE on the service now: $alreadyIdes")
+    val newList: List<AvailableIde> = fetchNewList()
 
-      val newList: List<AvailableIde> = fetchNewList()
+    LOG.info("The following IDEs should be on the service: ${newList.map { it.version }}")
 
-      LOG.info("The following IDEs should be on the service: ${newList.map { it.version }}")
+    val shouldBe: List<Pair<AvailableIde, IdeVersion>> = newList.map { it to fullVersion(it.version) }
 
-      val shouldBe: List<Pair<AvailableIde, IdeVersion>> = newList.map { it to fullVersion(it.version) }
+    shouldBe.filterNot { alreadyIdes.contains(it.second) }.distinctBy { it.second }.forEach {
+      enqueueUploadIde(it.first)
+    }
 
-      shouldBe.filterNot { alreadyIdes.contains(it.second) }.distinctBy { it.second }.forEach {
-        enqueueUploadIde(it.first)
-      }
-
-      (alreadyIdes - shouldBe.map { it.second }).forEach {
-        enqueueDeleteIde(it)
-      }
-    } catch (e: Exception) {
-      LOG.error("Failed to update IDE list", e)
+    (alreadyIdes - shouldBe.map { it.second }).forEach {
+      enqueueDeleteIde(it)
     }
   }
 
@@ -69,7 +46,7 @@ object IdeListUpdater {
   private fun enqueueDeleteIde(ideVersion: IdeVersion) {
     LOG.info("Delete the IDE #$ideVersion because it is not necessary anymore")
     val task = DeleteIdeRunner(ideVersion)
-    val taskId = TaskManager.enqueue(task)
+    val taskId = taskManager.enqueue(task)
     LOG.info("Delete IDE #$ideVersion is enqueued with taskId=#$taskId")
   }
 
@@ -82,7 +59,7 @@ object IdeListUpdater {
 
     val runner = UploadIdeRunner(availableIde = availableIde)
 
-    val taskId = TaskManager.enqueue(runner, { }, { _, _, _ -> }, { _, _ -> downloadingIdes.remove(version) })
+    val taskId = taskManager.enqueue(runner, { }, { _, _, _ -> }, { _, _ -> downloadingIdes.remove(version) })
     LOG.info("Uploading IDE version #$version is enqueued with taskId=#$taskId")
 
     downloadingIdes.add(version)

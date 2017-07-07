@@ -1,39 +1,24 @@
-package org.jetbrains.plugins.verifier.service.service
+package org.jetbrains.plugins.verifier.service.service.featureExtractor
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
-import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import okhttp3.RequestBody
-import okhttp3.ResponseBody
-import org.jetbrains.plugins.verifier.service.api.Result
-import org.jetbrains.plugins.verifier.service.api.TaskId
-import org.jetbrains.plugins.verifier.service.api.TaskStatus
-import org.jetbrains.plugins.verifier.service.core.TaskManager
-import org.jetbrains.plugins.verifier.service.runners.ExtractFeaturesRunner
-import org.jetbrains.plugins.verifier.service.runners.FeaturesResult
+import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.util.executeSuccessfully
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import retrofit2.Call
+import org.jetbrains.plugins.verifier.service.tasks.TaskId
+import org.jetbrains.plugins.verifier.service.tasks.TaskManager
+import org.jetbrains.plugins.verifier.service.tasks.TaskResult
+import org.jetbrains.plugins.verifier.service.tasks.TaskStatus
+import org.jetbrains.plugins.verifier.service.util.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Multipart
-import retrofit2.http.POST
-import retrofit2.http.Part
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 /**
  * @author Sergey Patrikeev
  */
-object FeatureService {
-
-  private val LOG: Logger = LoggerFactory.getLogger(FeatureService::class.java)
+class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, taskManager) {
 
   private val featuresExtractor: FeaturesApi = Retrofit.Builder()
       .baseUrl(Settings.FEATURE_EXTRACTOR_REPOSITORY_URL.get())
@@ -42,24 +27,12 @@ object FeatureService {
       .build()
       .create(FeaturesApi::class.java)
 
-  fun run() {
-    Executors.newSingleThreadScheduledExecutor(
-        ThreadFactoryBuilder()
-            .setDaemon(true)
-            .setNameFormat("feature-service-%d")
-            .build()
-    ).scheduleAtFixedRate({ tick() }, 0, SERVICE_PERIOD, TimeUnit.MINUTES)
-  }
-
-  //5 minutes
-  private const val SERVICE_PERIOD: Long = 5
-
   private val inProgressUpdates: MutableMap<UpdateInfo, TaskId> = hashMapOf()
 
   private val lastCheckDate: MutableMap<UpdateInfo, Long> = hashMapOf()
 
   //10 minutes
-  private const val UPDATE_PROCESS_MIN_PAUSE_MILLIS = 10 * 60 * 1000
+  private val UPDATE_PROCESS_MIN_PAUSE_MILLIS = 10 * 60 * 1000
 
   private val userName: String by lazy {
     Settings.PLUGIN_REPOSITORY_VERIFIER_USERNAME.get()
@@ -69,42 +42,15 @@ object FeatureService {
     Settings.PLUGIN_REPOSITORY_VERIFIER_PASSWORD.get()
   }
 
-  private var isRequesting: Boolean = false
-
-  private fun isServerTooBusy(): Boolean {
-    val runningNumber = TaskManager.runningTasksNumber()
-    if (runningNumber >= TaskManager.MAX_RUNNING_TASKS) {
-      LOG.info("There are too many running tasks $runningNumber >= ${TaskManager.MAX_RUNNING_TASKS}")
-      return true
-    }
-    return false
-  }
-
   @Synchronized
-  fun tick() {
+  override fun doTick() {
     LOG.info("It's time to extract more plugins!")
 
-    if (isServerTooBusy()) return
-
-    if (isRequesting) {
-      LOG.info("The server is already requesting new plugins list")
-      return
-    }
-
-    isRequesting = true
-
-    try {
-      for (it in getUpdatesToExtract()) {
-        if (isServerTooBusy()) {
-          return
-        }
-        schedule(it)
+    for (it in getUpdatesToExtract()) {
+      if (taskManager.isBusy()) {
+        return
       }
-
-    } catch (e: Exception) {
-      LOG.error("Failed to schedule updates check", e)
-    } finally {
-      isRequesting = false
+      schedule(it)
     }
   }
 
@@ -127,7 +73,7 @@ object FeatureService {
 
     val pluginInfo = PluginInfo(updateInfo.pluginId, updateInfo.version, updateInfo)
     val runner = ExtractFeaturesRunner(PluginCoordinate.ByUpdateInfo(updateInfo), pluginInfo)
-    val taskId = TaskManager.enqueue(
+    val taskId = taskManager.enqueue(
         runner,
         { onSuccess(it) },
         { t, tid, task -> logError(t, tid, task as ExtractFeaturesRunner) },
@@ -155,7 +101,7 @@ object FeatureService {
     LOG.error("Unable to extract features of the update $updateInfo: taskId = #${taskStatus.taskId}", throwable)
   }
 
-  private fun onSuccess(result: Result<FeaturesResult>) {
+  private fun onSuccess(result: TaskResult<FeaturesResult>) {
     val extractorResult = result.result!!
     logSuccess(extractorResult, result)
     val pluginsResult = convertToPluginsSiteResult(extractorResult)
@@ -166,16 +112,16 @@ object FeatureService {
     }
   }
 
-  private fun convertToPluginsSiteResult(featuresResult: FeaturesResult): PluginsSiteResult {
+  private fun convertToPluginsSiteResult(featuresResult: FeaturesResult): AdaptedFeaturesResult {
     val updateId = featuresResult.plugin.updateInfo!!.updateId
     val resultType = featuresResult.resultType
     if (resultType == FeaturesResult.ResultType.BAD_PLUGIN) {
-      return PluginsSiteResult(updateId, resultType)
+      return AdaptedFeaturesResult(updateId, resultType)
     }
-    return PluginsSiteResult(updateId, resultType, featuresResult.features)
+    return AdaptedFeaturesResult(updateId, resultType, featuresResult.features)
   }
 
-  private fun logSuccess(featuresResult: FeaturesResult, result: Result<FeaturesResult>) {
+  private fun logSuccess(featuresResult: FeaturesResult, result: TaskResult<FeaturesResult>) {
     val plugin = featuresResult.plugin
     val resultType = featuresResult.resultType
     val size = featuresResult.features.size
@@ -194,26 +140,7 @@ object FeatureService {
       featuresExtractor.getUpdatesToExtractFeatures(createStringRequestBody(userName), createStringRequestBody(password))
 
 
-  private fun sendExtractedFeatures(extractedFeatures: PluginsSiteResult, userName: String, password: String) =
+  private fun sendExtractedFeatures(extractedFeatures: AdaptedFeaturesResult, userName: String, password: String) =
       featuresExtractor.sendExtractedFeatures(createCompactJsonRequestBody(extractedFeatures), createStringRequestBody(userName), createStringRequestBody(password))
-
-}
-
-data class PluginsSiteResult(@SerializedName("updateId") val updateId: Int,
-                             @SerializedName("resultType") val resultType: FeaturesResult.ResultType,
-                             @SerializedName("features") val features: List<ExtensionPointFeatures> = emptyList())
-
-interface FeaturesApi {
-
-  @Multipart
-  @POST("/feature/getUpdatesToExtractFeatures")
-  fun getUpdatesToExtractFeatures(@Part("userName") userName: RequestBody,
-                                  @Part("password") password: RequestBody): Call<List<Int>>
-
-  @Multipart
-  @POST("/feature/receiveExtractedFeatures")
-  fun sendExtractedFeatures(@Part("extractedFeatures") extractedFeatures: RequestBody,
-                            @Part("userName") userName: RequestBody,
-                            @Part("password") password: RequestBody): Call<ResponseBody>
 
 }

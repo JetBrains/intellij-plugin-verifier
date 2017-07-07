@@ -2,13 +2,11 @@ package org.jetbrains.plugins.verifier.service.startup
 
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.repository.RepositoryManager
-import org.jetbrains.plugins.verifier.service.service.FeatureService
-import org.jetbrains.plugins.verifier.service.service.Service
-import org.jetbrains.plugins.verifier.service.service.UpdateInfoCache
+import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
+import org.jetbrains.plugins.verifier.service.service.ServerInstance
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.storage.FileManager
-import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
-import org.jetbrains.plugins.verifier.service.util.IdeListUpdater
+import org.jetbrains.plugins.verifier.service.util.UpdateInfoCache
 import org.slf4j.LoggerFactory
 import java.io.File
 import javax.servlet.ServletContextEvent
@@ -30,26 +28,25 @@ class ServerStartupListener : ServletContextListener {
   override fun contextInitialized(sce: ServletContextEvent?) {
     LOG.info("Server is ready to start")
 
-    assertSystemProperties()
+    validateSystemProperties()
     setSystemProperties()
 
     cleanUpTempDirs()
     prepareUpdateInfoCacheForExistingIdes()
 
-    LOG.info("Server settings: ${Settings.values().filterNot { it.encrypted }.joinToString { it.key + "=" + it.get() }}")
     if (Settings.ENABLE_PLUGIN_VERIFIER_SERVICE.getAsBoolean()) {
-      Service.run()
+      ServerInstance.verifierService.start()
     }
     if (Settings.ENABLE_FEATURE_EXTRACTOR_SERVICE.getAsBoolean()) {
-      FeatureService.run()
+      ServerInstance.featureService.start()
     }
     if (Settings.ENABLE_IDE_LIST_UPDATER.getAsBoolean()) {
-      IdeListUpdater.run()
+      ServerInstance.ideListUpdater.start()
     }
   }
 
 
-  fun prepareUpdateInfoCacheForExistingIdes() {
+  private fun prepareUpdateInfoCacheForExistingIdes() {
     try {
       IdeFilesManager.ideList().forEach {
         RepositoryManager.getLastCompatibleUpdates(it).forEach {
@@ -67,16 +64,13 @@ class ServerStartupListener : ServletContextListener {
 
 
   override fun contextDestroyed(sce: ServletContextEvent?) {
-    LOG.info("Stopping Verifier Service")
+    LOG.info("Stopping the Service")
   }
 
-  private fun assertSystemProperties() {
+  private fun validateSystemProperties() {
+    LOG.info("Validating system properties")
     Settings.values().toList().forEach { setting ->
-      try {
-        setting.get()
-      } catch (e: Exception) {
-        throw IllegalStateException("The property ${setting.key} must be set", e)
-      }
+      LOG.info("Property '${setting.key}' = '${setting.get()}'")
     }
   }
 
@@ -92,11 +86,7 @@ class ServerStartupListener : ServletContextListener {
       System.setProperty("plugin.repository.url", PUBLIC_PLUGIN_REPOSITORY)
     }
 
-    val diskSpace = try {
-      Integer.parseInt(Settings.MAX_DISK_SPACE_MB.get())
-    } catch (e: Exception) {
-      throw IllegalStateException("Max disk space parameter must be set!", e)
-    }
+    val diskSpace = Settings.MAX_DISK_SPACE_MB.getAsInt()
     if (diskSpace < MIN_DISK_SPACE_MB) {
       throw IllegalStateException("Too few available disk space: required at least $MIN_DISK_SPACE_MB Mb")
     }

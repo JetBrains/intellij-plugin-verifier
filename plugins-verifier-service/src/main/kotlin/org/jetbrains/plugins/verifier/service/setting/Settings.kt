@@ -30,4 +30,6 @@ enum class Settings(val key: String,
   }
 
   fun getAsBoolean(): Boolean = get().toBoolean()
+
+  fun getAsInt(): Int = get().toInt()
 }

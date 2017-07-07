@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.service
+package org.jetbrains.plugins.verifier.service.util
 
 import com.jetbrains.pluginverifier.persistence.CompactJson
 import okhttp3.MediaType

@@ -8,18 +8,18 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 
-private val LOG = LoggerFactory.getLogger(FileManager::class.java)
-
 /**
  * @author Sergey Patrikeev
  */
-object FileManager : IFileManager {
+object FileManager {
+
+  private val LOG = LoggerFactory.getLogger(FileManager::class.java)
 
   @Synchronized
-  override fun createTempDirectory(dirName: String): File = Files.createTempDirectory(getTempDirectory().toPath(), dirName).toFile()
+  fun createTempDirectory(dirName: String): File = Files.createTempDirectory(getTempDirectory().toPath(), dirName).toFile()
 
   @Synchronized
-  override fun createTempFile(suffix: String): File = Files.createTempFile(getTempDirectory().toPath(), "", suffix).toFile()
+  fun createTempFile(suffix: String): File = Files.createTempFile(getTempDirectory().toPath(), "", suffix).toFile()
 
   private fun dirName(type: FileType): String = when (type) {
     FileType.IDE -> "ides"
@@ -28,10 +28,10 @@ object FileManager : IFileManager {
   }
 
   @Synchronized
-  override fun getTypeDir(type: FileType): File = findOrCreateDirectory(File(getAppHomeDirectory(), dirName(type)))
+  fun getTypeDir(type: FileType): File = findOrCreateDirectory(File(getAppHomeDirectory(), dirName(type)))
 
   @Synchronized
-  override fun getAppHomeDirectory(): File = findOrCreateDirectory(Settings.APP_HOME_DIRECTORY.get())
+  fun getAppHomeDirectory(): File = findOrCreateDirectory(Settings.APP_HOME_DIRECTORY.get())
 
   private fun findOrCreateDirectory(path: String): File = findOrCreateDirectory(File(path))
 
@@ -47,7 +47,7 @@ object FileManager : IFileManager {
 
 
   @Synchronized
-  override fun save(source: File, fileType: FileType, overwrite: Boolean, removeSource: Boolean) {
+  fun save(source: File, fileType: FileType, overwrite: Boolean, removeSource: Boolean) {
     source.copyTo(getFileByName(source.name, fileType), overwrite)
     if (removeSource) {
       source.deleteLogged()
@@ -55,7 +55,7 @@ object FileManager : IFileManager {
   }
 
   @Synchronized
-  override fun delete(fileName: String, fileType: FileType) {
+  fun delete(fileName: String, fileType: FileType) {
     val file = getFileByName(fileName, fileType)
     if (file.exists()) {
       file.deleteLogged()
@@ -65,44 +65,13 @@ object FileManager : IFileManager {
   }
 
   @Synchronized
-  override fun getTempDirectory(): File = findOrCreateDirectory(File(getAppHomeDirectory(), "temp"))
+  fun getTempDirectory(): File = findOrCreateDirectory(File(getAppHomeDirectory(), "temp"))
 
   @Synchronized
-  override fun getFilesOfType(fileType: FileType): List<File> = getTypeDir(fileType).listFiles().toList()
+  fun getFilesOfType(fileType: FileType): List<File> = getTypeDir(fileType).listFiles().toList()
 
   @Synchronized
-  override fun getFileByName(name: String, fileType: FileType): File = File(getTypeDir(fileType), name)
-
-
-}
-
-/**
- * @author Sergey Patrikeev
- */
-interface IFileManager {
-
-  fun save(source: File, fileType: FileType, overwrite: Boolean = false, removeSource: Boolean = false)
-
-  fun delete(fileName: String, fileType: FileType)
-
-  fun getAppHomeDirectory(): File
-
-  fun getTempDirectory(): File
-
-  fun getFilesOfType(fileType: FileType): List<File>
-
-  fun getFileByName(name: String, fileType: FileType): File?
-
-  fun getTypeDir(type: FileType): File
-
-  fun createTempFile(suffix: String): File
-
-  fun createTempDirectory(dirName: String): File
+  fun getFileByName(name: String, fileType: FileType): File = File(getTypeDir(fileType), name)
 
 }
 
-enum class FileType {
-  IDE,
-  PLUGIN,
-  REPORT;
-}

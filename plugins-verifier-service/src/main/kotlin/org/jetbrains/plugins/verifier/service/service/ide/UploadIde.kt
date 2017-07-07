@@ -1,13 +1,13 @@
-package org.jetbrains.plugins.verifier.service.runners
+package org.jetbrains.plugins.verifier.service.service.ide
 
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.repository.AvailableIde
 import com.jetbrains.pluginverifier.repository.IdeRepository
-import org.jetbrains.plugins.verifier.service.core.Progress
-import org.jetbrains.plugins.verifier.service.core.Task
+import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
+import org.jetbrains.plugins.verifier.service.progress.TaskProgress
 import org.jetbrains.plugins.verifier.service.storage.FileManager
-import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
+import org.jetbrains.plugins.verifier.service.tasks.Task
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -26,7 +26,7 @@ class UploadIdeRunner(val ideVersion: IdeVersion? = null,
 
   override fun presentableName(): String = "UploadIde #${availableIde?.version ?: ideVersion!!}"
 
-  override fun computeResult(progress: Progress): Boolean {
+  override fun computeResult(progress: TaskProgress): Boolean {
     val artifact = getArtifactInfo() ?: throw IllegalArgumentException("Unable to find the IDE #$ideVersion in snapshots = $fromSnapshots")
 
     val ideFile = FileManager.createTempFile(".zip")

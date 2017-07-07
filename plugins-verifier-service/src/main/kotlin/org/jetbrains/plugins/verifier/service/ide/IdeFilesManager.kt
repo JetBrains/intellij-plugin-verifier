@@ -1,23 +1,14 @@
-package org.jetbrains.plugins.verifier.service.storage
+package org.jetbrains.plugins.verifier.service.ide
 
 import com.intellij.structure.ide.IdeManager
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
+import org.jetbrains.plugins.verifier.service.storage.FileManager
+import org.jetbrains.plugins.verifier.service.storage.FileType
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.File
-
-/**
- * @author Sergey Patrikeev
- */
-abstract class IdeFileLock : Closeable {
-  abstract fun getIdeFile(): File
-
-  abstract fun release()
-
-  final override fun close() = release()
-}
 
 //TODO: improve IDE cache on high concurrency: don't recreate IDE instance after each lock release.
 object IdeFilesManager {
