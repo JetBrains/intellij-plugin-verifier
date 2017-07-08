@@ -2,12 +2,18 @@ package com.jetbrains.intellij.feature.extractor.core
 
 import com.intellij.structure.resolvers.Resolver
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 import org.objectweb.asm.tree.analysis.*
 
 object AnalysisUtil {
 
   private val STRING_BUILDER = "java/lang/StringBuilder"
+
+  fun analyzeMethodFrames(classNode: ClassNode, methodNode: MethodNode) =
+      Analyzer(SourceInterpreter()).analyze(classNode.name, methodNode).toList()
+
+  fun getMethodParametersNumber(methodNode: MethodNode): Int = Type.getMethodType(methodNode.desc).argumentTypes.size
 
   fun takeNumberFromIntInstruction(instruction: AbstractInsnNode): Int? {
     if (instruction is InsnNode) {
@@ -66,8 +72,7 @@ object AnalysisUtil {
 
     }
 
-    val analyzer = Analyzer(interpreter)
-    val frames = analyzer.analyze(classNode.name, methodNode).toList()
+    val frames = Analyzer(interpreter).analyze(classNode.name, methodNode).toList()
 
     if (producer != null) {
       return evaluateConstantString(producer, resolver, frames, methodNode.instructionsAsList())
@@ -107,7 +112,7 @@ object AnalysisUtil {
     return null
   }
 
-  fun evaluateConstantFieldValue(classNode: ClassNode, fieldNode: FieldNode, resolver: Resolver): String? {
+  private fun evaluateConstantFieldValue(classNode: ClassNode, fieldNode: FieldNode, resolver: Resolver): String? {
     if (!fieldNode.isStatic()) {
       return null
     }
@@ -116,7 +121,7 @@ object AnalysisUtil {
       return fieldNode.value as String
     }
     val clinit = classNode.findMethod({ it.name == "<clinit>" }) ?: return null
-    val frames = Analyzer(SourceInterpreter()).analyze(classNode.name, clinit)
+    val frames = AnalysisUtil.analyzeMethodFrames(classNode, clinit)
     val instructions = clinit.instructionsAsList()
     val putStaticInstructionIndex = instructions.indexOfLast {
       it is FieldInsnNode

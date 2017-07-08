@@ -5,8 +5,6 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodInsnNode
-import org.objectweb.asm.tree.analysis.Analyzer
-import org.objectweb.asm.tree.analysis.SourceInterpreter
 
 /**
  * Extracts value returned by ArtifactType#getId() from a class extending ArtifactType.
@@ -22,7 +20,7 @@ class ArtifactTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     val superInitDesc = (instructions[superInitIndex] as MethodInsnNode).desc
     val argumentsNumber = Type.getArgumentTypes(superInitDesc).size
 
-    val frames = Analyzer(SourceInterpreter()).analyze(classNode.name, init).toList()
+    val frames = AnalysisUtil.analyzeMethodFrames(classNode, init)
     val frame = frames[superInitIndex]
     val value = frame.getOnStack(argumentsNumber - 1)
     val stringValue = AnalysisUtil.evaluateConstantString(value, resolver, frames, instructions)

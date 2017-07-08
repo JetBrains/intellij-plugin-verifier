@@ -8,12 +8,8 @@ abstract class Extractor(val resolver: Resolver) {
   data class Result(val extractedAll: Boolean, val featureNames: List<String>)
 
   fun extract(classNode: ClassNode): Result {
-    val list: List<String>? = extractImpl(classNode)
-    if (list == null) {
-      LOG.info("Unable to extract all features of the plugin's implementor ${classNode.name.replace('/', '.')}")
-      return Result(false, emptyList())
-    }
-    return Result(extractedAll, list)
+    val featureNames = extractImpl(classNode) ?: return Result(false, emptyList())
+    return Result(extractedAll, featureNames)
   }
 
   /**

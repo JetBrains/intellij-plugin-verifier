@@ -4,10 +4,7 @@ import com.intellij.structure.ide.Ide
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor.extractFeatures
-import com.jetbrains.intellij.feature.extractor.core.ArtifactTypeExtractor
-import com.jetbrains.intellij.feature.extractor.core.FacetTypeExtractor
-import com.jetbrains.intellij.feature.extractor.core.FileTypeExtractor
-import com.jetbrains.intellij.feature.extractor.core.RunConfigurationExtractor
+import com.jetbrains.intellij.feature.extractor.core.*
 import org.objectweb.asm.tree.ClassNode
 import org.slf4j.LoggerFactory
 
@@ -78,12 +75,21 @@ object FeaturesExtractor {
       ExtensionPoint.FACET_TYPE -> FacetTypeExtractor(resolver)
       ExtensionPoint.FILE_TYPE -> FileTypeExtractor(resolver)
       ExtensionPoint.ARTIFACT_TYPE -> ArtifactTypeExtractor(resolver)
+      ExtensionPoint.MODULE_TYPE -> ModuleTypeExtractor(resolver)
     }
     val result = extractor.extract(classNode)
+    if (!result.extractedAll) {
+      LOG.info("Not all features extracted from ${classNode.name} ($extensionPoint)")
+    }
     return ExtensionPointFeatures(extensionPoint, epImplementorClass, result.featureNames) to result.extractedAll
   }
 
-  private fun getExtensionPointImplementors(extensionPoint: ExtensionPoint, plugin: Plugin): List<String> =
-      plugin.extensions[extensionPoint.extensionPointName]?.mapNotNull { it.getAttributeValue("implementation") }.orEmpty()
+  private fun getExtensionPointImplementors(extensionPoint: ExtensionPoint, plugin: Plugin): List<String> {
+    val extensionElements = plugin.extensions[extensionPoint.extensionPointName] ?: return emptyList()
+    val result = arrayListOf<String>()
+    extensionElements.mapNotNullTo(result) { it.getAttributeValue("implementation") }
+    extensionElements.mapNotNullTo(result) { it.getAttributeValue("implementationClass") }
+    return result
+  }
 
 }

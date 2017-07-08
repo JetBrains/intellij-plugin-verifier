@@ -4,7 +4,7 @@
 Feature extractor is a tool used by the <a href="https://plugins.jetbrains.com">plugins repository</a>
 for determining a set of additional features supported by plugin.
 
-The features are specified using IntelliJ API. There are four main types of features:
+The features are specified using IntelliJ API. There are following types of features:
 
 <ol>
     <li>Configuration types<br>
@@ -24,6 +24,9 @@ The features are specified using IntelliJ API. There are four main types of feat
         A plugin author implements abstract class <code>com.intellij.packaging.artifacts.ArtifactType</code>
         and passes the artifact <code>id</code> as first parameter to <code>ArtifactType</code>'s constructor.
     </li>
+    <li>Module type</li>
+    A plugin author implements abstract class <code>com.intellij.openapi.module.ModuleType</code>
+    and passes the module <code>id</code> to super class constructor.
 </ol>
 
 In most cases the features are specified as string constants. The tool extracts the constant values from class files

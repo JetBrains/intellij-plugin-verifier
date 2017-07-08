@@ -4,9 +4,7 @@ import com.intellij.structure.resolvers.Resolver
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
-import org.objectweb.asm.tree.analysis.Analyzer
 import org.objectweb.asm.tree.analysis.Frame
-import org.objectweb.asm.tree.analysis.SourceInterpreter
 import org.objectweb.asm.tree.analysis.Value
 
 /*
@@ -23,8 +21,7 @@ class FacetTypeExtractor(resolver: Resolver) : Extractor(resolver) {
 
     @Suppress("UNCHECKED_CAST")
     (classNode.methods as List<MethodNode>).filter { it.name == "<init>" }.forEach { initMethod ->
-      val interpreter = SourceInterpreter()
-      val frames: List<Frame> = Analyzer(interpreter).analyze(classNode.name, initMethod).toList()
+      val frames = AnalysisUtil.analyzeMethodFrames(classNode, initMethod)
 
       initMethod.instructions.toArray().forEachIndexed { index, insn ->
         if (insn is MethodInsnNode) {

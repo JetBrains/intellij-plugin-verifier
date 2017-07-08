@@ -15,7 +15,10 @@ fun MethodNode.isAbstract(): Boolean = this.access and Opcodes.ACC_ABSTRACT != 0
 fun FieldNode.isStatic(): Boolean = this.access and Opcodes.ACC_STATIC != 0
 
 @Suppress("UNCHECKED_CAST")
-fun ClassNode.findMethod(predicate: (MethodNode) -> Boolean): MethodNode? = (methods as List<MethodNode>).find(predicate)
+fun ClassNode.findMethod(predicate: (MethodNode) -> Boolean): MethodNode? = findMethods(predicate).firstOrNull()
+
+@Suppress("UNCHECKED_CAST")
+fun ClassNode.findMethods(predicate: (MethodNode) -> Boolean): List<MethodNode> = (methods as List<MethodNode>).filter(predicate)
 
 @Suppress("UNCHECKED_CAST")
 fun ClassNode.findField(predicate: (FieldNode) -> Boolean): FieldNode? = (fields as List<FieldNode>).find(predicate)

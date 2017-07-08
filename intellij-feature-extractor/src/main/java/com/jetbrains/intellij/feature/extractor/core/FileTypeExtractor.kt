@@ -8,7 +8,9 @@ import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.TypeInsnNode
-import org.objectweb.asm.tree.analysis.*
+import org.objectweb.asm.tree.analysis.Frame
+import org.objectweb.asm.tree.analysis.SourceValue
+import org.objectweb.asm.tree.analysis.Value
 
 /**
  * Extracts file extensions passed to consumer of FileTypeFactory.createFileTypes(FileTypeConsumer) from a class extending FileTypeFactory
@@ -32,8 +34,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
       return null
     }
     val method = classNode.findMethod({ it.name == "createFileTypes" && it.desc == "(Lcom/intellij/openapi/fileTypes/FileTypeConsumer;)V" && !it.isAbstract() }) ?: return null
-    val interpreter = SourceInterpreter()
-    val frames = Analyzer(interpreter).analyze(classNode.name, method).toList()
+    val frames = AnalysisUtil.analyzeMethodFrames(classNode, method)
 
     val result = arrayListOf<String>()
     extractedAll = true

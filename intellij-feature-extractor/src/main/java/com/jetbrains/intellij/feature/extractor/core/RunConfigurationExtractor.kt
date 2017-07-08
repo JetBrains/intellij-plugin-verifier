@@ -1,11 +1,10 @@
 package com.jetbrains.intellij.feature.extractor.core
 
 import com.intellij.structure.resolvers.Resolver
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodInsnNode
-import org.objectweb.asm.tree.analysis.Analyzer
-import org.objectweb.asm.tree.analysis.SourceInterpreter
 
 /**
  * Extracts value returned by ConfigurationType#getId from a class extending ConfigurationType.
@@ -19,18 +18,20 @@ class RunConfigurationExtractor(resolver: Resolver) : Extractor(resolver) {
 
   override fun extractImpl(classNode: ClassNode): List<String>? {
     if (classNode.superName == CONFIGURATION_BASE) {
-      val init = classNode.findMethod({ it.name == "<init>" }) ?: return null
-      val frames = Analyzer(SourceInterpreter()).analyze(classNode.name, init)
-      val superInitIndex = init.instructions.toArray().indexOfLast {
+      val constructor = classNode.findMethod { it.name == "<init>" } ?: return null
+      val frames = AnalysisUtil.analyzeMethodFrames(classNode, constructor)
+      val constructorInstructions = constructor.instructionsAsList()
+      val superInitIndex = constructorInstructions.indexOfLast {
         it is MethodInsnNode
             && it.name == "<init>"
+            && it.opcode == Opcodes.INVOKESPECIAL
             && it.owner == CONFIGURATION_BASE
             && it.desc == "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljavax/swing/Icon;)V"
       }
       if (superInitIndex == -1) {
         return null
       }
-      val value = AnalysisUtil.evaluateConstantString(frames[superInitIndex].getOnStack(3), resolver, frames.toList(), init.instructionsAsList())
+      val value = AnalysisUtil.evaluateConstantString(frames[superInitIndex].getOnStack(3), resolver, frames.toList(), constructorInstructions)
       if (value != null) {
         extractedAll = true
         return listOf(value)
