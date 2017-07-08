@@ -3,6 +3,7 @@ package org.jetbrains.plugins.verifier.service.servlets
 import com.github.salomonbrys.kotson.typeToken
 import com.google.gson.Gson
 import com.jetbrains.pluginverifier.persistence.CompactJson
+import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.InputStream
@@ -12,7 +13,7 @@ import javax.servlet.http.HttpServlet
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-abstract class BaseServlet : HttpServlet() {
+abstract class BaseServlet(protected val taskManager: TaskManager) : HttpServlet() {
 
   companion object {
     protected val LOG: Logger = LoggerFactory.getLogger(BaseServlet::class.java)
@@ -30,8 +31,8 @@ abstract class BaseServlet : HttpServlet() {
     }
 
     @JvmStatic
-    protected fun sendNotFound(resp: HttpServletResponse) {
-      resp.sendError(HttpServletResponse.SC_NOT_FOUND)
+    protected fun sendNotFound(resp: HttpServletResponse, message: String = "") {
+      resp.sendError(HttpServletResponse.SC_NOT_FOUND, message)
     }
 
     inline fun <reified T : Any> fromJson(inputStream: InputStream): T = GSON.fromJson(InputStreamReader(inputStream, StandardCharsets.UTF_8), typeToken<T>())

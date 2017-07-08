@@ -9,7 +9,6 @@ import org.jetbrains.plugins.verifier.service.storage.FileType
 import org.slf4j.LoggerFactory
 import java.io.File
 
-//TODO: improve IDE cache on high concurrency: don't recreate IDE instance after each lock release.
 object IdeFilesManager {
 
   private val LOG = LoggerFactory.getLogger(IdeFilesManager::class.java)

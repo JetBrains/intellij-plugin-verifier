@@ -35,6 +35,10 @@ class HtmlBuilder(val output: PrintWriter) {
 
   fun p(block: () -> Unit) = tag("p", block)
 
+  fun ul(block: () -> Unit) = tag("ul", block)
+
+  fun li(block: () -> Unit) = tag("li", block)
+
   fun br() = closedTag("br")
 
   fun body(block: () -> Unit) = tag("body", block)
