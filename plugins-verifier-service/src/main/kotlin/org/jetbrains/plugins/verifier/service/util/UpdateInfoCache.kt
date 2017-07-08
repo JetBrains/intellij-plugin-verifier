@@ -2,6 +2,7 @@ package org.jetbrains.plugins.verifier.service.util
 
 import com.google.gson.Gson
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
+import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.slf4j.Logger
@@ -13,6 +14,7 @@ import retrofit2.http.POST
 import retrofit2.http.Query
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.TimeUnit
 
 /**
  * @author Sergey Patrikeev
@@ -26,7 +28,7 @@ object UpdateInfoCache {
   private val api: GetUpdateInfoApi = Retrofit.Builder()
       .baseUrl(Settings.PLUGIN_REPOSITORY_URL.get())
       .addConverterFactory(GsonConverterFactory.create(Gson()))
-      .client(makeClient(LOG.isDebugEnabled))
+      .client(makeOkHttpClient(LOG.isDebugEnabled, 5, TimeUnit.MINUTES))
       .build()
       .create(GetUpdateInfoApi::class.java)
 

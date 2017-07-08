@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
+import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.setting.Settings
@@ -14,7 +15,6 @@ import org.jetbrains.plugins.verifier.service.tasks.TaskStatus
 import org.jetbrains.plugins.verifier.service.util.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.util.createCompactJsonRequestBody
 import org.jetbrains.plugins.verifier.service.util.createStringRequestBody
-import org.jetbrains.plugins.verifier.service.util.makeClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
@@ -27,7 +27,7 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
   private val featuresExtractor: FeaturesApi = Retrofit.Builder()
       .baseUrl(Settings.FEATURE_EXTRACTOR_REPOSITORY_URL.get())
       .addConverterFactory(GsonConverterFactory.create(Gson()))
-      .client(makeClient(LOG.isDebugEnabled))
+      .client(makeOkHttpClient(LOG.isDebugEnabled, 5, TimeUnit.MINUTES))
       .build()
       .create(FeaturesApi::class.java)
 

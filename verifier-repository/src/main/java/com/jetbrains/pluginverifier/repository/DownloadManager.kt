@@ -5,10 +5,9 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
+import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import okhttp3.MediaType
-import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
-import okhttp3.logging.HttpLoggingInterceptor
 import org.apache.commons.io.FileUtils
 import org.apache.http.annotation.ThreadSafe
 import org.slf4j.Logger
@@ -75,16 +74,9 @@ object DownloadManager {
 
   private val spaceWatcher = FreeDiskSpaceWatcher(RepositoryConfiguration.downloadDir, RepositoryConfiguration.downloadDirMaxSpace)
 
-  private fun makeClient(needLog: Boolean): OkHttpClient = OkHttpClient.Builder()
-      .connectTimeout(5, TimeUnit.MINUTES)
-      .readTimeout(5, TimeUnit.MINUTES)
-      .writeTimeout(5, TimeUnit.MINUTES)
-      .addInterceptor(HttpLoggingInterceptor().setLevel(if (needLog) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE))
-      .build()
-
   private val downloadApi: DownloadApi = Retrofit.Builder()
       .baseUrl(RepositoryConfiguration.pluginRepositoryUrl)
-      .client(makeClient(LOG.isTraceEnabled))
+      .client(makeOkHttpClient(LOG.isTraceEnabled, 5, TimeUnit.MINUTES))
       .build()
       .create(DownloadApi::class.java)
 

@@ -6,6 +6,7 @@ import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
+import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.params.CheckRangeRunnerParams
@@ -19,7 +20,6 @@ import org.jetbrains.plugins.verifier.service.tasks.TaskStatus
 import org.jetbrains.plugins.verifier.service.util.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.util.createCompactJsonRequestBody
 import org.jetbrains.plugins.verifier.service.util.createStringRequestBody
-import org.jetbrains.plugins.verifier.service.util.makeClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.ConcurrentSkipListSet
@@ -38,7 +38,7 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
   private val verifier: VerificationApi = Retrofit.Builder()
       .baseUrl(Settings.PLUGIN_REPOSITORY_URL.get())
       .addConverterFactory(GsonConverterFactory.create(Gson()))
-      .client(makeClient(LOG.isDebugEnabled))
+      .client(makeOkHttpClient(LOG.isDebugEnabled, 5, TimeUnit.MINUTES))
       .build()
       .create(VerificationApi::class.java)
 

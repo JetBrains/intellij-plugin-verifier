@@ -5,9 +5,8 @@ import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import com.jetbrains.pluginverifier.misc.extractTo
-import okhttp3.OkHttpClient
+import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import okhttp3.ResponseBody
-import okhttp3.logging.HttpLoggingInterceptor
 import org.apache.commons.io.FileUtils
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -195,16 +194,9 @@ object IdeRepository {
   private val repository: IdeRepositoryApi = Retrofit.Builder()
       .baseUrl(RepositoryConfiguration.ideRepositoryUrl.trimEnd('/') + '/')
       .addConverterFactory(GsonConverterFactory.create(Gson()))
-      .client(makeClient())
+      .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
       .create(IdeRepositoryApi::class.java)
-
-  private fun makeClient(): OkHttpClient = OkHttpClient.Builder()
-      .connectTimeout(1, TimeUnit.HOURS)
-      .readTimeout(1, TimeUnit.HOURS)
-      .writeTimeout(1, TimeUnit.HOURS)
-      .addInterceptor(HttpLoggingInterceptor().setLevel(if (LOG.isDebugEnabled) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE))
-      .build()
 
 }
 

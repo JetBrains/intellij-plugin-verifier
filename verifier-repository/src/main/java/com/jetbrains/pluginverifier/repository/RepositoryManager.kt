@@ -3,8 +3,7 @@ package com.jetbrains.pluginverifier.repository
 import com.google.gson.Gson
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
+import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import org.apache.http.HttpStatus
 import org.apache.http.annotation.ThreadSafe
 import retrofit2.Call
@@ -56,15 +55,8 @@ object RepositoryManager : PluginRepository {
   private val repositoryApi: RepositoryApi = Retrofit.Builder()
       .baseUrl(RepositoryConfiguration.pluginRepositoryUrl.trimEnd('/') + '/')
       .addConverterFactory(GsonConverterFactory.create(Gson()))
-      .client(makeClient())
+      .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
       .create(RepositoryApi::class.java)
-
-  private fun makeClient(): OkHttpClient = OkHttpClient.Builder()
-      .connectTimeout(5, TimeUnit.MINUTES)
-      .readTimeout(5, TimeUnit.MINUTES)
-      .writeTimeout(5, TimeUnit.MINUTES)
-      .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.NONE))
-      .build()
 
 }
