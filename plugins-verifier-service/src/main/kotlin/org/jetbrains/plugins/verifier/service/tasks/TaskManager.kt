@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.jetbrains.plugins.verifier.service.tasks.TaskStatus.State.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.Closeable
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
@@ -11,9 +12,9 @@ import java.util.concurrent.Future
 /**
  * @author Sergey Patrikeev
  */
-class TaskManager(private val maxRunningTasks: Int) {
-
+class TaskManager(private val maxRunningTasks: Int) : Closeable {
   companion object {
+
     val LOG: Logger = LoggerFactory.getLogger(TaskManager::class.java)
   }
 
@@ -25,7 +26,7 @@ class TaskManager(private val maxRunningTasks: Int) {
 
   private val service = Executors.newFixedThreadPool(PARALLEL_LIMIT, ThreadFactoryBuilder().setDaemon(true).setNameFormat("worker-%d").build())
 
-  private val tasks: MutableMap<TaskId, Pair<Future<*>, Worker<*>>> = hashMapOf()
+  private val tasks: MutableMap<TaskId, Pair<Future<*>, Worker<*, *>>> = hashMapOf()
 
   private val PRESERVE_RESULTS_NUMBER: Int = 100
 
@@ -33,7 +34,7 @@ class TaskManager(private val maxRunningTasks: Int) {
 
   private val completedTasks: Queue<TaskId> = LinkedList()
 
-  fun isBusy(): Boolean = runningTasksNumber() > maxRunningTasks
+  fun isBusy(): Boolean = runningTasksNumber() >= maxRunningTasks
 
   @Synchronized
   fun runningTasksNumber(): Int = tasks.values.count { it.second.state == WAITING || it.second.state == TaskStatus.State.RUNNING }
@@ -58,10 +59,10 @@ class TaskManager(private val maxRunningTasks: Int) {
   }
 
   @Synchronized
-  fun <T> enqueue(task: Task<T>,
-                  onSuccess: (TaskResult<T>) -> Unit,
-                  onError: (Throwable, TaskStatus, Task<T>) -> Unit,
-                  onCompletion: (TaskStatus, Task<T>) -> Unit): TaskId {
+  fun <Res, Tsk : Task<Res>> enqueue(task: Tsk,
+                                     onSuccess: (TaskResult<Res>) -> Unit,
+                                     onError: (Throwable, TaskStatus, Tsk) -> Unit,
+                                     onCompletion: (TaskStatus, Tsk) -> Unit): TaskId {
     val taskId = TaskId(counter++)
 
     task.taskId = taskId
@@ -99,6 +100,10 @@ class TaskManager(private val maxRunningTasks: Int) {
     }
     tasks.remove(oldestId)
     completedTasks.remove()
+  }
+
+  override fun close() {
+    service.shutdownNow()
   }
 
 }

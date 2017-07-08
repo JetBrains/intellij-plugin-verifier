@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
+import com.jetbrains.pluginverifier.persistence.CompactJson
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.setting.Settings
@@ -13,7 +14,7 @@ import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.jetbrains.plugins.verifier.service.tasks.TaskResult
 import org.jetbrains.plugins.verifier.service.tasks.TaskStatus
 import org.jetbrains.plugins.verifier.service.util.UpdateInfoCache
-import org.jetbrains.plugins.verifier.service.util.createCompactJsonRequestBody
+import org.jetbrains.plugins.verifier.service.util.createJsonRequestBody
 import org.jetbrains.plugins.verifier.service.util.createStringRequestBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -80,8 +81,8 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
     val taskId = taskManager.enqueue(
         runner,
         { onSuccess(it) },
-        { t, tid, task -> logError(t, tid, task as ExtractFeaturesRunner) },
-        { _, task -> onUpdateExtracted(task as ExtractFeaturesRunner) }
+        { t, tid, task -> logError(t, tid, task) },
+        { _, task -> onUpdateExtracted(task) }
     )
     inProgressUpdates[updateInfo] = taskId
     lastCheckDate[updateInfo] = System.currentTimeMillis()
@@ -90,15 +91,9 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
 
   private fun onUpdateExtracted(task: ExtractFeaturesRunner) {
     val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
-    releaseUpdate(updateInfo)
-  }
-
-  @Synchronized
-  private fun releaseUpdate(updateInfo: UpdateInfo) {
     LOG.info("Update $updateInfo is successfully extracted")
     inProgressUpdates.remove(updateInfo)
   }
-
 
   private fun logError(throwable: Throwable, taskStatus: TaskStatus, task: ExtractFeaturesRunner) {
     val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
@@ -117,20 +112,20 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
   }
 
   private fun convertToPluginsSiteResult(featuresResult: FeaturesResult): AdaptedFeaturesResult {
+    val protocolVersion = Settings.PROTOCOL_VERSION.getAsInt()
     val updateId = featuresResult.plugin.updateInfo!!.updateId
     val resultType = featuresResult.resultType
     if (resultType == FeaturesResult.ResultType.BAD_PLUGIN) {
-      return AdaptedFeaturesResult(updateId, resultType)
+      return AdaptedFeaturesResult(updateId, resultType, emptyList(), protocolVersion)
     }
-    return AdaptedFeaturesResult(updateId, resultType, featuresResult.features)
+    return AdaptedFeaturesResult(updateId, resultType, featuresResult.features, protocolVersion)
   }
 
   private fun logSuccess(featuresResult: FeaturesResult, result: TaskResult<FeaturesResult>) {
     val plugin = featuresResult.plugin
     val resultType = featuresResult.resultType
     val size = featuresResult.features.size
-    val seconds = result.taskStatus.elapsedTime() / 1000
-    LOG.info("Plugin $plugin is successfully processed; Result type = $resultType; extracted = $size features; in $seconds s")
+    LOG.info("Plugin $plugin is successfully processed; Result type = $resultType; extracted = $size features; in ${result.taskStatus.elapsedTime()} ms")
   }
 
 
@@ -145,6 +140,6 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
 
 
   private fun sendExtractedFeatures(extractedFeatures: AdaptedFeaturesResult, userName: String, password: String) =
-      featuresExtractor.sendExtractedFeatures(createCompactJsonRequestBody(extractedFeatures), createStringRequestBody(userName), createStringRequestBody(password))
+      featuresExtractor.sendExtractedFeatures(createJsonRequestBody(CompactJson.toJson(extractedFeatures)), createStringRequestBody(userName), createStringRequestBody(password))
 
 }

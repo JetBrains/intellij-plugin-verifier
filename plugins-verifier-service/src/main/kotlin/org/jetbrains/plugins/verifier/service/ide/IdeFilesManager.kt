@@ -7,7 +7,6 @@ import com.jetbrains.pluginverifier.misc.extractTo
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.jetbrains.plugins.verifier.service.storage.FileType
 import org.slf4j.LoggerFactory
-import java.io.Closeable
 import java.io.File
 
 //TODO: improve IDE cache on high concurrency: don't recreate IDE instance after each lock release.
@@ -19,17 +18,15 @@ object IdeFilesManager {
   private val lockedIdes: MutableMap<IdeVersion, Int> = hashMapOf()
   private val deleteQueue: MutableSet<IdeVersion> = hashSetOf()
 
-  private data class IdeFileLockImpl(private val ide: File) : IdeFileLock(), Closeable {
+  private data class IdeFileLockImpl(override val ideFile: File, override val ideVersion: IdeVersion) : IdeFileLock {
+    override fun close() = releaseLock(this)
 
-    override fun getIdeFile(): File = ide
-
-    override fun release() = releaseLock(this)
-
+    override fun toString(): String = ideVersion.toString()
   }
 
   @Synchronized
   private fun releaseLock(lock: IdeFileLockImpl) {
-    val version = IdeVersion.createIdeVersion(lock.getIdeFile().name)
+    val version = IdeVersion.createIdeVersion(lock.ideFile.name)
     var cnt = lockedIdes[version] ?: return
     cnt--
     if (cnt == 0) {
@@ -68,7 +65,7 @@ object IdeFilesManager {
     val ide = ideCache.getOrPut(version, { ideFile })
     val cnt = lockedIdes.getOrPut(version, { 0 })
     lockedIdes.put(version, cnt + 1)
-    return IdeFileLockImpl(ide)
+    return IdeFileLockImpl(ide, version)
   }
 
   @Synchronized

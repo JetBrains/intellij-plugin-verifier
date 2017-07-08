@@ -1,11 +1,12 @@
 package com.jetbrains.pluginverifier.persistence
 
 import com.github.salomonbrys.kotson.*
-import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.LinkedHashMultimap
 import com.google.common.collect.Multimap
-import com.google.gson.*
-import com.google.gson.internal.Streams
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.TypeAdapter
+import com.google.gson.TypeAdapterFactory
 import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
@@ -19,59 +20,18 @@ import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.utils.*
 import java.io.IOException
-import java.io.InputStream
-import java.io.InputStreamReader
-import java.io.StringReader
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
-import java.nio.charset.StandardCharsets
-
-class JsonVersionMismatchedException(msg: String) : RuntimeException(msg)
 
 object CompactJson {
 
-  val FORMAT_VERSION: Int = 1
+  fun toJson(src: Any): String = GSON.toJson(src)
 
-  fun toJson(src: Any): String {
-    val contentTree = GSON.toJsonTree(src)
-    val versionedJson = JsonObject()
-    versionedJson.addProperty(VERSION_PROPERTY, FORMAT_VERSION)
-    versionedJson.add(CONTENT_PROPERTY, contentTree)
-    return GSON.toJson(versionedJson)
-  }
-
-  inline fun <reified T : Any> fromJson(inputStream: InputStream): T = GSON.fromJson(InputStreamReader(inputStream, StandardCharsets.UTF_8), typeToken<T>())
-
-  @JvmOverloads
-  fun <T> fromJson(json: String, type: Type, checkVersion: Boolean = true): T {
-    val jsonReader = GSON.newJsonReader(StringReader(json))
-    val jsonElement = Streams.parse(jsonReader)
-    val versionedJsonObject = jsonElement.asJsonObject
-    val versionElement = versionedJsonObject.remove(VERSION_PROPERTY)
-    val contentElement = versionedJsonObject.remove(CONTENT_PROPERTY)
-    require(versionElement != null, { "Given string is not a versioned json: missing '$VERSION_PROPERTY' property" })
-    require(contentElement != null, { "Given string is not a versioned json: missing '$CONTENT_PROPERTY' property" })
-    val version = versionElement.asInt
-    if (checkVersion && FORMAT_VERSION != version) {
-      throw JsonVersionMismatchedException("Json version $version is not equal to expected version $FORMAT_VERSION")
-    }
-    val adapter = GSON.getAdapter(TypeToken.get(type))
-    val obj = adapter.fromJsonTree(contentElement)
-    try {
-      @Suppress("UNCHECKED_CAST")
-      return obj as T
-    } catch(e: ClassCastException) {
-      throw IllegalArgumentException("Given json string is of type $type, not expected type $type")
-    }
-  }
+  fun <T> fromJson(json: String, type: Type): T = GSON.fromJson<T>(json, type)
 
   inline fun <reified T : Any> fromJson(json: String): T = fromJson(json, typeToken<T>())
 
-  private val VERSION_PROPERTY = "version"
-
-  private val CONTENT_PROPERTY = "content"
-
-  val GSON: Gson = GsonBuilder()
+  private val GSON: Gson = GsonBuilder()
       //serializes map as Json-array instead of Json-object
       .enableComplexMapKeySerialization()
       .registerTypeHierarchyAdapter(IdeVersion::class.java, IdeVersionTypeAdapter().nullSafe())
@@ -272,15 +232,4 @@ class MultimapTypeAdapterFactory : TypeAdapterFactory {
       }
     }.nullSafe() //Gson will check nulls automatically
   }
-}
-
-/**
- * Creates a Guava multimap using the input map.
- */
-fun <K, V> Map<K, Iterable<V>>.multimapFromMap(): Multimap<K, V> {
-  val result = ArrayListMultimap.create<K, V>()
-  for ((key, values) in this) {
-    result.putAll(key, values)
-  }
-  return result
 }

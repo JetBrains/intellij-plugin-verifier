@@ -3,18 +3,18 @@ package org.jetbrains.plugins.verifier.service.tasks
 import org.jetbrains.plugins.verifier.service.progress.DefaultProgress
 import org.jetbrains.plugins.verifier.service.progress.TaskProgress
 
-class Worker<T>(val task: Task<T>,
-                val taskId: TaskId,
-                val onSuccess: (TaskResult<T>) -> Unit,
-                val onError: (t: Throwable, taskStatus: TaskStatus, task: Task<T>) -> Unit,
-                val onCompletion: (taskStatus: TaskStatus, task: Task<T>) -> Unit,
-                val taskManager: TaskManager,
-                @Volatile var result: T? = null,
-                @Volatile var errorMsg: String? = null,
-                @Volatile var state: TaskStatus.State = TaskStatus.State.WAITING,
-                val startTime: Long = System.currentTimeMillis(),
-                @Volatile var endTime: Long? = null,
-                val progress: TaskProgress = DefaultProgress()) : Runnable {
+class Worker<R, T : Task<R>>(val task: T,
+                             val taskId: TaskId,
+                             val onSuccess: (TaskResult<R>) -> Unit,
+                             val onError: (t: Throwable, taskStatus: TaskStatus, task: T) -> Unit,
+                             val onCompletion: (taskStatus: TaskStatus, task: T) -> Unit,
+                             val taskManager: TaskManager,
+                             @Volatile var result: R? = null,
+                             @Volatile var errorMsg: String? = null,
+                             @Volatile var state: TaskStatus.State = TaskStatus.State.WAITING,
+                             val startTime: Long = System.currentTimeMillis(),
+                             @Volatile var endTime: Long? = null,
+                             val progress: TaskProgress = DefaultProgress()) : Runnable {
 
   override fun run() {
     TaskManager.LOG.info("Task #$taskId ${task.presentableName()} is starting")

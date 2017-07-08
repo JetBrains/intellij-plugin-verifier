@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.misc
 
+import com.google.common.collect.ArrayListMultimap
+import com.google.common.collect.Multimap
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -16,6 +18,17 @@ import java.util.concurrent.atomic.AtomicReference
  * @author Sergey Patrikeev
  */
 private val LOG = LoggerFactory.getLogger("LanguageUtils")
+
+/**
+ * Creates a Guava multimap using the input map.
+ */
+fun <K, V> Map<K, Iterable<V>>.multimapFromMap(): Multimap<K, V> {
+  val result = ArrayListMultimap.create<K, V>()
+  for ((key, values) in this) {
+    result.putAll(key, values)
+  }
+  return result
+}
 
 fun <T : Closeable?> T.closeLogged() {
   try {

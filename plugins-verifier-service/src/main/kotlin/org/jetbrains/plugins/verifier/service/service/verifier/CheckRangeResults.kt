@@ -11,7 +11,8 @@ import com.jetbrains.pluginverifier.api.Result
 data class CheckRangeResults(@SerializedName("plugin") val plugin: PluginInfo,
                              @SerializedName("type") val resultType: ResultType,
                              @SerializedName("checkedIdeList") val checkedIdeList: List<IdeVersion>,
-                             @SerializedName("results") val result: List<Result>) {
+                             @SerializedName("results") val result: List<Result>,
+                             @SerializedName("protocolVersion") val protocolVersion: Int) {
   enum class ResultType {
     NOT_FOUND,
     NO_COMPATIBLE_IDES,
