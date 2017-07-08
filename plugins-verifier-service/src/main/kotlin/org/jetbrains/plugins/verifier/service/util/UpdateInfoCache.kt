@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.util
 
 import com.google.gson.Gson
+import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.slf4j.Logger

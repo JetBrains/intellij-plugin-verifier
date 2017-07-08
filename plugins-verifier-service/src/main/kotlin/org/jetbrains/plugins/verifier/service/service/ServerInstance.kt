@@ -1,9 +1,9 @@
 package org.jetbrains.plugins.verifier.service.service
 
 import org.jetbrains.plugins.verifier.service.service.featureExtractor.FeatureService
+import org.jetbrains.plugins.verifier.service.service.ide.IdeListUpdater
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
-import org.jetbrains.plugins.verifier.service.util.IdeListUpdater
 
 /**
  * @author Sergey Patrikeev

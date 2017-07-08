@@ -1,12 +1,10 @@
-package org.jetbrains.plugins.verifier.service.util
+package org.jetbrains.plugins.verifier.service.service.ide
 
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.repository.AvailableIde
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.service.ide.DeleteIdeRunner
-import org.jetbrains.plugins.verifier.service.service.ide.UploadIdeRunner
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import java.util.concurrent.TimeUnit
 

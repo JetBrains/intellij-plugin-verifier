@@ -3,6 +3,7 @@ package org.jetbrains.plugins.verifier.service.service.featureExtractor
 import com.google.gson.Gson
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
+import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.setting.Settings
@@ -10,7 +11,10 @@ import org.jetbrains.plugins.verifier.service.tasks.TaskId
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.jetbrains.plugins.verifier.service.tasks.TaskResult
 import org.jetbrains.plugins.verifier.service.tasks.TaskStatus
-import org.jetbrains.plugins.verifier.service.util.*
+import org.jetbrains.plugins.verifier.service.util.UpdateInfoCache
+import org.jetbrains.plugins.verifier.service.util.createCompactJsonRequestBody
+import org.jetbrains.plugins.verifier.service.util.createStringRequestBody
+import org.jetbrains.plugins.verifier.service.util.makeClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
