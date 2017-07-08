@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier
 
+import com.jetbrains.pluginverifier.api.DefaultProgress
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PublicOpts
@@ -42,7 +43,7 @@ object PluginVerifierMain {
       LOG.info("Verification parameters: $parameters")
       @Suppress("UNCHECKED_CAST")
       val configuration = runner.getTask(parameters) as Task<TaskParameters, TaskResult>
-      val results = configuration.execute()
+      val results = configuration.execute(DefaultProgress())
       val printerOptions = OptionsParser.parsePrinterOptions(opts)
       results.printResults(printerOptions)
     }

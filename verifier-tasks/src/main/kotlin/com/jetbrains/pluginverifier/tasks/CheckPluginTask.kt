@@ -2,10 +2,7 @@ package com.jetbrains.pluginverifier.tasks
 
 import com.intellij.structure.ide.Ide
 import com.intellij.structure.plugin.PluginDependency
-import com.jetbrains.pluginverifier.api.IdeDescriptor
-import com.jetbrains.pluginverifier.api.PluginCoordinate
-import com.jetbrains.pluginverifier.api.Result
-import com.jetbrains.pluginverifier.api.VerifierParams
+import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.core.VerifierExecutor
 import com.jetbrains.pluginverifier.dependencies.DefaultDependencyResolver
 import com.jetbrains.pluginverifier.dependency.DependencyResolver
@@ -34,21 +31,21 @@ class CheckPluginTask(parameters: CheckPluginParams) : Task<CheckPluginParams, C
     }
   }
 
-  override fun execute(): CheckPluginResult {
+  override fun execute(progress: Progress): CheckPluginResult {
     allPluginsToCheck = parameters.pluginCoordinates.map { PluginCreator.createPlugin(it) }
     try {
-      return doExecute()
+      return doExecute(progress)
     } finally {
       allPluginsToCheck.forEach { it.closeLogged() }
     }
   }
 
-  private fun doExecute(): CheckPluginResult {
+  private fun doExecute(progress: Progress): CheckPluginResult {
     val results = arrayListOf<Result>()
     parameters.ideDescriptors.forEach { ideDescriptor ->
       val dependencyResolver = getDependencyResolver(ideDescriptor.ide)
       parameters.pluginCoordinates.mapTo(results) {
-        doVerification(it, ideDescriptor, dependencyResolver)
+        doVerification(it, ideDescriptor, dependencyResolver, progress)
       }
     }
     return CheckPluginResult(results)
@@ -56,11 +53,12 @@ class CheckPluginTask(parameters: CheckPluginParams) : Task<CheckPluginParams, C
 
   private fun doVerification(pluginCoordinate: PluginCoordinate,
                              ideDescriptor: IdeDescriptor,
-                             dependencyResolver: DependencyResolver): Result {
+                             dependencyResolver: DependencyResolver,
+                             progress: Progress): Result {
     val verifierParams = VerifierParams(parameters.jdkDescriptor, parameters.externalClassesPrefixes, parameters.problemsFilter, parameters.externalClasspath, dependencyResolver)
     val verifier = VerifierExecutor(verifierParams)
     verifier.use {
-      val results = verifier.verify(listOf(pluginCoordinate to ideDescriptor), parameters.progress)
+      val results = verifier.verify(listOf(pluginCoordinate to ideDescriptor), progress)
       return results.single()
     }
   }

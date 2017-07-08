@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.tasks
 
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginCoordinate
+import com.jetbrains.pluginverifier.api.Progress
 import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.core.VerifierExecutor
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
@@ -11,9 +12,9 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 
 class CheckIdeTask(parameters: CheckIdeParams) : Task<CheckIdeParams, CheckIdeResult>(parameters) {
 
-  override fun execute(): CheckIdeResult {
+  override fun execute(progress: Progress): CheckIdeResult {
     val notExcludedPlugins = parameters.pluginsToCheck.filterNot { isExcluded(it) }
-    return doExecute(notExcludedPlugins)
+    return doExecute(notExcludedPlugins, progress)
   }
 
   private fun isExcluded(pluginCoordinate: PluginCoordinate): Boolean = when (pluginCoordinate) {
@@ -32,11 +33,11 @@ class CheckIdeTask(parameters: CheckIdeParams) : Task<CheckIdeParams, CheckIdeRe
     }
   }
 
-  private fun doExecute(notExcludedPlugins: List<PluginCoordinate>): CheckIdeResult {
+  private fun doExecute(notExcludedPlugins: List<PluginCoordinate>, progress: Progress): CheckIdeResult {
     val verifierParams = VerifierParams(parameters.jdkDescriptor, parameters.externalClassesPrefixes, parameters.problemsFilter, parameters.externalClassPath, parameters.dependencyResolver)
     val verifier = VerifierExecutor(verifierParams)
     verifier.use {
-      val results = verifier.verify(notExcludedPlugins.map { it to parameters.ideDescriptor }, parameters.progress)
+      val results = verifier.verify(notExcludedPlugins.map { it to parameters.ideDescriptor }, progress)
       return CheckIdeResult(parameters.ideDescriptor.ideVersion, results, parameters.excludedPlugins, getMissingUpdatesProblems())
     }
   }

@@ -42,7 +42,7 @@ object IdeFilesManager {
   }
 
   @Synchronized
-  fun <R> locked(block: () -> R): R = block()
+  fun <R> lockAndAccess(block: () -> R): R = block()
 
   private fun onRelease(version: IdeVersion) {
     if (deleteQueue.contains(version)) {
@@ -59,7 +59,7 @@ object IdeFilesManager {
   fun ideList(): List<IdeVersion> = FileManager.getFilesOfType(FileType.IDE).map { it -> IdeVersion.createIdeVersion(it.name) }.toList()
 
   @Synchronized
-  fun getIde(version: IdeVersion): IdeFileLock? {
+  fun getIdeLock(version: IdeVersion): IdeFileLock? {
     val ideFile = FileManager.getFileByName(version.asString(), FileType.IDE)
     if (!ideFile.isDirectory) {
       return null

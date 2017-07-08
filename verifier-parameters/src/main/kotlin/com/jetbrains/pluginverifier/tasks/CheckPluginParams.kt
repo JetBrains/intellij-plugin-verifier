@@ -1,7 +1,10 @@
 package com.jetbrains.pluginverifier.tasks
 
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.api.*
+import com.jetbrains.pluginverifier.api.IdeDescriptor
+import com.jetbrains.pluginverifier.api.JdkDescriptor
+import com.jetbrains.pluginverifier.api.PluginCoordinate
+import com.jetbrains.pluginverifier.api.ProblemsFilter
 import com.jetbrains.pluginverifier.misc.closeLogged
 
 data class CheckPluginParams(val pluginCoordinates: List<PluginCoordinate>,
@@ -9,8 +12,7 @@ data class CheckPluginParams(val pluginCoordinates: List<PluginCoordinate>,
                              val jdkDescriptor: JdkDescriptor,
                              val externalClassesPrefixes: List<String>,
                              val problemsFilter: ProblemsFilter,
-                             val externalClasspath: Resolver = Resolver.getEmptyResolver(),
-                             val progress: Progress = DefaultProgress()) : TaskParameters {
+                             val externalClasspath: Resolver = Resolver.getEmptyResolver()) : TaskParameters {
 
   override fun presentableText(): String = """Check Plugin Configuration parameters:
   JDK: $jdkDescriptor

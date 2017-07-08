@@ -1,6 +1,8 @@
 package com.jetbrains.pluginverifier.tasks
 
-import com.jetbrains.pluginverifier.api.*
+import com.jetbrains.pluginverifier.api.IdeDescriptor
+import com.jetbrains.pluginverifier.api.JdkDescriptor
+import com.jetbrains.pluginverifier.api.ProblemsFilter
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import java.io.File
@@ -12,8 +14,7 @@ data class CheckTrunkApiParams(val trunkDescriptor: IdeDescriptor,
                                val problemsFilter: ProblemsFilter,
                                val jdkDescriptor: JdkDescriptor,
                                private val deleteMajorIdeOnExit: Boolean,
-                               private val majorIdeFile: File,
-                               val progress: Progress = DefaultProgress()) : TaskParameters {
+                               private val majorIdeFile: File) : TaskParameters {
   override fun presentableText(): String = """Check Trunk API Configuration Parameters:
 Trunk IDE to be checked: $trunkDescriptor
 Release IDE to compare API with: $releaseDescriptor

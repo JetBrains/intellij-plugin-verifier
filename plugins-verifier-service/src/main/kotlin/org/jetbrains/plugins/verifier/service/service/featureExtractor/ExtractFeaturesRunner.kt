@@ -40,9 +40,9 @@ class ExtractFeaturesRunner(val pluginCoordinate: PluginCoordinate, val pluginIn
     }
   }
 
-  private fun getSomeIdeMatchingSinceUntilBuilds(sinceBuild: IdeVersion, untilBuild: IdeVersion?): IdeFileLock = IdeFilesManager.locked {
+  private fun getSomeIdeMatchingSinceUntilBuilds(sinceBuild: IdeVersion, untilBuild: IdeVersion?): IdeFileLock = IdeFilesManager.lockAndAccess {
     val isMatching: (IdeVersion) -> Boolean = { sinceBuild <= it && (untilBuild == null || it <= untilBuild) }
     val maxCompatibleOrGlobalCompatible = IdeFilesManager.ideList().filter(isMatching).max() ?: IdeFilesManager.ideList().max()!!
-    IdeFilesManager.getIde(maxCompatibleOrGlobalCompatible)!!
+    IdeFilesManager.getIdeLock(maxCompatibleOrGlobalCompatible)!!
   }
 }
