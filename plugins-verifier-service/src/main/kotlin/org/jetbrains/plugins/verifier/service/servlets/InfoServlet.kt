@@ -5,15 +5,14 @@ import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.service.ServerInstance
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.status.ServerStatus
-import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-class InfoServlet(taskManager: TaskManager) : BaseServlet(taskManager) {
+class InfoServlet : BaseServlet() {
 
-  private val serverStatus = ServerStatus(taskManager)
+  private val serverStatus = ServerStatus(getTaskManager())
 
   override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
     processStatus(resp)

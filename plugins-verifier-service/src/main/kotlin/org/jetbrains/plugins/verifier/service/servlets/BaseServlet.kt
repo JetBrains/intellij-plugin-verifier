@@ -3,6 +3,7 @@ package org.jetbrains.plugins.verifier.service.servlets
 import com.github.salomonbrys.kotson.typeToken
 import com.google.gson.Gson
 import com.jetbrains.pluginverifier.persistence.CompactJson
+import org.jetbrains.plugins.verifier.service.service.ServerInstance
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -13,7 +14,7 @@ import javax.servlet.http.HttpServlet
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-abstract class BaseServlet(protected val taskManager: TaskManager) : HttpServlet() {
+abstract class BaseServlet : HttpServlet() {
 
   companion object {
     protected val LOG: Logger = LoggerFactory.getLogger(BaseServlet::class.java)
@@ -79,5 +80,7 @@ abstract class BaseServlet(protected val taskManager: TaskManager) : HttpServlet
     val json = CompactJson.toJson(src)
     sendBytes(resp, json.toByteArray(StandardCharsets.UTF_8))
   }
+
+  fun getTaskManager(): TaskManager = ServerInstance.taskManager
 
 }
