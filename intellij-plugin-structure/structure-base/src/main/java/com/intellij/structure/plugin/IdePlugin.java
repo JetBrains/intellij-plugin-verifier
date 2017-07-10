@@ -2,6 +2,7 @@ package com.intellij.structure.plugin;
 
 import com.google.common.collect.Multimap;
 import com.intellij.structure.ide.IdeVersion;
+import com.jetbrains.structure.plugin.Plugin;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jetbrains.annotations.NotNull;
@@ -15,13 +16,7 @@ import java.util.Set;
 /**
  * @author Sergey Patrikeev
  */
-public interface Plugin {
-
-  IdeVersion getSinceBuild();
-
-  @Nullable
-  IdeVersion getUntilBuild();
-
+public interface IdePlugin extends Plugin {
   boolean isCompatibleWithIde(@NotNull IdeVersion ideVersion);
 
   @NotNull
@@ -41,26 +36,11 @@ public interface Plugin {
   @NotNull
   Set<String> getDefinedModules();
 
-  @Nullable
-  String getDescription();
-
-  @Nullable
-  String getVendorEmail();
-
-  @Nullable
-  String getVendorUrl();
-
-  @Nullable
-  String getUrl();
-
-  @Nullable
-  String getChangeNotes();
-
   @NotNull
   Set<String> getAllClassesReferencedFromXml();
 
   @NotNull
-  Map<String, Plugin> getOptionalDescriptors();
+  Map<String, IdePlugin> getOptionalDescriptors();
 
   @NotNull
   Document getUnderlyingDocument();

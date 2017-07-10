@@ -8,7 +8,7 @@ import com.intellij.structure.impl.beans.PluginBean;
 import com.intellij.structure.impl.beans.PluginDependencyBean;
 import com.intellij.structure.impl.beans.PluginVendorBean;
 import com.intellij.structure.impl.utils.StringUtil;
-import com.intellij.structure.plugin.Plugin;
+import com.intellij.structure.plugin.IdePlugin;
 import com.intellij.structure.plugin.PluginDependency;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -20,13 +20,13 @@ import java.util.*;
 
 import static com.intellij.structure.impl.utils.StringUtil.isEmpty;
 
-public class PluginImpl implements Plugin {
+public class IdePluginImpl implements IdePlugin {
   private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules.";
 
   private final Set<String> myDefinedModules = new HashSet<String>();
   private final List<PluginDependency> myDependencies = new ArrayList<PluginDependency>();
   private final Map<PluginDependency, String> myOptionalConfigFiles = new HashMap<PluginDependency, String>();
-  private final Map<String, Plugin> myOptionalDescriptors = new HashMap<String, Plugin>();
+  private final Map<String, IdePlugin> myOptionalDescriptors = new HashMap<String, IdePlugin>();
   private final Set<String> myReferencedClasses = new HashSet<String>();
   private Multimap<String, Element> myExtensions;
   private File myOriginalFile;
@@ -43,7 +43,7 @@ public class PluginImpl implements Plugin {
   private IdeVersion mySinceBuild;
   private IdeVersion myUntilBuild;
 
-  PluginImpl(@NotNull Document underlyingDocument, @NotNull PluginBean bean) {
+  IdePluginImpl(@NotNull Document underlyingDocument, @NotNull PluginBean bean) {
     myUnderlyingDocument = underlyingDocument;
     setInfoFromBean(bean);
   }
@@ -193,11 +193,11 @@ public class PluginImpl implements Plugin {
 
   @NotNull
   @Override
-  public Map<String, Plugin> getOptionalDescriptors() {
+  public Map<String, IdePlugin> getOptionalDescriptors() {
     return Collections.unmodifiableMap(myOptionalDescriptors);
   }
 
-  void addOptionalDescriptor(@NotNull String configurationFile, @NotNull Plugin optionalPlugin) {
+  void addOptionalDescriptor(@NotNull String configurationFile, @NotNull IdePlugin optionalPlugin) {
     myOptionalDescriptors.put(configurationFile, optionalPlugin);
     myExtensions.putAll(optionalPlugin.getExtensions());
   }

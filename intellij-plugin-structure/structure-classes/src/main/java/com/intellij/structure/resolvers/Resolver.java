@@ -1,7 +1,7 @@
 package com.intellij.structure.resolvers;
 
 import com.intellij.structure.impl.resolvers.*;
-import com.intellij.structure.plugin.Plugin;
+import com.intellij.structure.plugin.IdePlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -32,7 +32,7 @@ public abstract class Resolver implements Closeable {
    * @throws IllegalArgumentException if the plugin has broken class-files or it has an incorrect directories structure
    */
   @NotNull
-  public static Resolver createPluginResolver(@NotNull Plugin plugin) throws IOException {
+  public static Resolver createPluginResolver(@NotNull IdePlugin plugin) throws IOException {
     return plugin.getOriginalFile() == null ? getEmptyResolver() : PluginResolver.createPluginResolver(plugin.getOriginalFile());
   }
 

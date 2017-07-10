@@ -10,7 +10,7 @@ import com.intellij.structure.impl.utils.StringUtil
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder
 import com.intellij.structure.impl.utils.xml.URLUtil
 import com.intellij.structure.impl.utils.xml.XIncludeException
-import com.intellij.structure.plugin.Plugin
+import com.intellij.structure.plugin.IdePlugin
 import com.intellij.structure.plugin.PluginCreationFail
 import com.intellij.structure.plugin.PluginCreationSuccess
 import org.apache.commons.io.FileUtils
@@ -117,7 +117,7 @@ class IdeManagerImpl : IdeManager() {
     fun getCommunityClassesRoot(ideaDir: File): File = File(ideaDir, "out/production")
 
     @Throws(IOException::class)
-    private fun getDummyPluginsFromSources(ideaDir: File): List<Plugin> {
+    private fun getDummyPluginsFromSources(ideaDir: File): List<IdePlugin> {
       if (isUltimate(ideaDir)) {
         return getDummyPlugins(getUltimateClassesRoot(ideaDir))
       } else if (isCommunity(ideaDir)) {
@@ -127,26 +127,14 @@ class IdeManagerImpl : IdeManager() {
       }
     }
 
-    /**
-     * Creates plugin descriptors from the found plugin.xml files.
-     * We don't know exactly which classes correspond to which descriptors
-     * so these classes are all in one Resolver.
-     *
-     * See [com.intellij.structure.impl.resolvers.IdeResolverCreator.getIdeaResolverFromSources]
-
-     * @param root idea root directory
-     * *
-     * @return dummy (no classes) plugins
-     */
-
-    private fun getDummyPlugins(root: File): List<Plugin> {
+    private fun getDummyPlugins(root: File): List<IdePlugin> {
       val xmlFiles = FileUtils.listFiles(root, WildcardFileFilter("*.xml"), TrueFileFilter.TRUE)
 
       val pathResolver = getFromSourcesPathResolver(xmlFiles)
       return getDummyPlugins(xmlFiles, pathResolver)
     }
 
-    private fun getDummyPlugins(xmlFiles: Collection<File>, pathResolver: JDOMXIncluder.PathResolver): List<Plugin> = xmlFiles
+    private fun getDummyPlugins(xmlFiles: Collection<File>, pathResolver: JDOMXIncluder.PathResolver): List<IdePlugin> = xmlFiles
         .filter { "plugin.xml" == it.name }
         .map { it.absoluteFile.parentFile }
         .filter { "META-INF" == it.name && it.isDirectory && it.parentFile != null }
@@ -154,7 +142,7 @@ class IdeManagerImpl : IdeManager() {
         .filter { it.isDirectory }
         .mapNotNull { createDummyPluginFromDirectory(it, pathResolver) }
 
-    private fun createDummyPluginFromDirectory(pluginDirectory: File, pathResolver: JDOMXIncluder.PathResolver?): Plugin? {
+    private fun createDummyPluginFromDirectory(pluginDirectory: File, pathResolver: JDOMXIncluder.PathResolver?): IdePlugin? {
       try {
         val pluginCreator = PluginManagerImpl(pathResolver).getPluginCreatorWithResult(pluginDirectory, false)
         pluginCreator.setOriginalFile(pluginDirectory)
@@ -192,7 +180,7 @@ class IdeManagerImpl : IdeManager() {
     }
 
     @Throws(IOException::class)
-    private fun getIdeaPlugins(ideaDir: File): List<Plugin> {
+    private fun getIdeaPlugins(ideaDir: File): List<IdePlugin> {
       val pluginsDir = File(ideaDir, "plugins")
       val pluginsFiles = pluginsDir.listFiles() ?: return emptyList()
       return pluginsFiles.filter { it.isDirectory }.mapNotNull { createDummyPluginFromDirectory(it, null) }

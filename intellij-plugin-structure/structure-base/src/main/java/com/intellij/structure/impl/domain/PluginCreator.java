@@ -34,7 +34,7 @@ public final class PluginCreator {
   private static final int MAX_PROPERTY_LENGTH = 255;
   private static final int MAX_LONG_PROPERTY_LENGTH = 65535;
 
-  private final PluginImpl myPlugin;
+  private final IdePluginImpl myPlugin;
   private final List<PluginProblem> myProblems = new ArrayList<PluginProblem>();
   private final String myDescriptorPath;
   private final boolean myValidateDescriptor;
@@ -106,7 +106,7 @@ public final class PluginCreator {
     }
   }
 
-  private void validatePlugin(Plugin plugin) {
+  private void validatePlugin(IdePlugin plugin) {
     int moduleDependenciesCnt = 0;
     for (PluginDependency dependency : plugin.getDependencies()) {
       if (dependency.isModule()) {
@@ -117,8 +117,8 @@ public final class PluginCreator {
       registerProblem(new NoModuleDependencies(myDescriptorPath));
     }
 
-    IdeVersion sinceBuild = plugin.getSinceBuild();
-    IdeVersion untilBuild = plugin.getUntilBuild();
+    IdeVersion sinceBuild = (IdeVersion) plugin.getSinceBuild();
+    IdeVersion untilBuild = (IdeVersion) plugin.getUntilBuild();
     if (sinceBuild != null && untilBuild != null && sinceBuild.compareTo(untilBuild) > 0) {
       registerProblem(new SinceBuildGreaterThanUntilBuild(myDescriptorPath, sinceBuild, untilBuild));
     }
@@ -138,9 +138,9 @@ public final class PluginCreator {
   }
 
   @Nullable
-  private PluginImpl resolveDocumentAndValidateBean(@NotNull Document originalDocument,
-                                                    @NotNull URL documentUrl,
-                                                    @NotNull JDOMXIncluder.PathResolver pathResolver) {
+  private IdePluginImpl resolveDocumentAndValidateBean(@NotNull Document originalDocument,
+                                                       @NotNull URL documentUrl,
+                                                       @NotNull JDOMXIncluder.PathResolver pathResolver) {
     Document document = resolveXIncludesOfDocument(originalDocument, documentUrl, pathResolver);
     if (document == null) {
       return null;
@@ -153,7 +153,7 @@ public final class PluginCreator {
     if (hasErrors()) {
       return null;
     }
-    PluginImpl plugin = new PluginImpl(document, bean);
+    IdePluginImpl plugin = new IdePluginImpl(document, bean);
     validatePlugin(plugin);
     if (hasErrors()) {
       return null;

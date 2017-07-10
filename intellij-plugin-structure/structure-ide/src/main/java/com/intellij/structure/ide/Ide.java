@@ -1,7 +1,7 @@
 package com.intellij.structure.ide;
 
 import com.intellij.structure.impl.utils.StringUtil;
-import com.intellij.structure.plugin.Plugin;
+import com.intellij.structure.plugin.IdePlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,16 +30,16 @@ public abstract class Ide {
    * @return copy of this Ide with added {@code plugin}
    */
   @NotNull
-  public abstract Ide getExpandedIde(@NotNull Plugin plugin);
+  public abstract Ide getExpandedIde(@NotNull IdePlugin plugin);
 
   /**
    * Returns the list of non-default plugins installed by the user. To emulate an installation of the plugin invoke
-   * {@link #getExpandedIde(Plugin)}.
+   * {@link #getExpandedIde(IdePlugin)}.
    *
    * @return the list of manually installed plugins
    */
   @NotNull
-  public abstract List<Plugin> getCustomPlugins();
+  public abstract List<IdePlugin> getCustomPlugins();
 
   /**
    * Returns the list of default plugins bundled with the IDE distribution to provide its work.
@@ -47,7 +47,7 @@ public abstract class Ide {
    * @return the list of bundled plugins
    */
   @NotNull
-  public abstract List<Plugin> getBundledPlugins();
+  public abstract List<IdePlugin> getBundledPlugins();
 
   /**
    * Returns the plugin instance with the specified plugin id (it's a value of plugin.xml {@literal <id>} tag). The
@@ -57,14 +57,14 @@ public abstract class Ide {
    * @return the plugin with the specified id
    */
   @Nullable
-  final public Plugin getPluginById(@NotNull String pluginId) {
-    for (Plugin plugin : getCustomPlugins()) {
+  final public IdePlugin getPluginById(@NotNull String pluginId) {
+    for (IdePlugin plugin : getCustomPlugins()) {
       String id = plugin.getPluginId() != null ? plugin.getPluginId() : plugin.getPluginName();
       if (StringUtil.equal(id, pluginId)) {
         return plugin;
       }
     }
-    for (Plugin plugin : getBundledPlugins()) {
+    for (IdePlugin plugin : getBundledPlugins()) {
       String id = plugin.getPluginId() != null ? plugin.getPluginId() : plugin.getPluginName();
       if (StringUtil.equal(id, pluginId))
         return plugin;
@@ -79,13 +79,13 @@ public abstract class Ide {
    * @return the plugin with definition of the module
    */
   @Nullable
-  final public Plugin getPluginByModule(@NotNull String moduleId) {
-    for (Plugin plugin : getCustomPlugins()) {
+  final public IdePlugin getPluginByModule(@NotNull String moduleId) {
+    for (IdePlugin plugin : getCustomPlugins()) {
       if (plugin.getDefinedModules().contains(moduleId)) {
         return plugin;
       }
     }
-    for (Plugin plugin : getBundledPlugins()) {
+    for (IdePlugin plugin : getBundledPlugins()) {
       if (plugin.getDefinedModules().contains(moduleId)) {
         return plugin;
       }

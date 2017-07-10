@@ -1,12 +1,13 @@
 package com.intellij.structure.ide;
 
 import com.intellij.structure.impl.domain.IdeVersionImpl;
+import com.jetbrains.structure.product.ProductVersion;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Sergey Patrikeev
  */
-public abstract class IdeVersion implements Comparable<IdeVersion> {
+public abstract class IdeVersion implements ProductVersion, Comparable<IdeVersion> {
 
   /**
    * Tries to parse specified text as an Ide-version

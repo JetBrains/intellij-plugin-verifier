@@ -2,7 +2,7 @@ package com.intellij.structure.impl;
 
 import com.intellij.structure.ide.Ide;
 import com.intellij.structure.ide.IdeVersion;
-import com.intellij.structure.plugin.Plugin;
+import com.intellij.structure.plugin.IdePlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -11,19 +11,19 @@ import java.util.Collections;
 import java.util.List;
 
 class IdeImpl extends Ide {
-  private final List<Plugin> myBundledPlugins;
-  private final List<Plugin> myCustomPlugins;
+  private final List<IdePlugin> myBundledPlugins;
+  private final List<IdePlugin> myCustomPlugins;
 
   private final IdeVersion myVersion;
   private final File myIdePath;
 
   IdeImpl(@NotNull File idePath,
           @NotNull IdeVersion version,
-          @NotNull List<Plugin> bundledPlugins) {
-    this(idePath, bundledPlugins, Collections.<Plugin>emptyList(), version);
+          @NotNull List<IdePlugin> bundledPlugins) {
+    this(idePath, bundledPlugins, Collections.<IdePlugin>emptyList(), version);
   }
 
-  private IdeImpl(@NotNull File idePath, @NotNull List<Plugin> bundledPlugins, @NotNull List<Plugin> customPlugins, @NotNull IdeVersion version) {
+  private IdeImpl(@NotNull File idePath, @NotNull List<IdePlugin> bundledPlugins, @NotNull List<IdePlugin> customPlugins, @NotNull IdeVersion version) {
     myIdePath = idePath;
     myBundledPlugins = bundledPlugins;
     myCustomPlugins = customPlugins;
@@ -38,21 +38,21 @@ class IdeImpl extends Ide {
 
   @NotNull
   @Override
-  public Ide getExpandedIde(@NotNull Plugin plugin) {
-    List<Plugin> newCustoms = new ArrayList<Plugin>(myCustomPlugins);
+  public Ide getExpandedIde(@NotNull IdePlugin plugin) {
+    List<IdePlugin> newCustoms = new ArrayList<IdePlugin>(myCustomPlugins);
     newCustoms.add(plugin);
     return new IdeImpl(myIdePath, myBundledPlugins, newCustoms, myVersion);
   }
 
   @Override
   @NotNull
-  public List<Plugin> getCustomPlugins() {
+  public List<IdePlugin> getCustomPlugins() {
     return Collections.unmodifiableList(myCustomPlugins);
   }
 
   @Override
   @NotNull
-  public List<Plugin> getBundledPlugins() {
+  public List<IdePlugin> getBundledPlugins() {
     return Collections.unmodifiableList(myBundledPlugins);
   }
 

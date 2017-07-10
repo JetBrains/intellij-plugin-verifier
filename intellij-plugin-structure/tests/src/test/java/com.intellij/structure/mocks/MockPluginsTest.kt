@@ -4,7 +4,7 @@ import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.intellij.structure.impl.extractor.ExtractedPluginFile
 import com.intellij.structure.impl.utils.FileUtil
-import com.intellij.structure.plugin.Plugin
+import com.intellij.structure.plugin.IdePlugin
 import com.intellij.structure.plugin.PluginCreationFail
 import com.intellij.structure.plugin.PluginCreationSuccess
 import com.intellij.structure.plugin.PluginManager
@@ -36,7 +36,7 @@ class MockPluginsTest {
   }
 
 
-  private fun testMockConfigs(plugin: Plugin) {
+  private fun testMockConfigs(plugin: IdePlugin) {
     assertEquals("http://kotlinlang.org", plugin.url)
     assertEquals("Kotlin", plugin.pluginName)
     assertEquals("1.0.0-beta-1038-IJ141-17", plugin.pluginVersion)
@@ -102,7 +102,7 @@ class MockPluginsTest {
     testMockPluginStructureAndConfiguration("mock-plugin-directory-with-lib-in-zip.zip", "lib/mock-plugin-1.0.jar")
   }
 
-  private fun testMockIdeCompatibility(plugin: Plugin) {
+  private fun testMockIdeCompatibility(plugin: IdePlugin) {
     //  <idea-version since-build="141.1009.5" until-build="141.9999999"/>
     checkCompatible(plugin, "141.1009.5", true)
     checkCompatible(plugin, "141.99999", true)
@@ -111,7 +111,7 @@ class MockPluginsTest {
     checkCompatible(plugin, "141", false)
   }
 
-  private fun checkCompatible(plugin: Plugin, version: String, compatible: Boolean) {
+  private fun checkCompatible(plugin: IdePlugin, version: String, compatible: Boolean) {
     assertEquals(compatible, plugin.isCompatibleWithIde(IdeVersion.createIdeVersion(version)))
   }
 
@@ -147,14 +147,14 @@ class MockPluginsTest {
     }
   }
 
-  private fun testMockUnderlyingDocument(plugin: Plugin) {
+  private fun testMockUnderlyingDocument(plugin: IdePlugin) {
     val document = plugin.underlyingDocument
     val rootElement = document.rootElement
     assertNotNull(rootElement)
     assertEquals("idea-plugin", rootElement.name)
   }
 
-  private fun testMockOptDescriptors(plugin: Plugin) {
+  private fun testMockOptDescriptors(plugin: IdePlugin) {
     val optionalDescriptors = plugin.optionalDescriptors
     assertContains(optionalDescriptors.keys, listOf("extension.xml", "optionals/optional.xml", "../optionalsDir/otherDirOptional.xml", "/META-INF/referencedFromRoot.xml"))
     assertEquals(4, optionalDescriptors.size.toLong())
@@ -164,7 +164,7 @@ class MockPluginsTest {
     assertContains(optionalDescriptors["../optionalsDir/otherDirOptional.xml"]!!.allClassesReferencedFromXml, listOf("com.intellij.optional.BeanClass".replace('.', '/')))
   }
 
-  private fun testMockDependenciesAndModules(plugin: Plugin) {
+  private fun testMockDependenciesAndModules(plugin: IdePlugin) {
     assertEquals(7, plugin.dependencies.size.toLong())
     //check plugin and module dependencies
     val dependencies = listOf(
@@ -181,14 +181,14 @@ class MockPluginsTest {
     assertEquals(hashSetOf("one_module", "two_module"), plugin.definedModules)
   }
 
-  private fun testMockExtensionPoints(plugin: Plugin) {
+  private fun testMockExtensionPoints(plugin: IdePlugin) {
     val extensions = plugin.extensions
     val keys = extensions.keys()
     assertThat("com.intellij.referenceImporter", isIn(keys))
     assertThat("org.intellij.scala.scalaTestDefaultWorkingDirectoryProvider", isIn(keys))
   }
 
-  private fun testMockClassesFromXml(plugin: Plugin) {
+  private fun testMockClassesFromXml(plugin: IdePlugin) {
     val set = plugin.allClassesReferencedFromXml
     assertContains(set, "org.jetbrains.kotlin.idea.compiler.JetCompilerManager".replace('.', '/'))
     assertContains(set, "org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages\$Extension".replace('.', '/'))
