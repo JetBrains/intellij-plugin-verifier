@@ -1,4 +1,5 @@
 dependencies {
+  compile "org.jetbrains.intellij.plugins:structure-classes:$intellijStructureVersion"
   compile 'com.github.spullara.cli-parser:cli-parser:1.1.2'
   compile project(':verifier-results')
 }

@@ -5,5 +5,4 @@ repositories {
 dependencies {
   compile project(':verifier-results')
   compile project(':verifier-parameters')
-  compile "org.jetbrains.intellij.plugins:structure-classes:$intellijStructureVersion"
 }

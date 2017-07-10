@@ -11,30 +11,34 @@ class IdeServlet : BaseServlet() {
 
   override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
     val path = getPath(req, resp) ?: return
-    val ideVersionParam = req.getParameter("ideVersion") ?: return
-    val ideVersion = try {
-      IdeVersion.createIdeVersion(ideVersionParam)
-    } catch (e: Exception) {
-      sendNotFound(resp, "Invalid IDE version: $ideVersionParam")
-      null
-    } ?: return
-
     if (path.endsWith("uploadIde")) {
-      processUploadIde(ideVersion, resp)
+      processUploadIde(req, resp)
     } else if (path.endsWith("deleteIde")) {
-      processDeleteIde(ideVersion, resp)
+      processDeleteIde(req, resp)
     } else {
       sendJson(resp, IdeFilesManager.ideList())
     }
   }
 
-  private fun processUploadIde(ideVersion: IdeVersion, resp: HttpServletResponse) {
+  private fun parseIdeVersionParameter(req: HttpServletRequest, resp: HttpServletResponse): IdeVersion? {
+    val ideVersionParam = req.getParameter("ideVersion") ?: return null
+    return try {
+      IdeVersion.createIdeVersion(ideVersionParam)
+    } catch (e: Exception) {
+      sendNotFound(resp, "Invalid IDE version: $ideVersionParam")
+      null
+    }
+  }
+
+  private fun processUploadIde(req: HttpServletRequest, resp: HttpServletResponse) {
+    val ideVersion = parseIdeVersionParameter(req, resp) ?: return
     val ideRunner = UploadIdeRunner(ideVersion)
     val taskId = getTaskManager().enqueue(ideRunner)
     sendOk(resp, "Uploading $ideVersion (#$taskId)")
   }
 
-  private fun processDeleteIde(ideVersion: IdeVersion, resp: HttpServletResponse) {
+  private fun processDeleteIde(req: HttpServletRequest, resp: HttpServletResponse) {
+    val ideVersion = parseIdeVersionParameter(req, resp) ?: return
     val deleteIdeRunner = DeleteIdeRunner(ideVersion)
     val taskId = getTaskManager().enqueue(deleteIdeRunner)
     sendOk(resp, "Deleting $ideVersion (#$taskId)")
