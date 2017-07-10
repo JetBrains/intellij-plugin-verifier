@@ -11,7 +11,6 @@ import com.jetbrains.pluginverifier.tasks.CheckPluginParams
 import com.jetbrains.pluginverifier.tasks.CheckPluginTask
 import org.jetbrains.plugins.verifier.service.ide.IdeFileLock
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
-import org.jetbrains.plugins.verifier.service.params.CheckRangeRunnerParams
 import org.jetbrains.plugins.verifier.service.progress.BridgeVerifierProgress
 import org.jetbrains.plugins.verifier.service.progress.TaskProgress
 import org.jetbrains.plugins.verifier.service.setting.Settings
@@ -21,7 +20,7 @@ import org.slf4j.LoggerFactory
 
 class CheckRangeTask(val pluginInfo: PluginInfo,
                      val pluginCoordinate: PluginCoordinate,
-                     val params: CheckRangeRunnerParams,
+                     val params: CheckRangeParams,
                      val ideVersions: List<IdeVersion>? = null) : Task<CheckRangeResults>() {
   override fun presentableName(): String = "Check $pluginCoordinate with IDE from [since; until]"
 

@@ -37,8 +37,7 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
 
   private val lastProceedDate: MutableMap<UpdateInfo, Long> = hashMapOf()
 
-  //10 minutes
-  private val UPDATE_PROCESS_MIN_PAUSE_MILLIS = 10 * 60 * 1000
+  private val UPDATE_PROCESS_MIN_PAUSE_MILLIS = TimeUnit.MINUTES.toMillis(10)
 
   private val userName: String by lazy {
     Settings.PLUGIN_REPOSITORY_VERIFIER_USERNAME.get()
@@ -48,7 +47,6 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
     Settings.PLUGIN_REPOSITORY_VERIFIER_PASSWORD.get()
   }
 
-  @Synchronized
   override fun doTick() {
     val updatesToExtract = getUpdatesToExtract()
     LOG.info("Extracting features of ${updatesToExtract.size} updates: $updatesToExtract")
@@ -78,7 +76,7 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
     lastProceedDate[updateInfo] = System.currentTimeMillis()
 
     val pluginInfo = PluginInfo(updateInfo.pluginId, updateInfo.version, updateInfo)
-    val runner = ExtractFeaturesRunner(PluginCoordinate.ByUpdateInfo(updateInfo), pluginInfo)
+    val runner = ExtractFeaturesTask(PluginCoordinate.ByUpdateInfo(updateInfo), pluginInfo)
     val taskId = taskManager.enqueue(
         runner,
         { onSuccess(it) },
@@ -89,11 +87,11 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
     LOG.info("Extract features of $updateInfo is scheduled with taskId #$taskId")
   }
 
-  private fun onCompletion(task: ExtractFeaturesRunner) {
+  private fun onCompletion(task: ExtractFeaturesTask) {
     inProgressUpdates.remove((task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo)
   }
 
-  private fun onError(error: Throwable, taskStatus: TaskStatus, task: ExtractFeaturesRunner) {
+  private fun onError(error: Throwable, taskStatus: TaskStatus, task: ExtractFeaturesTask) {
     val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
     LOG.error("Unable to extract features of $updateInfo (#${taskStatus.taskId})", error)
   }
