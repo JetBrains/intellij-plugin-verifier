@@ -57,13 +57,11 @@ appender('ERRORS_FILE', RollingFileAppender) {
 boolean developmentMode = 'true' == System.getProperty('verifier.service.development.mode')
 def loggers = ['STDOUT', 'ERRORS_FILE', 'FILE']
 
-logger("com.jetbrains.pluginverifier.misc.DownloadManager", ERROR, ['STDOUT', 'FILE'], false)
+logger("com.jetbrains.pluginverifier.repository.DownloadManager", ERROR, ['STDOUT', 'FILE'], false)
 logger("com.jetbrains.pluginverifier.repository.RepositoryManager", ERROR, loggers, false)
 logger("com.intellij.structure", ERROR, loggers, false)
-logger("org.jetbrains.plugins.verifier.service", developmentMode ? TRACE : INFO, loggers, false)
-logger("com.jetbrains.pluginverifier.api.VManager", developmentMode ? DEBUG : INFO, loggers, false)
+logger("org.jetbrains.plugins.verifier.service", developmentMode ? DEBUG : INFO, loggers, false)
 logger("com.jetbrains.pluginverifier", developmentMode ? DEBUG : INFO, loggers, false)
-logger("grails.app.controllers", developmentMode ? DEBUG : INFO, loggers, false)
-logger("grails.app.services", developmentMode ? DEBUG : INFO, loggers, false)
+logger("com.jetbrains.intellij.feature.extractor", developmentMode ? DEBUG : ERROR, loggers, false)
 
-root(WARN, loggers)
+root(INFO, loggers)
