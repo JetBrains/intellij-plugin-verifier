@@ -13,7 +13,7 @@ buildscript {
   }
 }
 
-def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.85'
+def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.96'
 
 configure(allprojects) {
   apply plugin: 'java'
