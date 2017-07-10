@@ -153,4 +153,6 @@ private fun <T> getAppropriateResponse(serverUrl: String, response: Response<T>?
 
 private fun <T> Call<T>.getServerUrl(): String = "${request().url().host()}:${request().url().port()}"
 
-fun Long.bytesToMegabytes(): Long = this / FileUtils.ONE_MB
+fun Long.bytesToMegabytes(): Double = this.toDouble() / FileUtils.ONE_MB
+
+fun Long.bytesToGigabytes(): Double = this.toDouble() / FileUtils.ONE_GB

@@ -72,7 +72,7 @@ object DownloadManager {
   //it is not used yet
   private val deleteQueue: MutableSet<File> = hashSetOf()
 
-  private val spaceWatcher = FreeDiskSpaceWatcher(RepositoryConfiguration.downloadDir, RepositoryConfiguration.downloadDirMaxSpace)
+  private val spaceWatcher = FreeDiskSpaceWatcher(RepositoryConfiguration.downloadDir, RepositoryConfiguration.downloadDirMaxSpaceMb)
 
   private val downloadApi: DownloadApi = Retrofit.Builder()
       .baseUrl(RepositoryConfiguration.pluginRepositoryUrl)

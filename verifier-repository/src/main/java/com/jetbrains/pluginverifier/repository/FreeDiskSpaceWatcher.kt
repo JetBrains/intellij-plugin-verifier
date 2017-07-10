@@ -10,7 +10,7 @@ import java.io.File
 class FreeDiskSpaceWatcher(val watchDir: File, val maximumByParameterMb: Long?) {
 
   companion object {
-    private val ONE_GIGABYTE = 1024L
+    private val ONE_GIGABYTE = 1024.0
 
     private val EXPECTED_SPACE = 3 * ONE_GIGABYTE
 
@@ -21,15 +21,15 @@ class FreeDiskSpaceWatcher(val watchDir: File, val maximumByParameterMb: Long?) 
 
   fun isEnoughSpace() = estimateAvailableSpace() > LOW_THRESHOLD * 2
 
-  fun estimateAvailableSpace(): Long {
+  fun estimateAvailableSpace(): Double {
     val realUsageMb = getSpaceUsageMb()
     if (maximumByParameterMb != null) {
       return maximumByParameterMb - realUsageMb
     }
 
-    val askedSpace = watchDir.usableSpace.bytesToMegabytes()
-    if (askedSpace != 0L) {
-      return askedSpace
+    val usableSpace = watchDir.usableSpace
+    if (usableSpace != 0L) {
+      return usableSpace.bytesToMegabytes()
     }
     return EXPECTED_SPACE
   }

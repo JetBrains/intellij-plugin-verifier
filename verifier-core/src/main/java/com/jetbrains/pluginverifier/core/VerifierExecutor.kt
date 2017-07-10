@@ -42,7 +42,7 @@ class VerifierExecutor(val params: VerifierParams) : Closeable {
     val availableMemory = Runtime.getRuntime().maxMemory().bytesToMegabytes()
     val availableCpu = Runtime.getRuntime().availableProcessors().toLong()
     LOG.info("Available memory: $availableMemory Mb; Available CPU = $availableCpu")
-    val maxByMemory = availableMemory / 200
+    val maxByMemory = (availableMemory / 200).toLong()
     return maxOf(4, minOf(maxByMemory, availableCpu)).toInt()
   }
 

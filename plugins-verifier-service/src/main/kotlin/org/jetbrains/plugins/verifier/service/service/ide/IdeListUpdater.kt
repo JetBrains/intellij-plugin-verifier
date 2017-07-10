@@ -15,7 +15,6 @@ class IdeListUpdater(taskManager: TaskManager) : BaseService("IdeListUpdater", 0
 
   private val downloadingIdes: MutableSet<IdeVersion> = hashSetOf()
 
-  @Synchronized
   override fun doTick() {
     val alreadyIdes: List<IdeVersion> = IdeFilesManager.ideList()
 

@@ -48,7 +48,7 @@ object RepositoryConfiguration {
     getProperty("plugin.repository.url")?.trimEnd('/') ?: throw RuntimeException("Plugin repository URL is not specified")
   }
 
-  val downloadDirMaxSpace: Long? by lazy {
+  val downloadDirMaxSpaceMb: Long? by lazy {
     return@lazy getProperty("plugin.verifier.cache.dir.max.space")?.toLong()
   }
 

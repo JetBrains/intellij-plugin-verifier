@@ -11,7 +11,6 @@ import com.jetbrains.pluginverifier.persistence.CompactJson
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
-import org.jetbrains.plugins.verifier.service.params.CheckRangeRunnerParams
 import org.jetbrains.plugins.verifier.service.params.JdkVersion
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.setting.Settings
@@ -97,7 +96,7 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
 
     val pluginInfo = PluginInfo(updateInfo.pluginId, updateInfo.version, updateInfo)
     val pluginCoordinate = PluginCoordinate.ByUpdateInfo(updateInfo)
-    val rangeRunnerParams = CheckRangeRunnerParams(JdkVersion.JAVA_8_ORACLE)
+    val rangeRunnerParams = CheckRangeParams(JdkVersion.JAVA_8_ORACLE)
     val runner = CheckRangeTask(pluginInfo, pluginCoordinate, rangeRunnerParams, versions)
     val taskId = taskManager.enqueue(
         runner,

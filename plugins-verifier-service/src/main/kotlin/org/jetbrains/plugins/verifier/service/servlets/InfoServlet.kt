@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.verifier.service.servlets
 
+import com.jetbrains.pluginverifier.misc.bytesToGigabytes
+import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.output.HtmlBuilder
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.service.ServerInstance
@@ -58,11 +60,14 @@ class InfoServlet : BaseServlet() {
               +"Status:"
             }
             ul {
-              serverStatus.health().forEach { (key, value) ->
-                li {
-                  +(key + " = " + value)
-                }
-              }
+              val (totalMemory, freeMemory, usedMemory, maxMemory) = serverStatus.getMemoryInfo()
+              li { +"Total memory: ${totalMemory.bytesToMegabytes()} mb" }
+              li { +"Free memory: ${freeMemory.bytesToMegabytes()} mb" }
+              li { +"Used memory: ${usedMemory.bytesToMegabytes()} mb" }
+              li { +"Max memory: ${maxMemory.bytesToMegabytes()} mb" }
+
+              val (totalUsage) = serverStatus.getDiskUsage()
+              li { +"Total disk usage: ${"%.3f".format(totalUsage.bytesToGigabytes())} Gb" }
             }
 
             h2 {
@@ -94,7 +99,7 @@ class InfoServlet : BaseServlet() {
                 th { +"Total time (ms)" }
               }
 
-              serverStatus.runningTasks().forEach { (taskId, taskName, startedDate, state, progress, totalTimeMs) ->
+              serverStatus.getRunningTasks().forEach { (taskId, taskName, startedDate, state, progress, totalTimeMs) ->
                 tr {
                   td { +taskId.toString() }
                   td { +taskName }
