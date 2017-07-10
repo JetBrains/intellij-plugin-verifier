@@ -15,18 +15,25 @@ abstract class BaseService(private val serviceName: String,
 
   protected val LOG: Logger = LoggerFactory.getLogger(serviceName)
 
-  @Volatile
   private var isServing: Boolean = false
 
+  private val executor = Executors.newSingleThreadScheduledExecutor(
+      ThreadFactoryBuilder()
+          .setDaemon(true)
+          .setNameFormat("$serviceName-%d")
+          .build()
+  )
+
   fun start() {
-    Executors.newSingleThreadScheduledExecutor(
-        ThreadFactoryBuilder()
-            .setDaemon(true)
-            .setNameFormat("$serviceName-%d")
-            .build()
-    ).scheduleAtFixedRate({ tick() }, initialDelay, period, timeUnit)
+    executor.scheduleAtFixedRate({ tick() }, initialDelay, period, timeUnit)
   }
 
+  fun stop() {
+    LOG.info("Stopping $serviceName")
+    executor.shutdownNow()
+  }
+
+  @Synchronized
   protected fun tick() {
     if (isServing) {
       LOG.info("$serviceName is already in progress")

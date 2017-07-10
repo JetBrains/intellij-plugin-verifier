@@ -36,9 +36,10 @@ class Worker<R, T : Task<R>>(val task: T,
       TaskManager.LOG.error("Fatal error during computation of a task #$taskId", e)
       throw e
     } finally {
+      progress.setProgress(1.0)
       endTime = System.currentTimeMillis()
       taskManager.onComplete(taskId)
-      TaskManager.LOG.info("Task #$taskId is completed with $state")
+      TaskManager.LOG.info("Task $task is completed with $state")
 
       //execute callbacks
       val status = TaskStatus(taskId, startTime, endTime, state, progress.getProgress(), progress.getText(), task.presentableName())

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.featureExtractor
 
 import com.google.gson.Gson
+import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
@@ -28,13 +29,13 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
   private val featuresExtractor: FeaturesApi = Retrofit.Builder()
       .baseUrl(Settings.FEATURE_EXTRACTOR_REPOSITORY_URL.get())
       .addConverterFactory(GsonConverterFactory.create(Gson()))
-      .client(makeOkHttpClient(LOG.isDebugEnabled, 5, TimeUnit.MINUTES))
+      .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
       .create(FeaturesApi::class.java)
 
   private val inProgressUpdates: MutableMap<UpdateInfo, TaskId> = hashMapOf()
 
-  private val lastCheckDate: MutableMap<UpdateInfo, Long> = hashMapOf()
+  private val lastProceedDate: MutableMap<UpdateInfo, Long> = hashMapOf()
 
   //10 minutes
   private val UPDATE_PROCESS_MIN_PAUSE_MILLIS = 10 * 60 * 1000
@@ -49,13 +50,13 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
 
   @Synchronized
   override fun doTick() {
-    LOG.info("It's time to extract more plugins!")
-
-    for (it in getUpdatesToExtract()) {
+    val updatesToExtract = getUpdatesToExtract()
+    LOG.info("Extracting features of ${updatesToExtract.size} updates: $updatesToExtract")
+    for (update in updatesToExtract) {
       if (taskManager.isBusy()) {
         return
       }
-      schedule(it)
+      schedule(update)
     }
   }
 
@@ -66,44 +67,45 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
 
   private fun schedule(updateInfo: UpdateInfo) {
     if (updateInfo in inProgressUpdates) {
-      LOG.debug("Update $updateInfo is currently in progress; ignore it")
       return
     }
 
-    val lastCheck = lastCheckDate[updateInfo]
-    if (lastCheck != null && System.currentTimeMillis() - lastCheck < UPDATE_PROCESS_MIN_PAUSE_MILLIS) {
-      LOG.info("Update $updateInfo was checked recently; wait at least ${UPDATE_PROCESS_MIN_PAUSE_MILLIS / 1000} seconds;")
+    val lastProceedAgo = System.currentTimeMillis() - (lastProceedDate[updateInfo] ?: 0)
+    if (lastProceedAgo < UPDATE_PROCESS_MIN_PAUSE_MILLIS) {
       return
     }
+
+    lastProceedDate[updateInfo] = System.currentTimeMillis()
 
     val pluginInfo = PluginInfo(updateInfo.pluginId, updateInfo.version, updateInfo)
     val runner = ExtractFeaturesRunner(PluginCoordinate.ByUpdateInfo(updateInfo), pluginInfo)
     val taskId = taskManager.enqueue(
         runner,
         { onSuccess(it) },
-        { t, tid, task -> logError(t, tid, task) },
-        { _, task -> onUpdateExtracted(task) }
+        { t, tid, task -> onError(t, tid, task) },
+        { _, task -> onCompletion(task) }
     )
     inProgressUpdates[updateInfo] = taskId
-    lastCheckDate[updateInfo] = System.currentTimeMillis()
     LOG.info("Extract features of $updateInfo is scheduled with taskId #$taskId")
   }
 
-  private fun onUpdateExtracted(task: ExtractFeaturesRunner) {
-    val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
-    LOG.info("Update $updateInfo is successfully extracted")
-    inProgressUpdates.remove(updateInfo)
+  private fun onCompletion(task: ExtractFeaturesRunner) {
+    inProgressUpdates.remove((task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo)
   }
 
-  private fun logError(throwable: Throwable, taskStatus: TaskStatus, task: ExtractFeaturesRunner) {
+  private fun onError(error: Throwable, taskStatus: TaskStatus, task: ExtractFeaturesRunner) {
     val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
-    LOG.error("Unable to extract features of the update $updateInfo: taskId = #${taskStatus.taskId}", throwable)
+    LOG.error("Unable to extract features of $updateInfo (#${taskStatus.taskId})", error)
   }
 
   private fun onSuccess(result: TaskResult<FeaturesResult>) {
     val extractorResult = result.result!!
-    logSuccess(extractorResult, result)
-    val pluginsResult = convertToPluginsSiteResult(extractorResult)
+    val pluginInfo = extractorResult.plugin
+    val resultType = extractorResult.resultType
+    val size = extractorResult.features.size
+    LOG.info("Plugin $pluginInfo extracted $size features: ($resultType)")
+
+    val pluginsResult = convertToPluginsSiteResult(pluginInfo, resultType, extractorResult.features)
     try {
       sendExtractedFeatures(pluginsResult, userName, password).executeSuccessfully()
     } catch(e: Exception) {
@@ -111,29 +113,17 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
     }
   }
 
-  private fun convertToPluginsSiteResult(featuresResult: FeaturesResult): AdaptedFeaturesResult {
+  private fun convertToPluginsSiteResult(pluginInfo: PluginInfo,
+                                         resultType: FeaturesResult.ResultType,
+                                         features: List<ExtensionPointFeatures>): AdaptedFeaturesResult {
     val protocolVersion = Settings.PROTOCOL_VERSION.getAsInt()
-    val updateId = featuresResult.plugin.updateInfo!!.updateId
-    val resultType = featuresResult.resultType
-    if (resultType == FeaturesResult.ResultType.BAD_PLUGIN) {
-      return AdaptedFeaturesResult(updateId, resultType, emptyList(), protocolVersion)
-    }
-    return AdaptedFeaturesResult(updateId, resultType, featuresResult.features, protocolVersion)
-  }
-
-  private fun logSuccess(featuresResult: FeaturesResult, result: TaskResult<FeaturesResult>) {
-    val plugin = featuresResult.plugin
-    val resultType = featuresResult.resultType
-    val size = featuresResult.features.size
-    LOG.info("Plugin $plugin is successfully processed; Result type = $resultType; extracted = $size features; in ${result.taskStatus.elapsedTime()} ms")
+    val updateId = pluginInfo.updateInfo!!.updateId
+    return AdaptedFeaturesResult(updateId, resultType, features, protocolVersion)
   }
 
 
-  private fun getUpdatesToExtract(): List<Int> {
-    val updateIds = getUpdatesToExtractFeatures(userName, password).executeSuccessfully().body()
-    LOG.info("Repository get updates to extract features success: (total: ${updateIds.size}): $updateIds")
-    return updateIds
-  }
+  private fun getUpdatesToExtract(): List<Int> =
+      getUpdatesToExtractFeatures(userName, password).executeSuccessfully().body().sortedDescending()
 
   private fun getUpdatesToExtractFeatures(userName: String, password: String) =
       featuresExtractor.getUpdatesToExtractFeatures(createStringRequestBody(userName), createStringRequestBody(password))

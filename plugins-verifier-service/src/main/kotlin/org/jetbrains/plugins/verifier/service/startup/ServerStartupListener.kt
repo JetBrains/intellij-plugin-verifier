@@ -65,6 +65,10 @@ class ServerStartupListener : ServletContextListener {
 
   override fun contextDestroyed(sce: ServletContextEvent?) {
     LOG.info("Stopping the Service")
+    ServerInstance.taskManager.stop()
+    ServerInstance.ideListUpdater.stop()
+    ServerInstance.verifierService.stop()
+    ServerInstance.featureService.stop()
   }
 
   private fun validateSystemProperties() {
@@ -90,7 +94,7 @@ class ServerStartupListener : ServletContextListener {
     if (diskSpace < MIN_DISK_SPACE_MB) {
       throw IllegalStateException("Too few available disk space: required at least $MIN_DISK_SPACE_MB Mb")
     }
-    val downloadDirSpace = diskSpace * DOWNLOAD_DIR_PROPORTION
+    val downloadDirSpace = (diskSpace * DOWNLOAD_DIR_PROPORTION).toLong()
     System.setProperty("plugin.verifier.cache.dir.max.space", downloadDirSpace.toString())
   }
 

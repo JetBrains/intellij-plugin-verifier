@@ -57,7 +57,6 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
     Settings.PLUGIN_REPOSITORY_VERIFIER_PASSWORD.get()
   }
 
-  @Synchronized
   override fun doTick() {
     val updateId2IdeVersions = HashMultimap.create<Int, IdeVersion>()
 

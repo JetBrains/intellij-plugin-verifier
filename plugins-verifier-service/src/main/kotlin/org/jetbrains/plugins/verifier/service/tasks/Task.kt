@@ -52,4 +52,6 @@ abstract class Task<out R>(@Volatile var taskId: TaskId? = null) {
     }
   }
 
+  override fun toString(): String = presentableName()
+
 }

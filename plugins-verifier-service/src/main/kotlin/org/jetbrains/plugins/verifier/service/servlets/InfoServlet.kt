@@ -7,12 +7,17 @@ import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.status.ServerStatus
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
+import java.text.SimpleDateFormat
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 class InfoServlet : BaseServlet() {
 
   private val serverStatus = ServerStatus(getTaskManager())
+
+  companion object {
+    private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd hh:mm:ss")
+  }
 
   override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
     processStatus(resp)
@@ -24,28 +29,37 @@ class InfoServlet : BaseServlet() {
 
   private fun generateStatusPage(): ByteArray {
     val byteOS = ByteArrayOutputStream()
-    HtmlBuilder(PrintWriter(byteOS)).apply {
+    val printWriter = PrintWriter(byteOS)
+    HtmlBuilder(printWriter).apply {
       html {
         head {
           title("Server status")
+          style {
+            +"""table, th, td {
+              border: 1px solid black;
+              border-collapse: collapse;
+            }"""
+          }
         }
         body {
           div {
             h2 {
               +"Application parameters:"
-              ul {
-                Settings.values().forEach { s ->
-                  li {
-                    +(s.key + " = " + if (s.encrypted) "*****" else s.get())
-                  }
+            }
+            ul {
+              Settings.values().forEach { s ->
+                li {
+                  +(s.key + " = " + if (s.encrypted) "*****" else s.get())
                 }
               }
             }
 
             h2 {
               +"Status:"
-              ul {
-                serverStatus.health().forEach { (key, value) ->
+            }
+            ul {
+              serverStatus.health().forEach { (key, value) ->
+                li {
                   +(key + " = " + value)
                 }
               }
@@ -53,26 +67,41 @@ class InfoServlet : BaseServlet() {
 
             h2 {
               +"Available IDEs: "
-              ul {
-                IdeFilesManager.ideList().forEach {
-                  li {
-                    +it.toString()
-                  }
+            }
+            ul {
+              IdeFilesManager.ideList().forEach {
+                li {
+                  +it.toString()
                 }
               }
             }
 
             h2 {
-              +("Updates missing compatible IDEs: " + ServerInstance.verifierService.updatesMissingCompatibleIde.joinToString())
+              +("Updates missing compatible IDEs: ")
             }
+            +ServerInstance.verifierService.updatesMissingCompatibleIde.joinToString()
 
             h2 {
               +"Running tasks"
-              ul {
-                serverStatus.runningTasks().forEach {
-                  li {
-                    +it
-                  }
+            }
+            table("width: 100%") {
+              tr {
+                th { +"ID" }
+                th { +"Task name" }
+                th { +"Start time" }
+                th { +"Status" }
+                th { +"Completion %" }
+                th { +"Total time (ms)" }
+              }
+
+              serverStatus.runningTasks().forEach { (taskId, taskName, startedDate, state, progress, totalTimeMs) ->
+                tr {
+                  td { +taskId.toString() }
+                  td { +taskName }
+                  td { +DATE_FORMAT.format(startedDate) }
+                  td { +state.toString() }
+                  td { +(progress * 100.0).toString() }
+                  td { +(totalTimeMs.toString()) }
                 }
               }
             }
@@ -80,6 +109,7 @@ class InfoServlet : BaseServlet() {
         }
       }
     }
+    printWriter.close()
     return byteOS.toByteArray()
   }
 

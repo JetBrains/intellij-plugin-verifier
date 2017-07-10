@@ -13,7 +13,7 @@ import org.jetbrains.plugins.verifier.service.progress.TaskProgress
 import org.jetbrains.plugins.verifier.service.tasks.Task
 
 class ExtractFeaturesRunner(val pluginCoordinate: PluginCoordinate, val pluginInfo: PluginInfo) : Task<FeaturesResult>() {
-  override fun presentableName(): String = "Features extraction of $pluginCoordinate"
+  override fun presentableName(): String = "Features of $pluginCoordinate"
 
   override fun computeResult(progress: TaskProgress): FeaturesResult {
     val createPluginResult = PluginCreator.createPlugin(pluginCoordinate)

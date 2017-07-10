@@ -28,7 +28,7 @@ object UpdateInfoCache {
   private val api: GetUpdateInfoApi = Retrofit.Builder()
       .baseUrl(Settings.PLUGIN_REPOSITORY_URL.get())
       .addConverterFactory(GsonConverterFactory.create(Gson()))
-      .client(makeOkHttpClient(LOG.isDebugEnabled, 5, TimeUnit.MINUTES))
+      .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
       .create(GetUpdateInfoApi::class.java)
 

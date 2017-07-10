@@ -4,7 +4,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.jetbrains.plugins.verifier.service.tasks.TaskStatus.State.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.Closeable
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
@@ -12,7 +11,7 @@ import java.util.concurrent.Future
 /**
  * @author Sergey Patrikeev
  */
-class TaskManager(private val maxRunningTasks: Int) : Closeable {
+class TaskManager(private val maxRunningTasks: Int) {
   companion object {
 
     val LOG: Logger = LoggerFactory.getLogger(TaskManager::class.java)
@@ -102,7 +101,8 @@ class TaskManager(private val maxRunningTasks: Int) : Closeable {
     completedTasks.remove()
   }
 
-  override fun close() {
+  fun stop() {
+    LOG.info("Stopping task manager")
     service.shutdownNow()
   }
 

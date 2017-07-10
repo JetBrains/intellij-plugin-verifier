@@ -10,7 +10,7 @@
 <head>
     <title>Plugins Verifier Service</title>
 
-    <jsp:forward page="/info/status"/>
+    <jsp:forward page="/info/"/>
     <h3>Plugins Verifier Service server is started!</h3>
 </head>
 <body>

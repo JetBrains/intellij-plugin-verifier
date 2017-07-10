@@ -17,10 +17,10 @@ enum class Settings(val key: String,
   FEATURE_EXTRACTOR_REPOSITORY_URL("verifier.service.feature.extractor.plugin.repository.url", { PLUGIN_REPOSITORY_URL.get() }),
   ENABLE_FEATURE_EXTRACTOR_SERVICE("verifier.service.enable.feature.extractor.service", { "false" }),
   ENABLE_PLUGIN_VERIFIER_SERVICE("verifier.service.enable.plugin.verifier.service", { "false" }),
+  ENABLE_IDE_LIST_UPDATER("verifier.service.enable.ide.list.updater", { "false" }),
   PLUGIN_REPOSITORY_VERIFIER_USERNAME("verifier.service.plugin.repository.verifier.username"),
   PLUGIN_REPOSITORY_VERIFIER_PASSWORD("verifier.service.plugin.repository.verifier.password", encrypted = true),
-  USE_SAME_REPOSITORY_FOR_DOWNLOADING("verifier.service.use.same.repository.for.downloading", { "true" }),
-  ENABLE_IDE_LIST_UPDATER("verifier.service.enable.ide.list.updater", { "true" });
+  USE_SAME_REPOSITORY_FOR_DOWNLOADING("verifier.service.use.same.repository.for.downloading", { "true" });
 
   fun get(): String {
     val property = System.getProperty(key)
