@@ -1,44 +1,47 @@
 package com.jetbrains.pluginverifier.repository
 
-import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import org.apache.commons.io.FileUtils
 import java.io.File
 
 /**
  * @author Sergey Patrikeev
  */
-class FreeDiskSpaceWatcher(val watchDir: File, val maximumByParameterMb: Long?) {
+class FreeDiskSpaceWatcher(val watchDir: File, val maximumByParameter: Long?) {
 
   companion object {
-    private val ONE_GIGABYTE = 1024.0
 
-    private val EXPECTED_SPACE = 3 * ONE_GIGABYTE
+    private val LOW_THRESHOLD = FileUtils.ONE_GB
 
-    private val LOW_THRESHOLD = ONE_GIGABYTE
+    private val ENOUGH_SPACE = LOW_THRESHOLD * 3
   }
 
-  fun getSpaceUsageMb() = FileUtils.sizeOfDirectory(watchDir).bytesToMegabytes()
+  fun getSpaceUsage() = FileUtils.sizeOfDirectory(watchDir)
 
-  fun isEnoughSpace() = estimateAvailableSpace() > LOW_THRESHOLD * 2
+  fun isEnoughSpace(): Boolean {
+    val estimatedSpace = estimateAvailableSpace()
+    return estimatedSpace == null || estimatedSpace > ENOUGH_SPACE
+  }
 
-  fun estimateAvailableSpace(): Double {
-    val realUsageMb = getSpaceUsageMb()
-    if (maximumByParameterMb != null) {
-      return maximumByParameterMb - realUsageMb
+  fun estimateAvailableSpace(): Long? {
+    val realUsage = getSpaceUsage()
+    if (maximumByParameter != null) {
+      return maximumByParameter - realUsage
     }
 
     val usableSpace = watchDir.usableSpace
     if (usableSpace != 0L) {
-      return usableSpace.bytesToMegabytes()
+      return usableSpace
     }
-    return EXPECTED_SPACE
+
+    //Unable to estimate available space.
+    return null
   }
 
-  fun isLowSpace(): Boolean {
-    val usedSpace = getSpaceUsageMb()
-    val availableSpace = estimateAvailableSpace()
-    if (availableSpace < LOW_THRESHOLD) {
-      DownloadManager.LOG.warn("Cache directory ${RepositoryConfiguration.downloadDir} has only $availableSpace < $LOW_THRESHOLD Mb; occupied = $usedSpace Mb")
+  fun isLittleSpace(): Boolean {
+    val usedSpace = getSpaceUsage()
+    val estimatedSpace = estimateAvailableSpace() ?: return false //Unable to evaluate available space => assume it's enough.
+    if (estimatedSpace < LOW_THRESHOLD) {
+      DownloadManager.LOG.warn("Cache directory ${RepositoryConfiguration.downloadDir} has only $estimatedSpace < $LOW_THRESHOLD bytes; occupied = $usedSpace bytes")
       return true
     } else {
       return false

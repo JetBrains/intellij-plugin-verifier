@@ -3,9 +3,9 @@ package com.jetbrains.pluginverifier.core
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
-import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.pluralize
+import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.util.concurrent.ExecutorCompletionService
@@ -19,6 +19,8 @@ class VerifierExecutor(val params: VerifierParams) : Closeable {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(VerifierExecutor::class.java)
+
+    private val AVERAGE_VERIFIER_MEMORY = 200 * FileUtils.ONE_MB
   }
 
   private val runtimeResolver = Resolver.createJdkResolver(params.jdkDescriptor.homeDir)
@@ -39,10 +41,10 @@ class VerifierExecutor(val params: VerifierParams) : Closeable {
   }
 
   private fun estimateNumberOfConcurrentWorkers(): Int {
-    val availableMemory = Runtime.getRuntime().maxMemory().bytesToMegabytes()
+    val availableMemory = Runtime.getRuntime().maxMemory()
     val availableCpu = Runtime.getRuntime().availableProcessors().toLong()
     LOG.info("Available memory: $availableMemory Mb; Available CPU = $availableCpu")
-    val maxByMemory = (availableMemory / 200).toLong()
+    val maxByMemory = availableMemory / AVERAGE_VERIFIER_MEMORY
     return maxOf(4, minOf(maxByMemory, availableCpu)).toInt()
   }
 

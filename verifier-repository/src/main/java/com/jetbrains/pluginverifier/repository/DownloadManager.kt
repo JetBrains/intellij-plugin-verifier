@@ -72,7 +72,7 @@ object DownloadManager {
   //it is not used yet
   private val deleteQueue: MutableSet<File> = hashSetOf()
 
-  private val spaceWatcher = FreeDiskSpaceWatcher(RepositoryConfiguration.downloadDir, RepositoryConfiguration.downloadDirMaxSpaceMb)
+  private val spaceWatcher = FreeDiskSpaceWatcher(RepositoryConfiguration.downloadDir, RepositoryConfiguration.downloadDirMaxSpace)
 
   private val downloadApi: DownloadApi = Retrofit.Builder()
       .baseUrl(RepositoryConfiguration.pluginRepositoryUrl)
@@ -80,13 +80,18 @@ object DownloadManager {
       .build()
       .create(DownloadApi::class.java)
 
+  private fun getEstimatedSpaceOrUnknown(): String {
+    val availableSpace = spaceWatcher.estimateAvailableSpace()
+    return if (availableSpace != null) availableSpace.bytesToMegabytes() + " Mb" else "<unknown>"
+  }
+
   @Synchronized
   private fun releaseOldLocksAndDeleteUnusedPlugins() {
-    LOG.info("It's time to remove unused plugins from cache. Cache usages: ${spaceWatcher.getSpaceUsageMb()} Mb; " +
-        "Estimated available space: ${spaceWatcher.estimateAvailableSpace()} Mb")
+    LOG.info("It's time to remove unused plugins from cache. Cache usages: ${getEstimatedSpaceOrUnknown()}; " +
+        "Estimated available space: ${getEstimatedSpaceOrUnknown()}")
 
     releaseOldLocks()
-    if (spaceWatcher.isLowSpace()) {
+    if (spaceWatcher.isLittleSpace()) {
       deleteUnusedPlugins()
     }
   }
@@ -103,15 +108,15 @@ object DownloadManager {
 
     for (update in updatesToDelete) {
       if (spaceWatcher.isEnoughSpace()) {
-        LOG.debug("Enough space after cleanup: ${spaceWatcher.estimateAvailableSpace()} Mb")
+        LOG.debug("Enough space after cleanup: ${getEstimatedSpaceOrUnknown()}")
         break
       }
       LOG.debug("Deleting unused update $update with size ${update.length().bytesToMegabytes()} Mb")
       update.deleteLogged()
     }
 
-    if (spaceWatcher.isLowSpace()) {
-      LOG.warn("Available space after cleanup is not sufficient!: ${spaceWatcher.estimateAvailableSpace()} Mb")
+    if (spaceWatcher.isLittleSpace()) {
+      LOG.warn("Available space after cleanup is not sufficient!: ${getEstimatedSpaceOrUnknown()}")
     }
   }
 
@@ -258,7 +263,7 @@ object DownloadManager {
     val lock = registerLock(pluginFile)
 
     try {
-      if (spaceWatcher.isLowSpace()) {
+      if (spaceWatcher.isLittleSpace()) {
         releaseOldLocksAndDeleteUnusedPlugins()
       }
     } catch (e: Throwable) {

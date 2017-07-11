@@ -61,13 +61,13 @@ class InfoServlet : BaseServlet() {
             }
             ul {
               val (totalMemory, freeMemory, usedMemory, maxMemory) = serverStatus.getMemoryInfo()
-              li { +"Total memory: ${totalMemory.bytesToMegabytes()} mb" }
-              li { +"Free memory: ${freeMemory.bytesToMegabytes()} mb" }
-              li { +"Used memory: ${usedMemory.bytesToMegabytes()} mb" }
-              li { +"Max memory: ${maxMemory.bytesToMegabytes()} mb" }
+              li { +"Total memory: ${totalMemory.bytesToMegabytes()} Mb" }
+              li { +"Free memory: ${freeMemory.bytesToMegabytes()} Mb" }
+              li { +"Used memory: ${usedMemory.bytesToMegabytes()} Mb" }
+              li { +"Max memory: ${maxMemory.bytesToMegabytes()} Mb" }
 
               val (totalUsage) = serverStatus.getDiskUsage()
-              li { +"Total disk usage: ${"%.3f".format(totalUsage.bytesToGigabytes())} Gb" }
+              li { +"Total disk usage: ${totalUsage.bytesToGigabytes()} Gb" }
             }
 
             h2 {
