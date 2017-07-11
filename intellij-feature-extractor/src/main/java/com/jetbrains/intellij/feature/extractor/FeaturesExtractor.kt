@@ -19,22 +19,18 @@ object FeaturesExtractor {
 
   private val LOG = LoggerFactory.getLogger("FeaturesExtractor")
 
-  fun extractFeatures(ide: Ide, plugin: Plugin): ExtractorResult {
-
-    val bundledResolvers = createBundledPluginResolvers(ide)
-
-    Resolver.createUnionResolver("IDE $ide bundled plugins", bundledResolvers).use { bundledPlugins ->
-      (Resolver.createPluginResolver(plugin)).use { pluginResolver ->
-        Resolver.createIdeResolver(ide).use { ideResolver ->
-          val resolver = Resolver.createUnionResolver("$ide $plugin", listOf(pluginResolver, ideResolver, bundledPlugins))
-          return implementations(plugin, resolver)
-        }
+  fun extractFeatures(ide: Ide, ideResolver: Resolver, plugin: Plugin): ExtractorResult {
+    createBundledPluginsResolver(ide).use { bundledPluginsResolver ->
+      Resolver.createPluginResolver(plugin).use { pluginResolver ->
+        //don't close this resolver, because ideResolver is to be closed by the caller.
+        val resolver = Resolver.createUnionResolver("Features resolver for $plugin with $ide", listOf(pluginResolver, ideResolver, bundledPluginsResolver))
+        return implementations(plugin, resolver)
       }
     }
   }
 
-  private fun createBundledPluginResolvers(ide: Ide): MutableList<Resolver> {
-    val bundledResolvers: MutableList<Resolver> = mutableListOf()
+  private fun createBundledPluginsResolver(ide: Ide): Resolver {
+    val bundledResolvers = arrayListOf<Resolver>()
 
     ide.bundledPlugins.forEach {
       try {
@@ -43,7 +39,7 @@ object FeaturesExtractor {
         LOG.error("Unable to create IDE ($ide) bundled plugin ($it) resolver", e)
       }
     }
-    return bundledResolvers
+    return Resolver.createUnionResolver("IDE $ide bundled plugins", bundledResolvers)
   }
 
   private fun implementations(plugin: Plugin, resolver: Resolver): ExtractorResult {

@@ -33,7 +33,7 @@ class UploadIdeRunner(val ideVersion: IdeVersion? = null,
 
     try {
       try {
-        IdeRepository.getOrDownloadIde(artifact, { progress.setProgress(it) })
+        IdeRepository.getOrDownloadIde(artifact) { progress.setProgress(it) }
       } catch(e: Exception) {
         LOG.error("Unable to download IDE ${artifact.version} community=${artifact.isCommunity} from snapshots=${artifact.isSnapshot}", e)
         throw e

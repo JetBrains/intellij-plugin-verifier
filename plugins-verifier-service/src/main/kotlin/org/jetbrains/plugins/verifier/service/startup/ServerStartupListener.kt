@@ -64,11 +64,7 @@ class ServerStartupListener : ServletContextListener {
 
 
   override fun contextDestroyed(sce: ServletContextEvent?) {
-    LOG.info("Stopping the Service")
-    ServerInstance.taskManager.stop()
-    ServerInstance.ideListUpdater.stop()
-    ServerInstance.verifierService.stop()
-    ServerInstance.featureService.stop()
+    ServerInstance.stop()
   }
 
   private fun validateSystemProperties() {

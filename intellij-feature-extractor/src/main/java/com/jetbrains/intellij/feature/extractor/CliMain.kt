@@ -5,6 +5,7 @@ import com.intellij.structure.ide.IdeManager
 import com.intellij.structure.plugin.PluginCreationFail
 import com.intellij.structure.plugin.PluginCreationSuccess
 import com.intellij.structure.plugin.PluginManager
+import com.intellij.structure.resolvers.Resolver
 import java.io.File
 
 /**
@@ -20,9 +21,11 @@ fun main(args: Array<String>) {
   when (pluginCreationResult) {
     is PluginCreationSuccess -> {
       val ide = IdeManager.getInstance().createIde(ideaFile)
-      val extractorResult = FeaturesExtractor.extractFeatures(ide, pluginCreationResult.plugin)
-      extractorResult.features.forEach { println(Gson().toJson(it)) }
-      println("All features extracted: ${extractorResult.extractedAll}")
+      Resolver.createIdeResolver(ide).use { ideResolver ->
+        val extractorResult = FeaturesExtractor.extractFeatures(ide, ideResolver, pluginCreationResult.plugin)
+        extractorResult.features.forEach { println(Gson().toJson(it)) }
+        println("All features extracted: ${extractorResult.extractedAll}")
+      }
     }
     is PluginCreationFail -> println("Plugin is invalid: " + pluginCreationResult.errorsAndWarnings.joinToString())
   }

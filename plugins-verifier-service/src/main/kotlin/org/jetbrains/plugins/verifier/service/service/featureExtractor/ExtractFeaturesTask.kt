@@ -33,10 +33,11 @@ class ExtractFeaturesTask(val pluginCoordinate: PluginCoordinate, val pluginInfo
     val untilBuild = plugin.untilBuild
 
     getSomeIdeMatchingSinceUntilBuilds(sinceBuild, untilBuild).use { ideFileLock ->
-      val ideDescriptor = IdeCreator.createByFile(ideFileLock.ideFile, null)
-      val extractorResult = FeaturesExtractor.extractFeatures(ideDescriptor.ide, plugin)
-      val resultType = if (extractorResult.extractedAll) FeaturesResult.ResultType.EXTRACTED_ALL else FeaturesResult.ResultType.EXTRACTED_PARTIALLY
-      return FeaturesResult(pluginInfo, resultType, extractorResult.features)
+      IdeCreator.createByFile(ideFileLock.ideFile, null).use { (ide, ideResolver) ->
+        val extractorResult = FeaturesExtractor.extractFeatures(ide, ideResolver, plugin)
+        val resultType = if (extractorResult.extractedAll) FeaturesResult.ResultType.EXTRACTED_ALL else FeaturesResult.ResultType.EXTRACTED_PARTIALLY
+        return FeaturesResult(pluginInfo, resultType, extractorResult.features)
+      }
     }
   }
 
