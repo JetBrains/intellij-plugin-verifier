@@ -57,17 +57,27 @@ object IdeRepository {
       val ideaIU = artifacts.getElementsContainingOwnText("ideaIU.zip")
       if (ideaIU.isNotEmpty()) {
         val downloadIdeaIU = URL(ideaIU[0].attr("href"))
-        result.add(AvailableIde(buildNumber, isRelease, false, snapshots, downloadIdeaIU))
+        val fullVersion = setFullProductNameIfNecessary(buildNumber, "IU")
+        result.add(AvailableIde(fullVersion, isRelease, false, snapshots, downloadIdeaIU))
       }
 
       val ideaIC = artifacts.getElementsContainingOwnText("ideaIC.zip")
       if (ideaIC.isNotEmpty()) {
         val downloadIdeaIC = URL(ideaIC[0].attr("href"))
-        result.add(AvailableIde(buildNumber, isRelease, true, snapshots, downloadIdeaIC))
+        val fullVersion = setFullProductNameIfNecessary(buildNumber, "IC")
+        result.add(AvailableIde(fullVersion, isRelease, true, snapshots, downloadIdeaIC))
       }
     }
 
     return result
+  }
+
+  private fun setFullProductNameIfNecessary(ideVersion: IdeVersion, productName: String): IdeVersion {
+    if (ideVersion.productCode.isNullOrEmpty())
+      return IdeVersion.createIdeVersion("$productName-" + ideVersion.asStringWithoutProductCode())
+    else {
+      return ideVersion
+    }
   }
 
   fun fetchIndex(snapshots: Boolean = false): List<AvailableIde> {
