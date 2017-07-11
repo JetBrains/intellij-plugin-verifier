@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.core
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
+import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.pluralize
 import org.apache.commons.io.FileUtils
@@ -43,7 +44,7 @@ class VerifierExecutor(val params: VerifierParams) : Closeable {
   private fun estimateNumberOfConcurrentWorkers(): Int {
     val availableMemory = Runtime.getRuntime().maxMemory()
     val availableCpu = Runtime.getRuntime().availableProcessors().toLong()
-    LOG.info("Available memory: $availableMemory Mb; Available CPU = $availableCpu")
+    LOG.info("Available memory: ${availableMemory.bytesToMegabytes()} Mb; Available CPU = $availableCpu")
     val maxByMemory = availableMemory / AVERAGE_VERIFIER_MEMORY
     return maxOf(4, minOf(maxByMemory, availableCpu)).toInt()
   }
