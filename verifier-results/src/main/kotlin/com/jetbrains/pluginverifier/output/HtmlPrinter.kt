@@ -137,7 +137,7 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
       is Verdict.Warnings -> printWarnings(verdict.warnings)
       is Verdict.Problems -> printProblems(verdict.problems)
       is Verdict.Bad -> printShortAndFullDescription(verdict.pluginProblems.joinToString(), plugin.pluginId)
-      is Verdict.NotFound -> +"The plugin $plugin is not found in the Repository"
+      is Verdict.NotFound -> printShortAndFullDescription("Plugin $plugin is not found in the Repository", verdict.reason)
       is Verdict.MissingDependencies -> printMissingDependenciesResult(verdict, options)
     }
   }
