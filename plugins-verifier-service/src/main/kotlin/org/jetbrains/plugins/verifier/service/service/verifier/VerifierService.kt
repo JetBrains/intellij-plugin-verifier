@@ -48,14 +48,6 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
       .build()
       .create(VerificationApi::class.java)
 
-  private val userName: String by lazy {
-    Settings.PLUGIN_REPOSITORY_VERIFIER_USERNAME.get()
-  }
-
-  private val password: String by lazy {
-    Settings.PLUGIN_REPOSITORY_VERIFIER_PASSWORD.get()
-  }
-
   override fun doTick() {
     val updateId2IdeVersions = HashMultimap.create<Int, IdeVersion>()
 
@@ -76,7 +68,7 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
   }
 
   private fun getUpdatesToCheck(ideVersion: IdeVersion): List<Int> =
-      getUpdatesToCheck(ideVersion, userName, password).executeSuccessfully().body()
+      getUpdatesToCheck(ideVersion, pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully().body()
 
   private fun schedule(updateId: Int, versions: List<IdeVersion>) {
     val updateInfo = UpdateInfoCache.getUpdateInfo(updateId) ?: return
@@ -129,7 +121,7 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
     }
 
     try {
-      sendUpdateCheckResult(results, userName, password).executeSuccessfully()
+      sendUpdateCheckResult(results, pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully()
     } catch(e: Exception) {
       LOG.error("Unable to send verification result of ${results.plugin}", e)
     }

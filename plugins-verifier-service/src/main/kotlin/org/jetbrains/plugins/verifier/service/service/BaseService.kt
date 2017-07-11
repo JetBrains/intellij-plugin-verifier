@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -23,6 +24,10 @@ abstract class BaseService(private val serviceName: String,
           .setNameFormat("$serviceName-%d")
           .build()
   )
+
+  protected val pluginRepositoryUserName: String = Settings.PLUGIN_REPOSITORY_VERIFIER_USERNAME.get()
+
+  protected val pluginRepositoryPassword: String = Settings.PLUGIN_REPOSITORY_VERIFIER_PASSWORD.get()
 
   fun start() {
     executor.scheduleAtFixedRate({ tick() }, initialDelay, period, timeUnit)

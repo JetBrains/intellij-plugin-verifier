@@ -39,14 +39,6 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
 
   private val UPDATE_PROCESS_MIN_PAUSE_MILLIS = TimeUnit.MINUTES.toMillis(10)
 
-  private val userName: String by lazy {
-    Settings.PLUGIN_REPOSITORY_VERIFIER_USERNAME.get()
-  }
-
-  private val password: String by lazy {
-    Settings.PLUGIN_REPOSITORY_VERIFIER_PASSWORD.get()
-  }
-
   override fun doTick() {
     val updatesToExtract = getUpdatesToExtract()
     LOG.info("Extracting features of ${updatesToExtract.size} updates: $updatesToExtract")
@@ -105,7 +97,7 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
 
     val pluginsResult = convertToPluginsSiteResult(pluginInfo, resultType, extractorResult.features)
     try {
-      sendExtractedFeatures(pluginsResult, userName, password).executeSuccessfully()
+      sendExtractedFeatures(pluginsResult, pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully()
     } catch(e: Exception) {
       LOG.error("Unable to send check result of the plugin ${extractorResult.plugin}", e)
     }
@@ -121,7 +113,7 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
 
 
   private fun getUpdatesToExtract(): List<Int> =
-      getUpdatesToExtractFeatures(userName, password).executeSuccessfully().body().sortedDescending()
+      getUpdatesToExtractFeatures(pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully().body().sortedDescending()
 
   private fun getUpdatesToExtractFeatures(userName: String, password: String) =
       featuresExtractor.getUpdatesToExtractFeatures(createStringRequestBody(userName), createStringRequestBody(password))
