@@ -1,6 +1,7 @@
 package com.intellij.structure.plugin;
 
 import com.intellij.structure.impl.domain.PluginManagerImpl;
+import com.jetbrains.structure.plugin.PluginCreationResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

@@ -4,8 +4,12 @@ import com.intellij.structure.ide.IdeVersion;
 import com.intellij.structure.impl.beans.*;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
-import com.intellij.structure.plugin.*;
+import com.intellij.structure.plugin.IdePlugin;
+import com.intellij.structure.plugin.PluginDependency;
 import com.intellij.structure.problems.*;
+import com.jetbrains.structure.plugin.PluginCreationFail;
+import com.jetbrains.structure.plugin.PluginCreationResult;
+import com.jetbrains.structure.plugin.PluginCreationSuccess;
 import org.jdom2.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,7 +135,7 @@ public final class PluginCreator {
   public void addOptionalDescriptor(PluginDependency pluginDependency, String configurationFile, PluginCreator optionalCreator) {
     PluginCreationResult pluginCreationResult = optionalCreator.getPluginCreationResult();
     if (pluginCreationResult instanceof PluginCreationSuccess) {
-      myPlugin.addOptionalDescriptor(configurationFile, ((PluginCreationSuccess) pluginCreationResult).getPlugin());
+      myPlugin.addOptionalDescriptor(configurationFile, (IdePlugin) ((PluginCreationSuccess) pluginCreationResult).getPlugin());
     } else {
       registerProblem(new MissingOptionalDependencyConfigurationFile(myDescriptorPath, pluginDependency, configurationFile));
     }

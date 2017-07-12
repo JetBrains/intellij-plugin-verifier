@@ -1,4 +1,4 @@
-package com.intellij.structure.plugin
+package com.jetbrains.structure.plugin
 
 import com.intellij.structure.problems.PluginProblem
 
@@ -8,6 +8,6 @@ data class PluginCreationFail(val errorsAndWarnings: List<PluginProblem>) : Plug
   override fun toString(): String = "Failed: ${errorsAndWarnings.joinToString()}"
 }
 
-data class PluginCreationSuccess(val plugin: IdePlugin, val warnings: List<PluginProblem>) : PluginCreationResult() {
+data class PluginCreationSuccess(val plugin: Plugin, val warnings: List<PluginProblem>) : PluginCreationResult() {
   override fun toString(): String = "Success" + (if (warnings.isNotEmpty()) " but warnings: " + warnings.joinToString() else "")
 }

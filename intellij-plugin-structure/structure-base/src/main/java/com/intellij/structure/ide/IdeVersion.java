@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Sergey Patrikeev
  */
-public abstract class IdeVersion implements ProductVersion, Comparable<IdeVersion> {
+public abstract class IdeVersion implements ProductVersion<IdeVersion> {
 
   /**
    * Tries to parse specified text as an Ide-version

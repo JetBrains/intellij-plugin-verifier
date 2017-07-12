@@ -5,12 +5,12 @@ import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.intellij.structure.impl.extractor.ExtractedPluginFile
 import com.intellij.structure.impl.utils.FileUtil
 import com.intellij.structure.plugin.IdePlugin
-import com.intellij.structure.plugin.PluginCreationFail
-import com.intellij.structure.plugin.PluginCreationSuccess
 import com.intellij.structure.plugin.PluginManager
 import com.intellij.structure.problems.MissingOptionalDependencyConfigurationFile
 import com.intellij.structure.problems.PluginProblem
 import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.structure.plugin.PluginCreationFail
+import com.jetbrains.structure.plugin.PluginCreationSuccess
 import org.hamcrest.CoreMatchers.*
 import org.hamcrest.collection.IsIn.isIn
 import org.junit.Assert
@@ -124,7 +124,7 @@ class MockPluginsTest {
       fail(message)
     }
     val pluginCreationSuccess = pluginCreationResult as PluginCreationSuccess
-    val plugin = pluginCreationSuccess.plugin
+    val plugin = pluginCreationSuccess.plugin as IdePlugin
     val classesResolver = Resolver.createPluginResolver(plugin)
 
     classesResolver.use {
