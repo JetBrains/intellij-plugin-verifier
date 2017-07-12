@@ -1,6 +1,6 @@
 package com.intellij.structure.impl.extractor
 
-import com.intellij.structure.problems.PluginProblem
+import com.jetbrains.structure.plugin.PluginProblem
 import org.apache.commons.io.FileUtils
 import java.io.Closeable
 import java.io.File

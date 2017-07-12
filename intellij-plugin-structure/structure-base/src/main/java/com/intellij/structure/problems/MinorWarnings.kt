@@ -1,6 +1,7 @@
 package com.intellij.structure.problems
 
 import com.intellij.structure.plugin.PluginDependency
+import com.jetbrains.structure.plugin.PluginProblem
 
 data class NoModuleDependencies(val descriptorPath: String) : PluginProblem() {
   override val level: PluginProblem.Level = PluginProblem.Level.WARNING

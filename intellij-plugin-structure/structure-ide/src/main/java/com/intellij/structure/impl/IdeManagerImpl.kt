@@ -11,8 +11,8 @@ import com.intellij.structure.impl.utils.xml.JDOMXIncluder
 import com.intellij.structure.impl.utils.xml.URLUtil
 import com.intellij.structure.impl.utils.xml.XIncludeException
 import com.intellij.structure.plugin.IdePlugin
-import com.intellij.structure.plugin.PluginCreationFail
-import com.intellij.structure.plugin.PluginCreationSuccess
+import com.jetbrains.structure.plugin.PluginCreationFail
+import com.jetbrains.structure.plugin.PluginCreationSuccess
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.io.filefilter.WildcardFileFilter
@@ -159,7 +159,7 @@ class IdeManagerImpl : IdeManager() {
         pluginCreator.setOriginalFile(pluginDirectory)
         val creationResult = pluginCreator.pluginCreationResult
         return when (creationResult) {
-          is PluginCreationSuccess -> creationResult.plugin
+          is PluginCreationSuccess -> creationResult.plugin as IdePlugin
           is PluginCreationFail -> {
             val problems = creationResult.errorsAndWarnings
             LOG.debug("Failed to read plugin " + pluginDirectory + ". Problems: " + Joiner.on(", ").join(problems))

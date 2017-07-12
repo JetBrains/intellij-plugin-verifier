@@ -7,10 +7,10 @@ import com.intellij.structure.impl.utils.FileUtil
 import com.intellij.structure.plugin.IdePlugin
 import com.intellij.structure.plugin.PluginManager
 import com.intellij.structure.problems.MissingOptionalDependencyConfigurationFile
-import com.intellij.structure.problems.PluginProblem
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.structure.plugin.PluginCreationFail
 import com.jetbrains.structure.plugin.PluginCreationSuccess
+import com.jetbrains.structure.plugin.PluginProblem
 import org.hamcrest.CoreMatchers.*
 import org.hamcrest.collection.IsIn.isIn
 import org.junit.Assert

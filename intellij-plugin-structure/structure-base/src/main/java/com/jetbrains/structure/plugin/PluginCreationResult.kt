@@ -1,7 +1,5 @@
 package com.jetbrains.structure.plugin
 
-import com.intellij.structure.problems.PluginProblem
-
 sealed class PluginCreationResult<out PluginType : Plugin> {
   abstract val plugin: PluginType?
 }

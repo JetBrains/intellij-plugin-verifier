@@ -1,5 +1,7 @@
 package com.intellij.structure.problems
 
+import com.jetbrains.structure.plugin.PluginProblem
+
 data class MultiplePluginDescriptorsInLibDirectory(val firstFileName: String,
                                                    val secondFileName: String) : PluginProblem() {
 

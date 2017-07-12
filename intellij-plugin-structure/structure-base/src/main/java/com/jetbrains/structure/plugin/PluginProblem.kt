@@ -1,4 +1,4 @@
-package com.intellij.structure.problems
+package com.jetbrains.structure.plugin
 
 abstract class PluginProblem {
 

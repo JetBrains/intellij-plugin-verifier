@@ -1,6 +1,7 @@
 package com.intellij.structure.problems
 
 import com.intellij.structure.ide.IdeVersion
+import com.jetbrains.structure.plugin.PluginProblem
 
 abstract class InvalidDescriptorProblem(descriptorPath: String, detailedMessage: String) : PluginProblem() {
   override val message: String = "Invalid plugin descriptor $descriptorPath: $detailedMessage"

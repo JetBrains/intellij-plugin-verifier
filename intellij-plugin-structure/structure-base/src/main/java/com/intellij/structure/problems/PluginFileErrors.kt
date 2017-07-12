@@ -1,5 +1,6 @@
 package com.intellij.structure.problems
 
+import com.jetbrains.structure.plugin.PluginProblem
 import java.io.File
 
 data class IncorrectPluginFile(val file: File) : PluginProblem() {

@@ -10,6 +10,7 @@ import com.intellij.structure.problems.*;
 import com.jetbrains.structure.plugin.PluginCreationFail;
 import com.jetbrains.structure.plugin.PluginCreationResult;
 import com.jetbrains.structure.plugin.PluginCreationSuccess;
+import com.jetbrains.structure.plugin.PluginProblem;
 import org.jdom2.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
