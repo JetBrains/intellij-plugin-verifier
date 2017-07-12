@@ -18,6 +18,6 @@ public abstract class PluginManager {
   }
 
   @NotNull
-  public abstract PluginCreationResult createPlugin(@NotNull File pluginFile) throws IOException;
+  public abstract PluginCreationResult<IdePlugin> createPlugin(@NotNull File pluginFile) throws IOException;
 
 }

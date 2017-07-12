@@ -216,11 +216,11 @@ public final class PluginCreator {
   }
 
   @NotNull
-  public PluginCreationResult getPluginCreationResult() {
+  public PluginCreationResult<IdePlugin> getPluginCreationResult() {
     if (hasErrors()) {
-      return new PluginCreationFail(myProblems);
+      return new PluginCreationFail<IdePlugin>(myProblems);
     }
-    return new PluginCreationSuccess(myPlugin, myProblems);
+    return new PluginCreationSuccess<IdePlugin>(myPlugin, myProblems);
   }
 
   @NotNull

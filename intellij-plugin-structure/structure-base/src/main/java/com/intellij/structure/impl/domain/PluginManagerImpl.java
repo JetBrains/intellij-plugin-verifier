@@ -6,10 +6,11 @@ import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.impl.utils.xml.URLUtil;
+import com.intellij.structure.plugin.IdePlugin;
+import com.jetbrains.structure.plugin.PluginCreationResult;
 import com.intellij.structure.plugin.PluginDependency;
 import com.intellij.structure.plugin.PluginManager;
 import com.intellij.structure.problems.*;
-import com.jetbrains.structure.plugin.PluginCreationResult;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.Document;
 import org.jdom2.input.JDOMParseException;
@@ -281,7 +282,7 @@ public class PluginManagerImpl extends PluginManager {
 
   @NotNull
   @Override
-  public PluginCreationResult createPlugin(@NotNull File pluginFile) {
+  public PluginCreationResult<IdePlugin> createPlugin(@NotNull File pluginFile) {
     PluginCreator pluginCreator = getPluginCreatorWithResult(pluginFile, true);
     pluginCreator.setOriginalFile(pluginFile);
     return pluginCreator.getPluginCreationResult();

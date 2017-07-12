@@ -2,6 +2,7 @@ package com.intellij.structure.mocks
 
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.impl.utils.ZipUtil
+import com.intellij.structure.plugin.IdePlugin
 import com.intellij.structure.plugin.PluginManager
 import com.intellij.structure.problems.*
 import com.jetbrains.structure.plugin.PluginCreationFail
@@ -67,13 +68,13 @@ class InvalidPluginsTest {
     assertThat(actualProblems, hasSize(expectedProblems.size))
   }
 
-  private fun getSuccessResult(pluginFile: File): PluginCreationSuccess {
+  private fun getSuccessResult(pluginFile: File): PluginCreationSuccess<IdePlugin> {
     val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile)
     assertThat(pluginCreationResult, instanceOf(PluginCreationSuccess::class.java))
-    return pluginCreationResult as PluginCreationSuccess
+    return pluginCreationResult as PluginCreationSuccess<IdePlugin>
   }
 
-  private fun getFailedResult(pluginFile: File): PluginCreationFail {
+  private fun getFailedResult(pluginFile: File): PluginCreationFail<IdePlugin> {
     val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile)
     assertThat(pluginCreationResult, instanceOf(PluginCreationFail::class.java))
     return pluginCreationResult as PluginCreationFail

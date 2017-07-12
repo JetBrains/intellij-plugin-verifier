@@ -2,12 +2,17 @@ package com.jetbrains.structure.plugin
 
 import com.intellij.structure.problems.PluginProblem
 
-sealed class PluginCreationResult
+sealed class PluginCreationResult<out PluginType : Plugin> {
+  abstract val plugin: PluginType?
+}
 
-data class PluginCreationFail(val errorsAndWarnings: List<PluginProblem>) : PluginCreationResult() {
+data class PluginCreationFail<out PluginType : Plugin>(val errorsAndWarnings: List<PluginProblem>) : PluginCreationResult<PluginType>() {
+  override val plugin: PluginType? = null
+
   override fun toString(): String = "Failed: ${errorsAndWarnings.joinToString()}"
 }
 
-data class PluginCreationSuccess(val plugin: Plugin, val warnings: List<PluginProblem>) : PluginCreationResult() {
+data class PluginCreationSuccess<out PluginType : Plugin>(override val plugin: PluginType, val warnings: List<PluginProblem>) :
+    PluginCreationResult<PluginType>() {
   override fun toString(): String = "Success" + (if (warnings.isNotEmpty()) " but warnings: " + warnings.joinToString() else "")
 }
