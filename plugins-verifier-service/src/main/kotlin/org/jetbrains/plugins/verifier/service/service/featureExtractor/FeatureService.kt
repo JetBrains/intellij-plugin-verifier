@@ -51,11 +51,7 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
   }
 
   private fun schedule(updateId: Int) {
-    val info = UpdateInfoCache.getUpdateInfo(updateId) ?: return
-    schedule(info)
-  }
-
-  private fun schedule(updateInfo: UpdateInfo) {
+    val updateInfo = UpdateInfoCache.getUpdateInfo(updateId) ?: return
     if (updateInfo in inProgressUpdates) {
       return
     }

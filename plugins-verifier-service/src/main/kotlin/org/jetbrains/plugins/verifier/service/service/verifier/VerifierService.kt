@@ -72,10 +72,6 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
 
   private fun schedule(updateId: Int, versions: List<IdeVersion>) {
     val updateInfo = UpdateInfoCache.getUpdateInfo(updateId) ?: return
-    schedule(updateInfo, versions)
-  }
-
-  private fun schedule(updateInfo: UpdateInfo, versions: List<IdeVersion>) {
     if (updateInfo in verifiableUpdates) {
       return
     }
