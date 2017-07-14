@@ -1,4 +1,5 @@
 dependencies {
+  compile project(":structure-common")
   compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
   compile group: 'org.jdom', name: 'jdom', version: '2.0.2'
   compile group: 'org.jsoup', name: 'jsoup', version: '1.9.2'

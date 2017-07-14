@@ -26,6 +26,9 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-classes/structure-classes.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-classes/structure-classes.iml" group="structure-classes" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-classes/structure-classes_main.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-classes/structure-classes_main.iml" group="structure-classes" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-classes/structure-classes_test.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-classes/structure-classes_test.iml" group="structure-classes" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-common/structure-common.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-common/structure-common.iml" group="structure-common" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-common/structure-common_main.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-common/structure-common_main.iml" group="structure-common" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-common/structure-common_test.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-common/structure-common_test.iml" group="structure-common" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-ide/structure-ide.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-ide/structure-ide.iml" group="structure-ide" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-ide/structure-ide_main.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-ide/structure-ide_main.iml" group="structure-ide" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-ide/structure-ide_test.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-ide/structure-ide_test.iml" group="structure-ide" />

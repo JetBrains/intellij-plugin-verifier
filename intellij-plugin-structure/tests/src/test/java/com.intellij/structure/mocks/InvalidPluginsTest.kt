@@ -7,6 +7,7 @@ import com.intellij.structure.plugin.PluginManager
 import com.intellij.structure.problems.*
 import com.jetbrains.structure.plugin.PluginCreationFail
 import com.jetbrains.structure.plugin.PluginCreationSuccess
+import com.jetbrains.structure.plugin.PluginProblem
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.instanceOf
 import org.hamcrest.Matchers.containsInAnyOrder

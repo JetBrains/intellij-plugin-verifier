@@ -1,4 +1,5 @@
 rootProject.name = 'intellij-plugin-structure'
+include 'structure-common'
 include 'structure-base'
 include 'structure-classes'
 include 'structure-ide'

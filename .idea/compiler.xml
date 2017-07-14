@@ -18,6 +18,8 @@
       <module name="structure-base_test" target="1.6" />
       <module name="structure-classes_main" target="1.6" />
       <module name="structure-classes_test" target="1.6" />
+      <module name="structure-common_main" target="1.6" />
+      <module name="structure-common_test" target="1.6" />
       <module name="structure-ide_main" target="1.6" />
       <module name="structure-ide_test" target="1.6" />
       <module name="test-classes_main" target="1.6" />
