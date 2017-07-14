@@ -1,13 +1,13 @@
 package com.intellij.structure.mocks
 
 import com.intellij.structure.ide.IdeVersion
-import com.intellij.structure.impl.utils.ZipUtil
 import com.intellij.structure.plugin.IdePlugin
 import com.intellij.structure.plugin.PluginManager
 import com.intellij.structure.problems.*
 import com.jetbrains.structure.plugin.PluginCreationFail
 import com.jetbrains.structure.plugin.PluginCreationSuccess
 import com.jetbrains.structure.plugin.PluginProblem
+import com.jetbrains.structure.utils.ZipUtil
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.instanceOf
 import org.hamcrest.Matchers.containsInAnyOrder

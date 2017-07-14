@@ -1,0 +1,5 @@
+dependencies {
+  compile("org.codehaus.plexus:plexus-archiver:2.3") {
+    exclude group: "junit"
+  }
+}

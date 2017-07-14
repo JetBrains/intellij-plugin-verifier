@@ -1,10 +1,10 @@
 package com.intellij.structure.impl.extractor
 
-import com.intellij.structure.impl.utils.ZipUtil
 import com.intellij.structure.problems.PluginZipContainsUnknownFile
 import com.intellij.structure.problems.PluginZipIsEmpty
 import com.jetbrains.structure.plugin.PluginProblem
 import com.jetbrains.structure.utils.FileUtil
+import com.jetbrains.structure.utils.ZipUtil
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.IOException
