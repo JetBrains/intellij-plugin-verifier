@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.google.gson.Gson
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.slf4j.Logger
@@ -15,6 +16,8 @@ abstract class BaseService(private val serviceName: String,
                            protected val taskManager: TaskManager) {
 
   protected val LOG: Logger = LoggerFactory.getLogger(serviceName)
+
+  protected val GSON: Gson = Gson()
 
   private var isServing: Boolean = false
 

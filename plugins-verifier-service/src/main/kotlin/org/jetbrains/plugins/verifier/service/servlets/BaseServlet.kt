@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.verifier.service.servlets
 
+import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.typeToken
 import com.google.gson.Gson
-import com.jetbrains.pluginverifier.persistence.CompactJson
 import org.jetbrains.plugins.verifier.service.service.ServerInstance
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.slf4j.Logger
@@ -53,7 +53,7 @@ abstract class BaseServlet : HttpServlet() {
     protected inline fun <reified T : Any> parseJsonParameter(req: HttpServletRequest, parameterName: String): T? {
       val parameter = req.getParameter(parameterName) ?: return null
       try {
-        return CompactJson.fromJson<T>(parameter)
+        return GSON.fromJson<T>(parameter)
       } catch(e: Exception) {
         LOG.error("Unable to deserialize parameter $parameterName: $parameter", e)
         return null
@@ -77,7 +77,7 @@ abstract class BaseServlet : HttpServlet() {
   }
 
   protected fun sendJson(resp: HttpServletResponse, src: Any) {
-    val json = CompactJson.toJson(src)
+    val json = GSON.toJson(src)
     sendBytes(resp, json.toByteArray(StandardCharsets.UTF_8))
   }
 

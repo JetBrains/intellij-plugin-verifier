@@ -1,7 +1,5 @@
 package com.jetbrains.intellij.feature.extractor
 
-import com.google.gson.annotations.SerializedName
-
 /**
  * Holds all features of a single plugin's extension point.
  *
@@ -16,11 +14,11 @@ data class ExtensionPointFeatures(
      * Extension point which allows to specify custom plugin implementation
      * of the IntelliJ API class for a specific feature type
      */
-    @SerializedName("extensionPoint") val extensionPoint: ExtensionPoint,
+    val extensionPoint: ExtensionPoint,
     /**
      * Class name of the plugin's implementation class
      */
-    @SerializedName("implementorName") val epImplementorName: String,
+    val epImplementorName: String,
     /**
      * Extracted feature name:
      *
@@ -32,5 +30,5 @@ data class ExtensionPointFeatures(
      *
      * For artifact type it is the ID of the artifact (e.g. war, apk)
      */
-    @SerializedName("featureNames") val featureNames: List<String>
+    val featureNames: List<String>
 )

@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.tasks
 
-import com.google.gson.annotations.SerializedName
 import com.jetbrains.pluginverifier.output.PrinterOptions
 import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityPrinter
@@ -9,8 +8,8 @@ import java.io.File
 /**
  * @author Sergey Patrikeev
  */
-data class CheckTrunkApiResult(@SerializedName("trunkResults") val trunkResults: CheckIdeResult,
-                               @SerializedName("releaseResults") val releaseResults: CheckIdeResult) : TaskResult {
+data class CheckTrunkApiResult(val trunkResults: CheckIdeResult,
+                               val releaseResults: CheckIdeResult) : TaskResult {
 
   override fun printResults(printerOptions: PrinterOptions) {
     if (printerOptions.needTeamCityLog) {

@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.tasks
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
-import com.google.gson.annotations.SerializedName
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Result
@@ -11,10 +10,10 @@ import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.problems.Problem
 
-data class CheckTrunkApiCompareResult(@SerializedName("trunkVersion") val trunkVersion: IdeVersion,
-                                      @SerializedName("releaseVersion") val releaseVersion: IdeVersion,
-                                      @SerializedName("newProblemToPlugin") val newProblemToPlugin: Multimap<Problem, PluginInfo>,
-                                      @SerializedName("newMissingProblems") val newMissingProblems: Multimap<MissingDependency, PluginInfo>) {
+data class CheckTrunkApiCompareResult(val trunkVersion: IdeVersion,
+                                      val releaseVersion: IdeVersion,
+                                      val newProblemToPlugin: Multimap<Problem, PluginInfo>,
+                                      val newMissingProblems: Multimap<MissingDependency, PluginInfo>) {
   companion object {
 
     private fun getProblemsOfAllResults(results: List<Result>): Multimap<Problem, PluginInfo> {

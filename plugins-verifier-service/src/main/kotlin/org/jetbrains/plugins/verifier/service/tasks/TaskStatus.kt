@@ -1,14 +1,12 @@
 package org.jetbrains.plugins.verifier.service.tasks
 
-import com.google.gson.annotations.SerializedName
-
-data class TaskStatus(@SerializedName("taskId") val taskId: TaskId,
-                      @SerializedName("startTime") val startTime: Long,
-                      @SerializedName("endTime") val endTime: Long?,
-                      @SerializedName("status") val state: State,
-                      @SerializedName("progress") val progress: Double,
-                      @SerializedName("progressText") val progressText: String,
-                      @SerializedName("taskName") val presentableName: String) {
+data class TaskStatus(val taskId: TaskId,
+                      val startTime: Long,
+                      val endTime: Long?,
+                      val state: State,
+                      val progress: Double,
+                      val progressText: String,
+                      val presentableName: String) {
   fun elapsedTime(): Long = (endTime ?: System.currentTimeMillis()) - startTime
 
   override fun toString(): String {

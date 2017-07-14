@@ -1,13 +1,12 @@
 package org.jetbrains.plugins.verifier.service.service.featureExtractor
 
-import com.google.gson.Gson
-import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
-import com.jetbrains.pluginverifier.persistence.CompactJson
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import org.jetbrains.plugins.verifier.service.api.ApiFeaturesResult
+import org.jetbrains.plugins.verifier.service.api.convertInternalFeaturesResultToServiceResult
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskId
@@ -28,7 +27,7 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
 
   private val featuresExtractor: FeaturesApi = Retrofit.Builder()
       .baseUrl(Settings.FEATURE_EXTRACTOR_REPOSITORY_URL.get())
-      .addConverterFactory(GsonConverterFactory.create(Gson()))
+      .addConverterFactory(GsonConverterFactory.create(GSON))
       .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
       .create(FeaturesApi::class.java)
@@ -91,7 +90,7 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
     val size = extractorResult.features.size
     LOG.info("Plugin $pluginInfo extracted $size features: ($resultType)")
 
-    val pluginsResult = convertToPluginsSiteResult(pluginInfo, resultType, extractorResult.features)
+    val pluginsResult = convertInternalFeaturesResultToServiceResult(pluginInfo, resultType, extractorResult.features)
     try {
       sendExtractedFeatures(pluginsResult, pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully()
     } catch(e: Exception) {
@@ -99,23 +98,13 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
     }
   }
 
-  private fun convertToPluginsSiteResult(pluginInfo: PluginInfo,
-                                         resultType: FeaturesResult.ResultType,
-                                         features: List<ExtensionPointFeatures>): AdaptedFeaturesResult {
-    val protocolVersion = Settings.PROTOCOL_VERSION.getAsInt()
-    val updateId = pluginInfo.updateInfo!!.updateId
-    return AdaptedFeaturesResult(updateId, resultType, features, protocolVersion)
-  }
-
-
-  private fun getUpdatesToExtract(): List<Int> =
-      getUpdatesToExtractFeatures(pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully().body().sortedDescending()
+  private fun getUpdatesToExtract(): List<Int> = getUpdatesToExtractFeatures(pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully().body().sortedDescending()
 
   private fun getUpdatesToExtractFeatures(userName: String, password: String) =
       featuresExtractor.getUpdatesToExtractFeatures(createStringRequestBody(userName), createStringRequestBody(password))
 
 
-  private fun sendExtractedFeatures(extractedFeatures: AdaptedFeaturesResult, userName: String, password: String) =
-      featuresExtractor.sendExtractedFeatures(createJsonRequestBody(CompactJson.toJson(extractedFeatures)), createStringRequestBody(userName), createStringRequestBody(password))
+  private fun sendExtractedFeatures(extractedApiFeatures: ApiFeaturesResult, userName: String, password: String) =
+      featuresExtractor.sendExtractedFeatures(createJsonRequestBody(GSON.toJson(extractedApiFeatures)), createStringRequestBody(userName), createStringRequestBody(password))
 
 }

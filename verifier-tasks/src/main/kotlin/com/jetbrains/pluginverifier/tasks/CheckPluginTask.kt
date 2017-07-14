@@ -12,9 +12,7 @@ import com.jetbrains.pluginverifier.plugin.PluginCreator
 
 class CheckPluginTask(parameters: CheckPluginParams) : Task<CheckPluginParams, CheckPluginResult>(parameters) {
 
-  private var allPluginsToCheck: List<CreatePluginResult> = emptyList()
-
-  private fun getDependencyResolver(ide: Ide): DependencyResolver = object : DependencyResolver {
+  private fun getDependencyResolver(ide: Ide, allPluginsToCheck: List<CreatePluginResult>): DependencyResolver = object : DependencyResolver {
 
     private val defaultDependencyResolver = DefaultDependencyResolver(ide)
 
@@ -32,18 +30,18 @@ class CheckPluginTask(parameters: CheckPluginParams) : Task<CheckPluginParams, C
   }
 
   override fun execute(progress: Progress): CheckPluginResult {
-    allPluginsToCheck = parameters.pluginCoordinates.map { PluginCreator.createPlugin(it) }
+    val allPluginsToCheck = parameters.pluginCoordinates.map { PluginCreator.createPlugin(it) }
     try {
-      return doExecute(progress)
+      return doExecute(progress, allPluginsToCheck)
     } finally {
       allPluginsToCheck.forEach { it.closeLogged() }
     }
   }
 
-  private fun doExecute(progress: Progress): CheckPluginResult {
+  private fun doExecute(progress: Progress, allPluginsToCheck: List<CreatePluginResult>): CheckPluginResult {
     val results = arrayListOf<Result>()
     parameters.ideDescriptors.forEach { ideDescriptor ->
-      val dependencyResolver = getDependencyResolver(ideDescriptor.ide)
+      val dependencyResolver = getDependencyResolver(ideDescriptor.ide, allPluginsToCheck)
       parameters.pluginCoordinates.mapTo(results) {
         doVerification(it, ideDescriptor, dependencyResolver, progress)
       }

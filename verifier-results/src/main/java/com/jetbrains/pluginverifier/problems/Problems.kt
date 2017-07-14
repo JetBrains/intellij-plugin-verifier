@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.problems
 
-import com.google.gson.annotations.SerializedName
 import com.jetbrains.pluginverifier.descriptions.DescriptionsBundle
 import com.jetbrains.pluginverifier.descriptions.FullDescription
 import com.jetbrains.pluginverifier.descriptions.ShortDescription
@@ -13,7 +12,7 @@ import org.jetbrains.annotations.PropertyKey
 /**
  * @author Sergey Patrikeev
  */
-sealed class Problem(@PropertyKey(resourceBundle = "long.descriptions") val messageKey: String) {
+sealed class Problem(@PropertyKey(resourceBundle = "long.descriptions") private val messageKey: String) {
 
   fun getShortDescription(): ShortDescription {
     val shortTemplate = DescriptionsBundle.getShortDescription(messageKey)
@@ -39,11 +38,11 @@ sealed class Problem(@PropertyKey(resourceBundle = "long.descriptions") val mess
 
 }
 
-data class MultipleDefaultImplementationsProblem(@SerializedName("caller") val caller: MethodLocation,
-                                                 @SerializedName("methodReference") val methodReference: MethodReference,
-                                                 @SerializedName("instruction") val instruction: Instruction,
-                                                 @SerializedName("implementation1") val implementation1: MethodLocation,
-                                                 @SerializedName("implementation2") val implementation2: MethodLocation) : Problem("multiple.default.implementations") {
+data class MultipleDefaultImplementationsProblem(val caller: MethodLocation,
+                                                 val methodReference: MethodReference,
+                                                 val instruction: Instruction,
+                                                 val implementation1: MethodLocation,
+                                                 val implementation2: MethodLocation) : Problem("multiple.default.implementations") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(methodReference)
 
@@ -51,9 +50,9 @@ data class MultipleDefaultImplementationsProblem(@SerializedName("caller") val c
 
 }
 
-data class IllegalClassAccessProblem(@SerializedName("unavailableClass") val unavailableClass: ClassLocation,
-                                     @SerializedName("access") val access: AccessType,
-                                     @SerializedName("usage") val usage: Location) : Problem("illegal.class.access") {
+data class IllegalClassAccessProblem(val unavailableClass: ClassLocation,
+                                     val access: AccessType,
+                                     val usage: Location) : Problem("illegal.class.access") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(access, unavailableClass)
 
@@ -63,8 +62,8 @@ data class IllegalClassAccessProblem(@SerializedName("unavailableClass") val una
   }
 }
 
-data class AbstractClassInstantiationProblem(@SerializedName("abstractClass") val abstractClass: ClassLocation,
-                                             @SerializedName("creator") val creator: MethodLocation) : Problem("abstract.class.instantiation") {
+data class AbstractClassInstantiationProblem(val abstractClass: ClassLocation,
+                                             val creator: MethodLocation) : Problem("abstract.class.instantiation") {
 
 
   override fun shortDescriptionParams(): List<Any> = listOf(abstractClass)
@@ -73,8 +72,8 @@ data class AbstractClassInstantiationProblem(@SerializedName("abstractClass") va
 
 }
 
-data class ClassNotFoundProblem(@SerializedName("class") val unresolved: ClassReference,
-                                @SerializedName("usage") val usage: Location) : Problem("class.not.found") {
+data class ClassNotFoundProblem(val unresolved: ClassReference,
+                                val usage: Location) : Problem("class.not.found") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(unresolved)
 
@@ -89,8 +88,8 @@ data class ClassNotFoundProblem(@SerializedName("class") val unresolved: ClassRe
   }
 }
 
-data class SuperInterfaceBecameClassProblem(@SerializedName("child") val child: ClassLocation,
-                                            @SerializedName("class") val clazz: ClassLocation) : Problem("super.interface.became.class") {
+data class SuperInterfaceBecameClassProblem(val child: ClassLocation,
+                                            val clazz: ClassLocation) : Problem("super.interface.became.class") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(clazz)
 
@@ -101,8 +100,8 @@ data class SuperInterfaceBecameClassProblem(@SerializedName("child") val child: 
 
 }
 
-data class InheritFromFinalClassProblem(@SerializedName("child") val child: ClassLocation,
-                                        @SerializedName("finalClass") val finalClass: ClassLocation) : Problem("inherit.from.final.class") {
+data class InheritFromFinalClassProblem(val child: ClassLocation,
+                                        val finalClass: ClassLocation) : Problem("inherit.from.final.class") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(finalClass)
 
@@ -112,8 +111,8 @@ data class InheritFromFinalClassProblem(@SerializedName("child") val child: Clas
   }
 }
 
-data class SuperClassBecameInterfaceProblem(@SerializedName("child") val child: ClassLocation,
-                                            @SerializedName("interface") val interfaze: ClassLocation) : Problem("super.class.became.interface") {
+data class SuperClassBecameInterfaceProblem(val child: ClassLocation,
+                                            val interfaze: ClassLocation) : Problem("super.class.became.interface") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(interfaze)
 
@@ -121,9 +120,9 @@ data class SuperClassBecameInterfaceProblem(@SerializedName("child") val child: 
 
 }
 
-data class InvokeClassMethodOnInterfaceProblem(@SerializedName("methodReference") val methodReference: MethodReference,
-                                               @SerializedName("caller") val caller: MethodLocation,
-                                               @SerializedName("instruction") val instruction: Instruction) : Problem("invoke.class.method.on.interface") {
+data class InvokeClassMethodOnInterfaceProblem(val methodReference: MethodReference,
+                                               val caller: MethodLocation,
+                                               val instruction: Instruction) : Problem("invoke.class.method.on.interface") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(methodReference.hostClass)
 
@@ -131,9 +130,9 @@ data class InvokeClassMethodOnInterfaceProblem(@SerializedName("methodReference"
 
 }
 
-data class InvokeInterfaceMethodOnClassProblem(@SerializedName("methodReference") val methodReference: MethodReference,
-                                               @SerializedName("caller") val caller: MethodLocation,
-                                               @SerializedName("instruction") val instruction: Instruction) : Problem("invoke.interface.method.on.class") {
+data class InvokeInterfaceMethodOnClassProblem(val methodReference: MethodReference,
+                                               val caller: MethodLocation,
+                                               val instruction: Instruction) : Problem("invoke.interface.method.on.class") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(methodReference.hostClass)
 
@@ -141,8 +140,8 @@ data class InvokeInterfaceMethodOnClassProblem(@SerializedName("methodReference"
 
 }
 
-data class InterfaceInstantiationProblem(@SerializedName("interface") val interfaze: ClassLocation,
-                                         @SerializedName("creator") val creator: MethodLocation) : Problem("interface.instantiation") {
+data class InterfaceInstantiationProblem(val interfaze: ClassLocation,
+                                         val creator: MethodLocation) : Problem("interface.instantiation") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(interfaze)
 
@@ -150,9 +149,9 @@ data class InterfaceInstantiationProblem(@SerializedName("interface") val interf
 
 }
 
-data class ChangeFinalFieldProblem(@SerializedName("field") val field: FieldLocation,
-                                   @SerializedName("accessor") val accessor: MethodLocation,
-                                   @SerializedName("instruction") val instruction: Instruction) : Problem("change.final.field") {
+data class ChangeFinalFieldProblem(val field: FieldLocation,
+                                   val accessor: MethodLocation,
+                                   val instruction: Instruction) : Problem("change.final.field") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(field)
 
@@ -160,19 +159,19 @@ data class ChangeFinalFieldProblem(@SerializedName("field") val field: FieldLoca
 
 }
 
-data class FieldNotFoundProblem(@SerializedName("field") val field: FieldReference,
-                                @SerializedName("accessor") val accessor: MethodLocation,
-                                @SerializedName("instruction") val instruction: Instruction) : Problem("field.not.found") {
+data class FieldNotFoundProblem(val field: FieldReference,
+                                val accessor: MethodLocation,
+                                val instruction: Instruction) : Problem("field.not.found") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(field)
 
   override fun fullDescriptionParams() = listOf(accessor, instruction, field)
 }
 
-data class IllegalFieldAccessProblem(@SerializedName("field") val field: FieldLocation,
-                                     @SerializedName("accessor") val accessor: MethodLocation,
-                                     @SerializedName("instruction") val instruction: Instruction,
-                                     @SerializedName("access") val fieldAccess: AccessType) : Problem("illegal.field.access") {
+data class IllegalFieldAccessProblem(val field: FieldLocation,
+                                     val accessor: MethodLocation,
+                                     val instruction: Instruction,
+                                     val fieldAccess: AccessType) : Problem("illegal.field.access") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(fieldAccess, field)
 
@@ -180,27 +179,27 @@ data class IllegalFieldAccessProblem(@SerializedName("field") val field: FieldLo
 
 }
 
-data class IllegalMethodAccessProblem(@SerializedName("method") val method: MethodLocation,
-                                      @SerializedName("caller") val caller: MethodLocation,
-                                      @SerializedName("instruction") val instruction: Instruction,
-                                      @SerializedName("access") val methodAccess: AccessType) : Problem("illegal.method.access") {
+data class IllegalMethodAccessProblem(val method: MethodLocation,
+                                      val caller: MethodLocation,
+                                      val instruction: Instruction,
+                                      val methodAccess: AccessType) : Problem("illegal.method.access") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(methodAccess, method)
 
   override fun fullDescriptionParams() = listOf(caller, instruction, methodAccess, method, caller.hostClass)
 }
 
-data class InvokeInterfaceOnPrivateMethodProblem(@SerializedName("resolvedMethod") val resolvedMethod: MethodLocation,
-                                                 @SerializedName("caller") val caller: MethodLocation) : Problem("invoke.interface.on.private.method") {
+data class InvokeInterfaceOnPrivateMethodProblem(val resolvedMethod: MethodLocation,
+                                                 val caller: MethodLocation) : Problem("invoke.interface.on.private.method") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(resolvedMethod)
 
   override fun fullDescriptionParams() = listOf(caller, resolvedMethod)
 }
 
-data class MethodNotFoundProblem(@SerializedName("method") val method: MethodReference,
-                                 @SerializedName("caller") val caller: MethodLocation,
-                                 @SerializedName("instruction") val instruction: Instruction) : Problem("method.not.found") {
+data class MethodNotFoundProblem(val method: MethodReference,
+                                 val caller: MethodLocation,
+                                 val instruction: Instruction) : Problem("method.not.found") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(method)
 
@@ -208,17 +207,17 @@ data class MethodNotFoundProblem(@SerializedName("method") val method: MethodRef
 
 }
 
-data class MethodNotImplementedProblem(@SerializedName("method") val method: MethodLocation,
-                                       @SerializedName("incompleteClass") val incompleteClass: ClassLocation) : Problem("method.not.implemented") {
+data class MethodNotImplementedProblem(val method: MethodLocation,
+                                       val incompleteClass: ClassLocation) : Problem("method.not.implemented") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(method)
 
   override fun fullDescriptionParams() = listOf(incompleteClass, method.hostClass, method.methodNameAndParameters())
 }
 
-data class AbstractMethodInvocationProblem(@SerializedName("method") val method: MethodLocation,
-                                           @SerializedName("caller") val caller: MethodLocation,
-                                           @SerializedName("instruction") val instruction: Instruction) : Problem("abstract.method.invocation") {
+data class AbstractMethodInvocationProblem(val method: MethodLocation,
+                                           val caller: MethodLocation,
+                                           val instruction: Instruction) : Problem("abstract.method.invocation") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(method)
 
@@ -226,17 +225,17 @@ data class AbstractMethodInvocationProblem(@SerializedName("method") val method:
 
 }
 
-data class OverridingFinalMethodProblem(@SerializedName("method") val method: MethodLocation,
-                                        @SerializedName("invalidClass") val invalidClass: ClassLocation) : Problem("overriding.final.method") {
+data class OverridingFinalMethodProblem(val method: MethodLocation,
+                                        val invalidClass: ClassLocation) : Problem("overriding.final.method") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(method)
 
   override fun fullDescriptionParams() = listOf(invalidClass, method)
 }
 
-data class NonStaticAccessOfStaticFieldProblem(@SerializedName("field") val field: FieldLocation,
-                                               @SerializedName("accessor") val accessor: MethodLocation,
-                                               @SerializedName("instruction") val instruction: Instruction) : Problem("non.static.access.of.static.field") {
+data class NonStaticAccessOfStaticFieldProblem(val field: FieldLocation,
+                                               val accessor: MethodLocation,
+                                               val instruction: Instruction) : Problem("non.static.access.of.static.field") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(instruction, field)
 
@@ -244,35 +243,35 @@ data class NonStaticAccessOfStaticFieldProblem(@SerializedName("field") val fiel
 
 }
 
-data class InvokeStaticOnNonStaticMethodProblem(@SerializedName("resolvedMethod") val resolvedMethod: MethodLocation,
-                                                @SerializedName("caller") val caller: MethodLocation) : Problem("invoke.static.on.non.static.method") {
+data class InvokeStaticOnNonStaticMethodProblem(val resolvedMethod: MethodLocation,
+                                                val caller: MethodLocation) : Problem("invoke.static.on.non.static.method") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(resolvedMethod)
 
   override fun fullDescriptionParams() = listOf(caller, resolvedMethod)
 }
 
-data class InvokeNonStaticInstructionOnStaticMethodProblem(@SerializedName("resolvedMethod") val resolvedMethod: MethodLocation,
-                                                           @SerializedName("caller") val caller: MethodLocation,
-                                                           @SerializedName("instruction") val instruction: Instruction) : Problem("invoke.non.static.instruction.on.static.method") {
+data class InvokeNonStaticInstructionOnStaticMethodProblem(val resolvedMethod: MethodLocation,
+                                                           val caller: MethodLocation,
+                                                           val instruction: Instruction) : Problem("invoke.non.static.instruction.on.static.method") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(instruction, resolvedMethod)
 
   override fun fullDescriptionParams() = listOf(caller, instruction, resolvedMethod)
 }
 
-data class StaticAccessOfNonStaticFieldProblem(@SerializedName("field") val field: FieldLocation,
-                                               @SerializedName("accessor") val accessor: MethodLocation,
-                                               @SerializedName("instruction") val instruction: Instruction) : Problem("static.access.of.non.static.field") {
+data class StaticAccessOfNonStaticFieldProblem(val field: FieldLocation,
+                                               val accessor: MethodLocation,
+                                               val instruction: Instruction) : Problem("static.access.of.non.static.field") {
 
   override fun shortDescriptionParams(): List<Any> = listOf(instruction, field)
 
   override fun fullDescriptionParams() = listOf(accessor, instruction, field)
 }
 
-data class InvalidClassFileProblem(@SerializedName("brokenClass") val brokenClass: ClassReference,
-                                   @SerializedName("usage") val usage: Location,
-                                   @SerializedName("reason") val reason: String) : Problem("invalid.class.file") {
+data class InvalidClassFileProblem(val brokenClass: ClassReference,
+                                   val usage: Location,
+                                   val reason: String) : Problem("invalid.class.file") {
   override fun shortDescriptionParams(): List<Any> = listOf(brokenClass)
 
   override fun fullDescriptionParams(): List<Any> = listOf(brokenClass, usage, reason)

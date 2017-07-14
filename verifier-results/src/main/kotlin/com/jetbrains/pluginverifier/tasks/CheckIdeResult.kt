@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.tasks
 
-import com.google.gson.annotations.SerializedName
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.Verdict
@@ -11,10 +10,10 @@ import com.jetbrains.pluginverifier.utils.ParametersListUtil
 import java.io.File
 import java.io.PrintWriter
 
-data class CheckIdeResult(@SerializedName("ideVersion") val ideVersion: IdeVersion,
-                          @SerializedName("results") val results: List<Result>,
-                          @SerializedName("excludedPlugins") val excludedPlugins: List<PluginIdAndVersion>,
-                          @SerializedName("noUpdatesProblems") val noCompatibleUpdatesProblems: List<MissingCompatibleUpdate>) : TaskResult {
+data class CheckIdeResult(val ideVersion: IdeVersion,
+                          val results: List<Result>,
+                          val excludedPlugins: List<PluginIdAndVersion>,
+                          val noCompatibleUpdatesProblems: List<MissingCompatibleUpdate>) : TaskResult {
 
   override fun printResults(printerOptions: PrinterOptions) {
     if (printerOptions.needTeamCityLog) {

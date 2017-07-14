@@ -11,7 +11,7 @@ interface VerificationApi {
 
   @POST("/verification/getUpdatesToCheck")
   @Multipart
-  fun getUpdatesToCheck(@Part("availableIde") availableIde: String,
+  fun getUpdatesToCheck(@Part("availableIde") availableIde: RequestBody,
                         @Part("userName") userName: RequestBody,
                         @Part("password") password: RequestBody): Call<List<Int>>
 
