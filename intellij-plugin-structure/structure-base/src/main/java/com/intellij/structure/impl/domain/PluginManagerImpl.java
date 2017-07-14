@@ -1,16 +1,16 @@
 package com.intellij.structure.impl.domain;
 
 import com.intellij.structure.impl.extractor.*;
-import com.intellij.structure.impl.utils.FileUtil;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.plugin.IdePlugin;
-import com.jetbrains.structure.plugin.PluginCreationResult;
 import com.intellij.structure.plugin.PluginDependency;
 import com.intellij.structure.plugin.PluginManager;
 import com.intellij.structure.problems.*;
+import com.jetbrains.structure.plugin.PluginCreationResult;
+import com.jetbrains.structure.utils.FileUtil;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.Document;
 import org.jdom2.input.JDOMParseException;
@@ -152,7 +152,7 @@ public class PluginManagerImpl extends PluginManager {
 
     for (final File file : files) {
       PluginCreator innerCreator;
-      if (FileUtil.isJarOrZip(file)) {
+      if (FileUtil.INSTANCE.isJarOrZip(file)) {
         innerCreator = loadDescriptorFromJarFile(file, descriptorPath, pathResolver, validateDescriptor);
       } else if (file.isDirectory()) {
         innerCreator = loadDescriptorFromDir(file, descriptorPath, validateDescriptor);
@@ -202,7 +202,7 @@ public class PluginManagerImpl extends PluginManager {
   private List<URL> getInLibMetaInfUrls(File[] files) {
     List<URL> inLibJarUrls = new ArrayList<URL>();
     for (File file : files) {
-      if (FileUtil.isJarOrZip(file)) {
+      if (FileUtil.INSTANCE.isJarOrZip(file)) {
         try {
           String metaInfUrl = URLUtil.getJarEntryURL(file, "META-INF").toExternalForm();
           inLibJarUrls.add(new URL(metaInfUrl));
@@ -222,7 +222,7 @@ public class PluginManagerImpl extends PluginManager {
     PluginCreator pluginCreator;
     if (jarOrDirectory.isDirectory()) {
       pluginCreator = loadDescriptorFromDir(jarOrDirectory, descriptorPath, validateDescriptor);
-    } else if (FileUtil.isJar(jarOrDirectory)) {
+    } else if (FileUtil.INSTANCE.isJar(jarOrDirectory)) {
       pluginCreator = loadDescriptorFromJarFile(jarOrDirectory, descriptorPath, myPathResolver, validateDescriptor);
     } else {
       return new PluginCreator(descriptorPath, new IncorrectPluginFile(jarOrDirectory), jarOrDirectory);
@@ -294,7 +294,7 @@ public class PluginManagerImpl extends PluginManager {
       throw new IllegalArgumentException("Plugin file " + pluginFile + " does not exist");
     }
     PluginCreator pluginCreator;
-    if (FileUtil.isZip(pluginFile)) {
+    if (FileUtil.INSTANCE.isZip(pluginFile)) {
       pluginCreator = extractZipAndCreatePlugin(pluginFile, validateDescriptor);
     } else {
       pluginCreator = loadDescriptorFromJarOrDirectory(pluginFile, PLUGIN_XML, validateDescriptor);

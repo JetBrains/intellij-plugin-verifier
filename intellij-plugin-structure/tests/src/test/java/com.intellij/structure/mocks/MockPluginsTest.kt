@@ -3,7 +3,6 @@ package com.intellij.structure.mocks
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.intellij.structure.impl.extractor.ExtractedPluginFile
-import com.intellij.structure.impl.utils.FileUtil
 import com.intellij.structure.plugin.IdePlugin
 import com.intellij.structure.plugin.PluginManager
 import com.intellij.structure.problems.MissingOptionalDependencyConfigurationFile
@@ -11,6 +10,7 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.structure.plugin.PluginCreationFail
 import com.jetbrains.structure.plugin.PluginCreationSuccess
 import com.jetbrains.structure.plugin.PluginProblem
+import com.jetbrains.structure.utils.FileUtil
 import org.hamcrest.CoreMatchers.*
 import org.hamcrest.collection.IsIn.isIn
 import org.junit.Assert

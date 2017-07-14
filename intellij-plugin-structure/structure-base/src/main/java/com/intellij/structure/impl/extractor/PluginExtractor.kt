@@ -1,10 +1,10 @@
 package com.intellij.structure.impl.extractor
 
-import com.intellij.structure.impl.utils.FileUtil
 import com.intellij.structure.impl.utils.ZipUtil
 import com.intellij.structure.problems.PluginZipContainsUnknownFile
 import com.intellij.structure.problems.PluginZipIsEmpty
 import com.jetbrains.structure.plugin.PluginProblem
+import com.jetbrains.structure.utils.FileUtil
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.IOException
@@ -20,7 +20,7 @@ object PluginExtractor {
       throw IllegalArgumentException("Must be a zip archive: " + pluginZip)
     }
 
-    val extractedDirectory = FileUtil.getExtractedPluginsDirectory()
+    val extractedDirectory = FileUtil.extractedPluginsDirectory
     val extractedPlugin = FileUtil.createTempDir(extractedDirectory, "plugin_")
 
     try {

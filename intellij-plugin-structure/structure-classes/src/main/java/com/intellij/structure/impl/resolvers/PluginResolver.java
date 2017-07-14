@@ -3,10 +3,11 @@ package com.intellij.structure.impl.resolvers;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.intellij.structure.impl.extractor.*;
-import com.intellij.structure.impl.utils.FileUtil;
 import com.intellij.structure.impl.utils.JarsUtils;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.resolvers.Resolver;
+import com.jetbrains.structure.utils.FileUtil;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -30,12 +31,12 @@ public class PluginResolver extends Resolver {
   private final Resolver myResolver;
   private boolean isClosed;
 
-  public PluginResolver(@NotNull ExtractedPluginFile extractedPluginFile) throws IOException {
+  public PluginResolver(@NotNull ExtractedPluginFile extractedPluginFile) {
     myExtractedPluginFile = extractedPluginFile;
     try {
       myResolver = loadClasses(myExtractedPluginFile.getActualPluginFile());
     } catch (Throwable e) {
-      FileUtil.closeQuietly(extractedPluginFile);
+      IOUtils.closeQuietly(extractedPluginFile);
       throw Throwables.propagate(e);
     }
   }
@@ -45,8 +46,8 @@ public class PluginResolver extends Resolver {
     if (!pluginFile.exists()) {
       throw new IllegalArgumentException("Plugin file doesn't exist " + pluginFile);
     }
-    if (pluginFile.isDirectory() || FileUtil.isJarOrZip(pluginFile)) {
-      if (FileUtil.isZip(pluginFile)) {
+    if (pluginFile.isDirectory() || FileUtil.INSTANCE.isJarOrZip(pluginFile)) {
+      if (FileUtil.INSTANCE.isZip(pluginFile)) {
         ExtractorResult extractorResult = PluginExtractor.INSTANCE.extractPlugin(pluginFile);
         if (extractorResult instanceof ExtractorSuccess) {
           ExtractedPluginFile extractedPluginFile = ((ExtractorSuccess) extractorResult).getExtractedPlugin();
