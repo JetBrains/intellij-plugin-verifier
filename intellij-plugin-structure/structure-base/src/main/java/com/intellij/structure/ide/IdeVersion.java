@@ -18,12 +18,12 @@ public abstract class IdeVersion implements ProductVersion<IdeVersion> {
    */
   @NotNull
   public static IdeVersion createIdeVersion(@NotNull String version) throws IllegalArgumentException {
-    return IdeVersionImpl.fromString(version);
+    return IdeVersionImpl.Companion.fromString(version);
   }
 
   public static boolean isValidIdeVersion(@NotNull String version) {
     try {
-      IdeVersionImpl.fromString(version);
+      IdeVersionImpl.Companion.fromString(version);
       return true;
     } catch (Exception e) {
       return false;

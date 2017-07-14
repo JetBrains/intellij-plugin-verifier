@@ -6,7 +6,6 @@ import com.intellij.structure.ide.Ide
 import com.intellij.structure.ide.IdeManager
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.impl.domain.PluginManagerImpl
-import com.intellij.structure.impl.utils.StringUtil
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder
 import com.intellij.structure.impl.utils.xml.URLUtil
 import com.intellij.structure.impl.utils.xml.XIncludeException
@@ -79,7 +78,7 @@ class IdeManagerImpl : IdeManager() {
 
     private fun resolveOutputDirectories(relativePath: String, base: String?): URL {
       val normalizedPath = if (relativePath.startsWith("./")) {
-        "/META-INF/" + StringUtil.substringAfter(relativePath, "./")
+        "/META-INF/" + relativePath.substringAfter("./")
       } else {
         relativePath
       }

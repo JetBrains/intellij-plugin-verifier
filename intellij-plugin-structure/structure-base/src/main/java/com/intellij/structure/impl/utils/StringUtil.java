@@ -5,10 +5,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,36 +12,6 @@ import static java.lang.Character.toLowerCase;
 import static java.lang.Character.toUpperCase;
 
 public class StringUtil {
-
-  @NotNull
-  public static String substringAfter(@NotNull String text, @NotNull String subString) {
-    int i = text.indexOf(subString);
-    if (i == -1) return text;
-    return text.substring(i + subString.length());
-  }
-
-  @NotNull
-  private static String substringBefore(@NotNull String text, @NotNull String subString) {
-    int i = text.indexOf(subString);
-    if (i == -1) return text;
-    return text.substring(0, i);
-  }
-
-  @NotNull
-  public static String substringBeforeIncluding(@NotNull String text, @NotNull String subString) {
-    String before = substringBefore(text, subString);
-    if (before == null) return text;
-    return before + subString;
-  }
-
-  @NotNull
-  public static String getFileName(@NotNull String path) {
-    if (path.length() == 0) return "";
-    char c = path.charAt(path.length() - 1);
-    int end = c == '/' || c == '\\' ? path.length() - 1 : path.length();
-    int start = Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1)) + 1;
-    return path.substring(start, end);
-  }
 
   @Contract("null -> true")
   public static boolean isEmptyOrSpaces(@Nullable String s) {
@@ -57,69 +23,6 @@ public class StringUtil {
         return false;
       }
     }
-    return true;
-  }
-
-  @NotNull
-  public static List<String> split(@NotNull String s, @NotNull String separator) {
-    return split(s, separator, true);
-  }
-
-  @NotNull
-  public static List<String> split(@NotNull String s, @NotNull String separator,
-                                   boolean excludeSeparator) {
-    return split(s, separator, excludeSeparator, true);
-  }
-
-  @SuppressWarnings("unchecked")
-  @NotNull
-  public static List<String> split(@NotNull String s, @NotNull String separator,
-                                   boolean excludeSeparator, boolean excludeEmptyStrings) {
-    return (List) split((CharSequence) s, separator, excludeSeparator, excludeEmptyStrings);
-  }
-
-  @NotNull
-  public static List<CharSequence> split(@NotNull CharSequence s, @NotNull CharSequence separator,
-                                         boolean excludeSeparator, boolean excludeEmptyStrings) {
-    if (separator.length() == 0) {
-      return Collections.singletonList(s);
-    }
-    List<CharSequence> result = new ArrayList<CharSequence>();
-    int pos = 0;
-    while (true) {
-      int index = indexOf(s, separator, pos);
-      if (index == -1) break;
-      final int nextPos = index + separator.length();
-      CharSequence token = s.subSequence(pos, excludeSeparator ? index : nextPos);
-      if (token.length() != 0 || !excludeEmptyStrings) {
-        result.add(token);
-      }
-      pos = nextPos;
-    }
-    if (pos < s.length() || !excludeEmptyStrings && pos == s.length()) {
-      result.add(s.subSequence(pos, s.length()));
-    }
-    return result;
-  }
-
-  public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix, int start) {
-    for (int i = start; i <= sequence.length() - infix.length(); i++) {
-      if (startsWith(sequence, i, infix)) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  public static boolean startsWith(@NotNull CharSequence text, int startIndex, @NotNull CharSequence prefix) {
-    int l1 = text.length() - startIndex;
-    int l2 = prefix.length();
-    if (l1 < l2) return false;
-
-    for (int i = 0; i < l2; i++) {
-      if (text.charAt(i + startIndex) != prefix.charAt(i)) return false;
-    }
-
     return true;
   }
 
@@ -138,22 +41,12 @@ public class StringUtil {
   }
 
   @NotNull
-  public static String toSystemDependentName(@NonNls @NotNull String fileName) {
-    return fileName.replace('/', File.separatorChar).replace('\\', File.separatorChar);
-  }
-
-  @NotNull
   public static String repeat(@NotNull String s, int count) {
     StringBuilder sb = new StringBuilder(s.length() * count);
     for (int i = 0; i < count; i++) {
       sb.append(s);
     }
     return sb.toString();
-  }
-
-  @NotNull
-  public static String notNullize(@Nullable String s) {
-    return s == null ? "" : s;
   }
 
   public static int countChars(@NotNull CharSequence text, char c) {
