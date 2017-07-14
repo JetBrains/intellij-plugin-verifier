@@ -15,9 +15,11 @@ abstract class BaseService(private val serviceName: String,
                            private val timeUnit: TimeUnit,
                            protected val taskManager: TaskManager) {
 
-  protected val LOG: Logger = LoggerFactory.getLogger(serviceName)
+  companion object {
+    val GSON: Gson = Gson()
+  }
 
-  protected val GSON: Gson = Gson()
+  protected val LOG: Logger = LoggerFactory.getLogger(serviceName)
 
   private var isServing: Boolean = false
 

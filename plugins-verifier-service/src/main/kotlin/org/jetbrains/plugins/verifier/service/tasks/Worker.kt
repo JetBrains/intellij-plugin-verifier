@@ -45,12 +45,24 @@ class Worker<R, T : Task<R>>(val task: T,
       val status = TaskStatus(taskId, startTime, endTime, state, progress.getProgress(), progress.getText(), task.presentableName())
       try {
         if (task.isSuccessful()) {
-          onSuccess(TaskResult(status, task.result(), null))
+          try {
+            onSuccess(TaskResult(status, task.result(), null))
+          } catch (e: Throwable) {
+            TaskManager.LOG.error("Task $task success callback is failed", e)
+          }
         } else if (task.isFailed()) {
-          onError(task.exception(), status, task)
+          try {
+            onError(task.exception(), status, task)
+          } catch (e: Throwable) {
+            TaskManager.LOG.error("Task $task error callback is failed", e)
+          }
         }
       } finally {
-        onCompletion(status, task)
+        try {
+          onCompletion(status, task)
+        } catch (e: Throwable) {
+          TaskManager.LOG.error("Task $task completion callback is failed", e)
+        }
       }
     }
 

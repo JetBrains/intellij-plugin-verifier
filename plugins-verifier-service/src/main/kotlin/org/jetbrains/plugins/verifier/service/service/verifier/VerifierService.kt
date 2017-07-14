@@ -1,15 +1,14 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.google.common.collect.HashMultimap
-import com.google.gson.Gson
+import com.google.common.collect.LinkedHashMultimap
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
-import com.jetbrains.pluginverifier.persistence.CompactJson
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.ResponseBody
+import org.jetbrains.plugins.verifier.service.api.prepareVerificationResponse
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.params.JdkVersion
 import org.jetbrains.plugins.verifier.service.service.BaseService
@@ -24,8 +23,6 @@ import org.jetbrains.plugins.verifier.service.util.createStringRequestBody
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.TimeUnit
 
@@ -35,21 +32,21 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
 
   private val UPDATE_CHECK_MIN_PAUSE_MS = TimeUnit.MINUTES.toMillis(10)
 
-  private val verifiableUpdates: ConcurrentMap<UpdateInfo, TaskId> = ConcurrentHashMap()
+  private val verifiableUpdates: MutableMap<UpdateInfo, TaskId> = hashMapOf()
 
   private val lastCheckDate: MutableMap<UpdateInfo, Long> = hashMapOf()
 
-  val updatesMissingCompatibleIde = ConcurrentSkipListSet<UpdateInfo>()
+  val updatesMissingCompatibleIde = ConcurrentSkipListSet<UpdateInfo>(Comparator { u1, u2 -> u1.updateId - u2.updateId })
 
   private val verifier: VerificationApi = Retrofit.Builder()
       .baseUrl(Settings.PLUGIN_REPOSITORY_URL.get())
-      .addConverterFactory(GsonConverterFactory.create(Gson()))
+      .addConverterFactory(GsonConverterFactory.create(GSON))
       .client(makeOkHttpClient(LOG.isDebugEnabled, 5, TimeUnit.MINUTES))
       .build()
       .create(VerificationApi::class.java)
 
   override fun doTick() {
-    val updateId2IdeVersions = HashMultimap.create<Int, IdeVersion>()
+    val updateId2IdeVersions = LinkedHashMultimap.create<Int, IdeVersion>()
 
     for (ideVersion in IdeFilesManager.ideList()) {
       getUpdatesToCheck(ideVersion).forEach { updateId ->
@@ -57,7 +54,7 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
       }
     }
 
-    LOG.info("Checking ${updateId2IdeVersions.keySet().size} updates: ${updateId2IdeVersions.asMap()}")
+    LOG.info("Checking updates: ${updateId2IdeVersions.asMap()}")
 
     for ((updateId, ideVersions) in updateId2IdeVersions.asMap()) {
       if (taskManager.isBusy()) {
@@ -68,7 +65,7 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
   }
 
   private fun getUpdatesToCheck(ideVersion: IdeVersion): List<Int> =
-      getUpdatesToCheck(ideVersion, pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully().body()
+      getUpdatesToCheck(ideVersion, pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully().body().sortedDescending()
 
   private fun schedule(updateId: Int, versions: List<IdeVersion>) {
     val updateInfo = UpdateInfoCache.getUpdateInfo(updateId) ?: return
@@ -85,7 +82,7 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
     val pluginInfo = PluginInfo(updateInfo.pluginId, updateInfo.version, updateInfo)
     val pluginCoordinate = PluginCoordinate.ByUpdateInfo(updateInfo)
     val rangeRunnerParams = CheckRangeParams(JdkVersion.JAVA_8_ORACLE)
-    val runner = CheckRangeTask(pluginInfo, pluginCoordinate, rangeRunnerParams, versions)
+    val runner = CheckRangeCompatibilityTask(pluginInfo, pluginCoordinate, rangeRunnerParams, versions)
     val taskId = taskManager.enqueue(
         runner,
         { taskResult -> onSuccess(taskResult, updateInfo) },
@@ -96,37 +93,39 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
     LOG.info("Check [since; until] for $updateInfo is scheduled #$taskId")
   }
 
-  private fun onCompletion(task: CheckRangeTask) {
+  private fun onCompletion(task: CheckRangeCompatibilityTask) {
     verifiableUpdates.remove((task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo)
   }
 
-  private fun onError(error: Throwable, taskStatus: TaskStatus, task: CheckRangeTask) {
+  private fun onError(error: Throwable, taskStatus: TaskStatus, task: CheckRangeCompatibilityTask) {
     val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
     LOG.error("Unable to check $updateInfo (task #${taskStatus.taskId})", error)
   }
 
-  private fun onSuccess(taskResult: TaskResult<CheckRangeResults>, updateInfo: UpdateInfo) {
-    val results = taskResult.result!!
-    LOG.info("Update ${results.plugin} is checked with [${results.checkedIdeList.joinToString()}];\n" +
-        "Result type = ${results.resultType}; ${taskResult.taskStatus.elapsedTime()} ms")
+  private fun onSuccess(taskResult: TaskResult<CheckRangeCompatibilityResult>, updateInfo: UpdateInfo) {
+    val compatibilityResult = taskResult.result!!
+    val ideVersionToResult = compatibilityResult.verificationResults.orEmpty().map { it.ideVersion to it.verdict.javaClass.simpleName }
+    LOG.info("Update ${compatibilityResult.plugin} is checked: ${compatibilityResult.resultType}: ${ideVersionToResult.joinToString()}")
 
-    if (results.resultType == CheckRangeResults.ResultType.NO_COMPATIBLE_IDES) {
+    if (compatibilityResult.resultType == CheckRangeCompatibilityResult.ResultType.NO_COMPATIBLE_IDES) {
       updatesMissingCompatibleIde.add(updateInfo)
     } else {
       updatesMissingCompatibleIde.remove(updateInfo)
     }
 
+    val verificationResult = prepareVerificationResponse(compatibilityResult)
+
     try {
-      sendUpdateCheckResult(results, pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully()
+      sendUpdateCheckResult(verificationResult, pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully()
     } catch(e: Exception) {
-      LOG.error("Unable to send verification result of ${results.plugin}", e)
+      LOG.error("Unable to send verification result of ${compatibilityResult.plugin}", e)
     }
   }
 
   private fun getUpdatesToCheck(availableIde: IdeVersion, userName: String, password: String) =
-      verifier.getUpdatesToCheck(availableIde.asString(), createStringRequestBody(userName), createStringRequestBody(password))
+      verifier.getUpdatesToCheck(createStringRequestBody(availableIde.asString()), createStringRequestBody(userName), createStringRequestBody(password))
 
-  private fun sendUpdateCheckResult(checkResult: CheckRangeResults, userName: String, password: String): Call<ResponseBody> =
-      verifier.sendUpdateCheckResult(createJsonRequestBody(CompactJson.toJson(checkResult)), createStringRequestBody(userName), createStringRequestBody(password))
+  private fun sendUpdateCheckResult(checkResult: String, userName: String, password: String): Call<ResponseBody> =
+      verifier.sendUpdateCheckResult(createJsonRequestBody(checkResult), createStringRequestBody(userName), createStringRequestBody(password))
 
 }

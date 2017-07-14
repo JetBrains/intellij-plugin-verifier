@@ -9,6 +9,7 @@ import org.jetbrains.plugins.verifier.service.storage.FileType
 import org.slf4j.LoggerFactory
 import java.io.File
 
+//todo: provide a cache of IdeDescriptors
 object IdeFilesManager {
 
   private val LOG = LoggerFactory.getLogger(IdeFilesManager::class.java)

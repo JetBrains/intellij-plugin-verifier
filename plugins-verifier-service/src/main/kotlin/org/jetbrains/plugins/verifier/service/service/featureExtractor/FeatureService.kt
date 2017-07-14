@@ -5,8 +5,7 @@ import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import org.jetbrains.plugins.verifier.service.api.ApiFeaturesResult
-import org.jetbrains.plugins.verifier.service.api.convertInternalFeaturesResultToServiceResult
+import org.jetbrains.plugins.verifier.service.api.prepareFeaturesResponse
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskId
@@ -90,7 +89,7 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
     val size = extractorResult.features.size
     LOG.info("Plugin $pluginInfo extracted $size features: ($resultType)")
 
-    val pluginsResult = convertInternalFeaturesResultToServiceResult(pluginInfo, resultType, extractorResult.features)
+    val pluginsResult = prepareFeaturesResponse(pluginInfo, resultType, extractorResult.features)
     try {
       sendExtractedFeatures(pluginsResult, pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully()
     } catch(e: Exception) {
@@ -104,7 +103,7 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
       featuresExtractor.getUpdatesToExtractFeatures(createStringRequestBody(userName), createStringRequestBody(password))
 
 
-  private fun sendExtractedFeatures(extractedApiFeatures: ApiFeaturesResult, userName: String, password: String) =
-      featuresExtractor.sendExtractedFeatures(createJsonRequestBody(GSON.toJson(extractedApiFeatures)), createStringRequestBody(userName), createStringRequestBody(password))
+  private fun sendExtractedFeatures(featuresJsonResponse: String, userName: String, password: String) =
+      featuresExtractor.sendExtractedFeatures(createJsonRequestBody(featuresJsonResponse), createStringRequestBody(userName), createStringRequestBody(password))
 
 }
