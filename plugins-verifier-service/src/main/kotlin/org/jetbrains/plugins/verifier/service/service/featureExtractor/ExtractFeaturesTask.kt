@@ -9,8 +9,8 @@ import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 import org.jetbrains.plugins.verifier.service.ide.IdeFileLock
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
-import org.jetbrains.plugins.verifier.service.progress.TaskProgress
 import org.jetbrains.plugins.verifier.service.tasks.Task
+import org.jetbrains.plugins.verifier.service.tasks.TaskProgress
 
 class ExtractFeaturesTask(val pluginCoordinate: PluginCoordinate, val pluginInfo: PluginInfo) : Task<FeaturesResult>() {
   override fun presentableName(): String = "Features of $pluginCoordinate"

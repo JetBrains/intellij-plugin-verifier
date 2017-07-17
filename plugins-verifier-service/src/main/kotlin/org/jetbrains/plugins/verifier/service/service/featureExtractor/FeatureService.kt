@@ -8,9 +8,7 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.api.prepareFeaturesResponse
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.tasks.TaskId
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
-import org.jetbrains.plugins.verifier.service.tasks.TaskResult
 import org.jetbrains.plugins.verifier.service.tasks.TaskStatus
 import org.jetbrains.plugins.verifier.service.util.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.util.createJsonRequestBody
@@ -31,7 +29,7 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
       .build()
       .create(FeaturesApi::class.java)
 
-  private val inProgressUpdates: MutableMap<UpdateInfo, TaskId> = hashMapOf()
+  private val inProgressUpdates: MutableSet<UpdateInfo> = hashSetOf()
 
   private val lastProceedDate: MutableMap<UpdateInfo, Long> = hashMapOf()
 
@@ -41,7 +39,7 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
     val updatesToExtract = getUpdatesToExtract()
     LOG.info("Extracting features of ${updatesToExtract.size} updates: $updatesToExtract")
     for (update in updatesToExtract) {
-      if (taskManager.isBusy()) {
+      if (inProgressUpdates.size > 500) {
         return
       }
       schedule(update)
@@ -63,14 +61,14 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
 
     val pluginInfo = PluginInfo(updateInfo.pluginId, updateInfo.version, updateInfo)
     val runner = ExtractFeaturesTask(PluginCoordinate.ByUpdateInfo(updateInfo), pluginInfo)
-    val taskId = taskManager.enqueue(
+    val taskStatus = taskManager.enqueue(
         runner,
         { onSuccess(it) },
         { t, tid, task -> onError(t, tid, task) },
         { _, task -> onCompletion(task) }
     )
-    inProgressUpdates[updateInfo] = taskId
-    LOG.info("Extract features of $updateInfo is scheduled with taskId #$taskId")
+    inProgressUpdates.add(updateInfo)
+    LOG.info("Extract features of $updateInfo is scheduled with taskId #${taskStatus.taskId}")
   }
 
   private fun onCompletion(task: ExtractFeaturesTask) {
@@ -82,8 +80,7 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
     LOG.error("Unable to extract features of $updateInfo (#${taskStatus.taskId})", error)
   }
 
-  private fun onSuccess(result: TaskResult<FeaturesResult>) {
-    val extractorResult = result.result!!
+  private fun onSuccess(extractorResult: FeaturesResult) {
     val pluginInfo = extractorResult.plugin
     val resultType = extractorResult.resultType
     val size = extractorResult.features.size

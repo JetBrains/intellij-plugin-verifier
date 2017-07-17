@@ -25,7 +25,7 @@ data class DiskUsageInfo(val totalUsage: Long)
 class ServerStatus(private val taskManager: TaskManager) {
 
   fun getRunningTasks(): List<RunningTaskInfo> = taskManager.listTasks().map {
-    RunningTaskInfo(it.taskId, it.presentableName, Date(it.startTime), it.state, it.progress, it.elapsedTime(), it.progressText)
+    RunningTaskInfo(it.taskId, it.taskName, Date(it.startTime), it.state, it.progress.getFraction(), it.elapsedTime(), it.progress.getText())
   }.sortedByDescending { it.startedDate }
 
 

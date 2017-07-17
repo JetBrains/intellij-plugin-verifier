@@ -1,13 +1,15 @@
 package org.jetbrains.plugins.verifier.service.progress
 
+import org.jetbrains.plugins.verifier.service.tasks.TaskProgress
+
 open class DefaultProgress : TaskProgress {
 
   @Volatile private var progress: Double = 0.0
   @Volatile private var text: String = ""
 
-  override fun getProgress(): Double = progress
+  override fun getFraction(): Double = progress
 
-  override fun setProgress(value: Double) {
+  override fun setFraction(value: Double) {
     progress = value
   }
 

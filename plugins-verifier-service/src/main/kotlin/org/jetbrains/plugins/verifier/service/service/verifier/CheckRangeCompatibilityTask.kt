@@ -11,10 +11,10 @@ import com.jetbrains.pluginverifier.tasks.CheckPluginParams
 import com.jetbrains.pluginverifier.tasks.CheckPluginTask
 import org.jetbrains.plugins.verifier.service.ide.IdeFileLock
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
-import org.jetbrains.plugins.verifier.service.progress.BridgeVerifierProgress
-import org.jetbrains.plugins.verifier.service.progress.TaskProgress
+import org.jetbrains.plugins.verifier.service.progress.VerifierToTaskBridgeProgress
 import org.jetbrains.plugins.verifier.service.storage.JdkManager
 import org.jetbrains.plugins.verifier.service.tasks.Task
+import org.jetbrains.plugins.verifier.service.tasks.TaskProgress
 import org.slf4j.LoggerFactory
 
 class CheckRangeCompatibilityTask(val pluginInfo: PluginInfo,
@@ -63,7 +63,7 @@ class CheckRangeCompatibilityTask(val pluginInfo: PluginInfo,
                                          ideDescriptors: List<IdeDescriptor>,
                                          jdkDescriptor: JdkDescriptor,
                                          progress: TaskProgress): CheckRangeCompatibilityResult {
-    val verifierProgress = BridgeVerifierProgress(progress)
+    val verifierProgress = VerifierToTaskBridgeProgress(progress)
     val params = CheckPluginParams(listOf(pluginCoordinate), ideDescriptors, jdkDescriptor, emptyList(), ProblemsFilter.AlwaysTrue, Resolver.getEmptyResolver())
     val checkPluginTask = CheckPluginTask(params)
     val checkPluginResults = checkPluginTask.execute(verifierProgress)

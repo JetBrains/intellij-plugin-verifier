@@ -2,8 +2,8 @@ package org.jetbrains.plugins.verifier.service.service.ide
 
 import com.intellij.structure.ide.IdeVersion
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
-import org.jetbrains.plugins.verifier.service.progress.TaskProgress
 import org.jetbrains.plugins.verifier.service.tasks.Task
+import org.jetbrains.plugins.verifier.service.tasks.TaskProgress
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

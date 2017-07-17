@@ -1,13 +1,13 @@
-package org.jetbrains.plugins.verifier.service.progress
+package org.jetbrains.plugins.verifier.service.tasks
 
 /**
  * @author Sergey Patrikeev
  */
 interface TaskProgress {
 
-  fun getProgress(): Double
+  fun getFraction(): Double
 
-  fun setProgress(value: Double)
+  fun setFraction(value: Double)
 
   fun getText(): String
 

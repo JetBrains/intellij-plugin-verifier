@@ -33,15 +33,15 @@ class IdeServlet : BaseServlet() {
   private fun processUploadIde(req: HttpServletRequest, resp: HttpServletResponse) {
     val ideVersion = parseIdeVersionParameter(req, resp) ?: return
     val ideRunner = UploadIdeRunner(ideVersion)
-    val taskId = getTaskManager().enqueue(ideRunner)
-    sendOk(resp, "Uploading $ideVersion (#$taskId)")
+    val taskStatus = getTaskManager().enqueue(ideRunner)
+    sendOk(resp, "Uploading $ideVersion (#${taskStatus.taskId})")
   }
 
   private fun processDeleteIde(req: HttpServletRequest, resp: HttpServletResponse) {
     val ideVersion = parseIdeVersionParameter(req, resp) ?: return
     val deleteIdeRunner = DeleteIdeRunner(ideVersion)
-    val taskId = getTaskManager().enqueue(deleteIdeRunner)
-    sendOk(resp, "Deleting $ideVersion (#$taskId)")
+    val taskStatus = getTaskManager().enqueue(deleteIdeRunner)
+    sendOk(resp, "Deleting $ideVersion (#${taskStatus.taskId})")
   }
 
 }

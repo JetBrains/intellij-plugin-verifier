@@ -37,8 +37,8 @@ class IdeListUpdater(taskManager: TaskManager) : BaseService("IdeListUpdater", 0
   private fun enqueueDeleteIde(ideVersion: IdeVersion) {
     LOG.info("Delete the IDE #$ideVersion because it is not necessary anymore")
     val task = DeleteIdeRunner(ideVersion)
-    val taskId = taskManager.enqueue(task)
-    LOG.info("Delete IDE #$ideVersion is enqueued with taskId=#$taskId")
+    val taskStatus = taskManager.enqueue(task)
+    LOG.info("Delete IDE #$ideVersion is enqueued with taskId=#${taskStatus.taskId}")
   }
 
   private fun enqueueUploadIde(availableIde: AvailableIde) {
@@ -49,8 +49,8 @@ class IdeListUpdater(taskManager: TaskManager) : BaseService("IdeListUpdater", 0
 
     val runner = UploadIdeRunner(availableIde = availableIde)
 
-    val taskId = taskManager.enqueue(runner, { }, { _, _, _ -> }) { _, _ -> downloadingIdes.remove(version) }
-    LOG.info("Uploading IDE version #$version (task #$taskId)")
+    val taskStatus = taskManager.enqueue(runner, { }, { _, _, _ -> }) { _, _ -> downloadingIdes.remove(version) }
+    LOG.info("Uploading IDE version #$version (task #${taskStatus.taskId})")
 
     downloadingIdes.add(version)
   }

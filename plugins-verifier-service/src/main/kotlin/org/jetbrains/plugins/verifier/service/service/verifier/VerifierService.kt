@@ -13,9 +13,7 @@ import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.params.JdkVersion
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.tasks.TaskId
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
-import org.jetbrains.plugins.verifier.service.tasks.TaskResult
 import org.jetbrains.plugins.verifier.service.tasks.TaskStatus
 import org.jetbrains.plugins.verifier.service.util.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.util.createJsonRequestBody
@@ -32,7 +30,7 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
 
   private val UPDATE_CHECK_MIN_PAUSE_MS = TimeUnit.MINUTES.toMillis(10)
 
-  private val verifiableUpdates: MutableMap<UpdateInfo, TaskId> = hashMapOf()
+  private val verifiableUpdates: MutableSet<UpdateInfo> = hashSetOf()
 
   private val lastCheckDate: MutableMap<UpdateInfo, Long> = hashMapOf()
 
@@ -57,7 +55,7 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
     LOG.info("Checking updates: ${updateId2IdeVersions.asMap()}")
 
     for ((updateId, ideVersions) in updateId2IdeVersions.asMap()) {
-      if (taskManager.isBusy()) {
+      if (verifiableUpdates.size > 500) {
         return
       }
       schedule(updateId, ideVersions.toList())
@@ -83,14 +81,14 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
     val pluginCoordinate = PluginCoordinate.ByUpdateInfo(updateInfo)
     val rangeRunnerParams = CheckRangeParams(JdkVersion.JAVA_8_ORACLE)
     val runner = CheckRangeCompatibilityTask(pluginInfo, pluginCoordinate, rangeRunnerParams, versions)
-    val taskId = taskManager.enqueue(
+    val taskStatus = taskManager.enqueue(
         runner,
         { taskResult -> onSuccess(taskResult, updateInfo) },
         { error, tid, task -> onError(error, tid, task) },
         { _, task -> onCompletion(task) }
     )
-    verifiableUpdates[updateInfo] = taskId
-    LOG.info("Check [since; until] for $updateInfo is scheduled #$taskId")
+    verifiableUpdates.add(updateInfo)
+    LOG.info("Check [since; until] for $updateInfo is scheduled #${taskStatus.taskId}")
   }
 
   private fun onCompletion(task: CheckRangeCompatibilityTask) {
@@ -102,8 +100,7 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
     LOG.error("Unable to check $updateInfo (task #${taskStatus.taskId})", error)
   }
 
-  private fun onSuccess(taskResult: TaskResult<CheckRangeCompatibilityResult>, updateInfo: UpdateInfo) {
-    val compatibilityResult = taskResult.result!!
+  private fun onSuccess(compatibilityResult: CheckRangeCompatibilityResult, updateInfo: UpdateInfo) {
     val ideVersionToResult = compatibilityResult.verificationResults.orEmpty().map { it.ideVersion to it.verdict.javaClass.simpleName }
     LOG.info("Update ${compatibilityResult.plugin} is checked: ${compatibilityResult.resultType}: ${ideVersionToResult.joinToString()}")
 

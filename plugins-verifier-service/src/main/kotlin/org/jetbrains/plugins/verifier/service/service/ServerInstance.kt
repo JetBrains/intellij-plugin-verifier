@@ -9,7 +9,7 @@ import org.jetbrains.plugins.verifier.service.tasks.TaskManager
  * @author Sergey Patrikeev
  */
 object ServerInstance {
-  val taskManager = TaskManager(100)
+  val taskManager = TaskManager(Runtime.getRuntime().availableProcessors())
 
   val verifierService = VerifierService(taskManager)
 

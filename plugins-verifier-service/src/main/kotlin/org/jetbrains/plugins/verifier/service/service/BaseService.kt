@@ -53,10 +53,6 @@ abstract class BaseService(private val serviceName: String,
     isServing = true
     val start = System.currentTimeMillis()
     try {
-      if (taskManager.isBusy()) {
-        LOG.info("Task manager is full now")
-        return
-      }
       LOG.info("$serviceName is going to start")
       doTick()
     } catch (e: Throwable) {
