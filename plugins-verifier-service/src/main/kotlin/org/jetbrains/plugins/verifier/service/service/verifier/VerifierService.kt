@@ -39,7 +39,7 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
   val updatesMissingCompatibleIde = ConcurrentSkipListSet<UpdateInfo>(Comparator { u1, u2 -> u1.updateId - u2.updateId })
 
   private val verifier: VerificationApi = Retrofit.Builder()
-      .baseUrl(Settings.PLUGIN_REPOSITORY_URL.get())
+      .baseUrl(Settings.VERIFIER_SERVICE_REPOSITORY_URL.get())
       .addConverterFactory(GsonConverterFactory.create(GSON))
       .client(makeOkHttpClient(LOG.isDebugEnabled, 5, TimeUnit.MINUTES))
       .build()

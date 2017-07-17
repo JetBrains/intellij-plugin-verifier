@@ -10,17 +10,18 @@ enum class Settings(val key: String,
   JDK_6_HOME("verifier.service.jdk.6.dir", { JDK_8_HOME.get() }),
   JDK_7_HOME("verifier.service.jdk.7.dir", { JDK_8_HOME.get() }),
   JDK_8_HOME("verifier.service.jdk.8.dir"),
-  PROTOCOL_VERSION("verifier.service.protocol.version", { "1" }),
   MAX_DISK_SPACE_MB("verifier.service.max.disk.space.mb", { (50 * 1024).toString() }),
-  PLUGIN_REPOSITORY_URL("verifier.service.plugin.repository.url", { "https://plugins.jetbrains.com" }),
   IDE_REPOSITORY_URL("verifier.service.ide.repository.url", { "https://www.jetbrains.com" }),
-  FEATURE_EXTRACTOR_REPOSITORY_URL("verifier.service.feature.extractor.plugin.repository.url", { PLUGIN_REPOSITORY_URL.get() }),
+
+  VERIFIER_SERVICE_REPOSITORY_URL("verifier.service.verification.plugin.repository.url", { PUBLIC_PLUGIN_REPOSITORY_URL }),
+  FEATURE_EXTRACTOR_REPOSITORY_URL("verifier.service.feature.extractor.plugin.repository.url", { PUBLIC_PLUGIN_REPOSITORY_URL }),
+  DOWNLOAD_PLUGINS_REPOSITORY_URL("verifier.service.download.plugins.repository.url", { PUBLIC_PLUGIN_REPOSITORY_URL }),
+
   ENABLE_FEATURE_EXTRACTOR_SERVICE("verifier.service.enable.feature.extractor.service", { "false" }),
   ENABLE_PLUGIN_VERIFIER_SERVICE("verifier.service.enable.plugin.verifier.service", { "false" }),
   ENABLE_IDE_LIST_UPDATER("verifier.service.enable.ide.list.updater", { "false" }),
   PLUGIN_REPOSITORY_VERIFIER_USERNAME("verifier.service.plugin.repository.verifier.username"),
-  PLUGIN_REPOSITORY_VERIFIER_PASSWORD("verifier.service.plugin.repository.verifier.password", encrypted = true),
-  USE_SAME_REPOSITORY_FOR_DOWNLOADING("verifier.service.use.same.repository.for.downloading", { "true" });
+  PLUGIN_REPOSITORY_VERIFIER_PASSWORD("verifier.service.plugin.repository.verifier.password", encrypted = true);
 
   fun get(): String {
     val property = System.getProperty(key)
@@ -33,4 +34,8 @@ enum class Settings(val key: String,
   fun getAsBoolean(): Boolean = get().toBoolean()
 
   fun getAsInt(): Int = get().toInt()
+
+  companion object {
+    private val PUBLIC_PLUGIN_REPOSITORY_URL = "https://plugins.jetbrains.com"
+  }
 }

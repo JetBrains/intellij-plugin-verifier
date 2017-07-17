@@ -79,12 +79,7 @@ class ServerStartupListener : ServletContextListener {
     val structureTemp = File(FileManager.getTempDirectory(), "intellijStructureTmp")
     System.setProperty("plugin.verifier.home.dir", appHomeDir + "/verifier")
     System.setProperty("intellij.structure.temp.dir", structureTemp.canonicalPath)
-
-    if ("true" == Settings.USE_SAME_REPOSITORY_FOR_DOWNLOADING.get()) {
-      System.setProperty("plugin.repository.url", Settings.PLUGIN_REPOSITORY_URL.get())
-    } else {
-      System.setProperty("plugin.repository.url", PUBLIC_PLUGIN_REPOSITORY)
-    }
+    System.setProperty("plugin.repository.url", Settings.DOWNLOAD_PLUGINS_REPOSITORY_URL.get())
 
     val diskSpace = Settings.MAX_DISK_SPACE_MB.getAsInt()
     if (diskSpace < MIN_DISK_SPACE_MB) {

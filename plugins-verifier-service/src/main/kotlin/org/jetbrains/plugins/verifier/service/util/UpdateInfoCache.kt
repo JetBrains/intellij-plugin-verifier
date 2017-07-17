@@ -26,7 +26,7 @@ object UpdateInfoCache {
   private val cache: ConcurrentMap<Int, UpdateInfo> = ConcurrentHashMap()
 
   private val api: GetUpdateInfoApi = Retrofit.Builder()
-      .baseUrl(Settings.PLUGIN_REPOSITORY_URL.get())
+      .baseUrl(Settings.DOWNLOAD_PLUGINS_REPOSITORY_URL.get())
       .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
