@@ -3,6 +3,7 @@ package org.jetbrains.plugins.verifier.service.api
 import com.google.gson.annotations.SerializedName
 
 import com.intellij.structure.plugin.PluginDependency
+import com.intellij.structure.problems.PluginProblem
 import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
@@ -17,8 +18,14 @@ import org.jetbrains.plugins.verifier.service.service.verifier.CheckRangeCompati
 fun prepareVerificationResponse(compatibilityResult: CheckRangeCompatibilityResult): String {
   val apiResultType = convertToApiResultType(compatibilityResult)
   val apiResults = compatibilityResult.verificationResults?.map { convertVerifierResult(it) }
-  val apiResult = ApiCheckRangeCompatibilityResult(compatibilityResult.plugin.updateInfo!!.updateId, apiResultType, apiResults)
+  val invalidPluginProblems = compatibilityResult.invalidPluginProblems?.map { convertInvalidProblem(it) }
+  val apiResult = ApiCheckRangeCompatibilityResult(compatibilityResult.plugin.updateInfo!!.updateId, apiResultType, apiResults, invalidPluginProblems, compatibilityResult.nonDownloadableReason)
   return BaseService.GSON.toJson(apiResult)
+}
+
+private fun convertInvalidProblem(pluginProblem: PluginProblem): ApiInvalidPluginProblem = when (pluginProblem.level) {
+  PluginProblem.Level.ERROR -> ApiInvalidPluginProblem(pluginProblem.message, ApiInvalidPluginProblem.Level.ERROR)
+  PluginProblem.Level.WARNING -> ApiInvalidPluginProblem(pluginProblem.message, ApiInvalidPluginProblem.Level.WARNING)
 }
 
 private data class ApiDependenciesGraph(@SerializedName("start") var start: Node,
@@ -30,6 +37,7 @@ private data class ApiDependenciesGraph(@SerializedName("start") var start: Node
                         @SerializedName("isOptional") var isOptional: Boolean)
 
   data class MissingDependency(@SerializedName("dependency") var dependency: Dependency,
+                               @SerializedName("isModule") var isModule: Boolean,
                                @SerializedName("missingReason") var missingReason: String)
 
   data class Node(@SerializedName("pluginId") var pluginId: String,
@@ -64,13 +72,19 @@ private data class ApiWarning(@SerializedName("message") val message: String)
 
 private data class ApiProblem(@SerializedName("description") val description: String)
 
-private data class ApiInvalidPluginProblem(@SerializedName("message") val message: String)
+private data class ApiInvalidPluginProblem(@SerializedName("message") val message: String,
+                                           @SerializedName("level") val level: Level) {
+  enum class Level {
+    WARNING,
+    ERROR
+  }
+}
 
 private data class ApiCheckRangeCompatibilityResult(@SerializedName("updateId") val updateId: Int,
                                                     @SerializedName("type") val resultType: ResultType,
-                                                    @SerializedName("verificationResults") val verificationResults: List<ApiVerificationResult>? = null,
-                                                    @SerializedName("invalidPluginProblems") val invalidPluginProblems: List<ApiInvalidPluginProblem>? = null,
-                                                    @SerializedName("nonDownloadableReason") val nonDownloadableReason: String? = null) {
+                                                    @SerializedName("verificationResults") val verificationResults: List<ApiVerificationResult>?,
+                                                    @SerializedName("invalidPluginProblems") val invalidPluginProblems: List<ApiInvalidPluginProblem>?,
+                                                    @SerializedName("nonDownloadableReason") val nonDownloadableReason: String?) {
   enum class ResultType {
     NON_DOWNLOADABLE,
     NO_COMPATIBLE_IDES,
@@ -93,7 +107,7 @@ private fun convertNode(internalNode: DependencyNode): ApiDependenciesGraph.Node
 )
 
 private fun convertMissingDependency(missingDependency: MissingDependency) = ApiDependenciesGraph.MissingDependency(
-    convertPluginDependency(missingDependency.dependency), missingDependency.missingReason
+    convertPluginDependency(missingDependency.dependency), missingDependency.isModule, missingDependency.missingReason
 )
 
 private fun convertPluginDependency(dependency: PluginDependency) = ApiDependenciesGraph.Dependency(dependency.id, dependency.isOptional)
