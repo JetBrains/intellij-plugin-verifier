@@ -57,11 +57,14 @@ class TaskManager(concurrency: Int) {
           if (result != null) {
             taskStatus.state = TaskStatus.State.SUCCESS
             onSuccess(result)
+            taskProgress.setText("Finished successfully")
           } else {
             taskStatus.state = TaskStatus.State.ERROR
             onError(error, taskStatus, task)
+            taskProgress.setText("Finished with error")
           }
           taskStatus.endTime = System.currentTimeMillis()
+          taskProgress.setFraction(1.0)
         }
         .whenComplete { _, _ ->
           onCompletion(taskStatus, task)

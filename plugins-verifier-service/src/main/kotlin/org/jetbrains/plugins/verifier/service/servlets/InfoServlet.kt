@@ -94,17 +94,19 @@ class InfoServlet : BaseServlet() {
                 th { +"ID" }
                 th { +"Task name" }
                 th { +"Start time" }
-                th { +"Status" }
+                th { +"State" }
+                th { +"Message" }
                 th { +"Completion %" }
                 th { +"Total time (ms)" }
               }
 
-              serverStatus.getRunningTasks().forEach { (taskId, taskName, startedDate, state, progress, totalTimeMs) ->
+              serverStatus.getRunningTasks().forEach { (taskId, taskName, startedDate, state, progress, totalTimeMs, message) ->
                 tr {
                   td { +taskId.toString() }
                   td { +taskName }
                   td { +DATE_FORMAT.format(startedDate) }
                   td { +state.toString() }
+                  td { +message }
                   td { +(progress * 100.0).toString() }
                   td { +(totalTimeMs.toString()) }
                 }
