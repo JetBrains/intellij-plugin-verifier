@@ -6,4 +6,5 @@ include 'structure-classes'
 include 'structure-ide'
 include 'tests'
 include 'tests:mock-plugin'
+include 'tests:teamcity-mock-plugin'
 

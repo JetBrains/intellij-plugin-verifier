@@ -11,3 +11,4 @@ dependencies {
 }
 
 test.dependsOn 'mock-plugin:prepareAllMocks'
+test.dependsOn 'teamcity-mock-plugin:prepareAllMocks'

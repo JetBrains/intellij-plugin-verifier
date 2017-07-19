@@ -22,7 +22,7 @@ data class TeamcityPlugin(
 
 
 fun TeamcityPluginBean.toPlugin() = TeamcityPlugin(
-    pluginId = "teamcity_" + this.name!!.replace(Regex("[^A-Za-z0-9] "), "").replace(' ', '-'),
+    pluginId = this.name!!.replace(Regex("[^A-Za-z0-9] "), "").replace(' ', '-'),
     pluginName = this.displayName!!,
     pluginVersion = this.version!!,
     vendor = this.vendor?.name,
