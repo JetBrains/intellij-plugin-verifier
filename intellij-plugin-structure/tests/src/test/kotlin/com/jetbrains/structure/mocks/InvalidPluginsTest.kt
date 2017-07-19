@@ -1,4 +1,4 @@
-package com.intellij.structure.mocks
+package com.jetbrains.structure.mocks
 
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.plugin.IdePlugin

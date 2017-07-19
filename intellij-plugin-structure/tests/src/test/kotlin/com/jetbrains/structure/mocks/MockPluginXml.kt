@@ -1,4 +1,4 @@
-package com.intellij.structure.mocks
+package com.jetbrains.structure.mocks
 
 data class PluginXmlBuilder(
     var ideaPluginTagOpen: String = "<idea-plugin>",

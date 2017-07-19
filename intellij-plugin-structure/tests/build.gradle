@@ -10,5 +10,4 @@ dependencies {
   testRuntime group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
 }
 
-test.dependsOn 'mock-plugin:prepareAllMocks'
-test.dependsOn 'teamcity-mock-plugin:prepareAllMocks'
+test.dependsOn('mock-plugin:prepareAllMocks', 'teamcity-mock-plugin:prepareAllMocks')

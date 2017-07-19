@@ -1,10 +1,10 @@
-package com.intellij.structure.domain
+package com.jetbrains.structure.domain
 
 import com.intellij.structure.ide.IdeManager
 import com.intellij.structure.ide.IdeVersion
-import com.intellij.structure.mocks.PluginXmlBuilder
-import com.intellij.structure.mocks.modify
-import com.intellij.structure.mocks.perfectXmlBuilder
+import com.jetbrains.structure.mocks.PluginXmlBuilder
+import com.jetbrains.structure.mocks.modify
+import com.jetbrains.structure.mocks.perfectXmlBuilder
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.collection.IsCollectionWithSize.hasSize
 import org.junit.Assert.assertThat

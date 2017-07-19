@@ -1,4 +1,4 @@
-package com.intellij.structure.domain;
+package com.jetbrains.structure.domain;
 
 
 import com.intellij.structure.ide.IdeVersion;

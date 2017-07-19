@@ -1,4 +1,4 @@
-package com.intellij.structure.utils;
+package com.jetbrains.structure.utils;
 
 import com.intellij.structure.impl.utils.xml.URLUtil;
 import org.junit.Test;
