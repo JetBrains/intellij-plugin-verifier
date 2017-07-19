@@ -34,9 +34,11 @@ fun createTeamcityPlugin(pluginFile: File): PluginCreationResult<TeamcityPlugin>
 }
 
 private fun loadDescriptorFromZip(pluginFile: ZipFile): PluginCreationResult<TeamcityPlugin> {
-  val descriptorEntry = pluginFile.getEntry(DESCRIPTOR_NAME) ?:
-      return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
-  return loadDescriptorFromStream(pluginFile.getInputStream(descriptorEntry))
+  pluginFile.use {
+    val descriptorEntry = pluginFile.getEntry(DESCRIPTOR_NAME) ?:
+        return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
+    return loadDescriptorFromStream(pluginFile.getInputStream(descriptorEntry))
+  }
 }
 
 private fun loadDescriptorFromDirectory(pluginDirectory: File): PluginCreationResult<TeamcityPlugin> {
@@ -44,7 +46,7 @@ private fun loadDescriptorFromDirectory(pluginDirectory: File): PluginCreationRe
   if (!descriptorFile.exists()) {
     return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
   }
-  return loadDescriptorFromStream(descriptorFile.inputStream())
+  return descriptorFile.inputStream().use { loadDescriptorFromStream(it) }
 }
 
 private fun loadDescriptorFromStream(inputStream: InputStream): PluginCreationResult<TeamcityPlugin> {
