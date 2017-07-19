@@ -17,6 +17,14 @@ import java.util.Set;
  * @author Sergey Patrikeev
  */
 public interface IdePlugin extends Plugin {
+  @Nullable
+  @Override
+  IdeVersion getSinceBuild();
+
+  @Nullable
+  @Override
+  IdeVersion getUntilBuild();
+
   boolean isCompatibleWithIde(@NotNull IdeVersion ideVersion);
 
   @NotNull

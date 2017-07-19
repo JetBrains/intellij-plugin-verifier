@@ -125,8 +125,8 @@ public final class PluginCreator {
       registerProblem(new NoModuleDependencies(myDescriptorPath));
     }
 
-    IdeVersion sinceBuild = (IdeVersion) plugin.getSinceBuild();
-    IdeVersion untilBuild = (IdeVersion) plugin.getUntilBuild();
+    IdeVersion sinceBuild = plugin.getSinceBuild();
+    IdeVersion untilBuild = plugin.getUntilBuild();
     if (sinceBuild != null && untilBuild != null && sinceBuild.compareTo(untilBuild) > 0) {
       registerProblem(new SinceBuildGreaterThanUntilBuild(myDescriptorPath, sinceBuild, untilBuild));
     }
@@ -137,9 +137,9 @@ public final class PluginCreator {
   }
 
   public void addOptionalDescriptor(PluginDependency pluginDependency, String configurationFile, PluginCreator optionalCreator) {
-    PluginCreationResult pluginCreationResult = optionalCreator.getPluginCreationResult();
+    PluginCreationResult<IdePlugin> pluginCreationResult = optionalCreator.getPluginCreationResult();
     if (pluginCreationResult instanceof PluginCreationSuccess) {
-      myPlugin.addOptionalDescriptor(configurationFile, (IdePlugin) ((PluginCreationSuccess) pluginCreationResult).getPlugin());
+      myPlugin.addOptionalDescriptor(configurationFile, ((PluginCreationSuccess<IdePlugin>) pluginCreationResult).getPlugin());
     } else {
       registerProblem(new MissingOptionalDependencyConfigurationFile(myDescriptorPath, pluginDependency, configurationFile));
     }

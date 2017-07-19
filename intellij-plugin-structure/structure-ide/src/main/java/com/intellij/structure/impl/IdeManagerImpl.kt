@@ -158,7 +158,7 @@ class IdeManagerImpl : IdeManager() {
         pluginCreator.setOriginalFile(pluginDirectory)
         val creationResult = pluginCreator.pluginCreationResult
         return when (creationResult) {
-          is PluginCreationSuccess -> creationResult.plugin as IdePlugin
+          is PluginCreationSuccess -> creationResult.plugin
           is PluginCreationFail -> {
             val problems = creationResult.errorsAndWarnings
             LOG.debug("Failed to read plugin " + pluginDirectory + ". Problems: " + Joiner.on(", ").join(problems))
