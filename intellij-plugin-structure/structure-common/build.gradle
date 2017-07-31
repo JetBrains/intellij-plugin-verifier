@@ -1,5 +1,26 @@
+apply plugin: 'maven-publish'
+version = '1.0'
+
 dependencies {
   compile("org.codehaus.plexus:plexus-archiver:2.3") {
     exclude group: "junit"
+  }
+}
+
+publishing {
+  publications {
+    maven(MavenPublication) {
+      groupId 'org.jetbrains.plugins'
+      artifactId 'structure-common'
+      version project(':structure-common').version
+
+      from components.java
+    }
+  }
+
+  repositories {
+    maven {
+      url "http://repo.labs.intellij.net/webteam"
+    }
   }
 }
