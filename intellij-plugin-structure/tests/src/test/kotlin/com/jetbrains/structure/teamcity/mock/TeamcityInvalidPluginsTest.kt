@@ -5,7 +5,7 @@ import com.jetbrains.structure.plugin.PluginCreationSuccess
 import com.jetbrains.structure.plugin.PluginProblem
 import com.jetbrains.structure.problems.*
 import com.jetbrains.structure.teamcity.TeamcityPlugin
-import com.jetbrains.structure.teamcity.createTeamcityPlugin
+import com.jetbrains.structure.teamcity.TeamcityPluginManager
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.instanceOf
 import org.junit.Assert.assertThat
@@ -38,7 +38,7 @@ class TeamcityInvalidPluginsTest {
     val nonExistentFile = File("non-existent-file")
     expectedEx.expect(IllegalArgumentException::class.java)
     expectedEx.expectMessage("Plugin file non-existent-file does not exist")
-    createTeamcityPlugin(nonExistentFile)
+    TeamcityPluginManager.createTeamcityPlugin(nonExistentFile)
   }
 
   @Test
@@ -59,13 +59,13 @@ class TeamcityInvalidPluginsTest {
   }
 
   private fun getSuccessResult(pluginFile: File): PluginCreationSuccess<TeamcityPlugin> {
-    val pluginCreationResult = createTeamcityPlugin(pluginFile)
+    val pluginCreationResult = TeamcityPluginManager.createTeamcityPlugin(pluginFile)
     assertThat(pluginCreationResult, instanceOf(PluginCreationSuccess::class.java))
     return pluginCreationResult as PluginCreationSuccess
   }
 
   private fun getFailedResult(pluginFile: File): PluginCreationFail<TeamcityPlugin> {
-    val pluginCreationResult = createTeamcityPlugin(pluginFile)
+    val pluginCreationResult = TeamcityPluginManager.createTeamcityPlugin(pluginFile)
     assertThat(pluginCreationResult, instanceOf(PluginCreationFail::class.java))
     return pluginCreationResult as PluginCreationFail
   }

@@ -4,8 +4,8 @@ import com.jetbrains.structure.plugin.PluginCreationFail
 import com.jetbrains.structure.plugin.PluginCreationSuccess
 import com.jetbrains.structure.plugin.PluginProblem
 import com.jetbrains.structure.teamcity.TeamcityPlugin
+import com.jetbrains.structure.teamcity.TeamcityPluginManager
 import com.jetbrains.structure.teamcity.TeamcityVersion
-import com.jetbrains.structure.teamcity.createTeamcityPlugin
 import org.junit.Assert
 import org.junit.Assert.*
 import org.junit.Test
@@ -66,7 +66,7 @@ class TeamcityMockPluginsTest {
   private fun testMockPluginStructureAndConfiguration(pluginPath: String) {
     val pluginFile = getMockPluginFile(pluginPath)
 
-    val pluginCreationResult = createTeamcityPlugin(pluginFile)
+    val pluginCreationResult = TeamcityPluginManager.createTeamcityPlugin(pluginFile)
     if (pluginCreationResult is PluginCreationFail) {
       val message = pluginCreationResult.errorsAndWarnings.joinToString(separator = "\n") { it.message }
       fail(message)
