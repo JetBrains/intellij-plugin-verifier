@@ -3,22 +3,13 @@ package com.jetbrains.pluginverifier.repository
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.lang.System.getProperty
 
 object RepositoryConfiguration {
 
-  private val myDefaultProperties: Properties
+  private val DEFAULT_IDE_REPOSITORY_URL = "https://jetbrains.com"
 
-  init {
-    val defaultConfig = Properties()
-    try {
-      defaultConfig.load(RepositoryConfiguration::class.java.getResourceAsStream("/defaultConfig.properties"))
-    } catch (e: IOException) {
-      throw RuntimeException("Failed to read defaultConfig.properties", e)
-    }
-
-    myDefaultProperties = Properties(defaultConfig)
-  }
+  private val DEFAULT_PLUGIN_REPOSITORY_URL = "https://plugins.jetbrains.com"
 
   private val verifierHomeDir: File
     get() {
@@ -33,19 +24,12 @@ object RepositoryConfiguration {
       return File(FileUtils.getTempDirectory(), ".pluginVerifier")
     }
 
-  private fun getProperty(propertyName: String): String? {
-    val systemProperty = System.getProperty(propertyName)
-    if (systemProperty != null) return systemProperty
-
-    return myDefaultProperties.getProperty(propertyName)
-  }
-
   val ideRepositoryUrl: String by lazy {
-    getProperty("ide.repository.url")?.trimEnd('/') ?: throw RuntimeException("IDE repository URL is not specified")
+    getProperty("ide.repository.url")?.trimEnd('/') ?: DEFAULT_IDE_REPOSITORY_URL ?: throw RuntimeException("IDE repository URL is not specified")
   }
 
   val pluginRepositoryUrl: String by lazy {
-    getProperty("plugin.repository.url")?.trimEnd('/') ?: throw RuntimeException("Plugin repository URL is not specified")
+    getProperty("plugin.repository.url")?.trimEnd('/') ?: DEFAULT_PLUGIN_REPOSITORY_URL ?: throw RuntimeException("Plugin repository URL is not specified")
   }
 
   val downloadDirMaxSpace: Long? by lazy {
