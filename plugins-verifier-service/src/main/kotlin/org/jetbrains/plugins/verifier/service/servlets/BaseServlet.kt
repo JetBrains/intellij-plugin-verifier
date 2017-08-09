@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
+import java.util.jar.Manifest
 import javax.servlet.http.HttpServlet
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -82,5 +83,10 @@ abstract class BaseServlet : HttpServlet() {
   }
 
   fun getTaskManager(): TaskManager = ServerInstance.taskManager
+
+  fun getAppVersion(): String? = servletContext.getResourceAsStream("/META-INF/MANIFEST.MF")?.use { inputStream ->
+    val manifest = Manifest(inputStream)
+    manifest.mainAttributes.getValue("Plugin-Verifier-Service-Version")
+  }
 
 }

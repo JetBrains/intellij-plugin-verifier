@@ -33,6 +33,12 @@ configure(allprojects) {
     }
   }
 
+  war {
+    manifest {
+      attributes 'Plugin-Verifier-Service-Version': version
+    }
+  }
+
 
   repositories {
     mavenLocal()

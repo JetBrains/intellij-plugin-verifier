@@ -45,8 +45,11 @@ class InfoServlet : BaseServlet() {
         }
         body {
           div {
+            h1 {
+              +("Plugin Verifier Service " + getAppVersion())
+            }
             h2 {
-              +"Application parameters:"
+              +"Runtime parameters:"
             }
             ul {
               Settings.values().forEach { s ->

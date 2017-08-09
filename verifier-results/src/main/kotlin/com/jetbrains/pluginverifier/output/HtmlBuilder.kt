@@ -53,6 +53,8 @@ class HtmlBuilder(val output: PrintWriter) {
 
   fun head(block: () -> Unit) = tag("head", block)
 
+  fun h1(block: () -> Unit) = tag("h1", block)
+
   fun h2(block: () -> Unit) = tag("h2", block)
 
   fun h3(block: () -> Unit) = tag("h3", block)
