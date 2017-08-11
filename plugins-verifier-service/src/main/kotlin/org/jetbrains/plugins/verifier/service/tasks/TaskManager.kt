@@ -49,6 +49,7 @@ class TaskManager(concurrency: Int) {
 
     val taskFuture = CompletableFuture.supplyAsync(Supplier {
       taskStatus.state = TaskStatus.State.RUNNING
+      taskProgress.setText("Running...")
       task.computeResult(taskProgress)
     }, executorService)
 

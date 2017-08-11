@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 
 //todo: provide a cache of IdeDescriptors
+//todo: merge it with IdeRepository from verifier module
 object IdeFilesManager {
 
   private val LOG = LoggerFactory.getLogger(IdeFilesManager::class.java)
