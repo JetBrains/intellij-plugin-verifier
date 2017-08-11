@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 import com.jetbrains.intellij.feature.extractor.ExtensionPoint
 import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.pluginverifier.api.PluginInfo
-import org.jetbrains.plugins.verifier.service.service.BaseService
+import org.jetbrains.plugins.verifier.service.service.ServerInstance
 import org.jetbrains.plugins.verifier.service.service.featureExtractor.FeaturesResult
 
 fun prepareFeaturesResponse(pluginInfo: PluginInfo,
@@ -13,7 +13,7 @@ fun prepareFeaturesResponse(pluginInfo: PluginInfo,
   val updateId = pluginInfo.updateInfo!!.updateId
   val apiResultType = convertResultType(resultType)
   val apiFeatures = convertFeatures(features)
-  return BaseService.GSON.toJson(ApiFeaturesResult(updateId, apiResultType, apiFeatures))
+  return ServerInstance.GSON.toJson(ApiFeaturesResult(updateId, apiResultType, apiFeatures))
 }
 
 private fun convertFeatures(features: List<ExtensionPointFeatures>): List<ApiExtensionPointFeatures> {

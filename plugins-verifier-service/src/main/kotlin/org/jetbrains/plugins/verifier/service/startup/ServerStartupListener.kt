@@ -4,6 +4,9 @@ import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.service.ServerInstance
+import org.jetbrains.plugins.verifier.service.service.featureExtractor.FeatureService
+import org.jetbrains.plugins.verifier.service.service.ide.IdeListUpdater
+import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.jetbrains.plugins.verifier.service.util.UpdateInfoCache
@@ -16,8 +19,6 @@ class ServerStartupListener : ServletContextListener {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(ServerStartupListener::class.java)
-
-    private val PUBLIC_PLUGIN_REPOSITORY: String = "https://plugins.jetbrains.com"
 
     private val MIN_DISK_SPACE_MB: Int = 10000
 
@@ -34,14 +35,22 @@ class ServerStartupListener : ServletContextListener {
     cleanUpTempDirs()
     prepareUpdateInfoCacheForExistingIdes()
 
+    val verifierService = VerifierService()
+    val featureService = FeatureService()
+    val ideListUpdater = IdeListUpdater()
+
+    ServerInstance.addService(verifierService)
+    ServerInstance.addService(featureService)
+    ServerInstance.addService(ideListUpdater)
+
     if (Settings.ENABLE_PLUGIN_VERIFIER_SERVICE.getAsBoolean()) {
-      ServerInstance.verifierService.start()
+      verifierService.start()
     }
     if (Settings.ENABLE_FEATURE_EXTRACTOR_SERVICE.getAsBoolean()) {
-      ServerInstance.featureService.start()
+      featureService.start()
     }
     if (Settings.ENABLE_IDE_LIST_UPDATER.getAsBoolean()) {
-      ServerInstance.ideListUpdater.start()
+      ideListUpdater.start()
     }
   }
 
@@ -64,7 +73,7 @@ class ServerStartupListener : ServletContextListener {
 
 
   override fun contextDestroyed(sce: ServletContextEvent?) {
-    ServerInstance.stop()
+    ServerInstance.close()
   }
 
   private fun validateSystemProperties() {

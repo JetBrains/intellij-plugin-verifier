@@ -4,6 +4,7 @@ import com.jetbrains.pluginverifier.misc.bytesToGigabytes
 import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.output.HtmlBuilder
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
+import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.ServerInstance
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.status.ServerStatus
@@ -22,7 +23,42 @@ class InfoServlet : BaseServlet() {
   }
 
   override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
-    processStatus(resp)
+    val path = getPath(req, resp) ?: return
+    if (path.endsWith("control-service")) {
+      val adminPassword = req.getParameter("admin-password")
+      if (adminPassword == null || adminPassword != Settings.SERVICE_ADMIN_PASSWORD.get()) {
+        resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Incorrect password")
+        return
+      }
+      val serviceName = req.getParameter("service-name")
+      if (serviceName == null) {
+        resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Service name is not specified")
+        return
+      }
+      val command = req.getParameter("command")
+      when (command) {
+        "start" -> changeServiceState(serviceName, resp) { it.start() }
+        "resume" -> changeServiceState(serviceName, resp) { it.resume() }
+        "pause" -> changeServiceState(serviceName, resp) { it.pause() }
+        "stop" -> changeServiceState(serviceName, resp) { it.stop() }
+        else -> resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown command")
+      }
+    } else {
+      processStatus(resp)
+    }
+  }
+
+  private fun changeServiceState(serviceName: String, resp: HttpServletResponse, action: (BaseService) -> Boolean) {
+    val service = ServerInstance.services.find { it.serviceName == serviceName }
+    if (service == null) {
+      resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Service $serviceName is not found")
+    } else {
+      if (action(service)) {
+        sendOk(resp, "Service's $serviceName state is changed to ${service.getState()}")
+      } else {
+        resp.sendError(HttpServletResponse.SC_CONFLICT, "Service $serviceName can't be paused")
+      }
+    }
   }
 
   private fun processStatus(resp: HttpServletResponse) {
@@ -74,6 +110,26 @@ class InfoServlet : BaseServlet() {
             }
 
             h2 {
+              +"Services:"
+            }
+            ul {
+              ServerInstance.services.forEach { service ->
+                val serviceName = service.serviceName
+                li {
+                  +(serviceName + " - ${service.getState()}")
+                  form("control-$serviceName", "display: inline;", "/info/control-service") {
+                    input("submit", "command", "start")
+                    input("submit", "command", "resume")
+                    input("submit", "command", "pause")
+                    input("submit", "command", "stop")
+                    input("hidden", "service-name", serviceName)
+                    +"Admin password: "
+                    input("password", "admin-password")
+                  }
+                }
+              }
+            }
+            h2 {
               +"Available IDEs: "
             }
             ul {
@@ -83,11 +139,6 @@ class InfoServlet : BaseServlet() {
                 }
               }
             }
-
-            h2 {
-              +("Updates missing compatible IDEs: ")
-            }
-            +ServerInstance.verifierService.updatesMissingCompatibleIde.joinToString()
 
             h2 {
               +"Running tasks"

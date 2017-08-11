@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.verifier.service.api
 
 import com.google.gson.annotations.SerializedName
-
 import com.intellij.structure.plugin.PluginDependency
 import com.intellij.structure.problems.PluginProblem
 import com.jetbrains.pluginverifier.api.Result
@@ -12,7 +11,7 @@ import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.warnings.Warning
 import org.jetbrains.plugins.verifier.service.api.ApiVerificationVerdict.VerdictType.*
-import org.jetbrains.plugins.verifier.service.service.BaseService
+import org.jetbrains.plugins.verifier.service.service.ServerInstance
 import org.jetbrains.plugins.verifier.service.service.verifier.CheckRangeCompatibilityResult
 
 fun prepareVerificationResponse(compatibilityResult: CheckRangeCompatibilityResult): String {
@@ -20,7 +19,7 @@ fun prepareVerificationResponse(compatibilityResult: CheckRangeCompatibilityResu
   val apiResults = compatibilityResult.verificationResults?.map { convertVerifierResult(it) }
   val invalidPluginProblems = compatibilityResult.invalidPluginProblems?.map { convertInvalidProblem(it) }
   val apiResult = ApiCheckRangeCompatibilityResult(compatibilityResult.plugin.updateInfo!!.updateId, apiResultType, apiResults, invalidPluginProblems, compatibilityResult.nonDownloadableReason)
-  return BaseService.GSON.toJson(apiResult)
+  return ServerInstance.GSON.toJson(apiResult)
 }
 
 private fun convertInvalidProblem(pluginProblem: PluginProblem): ApiInvalidPluginProblem = when (pluginProblem.level) {

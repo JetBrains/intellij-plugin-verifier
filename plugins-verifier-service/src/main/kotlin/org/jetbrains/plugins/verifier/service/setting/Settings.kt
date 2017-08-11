@@ -21,7 +21,9 @@ enum class Settings(val key: String,
   ENABLE_PLUGIN_VERIFIER_SERVICE("verifier.service.enable.plugin.verifier.service", { "false" }),
   ENABLE_IDE_LIST_UPDATER("verifier.service.enable.ide.list.updater", { "false" }),
   PLUGIN_REPOSITORY_VERIFIER_USERNAME("verifier.service.plugin.repository.verifier.username"),
-  PLUGIN_REPOSITORY_VERIFIER_PASSWORD("verifier.service.plugin.repository.verifier.password", encrypted = true);
+  PLUGIN_REPOSITORY_VERIFIER_PASSWORD("verifier.service.plugin.repository.verifier.password", encrypted = true),
+
+  SERVICE_ADMIN_PASSWORD("verifier.service.admin.password", encrypted = true);
 
   fun get(): String {
     val property = System.getProperty(key)

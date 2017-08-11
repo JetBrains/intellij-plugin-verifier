@@ -5,17 +5,16 @@ import com.jetbrains.pluginverifier.repository.AvailableIde
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import java.util.concurrent.TimeUnit
 
 /**
  * @author Sergey Patrikeev
  */
-class IdeListUpdater(taskManager: TaskManager) : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES, taskManager) {
+class IdeListUpdater : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES) {
 
   private val downloadingIdes: MutableSet<IdeVersion> = hashSetOf()
 
-  override fun doTick() {
+  override fun doServe() {
     val alreadyIdes = IdeFilesManager.ideList()
 
     val relevantIdes: List<AvailableIde> = fetchRelevantIdes()

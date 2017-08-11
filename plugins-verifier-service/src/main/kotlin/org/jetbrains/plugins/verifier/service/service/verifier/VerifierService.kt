@@ -12,8 +12,8 @@ import org.jetbrains.plugins.verifier.service.api.prepareVerificationResponse
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.params.JdkVersion
 import org.jetbrains.plugins.verifier.service.service.BaseService
+import org.jetbrains.plugins.verifier.service.service.ServerInstance
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.jetbrains.plugins.verifier.service.tasks.TaskStatus
 import org.jetbrains.plugins.verifier.service.util.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.util.createJsonRequestBody
@@ -24,7 +24,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.TimeUnit
 
-class VerifierService(taskManager: TaskManager) : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES, taskManager) {
+class VerifierService : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES) {
 
   private val UPDATE_MISSING_IDE_PAUSE_MS = TimeUnit.DAYS.toMillis(1)
 
@@ -34,16 +34,23 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
 
   private val lastCheckDate: MutableMap<UpdateInfo, Long> = hashMapOf()
 
-  val updatesMissingCompatibleIde = ConcurrentSkipListSet<UpdateInfo>(Comparator { u1, u2 -> u1.updateId - u2.updateId })
+  private val updatesMissingCompatibleIde = ConcurrentSkipListSet<UpdateInfo>(Comparator { u1, u2 -> u1.updateId - u2.updateId })
 
-  private val verifier: VerificationApi = Retrofit.Builder()
-      .baseUrl(Settings.VERIFIER_SERVICE_REPOSITORY_URL.get())
-      .addConverterFactory(GsonConverterFactory.create(GSON))
+  private val repo2VerifierApi = hashMapOf<String, VerificationApi>()
+
+  private fun getVerifierConnector(): VerificationApi {
+    val repositoryUrl = Settings.VERIFIER_SERVICE_REPOSITORY_URL.get()
+    return repo2VerifierApi.getOrPut(repositoryUrl, { createVerifier(repositoryUrl) })
+  }
+
+  private fun createVerifier(repositoryUrl: String): VerificationApi = Retrofit.Builder()
+      .baseUrl(repositoryUrl)
+      .addConverterFactory(GsonConverterFactory.create(ServerInstance.GSON))
       .client(makeOkHttpClient(LOG.isDebugEnabled, 5, TimeUnit.MINUTES))
       .build()
       .create(VerificationApi::class.java)
 
-  override fun doTick() {
+  override fun doServe() {
     val updateId2IdeVersions = LinkedHashMultimap.create<Int, IdeVersion>()
 
     for (ideVersion in IdeFilesManager.ideList()) {
@@ -120,9 +127,9 @@ class VerifierService(taskManager: TaskManager) : BaseService("VerifierService",
   }
 
   private fun getUpdatesToCheck(availableIde: IdeVersion, userName: String, password: String) =
-      verifier.getUpdatesToCheck(createStringRequestBody(availableIde.asString()), createStringRequestBody(userName), createStringRequestBody(password))
+      getVerifierConnector().getUpdatesToCheck(createStringRequestBody(availableIde.asString()), createStringRequestBody(userName), createStringRequestBody(password))
 
   private fun sendUpdateCheckResult(checkResult: String, userName: String, password: String): Call<ResponseBody> =
-      verifier.sendUpdateCheckResult(createJsonRequestBody(checkResult), createStringRequestBody(userName), createStringRequestBody(password))
+      getVerifierConnector().sendUpdateCheckResult(createJsonRequestBody(checkResult), createStringRequestBody(userName), createStringRequestBody(password))
 
 }

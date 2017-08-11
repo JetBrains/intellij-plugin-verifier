@@ -7,8 +7,8 @@ import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.api.prepareFeaturesResponse
 import org.jetbrains.plugins.verifier.service.service.BaseService
+import org.jetbrains.plugins.verifier.service.service.ServerInstance
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.jetbrains.plugins.verifier.service.tasks.TaskStatus
 import org.jetbrains.plugins.verifier.service.util.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.util.createJsonRequestBody
@@ -20,22 +20,29 @@ import java.util.concurrent.TimeUnit
 /**
  * @author Sergey Patrikeev
  */
-class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, taskManager) {
+class FeatureService : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES) {
 
-  private val featuresExtractor: FeaturesApi = Retrofit.Builder()
-      .baseUrl(Settings.FEATURE_EXTRACTOR_REPOSITORY_URL.get())
-      .addConverterFactory(GsonConverterFactory.create(GSON))
-      .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
-      .build()
-      .create(FeaturesApi::class.java)
+  private val UPDATE_PROCESS_MIN_PAUSE_MILLIS = TimeUnit.MINUTES.toMillis(10)
 
   private val inProgressUpdates: MutableSet<UpdateInfo> = hashSetOf()
 
   private val lastProceedDate: MutableMap<UpdateInfo, Long> = hashMapOf()
 
-  private val UPDATE_PROCESS_MIN_PAUSE_MILLIS = TimeUnit.MINUTES.toMillis(10)
+  private val repo2FeatureExtractorApi = hashMapOf<String, FeaturesApi>()
 
-  override fun doTick() {
+  private fun getFeaturesApiConnector(): FeaturesApi {
+    val repositoryUrl = Settings.FEATURE_EXTRACTOR_REPOSITORY_URL.get()
+    return repo2FeatureExtractorApi.getOrPut(repositoryUrl, { createFeatureExtractor(repositoryUrl) })
+  }
+
+  private fun createFeatureExtractor(repositoryUrl: String): FeaturesApi = Retrofit.Builder()
+      .baseUrl(repositoryUrl)
+      .addConverterFactory(GsonConverterFactory.create(ServerInstance.GSON))
+      .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
+      .build()
+      .create(FeaturesApi::class.java)
+
+  override fun doServe() {
     val updatesToExtract = getUpdatesToExtract()
     LOG.info("Extracting features of ${updatesToExtract.size} updates: $updatesToExtract")
     for (update in updatesToExtract) {
@@ -97,10 +104,10 @@ class FeatureService(taskManager: TaskManager) : BaseService("FeatureService", 0
   private fun getUpdatesToExtract(): List<Int> = getUpdatesToExtractFeatures(pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully().body().sortedDescending()
 
   private fun getUpdatesToExtractFeatures(userName: String, password: String) =
-      featuresExtractor.getUpdatesToExtractFeatures(createStringRequestBody(userName), createStringRequestBody(password))
+      getFeaturesApiConnector().getUpdatesToExtractFeatures(createStringRequestBody(userName), createStringRequestBody(password))
 
 
   private fun sendExtractedFeatures(featuresJsonResponse: String, userName: String, password: String) =
-      featuresExtractor.sendExtractedFeatures(createJsonRequestBody(featuresJsonResponse), createStringRequestBody(userName), createStringRequestBody(password))
+      getFeaturesApiConnector().sendExtractedFeatures(createJsonRequestBody(featuresJsonResponse), createStringRequestBody(userName), createStringRequestBody(password))
 
 }

@@ -1,27 +1,26 @@
 package org.jetbrains.plugins.verifier.service.service
 
-import org.jetbrains.plugins.verifier.service.service.featureExtractor.FeatureService
-import org.jetbrains.plugins.verifier.service.service.ide.IdeListUpdater
-import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
+import com.google.gson.Gson
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
+import java.io.Closeable
 
 /**
  * @author Sergey Patrikeev
  */
-object ServerInstance {
+object ServerInstance : Closeable {
+  val GSON: Gson = Gson()
+
   val taskManager = TaskManager(Runtime.getRuntime().availableProcessors())
 
-  val verifierService = VerifierService(taskManager)
+  val services = arrayListOf<BaseService>()
 
-  val ideListUpdater = IdeListUpdater(taskManager)
+  fun addService(service: BaseService) {
+    services.add(service)
+  }
 
-  val featureService = FeatureService(taskManager)
-
-  fun stop() {
+  override fun close() {
     taskManager.stop()
-    ideListUpdater.stop()
-    verifierService.stop()
-    featureService.stop()
+    services.forEach { it.stop() }
   }
 
 }

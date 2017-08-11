@@ -47,6 +47,19 @@ class HtmlBuilder(val output: PrintWriter) {
 
   fun li(block: () -> Unit) = tag("li", block)
 
+  fun form(id: String, style: String, action: String, block: () -> Unit) = tag("form", block, mapOf("action" to action, "id" to id, "style" to style))
+
+  fun input(type: String, name: String, value: String? = null, form: String? = null) {
+    val tags = mutableMapOf("type" to type, "name" to name)
+    if (form != null) {
+      tags["form"] = form
+    }
+    if (value != null) {
+      tags["value"] = value
+    }
+    closedTag("input", tags)
+  }
+
   fun br() = closedTag("br")
 
   fun body(block: () -> Unit) = tag("body", block)
