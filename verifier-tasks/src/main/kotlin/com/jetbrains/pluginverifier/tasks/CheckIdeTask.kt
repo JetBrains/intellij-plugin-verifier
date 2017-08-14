@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 
-class CheckIdeTask(parameters: CheckIdeParams) : Task<CheckIdeParams, CheckIdeResult>(parameters) {
+class CheckIdeTask(private val parameters: CheckIdeParams) : Task() {
 
   override fun execute(progress: Progress): CheckIdeResult {
     val notExcludedPlugins = parameters.pluginsToCheck.filterNot { isExcluded(it) }
@@ -46,7 +46,7 @@ class CheckIdeTask(parameters: CheckIdeParams) : Task<CheckIdeParams, CheckIdeRe
     val ideVersion = parameters.ideDescriptor.ideVersion
     val existingUpdatesForIde = RepositoryManager.getLastCompatibleUpdates(ideVersion)
         .filterNot { PluginIdAndVersion(it.pluginId, it.version) in parameters.excludedPlugins }
-        .mapNotNull { it.pluginId }
+        .map { it.pluginId }
         .toSet()
 
     return parameters.pluginIdsToCheckExistingBuilds.distinct()

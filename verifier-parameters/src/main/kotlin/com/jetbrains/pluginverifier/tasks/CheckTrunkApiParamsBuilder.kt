@@ -15,7 +15,7 @@ import java.io.File
 /**
  * @author Sergey Patrikeev
  */
-class CheckTrunkApiParamsBuilder : TaskParametersBuilder<CheckTrunkApiParams> {
+class CheckTrunkApiParamsBuilder : TaskParametersBuilder {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiParamsBuilder::class.java)
@@ -34,18 +34,20 @@ class CheckTrunkApiParamsBuilder : TaskParametersBuilder<CheckTrunkApiParams> {
     val majorIdeFile: File
     val deleteMajorOnExit: Boolean
 
-    if (apiOpts.majorIdePath != null) {
-      majorIdeFile = File(apiOpts.majorIdePath)
-      if (!majorIdeFile.isDirectory) {
-        throw IllegalArgumentException("The specified major IDE doesn't exist: $majorIdeFile")
+    when {
+      apiOpts.majorIdePath != null -> {
+        majorIdeFile = File(apiOpts.majorIdePath)
+        if (!majorIdeFile.isDirectory) {
+          throw IllegalArgumentException("The specified major IDE doesn't exist: $majorIdeFile")
+        }
+        deleteMajorOnExit = false
       }
-      deleteMajorOnExit = false
-    } else if (apiOpts.majorIdeVersion != null) {
-      val ideVersion = parseIdeVersion(apiOpts.majorIdeVersion!!)
-      majorIdeFile = downloadIdeByVersion(ideVersion)
-      deleteMajorOnExit = !apiOpts.saveMajorIdeFile
-    } else {
-      throw IllegalArgumentException("Neither the version (-miv) nor the path to the IDE (-mip) with which to compare API problems specified")
+      apiOpts.majorIdeVersion != null -> {
+        val ideVersion = parseIdeVersion(apiOpts.majorIdeVersion!!)
+        majorIdeFile = downloadIdeByVersion(ideVersion)
+        deleteMajorOnExit = !apiOpts.saveMajorIdeFile
+      }
+      else -> throw IllegalArgumentException("Neither the version (-miv) nor the path to the IDE (-mip) with which to compare API problems specified")
     }
 
     val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)

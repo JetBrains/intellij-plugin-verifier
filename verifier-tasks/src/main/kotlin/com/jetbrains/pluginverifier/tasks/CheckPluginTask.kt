@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 
-class CheckPluginTask(parameters: CheckPluginParams) : Task<CheckPluginParams, CheckPluginResult>(parameters) {
+class CheckPluginTask(private val parameters: CheckPluginParams) : Task() {
 
   private fun getDependencyResolver(ide: Ide, allPluginsToCheck: List<CreatePluginResult>): DependencyResolver = object : DependencyResolver {
 

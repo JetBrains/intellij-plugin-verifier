@@ -14,7 +14,7 @@ import java.io.File
 import java.io.FileReader
 import java.io.IOException
 
-class CheckIdeParamsBuilder : TaskParametersBuilder<CheckIdeParams> {
+class CheckIdeParamsBuilder : TaskParametersBuilder {
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckIdeParams {
     if (freeArgs.isEmpty()) {
       System.err.println("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"")

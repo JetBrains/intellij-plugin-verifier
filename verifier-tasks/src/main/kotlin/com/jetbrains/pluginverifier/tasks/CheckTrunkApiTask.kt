@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory
 /**
  * @author Sergey Patrikeev
  */
-class CheckTrunkApiTask(parameters: CheckTrunkApiParams) : Task<CheckTrunkApiParams, CheckTrunkApiResult>(parameters) {
+class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task() {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiTask::class.java)
