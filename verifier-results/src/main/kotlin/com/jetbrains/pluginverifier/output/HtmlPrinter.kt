@@ -167,7 +167,8 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
   private fun loadReportCss() = Resources.toString(HtmlPrinter::class.java.getResource("/reportCss.css"), Charset.forName("UTF-8"))
 
   private fun HtmlBuilder.printProblems(problems: Set<Problem>) {
-    problems.forEach { createProblemTab(it.getShortDescription(), it.getFullDescription()) }
+    problems.sortedBy { it.getShortDescription().toString() }
+        .forEach { createProblemTab(it.getShortDescription(), it.getFullDescription()) }
   }
 
   private fun HtmlBuilder.createProblemTab(shortDescription: ShortDescription, longDescription: FullDescription) {
