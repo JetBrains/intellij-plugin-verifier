@@ -87,7 +87,7 @@ object DownloadManager {
 
   @Synchronized
   private fun releaseOldLocksAndDeleteUnusedPlugins() {
-    LOG.info("It's time to remove unused plugins from cache. Cache usages: ${getEstimatedSpaceOrUnknown()}; " +
+    LOG.info("It's time to remove unused plugins from cache. Cache usages: ${spaceWatcher.getSpaceUsage()}; " +
         "Estimated available space: ${getEstimatedSpaceOrUnknown()}")
 
     releaseOldLocks()
