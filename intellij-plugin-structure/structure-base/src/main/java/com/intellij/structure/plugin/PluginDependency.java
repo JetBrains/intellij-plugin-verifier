@@ -10,4 +10,6 @@ public interface PluginDependency {
   String getId();
 
   boolean isOptional();
+
+  boolean isModule();
 }

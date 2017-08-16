@@ -14,7 +14,6 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jsoup.safety.Whitelist;
 
 import java.io.File;
 import java.util.*;
@@ -22,12 +21,10 @@ import java.util.*;
 import static com.intellij.structure.impl.utils.StringUtil.isEmpty;
 
 public class PluginImpl implements Plugin {
-  private static final Whitelist WHITELIST = Whitelist.basicWithImages();
   private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules.";
 
   private final Set<String> myDefinedModules = new HashSet<String>();
   private final List<PluginDependency> myDependencies = new ArrayList<PluginDependency>();
-  private final List<PluginDependency> myModuleDependencies = new ArrayList<PluginDependency>();
   private final Map<PluginDependency, String> myOptionalConfigFiles = new HashMap<PluginDependency, String>();
   private final Map<String, Plugin> myOptionalDescriptors = new HashMap<String, Plugin>();
   private final Set<String> myReferencedClasses = new HashSet<String>();
@@ -61,12 +58,6 @@ public class PluginImpl implements Plugin {
   @NotNull
   public List<PluginDependency> getDependencies() {
     return Collections.unmodifiableList(myDependencies);
-  }
-
-  @Override
-  @NotNull
-  public List<PluginDependency> getModuleDependencies() {
-    return Collections.unmodifiableList(myModuleDependencies);
   }
 
   @Override
@@ -167,12 +158,9 @@ public class PluginImpl implements Plugin {
     if (bean.dependencies != null) {
       for (PluginDependencyBean dependencyBean : bean.dependencies) {
         if (dependencyBean.pluginId != null) {
-          PluginDependency dependency = new PluginDependencyImpl(dependencyBean.pluginId, dependencyBean.optional);
-          if (dependency.getId().startsWith(INTELLIJ_MODULES_PREFIX)) {
-            myModuleDependencies.add(dependency);
-          } else {
-            myDependencies.add(dependency);
-          }
+          boolean isModule = dependencyBean.pluginId.startsWith(INTELLIJ_MODULES_PREFIX);
+          PluginDependency dependency = new PluginDependencyImpl(dependencyBean.pluginId, dependencyBean.optional, isModule);
+          myDependencies.add(dependency);
 
           if (dependency.isOptional() && dependencyBean.configFile != null) {
             myOptionalConfigFiles.put(dependency, dependencyBean.configFile);

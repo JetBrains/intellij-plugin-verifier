@@ -7,10 +7,12 @@ import org.jetbrains.annotations.Nullable;
 public class PluginDependencyImpl implements PluginDependency {
   private final String myId;
   private final boolean myIsOptional;
+  private final boolean myIsModule;
 
-  public PluginDependencyImpl(@NotNull String id, @Nullable final Boolean isOptional) {
+  public PluginDependencyImpl(@NotNull String id, @Nullable final Boolean isOptional, boolean isModule) {
     myId = id;
     myIsOptional = isOptional == null ? false : isOptional;
+    myIsModule = isModule;
   }
 
   @Override
@@ -22,6 +24,11 @@ public class PluginDependencyImpl implements PluginDependency {
   @Override
   public boolean isOptional() {
     return myIsOptional;
+  }
+
+  @Override
+  public boolean isModule() {
+    return myIsModule;
   }
 
   @Override

@@ -93,7 +93,13 @@ final class PluginCreator {
   }
 
   private void validatePlugin(Plugin plugin) {
-    if (plugin.getModuleDependencies().isEmpty()) {
+    int moduleDependenciesCnt = 0;
+    for (PluginDependency dependency : plugin.getDependencies()) {
+      if (dependency.isModule()) {
+        moduleDependenciesCnt++;
+      }
+    }
+    if (moduleDependenciesCnt == 0) {
       registerProblem(new NoModuleDependencies(myDescriptorPath));
     }
 

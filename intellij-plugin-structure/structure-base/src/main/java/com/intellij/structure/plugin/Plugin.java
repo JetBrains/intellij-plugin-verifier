@@ -30,9 +30,6 @@ public interface Plugin {
   @NotNull
   List<PluginDependency> getDependencies();
 
-  @NotNull
-  List<PluginDependency> getModuleDependencies();
-
   String getPluginName();
 
   String getPluginVersion();
