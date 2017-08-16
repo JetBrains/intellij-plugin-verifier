@@ -56,7 +56,7 @@ class MockPluginsTest {
 
   private fun testMockWarnings(problems: List<PluginProblem>) {
     assertContains(problems,
-        listOf(MissingOptionalDependencyConfigurationFile("plugin.xml", PluginDependencyImpl("missingDependency", true), "missingFile"))
+        listOf(MissingOptionalDependencyConfigurationFile("plugin.xml", PluginDependencyImpl("missingDependency", true, false), "missingFile"))
     )
   }
 
@@ -165,19 +165,19 @@ class MockPluginsTest {
   }
 
   private fun testMockDependenciesAndModules(plugin: Plugin) {
-    assertEquals(6, plugin.dependencies.size.toLong())
+    assertEquals(7, plugin.dependencies.size.toLong())
+    //check plugin and module dependencies
     val dependencies = listOf(
-        PluginDependencyImpl("JUnit", true),
-        PluginDependencyImpl("optionalDependency", true),
-        PluginDependencyImpl("otherDirOptionalDependency", true),
-        PluginDependencyImpl("mandatoryDependency", false),
-        PluginDependencyImpl("referenceFromRoot", true),
-        PluginDependencyImpl("missingDependency", true)
+        PluginDependencyImpl("JUnit", true, false),
+        PluginDependencyImpl("optionalDependency", true, false),
+        PluginDependencyImpl("otherDirOptionalDependency", true, false),
+        PluginDependencyImpl("mandatoryDependency", false, false),
+        PluginDependencyImpl("referenceFromRoot", true, false),
+        PluginDependencyImpl("missingDependency", true, false),
+        PluginDependencyImpl("com.intellij.modules.mandatoryDependency", false, true)
     )
     assertContains(plugin.dependencies, dependencies)
 
-    //check module dependencies
-    assertEquals(listOf(PluginDependencyImpl("com.intellij.modules.mandatoryDependency", false)), plugin.moduleDependencies)
     assertEquals(hashSetOf("one_module", "two_module"), plugin.definedModules)
   }
 
@@ -211,12 +211,7 @@ class MockPluginsTest {
     val pluginClassPath = resolver.classPath
     for (cp in classPath) {
       val shouldBe = File(extracted, cp)
-      var found = false
-      for (pcp in pluginClassPath) {
-        if (pcp.canonicalPath == shouldBe.canonicalPath) {
-          found = true
-        }
-      }
+      val found = pluginClassPath.any { it.canonicalPath == shouldBe.canonicalPath }
       Assert.assertTrue("The class path $shouldBe is not found", found)
     }
   }
