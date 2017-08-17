@@ -10,7 +10,7 @@ import java.io.Closeable
 
 interface DependencyResolver {
 
-  fun resolve(dependency: PluginDependency, isModule: Boolean): Result
+  fun resolve(dependency: PluginDependency): Result
 
   sealed class Result : Closeable {
     data class FoundReady(val plugin: Plugin, val resolver: Resolver) : Result() {

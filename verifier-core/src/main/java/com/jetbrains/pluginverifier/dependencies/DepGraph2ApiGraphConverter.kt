@@ -32,10 +32,10 @@ object DepGraph2ApiGraphConverter {
         val dependency = edge.dependency
         val isModule = edge.isModule
         val errors = resolveResult.pluginErrorsAndWarnings.filter { it.level == PluginProblem.Level.ERROR }
-        MissingDependency(dependency, isModule, "Dependent " + (if (isModule) "module" else "plugin") + " $dependency is invalid: " + errors.joinToString())
+        MissingDependency(dependency, "Dependent " + (if (isModule) "module" else "plugin") + " $dependency is invalid: " + errors.joinToString())
       }
       is DependencyResolver.Result.NotFound -> {
-        MissingDependency(edge.dependency, edge.isModule, resolveResult.reason)
+        MissingDependency(edge.dependency, resolveResult.reason)
       }
       DependencyResolver.Result.Skip -> null
     }

@@ -44,14 +44,14 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) : Clos
 
   override fun close() = graph.vertexSet().forEach { it.closeLogged() }
 
-  private fun findDependencyOrFillMissingReason(pluginDependency: PluginDependency, isModule: Boolean): DepVertex? =
-      getAlreadyResolvedDependency(pluginDependency) ?: resolveDependency(isModule, pluginDependency)
+  private fun findDependencyOrFillMissingReason(pluginDependency: PluginDependency): DepVertex? =
+      getAlreadyResolvedDependency(pluginDependency) ?: resolveDependency(pluginDependency)
 
   private fun getAlreadyResolvedDependency(pluginDependency: PluginDependency): DepVertex? =
       graph.vertexSet().find { pluginDependency.id == it.id }
 
-  private fun resolveDependency(isModule: Boolean, pluginDependency: PluginDependency): DepVertex {
-    val resolved = dependencyResolver.resolve(pluginDependency, isModule)
+  private fun resolveDependency(pluginDependency: PluginDependency): DepVertex {
+    val resolved = dependencyResolver.resolve(pluginDependency)
     return DepVertex(pluginDependency.id, resolved)
   }
 
@@ -70,9 +70,9 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) : Clos
     }
     graph.addVertex(current)
     val plugin = getPlugin(current.resolveResult) ?: return
-    for (pluginDependency in plugin.moduleDependencies + plugin.dependencies) {
-      val isModule = pluginDependency in plugin.moduleDependencies
-      val dependency = findDependencyOrFillMissingReason(pluginDependency, isModule) ?: continue
+    for (pluginDependency in plugin.dependencies) {
+      val isModule = pluginDependency.isModule
+      val dependency = findDependencyOrFillMissingReason(pluginDependency) ?: continue
       traverseDependencies(dependency)
       graph.addEdge(current, dependency, DepEdge(pluginDependency, isModule))
     }

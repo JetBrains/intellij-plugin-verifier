@@ -13,16 +13,13 @@ object MockUtil {
 
   fun createMockPlugin(pluginId: String,
                        pluginVersion: String,
-                       moduleDependencies: List<PluginDependency> = emptyList(),
-                       dependencies: List<PluginDependency> = emptyList(),
-                       definedModules: Set<String> = emptySet()): MockPluginAdapter {
+                       dependencies: List<PluginDependency>,
+                       definedModules: Set<String>): MockPluginAdapter {
 
     return object : MockPluginAdapter() {
       override fun getPluginId(): String = pluginId
 
       override fun getPluginVersion(): String = pluginVersion
-
-      override fun getModuleDependencies(): List<PluginDependency> = moduleDependencies
 
       override fun getDependencies(): List<PluginDependency> = dependencies
 
@@ -68,10 +65,6 @@ open class MockPluginAdapter : Plugin {
   }
 
   override fun getPluginVersion(): String {
-    throw UnsupportedOperationException("not implemented")
-  }
-
-  override fun getModuleDependencies(): List<PluginDependency> {
     throw UnsupportedOperationException("not implemented")
   }
 

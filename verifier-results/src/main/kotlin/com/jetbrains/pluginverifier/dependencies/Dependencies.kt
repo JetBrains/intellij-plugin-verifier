@@ -5,9 +5,8 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 data class MissingDependency(val dependency: PluginDependency,
-                             val isModule: Boolean,
                              val missingReason: String) {
-  override fun toString(): String = "${if (isModule) "module" else "plugin"} $dependency: $missingReason"
+  override fun toString(): String = "${if (dependency.isModule) "module" else "plugin"} $dependency: $missingReason"
 }
 
 data class DependencyNode(val id: String,

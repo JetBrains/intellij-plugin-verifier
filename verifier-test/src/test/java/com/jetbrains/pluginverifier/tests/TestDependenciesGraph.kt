@@ -24,19 +24,19 @@ class TestDependenciesGraph {
           a,
           listOf(a, b, c, d),
           listOf(
-              dependencyEdge(a, b, "B", false),
-              dependencyEdge(a, c, "C", false),
-              dependencyEdge(b, d, "D", false),
-              dependencyEdge(c, d, "D", false)
+              dependencyEdge(a, b, "B", false, false),
+              dependencyEdge(a, c, "C", false, false),
+              dependencyEdge(b, d, "D", false, false),
+              dependencyEdge(c, d, "D", false, false)
           )
       )
 
-      GRAPH_WITH_A_CYCLE = SIMPLE_GRAPH_WITH_NO_CYCLES.copy(edges = this.SIMPLE_GRAPH_WITH_NO_CYCLES.edges + dependencyEdge(d, a, "A", false))
+      GRAPH_WITH_A_CYCLE = SIMPLE_GRAPH_WITH_NO_CYCLES.copy(edges = this.SIMPLE_GRAPH_WITH_NO_CYCLES.edges + dependencyEdge(d, a, "A", false, false))
     }
 
-    fun missing(missingId: String, isOptional: Boolean, isModule: Boolean, reason: String) = MissingDependency(PluginDependencyImpl(missingId, isOptional), isModule, reason)
+    fun missing(missingId: String, isOptional: Boolean, isModule: Boolean, reason: String) = MissingDependency(PluginDependencyImpl(missingId, isOptional, isModule), reason)
 
-    fun dependencyEdge(from: DependencyNode, to: DependencyNode, depId: String, isOptional: Boolean) = DependencyEdge(from, to, PluginDependencyImpl(depId, isOptional))
+    fun dependencyEdge(from: DependencyNode, to: DependencyNode, depId: String, isOptional: Boolean, isModule: Boolean) = DependencyEdge(from, to, PluginDependencyImpl(depId, isOptional, isModule))
 
     fun node(id: String, version: String, missings: List<MissingDependency>): DependencyNode = DependencyNode(id, version, missings)
   }

@@ -3,9 +3,9 @@ package com.jetbrains.pluginverifier.tests
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.dependencies.DefaultDependencyResolver
 import com.jetbrains.pluginverifier.dependencies.DepGraph2ApiGraphConverter
 import com.jetbrains.pluginverifier.dependencies.DepGraphBuilder
+import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver
 import com.jetbrains.pluginverifier.tests.MockUtil.createMockPlugin
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -27,15 +27,15 @@ class DefaultDependenciesResolverTest {
 
     Should find dependencies on `test`, `somePlugin` and `moduleContainer`
      */
-    val testPlugin = createMockPlugin("test", "1.0", listOf(PluginDependencyImpl("someModule", false)), listOf(PluginDependencyImpl("somePlugin", false)))
-    val somePlugin = createMockPlugin("somePlugin", "1.0")
-    val moduleContainer = createMockPlugin("moduleContainer", "1.0", definedModules = setOf("someModule"))
+    val testPlugin = createMockPlugin("test", "1.0", listOf(PluginDependencyImpl("someModule", false, true), PluginDependencyImpl("somePlugin", false, false)), emptySet())
+    val somePlugin = createMockPlugin("somePlugin", "1.0", emptyList(), emptySet())
+    val moduleContainer = createMockPlugin("moduleContainer", "1.0", emptyList(), setOf("someModule"))
 
     val ide = MockUtil.createMockIde(IdeVersion.createIdeVersion("IU-144"), listOf(testPlugin, somePlugin, moduleContainer))
 
-    val plugin = createMockPlugin("myPlugin", "1.0", emptyList(), listOf(PluginDependencyImpl("test", true)))
+    val plugin = createMockPlugin("myPlugin", "1.0", listOf(PluginDependencyImpl("test", true, false)), emptySet())
 
-    val (graph, start) = DepGraphBuilder(DefaultDependencyResolver(ide)).build(plugin, Resolver.getEmptyResolver())
+    val (graph, start) = DepGraphBuilder(IdeDependencyResolver(ide)).build(plugin, Resolver.getEmptyResolver())
     val dependenciesGraph = DepGraph2ApiGraphConverter.convert(graph, start)
 
     val deps: List<String> = dependenciesGraph.vertices.map { it.id }
