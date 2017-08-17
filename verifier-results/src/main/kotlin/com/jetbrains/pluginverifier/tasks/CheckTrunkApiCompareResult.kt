@@ -42,11 +42,11 @@ data class CheckTrunkApiCompareResult(val trunkVersion: IdeVersion,
     }
 
     fun create(trunkApiResults: CheckTrunkApiResult): CheckTrunkApiCompareResult {
-      val trunkProblemToPlugin: Multimap<Problem, PluginInfo> = getProblemsOfAllResults(trunkApiResults.trunkResults.results)
-      val releaseProblemToPlugin: Multimap<Problem, PluginInfo> = getProblemsOfAllResults(trunkApiResults.releaseResults.results)
+      val trunkProblemToPlugin = getProblemsOfAllResults(trunkApiResults.trunkResults.results)
+      val releaseProblemToPlugin = getProblemsOfAllResults(trunkApiResults.releaseResults.results)
 
-      val trunkMissingDepToPlugin: Multimap<MissingDependency, PluginInfo> = getMissingDependenciesOfAllResults(trunkApiResults.trunkResults.results)
-      val releaseMissingDepToPlugin: Multimap<MissingDependency, PluginInfo> = getMissingDependenciesOfAllResults(trunkApiResults.releaseResults.results)
+      val trunkMissingDepToPlugin = getMissingDependenciesOfAllResults(trunkApiResults.trunkResults.results)
+      val releaseMissingDepToPlugin = getMissingDependenciesOfAllResults(trunkApiResults.releaseResults.results)
 
       val newProblemToPlugin = Multimaps.filterKeys(trunkProblemToPlugin, { problem -> problem !in releaseProblemToPlugin.keySet() })
       val newMissingDepToPlugin = Multimaps.filterKeys(trunkMissingDepToPlugin, { dependency -> dependency !in releaseMissingDepToPlugin.keySet() })
