@@ -17,19 +17,19 @@ import static org.junit.Assert.*;
 public class TestRepositoryManager {
 
   @Test
-  public void updatesOfPlugin() throws Exception {
+  public void updatesOfPlugin() {
     assertTrue(RepositoryManager.INSTANCE.getAllCompatibleUpdatesOfPlugin(getIdeVersion(), "ActionScript Profiler").size() > 0);
   }
 
   @Test
-  public void lastUpdate() throws Exception {
+  public void lastUpdate() {
     UpdateInfo info = RepositoryManager.INSTANCE.getLastCompatibleUpdateOfPlugin(getIdeVersion(), "org.jetbrains.kotlin");
     assertNotNull(info);
     assertTrue(info.getUpdateId() > 20000);
   }
 
   @Test
-  public void lastCompatibleUpdates() throws Exception {
+  public void lastCompatibleUpdates() {
     List<UpdateInfo> updates = RepositoryManager.INSTANCE.getLastCompatibleUpdates(IdeVersion.createIdeVersion("IU-163.2112"));
     assertFalse(updates.isEmpty());
   }
@@ -39,16 +39,14 @@ public class TestRepositoryManager {
     return IdeVersion.createIdeVersion("IU-162.1132.10");
   }
 
-  /*
-  TODO: uncomment this test when 500 on plugins site is fixed
   @Test
-  public void downloadNonExistentPlugin() throws Exception {
+  public void downloadNonExistentPlugin() {
     UpdateInfo updateInfo = RepositoryManager.INSTANCE.getUpdateInfoById(-1000);
     assertNull(updateInfo);
-  }*/
+  }
 
   @Test
-  public void downloadExistentPlugin() throws Exception {
+  public void downloadExistentPlugin() {
     UpdateInfo updateInfo = RepositoryManager.INSTANCE.getUpdateInfoById(25128); //.gitignore 1.3.3
     assertNotNull(updateInfo);
     FileLock fileLock = RepositoryManager.INSTANCE.getPluginFile(updateInfo);

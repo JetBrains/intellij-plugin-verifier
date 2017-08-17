@@ -34,7 +34,7 @@ object RepositoryManager : PluginRepository {
     val response = call.execute()
     if (response.isSuccessful) {
       return response.body()
-    } else if (response.code() == HttpStatus.SC_NOT_FOUND) {
+    } else if (response.code() == HttpStatus.SC_NOT_FOUND || response.code() == HttpStatus.SC_BAD_REQUEST) {
       return null
     } else {
       throw RuntimeException("Unable to get update info #$updateId: ${response.code()}")
