@@ -33,10 +33,10 @@ private data class ApiDependenciesGraph(@SerializedName("start") var start: Node
 
 
   data class Dependency(@SerializedName("dependencyId") var dependencyId: String,
-                        @SerializedName("isOptional") var isOptional: Boolean)
+                        @SerializedName("isOptional") var isOptional: Boolean,
+                        @SerializedName("isModule") var isModule: Boolean)
 
   data class MissingDependency(@SerializedName("dependency") var dependency: Dependency,
-                               @SerializedName("isModule") var isModule: Boolean,
                                @SerializedName("missingReason") var missingReason: String)
 
   data class Node(@SerializedName("pluginId") var pluginId: String,
@@ -106,10 +106,10 @@ private fun convertNode(internalNode: DependencyNode): ApiDependenciesGraph.Node
 )
 
 private fun convertMissingDependency(missingDependency: MissingDependency) = ApiDependenciesGraph.MissingDependency(
-    convertPluginDependency(missingDependency.dependency), missingDependency.isModule, missingDependency.missingReason
+    convertPluginDependency(missingDependency.dependency), missingDependency.missingReason
 )
 
-private fun convertPluginDependency(dependency: PluginDependency) = ApiDependenciesGraph.Dependency(dependency.id, dependency.isOptional)
+private fun convertPluginDependency(dependency: PluginDependency) = ApiDependenciesGraph.Dependency(dependency.id, dependency.isOptional, dependency.isModule)
 
 private fun convertVerifierResult(result: Result): ApiVerificationResult =
     ApiVerificationResult(result.ideVersion.asString(), convertVerdict(result.verdict))

@@ -8,23 +8,24 @@ import com.jetbrains.pluginverifier.misc.deleteLogged
 import java.io.File
 
 
-data class CheckTrunkApiParams(val trunkDescriptor: IdeDescriptor,
-                               val releaseDescriptor: IdeDescriptor,
+data class CheckTrunkApiParams(val trunkIde: IdeDescriptor,
+                               val releaseIde: IdeDescriptor,
                                val externalClassesPrefixes: List<String>,
                                val problemsFilter: ProblemsFilter,
                                val jdkDescriptor: JdkDescriptor,
+                               val jetBrainsPluginIds: List<String>,
                                private val deleteMajorIdeOnExit: Boolean,
                                private val majorIdeFile: File) : TaskParameters {
   override fun presentableText(): String = """Check Trunk API Configuration Parameters:
-Trunk IDE to be checked: $trunkDescriptor
-Release IDE to compare API with: $releaseDescriptor
+Trunk IDE to be checked: $trunkIde
+Release IDE to compare API with: $releaseIde
 External classes prefixes: [${externalClassesPrefixes.joinToString()}]
 JDK: $jdkDescriptor
 """
 
   override fun close() {
-    trunkDescriptor.closeLogged()
-    releaseDescriptor.closeLogged()
+    trunkIde.closeLogged()
+    releaseIde.closeLogged()
     if (deleteMajorIdeOnExit) {
       majorIdeFile.deleteLogged()
     }

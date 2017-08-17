@@ -74,7 +74,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
     val warnings = creationOk.warnings
     val pluginResolver = creationOk.resolver
 
-    val dependencyResolver = params.dependencyResolver ?: DefaultDependencyResolver(ideDescriptor.ide)
+    val dependencyResolver = params.dependencyResolver ?: IdeDependencyResolver(ideDescriptor.ide)
     DepGraphBuilder(dependencyResolver).use { graphBuilder ->
       val (graph, start) = graphBuilder.build(creationOk.plugin, creationOk.resolver)
       val apiGraph = DepGraph2ApiGraphConverter.convert(graph, start)

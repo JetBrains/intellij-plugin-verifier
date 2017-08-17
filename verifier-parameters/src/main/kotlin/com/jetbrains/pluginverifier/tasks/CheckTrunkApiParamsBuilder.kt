@@ -54,7 +54,16 @@ class CheckTrunkApiParamsBuilder : TaskParametersBuilder {
     val problemsFilter = OptionsParser.getProblemsFilter(opts)
 
     val majorIdeDescriptor = OptionsParser.createIdeDescriptor(majorIdeFile, opts)
-    return CheckTrunkApiParams(ideDescriptor, majorIdeDescriptor, externalClassesPrefixes, problemsFilter, jdkDescriptor, deleteMajorOnExit, majorIdeFile)
+
+    val jetBrainsPluginIds = getJetBrainsPluginIds(apiOpts)
+    return CheckTrunkApiParams(ideDescriptor, majorIdeDescriptor, externalClassesPrefixes, problemsFilter, jdkDescriptor, jetBrainsPluginIds, deleteMajorOnExit, majorIdeFile)
+  }
+
+  private fun getJetBrainsPluginIds(apiOpts: CheckTrunkApiOpts): List<String> {
+    if (apiOpts.jetBrainsPluginsFile != null) {
+      return File(apiOpts.jetBrainsPluginsFile).readLines()
+    }
+    return emptyList()
   }
 
   private fun downloadIdeByVersion(ideVersion: IdeVersion): File {
@@ -86,6 +95,12 @@ class CheckTrunkApiParamsBuilder : TaskParametersBuilder {
 
     @set:Argument("major-ide-path", alias = "mip", description = "The path to the IDE with which to compare API problems")
     var majorIdePath: String? = null
+
+    @set:Argument("jetbrains-plugins-file", alias = "jbpf", description = "The path to a file with plugin ids separated by newline. " +
+        "The provided plugin ids are JetBrains-developed plugins that in conjunction with IDE build constitute IntelliJ API used by third-party plugin developers. " +
+        "Compatible versions of these plugins will be downloaded and installed to the release and trunk IDE before verification. " +
+        "Found compatibility problems differences will be reported as if it were breakages of trunk API compared to release API.")
+    var jetBrainsPluginsFile: String? = null
   }
 
 }

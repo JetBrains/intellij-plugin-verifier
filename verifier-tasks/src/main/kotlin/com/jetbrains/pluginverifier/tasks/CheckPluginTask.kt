@@ -4,7 +4,7 @@ import com.intellij.structure.ide.Ide
 import com.intellij.structure.plugin.PluginDependency
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.core.VerifierExecutor
-import com.jetbrains.pluginverifier.dependencies.DefaultDependencyResolver
+import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver
 import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
@@ -14,10 +14,10 @@ class CheckPluginTask(private val parameters: CheckPluginParams) : Task() {
 
   private fun getDependencyResolver(ide: Ide, allPluginsToCheck: List<CreatePluginResult>): DependencyResolver = object : DependencyResolver {
 
-    private val defaultDependencyResolver = DefaultDependencyResolver(ide)
+    private val ideDependencyResolver = IdeDependencyResolver(ide)
 
-    override fun resolve(dependency: PluginDependency, isModule: Boolean): DependencyResolver.Result {
-      return findPluginInListOfPluginsToCheck(dependency) ?: defaultDependencyResolver.resolve(dependency, isModule)
+    override fun resolve(dependency: PluginDependency): DependencyResolver.Result {
+      return findPluginInListOfPluginsToCheck(dependency) ?: ideDependencyResolver.resolve(dependency)
     }
 
     private fun findPluginInListOfPluginsToCheck(dependency: PluginDependency): DependencyResolver.Result.FoundReady? {
