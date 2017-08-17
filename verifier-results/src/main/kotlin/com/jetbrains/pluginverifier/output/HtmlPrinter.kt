@@ -6,8 +6,6 @@ import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.descriptions.FullDescription
-import com.jetbrains.pluginverifier.descriptions.ShortDescription
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.misc.pluralize
@@ -167,12 +165,13 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
   private fun loadReportCss() = Resources.toString(HtmlPrinter::class.java.getResource("/reportCss.css"), Charset.forName("UTF-8"))
 
   private fun HtmlBuilder.printProblems(problems: Set<Problem>) {
-    problems.sortedBy { it.getShortDescription().toString() }
-        .forEach { createProblemTab(it.getShortDescription(), it.getFullDescription()) }
-  }
-
-  private fun HtmlBuilder.createProblemTab(shortDescription: ShortDescription, longDescription: FullDescription) {
-    printShortAndFullDescription(shortDescription.toString(), longDescription.toString())
+    problems
+        .sortedBy { it.getShortDescription().toString() }
+        .groupBy { it.getShortDescription().toString() }
+        .forEach { (shortDesc, problems) ->
+          val allProblems = problems.joinToString(separator = "\n") { it.getFullDescription().toString() }
+          printShortAndFullDescription(shortDesc, allProblems)
+        }
   }
 
   private fun HtmlBuilder.printShortAndFullDescription(shortDescription: String, fullDescription: String) {
