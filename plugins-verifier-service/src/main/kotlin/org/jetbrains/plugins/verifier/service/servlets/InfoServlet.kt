@@ -40,7 +40,6 @@ class InfoServlet : BaseServlet() {
         "start" -> changeServiceState(serviceName, resp) { it.start() }
         "resume" -> changeServiceState(serviceName, resp) { it.resume() }
         "pause" -> changeServiceState(serviceName, resp) { it.pause() }
-        "stop" -> changeServiceState(serviceName, resp) { it.stop() }
         else -> resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown command")
       }
     } else {
@@ -121,7 +120,6 @@ class InfoServlet : BaseServlet() {
                     input("submit", "command", "start")
                     input("submit", "command", "resume")
                     input("submit", "command", "pause")
-                    input("submit", "command", "stop")
                     input("hidden", "service-name", serviceName)
                     +"Admin password: "
                     input("password", "admin-password")
