@@ -78,11 +78,10 @@ class CheckTrunkApiParamsBuilder : TaskParametersBuilder {
 
   private fun parseIdeVersion(ideVersion: String): IdeVersion {
     try {
-      return IdeVersion.createIdeVersion(ideVersion.substringAfter("IU-").substringAfter("IC-"))
+      return IdeVersion.createIdeVersion(ideVersion)
     } catch(e: Exception) {
-      LOG.error("Unable to parse major ide version from $ideVersion", e)
-      throw IllegalArgumentException("Please provide valid build number of major IDE version with which to compare API problems; " +
-          "see https://www.jetbrains.com/intellij-repository/releases/", e)
+      throw IllegalArgumentException("Invalid IDE version: $ideVersion. Please provide IDE version (with product ID) with which to compare API problems; " +
+          "See https://www.jetbrains.com/intellij-repository/releases/", e)
     }
   }
 

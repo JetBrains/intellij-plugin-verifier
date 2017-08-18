@@ -73,7 +73,7 @@ object IdeRepository {
   }
 
   private fun setFullProductNameIfNecessary(ideVersion: IdeVersion, productName: String): IdeVersion {
-    if (ideVersion.productCode.isNullOrEmpty())
+    if (ideVersion.productCode.isEmpty())
       return IdeVersion.createIdeVersion("$productName-" + ideVersion.asStringWithoutProductCode())
     else {
       return ideVersion
@@ -147,6 +147,10 @@ object IdeRepository {
     val fromSnapshots = IdeRepository.fetchIndex(snapshots = true).find { it.version == ideVersion }
     if (fromSnapshots != null) {
       return getOrDownloadIde(fromSnapshots, progressUpdater)
+    }
+
+    if (ideVersion.productCode.isEmpty()) {
+      throw IllegalArgumentException("Please specify product code of the IDE build $ideVersion: either IU-$ideVersion or IC-$ideVersion")
     }
 
     throw IllegalArgumentException("IDE #$ideVersion is not found neither in https://www.jetbrains.com/intellij-repository/releases/ nor in https://www.jetbrains.com/intellij-repository/releases/")
