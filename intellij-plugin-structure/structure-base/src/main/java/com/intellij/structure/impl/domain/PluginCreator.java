@@ -29,6 +29,11 @@ import static com.intellij.structure.impl.utils.StringUtil.isEmptyOrSpaces;
 final class PluginCreator {
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginCreator.class);
+
+  private static final int MAX_VERSION_LENGTH = 64;
+  private static final int MAX_PROPERTY_LENGTH = 255;
+  private static final int MAX_LONG_PROPERTY_LENGTH = 65535;
+
   private final PluginImpl myPlugin;
   private final List<PluginProblem> myProblems = new ArrayList<PluginProblem>();
   private final String myDescriptorPath;
@@ -60,6 +65,7 @@ final class PluginCreator {
 
   private void validatePluginBean(PluginBean bean) {
     if (myValidateDescriptor) {
+      validateAttributes(bean);
       validateId(bean.id);
       validateName(bean.name);
       validateVersion(bean.pluginVersion);
@@ -86,9 +92,17 @@ final class PluginCreator {
     }
   }
 
+  private void validateAttributes(@NotNull PluginBean bean) {
+    if (bean.url != null) {
+      validatePropertyLength("plugin url", bean.url, MAX_PROPERTY_LENGTH);
+    }
+  }
+
   private void validateVersion(String pluginVersion) {
     if (isEmpty(pluginVersion)) {
       registerProblem(new PropertyNotSpecified(myDescriptorPath, "version"));
+    } else {
+      validatePropertyLength("version", pluginVersion, MAX_VERSION_LENGTH);
     }
   }
 
@@ -217,8 +231,12 @@ final class PluginCreator {
   }
 
   private void validateId(@Nullable String id) {
-    if ("com.your.company.unique.plugin.id".equals(id)) {
-      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "id"));
+    if (id != null) {
+      if ("com.your.company.unique.plugin.id".equals(id)) {
+        registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "id"));
+      } else {
+        validatePropertyLength("id", id, MAX_PROPERTY_LENGTH);
+      }
     }
   }
 
@@ -229,6 +247,8 @@ final class PluginCreator {
       registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "name"));
     } else if ("plugin".contains(name)) {
       registerProblem(new PluginWordInPluginName(myDescriptorPath));
+    } else {
+      validatePropertyLength("name", name, MAX_PROPERTY_LENGTH);
     }
   }
 
@@ -237,6 +257,7 @@ final class PluginCreator {
       registerProblem(new PropertyNotSpecified(myDescriptorPath, "description"));
       return;
     }
+    validatePropertyLength("description", htmlDescription, MAX_LONG_PROPERTY_LENGTH);
 
     String textDescription = Jsoup.parseBodyFragment(htmlDescription).text();
 
@@ -257,7 +278,7 @@ final class PluginCreator {
     }
   }
 
-  private void validateChangeNotes(String changeNotes) {
+  private void validateChangeNotes(@Nullable String changeNotes) {
     if (isEmptyOrSpaces(changeNotes)) {
       //Too many plugins don't specify the change-notes, so it's too strict to require them.
       //But if specified, let's check that the change-notes are long enough.
@@ -272,6 +293,14 @@ final class PluginCreator {
     if (changeNotes.contains("Add change notes here") ||
         changeNotes.contains("most HTML tags may be used")) {
       registerProblem(new DefaultChangeNotes(myDescriptorPath));
+    }
+
+    validatePropertyLength("<change-notes>", changeNotes, MAX_LONG_PROPERTY_LENGTH);
+  }
+
+  private void validatePropertyLength(@NotNull String propertyName, @NotNull String propertyValue, int maxLength) {
+    if (propertyValue.length() > maxLength) {
+      registerProblem(new TooLongPropertyValue(myDescriptorPath, propertyName, propertyValue.length(), maxLength));
     }
   }
 
@@ -291,14 +320,17 @@ final class PluginCreator {
     if ("YourCompany".equals(vendorBean.name)) {
       registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "vendor"));
     }
+    validatePropertyLength("vendor", vendorBean.name, MAX_PROPERTY_LENGTH);
 
     if ("http://www.yourcompany.com".equals(vendorBean.url)) {
       registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "vendor url"));
     }
+    validatePropertyLength("vendor url", vendorBean.url, MAX_PROPERTY_LENGTH);
 
     if ("support@yourcompany.com".equals(vendorBean.email)) {
       registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "vendor email"));
     }
+    validatePropertyLength("vendor email", vendorBean.email, MAX_PROPERTY_LENGTH);
   }
 
   private void validateIdeaVersion(IdeaVersionBean versionBean) {

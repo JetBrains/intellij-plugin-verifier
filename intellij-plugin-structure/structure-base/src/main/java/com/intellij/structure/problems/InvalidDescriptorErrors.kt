@@ -53,3 +53,10 @@ data class UnexpectedDescriptorElements(val descriptorPath: String, val errorMes
 data class UnresolvedXIncludeElements(val descriptorPath: String) : InvalidDescriptorProblem(descriptorPath, "unresolved xinclude elements") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 }
+
+data class TooLongPropertyValue(val descriptorPath: String,
+                                val propertyName: String,
+                                val propertyValueLength: Int,
+                                val maxLength: Int) : InvalidDescriptorProblem(descriptorPath, "value of property '$propertyName' is too long. Its length is $propertyValueLength which is more than maximum $maxLength characters long") {
+  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
+}

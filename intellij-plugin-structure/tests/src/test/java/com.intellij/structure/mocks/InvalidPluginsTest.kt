@@ -8,6 +8,8 @@ import com.intellij.structure.plugin.PluginManager
 import com.intellij.structure.problems.*
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.instanceOf
+import org.hamcrest.Matchers.containsInAnyOrder
+import org.hamcrest.Matchers.hasSize
 import org.junit.Assert.assertThat
 import org.junit.Rule
 import org.junit.Test
@@ -60,7 +62,9 @@ class InvalidPluginsTest {
 
   private fun assertExpectedProblems(pluginFile: File, expectedProblems: List<PluginProblem>) {
     val creationFail = getFailedResult(pluginFile)
-    assertThat(creationFail.errorsAndWarnings, `is`(expectedProblems))
+    val actualProblems = creationFail.errorsAndWarnings
+    assertThat(actualProblems, containsInAnyOrder(*expectedProblems.toTypedArray()))
+    assertThat(actualProblems, hasSize(expectedProblems.size))
   }
 
   private fun getSuccessResult(pluginFile: File): PluginCreationSuccess {
@@ -360,6 +364,38 @@ class InvalidPluginsTest {
           ideaPluginTagOpen = """<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">"""
           additionalContent = """<xi:include href="/META-INF/missing.xml" xpointer="xpointer(/idea-plugin/*)"/>"""
         }, listOf(UnresolvedXIncludeElements("plugin.xml"))
+    )
+  }
+
+  @Test
+  fun `too long properties specified`() {
+
+    val string_65 = "a".repeat(65)
+    val string_256 = "a".repeat(256)
+    val string_65536 = "a".repeat(65536)
+
+    val expectedProblems = listOf(
+        TooLongPropertyValue("plugin.xml", "version", 65, 64),
+        TooLongPropertyValue("plugin.xml", "plugin url", 256, 255),
+        TooLongPropertyValue("plugin.xml", "id", 256, 255),
+        TooLongPropertyValue("plugin.xml", "name", 256, 255),
+        TooLongPropertyValue("plugin.xml", "vendor", 256, 255),
+        TooLongPropertyValue("plugin.xml", "vendor email", 256, 255),
+        TooLongPropertyValue("plugin.xml", "vendor url", 256, 255),
+        TooLongPropertyValue("plugin.xml", "description", 65536, 65535),
+        TooLongPropertyValue("plugin.xml", "<change-notes>", 65536, 65535)
+    )
+
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          ideaPluginTagOpen = """<idea-plugin url="$string_256">"""
+          id = "<id>$string_256</id>"
+          name = "<name>$string_256</name>"
+          version = "<version>$string_65</version>"
+          vendor = """<vendor email="$string_256" url="$string_256">$string_256</vendor>"""
+          description = "<description>$string_65536</description>"
+          changeNotes = "<change-notes>$string_65536</change-notes>"
+        }, expectedProblems
     )
   }
 }

@@ -11,7 +11,7 @@ buildscript {
   }
 }
 
-def intellijPluginStructureVersion = '2.7'
+def intellijPluginStructureVersion = '2.8'
 if (project.hasProperty("structureVersion")) {
   intellijPluginStructureVersion = project.structureVersion
 }

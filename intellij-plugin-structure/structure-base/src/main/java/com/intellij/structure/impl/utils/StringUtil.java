@@ -1,5 +1,6 @@
 package com.intellij.structure.impl.utils;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +47,7 @@ public class StringUtil {
     return path.substring(start, end);
   }
 
+  @Contract("null -> true")
   public static boolean isEmptyOrSpaces(@Nullable String s) {
     if (StringUtil.isEmpty(s)) {
       return true;
