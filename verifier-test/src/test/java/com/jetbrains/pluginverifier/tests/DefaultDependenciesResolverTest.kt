@@ -5,7 +5,7 @@ import com.intellij.structure.impl.domain.PluginDependencyImpl
 import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.dependencies.DepGraph2ApiGraphConverter
 import com.jetbrains.pluginverifier.dependencies.DepGraphBuilder
-import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver
+import com.jetbrains.pluginverifier.dependencies.IdeCompatibleDependencyResolver
 import com.jetbrains.pluginverifier.tests.MockUtil.createMockPlugin
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -35,7 +35,7 @@ class DefaultDependenciesResolverTest {
 
     val plugin = createMockPlugin("myPlugin", "1.0", listOf(PluginDependencyImpl("test", true, false)), emptySet())
 
-    val (graph, start) = DepGraphBuilder(IdeDependencyResolver(ide)).build(plugin, Resolver.getEmptyResolver())
+    val (graph, start) = DepGraphBuilder(IdeCompatibleDependencyResolver(ide)).build(plugin, Resolver.getEmptyResolver())
     val dependenciesGraph = DepGraph2ApiGraphConverter.convert(graph, start)
 
     val deps: List<String> = dependenciesGraph.vertices.map { it.id }

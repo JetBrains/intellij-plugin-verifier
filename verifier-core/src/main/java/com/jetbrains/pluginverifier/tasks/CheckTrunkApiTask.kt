@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.Progress
 import com.jetbrains.pluginverifier.dependencies.DependencyResolver
 import com.jetbrains.pluginverifier.dependencies.DownloadCompatibleDependencyResolver
-import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver
+import com.jetbrains.pluginverifier.dependencies.IdeCompatibleDependencyResolver
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.utils.IdeResourceUtil
@@ -58,7 +58,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task() {
   }
 
   private inner class MyDependencyResolver(ide: Ide) : DependencyResolver {
-    private val checkedIdeResolver = IdeDependencyResolver(ide)
+    private val checkedIdeResolver = IdeCompatibleDependencyResolver(ide)
 
     private val releaseDownloadResolver = DownloadCompatibleDependencyResolver(parameters.releaseIde.ideVersion)
 

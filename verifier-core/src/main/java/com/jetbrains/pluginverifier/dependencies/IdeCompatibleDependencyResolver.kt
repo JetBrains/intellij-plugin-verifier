@@ -6,7 +6,7 @@ import com.intellij.structure.plugin.PluginDependency
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 
-class IdeDependencyResolver(val ide: Ide) : DependencyResolver {
+class IdeCompatibleDependencyResolver(val ide: Ide) : DependencyResolver {
 
   private val downloadCompatibleDependencyResolver = DownloadCompatibleDependencyResolver(ide.version)
 
