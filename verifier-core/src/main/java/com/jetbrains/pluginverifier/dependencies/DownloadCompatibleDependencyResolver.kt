@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.dependencies
 
 import com.google.common.collect.ImmutableSet
-import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.plugin.PluginDependency
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
@@ -12,7 +11,7 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 /**
  * @author Sergey Patrikeev
  */
-class DownloadCompatibleDependencyResolver(val ideVersion: IdeVersion) : DependencyResolver {
+class DownloadCompatibleDependencyResolver(private val dependencySelector: DependencySelector) : DependencyResolver {
 
   private companion object {
     val IDEA_ULTIMATE_MODULES: Set<String> = ImmutableSet.of(
@@ -32,7 +31,7 @@ class DownloadCompatibleDependencyResolver(val ideVersion: IdeVersion) : Depende
     if (dependency.isModule) {
       return resolveModuleDependency(dependency.id)
     }
-    return downloadLastCompatibleUpdate(dependency.id)
+    return selectAndDownloadPlugin(dependency.id)
   }
 
   private fun resolveModuleDependency(moduleId: String): DependencyResolver.Result {
@@ -43,15 +42,16 @@ class DownloadCompatibleDependencyResolver(val ideVersion: IdeVersion) : Depende
   }
 
   private fun resolveDeclaringPlugin(moduleId: String): DependencyResolver.Result {
-    val pluginId = RepositoryManager.getIdOfPluginDeclaringModule(moduleId)
-        ?: return DependencyResolver.Result.NotFound("Module '$moduleId' is not found in $ideVersion")
-    return downloadLastCompatibleUpdate(pluginId)
+    val pluginId = RepositoryManager.getIdOfPluginDeclaringModule(moduleId) ?: return DependencyResolver.Result.NotFound("Module '$moduleId' is not found")
+    return selectAndDownloadPlugin(pluginId)
   }
 
-  private fun downloadLastCompatibleUpdate(pluginId: String): DependencyResolver.Result {
-    val lastUpdate: UpdateInfo = RepositoryManager.getLastCompatibleUpdateOfPlugin(ideVersion, pluginId)
-        ?: return DependencyResolver.Result.NotFound("Plugin $pluginId doesn't have a build compatible with $ideVersion")
-    return downloadAndOpenPlugin(lastUpdate)
+  private fun selectAndDownloadPlugin(pluginId: String): DependencyResolver.Result {
+    val selectResult = dependencySelector.select(pluginId)
+    return when (selectResult) {
+      is DependencySelector.Result.Plugin -> downloadAndOpenPlugin(selectResult.updateInfo)
+      is DependencySelector.Result.NotFound -> DependencyResolver.Result.NotFound(selectResult.reason)
+    }
   }
 
   private fun downloadAndOpenPlugin(updateInfo: UpdateInfo): DependencyResolver.Result {

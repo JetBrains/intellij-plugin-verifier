@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.plugin.PluginCreator
 
 class IdeCompatibleDependencyResolver(val ide: Ide) : DependencyResolver {
 
-  private val downloadCompatibleDependencyResolver = DownloadCompatibleDependencyResolver(ide.version)
+  private val downloadCompatibleDependencyResolver = DownloadCompatibleDependencyResolver(LastCompatibleSelector(ide.version))
 
   override fun resolve(dependency: PluginDependency): DependencyResolver.Result {
     val id = dependency.id
