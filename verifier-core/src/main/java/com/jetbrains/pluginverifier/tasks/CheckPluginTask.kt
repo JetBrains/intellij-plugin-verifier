@@ -4,8 +4,8 @@ import com.intellij.structure.ide.Ide
 import com.intellij.structure.plugin.PluginDependency
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.core.VerifierExecutor
+import com.jetbrains.pluginverifier.dependencies.DependencyResolver
 import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver
-import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator

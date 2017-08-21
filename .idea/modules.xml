@@ -38,21 +38,12 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-core/verifier-core.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-core/verifier-core.iml" group="verifier-core" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-core/verifier-core_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-core/verifier-core_main.iml" group="verifier-core" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-core/verifier-core_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-core/verifier-core_test.iml" group="verifier-core" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-parameters/verifier-parameters.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-parameters/verifier-parameters.iml" group="verifier-parameters" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-parameters/verifier-parameters_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-parameters/verifier-parameters_main.iml" group="verifier-parameters" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-parameters/verifier-parameters_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-parameters/verifier-parameters_test.iml" group="verifier-parameters" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-parent.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-parent.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-parent_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-parent_main.iml" group="verifier-parent" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-parent_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-parent_test.iml" group="verifier-parent" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-repository/verifier-repository.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-repository/verifier-repository.iml" group="verifier-repository" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-repository/verifier-repository_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-repository/verifier-repository_main.iml" group="verifier-repository" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-repository/verifier-repository_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-repository/verifier-repository_test.iml" group="verifier-repository" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-results/verifier-results.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-results/verifier-results.iml" group="verifier-results" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-results/verifier-results_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-results/verifier-results_main.iml" group="verifier-results" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-results/verifier-results_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-results/verifier-results_test.iml" group="verifier-results" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-tasks/verifier-tasks.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-tasks/verifier-tasks.iml" group="verifier-tasks" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-tasks/verifier-tasks_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-tasks/verifier-tasks_main.iml" group="verifier-tasks" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-tasks/verifier-tasks_test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-tasks/verifier-tasks_test.iml" group="verifier-tasks" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-test/verifier-test.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-test/verifier-test.iml" group="verifier-test" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-test/mock-plugin/verifier-test-mock-plugin.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-test/mock-plugin/verifier-test-mock-plugin.iml" group="verifier-test/mock-plugin" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/verifier-test/mock-plugin/verifier-test-mock-plugin_main.iml" filepath="$PROJECT_DIR$/.idea/modules/verifier-test/mock-plugin/verifier-test-mock-plugin_main.iml" group="verifier-test/mock-plugin" />

@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.JdkDescriptor
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.ProblemsFilter
-import com.jetbrains.pluginverifier.dependency.DependencyResolver
+import com.jetbrains.pluginverifier.dependencies.DependencyResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
 
 

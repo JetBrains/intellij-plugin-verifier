@@ -169,6 +169,8 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
         is Verdict.Problems -> printProblems(plugin, testName, verdict.problems)
         is Verdict.MissingDependencies -> printMissingDependencies(plugin, verdict, testName, options)
         is Verdict.Bad -> printBadPluginResult(verdict, testName)
+        is Verdict.OK, is Verdict.Warnings, is Verdict.NotFound -> {
+        }
       }
     }
   }
@@ -258,7 +260,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
             try {
               val lastCompatibleUpdates = repository.getLastCompatibleUpdates(ideVersion)
               ideVersion to lastCompatibleUpdates.sortedByDescending { it.updateId }.distinctBy { it.pluginId }
-            } catch(e: Exception) {
+            } catch (e: Exception) {
               LOG.info("Unable to determine the last compatible updates of IDE $ideVersion")
               ideVersion to emptyList<UpdateInfo>()
             }

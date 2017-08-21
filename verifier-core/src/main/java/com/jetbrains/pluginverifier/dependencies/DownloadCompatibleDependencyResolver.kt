@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.dependencies
 
 import com.intellij.structure.ide.IdeVersion
 import com.intellij.structure.plugin.PluginDependency
-import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.repository.FileLock

@@ -9,7 +9,6 @@ import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import okhttp3.MediaType
 import okhttp3.ResponseBody
 import org.apache.commons.io.FileUtils
-import org.apache.http.annotation.ThreadSafe
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import retrofit2.Call
@@ -26,7 +25,6 @@ import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-@ThreadSafe
 object DownloadManager {
 
   private data class FileLockImpl(val locked: File, val id: Long, val lockDate: Long) : FileLock() {

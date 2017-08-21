@@ -11,10 +11,7 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/verifier-cli" />
             <option value="$PROJECT_DIR$/verifier-core" />
-            <option value="$PROJECT_DIR$/verifier-parameters" />
             <option value="$PROJECT_DIR$/verifier-repository" />
-            <option value="$PROJECT_DIR$/verifier-results" />
-            <option value="$PROJECT_DIR$/verifier-tasks" />
             <option value="$PROJECT_DIR$/verifier-test" />
             <option value="$PROJECT_DIR$/verifier-test/after-idea" />
             <option value="$PROJECT_DIR$/verifier-test/before-idea" />
@@ -62,10 +59,7 @@
                   <project path="$PROJECT_DIR$" />
                   <project path="$PROJECT_DIR$/verifier-cli" />
                   <project path="$PROJECT_DIR$/verifier-core" />
-                  <project path="$PROJECT_DIR$/verifier-parameters" />
                   <project path="$PROJECT_DIR$/verifier-repository" />
-                  <project path="$PROJECT_DIR$/verifier-results" />
-                  <project path="$PROJECT_DIR$/verifier-tasks" />
                   <project path="$PROJECT_DIR$/verifier-test" />
                   <project path="$PROJECT_DIR$/verifier-test/after-idea" />
                   <project path="$PROJECT_DIR$/verifier-test/before-idea" />
@@ -86,10 +80,7 @@
             <option value="$PROJECT_DIR$/plugins-verifier-service" />
             <option value="$PROJECT_DIR$/verifier-cli" />
             <option value="$PROJECT_DIR$/verifier-core" />
-            <option value="$PROJECT_DIR$/verifier-parameters" />
             <option value="$PROJECT_DIR$/verifier-repository" />
-            <option value="$PROJECT_DIR$/verifier-results" />
-            <option value="$PROJECT_DIR$/verifier-tasks" />
             <option value="$PROJECT_DIR$/verifier-test" />
             <option value="$PROJECT_DIR$/verifier-test/after-idea" />
             <option value="$PROJECT_DIR$/verifier-test/before-idea" />

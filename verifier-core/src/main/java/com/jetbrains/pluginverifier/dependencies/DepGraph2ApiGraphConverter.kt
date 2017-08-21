@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.dependencies
 
 import com.intellij.structure.problems.PluginProblem
-import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import org.jgrapht.DirectedGraph
 
 object DepGraph2ApiGraphConverter {

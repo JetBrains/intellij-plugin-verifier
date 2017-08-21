@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.dependency
+package com.jetbrains.pluginverifier.dependencies
 
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.plugin.PluginDependency

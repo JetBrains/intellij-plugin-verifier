@@ -4,13 +4,12 @@ import com.google.gson.Gson
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
-import org.apache.http.HttpStatus
-import org.apache.http.annotation.ThreadSafe
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
+import java.net.HttpURLConnection
 import java.util.concurrent.TimeUnit
 
 private interface RepositoryApi {
@@ -26,7 +25,6 @@ private interface RepositoryApi {
 
 }
 
-@ThreadSafe
 object RepositoryManager : PluginRepository {
 
   override fun getUpdateInfoById(updateId: Int): UpdateInfo? {
@@ -34,7 +32,7 @@ object RepositoryManager : PluginRepository {
     val response = call.execute()
     if (response.isSuccessful) {
       return response.body()
-    } else if (response.code() == HttpStatus.SC_NOT_FOUND || response.code() == HttpStatus.SC_BAD_REQUEST) {
+    } else if (response.code() == HttpURLConnection.HTTP_NOT_FOUND || response.code() == HttpURLConnection.HTTP_BAD_REQUEST) {
       return null
     } else {
       throw RuntimeException("Unable to get update info #$updateId: ${response.code()}")

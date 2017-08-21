@@ -13,7 +13,7 @@ buildscript {
   }
 }
 
-def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.97'
+def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.101'
 
 configure(allprojects) {
   apply plugin: 'java'
@@ -77,7 +77,6 @@ configure(childProjects.values()) {
     relocate('org.jdom', internalPrefix + 'jdom') {}
     relocate('org.intellij.lang.annotations', internalPrefix + 'intellijannotations') {}
     relocate('org.jetbrains.annotations', internalPrefix + 'jetbrainsannotation') {}
-    relocate('org.apache.http', internalPrefix + 'apachehttp') {}
   }
 
   jar.finalizedBy(shadowJar)
@@ -105,11 +104,8 @@ publishing {
     }
 
     VerifierCliPublication(MavenPublication) { configurePublication(it, ':verifier-cli') }
-    VerifierParameters(MavenPublication) { configurePublication(it, ':verifier-parameters') }
-    VerifierConfigurations(MavenPublication) { configurePublication(it, ':verifier-tasks') }
-    RepositoryPublication(MavenPublication) { configurePublication(it, ':verifier-repository') }
-    ResultsPublication(MavenPublication) { configurePublication(it, ':verifier-results') }
     VerifierCorePublication(MavenPublication) { configurePublication(it, ':verifier-core') }
+    RepositoryPublication(MavenPublication) { configurePublication(it, ':verifier-repository') }
   }
 }
 

@@ -26,6 +26,8 @@ data class CheckTrunkApiCompareResult(val trunkVersion: IdeVersion,
           is Verdict.Problems -> {
             verdict.problems.forEach { problemToPlugin.put(it, plugin) }
           }
+          is Verdict.OK, is Verdict.Warnings, is Verdict.Bad, is Verdict.NotFound -> {
+          }
         }
       }
       return problemToPlugin

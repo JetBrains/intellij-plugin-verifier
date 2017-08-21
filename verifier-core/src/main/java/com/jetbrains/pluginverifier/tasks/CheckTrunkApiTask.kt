@@ -6,9 +6,9 @@ import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.Progress
+import com.jetbrains.pluginverifier.dependencies.DependencyResolver
 import com.jetbrains.pluginverifier.dependencies.DownloadCompatibleDependencyResolver
 import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver
-import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.utils.IdeResourceUtil

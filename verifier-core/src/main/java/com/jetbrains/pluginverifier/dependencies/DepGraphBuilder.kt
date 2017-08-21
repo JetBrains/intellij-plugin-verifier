@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.dependencies
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.plugin.PluginDependency
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.dependency.DependencyResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
 import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph

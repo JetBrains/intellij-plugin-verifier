@@ -1,13 +1,9 @@
 rootProject.name = 'verifier-parent'
-include 'verifier-results'
+include 'verifier-cli'
+include 'verifier-core'
 include 'verifier-repository'
 
-include 'verifier-cli'
 include 'verifier-test'
 include 'verifier-test:after-idea'
 include 'verifier-test:before-idea'
 include 'verifier-test:mock-plugin'
-include 'verifier-core'
-include 'verifier-parameters'
-include 'verifier-tasks'
-

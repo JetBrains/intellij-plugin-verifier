@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.api
 
 import com.intellij.structure.resolvers.Resolver
-import com.jetbrains.pluginverifier.dependency.DependencyResolver
+import com.jetbrains.pluginverifier.dependencies.DependencyResolver
 
 /**
  * Accumulates parameters of the upcoming verification.
