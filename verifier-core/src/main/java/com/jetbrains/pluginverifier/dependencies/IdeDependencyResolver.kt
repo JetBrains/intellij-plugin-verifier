@@ -76,7 +76,11 @@ class IdeDependencyResolver(val ide: Ide) : DependencyResolver {
     val containingPluginId = INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
     if (containingPluginId != null) {
       val containingPluginDependency = PluginDependencyImpl(containingPluginId, dependency.isOptional, false)
-      return resolvePlugin(containingPluginDependency)
+      val resolvedPlugin = resolvePlugin(containingPluginDependency)
+      if (resolvedPlugin is DependencyResolver.Result.NotFound) {
+        return DependencyResolver.Result.NotFound("Plugin '$containingPluginId' which contains definition of module '$moduleId' is not found: ${resolvedPlugin.reason.decapitalize()}")
+      }
+      return resolvedPlugin
     }
 
     return DependencyResolver.Result.NotFound("Module $moduleId is not found in ${ide.version}")

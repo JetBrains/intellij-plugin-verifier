@@ -327,10 +327,10 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
     val missingProblems = compareResult.newMissingProblems
     tcLog.testSuiteStarted("missing plugin dependencies").use {
       missingProblems.asMap().entries.forEach { (missingDependency, dependentPlugins) ->
-        val testName = "(missing $missingDependency)"
+        val testName = "(missing ${missingDependency.dependency})"
         tcLog.testStarted(testName).use {
-          tcLog.testFailed(testName, "$missingDependency is not found in $trunkVersion " +
-              "but it is required for the following plugins: [${dependentPlugins.joinToString()}]", "This problem takes place in $trunkVersion but not in $releaseVersion")
+          tcLog.testFailed(testName, "${missingDependency.missingReason}\n'${missingDependency.dependency}' " +
+              "is required for the following plugins: [${dependentPlugins.joinToString()}]", "This problem takes place in $trunkVersion but not in $releaseVersion")
         }
       }
     }
