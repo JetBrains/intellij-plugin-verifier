@@ -41,7 +41,7 @@ sealed class Verdict {
    * The plugin has some dependencies which were not found during the verification.
    * Look at the [dependenciesGraph] for details.
    *
-   * Note: some of the problems might be caused by the missing dependencies (unresolved classes etc.).
+   * Note: some of the problems might have been caused by the missing dependencies (unresolved classes etc.).
    * Also the [problems] might be empty if the missed dependencies don't affect the compatibility with the IDE.
    */
   data class MissingDependencies(val missingDependencies: List<MissingDependency>,

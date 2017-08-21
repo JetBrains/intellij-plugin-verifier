@@ -31,7 +31,7 @@ data class CheckPluginResult(val results: List<Result>) : TaskResult {
           is Verdict.OK -> emptySet()
           is Verdict.Warnings -> emptySet()
           is Verdict.Problems -> it.verdict.problems
-          is Verdict.MissingDependencies -> it.verdict.problems  //some problems might be caused by missing dependencies
+          is Verdict.MissingDependencies -> it.verdict.problems  //some problems might have been caused by missing dependencies
           is Verdict.Bad -> setOf(Any())
           is Verdict.NotFound -> emptySet()
         }

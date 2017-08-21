@@ -60,7 +60,7 @@ data class CheckIdeResult(val ideVersion: IdeVersion,
         when (it.verdict) {
           is Verdict.OK -> emptySet()
           is Verdict.Warnings -> emptySet()
-          is Verdict.Problems -> it.verdict.problems //some problems might be caused by missing dependencies
+          is Verdict.Problems -> it.verdict.problems //some problems might have been caused by missing dependencies
           is Verdict.Bad -> setOf(Any())
           is Verdict.NotFound -> emptySet()
           is Verdict.MissingDependencies -> emptySet()

@@ -1,7 +1,9 @@
 package com.jetbrains.pluginverifier.output
 
+import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
+import com.google.common.collect.Multimaps
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Result
@@ -190,7 +192,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
         }
         if (missingDependencies.isNotEmpty()) {
           if (problems.isNotEmpty()) {
-            append("Some problems might be caused by missing plugins:").append('\n')
+            append("Some problems might have been caused by missing plugins:").append('\n')
           }
           appendMissingDependencies(missingDependencies.filterNot { it.dependency.isOptional })
           appendMissingDependencies(missingDependencies.filter { it.dependency.isOptional && !options.ignoreMissingOptionalDependency(it.dependency) })
@@ -302,27 +304,6 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
     val trunkVersion = compareResult.trunkVersion
     val releaseVersion = compareResult.releaseVersion
 
-    allProblems.groupBy { it.javaClass }.forEach { (problemClass, allProblemsOfClass) ->
-      val problemTypeSuite = convertProblemClassNameToSentence(problemClass)
-      tcLog.testSuiteStarted("($problemTypeSuite)").use {
-        allProblemsOfClass.groupBy { it.getShortDescription() }.forEach { (shortDescription, problemsWithShortDescription) ->
-          problemsWithShortDescription.forEach { problem ->
-            val shortProblemDescriptionSuite = shortDescription.toString()
-            tcLog.testSuiteStarted(shortProblemDescriptionSuite).use {
-              problemToPlugins.get(problem).forEach { plugin ->
-                val testName = "($plugin)"
-                tcLog.testStarted(testName).use {
-                  val pluginUrl = getPluginLink(plugin)
-                  val problemDetails = "${problem.getFullDescription()}\nThis problem is detected in $trunkVersion but not in $releaseVersion"
-                  tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problemDetails)
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
     //print missing dependencies
     val missingProblems = compareResult.newMissingProblems
     tcLog.testSuiteStarted("missing plugin dependencies").use {
@@ -334,7 +315,32 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
         }
       }
     }
+    val plugin2MissingDeps: Multimap<PluginInfo, MissingDependency> = Multimaps.invertFrom(missingProblems, ArrayListMultimap.create())
 
+    allProblems.groupBy { it.javaClass }.forEach { (problemClass, allProblemsOfClass) ->
+      val problemTypeSuite = convertProblemClassNameToSentence(problemClass)
+      tcLog.testSuiteStarted("($problemTypeSuite)").use {
+        allProblemsOfClass.groupBy { it.getShortDescription() }.forEach { (shortDescription, problemsWithShortDescription) ->
+          problemsWithShortDescription.forEach { problem ->
+            val shortProblemDescriptionSuite = shortDescription.toString()
+            tcLog.testSuiteStarted(shortProblemDescriptionSuite).use {
+              problemToPlugins.get(problem).forEach { plugin ->
+                val testName = "($plugin)"
+                tcLog.testStarted(testName).use {
+                  val pluginUrl = getPluginLink(plugin)
+                  var problemDetails = "${problem.getFullDescription()}\nThis problem takes place in $trunkVersion but not in $releaseVersion"
+                  val missingDeps = plugin2MissingDeps[plugin]
+                  if (missingDeps.isNotEmpty()) {
+                    problemDetails += "\nNote: some problems might have been caused by missing dependencies: [" + missingDeps.map { it.dependency }.joinToString() + "]"
+                  }
+                  tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problemDetails)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
 
     val newProblemsCnt = allProblems.distinctBy { it.getShortDescription() }.size
     val newMissingDependenciesCnt = missingProblems.keySet().size

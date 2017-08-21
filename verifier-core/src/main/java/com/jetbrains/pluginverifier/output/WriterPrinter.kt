@@ -46,7 +46,7 @@ class WriterPrinter(private val out: PrintWriter) : Printer {
 
   private fun printMissingMandatoryDependencies(missingMandatory: List<MissingDependency>) {
     if (missingMandatory.isNotEmpty()) {
-      out.println("   Some problems might be caused by missing non-optional dependencies:")
+      out.println("   Some problems might have been caused by missing non-optional dependencies:")
       missingMandatory.map { it.toString() }.forEach { out.println("        $it") }
     }
   }
