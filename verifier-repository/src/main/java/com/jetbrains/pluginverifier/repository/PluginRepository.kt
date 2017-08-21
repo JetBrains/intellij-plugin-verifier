@@ -16,6 +16,8 @@ interface PluginRepository {
 
   fun getUpdateInfoById(updateId: Int): UpdateInfo?
 
+  fun getIdOfPluginDeclaringModule(moduleId: String): String?
+
 }
 
 abstract class FileLock : Closeable {

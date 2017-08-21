@@ -33,6 +33,8 @@ class TestTeamCityPrinter {
     override fun getPluginFile(update: UpdateInfo): FileLock? = throw noConnection()
 
     override fun getUpdateInfoById(updateId: Int): UpdateInfo = throw noConnection()
+
+    override fun getIdOfPluginDeclaringModule(moduleId: String): String = throw noConnection()
   }
 
   private fun mockRepository(updateInfos: List<UpdateInfo>) = object : PluginRepository {
@@ -45,6 +47,8 @@ class TestTeamCityPrinter {
     override fun getPluginFile(update: UpdateInfo): FileLock? = throw UnsupportedOperationException()
 
     override fun getUpdateInfoById(updateId: Int): UpdateInfo = throw UnsupportedOperationException()
+
+    override fun getIdOfPluginDeclaringModule(moduleId: String): String = throw UnsupportedOperationException()
   }
 
   @Test

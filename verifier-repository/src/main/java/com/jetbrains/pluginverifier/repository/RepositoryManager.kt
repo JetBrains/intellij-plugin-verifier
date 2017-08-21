@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.repository
 
+import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.pluginverifier.misc.executeSuccessfully
@@ -27,6 +28,17 @@ private interface RepositoryApi {
 
 object RepositoryManager : PluginRepository {
 
+  /**
+   * TODO: implement this mapping on the Plugins Repository.
+   * The list of IntelliJ plugins which define some modules
+   * (e.g. the plugin "org.jetbrains.plugins.ruby" defines a module "com.intellij.modules.ruby")
+   */
+  private val INTELLIJ_MODULE_TO_CONTAINING_PLUGIN = ImmutableMap.of(
+      "com.intellij.modules.ruby", "org.jetbrains.plugins.ruby",
+      "com.intellij.modules.php", "com.jetbrains.php",
+      "com.intellij.modules.python", "Pythonid",
+      "com.intellij.modules.swift.lang", "com.intellij.clion-swift")
+
   override fun getUpdateInfoById(updateId: Int): UpdateInfo? {
     val call = repositoryApi.getUpdateInfoById(updateId)
     val response = call.execute()
@@ -47,6 +59,9 @@ object RepositoryManager : PluginRepository {
 
   override fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> =
       repositoryApi.getOriginalCompatibleUpdatesByPluginIds(ideVersion.asString(), pluginId).executeSuccessfully().body()
+
+  override fun getIdOfPluginDeclaringModule(moduleId: String): String? =
+      INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
 
   override fun getPluginFile(update: UpdateInfo): FileLock? = DownloadManager.getOrLoadUpdate(update)
 
