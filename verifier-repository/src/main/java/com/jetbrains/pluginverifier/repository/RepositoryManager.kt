@@ -21,13 +21,24 @@ private interface RepositoryApi {
   @GET("/manager/allCompatibleUpdates")
   fun getLastCompatibleUpdates(@Query("build") build: String): Call<List<UpdateInfo>>
 
+  //TODO: get rid of one of the parameters when the Plugins Repository allows it.
+  @GET("/plugin/updates")
+  fun getUpdates(@Query("pluginXmlId") pluginXmlId: String, @Query("xmlId") xmlId: String): Call<UpdatesResponse>
+
   @GET("/manager/originalCompatibleUpdatesByPluginIds")
   fun getOriginalCompatibleUpdatesByPluginIds(@Query("build") build: String, @Query("pluginIds") pluginId: String): Call<List<UpdateInfo>>
 
 }
 
-object RepositoryManager : PluginRepository {
+//TODO: get rid of nullability in types when the Plugins Repository gives that parameters.
+private data class UpdatesResponse(val pluginXmlId: String?,
+                                   val pluginName: String?,
+                                   val vendor: String?,
+                                   val updates: List<Update>) {
+  data class Update(val id: Int, val updateVersion: String, val since: String?, val until: String?)
+}
 
+object RepositoryManager : PluginRepository {
   /**
    * TODO: implement this mapping on the Plugins Repository.
    * The list of IntelliJ plugins which define some modules
@@ -48,6 +59,15 @@ object RepositoryManager : PluginRepository {
       return null
     } else {
       throw RuntimeException("Unable to get update info #$updateId: ${response.code()}")
+    }
+  }
+
+  override fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo> {
+    val updatesResponse = repositoryApi.getUpdates(pluginId, pluginId).executeSuccessfully().body()
+    val pluginXmlId = updatesResponse.pluginXmlId ?: pluginId
+    val name = updatesResponse.pluginName ?: "<unknown>"
+    return updatesResponse.updates.map {
+      UpdateInfo(pluginXmlId, name, it.updateVersion, it.id, updatesResponse.vendor)
     }
   }
 

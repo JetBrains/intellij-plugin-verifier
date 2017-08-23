@@ -35,6 +35,8 @@ class TestTeamCityPrinter {
     override fun getUpdateInfoById(updateId: Int): UpdateInfo = throw noConnection()
 
     override fun getIdOfPluginDeclaringModule(moduleId: String): String = throw noConnection()
+
+    override fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo> = throw noConnection()
   }
 
   private fun mockRepository(updateInfos: List<UpdateInfo>) = object : PluginRepository {
@@ -49,11 +51,13 @@ class TestTeamCityPrinter {
     override fun getUpdateInfoById(updateId: Int): UpdateInfo = throw UnsupportedOperationException()
 
     override fun getIdOfPluginDeclaringModule(moduleId: String): String = throw UnsupportedOperationException()
+
+    override fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo> = throw UnsupportedOperationException()
   }
 
   @Test
   fun `test newest suffix for updates with newest versions`() {
-    val pluginInfos = listOf(PluginInfo("id", "version", UpdateInfo("id", "name", "version", 1, "", "", "")), PluginInfo("id", "version 2", UpdateInfo("id", "name", "version 2", 2, "", "", "")))
+    val pluginInfos = listOf(PluginInfo("id", "version", UpdateInfo("id", "name", "version", 1, "")), PluginInfo("id", "version 2", UpdateInfo("id", "name", "version 2", 2, "")))
     val mockRepository = mockRepository(pluginInfos.map { it.updateInfo!! })
     val output = getTeamCityOutput(mockRepository, pluginInfos)
     Assert.assertEquals("""##teamcity[testSuiteStarted name='id']
@@ -68,7 +72,7 @@ class TestTeamCityPrinter {
   @Test
   fun `no repository connection lead to no -newest suffix`() {
     val mockPluginRepository = noConnectionPluginRepository()
-    val output = getTeamCityOutput(mockPluginRepository, listOf(PluginInfo("id", "v", UpdateInfo("id", "name", "v", 1, "vendor", "", ""))))
+    val output = getTeamCityOutput(mockPluginRepository, listOf(PluginInfo("id", "v", UpdateInfo("id", "name", "v", 1, "vendor"))))
     Assert.assertEquals("""##teamcity[testSuiteStarted name='id']
 ##teamcity[testStarted name='(v)']
 ##teamcity[testFinished name='(v)']
