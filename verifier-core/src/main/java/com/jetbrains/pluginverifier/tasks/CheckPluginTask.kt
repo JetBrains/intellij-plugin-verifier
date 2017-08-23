@@ -5,7 +5,7 @@ import com.intellij.structure.plugin.PluginDependency
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.core.VerifierExecutor
 import com.jetbrains.pluginverifier.dependencies.DependencyResolver
-import com.jetbrains.pluginverifier.dependencies.IdeCompatibleDependencyResolver
+import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
@@ -14,7 +14,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams) : Task() {
 
   private fun getDependencyResolver(ide: Ide, allPluginsToCheck: List<CreatePluginResult>): DependencyResolver = object : DependencyResolver {
 
-    private val ideDependencyResolver = IdeCompatibleDependencyResolver(ide)
+    private val ideDependencyResolver = IdeDependencyResolver(ide)
 
     override fun resolve(dependency: PluginDependency): DependencyResolver.Result {
       return findPluginInListOfPluginsToCheck(dependency) ?: ideDependencyResolver.resolve(dependency)

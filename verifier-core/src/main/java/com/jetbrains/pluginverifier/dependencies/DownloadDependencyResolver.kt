@@ -11,7 +11,7 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 /**
  * @author Sergey Patrikeev
  */
-class DownloadCompatibleDependencyResolver(private val dependencySelector: DependencySelector) : DependencyResolver {
+class DownloadDependencyResolver(private val dependencySelector: DependencySelector) : DependencyResolver {
 
   private companion object {
     val IDEA_ULTIMATE_MODULES: Set<String> = ImmutableSet.of(

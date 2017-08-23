@@ -6,9 +6,7 @@ import com.intellij.structure.plugin.PluginDependency
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 
-class IdeCompatibleDependencyResolver(val ide: Ide) : DependencyResolver {
-
-  private val downloadCompatibleDependencyResolver = DownloadCompatibleDependencyResolver(LastCompatibleSelector(ide.version))
+class BundledPluginDependencyResolver(val ide: Ide) : DependencyResolver {
 
   override fun resolve(dependency: PluginDependency): DependencyResolver.Result {
     val id = dependency.id
@@ -20,7 +18,7 @@ class IdeCompatibleDependencyResolver(val ide: Ide) : DependencyResolver {
     if (existingPlugin != null) {
       return createDependencyResultByExistingPlugin(existingPlugin)
     }
-    return downloadCompatibleDependencyResolver.resolve(dependency)
+    return DependencyResolver.Result.NotFound("${dependency.id} is not found in $ide")
   }
 
   private fun createDependencyResultByExistingPlugin(plugin: Plugin): DependencyResolver.Result {
