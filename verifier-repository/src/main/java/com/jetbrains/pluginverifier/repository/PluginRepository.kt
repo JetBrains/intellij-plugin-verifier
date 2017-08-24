@@ -12,7 +12,7 @@ interface PluginRepository {
 
   fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo>
 
-  fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo>
+  fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo>?
 
   fun getPluginFile(update: UpdateInfo): FileLock?
 

@@ -8,5 +8,5 @@ class LastUpdateSelector : DependencySelector {
     return DependencySelector.Result.Plugin(lastUpdate)
   }
 
-  private fun getLastUpdate(pluginId: String) = RepositoryManager.getAllUpdatesOfPlugin(pluginId).maxBy { it.updateId }
+  private fun getLastUpdate(pluginId: String) = RepositoryManager.getAllUpdatesOfPlugin(pluginId)?.maxBy { it.updateId }
 }

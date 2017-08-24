@@ -34,7 +34,7 @@ private interface RepositoryApi {
 private data class UpdatesResponse(val pluginXmlId: String?,
                                    val pluginName: String?,
                                    val vendor: String?,
-                                   val updates: List<Update>) {
+                                   val updates: List<Update>?) {
   data class Update(val id: Int, val updateVersion: String, val since: String?, val until: String?)
 }
 
@@ -62,8 +62,11 @@ object RepositoryManager : PluginRepository {
     }
   }
 
-  override fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo> {
+  override fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo>? {
     val updatesResponse = repositoryApi.getUpdates(pluginId, pluginId).executeSuccessfully().body()
+    if (updatesResponse?.updates == null) {
+      return null
+    }
     val pluginXmlId = updatesResponse.pluginXmlId ?: pluginId
     val name = updatesResponse.pluginName ?: "<unknown>"
     return updatesResponse.updates.map {
