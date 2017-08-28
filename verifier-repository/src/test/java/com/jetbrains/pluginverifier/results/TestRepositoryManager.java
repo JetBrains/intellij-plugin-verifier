@@ -22,6 +22,23 @@ public class TestRepositoryManager {
   }
 
   @Test
+  public void updatesOfExistentPlugin() {
+    List<UpdateInfo> updates = RepositoryManager.INSTANCE.getAllUpdatesOfPlugin("Pythonid");
+    assertNotNull(updates);
+    assertFalse(updates.isEmpty());
+    UpdateInfo updateInfo = updates.get(0);
+    assertEquals("Pythonid", updateInfo.getPluginId());
+    assertEquals("Python", updateInfo.getPluginName());
+    assertEquals("JetBrains", updateInfo.getVendor());
+  }
+
+  @Test
+  public void updatesOfNonExistentPlugin() {
+    List<UpdateInfo> updates = RepositoryManager.INSTANCE.getAllUpdatesOfPlugin("NON_EXISTENT_PLUGIN");
+    assertNull(updates);
+  }
+
+  @Test
   public void lastUpdate() {
     UpdateInfo info = RepositoryManager.INSTANCE.getLastCompatibleUpdateOfPlugin(getIdeVersion(), "org.jetbrains.kotlin");
     assertNotNull(info);

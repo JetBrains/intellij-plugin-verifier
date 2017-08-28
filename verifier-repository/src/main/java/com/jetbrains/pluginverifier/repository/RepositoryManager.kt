@@ -21,19 +21,17 @@ private interface RepositoryApi {
   @GET("/manager/allCompatibleUpdates")
   fun getLastCompatibleUpdates(@Query("build") build: String): Call<List<UpdateInfo>>
 
-  //TODO: get rid of one of the parameters when the Plugins Repository allows it.
   @GET("/plugin/updates")
-  fun getUpdates(@Query("pluginXmlId") pluginXmlId: String, @Query("xmlId") xmlId: String): Call<UpdatesResponse>
+  fun getUpdates(@Query("xmlId") xmlId: String): Call<UpdatesResponse>
 
   @GET("/manager/originalCompatibleUpdatesByPluginIds")
   fun getOriginalCompatibleUpdatesByPluginIds(@Query("build") build: String, @Query("pluginIds") pluginId: String): Call<List<UpdateInfo>>
 
 }
 
-//TODO: get rid of nullability in types when the Plugins Repository gives that parameters.
-private data class UpdatesResponse(val pluginXmlId: String?,
-                                   val pluginName: String?,
-                                   val vendor: String?,
+private data class UpdatesResponse(val pluginXmlId: String,
+                                   val pluginName: String,
+                                   val vendor: String,
                                    val updates: List<Update>?) {
   data class Update(val id: Int, val updateVersion: String, val since: String?, val until: String?)
 }
@@ -63,14 +61,23 @@ object RepositoryManager : PluginRepository {
   }
 
   override fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo>? {
-    val updatesResponse = repositoryApi.getUpdates(pluginId, pluginId).executeSuccessfully().body()
-    if (updatesResponse?.updates == null) {
+    val call = repositoryApi.getUpdates(pluginId)
+    val response = call.execute()
+    if (response.isSuccessful) {
+      val updates = response.body()
+      //TODO: get rid of this when the Repository is ready.
+      if (updates.updates == null) {
+        return null
+      }
+      val pluginXmlId = updates.pluginXmlId
+      val name = updates.pluginName
+      return updates.updates.map {
+        UpdateInfo(pluginXmlId, name, it.updateVersion, it.id, updates.vendor)
+      }
+    } else if (response.code() == HttpURLConnection.HTTP_NOT_FOUND) {
       return null
-    }
-    val pluginXmlId = updatesResponse.pluginXmlId ?: pluginId
-    val name = updatesResponse.pluginName ?: "<unknown>"
-    return updatesResponse.updates.map {
-      UpdateInfo(pluginXmlId, name, it.updateVersion, it.id, updatesResponse.vendor)
+    } else {
+      throw RuntimeException("Unable to get updates by pluginId = $pluginId: ${response.code()}")
     }
   }
 
