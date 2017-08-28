@@ -1,7 +1,5 @@
 package com.intellij.structure.resolvers;
 
-
-import com.intellij.structure.ide.Ide;
 import com.intellij.structure.impl.resolvers.*;
 import com.intellij.structure.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
@@ -36,22 +34,6 @@ public abstract class Resolver implements Closeable {
   @NotNull
   public static Resolver createPluginResolver(@NotNull Plugin plugin) throws IOException {
     return plugin.getOriginalFile() == null ? getEmptyResolver() : PluginResolver.createPluginResolver(plugin.getOriginalFile());
-  }
-
-  /**
-   * Creates a resolver for the given Ide.
-   * <p>If {@code ide} represents a binary IDE distribution the result consists of the .jar files under
-   * the <i>{ide.home}/lib</i> directory (not including the subdirectories of <i>lib</i> itself).</p>
-   * <p>If {@code ide} represents an IDE compile output the result consists of the class files under the build-directory
-   * (for Ultimate it is <i>{ide.home}/out/classes/production</i>)</p>
-   *
-   * @param ide ide for which to create a resolver
-   * @throws IOException if error occurs during attempt to read a class file or an Ide has an incorrect directories structure
-   * @return resolver of classes for the given Ide
-   */
-  @NotNull
-  public static Resolver createIdeResolver(@NotNull Ide ide) throws IOException {
-    return IdeResolverCreator.createIdeResolver(ide);
   }
 
   /**

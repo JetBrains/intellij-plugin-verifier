@@ -39,6 +39,7 @@
             <option value="$PROJECT_DIR$/intellij-plugin-structure" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-base" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-classes" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-ide" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/tests" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/tests/mock-plugin" />
           </set>

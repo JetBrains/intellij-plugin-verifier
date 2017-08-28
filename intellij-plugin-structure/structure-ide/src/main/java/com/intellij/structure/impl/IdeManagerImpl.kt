@@ -1,10 +1,11 @@
-package com.intellij.structure.impl.domain
+package com.intellij.structure.impl
 
 import com.google.common.base.Joiner
 import com.google.common.io.Files
 import com.intellij.structure.ide.Ide
 import com.intellij.structure.ide.IdeManager
 import com.intellij.structure.ide.IdeVersion
+import com.intellij.structure.impl.domain.PluginManagerImpl
 import com.intellij.structure.impl.utils.StringUtil
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder
 import com.intellij.structure.impl.utils.xml.URLUtil

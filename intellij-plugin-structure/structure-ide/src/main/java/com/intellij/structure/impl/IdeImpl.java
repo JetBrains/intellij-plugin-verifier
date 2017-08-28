@@ -1,4 +1,4 @@
-package com.intellij.structure.impl.domain;
+package com.intellij.structure.impl;
 
 import com.intellij.structure.ide.Ide;
 import com.intellij.structure.ide.IdeVersion;
@@ -6,7 +6,6 @@ import com.intellij.structure.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -20,7 +19,7 @@ class IdeImpl extends Ide {
 
   IdeImpl(@NotNull File idePath,
           @NotNull IdeVersion version,
-          @NotNull List<Plugin> bundledPlugins) throws IOException {
+          @NotNull List<Plugin> bundledPlugins) {
     this(idePath, bundledPlugins, Collections.<Plugin>emptyList(), version);
   }
 

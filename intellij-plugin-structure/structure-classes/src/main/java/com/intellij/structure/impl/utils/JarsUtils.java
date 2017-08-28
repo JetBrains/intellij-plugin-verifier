@@ -22,7 +22,7 @@ public class JarsUtils {
   private static final Logger LOG = LoggerFactory.getLogger(JarsUtils.class);
 
   @NotNull
-  public static Collection<File> collectJars(@NotNull File directory, @NotNull final Predicate<File> filter, boolean recursively) throws IOException {
+  public static Collection<File> collectJars(@NotNull File directory, @NotNull final Predicate<File> filter, boolean recursively) {
     return FileUtils.listFiles(directory, new AbstractFileFilter() {
       @Override
       public boolean accept(File file) {

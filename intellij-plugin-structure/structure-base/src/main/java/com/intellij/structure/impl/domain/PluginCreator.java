@@ -26,7 +26,7 @@ import static com.intellij.structure.impl.utils.StringUtil.isEmptyOrSpaces;
 /**
  * @author Sergey Patrikeev
  */
-final class PluginCreator {
+public final class PluginCreator {
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginCreator.class);
 

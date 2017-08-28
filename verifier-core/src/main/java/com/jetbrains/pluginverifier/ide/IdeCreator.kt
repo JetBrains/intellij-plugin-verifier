@@ -2,8 +2,10 @@ package com.jetbrains.pluginverifier.ide
 
 import com.intellij.structure.ide.IdeManager
 import com.intellij.structure.ide.IdeVersion
-import com.intellij.structure.resolvers.Resolver
+import com.intellij.structure.resolvers.IdeResolverCreator
 import com.jetbrains.pluginverifier.api.IdeDescriptor
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
 
 /**
@@ -11,9 +13,12 @@ import java.io.File
  */
 object IdeCreator {
 
+  val LOG: Logger = LoggerFactory.getLogger(IdeCreator::class.java)
+
   fun createByFile(file: File, ideVersion: IdeVersion?): IdeDescriptor {
+    LOG.debug("Reading IDE class files from $file")
     val ide = IdeManager.getInstance().createIde(file, ideVersion)
-    val ideResolver = Resolver.createIdeResolver(ide)
+    val ideResolver = IdeResolverCreator.createIdeResolver(ide)
     return IdeDescriptor(ide, ideResolver)
   }
 

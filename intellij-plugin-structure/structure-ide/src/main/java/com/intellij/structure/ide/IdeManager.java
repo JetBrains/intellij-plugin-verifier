@@ -1,6 +1,6 @@
 package com.intellij.structure.ide;
 
-import com.intellij.structure.impl.domain.IdeManagerImpl;
+import com.intellij.structure.impl.IdeManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

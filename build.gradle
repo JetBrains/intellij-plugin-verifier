@@ -1,7 +1,7 @@
 buildscript {
 
   ext.kotlin_version = '1.1.4'
-  ext.intellijStructureVersion = '2.7'
+  ext.intellijStructureVersion = '2.9'
 
   repositories {
     jcenter()
@@ -13,7 +13,7 @@ buildscript {
   }
 }
 
-def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.101'
+def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.103'
 
 configure(allprojects) {
   apply plugin: 'java'
