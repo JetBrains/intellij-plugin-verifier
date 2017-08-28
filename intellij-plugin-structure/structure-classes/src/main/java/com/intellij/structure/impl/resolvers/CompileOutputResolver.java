@@ -16,26 +16,33 @@ import java.util.*;
 /**
  * @author Sergey Patrikeev
  */
-class CompileOutputResolver extends Resolver {
+public class CompileOutputResolver extends Resolver {
 
   private final Map<String, File> allClasses = new HashMap<String, File>();
   private final Set<File> classPath = new HashSet<File>();
   private final File myDir;
 
-  CompileOutputResolver(@NotNull File dir) throws IOException {
-    myDir = dir;
-    Collection<File> classFiles = FileUtils.listFiles(dir, new String[]{"class"}, true);
+  public CompileOutputResolver(@NotNull File dir) throws IOException {
+    myDir = dir.getCanonicalFile();
+    Collection<File> classFiles = FileUtils.listFiles(myDir, new String[]{"class"}, true);
     for (File classFile : classFiles) {
-      ClassNode classNode = AsmUtil.readClassFromFile(classFile);
-      allClasses.put(classNode.name, classFile);
-      classPath.add(getClassRoot(classFile.getCanonicalFile(), classNode));
+      String className = AsmUtil.readClassName(classFile);
+      File classRoot = getClassRoot(classFile, className);
+      if (classRoot != null) {
+        allClasses.put(className, classFile);
+        classPath.add(classRoot);
+      }
     }
   }
 
-  private File getClassRoot(File classFile, ClassNode classNode) throws IOException {
-    int levelsUp = StringUtil.countChars(classNode.name, '/');
-    String back = StringUtil.repeat("../", levelsUp + 1);
-    return new File(classFile, back).getCanonicalFile();
+  @Nullable
+  private File getClassRoot(@NotNull File classFile, @NotNull String className) {
+    int levelsUp = StringUtil.countChars(className, '/');
+    File root = classFile;
+    for (int i = 0; i < levelsUp + 1; i++) {
+      root = root != null ? root.getParentFile() : null;
+    }
+    return root;
   }
 
   @Nullable
@@ -79,7 +86,7 @@ class CompileOutputResolver extends Resolver {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
     //nothing to do
   }
 

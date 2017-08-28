@@ -39,6 +39,25 @@ public class AsmUtil {
   }
 
   @NotNull
+  public static String readClassName(@NotNull File classFile) throws IOException {
+    InputStream is = null;
+    try {
+      is = FileUtils.openInputStream(classFile);
+      ClassReader classReader = new ClassReader(is);
+      String className = classReader.getClassName();
+      if (className == null) {
+        throw new IOException("Unable to read class name from " + classFile);
+      }
+      return className;
+    } catch (RuntimeException e) {
+      throw new IOException("Unable to read class file from " + classFile, e);
+    } finally {
+      IOUtils.closeQuietly(is);
+    }
+
+  }
+
+  @NotNull
   public static ClassNode readClassFromFile(@NotNull File classFile) throws IOException {
     InputStream is = null;
     try {
