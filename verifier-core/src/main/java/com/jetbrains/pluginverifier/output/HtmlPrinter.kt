@@ -46,7 +46,7 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
           if (results.isEmpty()) {
             +"No plugins checked"
           } else {
-            results.groupBy { it.plugin.pluginId }.forEach { (pluginId, pluginResults) ->
+            results.sortedBy { it.plugin.pluginId }.groupBy { it.plugin.pluginId }.forEach { (pluginId, pluginResults) ->
               appendPluginResults(pluginResults, pluginId, options)
             }
           }
