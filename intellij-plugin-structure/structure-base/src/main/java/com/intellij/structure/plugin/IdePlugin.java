@@ -25,14 +25,6 @@ public interface IdePlugin extends Plugin {
   @NotNull
   List<PluginDependency> getDependencies();
 
-  String getPluginName();
-
-  String getPluginVersion();
-
-  String getPluginId();
-
-  String getVendor();
-
   @NotNull
   Set<String> getDefinedModules();
 

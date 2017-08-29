@@ -42,8 +42,19 @@ class IdeManagerImpl : IdeManager() {
     return IdeImpl(idePath, ideVersion, bundled)
   }
 
+  private fun isMacOs(): Boolean {
+    val osName = System.getProperty("os.name")?.toLowerCase() ?: return false
+    return osName.contains("mac os x") || osName.contains("darwin") || osName.contains("osx")
+  }
+
   @Throws(IOException::class)
   private fun readVersionFromBinaries(idePath: File): IdeVersion {
+    if (isMacOs()) {
+      val versionFile = File(idePath, "Resources/build.txt")
+      if (versionFile.exists()) {
+        return readBuildNumber(versionFile)
+      }
+    }
     val versionFile = File(idePath, "build.txt")
     if (!versionFile.exists()) {
       throw IllegalArgumentException(versionFile.toString() + " is not found")
@@ -140,9 +151,9 @@ class IdeManagerImpl : IdeManager() {
         .filter { "META-INF" == it.name && it.isDirectory && it.parentFile != null }
         .map { it.parentFile }
         .filter { it.isDirectory }
-        .mapNotNull { createDummyPluginFromDirectory(it, pathResolver) }
+        .mapNotNull { createPluginByDir(it, pathResolver) }
 
-    private fun createDummyPluginFromDirectory(pluginDirectory: File, pathResolver: JDOMXIncluder.PathResolver?): IdePlugin? {
+    private fun createPluginByDir(pluginDirectory: File, pathResolver: JDOMXIncluder.PathResolver?): IdePlugin? {
       try {
         val pluginCreator = PluginManagerImpl(pathResolver).getPluginCreatorWithResult(pluginDirectory, false)
         pluginCreator.setOriginalFile(pluginDirectory)
@@ -183,7 +194,7 @@ class IdeManagerImpl : IdeManager() {
     private fun getIdeaPlugins(ideaDir: File): List<IdePlugin> {
       val pluginsDir = File(ideaDir, "plugins")
       val pluginsFiles = pluginsDir.listFiles() ?: return emptyList()
-      return pluginsFiles.filter { it.isDirectory }.mapNotNull { createDummyPluginFromDirectory(it, null) }
+      return pluginsFiles.filter { it.isDirectory }.mapNotNull { createPluginByDir(it, null) }
     }
   }
 }

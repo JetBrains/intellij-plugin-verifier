@@ -281,7 +281,7 @@ public class PluginManagerImpl extends PluginManager {
 
   @NotNull
   @Override
-  public PluginCreationResult createPlugin(@NotNull File pluginFile) throws IOException {
+  public PluginCreationResult createPlugin(@NotNull File pluginFile) {
     PluginCreator pluginCreator = getPluginCreatorWithResult(pluginFile, true);
     pluginCreator.setOriginalFile(pluginFile);
     return pluginCreator.getPluginCreationResult();
