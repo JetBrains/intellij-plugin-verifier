@@ -28,10 +28,12 @@ configure(allprojects) {
 
   repositories {
     maven { url "http://repo.maven.apache.org/maven2" }
+    maven { url "http://dl.bintray.com/jonnyzzz/maven" }
   }
 
   dependencies {
     compileOnly "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compileOnly "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     compile group: 'com.intellij', name: 'annotations', version: '12.0'
     compile group: 'com.google.guava', name: 'guava', version: '19.0'
     compile group: 'commons-io', name: 'commons-io', version: '2.5'

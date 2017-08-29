@@ -9,7 +9,7 @@ interface Plugin {
 
   val pluginVersion: String
 
-  val sinceBuild: ProductVersion<*>
+  val sinceBuild: ProductVersion<*>?
 
   val untilBuild: ProductVersion<*>?
 
@@ -19,7 +19,7 @@ interface Plugin {
 
   val description: String?
 
-  val vendor: String
+  val vendor: String?
 
   val vendorEmail: String?
 

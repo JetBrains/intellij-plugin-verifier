@@ -7,6 +7,7 @@ import com.intellij.structure.problems.*
 import com.jetbrains.structure.plugin.PluginCreationFail
 import com.jetbrains.structure.plugin.PluginCreationSuccess
 import com.jetbrains.structure.plugin.PluginProblem
+import com.jetbrains.structure.problems.*
 import com.jetbrains.structure.utils.ZipUtil
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.instanceOf
@@ -87,7 +88,7 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           description = "<description></description>"
         },
-        listOf(PropertyNotSpecified("plugin.xml", "description")))
+        listOf(PropertyNotSpecified("description", "plugin.xml")))
   }
 
   @Test
@@ -96,7 +97,7 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           name = ""
         },
-        listOf(PropertyNotSpecified("plugin.xml", "name")))
+        listOf(PropertyNotSpecified("name", "plugin.xml")))
   }
 
   @Test
@@ -116,7 +117,7 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           vendor = ""
         },
-        listOf(PropertyNotSpecified("plugin.xml", "vendor")))
+        listOf(PropertyNotSpecified("vendor", "plugin.xml")))
   }
 
   @Test
@@ -125,7 +126,7 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           version = ""
         }
-        , listOf(PropertyNotSpecified("plugin.xml", "version")))
+        , listOf(PropertyNotSpecified("version", "plugin.xml")))
   }
 
   @Test
@@ -134,7 +135,7 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           ideaVersion = ""
         },
-        listOf(PropertyNotSpecified("plugin.xml", "idea-version")))
+        listOf(PropertyNotSpecified("idea-version", "plugin.xml")))
   }
 
   @Test
@@ -197,7 +198,7 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           vendor = """<vendor></vendor>"""
         },
-        listOf(PropertyNotSpecified("plugin.xml", "vendor")))
+        listOf(PropertyNotSpecified("vendor", "plugin.xml")))
 
     `test valid plugin xml`(
         perfectXmlBuilder.modify {
@@ -355,7 +356,7 @@ class InvalidPluginsTest {
   fun `completely invalid plugin descriptor`() {
     `test invalid plugin xml`(
         "abracadabra",
-        listOf(UnexpectedDescriptorElements("plugin.xml", "unexpected element on line 1"))
+        listOf(UnexpectedDescriptorElements("unexpected element on line 1", "plugin.xml"))
     )
   }
 

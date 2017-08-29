@@ -1,11 +1,14 @@
 package com.intellij.structure.impl.domain;
 
 import com.intellij.structure.impl.extractor.*;
+import com.jetbrains.structure.problems.*;
+import com.jetbrains.structure.utils.FileUtil;
 import com.intellij.structure.impl.utils.StringUtil;
 import com.intellij.structure.impl.utils.xml.JDOMUtil;
 import com.intellij.structure.impl.utils.xml.JDOMXIncluder;
 import com.intellij.structure.impl.utils.xml.URLUtil;
 import com.intellij.structure.plugin.IdePlugin;
+import com.jetbrains.structure.plugin.PluginCreationResult;
 import com.intellij.structure.plugin.PluginDependency;
 import com.intellij.structure.plugin.PluginManager;
 import com.intellij.structure.problems.*;
@@ -126,7 +129,7 @@ public class PluginManagerImpl extends PluginManager {
     } catch (JDOMParseException e) {
       int lineNumber = e.getLineNumber();
       String message = lineNumber != -1 ? "unexpected element on line " + lineNumber : "unexpected elements";
-      return new PluginCreator(descriptorPath, new UnexpectedDescriptorElements(descriptorPath, message), pluginDirectory);
+      return new PluginCreator(descriptorPath, new UnexpectedDescriptorElements(message, descriptorPath), pluginDirectory);
     } catch (Exception e) {
       LOG.debug("Unable to read plugin descriptor " + descriptorPath + " of plugin " + descriptorFile, e);
       return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorPath), pluginDirectory);

@@ -5,6 +5,8 @@ sealed class PluginCreationResult<out PluginType : Plugin> {
 }
 
 data class PluginCreationFail<out PluginType : Plugin>(val errorsAndWarnings: List<PluginProblem>) : PluginCreationResult<PluginType>() {
+  constructor(error: PluginProblem) : this(listOf(error))
+
   override val plugin: PluginType? = null
 
   override fun toString(): String = "Failed: ${errorsAndWarnings.joinToString()}"

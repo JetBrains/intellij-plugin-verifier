@@ -9,7 +9,6 @@ import org.codehaus.plexus.archiver.zip.ZipArchiver
 import org.codehaus.plexus.archiver.zip.ZipUnArchiver
 import org.codehaus.plexus.logging.Logger
 import org.codehaus.plexus.logging.console.ConsoleLogger
-
 import java.io.File
 import java.io.IOException
 
@@ -27,6 +26,19 @@ object ZipUtil {
     } catch (e: Throwable) {
       FileUtils.deleteQuietly(destDir)
       throw Throwables.propagate(e)
+    }
+  }
+
+  fun <T> withExtractedZipArchive(pluginZip: File, callback: (File) -> T): T {
+    val destinationDirectory = FileUtil.createTempDir(FileUtil.extractedPluginsDirectory, "plugin_")
+    extractZip(pluginZip, destinationDirectory)
+    try {
+      val result = callback(destinationDirectory)
+      FileUtils.deleteDirectory(destinationDirectory)
+      return result
+    } catch (e: Throwable) {
+      FileUtils.deleteDirectory(destinationDirectory)
+      throw e
     }
   }
 

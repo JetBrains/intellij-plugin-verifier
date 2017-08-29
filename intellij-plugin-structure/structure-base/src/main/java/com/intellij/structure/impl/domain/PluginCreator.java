@@ -11,6 +11,9 @@ import com.jetbrains.structure.plugin.PluginCreationFail;
 import com.jetbrains.structure.plugin.PluginCreationResult;
 import com.jetbrains.structure.plugin.PluginCreationSuccess;
 import com.jetbrains.structure.plugin.PluginProblem;
+import com.jetbrains.structure.problems.InvalidDescriptorProblem;
+import com.jetbrains.structure.problems.PropertyNotSpecified;
+import com.jetbrains.structure.problems.UnableToReadDescriptor;
 import org.jdom2.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +108,7 @@ public final class PluginCreator {
 
   private void validateVersion(String pluginVersion) {
     if (isEmpty(pluginVersion)) {
-      registerProblem(new PropertyNotSpecified(myDescriptorPath, "version"));
+      registerProblem(new PropertyNotSpecified("version", myDescriptorPath));
     } else {
       validatePropertyLength("version", pluginVersion, MAX_VERSION_LENGTH);
     }
@@ -247,7 +250,7 @@ public final class PluginCreator {
 
   private void validateName(@Nullable String name) {
     if (isEmpty(name)) {
-      registerProblem(new PropertyNotSpecified(myDescriptorPath, "name"));
+      registerProblem(new PropertyNotSpecified("name", myDescriptorPath));
     } else if ("Plugin display name here".equals(name)) {
       registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "name"));
     } else if ("plugin".contains(name)) {
@@ -259,7 +262,7 @@ public final class PluginCreator {
 
   private void validateDescription(@Nullable String htmlDescription) {
     if (isEmpty(htmlDescription)) {
-      registerProblem(new PropertyNotSpecified(myDescriptorPath, "description"));
+      registerProblem(new PropertyNotSpecified("description", myDescriptorPath));
       return;
     }
     validatePropertyLength("description", htmlDescription, MAX_LONG_PROPERTY_LENGTH);
@@ -311,14 +314,14 @@ public final class PluginCreator {
 
   private void validateVendor(PluginVendorBean vendorBean) {
     if (vendorBean == null) {
-      registerProblem(new PropertyNotSpecified(myDescriptorPath, "vendor"));
+      registerProblem(new PropertyNotSpecified("vendor", myDescriptorPath));
       return;
     }
 
     if (isEmptyOrSpaces(vendorBean.url) &&
         isEmptyOrSpaces(vendorBean.email) &&
         isEmptyOrSpaces(vendorBean.name)) {
-      registerProblem(new PropertyNotSpecified(myDescriptorPath, "vendor"));
+      registerProblem(new PropertyNotSpecified("vendor", myDescriptorPath));
       return;
     }
 
@@ -340,7 +343,7 @@ public final class PluginCreator {
 
   private void validateIdeaVersion(IdeaVersionBean versionBean) {
     if (versionBean == null) {
-      registerProblem(new PropertyNotSpecified(myDescriptorPath, "idea-version"));
+      registerProblem(new PropertyNotSpecified("idea-version", myDescriptorPath));
       return;
     }
 

@@ -2,15 +2,7 @@ package com.intellij.structure.problems
 
 import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.structure.plugin.PluginProblem
-
-abstract class InvalidDescriptorProblem(descriptorPath: String, detailedMessage: String) : PluginProblem() {
-  override val message: String = "Invalid plugin descriptor $descriptorPath: $detailedMessage"
-}
-
-data class PropertyNotSpecified(val descriptorPath: String, val propertyName: String) :
-    InvalidDescriptorProblem(descriptorPath, "<$propertyName> is not specified") {
-  override val level = PluginProblem.Level.ERROR
-}
+import com.jetbrains.structure.problems.InvalidDescriptorProblem
 
 data class PropertyWithDefaultValue(val descriptorPath: String, val propertyName: String) :
     InvalidDescriptorProblem(descriptorPath, "<$propertyName> has default value") {
@@ -45,10 +37,6 @@ data class InvalidUntilBuild(val descriptorPath: String, val untilBuild: String)
 data class SinceBuildGreaterThanUntilBuild(val descriptorPath: String, val sinceBuild: IdeVersion, val untilBuild: IdeVersion) :
     InvalidDescriptorProblem(descriptorPath, "since build $sinceBuild is greater than until build $untilBuild") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
-}
-
-data class UnexpectedDescriptorElements(val descriptorPath: String, val errorMessage: String) : InvalidDescriptorProblem(descriptorPath, errorMessage) {
-  override val level: Level = Level.ERROR
 }
 
 data class UnresolvedXIncludeElements(val descriptorPath: String) : InvalidDescriptorProblem(descriptorPath, "unresolved xinclude elements") {
