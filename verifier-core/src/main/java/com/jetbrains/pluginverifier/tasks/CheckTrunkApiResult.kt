@@ -8,21 +8,21 @@ import java.io.File
 /**
  * @author Sergey Patrikeev
  */
-data class CheckTrunkApiResult(val trunkResults: CheckIdeResult,
-                               val releaseResults: CheckIdeResult) : TaskResult {
+data class CheckTrunkApiResult(val trunkResult: CheckIdeResult,
+                               val releaseResult: CheckIdeResult) : TaskResult {
 
   override fun printResults(printerOptions: PrinterOptions) {
     if (printerOptions.needTeamCityLog) {
-      val compareResult = CheckTrunkApiCompareResult.create(this)
+      val compareResult = CheckTrunkApiCompareResult.create(releaseResult, trunkResult)
       val printer = TeamCityPrinter(TeamCityLog(System.out), TeamCityPrinter.GroupBy.parse(printerOptions.teamCityGroupType))
       printer.printTrunkApiCompareResult(compareResult)
     }
     if (printerOptions.htmlReportFile != null) {
-      val trunkHtmlReportFileName = printerOptions.htmlReportFile + "-trunk-${trunkResults.ideVersion}.html"
-      saveIdeReportToHtmlFile(trunkResults, trunkHtmlReportFileName, printerOptions)
+      val trunkHtmlReportFileName = printerOptions.htmlReportFile + "-trunk-${trunkResult.ideVersion}.html"
+      saveIdeReportToHtmlFile(trunkResult, trunkHtmlReportFileName, printerOptions)
 
-      val releaseHtmlReportFileName = printerOptions.htmlReportFile + "-release-${releaseResults.ideVersion}.html"
-      saveIdeReportToHtmlFile(releaseResults, releaseHtmlReportFileName, printerOptions)
+      val releaseHtmlReportFileName = printerOptions.htmlReportFile + "-release-${releaseResult.ideVersion}.html"
+      saveIdeReportToHtmlFile(releaseResult, releaseHtmlReportFileName, printerOptions)
     }
   }
 
