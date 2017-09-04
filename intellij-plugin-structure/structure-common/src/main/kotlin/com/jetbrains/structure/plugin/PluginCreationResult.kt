@@ -1,4 +1,4 @@
-package com.jetbrains.structure.plugin
+package com.jetbrains.plugin.structure.plugin
 
 sealed class PluginCreationResult<out PluginType : Plugin>
 

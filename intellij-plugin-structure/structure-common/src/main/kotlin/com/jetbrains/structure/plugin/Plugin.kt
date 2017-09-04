@@ -1,6 +1,6 @@
-package com.jetbrains.structure.plugin
+package com.jetbrains.plugin.structure.plugin
 
-import com.jetbrains.structure.product.ProductVersion
+import com.jetbrains.plugin.structure.product.ProductVersion
 
 interface Plugin {
   val pluginId: String?

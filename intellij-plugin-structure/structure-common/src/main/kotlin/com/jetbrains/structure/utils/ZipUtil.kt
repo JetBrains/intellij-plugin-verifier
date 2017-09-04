@@ -1,4 +1,4 @@
-package com.jetbrains.structure.utils
+package com.jetbrains.plugin.structure.utils
 
 import com.google.common.base.Throwables
 import org.apache.commons.io.FileUtils

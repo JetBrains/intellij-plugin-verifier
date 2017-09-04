@@ -1,6 +1,6 @@
-package com.jetbrains.structure.problems
+package com.jetbrains.plugin.structure.problems
 
-import com.jetbrains.structure.plugin.PluginProblem
+import com.jetbrains.plugin.structure.plugin.PluginProblem
 
 data class PluginDescriptorIsNotFound(val descriptorPath: String) : PluginProblem() {
   override val level: Level = Level.ERROR
