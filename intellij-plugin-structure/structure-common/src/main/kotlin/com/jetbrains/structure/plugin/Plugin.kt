@@ -3,11 +3,11 @@ package com.jetbrains.structure.plugin
 import com.jetbrains.structure.product.ProductVersion
 
 interface Plugin {
-  val pluginId: String
+  val pluginId: String?
 
-  val pluginName: String
+  val pluginName: String?
 
-  val pluginVersion: String
+  val pluginVersion: String?
 
   val sinceBuild: ProductVersion<*>?
 
