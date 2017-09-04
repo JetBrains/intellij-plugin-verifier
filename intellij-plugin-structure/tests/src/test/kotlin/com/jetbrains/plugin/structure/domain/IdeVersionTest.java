@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.domain;
 
 
-import com.jetbrains.plugin.structure.ide.IdeVersion;
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import org.junit.Assert;
 import org.junit.Test;
 

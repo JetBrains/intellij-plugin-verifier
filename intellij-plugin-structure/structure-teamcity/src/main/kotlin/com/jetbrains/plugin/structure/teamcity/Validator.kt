@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.teamcity
 
-import com.jetbrains.plugin.structure.plugin.PluginProblem
-import com.jetbrains.plugin.structure.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.teamcity.beans.TeamcityPluginBean
 
 internal fun validateTeamcityPluginBean(bean: TeamcityPluginBean): List<PluginProblem>{

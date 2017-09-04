@@ -7,8 +7,8 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.createUnionResolver
 import com.jetbrains.plugin.structure.classes.utils.JarsUtils
 import com.jetbrains.plugin.structure.ide.Ide
-import com.jetbrains.plugin.structure.impl.IdeManagerImpl
-import com.jetbrains.plugin.structure.impl.loadProject
+import com.jetbrains.plugin.structure.ide.IdeManagerImpl
+import com.jetbrains.plugin.structure.ide.loadProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.File

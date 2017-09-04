@@ -1,12 +1,15 @@
 package com.jetbrains.plugin.structure.mocks
 
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.ide.IdeVersion
-import com.jetbrains.plugin.structure.impl.domain.PluginDependencyImpl
-import com.jetbrains.plugin.structure.impl.extractor.ExtractedPluginFile
-import com.jetbrains.plugin.structure.plugin.*
-import com.jetbrains.plugin.structure.problems.MissingOptionalDependencyConfigurationFile
-import com.jetbrains.plugin.structure.utils.FileUtil
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.extractor.ExtractedPluginFile
+import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.intellij.problems.MissingOptionalDependencyConfigurationFile
+import com.jetbrains.plugin.structure.base.utils.FileUtil
 import org.hamcrest.CoreMatchers.*
 import org.hamcrest.collection.IsIn.isIn
 import org.junit.Assert

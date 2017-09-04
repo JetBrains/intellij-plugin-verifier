@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.classes.utils;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver;
+import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.AbstractFileFilter;
 import org.apache.commons.io.filefilter.FalseFileFilter;

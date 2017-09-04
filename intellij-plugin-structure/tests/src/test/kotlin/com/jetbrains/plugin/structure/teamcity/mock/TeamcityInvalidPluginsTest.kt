@@ -1,9 +1,9 @@
 package com.jetbrains.plugin.structure.teamcity.mock
 
-import com.jetbrains.plugin.structure.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.plugin.PluginProblem
-import com.jetbrains.plugin.structure.problems.*
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.teamcity.TeamcityPlugin
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
 import org.hamcrest.CoreMatchers.`is`

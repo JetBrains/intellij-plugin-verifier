@@ -1,12 +1,12 @@
 package com.jetbrains.plugin.structure.teamcity
 
-import com.jetbrains.plugin.structure.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.plugin.PluginCreationResult
-import com.jetbrains.plugin.structure.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.plugin.PluginProblem
-import com.jetbrains.plugin.structure.problems.*
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.teamcity.beans.extractPluginBean
-import com.jetbrains.plugin.structure.utils.FileUtil
+import com.jetbrains.plugin.structure.base.utils.FileUtil
 import org.jdom2.input.JDOMParseException
 import java.io.File
 import java.io.IOException

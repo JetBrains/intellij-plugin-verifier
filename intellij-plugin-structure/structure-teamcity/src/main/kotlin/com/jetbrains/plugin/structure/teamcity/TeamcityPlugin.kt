@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.teamcity
 
-import com.jetbrains.plugin.structure.plugin.Plugin
+import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.teamcity.beans.TeamcityPluginBean
 
 data class TeamcityPlugin(

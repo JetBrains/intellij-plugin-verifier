@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.classes.resolvers;
 
-import com.jetbrains.plugin.structure.plugin.IdePlugin;
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;

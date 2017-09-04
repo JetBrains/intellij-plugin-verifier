@@ -1,9 +1,13 @@
 package com.jetbrains.plugin.structure.mocks
 
-import com.jetbrains.plugin.structure.ide.IdeVersion
-import com.jetbrains.plugin.structure.plugin.*
-import com.jetbrains.plugin.structure.problems.*
-import com.jetbrains.plugin.structure.utils.ZipUtil
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.intellij.problems.*
+import com.jetbrains.plugin.structure.base.utils.ZipUtil
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.instanceOf
 import org.hamcrest.Matchers.containsInAnyOrder

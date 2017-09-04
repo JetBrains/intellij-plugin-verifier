@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.domain
 
 import com.jetbrains.plugin.structure.ide.IdeManager
-import com.jetbrains.plugin.structure.ide.IdeVersion
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.PluginXmlBuilder
 import com.jetbrains.plugin.structure.mocks.modify
 import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder

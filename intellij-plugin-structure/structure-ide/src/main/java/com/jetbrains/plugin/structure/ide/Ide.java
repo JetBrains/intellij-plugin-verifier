@@ -1,7 +1,8 @@
 package com.jetbrains.plugin.structure.ide;
 
-import com.jetbrains.plugin.structure.classes.utils.StringUtil;
-import com.jetbrains.plugin.structure.plugin.IdePlugin;
+import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin;
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
