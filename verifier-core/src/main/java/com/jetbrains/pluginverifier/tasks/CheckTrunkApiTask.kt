@@ -54,17 +54,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task() {
     return CheckIdeTask(checkIdeParams).execute(progress)
   }
 
-  private val releaseDownloadResolver = DownloadDependencyResolver(LastCompatibleSelector(parameters.releaseIde.ideVersion))
-
-  private val repeatingResolver = RepeatingResolver(releaseDownloadResolver)
-
-  private inner class RepeatingResolver(val delegate: DependencyResolver) : DependencyResolver {
-
-    private val results = hashMapOf<PluginDependency, DependencyResolver.Result>()
-
-    override fun resolve(dependency: PluginDependency): DependencyResolver.Result =
-        results.getOrPut(dependency, { delegate.resolve(dependency) })
-  }
+  private val downloadReleaseCompatibleResolver = DownloadDependencyResolver(LastCompatibleSelector(parameters.releaseIde.ideVersion))
 
   private inner class ReleaseResolver : DependencyResolver {
 
@@ -73,7 +63,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task() {
     override fun resolve(dependency: PluginDependency): DependencyResolver.Result {
       val result = releaseBundledResolver.resolve(dependency)
       return if (result is DependencyResolver.Result.NotFound) {
-        repeatingResolver.resolve(dependency)
+        downloadReleaseCompatibleResolver.resolve(dependency)
       } else {
         result
       }
@@ -96,7 +86,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task() {
         return downloadLastUpdateResolver.resolve(dependency)
       }
 
-      return repeatingResolver.resolve(dependency)
+      return downloadReleaseCompatibleResolver.resolve(dependency)
     }
   }
 
