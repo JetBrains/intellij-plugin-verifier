@@ -1,9 +1,8 @@
 package com.jetbrains.plugin.structure.impl.beans;
 
-import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-class ListItemAdapter extends XmlAdapter<ListItemBean, String> {
+public class ListItemAdapter extends XmlAdapter<ListItemBean, String> {
   @Override
   public String unmarshal(ListItemBean item) {
     return item.value;
@@ -17,6 +16,3 @@ class ListItemAdapter extends XmlAdapter<ListItemBean, String> {
   }
 }
 
-class ListItemBean {
-  @XmlAttribute(name = "value") String value;
-}
