@@ -1,9 +1,8 @@
-package com.jetbrains.plugin.structure.impl.resolvers;
+package com.jetbrains.plugin.structure.classes.resolvers;
 
 import com.google.common.collect.Iterators;
-import com.jetbrains.plugin.structure.impl.utils.AsmUtil;
-import com.jetbrains.plugin.structure.impl.utils.StringUtil;
-import com.jetbrains.plugin.structure.resolvers.Resolver;
+import com.jetbrains.plugin.structure.classes.utils.AsmUtil;
+import com.jetbrains.plugin.structure.classes.utils.StringUtil;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -1,10 +1,10 @@
 package com.jetbrains.plugin.structure.impl.domain;
 
+import com.jetbrains.plugin.structure.classes.utils.StringUtil;
+import com.jetbrains.plugin.structure.classes.utils.xml.JDOMUtil;
+import com.jetbrains.plugin.structure.classes.utils.xml.JDOMXIncluder;
+import com.jetbrains.plugin.structure.classes.utils.xml.URLUtil;
 import com.jetbrains.plugin.structure.impl.extractor.*;
-import com.jetbrains.plugin.structure.impl.utils.StringUtil;
-import com.jetbrains.plugin.structure.impl.utils.xml.JDOMUtil;
-import com.jetbrains.plugin.structure.impl.utils.xml.JDOMXIncluder;
-import com.jetbrains.plugin.structure.impl.utils.xml.URLUtil;
 import com.jetbrains.plugin.structure.plugin.IdePlugin;
 import com.jetbrains.plugin.structure.plugin.PluginCreationResult;
 import com.jetbrains.plugin.structure.plugin.PluginDependency;
@@ -27,7 +27,7 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static com.jetbrains.plugin.structure.impl.utils.StringUtil.toSystemIndependentName;
+import static com.jetbrains.plugin.structure.classes.utils.StringUtil.toSystemIndependentName;
 
 /**
  * @author Sergey Patrikeev

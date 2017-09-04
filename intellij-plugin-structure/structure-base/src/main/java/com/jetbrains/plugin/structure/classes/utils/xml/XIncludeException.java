@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.jetbrains.plugin.structure.impl.utils.xml;
+package com.jetbrains.plugin.structure.classes.utils.xml;
 
 public class XIncludeException extends RuntimeException {
 

@@ -1,11 +1,10 @@
-package com.jetbrains.plugin.structure.impl.resolvers;
+package com.jetbrains.plugin.structure.classes.resolvers;
 
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
+import com.jetbrains.plugin.structure.classes.utils.JarsUtils;
+import com.jetbrains.plugin.structure.classes.utils.StringUtil;
 import com.jetbrains.plugin.structure.impl.extractor.*;
-import com.jetbrains.plugin.structure.impl.utils.JarsUtils;
-import com.jetbrains.plugin.structure.impl.utils.StringUtil;
-import com.jetbrains.plugin.structure.resolvers.Resolver;
 import com.jetbrains.plugin.structure.utils.FileUtil;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;

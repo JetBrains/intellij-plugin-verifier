@@ -2,12 +2,12 @@ package com.jetbrains.plugin.structure.impl.domain;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import com.jetbrains.plugin.structure.classes.utils.StringUtil;
 import com.jetbrains.plugin.structure.ide.IdeVersion;
 import com.jetbrains.plugin.structure.impl.beans.IdeaVersionBean;
 import com.jetbrains.plugin.structure.impl.beans.PluginBean;
 import com.jetbrains.plugin.structure.impl.beans.PluginDependencyBean;
 import com.jetbrains.plugin.structure.impl.beans.PluginVendorBean;
-import com.jetbrains.plugin.structure.impl.utils.StringUtil;
 import com.jetbrains.plugin.structure.plugin.IdePlugin;
 import com.jetbrains.plugin.structure.plugin.PluginDependency;
 import org.jdom2.Document;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-import static com.jetbrains.plugin.structure.impl.utils.StringUtil.isEmpty;
+import static com.jetbrains.plugin.structure.classes.utils.StringUtil.isEmpty;
 
 public class IdePluginImpl implements IdePlugin {
   private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules.";

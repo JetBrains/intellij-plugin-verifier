@@ -1,8 +1,8 @@
 package com.jetbrains.plugin.structure.impl.domain;
 
-import com.jetbrains.plugin.structure.impl.utils.xml.JDOMXIncluder;
-import com.jetbrains.plugin.structure.impl.utils.xml.URLUtil;
-import com.jetbrains.plugin.structure.impl.utils.xml.XIncludeException;
+import com.jetbrains.plugin.structure.classes.utils.xml.JDOMXIncluder;
+import com.jetbrains.plugin.structure.classes.utils.xml.URLUtil;
+import com.jetbrains.plugin.structure.classes.utils.xml.XIncludeException;
 import org.jdom2.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

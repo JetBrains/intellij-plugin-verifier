@@ -1,9 +1,8 @@
-package com.jetbrains.plugin.structure.impl.resolvers;
+package com.jetbrains.plugin.structure.classes.resolvers;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
-import com.jetbrains.plugin.structure.impl.utils.JarsUtils;
-import com.jetbrains.plugin.structure.resolvers.Resolver;
+import com.jetbrains.plugin.structure.classes.utils.JarsUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

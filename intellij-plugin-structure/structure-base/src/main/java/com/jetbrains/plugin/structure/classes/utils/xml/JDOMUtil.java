@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.plugin.structure.impl.utils.xml;
+package com.jetbrains.plugin.structure.classes.utils.xml;
 
 import com.google.common.io.ByteStreams;
-import com.jetbrains.plugin.structure.impl.utils.StringUtil;
+import com.jetbrains.plugin.structure.classes.utils.StringUtil;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.*;
 import org.jdom2.filter.AbstractFilter;

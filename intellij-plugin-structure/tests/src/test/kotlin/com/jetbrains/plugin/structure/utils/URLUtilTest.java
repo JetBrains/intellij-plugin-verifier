@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.utils;
 
-import com.jetbrains.plugin.structure.impl.utils.xml.URLUtil;
+import com.jetbrains.plugin.structure.classes.utils.xml.URLUtil;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

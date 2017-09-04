@@ -2,7 +2,7 @@ package com.jetbrains.plugin.structure.impl.beans;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.jetbrains.plugin.structure.impl.utils.StringUtil;
+import com.jetbrains.plugin.structure.classes.utils.StringUtil;
 import org.jdom2.*;
 import org.jdom2.transform.JDOMSource;
 import org.jetbrains.annotations.NotNull;

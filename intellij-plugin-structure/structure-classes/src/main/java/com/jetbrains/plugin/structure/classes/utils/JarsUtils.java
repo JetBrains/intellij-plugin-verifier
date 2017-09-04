@@ -1,8 +1,8 @@
-package com.jetbrains.plugin.structure.impl.utils;
+package com.jetbrains.plugin.structure.classes.utils;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
-import com.jetbrains.plugin.structure.resolvers.Resolver;
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.AbstractFileFilter;
 import org.apache.commons.io.filefilter.FalseFileFilter;
@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -32,7 +31,7 @@ public class JarsUtils {
   }
 
   @NotNull
-  public static Resolver makeResolver(@NotNull String presentableName, @NotNull Collection<File> jars) throws IOException {
+  public static Resolver makeResolver(@NotNull String presentableName, @NotNull Collection<File> jars) {
     List<Resolver> pool = new ArrayList<Resolver>();
 
     for (File jar : jars) {

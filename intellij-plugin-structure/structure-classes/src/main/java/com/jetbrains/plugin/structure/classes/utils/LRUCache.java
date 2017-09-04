@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.impl.utils;
+package com.jetbrains.plugin.structure.classes.utils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

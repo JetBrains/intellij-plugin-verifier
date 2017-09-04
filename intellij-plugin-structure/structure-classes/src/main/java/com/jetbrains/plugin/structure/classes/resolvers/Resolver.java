@@ -1,6 +1,5 @@
-package com.jetbrains.plugin.structure.resolvers;
+package com.jetbrains.plugin.structure.classes.resolvers;
 
-import com.jetbrains.plugin.structure.impl.resolvers.*;
 import com.jetbrains.plugin.structure.plugin.IdePlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +27,7 @@ public abstract class Resolver implements Closeable {
    *
    * @param plugin plugin for which resolver should be created
    * @return resolver for the specified plugin
-   * @throws IOException if disk error occurs during attempt to read a class-file or to extract a plugin
+   * @throws IOException              if disk error occurs during attempt to read a class-file or to extract a plugin
    * @throws IllegalArgumentException if the plugin has broken class-files or it has an incorrect directories structure
    */
   @NotNull
@@ -56,7 +55,6 @@ public abstract class Resolver implements Closeable {
    * @param presentableName some name determining the union resolver name (it can be obtained via the {@link #toString()})
    * @param resolvers       list of the resolvers according to the class-path order
    * @return a combining resolver
-   * @throws IOException if some of the listed resolvers fails to read class files
    */
   @NotNull
   public static Resolver createUnionResolver(@NotNull String presentableName, @NotNull List<Resolver> resolvers) {

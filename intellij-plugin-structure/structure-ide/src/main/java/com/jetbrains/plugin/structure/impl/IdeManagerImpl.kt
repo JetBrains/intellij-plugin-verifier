@@ -2,13 +2,13 @@ package com.jetbrains.plugin.structure.impl
 
 import com.google.common.base.Joiner
 import com.google.common.io.Files
+import com.jetbrains.plugin.structure.classes.utils.xml.JDOMXIncluder
+import com.jetbrains.plugin.structure.classes.utils.xml.URLUtil
+import com.jetbrains.plugin.structure.classes.utils.xml.XIncludeException
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.IdeVersion
 import com.jetbrains.plugin.structure.impl.domain.PluginManagerImpl
-import com.jetbrains.plugin.structure.impl.utils.xml.JDOMXIncluder
-import com.jetbrains.plugin.structure.impl.utils.xml.URLUtil
-import com.jetbrains.plugin.structure.impl.utils.xml.XIncludeException
 import com.jetbrains.plugin.structure.plugin.IdePlugin
 import com.jetbrains.plugin.structure.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.plugin.PluginCreationSuccess

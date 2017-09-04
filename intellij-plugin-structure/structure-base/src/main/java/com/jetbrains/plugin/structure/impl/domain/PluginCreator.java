@@ -1,9 +1,9 @@
 package com.jetbrains.plugin.structure.impl.domain;
 
+import com.jetbrains.plugin.structure.classes.utils.StringUtil;
+import com.jetbrains.plugin.structure.classes.utils.xml.JDOMXIncluder;
 import com.jetbrains.plugin.structure.ide.IdeVersion;
 import com.jetbrains.plugin.structure.impl.beans.*;
-import com.jetbrains.plugin.structure.impl.utils.StringUtil;
-import com.jetbrains.plugin.structure.impl.utils.xml.JDOMXIncluder;
 import com.jetbrains.plugin.structure.plugin.*;
 import com.jetbrains.plugin.structure.problems.*;
 import org.jdom2.Document;

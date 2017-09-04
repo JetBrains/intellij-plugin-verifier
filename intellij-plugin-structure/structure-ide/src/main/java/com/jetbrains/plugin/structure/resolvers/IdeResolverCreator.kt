@@ -2,12 +2,13 @@ package com.jetbrains.plugin.structure.resolvers
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
+import com.jetbrains.plugin.structure.classes.resolvers.CompileOutputResolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver.createUnionResolver
+import com.jetbrains.plugin.structure.classes.utils.JarsUtils
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.impl.IdeManagerImpl
 import com.jetbrains.plugin.structure.impl.loadProject
-import com.jetbrains.plugin.structure.impl.resolvers.CompileOutputResolver
-import com.jetbrains.plugin.structure.impl.utils.JarsUtils
-import com.jetbrains.plugin.structure.resolvers.Resolver.createUnionResolver
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.File

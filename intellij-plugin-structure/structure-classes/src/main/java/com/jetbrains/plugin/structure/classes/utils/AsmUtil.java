@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.impl.utils;
+package com.jetbrains.plugin.structure.classes.utils;
 
 import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;

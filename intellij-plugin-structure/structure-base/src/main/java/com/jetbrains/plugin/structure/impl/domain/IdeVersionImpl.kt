@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.impl.domain
 
+import com.jetbrains.plugin.structure.classes.utils.StringUtil
 import com.jetbrains.plugin.structure.ide.IdeVersion
-import com.jetbrains.plugin.structure.impl.utils.StringUtil
 import java.util.*
 
 /**

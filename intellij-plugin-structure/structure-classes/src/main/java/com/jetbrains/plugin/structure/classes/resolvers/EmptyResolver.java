@@ -1,7 +1,6 @@
-package com.jetbrains.plugin.structure.impl.resolvers;
+package com.jetbrains.plugin.structure.classes.resolvers;
 
 import com.google.common.collect.ImmutableSet;
-import com.jetbrains.plugin.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
