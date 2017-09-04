@@ -68,7 +68,9 @@ publishing {
       pub.artifact proj.sourcesJar
     }
 
+    BasePublication(MavenPublication) { configurePublication(it, ':structure-base') }
     IntellijPublication(MavenPublication) { configurePublication(it, ':structure-intellij') }
+    TeamCityPublication(MavenPublication) { configurePublication(it, ':structure-teamcity') }
     ClassesPublication(MavenPublication) { configurePublication(it, ':structure-classes') }
     IdePublication(MavenPublication) { configurePublication(it, ':structure-ide') }
   }
@@ -80,7 +82,7 @@ bintray {
 
 
   publish = true
-  publications = ['IntellijPublication', 'ClassesPublication', 'IdePublication']
+  publications = ['BasePublication', 'IntellijPublication', 'TeamCityPublication', 'ClassesPublication', 'IdePublication']
 
   pkg {
     repo = 'intellij-plugin-service'
