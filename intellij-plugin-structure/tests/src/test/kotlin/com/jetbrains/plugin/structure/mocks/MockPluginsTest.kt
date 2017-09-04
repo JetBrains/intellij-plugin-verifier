@@ -120,7 +120,7 @@ class MockPluginsTest {
       fail(message)
     }
     val pluginCreationSuccess = pluginCreationResult as PluginCreationSuccess
-    val plugin = pluginCreationSuccess.plugin as IdePlugin
+    val plugin = pluginCreationSuccess.plugin
     val classesResolver = Resolver.createPluginResolver(plugin)
 
     classesResolver.use {
