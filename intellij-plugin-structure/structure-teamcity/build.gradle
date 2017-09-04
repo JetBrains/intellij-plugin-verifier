@@ -2,7 +2,9 @@ apply plugin: 'maven-publish'
 
 dependencies {
   compile project(':structure-common')
-  compile "org.jonnyzzz.kotlin.xml.bind:jdom:0.1.9"
+  compile("org.jonnyzzz.kotlin.xml.bind:jdom:0.1.9") {
+    exclude group: "org.jetbrains.kotlin"
+  }
 }
 
 publishing {
