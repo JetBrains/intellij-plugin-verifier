@@ -1,4 +1,4 @@
-package com.intellij.structure.impl.utils.cache;
+package com.intellij.structure.impl.utils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

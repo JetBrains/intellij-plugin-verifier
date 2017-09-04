@@ -1,6 +1,6 @@
 package com.intellij.structure.impl.resolvers;
 
-import com.intellij.structure.impl.utils.cache.LRUCache;
+import com.intellij.structure.impl.utils.LRUCache;
 import com.intellij.structure.resolvers.Resolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,13 +17,16 @@ import java.util.List;
  */
 public class CacheResolver extends Resolver {
 
-  private static final int CLASSES_CACHE_SIZE = 1000;
   private final Resolver myDelegate;
-
-  private final LRUCache<String, SoftReference<ClassNode>> myCache = new LRUCache<String, SoftReference<ClassNode>>(CLASSES_CACHE_SIZE);
+  private final LRUCache<String, SoftReference<ClassNode>> myCache;
 
   public CacheResolver(@NotNull Resolver delegate) {
+    this(delegate, 1000);
+  }
+
+  public CacheResolver(@NotNull Resolver delegate, int cacheSize) {
     myDelegate = delegate;
+    myCache = new LRUCache<String, SoftReference<ClassNode>>(cacheSize);
   }
 
   @Override

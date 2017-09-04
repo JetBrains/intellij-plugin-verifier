@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.core
 
+import com.intellij.structure.impl.resolvers.CacheResolver
 import com.intellij.structure.plugin.Plugin
 import com.intellij.structure.problems.PluginProblem
 import com.intellij.structure.resolvers.Resolver
@@ -105,7 +106,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
     return BytecodeVerifier(params, plugin, classLoader, ideDescriptor.ideVersion).verify(checkClasses)
   }
 
-  private fun getVerificationClassLoader(dependenciesResolver: Resolver, plugin: Plugin, pluginResolver: Resolver): Resolver = Resolver.createCacheResolver(
+  private fun getVerificationClassLoader(dependenciesResolver: Resolver, plugin: Plugin, pluginResolver: Resolver): Resolver = CacheResolver(
       Resolver.createUnionResolver(
           "Common resolver for plugin $plugin; IDE #${ideDescriptor.ideVersion}; JDK $runtimeResolver",
           listOf(pluginResolver, runtimeResolver, ideDescriptor.ideResolver, dependenciesResolver, params.externalClassPath)
