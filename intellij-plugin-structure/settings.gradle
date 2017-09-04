@@ -1,5 +1,5 @@
 rootProject.name = 'intellij-plugin-structure'
-include 'structure-common'
+include 'structure-base'
 include 'structure-intellij'
 include 'structure-teamcity'
 include 'structure-classes'
