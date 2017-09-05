@@ -1,7 +1,7 @@
 package com.intellij.featureExtractor
 
-import com.intellij.structure.impl.resolvers.FilesResolver
-import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.FilesResolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import org.junit.After
 import org.junit.Before
 import org.objectweb.asm.tree.ClassNode

@@ -2,12 +2,12 @@ package com.jetbrains.plugin.structure.intellij.plugin;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
-import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import com.jetbrains.plugin.structure.intellij.beans.IdeaVersionBean;
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean;
 import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean;
 import com.jetbrains.plugin.structure.intellij.beans.PluginVendorBean;
+import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +58,6 @@ public class IdePluginImpl implements IdePlugin {
     return Collections.unmodifiableList(myDependencies);
   }
 
-  @Override
   @Nullable
   public IdeVersion getSinceBuild() {
     return mySinceBuild;

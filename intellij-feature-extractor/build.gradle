@@ -1,6 +1,6 @@
 buildscript {
 
-  ext.kotlin_version = '1.1.4'
+  ext.kotlin_version = '1.1.4-3'
 
   repositories {
     jcenter()
@@ -13,7 +13,7 @@ buildscript {
 }
 
 def extractorVersion = '1.0'
-def intellijStructureVersion = '2.4'
+def intellijStructureVersion = '3.0'
 
 configure(allprojects) {
   apply plugin: 'java'
@@ -40,6 +40,7 @@ configure(allprojects) {
 
 dependencies {
   compile "org.jetbrains.intellij.plugins:structure-classes:$intellijStructureVersion"
+  compile "org.jetbrains.intellij.plugins:structure-ide:$intellijStructureVersion"
   compile group: 'com.google.guava', name: 'guava', version: '19.0'
   compile group: 'com.google.code.gson', name: 'gson', version: '2.7'
   compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'

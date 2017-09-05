@@ -1,10 +1,10 @@
 package com.jetbrains.intellij.feature.extractor
 
-import com.intellij.structure.ide.Ide
-import com.intellij.structure.plugin.Plugin
-import com.intellij.structure.resolvers.Resolver
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor.extractFeatures
 import com.jetbrains.intellij.feature.extractor.core.*
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import org.objectweb.asm.tree.ClassNode
 import org.slf4j.LoggerFactory
 
@@ -19,7 +19,7 @@ object FeaturesExtractor {
 
   private val LOG = LoggerFactory.getLogger("FeaturesExtractor")
 
-  fun extractFeatures(ide: Ide, ideResolver: Resolver, plugin: Plugin): ExtractorResult {
+  fun extractFeatures(ide: Ide, ideResolver: Resolver, plugin: IdePlugin): ExtractorResult {
     createBundledPluginsResolver(ide).use { bundledPluginsResolver ->
       Resolver.createPluginResolver(plugin).use { pluginResolver ->
         //don't close this resolver, because ideResolver is to be closed by the caller.
@@ -42,12 +42,12 @@ object FeaturesExtractor {
     return Resolver.createUnionResolver("IDE $ide bundled plugins", bundledResolvers)
   }
 
-  private fun implementations(plugin: Plugin, resolver: Resolver): ExtractorResult {
+  private fun implementations(plugin: IdePlugin, resolver: Resolver): ExtractorResult {
     val allEpFeatures = ExtensionPoint.values().map { epFeatures(plugin, it, resolver) }
     return ExtractorResult(allEpFeatures.flatMap { it.features }, allEpFeatures.all { it.extractedAll })
   }
 
-  private fun epFeatures(plugin: Plugin, extensionPoint: ExtensionPoint, resolver: Resolver): ExtractorResult {
+  private fun epFeatures(plugin: IdePlugin, extensionPoint: ExtensionPoint, resolver: Resolver): ExtractorResult {
     val epImplementors = getExtensionPointImplementors(extensionPoint, plugin)
     if (epImplementors.isEmpty()) {
       return ExtractorResult(emptyList(), true)
@@ -57,7 +57,7 @@ object FeaturesExtractor {
     return ExtractorResult(allImplementorsFeatures.filterNotNull().map { it.first }.filterNot { it.featureNames.isEmpty() }, extractedAll)
   }
 
-  private fun extractEpFeatures(extensionPoint: ExtensionPoint, epImplementorClass: String, plugin: Plugin, resolver: Resolver): Pair<ExtensionPointFeatures, Boolean>? {
+  private fun extractEpFeatures(extensionPoint: ExtensionPoint, epImplementorClass: String, plugin: IdePlugin, resolver: Resolver): Pair<ExtensionPointFeatures, Boolean>? {
     val classNode: ClassNode
     try {
       classNode = resolver.findClass(epImplementorClass.replace('.', '/')) ?: return null
@@ -80,7 +80,7 @@ object FeaturesExtractor {
     return ExtensionPointFeatures(extensionPoint, epImplementorClass, result.featureNames) to result.extractedAll
   }
 
-  private fun getExtensionPointImplementors(extensionPoint: ExtensionPoint, plugin: Plugin): List<String> {
+  private fun getExtensionPointImplementors(extensionPoint: ExtensionPoint, plugin: IdePlugin): List<String> {
     val extensionElements = plugin.extensions[extensionPoint.extensionPointName] ?: return emptyList()
     val result = arrayListOf<String>()
     extensionElements.mapNotNullTo(result) { it.getAttributeValue("implementation") }

@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.utils
 
 import com.google.common.collect.ImmutableMultimap
 import com.google.common.collect.Multimap
-import com.intellij.structure.plugin.Plugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.api.ProblemsFilter
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.tasks.PluginIdAndVersion
@@ -16,9 +16,9 @@ class IgnoredProblemsFilter(val problemsToIgnore: Multimap<PluginIdAndVersion, P
 
   private val LOG: Logger = LoggerFactory.getLogger(IgnoredProblemsFilter::class.java)
 
-  override fun isRelevantProblem(plugin: Plugin, problem: Problem): Boolean = !isIgnoredProblem(plugin, problem)
+  override fun isRelevantProblem(plugin: IdePlugin, problem: Problem): Boolean = !isIgnoredProblem(plugin, problem)
 
-  private fun isIgnoredProblem(plugin: Plugin, problem: Problem): Boolean {
+  private fun isIgnoredProblem(plugin: IdePlugin, problem: Problem): Boolean {
     val xmlId = plugin.pluginId
     val version = plugin.pluginVersion
     for ((key, ignoredPattern) in problemsToIgnore.entries()) {
@@ -37,7 +37,7 @@ class IgnoredProblemsFilter(val problemsToIgnore: Multimap<PluginIdAndVersion, P
     return false
   }
 
-  private fun appendToIgnoredProblemsFileOrLog(plugin: Plugin, problem: Problem, regex: Regex) {
+  private fun appendToIgnoredProblemsFileOrLog(plugin: IdePlugin, problem: Problem, regex: Regex) {
     val ap = "Problem of the plugin $plugin was ignored by the ignoring pattern: ${regex.pattern}:\n" +
         "#" + problem.getShortDescription()
 

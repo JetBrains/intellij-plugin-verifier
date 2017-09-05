@@ -1,12 +1,12 @@
 package com.jetbrains.pluginverifier.api
 
-import com.intellij.structure.plugin.Plugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.problems.Problem
 
 interface ProblemsFilter {
-  fun isRelevantProblem(plugin: Plugin, problem: Problem): Boolean
+  fun isRelevantProblem(plugin: IdePlugin, problem: Problem): Boolean
 
   object AlwaysTrue : ProblemsFilter {
-    override fun isRelevantProblem(plugin: Plugin, problem: Problem): Boolean = true
+    override fun isRelevantProblem(plugin: IdePlugin, problem: Problem): Boolean = true
   }
 }

@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service.ide
 
-import com.intellij.structure.ide.IdeVersion
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.AvailableIde
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager

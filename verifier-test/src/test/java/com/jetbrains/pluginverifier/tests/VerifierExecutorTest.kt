@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tests
 
-import com.intellij.structure.impl.domain.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.location.*

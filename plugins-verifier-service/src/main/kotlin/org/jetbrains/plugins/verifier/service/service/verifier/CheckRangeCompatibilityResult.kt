@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.intellij.structure.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Result
 

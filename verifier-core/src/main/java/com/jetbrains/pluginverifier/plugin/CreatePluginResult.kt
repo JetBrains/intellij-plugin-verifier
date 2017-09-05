@@ -1,13 +1,13 @@
 package com.jetbrains.pluginverifier.plugin
 
-import com.intellij.structure.plugin.Plugin
-import com.intellij.structure.problems.PluginProblem
-import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.repository.FileLock
 import java.io.Closeable
 
 sealed class CreatePluginResult : Closeable {
-  data class OK internal constructor(val plugin: Plugin,
+  data class OK internal constructor(val plugin: IdePlugin,
                                      val warnings: List<PluginProblem>,
                                      val resolver: Resolver,
                                      private val pluginLock: FileLock) : CreatePluginResult() {

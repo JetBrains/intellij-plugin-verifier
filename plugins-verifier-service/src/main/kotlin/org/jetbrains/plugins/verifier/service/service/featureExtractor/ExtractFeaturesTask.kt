@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.featureExtractor
 
-import com.intellij.structure.ide.IdeVersion
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.ide.IdeCreator

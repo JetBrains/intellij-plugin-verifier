@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.api
 
-import com.intellij.structure.ide.IdeVersion
-import com.intellij.structure.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.pluralize

@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers
 
-import com.intellij.structure.ide.IdeVersion
-import com.intellij.structure.plugin.Plugin
-import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.InheritFromFinalClassVerifier
@@ -20,7 +20,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class BytecodeVerifier(verifierParams: VerifierParams,
-                       plugin: Plugin,
+                       plugin: IdePlugin,
                        classLoader: Resolver,
                        private val ideVersion: IdeVersion) {
 

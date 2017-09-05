@@ -1,7 +1,7 @@
 buildscript {
   ext {
-    kotlin_version = '1.1.4'
-    ext.verifierVersion = '1.103'
+    kotlin_version = '1.1.4-3'
+    ext.verifierVersion = '1.106'
   }
   repositories {
     jcenter()

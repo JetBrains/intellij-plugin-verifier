@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.dependencies
 
-import com.intellij.structure.plugin.Plugin
-import com.intellij.structure.plugin.PluginDependency
-import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.misc.closeLogged
 import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
@@ -33,7 +33,7 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) : Clos
 
   private val graph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
 
-  fun build(plugin: Plugin, resolver: Resolver): Pair<DirectedGraph<DepVertex, DepEdge>, DepVertex> {
+  fun build(plugin: IdePlugin, resolver: Resolver): Pair<DirectedGraph<DepVertex, DepEdge>, DepVertex> {
     LOG.debug("Building dependencies graph for $plugin")
     val startResult = DependencyResolver.Result.FoundReady(plugin, resolver)
     val startVertex = DepVertex(plugin.pluginId ?: "", startResult)
@@ -54,7 +54,7 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) : Clos
     return DepVertex(pluginDependency.id, resolved)
   }
 
-  private fun getPlugin(resolveResult: DependencyResolver.Result): Plugin? = when (resolveResult) {
+  private fun getPlugin(resolveResult: DependencyResolver.Result): IdePlugin? = when (resolveResult) {
     is DependencyResolver.Result.FoundReady -> resolveResult.plugin
     is DependencyResolver.Result.CreatedResolver -> resolveResult.plugin
     is DependencyResolver.Result.Downloaded -> resolveResult.plugin

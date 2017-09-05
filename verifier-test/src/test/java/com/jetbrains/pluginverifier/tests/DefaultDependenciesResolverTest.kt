@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.tests
 
-import com.intellij.structure.ide.IdeVersion
-import com.intellij.structure.impl.domain.PluginDependencyImpl
-import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DepGraph2ApiGraphConverter
 import com.jetbrains.pluginverifier.dependencies.DepGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver

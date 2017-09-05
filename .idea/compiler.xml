@@ -22,6 +22,12 @@
       <module name="structure-common_test" target="1.6" />
       <module name="structure-ide_main" target="1.6" />
       <module name="structure-ide_test" target="1.6" />
+      <module name="structure-intellij_main" target="1.6" />
+      <module name="structure-intellij_test" target="1.6" />
+      <module name="structure-teamcity_main" target="1.6" />
+      <module name="structure-teamcity_test" target="1.6" />
+      <module name="teamcity-mock-plugin_main" target="1.6" />
+      <module name="teamcity-mock-plugin_test" target="1.6" />
       <module name="test-classes_main" target="1.6" />
       <module name="test-classes_test" target="1.6" />
       <module name="tests_main" target="1.6" />

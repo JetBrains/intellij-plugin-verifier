@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.ide
 
-import com.intellij.structure.ide.IdeVersion
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.io.Closeable
 import java.io.File
 

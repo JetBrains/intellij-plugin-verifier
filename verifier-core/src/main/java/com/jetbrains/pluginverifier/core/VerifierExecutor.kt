@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.core
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.closeLogged

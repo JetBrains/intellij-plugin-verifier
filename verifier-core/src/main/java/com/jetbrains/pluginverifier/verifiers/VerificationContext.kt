@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers
 
-import com.intellij.structure.plugin.Plugin
-import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.location.*
 import com.jetbrains.pluginverifier.problems.Problem
@@ -12,7 +12,7 @@ import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
 
 data class VerificationContext(
-    val plugin: Plugin,
+    val plugin: IdePlugin,
     val verifierParams: VerifierParams,
     val resolver: Resolver
 ) {

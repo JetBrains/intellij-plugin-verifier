@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tests
 
-import com.intellij.structure.ide.IdeVersion
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.core.VerifierExecutor
 import com.jetbrains.pluginverifier.ide.IdeCreator

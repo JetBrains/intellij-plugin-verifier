@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.dependencies
 
 import com.google.common.collect.ImmutableSet
-import com.intellij.structure.plugin.PluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.repository.FileLock

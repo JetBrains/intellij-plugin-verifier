@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.verifier.service.api
 
 import com.google.gson.annotations.SerializedName
-import com.intellij.structure.plugin.PluginDependency
-import com.intellij.structure.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph

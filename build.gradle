@@ -1,7 +1,7 @@
 buildscript {
 
-  ext.kotlin_version = '1.1.4'
-  ext.intellijStructureVersion = '2.9'
+  ext.kotlin_version = '1.1.4-3'
+  ext.intellijStructureVersion = '3.0'
 
   repositories {
     jcenter()
@@ -13,7 +13,7 @@ buildscript {
   }
 }
 
-def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.103'
+def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.106'
 
 configure(allprojects) {
   apply plugin: 'java'
@@ -32,7 +32,7 @@ configure(allprojects) {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile 'com.github.salomonbrys.kotson:kotson:2.4.0'
 
-    compile "org.jetbrains.intellij.plugins:structure-base:$intellijStructureVersion"
+    compile "org.jetbrains.intellij.plugins:structure-intellij:$intellijStructureVersion"
 
     testCompile group: 'junit', name: 'junit', version: '4.11'
 
@@ -118,7 +118,7 @@ bintray {
 
 
   publish = true
-  publications = ['VerifierCliPublication', 'RepositoryPublication', 'ResultsPublication', 'VerifierParameters', 'VerifierConfigurations', 'VerifierCorePublication']
+  publications = ['VerifierCliPublication', 'VerifierCorePublication', 'RepositoryPublication']
 
   pkg {
     repo = 'intellij-plugin-service'

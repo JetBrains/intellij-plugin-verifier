@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.intellij.structure.ide.IdeVersion
-import com.intellij.structure.plugin.Plugin
-import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.ide.IdeCreator
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
@@ -27,7 +27,7 @@ class CheckRangeCompatibilityTask(val pluginInfo: PluginInfo,
     private val LOG = LoggerFactory.getLogger(CheckRangeCompatibilityTask::class.java)
   }
 
-  private fun doRangeVerification(plugin: Plugin, progress: TaskProgress): CheckRangeCompatibilityResult {
+  private fun doRangeVerification(plugin: IdePlugin, progress: TaskProgress): CheckRangeCompatibilityResult {
     val sinceBuild = plugin.sinceBuild!!
     val untilBuild = plugin.untilBuild
     val jdkDescriptor = JdkDescriptor(JdkManager.getJdkHome(params.jdkVersion))

@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.dependencies
 
-import com.intellij.structure.ide.IdeVersion
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 
 class LastCompatibleSelector(val ideVersion: IdeVersion) : DependencySelector {

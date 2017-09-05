@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.repository
 
-import com.intellij.structure.ide.IdeVersion
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.io.Closeable
 import java.io.File
 
@@ -28,5 +28,5 @@ abstract class FileLock : Closeable {
 
   abstract fun release()
 
-  override fun close(): Unit = release()
+  override fun close() = release()
 }

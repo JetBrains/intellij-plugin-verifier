@@ -1,11 +1,11 @@
 package com.jetbrains.pluginverifier.plugin
 
-import com.intellij.structure.plugin.Plugin
-import com.intellij.structure.plugin.PluginCreationFail
-import com.intellij.structure.plugin.PluginCreationSuccess
-import com.intellij.structure.plugin.PluginManager
-import com.intellij.structure.problems.PluginProblem
-import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.PluginManager
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.closeOnException
@@ -54,12 +54,12 @@ object PluginCreator {
     }
   }
 
-  fun createResultByExistingPlugin(plugin: Plugin): CreatePluginResult {
+  fun createResultByExistingPlugin(plugin: IdePlugin): CreatePluginResult {
     val resolver = createResolverByPluginOrCloseLock(plugin, null) ?: return CreatePluginResult.BadPlugin(listOf(UnableToReadPluginClassFilesProblem))
     return CreatePluginResult.OK(plugin, emptyList(), resolver, IdleFileLock(File("")))
   }
 
-  private fun createResolverByPluginOrCloseLock(plugin: Plugin, fileLock: FileLock?): Resolver? = try {
+  private fun createResolverByPluginOrCloseLock(plugin: IdePlugin, fileLock: FileLock?): Resolver? = try {
     Resolver.createPluginResolver(plugin)
   } catch (e: Exception) {
     LOG.debug("Unable to read plugin $plugin class files", e)

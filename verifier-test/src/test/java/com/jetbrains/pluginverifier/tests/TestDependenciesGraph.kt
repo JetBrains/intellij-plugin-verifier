@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tests
 
-import com.intellij.structure.impl.domain.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.dependencies.*
 import org.junit.Assert.assertTrue
 import org.junit.BeforeClass

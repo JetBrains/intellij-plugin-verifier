@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.tasks
 
-import com.intellij.structure.ide.Ide
-import com.intellij.structure.plugin.PluginDependency
+import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.core.VerifierExecutor
 import com.jetbrains.pluginverifier.dependencies.DependencyResolver

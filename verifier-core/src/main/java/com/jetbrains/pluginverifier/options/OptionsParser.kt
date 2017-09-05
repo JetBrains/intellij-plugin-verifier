@@ -2,8 +2,8 @@ package com.jetbrains.pluginverifier.options
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
-import com.intellij.structure.ide.IdeVersion
-import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.ProblemsFilter
 import com.jetbrains.pluginverifier.ide.IdeCreator

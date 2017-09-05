@@ -1,17 +1,11 @@
 package com.jetbrains.plugin.structure.base.plugin
 
-import com.jetbrains.plugin.structure.base.product.ProductVersion
-
 interface Plugin {
   val pluginId: String?
 
   val pluginName: String?
 
   val pluginVersion: String?
-
-  val sinceBuild: ProductVersion<*>?
-
-  val untilBuild: ProductVersion<*>?
 
   val url: String?
 

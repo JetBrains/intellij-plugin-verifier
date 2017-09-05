@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.core
 
-import com.intellij.structure.impl.resolvers.CacheResolver
-import com.intellij.structure.plugin.Plugin
-import com.intellij.structure.problems.PluginProblem
-import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.dependencies.*
 import com.jetbrains.pluginverifier.misc.withDebug
@@ -66,7 +66,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
 
   private fun getPluginInfoByPluginInstance(createPluginResult: CreatePluginResult.OK, pluginCoordinate: PluginCoordinate): PluginInfo {
     val plugin = createPluginResult.plugin
-    return PluginInfo(plugin.pluginId, plugin.pluginVersion, (pluginCoordinate as? PluginCoordinate.ByUpdateInfo)?.updateInfo)
+    return PluginInfo(plugin.pluginId!!, plugin.pluginVersion!!, (pluginCoordinate as? PluginCoordinate.ByUpdateInfo)?.updateInfo)
   }
 
   private fun getVerificationVerdict(creationOk: CreatePluginResult.OK): Verdict {
@@ -85,7 +85,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
     }
   }
 
-  private fun addCycleAndOtherWarnings(apiGraph: DependenciesGraph, context: VerificationContext, plugin: Plugin, warnings: List<PluginProblem>) {
+  private fun addCycleAndOtherWarnings(apiGraph: DependenciesGraph, context: VerificationContext, plugin: IdePlugin, warnings: List<PluginProblem>) {
     val cycles = apiGraph.getCycles()
     if (cycles.isNotEmpty()) {
       val nodes = cycles[0]
@@ -98,7 +98,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
     }
   }
 
-  private fun runVerifier(graph: DirectedGraph<DepVertex, DepEdge>, plugin: Plugin, pluginResolver: Resolver): VerificationContext {
+  private fun runVerifier(graph: DirectedGraph<DepVertex, DepEdge>, plugin: IdePlugin, pluginResolver: Resolver): VerificationContext {
     val dependenciesResolver = getDependenciesClassesResolver(graph)
     val checkClasses = getClassesOfPluginToCheck(plugin, pluginResolver)
     val classLoader = getVerificationClassLoader(dependenciesResolver, plugin, pluginResolver)
@@ -106,14 +106,14 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
     return BytecodeVerifier(params, plugin, classLoader, ideDescriptor.ideVersion).verify(checkClasses)
   }
 
-  private fun getVerificationClassLoader(dependenciesResolver: Resolver, plugin: Plugin, pluginResolver: Resolver): Resolver = CacheResolver(
+  private fun getVerificationClassLoader(dependenciesResolver: Resolver, plugin: IdePlugin, pluginResolver: Resolver): Resolver = CacheResolver(
       Resolver.createUnionResolver(
           "Common resolver for plugin $plugin; IDE #${ideDescriptor.ideVersion}; JDK $runtimeResolver",
           listOf(pluginResolver, runtimeResolver, ideDescriptor.ideResolver, dependenciesResolver, params.externalClassPath)
       )
   )
 
-  private fun getClassesOfPluginToCheck(plugin: Plugin, pluginResolver: Resolver): Iterator<String> {
+  private fun getClassesOfPluginToCheck(plugin: IdePlugin, pluginResolver: Resolver): Iterator<String> {
     val resolver = Resolver.createUnionResolver("Plugin classes for check",
         (plugin.allClassesReferencedFromXml + plugin.optionalDescriptors.flatMap { it.value.allClassesReferencedFromXml })
             .mapNotNull { pluginResolver.getClassLocation(it) }

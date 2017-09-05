@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.dependencies
 
-import com.intellij.structure.ide.Ide
-import com.intellij.structure.plugin.Plugin
-import com.intellij.structure.plugin.PluginDependency
+import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 
@@ -21,7 +21,7 @@ class BundledPluginDependencyResolver(val ide: Ide) : DependencyResolver {
     return DependencyResolver.Result.NotFound("${dependency.id} is not found in $ide")
   }
 
-  private fun createDependencyResultByExistingPlugin(plugin: Plugin): DependencyResolver.Result {
+  private fun createDependencyResultByExistingPlugin(plugin: IdePlugin): DependencyResolver.Result {
     val pluginCreateResult = PluginCreator.createResultByExistingPlugin(plugin)
     return when (pluginCreateResult) {
       is CreatePluginResult.OK -> DependencyResolver.Result.CreatedResolver(pluginCreateResult.plugin, pluginCreateResult.resolver)

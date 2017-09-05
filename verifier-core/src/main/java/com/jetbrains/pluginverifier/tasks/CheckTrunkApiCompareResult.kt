@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.tasks
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
-import com.intellij.structure.ide.IdeVersion
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.MissingDependency

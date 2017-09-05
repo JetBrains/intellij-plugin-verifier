@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.dependencies
 
-import com.intellij.structure.plugin.Plugin
-import com.intellij.structure.plugin.PluginDependency
-import com.intellij.structure.problems.PluginProblem
-import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import java.io.Closeable
@@ -13,16 +13,16 @@ interface DependencyResolver {
   fun resolve(dependency: PluginDependency): Result
 
   sealed class Result : Closeable {
-    data class FoundReady(val plugin: Plugin, val resolver: Resolver) : Result() {
+    data class FoundReady(val plugin: IdePlugin, val resolver: Resolver) : Result() {
       //resolver must not be closed because it belongs to client.
       override fun close() = Unit
     }
 
-    data class CreatedResolver(val plugin: Plugin, val resolver: Resolver) : Result() {
+    data class CreatedResolver(val plugin: IdePlugin, val resolver: Resolver) : Result() {
       override fun close() = resolver.close()
     }
 
-    data class Downloaded(val plugin: Plugin,
+    data class Downloaded(val plugin: IdePlugin,
                           val resolver: Resolver,
                           val updateInfo: UpdateInfo,
                           private val pluginFileLock: FileLock) : Result() {

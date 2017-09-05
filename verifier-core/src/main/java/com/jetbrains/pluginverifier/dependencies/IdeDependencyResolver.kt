@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.dependencies
 
-import com.intellij.structure.ide.Ide
-import com.intellij.structure.plugin.PluginDependency
+import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 
 /**
  * @author Sergey Patrikeev

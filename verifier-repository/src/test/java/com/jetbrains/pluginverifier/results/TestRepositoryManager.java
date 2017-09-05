@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.results;
 
-import com.intellij.structure.ide.IdeVersion;
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import com.jetbrains.pluginverifier.repository.FileLock;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.repository.UpdateInfo;

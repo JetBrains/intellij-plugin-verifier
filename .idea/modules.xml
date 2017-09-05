@@ -21,6 +21,7 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/plugins-verifier-service_main.iml" filepath="$PROJECT_DIR$/.idea/modules/plugins-verifier-service_main.iml" group="plugins-verifier-service" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/plugins-verifier-service_test.iml" filepath="$PROJECT_DIR$/.idea/modules/plugins-verifier-service_test.iml" group="plugins-verifier-service" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-base/structure-base.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-base/structure-base.iml" group="structure-base" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-base/structure-base.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-base/structure-base.iml" group="structure-base" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-base/structure-base_main.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-base/structure-base_main.iml" group="structure-base" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-base/structure-base_test.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-base/structure-base_test.iml" group="structure-base" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-classes/structure-classes.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-classes/structure-classes.iml" group="structure-classes" />
@@ -32,6 +33,15 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-ide/structure-ide.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-ide/structure-ide.iml" group="structure-ide" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-ide/structure-ide_main.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-ide/structure-ide_main.iml" group="structure-ide" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-ide/structure-ide_test.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-ide/structure-ide_test.iml" group="structure-ide" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-intellij/structure-intellij.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-intellij/structure-intellij.iml" group="structure-intellij" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-intellij/structure-intellij_main.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-intellij/structure-intellij_main.iml" group="structure-intellij" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-intellij/structure-intellij_test.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-intellij/structure-intellij_test.iml" group="structure-intellij" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-teamcity/structure-teamcity.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-teamcity/structure-teamcity.iml" group="structure-teamcity" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-teamcity/structure-teamcity_main.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-teamcity/structure-teamcity_main.iml" group="structure-teamcity" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/structure-teamcity/structure-teamcity_test.iml" filepath="$PROJECT_DIR$/.idea/modules/structure-teamcity/structure-teamcity_test.iml" group="structure-teamcity" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/tests/teamcity-mock-plugin/teamcity-mock-plugin.iml" filepath="$PROJECT_DIR$/.idea/modules/tests/teamcity-mock-plugin/teamcity-mock-plugin.iml" group="tests/teamcity-mock-plugin" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/tests/teamcity-mock-plugin/teamcity-mock-plugin_main.iml" filepath="$PROJECT_DIR$/.idea/modules/tests/teamcity-mock-plugin/teamcity-mock-plugin_main.iml" group="tests/teamcity-mock-plugin" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/tests/teamcity-mock-plugin/teamcity-mock-plugin_test.iml" filepath="$PROJECT_DIR$/.idea/modules/tests/teamcity-mock-plugin/teamcity-mock-plugin_test.iml" group="tests/teamcity-mock-plugin" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/test-classes/test-classes.iml" filepath="$PROJECT_DIR$/.idea/modules/test-classes/test-classes.iml" group="test-classes" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/test-classes/test-classes_main.iml" filepath="$PROJECT_DIR$/.idea/modules/test-classes/test-classes_main.iml" group="test-classes" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/test-classes/test-classes_test.iml" filepath="$PROJECT_DIR$/.idea/modules/test-classes/test-classes_test.iml" group="test-classes" />

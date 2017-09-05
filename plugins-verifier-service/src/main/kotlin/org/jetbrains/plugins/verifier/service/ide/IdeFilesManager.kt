@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.ide
 
-import com.intellij.structure.ide.IdeManager
-import com.intellij.structure.ide.IdeVersion
+import com.jetbrains.plugin.structure.ide.IdeManager
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
 import org.jetbrains.plugins.verifier.service.storage.FileManager

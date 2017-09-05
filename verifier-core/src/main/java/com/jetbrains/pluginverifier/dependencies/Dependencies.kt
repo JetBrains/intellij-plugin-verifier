@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.dependencies
 
-import com.intellij.structure.plugin.PluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import java.util.*
 import kotlin.collections.ArrayList
 

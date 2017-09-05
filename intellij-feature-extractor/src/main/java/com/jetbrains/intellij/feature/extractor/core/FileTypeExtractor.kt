@@ -1,6 +1,6 @@
 package com.jetbrains.intellij.feature.extractor.core
 
-import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
@@ -38,7 +38,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
 
     val result = arrayListOf<String>()
     extractedAll = true
-    var foundAnyConsumeInvocation: Boolean = false
+    var foundAnyConsumeInvocation = false
 
     val instructions = method.instructionsAsList()
     instructions.forEachIndexed { index, insn ->

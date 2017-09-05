@@ -5,7 +5,7 @@
       <GradleProjectSettings>
         <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleHome" value="$USER_HOME$/opt/gradle" />
+        <option name="gradleHome" value="$USER_HOME$/.sdkman/candidates/gradle/current" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
@@ -33,16 +33,18 @@
       <GradleProjectSettings>
         <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/intellij-plugin-structure" />
-        <option name="gradleHome" value="$USER_HOME$/opt/gradle" />
+        <option name="gradleHome" value="$USER_HOME$/.sdkman/candidates/gradle/current" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$/intellij-plugin-structure" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-base" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-classes" />
-            <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-common" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-ide" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-intellij" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-teamcity" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/tests" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/tests/mock-plugin" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/tests/teamcity-mock-plugin" />
           </set>
         </option>
       </GradleProjectSettings>
@@ -73,7 +75,7 @@
         </compositeConfiguration>
         <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/plugins-verifier-service" />
-        <option name="gradleHome" value="$USER_HOME$/opt/gradle" />
+        <option name="gradleHome" value="$USER_HOME$/.sdkman/candidates/gradle/current" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />

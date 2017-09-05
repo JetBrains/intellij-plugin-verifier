@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.api
 
-import com.intellij.structure.ide.Ide
-import com.intellij.structure.ide.IdeVersion
-import com.intellij.structure.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.io.Closeable
 
 data class IdeDescriptor(val ide: Ide, val ideResolver: Resolver) : Closeable {
