@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service
 
 import com.google.gson.Gson
+import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import java.io.Closeable
 
@@ -10,7 +11,7 @@ import java.io.Closeable
 object ServerInstance : Closeable {
   val GSON: Gson = Gson()
 
-  val taskManager = TaskManager(Runtime.getRuntime().availableProcessors())
+  val taskManager = TaskManager(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
 
   val services = arrayListOf<BaseService>()
 

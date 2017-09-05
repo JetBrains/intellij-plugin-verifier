@@ -21,6 +21,8 @@ enum class Settings(val key: String,
   PLUGIN_REPOSITORY_VERIFIER_USERNAME("verifier.service.plugin.repository.verifier.username"),
   PLUGIN_REPOSITORY_VERIFIER_PASSWORD("verifier.service.plugin.repository.verifier.password", encrypted = true),
 
+  TASK_MANAGER_CONCURRENCY("verifier.service.task.manager.concurrency", { "4" }),
+
   SERVICE_ADMIN_PASSWORD("verifier.service.admin.password", encrypted = true);
 
   fun get(): String {
