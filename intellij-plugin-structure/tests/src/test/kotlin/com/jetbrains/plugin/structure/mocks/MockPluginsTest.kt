@@ -24,16 +24,18 @@ import java.io.File
  */
 class MockPluginsTest {
 
-  private fun getMockPluginFile(mockName: String): File {
-    //if run with gradle
-    var pluginFile = File("mock-plugin/build/mocks/", mockName)
-    if (pluginFile.exists()) {
+  companion object {
+    fun getMockPluginFile(mockName: String): File {
+      //if run with gradle
+      var pluginFile = File("mock-plugin/build/mocks/", mockName)
+      if (pluginFile.exists()) {
+        return pluginFile
+      }
+      //if run with IDE test runner
+      pluginFile = File("intellij-plugin-structure/tests/mock-plugin/build/mocks", mockName)
+      Assert.assertTrue("mock plugin " + mockName + " is not found in " + pluginFile.absolutePath, pluginFile.exists())
       return pluginFile
     }
-    //if run with IDE test runner
-    pluginFile = File("intellij-plugin-structure/tests/mock-plugin/build/mocks", mockName)
-    Assert.assertTrue("mock plugin " + mockName + " is not found in " + pluginFile.absolutePath, pluginFile.exists())
-    return pluginFile
   }
 
 
@@ -84,11 +86,6 @@ class MockPluginsTest {
   @Test
   fun `directory with lib subdirectory containing jar file`() {
     testMockPluginStructureAndConfiguration("mock-plugin-dir", "lib/mock-plugin-1.0.jar")
-  }
-
-  @Test
-  fun `jar file renamed to zip archive`() {
-    testMockPluginStructureAndConfiguration("mock-pluginJarAsZip.zip", "")
   }
 
   @Test

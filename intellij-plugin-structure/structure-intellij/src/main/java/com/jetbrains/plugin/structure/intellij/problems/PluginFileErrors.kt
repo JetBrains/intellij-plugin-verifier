@@ -19,6 +19,14 @@ data class PluginZipContainsUnknownFile(val pluginZip: File, val fileName: Strin
 
 }
 
+data class PluginZipContainsMultipleFiles(val pluginZip: File, val fileNames: List<String>) : PluginProblem() {
+
+  override val level: PluginProblem.Level = PluginProblem.Level.ERROR
+
+  override val message: String = "Plugin .zip file ${pluginZip.name} contains multiple files: ${fileNames.joinToString()}"
+
+}
+
 data class UnableToReadJarFile(val jarFile: File) : PluginProblem() {
 
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR

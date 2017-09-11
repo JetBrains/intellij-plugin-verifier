@@ -1,10 +1,11 @@
 package com.jetbrains.plugin.structure.intellij.extractor
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsUnknownFile
-import com.jetbrains.plugin.structure.intellij.problems.PluginZipIsEmpty
 import com.jetbrains.plugin.structure.base.utils.FileUtil
 import com.jetbrains.plugin.structure.base.utils.ZipUtil
+import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
+import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsUnknownFile
+import com.jetbrains.plugin.structure.intellij.problems.PluginZipIsEmpty
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.IOException
@@ -62,7 +63,7 @@ object PluginExtractor {
         return fail(PluginZipContainsUnknownFile(pluginZip, singleFile.name), extractedPlugin)
       }
     } else {
-      return success(extractedPlugin, extractedPlugin)
+      return fail(PluginZipContainsMultipleFiles(pluginZip, rootFiles.map { it.name }.sorted()), extractedPlugin)
     }
   }
 

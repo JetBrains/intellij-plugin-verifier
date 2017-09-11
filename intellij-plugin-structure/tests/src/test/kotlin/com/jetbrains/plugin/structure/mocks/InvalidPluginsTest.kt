@@ -63,6 +63,12 @@ class InvalidPluginsTest {
     assertExpectedProblems(folder, listOf(PluginDescriptorIsNotFound("plugin.xml")))
   }
 
+  @Test
+  fun `plugin classes are packed in root of a zip archive`() {
+    val brokenZipFile = MockPluginsTest.getMockPluginFile("mock-pluginJarAsZip.zip")
+    assertExpectedProblems(brokenZipFile, listOf(PluginZipContainsMultipleFiles(brokenZipFile, listOf("META-INF", "icons", "optionalsDir", "packagename"))))
+  }
+
   private fun assertExpectedProblems(pluginFile: File, expectedProblems: List<PluginProblem>) {
     val creationFail = getFailedResult(pluginFile)
     val actualProblems = creationFail.errorsAndWarnings
