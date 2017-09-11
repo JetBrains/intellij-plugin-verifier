@@ -38,6 +38,6 @@ compileKotlin.dependsOn extractJpsStandalone
 //The only client for now who uses structure-ide is plugin verifier.
 jar {
   from {
-    configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    jpsJarsTree.collect { it.isDirectory() ? it : zipTree(it) }
   }
 }
