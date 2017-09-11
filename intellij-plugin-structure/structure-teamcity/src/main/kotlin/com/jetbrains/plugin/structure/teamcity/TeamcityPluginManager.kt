@@ -5,9 +5,10 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.*
-import com.jetbrains.plugin.structure.teamcity.beans.extractPluginBean
 import com.jetbrains.plugin.structure.base.utils.FileUtil
+import com.jetbrains.plugin.structure.teamcity.beans.extractPluginBean
 import org.jdom2.input.JDOMParseException
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -16,41 +17,43 @@ import java.util.zip.ZipFile
 object TeamcityPluginManager {
   private val DESCRIPTOR_NAME = "teamcity-plugin.xml"
 
+  private val LOG = LoggerFactory.getLogger(TeamcityPluginManager::class.java)
+
   fun createTeamcityPlugin(pluginFile: File): PluginCreationResult<TeamcityPlugin> {
     if (!pluginFile.exists()) {
       throw IllegalArgumentException("Plugin file $pluginFile does not exist")
     }
-
-    return if (FileUtil.isZip(pluginFile)) {
-      try {
-        loadDescriptorFromZip(ZipFile(pluginFile))
-      } catch (e: IOException) {
-        return PluginCreationFail(UnableToExtractZip(pluginFile))
-      }
-    } else if (pluginFile.isDirectory) {
-      loadDescriptorFromDirectory(pluginFile)
-    } else {
-      PluginCreationFail(IncorrectPluginFile(pluginFile))
+    return when {
+      pluginFile.isDirectory -> loadDescriptorFromDirectory(pluginFile)
+      FileUtil.isZip(pluginFile) -> loadDescriptorFromZip(pluginFile)
+      else -> PluginCreationFail(IncorrectPluginFile(pluginFile))
     }
+  }
+
+  private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<TeamcityPlugin> = try {
+    loadDescriptorFromZip(ZipFile(pluginFile))
+  } catch (e: IOException) {
+    LOG.info("Unable to extract plugin zip: $pluginFile", e)
+    PluginCreationFail(UnableToExtractZip(pluginFile))
   }
 
   private fun loadDescriptorFromZip(pluginFile: ZipFile): PluginCreationResult<TeamcityPlugin> {
     pluginFile.use {
       val descriptorEntry = pluginFile.getEntry(DESCRIPTOR_NAME) ?:
           return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
-      return loadDescriptorFromStream(pluginFile.getInputStream(descriptorEntry))
+      return loadDescriptorFromStream(pluginFile.name, pluginFile.getInputStream(descriptorEntry))
     }
   }
 
   private fun loadDescriptorFromDirectory(pluginDirectory: File): PluginCreationResult<TeamcityPlugin> {
     val descriptorFile = File(pluginDirectory, DESCRIPTOR_NAME)
-    if (!descriptorFile.exists()) {
-      return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
+    if (descriptorFile.exists()) {
+      return descriptorFile.inputStream().use { loadDescriptorFromStream(descriptorFile.path, it) }
     }
-    return descriptorFile.inputStream().use { loadDescriptorFromStream(it) }
+    return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
   }
 
-  private fun loadDescriptorFromStream(inputStream: InputStream): PluginCreationResult<TeamcityPlugin> {
+  private fun loadDescriptorFromStream(streamName: String, inputStream: InputStream): PluginCreationResult<TeamcityPlugin> {
     try {
       val bean = extractPluginBean(inputStream)
       val beanValidationResult = validateTeamcityPluginBean(bean)
@@ -63,7 +66,8 @@ object TeamcityPluginManager {
       val message = if (lineNumber != -1) "unexpected element on line " + lineNumber else "unexpected elements"
       return PluginCreationFail(UnexpectedDescriptorElements(message))
     } catch (e: Exception) {
-      return PluginCreationFail(UnableToReadDescriptor())
+      LOG.info("Unable to read plugin descriptor from $streamName", e)
+      return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME))
     }
   }
 }

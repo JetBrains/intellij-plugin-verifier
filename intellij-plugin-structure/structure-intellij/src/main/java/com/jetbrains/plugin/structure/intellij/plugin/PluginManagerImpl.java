@@ -1,14 +1,16 @@
 package com.jetbrains.plugin.structure.intellij.plugin;
 
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult;
 import com.jetbrains.plugin.structure.base.problems.*;
+import com.jetbrains.plugin.structure.base.utils.FileUtil;
+import com.jetbrains.plugin.structure.intellij.extractor.*;
+import com.jetbrains.plugin.structure.intellij.problems.MultiplePluginDescriptorsInLibDirectory;
+import com.jetbrains.plugin.structure.intellij.problems.PluginLibDirectoryIsEmpty;
+import com.jetbrains.plugin.structure.intellij.problems.UnableToReadJarFile;
 import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
 import com.jetbrains.plugin.structure.intellij.utils.xml.JDOMUtil;
 import com.jetbrains.plugin.structure.intellij.utils.xml.JDOMXIncluder;
 import com.jetbrains.plugin.structure.intellij.utils.xml.URLUtil;
-import com.jetbrains.plugin.structure.intellij.extractor.*;
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult;
-import com.jetbrains.plugin.structure.intellij.problems.*;
-import com.jetbrains.plugin.structure.base.utils.FileUtil;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.Document;
 import org.jdom2.input.JDOMParseException;
@@ -32,7 +34,7 @@ import static com.jetbrains.plugin.structure.intellij.utils.StringUtil.toSystemI
  */
 public class PluginManagerImpl extends PluginManager {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PluginManagerImpl.class);
+  private static final Logger LOG = LoggerFactory.getLogger(PluginManager.class);
   private static final String PLUGIN_XML = "plugin.xml";
 
   @NotNull
@@ -58,7 +60,7 @@ public class PluginManagerImpl extends PluginManager {
     try {
       zipFile = new ZipFile(jarFile);
     } catch (Exception e) {
-      LOG.debug("Unable to read jar file " + jarFile, e);
+      LOG.info("Unable to read jar file " + jarFile, e);
       return new PluginCreator(descriptorPath, new UnableToReadJarFile(jarFile), jarFile);
     }
 
@@ -72,7 +74,7 @@ public class PluginManagerImpl extends PluginManager {
           Document document = JDOMUtil.loadDocument(documentStream);
           return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, pathResolver, jarFile);
         } catch (Exception e) {
-          LOG.debug("Unable to read file " + descriptorPath);
+          LOG.info("Unable to read file " + descriptorPath);
           return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorPath), jarFile);
         } finally {
           IOUtils.closeQuietly(documentStream);
@@ -84,7 +86,7 @@ public class PluginManagerImpl extends PluginManager {
       try {
         zipFile.close();
       } catch (IOException e) {
-        LOG.debug("Unable to close jar file " + jarFile, e);
+        LOG.error("Unable to close jar file " + jarFile, e);
       }
     }
   }
@@ -126,7 +128,7 @@ public class PluginManagerImpl extends PluginManager {
       String message = lineNumber != -1 ? "unexpected element on line " + lineNumber : "unexpected elements";
       return new PluginCreator(descriptorPath, new UnexpectedDescriptorElements(message, descriptorPath), pluginDirectory);
     } catch (Exception e) {
-      LOG.debug("Unable to read plugin descriptor " + descriptorPath + " of plugin " + descriptorFile, e);
+      LOG.info("Unable to read plugin descriptor " + descriptorPath + " of plugin " + descriptorFile, e);
       return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorPath), pluginDirectory);
     }
   }
@@ -264,6 +266,7 @@ public class PluginManagerImpl extends PluginManager {
     try {
       extractorResult = PluginExtractor.INSTANCE.extractPlugin(zipPlugin);
     } catch (Exception e) {
+      LOG.info("Unable to extract plugin zip " + zipPlugin, e);
       return new PluginCreator(PLUGIN_XML, new UnableToExtractZip(zipPlugin), zipPlugin);
     }
     if (extractorResult instanceof ExtractorSuccess) {
