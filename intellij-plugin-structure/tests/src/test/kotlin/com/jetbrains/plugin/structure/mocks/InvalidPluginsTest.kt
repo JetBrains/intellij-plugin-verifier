@@ -4,10 +4,11 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.*
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.plugin.structure.intellij.plugin.*
-import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.base.utils.ZipUtil
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.problems.*
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.instanceOf
 import org.hamcrest.Matchers.containsInAnyOrder
@@ -47,7 +48,7 @@ class InvalidPluginsTest {
     val nonExistentFile = File("non-existent-file")
     expectedEx.expect(IllegalArgumentException::class.java)
     expectedEx.expectMessage("Plugin file non-existent-file does not exist")
-    PluginManager.getInstance().createPlugin(nonExistentFile)
+    IdePluginManager.getInstance().createPlugin(nonExistentFile)
   }
 
   @Test
@@ -70,13 +71,13 @@ class InvalidPluginsTest {
   }
 
   private fun getSuccessResult(pluginFile: File): PluginCreationSuccess<IdePlugin> {
-    val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile)
+    val pluginCreationResult = IdePluginManager.getInstance().createPlugin(pluginFile)
     assertThat(pluginCreationResult, instanceOf(PluginCreationSuccess::class.java))
     return pluginCreationResult as PluginCreationSuccess<IdePlugin>
   }
 
   private fun getFailedResult(pluginFile: File): PluginCreationFail<IdePlugin> {
-    val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile)
+    val pluginCreationResult = IdePluginManager.getInstance().createPlugin(pluginFile)
     assertThat(pluginCreationResult, instanceOf(PluginCreationFail::class.java))
     return pluginCreationResult as PluginCreationFail
   }

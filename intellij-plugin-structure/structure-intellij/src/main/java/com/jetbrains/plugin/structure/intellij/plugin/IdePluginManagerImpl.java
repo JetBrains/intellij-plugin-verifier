@@ -32,19 +32,19 @@ import static com.jetbrains.plugin.structure.intellij.utils.StringUtil.toSystemI
 /**
  * @author Sergey Patrikeev
  */
-public class PluginManagerImpl extends PluginManager {
+public class IdePluginManagerImpl extends IdePluginManager {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PluginManager.class);
+  private static final Logger LOG = LoggerFactory.getLogger(IdePluginManager.class);
   private static final String PLUGIN_XML = "plugin.xml";
 
   @NotNull
   private final JDOMXIncluder.PathResolver myPathResolver;
 
-  public PluginManagerImpl() {
+  public IdePluginManagerImpl() {
     this(null);
   }
 
-  public PluginManagerImpl(@Nullable JDOMXIncluder.PathResolver pathResolver) {
+  public IdePluginManagerImpl(@Nullable JDOMXIncluder.PathResolver pathResolver) {
     if (pathResolver == null) {
       myPathResolver = PluginXmlUtil.DEFAULT_PLUGIN_XML_PATH_RESOLVER;
     } else {

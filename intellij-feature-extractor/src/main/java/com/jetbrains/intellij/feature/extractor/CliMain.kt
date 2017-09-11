@@ -4,7 +4,7 @@ import com.google.gson.Gson
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.ide.IdeManager
-import com.jetbrains.plugin.structure.intellij.plugin.PluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.resolvers.IdeResolverCreator
 import java.io.File
 
@@ -17,7 +17,7 @@ fun main(args: Array<String>) {
   }
   val pluginFile = File(args[0])
   val ideaFile = File(args[1])
-  val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile)
+  val pluginCreationResult = IdePluginManager.getInstance().createPlugin(pluginFile)
   when (pluginCreationResult) {
     is PluginCreationSuccess -> {
       val ide = IdeManager.getInstance().createIde(ideaFile)

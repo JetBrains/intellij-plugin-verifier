@@ -2,14 +2,14 @@ package com.jetbrains.plugin.structure.ide
 
 import com.google.common.base.Joiner
 import com.google.common.io.Files
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManagerImpl
 import com.jetbrains.plugin.structure.intellij.utils.xml.JDOMXIncluder
 import com.jetbrains.plugin.structure.intellij.utils.xml.URLUtil
 import com.jetbrains.plugin.structure.intellij.utils.xml.XIncludeException
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.plugin.structure.intellij.plugin.PluginManagerImpl
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.io.filefilter.WildcardFileFilter
@@ -152,7 +152,7 @@ class IdeManagerImpl : IdeManager() {
 
     private fun createPluginByDir(pluginDirectory: File, pathResolver: JDOMXIncluder.PathResolver?): IdePlugin? {
       try {
-        val pluginCreator = PluginManagerImpl(pathResolver).getPluginCreatorWithResult(pluginDirectory, false)
+        val pluginCreator = IdePluginManagerImpl(pathResolver).getPluginCreatorWithResult(pluginDirectory, false)
         pluginCreator.setOriginalFile(pluginDirectory)
         val creationResult = pluginCreator.pluginCreationResult
         return when (creationResult) {

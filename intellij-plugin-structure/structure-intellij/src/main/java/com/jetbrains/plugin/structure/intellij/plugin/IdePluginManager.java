@@ -9,11 +9,11 @@ import java.io.IOException;
 /**
  * @author Sergey Patrikeev
  */
-public abstract class PluginManager {
+public abstract class IdePluginManager {
 
   @NotNull
-  public static PluginManager getInstance() {
-    return new PluginManagerImpl();
+  public static IdePluginManager getInstance() {
+    return new IdePluginManagerImpl();
   }
 
   @NotNull

@@ -7,8 +7,8 @@ import com.jetbrains.plugin.structure.base.utils.FileUtil
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractedPluginFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.plugin.structure.intellij.plugin.PluginManager
 import com.jetbrains.plugin.structure.intellij.problems.MissingOptionalDependencyConfigurationFile
 import com.jetbrains.plugin.structure.intellij.utils.PluginXmlUtil.getAllClassesReferencedFromXml
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -119,7 +119,7 @@ class MockPluginsTest {
   private fun testMockPluginStructureAndConfiguration(pluginPath: String, vararg classesPath: String) {
     val pluginFile = getMockPluginFile(pluginPath)
 
-    val pluginCreationResult = PluginManager.getInstance().createPlugin(pluginFile)
+    val pluginCreationResult = IdePluginManager.getInstance().createPlugin(pluginFile)
     if (pluginCreationResult is PluginCreationFail) {
       val message = pluginCreationResult.errorsAndWarnings.joinToString(separator = "\n") { it.message }
       fail(message)

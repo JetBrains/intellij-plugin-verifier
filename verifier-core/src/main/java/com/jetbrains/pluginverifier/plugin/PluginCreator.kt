@@ -5,7 +5,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.PluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.closeOnException
@@ -43,7 +43,7 @@ object PluginCreator {
     pluginFileLock.closeOnException {
       val pluginFile = pluginFileLock.getFile()
 
-      val creationResult = PluginManager.getInstance().createPlugin(pluginFile)
+      val creationResult = IdePluginManager.getInstance().createPlugin(pluginFile)
       if (creationResult is PluginCreationSuccess) {
         val pluginResolver = createResolverByPluginOrCloseLock(creationResult.plugin, pluginFileLock) ?: return CreatePluginResult.BadPlugin(listOf(UnableToReadPluginClassFilesProblem))
         return CreatePluginResult.OK(creationResult.plugin, creationResult.warnings, pluginResolver, pluginFileLock)
