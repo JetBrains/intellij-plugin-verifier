@@ -1,9 +1,6 @@
 package com.jetbrains.plugin.structure.teamcity
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.FileUtil
 import com.jetbrains.plugin.structure.teamcity.beans.extractPluginBean
@@ -14,12 +11,12 @@ import java.io.IOException
 import java.io.InputStream
 import java.util.zip.ZipFile
 
-object TeamcityPluginManager {
+object TeamcityPluginManager : PluginManager<TeamcityPlugin> {
   private val DESCRIPTOR_NAME = "teamcity-plugin.xml"
 
   private val LOG = LoggerFactory.getLogger(TeamcityPluginManager::class.java)
 
-  fun createTeamcityPlugin(pluginFile: File): PluginCreationResult<TeamcityPlugin> {
+  override fun createPlugin(pluginFile: File): PluginCreationResult<TeamcityPlugin> {
     if (!pluginFile.exists()) {
       throw IllegalArgumentException("Plugin file $pluginFile does not exist")
     }

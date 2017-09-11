@@ -48,7 +48,7 @@ class InvalidPluginsTest {
     val nonExistentFile = File("non-existent-file")
     expectedEx.expect(IllegalArgumentException::class.java)
     expectedEx.expectMessage("Plugin file non-existent-file does not exist")
-    IdePluginManager.getInstance().createPlugin(nonExistentFile)
+    IdePluginManager.createManager().createPlugin(nonExistentFile)
   }
 
   @Test
@@ -71,13 +71,13 @@ class InvalidPluginsTest {
   }
 
   private fun getSuccessResult(pluginFile: File): PluginCreationSuccess<IdePlugin> {
-    val pluginCreationResult = IdePluginManager.getInstance().createPlugin(pluginFile)
+    val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
     assertThat(pluginCreationResult, instanceOf(PluginCreationSuccess::class.java))
     return pluginCreationResult as PluginCreationSuccess<IdePlugin>
   }
 
   private fun getFailedResult(pluginFile: File): PluginCreationFail<IdePlugin> {
-    val pluginCreationResult = IdePluginManager.getInstance().createPlugin(pluginFile)
+    val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
     assertThat(pluginCreationResult, instanceOf(PluginCreationFail::class.java))
     return pluginCreationResult as PluginCreationFail
   }

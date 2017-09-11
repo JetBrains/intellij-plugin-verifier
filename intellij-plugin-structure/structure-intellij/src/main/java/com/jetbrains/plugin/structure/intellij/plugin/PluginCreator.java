@@ -7,11 +7,12 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem;
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem;
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified;
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor;
-import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
-import com.jetbrains.plugin.structure.intellij.utils.xml.JDOMXIncluder;
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import com.jetbrains.plugin.structure.intellij.beans.*;
 import com.jetbrains.plugin.structure.intellij.problems.*;
+import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
+import com.jetbrains.plugin.structure.intellij.utils.xincludes.JDOMXIncluder;
+import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludePathResolver;
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import org.jdom2.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,12 +44,12 @@ public final class PluginCreator {
   private final boolean myValidateDescriptor;
   private final File myActualFile;
 
-  PluginCreator(String descriptorPath,
+  PluginCreator(@NotNull String descriptorPath,
                 boolean validateDescriptor,
-                Document document,
-                URL documentUrl,
-                JDOMXIncluder.PathResolver pathResolver,
-                File actualFile) {
+                @NotNull Document document,
+                @NotNull URL documentUrl,
+                @NotNull XIncludePathResolver pathResolver,
+                @NotNull File actualFile) {
     myDescriptorPath = descriptorPath;
     myValidateDescriptor = validateDescriptor;
     myActualFile = actualFile;
@@ -143,7 +144,7 @@ public final class PluginCreator {
   @Nullable
   private IdePluginImpl resolveDocumentAndValidateBean(@NotNull Document originalDocument,
                                                        @NotNull URL documentUrl,
-                                                       @NotNull JDOMXIncluder.PathResolver pathResolver) {
+                                                       @NotNull XIncludePathResolver pathResolver) {
     Document document = resolveXIncludesOfDocument(originalDocument, documentUrl, pathResolver);
     if (document == null) {
       return null;
@@ -165,9 +166,9 @@ public final class PluginCreator {
   }
 
   @Nullable
-  private Document resolveXIncludesOfDocument(@NotNull Document originalDocument, @NotNull URL documentUrl, @NotNull JDOMXIncluder.PathResolver pathResolver) {
+  private Document resolveXIncludesOfDocument(@NotNull Document originalDocument, @NotNull URL documentUrl, @NotNull XIncludePathResolver pathResolver) {
     try {
-      return PluginXmlUtil.resolveXIncludes(originalDocument, documentUrl, pathResolver);
+      return JDOMXIncluder.resolve(originalDocument, documentUrl.toExternalForm(), false, pathResolver);
     } catch (Exception e) {
       LOG.debug("Unable to resolve x-include elements of descriptor " + myDescriptorPath, e);
       registerProblem(new UnresolvedXIncludeElements(myDescriptorPath));

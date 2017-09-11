@@ -62,10 +62,6 @@ open class MockIdeAdapter(val ideVersion: IdeVersion,
 open class MockPluginAdapter : IdePlugin {
   override fun getUnderlyingDocument(): Document = throw UnsupportedOperationException()
 
-  override fun getAllClassesReferencedFromXml(): Set<String> {
-    return emptySet()
-  }
-
   override fun getOptionalDescriptors(): Map<String, IdePlugin> {
     return emptyMap()
   }

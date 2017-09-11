@@ -5,10 +5,11 @@ import com.google.common.io.Files
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManagerImpl
-import com.jetbrains.plugin.structure.intellij.utils.xml.JDOMXIncluder
-import com.jetbrains.plugin.structure.intellij.utils.xml.URLUtil
-import com.jetbrains.plugin.structure.intellij.utils.xml.XIncludeException
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.utils.URLUtil
+import com.jetbrains.plugin.structure.intellij.utils.xincludes.DefaultXIncludePathResolver
+import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludeException
+import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludePathResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
@@ -72,7 +73,7 @@ class IdeManagerImpl : IdeManager() {
     throw IllegalArgumentException("Unable to find IDE version file (build.txt or community/build.txt)")
   }
 
-  private class PluginFromSourcePathResolver internal constructor(private val myDescriptors: Map<String, File>) : JDOMXIncluder.DefaultPathResolver() {
+  private class PluginFromSourceXIncludePathResolver(private val descriptors: Map<String, File>) : DefaultXIncludePathResolver() {
 
     private fun resolveOutputDirectories(relativePath: String, base: String?): URL {
       val normalizedPath = if (relativePath.startsWith("./")) {
@@ -81,7 +82,7 @@ class IdeManagerImpl : IdeManager() {
         relativePath
       }
 
-      val file = myDescriptors[normalizedPath]
+      val file = descriptors[normalizedPath]
       if (file != null) {
         try {
           return file.toURI().toURL()
@@ -142,7 +143,7 @@ class IdeManagerImpl : IdeManager() {
       return getDummyPlugins(xmlFiles, pathResolver)
     }
 
-    private fun getDummyPlugins(xmlFiles: Collection<File>, pathResolver: JDOMXIncluder.PathResolver): List<IdePlugin> = xmlFiles
+    private fun getDummyPlugins(xmlFiles: Collection<File>, pathResolver: XIncludePathResolver): List<IdePlugin> = xmlFiles
         .filter { "plugin.xml" == it.name }
         .map { it.absoluteFile.parentFile }
         .filter { "META-INF" == it.name && it.isDirectory && it.parentFile != null }
@@ -150,9 +151,9 @@ class IdeManagerImpl : IdeManager() {
         .filter { it.isDirectory }
         .mapNotNull { createPluginByDir(it, pathResolver) }
 
-    private fun createPluginByDir(pluginDirectory: File, pathResolver: JDOMXIncluder.PathResolver?): IdePlugin? {
+    private fun createPluginByDir(pluginDirectory: File, pathResolver: XIncludePathResolver): IdePlugin? {
       try {
-        val pluginCreator = IdePluginManagerImpl(pathResolver).getPluginCreatorWithResult(pluginDirectory, false)
+        val pluginCreator = IdePluginManager.createManager(pathResolver).getPluginCreatorWithResult(pluginDirectory, false)
         pluginCreator.setOriginalFile(pluginDirectory)
         val creationResult = pluginCreator.pluginCreationResult
         return when (creationResult) {
@@ -170,7 +171,7 @@ class IdeManagerImpl : IdeManager() {
       return null
     }
 
-    private fun getFromSourcesPathResolver(xmlFiles: Collection<File>): JDOMXIncluder.PathResolver {
+    private fun getFromSourcesPathResolver(xmlFiles: Collection<File>): XIncludePathResolver {
       val xmlDescriptors = HashMap<String, File>()
       for (file in xmlFiles) {
         val path = file.absolutePath
@@ -180,7 +181,7 @@ class IdeManagerImpl : IdeManager() {
           xmlDescriptors.put(key, file)
         }
       }
-      return PluginFromSourcePathResolver(xmlDescriptors)
+      return PluginFromSourceXIncludePathResolver(xmlDescriptors)
     }
 
     fun isSourceDir(dir: File): Boolean {
@@ -191,7 +192,7 @@ class IdeManagerImpl : IdeManager() {
     private fun getIdeaPlugins(ideaDir: File): List<IdePlugin> {
       val pluginsDir = File(ideaDir, "plugins")
       val pluginsFiles = pluginsDir.listFiles() ?: return emptyList()
-      return pluginsFiles.filter { it.isDirectory }.mapNotNull { createPluginByDir(it, null) }
+      return pluginsFiles.filter { it.isDirectory }.mapNotNull { createPluginByDir(it, DefaultXIncludePathResolver()) }
     }
   }
 }

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.jetbrains.plugin.structure.intellij.utils.xml;
+package com.jetbrains.plugin.structure.intellij.utils.xincludes;
 
+import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.*;
 import org.jetbrains.annotations.NonNls;
@@ -23,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -58,14 +58,14 @@ public class JDOMXIncluder {
   // /$1(/$2)?/*
   private static Pattern CHILDREN_PATTERN = Pattern.compile("/([^/]*)(/[^/]*)?/\\*");
   private final boolean myIgnoreMissing;
-  private final PathResolver myPathResolver;
+  private final XIncludePathResolver myPathResolver;
 
-  private JDOMXIncluder(boolean ignoreMissing, PathResolver pathResolver) {
+  private JDOMXIncluder(boolean ignoreMissing, XIncludePathResolver pathResolver) {
     myIgnoreMissing = ignoreMissing;
     myPathResolver = pathResolver;
   }
 
-  public static Document resolve(Document original, String base, boolean ignoreMissing, PathResolver pathResolver) throws XIncludeException {
+  public static Document resolve(Document original, String base, boolean ignoreMissing, XIncludePathResolver pathResolver) throws XIncludeException {
     return new JDOMXIncluder(ignoreMissing, pathResolver).doResolve(original, base);
   }
 
@@ -324,24 +324,4 @@ public class JDOMXIncluder {
     return result;
   }
 
-  public interface PathResolver {
-    @NotNull
-    URL resolvePath(@NotNull String relativePath, @Nullable String base);
-  }
-
-  public static class DefaultPathResolver implements PathResolver {
-    @NotNull
-    @Override
-    public URL resolvePath(@NotNull String relativePath, @Nullable String base) {
-      try {
-        if (base != null) {
-          return new URL(new URL(base), relativePath);
-        } else {
-          return new URL(relativePath);
-        }
-      } catch (MalformedURLException ex) {
-        throw new XIncludeException(ex);
-      }
-    }
-  }
 }

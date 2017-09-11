@@ -1,75 +1,71 @@
 package com.jetbrains.plugin.structure.intellij.plugin;
 
-import com.jetbrains.plugin.structure.intellij.utils.xml.JDOMXIncluder;
-import com.jetbrains.plugin.structure.intellij.utils.xml.URLUtil;
-import com.jetbrains.plugin.structure.intellij.utils.xml.XIncludeException;
-import org.jdom2.Document;
+import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
+import org.jdom2.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-class PluginXmlUtil {
-  static final JDOMXIncluder.PathResolver DEFAULT_PLUGIN_XML_PATH_RESOLVER = new PluginXmlPathResolver();
+public class PluginXmlUtil {
+  private static final Pattern JAVA_CLASS_PATTERN = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*");
+  private static final String[] CLASS_LIKE_STRINGS = new String[]{"class", "interface", "implementation", "instance"};
 
-  static Document resolveXIncludes(@NotNull Document document, @NotNull URL documentUrl, JDOMXIncluder.PathResolver pathResolver) throws XIncludeException {
-    return JDOMXIncluder.resolve(document, documentUrl.toExternalForm(), false, pathResolver);
-  }
+  private static Set<String> extractReferencedClasses(@NotNull Element rootElement) {
+    Set<String> referencedClasses = new HashSet<String>();
+    Iterator<Content> descendants = rootElement.getDescendants();
+    while (descendants.hasNext()) {
+      Content next = descendants.next();
+      if (next instanceof Element) {
+        Element element = (Element) next;
 
-  static class PluginXmlPathResolver extends JDOMXIncluder.DefaultPathResolver {
-
-    private final List<URL> myPluginMetaInfUrls;
-
-    private PluginXmlPathResolver() {
-      myPluginMetaInfUrls = Collections.emptyList();
-    }
-
-    PluginXmlPathResolver(List<URL> metaInfUrl) {
-      myPluginMetaInfUrls = new ArrayList<URL>(metaInfUrl);
-    }
-
-    @NotNull
-    private URL defaultResolve(@NotNull String relativePath, @Nullable String base) {
-      if (base != null && relativePath.startsWith("/META-INF/")) {
-        //for plugin descriptor the root is a directory containing the META-INF
-        try {
-          return new URL(new URL(base), ".." + relativePath);
-        } catch (MalformedURLException e) {
-          throw new XIncludeException(e);
+        if (isClassLikeName(element.getName())) {
+          referencedClasses.addAll(extractClasses(element.getTextNormalize()));
         }
-      }
-      return super.resolvePath(relativePath, base);
-    }
 
-    @NotNull
-    private URL getMetaInfRelativeUrl(@NotNull URL metaInf, @NotNull String relativePath) throws MalformedURLException {
-      if (relativePath.startsWith("/")) {
-        return new URL(metaInf, ".." + relativePath);
-      } else {
-        return new URL(metaInf, relativePath);
-      }
-    }
-
-    @NotNull
-    @Override
-    public URL resolvePath(@NotNull String relativePath, @Nullable String base) {
-      URL url = defaultResolve(relativePath, base);
-      if (!URLUtil.resourceExists(url)) {
-        for (URL metaInf : myPluginMetaInfUrls) {
-          try {
-            URL entryUrl = getMetaInfRelativeUrl(metaInf, relativePath);
-            if (URLUtil.resourceExists(entryUrl)) {
-              return entryUrl;
-            }
-          } catch (MalformedURLException ignored) {
+        for (Attribute attribute : element.getAttributes()) {
+          if (isClassLikeName(attribute.getName())) {
+            referencedClasses.addAll(extractClasses(attribute.getValue().trim()));
+          }
+        }
+      } else if (next instanceof Text) {
+        Parent parent = next.getParent();
+        if (parent instanceof Element) {
+          if (isClassLikeName(((Element) parent).getName())) {
+            referencedClasses.addAll(extractClasses(((Text) next).getTextTrim()));
           }
         }
       }
-      return url;
     }
+    return referencedClasses;
+  }
+
+  private static boolean isClassLikeName(@NotNull String label) {
+    for (String string : CLASS_LIKE_STRINGS) {
+      if (StringUtil.containsIgnoreCase(label, string)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static List<String> extractClasses(@NotNull String text) {
+    List<String> result = new ArrayList<String>();
+    Matcher matcher = JAVA_CLASS_PATTERN.matcher(text);
+    while (matcher.find()) {
+      result.add(matcher.group().replace('.', '/'));
+    }
+    return result;
+  }
+
+  @NotNull
+  public static Set<String> getAllClassesReferencedFromXml(IdePlugin plugin) {
+    Document document = plugin.getUnderlyingDocument();
+    Element rootElement = document.getRootElement();
+    if (rootElement != null) {
+      return extractReferencedClasses(rootElement);
+    }
+    return Collections.emptySet();
   }
 }

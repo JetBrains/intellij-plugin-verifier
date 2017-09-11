@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.plugin.structure.intellij.utils.xml;
+package com.jetbrains.plugin.structure.intellij.utils;
 
 import com.google.common.io.ByteStreams;
-import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.*;
 import org.jdom2.filter.AbstractFilter;
@@ -120,7 +119,7 @@ public class JDOMUtil {
   }
 
   @NotNull
-  static Document loadResourceDocument(URL url) throws JDOMException, IOException {
+  public static Document loadResourceDocument(URL url) throws JDOMException, IOException {
     InputStream stream = URLUtil.openResourceStream(url);
     try {
       return loadDocument(stream);

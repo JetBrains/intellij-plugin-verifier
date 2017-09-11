@@ -66,7 +66,7 @@ class TeamcityMockPluginsTest {
   private fun testMockPluginStructureAndConfiguration(pluginPath: String) {
     val pluginFile = getMockPluginFile(pluginPath)
 
-    val pluginCreationResult = TeamcityPluginManager.createTeamcityPlugin(pluginFile)
+    val pluginCreationResult = TeamcityPluginManager.createPlugin(pluginFile)
     if (pluginCreationResult is PluginCreationFail) {
       val message = pluginCreationResult.errorsAndWarnings.joinToString(separator = "\n") { it.message }
       fail(message)
