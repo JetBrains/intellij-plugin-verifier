@@ -17,7 +17,7 @@ fun main(args: Array<String>) {
   }
   val pluginFile = File(args[0])
   val ideaFile = File(args[1])
-  val pluginCreationResult = IdePluginManager.getInstance().createPlugin(pluginFile)
+  val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
   when (pluginCreationResult) {
     is PluginCreationSuccess -> {
       val ide = IdeManager.getInstance().createIde(ideaFile)

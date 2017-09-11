@@ -43,7 +43,7 @@ object PluginCreator {
     pluginFileLock.closeOnException {
       val pluginFile = pluginFileLock.getFile()
 
-      val creationResult = IdePluginManager.getInstance().createPlugin(pluginFile)
+      val creationResult = IdePluginManager.createManager().createPlugin(pluginFile)
       if (creationResult is PluginCreationSuccess) {
         val pluginResolver = createResolverByPluginOrCloseLock(creationResult.plugin, pluginFileLock) ?: return CreatePluginResult.BadPlugin(listOf(UnableToReadPluginClassFilesProblem))
         return CreatePluginResult.OK(creationResult.plugin, creationResult.warnings, pluginResolver, pluginFileLock)
