@@ -6,13 +6,13 @@ import com.jetbrains.plugin.structure.teamcity.beans.TeamcityPluginBean
 
 internal fun validateTeamcityPluginBean(bean: TeamcityPluginBean): List<PluginProblem>{
   val result = ArrayList<PluginProblem>()
-  if(bean.name == null) {
+  if(bean.name.isNullOrBlank()) {
     result.add(PropertyNotSpecified("name"))
   }
-  if(bean.displayName == null) {
+  if(bean.displayName.isNullOrBlank()) {
     result.add(PropertyNotSpecified("display-name"))
   }
-  if(bean.version == null) {
+  if(bean.version.isNullOrBlank()) {
     result.add(PropertyNotSpecified("version"))
   }
   return result
