@@ -3,13 +3,15 @@ package com.jetbrains.plugin.structure.mocks
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.plugin.structure.intellij.extractor.ExtractedPluginFile
-import com.jetbrains.plugin.structure.intellij.plugin.*
-import com.jetbrains.plugin.structure.intellij.problems.MissingOptionalDependencyConfigurationFile
 import com.jetbrains.plugin.structure.base.utils.FileUtil
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.extractor.ExtractedPluginFile
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.plugin.PluginManager
+import com.jetbrains.plugin.structure.intellij.problems.MissingOptionalDependencyConfigurationFile
+import com.jetbrains.plugin.structure.intellij.utils.PluginXmlUtil.getAllClassesReferencedFromXml
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.hamcrest.CoreMatchers.*
 import org.hamcrest.collection.IsIn.isIn
 import org.junit.Assert
@@ -131,7 +133,6 @@ class MockPluginsTest {
       assertEquals(pluginFile, plugin.originalFile)
       testMockConfigs(plugin)
       testMockWarnings(pluginCreationSuccess.warnings)
-      testMockClassesFromXml(plugin)
       testMockExtensionPoints(plugin)
       testMockDependenciesAndModules(plugin)
       testMockOptDescriptors(plugin)
@@ -158,9 +159,9 @@ class MockPluginsTest {
     assertContains(optionalDescriptors.keys, listOf("extension.xml", "optionals/optional.xml", "../optionalsDir/otherDirOptional.xml", "/META-INF/referencedFromRoot.xml"))
     assertEquals(4, optionalDescriptors.size.toLong())
 
-    assertContains(optionalDescriptors["extension.xml"]!!.allClassesReferencedFromXml, listOf("org.jetbrains.plugins.scala.project.maven.MavenWorkingDirectoryProviderImpl".replace('.', '/')))
-    assertContains(optionalDescriptors["optionals/optional.xml"]!!.allClassesReferencedFromXml, listOf("com.intellij.BeanClass".replace('.', '/')))
-    assertContains(optionalDescriptors["../optionalsDir/otherDirOptional.xml"]!!.allClassesReferencedFromXml, listOf("com.intellij.optional.BeanClass".replace('.', '/')))
+    assertContains(getAllClassesReferencedFromXml(optionalDescriptors["extension.xml"]!!), listOf("org.jetbrains.plugins.scala.project.maven.MavenWorkingDirectoryProviderImpl".replace('.', '/')))
+    assertContains(getAllClassesReferencedFromXml(optionalDescriptors["optionals/optional.xml"]!!), listOf("com.intellij.BeanClass".replace('.', '/')))
+    assertContains(getAllClassesReferencedFromXml(optionalDescriptors["../optionalsDir/otherDirOptional.xml"]!!), listOf("com.intellij.optional.BeanClass".replace('.', '/')))
   }
 
   private fun testMockDependenciesAndModules(plugin: IdePlugin) {
@@ -185,16 +186,6 @@ class MockPluginsTest {
     val keys = extensions.keys()
     assertThat("com.intellij.referenceImporter", isIn(keys))
     assertThat("org.intellij.scala.scalaTestDefaultWorkingDirectoryProvider", isIn(keys))
-  }
-
-  private fun testMockClassesFromXml(plugin: IdePlugin) {
-    val set = plugin.allClassesReferencedFromXml
-    assertContains(set, "org.jetbrains.kotlin.idea.compiler.JetCompilerManager".replace('.', '/'))
-    assertContains(set, "org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages\$Extension".replace('.', '/'))
-    assertContains(set, "org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator".replace('.', '/'))
-    assertContains(set, "org.jetbrains.kotlin.js.resolve.diagnostics.DefaultErrorMessagesJs".replace('.', '/'))
-    assertContains(set, "org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.UnfoldReturnToWhenIntention".replace('.', '/'))
-    assertFalse(set.contains("org.jetbrains.plugins.scala.project.maven.MavenWorkingDirectoryProviderImpl".replace('.', '/')))
   }
 
   private fun testMockClasses(resolver: Resolver, vararg classPath: String) {

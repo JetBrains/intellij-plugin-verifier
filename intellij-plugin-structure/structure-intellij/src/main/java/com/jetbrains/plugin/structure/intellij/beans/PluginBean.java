@@ -38,7 +38,6 @@ public class PluginBean {
   public List<String> modules = new ArrayList<String>();
 
   @XmlTransient public Multimap<String, Element> extensions;
-  @XmlTransient public List<String> classes;
 
   public String getDescription(){
     return this.description;

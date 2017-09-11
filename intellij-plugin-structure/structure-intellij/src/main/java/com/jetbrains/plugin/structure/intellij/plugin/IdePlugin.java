@@ -35,9 +35,6 @@ public interface IdePlugin extends Plugin {
   Set<String> getDefinedModules();
 
   @NotNull
-  Set<String> getAllClassesReferencedFromXml();
-
-  @NotNull
   Map<String, IdePlugin> getOptionalDescriptors();
 
   @NotNull

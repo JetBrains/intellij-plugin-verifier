@@ -3,7 +3,9 @@ package com.jetbrains.pluginverifier.core
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver.createUnionResolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.utils.PluginXmlUtil.getAllClassesReferencedFromXml
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.dependencies.*
 import com.jetbrains.pluginverifier.misc.withDebug
@@ -107,15 +109,15 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
   }
 
   private fun getVerificationClassLoader(dependenciesResolver: Resolver, plugin: IdePlugin, pluginResolver: Resolver): Resolver = CacheResolver(
-      Resolver.createUnionResolver(
+      createUnionResolver(
           "Common resolver for plugin $plugin; IDE #${ideDescriptor.ideVersion}; JDK $runtimeResolver",
           listOf(pluginResolver, runtimeResolver, ideDescriptor.ideResolver, dependenciesResolver, params.externalClassPath)
       )
   )
 
   private fun getClassesOfPluginToCheck(plugin: IdePlugin, pluginResolver: Resolver): Iterator<String> {
-    val resolver = Resolver.createUnionResolver("Plugin classes for check",
-        (plugin.allClassesReferencedFromXml + plugin.optionalDescriptors.flatMap { it.value.allClassesReferencedFromXml })
+    val resolver = createUnionResolver("Plugin classes for check",
+        (getAllClassesReferencedFromXml(plugin) + plugin.optionalDescriptors.flatMap { getAllClassesReferencedFromXml(it.value) })
             .mapNotNull { pluginResolver.getClassLocation(it) }
             .distinct())
     return if (resolver.isEmpty) pluginResolver.allClasses else resolver.allClasses
@@ -123,7 +125,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
 
   private fun getDependenciesClassesResolver(graph: DirectedGraph<DepVertex, DepEdge>): Resolver {
     val resolvers = graph.vertexSet().mapNotNull { getResolverByResult(it.resolveResult) }
-    return Resolver.createUnionResolver("Plugin dependencies resolver", resolvers)
+    return createUnionResolver("Plugin dependencies resolver", resolvers)
   }
 
   private fun getResolverByResult(result: DependencyResolver.Result): Resolver? = when (result) {

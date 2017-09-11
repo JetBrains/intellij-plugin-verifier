@@ -25,7 +25,6 @@ public class IdePluginImpl implements IdePlugin {
   private final List<PluginDependency> myDependencies = new ArrayList<PluginDependency>();
   private final Map<PluginDependency, String> myOptionalConfigFiles = new HashMap<PluginDependency, String>();
   private final Map<String, IdePlugin> myOptionalDescriptors = new HashMap<String, IdePlugin>();
-  private final Set<String> myReferencedClasses = new HashSet<String>();
   private Multimap<String, Element> myExtensions;
   private File myOriginalFile;
   private Document myUnderlyingDocument;
@@ -137,7 +136,6 @@ public class IdePluginImpl implements IdePlugin {
     myPluginVersion = bean.pluginVersion != null ? bean.pluginVersion.trim() : null;
     myDefinedModules.addAll(bean.modules);
     myExtensions = bean.extensions;
-    myReferencedClasses.addAll(bean.classes);
 
     IdeaVersionBean ideaVersionBean = bean.ideaVersion;
     if (ideaVersionBean != null) {
@@ -180,12 +178,6 @@ public class IdePluginImpl implements IdePlugin {
   @Nullable
   public String getChangeNotes() {
     return myNotes;
-  }
-
-  @NotNull
-  @Override
-  public Set<String> getAllClassesReferencedFromXml() {
-    return Collections.unmodifiableSet(myReferencedClasses);
   }
 
   @NotNull
