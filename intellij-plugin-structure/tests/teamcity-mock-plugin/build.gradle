@@ -2,14 +2,20 @@ def separator = File.separator
 def mocksPath = "$buildDir" + separator + "mocks"
 def mocksFile = new File(mocksPath)
 
+def mockPluginXmlFile = file("teamcity-plugin.xml")
+if (!mockPluginXmlFile.exists()) {
+  throw new RuntimeException(mockPluginXmlFile.absolutePath + " doesn't exist")
+}
+println "Mock TeamCity plugin xml path: ${mockPluginXmlFile.absolutePath}"
+
 task prepareMockAsZip(type: Zip) {
-  from file("teamcity-plugin.xml")
+  from mockPluginXmlFile
   destinationDir = mocksFile
   archiveName = "mock-plugin-zip.zip"
 }
 
 task prepareMockAsDir(type: Copy) {
-  from file("teamcity-plugin.xml")
+  from mockPluginXmlFile
   into mocksPath + separator + "mock-plugin-dir"
 }
 
