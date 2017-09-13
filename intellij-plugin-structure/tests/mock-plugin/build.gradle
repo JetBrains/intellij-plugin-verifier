@@ -10,11 +10,11 @@ task prepareMockAsJar(type: Copy) {
   from jar
 }
 
-task prepareMockJarAsZip(type: Zip, dependsOn: jar) {
-  //creates mock-pluginjarAsZip.zip which is equivalent to mock-plugin.jar
+task prepareInvalidMockJarAsZip(type: Zip, dependsOn: prepareMockAsJar) {
+  //creates plugin distribution with invalid structure: classes are located in the root of the zip
   from zipTree(mocksPath + separator + "mock-plugin-1.0.jar")
   destinationDir = mocksFile
-  archiveName = "mock-pluginJarAsZip.zip"
+  archiveName = "invalid-mock-pluginJarAsZip.zip"
 }
 
 task prepareMockAsDir(type: Copy) {
@@ -73,4 +73,4 @@ task prepareMockDirectoryWithLibInZip(type: Zip, dependsOn: jar) {
   destinationDir = mocksFile
 }
 
-task prepareAllMocks(dependsOn: [prepareMockAsJar, prepareMockJarAsZip, prepareMockAsDir, prepareZipLibMock, prepareJarInZip, prepareMockClasses, prepareZipMockClassesAsZip, prepareMockDirectoryWithLibInZip])
+task prepareAllMocks(dependsOn: [prepareMockAsJar, prepareInvalidMockJarAsZip, prepareMockAsDir, prepareZipLibMock, prepareJarInZip, prepareMockClasses, prepareZipMockClassesAsZip, prepareMockDirectoryWithLibInZip])
