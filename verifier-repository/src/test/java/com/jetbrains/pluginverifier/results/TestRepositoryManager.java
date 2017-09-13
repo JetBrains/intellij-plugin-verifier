@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.results;
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
+import com.jetbrains.pluginverifier.repository.DownloadPluginResult;
 import com.jetbrains.pluginverifier.repository.FileLock;
 import com.jetbrains.pluginverifier.repository.RepositoryManager;
 import com.jetbrains.pluginverifier.repository.UpdateInfo;
@@ -66,7 +67,9 @@ public class TestRepositoryManager {
   public void downloadExistentPlugin() {
     UpdateInfo updateInfo = RepositoryManager.INSTANCE.getUpdateInfoById(25128); //.gitignore 1.3.3
     assertNotNull(updateInfo);
-    FileLock fileLock = RepositoryManager.INSTANCE.getPluginFile(updateInfo);
+    DownloadPluginResult downloadPluginResult = RepositoryManager.INSTANCE.getPluginFile(updateInfo);
+    assertTrue(downloadPluginResult instanceof DownloadPluginResult.Found);
+    FileLock fileLock = ((DownloadPluginResult.Found) downloadPluginResult).getFileLock();
     assertNotNull(fileLock);
     assertTrue(fileLock.getFile().length() > 0);
     fileLock.release();

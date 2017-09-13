@@ -4,8 +4,8 @@ import com.google.common.collect.LinkedHashMultimap
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
-import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
+import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.api.prepareVerificationResponse

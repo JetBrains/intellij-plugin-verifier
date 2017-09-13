@@ -40,6 +40,10 @@ interface DependencyResolver {
       override fun close() = Unit
     }
 
+    data class FailedToDownload(val reason: String) : Result() {
+      override fun close() = Unit
+    }
+
     object Skip : Result() {
       override fun close() = Unit
     }

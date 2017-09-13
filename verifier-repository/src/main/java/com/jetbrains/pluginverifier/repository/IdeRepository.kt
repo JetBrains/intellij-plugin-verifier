@@ -3,9 +3,9 @@ package com.jetbrains.pluginverifier.repository
 import com.google.gson.Gson
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import com.jetbrains.pluginverifier.misc.extractTo
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
+import com.jetbrains.pluginverifier.network.executeSuccessfully
 import okhttp3.ResponseBody
 import org.apache.commons.io.FileUtils
 import org.jsoup.Jsoup

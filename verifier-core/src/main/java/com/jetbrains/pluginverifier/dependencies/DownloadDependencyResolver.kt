@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
+import com.jetbrains.pluginverifier.repository.DownloadPluginResult
 import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -55,9 +56,12 @@ class DownloadDependencyResolver(private val dependencySelector: DependencySelec
   }
 
   private fun downloadAndOpenPlugin(updateInfo: UpdateInfo): DependencyResolver.Result {
-    val pluginLock: FileLock = RepositoryManager.getPluginFile(updateInfo)
-        ?: return DependencyResolver.Result.NotFound("Plugin $updateInfo is not found in the Plugin Repository")
-    return getDependencyResultByDownloadedUpdate(pluginLock, updateInfo)
+    val downloadPluginResult = RepositoryManager.getPluginFile(updateInfo)
+    return when (downloadPluginResult) {
+      is DownloadPluginResult.Found -> getDependencyResultByDownloadedUpdate(downloadPluginResult.fileLock, updateInfo)
+      is DownloadPluginResult.NotFound -> DependencyResolver.Result.NotFound(downloadPluginResult.reason)
+      is DownloadPluginResult.FailedToDownload -> DependencyResolver.Result.FailedToDownload(downloadPluginResult.reason)
+    }
   }
 
   private fun getDependencyResultByDownloadedUpdate(pluginLock: FileLock, updateInfo: UpdateInfo): DependencyResolver.Result {
@@ -73,6 +77,10 @@ class DownloadDependencyResolver(private val dependencySelector: DependencySelec
       is CreatePluginResult.NotFound -> {
         pluginLock.release()
         DependencyResolver.Result.NotFound(dependencyCreationResult.reason)
+      }
+      is CreatePluginResult.FailedToDownload -> {
+        pluginLock.release()
+        DependencyResolver.Result.FailedToDownload(dependencyCreationResult.reason)
       }
     }
   }

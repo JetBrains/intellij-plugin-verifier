@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.closeOnException
+import com.jetbrains.pluginverifier.repository.DownloadPluginResult
 import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -26,9 +27,12 @@ object PluginCreator {
   }
 
   fun createPluginByUpdateInfo(updateInfo: UpdateInfo): CreatePluginResult {
-    val pluginFileLock = RepositoryManager.getPluginFile(updateInfo)
-        ?: return CreatePluginResult.NotFound("Plugin $updateInfo is not found in the Plugin Repository")
-    return createPluginByFileLock(pluginFileLock)
+    val downloadPluginResult = RepositoryManager.getPluginFile(updateInfo)
+    return when (downloadPluginResult) {
+      is DownloadPluginResult.Found -> createPluginByFileLock(downloadPluginResult.fileLock)
+      is DownloadPluginResult.NotFound -> CreatePluginResult.NotFound(downloadPluginResult.reason)
+      is DownloadPluginResult.FailedToDownload -> CreatePluginResult.FailedToDownload(downloadPluginResult.reason)
+    }
   }
 
   private data class IdleFileLock(private val backedFile: File) : FileLock() {

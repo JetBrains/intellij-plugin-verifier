@@ -2,8 +2,8 @@ package org.jetbrains.plugins.verifier.service.service.featureExtractor
 
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
-import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
+import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.api.prepareFeaturesResponse
 import org.jetbrains.plugins.verifier.service.service.BaseService

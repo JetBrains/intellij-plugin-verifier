@@ -5,14 +5,8 @@ import com.google.common.collect.Multimap
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import java.io.Closeable
 import java.io.File
-import java.lang.RuntimeException
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * @author Sergey Patrikeev
@@ -101,57 +95,7 @@ fun String.pluralize(times: Int): String {
   }
 }
 
-fun <T> Call<T>.executeSuccessfully(): Response<T> {
-  val serverUrl = getServerUrl()
-
-  val callResponse = AtomicReference<Response<T>?>(null)
-  val callError = AtomicReference<Throwable?>(null)
-  val finished = AtomicBoolean()
-  this.enqueue(object : Callback<T> {
-    override fun onResponse(call: Call<T>, response: Response<T>) {
-      callResponse.set(response)
-      finished.set(true)
-    }
-
-    override fun onFailure(call: Call<T>, error: Throwable) {
-      callError.set(error)
-      finished.set(true)
-    }
-  })
-
-  while (!finished.get()) {
-    if (Thread.currentThread().isInterrupted) {
-      this.cancel()
-      throw InterruptedException()
-    }
-    Thread.sleep(100)
-  }
-
-  return getAppropriateResponse(serverUrl, callResponse.get(), callError.get())
-}
-
-private fun <T> getAppropriateResponse(serverUrl: String, response: Response<T>?, error: Throwable?): Response<T> {
-  if (response != null) {
-    if (response.isSuccessful) {
-      return response
-    }
-    if (response.code() == 404) {
-      throw RuntimeException("Not found 404")
-    }
-    if (response.code() == 500) {
-      throw RuntimeException("Server $serverUrl has faced problems 500")
-    }
-    val message = response.errorBody().string().take(100)
-    throw RuntimeException("Server $serverUrl response = ${response.code()}: $message")
-  }
-  if (error != null) {
-    val errorMessage = error.message
-    throw RuntimeException("Unable to communicate with $serverUrl: $errorMessage", error)
-  }
-  throw RuntimeException("Unable to connect $serverUrl")
-}
-
-private fun <T> Call<T>.getServerUrl(): String = "${request().url().host()}:${request().url().port()}"
+fun impossible(): Nothing = throw AssertionError("Impossible")
 
 fun Long.bytesToMegabytes(digits: Int = 2): String = "%.${digits}f".format(this.toDouble() / FileUtils.ONE_MB)
 

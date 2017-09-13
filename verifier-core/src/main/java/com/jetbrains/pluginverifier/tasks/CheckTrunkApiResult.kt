@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.tasks
 
 import com.jetbrains.pluginverifier.output.PrinterOptions
 import com.jetbrains.pluginverifier.output.TeamCityLog
-import com.jetbrains.pluginverifier.output.TeamCityPrinter
+import com.jetbrains.pluginverifier.output.TrunkApiChangesOutput
 import java.io.File
 
 /**
@@ -13,9 +13,9 @@ data class CheckTrunkApiResult(val trunkResult: CheckIdeResult,
 
   override fun printResults(printerOptions: PrinterOptions) {
     if (printerOptions.needTeamCityLog) {
-      val compareResult = CheckTrunkApiCompareResult.create(releaseResult, trunkResult)
-      val printer = TeamCityPrinter(TeamCityLog(System.out), TeamCityPrinter.GroupBy.parse(printerOptions.teamCityGroupType))
-      printer.printTrunkApiCompareResult(compareResult)
+      val trunkApiChanges = TrunkApiChanges.create(releaseResult, trunkResult)
+      val printer = TrunkApiChangesOutput(TeamCityLog(System.out))
+      printer.printTrunkApiCompareResult(trunkApiChanges)
     }
     if (printerOptions.htmlReportFile != null) {
       val trunkHtmlReportFileName = printerOptions.htmlReportFile + "-trunk-${trunkResult.ideVersion}.html"

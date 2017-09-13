@@ -22,6 +22,7 @@ class ExtractFeaturesTask(val pluginCoordinate: PluginCoordinate, val pluginInfo
         is CreatePluginResult.OK -> doFeatureExtraction(createPluginResult)
         is CreatePluginResult.BadPlugin -> FeaturesResult(pluginInfo, FeaturesResult.ResultType.BAD_PLUGIN, emptyList())
         is CreatePluginResult.NotFound -> FeaturesResult(pluginInfo, FeaturesResult.ResultType.NOT_FOUND, emptyList())
+        is CreatePluginResult.FailedToDownload -> FeaturesResult(pluginInfo, FeaturesResult.ResultType.NOT_FOUND, emptyList())
       }
     }
   }

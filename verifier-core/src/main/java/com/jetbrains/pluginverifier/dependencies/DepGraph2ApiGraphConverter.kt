@@ -33,9 +33,8 @@ object DepGraph2ApiGraphConverter {
         val errors = resolveResult.pluginErrorsAndWarnings.filter { it.level == PluginProblem.Level.ERROR }
         MissingDependency(dependency, "Dependent " + (if (isModule) "module" else "plugin") + " $dependency is invalid: " + errors.joinToString())
       }
-      is DependencyResolver.Result.NotFound -> {
-        MissingDependency(edge.dependency, resolveResult.reason)
-      }
+      is DependencyResolver.Result.NotFound -> MissingDependency(edge.dependency, resolveResult.reason)
+      is DependencyResolver.Result.FailedToDownload -> MissingDependency(edge.dependency, resolveResult.reason)
       DependencyResolver.Result.Skip -> null
     }
   }
@@ -49,6 +48,7 @@ object DepGraph2ApiGraphConverter {
       is DependencyResolver.Result.Downloaded -> DependencyNode(resolveResult.plugin.pluginId ?: vertex.id, resolveResult.plugin.pluginVersion ?: DEFAULT_VERSION, missingDependencies)
       is DependencyResolver.Result.ProblematicDependency -> null
       is DependencyResolver.Result.NotFound -> null
+      is DependencyResolver.Result.FailedToDownload -> null
       DependencyResolver.Result.Skip -> null
     }
   }

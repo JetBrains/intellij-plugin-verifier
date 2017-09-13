@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.output.PrinterOptions
 import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityPrinter
-import com.jetbrains.pluginverifier.repository.FileLock
+import com.jetbrains.pluginverifier.repository.DownloadPluginResult
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.junit.Assert
@@ -22,6 +22,8 @@ import java.io.PrintStream
 class TestTeamCityPrinter {
 
   private fun noConnectionPluginRepository() = object : PluginRepository {
+    override fun getPluginOverviewUrl(update: UpdateInfo): String? = throw noConnection()
+
     private fun noConnection(): Exception = IOException("no connection")
 
     override fun getLastCompatibleUpdates(ideVersion: IdeVersion): List<UpdateInfo> = throw noConnection()
@@ -30,7 +32,7 @@ class TestTeamCityPrinter {
 
     override fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> = throw noConnection()
 
-    override fun getPluginFile(update: UpdateInfo): FileLock? = throw noConnection()
+    override fun getPluginFile(update: UpdateInfo): DownloadPluginResult = throw noConnection()
 
     override fun getUpdateInfoById(updateId: Int): UpdateInfo = throw noConnection()
 
@@ -40,13 +42,15 @@ class TestTeamCityPrinter {
   }
 
   private fun mockRepository(updateInfos: List<UpdateInfo>) = object : PluginRepository {
+    override fun getPluginOverviewUrl(update: UpdateInfo): String? = throw UnsupportedOperationException()
+
     override fun getLastCompatibleUpdates(ideVersion: IdeVersion): List<UpdateInfo> = updateInfos
 
     override fun getLastCompatibleUpdateOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? = updateInfos.find { it.pluginId == pluginId }
 
     override fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> = updateInfos.toList()
 
-    override fun getPluginFile(update: UpdateInfo): FileLock? = throw UnsupportedOperationException()
+    override fun getPluginFile(update: UpdateInfo): DownloadPluginResult = throw UnsupportedOperationException()
 
     override fun getUpdateInfoById(updateId: Int): UpdateInfo = throw UnsupportedOperationException()
 

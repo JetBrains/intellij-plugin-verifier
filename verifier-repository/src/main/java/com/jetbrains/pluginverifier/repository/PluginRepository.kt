@@ -14,11 +14,13 @@ interface PluginRepository {
 
   fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo>?
 
-  fun getPluginFile(update: UpdateInfo): FileLock?
+  fun getPluginFile(update: UpdateInfo): DownloadPluginResult
 
   fun getUpdateInfoById(updateId: Int): UpdateInfo?
 
   fun getIdOfPluginDeclaringModule(moduleId: String): String?
+
+  fun getPluginOverviewUrl(update: UpdateInfo): String?
 
 }
 

@@ -1,9 +1,7 @@
 package com.jetbrains.pluginverifier.output
 
-import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
-import com.google.common.collect.Multimaps
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Result
@@ -17,7 +15,6 @@ import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.tasks.CheckTrunkApiCompareResult
 import com.jetbrains.pluginverifier.tasks.MissingCompatibleUpdate
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -32,33 +29,45 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(TeamCityPrinter::class.java)
+
+    /**
+     * Converts string like "com.some.package.name.MyClassNameProblem" to "my class name"
+     */
+    fun convertProblemClassNameToSentence(clazz: Class<Problem>): String {
+      val name = clazz.name.substringAfterLast(".")
+      var words = name.split("(?=[A-Z])".toRegex())
+      if (words.isEmpty()) {
+        return name.toLowerCase()
+      }
+      if (words.last() == "Problem") {
+        words = words.dropLast(1)
+      }
+      return words.map { it.toLowerCase() }.joinToString(" ")
+    }
   }
 
-  private val REPOSITORY_PLUGIN_ID_BASE = "https://plugins.jetbrains.com/plugin/index?xmlId="
-
-  fun printNoCompatibleUpdatesProblems(problems: List<MissingCompatibleUpdate>) {
+  fun printNoCompatibleUpdatesProblems(missingProblems: List<MissingCompatibleUpdate>) {
     when (groupBy) {
       TeamCityPrinter.GroupBy.NOT_GROUPED -> {
-        problems.forEach { tcLog.buildProblem(it.toString()) }
+        missingProblems.forEach { tcLog.buildProblem(it.toString()) }
       }
       TeamCityPrinter.GroupBy.BY_PLUGIN -> {
-        problems.forEach { problem ->
-          tcLog.testSuiteStarted(problem.pluginId).use {
+        missingProblems.forEach { missingProblem ->
+          tcLog.testSuiteStarted(missingProblem.pluginId).use {
             val testName = "(no compatible update)"
             tcLog.testStarted(testName).use {
-              tcLog.testStdErr(testName, "#$problem\n")
-              tcLog.testFailed(testName, "Plugin URL: ${REPOSITORY_PLUGIN_ID_BASE + problem.pluginId}\n", "")
+              tcLog.testFailed(testName, "#$missingProblem\n", "")
             }
           }
         }
       }
       TeamCityPrinter.GroupBy.BY_PROBLEM_TYPE -> {
         tcLog.testSuiteStarted("(no compatible update)").use {
-          problems.forEach { problem ->
+          missingProblems.forEach { problem ->
             tcLog.testSuiteStarted(problem.pluginId).use {
               val testName = problem.pluginId
               tcLog.testStarted(testName).use {
-                tcLog.testFailed(testName, "Plugin URL: ${REPOSITORY_PLUGIN_ID_BASE + problem.pluginId}\n", problem.toString())
+                tcLog.testFailed(testName, "#$problem\n", "")
               }
             }
           }
@@ -280,79 +289,6 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
     return if (relevant.find { pluginInfo.pluginId == it.pluginId && pluginInfo.version == it.version } != null) newest else onlyVersion
   }
 
-  fun printTrunkApiCompareResult(compareResult: CheckTrunkApiCompareResult) {
-    //accessing to unknown class
-    //....firstClass
-    //.........pluginOne:1.0
-    //.........pluginOne:1.2
-    //.........pluginTwo:2.1
-    //....secondClass
-    //.........pluginOne:1.0
-    //invoking unknown method
-    //....myUnknownMethod
-    //.........pluginThree:1.3
-    //missing plugin dependencies
-    //....(missing module oneModule)
-    //.........oneModule is required for plugin#1, plugin#2
-    //....(missing plugin onePlugin)
-    //.........onePlugin is required for plugin#1
-    //...and so on....
-    val problemToPlugins: Multimap<Problem, PluginInfo> = compareResult.newProblemToPlugin
-
-    val allProblems: Set<Problem> = problemToPlugins.keySet()
-
-    val trunkVersion = compareResult.trunkVersion
-    val releaseVersion = compareResult.releaseVersion
-
-    //print missing dependencies
-    val missingProblems = compareResult.newMissingProblems
-    tcLog.testSuiteStarted("missing plugin dependencies").use {
-      missingProblems.asMap().entries.forEach { (missingDependency, dependentPlugins) ->
-        val testName = "(missing ${missingDependency.dependency})"
-        tcLog.testStarted(testName).use {
-          tcLog.testFailed(testName, "${missingDependency.missingReason}\n'${missingDependency.dependency}' " +
-              "is required for the following plugins: [${dependentPlugins.joinToString()}]", "This problem takes place in $trunkVersion but not in $releaseVersion")
-        }
-      }
-    }
-    val plugin2MissingDeps: Multimap<PluginInfo, MissingDependency> = Multimaps.invertFrom(missingProblems, ArrayListMultimap.create())
-
-    allProblems.groupBy { it.javaClass }.forEach { (problemClass, allProblemsOfClass) ->
-      val problemTypeSuite = convertProblemClassNameToSentence(problemClass)
-      tcLog.testSuiteStarted("($problemTypeSuite)").use {
-        allProblemsOfClass.groupBy { it.getShortDescription() }.forEach { (shortDescription, problemsWithShortDescription) ->
-          problemsWithShortDescription.forEach { problem ->
-            val shortProblemDescriptionSuite = shortDescription.toString()
-            tcLog.testSuiteStarted(shortProblemDescriptionSuite).use {
-              problemToPlugins.get(problem).forEach { plugin ->
-                val testName = "($plugin)"
-                tcLog.testStarted(testName).use {
-                  val pluginUrl = getPluginLink(plugin)
-                  var problemDetails = "${problem.getFullDescription()}\nThis problem takes place in $trunkVersion but not in $releaseVersion"
-                  val missingDeps = plugin2MissingDeps[plugin]
-                  if (missingDeps.isNotEmpty()) {
-                    problemDetails += "\nNote: some problems might have been caused by missing dependencies: [" + missingDeps.map { it.dependency }.joinToString() + "]"
-                  }
-                  tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: ${plugin.pluginId}:${plugin.version}", problemDetails)
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    val newProblemsCnt = allProblems.distinctBy { it.getShortDescription() }.size
-    val newMissingDependenciesCnt = missingProblems.keySet().size
-    if (newProblemsCnt > 0) {
-      tcLog.buildStatusFailure("$newProblemsCnt new " + "problem".pluralize(newProblemsCnt) + " detected in $trunkVersion compared to $releaseVersion")
-    } else if (newMissingDependenciesCnt > 0) {
-      tcLog.buildStatusFailure("$newMissingDependenciesCnt new missing " + "dependency".pluralize(newMissingDependenciesCnt) + " detected in $trunkVersion compared to $releaseVersion")
-    } else {
-      tcLog.buildStatusSuccess("No new compatibility problems found in $trunkVersion compared to $releaseVersion")
-    }
-  }
-
   private fun groupByProblemType(results: List<Result>) {
     //accessing to unknown class SomeClass
     //....(pluginOne:1.2.0)
@@ -389,7 +325,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
     printMissingDependenciesAsTests(results)
   }
 
-  private fun getPluginLink(pluginInfo: PluginInfo): String = REPOSITORY_PLUGIN_ID_BASE + pluginInfo.pluginId
+  private fun getPluginLink(pluginInfo: PluginInfo): String? = pluginInfo.updateInfo?.let { repository.getPluginOverviewUrl(it) }
 
   private fun printMissingDependenciesAsTests(results: List<Result>) {
     val missingToRequired = collectMissingDependenciesForRequiringPlugins(results)
@@ -403,22 +339,6 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
         }
       }
     }
-  }
-
-
-  /**
-   * Converts string like "com.some.package.name.MyClassNameProblem" to "my class name"
-   */
-  private fun convertProblemClassNameToSentence(clazz: Class<Problem>): String {
-    val name = clazz.name.substringAfterLast(".")
-    var words = name.split("(?=[A-Z])".toRegex())
-    if (words.isEmpty()) {
-      return name.toLowerCase()
-    }
-    if (words.last() == "Problem") {
-      words = words.dropLast(1)
-    }
-    return words.map { it.toLowerCase() }.joinToString(" ")
   }
 
 

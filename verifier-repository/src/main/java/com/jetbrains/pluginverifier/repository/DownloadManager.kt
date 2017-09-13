@@ -4,8 +4,9 @@ import com.google.common.primitives.Ints
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
+import com.jetbrains.pluginverifier.network.NotFound404ResponseException
+import com.jetbrains.pluginverifier.network.executeSuccessfully
 import okhttp3.MediaType
 import okhttp3.ResponseBody
 import org.apache.commons.io.FileUtils
@@ -72,8 +73,10 @@ object DownloadManager {
 
   private val spaceWatcher = FreeDiskSpaceWatcher(RepositoryConfiguration.downloadDir, RepositoryConfiguration.downloadDirMaxSpace)
 
+  private val pluginRepositoryUrl = RepositoryConfiguration.pluginRepositoryUrl
+
   private val downloadApi: DownloadApi = Retrofit.Builder()
-      .baseUrl(RepositoryConfiguration.pluginRepositoryUrl)
+      .baseUrl(pluginRepositoryUrl)
       .client(makeOkHttpClient(LOG.isTraceEnabled, 5, TimeUnit.MINUTES))
       .build()
       .create(DownloadApi::class.java)
@@ -222,14 +225,14 @@ object DownloadManager {
   }
 
   private fun downloadUpdate(updateInfo: UpdateInfo, tempFile: File): File {
-    val cachedUpdate = downloadUpdateToTempFileAndReturnDestinationFile(updateInfo, tempFile)
+    val cachedUpdate = downloadUpdateToTempFileAndGuessFileName(updateInfo, tempFile)
     if (moveDownloaded(updateInfo, tempFile, cachedUpdate)) {
       LOG.debug("Update $updateInfo is saved to $cachedUpdate")
     }
     return cachedUpdate
   }
 
-  private fun downloadUpdateToTempFileAndReturnDestinationFile(updateInfo: UpdateInfo, tempFile: File): File {
+  private fun downloadUpdateToTempFileAndGuessFileName(updateInfo: UpdateInfo, tempFile: File): File {
     val updateFileName = downloadToTempFile(updateInfo, tempFile)
     return File(RepositoryConfiguration.downloadDir, updateFileName)
   }
@@ -246,15 +249,18 @@ object DownloadManager {
     }
   }
 
-  fun getOrLoadUpdate(updateInfo: UpdateInfo): FileLock? {
+  fun getOrLoadUpdate(updateInfo: UpdateInfo): DownloadPluginResult {
     var pluginFile = getCachedFile(updateInfo)
 
     if (pluginFile == null || pluginFile.length() < BROKEN_FILE_THRESHOLD_BYTES) {
       try {
         pluginFile = downloadUpdate(updateInfo)
+      } catch (e: NotFound404ResponseException) {
+        return DownloadPluginResult.NotFound(updateInfo, "Plugin $updateInfo is not found the Plugin Repository")
       } catch (e: Exception) {
-        LOG.info("Unable to download update $updateInfo", e)
-        return null
+        val message = "Unable to download update $updateInfo" + (if (e.message != null) " " + e.message else "")
+        LOG.info(message, e)
+        return DownloadPluginResult.FailedToDownload(updateInfo, message + ": " + e.message)
       }
     }
 
@@ -269,7 +275,7 @@ object DownloadManager {
       throw e
     }
 
-    return lock
+    return DownloadPluginResult.Found(updateInfo, lock)
   }
 }
 

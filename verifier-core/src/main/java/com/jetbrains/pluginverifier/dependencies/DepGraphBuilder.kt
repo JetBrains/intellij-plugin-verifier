@@ -60,6 +60,7 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) : Clos
     is DependencyResolver.Result.Downloaded -> resolveResult.plugin
     is DependencyResolver.Result.ProblematicDependency -> null
     is DependencyResolver.Result.NotFound -> null
+    is DependencyResolver.Result.FailedToDownload -> null
     DependencyResolver.Result.Skip -> null
   }
 

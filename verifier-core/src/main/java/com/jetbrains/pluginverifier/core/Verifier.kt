@@ -36,11 +36,11 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
   }
 
   private fun createPluginAndDoVerification(): Result = PluginCreator.createPlugin(pluginCoordinate).use { createPluginResult ->
-    val (pluginInfo, verdict) = getPluginInfoByAndVerdict(createPluginResult)
+    val (pluginInfo, verdict) = getPluginInfoAndVerdict(createPluginResult)
     Result(pluginInfo, ideDescriptor.ideVersion, verdict)
   }
 
-  private fun getPluginInfoByAndVerdict(createPluginResult: CreatePluginResult) = when (createPluginResult) {
+  private fun getPluginInfoAndVerdict(createPluginResult: CreatePluginResult) = when (createPluginResult) {
     is CreatePluginResult.BadPlugin -> {
       getPluginInfoByCoordinate(pluginCoordinate) to Verdict.Bad(createPluginResult.pluginErrorsAndWarnings)
     }
@@ -48,8 +48,12 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
       getPluginInfoByCoordinate(pluginCoordinate) to Verdict.NotFound(createPluginResult.reason)
     }
     is CreatePluginResult.OK -> {
-      getPluginInfoByPluginInstance(createPluginResult, pluginCoordinate) to getVerificationVerdict(createPluginResult)
+      getPluginInfoByPluginInstance(createPluginResult, pluginCoordinate) to calculateVerdict(createPluginResult)
     }
+    is CreatePluginResult.FailedToDownload -> {
+      getPluginInfoByCoordinate(pluginCoordinate) to Verdict.NotFound(createPluginResult.reason)
+    }
+
   }
 
   private fun getPluginInfoByCoordinate(pluginCoordinate: PluginCoordinate): PluginInfo = when (pluginCoordinate) {
@@ -71,7 +75,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
     return PluginInfo(plugin.pluginId!!, plugin.pluginVersion!!, (pluginCoordinate as? PluginCoordinate.ByUpdateInfo)?.updateInfo)
   }
 
-  private fun getVerificationVerdict(creationOk: CreatePluginResult.OK): Verdict {
+  private fun calculateVerdict(creationOk: CreatePluginResult.OK): Verdict {
     val plugin = creationOk.plugin
     val warnings = creationOk.warnings
     val pluginResolver = creationOk.resolver
@@ -134,6 +138,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
     is DependencyResolver.Result.Downloaded -> result.resolver
     is DependencyResolver.Result.ProblematicDependency -> null
     is DependencyResolver.Result.NotFound -> null
+    is DependencyResolver.Result.FailedToDownload -> null
     DependencyResolver.Result.Skip -> null
   }
 

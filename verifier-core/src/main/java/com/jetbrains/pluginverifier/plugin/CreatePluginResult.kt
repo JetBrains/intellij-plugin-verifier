@@ -7,21 +7,25 @@ import com.jetbrains.pluginverifier.repository.FileLock
 import java.io.Closeable
 
 sealed class CreatePluginResult : Closeable {
-  data class OK internal constructor(val plugin: IdePlugin,
-                                     val warnings: List<PluginProblem>,
-                                     val resolver: Resolver,
-                                     private val pluginLock: FileLock) : CreatePluginResult() {
+  data class OK(val plugin: IdePlugin,
+                val warnings: List<PluginProblem>,
+                val resolver: Resolver,
+                private val pluginLock: FileLock) : CreatePluginResult() {
     override fun close() {
       pluginLock.close()
       resolver.close()
     }
   }
 
-  data class BadPlugin internal constructor(val pluginErrorsAndWarnings: List<PluginProblem>) : CreatePluginResult() {
+  data class BadPlugin(val pluginErrorsAndWarnings: List<PluginProblem>) : CreatePluginResult() {
     override fun close() = Unit
   }
 
-  data class NotFound internal constructor(val reason: String) : CreatePluginResult() {
+  data class FailedToDownload(val reason: String) : CreatePluginResult() {
+    override fun close() = Unit
+  }
+
+  data class NotFound(val reason: String) : CreatePluginResult() {
     override fun close() = Unit
   }
 }

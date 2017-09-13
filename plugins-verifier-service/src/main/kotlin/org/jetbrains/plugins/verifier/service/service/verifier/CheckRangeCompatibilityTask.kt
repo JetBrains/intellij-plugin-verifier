@@ -80,6 +80,7 @@ class CheckRangeCompatibilityTask(val pluginInfo: PluginInfo,
   override fun computeResult(progress: TaskProgress): CheckRangeCompatibilityResult = PluginCreator.createPlugin(pluginCoordinate).use { createPluginResult ->
     when (createPluginResult) {
       is CreatePluginResult.NotFound -> CheckRangeCompatibilityResult(pluginInfo, CheckRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = createPluginResult.reason)
+      is CreatePluginResult.FailedToDownload -> CheckRangeCompatibilityResult(pluginInfo, CheckRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = createPluginResult.reason)
       is CreatePluginResult.BadPlugin -> CheckRangeCompatibilityResult(pluginInfo, CheckRangeCompatibilityResult.ResultType.INVALID_PLUGIN, invalidPluginProblems = createPluginResult.pluginErrorsAndWarnings)
       is CreatePluginResult.OK -> doRangeVerification(createPluginResult.plugin, progress)
     }

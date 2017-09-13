@@ -27,6 +27,7 @@ class BundledPluginDependencyResolver(val ide: Ide) : DependencyResolver {
       is CreatePluginResult.OK -> DependencyResolver.Result.CreatedResolver(pluginCreateResult.plugin, pluginCreateResult.resolver)
       is CreatePluginResult.BadPlugin -> DependencyResolver.Result.ProblematicDependency(pluginCreateResult.pluginErrorsAndWarnings)
       is CreatePluginResult.NotFound -> DependencyResolver.Result.NotFound(pluginCreateResult.reason)
+      is CreatePluginResult.FailedToDownload -> DependencyResolver.Result.NotFound(pluginCreateResult.reason)
     }
   }
 

@@ -3,8 +3,8 @@ package com.jetbrains.pluginverifier.repository
 import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.executeSuccessfully
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
+import com.jetbrains.pluginverifier.network.executeSuccessfully
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -47,6 +47,10 @@ object RepositoryManager : PluginRepository {
       "com.intellij.modules.php", "com.jetbrains.php",
       "com.intellij.modules.python", "Pythonid",
       "com.intellij.modules.swift.lang", "com.intellij.clion-swift")
+
+  private val repositoryUrl = RepositoryConfiguration.pluginRepositoryUrl.trimEnd('/')
+
+  override fun getPluginOverviewUrl(update: UpdateInfo): String? = repositoryUrl + "/plugin/index?xmlId=" + update.pluginId
 
   override fun getUpdateInfoById(updateId: Int): UpdateInfo? {
     val call = repositoryApi.getUpdateInfoById(updateId)
@@ -93,10 +97,10 @@ object RepositoryManager : PluginRepository {
   override fun getIdOfPluginDeclaringModule(moduleId: String): String? =
       INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
 
-  override fun getPluginFile(update: UpdateInfo): FileLock? = DownloadManager.getOrLoadUpdate(update)
+  override fun getPluginFile(update: UpdateInfo): DownloadPluginResult = DownloadManager.getOrLoadUpdate(update)
 
   private val repositoryApi: RepositoryApi = Retrofit.Builder()
-      .baseUrl(RepositoryConfiguration.pluginRepositoryUrl.trimEnd('/') + '/')
+      .baseUrl(repositoryUrl + '/')
       .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
