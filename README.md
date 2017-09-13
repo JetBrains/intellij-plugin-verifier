@@ -1,3 +1,4 @@
+[![JetBrains team project](http://jb.gg/badges/team-plastic.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 # intellij-plugin-verifier
 
 [ ![Download](https://api.bintray.com/packages/jetbrains/intellij-plugin-service/intellij-plugin-verifier/images/download.svg) ](https://bintray.com/jetbrains/intellij-plugin-service/intellij-plugin-verifier/_latestVersion)
