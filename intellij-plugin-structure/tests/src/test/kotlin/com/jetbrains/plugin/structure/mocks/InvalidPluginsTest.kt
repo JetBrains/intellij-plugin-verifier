@@ -31,6 +31,27 @@ class InvalidPluginsTest {
   @JvmField
   val expectedEx: ExpectedException = ExpectedException.none()
 
+  companion object {
+    fun assertExpectedProblems(pluginFile: File, expectedProblems: List<PluginProblem>) {
+      val creationFail = getFailedResult(pluginFile)
+      val actualProblems = creationFail.errorsAndWarnings
+      assertThat(actualProblems, containsInAnyOrder(*expectedProblems.toTypedArray()))
+      assertThat(actualProblems, hasSize(expectedProblems.size))
+    }
+
+    private fun getFailedResult(pluginFile: File): PluginCreationFail<IdePlugin> {
+      val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
+      assertThat(pluginCreationResult, instanceOf(PluginCreationFail::class.java))
+      return pluginCreationResult as PluginCreationFail
+    }
+
+    private fun getSuccessResult(pluginFile: File): PluginCreationSuccess<IdePlugin> {
+      val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
+      assertThat(pluginCreationResult, instanceOf(PluginCreationSuccess::class.java))
+      return pluginCreationResult as PluginCreationSuccess<IdePlugin>
+    }
+  }
+
   @Test
   fun `incorrect plugin file type`() {
     val incorrect = temporaryFolder.newFile("incorrect.txt")
@@ -61,31 +82,6 @@ class InvalidPluginsTest {
   fun `no meta-inf plugin xml found`() {
     val folder = temporaryFolder.newFolder()
     assertExpectedProblems(folder, listOf(PluginDescriptorIsNotFound("plugin.xml")))
-  }
-
-  @Test
-  fun `plugin classes are packed in root of a zip archive`() {
-    val brokenZipFile = MockPluginsTest.getMockPluginFile("invalid-mock-pluginJarAsZip.zip")
-    assertExpectedProblems(brokenZipFile, listOf(PluginZipContainsMultipleFiles(brokenZipFile, listOf("META-INF", "icons", "optionalsDir", "packagename"))))
-  }
-
-  private fun assertExpectedProblems(pluginFile: File, expectedProblems: List<PluginProblem>) {
-    val creationFail = getFailedResult(pluginFile)
-    val actualProblems = creationFail.errorsAndWarnings
-    assertThat(actualProblems, containsInAnyOrder(*expectedProblems.toTypedArray()))
-    assertThat(actualProblems, hasSize(expectedProblems.size))
-  }
-
-  private fun getSuccessResult(pluginFile: File): PluginCreationSuccess<IdePlugin> {
-    val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
-    assertThat(pluginCreationResult, instanceOf(PluginCreationSuccess::class.java))
-    return pluginCreationResult as PluginCreationSuccess<IdePlugin>
-  }
-
-  private fun getFailedResult(pluginFile: File): PluginCreationFail<IdePlugin> {
-    val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
-    assertThat(pluginCreationResult, instanceOf(PluginCreationFail::class.java))
-    return pluginCreationResult as PluginCreationFail
   }
 
   @Test

@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
 import com.jetbrains.plugin.structure.intellij.problems.MissingOptionalDependencyConfigurationFile
+import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.hamcrest.CoreMatchers.*
 import org.hamcrest.collection.IsIn.isIn
@@ -22,22 +23,14 @@ import java.io.File
 /**
  * Created by Sergey Patrikeev
  */
-class MockPluginsTest {
+class MockPluginsTest : BaseMockPluginTest() {
+  override fun getMockPluginBuildDirectory(): File = File("mock-plugin/build/mocks")
 
-  companion object {
-    fun getMockPluginFile(mockName: String): File {
-      //if run with gradle
-      var pluginFile = File("mock-plugin/build/mocks/", mockName)
-      if (pluginFile.exists()) {
-        return pluginFile
-      }
-      //if run with IDE test runner
-      pluginFile = File("intellij-plugin-structure/tests/mock-plugin/build/mocks", mockName)
-      Assert.assertTrue("mock plugin " + mockName + " is not found in " + pluginFile.absolutePath, pluginFile.exists())
-      return pluginFile
-    }
+  @Test
+  fun `invalid plugin with classes packed in a root of a zip`() {
+    val brokenZipFile = getMockPluginFile("invalid-mock-pluginJarAsZip.zip")
+    InvalidPluginsTest.assertExpectedProblems(brokenZipFile, listOf(PluginZipContainsMultipleFiles(brokenZipFile, listOf("META-INF", "icons", "optionalsDir", "packagename"))))
   }
-
 
   private fun testMockConfigs(plugin: IdePlugin) {
     assertEquals("http://kotlinlang.org", plugin.url)

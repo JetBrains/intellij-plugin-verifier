@@ -3,28 +3,16 @@ package com.jetbrains.plugin.structure.teamcity.mock
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.mocks.BaseMockPluginTest
 import com.jetbrains.plugin.structure.teamcity.TeamcityPlugin
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
 import com.jetbrains.plugin.structure.teamcity.TeamcityVersion
-import org.junit.Assert
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
 
-class TeamcityMockPluginsTest {
-
-  private fun getMockPluginFile(mockName: String): File {
-    //if run with gradle
-    var pluginFile = File("teamcity-mock-plugin/build/mocks/", mockName)
-    if (pluginFile.exists()) {
-      return pluginFile
-    }
-    //if run with IDE test runner
-    pluginFile = File("intellij-plugin-structure/tests/teamcity-mock-plugin/build/mocks", mockName)
-    Assert.assertTrue("mock plugin " + mockName + " is not found in " + pluginFile.absolutePath, pluginFile.exists())
-    return pluginFile
-  }
-
+class TeamcityMockPluginsTest : BaseMockPluginTest() {
+  override fun getMockPluginBuildDirectory(): File = File("teamcity-mock-plugin/build/mocks")
 
   private fun testMockConfigs(plugin: TeamcityPlugin) {
     assertEquals(null, plugin.url)

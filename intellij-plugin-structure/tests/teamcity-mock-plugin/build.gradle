@@ -3,14 +3,12 @@ def mocksPath = "$buildDir" + separator + "mocks"
 def mocksFile = new File(mocksPath)
 
 task prepareMockAsZip(type: Zip) {
-  //creates mock-pluginjarAsZip.zip which is equivalent to mock-plugin.jar
   from file("teamcity-plugin.xml")
   destinationDir = mocksFile
   archiveName = "mock-plugin-zip.zip"
 }
 
 task prepareMockAsDir(type: Copy) {
-  //create mock-plugin-dir/ which contains /lib/mock-plugin.jar inside
   from file("teamcity-plugin.xml")
   into mocksPath + separator + "mock-plugin-dir"
 }
