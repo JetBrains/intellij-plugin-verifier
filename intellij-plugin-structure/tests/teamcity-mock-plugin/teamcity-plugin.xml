@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<teamcity-plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:noNamespaceSchemaLocation="urn:shemas-jetbrains-com:teamcity-plugin-v1-xml">
+    <info>
+        <name>cloud-google</name>
+        <display-name>Google Compute Engine cloud integration</display-name>
+        <version>@Version@</version>
+        <description>Support for build agents running on Google Cloud</description>
+        <download-url>https://github.com/Jetbrains/teamcity-google-agent</download-url>
+        <email>email@example.org</email>
+        <vendor>
+            <name>JetBrains, s.r.o.</name>
+            <url>http://www.jetbrains.com/</url>
+        </vendor>
+    </info>
+    <requirements min-build="2" max-build="3"/>
+    <deployment use-separate-classloader="true"/>
+    <parameters>
+        <parameter name="key">value</parameter>
+    </parameters>
+</teamcity-plugin>

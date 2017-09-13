@@ -3,10 +3,6 @@ def mocksPath = "$buildDir" + separator + "mocks"
 def mocksFile = new File(mocksPath)
 
 def mockPluginXmlFile = file("teamcity-plugin.xml")
-if (!mockPluginXmlFile.exists()) {
-  throw new RuntimeException(mockPluginXmlFile.absolutePath + " doesn't exist")
-}
-println "Mock TeamCity plugin xml path: ${mockPluginXmlFile.absolutePath}"
 
 task prepareMockAsZip(type: Zip) {
   from mockPluginXmlFile
