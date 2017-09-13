@@ -7,8 +7,10 @@ abstract class BaseMockPluginTest {
   abstract fun getMockPluginBuildDirectory(): File
 
   fun getMockPluginFile(mockName: String): File {
-    val pluginFile = File(getMockPluginBuildDirectory(), mockName)
-    assertTrue("mock plugin '$mockName' is not found in " + getMockPluginBuildDirectory().absolutePath, pluginFile.exists())
+    val buildDirectory = getMockPluginBuildDirectory()
+    assertTrue("mock plugins build directory doesn't exist: " + buildDirectory.absolutePath, buildDirectory.exists())
+    val pluginFile = File(buildDirectory, mockName)
+    assertTrue("mock plugin '$mockName' is not found in " + buildDirectory.absolutePath, pluginFile.exists())
     return pluginFile
   }
 }
