@@ -15,5 +15,11 @@ internal fun validateTeamcityPluginBean(bean: TeamcityPluginBean): List<PluginPr
   if (bean.version.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("version"))
   }
+  if(bean.description.isNullOrBlank()){
+    problems.add(PropertyNotSpecified("description"))
+  }
+  if(bean.vendor?.name.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified("vendor"))
+  }
   return problems
 }
