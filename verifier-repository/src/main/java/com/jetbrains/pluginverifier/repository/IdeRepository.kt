@@ -32,7 +32,7 @@ data class AvailableIde(val version: IdeVersion,
   override fun toString(): String = version.toString() + if (isSnapshot) " (snapshot)" else ""
 }
 
-object IdeRepository {
+class IdeRepository(private val downloadDir: File, private val repositoryUrl: String) {
 
   private val LOG: Logger = LoggerFactory.getLogger(IdeRepository::class.java)
 
@@ -81,7 +81,7 @@ object IdeRepository {
   }
 
   fun fetchIndex(snapshots: Boolean = false): List<AvailableIde> {
-    val repoUrl = RepositoryConfiguration.ideRepositoryUrl.trimEnd('/') + "/intellij-repository/" + (if (snapshots) "snapshots" else "releases") + "/"
+    val repoUrl = repositoryUrl.trimEnd('/') + "/intellij-repository/" + (if (snapshots) "snapshots" else "releases") + "/"
     try {
       //Jsoup sets the connection timeouts itself
       val document = Jsoup.connect(repoUrl).get()
@@ -92,7 +92,7 @@ object IdeRepository {
     }
   }
 
-  private fun getIdeDirForVersion(ideVersion: IdeVersion) = File(RepositoryConfiguration.ideDownloadDir, ideVersion.toString())
+  private fun getIdeDirForVersion(ideVersion: IdeVersion) = File(downloadDir, ideVersion.toString())
 
   private fun tryDownloadIde(availableIde: AvailableIde, progress: (Double) -> Unit): File {
     for (attempt in 1..IDE_DOWNLOAD_ATTEMPTS) {
@@ -108,7 +108,7 @@ object IdeRepository {
   }
 
   private fun downloadAndExtractIde(availableIde: AvailableIde, progress: (Double) -> Unit): File {
-    val tempIdeZip = File.createTempFile("ide-${availableIde.version}", ".zip", RepositoryConfiguration.ideDownloadDir)
+    val tempIdeZip = File.createTempFile("ide-${availableIde.version}", ".zip", downloadDir)
     try {
       return downloadIdeToTempZipAndExtract(availableIde, tempIdeZip, progress)
     } finally {
@@ -119,7 +119,7 @@ object IdeRepository {
   private fun downloadIdeToTempZipAndExtract(availableIde: AvailableIde, tempZip: File, progress: (Double) -> Unit): File {
     downloadIdeZipTo(availableIde, tempZip, progress)
 
-    val tempIdeDir = Files.createTempDirectory(RepositoryConfiguration.ideDownloadDir.toPath(), "ide").toFile()
+    val tempIdeDir = Files.createTempDirectory(downloadDir.toPath(), "ide").toFile()
     try {
       return extractIdeZipToTempDirectoryAndMove(tempZip, tempIdeDir, availableIde)
     } finally {
@@ -139,12 +139,12 @@ object IdeRepository {
   }
 
   fun getOrDownloadIde(ideVersion: IdeVersion, progressUpdater: (Double) -> Unit): File {
-    val fromReleases = IdeRepository.fetchIndex(snapshots = false).find { it.version == ideVersion }
+    val fromReleases = fetchIndex(snapshots = false).find { it.version == ideVersion }
     if (fromReleases != null) {
       return getOrDownloadIde(fromReleases, progressUpdater)
     }
 
-    val fromSnapshots = IdeRepository.fetchIndex(snapshots = true).find { it.version == ideVersion }
+    val fromSnapshots = fetchIndex(snapshots = true).find { it.version == ideVersion }
     if (fromSnapshots != null) {
       return getOrDownloadIde(fromSnapshots, progressUpdater)
     }
@@ -206,7 +206,7 @@ object IdeRepository {
   }
 
   private val repository: IdeRepositoryApi = Retrofit.Builder()
-      .baseUrl(RepositoryConfiguration.ideRepositoryUrl.trimEnd('/') + '/')
+      .baseUrl(repositoryUrl.trimEnd('/') + '/')
       .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()

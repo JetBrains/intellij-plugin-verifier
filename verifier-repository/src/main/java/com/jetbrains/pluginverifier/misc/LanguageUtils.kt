@@ -7,6 +7,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.File
+import java.io.IOException
 
 /**
  * @author Sergey Patrikeev
@@ -55,6 +56,16 @@ fun File.create(): File {
     FileUtils.forceMkdir(this.parentFile)
   }
   this.createNewFile()
+  return this
+}
+
+fun File.createDir(): File {
+  if (!isDirectory) {
+    FileUtils.forceMkdir(this)
+    if (!isDirectory) {
+      throw IOException("Failed to create directory ${this}")
+    }
+  }
   return this
 }
 

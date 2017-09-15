@@ -4,56 +4,46 @@ import com.google.common.primitives.Ints
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.NotFound404ResponseException
-import com.jetbrains.pluginverifier.network.executeSuccessfully
 import okhttp3.MediaType
 import okhttp3.ResponseBody
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import retrofit2.Call
 import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.http.GET
-import retrofit2.http.Query
-import retrofit2.http.Streaming
 import java.io.File
 import java.io.IOException
-import java.text.DateFormat
-import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-object DownloadManager {
+class DownloadManager(private val downloadDir: File,
+                      downloadDirMaxSpace: Long,
+                      private val downloader: (UpdateInfo) -> Response<ResponseBody>) {
 
-  private data class FileLockImpl(val locked: File, val id: Long, val lockDate: Long) : FileLock() {
+  companion object {
+    private val LOG: Logger = LoggerFactory.getLogger(DownloadManager::class.java)
+
+    private val TEMP_DOWNLOAD_PREFIX = "plugin_"
+
+    private val TEMP_DOWNLOAD_SUFFIX = "_download"
+
+    private val FORGOTTEN_LOCKS_GC_TIMEOUT_MS: Long = TimeUnit.HOURS.toMillis(8)
+
+    private val BROKEN_FILE_THRESHOLD_BYTES = 200
+
+    private val JAR_CONTENT_TYPE = MediaType.parse("application/java-archive")
+  }
+
+  private inner class FileLockImpl(val locked: File, val id: Long, val lockDate: Long) : FileLock() {
     override fun getFile(): File = locked
 
     override fun release() {
-      DownloadManager.releaseLock(this)
+      releaseLock(this)
     }
   }
 
-  val LOG: Logger = LoggerFactory.getLogger(DownloadManager::class.java)
-
-  private val TEMP_DOWNLOAD_PREFIX = "plugin_"
-
-  private val TEMP_DOWNLOAD_SUFFIX = "_download"
-
-  private val FORGOTTEN_LOCKS_GC_TIMEOUT_MS: Long = TimeUnit.HOURS.toMillis(8)
-
-  private val BROKEN_FILE_THRESHOLD_BYTES = 200
-
-  private val httpDateFormat: DateFormat
-
-  private val JAR_CONTENT_TYPE = MediaType.parse("application/java-archive")
-
   init {
-    httpDateFormat = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US)
-    httpDateFormat.timeZone = TimeZone.getTimeZone("GMT")
-
     Executors.newSingleThreadScheduledExecutor(
         ThreadFactoryBuilder()
             .setDaemon(true)
@@ -71,32 +61,24 @@ object DownloadManager {
   //it is not used yet
   private val deleteQueue: MutableSet<File> = hashSetOf()
 
-  private val spaceWatcher = FreeDiskSpaceWatcher(RepositoryConfiguration.downloadDir, RepositoryConfiguration.downloadDirMaxSpace)
-
-  private val pluginRepositoryUrl = RepositoryConfiguration.pluginRepositoryUrl
-
-  private val downloadApi: DownloadApi = Retrofit.Builder()
-      .baseUrl(pluginRepositoryUrl)
-      .client(makeOkHttpClient(LOG.isTraceEnabled, 5, TimeUnit.MINUTES))
-      .build()
-      .create(DownloadApi::class.java)
+  private val spaceWatcher = FreeDiskSpaceWatcher(downloadDir, downloadDirMaxSpace)
 
   @Synchronized
   private fun releaseOldLocksAndDeleteUnusedPlugins() {
     val spaceReport = spaceWatcher.getSpaceReport()
     LOG.info("It's time to remove unused plugins from cache. Download cache usage: ${spaceReport.usedSpace.bytesToMegabytes()} Mb; " +
-        "Estimated available space (Mb): ${spaceReport.estimatedAvailableSpace?.bytesToMegabytes() ?: "<unknown>"}")
+        "Estimated available space (Mb): ${spaceReport.availableSpace.bytesToMegabytes()}")
 
     releaseOldLocks()
     val newSpaceReport = spaceWatcher.getSpaceReport()
-    if ((newSpaceReport.estimatedAvailableSpace ?: 0) < newSpaceReport.lowSpaceThreshold) {
+    if (newSpaceReport.availableSpace < newSpaceReport.lowSpaceThreshold) {
       LOG.warn("Not enough space: $newSpaceReport")
       deleteUnusedPlugins()
     }
   }
 
   private fun deleteUnusedPlugins() {
-    val updatesToDelete = RepositoryConfiguration.downloadDir
+    val updatesToDelete = downloadDir
         .listFiles()!!
         .filterNot { it.name.startsWith(TEMP_DOWNLOAD_PREFIX) && it.name.endsWith(TEMP_DOWNLOAD_SUFFIX) }
         .filterNot { it in locksAcquired }
@@ -107,12 +89,8 @@ object DownloadManager {
 
     for (update in updatesToDelete) {
       val spaceReport = spaceWatcher.getSpaceReport()
-      if (spaceReport.estimatedAvailableSpace == null || spaceReport.estimatedAvailableSpace > spaceReport.enoughSpaceThreshold) {
-        if (spaceReport.estimatedAvailableSpace != null) {
-          LOG.info("Unable to evaluate available space so assume it is enough")
-        } else {
-          LOG.info("Enough space after cleanup ${spaceReport.estimatedAvailableSpace!!.bytesToMegabytes()} Mb > ${spaceReport.enoughSpaceThreshold.bytesToMegabytes()} Mb")
-        }
+      if (spaceReport.availableSpace > spaceReport.enoughSpaceThreshold) {
+        LOG.info("Enough space after cleanup ${spaceReport.availableSpace.bytesToMegabytes()} Mb > ${spaceReport.enoughSpaceThreshold.bytesToMegabytes()} Mb")
         break
       }
       LOG.info("Deleting unused update $update with size ${update.length().bytesToMegabytes()} Mb")
@@ -120,8 +98,8 @@ object DownloadManager {
     }
 
     val spaceReport = spaceWatcher.getSpaceReport()
-    if (spaceReport.estimatedAvailableSpace != null && spaceReport.estimatedAvailableSpace < spaceReport.lowSpaceThreshold) {
-      LOG.warn("Available space after cleanup is not sufficient! ${spaceReport.estimatedAvailableSpace.bytesToMegabytes()} Mb < ${spaceReport.lowSpaceThreshold.bytesToMegabytes()} Mb")
+    if (spaceReport.availableSpace < spaceReport.lowSpaceThreshold) {
+      LOG.warn("Available space after cleanup is not sufficient! ${spaceReport.availableSpace.bytesToMegabytes()} Mb < ${spaceReport.lowSpaceThreshold.bytesToMegabytes()} Mb")
     }
   }
 
@@ -170,11 +148,11 @@ object DownloadManager {
 
   private fun getCachedFile(updateInfo: UpdateInfo): File? {
     val updateId = updateInfo.updateId
-    val asZip = File(RepositoryConfiguration.downloadDir, "$updateId.zip")
+    val asZip = File(downloadDir, "$updateId.zip")
     if (asZip.exists() && asZip.length() >= BROKEN_FILE_THRESHOLD_BYTES) {
       return asZip
     }
-    val asJar = File(RepositoryConfiguration.downloadDir, "$updateId.jar")
+    val asJar = File(downloadDir, "$updateId.jar")
     if (asJar.exists() && asJar.length() >= BROKEN_FILE_THRESHOLD_BYTES) {
       return asJar
     }
@@ -183,7 +161,7 @@ object DownloadManager {
 
   private fun doDownloadAndGuessFileName(updateInfo: UpdateInfo, tempFile: File): String {
     val updateId = updateInfo.updateId
-    val response = downloadApi.downloadFile(updateId).executeSuccessfully()
+    val response = downloader(updateInfo)
     FileUtils.copyInputStreamToFile(response.body().byteStream(), tempFile)
     val extension = guessExtension(response)
     return "$updateId.$extension"
@@ -238,12 +216,12 @@ object DownloadManager {
 
   private fun downloadUpdateToTempFileAndGuessFileName(updateInfo: UpdateInfo, tempFile: File): File {
     val updateFileName = downloadToTempFile(updateInfo, tempFile)
-    return File(RepositoryConfiguration.downloadDir, updateFileName)
+    return File(downloadDir, updateFileName)
   }
 
   private fun downloadUpdate(updateInfo: UpdateInfo): File {
     LOG.debug("Downloading update $updateInfo")
-    val tempFile = File.createTempFile(TEMP_DOWNLOAD_PREFIX, TEMP_DOWNLOAD_SUFFIX, RepositoryConfiguration.downloadDir)
+    val tempFile = File.createTempFile(TEMP_DOWNLOAD_PREFIX, TEMP_DOWNLOAD_SUFFIX, downloadDir)
     try {
       return downloadUpdate(updateInfo, tempFile)
     } finally {
@@ -272,7 +250,7 @@ object DownloadManager {
 
     try {
       val spaceReport = spaceWatcher.getSpaceReport()
-      if (spaceReport.estimatedAvailableSpace != null && spaceReport.estimatedAvailableSpace < spaceReport.lowSpaceThreshold) {
+      if (spaceReport.availableSpace < spaceReport.lowSpaceThreshold) {
         releaseOldLocksAndDeleteUnusedPlugins()
       }
     } catch (e: Throwable) {
@@ -282,12 +260,4 @@ object DownloadManager {
 
     return DownloadPluginResult.Found(updateInfo, lock)
   }
-}
-
-private interface DownloadApi {
-
-  @GET("/plugin/download/?noStatistic=true")
-  @Streaming
-  fun downloadFile(@Query("updateId") updateId: Int): Call<ResponseBody>
-
 }
