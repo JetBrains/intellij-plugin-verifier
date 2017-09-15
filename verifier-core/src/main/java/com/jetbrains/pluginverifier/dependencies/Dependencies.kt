@@ -13,7 +13,7 @@ data class MissingDependency(val dependency: PluginDependency,
 data class DependencyNode(val id: String,
                           val version: String,
                           val missingDependencies: List<MissingDependency>) {
-  override fun toString(): String = if (version.isNotEmpty()) "$id:$version" else id
+  override fun toString(): String = "$id:$version"
 }
 
 data class DependencyEdge(val from: DependencyNode,
