@@ -128,7 +128,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
   private fun collectMissingDependenciesForRequiringPlugins(results: List<Result>): Multimap<MissingDependency, PluginInfo> {
     val missingToRequiring = HashMultimap.create<MissingDependency, PluginInfo>()
     results.filter { it.verdict is Verdict.MissingDependencies }.forEach {
-      (it.verdict as Verdict.MissingDependencies).missingDependencies.forEach { missingDependency ->
+      (it.verdict as Verdict.MissingDependencies).directMissingDependencies.forEach { missingDependency ->
         missingToRequiring.put(missingDependency, it.plugin)
       }
     }
@@ -191,7 +191,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
                                        testName: String,
                                        options: PrinterOptions) {
     val problems = verdict.problems
-    val missingDependencies = verdict.missingDependencies
+    val missingDependencies = verdict.directMissingDependencies
     if (problems.isNotEmpty() || missingDependencies.any { !it.dependency.isOptional }) {
       val pluginLink = getPluginLink(plugin)
       val overview = buildString {
@@ -237,7 +237,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
 
   private fun getMissingDependenciesProblemsContent(verdict: Verdict.MissingDependencies): String {
     val problems = verdict.problems
-    val missingDependencies = verdict.missingDependencies
+    val missingDependencies = verdict.directMissingDependencies
 
     val notFoundClassesProblems = problems.filterIsInstance<ClassNotFoundProblem>()
     if (missingDependencies.isNotEmpty() && notFoundClassesProblems.size > 20) {

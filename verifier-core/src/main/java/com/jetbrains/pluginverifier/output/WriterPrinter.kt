@@ -32,10 +32,10 @@ class WriterPrinter(private val out: PrintWriter) : Printer {
   }
 
   private fun printDependencies(verdict: Verdict.MissingDependencies, options: PrinterOptions) {
-    val mandatoryDependencies = verdict.missingDependencies.filterNot { it.dependency.isOptional }
+    val mandatoryDependencies = verdict.directMissingDependencies.filterNot { it.dependency.isOptional }
     printMissingMandatoryDependencies(mandatoryDependencies)
 
-    val optionalDependencies = verdict.missingDependencies.filter { it.dependency.isOptional && !options.ignoreMissingOptionalDependency(it.dependency) }
+    val optionalDependencies = verdict.directMissingDependencies.filter { it.dependency.isOptional && !options.ignoreMissingOptionalDependency(it.dependency) }
     printMissingOptionalDependencies(optionalDependencies)
   }
 

@@ -145,7 +145,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
   private fun getAppropriateVerdict(context: VerificationContext, dependenciesGraph: DependenciesGraph): Verdict {
     val missingDependencies = dependenciesGraph.start.missingDependencies
     if (missingDependencies.isNotEmpty()) {
-      return Verdict.MissingDependencies(missingDependencies, dependenciesGraph, context.problems, context.warnings)
+      return Verdict.MissingDependencies(dependenciesGraph, context.problems, context.warnings)
     }
 
     if (context.problems.isNotEmpty()) {

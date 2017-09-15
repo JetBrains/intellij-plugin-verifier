@@ -88,7 +88,7 @@ class VerifierExecutorTest {
 
   @Test
   fun checkMissingDeps() {
-    val missingDependencies = result.missingDependencies
+    val missingDependencies = result.directMissingDependencies
     assertFalse(missingDependencies.isEmpty())
     println(missingDependencies)
     val expectedDep = MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Plugin MissingPlugin doesn't have a build compatible with IU-145.500")

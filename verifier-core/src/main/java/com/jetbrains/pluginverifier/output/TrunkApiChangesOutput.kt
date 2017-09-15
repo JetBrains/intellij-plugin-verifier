@@ -88,8 +88,8 @@ class TrunkApiChangesOutput(private val tcLog: TeamCityLog, private val reposito
 
   private fun getMissingDependenciesDetails(apiChanges: TrunkApiChanges, plugin: PluginInfo): String {
     val (releaseResult, trunkResult) = apiChanges.comparingResults[plugin] ?: return ""
-    val releaseMissingDependencies = releaseResult.getMissingDependencies()
-    val trunkMissingDependencies = trunkResult.getMissingDependencies()
+    val releaseMissingDependencies = releaseResult.getDirectMissingDependencies()
+    val trunkMissingDependencies = trunkResult.getDirectMissingDependencies()
 
     if (trunkMissingDependencies.isNotEmpty()) {
       return buildString {
@@ -119,8 +119,8 @@ class TrunkApiChangesOutput(private val tcLog: TeamCityLog, private val reposito
     return ""
   }
 
-  private fun Result.getMissingDependencies() = when (this.verdict) {
-    is Verdict.MissingDependencies -> this.verdict.missingDependencies
+  private fun Result.getDirectMissingDependencies() = when (this.verdict) {
+    is Verdict.MissingDependencies -> this.verdict.directMissingDependencies
     else -> emptyList()
   }
 

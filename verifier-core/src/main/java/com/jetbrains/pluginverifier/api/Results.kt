@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.api
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -39,16 +38,17 @@ sealed class Verdict {
 
   /**
    * The plugin has some dependencies which were not found during the verification.
-   * Look at the [dependenciesGraph] for details.
    *
    * Note: some of the problems might have been caused by the missing dependencies (unresolved classes etc.).
    * Also the [problems] might be empty if the missed dependencies don't affect the compatibility with the IDE.
    */
-  data class MissingDependencies(val missingDependencies: List<MissingDependency>,
-                                 val dependenciesGraph: DependenciesGraph,
+  data class MissingDependencies(val dependenciesGraph: DependenciesGraph,
                                  val problems: Set<Problem>,
                                  val warnings: Set<Warning>) : Verdict() {
-    override fun toString(): String = "Missing ${missingDependencies.size} plugins and modules " + "dependency".pluralize(missingDependencies.size) + " and ${problems.size} " + "problem".pluralize(problems.size)
+    override fun toString(): String = "Missing ${directMissingDependencies.size} direct plugins and modules " + "dependency".pluralize(directMissingDependencies.size) + " and ${problems.size} " + "problem".pluralize(problems.size)
+
+    val directMissingDependencies = dependenciesGraph.start.missingDependencies
+    
   }
 
   /**

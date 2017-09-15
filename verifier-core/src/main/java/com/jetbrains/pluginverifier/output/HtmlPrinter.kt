@@ -121,7 +121,7 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
         is Verdict.Warnings -> "${verdict.warnings.size} " + "warning".pluralize(verdict.warnings.size) + " found"
         is Verdict.Problems -> "${verdict.problems.size} " + "problem".pluralize(verdict.problems.size) + " found"
         is Verdict.MissingDependencies -> "Plugin has " +
-            "${verdict.missingDependencies.size} missing " + "dependency".pluralize(verdict.missingDependencies.size) + " and " +
+            "${verdict.directMissingDependencies.size} missing direct " + "dependency".pluralize(verdict.directMissingDependencies.size) + " and " +
             "${verdict.problems.size} " + "problem".pluralize(verdict.problems.size)
         is Verdict.Bad -> "Plugin is invalid"
         is Verdict.NotFound -> "Plugin $pluginId:${plugin.version} is not found in the Repository"
@@ -142,7 +142,7 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
 
   private fun HtmlBuilder.printMissingDependenciesResult(verdict: Verdict.MissingDependencies, options: PrinterOptions) {
     printProblems(verdict.problems)
-    val missingDependencies = verdict.missingDependencies
+    val missingDependencies = verdict.directMissingDependencies
     printMissingDependencies(missingDependencies.filterNot { it.dependency.isOptional })
     printMissingDependencies(missingDependencies.filter { it.dependency.isOptional && !options.ignoreMissingOptionalDependency(it.dependency) })
   }

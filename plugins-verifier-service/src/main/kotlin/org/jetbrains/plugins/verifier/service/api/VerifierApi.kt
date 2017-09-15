@@ -132,7 +132,7 @@ private fun convertVerdict(verdict: Verdict): ApiVerificationVerdict {
   }
 }
 
-private fun convertMissingDependencies(verdict: Verdict.MissingDependencies) = verdict.missingDependencies.map { convertMissingDependency(it) }
+private fun convertMissingDependencies(verdict: Verdict.MissingDependencies) = verdict.directMissingDependencies.map { convertMissingDependency(it) }
 
 private fun convertProblems(problems: Set<Problem>): List<ApiProblem> = problems.map { ApiProblem(it.getFullDescription().toString()) }
 
