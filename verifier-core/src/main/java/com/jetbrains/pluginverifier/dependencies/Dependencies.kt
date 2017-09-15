@@ -53,7 +53,7 @@ data class DependenciesGraph(val start: DependencyNode,
       val edgesFromNode = edges.filter { node == it.from }
       if (edgesFromNode.isNotEmpty()) {
         appendln()
-        append("From $node to [${edgesFromNode.map { edge -> edge.to.toString() + if (edge.dependency.isOptional) " (optional)" else "" }.joinToString()}]")
+        append("From $node to [${edgesFromNode.joinToString { (_, to, dependency) -> to.toString() + if (dependency.isOptional) " (optional)" else "" }}]")
       }
       if (node.missingDependencies.isNotEmpty()) {
         appendln()

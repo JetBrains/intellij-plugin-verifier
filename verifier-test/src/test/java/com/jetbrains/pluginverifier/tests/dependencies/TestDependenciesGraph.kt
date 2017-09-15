@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.tests
+package com.jetbrains.pluginverifier.tests.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.dependencies.*
@@ -31,7 +31,7 @@ class TestDependenciesGraph {
           )
       )
 
-      GRAPH_WITH_A_CYCLE = SIMPLE_GRAPH_WITH_NO_CYCLES.copy(edges = this.SIMPLE_GRAPH_WITH_NO_CYCLES.edges + dependencyEdge(d, a, "A", false, false))
+      GRAPH_WITH_A_CYCLE = SIMPLE_GRAPH_WITH_NO_CYCLES.copy(edges = SIMPLE_GRAPH_WITH_NO_CYCLES.edges + dependencyEdge(d, a, "A", false, false))
     }
 
     fun missing(missingId: String, isOptional: Boolean, isModule: Boolean, reason: String) = MissingDependency(PluginDependencyImpl(missingId, isOptional, isModule), reason)

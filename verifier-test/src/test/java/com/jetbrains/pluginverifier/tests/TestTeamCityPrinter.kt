@@ -1,3 +1,5 @@
+package com.jetbrains.pluginverifier.tests
+
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Result
@@ -7,9 +9,9 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.output.PrinterOptions
 import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityPrinter
-import com.jetbrains.pluginverifier.repository.DownloadPluginResult
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
 import org.junit.Assert
 import org.junit.Test
 import java.io.ByteArrayOutputStream
@@ -21,42 +23,16 @@ import java.io.PrintStream
  */
 class TestTeamCityPrinter {
 
-  private fun noConnectionPluginRepository() = object : PluginRepository {
-    override fun getPluginOverviewUrl(update: UpdateInfo): String? = throw noConnection()
-
-    private fun noConnection(): Exception = IOException("no connection")
-
-    override fun getLastCompatibleUpdates(ideVersion: IdeVersion): List<UpdateInfo> = throw noConnection()
-
-    override fun getLastCompatibleUpdateOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? = throw noConnection()
-
-    override fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> = throw noConnection()
-
-    override fun getPluginFile(update: UpdateInfo): DownloadPluginResult = throw noConnection()
-
-    override fun getUpdateInfoById(updateId: Int): UpdateInfo = throw noConnection()
-
-    override fun getIdOfPluginDeclaringModule(moduleId: String): String = throw noConnection()
-
-    override fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo> = throw noConnection()
+  private fun noConnectionPluginRepository() = object : MockPluginRepositoryAdapter() {
+    override fun defaultAction(): Nothing = throw IOException("no connection")
   }
 
-  private fun mockRepository(updateInfos: List<UpdateInfo>) = object : PluginRepository {
-    override fun getPluginOverviewUrl(update: UpdateInfo): String? = throw UnsupportedOperationException()
-
+  private fun mockRepository(updateInfos: List<UpdateInfo>) = object : MockPluginRepositoryAdapter() {
     override fun getLastCompatibleUpdates(ideVersion: IdeVersion): List<UpdateInfo> = updateInfos
 
     override fun getLastCompatibleUpdateOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? = updateInfos.find { it.pluginId == pluginId }
 
     override fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> = updateInfos.toList()
-
-    override fun getPluginFile(update: UpdateInfo): DownloadPluginResult = throw UnsupportedOperationException()
-
-    override fun getUpdateInfoById(updateId: Int): UpdateInfo = throw UnsupportedOperationException()
-
-    override fun getIdOfPluginDeclaringModule(moduleId: String): String = throw UnsupportedOperationException()
-
-    override fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo> = throw UnsupportedOperationException()
   }
 
   @Test

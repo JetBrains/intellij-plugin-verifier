@@ -27,7 +27,7 @@ object PluginCreator {
   }
 
   fun createPluginByUpdateInfo(updateInfo: UpdateInfo): CreatePluginResult {
-    val downloadPluginResult = RepositoryManager.getPluginFile(updateInfo)
+    val downloadPluginResult = RepositoryManager.downloadPluginFile(updateInfo)
     return when (downloadPluginResult) {
       is DownloadPluginResult.Found -> createPluginByFileLock(downloadPluginResult.fileLock)
       is DownloadPluginResult.NotFound -> CreatePluginResult.NotFound(downloadPluginResult.reason)

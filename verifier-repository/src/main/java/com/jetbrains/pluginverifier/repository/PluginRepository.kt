@@ -14,7 +14,7 @@ interface PluginRepository {
 
   fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo>?
 
-  fun getPluginFile(update: UpdateInfo): DownloadPluginResult
+  fun downloadPluginFile(update: UpdateInfo): DownloadPluginResult
 
   fun getUpdateInfoById(updateId: Int): UpdateInfo?
 

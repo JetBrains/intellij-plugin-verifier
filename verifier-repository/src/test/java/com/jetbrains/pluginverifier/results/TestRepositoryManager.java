@@ -67,7 +67,7 @@ public class TestRepositoryManager {
   public void downloadExistentPlugin() {
     UpdateInfo updateInfo = RepositoryManager.INSTANCE.getUpdateInfoById(25128); //.gitignore 1.3.3
     assertNotNull(updateInfo);
-    DownloadPluginResult downloadPluginResult = RepositoryManager.INSTANCE.getPluginFile(updateInfo);
+    DownloadPluginResult downloadPluginResult = RepositoryManager.INSTANCE.downloadPluginFile(updateInfo);
     assertTrue(downloadPluginResult instanceof DownloadPluginResult.Found);
     FileLock fileLock = ((DownloadPluginResult.Found) downloadPluginResult).getFileLock();
     assertNotNull(fileLock);

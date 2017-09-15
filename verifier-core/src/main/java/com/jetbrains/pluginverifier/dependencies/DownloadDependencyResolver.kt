@@ -4,15 +4,13 @@ import com.google.common.collect.ImmutableSet
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
-import com.jetbrains.pluginverifier.repository.DownloadPluginResult
-import com.jetbrains.pluginverifier.repository.FileLock
-import com.jetbrains.pluginverifier.repository.RepositoryManager
-import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.*
 
 /**
  * @author Sergey Patrikeev
  */
-class DownloadDependencyResolver(private val dependencySelector: DependencySelector) : DependencyResolver {
+class DownloadDependencyResolver(private val dependencySelector: DependencySelector,
+                                 private val pluginRepository: PluginRepository = RepositoryManager) : DependencyResolver {
 
   private companion object {
     val IDEA_ULTIMATE_MODULES: Set<String> = ImmutableSet.of(
@@ -43,7 +41,7 @@ class DownloadDependencyResolver(private val dependencySelector: DependencySelec
   }
 
   private fun resolveDeclaringPlugin(moduleId: String): DependencyResolver.Result {
-    val pluginId = RepositoryManager.getIdOfPluginDeclaringModule(moduleId) ?: return DependencyResolver.Result.NotFound("Module '$moduleId' is not found")
+    val pluginId = pluginRepository.getIdOfPluginDeclaringModule(moduleId) ?: return DependencyResolver.Result.NotFound("Module '$moduleId' is not found")
     return selectAndDownloadPlugin(pluginId)
   }
 
@@ -56,7 +54,7 @@ class DownloadDependencyResolver(private val dependencySelector: DependencySelec
   }
 
   private fun downloadAndOpenPlugin(updateInfo: UpdateInfo): DependencyResolver.Result {
-    val downloadPluginResult = RepositoryManager.getPluginFile(updateInfo)
+    val downloadPluginResult = pluginRepository.downloadPluginFile(updateInfo)
     return when (downloadPluginResult) {
       is DownloadPluginResult.Found -> getDependencyResultByDownloadedUpdate(downloadPluginResult.fileLock, updateInfo)
       is DownloadPluginResult.NotFound -> DependencyResolver.Result.NotFound(downloadPluginResult.reason)
