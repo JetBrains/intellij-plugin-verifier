@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.tests
 
+import com.google.common.io.Files
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.core.VerifierExecutor
-import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.ide.IdeCreator
 import com.jetbrains.pluginverifier.location.*
@@ -14,7 +14,8 @@ import com.jetbrains.pluginverifier.plugin.PluginCreatorImpl
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.reference.SymbolicReference
-import com.jetbrains.pluginverifier.repository.PublicPluginRepository
+import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
+import com.jetbrains.pluginverifier.tests.mocks.NotFoundDependencyResolver
 import org.hamcrest.core.Is.`is`
 import org.junit.AfterClass
 import org.junit.Assert.*
@@ -35,13 +36,14 @@ class VerifierExecutorTest {
       val ideDescriptor = IdeCreator.createByFile(ideaFile, IdeVersion.createIdeVersion("IU-145.500"))
       val pluginCoordinate = PluginCoordinate.ByFile(pluginFile)
       val jdkPath = System.getenv("JAVA_HOME") ?: "/usr/lib/jvm/java-8-oracle"
-      val isntNecessaryFile = File("isn't necessary")
-      val pluginRepository = PublicPluginRepository("non-existent", isntNecessaryFile, 1)
-      val pluginCreator = PluginCreatorImpl(pluginRepository, isntNecessaryFile)
+      val pluginRepository = MockPluginRepositoryAdapter()
+      val tempFolder = Files.createTempDir()
+      tempFolder.deleteOnExit()
+      val pluginCreator = PluginCreatorImpl(pluginRepository, tempFolder)
       ideDescriptor.use {
         val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
         val problemsFilter = OptionsParser.getProblemsFilter(CmdOpts())
-        val verifierParams = VerifierParams(JdkDescriptor(File(jdkPath)), externalClassesPrefixes, problemsFilter, dependencyResolver = IdeDependencyResolver(ideDescriptor.ide, pluginRepository, pluginCreator))
+        val verifierParams = VerifierParams(JdkDescriptor(File(jdkPath)), externalClassesPrefixes, problemsFilter, dependencyResolver = NotFoundDependencyResolver())
         val verifier = VerifierExecutor(verifierParams)
         verifier.use {
           val results = verifier.verify(listOf(pluginCoordinate to ideDescriptor), DefaultProgress(), pluginRepository, pluginCreator)
@@ -118,8 +120,8 @@ class VerifierExecutorTest {
     val missingDependencies = result.directMissingDependencies
     assertFalse(missingDependencies.isEmpty())
     println(missingDependencies)
-    val expectedDep = MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Plugin MissingPlugin doesn't have a build compatible with IU-145.500")
-    assertTrue(expectedDep in missingDependencies)
+    val expectedDep = setOf(MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Plugin MissingPlugin doesn't have a build compatible with IU-145.500"))
+    assertEquals(expectedDep, missingDependencies.toSet())
   }
 
   private fun assertProblemFound(problem: Problem, expectedFullDescription: String, expectedShortDescription: String) {
