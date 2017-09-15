@@ -13,7 +13,7 @@ buildscript {
 }
 
 def extractorVersion = '1.0'
-def intellijStructureVersion = '3.0'
+def intellijStructureVersion = '3.1'
 
 configure(allprojects) {
   apply plugin: 'java'

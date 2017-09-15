@@ -87,7 +87,7 @@ class VerifierService : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES) {
     val pluginInfo = PluginInfo(updateInfo.pluginId, updateInfo.version, updateInfo)
     val pluginCoordinate = PluginCoordinate.ByUpdateInfo(updateInfo)
     val rangeRunnerParams = CheckRangeParams(JdkVersion.JAVA_8_ORACLE)
-    val runner = CheckRangeCompatibilityTask(pluginInfo, pluginCoordinate, rangeRunnerParams, versions)
+    val runner = CheckRangeCompatibilityTask(pluginInfo, pluginCoordinate, rangeRunnerParams, versions, ServerInstance.pluginRepository, ServerInstance.pluginCreator)
     val taskStatus = taskManager.enqueue(
         runner,
         { taskResult -> onSuccess(taskResult, updateInfo) },

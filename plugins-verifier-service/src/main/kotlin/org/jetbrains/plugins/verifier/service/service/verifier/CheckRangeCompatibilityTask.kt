@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.ide.IdeCreator
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.CheckPluginParams
 import com.jetbrains.pluginverifier.tasks.CheckPluginTask
 import org.jetbrains.plugins.verifier.service.ide.IdeFileLock
@@ -20,12 +21,14 @@ import org.slf4j.LoggerFactory
 class CheckRangeCompatibilityTask(val pluginInfo: PluginInfo,
                                   val pluginCoordinate: PluginCoordinate,
                                   val params: CheckRangeParams,
-                                  val ideVersions: List<IdeVersion>? = null) : Task<CheckRangeCompatibilityResult>() {
-  override fun presentableName(): String = "Check $pluginCoordinate with IDE from [since; until]"
-
+                                  val ideVersions: List<IdeVersion>? = null,
+                                  val pluginRepository: PluginRepository,
+                                  val pluginCreator: PluginCreator) : Task<CheckRangeCompatibilityResult>() {
   companion object {
     private val LOG = LoggerFactory.getLogger(CheckRangeCompatibilityTask::class.java)
   }
+
+  override fun presentableName(): String = "Check $pluginCoordinate with IDE from [since; until]"
 
   private fun doRangeVerification(plugin: IdePlugin, progress: TaskProgress): CheckRangeCompatibilityResult {
     val sinceBuild = plugin.sinceBuild!!
@@ -65,7 +68,7 @@ class CheckRangeCompatibilityTask(val pluginInfo: PluginInfo,
                                          progress: TaskProgress): CheckRangeCompatibilityResult {
     val verifierProgress = VerifierToTaskBridgeProgress(progress)
     val params = CheckPluginParams(listOf(pluginCoordinate), ideDescriptors, jdkDescriptor, emptyList(), ProblemsFilter.AlwaysTrue, Resolver.getEmptyResolver())
-    val checkPluginTask = CheckPluginTask(params)
+    val checkPluginTask = CheckPluginTask(params, pluginRepository, pluginCreator)
     val checkPluginResults = checkPluginTask.execute(verifierProgress)
     val results = checkPluginResults.results
     return CheckRangeCompatibilityResult(pluginInfo, CheckRangeCompatibilityResult.ResultType.VERIFICATION_DONE, results)
@@ -77,7 +80,7 @@ class CheckRangeCompatibilityTask(val pluginInfo: PluginInfo,
         .mapNotNull { IdeFilesManager.getIdeLock(it) }
   }
 
-  override fun computeResult(progress: TaskProgress): CheckRangeCompatibilityResult = PluginCreator.createPlugin(pluginCoordinate).use { createPluginResult ->
+  override fun computeResult(progress: TaskProgress): CheckRangeCompatibilityResult = pluginCreator.createPlugin(pluginCoordinate).use { createPluginResult ->
     when (createPluginResult) {
       is CreatePluginResult.NotFound -> CheckRangeCompatibilityResult(pluginInfo, CheckRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = createPluginResult.reason)
       is CreatePluginResult.FailedToDownload -> CheckRangeCompatibilityResult(pluginInfo, CheckRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = createPluginResult.reason)

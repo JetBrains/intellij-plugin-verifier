@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 /**
  * @author Sergey Patrikeev
  */
-class IdeListUpdater : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES) {
+class IdeListUpdater(val ideRepository: IdeRepository) : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES) {
 
   private val downloadingIdes: MutableSet<IdeVersion> = hashSetOf()
 
@@ -46,7 +46,7 @@ class IdeListUpdater : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES) {
       return
     }
 
-    val runner = UploadIdeRunner(availableIde = availableIde)
+    val runner = UploadIdeRunner(availableIde = availableIde, ideRepository = ideRepository)
 
     val taskStatus = taskManager.enqueue(runner, { }, { _, _, _ -> }) { _, _ -> downloadingIdes.remove(version) }
     LOG.info("Uploading IDE version #$version (task #${taskStatus.taskId})")
@@ -55,7 +55,7 @@ class IdeListUpdater : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES) {
   }
 
   private fun fetchRelevantIdes(): List<AvailableIde> {
-    val index = IdeRepository.fetchIndex()
+    val index = ideRepository.fetchIndex()
 
     val branchToVersions: Map<Int, List<AvailableIde>> = index
         .filterNot { it.isCommunity }

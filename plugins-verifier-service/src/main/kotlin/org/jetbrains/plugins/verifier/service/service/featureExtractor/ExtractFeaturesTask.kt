@@ -6,9 +6,9 @@ import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.ide.IdeCreator
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
-import com.jetbrains.pluginverifier.plugin.PluginCreator
 import org.jetbrains.plugins.verifier.service.ide.IdeFileLock
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
+import org.jetbrains.plugins.verifier.service.service.ServerInstance
 import org.jetbrains.plugins.verifier.service.tasks.Task
 import org.jetbrains.plugins.verifier.service.tasks.TaskProgress
 
@@ -16,7 +16,7 @@ class ExtractFeaturesTask(val pluginCoordinate: PluginCoordinate, val pluginInfo
   override fun presentableName(): String = "Features of $pluginCoordinate"
 
   override fun computeResult(progress: TaskProgress): FeaturesResult {
-    val createPluginResult = PluginCreator.createPlugin(pluginCoordinate)
+    val createPluginResult = ServerInstance.pluginCreator.createPlugin(pluginCoordinate)
     createPluginResult.use {
       return when (createPluginResult) {
         is CreatePluginResult.OK -> doFeatureExtraction(createPluginResult)

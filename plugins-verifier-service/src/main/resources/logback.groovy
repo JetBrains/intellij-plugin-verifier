@@ -58,7 +58,7 @@ boolean developmentMode = 'true' == System.getProperty('verifier.service.develop
 def loggers = ['STDOUT', 'ERRORS_FILE', 'FILE']
 
 logger("com.jetbrains.pluginverifier.repository.DownloadManager", ERROR, ['STDOUT', 'FILE'], false)
-logger("com.jetbrains.pluginverifier.repository.RepositoryManager", ERROR, loggers, false)
+logger("com.jetbrains.pluginverifier.repository.PublicPluginRepository", ERROR, loggers, false)
 logger("com.jetbrains.pluginverifier.core", ERROR, loggers, false)
 logger("com.intellij.structure", ERROR, loggers, false)
 logger("org.jetbrains.plugins.verifier.service", developmentMode ? DEBUG : INFO, loggers, false)

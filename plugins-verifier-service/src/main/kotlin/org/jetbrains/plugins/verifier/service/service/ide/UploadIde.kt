@@ -13,7 +13,8 @@ import org.jetbrains.plugins.verifier.service.tasks.TaskProgress
  */
 class UploadIdeRunner(val ideVersion: IdeVersion? = null,
                       val availableIde: AvailableIde? = null,
-                      val fromSnapshots: Boolean = false) : Task<Boolean>() {
+                      val fromSnapshots: Boolean = false,
+                      val ideRepository: IdeRepository) : Task<Boolean>() {
 
   init {
     require(ideVersion != null || availableIde != null, { "IDE version to be uploaded is not specified" })
@@ -24,7 +25,7 @@ class UploadIdeRunner(val ideVersion: IdeVersion? = null,
   override fun computeResult(progress: TaskProgress): Boolean {
     val artifact = getArtifactInfo() ?: throw IllegalArgumentException("Unable to find the IDE #$ideVersion in snapshots = $fromSnapshots")
 
-    val ideFile = IdeRepository.getOrDownloadIde(artifact) { progress.setFraction(it) }
+    val ideFile = ideRepository.getOrDownloadIde(artifact) { progress.setFraction(it) }
 
     try {
       return IdeFilesManager.addIde(ideFile)
@@ -33,7 +34,9 @@ class UploadIdeRunner(val ideVersion: IdeVersion? = null,
     }
   }
 
-  private fun getArtifactInfo(): AvailableIde? = availableIde ?: IdeRepository.fetchIndex(fromSnapshots)
-      .find { it.version.asStringWithoutProductCode() == ideVersion!!.asStringWithoutProductCode() }
+  private fun getArtifactInfo(): AvailableIde? {
+    return availableIde ?: ideRepository.fetchIndex(fromSnapshots)
+        .find { it.version.asStringWithoutProductCode() == ideVersion!!.asStringWithoutProductCode() }
+  }
 
 }

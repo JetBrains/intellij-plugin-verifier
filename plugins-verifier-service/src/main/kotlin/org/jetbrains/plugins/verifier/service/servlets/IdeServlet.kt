@@ -2,6 +2,7 @@ package org.jetbrains.plugins.verifier.service.servlets
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
+import org.jetbrains.plugins.verifier.service.service.ServerInstance
 import org.jetbrains.plugins.verifier.service.service.ide.DeleteIdeRunner
 import org.jetbrains.plugins.verifier.service.service.ide.UploadIdeRunner
 import javax.servlet.http.HttpServletRequest
@@ -9,6 +10,7 @@ import javax.servlet.http.HttpServletResponse
 
 class IdeServlet : BaseServlet() {
 
+  //todo: protect IDEs which are explicitly uploaded by this method from removing by the IDE cleaner
   override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
     val path = getPath(req, resp) ?: return
     if (path.endsWith("uploadIde")) {
@@ -32,7 +34,7 @@ class IdeServlet : BaseServlet() {
 
   private fun processUploadIde(req: HttpServletRequest, resp: HttpServletResponse) {
     val ideVersion = parseIdeVersionParameter(req, resp) ?: return
-    val ideRunner = UploadIdeRunner(ideVersion)
+    val ideRunner = UploadIdeRunner(ideVersion, ideRepository = ServerInstance.ideRepository)
     val taskStatus = getTaskManager().enqueue(ideRunner)
     sendOk(resp, "Uploading $ideVersion (#${taskStatus.taskId})")
   }
