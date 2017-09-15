@@ -32,7 +32,7 @@ public class PluginDependencyImpl implements PluginDependency {
 
   @Override
   public String toString() {
-    return myId + (myIsOptional ? " (optional)" : "");
+    return (myIsModule ? "module " : "") + myId + (myIsOptional ? " (optional)" : "");
   }
 
   @Override

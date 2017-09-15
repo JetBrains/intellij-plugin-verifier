@@ -99,14 +99,16 @@ class TrunkApiChangesOutput(private val tcLog: TeamCityLog, private val reposito
 
           val releaseResolvedDependency = releaseResult.getResolvedDependency(dependency)
           if (releaseResolvedDependency != null) {
-            append(" (when checked ${apiChanges.releaseVersion} plugin $releaseResolvedDependency was used)")
+            append(" (when ${apiChanges.releaseVersion} was checked, $releaseResolvedDependency was used)")
           } else {
-            val releaseMissingDep = releaseMissingDependencies.find { it.dependency == dependency } ?: continue
-            append(" (it was also missing when we checked ${apiChanges.releaseVersion} ")
-            if (missingReason == releaseMissingDep.missingReason) {
-              append("by the same reason)")
-            } else {
-              append("by the following reason: ${releaseMissingDep.missingReason})")
+            val releaseMissingDep = releaseMissingDependencies.find { it.dependency == dependency }
+            if (releaseMissingDep != null) {
+              append(" (it was also missing when we checked ${apiChanges.releaseVersion} ")
+              if (missingReason == releaseMissingDep.missingReason) {
+                append("by the same reason)")
+              } else {
+                append("by the following reason: ${releaseMissingDep.missingReason})")
+              }
             }
           }
           append("\n")
