@@ -6,11 +6,11 @@ data class TeamcityPluginXmlBuilder(
     var name: String = "<name>name</name>",
     var displayName: String = "<display-name>Display name</display-name>",
     var version: String = "<version>0.1.1</version>",
-    var description: String = "",
+    var description: String = "<description>Some short description</description>",
     var downloadUrl: String = "",
     var email: String = "",
     var deployment: String = "",
-    val vendor: String = "",
+    val vendor: String = "<vendor><name>JetBrains, s.r.o.</name></vendor>",
     val requirements: String = "",
     val parameters: String = "",
     var additionalContent: String = ""
