@@ -153,9 +153,7 @@ class IdeManagerImpl : IdeManager() {
 
     private fun createPluginByDir(pluginDirectory: File, pathResolver: XIncludePathResolver): IdePlugin? {
       try {
-        val pluginCreator = IdePluginManager.createManager(pathResolver).getPluginCreatorWithResult(pluginDirectory, false)
-        pluginCreator.setOriginalFile(pluginDirectory)
-        val creationResult = pluginCreator.pluginCreationResult
+        val creationResult = IdePluginManager.createManager(pathResolver).createPlugin(pluginDirectory, false)
         return when (creationResult) {
           is PluginCreationSuccess -> creationResult.plugin
           is PluginCreationFail -> {

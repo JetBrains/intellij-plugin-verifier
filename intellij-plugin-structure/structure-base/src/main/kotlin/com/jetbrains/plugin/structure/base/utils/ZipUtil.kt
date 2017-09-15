@@ -29,19 +29,6 @@ object ZipUtil {
     }
   }
 
-  fun <T> withExtractedZipArchive(pluginZip: File, callback: (File) -> T): T {
-    val destinationDirectory = FileUtil.createTempDir(FileUtil.extractedPluginsDirectory, "plugin_")
-    extractZip(pluginZip, destinationDirectory)
-    try {
-      val result = callback(destinationDirectory)
-      FileUtils.deleteDirectory(destinationDirectory)
-      return result
-    } catch (e: Throwable) {
-      FileUtils.deleteDirectory(destinationDirectory)
-      throw e
-    }
-  }
-
   @Throws(IOException::class)
   fun archiveDirectory(directory: File, destination: File) {
     val archiver = createArchiver(destination)

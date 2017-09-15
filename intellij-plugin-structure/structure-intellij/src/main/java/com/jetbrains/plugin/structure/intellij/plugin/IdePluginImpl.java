@@ -27,6 +27,7 @@ public class IdePluginImpl implements IdePlugin {
   private final Map<String, IdePlugin> myOptionalDescriptors = new HashMap<String, IdePlugin>();
   private Multimap<String, Element> myExtensions;
   private File myOriginalFile;
+  private File myExtractDirectory;
   private Document myUnderlyingDocument;
   private String myPluginName;
   private String myPluginVersion;
@@ -207,6 +208,14 @@ public class IdePluginImpl implements IdePlugin {
     myOriginalFile = originalFile;
   }
 
+  public File getExtractDirectory() {
+    return myExtractDirectory;
+  }
+
+  void setExtractDirectory(File extractDirectory) {
+    this.myExtractDirectory = extractDirectory;
+  }
+
   @NotNull
   Map<PluginDependency, String> getOptionalDependenciesConfigFiles() {
     return Collections.unmodifiableMap(myOptionalConfigFiles);
@@ -223,5 +232,4 @@ public class IdePluginImpl implements IdePlugin {
     }
     return id + (getPluginVersion() != null ? ":" + getPluginVersion() : "");
   }
-
 }

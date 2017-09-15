@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.intellij.plugin;
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult;
 import com.jetbrains.plugin.structure.base.plugin.PluginManager;
+import com.jetbrains.plugin.structure.base.plugin.Settings;
 import com.jetbrains.plugin.structure.base.problems.*;
 import com.jetbrains.plugin.structure.base.utils.FileUtil;
 import com.jetbrains.plugin.structure.intellij.extractor.*;
@@ -42,8 +43,12 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   @NotNull
   private final XIncludePathResolver myPathResolver;
 
-  private IdePluginManager(@NotNull XIncludePathResolver pathResolver) {
+  @NotNull
+  private final File myExtractDirectory;
+
+  private IdePluginManager(@NotNull XIncludePathResolver pathResolver, @NotNull File extractDirectory) {
     myPathResolver = pathResolver;
+    myExtractDirectory = extractDirectory;
   }
 
   @NotNull
@@ -52,8 +57,18 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   }
 
   @NotNull
+  public static IdePluginManager createManager(@NotNull File extractDirectory) {
+    return createManager(new DefaultXIncludePathResolver(), extractDirectory);
+  }
+
+  @NotNull
   public static IdePluginManager createManager(@NotNull XIncludePathResolver pathResolver) {
-    return new IdePluginManager(pathResolver);
+    return createManager(pathResolver, Settings.EXTRACT_DIRECTORY.getAsFile());
+  }
+
+  @NotNull
+  public static IdePluginManager createManager(@NotNull XIncludePathResolver pathResolver, @NotNull File extractDirectory) {
+    return new IdePluginManager(pathResolver, extractDirectory);
   }
 
   private PluginCreator loadDescriptorFromJarFile(@NotNull File jarFile,
@@ -268,7 +283,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
                                                   boolean validateDescriptor) {
     ExtractorResult extractorResult;
     try {
-      extractorResult = PluginExtractor.INSTANCE.extractPlugin(zipPlugin);
+      extractorResult = PluginExtractor.INSTANCE.extractPlugin(zipPlugin, myExtractDirectory);
     } catch (Exception e) {
       LOG.info("Unable to extract plugin zip " + zipPlugin, e);
       return new PluginCreator(PLUGIN_XML, new UnableToExtractZip(zipPlugin), zipPlugin);
@@ -288,13 +303,18 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   @NotNull
   @Override
   public PluginCreationResult<IdePlugin> createPlugin(@NotNull File pluginFile) {
-    PluginCreator pluginCreator = getPluginCreatorWithResult(pluginFile, true);
-    pluginCreator.setOriginalFile(pluginFile);
+    return createPlugin(pluginFile, true);
+  }
+
+  @NotNull
+  public PluginCreationResult<IdePlugin> createPlugin(@NotNull File pluginFile, boolean validateDescriptor) {
+    PluginCreator pluginCreator = getPluginCreatorWithResult(pluginFile, validateDescriptor);
+    pluginCreator.setOriginalFileAndExtractDir(pluginFile, myExtractDirectory);
     return pluginCreator.getPluginCreationResult();
   }
 
   @NotNull
-  public PluginCreator getPluginCreatorWithResult(@NotNull File pluginFile, boolean validateDescriptor) {
+  private PluginCreator getPluginCreatorWithResult(@NotNull File pluginFile, boolean validateDescriptor) {
     if (!pluginFile.exists()) {
       throw new IllegalArgumentException("Plugin file " + pluginFile + " does not exist");
     }

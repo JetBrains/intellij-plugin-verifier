@@ -1,6 +1,8 @@
 package com.jetbrains.plugin.structure.classes.resolvers;
 
+import com.jetbrains.plugin.structure.base.plugin.Settings;
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin;
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -32,7 +34,8 @@ public abstract class Resolver implements Closeable {
    */
   @NotNull
   public static Resolver createPluginResolver(@NotNull IdePlugin plugin) throws IOException {
-    return plugin.getOriginalFile() == null ? getEmptyResolver() : PluginResolver.createPluginResolver(plugin.getOriginalFile());
+    File extractDir = (plugin instanceof IdePluginImpl) ? ((IdePluginImpl) plugin).getExtractDirectory() : Settings.EXTRACT_DIRECTORY.getAsFile();
+    return plugin.getOriginalFile() == null ? getEmptyResolver() : PluginResolver.createPluginResolver(plugin.getOriginalFile(), extractDir);
   }
 
   /**

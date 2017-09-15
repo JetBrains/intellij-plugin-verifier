@@ -12,32 +12,6 @@ object FileUtil {
 
   private val TEMP_DIR_ATTEMPTS = 10000
 
-  private val tempDirectory: File
-    get() {
-      val tempDir = System.getProperty("intellij.structure.temp.dir")
-      if (tempDir != null) {
-        return File(tempDir)
-      }
-      return FileUtils.getTempDirectory()
-    }
-
-  val extractedPluginsDirectory: File
-    get() {
-      val dir = File(tempDirectory, "extracted-plugins")
-      if (!dir.isDirectory) {
-        try {
-          if (dir.exists()) {
-            FileUtils.forceDelete(dir)
-          }
-          FileUtils.forceMkdir(dir)
-        } catch (e: IOException) {
-          throw IOException("Unable to create plugins cache directory " + dir.absoluteFile + " (check access permissions)", e)
-        }
-
-      }
-      return dir
-    }
-
   //it's synchronized because otherwise there is a possibility of two threads creating the same directory
   @Synchronized
   fun createTempDir(parent: File, prefix: String): File {
@@ -58,6 +32,16 @@ object FileUtil {
     throw IllegalStateException("Failed to create directory under " + parent.absolutePath + " within "
         + TEMP_DIR_ATTEMPTS + " attempts (tried "
         + baseName + "_0 to " + baseName + "_" + (TEMP_DIR_ATTEMPTS - 1) + ')', lastException)
+  }
+
+  fun createDir(dir: File): File {
+    if (!dir.isDirectory) {
+      FileUtils.forceMkdir(dir)
+      if (!dir.isDirectory) {
+        throw IOException("Failed to create directory $dir")
+      }
+    }
+    return dir
   }
 
   private fun hasExtension(file: File, extension: String): Boolean =

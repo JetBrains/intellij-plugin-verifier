@@ -41,13 +41,13 @@ public class PluginResolver extends Resolver {
   }
 
   @NotNull
-  public static Resolver createPluginResolver(@NotNull File pluginFile) throws IOException {
+  public static Resolver createPluginResolver(@NotNull File pluginFile, @NotNull File extractDirectory) throws IOException {
     if (!pluginFile.exists()) {
       throw new IllegalArgumentException("Plugin file doesn't exist " + pluginFile);
     }
     if (pluginFile.isDirectory() || FileUtil.INSTANCE.isJarOrZip(pluginFile)) {
       if (FileUtil.INSTANCE.isZip(pluginFile)) {
-        ExtractorResult extractorResult = PluginExtractor.INSTANCE.extractPlugin(pluginFile);
+        ExtractorResult extractorResult = PluginExtractor.INSTANCE.extractPlugin(pluginFile, extractDirectory);
         if (extractorResult instanceof ExtractorSuccess) {
           ExtractedPluginFile extractedPluginFile = ((ExtractorSuccess) extractorResult).getExtractedPlugin();
           return new PluginResolver(extractedPluginFile);

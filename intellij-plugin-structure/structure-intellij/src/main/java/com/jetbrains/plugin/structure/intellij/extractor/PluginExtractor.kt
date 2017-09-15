@@ -14,13 +14,12 @@ import java.io.File
  */
 object PluginExtractor {
 
-  fun extractPlugin(pluginZip: File): ExtractorResult {
+  fun extractPlugin(pluginZip: File, extractDirectory: File): ExtractorResult {
     if (!FileUtil.isZip(pluginZip)) {
       throw IllegalArgumentException("Must be a zip archive: " + pluginZip)
     }
 
-    val extractedDirectory = FileUtil.extractedPluginsDirectory
-    val extractedPlugin = FileUtil.createTempDir(extractedDirectory, "plugin_")
+    val extractedPlugin = FileUtil.createTempDir(extractDirectory, "plugin_")
 
     try {
       ZipUtil.extractZip(pluginZip, extractedPlugin)

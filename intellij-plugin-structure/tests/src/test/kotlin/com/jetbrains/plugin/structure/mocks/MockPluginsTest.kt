@@ -17,7 +17,9 @@ import org.hamcrest.CoreMatchers.*
 import org.hamcrest.collection.IsIn.isIn
 import org.junit.Assert
 import org.junit.Assert.*
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import java.io.File
 
 /**
@@ -25,6 +27,10 @@ import java.io.File
  */
 class MockPluginsTest : BaseMockPluginTest() {
   override fun getMockPluginBuildDirectory(): File = File("mock-plugin/build/mocks")
+
+  @JvmField
+  @Rule
+  var tempFolder: TemporaryFolder = TemporaryFolder()
 
   @Test
   fun `invalid plugin with classes packed in a root of a zip`() {
@@ -109,7 +115,8 @@ class MockPluginsTest : BaseMockPluginTest() {
   private fun testMockPluginStructureAndConfiguration(pluginPath: String, vararg classesPath: String) {
     val pluginFile = getMockPluginFile(pluginPath)
 
-    val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
+    val extractDirectory = tempFolder.newFolder()
+    val pluginCreationResult = IdePluginManager.createManager(extractDirectory).createPlugin(pluginFile)
     if (pluginCreationResult is PluginCreationFail) {
       val message = pluginCreationResult.errorsAndWarnings.joinToString(separator = "\n") { it.message }
       fail(message)

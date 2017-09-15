@@ -228,9 +228,10 @@ public final class PluginCreator {
     return myProblems;
   }
 
-  public void setOriginalFile(File originalFile) {
+  public void setOriginalFileAndExtractDir(@NotNull File originalFile, @NotNull File extractedDir) {
     if (myPlugin != null) {
       myPlugin.setOriginalPluginFile(originalFile);
+      myPlugin.setExtractDirectory(extractedDir);
     }
   }
 
