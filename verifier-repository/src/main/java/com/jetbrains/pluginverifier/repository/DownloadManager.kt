@@ -81,18 +81,16 @@ object DownloadManager {
       .build()
       .create(DownloadApi::class.java)
 
-  private fun getEstimatedSpaceOrUnknown(): String {
-    val availableSpace = spaceWatcher.estimateAvailableSpace()
-    return if (availableSpace != null) availableSpace.bytesToMegabytes() + " Mb" else "<unknown>"
-  }
-
   @Synchronized
   private fun releaseOldLocksAndDeleteUnusedPlugins() {
-    LOG.info("It's time to remove unused plugins from cache. Cache usages: ${spaceWatcher.getSpaceUsage()}; " +
-        "Estimated available space: ${getEstimatedSpaceOrUnknown()}")
+    val spaceReport = spaceWatcher.getSpaceReport()
+    LOG.info("It's time to remove unused plugins from cache. Download cache usage: ${spaceReport.usedSpace.bytesToMegabytes()} Mb; " +
+        "Estimated available space (Mb): ${spaceReport.estimatedAvailableSpace?.bytesToMegabytes() ?: "<unknown>"}")
 
     releaseOldLocks()
-    if (spaceWatcher.isLittleSpace()) {
+    val newSpaceReport = spaceWatcher.getSpaceReport()
+    if ((newSpaceReport.estimatedAvailableSpace ?: 0) < newSpaceReport.lowSpaceThreshold) {
+      LOG.warn("Not enough space: $newSpaceReport")
       deleteUnusedPlugins()
     }
   }
@@ -108,16 +106,22 @@ object DownloadManager {
     LOG.info("Unused updates to be deleted: [{}]", updatesToDelete.joinToString())
 
     for (update in updatesToDelete) {
-      if (spaceWatcher.isEnoughSpace()) {
-        LOG.debug("Enough space after cleanup: ${getEstimatedSpaceOrUnknown()}")
+      val spaceReport = spaceWatcher.getSpaceReport()
+      if (spaceReport.estimatedAvailableSpace == null || spaceReport.estimatedAvailableSpace > spaceReport.enoughSpaceThreshold) {
+        if (spaceReport.estimatedAvailableSpace != null) {
+          LOG.info("Unable to evaluate available space so assume it is enough")
+        } else {
+          LOG.info("Enough space after cleanup ${spaceReport.estimatedAvailableSpace!!.bytesToMegabytes()} Mb > ${spaceReport.enoughSpaceThreshold.bytesToMegabytes()} Mb")
+        }
         break
       }
-      LOG.debug("Deleting unused update $update with size ${update.length().bytesToMegabytes()} Mb")
+      LOG.info("Deleting unused update $update with size ${update.length().bytesToMegabytes()} Mb")
       update.deleteLogged()
     }
 
-    if (spaceWatcher.isLittleSpace()) {
-      LOG.warn("Available space after cleanup is not sufficient!: ${getEstimatedSpaceOrUnknown()}")
+    val spaceReport = spaceWatcher.getSpaceReport()
+    if (spaceReport.estimatedAvailableSpace != null && spaceReport.estimatedAvailableSpace < spaceReport.lowSpaceThreshold) {
+      LOG.warn("Available space after cleanup is not sufficient! ${spaceReport.estimatedAvailableSpace.bytesToMegabytes()} Mb < ${spaceReport.lowSpaceThreshold.bytesToMegabytes()} Mb")
     }
   }
 
@@ -267,7 +271,8 @@ object DownloadManager {
     val lock = registerLock(pluginFile)
 
     try {
-      if (spaceWatcher.isLittleSpace()) {
+      val spaceReport = spaceWatcher.getSpaceReport()
+      if (spaceReport.estimatedAvailableSpace != null && spaceReport.estimatedAvailableSpace < spaceReport.lowSpaceThreshold) {
         releaseOldLocksAndDeleteUnusedPlugins()
       }
     } catch (e: Throwable) {

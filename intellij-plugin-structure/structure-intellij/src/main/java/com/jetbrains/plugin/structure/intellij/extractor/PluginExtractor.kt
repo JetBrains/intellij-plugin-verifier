@@ -8,14 +8,12 @@ import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsUnknown
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipIsEmpty
 import org.apache.commons.io.FileUtils
 import java.io.File
-import java.io.IOException
 
 /**
  * @author Sergey Patrikeev
  */
 object PluginExtractor {
 
-  @Throws(IOException::class)
   fun extractPlugin(pluginZip: File): ExtractorResult {
     if (!FileUtil.isZip(pluginZip)) {
       throw IllegalArgumentException("Must be a zip archive: " + pluginZip)

@@ -22,7 +22,6 @@ object FileUtil {
     }
 
   val extractedPluginsDirectory: File
-    @Throws(IOException::class)
     get() {
       val dir = File(tempDirectory, "extracted-plugins")
       if (!dir.isDirectory) {
@@ -41,7 +40,6 @@ object FileUtil {
 
   //it's synchronized because otherwise there is a possibility of two threads creating the same directory
   @Synchronized
-  @Throws(IOException::class)
   fun createTempDir(parent: File, prefix: String): File {
     val baseName = prefix + "_" + System.currentTimeMillis()
     var lastException: IOException? = null
