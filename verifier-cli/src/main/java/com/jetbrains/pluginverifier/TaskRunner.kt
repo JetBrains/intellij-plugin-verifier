@@ -2,6 +2,9 @@ package com.jetbrains.pluginverifier
 
 import com.jetbrains.pluginverifier.api.Progress
 import com.jetbrains.pluginverifier.options.CmdOpts
+import com.jetbrains.pluginverifier.plugin.PluginCreator
+import com.jetbrains.pluginverifier.repository.IdeRepository
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.tasks.TaskParameters
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
@@ -17,15 +20,25 @@ abstract class TaskRunner {
 
   abstract val commandName: String
 
-  protected abstract fun getParametersBuilder(): TaskParametersBuilder
+  protected abstract fun getParametersBuilder(pluginRepository: PluginRepository, ideRepository: IdeRepository, pluginCreator: PluginCreator): TaskParametersBuilder
 
-  protected abstract fun createTask(parameters: TaskParameters): Task
+  protected abstract fun createTask(parameters: TaskParameters, pluginRepository: PluginRepository, pluginCreator: PluginCreator): Task
 
-  fun runTask(opts: CmdOpts, freeArgs: List<String>, progress: Progress): TaskResult =
-      getParametersBuilder().build(opts, freeArgs).use { parameters ->
-        LOG.info("Task $commandName parameters: $parameters")
-        val task = createTask(parameters)
-        task.execute(progress)
-      }
+  fun runTask(
+      opts: CmdOpts,
+      freeArgs: List<String>,
+      pluginRepository: PluginRepository,
+      ideRepository: IdeRepository,
+      pluginCreator: PluginCreator,
+      progress: Progress
+  ): TaskResult {
+    val parametersBuilder = getParametersBuilder(pluginRepository, ideRepository, pluginCreator)
+    val parameters = parametersBuilder.build(opts, freeArgs)
+    return parameters.use {
+      LOG.info("Task $commandName parameters: $parameters")
+      val task = createTask(parameters, pluginRepository, pluginCreator)
+      task.execute(progress)
+    }
+  }
 
 }

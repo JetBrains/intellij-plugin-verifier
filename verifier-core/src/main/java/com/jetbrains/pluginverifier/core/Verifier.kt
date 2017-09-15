@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.dependencies.*
 import com.jetbrains.pluginverifier.misc.withDebug
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.warnings.Warning
@@ -23,7 +24,9 @@ import java.util.concurrent.Callable
 class Verifier(val pluginCoordinate: PluginCoordinate,
                val ideDescriptor: IdeDescriptor,
                val runtimeResolver: Resolver,
-               val params: VerifierParams) : Callable<Result> {
+               val params: VerifierParams,
+               val pluginRepository: PluginRepository,
+               val pluginCreator: PluginCreator) : Callable<Result> {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(Verifier::class.java)
@@ -35,7 +38,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
     }
   }
 
-  private fun createPluginAndDoVerification(): Result = PluginCreator.createPlugin(pluginCoordinate).use { createPluginResult ->
+  private fun createPluginAndDoVerification(): Result = pluginCreator.createPlugin(pluginCoordinate).use { createPluginResult ->
     val (pluginInfo, verdict) = getPluginInfoAndVerdict(createPluginResult)
     Result(pluginInfo, ideDescriptor.ideVersion, verdict)
   }
@@ -80,7 +83,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
     val warnings = creationOk.warnings
     val pluginResolver = creationOk.resolver
 
-    val dependencyResolver = params.dependencyResolver ?: IdeDependencyResolver(ideDescriptor.ide)
+    val dependencyResolver = params.dependencyResolver
     DepGraphBuilder(dependencyResolver).use { graphBuilder ->
       val (graph, start) = graphBuilder.build(creationOk.plugin, creationOk.resolver)
       val apiGraph = DepGraph2ApiGraphConverter.convert(graph, start)

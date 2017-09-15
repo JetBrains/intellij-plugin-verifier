@@ -3,40 +3,18 @@ package com.jetbrains.pluginverifier.repository
 import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
-import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Query
+import java.io.File
 import java.net.HttpURLConnection
 import java.util.concurrent.TimeUnit
 
-private interface RepositoryApi {
-
-  @GET("/manager/getUpdateInfoById")
-  fun getUpdateInfoById(@Query("updateId") updateId: Int): Call<UpdateInfo>
-
-  @GET("/manager/allCompatibleUpdates")
-  fun getLastCompatibleUpdates(@Query("build") build: String): Call<List<UpdateInfo>>
-
-  @GET("/plugin/updates")
-  fun getUpdates(@Query("xmlId") xmlId: String): Call<UpdatesResponse>
-
-  @GET("/manager/originalCompatibleUpdatesByPluginIds")
-  fun getOriginalCompatibleUpdatesByPluginIds(@Query("build") build: String, @Query("pluginIds") pluginId: String): Call<List<UpdateInfo>>
-
-}
-
-private data class UpdatesResponse(val pluginXmlId: String,
-                                   val pluginName: String,
-                                   val vendor: String,
-                                   val updates: List<Update>?) {
-  data class Update(val id: Int, val updateVersion: String, val since: String?, val until: String?)
-}
-
-object RepositoryManager : PluginRepository {
+class PublicPluginRepository(private val repositoryUrl: String,
+                             downloadDir: File,
+                             downloadDirMaxSpace: Long) : PluginRepository {
   /**
    * TODO: implement this mapping on the Plugins Repository.
    * The list of IntelliJ plugins which define some modules
@@ -48,17 +26,19 @@ object RepositoryManager : PluginRepository {
       "com.intellij.modules.python", "Pythonid",
       "com.intellij.modules.swift.lang", "com.intellij.clion-swift")
 
-  private val repositoryUrl = RepositoryConfiguration.pluginRepositoryUrl.trimEnd('/')
+  private val downloadManager = DownloadManager(downloadDir.createDir(), downloadDirMaxSpace, {
+    repositoryApi.downloadFile(it.updateId).executeSuccessfully()
+  })
 
   override fun getPluginOverviewUrl(update: UpdateInfo): String? = repositoryUrl + "/plugin/index?xmlId=" + update.pluginId
 
   override fun getUpdateInfoById(updateId: Int): UpdateInfo? {
     val call = repositoryApi.getUpdateInfoById(updateId)
     val response = call.execute()
-    if (response.isSuccessful) {
-      return response.body()
+    return if (response.isSuccessful) {
+      response.body()
     } else if (response.code() == HttpURLConnection.HTTP_NOT_FOUND || response.code() == HttpURLConnection.HTTP_BAD_REQUEST) {
-      return null
+      null
     } else {
       throw RuntimeException("Unable to get update info #$updateId: ${response.code()}")
     }
@@ -67,21 +47,15 @@ object RepositoryManager : PluginRepository {
   override fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo>? {
     val call = repositoryApi.getUpdates(pluginId)
     val response = call.execute()
-    if (response.isSuccessful) {
-      val updates = response.body()
-      //TODO: get rid of this when the Repository is ready.
-      if (updates.updates == null) {
-        return null
+    return when {
+      response.isSuccessful -> {
+        val body = response.body()
+        val pluginXmlId = body.pluginXmlId
+        val name = body.pluginName
+        body.updates.map { UpdateInfo(pluginXmlId, name, it.updateVersion, it.id, body.vendor) }
       }
-      val pluginXmlId = updates.pluginXmlId
-      val name = updates.pluginName
-      return updates.updates.map {
-        UpdateInfo(pluginXmlId, name, it.updateVersion, it.id, updates.vendor)
-      }
-    } else if (response.code() == HttpURLConnection.HTTP_NOT_FOUND) {
-      return null
-    } else {
-      throw RuntimeException("Unable to get updates by pluginId = $pluginId: ${response.code()}")
+      response.code() == HttpURLConnection.HTTP_NOT_FOUND -> null
+      else -> throw RuntimeException("Unable to get updates by pluginId = $pluginId: ${response.code()}")
     }
   }
 
@@ -97,13 +71,13 @@ object RepositoryManager : PluginRepository {
   override fun getIdOfPluginDeclaringModule(moduleId: String): String? =
       INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
 
-  override fun downloadPluginFile(update: UpdateInfo): DownloadPluginResult = DownloadManager.getOrLoadUpdate(update)
+  override fun downloadPluginFile(update: UpdateInfo): DownloadPluginResult = downloadManager.getOrLoadUpdate(update)
 
-  private val repositoryApi: RepositoryApi = Retrofit.Builder()
+  private val repositoryApi = Retrofit.Builder()
       .baseUrl(repositoryUrl + '/')
       .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
-      .create(RepositoryApi::class.java)
+      .create(RetrofitRepositoryApi::class.java)
 
 }

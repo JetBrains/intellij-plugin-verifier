@@ -17,7 +17,7 @@ data class CheckIdeParams(val ideDescriptor: IdeDescriptor,
                           val externalClassPath: Resolver,
                           val externalClassesPrefixes: List<String>,
                           val problemsFilter: ProblemsFilter,
-                          val dependencyResolver: DependencyResolver? = null) : TaskParameters {
+                          val dependencyResolver: DependencyResolver) : TaskParameters {
   override fun presentableText(): String = """Check IDE configuration parameters:
 IDE to be checked: $ideDescriptor
 JDK: $jdkDescriptor

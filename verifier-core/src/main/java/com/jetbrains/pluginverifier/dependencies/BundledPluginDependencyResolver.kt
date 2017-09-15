@@ -6,7 +6,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 
-class BundledPluginDependencyResolver(val ide: Ide) : DependencyResolver {
+class BundledPluginDependencyResolver(val ide: Ide, val pluginCreator: PluginCreator) : DependencyResolver {
 
   override fun resolve(dependency: PluginDependency): DependencyResolver.Result {
     val id = dependency.id
@@ -22,7 +22,7 @@ class BundledPluginDependencyResolver(val ide: Ide) : DependencyResolver {
   }
 
   private fun createDependencyResultByExistingPlugin(plugin: IdePlugin): DependencyResolver.Result {
-    val pluginCreateResult = PluginCreator.createResultByExistingPlugin(plugin)
+    val pluginCreateResult = pluginCreator.createResultByExistingPlugin(plugin)
     return when (pluginCreateResult) {
       is CreatePluginResult.OK -> DependencyResolver.Result.CreatedResolver(pluginCreateResult.plugin, pluginCreateResult.resolver)
       is CreatePluginResult.BadPlugin -> DependencyResolver.Result.ProblematicDependency(pluginCreateResult.pluginErrorsAndWarnings)

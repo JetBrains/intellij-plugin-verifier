@@ -11,13 +11,12 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.tasks.TrunkApiChanges
 
 /**
  * @author Sergey Patrikeev
  */
-class TrunkApiChangesOutput(private val tcLog: TeamCityLog, private val repository: PluginRepository = RepositoryManager) {
+class TrunkApiChangesOutput(private val tcLog: TeamCityLog, private val repository: PluginRepository) {
 
   private fun TrunkApiChanges.getNewProblems(): Multimap<Problem, PluginInfo> {
     val result = HashMultimap.create<Problem, PluginInfo>()

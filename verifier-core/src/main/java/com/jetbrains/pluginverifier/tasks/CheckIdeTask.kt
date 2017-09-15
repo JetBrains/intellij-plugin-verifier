@@ -7,10 +7,12 @@ import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.core.VerifierExecutor
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
-import com.jetbrains.pluginverifier.repository.RepositoryManager
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 
-class CheckIdeTask(private val parameters: CheckIdeParams) : Task() {
+class CheckIdeTask(private val parameters: CheckIdeParams,
+                   val pluginRepository: PluginRepository,
+                   val pluginCreator: PluginCreator) : Task() {
 
   override fun execute(progress: Progress): CheckIdeResult {
     val notExcludedPlugins = parameters.pluginsToCheck.filterNot { isExcluded(it) }
@@ -23,7 +25,7 @@ class CheckIdeTask(private val parameters: CheckIdeParams) : Task() {
       PluginIdAndVersion(updateInfo.pluginId, updateInfo.version) in parameters.excludedPlugins
     }
     is PluginCoordinate.ByFile -> {
-      PluginCreator.createPluginByFile(pluginCoordinate.pluginFile).use { createPluginResult ->
+      pluginCreator.createPluginByFile(pluginCoordinate.pluginFile).use { createPluginResult ->
         if (createPluginResult is CreatePluginResult.OK) {
           val plugin = createPluginResult.plugin
           return PluginIdAndVersion(plugin.pluginId ?: "", plugin.pluginVersion ?: "") in parameters.excludedPlugins
@@ -37,14 +39,14 @@ class CheckIdeTask(private val parameters: CheckIdeParams) : Task() {
     val verifierParams = VerifierParams(parameters.jdkDescriptor, parameters.externalClassesPrefixes, parameters.problemsFilter, parameters.externalClassPath, parameters.dependencyResolver)
     val verifier = VerifierExecutor(verifierParams)
     verifier.use {
-      val results = verifier.verify(notExcludedPlugins.map { it to parameters.ideDescriptor }, progress)
+      val results = verifier.verify(notExcludedPlugins.map { it to parameters.ideDescriptor }, progress, pluginRepository, pluginCreator)
       return CheckIdeResult(parameters.ideDescriptor.ideVersion, results, parameters.excludedPlugins, getMissingUpdatesProblems())
     }
   }
 
   private fun getMissingUpdatesProblems(): List<MissingCompatibleUpdate> {
     val ideVersion = parameters.ideDescriptor.ideVersion
-    val existingUpdatesForIde = RepositoryManager.getLastCompatibleUpdates(ideVersion)
+    val existingUpdatesForIde = pluginRepository.getLastCompatibleUpdates(ideVersion)
         .filterNot { PluginIdAndVersion(it.pluginId, it.version) in parameters.excludedPlugins }
         .map { it.pluginId }
         .toSet()
@@ -67,10 +69,10 @@ class CheckIdeTask(private val parameters: CheckIdeParams) : Task() {
     val ideVersion = version.asString()
     if (ideVersion.startsWith("IU-")) {
       val communityVersion = "IC-" + ideVersion.substringAfter(ideVersion, "IU-")
-      try {
-        return RepositoryManager.getLastCompatibleUpdateOfPlugin(IdeVersion.createIdeVersion(communityVersion), pluginId)
+      return try {
+        pluginRepository.getLastCompatibleUpdateOfPlugin(IdeVersion.createIdeVersion(communityVersion), pluginId)
       } catch (e: Exception) {
-        return null
+        null
       }
     }
     return null

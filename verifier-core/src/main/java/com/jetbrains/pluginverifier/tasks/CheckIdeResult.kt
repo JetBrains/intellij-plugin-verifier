@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.output.*
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.utils.ParametersListUtil
 import java.io.File
 import java.io.PrintWriter
@@ -15,9 +16,9 @@ data class CheckIdeResult(val ideVersion: IdeVersion,
                           val excludedPlugins: List<PluginIdAndVersion>,
                           val noCompatibleUpdatesProblems: List<MissingCompatibleUpdate>) : TaskResult {
 
-  override fun printResults(printerOptions: PrinterOptions) {
+  override fun printResults(printerOptions: PrinterOptions, pluginRepository: PluginRepository) {
     if (printerOptions.needTeamCityLog) {
-      printTcLog(TeamCityPrinter.GroupBy.parse(printerOptions.teamCityGroupType), true, printerOptions)
+      printTcLog(TeamCityPrinter.GroupBy.parse(printerOptions.teamCityGroupType), true, printerOptions, pluginRepository)
     } else {
       printOnStdOut(printerOptions)
     }
@@ -50,9 +51,9 @@ data class CheckIdeResult(val ideVersion: IdeVersion,
     HtmlPrinter(listOf(ideVersion), { (pluginId, pluginVersion) -> PluginIdAndVersion(pluginId, pluginVersion) in excludedPlugins }, htmlFile.create()).printResults(results, printerOptions)
   }
 
-  fun printTcLog(groupBy: TeamCityPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: PrinterOptions) {
+  private fun printTcLog(groupBy: TeamCityPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: PrinterOptions, pluginRepository: PluginRepository) {
     val tcLog = TeamCityLog(System.out)
-    val vPrinter = TeamCityPrinter(tcLog, groupBy)
+    val vPrinter = TeamCityPrinter(tcLog, groupBy, pluginRepository)
     vPrinter.printResults(results, vPrinterOptions)
     vPrinter.printNoCompatibleUpdatesProblems(noCompatibleUpdatesProblems)
     if (setBuildStatus) {

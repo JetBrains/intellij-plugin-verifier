@@ -4,13 +4,17 @@ import com.google.common.collect.ImmutableSet
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
-import com.jetbrains.pluginverifier.repository.*
+import com.jetbrains.pluginverifier.repository.DownloadPluginResult
+import com.jetbrains.pluginverifier.repository.FileLock
+import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 
 /**
  * @author Sergey Patrikeev
  */
 class DownloadDependencyResolver(private val dependencySelector: DependencySelector,
-                                 private val pluginRepository: PluginRepository = RepositoryManager) : DependencyResolver {
+                                 private val pluginRepository: PluginRepository,
+                                 private val pluginCreator: PluginCreator) : DependencyResolver {
 
   private companion object {
     val IDEA_ULTIMATE_MODULES: Set<String> = ImmutableSet.of(
@@ -63,7 +67,7 @@ class DownloadDependencyResolver(private val dependencySelector: DependencySelec
   }
 
   private fun getDependencyResultByDownloadedUpdate(pluginLock: FileLock, updateInfo: UpdateInfo): DependencyResolver.Result {
-    val dependencyCreationResult = PluginCreator.createPluginByFileLock(pluginLock)
+    val dependencyCreationResult = pluginCreator.createPluginByFileLock(pluginLock)
     return when (dependencyCreationResult) {
       is CreatePluginResult.OK -> {
         DependencyResolver.Result.Downloaded(dependencyCreationResult.plugin, dependencyCreationResult.resolver, updateInfo, pluginLock)

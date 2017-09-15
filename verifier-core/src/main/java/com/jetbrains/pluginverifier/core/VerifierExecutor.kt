@@ -6,6 +6,8 @@ import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.pluralize
+import com.jetbrains.pluginverifier.plugin.PluginCreator
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 import java.io.Closeable
@@ -49,9 +51,9 @@ class VerifierExecutor(val params: VerifierParams) : Closeable {
     return maxOf(4, minOf(maxByMemory, availableCpu)).toInt()
   }
 
-  fun verify(tasks: List<Pair<PluginCoordinate, IdeDescriptor>>, progress: Progress): List<Result> {
+  fun verify(tasks: List<Pair<PluginCoordinate, IdeDescriptor>>, progress: Progress, pluginRepository: PluginRepository, pluginCreator: PluginCreator): List<Result> {
     tasks.forEach {
-      val worker = Verifier(it.first, it.second, runtimeResolver, params)
+      val worker = Verifier(it.first, it.second, runtimeResolver, params, pluginRepository, pluginCreator)
       completionService.submit(worker)
     }
     return getResults(tasks.size, progress)

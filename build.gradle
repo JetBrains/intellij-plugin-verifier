@@ -1,7 +1,7 @@
 buildscript {
 
   ext.kotlin_version = '1.1.4-3'
-  ext.intellijStructureVersion = '3.0'
+  ext.intellijStructureVersion = '3.1'
 
   repositories {
     jcenter()

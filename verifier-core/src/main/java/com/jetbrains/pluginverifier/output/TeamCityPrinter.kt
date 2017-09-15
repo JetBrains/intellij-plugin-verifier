@@ -13,7 +13,6 @@ import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.problems.Problem
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.RepositoryManager
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.tasks.MissingCompatibleUpdate
 import org.slf4j.Logger
@@ -25,7 +24,7 @@ import org.slf4j.LoggerFactory
  */
 class TeamCityPrinter(private val tcLog: TeamCityLog,
                       private val groupBy: GroupBy,
-                      private val repository: PluginRepository = RepositoryManager) : Printer {
+                      private val repository: PluginRepository) : Printer {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(TeamCityPrinter::class.java)

@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.dependencies.DepGraph2ApiGraphConverter
 import com.jetbrains.pluginverifier.dependencies.DepGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.plugin.PluginCreatorImpl
 import com.jetbrains.pluginverifier.repository.DownloadPluginResult
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
@@ -14,6 +15,7 @@ import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.io.File
 
 /**
  * @author Sergey Patrikeev
@@ -57,7 +59,8 @@ class IdeDependencyResolverTest {
       }
     }
 
-    val dependencyResolver = IdeDependencyResolver(ide, repository)
+    val pluginCreator = PluginCreatorImpl(repository, File("isn't necessary"))
+    val dependencyResolver = IdeDependencyResolver(ide, repository, pluginCreator)
     val (graph, start) = DepGraphBuilder(dependencyResolver).build(plugin, Resolver.getEmptyResolver())
     val dependenciesGraph = DepGraph2ApiGraphConverter.convert(graph, start)
 

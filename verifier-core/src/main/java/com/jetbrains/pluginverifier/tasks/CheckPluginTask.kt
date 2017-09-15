@@ -9,12 +9,15 @@ import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
+import com.jetbrains.pluginverifier.repository.PluginRepository
 
-class CheckPluginTask(private val parameters: CheckPluginParams) : Task() {
+class CheckPluginTask(private val parameters: CheckPluginParams,
+                      private val pluginRepository: PluginRepository,
+                      private val pluginCreator: PluginCreator) : Task() {
 
   private fun getDependencyResolver(ide: Ide, allPluginsToCheck: List<CreatePluginResult>): DependencyResolver = object : DependencyResolver {
 
-    private val ideDependencyResolver = IdeDependencyResolver(ide)
+    private val ideDependencyResolver = IdeDependencyResolver(ide, pluginRepository, pluginCreator)
 
     override fun resolve(dependency: PluginDependency): DependencyResolver.Result {
       return findPluginInListOfPluginsToCheck(dependency) ?: ideDependencyResolver.resolve(dependency)
@@ -30,7 +33,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams) : Task() {
   }
 
   override fun execute(progress: Progress): CheckPluginResult {
-    val allPluginsToCheck = parameters.pluginCoordinates.map { PluginCreator.createPlugin(it) }
+    val allPluginsToCheck = parameters.pluginCoordinates.map { pluginCreator.createPlugin(it) }
     try {
       return doExecute(progress, allPluginsToCheck)
     } finally {
@@ -56,7 +59,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams) : Task() {
     val verifierParams = VerifierParams(parameters.jdkDescriptor, parameters.externalClassesPrefixes, parameters.problemsFilter, parameters.externalClasspath, dependencyResolver)
     val verifier = VerifierExecutor(verifierParams)
     verifier.use {
-      val results = verifier.verify(listOf(pluginCoordinate to ideDescriptor), progress)
+      val results = verifier.verify(listOf(pluginCoordinate to ideDescriptor), progress, pluginRepository, pluginCreator)
       return results.single()
     }
   }

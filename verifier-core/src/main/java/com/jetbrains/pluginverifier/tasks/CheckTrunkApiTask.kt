@@ -6,7 +6,8 @@ import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.Progress
 import com.jetbrains.pluginverifier.dependencies.*
-import com.jetbrains.pluginverifier.repository.RepositoryManager
+import com.jetbrains.pluginverifier.plugin.PluginCreator
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.utils.IdeResourceUtil
 import org.slf4j.Logger
@@ -15,7 +16,9 @@ import org.slf4j.LoggerFactory
 /**
  * @author Sergey Patrikeev
  */
-class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task() {
+class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
+                        private val pluginRepository: PluginRepository,
+                        private val pluginCreator: PluginCreator) : Task() {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiTask::class.java)
@@ -25,7 +28,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task() {
     val releaseVersion = parameters.releaseIde.ideVersion
     val trunkVersion = parameters.trunkIde.ideVersion
 
-    val pluginsToCheck = RepositoryManager.getLastCompatibleUpdates(releaseVersion).filterNot { it.pluginId in parameters.jetBrainsPluginIds }
+    val pluginsToCheck = pluginRepository.getLastCompatibleUpdates(releaseVersion).filterNot { it.pluginId in parameters.jetBrainsPluginIds }
 
     LOG.debug("The following updates will be checked with both #$trunkVersion and #$releaseVersion: " + pluginsToCheck.joinToString())
 
@@ -51,14 +54,14 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task() {
         parameters.problemsFilter,
         dependencyResolver
     )
-    return CheckIdeTask(checkIdeParams).execute(progress)
+    return CheckIdeTask(checkIdeParams, pluginRepository, pluginCreator).execute(progress)
   }
 
-  private val downloadReleaseCompatibleResolver = DownloadDependencyResolver(LastCompatibleSelector(parameters.releaseIde.ideVersion))
+  private val downloadReleaseCompatibleResolver = DownloadDependencyResolver(LastCompatibleSelector(parameters.releaseIde.ideVersion, pluginRepository), pluginRepository, pluginCreator)
 
   private inner class ReleaseResolver : DependencyResolver {
 
-    private val releaseBundledResolver = BundledPluginDependencyResolver(parameters.releaseIde.ide)
+    private val releaseBundledResolver = BundledPluginDependencyResolver(parameters.releaseIde.ide, pluginCreator)
 
     override fun resolve(dependency: PluginDependency): DependencyResolver.Result {
       val result = releaseBundledResolver.resolve(dependency)
@@ -72,9 +75,9 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task() {
 
   private inner class TrunkResolver : DependencyResolver {
 
-    private val trunkBundledResolver = BundledPluginDependencyResolver(parameters.trunkIde.ide)
+    private val trunkBundledResolver = BundledPluginDependencyResolver(parameters.trunkIde.ide, pluginCreator)
 
-    private val downloadLastUpdateResolver = DownloadDependencyResolver(LastUpdateSelector())
+    private val downloadLastUpdateResolver = DownloadDependencyResolver(LastUpdateSelector(pluginRepository), pluginRepository, pluginCreator)
 
     override fun resolve(dependency: PluginDependency): DependencyResolver.Result {
       val bundledResult = trunkBundledResolver.resolve(dependency)

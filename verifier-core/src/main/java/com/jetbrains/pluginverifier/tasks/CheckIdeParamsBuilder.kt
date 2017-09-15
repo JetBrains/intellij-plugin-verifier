@@ -3,10 +3,12 @@ package com.jetbrains.pluginverifier.tasks
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.JdkDescriptor
 import com.jetbrains.pluginverifier.api.PluginCoordinate
+import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.repository.RepositoryManager
+import com.jetbrains.pluginverifier.plugin.PluginCreator
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.utils.IdeResourceUtil
 import java.io.BufferedReader
@@ -14,7 +16,7 @@ import java.io.File
 import java.io.FileReader
 import java.io.IOException
 
-class CheckIdeParamsBuilder : TaskParametersBuilder {
+class CheckIdeParamsBuilder(val pluginRepository: PluginRepository, val pluginCreator: PluginCreator) : TaskParametersBuilder {
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckIdeParams {
     if (freeArgs.isEmpty()) {
       System.err.println("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"")
@@ -36,7 +38,7 @@ class CheckIdeParamsBuilder : TaskParametersBuilder {
         val excludedPlugins = parseExcludedPlugins(opts)
 
         val pluginsToCheck = getDescriptorsToCheck(checkAllBuilds, checkLastBuilds, ideDescriptor.ideVersion)
-        return CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, excludedPlugins, externalClassesPrefixes, externalClassPath, checkAllBuilds, problemsFilter)
+        return CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, excludedPlugins, externalClassesPrefixes, externalClassPath, checkAllBuilds, problemsFilter, IdeDependencyResolver(ideDescriptor.ide, pluginRepository, pluginCreator))
       }
     }
   }
@@ -96,16 +98,16 @@ class CheckIdeParamsBuilder : TaskParametersBuilder {
 
   private fun getUpdateInfosToCheck(checkAllBuilds: List<String>, checkLastBuilds: List<String>, ideVersion: IdeVersion): List<UpdateInfo> {
     if (checkAllBuilds.isEmpty() && checkLastBuilds.isEmpty()) {
-      return RepositoryManager.getLastCompatibleUpdates(ideVersion)
+      return pluginRepository.getLastCompatibleUpdates(ideVersion)
     } else {
       val myActualUpdatesToCheck = arrayListOf<UpdateInfo>()
 
       checkAllBuilds.flatMapTo(myActualUpdatesToCheck) {
-        RepositoryManager.getAllCompatibleUpdatesOfPlugin(ideVersion, it)
+        pluginRepository.getAllCompatibleUpdatesOfPlugin(ideVersion, it)
       }
 
       checkLastBuilds.distinct().mapNotNullTo(myActualUpdatesToCheck) {
-        RepositoryManager.getAllCompatibleUpdatesOfPlugin(ideVersion, it)
+        pluginRepository.getAllCompatibleUpdatesOfPlugin(ideVersion, it)
             .sortedByDescending { it.updateId }
             .firstOrNull()
       }

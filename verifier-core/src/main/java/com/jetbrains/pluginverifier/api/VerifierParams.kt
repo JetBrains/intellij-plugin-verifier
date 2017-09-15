@@ -33,7 +33,7 @@ data class VerifierParams(
      * Otherwise a default resolver which searches the plugin in the IDE
      * and in the Plugin Repository will be used.
      */
-    val dependencyResolver: DependencyResolver? = null
+    val dependencyResolver: DependencyResolver
 ) {
   fun isExternalClass(className: String): Boolean = externalClassesPrefixes.any { it.isNotEmpty() && className.startsWith(it) }
 }

@@ -15,7 +15,7 @@ import java.io.File
 /**
  * @author Sergey Patrikeev
  */
-class CheckTrunkApiParamsBuilder : TaskParametersBuilder {
+class CheckTrunkApiParamsBuilder(val ideRepository: IdeRepository) : TaskParametersBuilder {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiParamsBuilder::class.java)
@@ -68,7 +68,7 @@ class CheckTrunkApiParamsBuilder : TaskParametersBuilder {
 
   private fun downloadIdeByVersion(ideVersion: IdeVersion): File {
     val lastProgress = AtomicDouble()
-    return IdeRepository.getOrDownloadIde(ideVersion) {
+    return ideRepository.getOrDownloadIde(ideVersion) {
       if (it - lastProgress.get() > 0.1) {
         LOG.info("IDE #$ideVersion downloading progress ${(it * 100).toInt()}%")
         lastProgress.set(it)

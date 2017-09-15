@@ -1,14 +1,56 @@
 package com.jetbrains.pluginverifier
 
 import com.jetbrains.pluginverifier.api.DefaultProgress
+import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PublicOpts
+import com.jetbrains.pluginverifier.plugin.PluginCreatorImpl
+import com.jetbrains.pluginverifier.repository.IdeRepository
+import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.sampullara.cli.Args
+import org.apache.commons.io.FileUtils
+import java.io.File
 
 object PluginVerifierMain {
 
   private val taskRunners: List<TaskRunner> = listOf(CheckPluginRunner(), CheckIdeRunner(), CheckTrunkApiRunner())
+
+  private val DEFAULT_IDE_REPOSITORY_URL = "https://jetbrains.com"
+
+  private val DEFAULT_PLUGIN_REPOSITORY_URL = "https://plugins.jetbrains.com"
+
+  private fun getVerifierHomeDir(): File {
+    val verifierHomeDir = System.getProperty("plugin.verifier.home.dir")
+    if (verifierHomeDir != null) {
+      return File(verifierHomeDir)
+    }
+    val userHome = System.getProperty("user.home")
+    if (userHome != null) {
+      return File(userHome, ".pluginVerifier")
+    }
+    return File(FileUtils.getTempDirectory(), ".pluginVerifier")
+  }
+
+  private val ideRepositoryUrl: String by lazy {
+    System.getProperty("ide.repository.url")?.trimEnd('/') ?: DEFAULT_IDE_REPOSITORY_URL ?: throw RuntimeException("IDE repository URL is not specified")
+  }
+
+  private val pluginRepositoryUrl: String by lazy {
+    System.getProperty("plugin.repository.url")?.trimEnd('/') ?: DEFAULT_PLUGIN_REPOSITORY_URL ?: throw RuntimeException("Plugin repository URL is not specified")
+  }
+
+  private val downloadDirMaxSpace: Long? by lazy {
+    val property = System.getProperty("plugin.verifier.cache.dir.max.space")
+    return@lazy if (property != null) property.toLong() * FileUtils.ONE_MB else null
+  }
+
+
+  private val downloadDir: File = File(getVerifierHomeDir(), "loaded-plugins").createDir()
+
+  private val extractDir: File = File(getVerifierHomeDir(), "extracted-plugins").createDir()
+
+  private val ideDownloadDir: File = File(getVerifierHomeDir(), "ides").createDir()
 
   @JvmStatic
   fun main(args: Array<String>) {
@@ -30,10 +72,16 @@ object PluginVerifierMain {
     val command = freeArgs[0]
     freeArgs = freeArgs.drop(1)
 
-    val taskRunner = findTaskRunner(command)
-    val taskResult = taskRunner.runTask(opts, freeArgs, DefaultProgress())
+    val downloadDirMaxSpace = downloadDirMaxSpace ?: 5 * FileUtils.ONE_GB
+    val pluginRepository = PublicPluginRepository(pluginRepositoryUrl, downloadDir, downloadDirMaxSpace)
+    val ideRepository = IdeRepository(ideDownloadDir, ideRepositoryUrl)
+    val pluginCreator = PluginCreatorImpl(pluginRepository, extractDir)
+
+    val runner = findTaskRunner(command)
+    val result = runner.runTask(opts, freeArgs, pluginRepository, ideRepository, pluginCreator, DefaultProgress())
+
     val printerOptions = OptionsParser.parsePrinterOptions(opts)
-    taskResult.printResults(printerOptions)
+    result.printResults(printerOptions, pluginRepository)
   }
 
   private fun findTaskRunner(command: String?) = taskRunners.find { command == it.commandName }

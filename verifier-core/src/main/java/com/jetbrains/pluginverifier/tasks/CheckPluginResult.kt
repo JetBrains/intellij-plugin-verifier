@@ -4,14 +4,15 @@ import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.output.*
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import java.io.File
 import java.io.PrintWriter
 
 data class CheckPluginResult(val results: List<Result>) : TaskResult {
 
-  override fun printResults(printerOptions: PrinterOptions) {
+  override fun printResults(printerOptions: PrinterOptions, pluginRepository: PluginRepository) {
     if (printerOptions.needTeamCityLog) {
-      printTcLog(TeamCityPrinter.GroupBy.parse(printerOptions.teamCityGroupType), true, printerOptions)
+      printTcLog(TeamCityPrinter.GroupBy.parse(printerOptions.teamCityGroupType), true, printerOptions, pluginRepository)
     } else {
       printOnStdout(printerOptions)
     }
@@ -21,9 +22,9 @@ data class CheckPluginResult(val results: List<Result>) : TaskResult {
     }
   }
 
-  fun printTcLog(groupBy: TeamCityPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: PrinterOptions) {
+  fun printTcLog(groupBy: TeamCityPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: PrinterOptions, pluginRepository: PluginRepository) {
     val tcLog = TeamCityLog(System.out)
-    val vPrinter = TeamCityPrinter(tcLog, groupBy)
+    val vPrinter = TeamCityPrinter(tcLog, groupBy, pluginRepository)
     vPrinter.printResults(results, vPrinterOptions)
     if (setBuildStatus) {
       val totalProblemsNumber = results.flatMap {
