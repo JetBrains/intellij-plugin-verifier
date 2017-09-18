@@ -19,13 +19,11 @@ import java.io.IOException
 class CheckIdeParamsBuilder(val pluginRepository: PluginRepository, val pluginCreator: PluginCreator) : TaskParametersBuilder {
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckIdeParams {
     if (freeArgs.isEmpty()) {
-      System.err.println("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"")
-      System.exit(1)
+      throw IllegalArgumentException("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"")
     }
     val ideFile = File(freeArgs[0])
     if (!ideFile.isDirectory) {
-      System.err.println("IDE path must be a directory: " + ideFile)
-      System.exit(1)
+      throw IllegalArgumentException("IDE path must be a directory: " + ideFile)
     }
     OptionsParser.createIdeDescriptor(ideFile, opts).closeOnException { ideDescriptor ->
       val jdkDescriptor = JdkDescriptor(OptionsParser.getJdkDir(opts))

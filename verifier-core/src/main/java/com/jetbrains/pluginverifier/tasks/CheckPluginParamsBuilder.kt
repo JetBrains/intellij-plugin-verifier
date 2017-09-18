@@ -13,10 +13,9 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckPluginParams {
     if (freeArgs.size <= 1) {
-      System.err.println("You must specify plugin to check and IDE(s), example:\n" +
+      throw IllegalArgumentException("You must specify plugin to check and IDE(s), example:\n" +
           "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963\n" +
           "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963")
-      System.exit(1)
     }
     val ideDescriptors = freeArgs.drop(1).map { File(it) }.map { OptionsParser.createIdeDescriptor(it, opts) }
     val coordinates = getPluginsToCheck(freeArgs[0], ideDescriptors.map { it.ideVersion })

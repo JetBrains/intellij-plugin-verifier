@@ -15,6 +15,7 @@ import com.jetbrains.pluginverifier.tasks.TaskRunner
 import com.sampullara.cli.Args
 import org.apache.commons.io.FileUtils
 import java.io.File
+import kotlin.system.exitProcess
 
 object PluginVerifierMain {
 
@@ -69,7 +70,7 @@ object PluginVerifierMain {
 """)
       Args.usage(System.err, PublicOpts())
 
-      System.exit(1)
+      exitProcess(1)
     }
 
     val command = freeArgs[0]
@@ -81,10 +82,23 @@ object PluginVerifierMain {
     val pluginCreator = PluginCreatorImpl(pluginRepository, extractDir)
 
     val runner = findTaskRunner(command)
-    val result = runner.runTask(opts, freeArgs, pluginRepository, ideRepository, pluginCreator, DefaultProgress())
+    val parametersBuilder = runner.getParametersBuilder(pluginRepository, ideRepository, pluginCreator)
+
+    val parameters = try {
+      parametersBuilder.build(opts, freeArgs)
+    } catch (e: IllegalArgumentException) {
+      System.err.println(e.message)
+      exitProcess(1)
+    }
+
+    val taskResult = parameters.use {
+      println("Task ${runner.commandName} parameters: $parameters")
+      val task = runner.createTask(parameters, pluginRepository, pluginCreator)
+      task.execute(DefaultProgress())
+    }
 
     val printerOptions = OptionsParser.parsePrinterOptions(opts)
-    result.printResults(printerOptions, pluginRepository)
+    taskResult.printResults(printerOptions, pluginRepository)
   }
 
   private fun findTaskRunner(command: String?) = taskRunners.find { command == it.commandName }
