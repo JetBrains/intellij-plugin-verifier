@@ -82,7 +82,7 @@ class VerifierExecutorTest {
     @AfterClass
     @JvmStatic
     fun assertNoRedundantProblems() {
-      val message = redundantProblems.joinToString(separator = "\n") { "${it.getShortDescription()}:\n    ${it.getFullDescription()}" }
+      val message = redundantProblems.joinToString(separator = "\n") { "${it.shortDescription}:\n    ${it.fullDescription}" }
       assertTrue("Redundant problems: \n$message", redundantProblems.isEmpty())
     }
 
@@ -125,10 +125,10 @@ class VerifierExecutorTest {
   }
 
   private fun assertProblemFound(problem: Problem, expectedFullDescription: String, expectedShortDescription: String) {
-    assertTrue("${problem.getShortDescription()} is not found", actualProblems.contains(problem))
+    assertTrue("${problem.shortDescription} is not found", actualProblems.contains(problem))
     redundantProblems.remove(problem)
-    assertThat(expectedShortDescription, `is`(problem.getShortDescription().toString()))
-    assertThat(expectedFullDescription, `is`(problem.getFullDescription().toString()))
+    assertThat(expectedShortDescription, `is`(problem.shortDescription))
+    assertThat(expectedFullDescription, `is`(problem.fullDescription))
   }
 
   @Test

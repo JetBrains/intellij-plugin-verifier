@@ -17,10 +17,10 @@ object DescriptionsBundle {
   private fun getProperties(bundleName: String): Properties =
       Properties().apply { load(Problem::class.java.getResourceAsStream(bundleName)) }
 
-  fun getFullDescription(key: String) = fullDescriptions.getProperty(key)
+  fun getFullDescriptionTemplate(key: String): String = fullDescriptions.getProperty(key)
 
-  fun getShortDescription(key: String) = shortDescriptions.getProperty(key)
+  fun getShortDescriptionTemplate(key: String): String = shortDescriptions.getProperty(key)
 
-  fun getEffect(key: String) = effects.getProperty(key)
+  fun getEffect(key: String): String = effects.getProperty(key)
 
 }

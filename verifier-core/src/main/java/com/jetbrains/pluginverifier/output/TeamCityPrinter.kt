@@ -7,7 +7,6 @@ import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Result
 import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.descriptions.ShortDescription
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
@@ -96,15 +95,15 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
   }
 
   private fun printProblemAndAffectedPluginsAsBuildProblem(results: List<Result>) {
-    val shortDescriptionToResults: Multimap<ShortDescription, Result> = HashMultimap.create()
+    val shortDescriptionToResults: Multimap<String, Result> = HashMultimap.create()
     results.forEach { result ->
       getProblemsOfVerdict(result.verdict).forEach {
-        shortDescriptionToResults.put(it.getShortDescription(), result)
+        shortDescriptionToResults.put(it.shortDescription, result)
       }
     }
     shortDescriptionToResults.asMap().forEach { description, descriptionResults ->
       val allPluginsWithThisProblem = descriptionResults.map { it.plugin }
-      tcLog.buildProblem(description.toString() + " (in ${allPluginsWithThisProblem.joinToString()})")
+      tcLog.buildProblem("$description (in ${allPluginsWithThisProblem.joinToString()})")
     }
   }
 
@@ -226,7 +225,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
   }
 
   private fun getProblemsContent(problems: Set<Problem>): String =
-      problems.groupBy({ it.getShortDescription() }, { it.getFullDescription() }).entries
+      problems.groupBy({ it.shortDescription }, { it.fullDescription }).entries
           .joinToString(separator = "\n") { (short, fulls) ->
             "#$short\n" + fulls.joinToString(separator = "\n") { "    $it" }
           }
@@ -306,11 +305,11 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
       tcLog.testSuiteStarted("($prefix)").use {
         typeToProblems.value.forEach { problem ->
           problemToDetectingResult.get(problem).forEach { (plugin) ->
-            tcLog.testSuiteStarted(problem.getShortDescription().toString()).use {
+            tcLog.testSuiteStarted(problem.shortDescription).use {
               val testName = "($plugin)"
               tcLog.testStarted(testName).use {
                 val pluginUrl = getPluginLink(plugin)
-                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: $plugin", problem.getFullDescription().toString())
+                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: $plugin", problem.fullDescription)
               }
             }
           }

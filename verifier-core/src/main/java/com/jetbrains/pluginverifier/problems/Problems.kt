@@ -1,40 +1,39 @@
 package com.jetbrains.pluginverifier.problems
 
 import com.jetbrains.pluginverifier.descriptions.DescriptionsBundle
-import com.jetbrains.pluginverifier.descriptions.FullDescription
-import com.jetbrains.pluginverifier.descriptions.ShortDescription
 import com.jetbrains.pluginverifier.location.*
 import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.reference.FieldReference
 import com.jetbrains.pluginverifier.reference.MethodReference
 import org.jetbrains.annotations.PropertyKey
+import java.text.MessageFormat
 
 /**
  * @author Sergey Patrikeev
  */
 sealed class Problem(@PropertyKey(resourceBundle = "long.descriptions") private val messageKey: String) {
 
-  fun getShortDescription(): ShortDescription {
-    val shortTemplate = DescriptionsBundle.getShortDescription(messageKey)
-    return ShortDescription(shortTemplate, shortDescriptionParams().map { it.toString() })
+  abstract val shortDescription: String
+
+  abstract val fullDescription: String
+
+  protected fun short(vararg arguments: Any): String {
+    val shortTemplate = DescriptionsBundle.getShortDescriptionTemplate(messageKey)
+    return MessageFormat.format(shortTemplate, *arguments.map { it.toString() }.toTypedArray())
   }
 
-  fun getFullDescription(): FullDescription {
-    val descriptionParams = fullDescriptionParams()
-    val fullTemplate = DescriptionsBundle.getFullDescription(messageKey)
+  protected fun full(vararg arguments: Any): String {
+    val template = DescriptionsBundle.getFullDescriptionTemplate(messageKey)
     val effect = DescriptionsBundle.getEffect(messageKey)
-    return FullDescription(fullTemplate, effect, descriptionParams.map { it.toString() })
+    val fullMessage = MessageFormat.format(template, *arguments.map { it.toString() }.toTypedArray())
+    return "$fullMessage. $effect"
   }
 
-  protected abstract fun fullDescriptionParams(): List<Any>
+  final override fun toString(): String = fullDescription
 
-  protected abstract fun shortDescriptionParams(): List<Any>
+  final override fun equals(other: Any?): Boolean = other is Problem && fullDescription == other.fullDescription
 
-  final override fun toString(): String = getFullDescription().toString()
-
-  final override fun equals(other: Any?): Boolean = other is Problem && getFullDescription() == other.getFullDescription()
-
-  final override fun hashCode(): Int = getFullDescription().hashCode()
+  final override fun hashCode(): Int = fullDescription.hashCode()
 
 }
 
@@ -44,9 +43,9 @@ data class MultipleDefaultImplementationsProblem(val caller: MethodLocation,
                                                  val implementation1: MethodLocation,
                                                  val implementation2: MethodLocation) : Problem("multiple.default.implementations") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(methodReference)
+  override val shortDescription = short(methodReference)
 
-  override fun fullDescriptionParams() = listOf(caller, instruction, methodReference, implementation1, implementation2)
+  override val fullDescription = full(caller, instruction, methodReference, implementation1, implementation2)
 
 }
 
@@ -54,69 +53,72 @@ data class IllegalClassAccessProblem(val unavailableClass: ClassLocation,
                                      val access: AccessType,
                                      val usage: Location) : Problem("illegal.class.access") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(access, unavailableClass)
+  override val shortDescription = short(access, unavailableClass)
 
-  override fun fullDescriptionParams(): List<Any> {
-    val type = if (unavailableClass.accessFlags.contains(AccessFlags.Flag.INTERFACE)) "interface" else "class"
-    return listOf(access.toString().capitalize(), type, unavailableClass, usage)
-  }
+  override val fullDescription: String
+    get() {
+      val type = if (unavailableClass.accessFlags.contains(AccessFlags.Flag.INTERFACE)) "interface" else "class"
+      return full(access.toString().capitalize(), type, unavailableClass, usage)
+    }
 }
 
 data class AbstractClassInstantiationProblem(val abstractClass: ClassLocation,
                                              val creator: MethodLocation) : Problem("abstract.class.instantiation") {
 
+  override val shortDescription = short(abstractClass)
 
-  override fun shortDescriptionParams(): List<Any> = listOf(abstractClass)
-
-  override fun fullDescriptionParams() = listOf(creator, abstractClass)
+  override val fullDescription: String = full(creator, abstractClass)
 
 }
 
 data class ClassNotFoundProblem(val unresolved: ClassReference,
                                 val usage: Location) : Problem("class.not.found") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(unresolved)
+  override val shortDescription = short(unresolved)
 
-  override fun fullDescriptionParams(): List<Any> {
-    val type: String = when (usage) {
-      is ClassLocation -> "Class"
-      is MethodLocation -> "Method"
-      is FieldLocation -> "Field"
-      else -> throw IllegalArgumentException()
+  override val fullDescription: String
+    get() {
+      val type = when (usage) {
+        is ClassLocation -> "Class"
+        is MethodLocation -> "Method"
+        is FieldLocation -> "Field"
+        else -> throw IllegalArgumentException()
+      }
+      return full(type, usage, unresolved)
     }
-    return listOf(type, usage, unresolved)
-  }
 }
 
 data class SuperInterfaceBecameClassProblem(val child: ClassLocation,
                                             val clazz: ClassLocation) : Problem("super.interface.became.class") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(clazz)
+  override val shortDescription = short(clazz)
 
-  override fun fullDescriptionParams(): List<Any> {
-    val type = if (child.accessFlags.contains(AccessFlags.Flag.INTERFACE)) "Interface" else "Class"
-    return listOf(type, child, clazz)
-  }
+  override val fullDescription: String
+    get() {
+      val type = if (child.accessFlags.contains(AccessFlags.Flag.INTERFACE)) "Interface" else "Class"
+      return full(type, child, clazz)
+    }
 
 }
 
 data class InheritFromFinalClassProblem(val child: ClassLocation,
                                         val finalClass: ClassLocation) : Problem("inherit.from.final.class") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(finalClass)
+  override val shortDescription = short(finalClass)
 
-  override fun fullDescriptionParams(): List<Any> {
-    val type = if (child.accessFlags.contains(AccessFlags.Flag.INTERFACE)) "Interface" else "Class"
-    return listOf(type, child, finalClass)
-  }
+  override val fullDescription: String
+    get() {
+      val type = if (child.accessFlags.contains(AccessFlags.Flag.INTERFACE)) "Interface" else "Class"
+      return full(type, child, finalClass)
+    }
 }
 
 data class SuperClassBecameInterfaceProblem(val child: ClassLocation,
                                             val interfaze: ClassLocation) : Problem("super.class.became.interface") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(interfaze)
+  override val shortDescription = short(interfaze)
 
-  override fun fullDescriptionParams() = listOf(child, interfaze)
+  override val fullDescription = full(child, interfaze)
 
 }
 
@@ -124,9 +126,9 @@ data class InvokeClassMethodOnInterfaceProblem(val methodReference: MethodRefere
                                                val caller: MethodLocation,
                                                val instruction: Instruction) : Problem("invoke.class.method.on.interface") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(methodReference.hostClass)
+  override val shortDescription = short(methodReference.hostClass)
 
-  override fun fullDescriptionParams() = listOf(caller, instruction, methodReference, methodReference.hostClass)
+  override val fullDescription = full(caller, instruction, methodReference, methodReference.hostClass)
 
 }
 
@@ -134,18 +136,18 @@ data class InvokeInterfaceMethodOnClassProblem(val methodReference: MethodRefere
                                                val caller: MethodLocation,
                                                val instruction: Instruction) : Problem("invoke.interface.method.on.class") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(methodReference.hostClass)
+  override val shortDescription = short(methodReference.hostClass)
 
-  override fun fullDescriptionParams() = listOf(caller, instruction, methodReference, methodReference.hostClass)
+  override val fullDescription = full(caller, instruction, methodReference, methodReference.hostClass)
 
 }
 
 data class InterfaceInstantiationProblem(val interfaze: ClassLocation,
                                          val creator: MethodLocation) : Problem("interface.instantiation") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(interfaze)
+  override val shortDescription = short(interfaze)
 
-  override fun fullDescriptionParams() = listOf(creator, interfaze)
+  override val fullDescription = full(creator, interfaze)
 
 }
 
@@ -153,9 +155,9 @@ data class ChangeFinalFieldProblem(val field: FieldLocation,
                                    val accessor: MethodLocation,
                                    val instruction: Instruction) : Problem("change.final.field") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(field)
+  override val shortDescription = short(field)
 
-  override fun fullDescriptionParams() = listOf(accessor, instruction, field)
+  override val fullDescription = full(accessor, instruction, field)
 
 }
 
@@ -163,9 +165,9 @@ data class FieldNotFoundProblem(val field: FieldReference,
                                 val accessor: MethodLocation,
                                 val instruction: Instruction) : Problem("field.not.found") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(field)
+  override val shortDescription = short(field)
 
-  override fun fullDescriptionParams() = listOf(accessor, instruction, field)
+  override val fullDescription = full(accessor, instruction, field)
 }
 
 data class IllegalFieldAccessProblem(val field: FieldLocation,
@@ -173,9 +175,9 @@ data class IllegalFieldAccessProblem(val field: FieldLocation,
                                      val instruction: Instruction,
                                      val fieldAccess: AccessType) : Problem("illegal.field.access") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(fieldAccess, field)
+  override val shortDescription = short(fieldAccess, field)
 
-  override fun fullDescriptionParams() = listOf(accessor, instruction, fieldAccess, field, accessor.hostClass)
+  override val fullDescription = full(accessor, instruction, fieldAccess, field, accessor.hostClass)
 
 }
 
@@ -184,96 +186,96 @@ data class IllegalMethodAccessProblem(val method: MethodLocation,
                                       val instruction: Instruction,
                                       val methodAccess: AccessType) : Problem("illegal.method.access") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(methodAccess, method)
+  override val shortDescription = short(methodAccess, method)
 
-  override fun fullDescriptionParams() = listOf(caller, instruction, methodAccess, method, caller.hostClass)
+  override val fullDescription = full(caller, instruction, methodAccess, method, caller.hostClass)
 }
 
 data class InvokeInterfaceOnPrivateMethodProblem(val resolvedMethod: MethodLocation,
                                                  val caller: MethodLocation) : Problem("invoke.interface.on.private.method") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(resolvedMethod)
+  override val shortDescription = short(resolvedMethod)
 
-  override fun fullDescriptionParams() = listOf(caller, resolvedMethod)
+  override val fullDescription = full(caller, resolvedMethod)
 }
 
 data class MethodNotFoundProblem(val method: MethodReference,
                                  val caller: MethodLocation,
                                  val instruction: Instruction) : Problem("method.not.found") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(method)
+  override val shortDescription = short(method)
 
-  override fun fullDescriptionParams() = listOf(caller, instruction, method)
+  override val fullDescription = full(caller, instruction, method)
 
 }
 
 data class MethodNotImplementedProblem(val method: MethodLocation,
                                        val incompleteClass: ClassLocation) : Problem("method.not.implemented") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(method)
+  override val shortDescription = short(method)
 
-  override fun fullDescriptionParams() = listOf(incompleteClass, method.hostClass, method.methodNameAndParameters())
+  override val fullDescription = full(incompleteClass, method.hostClass, method.methodNameAndParameters())
 }
 
 data class AbstractMethodInvocationProblem(val method: MethodLocation,
                                            val caller: MethodLocation,
                                            val instruction: Instruction) : Problem("abstract.method.invocation") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(method)
+  override val shortDescription = short(method)
 
-  override fun fullDescriptionParams() = listOf(caller, instruction, method)
+  override val fullDescription = full(caller, instruction, method)
 
 }
 
 data class OverridingFinalMethodProblem(val method: MethodLocation,
                                         val invalidClass: ClassLocation) : Problem("overriding.final.method") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(method)
+  override val shortDescription = short(method)
 
-  override fun fullDescriptionParams() = listOf(invalidClass, method)
+  override val fullDescription = full(invalidClass, method)
 }
 
 data class NonStaticAccessOfStaticFieldProblem(val field: FieldLocation,
                                                val accessor: MethodLocation,
                                                val instruction: Instruction) : Problem("non.static.access.of.static.field") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(instruction, field)
+  override val shortDescription = short(instruction, field)
 
-  override fun fullDescriptionParams() = listOf(accessor, instruction, field)
+  override val fullDescription = full(accessor, instruction, field)
 
 }
 
 data class InvokeStaticOnNonStaticMethodProblem(val resolvedMethod: MethodLocation,
                                                 val caller: MethodLocation) : Problem("invoke.static.on.non.static.method") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(resolvedMethod)
+  override val shortDescription = short(resolvedMethod)
 
-  override fun fullDescriptionParams() = listOf(caller, resolvedMethod)
+  override val fullDescription = full(caller, resolvedMethod)
 }
 
 data class InvokeNonStaticInstructionOnStaticMethodProblem(val resolvedMethod: MethodLocation,
                                                            val caller: MethodLocation,
                                                            val instruction: Instruction) : Problem("invoke.non.static.instruction.on.static.method") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(instruction, resolvedMethod)
+  override val shortDescription = short(instruction, resolvedMethod)
 
-  override fun fullDescriptionParams() = listOf(caller, instruction, resolvedMethod)
+  override val fullDescription = full(caller, instruction, resolvedMethod)
 }
 
 data class StaticAccessOfNonStaticFieldProblem(val field: FieldLocation,
                                                val accessor: MethodLocation,
                                                val instruction: Instruction) : Problem("static.access.of.non.static.field") {
 
-  override fun shortDescriptionParams(): List<Any> = listOf(instruction, field)
+  override val shortDescription = short(instruction, field)
 
-  override fun fullDescriptionParams() = listOf(accessor, instruction, field)
+  override val fullDescription = full(accessor, instruction, field)
 }
 
 data class InvalidClassFileProblem(val brokenClass: ClassReference,
                                    val usage: Location,
                                    val reason: String) : Problem("invalid.class.file") {
-  override fun shortDescriptionParams(): List<Any> = listOf(brokenClass)
+  override val shortDescription = short(brokenClass)
 
-  override fun fullDescriptionParams(): List<Any> = listOf(brokenClass, usage, reason)
+  override val fullDescription = full(brokenClass, usage, reason)
 
 }

@@ -27,7 +27,7 @@ class IgnoredProblemsFilter(val problemsToIgnore: Multimap<PluginIdAndVersion, P
       if (xmlId == ignoreXmlId) {
         if (ignoreVersion.isEmpty() || version == ignoreVersion) {
           val regex = ignoredPattern.toRegex()
-          if (problem.getShortDescription().toString().matches(regex)) {
+          if (problem.shortDescription.matches(regex)) {
             appendToIgnoredProblemsFileOrLog(plugin, problem, regex)
             return true
           }
@@ -39,7 +39,7 @@ class IgnoredProblemsFilter(val problemsToIgnore: Multimap<PluginIdAndVersion, P
 
   private fun appendToIgnoredProblemsFileOrLog(plugin: IdePlugin, problem: Problem, regex: Regex) {
     val ap = "Problem of the plugin $plugin was ignored by the ignoring pattern: ${regex.pattern}:\n" +
-        "#" + problem.getShortDescription()
+        "#" + problem.shortDescription
 
     if (saveIgnoredProblemsFile != null) {
       try {

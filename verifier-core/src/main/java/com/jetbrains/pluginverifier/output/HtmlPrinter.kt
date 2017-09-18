@@ -169,10 +169,10 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
 
   private fun HtmlBuilder.printProblems(problems: Set<Problem>) {
     problems
-        .sortedBy { it.getShortDescription().toString() }
-        .groupBy { it.getShortDescription().toString() }
+        .sortedBy { it.shortDescription }
+        .groupBy { it.shortDescription }
         .forEach { (shortDesc, problems) ->
-          val allProblems = problems.joinToString(separator = "\n") { it.getFullDescription().toString() }
+          val allProblems = problems.joinToString(separator = "\n") { it.fullDescription }
           printShortAndFullDescription(shortDesc, allProblems)
         }
   }

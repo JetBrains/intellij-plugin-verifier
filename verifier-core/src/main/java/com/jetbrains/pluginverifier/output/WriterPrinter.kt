@@ -70,7 +70,7 @@ class WriterPrinter(private val out: PrintWriter) : Printer {
   private fun printProblems(ideVersion: IdeVersion, plugin: PluginInfo, problems: Set<Problem>) {
     val problemsCnt = problems.size
     out.println("With IDE #$ideVersion plugin $plugin has $problemsCnt " + "problem".pluralize(problemsCnt))
-    problems.groupBy({ it.getShortDescription() }, { it.getFullDescription() }).forEach {
+    problems.groupBy({ it.shortDescription }, { it.fullDescription }).forEach {
       out.println("    #${it.key}")
       it.value.forEach { fullDescription ->
         out.println("        $fullDescription")
