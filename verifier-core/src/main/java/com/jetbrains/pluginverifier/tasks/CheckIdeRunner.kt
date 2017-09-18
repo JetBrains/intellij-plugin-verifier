@@ -1,12 +1,8 @@
-package com.jetbrains.pluginverifier
+package com.jetbrains.pluginverifier.tasks
 
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.tasks.CheckIdeParams
-import com.jetbrains.pluginverifier.tasks.CheckIdeParamsBuilder
-import com.jetbrains.pluginverifier.tasks.CheckIdeTask
-import com.jetbrains.pluginverifier.tasks.TaskParameters
 
 class CheckIdeRunner : TaskRunner() {
   override val commandName: String = "check-ide"

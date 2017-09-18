@@ -1,14 +1,10 @@
-package com.jetbrains.pluginverifier
+package com.jetbrains.pluginverifier.tasks
 
 import com.jetbrains.pluginverifier.api.Progress
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.tasks.Task
-import com.jetbrains.pluginverifier.tasks.TaskParameters
-import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
-import com.jetbrains.pluginverifier.tasks.TaskResult
 import org.slf4j.LoggerFactory
 
 /**

@@ -8,6 +8,10 @@ import com.jetbrains.pluginverifier.options.PublicOpts
 import com.jetbrains.pluginverifier.plugin.PluginCreatorImpl
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
+import com.jetbrains.pluginverifier.tasks.CheckIdeRunner
+import com.jetbrains.pluginverifier.tasks.CheckPluginRunner
+import com.jetbrains.pluginverifier.tasks.CheckTrunkApiRunner
+import com.jetbrains.pluginverifier.tasks.TaskRunner
 import com.sampullara.cli.Args
 import org.apache.commons.io.FileUtils
 import java.io.File
@@ -41,8 +45,7 @@ object PluginVerifierMain {
   }
 
   private val downloadDirMaxSpace: Long? by lazy {
-    val property = System.getProperty("plugin.verifier.cache.dir.max.space")
-    return@lazy if (property != null) property.toLong() * FileUtils.ONE_MB else null
+    System.getProperty("plugin.verifier.cache.dir.max.space")?.let { it.toLong() * FileUtils.ONE_MB }
   }
 
 
