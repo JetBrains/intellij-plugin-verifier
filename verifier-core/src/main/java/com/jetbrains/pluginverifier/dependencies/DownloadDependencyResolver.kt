@@ -50,7 +50,7 @@ class DownloadDependencyResolver(private val dependencySelector: DependencySelec
   }
 
   private fun selectAndDownloadPlugin(pluginId: String): DependencyResolver.Result {
-    val selectResult = dependencySelector.select(pluginId)
+    val selectResult = dependencySelector.select(pluginId, pluginRepository)
     return when (selectResult) {
       is DependencySelector.Result.Plugin -> downloadAndOpenPlugin(selectResult.updateInfo)
       is DependencySelector.Result.NotFound -> DependencyResolver.Result.NotFound(selectResult.reason)

@@ -46,7 +46,7 @@ class VerifierExecutorTest {
         val verifierParams = VerifierParams(JdkDescriptor(File(jdkPath)), externalClassesPrefixes, problemsFilter, dependencyResolver = NotFoundDependencyResolver())
         val verifier = VerifierExecutor(verifierParams)
         verifier.use {
-          val results = verifier.verify(listOf(pluginCoordinate to ideDescriptor), DefaultProgress(), pluginRepository, pluginCreator)
+          val results = verifier.verify(listOf(pluginCoordinate to ideDescriptor), DefaultProgress(), pluginCreator)
           return results.single()
         }
       }

@@ -11,7 +11,6 @@ import com.jetbrains.pluginverifier.dependencies.*
 import com.jetbrains.pluginverifier.misc.withDebug
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
-import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.warnings.Warning
@@ -25,7 +24,6 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
                val ideDescriptor: IdeDescriptor,
                val runtimeResolver: Resolver,
                val params: VerifierParams,
-               val pluginRepository: PluginRepository,
                val pluginCreator: PluginCreator) : Callable<Result> {
 
   companion object {

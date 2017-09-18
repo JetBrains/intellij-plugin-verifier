@@ -11,7 +11,7 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 class IdeDependencyResolver(ide: Ide, pluginRepository: PluginRepository, pluginCreator: PluginCreator) : DependencyResolver {
   private val bundledResolver = BundledPluginDependencyResolver(ide, pluginCreator)
 
-  private val downloadResolver = DownloadDependencyResolver(LastCompatibleSelector(ide.version, pluginRepository), pluginRepository, pluginCreator)
+  private val downloadResolver = DownloadDependencyResolver(LastCompatibleSelector(ide.version), pluginRepository, pluginCreator)
 
   override fun resolve(dependency: PluginDependency): DependencyResolver.Result {
     val result = bundledResolver.resolve(dependency)

@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.dependencies
 
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 
 interface DependencySelector {
@@ -8,5 +9,5 @@ interface DependencySelector {
     data class NotFound(val reason: String) : Result()
   }
 
-  fun select(pluginId: String): Result
+  fun select(pluginId: String, pluginRepository: PluginRepository): Result
 }

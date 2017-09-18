@@ -57,7 +57,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
     return CheckIdeTask(checkIdeParams, pluginRepository, pluginCreator).execute(progress)
   }
 
-  private val downloadReleaseCompatibleResolver = DownloadDependencyResolver(LastCompatibleSelector(parameters.releaseIde.ideVersion, pluginRepository), pluginRepository, pluginCreator)
+  private val downloadReleaseCompatibleResolver = DownloadDependencyResolver(LastCompatibleSelector(parameters.releaseIde.ideVersion), pluginRepository, pluginCreator)
 
   private inner class ReleaseResolver : DependencyResolver {
 
@@ -77,7 +77,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
 
     private val trunkBundledResolver = BundledPluginDependencyResolver(parameters.trunkIde.ide, pluginCreator)
 
-    private val downloadLastUpdateResolver = DownloadDependencyResolver(LastUpdateSelector(pluginRepository), pluginRepository, pluginCreator)
+    private val downloadLastUpdateResolver = DownloadDependencyResolver(LastUpdateSelector(), pluginRepository, pluginCreator)
 
     override fun resolve(dependency: PluginDependency): DependencyResolver.Result {
       val bundledResult = trunkBundledResolver.resolve(dependency)

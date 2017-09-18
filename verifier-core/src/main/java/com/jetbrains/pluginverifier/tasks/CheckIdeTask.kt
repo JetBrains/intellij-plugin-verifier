@@ -39,7 +39,7 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
     val verifierParams = VerifierParams(parameters.jdkDescriptor, parameters.externalClassesPrefixes, parameters.problemsFilter, parameters.externalClassPath, parameters.dependencyResolver)
     val verifier = VerifierExecutor(verifierParams)
     verifier.use {
-      val results = verifier.verify(notExcludedPlugins.map { it to parameters.ideDescriptor }, progress, pluginRepository, pluginCreator)
+      val results = verifier.verify(notExcludedPlugins.map { it to parameters.ideDescriptor }, progress, pluginCreator)
       return CheckIdeResult(parameters.ideDescriptor.ideVersion, results, parameters.excludedPlugins, getMissingUpdatesProblems())
     }
   }
