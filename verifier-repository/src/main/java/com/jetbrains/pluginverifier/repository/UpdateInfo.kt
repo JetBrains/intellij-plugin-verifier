@@ -1,12 +1,10 @@
 package com.jetbrains.pluginverifier.repository
 
-import com.google.gson.annotations.SerializedName
-
-data class UpdateInfo(@SerializedName("pluginId") val pluginId: String,
-                      @SerializedName("pluginName") val pluginName: String,
-                      @SerializedName("version", alternate = arrayOf("pluginVersion")) val version: String,
-                      @SerializedName("updateId") val updateId: Int,
-                      @SerializedName("vendor") val vendor: String?) {
+data class UpdateInfo(val pluginId: String,
+                      val pluginName: String,
+                      val version: String,
+                      val updateId: Int,
+                      val vendor: String?) {
 
   override fun toString(): String = "$pluginId:$version (#$updateId)"
 }

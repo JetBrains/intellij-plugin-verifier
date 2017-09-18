@@ -36,7 +36,7 @@ class PublicPluginRepository(private val repositoryUrl: String,
     val call = repositoryApi.getUpdateInfoById(updateId)
     val response = call.execute()
     return if (response.isSuccessful) {
-      response.body()
+      response.body().toUpdateInfo()
     } else if (response.code() == HttpURLConnection.HTTP_NOT_FOUND || response.code() == HttpURLConnection.HTTP_BAD_REQUEST) {
       null
     } else {
@@ -60,13 +60,13 @@ class PublicPluginRepository(private val repositoryUrl: String,
   }
 
   override fun getLastCompatibleUpdates(ideVersion: IdeVersion): List<UpdateInfo> =
-      repositoryApi.getLastCompatibleUpdates(ideVersion.asString()).executeSuccessfully().body()
+      repositoryApi.getLastCompatibleUpdates(ideVersion.asString()).executeSuccessfully().body().map { it.toUpdateInfo() }
 
   override fun getLastCompatibleUpdateOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? =
       getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId).maxBy { it.updateId }
 
   override fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> =
-      repositoryApi.getOriginalCompatibleUpdatesByPluginIds(ideVersion.asString(), pluginId).executeSuccessfully().body()
+      repositoryApi.getOriginalCompatibleUpdatesByPluginIds(ideVersion.asString(), pluginId).executeSuccessfully().body().map { it.toUpdateInfo() }
 
   override fun getIdOfPluginDeclaringModule(moduleId: String): String? =
       INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
