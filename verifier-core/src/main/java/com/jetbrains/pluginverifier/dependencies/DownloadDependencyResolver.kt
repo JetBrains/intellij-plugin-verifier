@@ -68,22 +68,14 @@ class DownloadDependencyResolver(private val dependencySelector: DependencySelec
 
   private fun getDependencyResultByDownloadedUpdate(pluginLock: FileLock, updateInfo: UpdateInfo): DependencyResolver.Result {
     val dependencyCreationResult = pluginCreator.createPluginByFileLock(pluginLock)
+    if (dependencyCreationResult !is CreatePluginResult.OK) {
+      pluginLock.release()
+    }
     return when (dependencyCreationResult) {
-      is CreatePluginResult.OK -> {
-        DependencyResolver.Result.Downloaded(dependencyCreationResult.plugin, dependencyCreationResult.resolver, updateInfo, pluginLock)
-      }
-      is CreatePluginResult.BadPlugin -> {
-        pluginLock.release()
-        DependencyResolver.Result.ProblematicDependency(dependencyCreationResult.pluginErrorsAndWarnings)
-      }
-      is CreatePluginResult.NotFound -> {
-        pluginLock.release()
-        DependencyResolver.Result.NotFound(dependencyCreationResult.reason)
-      }
-      is CreatePluginResult.FailedToDownload -> {
-        pluginLock.release()
-        DependencyResolver.Result.FailedToDownload(dependencyCreationResult.reason)
-      }
+      is CreatePluginResult.OK -> DependencyResolver.Result.Downloaded(dependencyCreationResult.plugin, dependencyCreationResult.resolver, updateInfo, pluginLock)
+      is CreatePluginResult.BadPlugin -> DependencyResolver.Result.ProblematicDependency(dependencyCreationResult.pluginErrorsAndWarnings)
+      is CreatePluginResult.NotFound -> DependencyResolver.Result.NotFound(dependencyCreationResult.reason)
+      is CreatePluginResult.FailedToDownload -> DependencyResolver.Result.FailedToDownload(dependencyCreationResult.reason)
     }
   }
 
