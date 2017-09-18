@@ -59,12 +59,9 @@ data class CheckIdeResult(val ideVersion: IdeVersion,
     if (setBuildStatus) {
       val totalProblemsNumber: Int = results.flatMap {
         when (it.verdict) {
-          is Verdict.OK -> emptySet()
-          is Verdict.Warnings -> emptySet()
           is Verdict.Problems -> it.verdict.problems //some problems might have been caused by missing dependencies
           is Verdict.Bad -> setOf(Any())
-          is Verdict.NotFound -> emptySet()
-          is Verdict.MissingDependencies -> emptySet()
+          is Verdict.OK, is Verdict.Warnings, is Verdict.NotFound, is Verdict.MissingDependencies, is Verdict.FailedToDownload -> emptySet()
         }
       }.distinct().size
       if (totalProblemsNumber > 0) {

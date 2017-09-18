@@ -75,6 +75,11 @@ sealed class Verdict {
     override fun toString(): String = "Plugin is not found: $reason"
   }
 
+  /**
+   * The plugin is found in the Repository but the verifier failed to download it.
+   * Look at [reason] for details
+   */
+  data class FailedToDownload(val reason: String) : Verdict()
 
 }
 

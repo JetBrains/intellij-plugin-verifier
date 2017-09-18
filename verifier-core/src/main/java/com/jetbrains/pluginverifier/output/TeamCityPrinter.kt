@@ -46,7 +46,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
   }
 
   fun printNoCompatibleUpdatesProblems(missingProblems: List<MissingCompatibleUpdate>) {
-    when (groupBy) {
+    return when (groupBy) {
       TeamCityPrinter.GroupBy.NOT_GROUPED -> {
         missingProblems.forEach { tcLog.buildProblem(it.toString()) }
       }
@@ -111,10 +111,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
   private fun getProblemsOfVerdict(verdict: Verdict): Collection<Problem> = when (verdict) {
     is Verdict.Problems -> verdict.problems
     is Verdict.MissingDependencies -> verdict.problems
-    is Verdict.OK -> emptyList()
-    is Verdict.Warnings -> emptyList()
-    is Verdict.Bad -> emptyList()
-    is Verdict.NotFound -> emptyList()
+    is Verdict.OK, is Verdict.Warnings, is Verdict.Bad, is Verdict.NotFound, is Verdict.FailedToDownload -> emptyList()
   }
 
   private fun printMissingDependenciesAndRequiredPluginsAsBuildProblem(results: List<Result>) {
@@ -175,11 +172,11 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
                                            testName: String,
                                            options: PrinterOptions) {
     tcLog.testStarted(testName).use {
-      when (verdict) {
+      return@use when (verdict) {
         is Verdict.Problems -> printProblems(plugin, testName, verdict.problems)
         is Verdict.MissingDependencies -> printMissingDependencies(plugin, verdict, testName, options)
         is Verdict.Bad -> printBadPluginResult(verdict, testName)
-        is Verdict.OK, is Verdict.Warnings, is Verdict.NotFound -> {
+        is Verdict.OK, is Verdict.Warnings, is Verdict.NotFound, is Verdict.FailedToDownload -> {
         }
       }
     }

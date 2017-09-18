@@ -30,7 +30,7 @@ class TrunkApiChangesOutput(private val tcLog: TeamCityLog, private val reposito
   }
 
   private fun Verdict.getProblems() = when (this) {
-    is Verdict.NotFound, is Verdict.Bad, is Verdict.OK, is Verdict.Warnings -> emptySet()
+    is Verdict.NotFound, is Verdict.Bad, is Verdict.OK, is Verdict.Warnings, is Verdict.FailedToDownload -> emptySet()
     is Verdict.MissingDependencies -> problems
     is Verdict.Problems -> problems
   }

@@ -14,13 +14,14 @@ class WriterPrinter(private val out: PrintWriter) : Printer {
 
   override fun printResults(results: List<Result>, options: PrinterOptions) {
     results.forEach { (plugin, ideVersion, verdict) ->
-      when (verdict) {
+      return@forEach when (verdict) {
         is Verdict.OK -> out.println("With IDE #$ideVersion the plugin $plugin is OK")
         is Verdict.Warnings -> out.println("With IDE #$ideVersion the plugin $plugin has ${verdict.warnings.size} warnings: ${verdict.warnings.joinToString(separator = "\n", prefix = "    ")}")
         is Verdict.Problems -> printProblemsVerdict(ideVersion, plugin, verdict)
         is Verdict.MissingDependencies -> printMissingDependencies(options, verdict, ideVersion, plugin)
         is Verdict.Bad -> out.println("The plugin $plugin is broken: ${verdict.pluginProblems.joinToString()}")
         is Verdict.NotFound -> out.println("The plugin $plugin is not found: ${verdict.reason}")
+        is Verdict.FailedToDownload -> out.println("The plugin $plugin is not downloaded from the Repository: ${verdict.reason}")
       }
     }
   }

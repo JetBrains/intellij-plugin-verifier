@@ -20,7 +20,9 @@ data class TrunkApiChanges(val releaseVersion: IdeVersion,
 
       for ((plugin, newResult) in trunkPlugin2Result) {
         val oldResult = releasePlugin2Result[plugin] ?: continue
-        if (oldResult.verdict is Verdict.NotFound || newResult.verdict is Verdict.NotFound) {
+        val oldNotChecked = oldResult.verdict is Verdict.NotFound || oldResult.verdict is Verdict.FailedToDownload
+        val newNotChecked = newResult.verdict is Verdict.NotFound || newResult.verdict is Verdict.FailedToDownload
+        if (oldNotChecked || newNotChecked) {
           continue
         }
         comparingResults[plugin] = PluginComparingResult(oldResult, newResult)

@@ -29,12 +29,10 @@ data class CheckPluginResult(val results: List<Result>) : TaskResult {
     if (setBuildStatus) {
       val totalProblemsNumber = results.flatMap {
         when (it.verdict) {
-          is Verdict.OK -> emptySet()
-          is Verdict.Warnings -> emptySet()
           is Verdict.Problems -> it.verdict.problems
           is Verdict.MissingDependencies -> it.verdict.problems  //some problems might have been caused by missing dependencies
           is Verdict.Bad -> setOf(Any())
-          is Verdict.NotFound -> emptySet()
+          is Verdict.OK, is Verdict.Warnings, is Verdict.NotFound, is Verdict.FailedToDownload -> emptySet()
         }
       }.distinct().size
       if (totalProblemsNumber > 0) {

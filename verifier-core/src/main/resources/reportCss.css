@@ -41,6 +41,11 @@
     color: #e5c2ef;
 }
 
+.failedToDownload .uMarker {
+    background: #ffa87a;
+    color: #ffa87a;
+}
+
 .excluded .uMarker {
     background: #888 !important;
 }
@@ -77,6 +82,11 @@
 .notFound .pMarker {
     background: #e5c2ef;
     color: #e5c2ef;
+}
+
+.failedToDownload .pMarker {
+    background: #ffa87a;
+    color: #ffa87a;
 }
 
 .shortDescription a {

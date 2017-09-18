@@ -52,7 +52,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
       getPluginInfoByPluginInstance(createPluginResult, pluginCoordinate) to calculateVerdict(createPluginResult)
     }
     is CreatePluginResult.FailedToDownload -> {
-      getPluginInfoByCoordinate(pluginCoordinate) to Verdict.NotFound(createPluginResult.reason)
+      getPluginInfoByCoordinate(pluginCoordinate) to Verdict.FailedToDownload(createPluginResult.reason)
     }
 
   }

@@ -120,7 +120,7 @@ private fun convertVerdict(verdict: Verdict): ApiVerificationVerdict {
     is Verdict.Warnings -> verdict.dependenciesGraph
     is Verdict.MissingDependencies -> verdict.dependenciesGraph
     is Verdict.Problems -> verdict.dependenciesGraph
-    is Verdict.Bad, is Verdict.NotFound -> throw RuntimeException()
+    is Verdict.Bad, is Verdict.NotFound, is Verdict.FailedToDownload -> throw RuntimeException()
   }
   val convertedGraph = convertDependencyGraph(dependenciesGraph)
   return when (verdict) {
@@ -128,7 +128,7 @@ private fun convertVerdict(verdict: Verdict): ApiVerificationVerdict {
     is Verdict.Warnings -> ApiVerificationVerdict(WARNINGS, convertedGraph, warnings = convertWarnings(verdict.warnings))
     is Verdict.MissingDependencies -> ApiVerificationVerdict(MISSING_DEPENDENCIES, convertedGraph, convertMissingDependencies(verdict), convertWarnings(verdict.warnings), convertProblems(verdict.problems))
     is Verdict.Problems -> ApiVerificationVerdict(PROBLEMS, convertedGraph, emptyList(), convertWarnings(verdict.warnings), convertProblems(verdict.problems))
-    is Verdict.Bad, is Verdict.NotFound -> throw RuntimeException()
+    is Verdict.Bad, is Verdict.NotFound, is Verdict.FailedToDownload -> throw RuntimeException()
   }
 }
 
