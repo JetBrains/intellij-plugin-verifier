@@ -40,7 +40,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
       if (words.last() == "Problem") {
         words = words.dropLast(1)
       }
-      return words.map { it.toLowerCase() }.joinToString(" ")
+      return words.joinToString(" ") { it.toLowerCase() }
     }
   }
 
@@ -95,22 +95,21 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
   }
 
   private fun printProblemAndAffectedPluginsAsBuildProblem(results: List<Result>) {
-    val shortDescriptionToResults: Multimap<String, Result> = HashMultimap.create()
-    results.forEach { result ->
-      getProblemsOfVerdict(result.verdict).forEach {
-        shortDescriptionToResults.put(it.shortDescription, result)
+    val shortDescription2Plugins: Multimap<String, PluginInfo> = HashMultimap.create()
+    for ((plugin, _, verdict) in results) {
+      for (problem in getProblemsOfVerdict(verdict)) {
+        shortDescription2Plugins.put(problem.shortDescription, plugin)
       }
     }
-    shortDescriptionToResults.asMap().forEach { description, descriptionResults ->
-      val allPluginsWithThisProblem = descriptionResults.map { it.plugin }
+    shortDescription2Plugins.asMap().forEach { description, allPluginsWithThisProblem ->
       tcLog.buildProblem("$description (in ${allPluginsWithThisProblem.joinToString()})")
     }
   }
 
-  private fun getProblemsOfVerdict(verdict: Verdict): Collection<Problem> = when (verdict) {
+  private fun getProblemsOfVerdict(verdict: Verdict) = when (verdict) {
     is Verdict.Problems -> verdict.problems
     is Verdict.MissingDependencies -> verdict.problems
-    is Verdict.OK, is Verdict.Warnings, is Verdict.Bad, is Verdict.NotFound, is Verdict.FailedToDownload -> emptyList()
+    is Verdict.OK, is Verdict.Warnings, is Verdict.Bad, is Verdict.NotFound, is Verdict.FailedToDownload -> emptySet()
   }
 
   private fun printMissingDependenciesAndRequiredPluginsAsBuildProblem(results: List<Result>) {
@@ -235,10 +234,10 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
     val missingDependencies = verdict.directMissingDependencies
 
     val notFoundClassesProblems = problems.filterIsInstance<ClassNotFoundProblem>()
-    if (missingDependencies.isNotEmpty() && notFoundClassesProblems.size > 20) {
-      return getTooManyUnknownClassesProblems(missingDependencies, notFoundClassesProblems, problems)
+    return if (missingDependencies.isNotEmpty() && notFoundClassesProblems.size > 20) {
+      getTooManyUnknownClassesProblems(missingDependencies, notFoundClassesProblems, problems)
     } else {
-      return getProblemsContent(problems)
+      getProblemsContent(problems)
     }
   }
 
@@ -293,18 +292,19 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
     //missing dependencies
     //....(missing#1)
     //.........Required for plugin1, plugin2, plugin3
-    val problemToDetectingResult: Multimap<Problem, Result> = HashMultimap.create()
-    results.forEach { result ->
-      getProblemsOfVerdict(result.verdict).forEach {
-        problemToDetectingResult.put(it, result)
+    val problem2Plugin: Multimap<Problem, PluginInfo> = HashMultimap.create()
+    for ((plugin, _, verdict) in results) {
+      for (problem in getProblemsOfVerdict(verdict)) {
+        problem2Plugin.put(problem, plugin)
       }
     }
 
-    problemToDetectingResult.keySet().groupBy { it.javaClass }.forEach { typeToProblems ->
-      val prefix = convertProblemClassNameToSentence(typeToProblems.key)
+    val allProblems = problem2Plugin.keySet()
+    for ((problemClass, problemsOfClass) in allProblems.groupBy { it.javaClass }) {
+      val prefix = convertProblemClassNameToSentence(problemClass)
       tcLog.testSuiteStarted("($prefix)").use {
-        typeToProblems.value.forEach { problem ->
-          problemToDetectingResult.get(problem).forEach { (plugin) ->
+        for (problem in problemsOfClass) {
+          for (plugin in problem2Plugin.get(problem)) {
             tcLog.testSuiteStarted(problem.shortDescription).use {
               val testName = "($plugin)"
               tcLog.testStarted(testName).use {

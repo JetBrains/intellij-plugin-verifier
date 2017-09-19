@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.output
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
+import com.google.common.collect.Multimaps
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.api.Result
@@ -18,13 +19,13 @@ import com.jetbrains.pluginverifier.tasks.TrunkApiChanges
  */
 class TrunkApiChangesOutput(private val tcLog: TeamCityLog, private val repository: PluginRepository) {
 
-  private fun TrunkApiChanges.getNewProblems(): Multimap<Problem, PluginInfo> {
-    val result = HashMultimap.create<Problem, PluginInfo>()
+  private fun TrunkApiChanges.getNewPluginProblems(): Multimap<PluginInfo, Problem> {
+    val result = HashMultimap.create<PluginInfo, Problem>()
     for ((plugin, cmpResult) in comparingResults.entries) {
       val releaseProblems = cmpResult.releaseResult.verdict.getProblems()
       val trunkProblems = cmpResult.trunkResult.verdict.getProblems()
       val newProblems = trunkProblems - releaseProblems
-      newProblems.forEach { result.put(it, plugin) }
+      result.putAll(plugin, newProblems)
     }
     return result
   }
@@ -38,25 +39,24 @@ class TrunkApiChangesOutput(private val tcLog: TeamCityLog, private val reposito
   private fun getPluginUrl(pluginInfo: PluginInfo) = pluginInfo.updateInfo?.let { repository.getPluginOverviewUrl(it) }
 
   fun printTrunkApiCompareResult(apiChanges: TrunkApiChanges) {
-    val problemToPlugins: Multimap<Problem, PluginInfo> = apiChanges.getNewProblems()
+    val plugin2NewProblems: Multimap<PluginInfo, Problem> = apiChanges.getNewPluginProblems()
+    val problem2Plugins: Multimap<Problem, PluginInfo> = Multimaps.invertFrom(plugin2NewProblems, HashMultimap.create())
 
-    val allProblems = problemToPlugins.keySet()
-
-    val releaseVersion = apiChanges.releaseVersion
-    val trunkVersion = apiChanges.trunkVersion
+    val allProblems = problem2Plugins.keySet()
 
     for ((problemClass, allProblemsOfClass) in allProblems.groupBy { it.javaClass }) {
       val problemTypeSuite = TeamCityPrinter.convertProblemClassNameToSentence(problemClass)
       tcLog.testSuiteStarted("($problemTypeSuite)").use {
-        for ((shortDescription, problemsWithShortDescription) in allProblemsOfClass.groupBy { it.getShortDescription() }) {
+        val shortDescription2Problems = allProblemsOfClass.groupBy { it.shortDescription }
+        for ((shortDescription, problemsWithShortDescription) in shortDescription2Problems) {
           for (problem in problemsWithShortDescription) {
-            tcLog.testSuiteStarted(shortDescription.toString()).use {
-              for (plugin in problemToPlugins.get(problem)) {
+            tcLog.testSuiteStarted(shortDescription).use {
+              for (plugin in problem2Plugins.get(problem)) {
                 val pluginName = "($plugin)"
                 tcLog.testStarted(pluginName).use {
                   val problemDetails = buildString {
-                    append(problem.getFullDescription().toString())
-                    append("\nThis problem takes place in $trunkVersion but not in $releaseVersion")
+                    append(problem.shortDescription)
+                    append("\nThis problem takes place in ${apiChanges.trunkVersion} but not in ${apiChanges.releaseVersion}")
                     append(getMissingDependenciesDetails(apiChanges, plugin))
                   }
                   val pluginUrl = getPluginUrl(plugin)
@@ -71,11 +71,11 @@ class TrunkApiChangesOutput(private val tcLog: TeamCityLog, private val reposito
       }
     }
 
-    val newProblemsCnt = allProblems.distinctBy { it.getShortDescription() }.size
+    val newProblemsCnt = allProblems.distinctBy { it.shortDescription }.size
     if (newProblemsCnt > 0) {
-      tcLog.buildStatusFailure("$newProblemsCnt new " + "problem".pluralize(newProblemsCnt) + " detected in $trunkVersion compared to $releaseVersion")
+      tcLog.buildStatusFailure("$newProblemsCnt new " + "problem".pluralize(newProblemsCnt) + " detected in ${apiChanges.trunkVersion} compared to ${apiChanges.releaseVersion}")
     } else {
-      tcLog.buildStatusSuccess("No new compatibility problems found in $trunkVersion compared to $releaseVersion")
+      tcLog.buildStatusSuccess("No new compatibility problems found in ${apiChanges.trunkVersion} compared to ${apiChanges.releaseVersion}")
     }
   }
 
