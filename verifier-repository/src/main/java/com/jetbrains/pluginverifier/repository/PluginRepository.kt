@@ -1,8 +1,6 @@
 package com.jetbrains.pluginverifier.repository
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import java.io.Closeable
-import java.io.File
 
 interface PluginRepository {
 
@@ -22,13 +20,4 @@ interface PluginRepository {
 
   fun getPluginOverviewUrl(update: UpdateInfo): String?
 
-}
-
-abstract class FileLock : Closeable {
-
-  abstract fun getFile(): File
-
-  abstract fun release()
-
-  override fun close() = release()
 }
