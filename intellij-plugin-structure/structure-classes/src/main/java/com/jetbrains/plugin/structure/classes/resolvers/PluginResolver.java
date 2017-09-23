@@ -1,11 +1,14 @@
 package com.jetbrains.plugin.structure.classes.resolvers;
 
-import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
-import com.jetbrains.plugin.structure.classes.utils.JarsUtils;
-import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
-import com.jetbrains.plugin.structure.intellij.extractor.*;
 import com.jetbrains.plugin.structure.base.utils.FileUtil;
+import com.jetbrains.plugin.structure.classes.locator.ClassesDirectoryLocator;
+import com.jetbrains.plugin.structure.classes.locator.CompileServerExtensionLocator;
+import com.jetbrains.plugin.structure.classes.locator.IdePluginClassesLocator;
+import com.jetbrains.plugin.structure.classes.locator.LibDirectoryLocator;
+import com.jetbrains.plugin.structure.intellij.extractor.*;
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin;
+import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -26,11 +29,14 @@ import java.util.List;
 public class PluginResolver extends Resolver {
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginResolver.class);
+  private static final List<IdePluginClassesLocator> CLASSES_LOCATORS = Arrays.asList(new ClassesDirectoryLocator(), new LibDirectoryLocator(), new CompileServerExtensionLocator());
+  private final IdePlugin myPlugin;
   private final ExtractedPluginFile myExtractedPluginFile;
   private final Resolver myResolver;
   private boolean isClosed;
 
-  public PluginResolver(@NotNull ExtractedPluginFile extractedPluginFile) {
+  private PluginResolver(IdePlugin plugin, @NotNull ExtractedPluginFile extractedPluginFile) {
+    myPlugin = plugin;
     myExtractedPluginFile = extractedPluginFile;
     try {
       myResolver = loadClasses(myExtractedPluginFile.getActualPluginFile());
@@ -41,8 +47,11 @@ public class PluginResolver extends Resolver {
   }
 
   @NotNull
-  public static Resolver createPluginResolver(@NotNull File pluginFile, @NotNull File extractDirectory) throws IOException {
-    if (!pluginFile.exists()) {
+  public static Resolver createPluginResolver(@NotNull IdePlugin plugin, @NotNull File extractDirectory) throws IOException {
+    File pluginFile = plugin.getOriginalFile();
+    if (pluginFile == null) {
+      return Resolver.getEmptyResolver();
+    } else if (!pluginFile.exists()) {
       throw new IllegalArgumentException("Plugin file doesn't exist " + pluginFile);
     }
     if (pluginFile.isDirectory() || FileUtil.INSTANCE.isJarOrZip(pluginFile)) {
@@ -50,12 +59,12 @@ public class PluginResolver extends Resolver {
         ExtractorResult extractorResult = PluginExtractor.INSTANCE.extractPlugin(pluginFile, extractDirectory);
         if (extractorResult instanceof ExtractorSuccess) {
           ExtractedPluginFile extractedPluginFile = ((ExtractorSuccess) extractorResult).getExtractedPlugin();
-          return new PluginResolver(extractedPluginFile);
+          return new PluginResolver(plugin, extractedPluginFile);
         } else {
           throw new IOException(((ExtractorFail) extractorResult).getPluginProblem().getMessage());
         }
       }
-      return new PluginResolver(new ExtractedPluginFile(pluginFile, null));
+      return new PluginResolver(plugin, new ExtractedPluginFile(pluginFile, null));
     }
     throw new IllegalArgumentException("Incorrect plugin file type " + pluginFile + ": expected a directory, a .zip or a .jar archive");
   }
@@ -113,52 +122,22 @@ public class PluginResolver extends Resolver {
     if (file.isDirectory()) {
       return loadClassesFromDir(file);
     } else if (file.exists() && StringUtil.endsWithIgnoreCase(file.getName(), ".jar")) {
-      return loadClassesFromJar(file);
+      return createJarResolver(file);
     }
     throw new IllegalArgumentException("Invalid plugin file extension: " + file + ". It must be a directory or a jar file");
   }
 
-  @NotNull
-  private Resolver loadClassesFromJar(@NotNull File file) throws IOException {
-    return createJarResolver(file);
-  }
-
-  private Resolver loadClassesFromDir(@NotNull File dir) throws IOException {
-    File classesDir = new File(dir, "classes");
-
-    File root;
-    boolean classesDirExists = classesDir.isDirectory();
-    if (classesDirExists) {
-      root = classesDir;
-    } else {
-      //it is possible that a plugin .zip-file is not actually a .zip archive, but a .jar archive (someone has renamed it)
-      //so plugin classes will not be in the `classes` dir, but in the root dir itself
-      root = dir;
-    }
-
+  private Resolver loadClassesFromDir(@NotNull File pluginDirectory) {
     List<Resolver> resolvers = new ArrayList<Resolver>();
-
-    String presentableName = "Plugin " + (classesDirExists ? "`classes`" : "root") + " directory";
-    Resolver rootResolver = new FilesResolver(presentableName, root);
-    if (!rootResolver.isEmpty()) {
-      resolvers.add(rootResolver);
-    }
-
-
-    File lib = new File(dir, "lib");
     try {
-      if (lib.isDirectory()) {
-        Collection<File> jars = JarsUtils.collectJars(lib, Predicates.<File>alwaysTrue(), false);
-        Resolver libResolver = JarsUtils.makeResolver("Plugin `lib` jars: " + lib.getCanonicalPath(), jars);
-        if (!libResolver.isEmpty()) {
-          resolvers.add(libResolver);
-        }
+      for (IdePluginClassesLocator classesLocator : CLASSES_LOCATORS) {
+        Resolver classes = classesLocator.findClasses(myPlugin, pluginDirectory);
+        resolvers.add(classes);
       }
     } catch (Throwable e) {
       closeResolvers(resolvers);
       Throwables.propagate(e);
     }
-
     return createUnionResolver("Plugin resolver", resolvers);
   }
 

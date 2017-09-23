@@ -35,7 +35,7 @@ public abstract class Resolver implements Closeable {
   @NotNull
   public static Resolver createPluginResolver(@NotNull IdePlugin plugin) throws IOException {
     File extractDir = (plugin instanceof IdePluginImpl) ? ((IdePluginImpl) plugin).getExtractDirectory() : Settings.EXTRACT_DIRECTORY.getAsFile();
-    return plugin.getOriginalFile() == null ? getEmptyResolver() : PluginResolver.createPluginResolver(plugin.getOriginalFile(), extractDir);
+    return PluginResolver.createPluginResolver(plugin, extractDir);
   }
 
   /**

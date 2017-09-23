@@ -62,6 +62,9 @@
     </actions>
 
     <extensions defaultExtensionNs="com.intellij">
+        <!--Specifies which jars should be additionally added to plugin's class-path (relative to /lib directory)-->
+        <compileServer.plugin classpath="compile/mock-compile-library-1.0.jar"/>
+
         <applicationService serviceInterface="org.jetbrains.kotlin.psi.stubs.elements.StubIndexService"
                             serviceImplementation="org.jetbrains.kotlin.idea.stubindex.IdeStubIndexService"/>
         <projectService serviceInterface="org.jetbrains.kotlin.console.KotlinConsoleKeeper"

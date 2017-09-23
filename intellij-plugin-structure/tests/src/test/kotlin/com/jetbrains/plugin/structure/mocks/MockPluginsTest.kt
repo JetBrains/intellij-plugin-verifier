@@ -3,7 +3,7 @@ package com.jetbrains.plugin.structure.mocks
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.utils.FileUtil
+import com.jetbrains.plugin.structure.classes.resolvers.PluginResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractedPluginFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -13,7 +13,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClasse
 import com.jetbrains.plugin.structure.intellij.problems.MissingOptionalDependencyConfigurationFile
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.hamcrest.CoreMatchers.*
 import org.hamcrest.collection.IsIn.isIn
 import org.junit.Assert
 import org.junit.Assert.*
@@ -64,39 +63,39 @@ class MockPluginsTest : BaseMockPluginTest() {
 
   @Test
   fun `jar file packed in zip`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-jar-in-zip.zip", "")
+    testMockPluginStructureAndConfiguration("mock-plugin-jar-in-zip.zip", "", false)
   }
 
   @Test
   fun `classes directory packed in zip`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-classes-zip.zip", "classes")
+    testMockPluginStructureAndConfiguration("mock-plugin-classes-zip.zip", "classes", true)
   }
 
   @Test
   fun `plugin as directory with classes`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-classes", "classes")
+    testMockPluginStructureAndConfiguration("mock-plugin-classes", "classes", true)
   }
 
   @Test
   fun `plugin jar packed in lib directory of zip archive`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-lib.zip", "lib/mock-plugin-1.0.jar")
+    testMockPluginStructureAndConfiguration("mock-plugin-lib.zip", "lib/mock-plugin-1.0.jar", true)
   }
 
   @Test
   fun `directory with lib subdirectory containing jar file`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-dir", "lib/mock-plugin-1.0.jar")
+    testMockPluginStructureAndConfiguration("mock-plugin-dir", "lib/mock-plugin-1.0.jar", true)
   }
 
   @Test
   @Throws(Exception::class)
   fun `single jar file`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-1.0.jar", "")
+    testMockPluginStructureAndConfiguration("mock-plugin-1.0.jar", "", false)
   }
 
   @Test
   @Throws(Exception::class)
   fun `plugin directory with lib containing jar file - packed in zip archive`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-directory-with-lib-in-zip.zip", "lib/mock-plugin-1.0.jar")
+    testMockPluginStructureAndConfiguration("mock-plugin-directory-with-lib-in-zip.zip", "lib/mock-plugin-1.0.jar", true)
   }
 
   private fun testMockIdeCompatibility(plugin: IdePlugin) {
@@ -112,7 +111,7 @@ class MockPluginsTest : BaseMockPluginTest() {
     assertEquals(compatible, plugin.isCompatibleWithIde(IdeVersion.createIdeVersion(version)))
   }
 
-  private fun testMockPluginStructureAndConfiguration(pluginPath: String, vararg classesPath: String) {
+  private fun testMockPluginStructureAndConfiguration(pluginPath: String, classPath: String, hasLibDirectory: Boolean) {
     val pluginFile = getMockPluginFile(pluginPath)
 
     val extractDirectory = tempFolder.newFolder()
@@ -123,25 +122,30 @@ class MockPluginsTest : BaseMockPluginTest() {
     }
     val pluginCreationSuccess = pluginCreationResult as PluginCreationSuccess
     val plugin = pluginCreationSuccess.plugin
-    val classesResolver = Resolver.createPluginResolver(plugin)
 
-    classesResolver.use {
-      assertThat(classesResolver, `is`(not(nullValue())))
-      assertEquals(pluginFile, plugin.originalFile)
-      testMockConfigs(plugin)
-      testMockWarnings(pluginCreationSuccess.warnings)
-      testMockExtensionPoints(plugin)
-      testMockDependenciesAndModules(plugin)
-      testMockOptDescriptors(plugin)
-      testMockUnderlyingDocument(plugin)
-      testMockIdeCompatibility(plugin)
-      testMockClasses(classesResolver, *classesPath)
+    assertEquals(pluginFile, plugin.originalFile)
+    testMockConfigs(plugin)
+    testMockWarnings(pluginCreationSuccess.warnings)
+    testMockExtensionPoints(plugin)
+    testMockDependenciesAndModules(plugin)
+    testMockOptDescriptors(plugin)
+    testMockUnderlyingDocument(plugin)
+    testMockIdeCompatibility(plugin)
+    testMockPluginClasses(plugin, classPath, hasLibDirectory)
+  }
+
+  private fun testMockPluginClasses(plugin: IdePlugin, classPath: String, hasLibDirectory: Boolean) {
+    assertNotNull(plugin.originalFile)
+
+    val extractDirectory = tempFolder.newFolder()
+    assertTrue(extractDirectory.listFiles().isEmpty())
+
+    PluginResolver.createPluginResolver(plugin, extractDirectory).use { classesResolver ->
+      testMockClasses(classesResolver, classPath, hasLibDirectory)
     }
 
-    val extractedPluginPath = getExtractedPluginPath(classesResolver)
-    if (FileUtil.isZip(pluginFile)) {
-      assertThat(extractedPluginPath.exists(), `is`(false))
-    }
+    //Assert the extracted file was removed on Resolver close
+    assertTrue(extractDirectory.listFiles().isEmpty())
   }
 
   private fun testMockUnderlyingDocument(plugin: IdePlugin) {
@@ -185,28 +189,36 @@ class MockPluginsTest : BaseMockPluginTest() {
     assertThat("org.intellij.scala.scalaTestDefaultWorkingDirectoryProvider", isIn(keys))
   }
 
-  private fun testMockClasses(resolver: Resolver, vararg classPath: String) {
-    val allClasses = resolver.allClasses.asSequence().toList()
-    assertEquals(4, allClasses.size.toLong())
-    assertContains(allClasses, listOf("packagename/InFileClassOne", "packagename/ClassOne\$ClassOneInnerStatic", "packagename/ClassOne\$ClassOneInner", "packagename/InFileClassOne"))
+  private fun testMockClasses(resolver: Resolver, classPath: String, hasLibDirectory: Boolean) {
+    val allClasses = resolver.allClasses.asSequence().toSet()
+    val expected = setOf("packagename/ClassOne", "packagename/InFileClassOne", "packagename/ClassOne\$ClassOneInnerStatic", "packagename/ClassOne\$ClassOneInner", "packagename/InFileClassOne") +
+        if (hasLibDirectory) setOf("com/some/compile/library/CompileLibraryClass") else emptySet()
+
+    assertSetsEqual(expected, allClasses)
 
     val extracted = getExtractedPluginPath(resolver).canonicalFile
-    assertClassPath(resolver, extracted, *classPath)
+    assertClassPath(resolver.classPath, extracted, classPath)
   }
 
-  private fun assertClassPath(resolver: Resolver, extracted: File, vararg classPath: String) {
-    val pluginClassPath = resolver.classPath
-    for (cp in classPath) {
-      val shouldBe = File(extracted, cp)
-      val found = pluginClassPath.any { it.canonicalPath == shouldBe.canonicalPath }
-      Assert.assertTrue("The class path $shouldBe is not found", found)
-    }
+  private fun assertClassPath(pluginClassPath: List<File>, extracted: File, classPath: String) {
+    val shouldBe = File(extracted, classPath)
+    val found = pluginClassPath.any { it.canonicalPath == shouldBe.canonicalPath }
+    Assert.assertTrue("The class path $shouldBe is not found", found)
   }
 
   private fun getExtractedPluginPath(resolver: Resolver): File {
     val field = resolver.javaClass.getDeclaredField("myExtractedPluginFile")
     field.isAccessible = true
     return (field.get(resolver) as ExtractedPluginFile).actualPluginFile
+  }
+
+  private fun <T> assertSetsEqual(expected: Set<T>, actual: Set<T>) {
+    val redundant = actual - expected
+    val missing = expected - actual
+    val message = "Missing: " + redundant + "\nRedundant: " + missing.joinToString()
+    if (redundant.isNotEmpty() || missing.isNotEmpty()) {
+      fail(message)
+    }
   }
 
   private fun <T> assertContains(collection: Collection<T>, elem: T) = assertContains(collection, listOf(elem))
