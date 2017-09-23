@@ -51,6 +51,8 @@ inline fun <T : Closeable?, R> T.closeOnException(block: (T) -> R): R {
   }
 }
 
+fun String.toSystemIndependentName() = replace('\\', '/')
+
 fun File.create(): File {
   if (this.parentFile != null) {
     FileUtils.forceMkdir(this.parentFile)

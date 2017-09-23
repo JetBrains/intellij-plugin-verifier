@@ -5,7 +5,6 @@ import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.createUnionResolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.dependencies.*
 import com.jetbrains.pluginverifier.misc.withDebug
@@ -107,7 +106,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
 
   private fun runVerifier(graph: DirectedGraph<DepVertex, DepEdge>, plugin: IdePlugin, pluginResolver: Resolver): VerificationContext {
     val dependenciesResolver = getDependenciesClassesResolver(graph)
-    val checkClasses = getClassesOfPluginToCheck(plugin, pluginResolver)
+    val checkClasses = ClassesForCheckSelector().getClassesForCheck(plugin, pluginResolver)
     val classLoader = getVerificationClassLoader(dependenciesResolver, plugin, pluginResolver)
     //don't close classLoader because it consists of client-resolvers.
     return BytecodeVerifier(params, plugin, classLoader, ideDescriptor.ideVersion).verify(checkClasses)
@@ -119,14 +118,6 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
           listOf(pluginResolver, runtimeResolver, ideDescriptor.ideResolver, dependenciesResolver, params.externalClassPath)
       )
   )
-
-  private fun getClassesOfPluginToCheck(plugin: IdePlugin, pluginResolver: Resolver): Iterator<String> {
-    val resolver = createUnionResolver("Plugin classes for check",
-        (getAllClassesReferencedFromXml(plugin) + plugin.optionalDescriptors.flatMap { getAllClassesReferencedFromXml(it.value) })
-            .mapNotNull { pluginResolver.getClassLocation(it) }
-            .distinct())
-    return if (resolver.isEmpty) pluginResolver.allClasses else resolver.allClasses
-  }
 
   private fun getDependenciesClassesResolver(graph: DirectedGraph<DepVertex, DepEdge>): Resolver {
     val resolvers = graph.vertexSet().mapNotNull { getResolverByResult(it.resolveResult) }
