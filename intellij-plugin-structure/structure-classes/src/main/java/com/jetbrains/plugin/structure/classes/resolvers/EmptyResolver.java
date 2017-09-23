@@ -52,6 +52,11 @@ public class EmptyResolver extends Resolver {
   }
 
   @Override
+  public List<Resolver> getEventualResolvers() {
+    return Collections.emptyList();
+  }
+
+  @Override
   public String toString() {
     return "EmptyResolver";
   }

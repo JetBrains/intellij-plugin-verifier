@@ -15,7 +15,7 @@ class CompileServerExtensionLocator : IdePluginClassesLocator {
     private val EXTENSION_POINT_NAME = "com.intellij.compileServer.plugin"
   }
 
-  override fun findClasses(idePlugin: IdePlugin, pluginDirectory: File): Resolver {
+  override fun findClasses(idePlugin: IdePlugin, pluginDirectory: File): List<Resolver> {
     val pluginLib = File(pluginDirectory, "lib")
     if (pluginLib.isDirectory) {
       val elements = idePlugin.extensions.get(EXTENSION_POINT_NAME)
@@ -25,8 +25,8 @@ class CompileServerExtensionLocator : IdePluginClassesLocator {
           .filter { it.endsWith(".jar") }
           .map { File(pluginLib, it) }
           .filter { it.isFile }
-      return JarsUtils.makeResolver("Extension point 'compileServer.plugin' jars", allCompileJars)
+      return JarsUtils.getResolversForJars(allCompileJars)
     }
-    return Resolver.getEmptyResolver()
+    return emptyList()
   }
 }

@@ -33,22 +33,26 @@ public class JarsUtils {
 
   @NotNull
   public static Resolver makeResolver(@NotNull String presentableName, @NotNull Collection<File> jars) {
-    List<Resolver> pool = new ArrayList<Resolver>();
+    List<Resolver> pool = getResolversForJars(jars);
+    return Resolver.createUnionResolver(presentableName, pool);
+  }
 
+  @NotNull
+  public static List<Resolver> getResolversForJars(@NotNull Collection<File> jars) {
+    List<Resolver> resolvers = new ArrayList<Resolver>();
     for (File jar : jars) {
       if (!jar.exists()) {
-        closeResolvers(pool);
+        closeResolvers(resolvers);
         throw new IllegalArgumentException("File " + jar + " doesn't exist");
       }
       try {
-        pool.add(Resolver.createJarResolver(jar));
+        resolvers.add(Resolver.createJarResolver(jar));
       } catch (Throwable e) {
-        closeResolvers(pool);
+        closeResolvers(resolvers);
         Throwables.propagate(e);
       }
     }
-
-    return Resolver.createUnionResolver(presentableName, pool);
+    return resolvers;
   }
 
   private static void closeResolvers(List<Resolver> pool) {

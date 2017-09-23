@@ -91,6 +91,15 @@ public final class ContainerResolver extends Resolver {
   }
 
   @Override
+  public List<Resolver> getEventualResolvers() {
+    List<Resolver> result = new ArrayList<Resolver>();
+    for (Resolver resolver : myResolvers) {
+      result.addAll(resolver.getEventualResolvers());
+    }
+    return result;
+  }
+
+  @Override
   @Nullable
   public ClassNode findClass(@NotNull String className) throws IOException {
     for (Resolver resolver : myResolvers) {

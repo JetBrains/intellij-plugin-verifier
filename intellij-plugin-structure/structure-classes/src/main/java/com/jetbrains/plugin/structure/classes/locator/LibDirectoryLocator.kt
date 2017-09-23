@@ -7,13 +7,13 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.io.File
 
 class LibDirectoryLocator : IdePluginClassesLocator {
-  override fun findClasses(idePlugin: IdePlugin, pluginDirectory: File): Resolver {
+  override fun findClasses(idePlugin: IdePlugin, pluginDirectory: File): List<Resolver> {
     val pluginLib = File(pluginDirectory, "lib")
     if (pluginLib.isDirectory) {
       val jars = JarsUtils.collectJars(pluginLib, Predicates.alwaysTrue(), false).toList()
-      return JarsUtils.makeResolver("Plugin `lib` jars: " + pluginLib.canonicalPath, jars)
+      return JarsUtils.getResolversForJars(jars)
     }
-    return Resolver.getEmptyResolver()
+    return emptyList()
   }
 
 }

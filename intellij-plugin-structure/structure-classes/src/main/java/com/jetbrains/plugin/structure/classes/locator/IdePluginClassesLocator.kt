@@ -10,5 +10,5 @@ import java.io.IOException
  */
 interface IdePluginClassesLocator {
   @Throws(IOException::class)
-  fun findClasses(idePlugin: IdePlugin, pluginDirectory: File): Resolver
+  fun findClasses(idePlugin: IdePlugin, pluginDirectory: File): List<Resolver>
 }

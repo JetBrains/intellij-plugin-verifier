@@ -6,11 +6,11 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.io.File
 
 class ClassesDirectoryLocator : IdePluginClassesLocator {
-  override fun findClasses(idePlugin: IdePlugin, pluginDirectory: File): Resolver {
+  override fun findClasses(idePlugin: IdePlugin, pluginDirectory: File): List<Resolver> {
     val classesDir = File(pluginDirectory, "classes")
     if (classesDir.isDirectory) {
-      return FilesResolver("Plugin `classes` directory", classesDir)
+      return listOf(FilesResolver("Plugin `classes` directory", classesDir))
     }
-    return Resolver.getEmptyResolver()
+    return emptyList()
   }
 }

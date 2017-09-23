@@ -73,6 +73,11 @@ public class CacheResolver extends Resolver {
   }
 
   @Override
+  public List<Resolver> getEventualResolvers() {
+    return myDelegate.getEventualResolvers();
+  }
+
+  @Override
   public void close() throws IOException {
     myDelegate.close();
   }

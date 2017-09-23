@@ -85,6 +85,11 @@ public class CompileOutputResolver extends Resolver {
   }
 
   @Override
+  public List<Resolver> getEventualResolvers() {
+    return Collections.singletonList((Resolver) this);
+  }
+
+  @Override
   public void close() {
     //nothing to do
   }

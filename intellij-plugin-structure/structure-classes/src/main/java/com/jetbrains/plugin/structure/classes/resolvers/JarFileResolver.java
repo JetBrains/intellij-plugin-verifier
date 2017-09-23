@@ -76,6 +76,11 @@ public final class JarFileResolver extends Resolver {
   }
 
   @Override
+  public List<Resolver> getEventualResolvers() {
+    return Collections.singletonList((Resolver) this);
+  }
+
+  @Override
   @Nullable
   public ClassNode findClass(@NotNull String className) throws IOException {
     return myClasses.contains(className) ? evaluateNode(className) : null;

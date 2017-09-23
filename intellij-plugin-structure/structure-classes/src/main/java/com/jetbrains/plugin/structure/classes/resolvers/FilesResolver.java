@@ -70,6 +70,11 @@ public final class FilesResolver extends Resolver {
   }
 
   @Override
+  public List<Resolver> getEventualResolvers() {
+    return Collections.singletonList((Resolver) this);
+  }
+
+  @Override
   public String toString() {
     return myPresentableName;
   }
