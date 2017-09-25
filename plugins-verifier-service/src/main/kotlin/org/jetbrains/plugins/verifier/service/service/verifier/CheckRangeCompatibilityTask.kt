@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.*
@@ -67,7 +67,7 @@ class CheckRangeCompatibilityTask(val pluginInfo: PluginInfo,
                                          jdkDescriptor: JdkDescriptor,
                                          progress: TaskProgress): CheckRangeCompatibilityResult {
     val verifierProgress = VerifierToTaskBridgeProgress(progress)
-    val params = CheckPluginParams(listOf(pluginCoordinate), ideDescriptors, jdkDescriptor, emptyList(), ProblemsFilter.AlwaysTrue, Resolver.getEmptyResolver())
+    val params = CheckPluginParams(listOf(pluginCoordinate), ideDescriptors, jdkDescriptor, emptyList(), ProblemsFilter.AlwaysTrue, EmptyResolver)
     val checkPluginTask = CheckPluginTask(params, pluginRepository, pluginCreator)
     val checkPluginResults = checkPluginTask.execute(verifierProgress)
     val results = checkPluginResults.results

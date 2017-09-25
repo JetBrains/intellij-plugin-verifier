@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.api
 
+import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.dependencies.DependencyResolver
 
@@ -26,7 +27,7 @@ data class VerifierParams(
     /**
      * The Resolver for external classes. The verification can refer to them.
      */
-    val externalClassPath: Resolver = Resolver.getEmptyResolver(),
+    val externalClassPath: Resolver = EmptyResolver,
 
     /**
      * If set, this resolver will be used to resolve plugin dependencies.

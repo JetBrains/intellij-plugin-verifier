@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tests.dependencies
 
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.classes.locator.ClassLocationsContainer
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DepGraph2ApiGraphConverter
@@ -15,6 +15,7 @@ import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.io.Closeable
 import java.io.File
 
 /**
@@ -61,7 +62,7 @@ class IdeDependencyResolverTest {
 
     val pluginCreator = PluginCreatorImpl(repository, File("isn't necessary"))
     val dependencyResolver = IdeDependencyResolver(ide, repository, pluginCreator)
-    val (graph, start) = DepGraphBuilder(dependencyResolver).build(plugin, Resolver.getEmptyResolver())
+    val (graph, start) = DepGraphBuilder(dependencyResolver).build(plugin, ClassLocationsContainer(Closeable { }, emptyMap()))
     val dependenciesGraph = DepGraph2ApiGraphConverter.convert(graph, start)
 
     val deps: List<String> = dependenciesGraph.vertices.map { it.id }

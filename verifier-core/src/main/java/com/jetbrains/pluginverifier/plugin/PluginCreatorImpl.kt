@@ -2,7 +2,9 @@ package com.jetbrains.pluginverifier.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.classes.locator.ClassLocationsContainer
+import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionLocator
+import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.api.PluginCoordinate
@@ -51,8 +53,8 @@ class PluginCreatorImpl(private val pluginRepository: PluginRepository,
 
       val creationResult = IdePluginManager.createManager(extractDirectory).createPlugin(pluginFile)
       if (creationResult is PluginCreationSuccess) {
-        val pluginResolver = createResolverByPluginOrCloseLock(creationResult.plugin, pluginFileLock) ?: return CreatePluginResult.BadPlugin(listOf(UnableToReadPluginClassFilesProblem))
-        return CreatePluginResult.OK(creationResult.plugin, creationResult.warnings, pluginResolver, pluginFileLock)
+        val locationsContainer = createResolverByPluginOrCloseLock(creationResult.plugin, pluginFileLock) ?: return CreatePluginResult.BadPlugin(listOf(UnableToReadPluginClassFilesProblem))
+        return CreatePluginResult.OK(creationResult.plugin, creationResult.warnings, locationsContainer, pluginFileLock)
       } else {
         pluginFileLock.close()
         return CreatePluginResult.BadPlugin((creationResult as PluginCreationFail).errorsAndWarnings)
@@ -65,8 +67,8 @@ class PluginCreatorImpl(private val pluginRepository: PluginRepository,
     return CreatePluginResult.OK(plugin, emptyList(), resolver, IdleFileLock(File("")))
   }
 
-  private fun createResolverByPluginOrCloseLock(plugin: IdePlugin, fileLock: FileLock?): Resolver? = try {
-    Resolver.createPluginResolver(plugin)
+  private fun createResolverByPluginOrCloseLock(plugin: IdePlugin, fileLock: FileLock?): ClassLocationsContainer? = try {
+    IdePluginClassesFinder.createLocationsContainer(plugin, listOf(CompileServerExtensionLocator()))
   } catch (e: Exception) {
     LOG.debug("Unable to read plugin $plugin class files", e)
     fileLock?.closeLogged()

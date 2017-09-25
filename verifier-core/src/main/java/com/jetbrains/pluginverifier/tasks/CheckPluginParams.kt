@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.tasks
 
+import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.JdkDescriptor
@@ -12,7 +13,7 @@ data class CheckPluginParams(val pluginCoordinates: List<PluginCoordinate>,
                              val jdkDescriptor: JdkDescriptor,
                              val externalClassesPrefixes: List<String>,
                              val problemsFilter: ProblemsFilter,
-                             val externalClasspath: Resolver = Resolver.getEmptyResolver()) : TaskParameters {
+                             val externalClasspath: Resolver = EmptyResolver) : TaskParameters {
 
   override fun presentableText(): String = """Check Plugin Configuration parameters:
   JDK: $jdkDescriptor

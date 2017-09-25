@@ -2,7 +2,9 @@ package com.jetbrains.pluginverifier.options
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
+import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.ProblemsFilter
@@ -66,8 +68,7 @@ object OptionsParser {
   }
 
   fun getExternalClassPath(opts: CmdOpts): Resolver =
-      Resolver.createUnionResolver("External classpath resolver: ${opts.externalClasspath}",
-          opts.externalClasspath.map { Resolver.createJarResolver(File(it)) })
+      UnionResolver.create(opts.externalClasspath.map { JarFileResolver(File(it)) })
 
   fun getExternalClassesPrefixes(opts: CmdOpts): List<String> = opts.externalClassesPrefixes.map { it.replace('.', '/') }
 

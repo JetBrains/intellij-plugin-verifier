@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tasks
 
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.PluginCoordinate
@@ -49,7 +49,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
         pluginCoordinates,
         excludedPlugins,
         emptyList(),
-        Resolver.getEmptyResolver(),
+        EmptyResolver,
         parameters.externalClassesPrefixes,
         parameters.problemsFilter,
         dependencyResolver

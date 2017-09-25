@@ -39,8 +39,8 @@ configure(allprojects) {
 }
 
 dependencies {
-  compile "org.jetbrains.intellij.plugins:structure-classes:$intellijStructureVersion"
-  compile "org.jetbrains.intellij.plugins:structure-ide:$intellijStructureVersion"
+  compile "org.jetbrains.intellij.plugins:structure-intellij-classes:$intellijStructureVersion"
+  compile "org.jetbrains.intellij.plugins:structure-ide-classes:$intellijStructureVersion"
   compile group: 'com.google.guava', name: 'guava', version: '19.0'
   compile group: 'com.google.code.gson', name: 'gson', version: '2.7'
   compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'

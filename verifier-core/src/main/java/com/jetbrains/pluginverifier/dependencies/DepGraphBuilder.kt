@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.dependencies
 
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.classes.locator.ClassLocationsContainer
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.misc.closeLogged
@@ -33,9 +33,9 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) : Clos
 
   private val graph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
 
-  fun build(plugin: IdePlugin, resolver: Resolver): Pair<DirectedGraph<DepVertex, DepEdge>, DepVertex> {
+  fun build(plugin: IdePlugin, locationsContainer: ClassLocationsContainer): Pair<DirectedGraph<DepVertex, DepEdge>, DepVertex> {
     LOG.debug("Building dependencies graph for $plugin")
-    val startResult = DependencyResolver.Result.FoundReady(plugin, resolver)
+    val startResult = DependencyResolver.Result.FoundReady(plugin, locationsContainer)
     val startVertex = DepVertex(plugin.pluginId ?: "", startResult)
     traverseDependencies(startVertex)
     return graph to startVertex

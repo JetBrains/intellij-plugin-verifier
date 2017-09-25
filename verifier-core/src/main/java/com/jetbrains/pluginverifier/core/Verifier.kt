@@ -3,7 +3,8 @@ package com.jetbrains.pluginverifier.core
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver.createUnionResolver
+import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
+import com.jetbrains.plugin.structure.intellij.classes.locator.ClassLocationsContainer
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.dependencies.*
@@ -78,14 +79,14 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
   private fun calculateVerdict(creationOk: CreatePluginResult.OK): Verdict {
     val plugin = creationOk.plugin
     val warnings = creationOk.warnings
-    val pluginResolver = creationOk.resolver
+    val locationsContainer = creationOk.locationsContainer
 
     val dependencyResolver = params.dependencyResolver
     DepGraphBuilder(dependencyResolver).use { graphBuilder ->
-      val (graph, start) = graphBuilder.build(creationOk.plugin, creationOk.resolver)
+      val (graph, start) = graphBuilder.build(creationOk.plugin, creationOk.locationsContainer)
       val apiGraph = DepGraph2ApiGraphConverter.convert(graph, start)
       LOG.debug("Dependencies graph for $plugin: $apiGraph")
-      val context = runVerifier(graph, plugin, pluginResolver)
+      val context = runVerifier(graph, plugin, locationsContainer)
       addCycleAndOtherWarnings(apiGraph, context, plugin, warnings)
       return getAppropriateVerdict(context, apiGraph)
     }
@@ -104,30 +105,29 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
     }
   }
 
-  private fun runVerifier(graph: DirectedGraph<DepVertex, DepEdge>, plugin: IdePlugin, pluginResolver: Resolver): VerificationContext {
+  private fun runVerifier(graph: DirectedGraph<DepVertex, DepEdge>, plugin: IdePlugin, locationsContainer: ClassLocationsContainer): VerificationContext {
     val dependenciesResolver = getDependenciesClassesResolver(graph)
-    val checkClasses = ClassesForCheckSelector().getClassesForCheck(plugin, pluginResolver)
-    val classLoader = getVerificationClassLoader(dependenciesResolver, plugin, pluginResolver)
+    val checkClasses = ClassesForCheckSelector().getClassesForCheck(plugin, locationsContainer)
+    val classLoader = getVerificationClassLoader(dependenciesResolver, locationsContainer)
     //don't close classLoader because it consists of client-resolvers.
     return BytecodeVerifier(params, plugin, classLoader, ideDescriptor.ideVersion).verify(checkClasses)
   }
 
-  private fun getVerificationClassLoader(dependenciesResolver: Resolver, plugin: IdePlugin, pluginResolver: Resolver): Resolver = CacheResolver(
-      createUnionResolver(
-          "Common resolver for plugin $plugin; IDE #${ideDescriptor.ideVersion}; JDK $runtimeResolver",
-          listOf(pluginResolver, runtimeResolver, ideDescriptor.ideResolver, dependenciesResolver, params.externalClassPath)
+  private fun getVerificationClassLoader(dependenciesResolver: Resolver, locationsContainer: ClassLocationsContainer): Resolver = CacheResolver(
+      UnionResolver.create(
+          listOf(locationsContainer.getUnitedResolver(), runtimeResolver, ideDescriptor.ideResolver, dependenciesResolver, params.externalClassPath)
       )
   )
 
   private fun getDependenciesClassesResolver(graph: DirectedGraph<DepVertex, DepEdge>): Resolver {
-    val resolvers = graph.vertexSet().mapNotNull { getResolverByResult(it.resolveResult) }
-    return createUnionResolver("Plugin dependencies resolver", resolvers)
+    val classContainers = graph.vertexSet().mapNotNull { getClassLocationsByResult(it.resolveResult) }
+    return UnionResolver.create(classContainers.map { it.getUnitedResolver() })
   }
 
-  private fun getResolverByResult(result: DependencyResolver.Result): Resolver? = when (result) {
-    is DependencyResolver.Result.FoundReady -> result.resolver
-    is DependencyResolver.Result.CreatedResolver -> result.resolver
-    is DependencyResolver.Result.Downloaded -> result.resolver
+  private fun getClassLocationsByResult(result: DependencyResolver.Result): ClassLocationsContainer? = when (result) {
+    is DependencyResolver.Result.FoundReady -> result.locationsContainer
+    is DependencyResolver.Result.CreatedResolver -> result.locationsContainer
+    is DependencyResolver.Result.Downloaded -> result.locationsContainer
     is DependencyResolver.Result.ProblematicDependency -> null
     is DependencyResolver.Result.NotFound -> null
     is DependencyResolver.Result.FailedToDownload -> null

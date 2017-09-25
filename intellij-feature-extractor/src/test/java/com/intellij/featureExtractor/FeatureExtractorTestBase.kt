@@ -1,6 +1,6 @@
 package com.intellij.featureExtractor
 
-import com.jetbrains.plugin.structure.classes.resolvers.FilesResolver
+import com.jetbrains.plugin.structure.classes.resolvers.ClassFilesResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import org.junit.After
 import org.junit.Before
@@ -13,7 +13,7 @@ open class FeatureExtractorTestBase {
 
   @Before
   fun setUp() {
-    resolver = FilesResolver("Test class files", File("."))
+    resolver = ClassFilesResolver(File("."))
   }
 
   @After

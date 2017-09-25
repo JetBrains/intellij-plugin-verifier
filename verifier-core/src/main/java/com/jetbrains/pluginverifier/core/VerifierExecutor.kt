@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.core
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.closeLogged
@@ -25,7 +25,7 @@ class VerifierExecutor(val params: VerifierParams) : Closeable {
     private val AVERAGE_VERIFIER_MEMORY = 200 * FileUtils.ONE_MB
   }
 
-  private val runtimeResolver = Resolver.createJdkResolver(params.jdkDescriptor.homeDir)
+  private val runtimeResolver = JdkResolverCreator.createJdkResolver(params.jdkDescriptor.homeDir)
 
   private val concurrentWorkers = estimateNumberOfConcurrentWorkers()
 
