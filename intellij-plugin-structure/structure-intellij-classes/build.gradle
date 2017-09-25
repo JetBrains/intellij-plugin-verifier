@@ -1,0 +1,4 @@
+dependencies {
+  compile project(':structure-intellij')
+  compile project(':structure-classes')
+}

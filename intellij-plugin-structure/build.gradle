@@ -66,10 +66,12 @@ publishing {
     }
 
     BasePublication(MavenPublication) { configurePublication(it, ':structure-base') }
-    IntellijPublication(MavenPublication) { configurePublication(it, ':structure-intellij') }
-    TeamCityPublication(MavenPublication) { configurePublication(it, ':structure-teamcity') }
     ClassesPublication(MavenPublication) { configurePublication(it, ':structure-classes') }
+    IntellijPublication(MavenPublication) { configurePublication(it, ':structure-intellij') }
+    IntellijClassesPublication(MavenPublication) { configurePublication(it, ':structure-intellij-classes') }
     IdePublication(MavenPublication) { configurePublication(it, ':structure-ide') }
+    IdeClassesPublication(MavenPublication) { configurePublication(it, ':structure-ide-classes') }
+    TeamCityPublication(MavenPublication) { configurePublication(it, ':structure-teamcity') }
   }
 }
 
@@ -79,7 +81,7 @@ bintray {
 
 
   publish = true
-  publications = ['BasePublication', 'IntellijPublication', 'TeamCityPublication', 'ClassesPublication', 'IdePublication']
+  publications = ['BasePublication', 'ClassesPublication', 'IntellijPublication', 'IntellijClassesPublication', 'IdePublication', 'IdeClassesPublication', 'TeamCityPublication']
 
   pkg {
     repo = 'intellij-plugin-service'
