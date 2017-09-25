@@ -32,11 +32,11 @@ object PluginExtractor {
   }
 
   private fun success(actualFile: File, fileToDelete: File): ExtractorResult =
-      ExtractorSuccess(ExtractedPluginFile(actualFile, fileToDelete))
+      ExtractorResult.Success(ExtractedPlugin(actualFile, fileToDelete))
 
   private fun fail(problem: PluginProblem, extractedPlugin: File): ExtractorResult {
     try {
-      return ExtractorFail(problem)
+      return ExtractorResult.Fail(problem)
     } finally {
       FileUtils.deleteQuietly(extractedPlugin)
     }

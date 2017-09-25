@@ -6,9 +6,11 @@ import com.jetbrains.plugin.structure.base.utils.FileUtil.isJar
 import com.jetbrains.plugin.structure.base.utils.FileUtil.isZip
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.intellij.classes.locator.*
-import com.jetbrains.plugin.structure.intellij.extractor.ExtractorFail
-import com.jetbrains.plugin.structure.intellij.extractor.ExtractorSuccess
+import com.jetbrains.plugin.structure.intellij.classes.locator.ClassesDirectoryKey
+import com.jetbrains.plugin.structure.intellij.classes.locator.JarPluginKey
+import com.jetbrains.plugin.structure.intellij.classes.locator.LibDirectoryKey
+import com.jetbrains.plugin.structure.intellij.classes.locator.LocationKey
+import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult
 import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
@@ -21,9 +23,9 @@ import java.io.IOException
  */
 class IdePluginClassesFinder private constructor(private val idePlugin: IdePlugin,
                                                  private val extractDirectory: File,
-                                                 private val locators: List<IdePluginClassesLocator>) {
+                                                 private val locatorKeys: List<LocationKey>) {
 
-  private fun createLocationsContainer(): ClassLocationsContainer {
+  private fun findPluginClasses(): IdePluginClassesLocations {
     val pluginFile = idePlugin.originalFile
     if (pluginFile == null) {
       throw IllegalArgumentException("Class path cannot be created for optional plugin descriptor $idePlugin")
@@ -34,53 +36,60 @@ class IdePluginClassesFinder private constructor(private val idePlugin: IdePlugi
     }
 
     return if (FileUtil.isZip(pluginFile)) {
-      createClassPathFromZip(pluginFile)
+      findInZip(pluginFile)
     } else {
-      val classPaths = createClassPaths(pluginFile)
-      ClassLocationsContainer(Closeable { /* Nothing to delete */ }, classPaths)
+      val locations = findLocations(pluginFile)
+      IdePluginClassesLocations(idePlugin, Closeable { /* Nothing to delete */ }, locations)
     }
   }
 
-  private fun createClassPathFromZip(pluginDir: File): ClassLocationsContainer {
-    val extractorResult = PluginExtractor.extractPlugin(pluginDir, extractDirectory)
+  private fun findInZip(pluginZip: File): IdePluginClassesLocations {
+    val extractorResult = PluginExtractor.extractPlugin(pluginZip, extractDirectory)
     return when (extractorResult) {
-      is ExtractorSuccess -> {
+      is ExtractorResult.Success -> {
         val extractedPlugin = extractorResult.extractedPlugin
-        val classPaths = createClassPaths(extractedPlugin.pluginFile)
-        ClassLocationsContainer(extractedPlugin, classPaths)
+        val locations = findLocations(extractedPlugin.pluginFile)
+        IdePluginClassesLocations(idePlugin, extractedPlugin, locations)
       }
-      is ExtractorFail -> throw IOException(extractorResult.pluginProblem.message)
+      is ExtractorResult.Fail -> throw IOException(extractorResult.pluginProblem.message)
     }
   }
 
-  private fun createClassPaths(pluginFile: File): Map<LocationKey, Resolver> {
-    val classesLocations = hashMapOf<LocationKey, Resolver>()
+  private fun findLocations(pluginFile: File): Map<LocationKey, Resolver> {
+    val locations = hashMapOf<LocationKey, Resolver>()
     try {
-      for (locator in locators) {
-        val resolver = locator.findClasses(idePlugin, pluginFile)
+      for (locatorKey in locatorKeys) {
+        val resolver = locatorKey.locator.findClasses(idePlugin, pluginFile)
         if (resolver != null) {
-          classesLocations[locator.locationKey] = resolver
+          locations[locatorKey] = resolver
         }
       }
     } catch (e: Throwable) {
-      classesLocations.values.forEach { it.closeLogged() }
+      locations.values.forEach { it.closeLogged() }
       throw e
     }
-    return classesLocations
+    return locations
   }
 
   companion object {
 
-    private val DEFAULT_LOCATORS = listOf(JarPluginLocator(), ClassesDirectoryLocator(), LibDirectoryLocator())
+    val MAIN_CLASSES_KEYS: List<LocationKey> = listOf(JarPluginKey, ClassesDirectoryKey, LibDirectoryKey)
 
-    fun createLocationsContainer(idePlugin: IdePlugin, additionalLocators: List<IdePluginClassesLocator>): ClassLocationsContainer {
+    fun findPluginClasses(
+        idePlugin: IdePlugin,
+        additionalKeys: List<LocationKey> = emptyList()
+    ): IdePluginClassesLocations {
       val extractDirectory = if (idePlugin is IdePluginImpl) idePlugin.extractDirectory else Settings.EXTRACT_DIRECTORY.getAsFile()
-      return createLocationsContainer(idePlugin, extractDirectory, additionalLocators)
+      return findPluginClasses(idePlugin, extractDirectory, additionalKeys)
     }
 
-    fun createLocationsContainer(idePlugin: IdePlugin, extractDirectory: File, additionalLocators: List<IdePluginClassesLocator>): ClassLocationsContainer {
-      val locators = DEFAULT_LOCATORS + additionalLocators
-      return IdePluginClassesFinder(idePlugin, extractDirectory, locators).createLocationsContainer()
+    fun findPluginClasses(
+        idePlugin: IdePlugin,
+        extractDirectory: File,
+        additionalKeys: List<LocationKey> = emptyList()
+    ): IdePluginClassesLocations {
+      val locatorKeys = MAIN_CLASSES_KEYS + additionalKeys
+      return IdePluginClassesFinder(idePlugin, extractDirectory, locatorKeys).findPluginClasses()
     }
   }
 

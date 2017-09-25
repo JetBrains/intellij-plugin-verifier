@@ -9,7 +9,7 @@ import java.io.File
  * Classes that added to external build process' classpath.
  * See PR-1063 and com.intellij.compiler.server.CompileServerPlugin for details
  */
-class CompileServerExtensionLocator : IdePluginClassesLocator {
+class CompileServerExtensionLocator : ClassesLocator {
   companion object {
     private val EXTENSION_POINT_NAME = "com.intellij.compileServer.plugin"
   }
@@ -30,4 +30,10 @@ class CompileServerExtensionLocator : IdePluginClassesLocator {
     }
     return null
   }
+}
+
+object CompileServerExtensionKey : LocationKey {
+  override val name: String = "compileServer.plugin extension point"
+
+  override val locator: ClassesLocator = CompileServerExtensionLocator()
 }

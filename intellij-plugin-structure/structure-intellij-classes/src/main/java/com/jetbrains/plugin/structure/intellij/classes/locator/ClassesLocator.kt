@@ -7,7 +7,7 @@ import java.io.File
 /**
  * @author Sergey Patrikeev
  */
-interface IdePluginClassesLocator {
+interface ClassesLocator {
   val locationKey: LocationKey
 
   fun findClasses(idePlugin: IdePlugin, pluginFile: File): Resolver?

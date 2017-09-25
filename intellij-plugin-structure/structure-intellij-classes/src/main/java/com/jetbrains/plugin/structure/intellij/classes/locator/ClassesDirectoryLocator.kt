@@ -5,7 +5,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.io.File
 
-class ClassesDirectoryLocator : IdePluginClassesLocator {
+class ClassesDirectoryLocator : ClassesLocator {
   override val locationKey: LocationKey = ClassesDirectoryKey
 
   override fun findClasses(idePlugin: IdePlugin, pluginFile: File): Resolver? {
@@ -15,4 +15,10 @@ class ClassesDirectoryLocator : IdePluginClassesLocator {
     }
     return null
   }
+}
+
+object ClassesDirectoryKey : LocationKey {
+  override val name: String = "classes directory"
+
+  override val locator: ClassesLocator = ClassesDirectoryLocator()
 }

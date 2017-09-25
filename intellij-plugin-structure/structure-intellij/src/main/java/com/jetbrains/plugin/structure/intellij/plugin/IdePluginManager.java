@@ -5,7 +5,9 @@ import com.jetbrains.plugin.structure.base.plugin.PluginManager;
 import com.jetbrains.plugin.structure.base.plugin.Settings;
 import com.jetbrains.plugin.structure.base.problems.*;
 import com.jetbrains.plugin.structure.base.utils.FileUtil;
-import com.jetbrains.plugin.structure.intellij.extractor.*;
+import com.jetbrains.plugin.structure.intellij.extractor.ExtractedPlugin;
+import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult;
+import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor;
 import com.jetbrains.plugin.structure.intellij.problems.MultiplePluginDescriptorsInLibDirectory;
 import com.jetbrains.plugin.structure.intellij.problems.PluginLibDirectoryIsEmpty;
 import com.jetbrains.plugin.structure.intellij.problems.UnableToReadJarFile;
@@ -288,15 +290,15 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       LOG.info("Unable to extract plugin zip " + zipPlugin, e);
       return new PluginCreator(PLUGIN_XML, new UnableToExtractZip(zipPlugin), zipPlugin);
     }
-    if (extractorResult instanceof ExtractorSuccess) {
-      ExtractedPluginFile extractedPluginFile = ((ExtractorSuccess) extractorResult).getExtractedPlugin();
+    if (extractorResult instanceof ExtractorResult.Success) {
+      ExtractedPlugin extractedPlugin = ((ExtractorResult.Success) extractorResult).getExtractedPlugin();
       try {
-        return loadDescriptorFromJarOrDirectory(extractedPluginFile.getPluginFile(), PLUGIN_XML, validateDescriptor);
+        return loadDescriptorFromJarOrDirectory(extractedPlugin.getPluginFile(), PLUGIN_XML, validateDescriptor);
       } finally {
-        extractedPluginFile.close();
+        extractedPlugin.close();
       }
     } else {
-      return new PluginCreator(PLUGIN_XML, ((ExtractorFail) extractorResult).getPluginProblem(), zipPlugin);
+      return new PluginCreator(PLUGIN_XML, ((ExtractorResult.Fail) extractorResult).getPluginProblem(), zipPlugin);
     }
   }
 

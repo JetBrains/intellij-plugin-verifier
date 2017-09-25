@@ -4,8 +4,12 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.toSet
-import com.jetbrains.plugin.structure.intellij.classes.locator.*
+import com.jetbrains.plugin.structure.intellij.classes.locator.ClassesDirectoryKey
+import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
+import com.jetbrains.plugin.structure.intellij.classes.locator.JarPluginKey
+import com.jetbrains.plugin.structure.intellij.classes.locator.LibDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
+import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
@@ -139,7 +143,7 @@ class MockPluginsTest : BaseMockPluginTest() {
     val extractDirectory = tempFolder.newFolder()
     assertTrue(extractDirectory.listFiles().isEmpty())
 
-    IdePluginClassesFinder.createLocationsContainer(plugin, extractDirectory, listOf(CompileServerExtensionLocator())).use { locationsContainer ->
+    IdePluginClassesFinder.findPluginClasses(plugin, extractDirectory, listOf(CompileServerExtensionKey)).use { locationsContainer ->
       testMockClasses(locationsContainer, hasLibDirectory, classPath)
     }
 
@@ -188,7 +192,7 @@ class MockPluginsTest : BaseMockPluginTest() {
     assertThat("org.intellij.scala.scalaTestDefaultWorkingDirectoryProvider", isIn(keys))
   }
 
-  private fun testMockClasses(locationsContainer: ClassLocationsContainer, hasLibDirectory: Boolean, classPath: String) {
+  private fun testMockClasses(locationsContainer: IdePluginClassesLocations, hasLibDirectory: Boolean, classPath: String) {
     if (hasLibDirectory) {
       val compilePathResolver = locationsContainer.getResolver(CompileServerExtensionKey)!!
       val libDirectoryClasses = compilePathResolver.allClasses.toSet()
