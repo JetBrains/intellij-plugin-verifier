@@ -1,8 +1,5 @@
 package com.jetbrains.plugin.structure.classes.resolvers;
 
-import com.jetbrains.plugin.structure.base.plugin.Settings;
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin;
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -22,81 +19,6 @@ import java.util.List;
  * clean the used disk space.</p>
  */
 public abstract class Resolver implements Closeable {
-
-  /**
-   * Creates a resolver for the given plugin.
-   * <p>It consists of all the plugin classes and .jar libraries.</p>
-   *
-   * @param plugin plugin for which resolver should be created
-   * @return resolver for the specified plugin
-   * @throws IOException              if disk error occurs during attempt to read a class-file or to extract a plugin
-   * @throws IllegalArgumentException if the plugin has broken class-files or it has an incorrect directories structure
-   */
-  @NotNull
-  public static Resolver createPluginResolver(@NotNull IdePlugin plugin) throws IOException {
-    File extractDir = (plugin instanceof IdePluginImpl) ? ((IdePluginImpl) plugin).getExtractDirectory() : Settings.EXTRACT_DIRECTORY.getAsFile();
-    return PluginResolver.Companion.createPluginResolver(plugin, extractDir);
-  }
-
-  /**
-   * Creates a resolver for the given JDK instance.
-   * <p>It consists of the jars which are required to run a Java program (<i>rt.jar</i> and others) </p>
-   *
-   * @param jdkPath path to the JDK or JRE containing directory (on Linux it might be <i>/usr/lib/jvm/java-8-oracle</i>)
-   * @return resolver of the JDK classes
-   * @throws IOException if IO error occurs during attempt to read a class-file
-   */
-  @NotNull
-  public static Resolver createJdkResolver(@NotNull File jdkPath) throws IOException {
-    return JdkResolverCreator.createJdkResolver(jdkPath);
-  }
-
-  /**
-   * Creates a resolver which combines the specified list of resolvers similar to the <i>Java class-path</i> setting.
-   * During the class search attempt the list will be searched in the left-to-right order until the class is found.
-   *
-   * @param presentableName some name determining the union resolver name (it can be obtained via the {@link #toString()})
-   * @param resolvers       list of the resolvers according to the class-path order
-   * @return a combining resolver
-   */
-  @NotNull
-  public static Resolver createUnionResolver(@NotNull String presentableName, @NotNull List<Resolver> resolvers) {
-    return ContainerResolver.createFromList(presentableName, resolvers);
-  }
-
-  /**
-   * Creates a resolver designated to cache the sought-for classes. It may be used for performance reasons.
-   *
-   * @param delegate a resolver to which class search attempts will be delegated
-   * @return a caching resolver
-   */
-  @NotNull
-  public static Resolver createCacheResolver(@NotNull Resolver delegate) {
-    return new CacheResolver(delegate);
-  }
-
-  /**
-   * Creates a resolver for the given jar-file (a .jar archive containing the class-files)
-   *
-   * @param jarFile file - should be a .jar archive
-   * @return Resolver for the given .jar file
-   * @throws IOException              if io-error occurs
-   * @throws IllegalArgumentException if supplied file doesn't exist or is not a .jar archive
-   */
-  @NotNull
-  public static Resolver createJarResolver(@NotNull File jarFile) throws IOException {
-    return new JarFileResolver(jarFile);
-  }
-
-  /**
-   * Returns the resolver which doesn't contain any class.
-   *
-   * @return an empty resolver
-   */
-  @NotNull
-  public static Resolver getEmptyResolver() {
-    return EmptyResolver.INSTANCE;
-  }
 
   /**
    * Returns a class-file node with the specified name. If {@code this} resolver contains multiple

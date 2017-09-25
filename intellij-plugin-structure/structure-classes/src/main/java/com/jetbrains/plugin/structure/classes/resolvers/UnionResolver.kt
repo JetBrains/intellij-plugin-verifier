@@ -51,7 +51,7 @@ class UnionResolver private constructor(private val resolvers: List<Resolver>) :
     fun create(resolvers: Iterable<Resolver>): Resolver {
       val nonEmptyResolvers = resolvers.filterNot { it.isEmpty }
       if (nonEmptyResolvers.isEmpty()) {
-        return EmptyResolver.INSTANCE
+        return EmptyResolver
       }
       return if (nonEmptyResolvers.size == 1) {
         nonEmptyResolvers[0]

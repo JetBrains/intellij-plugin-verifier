@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 /**
  * @author Sergey Patrikeev
  */
-public final class PluginCreator {
+final class PluginCreator {
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginCreator.class);
 

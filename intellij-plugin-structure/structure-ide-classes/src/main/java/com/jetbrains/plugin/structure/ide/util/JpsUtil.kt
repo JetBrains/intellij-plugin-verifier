@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.ide
+package com.jetbrains.plugin.structure.ide.util
 
 import com.intellij.util.ConcurrencyUtil
 import org.jetbrains.jps.model.JpsElementFactory

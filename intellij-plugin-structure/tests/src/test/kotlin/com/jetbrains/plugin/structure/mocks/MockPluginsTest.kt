@@ -3,9 +3,9 @@ package com.jetbrains.plugin.structure.mocks
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.classes.resolvers.PluginResolver
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.intellij.extractor.ExtractedPluginFile
+import com.jetbrains.plugin.structure.base.utils.toSet
+import com.jetbrains.plugin.structure.intellij.classes.locator.*
+import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
@@ -14,7 +14,6 @@ import com.jetbrains.plugin.structure.intellij.problems.MissingOptionalDependenc
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.hamcrest.collection.IsIn.isIn
-import org.junit.Assert
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -140,8 +139,8 @@ class MockPluginsTest : BaseMockPluginTest() {
     val extractDirectory = tempFolder.newFolder()
     assertTrue(extractDirectory.listFiles().isEmpty())
 
-    PluginResolver.createPluginResolver(plugin, extractDirectory).use { classesResolver ->
-      testMockClasses(classesResolver, classPath, hasLibDirectory)
+    IdePluginClassesFinder.createLocationsContainer(plugin, extractDirectory, listOf(CompileServerExtensionLocator())).use { locationsContainer ->
+      testMockClasses(locationsContainer, hasLibDirectory, classPath)
     }
 
     //Assert the extracted file was removed on Resolver close
@@ -189,47 +188,33 @@ class MockPluginsTest : BaseMockPluginTest() {
     assertThat("org.intellij.scala.scalaTestDefaultWorkingDirectoryProvider", isIn(keys))
   }
 
-  private fun testMockClasses(resolver: Resolver, classPath: String, hasLibDirectory: Boolean) {
-    val allClasses = resolver.allClasses.asSequence().toSet()
-    val expected = setOf("packagename/ClassOne", "packagename/InFileClassOne", "packagename/ClassOne\$ClassOneInnerStatic", "packagename/ClassOne\$ClassOneInner", "packagename/InFileClassOne") +
-        if (hasLibDirectory) setOf("com/some/compile/library/CompileLibraryClass") else emptySet()
+  private fun testMockClasses(locationsContainer: ClassLocationsContainer, hasLibDirectory: Boolean, classPath: String) {
+    if (hasLibDirectory) {
+      val compilePathResolver = locationsContainer.getResolver(CompileServerExtensionKey)!!
+      val libDirectoryClasses = compilePathResolver.allClasses.toSet()
+      assertSetsEqual(setOf("com/some/compile/library/CompileLibraryClass"), libDirectoryClasses)
+    }
 
-    assertSetsEqual(expected, allClasses)
+    val mainResolvers = listOf(ClassesDirectoryKey, LibDirectoryKey, JarPluginKey).mapNotNull { locationsContainer.getResolver(it) }
+    val allClasses = mainResolvers.flatMap { it.allClasses.toSet() }.toSet()
+    assertSetsEqual(setOf("packagename/ClassOne", "packagename/InFileClassOne", "packagename/ClassOne\$ClassOneInnerStatic", "packagename/ClassOne\$ClassOneInner", "packagename/InFileClassOne"), allClasses)
 
-    val extracted = getExtractedPluginPath(resolver).canonicalFile
-    assertClassPath(resolver.classPath, extracted, classPath)
-  }
-
-  private fun assertClassPath(pluginClassPath: List<File>, extracted: File, classPath: String) {
-    val shouldBe = File(extracted, classPath)
-    val found = pluginClassPath.any { it.canonicalPath == shouldBe.canonicalPath }
-    Assert.assertTrue("The class path $shouldBe is not found", found)
-  }
-
-  private fun getExtractedPluginPath(resolver: Resolver): File {
-    val field = resolver.javaClass.getDeclaredField("myExtractedPluginFile")
-    field.isAccessible = true
-    return (field.get(resolver) as ExtractedPluginFile).actualPluginFile
+    val allClassPath = mainResolvers.flatMap { it.classPath }
+    assertTrue(allClassPath.all { it.canonicalPath.endsWith(classPath) })
   }
 
   private fun <T> assertSetsEqual(expected: Set<T>, actual: Set<T>) {
     val redundant = actual - expected
     val missing = expected - actual
-    val message = "Missing: " + redundant + "\nRedundant: " + missing.joinToString()
+    val message = "Missing: [" + redundant.joinToString() + "]\nRedundant: [" + missing.joinToString() + "]"
     if (redundant.isNotEmpty() || missing.isNotEmpty()) {
       fail(message)
     }
   }
 
-  private fun <T> assertContains(collection: Collection<T>, elem: T) = assertContains(collection, listOf(elem))
-
-  private fun <T> assertContains(collection: Collection<T>, elems: List<T>) {
-    for (t in elems) {
-      if (!collection.contains(t)) {
-        System.err.println(collection)
-        throw AssertionError("Collection must contain an element " + t)
-      }
-    }
+  private fun <T> assertContains(elements: Iterable<T>, shouldBe: List<T>) {
+    shouldBe.filterNot { elements.contains(it) }
+        .forEach { throw AssertionError("Collection must contain an element $it: [$elements]") }
 
   }
 }

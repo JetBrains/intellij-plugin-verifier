@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.classes.locator
+package com.jetbrains.plugin.structure.intellij.classes.locator
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.utils.JarsUtils
@@ -10,13 +10,14 @@ import java.io.File
  * See PR-1063 and com.intellij.compiler.server.CompileServerPlugin for details
  */
 class CompileServerExtensionLocator : IdePluginClassesLocator {
-
   companion object {
     private val EXTENSION_POINT_NAME = "com.intellij.compileServer.plugin"
   }
 
-  override fun findClasses(idePlugin: IdePlugin, pluginDirectory: File): List<Resolver> {
-    val pluginLib = File(pluginDirectory, "lib")
+  override val locationKey: LocationKey = CompileServerExtensionKey
+
+  override fun findClasses(idePlugin: IdePlugin, pluginFile: File): Resolver? {
+    val pluginLib = File(pluginFile, "lib")
     if (pluginLib.isDirectory) {
       val elements = idePlugin.extensions.get(EXTENSION_POINT_NAME)
       val allCompileJars = elements
@@ -25,8 +26,8 @@ class CompileServerExtensionLocator : IdePluginClassesLocator {
           .filter { it.endsWith(".jar") }
           .map { File(pluginLib, it) }
           .filter { it.isFile }
-      return JarsUtils.getResolversForJars(allCompileJars)
+      return JarsUtils.makeResolver(allCompileJars)
     }
-    return emptyList()
+    return null
   }
 }

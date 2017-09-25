@@ -171,7 +171,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
 
     for (final File file : files) {
       PluginCreator innerCreator;
-      if (FileUtil.INSTANCE.isJarOrZip(file)) {
+      if (FileUtil.INSTANCE.isJar(file) || FileUtil.INSTANCE.isZip(file)) {
         innerCreator = loadDescriptorFromJarFile(file, descriptorPath, pathResolver, validateDescriptor);
       } else if (file.isDirectory()) {
         innerCreator = loadDescriptorFromDir(file, descriptorPath, validateDescriptor);
@@ -221,7 +221,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   private List<URL> getInLibMetaInfUrls(File[] files) {
     List<URL> inLibJarUrls = new ArrayList<URL>();
     for (File file : files) {
-      if (FileUtil.INSTANCE.isJarOrZip(file)) {
+      if (FileUtil.INSTANCE.isJar(file) || FileUtil.INSTANCE.isZip(file)) {
         try {
           String metaInfUrl = URLUtil.getJarEntryURL(file, "META-INF").toExternalForm();
           inLibJarUrls.add(new URL(metaInfUrl));
@@ -291,7 +291,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     if (extractorResult instanceof ExtractorSuccess) {
       ExtractedPluginFile extractedPluginFile = ((ExtractorSuccess) extractorResult).getExtractedPlugin();
       try {
-        return loadDescriptorFromJarOrDirectory(extractedPluginFile.getActualPluginFile(), PLUGIN_XML, validateDescriptor);
+        return loadDescriptorFromJarOrDirectory(extractedPluginFile.getPluginFile(), PLUGIN_XML, validateDescriptor);
       } finally {
         extractedPluginFile.close();
       }

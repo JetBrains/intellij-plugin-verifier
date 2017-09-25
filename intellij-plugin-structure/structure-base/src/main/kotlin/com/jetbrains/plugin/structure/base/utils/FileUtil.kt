@@ -47,8 +47,6 @@ object FileUtil {
   private fun hasExtension(file: File, extension: String): Boolean =
       file.isFile && extension == Files.getFileExtension(file.name)
 
-  fun isJarOrZip(file: File): Boolean = isJar(file) || isZip(file)
-
   fun isZip(file: File): Boolean = hasExtension(file, "zip")
 
   fun isJar(file: File): Boolean = hasExtension(file, "jar")

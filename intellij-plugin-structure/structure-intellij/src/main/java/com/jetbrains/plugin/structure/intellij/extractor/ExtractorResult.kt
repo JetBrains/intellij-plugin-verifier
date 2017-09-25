@@ -6,7 +6,7 @@ import java.io.Closeable
 import java.io.File
 
 
-data class ExtractedPluginFile(val actualPluginFile: File,
+data class ExtractedPluginFile(val pluginFile: File,
                                val fileToDelete: File?) : Closeable {
   override fun close() {
     if (fileToDelete != null) {
