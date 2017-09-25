@@ -35,7 +35,7 @@ class VerifierExecutorTest {
     private fun doIdeaAndPluginVerification(ideaFile: File, pluginFile: File): Result {
       val ideDescriptor = IdeCreator.createByFile(ideaFile, IdeVersion.createIdeVersion("IU-145.500"))
       val pluginCoordinate = PluginCoordinate.ByFile(pluginFile)
-      val jdkPath = System.getenv("JAVA_HOME") ?: "/usr/lib/jvm/java-8-oracle"
+      val jdkPath = "/usr/lib/jvm/java-8-oracle"
       val pluginRepository = MockPluginRepositoryAdapter()
       val tempFolder = Files.createTempDir()
       tempFolder.deleteOnExit()

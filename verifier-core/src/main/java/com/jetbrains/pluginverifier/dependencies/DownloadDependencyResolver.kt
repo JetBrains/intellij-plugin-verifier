@@ -72,7 +72,7 @@ class DownloadDependencyResolver(private val dependencySelector: DependencySelec
       pluginLock.release()
     }
     return when (dependencyCreationResult) {
-      is CreatePluginResult.OK -> DependencyResolver.Result.Downloaded(dependencyCreationResult.plugin, dependencyCreationResult.locationsContainer, updateInfo, pluginLock)
+      is CreatePluginResult.OK -> DependencyResolver.Result.Downloaded(dependencyCreationResult.plugin, dependencyCreationResult.pluginClassesLocations, updateInfo, pluginLock)
       is CreatePluginResult.BadPlugin -> DependencyResolver.Result.ProblematicDependency(dependencyCreationResult.pluginErrorsAndWarnings)
       is CreatePluginResult.NotFound -> DependencyResolver.Result.NotFound(dependencyCreationResult.reason)
       is CreatePluginResult.FailedToDownload -> DependencyResolver.Result.FailedToDownload(dependencyCreationResult.reason)

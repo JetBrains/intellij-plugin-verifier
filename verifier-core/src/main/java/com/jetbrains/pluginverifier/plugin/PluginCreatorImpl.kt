@@ -2,9 +2,9 @@ package com.jetbrains.pluginverifier.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.intellij.classes.locator.ClassLocationsContainer
-import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionLocator
+import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
+import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.api.PluginCoordinate
@@ -53,8 +53,8 @@ class PluginCreatorImpl(private val pluginRepository: PluginRepository,
 
       val creationResult = IdePluginManager.createManager(extractDirectory).createPlugin(pluginFile)
       if (creationResult is PluginCreationSuccess) {
-        val locationsContainer = createResolverByPluginOrCloseLock(creationResult.plugin, pluginFileLock) ?: return CreatePluginResult.BadPlugin(listOf(UnableToReadPluginClassFilesProblem))
-        return CreatePluginResult.OK(creationResult.plugin, creationResult.warnings, locationsContainer, pluginFileLock)
+        val pluginClassesLocations = findPluginClassesOrCloseLock(creationResult.plugin, pluginFileLock) ?: return CreatePluginResult.BadPlugin(listOf(UnableToReadPluginClassFilesProblem))
+        return CreatePluginResult.OK(creationResult.plugin, creationResult.warnings, pluginClassesLocations, pluginFileLock)
       } else {
         pluginFileLock.close()
         return CreatePluginResult.BadPlugin((creationResult as PluginCreationFail).errorsAndWarnings)
@@ -63,14 +63,14 @@ class PluginCreatorImpl(private val pluginRepository: PluginRepository,
   }
 
   override fun createResultByExistingPlugin(plugin: IdePlugin): CreatePluginResult {
-    val resolver = createResolverByPluginOrCloseLock(plugin, null) ?: return CreatePluginResult.BadPlugin(listOf(UnableToReadPluginClassFilesProblem))
+    val resolver = findPluginClassesOrCloseLock(plugin, null) ?: return CreatePluginResult.BadPlugin(listOf(UnableToReadPluginClassFilesProblem))
     return CreatePluginResult.OK(plugin, emptyList(), resolver, IdleFileLock(File("")))
   }
 
-  private fun createResolverByPluginOrCloseLock(plugin: IdePlugin, fileLock: FileLock?): ClassLocationsContainer? = try {
-    IdePluginClassesFinder.createLocationsContainer(plugin, listOf(CompileServerExtensionLocator()))
+  private fun findPluginClassesOrCloseLock(plugin: IdePlugin, fileLock: FileLock?): IdePluginClassesLocations? = try {
+    IdePluginClassesFinder.findPluginClasses(plugin, additionalKeys = listOf(CompileServerExtensionKey))
   } catch (e: Exception) {
-    LOG.debug("Unable to read plugin $plugin class files", e)
+    LOG.info("Unable to read plugin $plugin class files", e)
     fileLock?.closeLogged()
     null
   }

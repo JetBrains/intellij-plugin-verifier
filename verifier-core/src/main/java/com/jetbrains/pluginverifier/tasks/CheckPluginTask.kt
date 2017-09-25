@@ -28,7 +28,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
           .filterIsInstance<CreatePluginResult.OK>()
           .find { it.plugin.pluginId == dependency.id }
           ?: return null
-      return DependencyResolver.Result.FoundReady(createdPlugin.plugin, createdPlugin.locationsContainer)
+      return DependencyResolver.Result.FoundReady(createdPlugin.plugin, createdPlugin.pluginClassesLocations)
     }
   }
 
