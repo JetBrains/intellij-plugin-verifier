@@ -155,8 +155,9 @@ public abstract class Resolver implements Closeable {
   /**
    * Returns the resolvers that actually constitute the given resolver
    *
-   * @return eventual resolvers
+   * @return final resolvers
    */
-  public abstract List<Resolver> getEventualResolvers();
+  @NotNull
+  public abstract List<Resolver> getFinalResolvers();
 
 }

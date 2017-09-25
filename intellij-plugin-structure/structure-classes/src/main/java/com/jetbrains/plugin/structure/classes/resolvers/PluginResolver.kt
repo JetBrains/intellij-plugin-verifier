@@ -59,7 +59,7 @@ class PluginResolver private constructor(private val plugin: IdePlugin,
 
   override fun getClassPath(): List<File> = resolver.classPath
 
-  override fun getEventualResolvers(): List<Resolver> = resolver.eventualResolvers
+  override fun getFinalResolvers(): List<Resolver> = resolver.finalResolvers
 
   private fun loadClasses(file: File): Resolver {
     if (file.isDirectory) {
@@ -80,7 +80,7 @@ class PluginResolver private constructor(private val plugin: IdePlugin,
       closeResolvers(resolvers)
       throw e
     }
-    val distinctResolvers = resolvers.flatMap { it.eventualResolvers }.distinctBy { it.classPath }
+    val distinctResolvers = resolvers.flatMap { it.finalResolvers }.distinctBy { it.classPath }
     return Resolver.createUnionResolver("Plugin resolver", distinctResolvers)
   }
 

@@ -84,8 +84,9 @@ public class CompileOutputResolver extends Resolver {
     return new ArrayList<File>(classPath);
   }
 
+  @NotNull
   @Override
-  public List<Resolver> getEventualResolvers() {
+  public List<Resolver> getFinalResolvers() {
     return Collections.singletonList((Resolver) this);
   }
 

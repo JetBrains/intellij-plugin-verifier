@@ -90,11 +90,12 @@ public final class ContainerResolver extends Resolver {
     return result;
   }
 
+  @NotNull
   @Override
-  public List<Resolver> getEventualResolvers() {
+  public List<Resolver> getFinalResolvers() {
     List<Resolver> result = new ArrayList<Resolver>();
     for (Resolver resolver : myResolvers) {
-      result.addAll(resolver.getEventualResolvers());
+      result.addAll(resolver.getFinalResolvers());
     }
     return result;
   }

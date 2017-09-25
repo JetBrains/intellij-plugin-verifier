@@ -69,8 +69,9 @@ public final class FilesResolver extends Resolver {
     return Collections.singletonList(myRoot);
   }
 
+  @NotNull
   @Override
-  public List<Resolver> getEventualResolvers() {
+  public List<Resolver> getFinalResolvers() {
     return Collections.singletonList((Resolver) this);
   }
 

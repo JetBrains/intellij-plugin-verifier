@@ -75,8 +75,9 @@ public final class JarFileResolver extends Resolver {
     return Collections.singletonList(myOriginalFile);
   }
 
+  @NotNull
   @Override
-  public List<Resolver> getEventualResolvers() {
+  public List<Resolver> getFinalResolvers() {
     return Collections.singletonList((Resolver) this);
   }
 

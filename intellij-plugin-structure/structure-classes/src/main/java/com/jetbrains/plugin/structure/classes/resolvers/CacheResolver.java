@@ -72,9 +72,10 @@ public class CacheResolver extends Resolver {
     return myDelegate.getClassPath();
   }
 
+  @NotNull
   @Override
-  public List<Resolver> getEventualResolvers() {
-    return myDelegate.getEventualResolvers();
+  public List<Resolver> getFinalResolvers() {
+    return myDelegate.getFinalResolvers();
   }
 
   @Override
