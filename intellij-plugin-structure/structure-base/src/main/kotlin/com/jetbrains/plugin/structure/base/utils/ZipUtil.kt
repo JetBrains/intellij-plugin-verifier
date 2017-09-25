@@ -21,6 +21,7 @@ object ZipUtil {
     try {
       val ua = ZipUnArchiver(pluginZip)
       ua.enableLogging(ConsoleLogger(Logger.LEVEL_WARN, ""))
+      FileUtils.forceMkdir(destDir)
       ua.destDirectory = destDir
       ua.extract()
     } catch (e: Throwable) {
