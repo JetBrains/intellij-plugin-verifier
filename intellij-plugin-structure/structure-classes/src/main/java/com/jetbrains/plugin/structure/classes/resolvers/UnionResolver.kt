@@ -52,11 +52,12 @@ class UnionResolver private constructor(private val resolvers: List<Resolver>) :
       val nonEmptyResolvers = resolvers.filterNot { it.isEmpty }
       if (nonEmptyResolvers.isEmpty()) {
         return EmptyResolver
-      }
-      return if (nonEmptyResolvers.size == 1) {
-        nonEmptyResolvers[0]
+      } else if (nonEmptyResolvers.size == 1) {
+        return nonEmptyResolvers[0]
       } else {
-        UnionResolver(nonEmptyResolvers)
+        val finalResolvers = nonEmptyResolvers.flatMap { it.finalResolvers }
+        val uniqueResolvers = finalResolvers.distinctBy { it.classPath }
+        return UnionResolver(uniqueResolvers)
       }
     }
   }
