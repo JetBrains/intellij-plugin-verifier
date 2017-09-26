@@ -2,7 +2,6 @@ package com.jetbrains.plugin.structure.intellij.classes.plugin
 
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.LocationKey
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.io.Closeable
@@ -28,7 +27,5 @@ data class IdePluginClassesLocations(val idePlugin: IdePlugin,
   fun getResolver(key: LocationKey): Resolver? = locations[key]
 
   fun getAllKeys(): Set<LocationKey> = locations.keys
-
-  fun getUnitedResolver(): Resolver = UnionResolver.create(locations.values)
 
 }
