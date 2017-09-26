@@ -36,6 +36,7 @@ class ClassesForCheckSelector {
     val mainUnitedResolver = UnionResolver.create(mainResolvers)
     val referencedResolvers = getAllClassesReferencedFromXml(classesLocations.idePlugin)
         .mapNotNull { mainUnitedResolver.getClassLocation(it) }
+        .distinct()
         .let { if (it.isEmpty()) mainResolvers else it }
 
     val additionalResolvers = ADDITIONAL_LOCATIONS_KEYS
