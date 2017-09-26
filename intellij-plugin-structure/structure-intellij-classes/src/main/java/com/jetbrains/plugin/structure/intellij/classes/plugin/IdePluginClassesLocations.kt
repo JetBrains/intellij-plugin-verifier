@@ -26,6 +26,4 @@ data class IdePluginClassesLocations(val idePlugin: IdePlugin,
 
   fun getResolver(key: LocationKey): Resolver? = locations[key]
 
-  fun getAllKeys(): Set<LocationKey> = locations.keys
-
 }
