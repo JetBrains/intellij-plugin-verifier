@@ -16,14 +16,33 @@ class ClassesForCheckSelector {
     val ADDITIONAL_LOCATIONS_KEYS = listOf(CompileServerExtensionKey)
   }
 
-  fun getClassesForCheck(plugin: IdePlugin, locations: IdePluginClassesLocations): Iterator<String> {
-    val mainUnitedResolver = UnionResolver.create(IdePluginClassesFinder.MAIN_CLASSES_KEYS.mapNotNull { locations.getResolver(it) })
-    val referencedResolvers = getAllClassesReferencedFromXml(plugin).mapNotNull { mainUnitedResolver.getClassLocation(it) }
+  /**
+   * Determines plugin's classes that must be verified.
+   *
+   * The purpose of this method is to filter out the unrelated classes which
+   * don't use the IntelliJ API: many plugins pack the libraries without all transitive dependencies.
+   * We don't want to check such classes because it leads to false warnings.
+   *
+   * Instead, our approach is to look at classes referenced in the `plugin.xml`. Given these classes
+   * we predict the .jar-files that correspond to the plugin itself (not the secondary bundled library).
+   * The additional .jar-s which are explicitly specified in the `plugin.xml`
+   * (such as those defined by `compileServer.plugin` extension point) are to be verified, too.
+   */
+  fun getClassesForCheck(plugin: IdePlugin, classesLocations: IdePluginClassesLocations): Iterator<String> {
+    val mainResolvers = IdePluginClassesFinder.MAIN_CLASSES_KEYS
+        .mapNotNull { classesLocations.getResolver(it) }
+        .flatMap { it.finalResolvers }
 
-    val additionalResolvers = ADDITIONAL_LOCATIONS_KEYS.mapNotNull { locations.getResolver(it) }
+    val mainUnitedResolver = UnionResolver.create(mainResolvers)
+    val referencedResolvers = getAllClassesReferencedFromXml(plugin)
+        .mapNotNull { mainUnitedResolver.getClassLocation(it) }
+        .let { if (it.isEmpty()) mainResolvers else it }
 
-    val result = UnionResolver.create((referencedResolvers + additionalResolvers).distinct())
-    return if (result.isEmpty) locations.getUnitedResolver().allClasses else result.allClasses
+    val additionalResolvers = ADDITIONAL_LOCATIONS_KEYS
+        .mapNotNull { classesLocations.getResolver(it) }
+        .flatMap { it.finalResolvers }
+
+    return UnionResolver.create(referencedResolvers + additionalResolvers).allClasses
   }
 
   private fun getAllClassesReferencedFromXml(plugin: IdePlugin): Set<String> =
