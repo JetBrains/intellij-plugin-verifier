@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
+import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.api.*
@@ -105,24 +106,39 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
     }
   }
 
+  /**
+   * Selects the plugin's classes that are referenced by the plugin itself and its dependencies.
+   * The additional classes (such as those defined by compileServer.plugin extension point) are not selected here.
+   */
+  private fun IdePluginClassesLocations.constructMainPluginResolver(): Resolver = UnionResolver.create(
+      IdePluginClassesFinder.MAIN_CLASSES_KEYS.mapNotNull { this.getResolver(it) }
+  )
+
   private fun runVerifier(graph: DirectedGraph<DepVertex, DepEdge>, plugin: IdePlugin, pluginClassesLocations: IdePluginClassesLocations): VerificationContext {
-    val dependenciesResolver = getDependenciesClassesResolver(graph)
-    val checkClasses = ClassesForCheckSelector().getClassesForCheck(plugin, pluginClassesLocations)
-    //don't close classLoader because it consists of client resolvers.
-    val classLoader = getVerificationClassLoader(dependenciesResolver, pluginClassesLocations)
+    val dependenciesResolver = UnionResolver.create(getDependenciesClassesResolvers(graph))
+    val checkClasses = ClassesForCheckSelector().getClassesForCheck(pluginClassesLocations)
+    val mainPluginResolver = pluginClassesLocations.constructMainPluginResolver()
+    //don't close this classLoader because it consists of client resolvers.
+    val classLoader = CacheResolver(getVerificationClassLoader(dependenciesResolver, mainPluginResolver))
     return BytecodeVerifier(params, plugin, classLoader, ideDescriptor.ideVersion).verify(checkClasses)
   }
 
-  private fun getVerificationClassLoader(dependenciesResolver: Resolver, pluginClassesLocations: IdePluginClassesLocations): Resolver = CacheResolver(
-      UnionResolver.create(
-          listOf(pluginClassesLocations.getUnitedResolver(), runtimeResolver, ideDescriptor.ideResolver, dependenciesResolver, params.externalClassPath)
-      )
+  /**
+   * Specifies the order of the classes resolution:
+   * 1) firstly a class is searched among classes of the plugin
+   * 2) if not found, among the classes of the used JDK
+   * 3) if not found, among the libraries of the checked IDE
+   * 4) if not found, among the classes of the plugin dependencies' classes
+   * 5) if not found, it is finally searched in the external classes specified in the verification arguments.
+   */
+  private fun getVerificationClassLoader(dependenciesResolver: Resolver, mainPluginResolver: Resolver) = UnionResolver.create(
+      listOf(mainPluginResolver, runtimeResolver, ideDescriptor.ideResolver, dependenciesResolver, params.externalClassPath)
   )
 
-  private fun getDependenciesClassesResolver(graph: DirectedGraph<DepVertex, DepEdge>): Resolver {
-    val classContainers = graph.vertexSet().mapNotNull { getClassLocationsByResult(it.resolveResult) }
-    return UnionResolver.create(classContainers.map { it.getUnitedResolver() })
-  }
+  private fun getDependenciesClassesResolvers(graph: DirectedGraph<DepVertex, DepEdge>): List<Resolver> =
+      graph.vertexSet()
+          .mapNotNull { getClassLocationsByResult(it.resolveResult) }
+          .map { it.constructMainPluginResolver() }
 
   private fun getClassLocationsByResult(result: DependencyResolver.Result): IdePluginClassesLocations? = when (result) {
     is DependencyResolver.Result.FoundReady -> result.pluginClassesLocations

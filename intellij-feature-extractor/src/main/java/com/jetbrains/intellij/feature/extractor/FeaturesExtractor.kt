@@ -23,12 +23,16 @@ object FeaturesExtractor {
 
   private val LOG = LoggerFactory.getLogger("FeaturesExtractor")
 
+  private fun IdePluginClassesLocations.constructMainPluginResolver(): Resolver = UnionResolver.create(
+      IdePluginClassesFinder.MAIN_CLASSES_KEYS.mapNotNull { this.getResolver(it) }
+  )
+
   fun extractFeatures(ide: Ide, ideResolver: Resolver, plugin: IdePlugin): ExtractorResult {
     val bundledClassLocations = findBundledPluginClasses(ide)
     try {
-      val bundledResolvers = bundledClassLocations.map { it.getUnitedResolver() }
+      val bundledResolvers = bundledClassLocations.map { it.constructMainPluginResolver() }
       IdePluginClassesFinder.findPluginClasses(plugin, additionalKeys = emptyList()).use { pluginClassesLocations ->
-        val pluginResolver = pluginClassesLocations.getUnitedResolver()
+        val pluginResolver = pluginClassesLocations.constructMainPluginResolver()
         //don't close this resolver, because ideResolver is to be closed by the caller.
         val resolver = UnionResolver.create(listOf(pluginResolver, ideResolver) + bundledResolvers)
         return implementations(plugin, resolver)

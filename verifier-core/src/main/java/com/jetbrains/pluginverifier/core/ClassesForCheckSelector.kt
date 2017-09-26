@@ -28,13 +28,13 @@ class ClassesForCheckSelector {
    * The additional .jar-s which are explicitly specified in the `plugin.xml`
    * (such as those defined by `compileServer.plugin` extension point) are to be verified, too.
    */
-  fun getClassesForCheck(plugin: IdePlugin, classesLocations: IdePluginClassesLocations): Iterator<String> {
+  fun getClassesForCheck(classesLocations: IdePluginClassesLocations): Iterator<String> {
     val mainResolvers = IdePluginClassesFinder.MAIN_CLASSES_KEYS
         .mapNotNull { classesLocations.getResolver(it) }
         .flatMap { it.finalResolvers }
 
     val mainUnitedResolver = UnionResolver.create(mainResolvers)
-    val referencedResolvers = getAllClassesReferencedFromXml(plugin)
+    val referencedResolvers = getAllClassesReferencedFromXml(classesLocations.idePlugin)
         .mapNotNull { mainUnitedResolver.getClassLocation(it) }
         .let { if (it.isEmpty()) mainResolvers else it }
 
