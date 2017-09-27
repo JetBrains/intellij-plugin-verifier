@@ -1,15 +1,29 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.google.common.collect.Iterators
+import com.jetbrains.plugin.structure.base.utils.FileUtil
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import java.util.*
+import java.util.jar.JarFile
 import java.util.zip.ZipFile
 
-class JarFileResolver(private val originalFile: File) : Resolver() {
+class JarFileResolver(jarFile: File) : Resolver() {
 
-  private val jarFile: ZipFile = ZipFile(originalFile)
+  private val ioJarFile: File
+
+  init {
+    if (!jarFile.exists()) {
+      throw IllegalArgumentException("Jar file $jarFile doesn't exist")
+    }
+    if (!FileUtil.isJar(jarFile)) {
+      throw IllegalArgumentException("File $jarFile is not a jar archive")
+    }
+    ioJarFile = jarFile
+  }
+
+  private val jarFile: ZipFile = JarFile(ioJarFile)
 
   private val classes: Set<String> = readClasses()
 
@@ -28,13 +42,13 @@ class JarFileResolver(private val originalFile: File) : Resolver() {
 
   override fun getAllClasses(): Iterator<String> = Iterators.unmodifiableIterator<String>(classes.iterator())
 
-  override fun toString(): String = jarFile.name
+  override fun toString(): String = ioJarFile.name
 
   override fun isEmpty(): Boolean = classes.isEmpty()
 
   override fun containsClass(className: String): Boolean = classes.contains(className)
 
-  override fun getClassPath(): List<File> = listOf(originalFile)
+  override fun getClassPath(): List<File> = listOf(ioJarFile)
 
   override fun getFinalResolvers(): List<Resolver> = listOf(this as Resolver)
 
