@@ -116,7 +116,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
 
   private fun runVerifier(graph: DirectedGraph<DepVertex, DepEdge>, plugin: IdePlugin, pluginClassesLocations: IdePluginClassesLocations): VerificationContext {
     val dependenciesResolver = UnionResolver.create(getDependenciesClassesResolvers(graph))
-    val checkClasses = ClassesForCheckSelector().getClassesForCheck(pluginClassesLocations)
+    val checkClasses = MainClassesSelector().getClassesForCheck(pluginClassesLocations)
     val mainPluginResolver = pluginClassesLocations.constructMainPluginResolver()
     //don't close this classLoader because it consists of client resolvers.
     val classLoader = CacheResolver(getVerificationClassLoader(dependenciesResolver, mainPluginResolver))

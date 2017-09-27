@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 /**
  * @author Sergey Patrikeev
  */
-class VerifierExecutor(val params: VerifierParams) : Closeable {
+class VerifierExecutor(val params: VerifierParams, val pluginCreator: PluginCreator) : Closeable {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(VerifierExecutor::class.java)
@@ -50,7 +50,7 @@ class VerifierExecutor(val params: VerifierParams) : Closeable {
     return maxOf(4, minOf(maxByMemory, availableCpu)).toInt()
   }
 
-  fun verify(tasks: List<Pair<PluginCoordinate, IdeDescriptor>>, progress: Progress, pluginCreator: PluginCreator): List<Result> {
+  fun verify(tasks: List<Pair<PluginCoordinate, IdeDescriptor>>, progress: Progress): List<Result> {
     tasks.forEach {
       val worker = Verifier(it.first, it.second, runtimeResolver, params, pluginCreator)
       completionService.submit(worker)
