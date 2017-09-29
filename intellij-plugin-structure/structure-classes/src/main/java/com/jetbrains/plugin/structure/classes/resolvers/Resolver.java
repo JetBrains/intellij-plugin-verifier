@@ -7,8 +7,8 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * <p>Provides an access to the byte-code of a class by its name via the {@link #findClass(String)}.
@@ -48,7 +48,7 @@ public abstract class Resolver implements Closeable {
    * @return all the classes names in the <i>binary</i> form.
    */
   @NotNull
-  public abstract Iterator<String> getAllClasses();
+  public abstract Set<String> getAllClasses();
 
   /**
    * Checks whether this resolver contains any class. Classes can be obtained through {@link #getAllClasses()}.

@@ -1,6 +1,5 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
-import com.google.common.collect.Iterators
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.apache.commons.io.FileUtils
 import org.objectweb.asm.tree.ClassNode
@@ -49,7 +48,7 @@ class ClassFilesResolver(private val root: File) : Resolver() {
     null
   }
 
-  override fun getAllClasses(): Iterator<String> = Iterators.unmodifiableIterator(allClasses.keys.iterator())
+  override fun getAllClasses(): Set<String> = allClasses.keys
 
   override fun isEmpty(): Boolean = allClasses.isEmpty()
 

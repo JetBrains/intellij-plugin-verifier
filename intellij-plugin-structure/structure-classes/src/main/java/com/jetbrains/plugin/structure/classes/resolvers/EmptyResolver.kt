@@ -1,6 +1,5 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
-import com.google.common.collect.ImmutableSet
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
 
@@ -13,7 +12,7 @@ object EmptyResolver : Resolver() {
 
   override fun getClassLocation(className: String): Resolver? = null
 
-  override fun getAllClasses(): Iterator<String> = ImmutableSet.of<String>().iterator()
+  override fun getAllClasses(): Set<String> = emptySet()
 
   override fun isEmpty(): Boolean = true
 

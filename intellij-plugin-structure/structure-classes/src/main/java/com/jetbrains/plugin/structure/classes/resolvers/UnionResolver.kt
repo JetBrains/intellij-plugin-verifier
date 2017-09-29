@@ -1,14 +1,12 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
-import com.google.common.collect.Iterators
 import org.objectweb.asm.tree.ClassNode
-
 import java.io.File
 import java.io.IOException
 
 class UnionResolver private constructor(private val resolvers: List<Resolver>) : Resolver() {
 
-  override fun getAllClasses(): Iterator<String> = Iterators.concat(resolvers.map { it.allClasses }.iterator())
+  override fun getAllClasses(): Set<String> = resolvers.flatMapTo(hashSetOf()) { it.allClasses }
 
   override fun isEmpty(): Boolean = resolvers.all { it.isEmpty }
 

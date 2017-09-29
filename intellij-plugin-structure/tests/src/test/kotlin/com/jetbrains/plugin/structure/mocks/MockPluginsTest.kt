@@ -3,7 +3,6 @@ package com.jetbrains.plugin.structure.mocks
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.utils.toSet
 import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.ClassesDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
@@ -199,7 +198,7 @@ class MockPluginsTest : BaseMockPluginTest() {
     }
 
     val mainResolvers = listOf(ClassesDirectoryKey, LibDirectoryKey, JarPluginKey).mapNotNull { locationsContainer.getResolver(it) }
-    val allClasses = mainResolvers.flatMap { it.allClasses.toSet() }.toSet()
+    val allClasses = mainResolvers.flatMap { it.allClasses }.toSet()
     assertSetsEqual(setOf("packagename/ClassOne", "packagename/InFileClassOne", "packagename/ClassOne\$ClassOneInnerStatic", "packagename/ClassOne\$ClassOneInner", "packagename/InFileClassOne"), allClasses)
 
     val allClassPath = mainResolvers.flatMap { it.classPath }
@@ -208,7 +207,7 @@ class MockPluginsTest : BaseMockPluginTest() {
 
   private fun testCompileServerJars(classesLocations: IdePluginClassesLocations) {
     val resolver = classesLocations.getResolver(CompileServerExtensionKey)!!
-    val libDirectoryClasses = resolver.allClasses.toSet()
+    val libDirectoryClasses = resolver.allClasses
     assertSetsEqual(setOf("com/some/compile/library/CompileLibraryClass"), libDirectoryClasses)
 
     val compileServerJars = resolver.finalResolvers

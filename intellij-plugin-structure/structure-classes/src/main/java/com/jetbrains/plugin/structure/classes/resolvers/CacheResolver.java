@@ -8,8 +8,8 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Sergey Patrikeev
@@ -52,7 +52,7 @@ public class CacheResolver extends Resolver {
 
   @NotNull
   @Override
-  public Iterator<String> getAllClasses() {
+  public Set<String> getAllClasses() {
     return myDelegate.getAllClasses();
   }
 

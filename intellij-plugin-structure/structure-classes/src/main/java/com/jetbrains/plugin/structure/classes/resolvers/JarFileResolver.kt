@@ -1,6 +1,5 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
-import com.google.common.collect.Iterators
 import com.jetbrains.plugin.structure.base.utils.FileUtil
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
@@ -62,7 +61,7 @@ class JarFileResolver(jar: File) : Resolver() {
 
   val implementedServiceProviders: Set<String> = serviceProviders
 
-  override fun getAllClasses(): Iterator<String> = Iterators.unmodifiableIterator<String>(classes.iterator())
+  override fun getAllClasses(): Set<String> = classes
 
   override fun toString(): String = ioJarFile.name
 
