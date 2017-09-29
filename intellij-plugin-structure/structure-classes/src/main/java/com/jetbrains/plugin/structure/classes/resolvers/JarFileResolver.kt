@@ -2,30 +2,38 @@ package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.google.common.collect.Iterators
 import com.jetbrains.plugin.structure.base.utils.FileUtil
+import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import java.util.*
 import java.util.jar.JarFile
-import java.util.zip.ZipFile
 
-class JarFileResolver(jarFile: File) : Resolver() {
+class JarFileResolver(jar: File) : Resolver() {
 
   private val ioJarFile: File
 
+  private val jarFile: JarFile
+
+  private val classes: Set<String>
+
   init {
-    if (!jarFile.exists()) {
-      throw IllegalArgumentException("Jar file $jarFile doesn't exist")
+    if (!jar.exists()) {
+      throw IllegalArgumentException("Jar file $jar doesn't exist")
     }
-    if (!FileUtil.isJar(jarFile)) {
-      throw IllegalArgumentException("File $jarFile is not a jar archive")
+    if (!FileUtil.isJar(jar)) {
+      throw IllegalArgumentException("File $jar is not a jar archive")
     }
-    ioJarFile = jarFile
+    ioJarFile = jar
+
+    jarFile = JarFile(ioJarFile)
+    try {
+      classes = readClasses()
+    } catch (e: Throwable) {
+      jarFile.closeLogged()
+      throw e
+    }
   }
-
-  private val jarFile: ZipFile = JarFile(ioJarFile)
-
-  private val classes: Set<String> = readClasses()
 
   private fun readClasses(): Set<String> {
     val entries = jarFile.entries()
