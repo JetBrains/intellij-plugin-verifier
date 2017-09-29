@@ -6,16 +6,23 @@ import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
-import java.util.*
 import java.util.jar.JarFile
 
 class JarFileResolver(jar: File) : Resolver() {
+
+  private companion object {
+    private const val CLASS_SUFFIX = ".class"
+
+    private const val SERVICE_PROVIDERS_PREFIX = "META-INF/services/"
+  }
 
   private val ioJarFile: File
 
   private val jarFile: JarFile
 
-  private val classes: Set<String>
+  private val classes: MutableSet<String> = hashSetOf()
+
+  private val serviceProviders: MutableSet<String> = hashSetOf()
 
   init {
     if (!jar.exists()) {
@@ -28,25 +35,32 @@ class JarFileResolver(jar: File) : Resolver() {
 
     jarFile = JarFile(ioJarFile)
     try {
-      classes = readClasses()
+      readClassNamesAndServiceProviders()
     } catch (e: Throwable) {
       jarFile.closeLogged()
       throw e
     }
   }
 
-  private fun readClasses(): Set<String> {
-    val entries = jarFile.entries()
-    val classes = HashSet<String>()
-    while (entries.hasMoreElements()) {
-      val entry = entries.nextElement()
+  private fun readClassNamesAndServiceProviders() {
+    for (entry in jarFile.entries().iterator()) {
       val entryName = entry.name
       if (entryName.endsWith(CLASS_SUFFIX)) {
         classes.add(entryName.substringBeforeLast(CLASS_SUFFIX))
+      } else if (!entry.isDirectory && entryName.startsWith(SERVICE_PROVIDERS_PREFIX) && entryName.count { it == '/' } == 2) {
+        serviceProviders.add(entryName.substringAfter(SERVICE_PROVIDERS_PREFIX))
       }
     }
-    return classes
   }
+
+  fun readServiceImplementationNames(serviceProvider: String): Set<String> {
+    val entry = SERVICE_PROVIDERS_PREFIX + serviceProvider
+    val jarEntry = jarFile.getJarEntry(entry) ?: return emptySet()
+    val lines = jarFile.getInputStream(jarEntry).reader().readLines()
+    return lines.map { it.substringBefore("#").trim() }.filterNotTo(hashSetOf()) { it.isEmpty() }
+  }
+
+  val implementedServiceProviders: Set<String> = serviceProviders
 
   override fun getAllClasses(): Iterator<String> = Iterators.unmodifiableIterator<String>(classes.iterator())
 
@@ -76,7 +90,4 @@ class JarFileResolver(jar: File) : Resolver() {
     jarFile.close()
   }
 
-  companion object {
-    private val CLASS_SUFFIX = ".class"
-  }
 }

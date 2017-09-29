@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.toSet
+import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.ClassesDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.JarPluginKey
@@ -194,9 +195,7 @@ class MockPluginsTest : BaseMockPluginTest() {
 
   private fun testMockClasses(locationsContainer: IdePluginClassesLocations, hasLibDirectory: Boolean, classPath: String) {
     if (hasLibDirectory) {
-      val compilePathResolver = locationsContainer.getResolver(CompileServerExtensionKey)!!
-      val libDirectoryClasses = compilePathResolver.allClasses.toSet()
-      assertSetsEqual(setOf("com/some/compile/library/CompileLibraryClass"), libDirectoryClasses)
+      testCompileServerJars(locationsContainer)
     }
 
     val mainResolvers = listOf(ClassesDirectoryKey, LibDirectoryKey, JarPluginKey).mapNotNull { locationsContainer.getResolver(it) }
@@ -205,6 +204,25 @@ class MockPluginsTest : BaseMockPluginTest() {
 
     val allClassPath = mainResolvers.flatMap { it.classPath }
     assertTrue(allClassPath.all { it.canonicalPath.endsWith(classPath) })
+  }
+
+  private fun testCompileServerJars(classesLocations: IdePluginClassesLocations) {
+    val resolver = classesLocations.getResolver(CompileServerExtensionKey)!!
+    val libDirectoryClasses = resolver.allClasses.toSet()
+    assertSetsEqual(setOf("com/some/compile/library/CompileLibraryClass"), libDirectoryClasses)
+
+    val compileServerJars = resolver.finalResolvers
+    assertEquals(1, compileServerJars.size)
+    val compileServerJar = compileServerJars[0]
+    assertTrue(compileServerJar is JarFileResolver)
+    val jarFileResolver = compileServerJar as JarFileResolver
+    assertSetsEqual(setOf("com.example.service.Service"), jarFileResolver.implementedServiceProviders)
+    val implementationNames = jarFileResolver.readServiceImplementationNames("com.example.service.Service")
+    assertSetsEqual(setOf(
+        "com.some.compile.library.One",
+        "com.some.compile.library.Two",
+        "com.some.compile.library.Three"
+    ), implementationNames)
   }
 
   private fun <T> assertSetsEqual(expected: Set<T>, actual: Set<T>) {
