@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.core
 
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
@@ -9,7 +10,14 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil
 /**
  * @author Sergey Patrikeev
  */
-class MainClassesSelector : ClassesForCheckSelector {
+class MainClassesSelector : ClassesSelector {
+
+  /**
+   * Selects the plugin's classes that can be referenced by the plugin and its dependencies.
+   */
+  override fun getClassLoader(classesLocations: IdePluginClassesLocations): Resolver = UnionResolver.create(
+      IdePluginClassesFinder.MAIN_CLASSES_KEYS.mapNotNull { classesLocations.getResolver(it) }
+  )
 
   /**
    * Determines plugin's classes that must be verified.
@@ -21,7 +29,7 @@ class MainClassesSelector : ClassesForCheckSelector {
    * Instead, our approach is to look at classes referenced in the `plugin.xml`. Given these classes
    * we predict the .jar-files that correspond to the plugin itself (not the secondary bundled libraries).
    */
-  override fun getClassesForCheck(classesLocations: IdePluginClassesLocations): Iterator<String> {
+  override fun getClassesForCheck(classesLocations: IdePluginClassesLocations): Set<String> {
     val mainResolvers = IdePluginClassesFinder.MAIN_CLASSES_KEYS
         .mapNotNull { classesLocations.getResolver(it) }
         .flatMap { it.finalResolvers }

@@ -58,7 +58,7 @@ class BytecodeVerifier(verifierParams: VerifierParams,
 
   private var totalVerifiedClasses: Int = 0
 
-  fun verify(classesToCheck: Iterator<String>): VerificationContext {
+  fun verify(classesToCheck: Set<String>): VerificationContext {
     totalVerifiedClasses = 0
     for (className in classesToCheck) {
       checkCancelled()
