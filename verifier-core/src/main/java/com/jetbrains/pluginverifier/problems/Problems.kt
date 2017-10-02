@@ -237,7 +237,7 @@ data class OverridingFinalMethodProblem(val method: MethodLocation,
 
 data class NonStaticAccessOfStaticFieldProblem(val field: FieldLocation,
                                                val accessor: MethodLocation,
-                                               val instruction: Instruction) : Problem("non.static.access.of.static.field") {
+                                               val instruction: Instruction) : Problem("non.static.access.to.static.field") {
 
   override val shortDescription = short(instruction, field)
 
@@ -264,7 +264,7 @@ data class InvokeNonStaticInstructionOnStaticMethodProblem(val resolvedMethod: M
 
 data class StaticAccessOfNonStaticFieldProblem(val field: FieldLocation,
                                                val accessor: MethodLocation,
-                                               val instruction: Instruction) : Problem("static.access.of.non.static.field") {
+                                               val instruction: Instruction) : Problem("static.access.to.non.static.field") {
 
   override val shortDescription = short(instruction, field)
 
