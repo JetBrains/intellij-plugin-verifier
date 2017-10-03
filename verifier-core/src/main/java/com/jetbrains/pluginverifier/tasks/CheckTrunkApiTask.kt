@@ -51,7 +51,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
         emptyList(),
         EmptyResolver,
         parameters.externalClassesPrefixes,
-        parameters.problemsFilter,
+        parameters.problemsFilters,
         dependencyResolver
     )
     return CheckIdeTask(checkIdeParams, pluginRepository, pluginCreator).execute(progress)

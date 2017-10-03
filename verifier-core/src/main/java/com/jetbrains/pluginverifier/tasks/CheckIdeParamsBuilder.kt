@@ -29,14 +29,14 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository, val pluginCr
       val jdkDescriptor = JdkDescriptor(OptionsParser.getJdkDir(opts))
       val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
       OptionsParser.getExternalClassPath(opts).closeOnException { externalClassPath ->
-        val problemsFilter = OptionsParser.getProblemsFilter(opts)
+        val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
         val (checkAllBuilds, checkLastBuilds) = parsePluginToCheckList(opts)
 
         val excludedPlugins = parseExcludedPlugins(opts)
 
         val pluginsToCheck = getDescriptorsToCheck(checkAllBuilds, checkLastBuilds, ideDescriptor.ideVersion)
-        return CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, excludedPlugins, externalClassesPrefixes, externalClassPath, checkAllBuilds, problemsFilter, IdeDependencyResolver(ideDescriptor.ide, pluginRepository, pluginCreator))
+        return CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, excludedPlugins, externalClassesPrefixes, externalClassPath, checkAllBuilds, problemsFilters, IdeDependencyResolver(ideDescriptor.ide, pluginRepository, pluginCreator))
       }
     }
   }

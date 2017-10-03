@@ -21,7 +21,9 @@ data class VerificationContext(
   val warnings: MutableSet<Warning> = hashSetOf()
 
   fun registerProblem(problem: Problem) {
-    if (verifierParams.problemFilter.isRelevantProblem(plugin, problem)) {
+    val problemFilters = verifierParams.problemFilters
+    val accepted = problemFilters.all { it.accept(plugin, problem) }
+    if (accepted) {
       problems.add(problem)
     }
   }

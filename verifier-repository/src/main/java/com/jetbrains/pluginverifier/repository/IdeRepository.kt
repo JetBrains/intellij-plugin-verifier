@@ -83,8 +83,10 @@ class IdeRepository(private val downloadDir: File, private val repositoryUrl: St
   fun fetchIndex(snapshots: Boolean = false): List<AvailableIde> {
     val repoUrl = repositoryUrl.trimEnd('/') + "/intellij-repository/" + (if (snapshots) "snapshots" else "releases") + "/"
     try {
-      //Jsoup sets the connection timeouts itself
-      val document = Jsoup.connect(repoUrl).get()
+      val document = Jsoup
+          .connect(repoUrl)
+          .timeout(3000)
+          .get()
       return parseDocument(document, snapshots)
     } catch (e: Exception) {
       LOG.error("Unable to fetch repository $repoUrl index", e)

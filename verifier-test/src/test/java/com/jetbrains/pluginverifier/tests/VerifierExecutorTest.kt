@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.tests
 
 import com.google.common.io.Files
+import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.*
@@ -42,8 +43,8 @@ class VerifierExecutorTest {
       val pluginCreator = PluginCreatorImpl(pluginRepository, tempFolder)
       ideDescriptor.use {
         val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
-        val problemsFilter = OptionsParser.getProblemsFilter(CmdOpts())
-        val verifierParams = VerifierParams(JdkDescriptor(File(jdkPath)), externalClassesPrefixes, problemsFilter, dependencyResolver = NotFoundDependencyResolver())
+        val problemsFilters = OptionsParser.getProblemsFilters(CmdOpts())
+        val verifierParams = VerifierParams(JdkDescriptor(File(jdkPath)), externalClassesPrefixes, problemsFilters, EmptyResolver, NotFoundDependencyResolver())
         val verifier = VerifierExecutor(verifierParams, pluginCreator)
         verifier.use {
           val results = verifier.verify(listOf(pluginCoordinate to ideDescriptor), DefaultProgress())

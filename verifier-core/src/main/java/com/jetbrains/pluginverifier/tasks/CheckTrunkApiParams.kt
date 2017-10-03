@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.tasks
 
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.JdkDescriptor
-import com.jetbrains.pluginverifier.api.ProblemsFilter
+import com.jetbrains.pluginverifier.filter.ProblemsFilter
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import java.io.File
@@ -11,7 +11,7 @@ import java.io.File
 data class CheckTrunkApiParams(val trunkIde: IdeDescriptor,
                                val releaseIde: IdeDescriptor,
                                val externalClassesPrefixes: List<String>,
-                               val problemsFilter: ProblemsFilter,
+                               val problemsFilters: List<ProblemsFilter>,
                                val jdkDescriptor: JdkDescriptor,
                                val jetBrainsPluginIds: List<String>,
                                private val deleteMajorIdeOnExit: Boolean,
@@ -26,6 +26,7 @@ JDK: $jdkDescriptor
   override fun close() {
     trunkIde.closeLogged()
     releaseIde.closeLogged()
+    problemsFilters.forEach { it.closeLogged() }
     if (deleteMajorIdeOnExit) {
       majorIdeFile.deleteLogged()
     }

@@ -51,12 +51,12 @@ class CheckTrunkApiParamsBuilder(val ideRepository: IdeRepository) : TaskParamet
     }
 
     val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
-    val problemsFilter = OptionsParser.getProblemsFilter(opts)
+    val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
     val majorIdeDescriptor = OptionsParser.createIdeDescriptor(majorIdeFile, opts)
 
     val jetBrainsPluginIds = getJetBrainsPluginIds(apiOpts)
-    return CheckTrunkApiParams(ideDescriptor, majorIdeDescriptor, externalClassesPrefixes, problemsFilter, jdkDescriptor, jetBrainsPluginIds, deleteMajorOnExit, majorIdeFile)
+    return CheckTrunkApiParams(ideDescriptor, majorIdeDescriptor, externalClassesPrefixes, problemsFilters, jdkDescriptor, jetBrainsPluginIds, deleteMajorOnExit, majorIdeFile)
   }
 
   private fun getJetBrainsPluginIds(apiOpts: CheckTrunkApiOpts): List<String> {

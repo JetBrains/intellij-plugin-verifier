@@ -82,16 +82,16 @@ inline fun <R> withDebug(logger: Logger, taskName: String, block: () -> R): R {
   }
 }
 
-fun File.deleteLogged(): Boolean {
-  try {
-    if (exists()) {
-      FileUtils.forceDelete(this)
-    }
-    return true
-  } catch(e: Exception) {
-    LOG.error("Unable to delete $this", e)
-    return false
+fun <T> T?.singletonOrEmpty(): List<T> = if (this == null) emptyList() else listOf(this)
+
+fun File.deleteLogged(): Boolean = try {
+  if (exists()) {
+    FileUtils.forceDelete(this)
   }
+  true
+} catch (e: Exception) {
+  LOG.error("Unable to delete $this", e)
+  false
 }
 
 fun String.pluralizeWithNumber(times: Int): String = "$times " + this.pluralize(times)

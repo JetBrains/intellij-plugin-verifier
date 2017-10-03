@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.api
 
-import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.dependencies.DependencyResolver
+import com.jetbrains.pluginverifier.filter.ProblemsFilter
 
 /**
  * Accumulates parameters of the upcoming verification.
@@ -17,17 +17,17 @@ data class VerifierParams(
     /**
      * Ignore missing classes having the listed packages
      */
-    val externalClassesPrefixes: List<String> = emptyList(),
+    val externalClassesPrefixes: List<String>,
 
     /**
      * Problems filter to ignore unrelated or known problems
      */
-    val problemFilter: ProblemsFilter = ProblemsFilter.AlwaysTrue,
+    val problemFilters: List<ProblemsFilter>,
 
     /**
      * The Resolver for external classes. The verification can refer to them.
      */
-    val externalClassPath: Resolver = EmptyResolver,
+    val externalClassPath: Resolver,
 
     /**
      * If set, this resolver will be used to resolve plugin dependencies.

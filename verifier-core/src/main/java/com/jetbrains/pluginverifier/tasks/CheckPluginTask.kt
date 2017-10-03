@@ -56,7 +56,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
                              ideDescriptor: IdeDescriptor,
                              dependencyResolver: DependencyResolver,
                              progress: Progress): Result {
-    val verifierParams = VerifierParams(parameters.jdkDescriptor, parameters.externalClassesPrefixes, parameters.problemsFilter, parameters.externalClasspath, dependencyResolver)
+    val verifierParams = VerifierParams(parameters.jdkDescriptor, parameters.externalClassesPrefixes, parameters.problemsFilters, parameters.externalClasspath, dependencyResolver)
     val verifier = VerifierExecutor(verifierParams, pluginCreator)
     verifier.use {
       val results = verifier.verify(listOf(pluginCoordinate to ideDescriptor), progress)

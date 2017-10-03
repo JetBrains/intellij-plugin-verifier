@@ -1,24 +1,26 @@
 package com.jetbrains.pluginverifier.options
 
 import com.google.common.collect.HashMultimap
-import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.IdeDescriptor
-import com.jetbrains.pluginverifier.api.ProblemsFilter
+import com.jetbrains.pluginverifier.filter.*
 import com.jetbrains.pluginverifier.ide.IdeCreator
+import com.jetbrains.pluginverifier.misc.deleteLogged
+import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.output.PrinterOptions
 import com.jetbrains.pluginverifier.tasks.PluginIdAndVersion
-import com.jetbrains.pluginverifier.utils.IgnoredProblemsFilter
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
-import java.nio.file.Files
-import java.util.regex.Pattern
 
 object OptionsParser {
+
+  private val LOG: Logger = LoggerFactory.getLogger(OptionsParser::class.java)
 
   fun parsePrinterOptions(opts: CmdOpts): PrinterOptions = PrinterOptions(
       opts.ignoreAllMissingOptionalDeps,
@@ -72,37 +74,57 @@ object OptionsParser {
 
   fun getExternalClassesPrefixes(opts: CmdOpts): List<String> = opts.externalClassesPrefixes.map { it.replace('.', '/') }
 
-  fun getProblemsFilter(opts: CmdOpts): ProblemsFilter {
-
-    val ignoreProblemsFile = opts.ignoreProblemsFile
-    val problemsToIgnore = if (ignoreProblemsFile != null) {
-      getProblemsToIgnoreFromFile(ignoreProblemsFile)
-    } else {
-      HashMultimap.create()
+  private fun createIgnoredProblemsFilter(opts: CmdOpts): ProblemsFilter? {
+    if (opts.ignoreProblemsFile != null) {
+      val problemsToIgnore = getProblemsToIgnoreFromFile(opts.ignoreProblemsFile!!)
+      val savedIgnoredProblemsFile = getSavedIgnoredProblemsFile(opts)
+      return IgnoredProblemsFilter(problemsToIgnore, savedIgnoredProblemsFile)
     }
+    return null
+  }
 
-    val saveIgnoredProblemsFile = if (opts.saveIgnoredProblemsFile != null) File(opts.saveIgnoredProblemsFile) else null
-    if (saveIgnoredProblemsFile != null) {
-      try {
-        Files.deleteIfExists(saveIgnoredProblemsFile.toPath())
-      } catch(e: Exception) {
-        throw RuntimeException("Unable to clean the file $saveIgnoredProblemsFile", e)
-      }
+  private fun getSavedIgnoredProblemsFile(opts: CmdOpts): File? = if (opts.saveIgnoredProblemsFile != null) {
+    val file = File(opts.saveIgnoredProblemsFile!!)
+    file.deleteLogged()
+    file
+  } else {
+    null
+  }
+
+  private fun createDocumentedProblemsFilter(opts: CmdOpts): ProblemsFilter? {
+    if (opts.documentedProblemsPageUrl != null) {
+      val documentedPage = fetchDocumentedProblemsPage(opts) ?: return null
+      val documentedProblems = DocumentedProblemsParser().parse(documentedPage)
+      val savedIgnoredProblemsFile = getSavedIgnoredProblemsFile(opts)
+      return DocumentedProblemsFilter(documentedProblems, savedIgnoredProblemsFile)
     }
+    return null
+  }
 
-    return IgnoredProblemsFilter(problemsToIgnore, saveIgnoredProblemsFile)
+  private fun fetchDocumentedProblemsPage(opts: CmdOpts): String? = try {
+    DocumentedProblemsFetcher().fetchPage(opts.documentedProblemsPageUrl!!)
+  } catch (e: Exception) {
+    LOG.error("Failed to fetch documented problems page ${opts.documentedProblemsPageUrl}. " +
+        "The problems described on the page will not be ignored.", e)
+    null
+  }
+
+  fun getProblemsFilters(opts: CmdOpts): List<ProblemsFilter> {
+    val ignoredProblemsFilter = createIgnoredProblemsFilter(opts)
+    val documentedProblemsFilter = createDocumentedProblemsFilter(opts)
+    return ignoredProblemsFilter.singletonOrEmpty() + documentedProblemsFilter.singletonOrEmpty()
   }
 
   /**
    * @return _(pluginXmlId, version)_ -> to be ignored _problem pattern_
    */
-  private fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): Multimap<PluginIdAndVersion, Pattern> {
+  private fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): HashMultimap<PluginIdAndVersion, Regex> {
     val file = File(ignoreProblemsFile)
     if (!file.exists()) {
       throw IllegalArgumentException("Ignored problems file doesn't exist " + ignoreProblemsFile)
     }
 
-    val m = HashMultimap.create<PluginIdAndVersion, Pattern>()
+    val m = HashMultimap.create<PluginIdAndVersion, Regex>()
     try {
       BufferedReader(FileReader(file)).use { br ->
         var s: String?
@@ -123,7 +145,7 @@ object OptionsParser {
           val pluginVersion = tokens[1].trim { it <= ' ' }
           val ignorePattern = tokens[2].trim { it <= ' ' }.replace('/', '.')
 
-          m.put(PluginIdAndVersion(pluginId, pluginVersion), Pattern.compile(ignorePattern))
+          m.put(PluginIdAndVersion(pluginId, pluginVersion), Regex(ignorePattern, RegexOption.IGNORE_CASE))
         }
       }
     } catch (e: Exception) {
