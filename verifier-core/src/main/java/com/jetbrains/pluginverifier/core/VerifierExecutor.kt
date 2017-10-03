@@ -50,12 +50,11 @@ class VerifierExecutor(val params: VerifierParams, val pluginCreator: PluginCrea
     return maxOf(4, minOf(maxByMemory, availableCpu)).toInt()
   }
 
-  fun verify(tasks: List<Pair<PluginCoordinate, IdeDescriptor>>, progress: Progress): List<Result> {
-    tasks.forEach {
-      val worker = Verifier(it.first, it.second, runtimeResolver, params, pluginCreator)
-      completionService.submit(worker)
-    }
-    return getResults(tasks.size, progress)
+  fun verify(tasks: List<Pair<PluginCoordinate, IdeDescriptor>>, logger: Progress): List<Result> {
+    tasks
+        .map { (plugin, ide) -> Verifier(plugin, ide, runtimeResolver, params, pluginCreator) }
+        .forEach { completionService.submit(it) }
+    return getResults(tasks.size, logger)
   }
 
   override fun close() {
@@ -63,7 +62,7 @@ class VerifierExecutor(val params: VerifierParams, val pluginCreator: PluginCrea
     executor.shutdownNow()
   }
 
-  private fun getResults(tasks: Int, progress: Progress): List<Result> {
+  private fun getResults(tasks: Int, logger: Progress): List<Result> {
     var verified = 0
     val results = arrayListOf<Result>()
     (1..tasks).forEach fori@ {
@@ -76,9 +75,9 @@ class VerifierExecutor(val params: VerifierParams, val pluginCreator: PluginCrea
         if (future != null) {
           val result = future.get()
           results.add(result)
-          progress.setProgress(((++verified).toDouble()) / tasks)
+          logger.setProgress(((++verified).toDouble()) / tasks)
           val resultString = result.toString()
-          progress.setText(resultString)
+          logger.setText(resultString)
           LOG.info("$verified/$tasks plugins finished. $resultString")
           break
         }

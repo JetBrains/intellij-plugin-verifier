@@ -4,7 +4,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.Progress
 import com.jetbrains.pluginverifier.api.VerifierParams
-import com.jetbrains.pluginverifier.core.VerifierExecutor
+import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -37,11 +37,9 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
 
   private fun doExecute(notExcludedPlugins: List<PluginCoordinate>, progress: Progress): CheckIdeResult {
     val verifierParams = VerifierParams(parameters.jdkDescriptor, parameters.externalClassesPrefixes, parameters.problemsFilters, parameters.externalClassPath, parameters.dependencyResolver)
-    val verifier = VerifierExecutor(verifierParams, pluginCreator)
-    verifier.use {
-      val results = verifier.verify(notExcludedPlugins.map { it to parameters.ideDescriptor }, progress)
-      return CheckIdeResult(parameters.ideDescriptor.ideVersion, results, parameters.excludedPlugins, getMissingUpdatesProblems())
-    }
+    val tasks = notExcludedPlugins.map { it to parameters.ideDescriptor }
+    val results = Verification.run(verifierParams, pluginCreator, tasks, progress)
+    return CheckIdeResult(parameters.ideDescriptor.ideVersion, results, parameters.excludedPlugins, getMissingUpdatesProblems())
   }
 
   private fun getMissingUpdatesProblems(): List<MissingCompatibleUpdate> {

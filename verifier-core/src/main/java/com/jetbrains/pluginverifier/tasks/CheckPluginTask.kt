@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.tasks
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.api.*
-import com.jetbrains.pluginverifier.core.VerifierExecutor
+import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.dependencies.DependencyResolver
 import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
@@ -55,13 +55,10 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
   private fun doVerification(pluginCoordinate: PluginCoordinate,
                              ideDescriptor: IdeDescriptor,
                              dependencyResolver: DependencyResolver,
-                             progress: Progress): Result {
+                             logger: Progress): Result {
     val verifierParams = VerifierParams(parameters.jdkDescriptor, parameters.externalClassesPrefixes, parameters.problemsFilters, parameters.externalClasspath, dependencyResolver)
-    val verifier = VerifierExecutor(verifierParams, pluginCreator)
-    verifier.use {
-      val results = verifier.verify(listOf(pluginCoordinate to ideDescriptor), progress)
-      return results.single()
-    }
+    val tasks = listOf(pluginCoordinate to ideDescriptor)
+    return Verification.run(verifierParams, pluginCreator, tasks, logger).single()
   }
 
 }
