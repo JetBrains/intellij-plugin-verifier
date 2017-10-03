@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.classes.utils.JarsUtils
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl
+import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.isSourceDir
 import com.jetbrains.plugin.structure.ide.util.loadProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -22,7 +23,7 @@ object IdeResolverCreator {
   @JvmStatic
   fun createIdeResolver(ide: Ide): Resolver {
     val idePath = ide.idePath
-    return if (IdeManagerImpl.isSourceDir(idePath)) {
+    return if (isSourceDir(idePath)) {
       getIdeaResolverFromSources(idePath)
     } else {
       getIdeResolverFromLibraries(idePath)

@@ -1,5 +1,7 @@
 package com.jetbrains.plugin.structure.ide;
 
+import com.jetbrains.plugin.structure.base.logging.Logger;
+import com.jetbrains.plugin.structure.base.logging.LoggerFactory;
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,8 +15,13 @@ import java.io.IOException;
 public abstract class IdeManager {
 
   @NotNull
-  public static IdeManager getInstance() {
-    return new IdeManagerImpl();
+  public static IdeManager createManager() {
+    return createManager(LoggerFactory.INSTANCE.createDefaultLogger(IdeManager.class));
+  }
+
+  @NotNull
+  public static IdeManager createManager(@NotNull Logger logger) {
+    return new IdeManagerImpl(logger);
   }
 
   /**

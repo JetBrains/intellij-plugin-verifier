@@ -1,5 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.plugin;
 
+import com.jetbrains.plugin.structure.base.logging.Logger;
+import com.jetbrains.plugin.structure.base.logging.LoggerFactory;
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult;
 import com.jetbrains.plugin.structure.base.plugin.PluginManager;
 import com.jetbrains.plugin.structure.base.plugin.Settings;
@@ -21,8 +23,6 @@ import org.jdom2.Document;
 import org.jdom2.input.JDOMParseException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +39,6 @@ import static com.jetbrains.plugin.structure.intellij.utils.StringUtil.toSystemI
  */
 public final class IdePluginManager implements PluginManager<IdePlugin> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(IdePluginManager.class);
   private static final String PLUGIN_XML = "plugin.xml";
 
   @NotNull
@@ -48,9 +47,13 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   @NotNull
   private final File myExtractDirectory;
 
-  private IdePluginManager(@NotNull XIncludePathResolver pathResolver, @NotNull File extractDirectory) {
+  @NotNull
+  private final Logger myLogger;
+
+  private IdePluginManager(@NotNull XIncludePathResolver pathResolver, @NotNull File extractDirectory, @NotNull Logger logger) {
     myPathResolver = pathResolver;
     myExtractDirectory = extractDirectory;
+    myLogger = logger;
   }
 
   @NotNull
@@ -60,17 +63,22 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
 
   @NotNull
   public static IdePluginManager createManager(@NotNull File extractDirectory) {
-    return createManager(new DefaultXIncludePathResolver(), extractDirectory);
+    return createManager(new DefaultXIncludePathResolver(), extractDirectory, createDefaultLogger());
   }
 
   @NotNull
   public static IdePluginManager createManager(@NotNull XIncludePathResolver pathResolver) {
-    return createManager(pathResolver, Settings.EXTRACT_DIRECTORY.getAsFile());
+    return createManager(pathResolver, Settings.EXTRACT_DIRECTORY.getAsFile(), createDefaultLogger());
   }
 
   @NotNull
-  public static IdePluginManager createManager(@NotNull XIncludePathResolver pathResolver, @NotNull File extractDirectory) {
-    return new IdePluginManager(pathResolver, extractDirectory);
+  private static Logger createDefaultLogger() {
+    return LoggerFactory.INSTANCE.createDefaultLogger(IdePluginManager.class);
+  }
+
+  @NotNull
+  public static IdePluginManager createManager(@NotNull XIncludePathResolver pathResolver, @NotNull File extractDirectory, @NotNull Logger logger) {
+    return new IdePluginManager(pathResolver, extractDirectory, logger);
   }
 
   private PluginCreator loadDescriptorFromJarFile(@NotNull File jarFile,
@@ -81,7 +89,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     try {
       zipFile = new ZipFile(jarFile);
     } catch (Exception e) {
-      LOG.info("Unable to read jar file " + jarFile, e);
+      myLogger.info("Unable to read jar file " + jarFile, e);
       return new PluginCreator(descriptorPath, new UnableToReadJarFile(jarFile), jarFile);
     }
 
@@ -93,9 +101,9 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
           URL documentUrl = URLUtil.getJarEntryURL(jarFile, entry.getName());
           documentStream = zipFile.getInputStream(entry);
           Document document = JDOMUtil.loadDocument(documentStream);
-          return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, pathResolver, jarFile);
+          return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, pathResolver, jarFile, myLogger);
         } catch (Exception e) {
-          LOG.info("Unable to read file " + descriptorPath);
+          myLogger.info("Unable to read file " + descriptorPath);
           return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorPath), jarFile);
         } finally {
           IOUtils.closeQuietly(documentStream);
@@ -107,7 +115,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       try {
         zipFile.close();
       } catch (IOException e) {
-        LOG.error("Unable to close jar file " + jarFile, e);
+        myLogger.error("Unable to close jar file " + jarFile, e);
       }
     }
   }
@@ -143,13 +151,13 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     try {
       URL documentUrl = URLUtil.fileToUrl(descriptorFile);
       Document document = JDOMUtil.loadDocument(documentUrl);
-      return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, myPathResolver, pluginDirectory);
+      return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, myPathResolver, pluginDirectory, myLogger);
     } catch (JDOMParseException e) {
       int lineNumber = e.getLineNumber();
       String message = lineNumber != -1 ? "unexpected element on line " + lineNumber : "unexpected elements";
       return new PluginCreator(descriptorPath, new UnexpectedDescriptorElements(message, descriptorPath), pluginDirectory);
     } catch (Exception e) {
-      LOG.info("Unable to read plugin descriptor " + descriptorPath + " of plugin " + descriptorFile, e);
+      myLogger.info("Unable to read plugin descriptor " + descriptorPath + " of plugin " + descriptorFile, e);
       return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorPath), pluginDirectory);
     }
   }
@@ -228,7 +236,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
           String metaInfUrl = URLUtil.getJarEntryURL(file, "META-INF").toExternalForm();
           inLibJarUrls.add(new URL(metaInfUrl));
         } catch (Exception e) {
-          LOG.warn("Unable to create URL for " + file + " META-INF root", e);
+          myLogger.warn("Unable to create URL for " + file + " META-INF root", e);
         }
       }
     }
@@ -287,7 +295,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     try {
       extractorResult = PluginExtractor.INSTANCE.extractPlugin(zipPlugin, myExtractDirectory);
     } catch (Exception e) {
-      LOG.info("Unable to extract plugin zip " + zipPlugin, e);
+      myLogger.info("Unable to extract plugin zip " + zipPlugin, e);
       return new PluginCreator(PLUGIN_XML, new UnableToExtractZip(zipPlugin), zipPlugin);
     }
     if (extractorResult instanceof ExtractorResult.Success) {
