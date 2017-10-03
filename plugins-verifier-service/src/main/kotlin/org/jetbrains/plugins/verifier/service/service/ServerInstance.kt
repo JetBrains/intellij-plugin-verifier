@@ -46,7 +46,7 @@ object ServerInstance : Closeable {
   }
 
   val pluginCreator: PluginCreator by lazy {
-    PluginCreatorImpl(pluginRepository, extractedPluginsDir)
+    PluginCreatorImpl(extractedPluginsDir)
   }
 
   val ideRepository: IdeRepository = IdeRepository(FileManager.getTypeDir(FileType.IDE), Settings.IDE_REPOSITORY_URL.get())

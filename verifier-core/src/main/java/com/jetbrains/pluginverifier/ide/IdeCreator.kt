@@ -13,11 +13,11 @@ import java.io.File
  */
 object IdeCreator {
 
-  val LOG: Logger = LoggerFactory.getLogger(IdeCreator::class.java)
+  private val LOG: Logger = LoggerFactory.getLogger(IdeCreator::class.java)
 
   fun createByFile(file: File, ideVersion: IdeVersion?): IdeDescriptor {
     LOG.debug("Reading IDE class files from $file")
-    val ide = IdeManager.getInstance().createIde(file, ideVersion)
+    val ide = IdeManager.createManager().createIde(file, ideVersion)
     val ideResolver = IdeResolverCreator.createIdeResolver(ide)
     return IdeDescriptor(ide, ideResolver)
   }

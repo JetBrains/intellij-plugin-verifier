@@ -2,10 +2,10 @@ package com.jetbrains.pluginverifier.tasks
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.JdkDescriptor
-import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import java.io.File
 
@@ -36,7 +36,7 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
     } else if (pluginToTestArg.matches("#\\d+".toRegex())) {
       val updateId = Integer.parseInt(pluginToTestArg.drop(1))
       val updateInfo = pluginRepository.getUpdateInfoById(updateId) ?: throw IllegalArgumentException("Update #$updateId is not found in the Plugin Repository")
-      return listOf(PluginCoordinate.ByUpdateInfo(updateInfo))
+      return listOf(PluginCoordinate.ByUpdateInfo(updateInfo, pluginRepository))
     } else {
       val file = File(pluginToTestArg)
       if (!file.exists()) {
@@ -67,7 +67,7 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
 
   fun downloadPluginBuilds(pluginId: String, ideVersion: IdeVersion): List<PluginCoordinate> =
       pluginRepository.getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId)
-          .map { PluginCoordinate.ByUpdateInfo(it) }
+          .map { PluginCoordinate.ByUpdateInfo(it, pluginRepository) }
 
 
 }

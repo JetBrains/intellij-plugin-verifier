@@ -22,7 +22,7 @@ class BundledPluginDependencyResolver(val ide: Ide, val pluginCreator: PluginCre
   }
 
   private fun createDependencyResultByExistingPlugin(plugin: IdePlugin): DependencyResolver.Result {
-    val pluginCreateResult = pluginCreator.createResultByExistingPlugin(plugin)
+    val pluginCreateResult = pluginCreator.createByExistingPlugin(plugin)
     return when (pluginCreateResult) {
       is CreatePluginResult.OK -> DependencyResolver.Result.CreatedResolver(pluginCreateResult.plugin, pluginCreateResult.pluginClassesLocations)
       is CreatePluginResult.BadPlugin -> DependencyResolver.Result.ProblematicDependency(pluginCreateResult.pluginErrorsAndWarnings)

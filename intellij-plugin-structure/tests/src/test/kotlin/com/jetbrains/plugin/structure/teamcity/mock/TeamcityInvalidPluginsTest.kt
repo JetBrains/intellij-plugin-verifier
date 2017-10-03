@@ -38,7 +38,7 @@ class TeamcityInvalidPluginsTest {
     val nonExistentFile = File("non-existent-file")
     expectedEx.expect(IllegalArgumentException::class.java)
     expectedEx.expectMessage("Plugin file non-existent-file does not exist")
-    TeamcityPluginManager.createPlugin(nonExistentFile)
+    TeamcityPluginManager.createManager().createPlugin(nonExistentFile)
   }
 
   @Test
@@ -59,13 +59,13 @@ class TeamcityInvalidPluginsTest {
   }
 
   private fun getSuccessResult(pluginFile: File): PluginCreationSuccess<TeamcityPlugin> {
-    val pluginCreationResult = TeamcityPluginManager.createPlugin(pluginFile)
+    val pluginCreationResult = TeamcityPluginManager.createManager().createPlugin(pluginFile)
     assertThat(pluginCreationResult, instanceOf(PluginCreationSuccess::class.java))
     return pluginCreationResult as PluginCreationSuccess
   }
 
   private fun getFailedResult(pluginFile: File): PluginCreationFail<TeamcityPlugin> {
-    val pluginCreationResult = TeamcityPluginManager.createPlugin(pluginFile)
+    val pluginCreationResult = TeamcityPluginManager.createManager().createPlugin(pluginFile)
     assertThat(pluginCreationResult, instanceOf(PluginCreationFail::class.java))
     return pluginCreationResult as PluginCreationFail
   }

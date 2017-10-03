@@ -4,9 +4,9 @@ import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.JdkDescriptor
-import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.filter.ProblemsFilter
 import com.jetbrains.pluginverifier.misc.closeLogged
+import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 
 data class CheckPluginParams(val pluginCoordinates: List<PluginCoordinate>,
                              val ideDescriptors: List<IdeDescriptor>,

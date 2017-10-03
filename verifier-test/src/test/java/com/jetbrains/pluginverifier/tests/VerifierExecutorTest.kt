@@ -4,24 +4,30 @@ import com.google.common.io.Files
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.api.*
+import com.jetbrains.pluginverifier.api.JdkDescriptor
+import com.jetbrains.pluginverifier.api.Result
+import com.jetbrains.pluginverifier.api.Verdict
+import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.ide.IdeCreator
 import com.jetbrains.pluginverifier.location.*
+import com.jetbrains.pluginverifier.logging.VerificationLoggerImpl
+import com.jetbrains.pluginverifier.logging.loggers.Slf4JLogger
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginCreatorImpl
 import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.reference.SymbolicReference
-import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
 import com.jetbrains.pluginverifier.tests.mocks.NotFoundDependencyResolver
 import org.hamcrest.core.Is.`is`
 import org.junit.AfterClass
 import org.junit.Assert.*
 import org.junit.BeforeClass
 import org.junit.Test
+import org.slf4j.LoggerFactory
 import java.io.File
 
 class VerifierExecutorTest {
@@ -37,16 +43,15 @@ class VerifierExecutorTest {
       val ideDescriptor = IdeCreator.createByFile(ideaFile, IdeVersion.createIdeVersion("IU-145.500"))
       val pluginCoordinate = PluginCoordinate.ByFile(pluginFile)
       val jdkPath = System.getenv("JAVA_HOME") ?: "/usr/lib/jvm/java-8-oracle"
-      val pluginRepository = MockPluginRepositoryAdapter()
       val tempFolder = Files.createTempDir()
       tempFolder.deleteOnExit()
-      val pluginCreator = PluginCreatorImpl(pluginRepository, tempFolder)
+      val pluginCreator = PluginCreatorImpl(tempFolder)
       ideDescriptor.use {
         val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
         val problemsFilters = OptionsParser.getProblemsFilters(CmdOpts())
         val verifierParams = VerifierParams(JdkDescriptor(File(jdkPath)), externalClassesPrefixes, problemsFilters, EmptyResolver, NotFoundDependencyResolver())
         val tasks = listOf(pluginCoordinate to ideDescriptor)
-        return Verification.run(verifierParams, pluginCreator, tasks, DefaultProgress()).single()
+        return Verification.run(verifierParams, pluginCreator, tasks, VerificationLoggerImpl(Slf4JLogger(LoggerFactory.getLogger("test")))).single()
       }
     }
 
@@ -690,17 +695,17 @@ class VerifierExecutorTest {
 
     assertProblemFound(accessProblem("accessPrivateField", "privateField", "fields/FieldsContainer", AccessType.PRIVATE, AccessFlags(0x2)),
         "Method mock.plugin.field.FieldProblemsContainer.accessPrivateField() : void contains a *getfield* instruction referencing a private field fields.FieldsContainer.privateField : int that a class mock.plugin.field.FieldProblemsContainer doesn't have access to. This can lead to **IllegalAccessError** exception at runtime.",
-        "Illegal access of a private field fields.FieldsContainer.privateField : int"
+        "Illegal access to a private field fields.FieldsContainer.privateField : int"
     )
 
     assertProblemFound(accessProblem("accessProtectedField", "protectedField", "fields/otherPackage/OtherFieldsContainer", AccessType.PROTECTED, AccessFlags(0x4)),
         "Method mock.plugin.field.FieldProblemsContainer.accessProtectedField() : void contains a *getfield* instruction referencing a protected field fields.otherPackage.OtherFieldsContainer.protectedField : int that a class mock.plugin.field.FieldProblemsContainer doesn't have access to. This can lead to **IllegalAccessError** exception at runtime.",
-        "Illegal access of a protected field fields.otherPackage.OtherFieldsContainer.protectedField : int"
+        "Illegal access to a protected field fields.otherPackage.OtherFieldsContainer.protectedField : int"
     )
 
     assertProblemFound(accessProblem("accessPackageField", "packageField", "fields/otherPackage/OtherFieldsContainer", AccessType.PACKAGE_PRIVATE, AccessFlags(0x0)),
         "Method mock.plugin.field.FieldProblemsContainer.accessPackageField() : void contains a *getfield* instruction referencing a package-private field fields.otherPackage.OtherFieldsContainer.packageField : int that a class mock.plugin.field.FieldProblemsContainer doesn't have access to. This can lead to **IllegalAccessError** exception at runtime.",
-        "Illegal access of a package-private field fields.otherPackage.OtherFieldsContainer.packageField : int"
+        "Illegal access to a package-private field fields.otherPackage.OtherFieldsContainer.packageField : int"
     )
   }
 

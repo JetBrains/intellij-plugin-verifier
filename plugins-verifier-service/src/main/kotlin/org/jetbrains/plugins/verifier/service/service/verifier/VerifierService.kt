@@ -2,10 +2,10 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.google.common.collect.LinkedHashMultimap
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
+import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.api.prepareVerificationResponse
@@ -85,7 +85,7 @@ class VerifierService : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES) {
     lastCheckDate[updateInfo] = System.currentTimeMillis()
 
     val pluginInfo = PluginInfo(updateInfo.pluginId, updateInfo.version, updateInfo)
-    val pluginCoordinate = PluginCoordinate.ByUpdateInfo(updateInfo)
+    val pluginCoordinate = PluginCoordinate.ByUpdateInfo(updateInfo, ServerInstance.pluginRepository)
     val rangeRunnerParams = CheckRangeParams(JdkVersion.JAVA_8_ORACLE)
     val runner = CheckRangeCompatibilityTask(pluginInfo, pluginCoordinate, rangeRunnerParams, versions, ServerInstance.pluginRepository, ServerInstance.pluginCreator)
     val taskStatus = taskManager.enqueue(

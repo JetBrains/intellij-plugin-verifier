@@ -71,6 +71,12 @@ fun File.createDir(): File {
   return this
 }
 
+fun checkIfInterrupted() {
+  if (Thread.currentThread().isInterrupted) {
+    throw InterruptedException()
+  }
+}
+
 inline fun <R> withDebug(logger: Logger, taskName: String, block: () -> R): R {
   val startTime = System.currentTimeMillis()
   logger.debug(taskName + " is starting")

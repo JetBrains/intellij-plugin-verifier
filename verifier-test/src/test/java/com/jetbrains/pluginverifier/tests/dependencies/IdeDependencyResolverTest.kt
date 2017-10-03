@@ -87,7 +87,7 @@ class IdeDependencyResolverTest {
       }
     }
 
-    val pluginCreator = PluginCreatorImpl(repository, File("isn't necessary"))
+    val pluginCreator = PluginCreatorImpl(File("isn't necessary"))
     val dependencyResolver = IdeDependencyResolver(ide, repository, pluginCreator)
     val (graph, start) = DepGraphBuilder(dependencyResolver).build(startPlugin, IdePluginClassesLocations(startPlugin, Closeable { }, emptyMap()))
     val dependenciesGraph = DepGraph2ApiGraphConverter.convert(graph, start)

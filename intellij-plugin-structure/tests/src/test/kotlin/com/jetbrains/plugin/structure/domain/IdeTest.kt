@@ -32,7 +32,7 @@ class IdeTest {
     expectedEx.expect(IllegalArgumentException::class.java)
     expectedEx.expectMessage(ideaFolder.absolutePath + File.separator + "build.txt is not found")
 
-    IdeManager.getInstance().createIde(ideaFolder)
+    IdeManager.createManager().createIde(ideaFolder)
   }
 
   @Test
@@ -48,7 +48,7 @@ class IdeTest {
     bundledXml.parentFile.mkdirs()
     bundledXml.writeText(bundledPluginXmlContent)
 
-    val ide = IdeManager.getInstance().createIde(ideaFolder)
+    val ide = IdeManager.createManager().createIde(ideaFolder)
     assertThat(ide.version, `is`(IdeVersion.createIdeVersion("IU-163.1.2.3")))
     assertThat(ide.bundledPlugins, hasSize(1))
     val plugin = ide.bundledPlugins[0]!!
@@ -73,7 +73,7 @@ class IdeTest {
     bundledXml.parentFile.mkdirs()
     bundledXml.writeText(bundledPluginXmlContent)
 
-    val ide = IdeManager.getInstance().createIde(ideaFolder)
+    val ide = IdeManager.createManager().createIde(ideaFolder)
     assertThat(ide.version, `is`(IdeVersion.createIdeVersion("IU-163.1.2.3")))
     assertThat(ide.bundledPlugins, hasSize(1))
 
@@ -101,7 +101,7 @@ class IdeTest {
     bundledXml.parentFile.mkdirs()
     bundledXml.writeText(incompleteDescriptor)
 
-    val ide = IdeManager.getInstance().createIde(ideaFolder)
+    val ide = IdeManager.createManager().createIde(ideaFolder)
     assertThat(ide.version, `is`(IdeVersion.createIdeVersion("IU-163.1.2.3")))
     assertThat(ide.bundledPlugins, hasSize(1))
     val plugin = ide.bundledPlugins[0]!!

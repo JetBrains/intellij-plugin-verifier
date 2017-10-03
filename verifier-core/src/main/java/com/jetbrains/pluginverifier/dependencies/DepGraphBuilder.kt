@@ -7,8 +7,6 @@ import com.jetbrains.pluginverifier.misc.closeLogged
 import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.jgrapht.graph.DefaultEdge
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.Closeable
 
 data class DepEdge(val dependency: PluginDependency, val isModule: Boolean) : DefaultEdge() {
@@ -27,14 +25,10 @@ data class DepVertex(val id: String, val resolveResult: DependencyResolver.Resul
 }
 
 class DepGraphBuilder(private val dependencyResolver: DependencyResolver) : Closeable {
-  companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(DepGraphBuilder::class.java)
-  }
 
   private val graph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
 
   fun build(startPlugin: IdePlugin, startClassesLocations: IdePluginClassesLocations): Pair<DirectedGraph<DepVertex, DepEdge>, DepVertex> {
-    LOG.debug("Building dependencies graph for $startPlugin")
     val startResult = DependencyResolver.Result.FoundReady(startPlugin, startClassesLocations)
     val startVertex = DepVertex(startPlugin.pluginId ?: "", startResult)
     traverseDependencies(startVertex)

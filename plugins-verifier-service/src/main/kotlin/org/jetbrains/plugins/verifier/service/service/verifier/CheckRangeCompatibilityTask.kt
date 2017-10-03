@@ -5,28 +5,30 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.IdeDescriptor
 import com.jetbrains.pluginverifier.api.JdkDescriptor
-import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.ide.IdeCreator
+import com.jetbrains.pluginverifier.logging.VerificationLoggerImpl
+import com.jetbrains.pluginverifier.logging.loggers.Slf4JLogger
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
+import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginCreator
+import com.jetbrains.pluginverifier.plugin.create
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.CheckPluginParams
 import com.jetbrains.pluginverifier.tasks.CheckPluginTask
 import org.jetbrains.plugins.verifier.service.ide.IdeFileLock
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
-import org.jetbrains.plugins.verifier.service.progress.VerifierToTaskBridgeProgress
 import org.jetbrains.plugins.verifier.service.storage.JdkManager
 import org.jetbrains.plugins.verifier.service.tasks.Task
 import org.jetbrains.plugins.verifier.service.tasks.TaskProgress
 import org.slf4j.LoggerFactory
 
-class CheckRangeCompatibilityTask(val pluginInfo: PluginInfo,
+class CheckRangeCompatibilityTask(private val pluginInfo: PluginInfo,
                                   val pluginCoordinate: PluginCoordinate,
-                                  val params: CheckRangeParams,
-                                  val ideVersions: List<IdeVersion>? = null,
-                                  val pluginRepository: PluginRepository,
-                                  val pluginCreator: PluginCreator) : Task<CheckRangeCompatibilityResult>() {
+                                  private val params: CheckRangeParams,
+                                  private val ideVersions: List<IdeVersion>? = null,
+                                  private val pluginRepository: PluginRepository,
+                                  private val pluginCreator: PluginCreator) : Task<CheckRangeCompatibilityResult>() {
   companion object {
     private val LOG = LoggerFactory.getLogger(CheckRangeCompatibilityTask::class.java)
   }
@@ -69,7 +71,8 @@ class CheckRangeCompatibilityTask(val pluginInfo: PluginInfo,
                                          ideDescriptors: List<IdeDescriptor>,
                                          jdkDescriptor: JdkDescriptor,
                                          progress: TaskProgress): CheckRangeCompatibilityResult {
-    val verifierProgress = VerifierToTaskBridgeProgress(progress)
+    //todo: employ progress.
+    val verifierProgress = VerificationLoggerImpl(Slf4JLogger(LOG))
     val params = CheckPluginParams(listOf(pluginCoordinate), ideDescriptors, jdkDescriptor, emptyList(), emptyList(), EmptyResolver)
     val checkPluginTask = CheckPluginTask(params, pluginRepository, pluginCreator)
     val checkPluginResults = checkPluginTask.execute(verifierProgress)
@@ -83,12 +86,13 @@ class CheckRangeCompatibilityTask(val pluginInfo: PluginInfo,
         .mapNotNull { IdeFilesManager.getIdeLock(it) }
   }
 
-  override fun computeResult(progress: TaskProgress): CheckRangeCompatibilityResult = pluginCreator.createPlugin(pluginCoordinate).use { createPluginResult ->
-    when (createPluginResult) {
-      is CreatePluginResult.NotFound -> CheckRangeCompatibilityResult(pluginInfo, CheckRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = createPluginResult.reason)
-      is CreatePluginResult.FailedToDownload -> CheckRangeCompatibilityResult(pluginInfo, CheckRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = createPluginResult.reason)
-      is CreatePluginResult.BadPlugin -> CheckRangeCompatibilityResult(pluginInfo, CheckRangeCompatibilityResult.ResultType.INVALID_PLUGIN, invalidPluginProblems = createPluginResult.pluginErrorsAndWarnings)
-      is CreatePluginResult.OK -> doRangeVerification(createPluginResult.plugin, progress)
-    }
-  }
+  override fun computeResult(progress: TaskProgress): CheckRangeCompatibilityResult =
+      pluginCoordinate.create(pluginCreator).use { createPluginResult ->
+        when (createPluginResult) {
+          is CreatePluginResult.NotFound -> CheckRangeCompatibilityResult(pluginInfo, CheckRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = createPluginResult.reason)
+          is CreatePluginResult.FailedToDownload -> CheckRangeCompatibilityResult(pluginInfo, CheckRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = createPluginResult.reason)
+          is CreatePluginResult.BadPlugin -> CheckRangeCompatibilityResult(pluginInfo, CheckRangeCompatibilityResult.ResultType.INVALID_PLUGIN, invalidPluginProblems = createPluginResult.pluginErrorsAndWarnings)
+          is CreatePluginResult.OK -> doRangeVerification(createPluginResult.plugin, progress)
+        }
+      }
 }

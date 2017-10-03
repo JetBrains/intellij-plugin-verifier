@@ -8,42 +8,47 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLo
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.api.*
 import com.jetbrains.pluginverifier.dependencies.*
-import com.jetbrains.pluginverifier.misc.withDebug
+import com.jetbrains.pluginverifier.logging.PluginLogger
 import com.jetbrains.pluginverifier.plugin.CreatePluginResult
+import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginCreator
+import com.jetbrains.pluginverifier.plugin.create
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.warnings.Warning
 import org.jgrapht.DirectedGraph
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.concurrent.Callable
 
-class Verifier(val pluginCoordinate: PluginCoordinate,
-               val ideDescriptor: IdeDescriptor,
-               val runtimeResolver: Resolver,
-               val params: VerifierParams,
-               val pluginCreator: PluginCreator) : Callable<Result> {
+class Verifier(private val pluginCoordinate: PluginCoordinate,
+               private val ideDescriptor: IdeDescriptor,
+               private val runtimeResolver: Resolver,
+               private val params: VerifierParams,
+               private val pluginCreator: PluginCreator,
+               private val pluginLogger: PluginLogger) : Callable<Result> {
 
   companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(Verifier::class.java)
-
     private val classesSelectors = listOf(MainClassesSelector(), ExternalBuildClassesSelector())
   }
 
   override fun call(): Result {
-    withDebug(LOG, "Verify $pluginCoordinate with $ideDescriptor") {
+    pluginLogger.started()
+    try {
       return createPluginAndDoVerification()
+    } finally {
+      pluginLogger.finished()
     }
   }
 
-  private fun createPluginAndDoVerification(): Result = pluginCreator.createPlugin(pluginCoordinate).use { createPluginResult ->
-    val (pluginInfo, verdict) = getPluginInfoAndVerdict(createPluginResult)
-    Result(pluginInfo, ideDescriptor.ideVersion, verdict)
+  private fun createPluginAndDoVerification(): Result {
+    val createPluginResult = pluginCoordinate.create(pluginCreator)
+    return createPluginResult.use {
+      val (pluginInfo, verdict) = calculatePluginInfoAndVerdict(createPluginResult)
+      Result(pluginInfo, ideDescriptor.ideVersion, verdict)
+    }
   }
 
-  private fun getPluginInfoAndVerdict(createPluginResult: CreatePluginResult) = when (createPluginResult) {
+  private fun calculatePluginInfoAndVerdict(createPluginResult: CreatePluginResult) = when (createPluginResult) {
     is CreatePluginResult.BadPlugin -> {
       getPluginInfoByCoordinate(pluginCoordinate) to Verdict.Bad(createPluginResult.pluginErrorsAndWarnings)
     }
@@ -87,7 +92,7 @@ class Verifier(val pluginCoordinate: PluginCoordinate,
     DepGraphBuilder(dependencyResolver).use { graphBuilder ->
       val (depGraph, start) = graphBuilder.build(creationOk.plugin, creationOk.pluginClassesLocations)
       val apiGraph = DepGraph2ApiGraphConverter.convert(depGraph, start)
-      LOG.debug("Dependencies graph for $plugin: $apiGraph")
+      pluginLogger.logDependencyGraph(apiGraph)
 
       //don't close this classLoader because it contains the client's resolvers.
       val classLoader = createClassLoader(pluginClassesLocations, depGraph)

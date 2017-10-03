@@ -2,11 +2,11 @@ package com.jetbrains.pluginverifier.tasks
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.api.JdkDescriptor
-import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginCreator
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -91,8 +91,8 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository, val pluginCr
   }
 
 
-  private fun getDescriptorsToCheck(checkAllBuilds: List<String>, checkLastBuilds: List<String>, ideVersion: IdeVersion): List<PluginCoordinate> =
-      getUpdateInfosToCheck(checkAllBuilds, checkLastBuilds, ideVersion).map { PluginCoordinate.ByUpdateInfo(it) }
+  private fun getDescriptorsToCheck(checkAllBuilds: List<String>, checkLastBuilds: List<String>, ideVersion: IdeVersion) =
+      getUpdateInfosToCheck(checkAllBuilds, checkLastBuilds, ideVersion).map { PluginCoordinate.ByUpdateInfo(it, pluginRepository) }
 
   private fun getUpdateInfosToCheck(checkAllBuilds: List<String>, checkLastBuilds: List<String>, ideVersion: IdeVersion): List<UpdateInfo> {
     if (checkAllBuilds.isEmpty() && checkLastBuilds.isEmpty()) {

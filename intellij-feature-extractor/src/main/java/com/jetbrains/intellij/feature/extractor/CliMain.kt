@@ -20,7 +20,7 @@ fun main(args: Array<String>) {
   val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
   val result = when (pluginCreationResult) {
     is PluginCreationSuccess -> {
-      val ide = IdeManager.getInstance().createIde(ideaFile)
+      val ide = IdeManager.createManager().createIde(ideaFile)
       IdeResolverCreator.createIdeResolver(ide).use { ideResolver ->
         val extractorResult = FeaturesExtractor.extractFeatures(ide, ideResolver, pluginCreationResult.plugin)
         extractorResult.features.forEach { println(Gson().toJson(it)) }

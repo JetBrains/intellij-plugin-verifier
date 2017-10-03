@@ -1,9 +1,9 @@
 package org.jetbrains.plugins.verifier.service.service.featureExtractor
 
-import com.jetbrains.pluginverifier.api.PluginCoordinate
 import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
+import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.api.prepareFeaturesResponse
 import org.jetbrains.plugins.verifier.service.service.BaseService
@@ -67,7 +67,7 @@ class FeatureService : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES) {
     lastProceedDate[updateInfo] = System.currentTimeMillis()
 
     val pluginInfo = PluginInfo(updateInfo.pluginId, updateInfo.version, updateInfo)
-    val runner = ExtractFeaturesTask(PluginCoordinate.ByUpdateInfo(updateInfo), pluginInfo)
+    val runner = ExtractFeaturesTask(PluginCoordinate.ByUpdateInfo(updateInfo, ServerInstance.pluginRepository), pluginInfo)
     val taskStatus = taskManager.enqueue(
         runner,
         { onSuccess(it) },

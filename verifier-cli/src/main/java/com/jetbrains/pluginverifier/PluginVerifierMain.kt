@@ -1,6 +1,9 @@
 package com.jetbrains.pluginverifier
 
-import com.jetbrains.pluginverifier.api.DefaultProgress
+import com.jetbrains.pluginverifier.logging.VerificationLoggerImpl
+import com.jetbrains.pluginverifier.logging.loggers.FileLogger
+import com.jetbrains.pluginverifier.logging.loggers.GroupLogger
+import com.jetbrains.pluginverifier.logging.loggers.Slf4JLogger
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
@@ -14,6 +17,7 @@ import com.jetbrains.pluginverifier.tasks.CheckTrunkApiRunner
 import com.jetbrains.pluginverifier.tasks.TaskRunner
 import com.sampullara.cli.Args
 import org.apache.commons.io.FileUtils
+import org.slf4j.LoggerFactory
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -79,7 +83,7 @@ object PluginVerifierMain {
     val downloadDirMaxSpace = downloadDirMaxSpace ?: 5 * FileUtils.ONE_GB
     val pluginRepository = PublicPluginRepository(pluginRepositoryUrl, downloadDir, downloadDirMaxSpace)
     val ideRepository = IdeRepository(ideDownloadDir, ideRepositoryUrl)
-    val pluginCreator = PluginCreatorImpl(pluginRepository, extractDir)
+    val pluginCreator = PluginCreatorImpl(extractDir)
 
     val runner = findTaskRunner(command)
     val parametersBuilder = runner.getParametersBuilder(pluginRepository, ideRepository, pluginCreator)
@@ -92,9 +96,14 @@ object PluginVerifierMain {
     }
 
     val taskResult = parameters.use {
-      println("Task ${runner.commandName} parameters: $parameters")
-      val task = runner.createTask(parameters, pluginRepository, pluginCreator)
-      task.execute(DefaultProgress())
+      val loggers = listOf(FileLogger(File(".")), Slf4JLogger(LoggerFactory.getLogger("Verifier")))
+      val logger = GroupLogger(loggers)
+      logger.use {
+        val verificationLogger = VerificationLoggerImpl(logger)
+        println("Task ${runner.commandName} parameters: $parameters")
+        val task = runner.createTask(parameters, pluginRepository, pluginCreator)
+        task.execute(verificationLogger)
+      }
     }
 
     val printerOptions = OptionsParser.parsePrinterOptions(opts)
