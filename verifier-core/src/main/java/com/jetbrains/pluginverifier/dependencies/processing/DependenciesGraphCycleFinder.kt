@@ -1,5 +1,7 @@
-package com.jetbrains.pluginverifier.dependencies
+package com.jetbrains.pluginverifier.dependencies.processing
 
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import org.jgrapht.DirectedGraph
 import org.jgrapht.alg.cycle.JohnsonSimpleCycles
 import org.jgrapht.graph.DefaultDirectedGraph

@@ -1,11 +1,11 @@
-package com.jetbrains.pluginverifier.dependencies
+package com.jetbrains.pluginverifier.dependencies.resolution.repository
 
+import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.UpdateInfo
 
-interface DependencySelector {
+interface UpdateSelector {
   sealed class Result {
-    data class Plugin(val updateInfo: UpdateInfo) : Result()
+    data class Plugin(val updateInfo: PluginCoordinate) : Result()
     data class NotFound(val reason: String) : Result()
   }
 

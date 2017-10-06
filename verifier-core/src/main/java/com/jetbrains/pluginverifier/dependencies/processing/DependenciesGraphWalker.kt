@@ -1,4 +1,7 @@
-package com.jetbrains.pluginverifier.dependencies
+package com.jetbrains.pluginverifier.dependencies.processing
+
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.DependencyNode
 
 data class DependenciesGraphWalker(val graph: DependenciesGraph,
                                    val onVisit: (DependencyNode) -> Unit,
