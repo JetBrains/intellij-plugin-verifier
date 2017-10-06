@@ -9,14 +9,14 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 /**
  * @author Sergey Patrikeev
  */
-class IdeDependencyResolver(ide: Ide, pluginRepository: PluginRepository, pluginDetailsProvider: PluginDetailsProvider) : DependencyResolver {
-  private val bundledResolver = BundledPluginDependencyResolver(ide)
+class IdeDependencyFinder(ide: Ide, pluginRepository: PluginRepository, pluginDetailsProvider: PluginDetailsProvider) : DependencyFinder {
+  private val bundledResolver = BundledPluginDependencyFinder(ide)
 
-  private val downloadResolver = RepositoryDependencyResolver(pluginRepository, LastCompatibleSelector(ide.version), pluginDetailsProvider)
+  private val downloadResolver = RepositoryDependencyFinder(pluginRepository, LastCompatibleSelector(ide.version), pluginDetailsProvider)
 
-  override fun findPluginDependency(dependency: PluginDependency): DependencyResolver.Result {
+  override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
     val result = bundledResolver.findPluginDependency(dependency)
-    if (result is DependencyResolver.Result.NotFound) {
+    if (result is DependencyFinder.Result.NotFound) {
       return downloadResolver.findPluginDependency(dependency)
     }
     return result

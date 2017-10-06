@@ -1,29 +1,32 @@
 package com.jetbrains.pluginverifier.tests.dependencies
 
-import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.dependencies.DepGraph2ApiGraphConverter
-import com.jetbrains.pluginverifier.dependencies.DepGraphBuilder
-import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver
+import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter
+import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
+import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.plugin.PluginCreatorImpl
+import com.jetbrains.pluginverifier.dependencies.graph.DepEdge
+import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
+import com.jetbrains.pluginverifier.plugin.PluginDetails
+import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.DownloadPluginResult
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
+import org.jgrapht.DirectedGraph
+import org.jgrapht.graph.DefaultDirectedGraph
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.io.Closeable
 import java.io.File
 
 /**
  * @author Sergey Patrikeev
  */
-class IdeDependencyResolverTest {
+class IdeDependencyFinderTest {
 
   @JvmField
   @Rule
@@ -43,24 +46,19 @@ class IdeDependencyResolverTest {
     Should find dependencies on `test`, `somePlugin` and `moduleContainer`.
     Dependency resolution on `externalPlugin` must fail.
      */
-    val emptyFolder = tempFolder.newFolder()
-
     val testPlugin = MockIdePlugin(
         pluginId = "test",
         pluginVersion = "1.0",
-        dependencies = listOf(PluginDependencyImpl("someModule", false, true), PluginDependencyImpl("somePlugin", false, false)),
-        originalFile = emptyFolder
+        dependencies = listOf(PluginDependencyImpl("someModule", false, true), PluginDependencyImpl("somePlugin", false, false))
     )
     val somePlugin = MockIdePlugin(
         pluginId = "somePlugin",
-        pluginVersion = "1.0",
-        originalFile = emptyFolder
+        pluginVersion = "1.0"
     )
     val moduleContainer = MockIdePlugin(
         pluginId = "moduleContainer",
         pluginVersion = "1.0",
-        definedModules = setOf("someModule"),
-        originalFile = emptyFolder
+        definedModules = setOf("someModule")
     )
 
     val ide = MockIde(IdeVersion.createIdeVersion("IU-144"), bundledPlugins = listOf(testPlugin, somePlugin, moduleContainer))
@@ -69,8 +67,7 @@ class IdeDependencyResolverTest {
     val startPlugin = MockIdePlugin(
         pluginId = "myPlugin",
         pluginVersion = "1.0",
-        dependencies = listOf(PluginDependencyImpl("test", true, false), externalModuleDependency),
-        originalFile = emptyFolder
+        dependencies = listOf(PluginDependencyImpl("test", true, false), externalModuleDependency)
     )
 
     val repository = object : MockPluginRepositoryAdapter() {
@@ -87,12 +84,16 @@ class IdeDependencyResolverTest {
       }
     }
 
-    val pluginCreator = PluginCreatorImpl(File("isn't necessary"))
-    val dependencyResolver = IdeDependencyResolver(ide, repository, pluginCreator)
-    val (graph, start) = DepGraphBuilder(dependencyResolver).build(startPlugin, IdePluginClassesLocations(startPlugin, Closeable { }, emptyMap()))
-    val dependenciesGraph = DepGraph2ApiGraphConverter.convert(graph, start)
+    val pluginDetailsProvider = PluginDetailsProviderImpl(File("."))
+    val ideDependencyResolver = IdeDependencyFinder(ide, repository, pluginDetailsProvider)
 
-    val deps: List<String> = dependenciesGraph.vertices.map { it.id }
+    val start = DepVertex("myPlugin", PluginDetails.FoundOpenPluginWithoutClasses(startPlugin))
+    val graph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
+    val depGraphBuilder = DepGraphBuilder(ideDependencyResolver)
+    depGraphBuilder.fillDependenciesGraph(start, graph)
+
+    val dependenciesGraph = DepGraph2ApiGraphConverter().convert(graph, start)
+    val deps = dependenciesGraph.vertices.map { it.id }
     assertEquals(setOf("myPlugin", "test", "somePlugin", "moduleContainer"), deps.toSet())
 
     assertEquals(listOf(MissingDependency(externalModuleDependency, "Failed to download test.")), dependenciesGraph.start.missingDependencies)

@@ -9,9 +9,9 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 /**
  * @author Sergey Patrikeev
  */
-class RepositoryDependencyResolver(private val pluginRepository: PluginRepository,
-                                   private val updateSelector: UpdateSelector,
-                                   private val pluginDetailsProvider: PluginDetailsProvider) : DependencyResolver {
+class RepositoryDependencyFinder(private val pluginRepository: PluginRepository,
+                                 private val updateSelector: UpdateSelector,
+                                 private val pluginDetailsProvider: PluginDetailsProvider) : DependencyFinder {
 
   private companion object {
     val IDEA_ULTIMATE_MODULES: Set<String> = ImmutableSet.of(
@@ -27,31 +27,31 @@ class RepositoryDependencyResolver(private val pluginRepository: PluginRepositor
     fun isDefaultModule(moduleId: String): Boolean = moduleId in IDEA_ULTIMATE_MODULES
   }
 
-  override fun findPluginDependency(dependency: PluginDependency): DependencyResolver.Result {
+  override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
     if (dependency.isModule) {
       return resolveModuleDependency(dependency.id)
     }
     return selectPlugin(dependency.id)
   }
 
-  private fun resolveModuleDependency(moduleId: String): DependencyResolver.Result {
+  private fun resolveModuleDependency(moduleId: String): DependencyFinder.Result {
     if (isDefaultModule(moduleId)) {
-      return DependencyResolver.Result.Skip
+      return DependencyFinder.Result.Skip
     }
     return resolveDeclaringPlugin(moduleId)
   }
 
-  private fun resolveDeclaringPlugin(moduleId: String): DependencyResolver.Result {
+  private fun resolveDeclaringPlugin(moduleId: String): DependencyFinder.Result {
     val pluginId = pluginRepository.getIdOfPluginDeclaringModule(moduleId)
-        ?: return DependencyResolver.Result.NotFound("Module '$moduleId' is not found")
+        ?: return DependencyFinder.Result.NotFound("Module '$moduleId' is not found")
     return selectPlugin(pluginId)
   }
 
-  private fun selectPlugin(pluginId: String): DependencyResolver.Result {
+  private fun selectPlugin(pluginId: String): DependencyFinder.Result {
     val selectResult = updateSelector.select(pluginId, pluginRepository)
     return when (selectResult) {
-      is UpdateSelector.Result.Plugin -> DependencyResolver.Result.FoundCoordinates(selectResult.updateInfo, pluginDetailsProvider)
-      is UpdateSelector.Result.NotFound -> DependencyResolver.Result.NotFound(selectResult.reason)
+      is UpdateSelector.Result.Plugin -> DependencyFinder.Result.FoundCoordinates(selectResult.updateInfo, pluginDetailsProvider)
+      is UpdateSelector.Result.NotFound -> DependencyFinder.Result.NotFound(selectResult.reason)
     }
   }
 }

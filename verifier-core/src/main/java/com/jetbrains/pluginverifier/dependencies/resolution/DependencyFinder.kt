@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 
-interface DependencyResolver {
+interface DependencyFinder {
 
   fun findPluginDependency(dependency: PluginDependency): Result
 

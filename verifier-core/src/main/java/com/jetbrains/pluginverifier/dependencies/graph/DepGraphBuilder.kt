@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.dependencies.graph
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.pluginverifier.dependencies.resolution.DependencyResolver
+import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import org.jgrapht.DirectedGraph
 
-class DepGraphBuilder(private val dependencyResolver: DependencyResolver) {
+class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
 
   fun fillDependenciesGraph(current: DepVertex, directedGraph: DirectedGraph<DepVertex, DepEdge>) {
     if (!directedGraph.containsVertex(current)) {
@@ -23,7 +23,7 @@ class DepGraphBuilder(private val dependencyResolver: DependencyResolver) {
   private fun resolveDependency(pluginDependency: PluginDependency, directedGraph: DirectedGraph<DepVertex, DepEdge>): DepVertex {
     val alreadyResolved = directedGraph.vertexSet().find { pluginDependency.id == it.dependencyId }
     if (alreadyResolved == null) {
-      val pluginDetails = dependencyResolver.findPluginDependency(pluginDependency).getPluginDetails()
+      val pluginDetails = dependencyFinder.findPluginDependency(pluginDependency).getPluginDetails()
       return DepVertex(pluginDependency.id, pluginDetails)
     }
     return alreadyResolved
