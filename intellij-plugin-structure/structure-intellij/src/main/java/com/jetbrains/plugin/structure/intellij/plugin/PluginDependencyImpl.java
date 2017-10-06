@@ -1,16 +1,15 @@
 package com.jetbrains.plugin.structure.intellij.plugin;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PluginDependencyImpl implements PluginDependency {
   private final String myId;
   private final boolean myIsOptional;
   private final boolean myIsModule;
 
-  public PluginDependencyImpl(@NotNull String id, @Nullable final Boolean isOptional, boolean isModule) {
+  public PluginDependencyImpl(@NotNull String id, @NotNull final Boolean isOptional, boolean isModule) {
     myId = id;
-    myIsOptional = isOptional == null ? false : isOptional;
+    myIsOptional = isOptional;
     myIsModule = isModule;
   }
 
