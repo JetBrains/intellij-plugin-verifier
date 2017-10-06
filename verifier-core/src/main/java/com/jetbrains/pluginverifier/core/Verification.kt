@@ -3,8 +3,8 @@ package com.jetbrains.pluginverifier.core
 import com.jetbrains.pluginverifier.logging.VerificationLogger
 import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
+import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.results.Result
@@ -23,8 +23,9 @@ object Verification {
           logger: VerificationLogger): List<Result> {
     val concurrentWorkers = estimateNumberOfConcurrentWorkers(logger)
     logger.logEvent("Creating verifier with $concurrentWorkers " + " worker".pluralize(concurrentWorkers))
-    logger.tasksNumber = tasks.size
-    return VerifierExecutor().verify(tasks, verifierParameters, concurrentWorkers, pluginDetailsProvider, logger)
+    return VerifierExecutor(concurrentWorkers).use {
+      it.verify(tasks, verifierParameters, pluginDetailsProvider, logger)
+    }
   }
 
   private fun estimateNumberOfConcurrentWorkers(logger: VerificationLogger): Int {

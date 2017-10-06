@@ -8,8 +8,6 @@ import com.jetbrains.pluginverifier.plugin.PluginCoordinate
  */
 interface VerificationLogger {
 
-  var tasksNumber: Int
-
   fun logEvent(message: String)
 
   fun createPluginLogger(pluginCoordinate: PluginCoordinate, ideDescriptor: IdeDescriptor): PluginLogger
