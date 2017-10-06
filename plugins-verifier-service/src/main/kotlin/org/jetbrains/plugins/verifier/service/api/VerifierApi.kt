@@ -3,13 +3,13 @@ package org.jetbrains.plugins.verifier.service.api
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.pluginverifier.api.Result
-import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.problems.Problem
-import com.jetbrains.pluginverifier.warnings.Warning
+import com.jetbrains.pluginverifier.results.Result
+import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.warnings.Warning
 import org.jetbrains.plugins.verifier.service.api.ApiVerificationVerdict.VerdictType.*
 import org.jetbrains.plugins.verifier.service.service.ServerInstance
 import org.jetbrains.plugins.verifier.service.service.verifier.CheckRangeCompatibilityResult
@@ -18,7 +18,7 @@ fun prepareVerificationResponse(compatibilityResult: CheckRangeCompatibilityResu
   val apiResultType = convertToApiResultType(compatibilityResult)
   val apiResults = compatibilityResult.verificationResults?.map { convertVerifierResult(it) }
   val invalidPluginProblems = compatibilityResult.invalidPluginProblems?.map { convertInvalidProblem(it) }
-  val apiResult = ApiCheckRangeCompatibilityResult(compatibilityResult.plugin.updateInfo!!.updateId, apiResultType, apiResults, invalidPluginProblems, compatibilityResult.nonDownloadableReason)
+  val apiResult = ApiCheckRangeCompatibilityResult(compatibilityResult.updateInfo.updateId, apiResultType, apiResults, invalidPluginProblems, compatibilityResult.nonDownloadableReason)
   return ServerInstance.GSON.toJson(apiResult)
 }
 

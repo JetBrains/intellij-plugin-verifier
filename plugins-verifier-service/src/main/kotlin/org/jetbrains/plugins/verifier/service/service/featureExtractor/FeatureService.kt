@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.verifier.service.service.featureExtractor
 
-import com.jetbrains.pluginverifier.api.PluginInfo
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
@@ -66,8 +65,7 @@ class FeatureService : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES) {
 
     lastProceedDate[updateInfo] = System.currentTimeMillis()
 
-    val pluginInfo = PluginInfo(updateInfo.pluginId, updateInfo.version, updateInfo)
-    val runner = ExtractFeaturesTask(PluginCoordinate.ByUpdateInfo(updateInfo, ServerInstance.pluginRepository), pluginInfo)
+    val runner = ExtractFeaturesTask(PluginCoordinate.ByUpdateInfo(updateInfo, ServerInstance.pluginRepository), updateInfo)
     val taskStatus = taskManager.enqueue(
         runner,
         { onSuccess(it) },
@@ -88,16 +86,16 @@ class FeatureService : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES) {
   }
 
   private fun onSuccess(extractorResult: FeaturesResult) {
-    val pluginInfo = extractorResult.plugin
+    val updateInfo = extractorResult.updateInfo
     val resultType = extractorResult.resultType
     val size = extractorResult.features.size
-    LOG.info("Plugin $pluginInfo extracted $size features: ($resultType)")
+    LOG.info("Plugin $updateInfo extracted $size features: ($resultType)")
 
-    val pluginsResult = prepareFeaturesResponse(pluginInfo, resultType, extractorResult.features)
+    val pluginsResult = prepareFeaturesResponse(updateInfo, resultType, extractorResult.features)
     try {
       sendExtractedFeatures(pluginsResult, pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully()
     } catch(e: Exception) {
-      LOG.error("Unable to send check result of the plugin ${extractorResult.plugin}", e)
+      LOG.error("Unable to send check result of the plugin ${extractorResult.updateInfo}", e)
     }
   }
 

@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.verifier.service.service
 
 import com.google.gson.Gson
-import com.jetbrains.pluginverifier.plugin.PluginCreator
-import com.jetbrains.pluginverifier.plugin.PluginCreatorImpl
+import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
@@ -45,8 +45,8 @@ object ServerInstance : Closeable {
     PublicPluginRepository(Settings.DOWNLOAD_PLUGINS_REPOSITORY_URL.get(), loadedPluginsDir, downloadDirMaxSpaceMb)
   }
 
-  val pluginCreator: PluginCreator by lazy {
-    PluginCreatorImpl(extractedPluginsDir)
+  val pluginDetailsProvider: PluginDetailsProvider by lazy {
+    PluginDetailsProviderImpl(extractedPluginsDir)
   }
 
   val ideRepository: IdeRepository = IdeRepository(FileManager.getTypeDir(FileType.IDE), Settings.IDE_REPOSITORY_URL.get())
