@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.logging
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.logging.loggers.Logger
-import com.jetbrains.pluginverifier.parameters.IdeDescriptor
+import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.results.Verdict
 

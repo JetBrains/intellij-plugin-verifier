@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.dependencies.resolution.RepositoryDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.repository.LastCompatibleSelector
 import com.jetbrains.pluginverifier.dependencies.resolution.repository.LastSelector
 import com.jetbrains.pluginverifier.logging.VerificationLogger
-import com.jetbrains.pluginverifier.parameters.IdeDescriptor
+import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository

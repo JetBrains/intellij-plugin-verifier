@@ -1,9 +1,8 @@
-package com.jetbrains.pluginverifier.ide
+package com.jetbrains.pluginverifier.parameters.ide
 
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.parameters.IdeDescriptor
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File

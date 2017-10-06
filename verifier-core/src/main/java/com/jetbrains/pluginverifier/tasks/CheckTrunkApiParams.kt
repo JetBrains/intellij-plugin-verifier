@@ -2,8 +2,8 @@ package com.jetbrains.pluginverifier.tasks
 
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.parameters.IdeDescriptor
-import com.jetbrains.pluginverifier.parameters.JdkDescriptor
+import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import java.io.File
 
