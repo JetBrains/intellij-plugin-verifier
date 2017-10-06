@@ -1,14 +1,13 @@
 package com.jetbrains.pluginverifier.tasks
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.output.*
+import com.jetbrains.pluginverifier.parameters.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
-import com.jetbrains.pluginverifier.utils.ParametersListUtil
 import java.io.File
 import java.io.PrintWriter
 
@@ -29,22 +28,12 @@ data class CheckIdeResult(val ideVersion: IdeVersion,
     }
 
     if (printerOptions.dumpBrokenPluginsFile != null) {
-      dumbBrokenPluginsList(File(printerOptions.dumpBrokenPluginsFile))
-    }
-  }
-
-  fun dumbBrokenPluginsList(dumpBrokenPluginsFile: File) {
-    PrintWriter(dumpBrokenPluginsFile.create()).use { out ->
-      out.println("// This file contains list of broken plugins.\n" +
-          "// Each line contains plugin ID and list of versions that are broken.\n" +
-          "// If plugin name or version contains a space you can quote it like in command line.\n")
-
-      val brokenPlugins = results.filterNot { it.verdict is Verdict.OK }.map { it.plugin }.map { it.pluginId to it.version }.distinct()
-      brokenPlugins.groupBy { it.first }.forEach {
-        out.print(ParametersListUtil.join(listOf(it.key)))
-        out.print("    ")
-        out.println(ParametersListUtil.join(it.value.map { it.second }.sortedWith(VersionComparatorUtil.COMPARATOR)))
-      }
+      val brokenPlugins = results
+          .filter { it.verdict !is Verdict.OK && it.verdict !is Verdict.Warnings }
+          .map { it.plugin }
+          .map { PluginIdAndVersion(it.pluginId, it.version) }
+          .distinct()
+      IdeResourceUtil.dumbBrokenPluginsList(File(printerOptions.dumpBrokenPluginsFile), brokenPlugins)
     }
   }
 

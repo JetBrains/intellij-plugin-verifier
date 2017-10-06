@@ -5,13 +5,13 @@ import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.parameters.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.utils.IdeResourceUtil
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -118,10 +118,7 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository, val pluginDe
 
   private fun parseExcludedPlugins(opts: CmdOpts): List<PluginIdAndVersion> {
     val epf = opts.excludedPluginsFile ?: return emptyList()
-    File(epf).bufferedReader().use { br ->
-      return IdeResourceUtil.getBrokenPluginsByLines(br.readLines())
-    }
+    return IdeResourceUtil.readBrokenPluginsFromFile(File(epf))
   }
-
 
 }

@@ -9,11 +9,11 @@ import com.jetbrains.pluginverifier.dependencies.resolution.repository.LastCompa
 import com.jetbrains.pluginverifier.dependencies.resolution.repository.LastSelector
 import com.jetbrains.pluginverifier.logging.VerificationLogger
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.parameters.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.utils.IdeResourceUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -47,7 +47,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
                        dependencyFinder: DependencyFinder,
                        progress: VerificationLogger): CheckIdeResult {
     val pluginCoordinates = pluginsToCheck.map { PluginCoordinate.ByUpdateInfo(it, pluginRepository) }
-    val excludedPlugins = IdeResourceUtil.getBrokenPluginsListedInBuild(ideDescriptor.ide) ?: emptyList()
+    val excludedPlugins = IdeResourceUtil.getBrokenPluginsListedInIde(ideDescriptor.ide) ?: emptyList()
     val checkIdeParams = CheckIdeParams(ideDescriptor,
         parameters.jdkDescriptor,
         pluginCoordinates,
