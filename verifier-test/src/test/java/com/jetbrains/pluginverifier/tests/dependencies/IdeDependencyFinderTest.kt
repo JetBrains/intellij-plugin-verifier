@@ -2,12 +2,12 @@ package com.jetbrains.pluginverifier.tests.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter
-import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
-import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.graph.DepEdge
+import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter
+import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
+import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.DownloadPluginResult
@@ -18,6 +18,7 @@ import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
 import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -42,8 +43,9 @@ class IdeDependencyFinderTest {
 
     `myPlugin` -> `test`
     `myPlugin` -> `externalModule` (defined in external plugin `externalPlugin` which is impossible to download)
+    `myPlugin` -> `com.intellij.modules.platform` (default module)
 
-    Should find dependencies on `test`, `somePlugin` and `moduleContainer`.
+    Should find dependencies on `test`, `somePlugin`, `moduleContainer`. Dependency on `com.intellij.modules.platform` must not be indicated.
     Dependency resolution on `externalPlugin` must fail.
      */
     val testPlugin = MockIdePlugin(
@@ -67,7 +69,7 @@ class IdeDependencyFinderTest {
     val startPlugin = MockIdePlugin(
         pluginId = "myPlugin",
         pluginVersion = "1.0",
-        dependencies = listOf(PluginDependencyImpl("test", true, false), externalModuleDependency)
+        dependencies = listOf(PluginDependencyImpl("test", true, false), externalModuleDependency, PluginDependencyImpl("com.intellij.modules.platform", false, true))
     )
 
     val repository = object : MockPluginRepositoryAdapter() {
@@ -97,6 +99,7 @@ class IdeDependencyFinderTest {
     assertEquals(setOf("myPlugin", "test", "somePlugin", "moduleContainer"), deps.toSet())
 
     assertEquals(listOf(MissingDependency(externalModuleDependency, "Failed to download test.")), dependenciesGraph.start.missingDependencies)
+    assertTrue(dependenciesGraph.getMissingDependencyPaths().size == 1)
   }
 
 }

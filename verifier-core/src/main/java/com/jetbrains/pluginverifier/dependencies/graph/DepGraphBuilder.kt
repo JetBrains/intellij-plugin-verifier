@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.dependencies.graph
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
+import com.jetbrains.pluginverifier.plugin.PluginDetails
 import org.jgrapht.DirectedGraph
 
 class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
@@ -12,7 +13,7 @@ class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
       val plugin = current.pluginDetails.plugin
       if (plugin != null) {
         for (pluginDependency in plugin.dependencies) {
-          val dependency = resolveDependency(pluginDependency, directedGraph)
+          val dependency = resolveDependency(pluginDependency, directedGraph) ?: continue
           fillDependenciesGraph(dependency, directedGraph)
           directedGraph.addEdge(current, dependency, DepEdge(pluginDependency))
         }
@@ -20,13 +21,23 @@ class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
     }
   }
 
-  private fun resolveDependency(pluginDependency: PluginDependency, directedGraph: DirectedGraph<DepVertex, DepEdge>): DepVertex {
+  private fun resolveDependency(pluginDependency: PluginDependency, directedGraph: DirectedGraph<DepVertex, DepEdge>): DepVertex? {
     val alreadyResolved = directedGraph.vertexSet().find { pluginDependency.id == it.dependencyId }
     if (alreadyResolved == null) {
-      val pluginDetails = dependencyFinder.findPluginDependency(pluginDependency).getPluginDetails()
+      val resolvedPluginDependency = dependencyFinder.findPluginDependency(pluginDependency)
+      val pluginDetails = resolvedPluginDependency.toPluginDetails() ?: return null
       return DepVertex(pluginDependency.id, pluginDetails)
     }
     return alreadyResolved
+  }
+
+  private fun DependencyFinder.Result.toPluginDetails() = when (this) {
+    is DependencyFinder.Result.FoundCoordinates -> pluginDetailsProvider.fetchPluginDetails(pluginCoordinate)
+    is DependencyFinder.Result.PluginAndDetailsProvider -> pluginDetailsProvider.fetchByExistingPlugins(plugin)
+    is DependencyFinder.Result.FoundOpenPluginWithoutClasses -> PluginDetails.FoundOpenPluginWithoutClasses(plugin)
+    is DependencyFinder.Result.FoundOpenPluginAndClasses -> PluginDetails.FoundOpenPluginAndClasses(plugin, pluginClassesLocations, warnings)
+    is DependencyFinder.Result.NotFound -> PluginDetails.NotFound(reason)
+    is DependencyFinder.Result.DefaultIdeaModule -> null
   }
 
 }

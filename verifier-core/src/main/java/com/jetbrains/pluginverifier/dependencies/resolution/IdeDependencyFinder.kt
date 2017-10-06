@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
  * @author Sergey Patrikeev
  */
 class IdeDependencyFinder(ide: Ide, pluginRepository: PluginRepository, pluginDetailsProvider: PluginDetailsProvider) : DependencyFinder {
-  private val bundledResolver = BundledPluginDependencyFinder(ide)
+  private val bundledResolver = BundledPluginDependencyFinder(ide, pluginDetailsProvider)
 
   private val downloadResolver = RepositoryDependencyFinder(pluginRepository, LastCompatibleSelector(ide.version), pluginDetailsProvider)
 

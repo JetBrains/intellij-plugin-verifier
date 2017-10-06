@@ -20,7 +20,7 @@ sealed class PluginCoordinate {
     override val fileFinder: PluginFileFinder
       get() = RepositoryPluginFileFinder(pluginRepository, updateInfo)
 
-    override val uniqueId: String = updateInfo.updateId.toString()
+    override val uniqueId: String = "#${updateInfo.updateId}"
   }
 
   data class ByFile(val pluginFile: File) : PluginCoordinate() {

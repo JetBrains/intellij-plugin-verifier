@@ -36,7 +36,7 @@ class RepositoryDependencyFinder(private val pluginRepository: PluginRepository,
 
   private fun resolveModuleDependency(moduleId: String): DependencyFinder.Result {
     if (isDefaultModule(moduleId)) {
-      return DependencyFinder.Result.Skip
+      return DependencyFinder.Result.DefaultIdeaModule(moduleId)
     }
     return resolveDeclaringPlugin(moduleId)
   }

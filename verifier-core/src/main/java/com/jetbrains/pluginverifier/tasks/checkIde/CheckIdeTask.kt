@@ -2,10 +2,10 @@ package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
-import com.jetbrains.pluginverifier.logging.VerificationLogger
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -15,9 +15,9 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
                    val pluginRepository: PluginRepository,
                    val pluginDetailsProvider: PluginDetailsProvider) : Task() {
 
-  override fun execute(logger: VerificationLogger): CheckIdeResult {
+  override fun execute(verificationReportage: VerificationReportage): CheckIdeResult {
     val notExcludedPlugins = parameters.pluginsToCheck.filterNot { isExcluded(it) }
-    return doExecute(notExcludedPlugins, logger)
+    return doExecute(notExcludedPlugins, verificationReportage)
   }
 
   private fun isExcluded(pluginCoordinate: PluginCoordinate) = when (pluginCoordinate) {
@@ -36,10 +36,10 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
     }
   }
 
-  private fun doExecute(notExcludedPlugins: List<PluginCoordinate>, logger: VerificationLogger): CheckIdeResult {
+  private fun doExecute(notExcludedPlugins: List<PluginCoordinate>, reportage: VerificationReportage): CheckIdeResult {
     val verifierParams = VerifierParameters(parameters.externalClassesPrefixes, parameters.problemsFilters, parameters.externalClassPath, parameters.dependencyFinder)
     val tasks = notExcludedPlugins.map { it to parameters.ideDescriptor }
-    val results = Verification.run(verifierParams, pluginDetailsProvider, tasks, logger, parameters.jdkDescriptor)
+    val results = Verification.run(verifierParams, pluginDetailsProvider, tasks, reportage, parameters.jdkDescriptor)
     return CheckIdeResult(parameters.ideDescriptor.ideVersion, results, parameters.excludedPlugins, getMissingUpdatesProblems())
   }
 

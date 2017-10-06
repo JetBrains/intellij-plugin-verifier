@@ -3,14 +3,19 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.logging.VerificationLoggerImpl
-import com.jetbrains.pluginverifier.logging.loggers.Slf4JLogger
 import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.reporting.dependencies.LogDependencyGraphReporter
+import com.jetbrains.pluginverifier.reporting.message.LogMessageReporter
+import com.jetbrains.pluginverifier.reporting.progress.ProgressReporter
+import com.jetbrains.pluginverifier.reporting.verdict.LogVerdictReporter
+import com.jetbrains.pluginverifier.reporting.verification.ReporterSet
+import com.jetbrains.pluginverifier.reporting.verification.ReporterSetProvider
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.tasks.checkPlugin.CheckPluginParams
@@ -65,13 +70,35 @@ class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
     }
   }
 
+  private class DelegateProgressReporter(private val taskProgress: TaskProgress) : ProgressReporter {
+    override fun reportProgress(completed: Double) {
+      taskProgress.setFraction(completed)
+    }
+
+    override fun close() = Unit
+  }
+
   private fun checkPluginWithSeveralIdes(pluginCoordinate: PluginCoordinate,
                                          updateInfo: UpdateInfo,
                                          ideDescriptors: List<IdeDescriptor>,
                                          jdkDescriptor: JdkDescriptor,
                                          progress: TaskProgress): CheckRangeCompatibilityResult {
-    //todo: employ progress.
-    val verifierProgress = VerificationLoggerImpl(Slf4JLogger(LOG))
+    val verifierProgress = VerificationReportageImpl(
+        messageReporters = listOf(LogMessageReporter(LOG)),
+        progressReporters = listOf(DelegateProgressReporter(progress)),
+        reporterSetProvider = object : ReporterSetProvider {
+          override fun provide(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): ReporterSet {
+            return ReporterSet(
+                verdictReporters = listOf(LogVerdictReporter(LOG)),
+                messageReporters = listOf(LogMessageReporter(LOG)),
+                progressReporters = listOf(DelegateProgressReporter(progress)),
+                warningReporters = emptyList(),
+                problemsReporters = emptyList(),
+                dependenciesGraphReporters = listOf(LogDependencyGraphReporter(LOG))
+            )
+          }
+        }
+    )
     val params = CheckPluginParams(listOf(pluginCoordinate), ideDescriptors, jdkDescriptor, emptyList(), emptyList(), EmptyResolver)
     val checkPluginTask = CheckPluginTask(params, pluginRepository, pluginDetailsProvider)
     val checkPluginResults = checkPluginTask.execute(verifierProgress)

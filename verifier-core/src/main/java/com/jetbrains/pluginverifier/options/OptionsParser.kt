@@ -25,10 +25,23 @@ import org.slf4j.LoggerFactory
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
+import java.text.SimpleDateFormat
+import java.util.*
 
 object OptionsParser {
 
   private val LOG: Logger = LoggerFactory.getLogger(OptionsParser::class.java)
+
+  private val TIMESTAMP_DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+
+  fun getVerificationReportsDirectory(opts: CmdOpts): File? {
+    return opts.verificationReportsDir?.let { File(it) }
+  }
+
+  private fun createFallback(): File {
+    val timestamp = TIMESTAMP_DATE_FORMAT.format(Date())
+    return File("verification-$timestamp")
+  }
 
   fun parseOutputOptions(opts: CmdOpts): OutputOptions = OutputOptions(
       createMissingDependencyIgnorer(opts),

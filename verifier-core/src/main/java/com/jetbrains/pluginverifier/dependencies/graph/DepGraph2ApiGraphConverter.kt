@@ -41,7 +41,7 @@ class DepGraph2ApiGraphConverter {
   private fun DepVertex.toDependencyNode(graph: DirectedGraph<DepVertex, DepEdge>): DependencyNode? {
     val missingDependencies = graph.outgoingEdgesOf(this).mapNotNull { it.toMissingDependency() }
     val plugin = pluginDetails.plugin
-    return plugin?.run { DependencyNode(pluginId ?: dependencyId, pluginVersion ?: "<version isn't specified>", missingDependencies) }
+    return plugin?.run { DependencyNode(pluginId ?: dependencyId, pluginVersion ?: "<UNSPECIFIED>", missingDependencies) }
   }
 
 }

@@ -5,13 +5,13 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
-import com.jetbrains.pluginverifier.logging.VerificationLogger
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.tasks.Task
@@ -46,17 +46,17 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
 
   }
 
-  override fun execute(logger: VerificationLogger): CheckPluginResult {
+  override fun execute(verificationReportage: VerificationReportage): CheckPluginResult {
     val pluginCoordinates = parameters.pluginCoordinates
     val allPluginsToCheck = pluginCoordinates.map { pluginDetailsProvider.fetchPluginDetails(it) }
     try {
-      return doExecute(logger, allPluginsToCheck)
+      return doExecute(verificationReportage, allPluginsToCheck)
     } finally {
       allPluginsToCheck.forEach { it.closeLogged() }
     }
   }
 
-  private fun doExecute(progress: VerificationLogger, pluginDetails: List<PluginDetails>): CheckPluginResult {
+  private fun doExecute(progress: VerificationReportage, pluginDetails: List<PluginDetails>): CheckPluginResult {
     val results = arrayListOf<Result>()
     parameters.ideDescriptors.forEach { ideDescriptor ->
       val dependencyResolver = getDependencyResolver(ideDescriptor.ide, pluginDetails)
@@ -70,7 +70,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
   private fun doVerification(pluginCoordinate: PluginCoordinate,
                              ideDescriptor: IdeDescriptor,
                              dependencyFinder: DependencyFinder,
-                             logger: VerificationLogger): Result {
+                             reportage: VerificationReportage): Result {
     val verifierParams = VerifierParameters(
         parameters.externalClassesPrefixes,
         parameters.problemsFilters,
@@ -78,7 +78,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
         dependencyFinder
     )
     val tasks = listOf(pluginCoordinate to ideDescriptor)
-    return Verification.run(verifierParams, pluginDetailsProvider, tasks, logger, parameters.jdkDescriptor).single()
+    return Verification.run(verifierParams, pluginDetailsProvider, tasks, reportage, parameters.jdkDescriptor).single()
   }
 
 }

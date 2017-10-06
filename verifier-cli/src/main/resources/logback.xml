@@ -17,7 +17,7 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>verification-report-${startTime}.log</file>
+        <file>verification-${startTime}.log</file>
         <encoder>
             <pattern>${log.pattern}</pattern>
         </encoder>

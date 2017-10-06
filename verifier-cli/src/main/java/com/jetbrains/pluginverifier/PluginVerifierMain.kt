@@ -1,13 +1,13 @@
 package com.jetbrains.pluginverifier
 
-import com.jetbrains.pluginverifier.logging.VerificationLoggerImpl
-import com.jetbrains.pluginverifier.logging.loggers.FileLogger
-import com.jetbrains.pluginverifier.logging.loggers.GroupLogger
-import com.jetbrains.pluginverifier.logging.loggers.Slf4JLogger
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
+import com.jetbrains.pluginverifier.reporting.message.LogMessageReporter
+import com.jetbrains.pluginverifier.reporting.progress.ProgressReporter
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskRunner
@@ -94,20 +94,29 @@ object PluginVerifierMain {
       exitProcess(1)
     }
 
+    val reportsDirectory = OptionsParser.getVerificationReportsDirectory(opts)
+    val verificationReportage = createVerificationReportage(reportsDirectory)
+
     val taskResult = parameters.use {
-      val loggers = listOf(FileLogger(File(".")), Slf4JLogger(LoggerFactory.getLogger("Verifier")))
-      val logger = GroupLogger(loggers)
-      logger.use {
-        val verificationLogger = VerificationLoggerImpl(logger)
-        println("Task ${runner.commandName} parameters: $parameters")
-        val task = runner.createTask(parameters, pluginRepository, pluginDetailsProvider)
-        task.execute(verificationLogger)
-      }
+      println("Task ${runner.commandName} parameters: $parameters")
+      val task = runner.createTask(parameters, pluginRepository, pluginDetailsProvider)
+      task.execute(verificationReportage)
     }
 
     val printerOptions = OptionsParser.parseOutputOptions(opts)
     taskResult.printResults(printerOptions, pluginRepository)
   }
+
+  private fun createVerificationReportage(reportsDirectory: File?): VerificationReportage {
+    val logger = LoggerFactory.getLogger("verification")
+    val messageReporters = listOf(LogMessageReporter(logger))
+    val progressReporters = emptyList<ProgressReporter>()
+    val reporterSetProvider = createReporterSetProvider(reportsDirectory)
+    return VerificationReportageImpl(messageReporters, progressReporters, reporterSetProvider)
+  }
+
+  private fun createReporterSetProvider(reportsDirectory: File?) =
+      MainVerificationReporterSetProvider(reportsDirectory)
 
   private fun findTaskRunner(command: String?) = taskRunners.find { command == it.commandName }
       ?: throw IllegalArgumentException("Unsupported command: $command. Supported commands: ${taskRunners.map { it.commandName }}")

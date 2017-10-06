@@ -3,6 +3,9 @@ package com.jetbrains.pluginverifier.options
 import com.sampullara.cli.Argument
 
 open class CmdOpts(
+    @set:Argument("verification-reports-dir", alias = "vrd", description = "The directory where the verification report files will reside")
+    var verificationReportsDir: String? = null,
+
     @set:Argument("ignored-problems", alias = "ip", description = "The problems specified in this file will be ignored. The file must contain lines in form <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>")
     var ignoreProblemsFile: String? = null,
 

@@ -19,7 +19,7 @@ class WriterResultPrinter(private val out: PrintWriter,
     results.forEach { (plugin, ideVersion, verdict) ->
       return@forEach when (verdict) {
         is Verdict.OK -> out.println("With IDE #$ideVersion the plugin $plugin is OK")
-        is Verdict.Warnings -> out.println("With IDE #$ideVersion the plugin $plugin has ${verdict.warnings.size} warnings: ${verdict.warnings.joinToString(separator = "\n", prefix = "    ")}")
+        is Verdict.Warnings -> out.println("With IDE #$ideVersion the plugin $plugin has ${verdict.warnings.size} " + "warning".pluralize(verdict.warnings.size) + " : ${verdict.warnings.joinToString(separator = "\n")}")
         is Verdict.Problems -> printProblemsVerdict(ideVersion, plugin, verdict)
         is Verdict.MissingDependencies -> printMissingDependencies(verdict, ideVersion, plugin)
         is Verdict.Bad -> out.println("The plugin $plugin is broken: ${verdict.pluginProblems.joinToString()}")

@@ -5,7 +5,6 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLo
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
-import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 
 interface DependencyFinder {
@@ -14,33 +13,19 @@ interface DependencyFinder {
 
   sealed class Result {
 
-    abstract fun getPluginDetails(): PluginDetails
+    data class PluginAndDetailsProvider(val plugin: IdePlugin, val pluginDetailsProvider: PluginDetailsProvider) : Result()
 
-    data class FoundCoordinates(private val pluginCoordinate: PluginCoordinate,
-                                private val pluginDetailsProvider: PluginDetailsProvider) : Result() {
+    data class FoundCoordinates(val pluginCoordinate: PluginCoordinate,
+                                val pluginDetailsProvider: PluginDetailsProvider) : Result()
 
-      override fun getPluginDetails() = pluginDetailsProvider.fetchPluginDetails(pluginCoordinate)
-    }
+    data class FoundOpenPluginWithoutClasses(val plugin: IdePlugin) : Result()
 
-    data class FoundOpenPluginWithoutClasses(private val plugin: IdePlugin) : Result() {
+    data class FoundOpenPluginAndClasses(val plugin: IdePlugin,
+                                         val warnings: List<PluginProblem>,
+                                         val pluginClassesLocations: IdePluginClassesLocations) : Result()
 
-      override fun getPluginDetails(): PluginDetails = PluginDetails.FoundOpenPluginWithoutClasses(plugin)
+    data class NotFound(val reason: String) : Result()
 
-    }
-
-    data class FoundOpenPluginAndClasses(private val plugin: IdePlugin,
-                                         private val warnings: List<PluginProblem>,
-                                         private val pluginClassesLocations: IdePluginClassesLocations) : Result() {
-
-      override fun getPluginDetails() = PluginDetails.FoundOpenPluginAndClasses(plugin, pluginClassesLocations, warnings)
-    }
-
-    data class NotFound(val reason: String) : Result() {
-      override fun getPluginDetails() = PluginDetails.NotFound(reason)
-    }
-
-    object Skip : Result() {
-      override fun getPluginDetails() = PluginDetails.NotFound("Skipped")
-    }
+    data class DefaultIdeaModule(val moduleId: String) : Result()
   }
 }

@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.tasks
 
-import com.jetbrains.pluginverifier.logging.VerificationLogger
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 
 abstract class Task {
-  abstract fun execute(logger: VerificationLogger): TaskResult
+  abstract fun execute(verificationReportage: VerificationReportage): TaskResult
 }

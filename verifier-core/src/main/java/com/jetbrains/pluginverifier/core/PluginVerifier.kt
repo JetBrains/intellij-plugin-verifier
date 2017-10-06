@@ -10,7 +10,6 @@ import com.jetbrains.pluginverifier.dependencies.graph.DepEdge
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
-import com.jetbrains.pluginverifier.logging.PluginLogger
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
@@ -19,6 +18,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.progress.DefaultProgressIndicator
 import com.jetbrains.pluginverifier.progress.ProgressIndicator
+import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.Result
@@ -30,23 +30,23 @@ import org.jgrapht.graph.DefaultDirectedGraph
 import java.io.File
 import java.util.concurrent.Callable
 
-class Verifier(private val pluginCoordinate: PluginCoordinate,
-               private val ideDescriptor: IdeDescriptor,
-               private val runtimeResolver: Resolver,
-               private val verifierParameters: VerifierParameters,
-               private val pluginDetailsProvider: PluginDetailsProvider,
-               private val pluginLogger: PluginLogger) : Callable<Result> {
+class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
+                     private val ideDescriptor: IdeDescriptor,
+                     private val runtimeResolver: Resolver,
+                     private val verifierParameters: VerifierParameters,
+                     private val pluginDetailsProvider: PluginDetailsProvider,
+                     private val pluginVerificationReportage: PluginVerificationReportage) : Callable<Result> {
 
   companion object {
     private val classesSelectors = listOf(MainClassesSelector(), ExternalBuildClassesSelector())
   }
 
   override fun call(): Result {
-    pluginLogger.logVerificationStarted()
+    pluginVerificationReportage.logVerificationStarted()
     try {
       return createPluginAndDoVerification()
     } finally {
-      pluginLogger.logVerificationFinished()
+      pluginVerificationReportage.logVerificationFinished()
     }
   }
 
@@ -94,7 +94,7 @@ class Verifier(private val pluginCoordinate: PluginCoordinate,
   private fun calculateVerdict(plugin: IdePlugin,
                                pluginWarnings: List<PluginProblem>?,
                                pluginClassesLocations: IdePluginClassesLocations?): Verdict {
-    val resultHolder = VerificationResultHolder(plugin, ideDescriptor.ideVersion, verifierParameters.problemFilters, pluginLogger)
+    val resultHolder = VerificationResultHolder(plugin, ideDescriptor.ideVersion, verifierParameters.problemFilters, pluginVerificationReportage)
     if (pluginWarnings != null) {
       resultHolder.addPluginWarnings(pluginWarnings)
     }
@@ -115,16 +115,17 @@ class Verifier(private val pluginCoordinate: PluginCoordinate,
       val apiGraph = DepGraph2ApiGraphConverter().convert(depGraph, start)
       resultHolder.setDependenciesGraph(apiGraph)
 
-      //don't close this classLoader because it contains the client's resolvers.
+      val pluginResolver = pluginClassesLocations.createPluginClassLoader()
       val dependenciesResolver = depGraph.toDependenciesClassesResolver()
-      val classLoader = createClassLoader(pluginClassesLocations.createPluginClassLoader(), dependenciesResolver)
+      //don't close this classLoader because it contains the client's resolvers.
+      val classLoader = createClassLoader(pluginResolver, dependenciesResolver)
       val checkClasses = getClassesForCheck(pluginClassesLocations)
 
       val verificationContext = VerificationContext(classLoader, resultHolder, verifierParameters.externalClassesPrefixes)
       val progressIndicator = object : DefaultProgressIndicator() {
         override fun setProgress(value: Double) {
           super.setProgress(value)
-          pluginLogger.logCompletedClasses(value)
+          pluginVerificationReportage.logProgress(value)
         }
       }
       runVerification(verificationContext, checkClasses, progressIndicator)
@@ -163,7 +164,8 @@ class Verifier(private val pluginCoordinate: PluginCoordinate,
   private fun DirectedGraph<DepVertex, DepEdge>.toDependenciesClassesResolver(): Resolver =
       UnionResolver.create(vertexSet()
           .mapNotNull { it.pluginDetails.pluginClassesLocations }
-          .map { it.createPluginClassLoader() })
+          .map { it.createPluginClassLoader() }
+      )
 
   private fun VerificationResultHolder.toVerdict(): Verdict {
     val dependenciesGraph = getDependenciesGraph()

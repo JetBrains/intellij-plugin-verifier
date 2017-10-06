@@ -4,8 +4,8 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.logging.PluginLogger
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
+import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
 
@@ -15,7 +15,7 @@ import com.jetbrains.pluginverifier.results.warnings.Warning
 class VerificationResultHolder(private val idePlugin: IdePlugin,
                                private val ideVersion: IdeVersion,
                                private val problemsFilters: List<ProblemsFilter>,
-                               private val pluginLogger: PluginLogger) {
+                               private val pluginVerificationReportage: PluginVerificationReportage) {
 
   val problems: MutableSet<Problem> = hashSetOf()
 
@@ -25,7 +25,7 @@ class VerificationResultHolder(private val idePlugin: IdePlugin,
 
   fun setDependenciesGraph(graph: DependenciesGraph) {
     dependenciesGraph = graph
-    pluginLogger.logDependencyGraph(graph)
+    pluginVerificationReportage.logDependencyGraph(graph)
     addCycleWarningIfExists(graph)
   }
 
@@ -34,14 +34,14 @@ class VerificationResultHolder(private val idePlugin: IdePlugin,
   fun registerProblem(problem: Problem) {
     val accepted = problemsFilters.all { it.accept(idePlugin, problem) }
     if (accepted) {
-      pluginLogger.logNewProblemDetected(problem)
+      pluginVerificationReportage.logNewProblemDetected(problem)
       problems.add(problem)
     }
   }
 
   private fun registerWarning(warning: Warning) {
     warnings.add(warning)
-    pluginLogger.logNewWarningDetected(warning)
+    pluginVerificationReportage.logNewWarningDetected(warning)
   }
 
   private fun addCycleWarningIfExists(dependenciesGraph: DependenciesGraph) {

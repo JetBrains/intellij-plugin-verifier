@@ -6,8 +6,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.logging.VerificationLoggerImpl
-import com.jetbrains.pluginverifier.logging.loggers.Slf4JLogger
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
@@ -15,6 +13,9 @@ import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
+import com.jetbrains.pluginverifier.reporting.verification.ReporterSet
+import com.jetbrains.pluginverifier.reporting.verification.ReporterSetProvider
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.problems.*
@@ -26,7 +27,6 @@ import org.junit.AfterClass
 import org.junit.Assert.*
 import org.junit.BeforeClass
 import org.junit.Test
-import org.slf4j.LoggerFactory
 import java.io.File
 
 class VerifierExecutorTest {
@@ -51,7 +51,10 @@ class VerifierExecutorTest {
         val jdkDescriptor = JdkDescriptor(File(jdkPath))
         val verifierParams = VerifierParameters(externalClassesPrefixes, problemsFilters, EmptyResolver, NotFoundDependencyFinder())
         val tasks = listOf(pluginCoordinate to ideDescriptor)
-        return Verification.run(verifierParams, pluginDetailsProvider, tasks, VerificationLoggerImpl(Slf4JLogger(LoggerFactory.getLogger("test"))), jdkDescriptor).single()
+        return Verification.run(verifierParams, pluginDetailsProvider, tasks, VerificationReportageImpl(emptyList(), emptyList(), object : ReporterSetProvider {
+          override fun provide(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): ReporterSet =
+              ReporterSet(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
+        }), jdkDescriptor).single()
       }
     }
 
