@@ -1,16 +1,16 @@
 package com.jetbrains.pluginverifier.tests
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.api.PluginInfo
-import com.jetbrains.pluginverifier.api.Result
-import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.output.PrinterOptions
 import com.jetbrains.pluginverifier.output.TeamCityLog
 import com.jetbrains.pluginverifier.output.TeamCityPrinter
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.results.Result
+import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
 import org.junit.Assert
 import org.junit.Test
@@ -37,9 +37,9 @@ class TestTeamCityPrinter {
 
   @Test
   fun `test newest suffix for updates with newest versions`() {
-    val pluginInfos = listOf(PluginInfo("id", "version", UpdateInfo("id", "name", "version", 1, "")), PluginInfo("id", "version 2", UpdateInfo("id", "name", "version 2", 2, "")))
-    val mockRepository = mockRepository(pluginInfos.map { it.updateInfo!! })
-    val output = getTeamCityOutput(mockRepository, pluginInfos)
+    val updateInfos = listOf(UpdateInfo("id", "name", "version", 1, ""), UpdateInfo("id", "name", "version 2", 2, ""))
+    val mockRepository = mockRepository(updateInfos)
+    val output = getTeamCityOutput(mockRepository, updateInfos)
     Assert.assertEquals("""##teamcity[testSuiteStarted name='id']
 ##teamcity[testStarted name='(version)']
 ##teamcity[testFinished name='(version)']
@@ -52,7 +52,7 @@ class TestTeamCityPrinter {
   @Test
   fun `no repository connection lead to no -newest suffix`() {
     val mockPluginRepository = noConnectionPluginRepository()
-    val output = getTeamCityOutput(mockPluginRepository, listOf(PluginInfo("id", "v", UpdateInfo("id", "name", "v", 1, "vendor"))))
+    val output = getTeamCityOutput(mockPluginRepository, listOf(UpdateInfo("id", "name", "v", 1, "vendor")))
     Assert.assertEquals("""##teamcity[testSuiteStarted name='id']
 ##teamcity[testStarted name='(v)']
 ##teamcity[testFinished name='(v)']

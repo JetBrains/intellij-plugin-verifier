@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.tasks
 
-import com.jetbrains.pluginverifier.api.IdeDescriptor
-import com.jetbrains.pluginverifier.api.JdkDescriptor
-import com.jetbrains.pluginverifier.filter.ProblemsFilter
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.deleteLogged
+import com.jetbrains.pluginverifier.parameters.IdeDescriptor
+import com.jetbrains.pluginverifier.parameters.JdkDescriptor
+import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import java.io.File
 
 

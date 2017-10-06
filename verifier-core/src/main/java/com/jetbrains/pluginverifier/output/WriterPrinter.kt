@@ -1,13 +1,13 @@
 package com.jetbrains.pluginverifier.output
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.api.PluginInfo
-import com.jetbrains.pluginverifier.api.Result
-import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.problems.Problem
-import com.jetbrains.pluginverifier.warnings.Warning
+import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.results.Result
+import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.warnings.Warning
 import java.io.PrintWriter
 
 class WriterPrinter(private val out: PrintWriter) : Printer {

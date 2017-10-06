@@ -3,16 +3,16 @@ package com.jetbrains.pluginverifier.output
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.api.PluginInfo
-import com.jetbrains.pluginverifier.api.Result
-import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
-import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
-import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.results.Result
+import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
+import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.tasks.MissingCompatibleUpdate
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -277,8 +277,8 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
     val onlyVersion = "(${pluginInfo.version})"
     val relevant = lastUpdates[ideVersion] ?: return onlyVersion
     val newest = "(${pluginInfo.version} - newest)"
-    if (pluginInfo.updateInfo != null) {
-      return if (relevant.any { pluginInfo.updateInfo.updateId == it.updateId }) newest else onlyVersion
+    if (pluginInfo is UpdateInfo) {
+      return if (relevant.any { pluginInfo.updateId == it.updateId }) newest else onlyVersion
     }
     return if (relevant.find { pluginInfo.pluginId == it.pluginId && pluginInfo.version == it.version } != null) newest else onlyVersion
   }
@@ -320,7 +320,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
     printMissingDependenciesAsTests(results)
   }
 
-  private fun getPluginLink(pluginInfo: PluginInfo): String? = pluginInfo.updateInfo?.let { repository.getPluginOverviewUrl(it) }
+  private fun getPluginLink(pluginInfo: PluginInfo): String? = (pluginInfo as? UpdateInfo)?.let { repository.getPluginOverviewUrl(it) }
 
   private fun printMissingDependenciesAsTests(results: List<Result>) {
     val missingToRequired = collectMissingDependenciesForRequiringPlugins(results)

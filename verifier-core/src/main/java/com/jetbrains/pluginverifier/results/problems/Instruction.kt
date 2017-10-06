@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.problems
+package com.jetbrains.pluginverifier.results.problems
 
 enum class Instruction(private val type: String) {
   GET_STATIC("getstatic"),

@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.logging
 
-import com.jetbrains.pluginverifier.api.IdeDescriptor
+import com.jetbrains.pluginverifier.parameters.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 
 /**

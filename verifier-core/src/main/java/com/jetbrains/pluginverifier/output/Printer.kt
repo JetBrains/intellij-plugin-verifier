@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.output
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.pluginverifier.api.Result
+import com.jetbrains.pluginverifier.results.Result
 
 /**
  * @author Sergey Patrikeev

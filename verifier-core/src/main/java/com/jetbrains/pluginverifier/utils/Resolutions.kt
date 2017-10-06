@@ -1,11 +1,11 @@
 package com.jetbrains.pluginverifier.utils
 
 import com.jetbrains.pluginverifier.location.Location
-import com.jetbrains.pluginverifier.problems.AccessType
-import com.jetbrains.pluginverifier.problems.ClassNotFoundProblem
-import com.jetbrains.pluginverifier.problems.IllegalClassAccessProblem
-import com.jetbrains.pluginverifier.problems.InvalidClassFileProblem
 import com.jetbrains.pluginverifier.reference.ClassReference
+import com.jetbrains.pluginverifier.results.problems.AccessType
+import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
+import com.jetbrains.pluginverifier.results.problems.IllegalClassAccessProblem
+import com.jetbrains.pluginverifier.results.problems.InvalidClassFileProblem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.objectweb.asm.tree.ClassNode
 import org.slf4j.Logger
@@ -28,11 +28,11 @@ private val ClassFileLogger: Logger = LoggerFactory.getLogger("plugin.verifier.c
  *  If C is not accessible (§5.4.4) to D, class or interface resolution throws an IllegalAccessError.
  */
 fun VerificationContext.resolveClass(className: String, lookup: ClassNode): ClsResolution {
-  if (verifierParams.isExternalClass(className)) {
+  if (isExternalClass(className)) {
     return ClsResolution.ExternalClass
   }
   val node = try {
-    resolver.findClass(className)
+    classLoader.findClass(className)
   } catch (e: Exception) {
     ClassFileLogger.debug("Unable to read class $className", e)
     return ClsResolution.InvalidClassFile("Unable to read class-file $className using ASM Java Bytecode engineering library. Internal error: ${e.message}")
@@ -71,7 +71,7 @@ fun VerificationContext.resolveClassOrProblem(className: String,
 }
 
 fun VerificationContext.checkClassExistsOrExternal(className: String, registerMissing: () -> Location) {
-  if (!verifierParams.isExternalClass(className) && !resolver.containsClass(className)) {
+  if (!isExternalClass(className) && !classLoader.containsClass(className)) {
     registerProblem(ClassNotFoundProblem(ClassReference(className), registerMissing.invoke()))
   }
 }

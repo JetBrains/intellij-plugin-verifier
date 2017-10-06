@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.filter
 
+import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblem
+import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsParser
 import org.junit.Assert
 import org.junit.Test
 

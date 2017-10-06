@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tasks
 
-import com.jetbrains.pluginverifier.plugin.PluginCreator
+import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PluginRepository
 
@@ -11,8 +11,16 @@ abstract class TaskRunner {
 
   abstract val commandName: String
 
-  abstract fun getParametersBuilder(pluginRepository: PluginRepository, ideRepository: IdeRepository, pluginCreator: PluginCreator): TaskParametersBuilder
+  abstract fun getParametersBuilder(
+      pluginRepository: PluginRepository,
+      ideRepository: IdeRepository,
+      pluginDetailsProvider: PluginDetailsProvider
+  ): TaskParametersBuilder
 
-  abstract fun createTask(parameters: TaskParameters, pluginRepository: PluginRepository, pluginCreator: PluginCreator): Task
+  abstract fun createTask(
+      parameters: TaskParameters,
+      pluginRepository: PluginRepository,
+      pluginDetailsProvider: PluginDetailsProvider
+  ): Task
 
 }

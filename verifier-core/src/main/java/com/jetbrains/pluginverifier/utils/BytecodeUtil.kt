@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.utils
 
-import com.jetbrains.pluginverifier.problems.AccessType
+import com.jetbrains.pluginverifier.results.problems.AccessType
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type

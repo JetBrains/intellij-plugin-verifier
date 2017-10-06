@@ -1,10 +1,10 @@
-package com.jetbrains.pluginverifier.problems
+package com.jetbrains.pluginverifier.results.problems
 
-import com.jetbrains.pluginverifier.descriptions.DescriptionsBundle
 import com.jetbrains.pluginverifier.location.*
 import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.reference.FieldReference
 import com.jetbrains.pluginverifier.reference.MethodReference
+import com.jetbrains.pluginverifier.results.descriptions.DescriptionsBundle
 import org.jetbrains.annotations.PropertyKey
 import java.text.MessageFormat
 

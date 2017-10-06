@@ -4,14 +4,15 @@ import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.pluginverifier.api.PluginInfo
-import com.jetbrains.pluginverifier.api.Result
-import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.results.Result
+import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.tasks.TrunkApiChanges
 
 /**
@@ -36,7 +37,7 @@ class TrunkApiChangesOutput(private val tcLog: TeamCityLog, private val reposito
     is Verdict.Problems -> problems
   }
 
-  private fun getPluginUrl(pluginInfo: PluginInfo) = pluginInfo.updateInfo?.let { repository.getPluginOverviewUrl(it) }
+  private fun getPluginUrl(pluginInfo: PluginInfo) = (pluginInfo as? UpdateInfo)?.let { repository.getPluginOverviewUrl(it) }
 
   fun printTrunkApiCompareResult(apiChanges: TrunkApiChanges) {
     val plugin2NewProblems: Multimap<PluginInfo, Problem> = apiChanges.getNewPluginProblems()

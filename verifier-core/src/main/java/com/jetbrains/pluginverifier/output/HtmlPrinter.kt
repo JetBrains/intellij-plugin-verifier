@@ -2,16 +2,17 @@ package com.jetbrains.pluginverifier.output
 
 import com.google.common.io.Resources
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.api.PluginInfo
-import com.jetbrains.pluginverifier.api.Result
-import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.problems.Problem
-import com.jetbrains.pluginverifier.tasks.PluginIdAndVersion
-import com.jetbrains.pluginverifier.warnings.Warning
+import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
+import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.results.Result
+import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.warnings.Warning
 import java.io.File
 import java.io.PrintWriter
 import java.nio.charset.Charset
@@ -115,7 +116,7 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
   private fun HtmlBuilder.printUpdateHeader(plugin: PluginInfo, verdict: Verdict, pluginId: String) {
     span(classes = "uMarker") { +"    " }
     +plugin.version
-    small { +if (plugin.updateInfo != null) "(#${plugin.updateInfo.updateId})" else "" }
+    small { +if (plugin is UpdateInfo) "(#${plugin.updateId})" else "" }
     small {
       +when (verdict) {
         is Verdict.OK -> "OK"

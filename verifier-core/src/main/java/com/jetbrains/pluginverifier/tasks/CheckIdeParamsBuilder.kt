@@ -1,13 +1,14 @@
 package com.jetbrains.pluginverifier.tasks
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.api.JdkDescriptor
-import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver
+import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.parameters.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
-import com.jetbrains.pluginverifier.plugin.PluginCreator
+import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.utils.IdeResourceUtil
@@ -16,7 +17,7 @@ import java.io.File
 import java.io.FileReader
 import java.io.IOException
 
-class CheckIdeParamsBuilder(val pluginRepository: PluginRepository, val pluginCreator: PluginCreator) : TaskParametersBuilder {
+class CheckIdeParamsBuilder(val pluginRepository: PluginRepository, val pluginDetailsProvider: PluginDetailsProvider) : TaskParametersBuilder {
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckIdeParams {
     if (freeArgs.isEmpty()) {
       throw IllegalArgumentException("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"")
@@ -36,7 +37,8 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository, val pluginCr
         val excludedPlugins = parseExcludedPlugins(opts)
 
         val pluginsToCheck = getDescriptorsToCheck(checkAllBuilds, checkLastBuilds, ideDescriptor.ideVersion)
-        return CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, excludedPlugins, externalClassesPrefixes, externalClassPath, checkAllBuilds, problemsFilters, IdeDependencyResolver(ideDescriptor.ide, pluginRepository, pluginCreator))
+        val dependencyResolver = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsProvider)
+        return CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, excludedPlugins, externalClassesPrefixes, externalClassPath, checkAllBuilds, problemsFilters, dependencyResolver)
       }
     }
   }

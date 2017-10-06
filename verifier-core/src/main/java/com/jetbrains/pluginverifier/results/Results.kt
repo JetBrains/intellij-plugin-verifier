@@ -1,18 +1,12 @@
-package com.jetbrains.pluginverifier.api
+package com.jetbrains.pluginverifier.results
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.problems.Problem
-import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.warnings.Warning
-
-data class PluginInfo(val pluginId: String,
-                      val version: String,
-                      val updateInfo: UpdateInfo?) {
-  override fun toString(): String = updateInfo?.toString() ?: "$pluginId:$version"
-}
+import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.warnings.Warning
 
 data class Result(val plugin: PluginInfo,
                   val ideVersion: IdeVersion,

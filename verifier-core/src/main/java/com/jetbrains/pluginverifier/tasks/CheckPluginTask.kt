@@ -2,53 +2,63 @@ package com.jetbrains.pluginverifier.tasks
 
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.pluginverifier.api.IdeDescriptor
-import com.jetbrains.pluginverifier.api.Result
-import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.core.Verification
-import com.jetbrains.pluginverifier.dependencies.DependencyResolver
-import com.jetbrains.pluginverifier.dependencies.IdeDependencyResolver
+import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.logging.VerificationLogger
 import com.jetbrains.pluginverifier.misc.closeLogged
-import com.jetbrains.pluginverifier.plugin.CreatePluginResult
+import com.jetbrains.pluginverifier.parameters.IdeDescriptor
+import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
-import com.jetbrains.pluginverifier.plugin.PluginCreator
-import com.jetbrains.pluginverifier.plugin.create
+import com.jetbrains.pluginverifier.plugin.PluginDetails
+import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.results.Result
 
 class CheckPluginTask(private val parameters: CheckPluginParams,
                       private val pluginRepository: PluginRepository,
-                      private val pluginCreator: PluginCreator) : Task() {
+                      private val pluginDetailsProvider: PluginDetailsProvider) : Task() {
 
-  private fun getDependencyResolver(ide: Ide, successfulCreations: List<CreatePluginResult.OK>): DependencyResolver = object : DependencyResolver {
+  private fun getDependencyResolver(ide: Ide, pluginDetails: List<PluginDetails>): DependencyFinder = object : DependencyFinder {
 
-    private val ideDependencyResolver = IdeDependencyResolver(ide, pluginRepository, pluginCreator)
+    private val ideDependencyResolver = IdeDependencyFinder(ide, pluginRepository, pluginDetailsProvider)
 
-    override fun resolve(dependency: PluginDependency): DependencyResolver.Result {
-      return findPluginInListOfPluginsToCheck(dependency) ?: ideDependencyResolver.resolve(dependency)
-    }
+    override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result =
+        findPluginInListOfPluginsToCheck(dependency) ?: ideDependencyResolver.findPluginDependency(dependency)
 
-    private fun findPluginInListOfPluginsToCheck(dependency: PluginDependency): DependencyResolver.Result.FoundReady? {
-      val createdPlugin = successfulCreations.find { it.plugin.pluginId == dependency.id } ?: return null
-      return DependencyResolver.Result.FoundReady(createdPlugin.plugin, createdPlugin.pluginClassesLocations)
-    }
+    private fun findPluginInListOfPluginsToCheck(dependency: PluginDependency): DependencyFinder.Result? =
+        pluginDetails.mapNotNull {
+          val plugin = it.plugin
+          if (plugin?.pluginId == dependency.id) {
+            when (it) {
+              is PluginDetails.ByFileLock -> DependencyFinder.Result.FoundOpenPluginAndClasses(it.plugin, it.warnings, it.pluginClassesLocations)
+              is PluginDetails.FoundOpenPluginAndClasses -> DependencyFinder.Result.FoundOpenPluginAndClasses(it.plugin, it.warnings, it.pluginClassesLocations)
+              is PluginDetails.FoundOpenPluginWithoutClasses -> DependencyFinder.Result.FoundOpenPluginWithoutClasses(it.plugin)
+              is PluginDetails.BadPlugin -> null
+              is PluginDetails.FailedToDownload -> null
+              is PluginDetails.NotFound -> null
+            }
+          } else {
+            null
+          }
+        }.firstOrNull()
+
   }
 
   override fun execute(logger: VerificationLogger): CheckPluginResult {
     val pluginCoordinates = parameters.pluginCoordinates
-    val allPluginsToCheck = pluginCoordinates.map { it.create(pluginCreator) }
+    val allPluginsToCheck = pluginCoordinates.map { pluginDetailsProvider.fetchPluginDetails(it) }
     try {
-      val successfulCreations = allPluginsToCheck.filterIsInstance<CreatePluginResult.OK>()
-      return doExecute(logger, successfulCreations)
+      return doExecute(logger, allPluginsToCheck)
     } finally {
       allPluginsToCheck.forEach { it.closeLogged() }
     }
   }
 
-  private fun doExecute(progress: VerificationLogger, successfulCreations: List<CreatePluginResult.OK>): CheckPluginResult {
+  private fun doExecute(progress: VerificationLogger, pluginDetails: List<PluginDetails>): CheckPluginResult {
     val results = arrayListOf<Result>()
     parameters.ideDescriptors.forEach { ideDescriptor ->
-      val dependencyResolver = getDependencyResolver(ideDescriptor.ide, successfulCreations)
+      val dependencyResolver = getDependencyResolver(ideDescriptor.ide, pluginDetails)
       parameters.pluginCoordinates.mapTo(results) {
         doVerification(it, ideDescriptor, dependencyResolver, progress)
       }
@@ -58,11 +68,17 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
 
   private fun doVerification(pluginCoordinate: PluginCoordinate,
                              ideDescriptor: IdeDescriptor,
-                             dependencyResolver: DependencyResolver,
+                             dependencyFinder: DependencyFinder,
                              logger: VerificationLogger): Result {
-    val verifierParams = VerifierParams(parameters.jdkDescriptor, parameters.externalClassesPrefixes, parameters.problemsFilters, parameters.externalClasspath, dependencyResolver)
+    val verifierParams = VerifierParameters(
+        parameters.jdkDescriptor,
+        parameters.externalClassesPrefixes,
+        parameters.problemsFilters,
+        parameters.externalClasspath,
+        dependencyFinder
+    )
     val tasks = listOf(pluginCoordinate to ideDescriptor)
-    return Verification.run(verifierParams, pluginCreator, tasks, logger).single()
+    return Verification.run(verifierParams, pluginDetailsProvider, tasks, logger).single()
   }
 
 }

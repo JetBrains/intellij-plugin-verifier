@@ -2,9 +2,9 @@ package com.jetbrains.pluginverifier.tasks
 
 import com.google.common.util.concurrent.AtomicDouble
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.api.JdkDescriptor
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.parameters.JdkDescriptor
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument

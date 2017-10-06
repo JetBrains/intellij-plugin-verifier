@@ -2,11 +2,15 @@ package com.jetbrains.pluginverifier.tasks
 
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.pluginverifier.api.IdeDescriptor
-import com.jetbrains.pluginverifier.dependencies.*
+import com.jetbrains.pluginverifier.dependencies.resolution.BundledPluginDependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.RepositoryDependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.repository.LastCompatibleSelector
+import com.jetbrains.pluginverifier.dependencies.resolution.repository.LastSelector
 import com.jetbrains.pluginverifier.logging.VerificationLogger
+import com.jetbrains.pluginverifier.parameters.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
-import com.jetbrains.pluginverifier.plugin.PluginCreator
+import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.utils.IdeResourceUtil
@@ -18,7 +22,7 @@ import org.slf4j.LoggerFactory
  */
 class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
                         private val pluginRepository: PluginRepository,
-                        private val pluginCreator: PluginCreator) : Task() {
+                        private val pluginDetailsProvider: PluginDetailsProvider) : Task() {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiTask::class.java)
@@ -32,15 +36,15 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
 
     LOG.debug("The following updates will be checked with both #$trunkVersion and #$releaseVersion: " + pluginsToCheck.joinToString())
 
-    val releaseResults = checkIde(parameters.releaseIde, pluginsToCheck, ReleaseResolver(), logger)
-    val trunkResults = checkIde(parameters.trunkIde, pluginsToCheck, TrunkResolver(), logger)
+    val releaseResults = checkIde(parameters.releaseIde, pluginsToCheck, ReleaseFinder(), logger)
+    val trunkResults = checkIde(parameters.trunkIde, pluginsToCheck, TrunkFinder(), logger)
 
     return CheckTrunkApiResult(trunkResults, releaseResults)
   }
 
   private fun checkIde(ideDescriptor: IdeDescriptor,
                        pluginsToCheck: List<UpdateInfo>,
-                       dependencyResolver: DependencyResolver,
+                       dependencyFinder: DependencyFinder,
                        progress: VerificationLogger): CheckIdeResult {
     val pluginCoordinates = pluginsToCheck.map { PluginCoordinate.ByUpdateInfo(it, pluginRepository) }
     val excludedPlugins = IdeResourceUtil.getBrokenPluginsListedInBuild(ideDescriptor.ide) ?: emptyList()
@@ -52,44 +56,44 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
         EmptyResolver,
         parameters.externalClassesPrefixes,
         parameters.problemsFilters,
-        dependencyResolver
+        dependencyFinder
     )
-    return CheckIdeTask(checkIdeParams, pluginRepository, pluginCreator).execute(progress)
+    return CheckIdeTask(checkIdeParams, pluginRepository, pluginDetailsProvider).execute(progress)
   }
 
-  private val downloadReleaseCompatibleResolver = DownloadDependencyResolver(LastCompatibleSelector(parameters.releaseIde.ideVersion), pluginRepository, pluginCreator)
+  private val downloadReleaseCompatibleResolver = RepositoryDependencyFinder(pluginRepository, LastCompatibleSelector(parameters.releaseIde.ideVersion), pluginDetailsProvider)
 
-  private inner class ReleaseResolver : DependencyResolver {
+  private inner class ReleaseFinder : DependencyFinder {
 
-    private val releaseBundledResolver = BundledPluginDependencyResolver(parameters.releaseIde.ide, pluginCreator)
+    private val releaseBundledResolver = BundledPluginDependencyFinder(parameters.releaseIde.ide)
 
-    override fun resolve(dependency: PluginDependency): DependencyResolver.Result {
-      val result = releaseBundledResolver.resolve(dependency)
-      return if (result is DependencyResolver.Result.NotFound) {
-        downloadReleaseCompatibleResolver.resolve(dependency)
+    override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
+      val result = releaseBundledResolver.findPluginDependency(dependency)
+      return if (result is DependencyFinder.Result.NotFound) {
+        downloadReleaseCompatibleResolver.findPluginDependency(dependency)
       } else {
         result
       }
     }
   }
 
-  private inner class TrunkResolver : DependencyResolver {
+  private inner class TrunkFinder : DependencyFinder {
 
-    private val trunkBundledResolver = BundledPluginDependencyResolver(parameters.trunkIde.ide, pluginCreator)
+    private val trunkBundledResolver = BundledPluginDependencyFinder(parameters.trunkIde.ide)
 
-    private val downloadLastUpdateResolver = DownloadDependencyResolver(LastUpdateSelector(), pluginRepository, pluginCreator)
+    private val downloadLastUpdateResolver = RepositoryDependencyFinder(pluginRepository, LastSelector(), pluginDetailsProvider)
 
-    override fun resolve(dependency: PluginDependency): DependencyResolver.Result {
-      val bundledResult = trunkBundledResolver.resolve(dependency)
-      if (bundledResult !is DependencyResolver.Result.NotFound) {
+    override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
+      val bundledResult = trunkBundledResolver.findPluginDependency(dependency)
+      if (bundledResult !is DependencyFinder.Result.NotFound) {
         return bundledResult
       }
 
       if (dependency.isModule || dependency.id in parameters.jetBrainsPluginIds) {
-        return downloadLastUpdateResolver.resolve(dependency)
+        return downloadLastUpdateResolver.findPluginDependency(dependency)
       }
 
-      return downloadReleaseCompatibleResolver.resolve(dependency)
+      return downloadReleaseCompatibleResolver.findPluginDependency(dependency)
     }
   }
 

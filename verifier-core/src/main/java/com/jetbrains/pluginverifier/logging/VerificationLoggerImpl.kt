@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.logging
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.api.IdeDescriptor
-import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.logging.loggers.Logger
+import com.jetbrains.pluginverifier.parameters.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
+import com.jetbrains.pluginverifier.results.Verdict
 
 class VerificationLoggerImpl(private val logger: Logger) : VerificationLogger {
 

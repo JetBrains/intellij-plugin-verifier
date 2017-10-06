@@ -1,6 +1,6 @@
-package com.jetbrains.pluginverifier.descriptions
+package com.jetbrains.pluginverifier.results.descriptions
 
-import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.Problem
 import java.util.*
 
 /**

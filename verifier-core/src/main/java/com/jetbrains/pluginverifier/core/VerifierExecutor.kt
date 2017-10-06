@@ -2,13 +2,13 @@ package com.jetbrains.pluginverifier.core
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
-import com.jetbrains.pluginverifier.api.IdeDescriptor
-import com.jetbrains.pluginverifier.api.Result
-import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.logging.VerificationLogger
 import com.jetbrains.pluginverifier.misc.checkIfInterrupted
+import com.jetbrains.pluginverifier.parameters.IdeDescriptor
+import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
-import com.jetbrains.pluginverifier.plugin.PluginCreator
+import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.results.Result
 import java.util.concurrent.ExecutorCompletionService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -20,9 +20,9 @@ class VerifierExecutor {
 
   fun verify(
       tasks: List<Pair<PluginCoordinate, IdeDescriptor>>,
-      params: VerifierParams,
+      parameters: VerifierParameters,
       concurrentWorkers: Int,
-      pluginCreator: PluginCreator,
+      pluginDetailsProvider: PluginDetailsProvider,
       logger: VerificationLogger
   ): List<Result> {
     val executor = Executors.newFixedThreadPool(concurrentWorkers,
@@ -34,11 +34,11 @@ class VerifierExecutor {
     val completionService = ExecutorCompletionService<Result>(executor)
 
     try {
-      val runtimeResolver = JdkResolverCreator.createJdkResolver(params.jdkDescriptor.homeDir)
+      val runtimeResolver = JdkResolverCreator.createJdkResolver(parameters.jdkDescriptor.homeDir)
       return runtimeResolver.use {
         for ((pluginCoordinate, ideDescriptor) in tasks) {
           val pluginLogger = logger.createPluginLogger(pluginCoordinate, ideDescriptor)
-          val verifier = Verifier(pluginCoordinate, ideDescriptor, runtimeResolver, params, pluginCreator, pluginLogger)
+          val verifier = Verifier(pluginCoordinate, ideDescriptor, runtimeResolver, parameters, pluginDetailsProvider, pluginLogger)
           completionService.submit(verifier)
         }
         waitForResults(completionService, tasks.size)

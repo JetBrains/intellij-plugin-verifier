@@ -7,8 +7,7 @@ import com.jetbrains.pluginverifier.logging.loggers.Slf4JLogger
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.options.PublicOpts
-import com.jetbrains.pluginverifier.plugin.PluginCreatorImpl
+import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.tasks.CheckIdeRunner
@@ -72,7 +71,7 @@ object PluginVerifierMain {
 
   More examples on https://github.com/JetBrains/intellij-plugin-verifier/
 """)
-      Args.usage(System.err, PublicOpts())
+      Args.usage(System.err, CmdOpts())
 
       exitProcess(1)
     }
@@ -83,10 +82,10 @@ object PluginVerifierMain {
     val downloadDirMaxSpace = downloadDirMaxSpace ?: 5 * FileUtils.ONE_GB
     val pluginRepository = PublicPluginRepository(pluginRepositoryUrl, downloadDir, downloadDirMaxSpace)
     val ideRepository = IdeRepository(ideDownloadDir, ideRepositoryUrl)
-    val pluginCreator = PluginCreatorImpl(extractDir)
+    val pluginDetailsProvider = PluginDetailsProviderImpl(extractDir)
 
     val runner = findTaskRunner(command)
-    val parametersBuilder = runner.getParametersBuilder(pluginRepository, ideRepository, pluginCreator)
+    val parametersBuilder = runner.getParametersBuilder(pluginRepository, ideRepository, pluginDetailsProvider)
 
     val parameters = try {
       parametersBuilder.build(opts, freeArgs)
@@ -101,7 +100,7 @@ object PluginVerifierMain {
       logger.use {
         val verificationLogger = VerificationLoggerImpl(logger)
         println("Task ${runner.commandName} parameters: $parameters")
-        val task = runner.createTask(parameters, pluginRepository, pluginCreator)
+        val task = runner.createTask(parameters, pluginRepository, pluginDetailsProvider)
         task.execute(verificationLogger)
       }
     }

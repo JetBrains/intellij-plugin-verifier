@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.warnings
+package com.jetbrains.pluginverifier.results.warnings
 
 /**
  * @author Sergey Patrikeev

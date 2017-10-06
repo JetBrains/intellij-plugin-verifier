@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.tasks
 
-import com.jetbrains.pluginverifier.api.Result
-import com.jetbrains.pluginverifier.api.Verdict
 import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.output.*
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.results.Result
+import com.jetbrains.pluginverifier.results.Verdict
 import java.io.File
 import java.io.PrintWriter
 

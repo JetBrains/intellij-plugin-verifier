@@ -18,8 +18,6 @@ class FileLogger(private val file: File) : Logger {
   }
 
   override fun error(message: String, e: Throwable?) {
-
-    org.slf4j.Logger
   }
 
   override fun close() {

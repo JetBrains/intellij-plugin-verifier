@@ -4,10 +4,6 @@ import com.google.common.io.Files
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.api.JdkDescriptor
-import com.jetbrains.pluginverifier.api.Result
-import com.jetbrains.pluginverifier.api.Verdict
-import com.jetbrains.pluginverifier.api.VerifierParams
 import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.ide.IdeCreator
@@ -16,12 +12,16 @@ import com.jetbrains.pluginverifier.logging.VerificationLoggerImpl
 import com.jetbrains.pluginverifier.logging.loggers.Slf4JLogger
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.parameters.JdkDescriptor
+import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
-import com.jetbrains.pluginverifier.plugin.PluginCreatorImpl
-import com.jetbrains.pluginverifier.problems.*
+import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.reference.SymbolicReference
-import com.jetbrains.pluginverifier.tests.mocks.NotFoundDependencyResolver
+import com.jetbrains.pluginverifier.results.Result
+import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.problems.*
+import com.jetbrains.pluginverifier.tests.mocks.NotFoundDependencyFinder
 import org.hamcrest.core.Is.`is`
 import org.junit.AfterClass
 import org.junit.Assert.*
@@ -45,13 +45,13 @@ class VerifierExecutorTest {
       val jdkPath = System.getenv("JAVA_HOME") ?: "/usr/lib/jvm/java-8-oracle"
       val tempFolder = Files.createTempDir()
       tempFolder.deleteOnExit()
-      val pluginCreator = PluginCreatorImpl(tempFolder)
+      val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
       ideDescriptor.use {
         val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
         val problemsFilters = OptionsParser.getProblemsFilters(CmdOpts())
-        val verifierParams = VerifierParams(JdkDescriptor(File(jdkPath)), externalClassesPrefixes, problemsFilters, EmptyResolver, NotFoundDependencyResolver())
+        val verifierParams = VerifierParameters(JdkDescriptor(File(jdkPath)), externalClassesPrefixes, problemsFilters, EmptyResolver, NotFoundDependencyFinder())
         val tasks = listOf(pluginCoordinate to ideDescriptor)
-        return Verification.run(verifierParams, pluginCreator, tasks, VerificationLoggerImpl(Slf4JLogger(LoggerFactory.getLogger("test")))).single()
+        return Verification.run(verifierParams, pluginDetailsProvider, tasks, VerificationLoggerImpl(Slf4JLogger(LoggerFactory.getLogger("test")))).single()
       }
     }
 
