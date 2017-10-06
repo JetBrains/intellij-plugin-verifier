@@ -1,6 +1,6 @@
-import com.jetbrains.pluginverifier.location.AccessFlags
-import com.jetbrains.pluginverifier.location.ClassPath
-import com.jetbrains.pluginverifier.location.Location
+import com.jetbrains.pluginverifier.results.problems.AccessFlags
+import com.jetbrains.pluginverifier.results.problems.ClassPath
+import com.jetbrains.pluginverifier.results.problems.Location
 import org.junit.Assert
 import org.junit.Test
 

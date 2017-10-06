@@ -7,7 +7,6 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.ide.IdeCreator
-import com.jetbrains.pluginverifier.location.*
 import com.jetbrains.pluginverifier.logging.VerificationLoggerImpl
 import com.jetbrains.pluginverifier.logging.loggers.Slf4JLogger
 import com.jetbrains.pluginverifier.options.CmdOpts

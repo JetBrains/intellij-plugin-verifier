@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.clazz
 
-import com.jetbrains.pluginverifier.location.MethodLocation
+import com.jetbrains.pluginverifier.results.problems.MethodLocation
 import com.jetbrains.pluginverifier.results.problems.MethodNotImplementedProblem
 import com.jetbrains.pluginverifier.utils.BytecodeUtil
 import com.jetbrains.pluginverifier.utils.resolveClassOrProblem

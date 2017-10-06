@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.location
+package com.jetbrains.pluginverifier.results.problems
 
 import com.jetbrains.pluginverifier.utils.PresentationUtils
 import com.jetbrains.pluginverifier.utils.PresentationUtils.convertClassSignature
@@ -6,36 +6,6 @@ import com.jetbrains.pluginverifier.utils.PresentationUtils.convertJvmDescriptor
 import com.jetbrains.pluginverifier.utils.PresentationUtils.cutPackageConverter
 import com.jetbrains.pluginverifier.utils.PresentationUtils.normalConverter
 import com.jetbrains.pluginverifier.utils.PresentationUtils.splitMethodDescriptorOnRawParametersAndReturnTypes
-
-/**
- * @author Sergey Patrikeev
- */
-interface Location {
-
-  companion object {
-    fun fromClass(className: String,
-                  signature: String?,
-                  classPath: ClassPath,
-                  accessFlags: AccessFlags): ClassLocation
-        = ClassLocation(className, signature ?: "", classPath, accessFlags)
-
-    fun fromMethod(hostClass: ClassLocation,
-                   methodName: String,
-                   methodDescriptor: String,
-                   parameterNames: List<String>,
-                   signature: String?,
-                   accessFlags: AccessFlags): MethodLocation
-        = MethodLocation(hostClass, methodName, methodDescriptor, parameterNames, signature ?: "", accessFlags)
-
-    fun fromField(hostClass: ClassLocation,
-                  fieldName: String,
-                  fieldDescriptor: String,
-                  signature: String?,
-                  accessFlags: AccessFlags): FieldLocation
-        = FieldLocation(hostClass, fieldName, fieldDescriptor, signature ?: "", accessFlags)
-  }
-
-}
 
 data class MethodLocation(val hostClass: ClassLocation,
                           val methodName: String,

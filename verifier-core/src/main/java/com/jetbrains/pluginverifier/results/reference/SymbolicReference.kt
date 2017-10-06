@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.reference
+package com.jetbrains.pluginverifier.results.reference
 
 import com.jetbrains.pluginverifier.utils.PresentationUtils.convertJvmDescriptorToNormalPresentation
 import com.jetbrains.pluginverifier.utils.PresentationUtils.cutPackageConverter

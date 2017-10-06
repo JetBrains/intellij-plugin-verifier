@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.location
+package com.jetbrains.pluginverifier.results.problems
 
 data class AccessFlags(val flags: Int) {
 

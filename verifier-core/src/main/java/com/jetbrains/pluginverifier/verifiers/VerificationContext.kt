@@ -2,8 +2,7 @@ package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.core.VerificationResultHolder
-import com.jetbrains.pluginverifier.location.*
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.utils.BytecodeUtil
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
