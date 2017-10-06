@@ -1,7 +1,8 @@
-package com.jetbrains.pluginverifier.filter
+package com.jetbrains.pluginverifier.parameters.filtering
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblem
+import com.jetbrains.pluginverifier.results.problems.Problem
 import java.io.File
 
 class DocumentedProblemsFilter(private val documentedProblems: List<DocumentedProblem>,

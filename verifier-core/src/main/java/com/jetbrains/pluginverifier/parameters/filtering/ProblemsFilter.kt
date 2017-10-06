@@ -1,7 +1,7 @@
-package com.jetbrains.pluginverifier.filter
+package com.jetbrains.pluginverifier.parameters.filtering
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.Problem
 import java.io.Closeable
 
 abstract class ProblemsFilter : Closeable {

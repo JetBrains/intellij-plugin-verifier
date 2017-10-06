@@ -1,6 +1,6 @@
-package com.jetbrains.pluginverifier.filter
+package com.jetbrains.pluginverifier.parameters.filtering.documented
 
-import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.Problem
 
 /**
  * @author Sergey Patrikeev

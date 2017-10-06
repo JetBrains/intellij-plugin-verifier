@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.api
+package com.jetbrains.pluginverifier.parameters
 
 import java.io.File
 

@@ -1,9 +1,9 @@
-package com.jetbrains.pluginverifier.filter
+package com.jetbrains.pluginverifier.parameters.filtering
 
 import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.pluginverifier.problems.Problem
-import com.jetbrains.pluginverifier.tasks.PluginIdAndVersion
+import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
+import com.jetbrains.pluginverifier.results.problems.Problem
 import java.io.File
 
 class IgnoredProblemsFilter(private val problemsToIgnore: Multimap<PluginIdAndVersion, Regex>,

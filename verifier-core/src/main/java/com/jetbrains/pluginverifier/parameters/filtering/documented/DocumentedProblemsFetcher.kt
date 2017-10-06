@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.filter
+package com.jetbrains.pluginverifier.parameters.filtering.documented
 
 import org.jsoup.Connection
 import org.jsoup.Jsoup

@@ -1,13 +1,13 @@
-package com.jetbrains.pluginverifier.api
+package com.jetbrains.pluginverifier.parameters
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.pluginverifier.dependencies.DependencyResolver
-import com.jetbrains.pluginverifier.filter.ProblemsFilter
+import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
+import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 
 /**
  * Accumulates parameters of the upcoming verification.
  */
-data class VerifierParams(
+data class VerifierParameters(
 
     /**
      * The JDK against which the plugins will be verified.
@@ -34,7 +34,5 @@ data class VerifierParams(
      * Otherwise a default resolver which searches the plugin in the IDE
      * and in the Plugin Repository will be used.
      */
-    val dependencyResolver: DependencyResolver
-) {
-  fun isExternalClass(className: String): Boolean = externalClassesPrefixes.any { it.isNotEmpty() && className.startsWith(it) }
-}
+    val dependencyFinder: DependencyFinder
+)
