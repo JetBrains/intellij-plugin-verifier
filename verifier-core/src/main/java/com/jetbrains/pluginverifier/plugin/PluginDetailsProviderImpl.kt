@@ -12,6 +12,20 @@ import com.jetbrains.pluginverifier.repository.FileLock
 import java.io.File
 
 class PluginDetailsProviderImpl(private val extractDirectory: File) : PluginDetailsProvider {
+  override fun fetchByExistingPlugins(plugin: IdePlugin): PluginDetails {
+    val originalFile = plugin.originalFile
+    return if (originalFile != null) {
+      val pluginClassesLocations = try {
+        plugin.findPluginClasses()
+      } catch (e: Exception) {
+        return PluginDetails.BadPlugin(listOf(UnableToReadPluginClassFilesProblem(e)))
+      }
+      PluginDetails.ByFileLock(plugin, pluginClassesLocations, emptyList(), IdleFileLock(originalFile))
+    } else {
+      PluginDetails.NotFound("Plugin classes are not found")
+    }
+  }
+
   override fun fetchPluginDetails(pluginCoordinate: PluginCoordinate): PluginDetails {
     val pluginFileFindResult = pluginCoordinate.fileFinder.findPluginFile()
     return when (pluginFileFindResult) {
