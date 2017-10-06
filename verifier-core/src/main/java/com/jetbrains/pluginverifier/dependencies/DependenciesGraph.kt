@@ -1,31 +1,9 @@
 package com.jetbrains.pluginverifier.dependencies
 
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
+import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphCycleFinder
+import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphWalker
 import java.util.*
 import kotlin.collections.ArrayList
-
-//todo: make missingReason a separate class with more information.
-data class MissingDependency(val dependency: PluginDependency,
-                             val missingReason: String) {
-  override fun toString(): String = "$dependency: $missingReason"
-}
-
-data class DependencyNode(val id: String,
-                          val version: String,
-                          val missingDependencies: List<MissingDependency>) {
-  override fun toString(): String = "$id:$version"
-}
-
-data class DependencyEdge(val from: DependencyNode,
-                          val to: DependencyNode,
-                          val dependency: PluginDependency) {
-  override fun toString(): String = if (dependency.isOptional) "$from ---optional---> $to" else "$from ---> $to"
-}
-
-data class MissingDependencyPath(val path: List<DependencyNode>,
-                                 val missingDependency: MissingDependency) {
-  override fun toString(): String = path.joinToString(" ---X--> ") + " ---X--> " + missingDependency
-}
 
 data class DependenciesGraph(val start: DependencyNode,
                              val vertices: List<DependencyNode>,
