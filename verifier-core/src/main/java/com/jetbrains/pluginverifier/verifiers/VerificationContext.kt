@@ -1,40 +1,29 @@
 package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.pluginverifier.api.VerifierParams
+import com.jetbrains.pluginverifier.core.VerificationResultHolder
 import com.jetbrains.pluginverifier.location.*
-import com.jetbrains.pluginverifier.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.utils.BytecodeUtil
-import com.jetbrains.pluginverifier.warnings.Warning
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
 
 data class VerificationContext(
-    val plugin: IdePlugin,
-    val verifierParams: VerifierParams,
-    val resolver: Resolver
+    val classLoader: Resolver,
+    val resultHolder: VerificationResultHolder,
+    val externalClassesPrefixes: List<String>
 ) {
-  val problems: MutableSet<Problem> = hashSetOf()
-
-  val warnings: MutableSet<Warning> = hashSetOf()
 
   fun registerProblem(problem: Problem) {
-    val problemFilters = verifierParams.problemFilters
-    val accepted = problemFilters.all { it.accept(plugin, problem) }
-    if (accepted) {
-      problems.add(problem)
-    }
+    resultHolder.registerProblem(problem)
   }
 
-  fun registerWarning(warning: Warning) {
-    warnings.add(warning)
-  }
+  fun isExternalClass(className: String): Boolean = externalClassesPrefixes.any { it.isNotEmpty() && className.startsWith(it) }
 
   private fun getClassPath(classNode: ClassNode): ClassPath {
     val className = classNode.name
-    val actualResolver = resolver.getClassLocation(className) ?: return ClassPath(ClassPath.Type.ROOT, "root")
+    val actualResolver = classLoader.getClassLocation(className) ?: return ClassPath(ClassPath.Type.ROOT, "root")
     if (actualResolver.classPath.size != 1) {
       //it should not happen, because actually each class-file is coming from a specific resolver
       //(a specific jar file or maybe a `classes` directory)

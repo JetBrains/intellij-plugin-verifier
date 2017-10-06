@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.method
 
-import com.jetbrains.pluginverifier.problems.OverridingFinalMethodProblem
+import com.jetbrains.pluginverifier.results.problems.OverridingFinalMethodProblem
 import com.jetbrains.pluginverifier.utils.BytecodeUtil
 import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
@@ -28,7 +28,7 @@ class OverrideNonFinalVerifier : MethodVerifier {
 
     val superClass = clazz.superName
 
-    if (superClass == null || superClass.startsWith("[") || ctx.verifierParams.isExternalClass(superClass)) {
+    if (superClass == null || superClass.startsWith("[") || ctx.isExternalClass(superClass)) {
       return
     }
 

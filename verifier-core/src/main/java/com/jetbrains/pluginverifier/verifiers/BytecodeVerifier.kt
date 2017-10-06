@@ -1,9 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers
 
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.api.VerifierParams
+import com.jetbrains.pluginverifier.misc.checkIfInterrupted
+import com.jetbrains.pluginverifier.progress.ProgressIndicator
 import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.InheritFromFinalClassVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier
@@ -16,19 +14,8 @@ import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
-class BytecodeVerifier(verifierParams: VerifierParams,
-                       plugin: IdePlugin,
-                       classLoader: Resolver,
-                       private val ideVersion: IdeVersion) {
-
-  companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(BytecodeVerifier::class.java)
-  }
-
-  private val verificationContext: VerificationContext = VerificationContext(plugin, verifierParams, classLoader)
+class BytecodeVerifier {
 
   private val fieldVerifiers = arrayOf<FieldVerifier>(FieldTypeVerifier())
 
@@ -56,40 +43,29 @@ class BytecodeVerifier(verifierParams: VerifierParams,
       FieldAccessInstructionVerifier()
   )
 
-  private var totalVerifiedClasses: Int = 0
-
-  fun verify(classesToCheck: Set<String>): VerificationContext {
-    totalVerifiedClasses = 0
-    for (className in classesToCheck) {
-      checkCancelled()
-      verifyClass(className)
-      totalVerifiedClasses++
-      if (totalVerifiedClasses % 1000 == 0) {
-        LOG.debug("'${verificationContext.plugin}' and #$ideVersion: finished $totalVerifiedClasses classes")
+  fun verify(classesToCheck: Set<String>, verificationContext: VerificationContext, progressIndicator: ProgressIndicator) {
+    if (classesToCheck.isNotEmpty()) {
+      for ((totalVerifiedClasses, className) in classesToCheck.withIndex()) {
+        checkIfInterrupted()
+        verifyClass(className, verificationContext)
+        progressIndicator.setProgress((totalVerifiedClasses + 1).toDouble() / classesToCheck.size)
       }
     }
-    return verificationContext
   }
 
-  private fun checkCancelled() {
-    if (Thread.currentThread().isInterrupted) {
-      throw InterruptedException("The verification was cancelled")
-    }
-  }
-
-  private fun verifyClass(className: String) {
+  private fun verifyClass(className: String, verificationContext: VerificationContext) {
     val node = try {
-      verificationContext.resolver.findClass(className)
+      verificationContext.classLoader.findClass(className)
     } catch (e: Exception) {
       null
     }
     if (node != null) {
-      verifyClass(node, verificationContext)
+      verifyClassNode(node, verificationContext)
     }
   }
 
   @Suppress("UNCHECKED_CAST")
-  private fun verifyClass(node: ClassNode, ctx: VerificationContext) {
+  private fun verifyClassNode(node: ClassNode, ctx: VerificationContext) {
     for (verifier in classVerifiers) {
       verifier.verify(node, ctx)
     }

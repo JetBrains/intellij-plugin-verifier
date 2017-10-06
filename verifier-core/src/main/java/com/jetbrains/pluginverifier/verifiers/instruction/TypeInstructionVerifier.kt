@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
-import com.jetbrains.pluginverifier.problems.AbstractClassInstantiationProblem
-import com.jetbrains.pluginverifier.problems.InterfaceInstantiationProblem
+import com.jetbrains.pluginverifier.results.problems.AbstractClassInstantiationProblem
+import com.jetbrains.pluginverifier.results.problems.InterfaceInstantiationProblem
 import com.jetbrains.pluginverifier.utils.BytecodeUtil
 import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext

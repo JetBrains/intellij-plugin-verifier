@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
-import com.jetbrains.pluginverifier.problems.*
 import com.jetbrains.pluginverifier.reference.SymbolicReference
+import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.utils.BytecodeUtil
 import com.jetbrains.pluginverifier.utils.BytecodeUtil.isInterface
 import com.jetbrains.pluginverifier.utils.checkClassExistsOrExternal

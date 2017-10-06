@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.clazz
 
-import com.jetbrains.pluginverifier.problems.InheritFromFinalClassProblem
+import com.jetbrains.pluginverifier.results.problems.InheritFromFinalClassProblem
 import com.jetbrains.pluginverifier.utils.BytecodeUtil
 import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
