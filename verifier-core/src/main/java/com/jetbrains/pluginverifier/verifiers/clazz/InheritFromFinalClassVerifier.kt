@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.verifiers.clazz
 
 import com.jetbrains.pluginverifier.results.problems.InheritFromFinalClassProblem
-import com.jetbrains.pluginverifier.utils.BytecodeUtil
-import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
+import com.jetbrains.pluginverifier.verifiers.BytecodeUtil
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.resolveClassOrProblem
 import org.objectweb.asm.tree.ClassNode
 
 class InheritFromFinalClassVerifier : ClassVerifier {

@@ -1,8 +1,7 @@
-package com.jetbrains.pluginverifier.utils
+package com.jetbrains.pluginverifier.verifiers
 
-import com.jetbrains.pluginverifier.reference.ClassReference
 import com.jetbrains.pluginverifier.results.problems.*
-import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.results.reference.ClassReference
 import org.objectweb.asm.tree.ClassNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

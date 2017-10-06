@@ -15,11 +15,11 @@ import com.jetbrains.pluginverifier.parameters.JdkDescriptor
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
-import com.jetbrains.pluginverifier.reference.ClassReference
-import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.problems.*
+import com.jetbrains.pluginverifier.results.reference.ClassReference
+import com.jetbrains.pluginverifier.results.reference.SymbolicReference
 import com.jetbrains.pluginverifier.tests.mocks.NotFoundDependencyFinder
 import org.hamcrest.core.Is.`is`
 import org.junit.AfterClass

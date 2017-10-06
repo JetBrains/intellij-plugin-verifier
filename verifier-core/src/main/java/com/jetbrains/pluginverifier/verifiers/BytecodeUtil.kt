@@ -1,7 +1,6 @@
-package com.jetbrains.pluginverifier.utils
+package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.pluginverifier.results.problems.AccessType
-import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode

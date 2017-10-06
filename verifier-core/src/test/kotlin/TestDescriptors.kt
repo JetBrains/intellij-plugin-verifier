@@ -1,4 +1,4 @@
-import com.jetbrains.pluginverifier.reference.SymbolicReference
+import com.jetbrains.pluginverifier.results.reference.SymbolicReference
 import org.junit.Assert
 import org.junit.Test
 

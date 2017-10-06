@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.results.problems
 
-import com.jetbrains.pluginverifier.reference.ClassReference
-import com.jetbrains.pluginverifier.reference.FieldReference
-import com.jetbrains.pluginverifier.reference.MethodReference
+import com.jetbrains.pluginverifier.results.reference.ClassReference
+import com.jetbrains.pluginverifier.results.reference.FieldReference
+import com.jetbrains.pluginverifier.results.reference.MethodReference
 
 data class MultipleDefaultImplementationsProblem(val caller: MethodLocation,
                                                  val methodReference: MethodReference,

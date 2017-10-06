@@ -2,9 +2,9 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.jetbrains.pluginverifier.results.problems.AbstractClassInstantiationProblem
 import com.jetbrains.pluginverifier.results.problems.InterfaceInstantiationProblem
-import com.jetbrains.pluginverifier.utils.BytecodeUtil
-import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
+import com.jetbrains.pluginverifier.verifiers.BytecodeUtil
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.resolveClassOrProblem
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode

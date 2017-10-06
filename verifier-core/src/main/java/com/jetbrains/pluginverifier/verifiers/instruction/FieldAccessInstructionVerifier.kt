@@ -1,12 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
-import com.jetbrains.pluginverifier.reference.SymbolicReference
 import com.jetbrains.pluginverifier.results.problems.*
-import com.jetbrains.pluginverifier.utils.BytecodeUtil
-import com.jetbrains.pluginverifier.utils.checkClassExistsOrExternal
-import com.jetbrains.pluginverifier.utils.isSubclassOf
-import com.jetbrains.pluginverifier.utils.resolveClassOrProblem
-import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.results.reference.SymbolicReference
+import com.jetbrains.pluginverifier.verifiers.*
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 
