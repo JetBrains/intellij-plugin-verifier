@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.results.descriptions
+package com.jetbrains.pluginverifier.results.presentation
 
 import com.jetbrains.pluginverifier.results.problems.Problem
 import java.util.*

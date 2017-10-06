@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.utils
+package com.jetbrains.pluginverifier.results.presentation
 
 import org.objectweb.asm.signature.SignatureReader
 

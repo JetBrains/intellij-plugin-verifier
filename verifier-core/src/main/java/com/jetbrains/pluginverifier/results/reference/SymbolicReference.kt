@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.results.reference
 
-import com.jetbrains.pluginverifier.utils.PresentationUtils.convertJvmDescriptorToNormalPresentation
-import com.jetbrains.pluginverifier.utils.PresentationUtils.cutPackageConverter
-import com.jetbrains.pluginverifier.utils.PresentationUtils.normalConverter
-import com.jetbrains.pluginverifier.utils.PresentationUtils.splitMethodDescriptorOnRawParametersAndReturnTypes
+import com.jetbrains.pluginverifier.results.presentation.PresentationUtils.convertJvmDescriptorToNormalPresentation
+import com.jetbrains.pluginverifier.results.presentation.PresentationUtils.cutPackageConverter
+import com.jetbrains.pluginverifier.results.presentation.PresentationUtils.normalConverter
+import com.jetbrains.pluginverifier.results.presentation.PresentationUtils.splitMethodDescriptorOnRawParametersAndReturnTypes
 
 /**
  * @author Sergey Patrikeev

@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.results.problems
 
-import com.jetbrains.pluginverifier.results.descriptions.DescriptionsBundle
+import com.jetbrains.pluginverifier.results.presentation.DescriptionsBundle
 import org.jetbrains.annotations.PropertyKey
 import java.text.MessageFormat
 
