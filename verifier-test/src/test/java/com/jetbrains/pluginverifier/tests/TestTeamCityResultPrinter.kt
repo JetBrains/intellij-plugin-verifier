@@ -3,9 +3,9 @@ package com.jetbrains.pluginverifier.tests
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
-import com.jetbrains.pluginverifier.output.PrinterOptions
-import com.jetbrains.pluginverifier.output.TeamCityLog
-import com.jetbrains.pluginverifier.output.TeamCityPrinter
+import com.jetbrains.pluginverifier.output.settings.dependencies.AllMissingDependencyIgnoring
+import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
+import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -21,7 +21,7 @@ import java.io.PrintStream
 /**
  * @author Sergey Patrikeev
  */
-class TestTeamCityPrinter {
+class TestTeamCityResultPrinter {
 
   private fun noConnectionPluginRepository() = object : MockPluginRepositoryAdapter() {
     override fun defaultAction(): Nothing = throw IOException("no connection")
@@ -65,7 +65,7 @@ class TestTeamCityPrinter {
     val output = ByteArrayOutputStream().use { bos ->
       PrintStream(bos, true, "utf-8").use { printStream ->
         val teamCityLog = TeamCityLog(printStream)
-        val teamCityVPrinter = TeamCityPrinter(teamCityLog, TeamCityPrinter.GroupBy.BY_PLUGIN, pluginRepository)
+        val teamCityVPrinter = TeamCityResultPrinter(teamCityLog, TeamCityResultPrinter.GroupBy.BY_PLUGIN, pluginRepository, AllMissingDependencyIgnoring)
         teamCityVPrinter.printResults(
             pluginInfos.map {
               Result(
@@ -73,8 +73,7 @@ class TestTeamCityPrinter {
                   IdeVersion.createIdeVersion("IU-145"),
                   Verdict.OK(DependenciesGraph(dependencyNode, listOf(dependencyNode), emptyList()))
               )
-            },
-            PrinterOptions()
+            }
         )
       }
       bos.toString("utf-8")

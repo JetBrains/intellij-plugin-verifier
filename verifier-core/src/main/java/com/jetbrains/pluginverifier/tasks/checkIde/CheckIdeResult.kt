@@ -1,13 +1,18 @@
-package com.jetbrains.pluginverifier.tasks
+package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.create
-import com.jetbrains.pluginverifier.output.*
+import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
+import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
+import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
+import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.parameters.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.tasks.OutputOptions
+import com.jetbrains.pluginverifier.tasks.TaskResult
 import java.io.File
 import java.io.PrintWriter
 
@@ -16,36 +21,39 @@ data class CheckIdeResult(val ideVersion: IdeVersion,
                           val excludedPlugins: List<PluginIdAndVersion>,
                           val noCompatibleUpdatesProblems: List<MissingCompatibleUpdate>) : TaskResult {
 
-  override fun printResults(printerOptions: PrinterOptions, pluginRepository: PluginRepository) {
-    if (printerOptions.needTeamCityLog) {
-      printTcLog(TeamCityPrinter.GroupBy.parse(printerOptions.teamCityGroupType), true, printerOptions, pluginRepository)
+  override fun printResults(outputOptions: OutputOptions, pluginRepository: PluginRepository) {
+    if (outputOptions.needTeamCityLog) {
+      printTcLog(outputOptions.teamCityGroupType, true, pluginRepository, outputOptions)
     } else {
-      printOnStdOut(printerOptions)
+      printOnStdOut(outputOptions)
     }
 
-    if (printerOptions.htmlReportFile != null) {
-      saveToHtmlFile(File(printerOptions.htmlReportFile), printerOptions)
+    if (outputOptions.htmlReportFile != null) {
+      saveToHtmlFile(outputOptions.htmlReportFile, outputOptions)
     }
 
-    if (printerOptions.dumpBrokenPluginsFile != null) {
+    if (outputOptions.dumpBrokenPluginsFile != null) {
       val brokenPlugins = results
           .filter { it.verdict !is Verdict.OK && it.verdict !is Verdict.Warnings }
           .map { it.plugin }
           .map { PluginIdAndVersion(it.pluginId, it.version) }
           .distinct()
-      IdeResourceUtil.dumbBrokenPluginsList(File(printerOptions.dumpBrokenPluginsFile), brokenPlugins)
+      IdeResourceUtil.dumbBrokenPluginsList(File(outputOptions.dumpBrokenPluginsFile), brokenPlugins)
     }
   }
 
-  fun saveToHtmlFile(htmlFile: File, printerOptions: PrinterOptions) {
-    HtmlPrinter(listOf(ideVersion), { (pluginId, pluginVersion) -> PluginIdAndVersion(pluginId, pluginVersion) in excludedPlugins }, htmlFile.create()).printResults(results, printerOptions)
+  fun saveToHtmlFile(htmlFile: File, outputOptions: OutputOptions) {
+    HtmlResultPrinter(listOf(ideVersion), { (pluginId, pluginVersion) ->
+      PluginIdAndVersion(pluginId, pluginVersion) in excludedPlugins
+    }, htmlFile.create(), outputOptions.missingDependencyIgnoring
+    ).printResults(results)
   }
 
-  private fun printTcLog(groupBy: TeamCityPrinter.GroupBy, setBuildStatus: Boolean, vPrinterOptions: PrinterOptions, pluginRepository: PluginRepository) {
+  private fun printTcLog(groupBy: TeamCityResultPrinter.GroupBy, setBuildStatus: Boolean, pluginRepository: PluginRepository, outputOptions: OutputOptions) {
     val tcLog = TeamCityLog(System.out)
-    val vPrinter = TeamCityPrinter(tcLog, groupBy, pluginRepository)
-    vPrinter.printResults(results, vPrinterOptions)
-    vPrinter.printNoCompatibleUpdatesProblems(noCompatibleUpdatesProblems)
+    val resultPrinter = TeamCityResultPrinter(tcLog, groupBy, pluginRepository, outputOptions.missingDependencyIgnoring)
+    resultPrinter.printResults(results)
+    resultPrinter.printNoCompatibleUpdatesProblems(noCompatibleUpdatesProblems)
     if (setBuildStatus) {
       val totalProblemsNumber: Int = results.flatMap {
         when (it.verdict) {
@@ -63,9 +71,9 @@ data class CheckIdeResult(val ideVersion: IdeVersion,
     }
   }
 
-  fun printOnStdOut(vPrinterOptions: PrinterOptions) {
+  private fun printOnStdOut(outputOptions: OutputOptions) {
     val printWriter = PrintWriter(System.out)
-    WriterPrinter(printWriter).printResults(results, vPrinterOptions)
+    WriterResultPrinter(printWriter, outputOptions.missingDependencyIgnoring).printResults(results)
     printWriter.flush()
   }
 

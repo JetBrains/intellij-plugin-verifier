@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.tasks
+package com.jetbrains.pluginverifier.tasks.checkPlugin
 
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
@@ -7,13 +7,14 @@ import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.logging.VerificationLogger
 import com.jetbrains.pluginverifier.misc.closeLogged
-import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
+import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.Result
+import com.jetbrains.pluginverifier.tasks.Task
 
 class CheckPluginTask(private val parameters: CheckPluginParams,
                       private val pluginRepository: PluginRepository,

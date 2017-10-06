@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.output
+package com.jetbrains.pluginverifier.output.teamcity
 
 import java.io.Closeable
 import java.io.PrintStream

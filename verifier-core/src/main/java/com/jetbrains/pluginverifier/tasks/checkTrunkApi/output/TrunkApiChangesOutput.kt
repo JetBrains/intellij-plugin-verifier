@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.output
+package com.jetbrains.pluginverifier.tasks.checkTrunkApi.output
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
@@ -7,13 +7,15 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.misc.pluralize
+import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
+import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.problems.Problem
-import com.jetbrains.pluginverifier.tasks.TrunkApiChanges
+import com.jetbrains.pluginverifier.tasks.checkTrunkApi.result.TrunkApiChanges
 
 /**
  * @author Sergey Patrikeev
@@ -46,7 +48,7 @@ class TrunkApiChangesOutput(private val tcLog: TeamCityLog, private val reposito
     val allProblems = problem2Plugins.keySet()
 
     for ((problemClass, allProblemsOfClass) in allProblems.groupBy { it.javaClass }) {
-      val problemTypeSuite = TeamCityPrinter.convertProblemClassNameToSentence(problemClass)
+      val problemTypeSuite = TeamCityResultPrinter.convertProblemClassNameToSentence(problemClass)
       tcLog.testSuiteStarted("($problemTypeSuite)").use {
         val shortDescription2Problems = allProblemsOfClass.groupBy { it.shortDescription }
         for ((shortDescription, problemsWithShortDescription) in shortDescription2Problems) {

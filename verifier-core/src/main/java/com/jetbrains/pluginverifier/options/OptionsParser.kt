@@ -5,17 +5,21 @@ import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.singletonOrEmpty
-import com.jetbrains.pluginverifier.output.PrinterOptions
-import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.output.settings.dependencies.AllMissingDependencyIgnoring
+import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
+import com.jetbrains.pluginverifier.output.settings.dependencies.SpecifiedMissingDependencyIgnoring
+import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsFetcher
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsParser
+import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
+import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
+import com.jetbrains.pluginverifier.tasks.OutputOptions
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedReader
@@ -26,21 +30,27 @@ object OptionsParser {
 
   private val LOG: Logger = LoggerFactory.getLogger(OptionsParser::class.java)
 
-  fun parsePrinterOptions(opts: CmdOpts): PrinterOptions = PrinterOptions(
-      opts.ignoreAllMissingOptionalDeps,
-      opts.ignoreMissingOptionalDeps.toList(),
+  fun parseOutputOptions(opts: CmdOpts): OutputOptions = OutputOptions(
+      createMissingDependencyIgnorer(opts),
       opts.needTeamCityLog,
-      opts.teamCityGroupType,
-      opts.htmlReportFile,
+      TeamCityResultPrinter.GroupBy.parse(opts.teamCityGroupType),
+      opts.htmlReportFile?.let { File(it) },
       opts.dumpBrokenPluginsFile
   )
+
+  private fun createMissingDependencyIgnorer(opts: CmdOpts): MissingDependencyIgnoring {
+    if (opts.ignoreAllMissingOptionalDeps) {
+      return AllMissingDependencyIgnoring
+    }
+    return SpecifiedMissingDependencyIgnoring(opts.ignoreMissingOptionalDeps.toSet())
+  }
 
   fun createIdeDescriptor(ideToCheckFile: File, opts: CmdOpts): IdeDescriptor {
     val ideVersion = takeVersionFromCmd(opts)
     return IdeCreator.createByFile(ideToCheckFile, ideVersion)
   }
 
-  fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {
+  private fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {
     val build = opts.actualIdeVersion
     if (!build.isNullOrBlank()) {
       try {

@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.tasks
+package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
@@ -14,6 +14,10 @@ import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.tasks.Task
+import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeParams
+import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeResult
+import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeTask
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

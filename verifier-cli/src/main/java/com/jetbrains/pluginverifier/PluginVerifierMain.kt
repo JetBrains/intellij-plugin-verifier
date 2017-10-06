@@ -10,10 +10,10 @@ import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
-import com.jetbrains.pluginverifier.tasks.CheckIdeRunner
-import com.jetbrains.pluginverifier.tasks.CheckPluginRunner
-import com.jetbrains.pluginverifier.tasks.CheckTrunkApiRunner
 import com.jetbrains.pluginverifier.tasks.TaskRunner
+import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeRunner
+import com.jetbrains.pluginverifier.tasks.checkPlugin.CheckPluginRunner
+import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiRunner
 import com.sampullara.cli.Args
 import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
@@ -105,7 +105,7 @@ object PluginVerifierMain {
       }
     }
 
-    val printerOptions = OptionsParser.parsePrinterOptions(opts)
+    val printerOptions = OptionsParser.parseOutputOptions(opts)
     taskResult.printResults(printerOptions, pluginRepository)
   }
 

@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.tasks
+package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
@@ -12,6 +12,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader

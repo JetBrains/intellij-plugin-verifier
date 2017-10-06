@@ -1,8 +1,10 @@
-package com.jetbrains.pluginverifier.output
+package com.jetbrains.pluginverifier.output.stream
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.pluralize
+import com.jetbrains.pluginverifier.output.ResultPrinter
+import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
@@ -10,15 +12,16 @@ import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
 import java.io.PrintWriter
 
-class WriterPrinter(private val out: PrintWriter) : Printer {
+class WriterResultPrinter(private val out: PrintWriter,
+                          private val missingDependencyIgnoring: MissingDependencyIgnoring) : ResultPrinter {
 
-  override fun printResults(results: List<Result>, options: PrinterOptions) {
+  override fun printResults(results: List<Result>) {
     results.forEach { (plugin, ideVersion, verdict) ->
       return@forEach when (verdict) {
         is Verdict.OK -> out.println("With IDE #$ideVersion the plugin $plugin is OK")
         is Verdict.Warnings -> out.println("With IDE #$ideVersion the plugin $plugin has ${verdict.warnings.size} warnings: ${verdict.warnings.joinToString(separator = "\n", prefix = "    ")}")
         is Verdict.Problems -> printProblemsVerdict(ideVersion, plugin, verdict)
-        is Verdict.MissingDependencies -> printMissingDependencies(options, verdict, ideVersion, plugin)
+        is Verdict.MissingDependencies -> printMissingDependencies(verdict, ideVersion, plugin)
         is Verdict.Bad -> out.println("The plugin $plugin is broken: ${verdict.pluginProblems.joinToString()}")
         is Verdict.NotFound -> out.println("The plugin $plugin is not found: ${verdict.reason}")
         is Verdict.FailedToDownload -> out.println("The plugin $plugin is not downloaded from the Repository: ${verdict.reason}")
@@ -26,17 +29,17 @@ class WriterPrinter(private val out: PrintWriter) : Printer {
     }
   }
 
-  private fun printMissingDependencies(options: PrinterOptions, verdict: Verdict.MissingDependencies, ideVersion: IdeVersion, plugin: PluginInfo) {
-    printDependencies(verdict, options)
+  private fun printMissingDependencies(verdict: Verdict.MissingDependencies, ideVersion: IdeVersion, plugin: PluginInfo) {
+    printDependencies(verdict)
     printWarnings(ideVersion, plugin, verdict.warnings)
     printProblems(ideVersion, plugin, verdict.problems)
   }
 
-  private fun printDependencies(verdict: Verdict.MissingDependencies, options: PrinterOptions) {
+  private fun printDependencies(verdict: Verdict.MissingDependencies) {
     val mandatoryDependencies = verdict.directMissingDependencies.filterNot { it.dependency.isOptional }
     printMissingMandatoryDependencies(mandatoryDependencies)
 
-    val optionalDependencies = verdict.directMissingDependencies.filter { it.dependency.isOptional && !options.ignoreMissingOptionalDependency(it.dependency) }
+    val optionalDependencies = verdict.directMissingDependencies.filter { it.dependency.isOptional && !missingDependencyIgnoring.ignoreMissingOptionalDependency(it.dependency) }
     printMissingOptionalDependencies(optionalDependencies)
   }
 

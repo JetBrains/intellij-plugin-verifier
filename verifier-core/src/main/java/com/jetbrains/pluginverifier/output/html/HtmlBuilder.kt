@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.output
+package com.jetbrains.pluginverifier.output.html
 
 import com.google.common.html.HtmlEscapers
 import java.io.PrintWriter

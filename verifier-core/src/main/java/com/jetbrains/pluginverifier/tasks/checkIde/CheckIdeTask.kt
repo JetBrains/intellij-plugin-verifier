@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.tasks
+package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.tasks.Task
 
 class CheckIdeTask(private val parameters: CheckIdeParams,
                    val pluginRepository: PluginRepository,

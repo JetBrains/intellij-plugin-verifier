@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.output
+package com.jetbrains.pluginverifier.output.teamcity
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
@@ -6,6 +6,8 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
+import com.jetbrains.pluginverifier.output.ResultPrinter
+import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -13,7 +15,7 @@ import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.Problem
-import com.jetbrains.pluginverifier.tasks.MissingCompatibleUpdate
+import com.jetbrains.pluginverifier.tasks.checkIde.MissingCompatibleUpdate
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -21,12 +23,13 @@ import org.slf4j.LoggerFactory
 /**
  * @author Sergey Patrikeev
  */
-class TeamCityPrinter(private val tcLog: TeamCityLog,
-                      private val groupBy: GroupBy,
-                      private val repository: PluginRepository) : Printer {
+class TeamCityResultPrinter(private val tcLog: TeamCityLog,
+                            private val groupBy: GroupBy,
+                            private val repository: PluginRepository,
+                            private val missingDependencyIgnoring: MissingDependencyIgnoring) : ResultPrinter {
 
   companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(TeamCityPrinter::class.java)
+    private val LOG: Logger = LoggerFactory.getLogger(TeamCityResultPrinter::class.java)
 
     /**
      * Converts string like "com.some.package.name.MyClassNameProblem" to "my class name"
@@ -46,10 +49,10 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
 
   fun printNoCompatibleUpdatesProblems(missingProblems: List<MissingCompatibleUpdate>) {
     return when (groupBy) {
-      TeamCityPrinter.GroupBy.NOT_GROUPED -> {
+      GroupBy.NOT_GROUPED -> {
         missingProblems.forEach { tcLog.buildProblem(it.toString()) }
       }
-      TeamCityPrinter.GroupBy.BY_PLUGIN -> {
+      GroupBy.BY_PLUGIN -> {
         missingProblems.forEach { missingProblem ->
           tcLog.testSuiteStarted(missingProblem.pluginId).use {
             val testName = "(no compatible update)"
@@ -59,7 +62,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
           }
         }
       }
-      TeamCityPrinter.GroupBy.BY_PROBLEM_TYPE -> {
+      GroupBy.BY_PROBLEM_TYPE -> {
         tcLog.testSuiteStarted("(no compatible update)").use {
           missingProblems.forEach { problem ->
             tcLog.testSuiteStarted(problem.pluginId).use {
@@ -76,11 +79,11 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
   }
 
 
-  override fun printResults(results: List<Result>, options: PrinterOptions) {
+  override fun printResults(results: List<Result>) {
     when (groupBy) {
       GroupBy.NOT_GROUPED -> notGrouped(results)
       GroupBy.BY_PROBLEM_TYPE -> groupByProblemType(results)
-      GroupBy.BY_PLUGIN -> groupByPlugin(results, options)
+      GroupBy.BY_PLUGIN -> groupByPlugin(results)
     }
   }
 
@@ -130,7 +133,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
   }
 
 
-  private fun groupByPlugin(results: List<Result>, options: PrinterOptions) {
+  private fun groupByPlugin(results: List<Result>) {
     //pluginOne
     //....(1.0)
     //........#invoking unknown method
@@ -147,19 +150,18 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
     //...and so on...
     val lastUpdates: Map<IdeVersion, List<UpdateInfo>> = requestLastVersionsOfCheckedPlugins(results)
     results.groupBy { it.plugin.pluginId }.forEach { (pluginId, pluginResults) ->
-      printResultsForSpecificPluginId(options, pluginId, pluginResults, lastUpdates)
+      printResultsForSpecificPluginId(pluginId, pluginResults, lastUpdates)
     }
   }
 
-  private fun printResultsForSpecificPluginId(options: PrinterOptions,
-                                              pluginId: String,
+  private fun printResultsForSpecificPluginId(pluginId: String,
                                               pluginResults: List<Result>,
                                               lastUpdates: Map<IdeVersion, List<UpdateInfo>>) {
     tcLog.testSuiteStarted(pluginId).use {
       pluginResults.groupBy { it.plugin.version }.forEach { versionToVerdicts ->
         versionToVerdicts.value.forEach { (plugin, ideVersion, verdict) ->
           val testName = genTestName(plugin, ideVersion, lastUpdates)
-          printResultOfSpecificVersion(plugin, verdict, testName, options)
+          printResultOfSpecificVersion(plugin, verdict, testName)
         }
       }
     }
@@ -167,12 +169,11 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
 
   private fun printResultOfSpecificVersion(plugin: PluginInfo,
                                            verdict: Verdict,
-                                           testName: String,
-                                           options: PrinterOptions) {
+                                           testName: String) {
     tcLog.testStarted(testName).use {
       return@use when (verdict) {
         is Verdict.Problems -> printProblems(plugin, testName, verdict.problems)
-        is Verdict.MissingDependencies -> printMissingDependencies(plugin, verdict, testName, options)
+        is Verdict.MissingDependencies -> printMissingDependencies(plugin, verdict, testName)
         is Verdict.Bad -> printBadPluginResult(verdict, testName)
         is Verdict.OK, is Verdict.Warnings, is Verdict.NotFound, is Verdict.FailedToDownload -> {
         }
@@ -182,8 +183,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
 
   private fun printMissingDependencies(plugin: PluginInfo,
                                        verdict: Verdict.MissingDependencies,
-                                       testName: String,
-                                       options: PrinterOptions) {
+                                       testName: String) {
     val problems = verdict.problems
     val missingDependencies = verdict.directMissingDependencies
     if (problems.isNotEmpty() || missingDependencies.any { !it.dependency.isOptional }) {
@@ -198,7 +198,7 @@ class TeamCityPrinter(private val tcLog: TeamCityLog,
             append("Some problems might have been caused by missing plugins:").append('\n')
           }
           appendMissingDependencies(missingDependencies.filterNot { it.dependency.isOptional })
-          appendMissingDependencies(missingDependencies.filter { it.dependency.isOptional && !options.ignoreMissingOptionalDependency(it.dependency) })
+          appendMissingDependencies(missingDependencies.filter { it.dependency.isOptional && !missingDependencyIgnoring.ignoreMissingOptionalDependency(it.dependency) })
         }
       }
       val problemsContent = getMissingDependenciesProblemsContent(verdict)

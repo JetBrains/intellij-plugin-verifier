@@ -1,9 +1,10 @@
-package com.jetbrains.pluginverifier.tasks
+package com.jetbrains.pluginverifier.tasks.checkTrunkApi.result
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeResult
 
 data class PluginComparingResult(val releaseResult: Result, val trunkResult: Result)
 

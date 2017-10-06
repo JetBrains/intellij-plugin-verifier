@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.output
+package com.jetbrains.pluginverifier.output.html
 
 import com.google.common.io.Resources
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -6,6 +6,8 @@ import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.misc.pluralize
+import com.jetbrains.pluginverifier.output.ResultPrinter
+import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -17,18 +19,19 @@ import java.io.File
 import java.io.PrintWriter
 import java.nio.charset.Charset
 
-class HtmlPrinter(val ideVersions: List<IdeVersion>,
-                  val isExcluded: (PluginIdAndVersion) -> Boolean,
-                  val htmlFile: File) : Printer {
+class HtmlResultPrinter(val ideVersions: List<IdeVersion>,
+                        val isExcluded: (PluginIdAndVersion) -> Boolean,
+                        val htmlFile: File,
+                        private val missingDependencyIgnoring: MissingDependencyIgnoring) : ResultPrinter {
 
-  override fun printResults(results: List<Result>, options: PrinterOptions) {
+  override fun printResults(results: List<Result>) {
     PrintWriter(htmlFile.create()).use {
       val htmlBuilder = HtmlBuilder(it)
-      doPrintResults(htmlBuilder, results, options)
+      doPrintResults(htmlBuilder, results)
     }
   }
 
-  private fun doPrintResults(htmlBuilder: HtmlBuilder, results: List<Result>, options: PrinterOptions) {
+  private fun doPrintResults(htmlBuilder: HtmlBuilder, results: List<Result>) {
     htmlBuilder.apply {
       html {
         head {
@@ -48,7 +51,7 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
             +"No plugins checked"
           } else {
             results.sortedBy { it.plugin.pluginId }.groupBy { it.plugin.pluginId }.forEach { (pluginId, pluginResults) ->
-              appendPluginResults(pluginResults, pluginId, options)
+              appendPluginResults(pluginResults, pluginId)
             }
           }
           script { unsafe(loadReportScript()) }
@@ -57,7 +60,7 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
     }
   }
 
-  private fun HtmlBuilder.appendPluginResults(pluginResults: List<Result>, pluginId: String, options: PrinterOptions) {
+  private fun HtmlBuilder.appendPluginResults(pluginResults: List<Result>, pluginId: String) {
     div(classes = "plugin " + getPluginStyle(pluginResults)) {
       h3 {
         span(classes = "pMarker") { +"    " }
@@ -68,7 +71,7 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
             .filterNot { isExcluded(PluginIdAndVersion(it.plugin.pluginId, it.plugin.version)) }
             .sortedWith(compareBy(VersionComparatorUtil.COMPARATOR, { it.plugin.version }))
             .associateBy({ it.plugin }, { it.verdict })
-            .forEach { (plugin, verdict) -> printPluginVerdict(verdict, pluginId, plugin, options) }
+            .forEach { (plugin, verdict) -> printPluginVerdict(verdict, pluginId, plugin) }
       }
     }
   }
@@ -92,7 +95,7 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
     return "pluginOk"
   }
 
-  private fun HtmlBuilder.printPluginVerdict(verdict: Verdict, pluginId: String, plugin: PluginInfo, options: PrinterOptions) {
+  private fun HtmlBuilder.printPluginVerdict(verdict: Verdict, pluginId: String, plugin: PluginInfo) {
     val verdictStyle = when (verdict) {
       is Verdict.OK -> "updateOk"
       is Verdict.Warnings -> "warnings"
@@ -108,7 +111,7 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
         printUpdateHeader(plugin, verdict, pluginId)
       }
       div {
-        printVerificationResult(verdict, plugin, options)
+        printVerificationResult(verdict, plugin)
       }
     }
   }
@@ -132,7 +135,7 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
     }
   }
 
-  private fun HtmlBuilder.printVerificationResult(verdict: Verdict, plugin: PluginInfo, options: PrinterOptions) {
+  private fun HtmlBuilder.printVerificationResult(verdict: Verdict, plugin: PluginInfo) {
     return when (verdict) {
       is Verdict.OK -> +"No problems."
       is Verdict.Warnings -> printWarnings(verdict.warnings)
@@ -140,15 +143,15 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
       is Verdict.Bad -> printShortAndFullDescription(verdict.pluginProblems.joinToString(), plugin.pluginId)
       is Verdict.NotFound -> printShortAndFullDescription("Plugin $plugin is not found in the Repository", verdict.reason)
       is Verdict.FailedToDownload -> printShortAndFullDescription("Plugin $plugin is not downloaded from the Repository", verdict.reason)
-      is Verdict.MissingDependencies -> printMissingDependenciesResult(verdict, options)
+      is Verdict.MissingDependencies -> printMissingDependenciesResult(verdict)
     }
   }
 
-  private fun HtmlBuilder.printMissingDependenciesResult(verdict: Verdict.MissingDependencies, options: PrinterOptions) {
+  private fun HtmlBuilder.printMissingDependenciesResult(verdict: Verdict.MissingDependencies) {
     printProblems(verdict.problems)
     val missingDependencies = verdict.directMissingDependencies
     printMissingDependencies(missingDependencies.filterNot { it.dependency.isOptional })
-    printMissingDependencies(missingDependencies.filter { it.dependency.isOptional && !options.ignoreMissingOptionalDependency(it.dependency) })
+    printMissingDependencies(missingDependencies.filter { it.dependency.isOptional && !missingDependencyIgnoring.ignoreMissingOptionalDependency(it.dependency) })
   }
 
   private fun HtmlBuilder.printWarnings(warnings: Set<Warning>) {
@@ -164,9 +167,9 @@ class HtmlPrinter(val ideVersions: List<IdeVersion>,
     nonOptionals.forEach { printShortAndFullDescription("missing dependency: $it", it.missingReason) }
   }
 
-  private fun loadReportScript() = Resources.toString(HtmlPrinter::class.java.getResource("/reportScript.js"), Charset.forName("UTF-8"))
+  private fun loadReportScript() = Resources.toString(HtmlResultPrinter::class.java.getResource("/reportScript.js"), Charset.forName("UTF-8"))
 
-  private fun loadReportCss() = Resources.toString(HtmlPrinter::class.java.getResource("/reportCss.css"), Charset.forName("UTF-8"))
+  private fun loadReportCss() = Resources.toString(HtmlResultPrinter::class.java.getResource("/reportCss.css"), Charset.forName("UTF-8"))
 
   private fun HtmlBuilder.printProblems(problems: Set<Problem>) {
     problems

@@ -2,7 +2,7 @@ package org.jetbrains.plugins.verifier.service.servlets
 
 import com.jetbrains.pluginverifier.misc.bytesToGigabytes
 import com.jetbrains.pluginverifier.misc.bytesToMegabytes
-import com.jetbrains.pluginverifier.output.HtmlBuilder
+import com.jetbrains.pluginverifier.output.html.HtmlBuilder
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.ServerInstance
