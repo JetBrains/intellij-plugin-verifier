@@ -3,17 +3,11 @@ package com.jetbrains.pluginverifier.parameters
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 
 /**
  * Accumulates parameters of the upcoming verification.
  */
 data class VerifierParameters(
-
-    /**
-     * The JDK against which the plugins will be verified.
-     */
-    val jdkDescriptor: JdkDescriptor,
 
     /**
      * Ignore missing classes having the listed packages

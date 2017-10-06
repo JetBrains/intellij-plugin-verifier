@@ -6,13 +6,13 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
 import com.jetbrains.pluginverifier.logging.VerificationLoggerImpl
 import com.jetbrains.pluginverifier.logging.loggers.Slf4JLogger
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
+import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.results.Result
@@ -48,9 +48,10 @@ class VerifierExecutorTest {
       ideDescriptor.use {
         val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
         val problemsFilters = OptionsParser.getProblemsFilters(CmdOpts())
-        val verifierParams = VerifierParameters(JdkDescriptor(File(jdkPath)), externalClassesPrefixes, problemsFilters, EmptyResolver, NotFoundDependencyFinder())
+        val jdkDescriptor = JdkDescriptor(File(jdkPath))
+        val verifierParams = VerifierParameters(externalClassesPrefixes, problemsFilters, EmptyResolver, NotFoundDependencyFinder())
         val tasks = listOf(pluginCoordinate to ideDescriptor)
-        return Verification.run(verifierParams, pluginDetailsProvider, tasks, VerificationLoggerImpl(Slf4JLogger(LoggerFactory.getLogger("test")))).single()
+        return Verification.run(verifierParams, pluginDetailsProvider, tasks, VerificationLoggerImpl(Slf4JLogger(LoggerFactory.getLogger("test"))), jdkDescriptor).single()
       }
     }
 

@@ -12,12 +12,13 @@ import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
 import com.jetbrains.pluginverifier.logging.PluginLogger
 import com.jetbrains.pluginverifier.misc.closeLogged
-import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
+import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.progress.DefaultProgressIndicator
+import com.jetbrains.pluginverifier.progress.ProgressIndicator
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.Result
@@ -41,11 +42,11 @@ class Verifier(private val pluginCoordinate: PluginCoordinate,
   }
 
   override fun call(): Result {
-    pluginLogger.started()
+    pluginLogger.logVerificationStarted()
     try {
       return createPluginAndDoVerification()
     } finally {
-      pluginLogger.finished()
+      pluginLogger.logVerificationFinished()
     }
   }
 
@@ -120,7 +121,13 @@ class Verifier(private val pluginCoordinate: PluginCoordinate,
       val checkClasses = getClassesForCheck(pluginClassesLocations)
 
       val verificationContext = VerificationContext(classLoader, resultHolder, verifierParameters.externalClassesPrefixes)
-      runVerification(plugin, verificationContext, checkClasses)
+      val progressIndicator = object : DefaultProgressIndicator() {
+        override fun setProgress(value: Double) {
+          super.setProgress(value)
+          pluginLogger.logCompletedClasses(value)
+        }
+      }
+      runVerification(verificationContext, checkClasses, progressIndicator)
     } finally {
       depGraph.vertexSet().forEach { it.pluginDetails.closeLogged() }
     }
@@ -137,15 +144,8 @@ class Verifier(private val pluginCoordinate: PluginCoordinate,
     return UnionResolver.create(selectedClassLoaders)
   }
 
-  private fun runVerification(plugin: IdePlugin, verificationContext: VerificationContext, checkClasses: Set<String>) {
-    //todo: print progress properly.
-    val classesVerificationProgress = object : DefaultProgressIndicator() {
-      override fun setProgress(value: Double) {
-        super.setProgress(value)
-        pluginLogger.info("'$plugin' and #${ideDescriptor.ideVersion} finished " + "%.2f".format(value) + " of classes")
-      }
-    }
-    BytecodeVerifier().verify(checkClasses, verificationContext, classesVerificationProgress)
+  private fun runVerification(verificationContext: VerificationContext, checkClasses: Set<String>, progressIndicator: ProgressIndicator) {
+    BytecodeVerifier().verify(checkClasses, verificationContext, progressIndicator)
   }
 
   /**

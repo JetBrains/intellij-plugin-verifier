@@ -34,12 +34,14 @@ class VerificationResultHolder(private val idePlugin: IdePlugin,
   fun registerProblem(problem: Problem) {
     val accepted = problemsFilters.all { it.accept(idePlugin, problem) }
     if (accepted) {
+      pluginLogger.logNewProblemDetected(problem)
       problems.add(problem)
     }
   }
 
-  fun registerWarning(warning: Warning) {
+  private fun registerWarning(warning: Warning) {
     warnings.add(warning)
+    pluginLogger.logNewWarningDetected(warning)
   }
 
   private fun addCycleWarningIfExists(dependenciesGraph: DependenciesGraph) {

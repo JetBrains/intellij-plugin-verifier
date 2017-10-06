@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.results.Result
@@ -20,11 +21,12 @@ object Verification {
   fun run(verifierParameters: VerifierParameters,
           pluginDetailsProvider: PluginDetailsProvider,
           tasks: List<Pair<PluginCoordinate, IdeDescriptor>>,
-          logger: VerificationLogger): List<Result> {
+          logger: VerificationLogger,
+          jdkDescriptor: JdkDescriptor): List<Result> {
     val concurrentWorkers = estimateNumberOfConcurrentWorkers(logger)
     logger.logEvent("Creating verifier with $concurrentWorkers " + " worker".pluralize(concurrentWorkers))
     return VerifierExecutor(concurrentWorkers).use {
-      it.verify(tasks, verifierParameters, pluginDetailsProvider, logger)
+      it.verify(tasks, jdkDescriptor, verifierParameters, pluginDetailsProvider, logger)
     }
   }
 

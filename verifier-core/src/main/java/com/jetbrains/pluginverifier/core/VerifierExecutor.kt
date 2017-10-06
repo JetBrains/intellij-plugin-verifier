@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.logging.VerificationLogger
 import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.results.Result
@@ -34,11 +35,12 @@ class VerifierExecutor(concurrentWorkers: Int) : Closeable {
 
   fun verify(
       tasks: List<Pair<PluginCoordinate, IdeDescriptor>>,
+      jdkDescriptor: JdkDescriptor,
       parameters: VerifierParameters,
       pluginDetailsProvider: PluginDetailsProvider,
       logger: VerificationLogger
   ): List<Result> {
-    val jdkResolver = JdkResolverCreator.createJdkResolver(parameters.jdkDescriptor.homeDir)
+    val jdkResolver = JdkResolverCreator.createJdkResolver(jdkDescriptor.homeDir)
     return jdkResolver.use {
       runVerificationConcurrently(executor, tasks, logger, jdkResolver, parameters, pluginDetailsProvider)
     }

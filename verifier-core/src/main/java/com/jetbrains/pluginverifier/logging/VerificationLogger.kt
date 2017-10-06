@@ -12,4 +12,6 @@ interface VerificationLogger {
 
   fun createPluginLogger(pluginCoordinate: PluginCoordinate, ideDescriptor: IdeDescriptor): PluginLogger
 
+  fun logPluginVerificationFinished(pluginLogger: PluginLogger)
+
 }

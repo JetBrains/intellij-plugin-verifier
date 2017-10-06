@@ -2,14 +2,26 @@ package com.jetbrains.pluginverifier.logging
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.logging.loggers.Logger
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.warnings.Warning
 
-class PluginLoggerImpl(val verificationLogger: VerificationLoggerImpl,
+class PluginLoggerImpl(private val verificationLogger: VerificationLogger,
                        override val plugin: PluginCoordinate,
-                       override val ideVersion: IdeVersion,
-                       private val logger: Logger) : PluginLogger {
+                       override val ideVersion: IdeVersion) : PluginLogger {
+  override fun logCompletedClasses(fraction: Double) {
+    info("Verification of '$plugin' and #$ideVersion finished " + "%.2f".format(fraction) + "% of classes")
+  }
+
+  override fun logNewProblemDetected(problem: Problem) {
+
+  }
+
+  override fun logNewWarningDetected(warning: Warning) {
+
+  }
+
   override fun info(message: String) {
 
   }
@@ -24,28 +36,22 @@ class PluginLoggerImpl(val verificationLogger: VerificationLoggerImpl,
 
   private var startTime: Long = 0
 
-  private var verdict: Verdict? = null
-
-  override fun started() {
-    logger.info("Verification of $plugin with $ideVersion is starting")
+  override fun logVerificationStarted() {
+    info("Verification of $plugin with $ideVersion is starting")
     startTime = System.currentTimeMillis()
   }
 
-  override fun finished() {
+  override fun logVerificationFinished() {
     val elapsedTime = System.currentTimeMillis() - startTime
-    logger.info("Verification of $plugin with $ideVersion is finished in ${elapsedTime / 1000} seconds")
-
-    if (verdict != null) {
-      verificationLogger.pluginFinished(plugin, ideVersion, verdict!!)
-    }
+    info("Verification of $plugin with $ideVersion is finished in ${elapsedTime / 1000} seconds")
   }
 
   override fun logDependencyGraph(dependenciesGraph: DependenciesGraph) {
-    logger.info("Dependencies graph for $plugin: $dependenciesGraph")
+    info("Dependencies graph for $plugin: $dependenciesGraph")
   }
 
   override fun logVerdict(verdict: Verdict) {
-    this.verdict = verdict
+    verificationLogger.logPluginVerificationFinished(this)
   }
 
 }

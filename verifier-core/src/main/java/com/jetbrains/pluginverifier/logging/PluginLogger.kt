@@ -4,6 +4,8 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.warnings.Warning
 
 /**
  * @author Sergey Patrikeev
@@ -13,11 +15,17 @@ interface PluginLogger {
 
   val ideVersion: IdeVersion
 
-  fun started()
+  fun logVerificationStarted()
 
-  fun finished()
+  fun logVerificationFinished()
 
   fun logDependencyGraph(dependenciesGraph: DependenciesGraph)
+
+  fun logNewProblemDetected(problem: Problem)
+
+  fun logNewWarningDetected(warning: Warning)
+
+  fun logCompletedClasses(fraction: Double)
 
   fun logVerdict(verdict: Verdict)
 
