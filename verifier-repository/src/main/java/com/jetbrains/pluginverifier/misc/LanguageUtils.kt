@@ -114,6 +114,19 @@ fun String.pluralize(times: Int): String {
   }
 }
 
+fun <T> List<T>.listEndsWith(vararg ending: T): Boolean {
+  if (ending.isEmpty()) {
+    return true
+  }
+  if (size < ending.size) {
+    return false
+  }
+  if (size == ending.size) {
+    return this == ending.toList()
+  }
+  return ending.indices.all { index -> ending[index] == this[size - ending.size + index] }
+}
+
 fun impossible(): Nothing = throw AssertionError("Impossible")
 
 fun Long.bytesToMegabytes(digits: Int = 2): String = "%.${digits}f".format(this.toDouble() / FileUtils.ONE_MB)

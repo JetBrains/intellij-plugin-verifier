@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.progress
 
+//replace with ProgressReporter
 interface ProgressIndicator {
   fun getProgress(): Double
 

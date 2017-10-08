@@ -17,11 +17,11 @@ class DocumentedProblemsParserTest {
     val text = DocumentedProblemsParserTest::class.java.getResourceAsStream("/documentedProblems.md").bufferedReader().use { it.readText() }
     val documentedProblems: List<DocumentedProblem> = parser.parse(text)
     Assert.assertEquals(listOf(
-        "Access to unresolved class org.apache.sanselan..*",
-        "Access to unresolved class org.jetbrains.asm4..*",
-        "Abstract method com.intellij.openapi.application.ApplicationListener.afterWriteActionFinished.* is not implemented",
-        "Access to unresolved field com.intellij.util.net.HttpConfigurable.PROXY_LOGIN.*",
-        "Access to unresolved field com.intellij.util.net.HttpConfigurable.PROXY_PASSWORD_CRYPT.*"
-    ), documentedProblems.map { it.problemRegex.pattern })
+        DocumentedProblem.PackageRemoved("com/example/deletedPackage"),
+        DocumentedProblem.AbstractMethodAdded("com/example/Faz", "newAbstractMethod"),
+        DocumentedProblem.FieldRemoved("com/example/Baz", "REMOVED_FIELD"),
+        DocumentedProblem.ClassRemoved("com/example/Foo"),
+        DocumentedProblem.MethodRemoved("com/example/Bar", "removedMethod")
+    ), documentedProblems)
   }
 }
