@@ -16,8 +16,7 @@ import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
-import com.jetbrains.pluginverifier.progress.DefaultProgressIndicator
-import com.jetbrains.pluginverifier.progress.ProgressIndicator
+import com.jetbrains.pluginverifier.reporting.progress.ProgressReporter
 import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -122,10 +121,11 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
       val checkClasses = getClassesForCheck(pluginClassesLocations)
 
       val verificationContext = VerificationContext(classLoader, resultHolder, verifierParameters.externalClassesPrefixes)
-      val progressIndicator = object : DefaultProgressIndicator() {
-        override fun setProgress(value: Double) {
-          super.setProgress(value)
-          pluginVerificationReportage.logProgress(value)
+      val progressIndicator = object : ProgressReporter {
+        override fun close() = Unit
+
+        override fun reportProgress(completed: Double) {
+          pluginVerificationReportage.logProgress(completed)
         }
       }
       runVerification(verificationContext, checkClasses, progressIndicator)
@@ -145,8 +145,8 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
     return UnionResolver.create(selectedClassLoaders)
   }
 
-  private fun runVerification(verificationContext: VerificationContext, checkClasses: Set<String>, progressIndicator: ProgressIndicator) {
-    BytecodeVerifier().verify(checkClasses, verificationContext, progressIndicator)
+  private fun runVerification(verificationContext: VerificationContext, checkClasses: Set<String>, progressReporter: ProgressReporter) {
+    BytecodeVerifier().verify(checkClasses, verificationContext, progressReporter)
   }
 
   /**
