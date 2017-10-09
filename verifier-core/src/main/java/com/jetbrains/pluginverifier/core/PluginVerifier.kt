@@ -54,6 +54,7 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
     return pluginDetails.use {
       val pluginInfo = pluginDetails.toPluginInfo()
       val verdict = pluginDetails.calculateVerdict()
+      pluginVerificationReportage.logVerdict(verdict)
       Result(pluginInfo, ideDescriptor.ideVersion, verdict)
     }
   }
