@@ -32,15 +32,16 @@ class VerificationResultHolder(private val idePlugin: IdePlugin,
   fun getDependenciesGraph(): DependenciesGraph = dependenciesGraph!!
 
   fun registerProblem(problem: Problem) {
-    for (problemFilter in problemFilters) {
-      val shouldReportProblem = problemFilter.shouldReportProblem(idePlugin, ideVersion, problem)
-      if (shouldReportProblem is ProblemsFilter.Result.Report) {
-        pluginVerificationReportage.logNewProblemDetected(problem)
-        problems.add(problem)
-      } else if (shouldReportProblem is ProblemsFilter.Result.Ignore) {
-        pluginVerificationReportage.logProblemIgnored(problem, shouldReportProblem.reason)
-      }
-    }
+    problemFilters
+        .map { it.shouldReportProblem(idePlugin, ideVersion, problem) }
+        .forEach {
+          if (it is ProblemsFilter.Result.Report) {
+            pluginVerificationReportage.logNewProblemDetected(problem)
+            problems.add(problem)
+          } else if (it is ProblemsFilter.Result.Ignore) {
+            pluginVerificationReportage.logProblemIgnored(problem, it.reason)
+          }
+        }
   }
 
   private fun registerWarning(warning: Warning) {
