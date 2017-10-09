@@ -104,13 +104,12 @@ object OptionsParser {
   private fun createIgnoredProblemsFilter(opts: CmdOpts): ProblemsFilter? {
     if (opts.ignoreProblemsFile != null) {
       val problemsToIgnore = getProblemsToIgnoreFromFile(opts.ignoreProblemsFile!!)
-      val savedIgnoredProblemsFile = getSavedIgnoredProblemsFile(opts)
-      return IgnoredProblemsFilter(problemsToIgnore, savedIgnoredProblemsFile)
+      return IgnoredProblemsFilter(problemsToIgnore)
     }
     return null
   }
 
-  private fun getSavedIgnoredProblemsFile(opts: CmdOpts): File? = if (opts.saveIgnoredProblemsFile != null) {
+  fun getSaveIgnoredProblemsFile(opts: CmdOpts): File? = if (opts.saveIgnoredProblemsFile != null) {
     val file = File(opts.saveIgnoredProblemsFile!!)
     file.deleteLogged()
     file
@@ -122,8 +121,7 @@ object OptionsParser {
     if (opts.documentedProblemsPageUrl != null) {
       val documentedPage = fetchDocumentedProblemsPage(opts) ?: return null
       val documentedProblems = DocumentedProblemsParser().parse(documentedPage)
-      val savedIgnoredProblemsFile = getSavedIgnoredProblemsFile(opts)
-      return DocumentedProblemsFilter(documentedProblems, savedIgnoredProblemsFile)
+      return DocumentedProblemsFilter(documentedProblems)
     }
     return null
   }

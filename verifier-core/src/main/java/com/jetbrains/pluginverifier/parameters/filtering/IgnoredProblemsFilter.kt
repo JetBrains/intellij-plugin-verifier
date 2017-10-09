@@ -2,18 +2,13 @@ package com.jetbrains.pluginverifier.parameters.filtering
 
 import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.results.problems.Problem
-import java.io.File
 
-class IgnoredProblemsFilter(private val problemsToIgnore: Multimap<PluginIdAndVersion, Regex>,
-                            private val saveIgnoredProblemsFile: File?) : ProblemsFilter() {
+class IgnoredProblemsFilter(private val problemsToIgnore: Multimap<PluginIdAndVersion, Regex>) : ProblemsFilter {
 
-  private val ignoredProblems = arrayListOf<Triple<IdePlugin, Problem, Regex>>()
-
-  override fun accept(plugin: IdePlugin, problem: Problem): Boolean = !isIgnoredProblem(plugin, problem)
-
-  private fun isIgnoredProblem(plugin: IdePlugin, problem: Problem): Boolean {
+  override fun shouldReportProblem(plugin: IdePlugin, ideVersion: IdeVersion, problem: Problem): ProblemsFilter.Result {
     val xmlId = plugin.pluginId
     val version = plugin.pluginVersion
     for ((pluginIdAndVersion, ignoredPattern) in problemsToIgnore.entries()) {
@@ -22,24 +17,12 @@ class IgnoredProblemsFilter(private val problemsToIgnore: Multimap<PluginIdAndVe
       if (xmlId == ignoreXmlId) {
         if (ignoreVersion.isEmpty() || version == ignoreVersion) {
           if (problem.shortDescription.matches(ignoredPattern)) {
-            ignoredProblems.add(Triple(plugin, problem, ignoredPattern))
-            return true
+            return ProblemsFilter.Result.Ignore("ignoring pattern matches - $ignoredPattern")
           }
         }
       }
     }
-    return false
-  }
-
-  private fun generateIgnoredProblemLine(plugin: IdePlugin, problem: Problem, regex: Regex): String =
-      "Problem of the plugin $plugin was ignored by the ignoring pattern: ${regex.pattern}:\n#${problem.fullDescription}"
-
-  override fun onClose() {
-    saveIgnoredProblemsFile?.bufferedWriter()?.use { writer ->
-      for ((plugin, problem, regex) in ignoredProblems) {
-        writer.appendln(generateIgnoredProblemLine(plugin, problem, regex))
-      }
-    }
+    return ProblemsFilter.Result.Report
   }
 
 }

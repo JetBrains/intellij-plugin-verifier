@@ -30,7 +30,6 @@ Excluded plugins: [${excludedPlugins.joinToString()}]
   override fun close() {
     ideDescriptor.closeLogged()
     externalClassPath.closeLogged()
-    problemsFilters.forEach { it.closeLogged() }
   }
 
   override fun toString(): String = presentableText()

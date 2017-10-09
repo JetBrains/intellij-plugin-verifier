@@ -11,7 +11,6 @@ class PluginVerificationReportageImpl(private val verificationReportage: Verific
                                       override val plugin: PluginCoordinate,
                                       override val ideVersion: IdeVersion,
                                       private val reporterSet: ReporterSet) : PluginVerificationReportage {
-
   private var startTime: Long = 0
 
   override fun logVerificationStarted() {
@@ -47,6 +46,11 @@ class PluginVerificationReportageImpl(private val verificationReportage: Verific
 
   private fun reportMessage(message: String) {
     reporterSet.messageReporters.forEach { it.report(message) }
+  }
+
+  override fun logProblemIgnored(problem: Problem, reason: String) {
+    val line = "Problem of the plugin $plugin with #$ideVersion was ignored: $reason:\n  $problem"
+    reporterSet.ignoredProblemReporters.forEach { it.report(line) }
   }
 
   override fun close() {

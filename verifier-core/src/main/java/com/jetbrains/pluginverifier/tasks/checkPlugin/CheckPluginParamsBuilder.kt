@@ -24,8 +24,8 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
     val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
     val externalClasspath = OptionsParser.getExternalClassPath(opts)
     externalClasspath.closeOnException {
-      val problemsFilter = OptionsParser.getProblemsFilters(opts)
-      return CheckPluginParams(coordinates, ideDescriptors, jdkDescriptor, externalClassesPrefixes, problemsFilter, externalClasspath)
+      val problemsFilters = OptionsParser.getProblemsFilters(opts)
+      return CheckPluginParams(coordinates, ideDescriptors, jdkDescriptor, externalClassesPrefixes, problemsFilters, externalClasspath)
     }
   }
 

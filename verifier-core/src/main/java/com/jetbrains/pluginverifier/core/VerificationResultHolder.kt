@@ -14,7 +14,7 @@ import com.jetbrains.pluginverifier.results.warnings.Warning
  */
 class VerificationResultHolder(private val idePlugin: IdePlugin,
                                private val ideVersion: IdeVersion,
-                               private val problemsFilters: List<ProblemsFilter>,
+                               private val problemFilters: List<ProblemsFilter>,
                                private val pluginVerificationReportage: PluginVerificationReportage) {
 
   val problems: MutableSet<Problem> = hashSetOf()
@@ -32,10 +32,14 @@ class VerificationResultHolder(private val idePlugin: IdePlugin,
   fun getDependenciesGraph(): DependenciesGraph = dependenciesGraph!!
 
   fun registerProblem(problem: Problem) {
-    val accepted = problemsFilters.all { it.accept(idePlugin, problem) }
-    if (accepted) {
-      pluginVerificationReportage.logNewProblemDetected(problem)
-      problems.add(problem)
+    for (problemFilter in problemFilters) {
+      val shouldReportProblem = problemFilter.shouldReportProblem(idePlugin, ideVersion, problem)
+      if (shouldReportProblem is ProblemsFilter.Result.Report) {
+        pluginVerificationReportage.logNewProblemDetected(problem)
+        problems.add(problem)
+      } else if (shouldReportProblem is ProblemsFilter.Result.Ignore) {
+        pluginVerificationReportage.logProblemIgnored(problem, shouldReportProblem.reason)
+      }
     }
   }
 

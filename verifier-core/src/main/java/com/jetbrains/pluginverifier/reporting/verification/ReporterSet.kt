@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.reporting.verification
 
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.reporting.dependencies.DependencyGraphReporter
+import com.jetbrains.pluginverifier.reporting.ignoring.IgnoredProblemReporter
 import com.jetbrains.pluginverifier.reporting.message.MessageReporter
 import com.jetbrains.pluginverifier.reporting.problems.ProblemReporter
 import com.jetbrains.pluginverifier.reporting.progress.ProgressReporter
@@ -18,7 +19,8 @@ data class ReporterSet(
     val progressReporters: List<ProgressReporter>,
     val warningReporters: List<WarningReporter>,
     val problemsReporters: List<ProblemReporter>,
-    val dependenciesGraphReporters: List<DependencyGraphReporter>
+    val dependenciesGraphReporters: List<DependencyGraphReporter>,
+    val ignoredProblemReporters: List<IgnoredProblemReporter>
 ) : Closeable {
   override fun close() {
     verdictReporters.forEach { it.closeLogged() }
@@ -27,5 +29,6 @@ data class ReporterSet(
     problemsReporters.forEach { it.closeLogged() }
     warningReporters.forEach { it.closeLogged() }
     dependenciesGraphReporters.forEach { it.closeLogged() }
+    ignoredProblemReporters.forEach { it.closeLogged() }
   }
 }

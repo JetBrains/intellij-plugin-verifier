@@ -53,7 +53,7 @@ class VerifierExecutorTest {
         val tasks = listOf(pluginCoordinate to ideDescriptor)
         return Verification.run(verifierParams, pluginDetailsProvider, tasks, VerificationReportageImpl(emptyList(), emptyList(), object : ReporterSetProvider {
           override fun provide(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): ReporterSet =
-              ReporterSet(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
+              ReporterSet(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
         }), jdkDescriptor).single()
       }
     }

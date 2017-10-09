@@ -94,7 +94,8 @@ class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
                 progressReporters = listOf(DelegateProgressReporter(progress)),
                 warningReporters = emptyList(),
                 problemsReporters = emptyList(),
-                dependenciesGraphReporters = listOf(LogDependencyGraphReporter(LOG))
+                dependenciesGraphReporters = listOf(LogDependencyGraphReporter(LOG)),
+                ignoredProblemReporters = emptyList()
             )
           }
         }

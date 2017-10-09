@@ -1,32 +1,18 @@
 package com.jetbrains.pluginverifier.parameters.filtering
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblem
 import com.jetbrains.pluginverifier.results.problems.Problem
-import java.io.File
 
-class DocumentedProblemsFilter(private val documentedProblems: List<DocumentedProblem>,
-                               private val documentedIgnoredProblemsFile: File?) : ProblemsFilter() {
+class DocumentedProblemsFilter(private val documentedProblems: List<DocumentedProblem>) : ProblemsFilter {
 
-  private val ignoredProblems = arrayListOf<Triple<IdePlugin, Problem, DocumentedProblem>>()
-
-  override fun accept(plugin: IdePlugin, problem: Problem): Boolean {
+  override fun shouldReportProblem(plugin: IdePlugin, ideVersion: IdeVersion, problem: Problem): ProblemsFilter.Result {
     val documentedProblem = documentedProblems.find { it.isDocumenting(problem) }
     if (documentedProblem != null) {
-      ignoredProblems.add(Triple(plugin, problem, documentedProblem))
+      return ProblemsFilter.Result.Ignore("the problem is already documented in the API Breakages page (http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html)\n $problem")
     }
-    return documentedProblem == null
+    return ProblemsFilter.Result.Report
   }
 
-  override fun onClose() {
-    documentedIgnoredProblemsFile?.bufferedWriter()?.use { writer ->
-      for ((plugin, problem, documentedProblem) in ignoredProblems) {
-        writer.appendln(getIgnoredProblemLine(plugin, documentedProblem, problem))
-      }
-    }
-  }
-
-  private fun getIgnoredProblemLine(plugin: IdePlugin, documentedProblem: DocumentedProblem, problem: Problem) =
-      "Problem of the plugin $plugin is already documented on the http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html " +
-          "by $documentedProblem:\n#${problem.fullDescription}"
 }

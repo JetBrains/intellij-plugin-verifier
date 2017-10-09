@@ -25,7 +25,6 @@ data class CheckPluginParams(val pluginCoordinates: List<PluginCoordinate>,
 
   override fun close() {
     ideDescriptors.forEach { it.closeLogged() }
-    problemsFilters.forEach { it.closeLogged() }
   }
 
   override fun toString(): String = presentableText()

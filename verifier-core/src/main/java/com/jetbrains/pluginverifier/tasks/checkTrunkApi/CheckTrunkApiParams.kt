@@ -27,7 +27,6 @@ JDK: $jdkDescriptor
   override fun close() {
     trunkIde.closeLogged()
     releaseIde.closeLogged()
-    problemsFilters.forEach { it.closeLogged() }
     if (deleteMajorIdeOnExit) {
       majorIdeFile.deleteLogged()
     }

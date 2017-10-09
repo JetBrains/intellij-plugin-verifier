@@ -95,7 +95,8 @@ object PluginVerifierMain {
     }
 
     val reportsDirectory = OptionsParser.getVerificationReportsDirectory(opts)
-    val verificationReportage = createVerificationReportage(reportsDirectory)
+    val saveIgnoredProblemsFile = OptionsParser.getSaveIgnoredProblemsFile(opts)
+    val verificationReportage = createVerificationReportage(reportsDirectory, saveIgnoredProblemsFile)
 
     val taskResult = parameters.use {
       println("Task ${runner.commandName} parameters: $parameters")
@@ -107,16 +108,16 @@ object PluginVerifierMain {
     taskResult.printResults(printerOptions, pluginRepository)
   }
 
-  private fun createVerificationReportage(reportsDirectory: File?): VerificationReportage {
+  private fun createVerificationReportage(reportsDirectory: File?, saveIgnoredProblemsFile: File?): VerificationReportage {
     val logger = LoggerFactory.getLogger("verification")
     val messageReporters = listOf(LogMessageReporter(logger))
     val progressReporters = emptyList<ProgressReporter>()
-    val reporterSetProvider = createReporterSetProvider(reportsDirectory)
+    val reporterSetProvider = createReporterSetProvider(reportsDirectory, saveIgnoredProblemsFile)
     return VerificationReportageImpl(messageReporters, progressReporters, reporterSetProvider)
   }
 
-  private fun createReporterSetProvider(reportsDirectory: File?) =
-      MainVerificationReporterSetProvider(reportsDirectory)
+  private fun createReporterSetProvider(reportsDirectory: File?, saveIgnoredProblemsFile: File?) =
+      MainVerificationReporterSetProvider(reportsDirectory, saveIgnoredProblemsFile)
 
   private fun findTaskRunner(command: String?) = taskRunners.find { command == it.commandName }
       ?: throw IllegalArgumentException("Unsupported command: $command. Supported commands: ${taskRunners.map { it.commandName }}")

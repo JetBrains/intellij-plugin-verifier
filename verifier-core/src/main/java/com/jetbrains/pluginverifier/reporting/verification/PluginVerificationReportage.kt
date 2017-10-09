@@ -30,4 +30,6 @@ interface PluginVerificationReportage : Closeable {
 
   fun logVerdict(verdict: Verdict)
 
+  fun logProblemIgnored(problem: Problem, reason: String)
+
 }
