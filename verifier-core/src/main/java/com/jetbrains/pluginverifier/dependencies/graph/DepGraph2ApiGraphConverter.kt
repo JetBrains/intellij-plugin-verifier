@@ -10,6 +10,10 @@ import org.jgrapht.DirectedGraph
 
 class DepGraph2ApiGraphConverter {
 
+  companion object {
+    val UNSPECIFIED_VERSION = "<unspecified>"
+  }
+
   fun convert(graph: DirectedGraph<DepVertex, DepEdge>, startVertex: DepVertex): DependenciesGraph {
     val startNode = startVertex.toDependencyNode(graph)!!
     val vertices = graph.vertexSet().mapNotNull { it.toDependencyNode(graph) }
@@ -41,7 +45,7 @@ class DepGraph2ApiGraphConverter {
   private fun DepVertex.toDependencyNode(graph: DirectedGraph<DepVertex, DepEdge>): DependencyNode? {
     val missingDependencies = graph.outgoingEdgesOf(this).mapNotNull { it.toMissingDependency() }
     val plugin = pluginDetails.plugin
-    return plugin?.run { DependencyNode(pluginId ?: dependencyId, pluginVersion ?: "<UNSPECIFIED>", missingDependencies) }
+    return plugin?.run { DependencyNode(pluginId ?: dependencyId, pluginVersion ?: UNSPECIFIED_VERSION, missingDependencies) }
   }
 
 }

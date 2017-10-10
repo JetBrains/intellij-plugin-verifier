@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.dependencies
 
 import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphCycleFinder
 import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphWalker
+import com.jetbrains.pluginverifier.reporting.dependencies.DependenciesGraphPrettyPrinter
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -25,20 +26,6 @@ data class DependenciesGraph(val start: DependencyNode,
     return result
   }
 
-  override fun toString(): String = buildString {
-    append("Start: $start; Vertices: ${vertices.size}; Edges: ${edges.size};")
-    DependenciesGraphWalker(this@DependenciesGraph, { node ->
-      val edgesFromNode = edges.filter { node == it.from }
-      if (edgesFromNode.isNotEmpty()) {
-        appendln()
-        append("From $node to [${edgesFromNode.joinToString { (_, to, dependency) -> to.toString() + if (dependency.isOptional) " (optional)" else "" }}]")
-      }
-      if (node.missingDependencies.isNotEmpty()) {
-        appendln()
-        append("Missing dependencies of $node: " + node.missingDependencies.joinToString())
-      }
-    }, {}).walk(start)
-  }
-
+  override fun toString(): String = DependenciesGraphPrettyPrinter(this).prettyPresentation()
 
 }
