@@ -18,8 +18,6 @@ import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeParams
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeResult
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeTask
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 /**
  * @author Sergey Patrikeev
@@ -28,8 +26,17 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
                         private val pluginRepository: PluginRepository,
                         private val pluginDetailsProvider: PluginDetailsProvider) : Task() {
 
-  companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiTask::class.java)
+  private fun <T> List<T>.printInColumns(columns: Int, minColumnWidth: Int): String {
+    val list = this
+    return buildString {
+      var pos = 0
+      while (pos < list.size) {
+        val subList = list.subList(pos, minOf(pos + columns, list.size))
+        val row = subList.map { it.toString() }.joinToString(separator = "") { it.padEnd(minColumnWidth) }
+        appendln(row)
+        pos += columns
+      }
+    }
   }
 
   override fun execute(verificationReportage: VerificationReportage): CheckTrunkApiResult {
@@ -38,7 +45,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
 
     val pluginsToCheck = pluginRepository.getLastCompatibleUpdates(releaseVersion).filterNot { it.pluginId in parameters.jetBrainsPluginIds }
 
-    LOG.debug("The following updates will be checked with both #$trunkVersion and #$releaseVersion: " + pluginsToCheck.joinToString())
+    println("The following updates will be checked with both #$trunkVersion and #$releaseVersion:\n" + pluginsToCheck.sortedBy { it.updateId }.printInColumns(4, 60))
 
     val releaseResults = checkIde(parameters.releaseIde, pluginsToCheck, ReleaseFinder(), verificationReportage)
     val trunkResults = checkIde(parameters.trunkIde, pluginsToCheck, TrunkFinder(), verificationReportage)
