@@ -95,11 +95,12 @@ object PluginVerifierMain {
       exitProcess(1)
     }
 
-    val taskResult = createVerificationReportage(opts).use { verificationReportage ->
-      parameters.use {
-        println("Task ${runner.commandName} parameters: $parameters")
-        val task = runner.createTask(parameters, pluginRepository, pluginDetailsProvider)
-        task.execute(verificationReportage)
+    val taskResult = parameters.use {
+      println("Task ${runner.commandName} parameters: $parameters")
+      createVerificationReportage(opts).use { verificationReportage ->
+        runner
+            .createTask(parameters, pluginRepository, pluginDetailsProvider)
+            .execute(verificationReportage)
       }
     }
 
