@@ -4,13 +4,12 @@ import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
-import com.jetbrains.pluginverifier.reporting.message.MessageReporter
-import com.jetbrains.pluginverifier.reporting.progress.ProgressReporter
+import com.jetbrains.pluginverifier.reporting.Reporter
 
-class VerificationReportageImpl(private val messageReporters: List<MessageReporter>,
-                                private val progressReporters: List<ProgressReporter>,
+class VerificationReportageImpl(private val messageReporters: List<Reporter<String>>,
+                                private val progressReporters: List<Reporter<Double>>,
+                                private val allIgnoredProblemsReporter: Reporter<String>,
                                 private val reporterSetProvider: ReporterSetProvider) : VerificationReportage {
-
   private var verifiedPlugins: Int = 0
 
   private var totalPlugins: Int = 0
@@ -36,6 +35,12 @@ class VerificationReportageImpl(private val messageReporters: List<MessageReport
     totalPlugins++
     val reporterSet = reporterSetProvider.provide(pluginCoordinate, ideDescriptor.ideVersion)
     return PluginVerificationReportageImpl(this, pluginCoordinate, ideDescriptor.ideVersion, reporterSet)
+  }
+
+  override fun close() {
+    messageReporters.forEach { it.closeLogged() }
+    progressReporters.forEach { it.closeLogged() }
+    allIgnoredProblemsReporter.closeLogged()
   }
 
 }

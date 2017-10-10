@@ -6,8 +6,8 @@ import org.slf4j.Logger
 /**
  * @author Sergey Patrikeev
  */
-open class LogReporter<T>(private val logger: Logger,
-                          private val lineProvider: (T) -> String = { it.toString() }) : Reporter<T> {
+open class LogReporter<in T>(private val logger: Logger,
+                             private val lineProvider: (T) -> String = { it.toString() }) : Reporter<T> {
   override fun close() = Unit
 
   override fun report(t: T) {

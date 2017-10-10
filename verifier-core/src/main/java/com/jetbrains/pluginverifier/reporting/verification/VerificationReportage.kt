@@ -2,11 +2,12 @@ package com.jetbrains.pluginverifier.reporting.verification
 
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
+import java.io.Closeable
 
 /**
  * @author Sergey Patrikeev
  */
-interface VerificationReportage {
+interface VerificationReportage : Closeable {
 
   fun logVerificationExecutorCreated(availableMemory: Long, availableCpu: Long, concurrencyLevel: Int)
 

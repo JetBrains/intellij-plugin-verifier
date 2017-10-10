@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.reporting.verification
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
+import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
@@ -11,16 +12,17 @@ class PluginVerificationReportageImpl(private val verificationReportage: Verific
                                       override val plugin: PluginCoordinate,
                                       override val ideVersion: IdeVersion,
                                       private val reporterSet: ReporterSet) : PluginVerificationReportage {
+  @Volatile
   private var startTime: Long = 0
 
   override fun logVerificationStarted() {
-    reportMessage("Verification of $plugin with $ideVersion is starting")
+    reportMessage("Start verification of $plugin with $ideVersion")
     startTime = System.currentTimeMillis()
   }
 
   override fun logVerificationFinished() {
     val elapsedTime = System.currentTimeMillis() - startTime
-    reportMessage("Verification of $plugin with $ideVersion is finished in ${"%.2f".format((elapsedTime / 1000).toDouble())} seconds")
+    reportMessage("Finished verification of $plugin with $ideVersion in ${"%.2f".format(elapsedTime / 1000.0)} seconds")
     verificationReportage.logPluginVerificationFinished(this)
   }
 
@@ -49,8 +51,7 @@ class PluginVerificationReportageImpl(private val verificationReportage: Verific
   }
 
   override fun logProblemIgnored(problem: Problem, reason: String) {
-    val line = "Problem of the plugin $plugin with #$ideVersion was ignored: $reason:\n  $problem"
-    reporterSet.ignoredProblemReporters.forEach { it.report(line) }
+    reporterSet.ignoredProblemReporters.forEach { it.report(ProblemIgnoredEvent(plugin, ideVersion, problem, reason)) }
   }
 
   override fun close() {

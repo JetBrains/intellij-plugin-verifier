@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.reporting.dependencies
+package com.jetbrains.pluginverifier.dependencies.presentation
 
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
@@ -35,7 +35,7 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
   private fun recursivelyCalculateLines(currentNode: DependencyNode): List<String> {
     if (currentNode in visitedNodes) {
       //This node has already been printed with all its dependencies.
-      return listOf("$currentNode $TRANSITIVE_DEPENDENCY_SUFFIX")
+      return listOf("$currentNode ${TRANSITIVE_DEPENDENCY_SUFFIX}")
     }
     visitedNodes.add(currentNode)
     val result = arrayListOf<String>()
@@ -62,7 +62,7 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
     }
 
     currentNode.missingDependencies.mapTo(childrenLines) { missingDependency ->
-      listOf("$FAILED_DEPENDENCY_PREFIX ${missingDependency.dependency}: ${missingDependency.missingReason}")
+      listOf("${FAILED_DEPENDENCY_PREFIX} ${missingDependency.dependency}: ${missingDependency.missingReason}")
     }
 
     if (childrenLines.isNotEmpty()) {

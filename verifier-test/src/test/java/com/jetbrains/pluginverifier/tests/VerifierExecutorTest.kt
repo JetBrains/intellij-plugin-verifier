@@ -13,6 +13,7 @@ import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
+import com.jetbrains.pluginverifier.reporting.common.IdleReporter
 import com.jetbrains.pluginverifier.reporting.verification.ReporterSet
 import com.jetbrains.pluginverifier.reporting.verification.ReporterSetProvider
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
@@ -51,7 +52,7 @@ class VerifierExecutorTest {
         val jdkDescriptor = JdkDescriptor(File(jdkPath))
         val verifierParams = VerifierParameters(externalClassesPrefixes, problemsFilters, EmptyResolver, NotFoundDependencyFinder())
         val tasks = listOf(pluginCoordinate to ideDescriptor)
-        return Verification.run(verifierParams, pluginDetailsProvider, tasks, VerificationReportageImpl(emptyList(), emptyList(), object : ReporterSetProvider {
+        return Verification.run(verifierParams, pluginDetailsProvider, tasks, VerificationReportageImpl(emptyList(), emptyList(), IdleReporter(), object : ReporterSetProvider {
           override fun provide(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): ReporterSet =
               ReporterSet(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
         }), jdkDescriptor).single()

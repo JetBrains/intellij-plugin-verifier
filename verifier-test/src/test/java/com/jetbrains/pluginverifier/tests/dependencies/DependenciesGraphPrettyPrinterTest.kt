@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter
-import com.jetbrains.pluginverifier.reporting.dependencies.DependenciesGraphPrettyPrinter
+import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import org.junit.Assert
 import org.junit.Test

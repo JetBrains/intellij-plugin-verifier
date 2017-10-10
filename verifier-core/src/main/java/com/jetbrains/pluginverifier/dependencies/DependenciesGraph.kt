@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.dependencies
 
+import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphCycleFinder
 import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphWalker
-import com.jetbrains.pluginverifier.reporting.dependencies.DependenciesGraphPrettyPrinter
 import java.util.*
 import kotlin.collections.ArrayList
 

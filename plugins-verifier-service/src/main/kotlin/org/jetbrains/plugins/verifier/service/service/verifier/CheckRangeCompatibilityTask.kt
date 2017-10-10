@@ -9,10 +9,9 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
-import com.jetbrains.pluginverifier.reporting.dependencies.LogDependencyGraphReporter
-import com.jetbrains.pluginverifier.reporting.message.LogMessageReporter
-import com.jetbrains.pluginverifier.reporting.progress.ProgressReporter
-import com.jetbrains.pluginverifier.reporting.verdict.LogVerdictReporter
+import com.jetbrains.pluginverifier.reporting.Reporter
+import com.jetbrains.pluginverifier.reporting.common.IdleReporter
+import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.verification.ReporterSet
 import com.jetbrains.pluginverifier.reporting.verification.ReporterSetProvider
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
@@ -70,9 +69,9 @@ class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
     }
   }
 
-  private class DelegateProgressReporter(private val taskProgress: TaskProgress) : ProgressReporter {
-    override fun reportProgress(completed: Double) {
-      taskProgress.setFraction(completed)
+  private class DelegateProgressReporter(private val taskProgress: TaskProgress) : Reporter<Double> {
+    override fun report(t: Double) {
+      taskProgress.setFraction(t)
     }
 
     override fun close() = Unit
@@ -84,17 +83,18 @@ class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
                                          jdkDescriptor: JdkDescriptor,
                                          progress: TaskProgress): CheckRangeCompatibilityResult {
     val verifierProgress = VerificationReportageImpl(
-        messageReporters = listOf(LogMessageReporter(LOG)),
+        messageReporters = listOf(LogReporter(LOG)),
         progressReporters = listOf(DelegateProgressReporter(progress)),
+        allIgnoredProblemsReporter = IdleReporter(),
         reporterSetProvider = object : ReporterSetProvider {
           override fun provide(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): ReporterSet {
             return ReporterSet(
-                verdictReporters = listOf(LogVerdictReporter(LOG)),
-                messageReporters = listOf(LogMessageReporter(LOG)),
+                verdictReporters = listOf(LogReporter(LOG)),
+                messageReporters = listOf(LogReporter(LOG)),
                 progressReporters = listOf(DelegateProgressReporter(progress)),
                 warningReporters = emptyList(),
                 problemsReporters = emptyList(),
-                dependenciesGraphReporters = listOf(LogDependencyGraphReporter(LOG)),
+                dependenciesGraphReporters = listOf(LogReporter(LOG)),
                 ignoredProblemReporters = emptyList()
             )
           }

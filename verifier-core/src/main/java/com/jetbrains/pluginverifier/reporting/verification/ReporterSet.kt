@@ -1,26 +1,25 @@
 package com.jetbrains.pluginverifier.reporting.verification
 
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.misc.closeLogged
-import com.jetbrains.pluginverifier.reporting.dependencies.DependencyGraphReporter
-import com.jetbrains.pluginverifier.reporting.ignoring.IgnoredProblemReporter
-import com.jetbrains.pluginverifier.reporting.message.MessageReporter
-import com.jetbrains.pluginverifier.reporting.problems.ProblemReporter
-import com.jetbrains.pluginverifier.reporting.progress.ProgressReporter
-import com.jetbrains.pluginverifier.reporting.verdict.VerdictReporter
-import com.jetbrains.pluginverifier.reporting.warnings.WarningReporter
+import com.jetbrains.pluginverifier.reporting.Reporter
+import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
+import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.warnings.Warning
 import java.io.Closeable
 
 /**
  * @author Sergey Patrikeev
  */
 data class ReporterSet(
-    val verdictReporters: List<VerdictReporter>,
-    val messageReporters: List<MessageReporter>,
-    val progressReporters: List<ProgressReporter>,
-    val warningReporters: List<WarningReporter>,
-    val problemsReporters: List<ProblemReporter>,
-    val dependenciesGraphReporters: List<DependencyGraphReporter>,
-    val ignoredProblemReporters: List<IgnoredProblemReporter>
+    val verdictReporters: List<Reporter<Verdict>>,
+    val messageReporters: List<Reporter<String>>,
+    val progressReporters: List<Reporter<Double>>,
+    val warningReporters: List<Reporter<Warning>>,
+    val problemsReporters: List<Reporter<Problem>>,
+    val dependenciesGraphReporters: List<Reporter<DependenciesGraph>>,
+    val ignoredProblemReporters: List<Reporter<ProblemIgnoredEvent>>
 ) : Closeable {
   override fun close() {
     verdictReporters.forEach { it.closeLogged() }
