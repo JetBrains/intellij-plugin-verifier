@@ -21,6 +21,9 @@ open class CmdOpts(
     @set:Argument("ignore-all-missing-optional-dependencies", alias = "ignore-all-missing-opt-deps", description = "If specified, all the optional missing plugins will not be treated as problems")
     var ignoreAllMissingOptionalDeps: Boolean = false,
 
+    @set:Argument("print-plugin-verification-progress", alias = "ppvp", description = "If specified, the plugin verification progress in percentages will be printed during the verification process")
+    var printPluginVerificationProgress: Boolean = false,
+
     @set:Argument("ignore-specific-missing-optional-dependencies", alias = "ignore-specific-missing-opt-deps", delimiter = ":")
     var ignoreMissingOptionalDeps: Array<String> = arrayOf(),
 

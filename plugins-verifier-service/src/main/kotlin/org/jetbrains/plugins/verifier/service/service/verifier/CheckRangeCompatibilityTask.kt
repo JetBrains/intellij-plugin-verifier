@@ -82,30 +82,32 @@ class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
                                          ideDescriptors: List<IdeDescriptor>,
                                          jdkDescriptor: JdkDescriptor,
                                          progress: TaskProgress): CheckRangeCompatibilityResult {
-    val verifierProgress = VerificationReportageImpl(
-        messageReporters = listOf(LogReporter(LOG)),
-        progressReporters = listOf(DelegateProgressReporter(progress)),
-        allIgnoredProblemsReporter = IdleReporter(),
-        reporterSetProvider = object : ReporterSetProvider {
-          override fun provide(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): ReporterSet {
-            return ReporterSet(
-                verdictReporters = listOf(LogReporter(LOG)),
-                messageReporters = listOf(LogReporter(LOG)),
-                progressReporters = listOf(DelegateProgressReporter(progress)),
-                warningReporters = emptyList(),
-                problemsReporters = emptyList(),
-                dependenciesGraphReporters = listOf(LogReporter(LOG)),
-                ignoredProblemReporters = emptyList()
-            )
-          }
-        }
-    )
+    val verificationReportage = createVerificationReportage(progress)
     val params = CheckPluginParams(listOf(pluginCoordinate), ideDescriptors, jdkDescriptor, emptyList(), emptyList(), EmptyResolver)
     val checkPluginTask = CheckPluginTask(params, pluginRepository, pluginDetailsProvider)
-    val checkPluginResults = checkPluginTask.execute(verifierProgress)
+    val checkPluginResults = checkPluginTask.execute(verificationReportage)
     val results = checkPluginResults.results
     return CheckRangeCompatibilityResult(updateInfo, CheckRangeCompatibilityResult.ResultType.VERIFICATION_DONE, results)
   }
+
+  private fun createVerificationReportage(progress: TaskProgress) = VerificationReportageImpl(
+      messageReporters = listOf(LogReporter(LOG)),
+      progressReporters = listOf(DelegateProgressReporter(progress)),
+      allIgnoredProblemsReporter = IdleReporter(),
+      reporterSetProvider = object : ReporterSetProvider {
+        override fun provide(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): ReporterSet {
+          return ReporterSet(
+              verdictReporters = listOf(LogReporter(LOG)),
+              messageReporters = listOf(LogReporter(LOG)),
+              progressReporters = listOf(DelegateProgressReporter(progress)),
+              warningReporters = emptyList(),
+              problemsReporters = emptyList(),
+              dependenciesGraphReporters = listOf(LogReporter(LOG)),
+              ignoredProblemReporters = emptyList()
+          )
+        }
+      }
+  )
 
   private fun getAvailableIdesMatchingSinceUntilBuild(sinceBuild: IdeVersion, untilBuild: IdeVersion?): List<IdeFileLock> = IdeFilesManager.lockAndAccess {
     (ideVersions ?: IdeFilesManager.ideList())

@@ -40,22 +40,24 @@ class VerifierExecutorTest {
     lateinit var redundantProblems: MutableList<Problem>
 
     private fun doIdeaAndPluginVerification(ideaFile: File, pluginFile: File): Result {
-      val ideDescriptor = IdeCreator.createByFile(ideaFile, IdeVersion.createIdeVersion("IU-145.500"))
       val pluginCoordinate = PluginCoordinate.ByFile(pluginFile)
       val jdkPath = System.getenv("JAVA_HOME") ?: "/usr/lib/jvm/java-8-oracle"
       val tempFolder = Files.createTempDir()
       tempFolder.deleteOnExit()
       val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
-      ideDescriptor.use {
+      return IdeCreator.createByFile(ideaFile, IdeVersion.createIdeVersion("IU-145.500")).use { ideDescriptor ->
         val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
         val problemsFilters = OptionsParser.getProblemsFilters(CmdOpts(documentedProblemsPageUrl = null))
         val jdkDescriptor = JdkDescriptor(File(jdkPath))
         val verifierParams = VerifierParameters(externalClassesPrefixes, problemsFilters, EmptyResolver, NotFoundDependencyFinder())
         val tasks = listOf(pluginCoordinate to ideDescriptor)
-        return Verification.run(verifierParams, pluginDetailsProvider, tasks, VerificationReportageImpl(emptyList(), emptyList(), IdleReporter(), object : ReporterSetProvider {
+        val emptyReporterSetProvider = object : ReporterSetProvider {
           override fun provide(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): ReporterSet =
               ReporterSet(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
-        }), jdkDescriptor).single()
+        }
+        VerificationReportageImpl(emptyList(), emptyList(), IdleReporter(), emptyReporterSetProvider).use { verificationReportage ->
+          Verification.run(verifierParams, pluginDetailsProvider, tasks, verificationReportage, jdkDescriptor).single()
+        }
       }
     }
 

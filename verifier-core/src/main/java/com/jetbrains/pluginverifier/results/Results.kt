@@ -58,7 +58,7 @@ sealed class Verdict {
    * The Plugin has an incorrect structure.
    */
   data class Bad(val pluginProblems: List<PluginProblem>) : Verdict() {
-    override fun toString(): String = "Plugin is invalid: $pluginProblems"
+    override fun toString(): String = "Plugin is invalid: ${pluginProblems.joinToString()}"
   }
 
   /**

@@ -1,12 +1,12 @@
 package com.jetbrains.pluginverifier.options
 
 import com.google.common.collect.HashMultimap
+import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.misc.singletonOrEmpty
+import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.output.settings.dependencies.AllMissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.settings.dependencies.SpecifiedMissingDependencyIgnoring
@@ -32,15 +32,20 @@ object OptionsParser {
 
   private val LOG: Logger = LoggerFactory.getLogger(OptionsParser::class.java)
 
-  private val TIMESTAMP_DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+  private val TIMESTAMP_DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd 'at' HH.mm.ss")
 
-  fun getVerificationReportsDirectory(opts: CmdOpts): File? {
-    return opts.verificationReportsDir?.let { File(it) }
-  }
-
-  private fun createFallback(): File {
-    val timestamp = TIMESTAMP_DATE_FORMAT.format(Date())
-    return File("verification-$timestamp")
+  fun getVerificationReportsDirectory(opts: CmdOpts): File {
+    val dir = opts.verificationReportsDir?.let { File(it) }
+    if (dir != null) {
+      if (dir.exists() && dir.listFiles().orEmpty().isNotEmpty()) {
+        LOG.info("Delete the verification directory ${dir.absolutePath} because it isn't empty")
+        dir.deleteLogged()
+      }
+      dir.createDir()
+    }
+    val nowTime = TIMESTAMP_DATE_FORMAT.format(Date())
+    val directoryName = ("verification-" + nowTime).replaceInvalidFileNameCharacters()
+    return File(directoryName).createDir()
   }
 
   fun parseOutputOptions(opts: CmdOpts): OutputOptions = OutputOptions(
@@ -109,12 +114,15 @@ object OptionsParser {
     return null
   }
 
-  fun getSaveIgnoredProblemsFile(opts: CmdOpts): File? = if (opts.saveIgnoredProblemsFile != null) {
-    val file = File(opts.saveIgnoredProblemsFile!!)
+  fun getSaveIgnoredProblemsFile(opts: CmdOpts): File {
+    val file = if (opts.saveIgnoredProblemsFile != null) {
+      File(opts.saveIgnoredProblemsFile!!)
+    } else {
+      val verificationReportsDirectory = getVerificationReportsDirectory(opts)
+      File(verificationReportsDirectory, "ignored-problems.txt")
+    }
     file.deleteLogged()
-    file
-  } else {
-    null
+    return file.create()
   }
 
   private fun createDocumentedProblemsFilter(opts: CmdOpts): ProblemsFilter? {
@@ -143,7 +151,7 @@ object OptionsParser {
   /**
    * @return _(pluginXmlId, version)_ -> to be ignored _problem pattern_
    */
-  private fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): HashMultimap<PluginIdAndVersion, Regex> {
+  private fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): Multimap<PluginIdAndVersion, Regex> {
     val file = File(ignoreProblemsFile)
     if (!file.exists()) {
       throw IllegalArgumentException("Ignored problems file doesn't exist " + ignoreProblemsFile)

@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.misc
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import org.apache.commons.io.FileUtils
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.File
@@ -61,6 +60,8 @@ fun File.create(): File {
   return this
 }
 
+inline fun <T> buildList(builderAction: MutableList<T>.() -> Unit): List<T> = arrayListOf<T>().apply(builderAction)
+
 fun File.createDir(): File {
   if (!isDirectory) {
     FileUtils.forceMkdir(this)
@@ -74,17 +75,6 @@ fun File.createDir(): File {
 fun checkIfInterrupted() {
   if (Thread.currentThread().isInterrupted) {
     throw InterruptedException()
-  }
-}
-
-inline fun <R> withDebug(logger: Logger, taskName: String, block: () -> R): R {
-  val startTime = System.currentTimeMillis()
-  logger.debug(taskName + " is starting")
-  try {
-    return block()
-  } finally {
-    val elapsedTime = System.currentTimeMillis() - startTime
-    logger.debug(taskName + " is finished in ${elapsedTime / 1000} seconds")
   }
 }
 
@@ -126,6 +116,8 @@ fun <T> List<T>.listEndsWith(vararg ending: T): Boolean {
   }
   return ending.indices.all { index -> ending[index] == this[size - ending.size + index] }
 }
+
+fun String.replaceInvalidFileNameCharacters(): String = replace(Regex("[^a-zA-Z0-9.#\\-() ]"), "_")
 
 fun impossible(): Nothing = throw AssertionError("Impossible")
 

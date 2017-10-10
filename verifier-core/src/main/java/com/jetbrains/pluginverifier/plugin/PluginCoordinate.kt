@@ -6,8 +6,6 @@ import java.io.File
 
 sealed class PluginCoordinate {
 
-  abstract val uniqueId: String
-
   abstract val presentableName: String
 
   abstract val fileFinder: PluginFileFinder
@@ -20,7 +18,6 @@ sealed class PluginCoordinate {
     override val fileFinder: PluginFileFinder
       get() = RepositoryPluginFileFinder(pluginRepository, updateInfo)
 
-    override val uniqueId: String = "#${updateInfo.updateId}"
   }
 
   data class ByFile(val pluginFile: File) : PluginCoordinate() {
@@ -29,7 +26,6 @@ sealed class PluginCoordinate {
     override val fileFinder: PluginFileFinder
       get() = LocalFileFinder(pluginFile)
 
-    override val uniqueId: String = pluginFile.name
   }
 
 }
