@@ -35,17 +35,16 @@ class VerificationResultHolder(private val idePlugin: IdePlugin,
 
   fun registerProblem(problem: Problem) {
     if (problem !in problems && problem !in ignoredProblems) {
-      problemFilters
-          .map { it.shouldReportProblem(idePlugin, ideVersion, problem) }
-          .forEach {
-            if (it is ProblemsFilter.Result.Report) {
-              pluginVerificationReportage.logNewProblemDetected(problem)
-              problems.add(problem)
-            } else if (it is ProblemsFilter.Result.Ignore) {
-              pluginVerificationReportage.logProblemIgnored(problem, it.reason)
-              ignoredProblems.add(problem)
-            }
-          }
+      val shouldReportDecisions = problemFilters.map { it.shouldReportProblem(idePlugin, ideVersion, problem) }
+      val ignoreDecisions = shouldReportDecisions.filterIsInstance<ProblemsFilter.Result.Ignore>()
+
+      if (ignoreDecisions.isNotEmpty()) {
+        ignoredProblems.add(problem)
+        ignoreDecisions.forEach { pluginVerificationReportage.logProblemIgnored(problem, it.reason) }
+      } else {
+        problems.add(problem)
+        pluginVerificationReportage.logNewProblemDetected(problem)
+      }
     }
   }
 
