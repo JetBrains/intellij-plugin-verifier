@@ -23,6 +23,8 @@ class VerificationResultHolder(private val idePlugin: IdePlugin,
 
   private var dependenciesGraph: DependenciesGraph? = null
 
+  private val ignoredProblems = hashSetOf<Problem>()
+
   fun setDependenciesGraph(graph: DependenciesGraph) {
     dependenciesGraph = graph
     pluginVerificationReportage.logDependencyGraph(graph)
@@ -32,7 +34,7 @@ class VerificationResultHolder(private val idePlugin: IdePlugin,
   fun getDependenciesGraph(): DependenciesGraph = dependenciesGraph!!
 
   fun registerProblem(problem: Problem) {
-    if (problem !in problems) {
+    if (problem !in problems && problem !in ignoredProblems) {
       problemFilters
           .map { it.shouldReportProblem(idePlugin, ideVersion, problem) }
           .forEach {
@@ -41,6 +43,7 @@ class VerificationResultHolder(private val idePlugin: IdePlugin,
               problems.add(problem)
             } else if (it is ProblemsFilter.Result.Ignore) {
               pluginVerificationReportage.logProblemIgnored(problem, it.reason)
+              ignoredProblems.add(problem)
             }
           }
     }
