@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.*
+import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.settings.dependencies.AllMissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.settings.dependencies.SpecifiedMissingDependencyIgnoring
@@ -19,7 +20,6 @@ import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedPr
 import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
-import com.jetbrains.pluginverifier.tasks.OutputOptions
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedReader

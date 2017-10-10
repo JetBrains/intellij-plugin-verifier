@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.create
+import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
@@ -11,7 +12,6 @@ import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
-import com.jetbrains.pluginverifier.tasks.OutputOptions
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import java.io.File
 import java.io.PrintWriter
@@ -56,8 +56,9 @@ data class CheckIdeResult(val ideVersion: IdeVersion,
     resultPrinter.printNoCompatibleUpdatesProblems(noCompatibleUpdatesProblems)
     if (setBuildStatus) {
       val totalProblemsNumber: Int = results.flatMap {
-        when (it.verdict) {
-          is Verdict.Problems -> it.verdict.problems //some problems might have been caused by missing dependencies
+        val verdict = it.verdict
+        when (verdict) {
+          is Verdict.Problems -> verdict.problems //some problems might have been caused by missing dependencies
           is Verdict.Bad -> setOf(Any())
           is Verdict.OK, is Verdict.Warnings, is Verdict.NotFound, is Verdict.MissingDependencies, is Verdict.FailedToDownload -> emptySet()
         }

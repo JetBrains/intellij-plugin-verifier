@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
@@ -17,8 +16,6 @@ import com.jetbrains.pluginverifier.reporting.verification.ReporterSetProvider
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.tasks.checkPlugin.CheckPluginParams
-import com.jetbrains.pluginverifier.tasks.checkPlugin.CheckPluginTask
 import org.jetbrains.plugins.verifier.service.ide.IdeFileLock
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.storage.JdkManager
@@ -83,11 +80,12 @@ class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
                                          jdkDescriptor: JdkDescriptor,
                                          progress: TaskProgress): CheckRangeCompatibilityResult {
     val verificationReportage = createVerificationReportage(progress)
-    val params = CheckPluginParams(listOf(pluginCoordinate), ideDescriptors, jdkDescriptor, emptyList(), emptyList(), EmptyResolver)
-    val checkPluginTask = CheckPluginTask(params, pluginRepository, pluginDetailsProvider)
-    val checkPluginResults = checkPluginTask.execute(verificationReportage)
-    val results = checkPluginResults.results
-    return CheckRangeCompatibilityResult(updateInfo, CheckRangeCompatibilityResult.ResultType.VERIFICATION_DONE, results)
+    TODO("get rid of dependency on CheckPlugin")
+//    val params = CheckPluginParams(listOf(pluginCoordinate), ideDescriptors, jdkDescriptor, emptyList(), emptyList(), EmptyResolver)
+//    val checkPluginTask = CheckPluginTask(params, pluginRepository, pluginDetailsProvider)
+//    val checkPluginResults = checkPluginTask.execute(verificationReportage)
+//    val results = checkPluginResults.results
+//    return CheckRangeCompatibilityResult(updateInfo, CheckRangeCompatibilityResult.ResultType.VERIFICATION_DONE, results)
   }
 
   private fun createVerificationReportage(progress: TaskProgress) = VerificationReportageImpl(

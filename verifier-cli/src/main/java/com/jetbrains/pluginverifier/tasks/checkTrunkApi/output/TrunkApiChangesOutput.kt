@@ -6,6 +6,7 @@ import com.google.common.collect.Multimaps
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
+import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
@@ -121,9 +122,12 @@ class TrunkApiChangesOutput(private val tcLog: TeamCityLog, private val reposito
     return ""
   }
 
-  private fun Result.getDirectMissingDependencies() = when (this.verdict) {
-    is Verdict.MissingDependencies -> this.verdict.directMissingDependencies
-    else -> emptyList()
+  private fun Result.getDirectMissingDependencies(): List<MissingDependency> {
+    val verdict = this.verdict
+    return when (verdict) {
+      is Verdict.MissingDependencies -> verdict.directMissingDependencies
+      else -> emptyList()
+    }
   }
 
 }

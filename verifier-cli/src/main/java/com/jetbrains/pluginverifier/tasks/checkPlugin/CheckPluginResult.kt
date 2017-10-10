@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
 import com.jetbrains.pluginverifier.misc.create
+import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
@@ -8,7 +9,6 @@ import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
-import com.jetbrains.pluginverifier.tasks.OutputOptions
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import java.io.File
 import java.io.PrintWriter
@@ -33,9 +33,10 @@ data class CheckPluginResult(val results: List<Result>) : TaskResult {
     vPrinter.printResults(results)
     if (setBuildStatus) {
       val totalProblemsNumber = results.flatMap {
-        when (it.verdict) {
-          is Verdict.Problems -> it.verdict.problems
-          is Verdict.MissingDependencies -> it.verdict.problems  //some problems might have been caused by missing dependencies
+        val verdict = it.verdict
+        when (verdict) {
+          is Verdict.Problems -> verdict.problems
+          is Verdict.MissingDependencies -> verdict.problems  //some problems might have been caused by missing dependencies
           is Verdict.Bad -> setOf(Any())
           is Verdict.OK, is Verdict.Warnings, is Verdict.NotFound, is Verdict.FailedToDownload -> emptySet()
         }

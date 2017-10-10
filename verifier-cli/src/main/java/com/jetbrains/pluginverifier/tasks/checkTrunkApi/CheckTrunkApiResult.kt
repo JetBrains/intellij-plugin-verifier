@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
+import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.tasks.OutputOptions
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeResult
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.output.TrunkApiChangesOutput
