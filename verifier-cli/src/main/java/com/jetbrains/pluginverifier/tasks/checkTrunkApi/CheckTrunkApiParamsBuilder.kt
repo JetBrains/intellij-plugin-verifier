@@ -18,8 +18,10 @@ import java.io.File
  */
 class CheckTrunkApiParamsBuilder(val ideRepository: IdeRepository) : TaskParametersBuilder {
 
-  companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiParamsBuilder::class.java)
+  private companion object {
+    val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiParamsBuilder::class.java)
+
+    val MAX_DOWNLOAD_ATTEMPTS = 3
   }
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckTrunkApiParams {
@@ -45,7 +47,7 @@ class CheckTrunkApiParamsBuilder(val ideRepository: IdeRepository) : TaskParamet
       }
       apiOpts.majorIdeVersion != null -> {
         val ideVersion = parseIdeVersion(apiOpts.majorIdeVersion!!)
-        majorIdeFile = downloadIdeByVersion(ideVersion)
+        majorIdeFile = tryToDownloadIdeInSeveralAttempts(ideVersion)
         deleteMajorOnExit = !apiOpts.saveMajorIdeFile
       }
       else -> throw IllegalArgumentException("Neither the version (-miv) nor the path to the IDE (-mip) with which to compare API problems specified")
@@ -58,6 +60,18 @@ class CheckTrunkApiParamsBuilder(val ideRepository: IdeRepository) : TaskParamet
 
     val jetBrainsPluginIds = getJetBrainsPluginIds(apiOpts)
     return CheckTrunkApiParams(ideDescriptor, majorIdeDescriptor, externalClassesPrefixes, problemsFilters, jdkDescriptor, jetBrainsPluginIds, deleteMajorOnExit, majorIdeFile)
+  }
+
+  private fun tryToDownloadIdeInSeveralAttempts(ideVersion: IdeVersion): File {
+    for (attempt in 1..MAX_DOWNLOAD_ATTEMPTS) {
+      try {
+        return downloadIdeByVersion(ideVersion)
+      } catch (e: Exception) {
+        LOG.error("Attempt #$attempt of $MAX_DOWNLOAD_ATTEMPTS to download IDE $ideVersion is failed", e)
+        continue
+      }
+    }
+    throw RuntimeException("Unable to download IDE $ideVersion in $MAX_DOWNLOAD_ATTEMPTS attempts")
   }
 
   private fun getJetBrainsPluginIds(apiOpts: CheckTrunkApiOpts): List<String> {
@@ -80,7 +94,7 @@ class CheckTrunkApiParamsBuilder(val ideRepository: IdeRepository) : TaskParamet
   private fun parseIdeVersion(ideVersion: String): IdeVersion {
     try {
       return IdeVersion.createIdeVersion(ideVersion)
-    } catch(e: Exception) {
+    } catch (e: Exception) {
       throw IllegalArgumentException("Invalid IDE version: $ideVersion. Please provide IDE version (with product ID) with which to compare API problems; " +
           "See https://www.jetbrains.com/intellij-repository/releases/", e)
     }

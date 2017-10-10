@@ -36,8 +36,6 @@ class IdeRepository(private val downloadDir: File, private val repositoryUrl: St
 
   private val LOG: Logger = LoggerFactory.getLogger(IdeRepository::class.java)
 
-  private val IDE_DOWNLOAD_ATTEMPTS = 3
-
   private fun parseDocument(document: Document, snapshots: Boolean): List<AvailableIde> {
     val table = document.getElementsByTag("table")[0]
     val tbody = table.getElementsByTag("tbody")[0]
@@ -72,13 +70,12 @@ class IdeRepository(private val downloadDir: File, private val repositoryUrl: St
     return result
   }
 
-  private fun setFullProductNameIfNecessary(ideVersion: IdeVersion, productName: String): IdeVersion {
-    if (ideVersion.productCode.isEmpty())
-      return IdeVersion.createIdeVersion("$productName-" + ideVersion.asStringWithoutProductCode())
-    else {
-      return ideVersion
-    }
-  }
+  private fun setFullProductNameIfNecessary(ideVersion: IdeVersion, productName: String): IdeVersion =
+      if (ideVersion.productCode.isEmpty())
+        IdeVersion.createIdeVersion("$productName-" + ideVersion.asStringWithoutProductCode())
+      else {
+        ideVersion
+      }
 
   fun fetchIndex(snapshots: Boolean = false): List<AvailableIde> {
     val repoUrl = repositoryUrl.trimEnd('/') + "/intellij-repository/" + (if (snapshots) "snapshots" else "releases") + "/"
@@ -95,19 +92,6 @@ class IdeRepository(private val downloadDir: File, private val repositoryUrl: St
   }
 
   private fun getIdeDirForVersion(ideVersion: IdeVersion) = File(downloadDir, ideVersion.toString())
-
-  private fun tryDownloadIde(availableIde: AvailableIde, progress: (Double) -> Unit): File {
-    for (attempt in 1..IDE_DOWNLOAD_ATTEMPTS) {
-      val ide = try {
-        downloadAndExtractIde(availableIde, progress)
-      } catch (e: Exception) {
-        LOG.error("Attempt #$attempt to download IDE is failed", e)
-        continue
-      }
-      return ide
-    }
-    throw RuntimeException("Unable to download IDE $availableIde in $IDE_DOWNLOAD_ATTEMPTS attempts")
-  }
 
   private fun downloadAndExtractIde(availableIde: AvailableIde, progress: (Double) -> Unit): File {
     val tempIdeZip = File.createTempFile("ide-${availableIde.version}", ".zip", downloadDir)
@@ -161,14 +145,14 @@ class IdeRepository(private val downloadDir: File, private val repositoryUrl: St
   fun getOrDownloadIde(availableIde: AvailableIde, progress: (Double) -> Unit): File {
     val ideVersion = availableIde.version
     val ideDir = getIdeDirForVersion(ideVersion)
-    if (ideDir.isDirectory && ideDir.list().orEmpty().isNotEmpty()) {
+    return if (ideDir.isDirectory && ideDir.list().orEmpty().isNotEmpty()) {
       LOG.info("IDE #$ideVersion is found in $ideDir")
-      return ideDir
+      ideDir
     } else {
       LOG.info("Downloading IDE $availableIde")
-      val downloadedIde = tryDownloadIde(availableIde, progress)
+      val downloadedIde = downloadAndExtractIde(availableIde, progress)
       LOG.info("Successfully downloaded to $downloadedIde")
-      return downloadedIde
+      downloadedIde
     }
   }
 
