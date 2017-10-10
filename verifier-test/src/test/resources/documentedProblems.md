@@ -15,3 +15,4 @@ title: Incompatible Changes in IntelliJ Platform and Plugins API
 |---------|---------------------|
 | `com.example.Foo` class removed | Use [`com.intellij.util.net.HttpConfigurable.getPlainProxyPassword()`](upsource:///platform/platform-api/src/com/intellij/util/net/HttpConfigurable.java) instead |
 | `com.example.Bar.removedMethod` method removed | Use classes from `org.jetbrains.org.objectweb.asm` package instead |
+| `com.example.Baf` class moved to package `com.another` | Use the moved classes |

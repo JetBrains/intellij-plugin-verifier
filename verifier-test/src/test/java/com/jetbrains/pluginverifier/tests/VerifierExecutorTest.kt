@@ -47,7 +47,7 @@ class VerifierExecutorTest {
       val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
       ideDescriptor.use {
         val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
-        val problemsFilters = OptionsParser.getProblemsFilters(CmdOpts())
+        val problemsFilters = OptionsParser.getProblemsFilters(CmdOpts(documentedProblemsPageUrl = null))
         val jdkDescriptor = JdkDescriptor(File(jdkPath))
         val verifierParams = VerifierParameters(externalClassesPrefixes, problemsFilters, EmptyResolver, NotFoundDependencyFinder())
         val tasks = listOf(pluginCoordinate to ideDescriptor)

@@ -1,6 +1,8 @@
 package com.jetbrains.pluginverifier.parameters.filtering.documented
 
 /**
+ * Parser of the markdown-formatted [Breaking API Changes page](http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html).
+ *
  * @author Sergey Patrikeev
  */
 class DocumentedProblemsParser {
@@ -8,40 +10,33 @@ class DocumentedProblemsParser {
   private companion object {
     const val DELIM = '|'
 
-    const val PLACE_HOLDER = "X"
+    const val IDENTIFIER = "[\\w.()]+"
 
-    fun String.toInternalName(): String = replace('.', '/')
-
-    val pattern2Parser = listOf<Pair<String, (String) -> DocumentedProblem?>>(
-        "$PLACE_HOLDER class removed" to { x ->
-          DocumentedProblem.ClassRemoved(x.toInternalName())
-        },
-        "$PLACE_HOLDER method removed" to { x ->
-          DocumentedProblem.MethodRemoved(x.substringBeforeLast(".").toInternalName(), x.substringAfterLast("."))
-        },
-        "$PLACE_HOLDER field removed" to { x ->
-          DocumentedProblem.FieldRemoved(x.substringBeforeLast(".").toInternalName(), x.substringAfterLast("."))
-        },
-        "$PLACE_HOLDER package removed" to { x ->
-          DocumentedProblem.PackageRemoved(x.toInternalName())
-        },
-        "$PLACE_HOLDER abstract method added" to { x ->
-          DocumentedProblem.AbstractMethodAdded(x.substringBeforeLast(".").toInternalName(), x.substringAfterLast("."))
-        }
+    val pattern2Parser = mapOf<Regex, (List<String>) -> DocumentedProblem>(
+        Regex("($IDENTIFIER) class removed") to { s -> DocClassRemoved(s[0].toInternalName()) },
+        Regex("($IDENTIFIER)\\.($IDENTIFIER) method removed") to { s -> DocMethodRemoved(s[0].toInternalName(), s[1]) },
+        Regex("($IDENTIFIER)\\.($IDENTIFIER) field removed") to { s -> DocFieldRemoved(s[0].toInternalName(), s[1]) },
+        Regex("($IDENTIFIER) package removed") to { s -> DocPackageRemoved(s[0].toInternalName()) },
+        Regex("($IDENTIFIER)\\.($IDENTIFIER) abstract method added") to { s -> DocAbstractMethodAdded(s[0].toInternalName(), s[1]) },
+        Regex("($IDENTIFIER) class moved to package ($IDENTIFIER)") to { s -> DocClassMovedToPackage(s[0].toInternalName(), s[1].toInternalName()) }
     )
 
-    fun extractRawMarkdownWord(markdown: String): String {
+    /**
+     * Gets rid of the markdown code quotes and links
+     */
+    fun unwrapMarkdownFeatures(markdownWord: String): String {
       //Matches Markdown links: [some-text](http://example.com)
-      if (markdown.matches(Regex("\\[.*]\\(.*\\)"))) {
-        return extractRawMarkdownWord(markdown.substringAfter("[").substringBefore("]"))
+      if (markdownWord.matches(Regex("\\[.*]\\(.*\\)"))) {
+        return unwrapMarkdownFeatures(markdownWord.substringAfter("[").substringBefore("]"))
       }
       //Matches Markdown code: `val x = 5`
-      if (markdown.startsWith('`') && markdown.endsWith('`')) {
-        return markdown.substring(1, markdown.length - 1)
+      if (markdownWord.startsWith('`') && markdownWord.endsWith('`')) {
+        return markdownWord.substring(1, markdownWord.length - 1)
       }
-      return markdown
+      return markdownWord
     }
 
+    fun String.toInternalName(): String = replace('.', '/')
   }
 
   fun parse(pageBody: String): List<DocumentedProblem> = pageBody.lineSequence()
@@ -63,19 +58,15 @@ class DocumentedProblemsParser {
       .mapNotNull { parseDescription(it) }
       .toList()
 
-  private fun List<String>.matchesPattern(pattern: List<String>): Boolean =
-      size == pattern.size && indices.all { index -> this[index] == pattern[index] || pattern[index] == PLACE_HOLDER }
-
-  private fun String.toWords(): List<String> = split(' ')
-
-  private fun List<String>.extractPlaceHolder(pattern: String): String = this[pattern.toWords().indexOf(PLACE_HOLDER)]
-
-  private fun parseDescription(description: String): DocumentedProblem? {
-    val words = description.toWords().map { extractRawMarkdownWord(it) }
-    val (pattern, parser) = pattern2Parser.find { (pattern, _) ->
-      words.matchesPattern(pattern.toWords())
-    } ?: return null
-    val placeHolder = words.extractPlaceHolder(pattern)
-    return parser(placeHolder)
+  private fun parseDescription(text: String): DocumentedProblem? {
+    val unwrappedMarkdown = text.split(' ').joinToString(" ") { unwrapMarkdownFeatures(it) }
+    for ((pattern, parser) in pattern2Parser) {
+      val matchResult = pattern.matchEntire(unwrappedMarkdown)
+      if (matchResult != null) {
+        val values = matchResult.groupValues.drop(1)
+        return parser(values)
+      }
+    }
+    return null
   }
 }
