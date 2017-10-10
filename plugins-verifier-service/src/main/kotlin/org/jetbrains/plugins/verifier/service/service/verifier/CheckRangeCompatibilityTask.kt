@@ -1,7 +1,11 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
+import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.core.Verification
+import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
+import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
@@ -16,6 +20,7 @@ import com.jetbrains.pluginverifier.reporting.verification.ReporterSetProvider
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.results.Result
 import org.jetbrains.plugins.verifier.service.ide.IdeFileLock
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.storage.JdkManager
@@ -80,12 +85,18 @@ class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
                                          jdkDescriptor: JdkDescriptor,
                                          progress: TaskProgress): CheckRangeCompatibilityResult {
     val verificationReportage = createVerificationReportage(progress)
-    TODO("get rid of dependency on CheckPlugin")
-//    val params = CheckPluginParams(listOf(pluginCoordinate), ideDescriptors, jdkDescriptor, emptyList(), emptyList(), EmptyResolver)
-//    val checkPluginTask = CheckPluginTask(params, pluginRepository, pluginDetailsProvider)
-//    val checkPluginResults = checkPluginTask.execute(verificationReportage)
-//    val results = checkPluginResults.results
-//    return CheckRangeCompatibilityResult(updateInfo, CheckRangeCompatibilityResult.ResultType.VERIFICATION_DONE, results)
+    val allResults = arrayListOf<Result>()
+    for (ideDescriptor in ideDescriptors) {
+      val verifierParameters = VerifierParameters(
+          externalClassesPrefixes = emptyList(),
+          problemFilters = emptyList(),
+          externalClassPath = EmptyResolver,
+          dependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsProvider)
+      )
+      val results = Verification.run(verifierParameters, pluginDetailsProvider, listOf(pluginCoordinate to ideDescriptor), verificationReportage, jdkDescriptor)
+      allResults.addAll(results)
+    }
+    return CheckRangeCompatibilityResult(updateInfo, CheckRangeCompatibilityResult.ResultType.VERIFICATION_DONE, allResults)
   }
 
   private fun createVerificationReportage(progress: TaskProgress) = VerificationReportageImpl(

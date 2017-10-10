@@ -25,9 +25,7 @@ data class VerifierParameters(
     val externalClassPath: Resolver,
 
     /**
-     * If set, this resolver will be used to resolve plugin dependencies.
-     * Otherwise a default resolver which searches the plugin in the IDE
-     * and in the Plugin Repository will be used.
+     * This finder will be used to resolve plugin dependencies.
      */
     val dependencyFinder: DependencyFinder
 )
