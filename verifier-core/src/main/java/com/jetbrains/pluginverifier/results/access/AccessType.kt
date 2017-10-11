@@ -1,8 +1,6 @@
 package com.jetbrains.pluginverifier.results.access
 
-import com.jetbrains.pluginverifier.results.presentation.Presentable
-
-enum class AccessType(private val type: String) : Presentable {
+enum class AccessType(private val type: String) {
   PUBLIC("public"),
   PROTECTED("protected"),
   PACKAGE_PRIVATE("package-private"),
@@ -10,7 +8,4 @@ enum class AccessType(private val type: String) : Presentable {
 
   override fun toString(): String = type
 
-  override val shortPresentation: String = type
-
-  override val fullPresentation: String = type
 }

@@ -10,14 +10,10 @@ data class ClassLocation(val className: String,
                          val signature: String,
                          val classPath: ClassPath,
                          val modifiers: Modifiers) : Location {
-  override val shortPresentation: String = cutPackageConverter(className)
-
-  override val fullPresentation: String = if (signature.isNotEmpty()) {
+  override fun toString(): String = if (signature.isNotEmpty()) {
     normalConverter(className) + convertClassSignature(signature, cutPackageConverter)
   } else {
     normalConverter(className)
   }
-
-  override fun toString(): String = fullPresentation
 }
 

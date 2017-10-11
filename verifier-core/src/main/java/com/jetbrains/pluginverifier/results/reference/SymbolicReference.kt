@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.results.reference
 
-import com.jetbrains.pluginverifier.results.presentation.Presentable
 import com.jetbrains.pluginverifier.results.presentation.PresentationUtils.convertJvmDescriptorToNormalPresentation
 import com.jetbrains.pluginverifier.results.presentation.PresentationUtils.cutPackageConverter
 import com.jetbrains.pluginverifier.results.presentation.PresentationUtils.normalConverter
@@ -9,7 +8,7 @@ import com.jetbrains.pluginverifier.results.presentation.PresentationUtils.split
 /**
  * @author Sergey Patrikeev
  */
-interface SymbolicReference : Presentable {
+interface SymbolicReference {
   companion object {
 
     fun methodOf(hostClass: String, methodName: String, methodDescriptor: String): MethodReference = MethodReference(ClassReference(hostClass), methodName, methodDescriptor)
@@ -24,13 +23,9 @@ data class MethodReference(val hostClass: ClassReference,
                            val methodName: String,
                            val methodDescriptor: String) : SymbolicReference {
 
-  override val shortPresentation: String = "$hostClass.${methodNameAndParameters(cutPackageConverter)}"
+  override fun toString(): String = "$hostClass.${methodNameAndParameters(cutPackageConverter)}"
 
-  override val fullPresentation: String = "$hostClass.${methodNameAndParameters(normalConverter)}"
-
-  override fun toString(): String = shortPresentation
-
-  private fun methodNameAndParameters(descriptorConverter: (String) -> String): String {
+  fun methodNameAndParameters(descriptorConverter: (String) -> String): String {
     val (parametersTypes, returnType) = splitMethodDescriptorOnRawParametersAndReturnTypes(methodDescriptor)
     val (presentableParams, presentableReturn) = (parametersTypes.map { convertJvmDescriptorToNormalPresentation(it, descriptorConverter) }) to (convertJvmDescriptorToNormalPresentation(returnType, descriptorConverter))
     return "$methodName(" + presentableParams.joinToString() + ") : $presentableReturn"
@@ -43,21 +38,13 @@ data class FieldReference(val hostClass: ClassReference,
                           val fieldName: String,
                           val fieldDescriptor: String) : SymbolicReference {
 
-  override val shortPresentation: String = "$hostClass.${fieldNameAndParameters(cutPackageConverter)}"
-
-  override val fullPresentation: String = "$hostClass.${fieldNameAndParameters(normalConverter)}"
-
-  private fun fieldNameAndParameters(descriptorConverter: (String) -> String): String =
+  fun fieldNameAndParameters(descriptorConverter: (String) -> String): String =
       "$fieldName : ${convertJvmDescriptorToNormalPresentation(fieldDescriptor, descriptorConverter)}"
 
-  override fun toString(): String = shortPresentation
+  override fun toString(): String = "$hostClass.${fieldNameAndParameters(cutPackageConverter)}"
 
 }
 
 data class ClassReference(val className: String) : SymbolicReference {
-  override val shortPresentation: String = cutPackageConverter(className)
-
-  override val fullPresentation: String = normalConverter(className)
-
-  override fun toString(): String = fullPresentation
+  override fun toString(): String = normalConverter(className)
 }

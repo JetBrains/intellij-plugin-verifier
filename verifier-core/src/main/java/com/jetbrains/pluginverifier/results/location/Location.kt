@@ -2,12 +2,11 @@ package com.jetbrains.pluginverifier.results.location
 
 import com.jetbrains.pluginverifier.results.location.classpath.ClassPath
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
-import com.jetbrains.pluginverifier.results.presentation.Presentable
 
 /**
  * @author Sergey Patrikeev
  */
-interface Location : Presentable {
+interface Location {
 
   companion object {
     fun fromClass(className: String,

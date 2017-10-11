@@ -8,9 +8,6 @@ data class FieldLocation(val hostClass: ClassLocation,
                          val fieldDescriptor: String,
                          val signature: String,
                          val modifiers: Modifiers) : Location {
-  override val shortPresentation: String = "$hostClass.${fieldNameAndType(PresentationUtils.cutPackageConverter)}"
-
-  override val fullPresentation: String = "$hostClass.${fieldNameAndType(PresentationUtils.normalConverter)}"
 
   private fun fieldNameAndType(descriptorConverter: (String) -> String): String {
     if (signature.isNotEmpty()) {
@@ -20,5 +17,5 @@ data class FieldLocation(val hostClass: ClassLocation,
     return "$fieldName : $type"
   }
 
-  override fun toString(): String = shortPresentation
+  override fun toString(): String = "$hostClass.${fieldNameAndType(PresentationUtils.cutPackageConverter)}"
 }

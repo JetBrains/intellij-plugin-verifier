@@ -9,15 +9,12 @@ data class MethodLocation(val hostClass: ClassLocation,
                           val parameterNames: List<String>,
                           val signature: String,
                           val modifiers: Modifiers) : Location {
-  override val shortPresentation: String = "$hostClass.${methodNameAndParameters(PresentationUtils.cutPackageConverter)}"
-
-  override val fullPresentation: String = "$hostClass.${methodNameAndParameters(PresentationUtils.normalConverter)}"
 
   private fun zipWithNames(parametersTypes: List<String>): List<String> {
     val names: List<String> = if (parameterNames.size == parametersTypes.size) {
       parameterNames
     } else {
-      (0..parametersTypes.size - 1).map { "arg$it" }
+      (0 until parametersTypes.size).map { "arg$it" }
     }
     return parametersTypes.zip(names).map { "${it.first} ${it.second}" }
   }
@@ -33,5 +30,5 @@ data class MethodLocation(val hostClass: ClassLocation,
     return "$methodName(${withNames.joinToString()}) : $returnType"
   }
 
-  override fun toString(): String = shortPresentation
+  override fun toString(): String = "$hostClass.${methodNameAndParameters(PresentationUtils.cutPackageConverter)}"
 }
