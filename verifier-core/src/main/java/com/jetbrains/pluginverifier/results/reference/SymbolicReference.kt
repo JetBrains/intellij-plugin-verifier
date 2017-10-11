@@ -43,9 +43,9 @@ data class FieldReference(val hostClass: ClassReference,
                           val fieldName: String,
                           val fieldDescriptor: String) : SymbolicReference {
 
-  override val shortPresentation: String = fieldNameAndParameters(cutPackageConverter)
+  override val shortPresentation: String = "$hostClass.${fieldNameAndParameters(cutPackageConverter)}"
 
-  override val fullPresentation: String = fieldNameAndParameters(normalConverter)
+  override val fullPresentation: String = "$hostClass.${fieldNameAndParameters(normalConverter)}"
 
   private fun fieldNameAndParameters(descriptorConverter: (String) -> String): String =
       "$fieldName : ${convertJvmDescriptorToNormalPresentation(fieldDescriptor, descriptorConverter)}"
