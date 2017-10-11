@@ -34,7 +34,7 @@ class MainVerificationReporterSetProvider(private val verificationReportsDirecto
         verdictReporters = createVerdictReporters(pluginLogger, pluginVerificationDirectory),
         messageReporters = createMessageReporters(pluginLogger),
         progressReporters = createProgressReporters(pluginCoordinate, ideVersion, pluginLogger),
-        warningReporters = createWarningReporters(),
+        warningReporters = createWarningReporters(pluginVerificationDirectory),
         problemsReporters = createProblemReporters(pluginVerificationDirectory),
         dependenciesGraphReporters = createDependencyGraphReporters(pluginVerificationDirectory),
         ignoredProblemReporters = createIgnoredProblemReporters(pluginLogger, pluginVerificationDirectory, pluginCoordinate, ideVersion)
@@ -55,7 +55,9 @@ class MainVerificationReporterSetProvider(private val verificationReportsDirecto
         }
       }
 
-  private fun createWarningReporters() = emptyList<Reporter<Warning>>()
+  private fun createWarningReporters(pluginVerificationDirectory: File) = buildList<Reporter<Warning>> {
+    add(FileReporter(File(pluginVerificationDirectory, "warnings.txt")))
+  }
 
   private fun createMessageReporters(pluginLogger: Logger) = buildList<Reporter<String>> {
     add(LogReporter(pluginLogger))
