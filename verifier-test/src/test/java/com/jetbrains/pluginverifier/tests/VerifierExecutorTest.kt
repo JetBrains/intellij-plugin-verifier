@@ -49,14 +49,14 @@ class VerifierExecutorTest {
 
     private fun doIdeaAndPluginVerification(ideaFile: File, pluginFile: File): Result {
       val pluginCoordinate = PluginCoordinate.ByFile(pluginFile)
-      val jdkPath = System.getenv("JAVA_HOME") ?: "/usr/lib/jvm/java-8-oracle"
+      val jdkDescriptor = getJdkDescriptor()
+
       val tempFolder = Files.createTempDir()
       tempFolder.deleteOnExit()
       val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
       return IdeCreator.createByFile(ideaFile, IdeVersion.createIdeVersion("IU-145.500")).use { ideDescriptor ->
         val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
         val problemsFilters = OptionsParser.getProblemsFilters(CmdOpts(documentedProblemsPageUrl = null))
-        val jdkDescriptor = JdkDescriptor(File(jdkPath))
         val verifierParams = VerifierParameters(externalClassesPrefixes, problemsFilters, EmptyResolver, NotFoundDependencyFinder())
         val tasks = listOf(pluginCoordinate to ideDescriptor)
         val emptyReporterSetProvider = object : VerificationReportersProvider {
@@ -73,6 +73,16 @@ class VerifierExecutorTest {
           Verification.run(verifierParams, pluginDetailsProvider, tasks, verificationReportage, jdkDescriptor).single()
         }
       }
+    }
+
+    private fun getJdkDescriptor(): JdkDescriptor {
+      val jdk8 = "/usr/lib/jvm/java-8-oracle"
+      val jdkPath = System.getenv("JAVA_HOME") ?: jdk8
+      if ('9' in jdkPath) {
+        //Todo: support the java 9
+        return JdkDescriptor(File(jdk8))
+      }
+      return JdkDescriptor(File(jdkPath))
     }
 
     @BeforeClass
@@ -150,8 +160,8 @@ class VerifierExecutorTest {
   private fun assertProblemFound(problem: Problem, expectedFullDescription: String, expectedShortDescription: String) {
     assertTrue("${problem.shortDescription} is not found", actualProblems.contains(problem))
     redundantProblems.remove(problem)
-    assertThat(expectedShortDescription, `is`(problem.shortDescription))
-    assertThat(expectedFullDescription, `is`(problem.fullDescription))
+    assertThat(problem.shortDescription, `is`(expectedShortDescription))
+    assertThat(problem.fullDescription, `is`(expectedFullDescription))
   }
 
   @Test
