@@ -1,6 +1,8 @@
 package com.jetbrains.pluginverifier.results.problems
 
-enum class Instruction(private val type: String) {
+import com.jetbrains.pluginverifier.results.presentation.Presentable
+
+enum class Instruction(private val type: String) : Presentable {
   GET_STATIC("getstatic"),
   PUT_STATIC("putstatic"),
   PUT_FIELD("putfield"),
@@ -11,4 +13,8 @@ enum class Instruction(private val type: String) {
   INVOKE_SPECIAL("invokespecial");
 
   override fun toString(): String = type
+
+  override val shortPresentation: String = type
+
+  override val fullPresentation: String = type
 }

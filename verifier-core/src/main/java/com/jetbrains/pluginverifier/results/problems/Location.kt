@@ -1,9 +1,11 @@
 package com.jetbrains.pluginverifier.results.problems
 
+import com.jetbrains.pluginverifier.results.presentation.Presentable
+
 /**
  * @author Sergey Patrikeev
  */
-interface Location {
+interface Location : Presentable {
 
   companion object {
     fun fromClass(className: String,

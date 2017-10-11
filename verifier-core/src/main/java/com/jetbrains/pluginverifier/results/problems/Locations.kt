@@ -13,6 +13,9 @@ data class MethodLocation(val hostClass: ClassLocation,
                           val parameterNames: List<String>,
                           val signature: String,
                           val accessFlags: AccessFlags) : Location {
+  override val shortPresentation: String = "$hostClass.${methodNameAndParameters(cutPackageConverter)}"
+
+  override val fullPresentation: String = "$hostClass.${methodNameAndParameters(normalConverter)}"
 
   private fun zipWithNames(parametersTypes: List<String>): List<String> {
     val names: List<String> = if (parameterNames.size == parametersTypes.size) {
@@ -23,18 +26,18 @@ data class MethodLocation(val hostClass: ClassLocation,
     return parametersTypes.zip(names).map { "${it.first} ${it.second}" }
   }
 
-  fun methodNameAndParameters(): String {
+  fun methodNameAndParameters(descriptorConverter: (String) -> String): String {
     val (parametersTypes, returnType) = if (signature.isNotEmpty()) {
-      PresentationUtils.parseMethodSignature(signature, cutPackageConverter)
+      PresentationUtils.parseMethodSignature(signature, descriptorConverter)
     } else {
       val (paramsTs, returnT) = splitMethodDescriptorOnRawParametersAndReturnTypes(methodDescriptor)
-      (paramsTs.map { convertJvmDescriptorToNormalPresentation(it, cutPackageConverter) }) to (convertJvmDescriptorToNormalPresentation(returnT, cutPackageConverter))
+      (paramsTs.map { convertJvmDescriptorToNormalPresentation(it, descriptorConverter) }) to (convertJvmDescriptorToNormalPresentation(returnT, descriptorConverter))
     }
     val withNames = zipWithNames(parametersTypes)
     return "$methodName(${withNames.joinToString()}) : $returnType"
   }
 
-  override fun toString(): String = "$hostClass.${methodNameAndParameters()}"
+  override fun toString(): String = shortPresentation
 }
 
 data class FieldLocation(val hostClass: ClassLocation,
@@ -42,26 +45,33 @@ data class FieldLocation(val hostClass: ClassLocation,
                          val fieldDescriptor: String,
                          val signature: String,
                          val accessFlags: AccessFlags) : Location {
-  fun fieldNameAndType(): String {
+  override val shortPresentation: String = "$hostClass.${fieldNameAndType(cutPackageConverter)}"
+
+  override val fullPresentation: String = "$hostClass.${fieldNameAndType(normalConverter)}"
+
+  private fun fieldNameAndType(descriptorConverter: (String) -> String): String {
     if (signature.isNotEmpty()) {
-      return "$fieldName : ${PresentationUtils.convertFieldSignature(signature, cutPackageConverter)}"
+      return "$fieldName : ${PresentationUtils.convertFieldSignature(signature, descriptorConverter)}"
     }
-    val type = convertJvmDescriptorToNormalPresentation(fieldDescriptor, normalConverter)
+    val type = convertJvmDescriptorToNormalPresentation(fieldDescriptor, descriptorConverter)
     return "$fieldName : $type"
   }
 
-  override fun toString(): String = "$hostClass.${fieldNameAndType()}"
+  override fun toString(): String = shortPresentation
 }
 
 data class ClassLocation(val className: String,
                          val signature: String,
                          val classPath: ClassPath,
                          val accessFlags: AccessFlags) : Location {
-  override fun toString(): String {
-    if (signature.isNotEmpty()) {
-      return normalConverter(className) + convertClassSignature(signature, cutPackageConverter)
-    }
-    return normalConverter(className)
+  override val shortPresentation: String = cutPackageConverter(className)
+
+  override val fullPresentation: String = if (signature.isNotEmpty()) {
+    normalConverter(className) + convertClassSignature(signature, cutPackageConverter)
+  } else {
+    normalConverter(className)
   }
+
+  override fun toString(): String = fullPresentation
 }
 

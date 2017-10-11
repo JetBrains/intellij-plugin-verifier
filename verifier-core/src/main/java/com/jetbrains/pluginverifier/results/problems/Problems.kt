@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.results.problems
 
+import com.jetbrains.pluginverifier.results.presentation.PresentationUtils.cutPackageConverter
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
@@ -181,7 +182,7 @@ data class MethodNotImplementedProblem(val method: MethodLocation,
 
   override val shortDescription = short(method)
 
-  override val fullDescription = full(incompleteClass, method.hostClass, method.methodNameAndParameters())
+  override val fullDescription = full(incompleteClass, method.hostClass, method.methodNameAndParameters(cutPackageConverter))
 }
 
 data class AbstractMethodInvocationProblem(val method: MethodLocation,

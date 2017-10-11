@@ -1,17 +1,24 @@
 package com.jetbrains.pluginverifier.results.problems
 
 import com.jetbrains.pluginverifier.results.presentation.DescriptionsBundle
+import com.jetbrains.pluginverifier.results.presentation.Presentable
 import org.jetbrains.annotations.PropertyKey
 import java.text.MessageFormat
 
 /**
  * @author Sergey Patrikeev
  */
-abstract class Problem(@PropertyKey(resourceBundle = "long.descriptions") private val messageKey: String) {
+abstract class Problem(@PropertyKey(resourceBundle = "long.descriptions") private val messageKey: String) : Presentable {
 
   abstract val shortDescription: String
 
   abstract val fullDescription: String
+
+  final override val shortPresentation: String
+    get() = shortDescription
+
+  override val fullPresentation: String
+    get() = fullDescription
 
   protected fun short(vararg arguments: Any): String {
     val shortTemplate = DescriptionsBundle.getShortDescriptionTemplate(messageKey)
