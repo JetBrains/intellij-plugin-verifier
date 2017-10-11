@@ -2,19 +2,7 @@ package com.jetbrains.pluginverifier.results.presentation
 
 import org.objectweb.asm.signature.SignatureReader
 
-object PresentationUtils {
-
-  /**
-   * Converts class name in binary form into Java-like presentation.
-   * E.g. 'org/some/Class$Inner1$Inner2' -> 'org.some.Class.Inner1.Inner2'
-   */
-  val normalConverter: (String) -> String = { binaryName -> binaryName.replace('/', '.').replace('$', '.') }
-
-  /**
-   * Cuts off the package of the class and converts the simple name of the class to Java-like presentation
-   * E.g. 'org/some/Class$Inner1$Inner2' -> 'Class.Inner1.Inner2'
-   */
-  val cutPackageConverter: (String) -> String = { binaryName -> binaryName.substringAfterLast("/").replace('$', '.') }
+object JvmDescriptorsPresentation {
 
   /**
    * Converts internal JVM type-descriptor into Java-like type.
@@ -24,7 +12,7 @@ object PresentationUtils {
    * ...
    * '[[[Ljava/lang/Object;' -> 'java.lang.Object[][][]'
    */
-  fun convertJvmDescriptorToNormalPresentation(descriptor: String, binaryNameConverter: (String) -> String): String {
+  fun convertJvmDescriptorToNormalPresentation(descriptor: String, binaryNameConverter: String.() -> String): String {
     var dims = 0
     while (descriptor[dims] == '[') {
       dims++
@@ -42,7 +30,7 @@ object PresentationUtils {
       "D" -> "double"
       else -> {
         require(elemType.startsWith("L") && elemType.endsWith(";") && elemType.length > 2, { elemType })
-        binaryNameConverter(elemType.substring(1, elemType.length - 1))
+        elemType.substring(1, elemType.length - 1).binaryNameConverter()
       }
     }
     return arrayType + "[]".repeat(dims)
@@ -62,27 +50,27 @@ object PresentationUtils {
    *
    * E.g. (I)TE; -> [ int ] and E
    */
-  fun parseMethodSignature(methodSignature: String, binaryNameConverter: (String) -> String): Pair<List<String>, String> {
+  fun parseMethodSignature(methodSignature: String, binaryNameConverter: String.() -> String): Pair<List<String>, String> {
     require(methodSignature.isNotEmpty(), { "Empty signature is not expected here" })
     val visitor = runSignatureVisitor(methodSignature, binaryNameConverter)
     val returnType = visitor.getReturnType()
     return visitor.getMethodParameterTypes() to returnType
   }
 
-  private fun runSignatureVisitor(signature: String, binaryNameConverter: (String) -> String): PresentableSignatureVisitor {
+  private fun runSignatureVisitor(signature: String, binaryNameConverter: String.() -> String): PresentableSignatureVisitor {
     require(signature.isNotEmpty())
     val visitor = PresentableSignatureVisitor(binaryNameConverter)
     SignatureReader(signature).accept(visitor)
     return visitor
   }
 
-  fun convertClassSignature(classSignature: String, binaryNameConverter: (String) -> String): String {
+  fun convertClassSignature(classSignature: String, binaryNameConverter: String.() -> String): String {
     require(classSignature.isNotEmpty(), { "Empty signature is not expected here" })
     val visitor = runSignatureVisitor(classSignature, binaryNameConverter)
     return visitor.getClassFormalTypeParameters()
   }
 
-  fun convertFieldSignature(fieldSignature: String, binaryNameConverter: (String) -> String): String {
+  fun convertFieldSignature(fieldSignature: String, binaryNameConverter: String.() -> String): String {
     require(fieldSignature.isNotEmpty(), { "Empty signature is not expected here" })
     val visitor = TypeSignatureVisitor(binaryNameConverter)
     SignatureReader(fieldSignature).acceptType(visitor)

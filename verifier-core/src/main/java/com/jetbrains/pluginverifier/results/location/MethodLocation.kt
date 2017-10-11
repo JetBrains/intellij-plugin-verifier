@@ -1,7 +1,10 @@
 package com.jetbrains.pluginverifier.results.location
 
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
-import com.jetbrains.pluginverifier.results.presentation.PresentationUtils
+import com.jetbrains.pluginverifier.results.presentation.HostClassOption
+import com.jetbrains.pluginverifier.results.presentation.MethodParameterTypeOption
+import com.jetbrains.pluginverifier.results.presentation.MethodReturnTypeOption
+import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 
 data class MethodLocation(val hostClass: ClassLocation,
                           val methodName: String,
@@ -10,25 +13,5 @@ data class MethodLocation(val hostClass: ClassLocation,
                           val signature: String,
                           val modifiers: Modifiers) : Location {
 
-  private fun zipWithNames(parametersTypes: List<String>): List<String> {
-    val names: List<String> = if (parameterNames.size == parametersTypes.size) {
-      parameterNames
-    } else {
-      (0 until parametersTypes.size).map { "arg$it" }
-    }
-    return parametersTypes.zip(names).map { "${it.first} ${it.second}" }
-  }
-
-  fun methodNameAndParameters(descriptorConverter: (String) -> String): String {
-    val (parametersTypes, returnType) = if (signature.isNotEmpty()) {
-      PresentationUtils.parseMethodSignature(signature, descriptorConverter)
-    } else {
-      val (paramsTs, returnT) = PresentationUtils.splitMethodDescriptorOnRawParametersAndReturnTypes(methodDescriptor)
-      (paramsTs.map { PresentationUtils.convertJvmDescriptorToNormalPresentation(it, descriptorConverter) }) to (PresentationUtils.convertJvmDescriptorToNormalPresentation(returnT, descriptorConverter))
-    }
-    val withNames = zipWithNames(parametersTypes)
-    return "$methodName(${withNames.joinToString()}) : $returnType"
-  }
-
-  override fun toString(): String = "$hostClass.${methodNameAndParameters(PresentationUtils.cutPackageConverter)}"
+  override fun toString(): String = formatMethodLocation(HostClassOption.FULL_HOST_WITH_SIGNATURE, MethodParameterTypeOption.SIMPLE_PARAM_CLASS_NAME, MethodReturnTypeOption.SIMPLE_RETURN_TYPE_CLASS_NAME)
 }

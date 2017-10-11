@@ -1,9 +1,6 @@
 package com.jetbrains.pluginverifier.results.reference
 
-import com.jetbrains.pluginverifier.results.presentation.PresentationUtils.convertJvmDescriptorToNormalPresentation
-import com.jetbrains.pluginverifier.results.presentation.PresentationUtils.cutPackageConverter
-import com.jetbrains.pluginverifier.results.presentation.PresentationUtils.normalConverter
-import com.jetbrains.pluginverifier.results.presentation.PresentationUtils.splitMethodDescriptorOnRawParametersAndReturnTypes
+import com.jetbrains.pluginverifier.results.presentation.*
 
 /**
  * @author Sergey Patrikeev
@@ -23,13 +20,7 @@ data class MethodReference(val hostClass: ClassReference,
                            val methodName: String,
                            val methodDescriptor: String) : SymbolicReference {
 
-  override fun toString(): String = "$hostClass.${methodNameAndParameters(cutPackageConverter)}"
-
-  fun methodNameAndParameters(descriptorConverter: (String) -> String): String {
-    val (parametersTypes, returnType) = splitMethodDescriptorOnRawParametersAndReturnTypes(methodDescriptor)
-    val (presentableParams, presentableReturn) = (parametersTypes.map { convertJvmDescriptorToNormalPresentation(it, descriptorConverter) }) to (convertJvmDescriptorToNormalPresentation(returnType, descriptorConverter))
-    return "$methodName(" + presentableParams.joinToString() + ") : $presentableReturn"
-  }
+  override fun toString(): String = formatMethodReference(HostClassOption.FULL_HOST_NAME, MethodParameterTypeOption.SIMPLE_PARAM_CLASS_NAME, MethodReturnTypeOption.SIMPLE_RETURN_TYPE_CLASS_NAME)
 
 }
 
@@ -38,13 +29,10 @@ data class FieldReference(val hostClass: ClassReference,
                           val fieldName: String,
                           val fieldDescriptor: String) : SymbolicReference {
 
-  fun fieldNameAndParameters(descriptorConverter: (String) -> String): String =
-      "$fieldName : ${convertJvmDescriptorToNormalPresentation(fieldDescriptor, descriptorConverter)}"
-
-  override fun toString(): String = "$hostClass.${fieldNameAndParameters(cutPackageConverter)}"
+  override fun toString(): String = formatFieldReference(HostClassOption.FULL_HOST_NAME, FieldTypeOption.SIMPLE_HOST_NAME)
 
 }
 
 data class ClassReference(val className: String) : SymbolicReference {
-  override fun toString(): String = normalConverter(className)
+  override fun toString(): String = formatClassReference(ClassOption.FULL_NAME)
 }

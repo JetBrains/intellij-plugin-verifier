@@ -1,7 +1,9 @@
 package com.jetbrains.pluginverifier.results.location
 
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
-import com.jetbrains.pluginverifier.results.presentation.PresentationUtils
+import com.jetbrains.pluginverifier.results.presentation.FieldTypeOption
+import com.jetbrains.pluginverifier.results.presentation.HostClassOption
+import com.jetbrains.pluginverifier.results.presentation.formatFieldLocation
 
 data class FieldLocation(val hostClass: ClassLocation,
                          val fieldName: String,
@@ -9,13 +11,5 @@ data class FieldLocation(val hostClass: ClassLocation,
                          val signature: String,
                          val modifiers: Modifiers) : Location {
 
-  private fun fieldNameAndType(descriptorConverter: (String) -> String): String {
-    if (signature.isNotEmpty()) {
-      return "$fieldName : ${PresentationUtils.convertFieldSignature(signature, descriptorConverter)}"
-    }
-    val type = PresentationUtils.convertJvmDescriptorToNormalPresentation(fieldDescriptor, descriptorConverter)
-    return "$fieldName : $type"
-  }
-
-  override fun toString(): String = "$hostClass.${fieldNameAndType(PresentationUtils.cutPackageConverter)}"
+  override fun toString(): String = formatFieldLocation(HostClassOption.FULL_HOST_WITH_SIGNATURE, FieldTypeOption.SIMPLE_HOST_NAME)
 }

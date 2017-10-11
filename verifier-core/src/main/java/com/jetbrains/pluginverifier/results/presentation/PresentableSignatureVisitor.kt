@@ -88,7 +88,7 @@ VoidDescriptor:
 FieldSignature:
   ReferenceTypeSignature
 */
-class PresentableSignatureVisitor(val binaryNameConverter: (String) -> String) : SignatureVisitor(Opcodes.ASM5) {
+class PresentableSignatureVisitor(val binaryNameConverter: String.() -> String) : SignatureVisitor(Opcodes.ASM5) {
 
   private val IGNORING_VISITOR = object : SignatureVisitor(api) {}
 
