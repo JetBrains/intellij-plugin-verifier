@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
+import java.text.MessageFormat
 import java.util.concurrent.TimeUnit
 
 /**
@@ -24,6 +25,8 @@ fun <K, V> Map<K, Iterable<V>>.multimapFromMap(): Multimap<K, V> {
   }
   return result
 }
+
+fun String.formatMessage(vararg args: Any): String = MessageFormat(this).format(args)
 
 fun <T : Closeable?> T.closeLogged() {
   try {

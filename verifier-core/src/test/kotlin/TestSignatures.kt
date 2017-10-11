@@ -1,6 +1,6 @@
-import com.jetbrains.pluginverifier.results.problems.AccessFlags
-import com.jetbrains.pluginverifier.results.problems.ClassPath
-import com.jetbrains.pluginverifier.results.problems.Location
+import com.jetbrains.pluginverifier.results.location.Location
+import com.jetbrains.pluginverifier.results.location.classpath.ClassPath
+import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import org.junit.Assert
 import org.junit.Test
 
@@ -35,7 +35,7 @@ class TestSignatures {
     Assert.assertEquals(expectedResult, fromClass.toString())
   }
 
-  private fun genSomeClassLocation(className: String, signature: String) = Location.fromClass(className, signature, ClassPath(ClassPath.Type.ROOT, ""), AccessFlags(0))
+  private fun genSomeClassLocation(className: String, signature: String) = Location.fromClass(className, signature, ClassPath(ClassPath.Type.ROOT, ""), Modifiers(0))
 
   @Test
   fun assertCollectionsMin() {
@@ -53,13 +53,13 @@ class TestSignatures {
   }
 
   private fun assertMethod(methodName: String, methodDescriptor: String, className: String, classSignature: String, parameterNames: List<String>, signature: String, expected: String) {
-    val methodLocation = Location.fromMethod(genSomeClassLocation(className, classSignature), methodName, methodDescriptor, parameterNames, signature, AccessFlags(0))
+    val methodLocation = Location.fromMethod(genSomeClassLocation(className, classSignature), methodName, methodDescriptor, parameterNames, signature, Modifiers(0))
     Assert.assertEquals(expected, methodLocation.toString())
   }
 
   @Test
   fun assertField() {
-    val fieldLocation = Location.fromField(genSomeClassLocation("some/Class", "<E:Ljava/lang/Object;>Ljava/lang/Object;Ljava/util/Collection<TE;>;"), "field", "I", "TT;", AccessFlags(0))
+    val fieldLocation = Location.fromField(genSomeClassLocation("some/Class", "<E:Ljava/lang/Object;>Ljava/lang/Object;Ljava/util/Collection<TE;>;"), "field", "I", "TT;", Modifiers(0))
     Assert.assertEquals("some.Class<E>.field : T", fieldLocation.toString())
   }
 }

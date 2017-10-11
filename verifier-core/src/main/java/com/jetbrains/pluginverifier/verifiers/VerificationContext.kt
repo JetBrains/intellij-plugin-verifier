@@ -2,7 +2,13 @@ package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.core.VerificationResultHolder
-import com.jetbrains.pluginverifier.results.problems.*
+import com.jetbrains.pluginverifier.results.location.ClassLocation
+import com.jetbrains.pluginverifier.results.location.FieldLocation
+import com.jetbrains.pluginverifier.results.location.Location
+import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.location.classpath.ClassPath
+import com.jetbrains.pluginverifier.results.modifiers.Modifiers
+import com.jetbrains.pluginverifier.results.problems.Problem
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
@@ -46,12 +52,12 @@ data class VerificationContext(
   }
 
   fun fromClass(clazz: ClassNode): ClassLocation =
-      Location.fromClass(clazz.name, clazz.signature, getClassPath(clazz), AccessFlags(clazz.access))
+      Location.fromClass(clazz.name, clazz.signature, getClassPath(clazz), Modifiers(clazz.access))
 
   fun fromMethod(hostClass: ClassNode, method: MethodNode): MethodLocation =
-      Location.fromMethod(fromClass(hostClass), method.name, method.desc, BytecodeUtil.getParameterNames(method), method.signature, AccessFlags(method.access))
+      Location.fromMethod(fromClass(hostClass), method.name, method.desc, BytecodeUtil.getParameterNames(method), method.signature, Modifiers(method.access))
 
   fun fromField(hostClass: ClassNode, field: FieldNode): FieldLocation =
-      Location.fromField(fromClass(hostClass), field.name, field.desc, field.signature, AccessFlags(field.access))
+      Location.fromField(fromClass(hostClass), field.name, field.desc, field.signature, Modifiers(field.access))
 
 }

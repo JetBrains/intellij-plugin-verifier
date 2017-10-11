@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
+import com.jetbrains.pluginverifier.results.access.AccessType
+import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.SymbolicReference
 import com.jetbrains.pluginverifier.verifiers.*

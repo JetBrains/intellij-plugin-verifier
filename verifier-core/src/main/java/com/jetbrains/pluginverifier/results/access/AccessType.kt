@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.results.problems
+package com.jetbrains.pluginverifier.results.access
 
 import com.jetbrains.pluginverifier.results.presentation.Presentable
 

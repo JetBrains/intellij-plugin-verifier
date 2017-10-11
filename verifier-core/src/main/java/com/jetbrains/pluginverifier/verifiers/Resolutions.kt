@@ -1,6 +1,10 @@
 package com.jetbrains.pluginverifier.verifiers
 
-import com.jetbrains.pluginverifier.results.problems.*
+import com.jetbrains.pluginverifier.results.access.AccessType
+import com.jetbrains.pluginverifier.results.location.Location
+import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
+import com.jetbrains.pluginverifier.results.problems.IllegalClassAccessProblem
+import com.jetbrains.pluginverifier.results.problems.InvalidClassFileProblem
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import org.objectweb.asm.tree.ClassNode
 import org.slf4j.Logger
