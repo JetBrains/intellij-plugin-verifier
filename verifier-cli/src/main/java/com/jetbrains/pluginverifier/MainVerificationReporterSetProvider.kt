@@ -25,8 +25,8 @@ class MainVerificationReporterSetProvider(private val verificationReportsDirecto
                                           private val printPluginVerificationProgress: Boolean) : ReporterSetProvider {
 
   override fun provide(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): ReporterSet {
-    val pluginsDirectory = File(verificationReportsDirectory, "plugins")
-    val pluginVerificationDirectory = createPluginVerificationDirectory(pluginsDirectory, pluginCoordinate)
+    val pluginsResultsDirectory = File(verificationReportsDirectory, "$ideVersion".replaceInvalidFileNameCharacters())
+    val pluginVerificationDirectory = createPluginVerificationDirectory(pluginsResultsDirectory, pluginCoordinate)
 
     val pluginLogger = LoggerFactory.getLogger(pluginCoordinate.presentableName)
 
