@@ -59,7 +59,7 @@ class TrunkApiChangesOutput(private val tcLog: TeamCityLog, private val reposito
                 val pluginName = "($plugin)"
                 tcLog.testStarted(pluginName).use {
                   val problemDetails = buildString {
-                    append(problem.shortDescription)
+                    append(problem.fullDescription)
                     append("\nThis problem takes place in ${apiChanges.trunkVersion} but not in ${apiChanges.releaseVersion}")
                     append(getMissingDependenciesDetails(apiChanges, plugin))
                   }
