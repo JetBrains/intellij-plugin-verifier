@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
+import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
@@ -10,6 +11,7 @@ import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.tasks.Task
+import java.util.concurrent.TimeUnit
 
 class CheckIdeTask(private val parameters: CheckIdeParams,
                    val pluginRepository: PluginRepository,
@@ -45,7 +47,10 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
 
   private fun getMissingUpdatesProblems(): List<MissingCompatibleUpdate> {
     val ideVersion = parameters.ideDescriptor.ideVersion
-    val existingUpdatesForIde = pluginRepository.getLastCompatibleUpdates(ideVersion)
+    val allCompatiblePlugins = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch last compatible updates with $ideVersion") {
+      getLastCompatibleUpdates(ideVersion)
+    }
+    val existingUpdatesForIde = allCompatiblePlugins
         .filterNot { PluginIdAndVersion(it.pluginId, it.version) in parameters.excludedPlugins }
         .map { it.pluginId }
         .toSet()

@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 /**
  * @author Sergey Patrikeev
@@ -124,3 +125,19 @@ fun impossible(): Nothing = throw AssertionError("Impossible")
 fun Long.bytesToMegabytes(digits: Int = 2): String = "%.${digits}f".format(this.toDouble() / FileUtils.ONE_MB)
 
 fun Long.bytesToGigabytes(digits: Int = 3): String = "%.${digits}f".format(this.toDouble() / FileUtils.ONE_GB)
+
+fun <T, R> T.tryInvokeSeveralTimes(attempts: Int,
+                                   attemptsDelay: Long,
+                                   attemptsDelayTimeUnit: TimeUnit,
+                                   presentableBlockName: String, block: T.() -> R): R {
+  for (attempt in 1..attempts) {
+    try {
+      return block()
+    } catch (e: Exception) {
+      val delayMillis = attemptsDelayTimeUnit.toMillis(attemptsDelay)
+      LOG.error("Failed attempt #$attempt of $attempts to invoke '$presentableBlockName'. Wait for $delayMillis millis to reattempt", e)
+      Thread.sleep(delayMillis)
+    }
+  }
+  throw RuntimeException("Failed to invoke $presentableBlockName in $attempts attempts")
+}

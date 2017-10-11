@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.RepositoryDependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.repository.LastCompatibleSelector
 import com.jetbrains.pluginverifier.dependencies.resolution.repository.LastSelector
+import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
@@ -18,6 +19,7 @@ import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeParams
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeResult
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeTask
+import java.util.concurrent.TimeUnit
 
 /**
  * @author Sergey Patrikeev
@@ -43,7 +45,10 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
     val releaseVersion = parameters.releaseIde.ideVersion
     val trunkVersion = parameters.trunkIde.ideVersion
 
-    val pluginsToCheck = pluginRepository.getLastCompatibleUpdates(releaseVersion).filterNot { it.pluginId in parameters.jetBrainsPluginIds }
+    val releaseCompatibleUpdates = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch last compatible updates with $releaseVersion") {
+      getLastCompatibleUpdates(releaseVersion)
+    }
+    val pluginsToCheck = releaseCompatibleUpdates.filterNot { it.pluginId in parameters.jetBrainsPluginIds }
 
     println("The following updates will be checked with both #$trunkVersion and #$releaseVersion:\n" + pluginsToCheck.sortedBy { it.updateId }.printInColumns(4, 60))
 

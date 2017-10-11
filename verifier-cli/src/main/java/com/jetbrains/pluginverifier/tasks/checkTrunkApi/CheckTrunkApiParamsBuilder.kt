@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
 import com.google.common.util.concurrent.AtomicDouble
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
@@ -12,6 +13,7 @@ import com.sampullara.cli.Argument
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 /**
  * @author Sergey Patrikeev
@@ -20,8 +22,6 @@ class CheckTrunkApiParamsBuilder(val ideRepository: IdeRepository) : TaskParamet
 
   private companion object {
     val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiParamsBuilder::class.java)
-
-    val MAX_DOWNLOAD_ATTEMPTS = 3
   }
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckTrunkApiParams {
@@ -47,7 +47,9 @@ class CheckTrunkApiParamsBuilder(val ideRepository: IdeRepository) : TaskParamet
       }
       apiOpts.majorIdeVersion != null -> {
         val ideVersion = parseIdeVersion(apiOpts.majorIdeVersion!!)
-        majorIdeFile = tryToDownloadIdeInSeveralAttempts(ideVersion)
+        majorIdeFile = this.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "download ide $ideVersion") {
+          downloadIdeByVersion(ideVersion)
+        }
         deleteMajorOnExit = !apiOpts.saveMajorIdeFile
       }
       else -> throw IllegalArgumentException("Neither the version (-miv) nor the path to the IDE (-mip) with which to compare API problems specified")
@@ -60,18 +62,6 @@ class CheckTrunkApiParamsBuilder(val ideRepository: IdeRepository) : TaskParamet
 
     val jetBrainsPluginIds = getJetBrainsPluginIds(apiOpts)
     return CheckTrunkApiParams(ideDescriptor, majorIdeDescriptor, externalClassesPrefixes, problemsFilters, jdkDescriptor, jetBrainsPluginIds, deleteMajorOnExit, majorIdeFile)
-  }
-
-  private fun tryToDownloadIdeInSeveralAttempts(ideVersion: IdeVersion): File {
-    for (attempt in 1..MAX_DOWNLOAD_ATTEMPTS) {
-      try {
-        return downloadIdeByVersion(ideVersion)
-      } catch (e: Exception) {
-        LOG.error("Attempt #$attempt of $MAX_DOWNLOAD_ATTEMPTS to download IDE $ideVersion is failed", e)
-        continue
-      }
-    }
-    throw RuntimeException("Unable to download IDE $ideVersion in $MAX_DOWNLOAD_ATTEMPTS attempts")
   }
 
   private fun getJetBrainsPluginIds(apiOpts: CheckTrunkApiOpts): List<String> {

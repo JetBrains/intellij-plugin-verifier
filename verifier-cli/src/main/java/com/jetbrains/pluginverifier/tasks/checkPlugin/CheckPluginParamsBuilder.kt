@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.tasks.checkPlugin
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.closeOnException
+import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
@@ -9,6 +10,7 @@ import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskParametersBuilder {
 
@@ -36,7 +38,9 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
       return ideVersions!!.flatMap { fetchPlugins(it, pluginListFile, pluginPaths) }
     } else if (pluginToTestArg.matches("#\\d+".toRegex())) {
       val updateId = Integer.parseInt(pluginToTestArg.drop(1))
-      val updateInfo = pluginRepository.getUpdateInfoById(updateId) ?: throw IllegalArgumentException("Update #$updateId is not found in the Plugin Repository")
+      val updateInfo = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "get update information for update #$updateId") {
+        getUpdateInfoById(updateId)
+      } ?: throw IllegalArgumentException("Update #$updateId is not found in the Plugin Repository")
       return listOf(PluginCoordinate.ByUpdateInfo(updateInfo, pluginRepository))
     } else {
       val file = File(pluginToTestArg)
@@ -66,9 +70,12 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
             }
           }
 
-  fun downloadPluginBuilds(pluginId: String, ideVersion: IdeVersion): List<PluginCoordinate> =
-      pluginRepository.getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId)
-          .map { PluginCoordinate.ByUpdateInfo(it, pluginRepository) }
+  private fun downloadPluginBuilds(pluginId: String, ideVersion: IdeVersion): List<PluginCoordinate> {
+    val allCompatibleUpdatesOfPlugin = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch all compatible updates of plugin $pluginId with $ideVersion") {
+      getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId)
+    }
+    return allCompatibleUpdatesOfPlugin.map { PluginCoordinate.ByUpdateInfo(it, pluginRepository) }
+  }
 
 
 }

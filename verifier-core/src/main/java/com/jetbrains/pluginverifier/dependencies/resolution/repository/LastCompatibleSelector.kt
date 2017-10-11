@@ -10,6 +10,6 @@ class LastCompatibleSelector(val ideVersion: IdeVersion) : UpdateSelector {
     if (updateInfo != null) {
       return UpdateSelector.Result.Plugin(PluginCoordinate.ByUpdateInfo(updateInfo, pluginRepository))
     }
-    return UpdateSelector.Result.NotFound("Plugin $pluginId doesn't have a build compatible with $ideVersion")
+    return UpdateSelector.Result.NotFound("Plugin $pluginId doesn't have a build compatible with ${ideVersion}")
   }
 }

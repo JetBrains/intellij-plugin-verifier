@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.tasks.checkIde
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.misc.closeOnException
+import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.ide.IdeResourceUtil
@@ -17,6 +18,7 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 class CheckIdeParamsBuilder(val pluginRepository: PluginRepository, val pluginDetailsProvider: PluginDetailsProvider) : TaskParametersBuilder {
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckIdeParams {
@@ -37,7 +39,9 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository, val pluginDe
 
         val excludedPlugins = parseExcludedPlugins(opts)
 
-        val pluginsToCheck = getDescriptorsToCheck(checkAllBuilds, checkLastBuilds, ideDescriptor.ideVersion)
+        val pluginsToCheck = this.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch updates to check with ${ideDescriptor.ideVersion}") {
+          getDescriptorsToCheck(checkAllBuilds, checkLastBuilds, ideDescriptor.ideVersion)
+        }
         val dependencyResolver = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsProvider)
         return CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, excludedPlugins, externalClassesPrefixes, externalClassPath, checkAllBuilds, problemsFilters, dependencyResolver)
       }
