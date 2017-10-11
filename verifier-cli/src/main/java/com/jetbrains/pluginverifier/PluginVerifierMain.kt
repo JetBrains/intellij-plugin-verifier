@@ -5,7 +5,6 @@ import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.reporting.Reporter
-import com.jetbrains.pluginverifier.reporting.common.FileReporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
@@ -113,13 +112,10 @@ object PluginVerifierMain {
     val messageReporters = listOf(LogReporter<String>(logger))
     val progressReporters = emptyList<Reporter<Double>>()
     val verificationReportsDirectory = OptionsParser.getVerificationReportsDirectory(opts)
-    val saveIgnoredProblemsFile = OptionsParser.getSaveIgnoredProblemsFile(opts)
     println("Verification reports directory: $verificationReportsDirectory")
-    println("Ignored problems will be saved into $saveIgnoredProblemsFile")
-    val ignoredProblemsReporter = FileReporter<String>(saveIgnoredProblemsFile)
     val printPluginVerificationProgress = opts.printPluginVerificationProgress
-    val reporterSetProvider = MainVerificationReporterSetProvider(verificationReportsDirectory, ignoredProblemsReporter, printPluginVerificationProgress)
-    return VerificationReportageImpl(messageReporters, progressReporters, ignoredProblemsReporter, reporterSetProvider)
+    val reporterSetProvider = MainVerificationReportersProvider(messageReporters, progressReporters, verificationReportsDirectory, printPluginVerificationProgress)
+    return VerificationReportageImpl(reporterSetProvider)
   }
 
   private fun findTaskRunner(command: String?) = taskRunners.find { command == it.commandName }

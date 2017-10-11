@@ -13,10 +13,10 @@ import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
-import com.jetbrains.pluginverifier.reporting.common.IdleReporter
-import com.jetbrains.pluginverifier.reporting.verification.ReporterSet
-import com.jetbrains.pluginverifier.reporting.verification.ReporterSetProvider
+import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterSet
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportersProvider
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.problems.*
@@ -51,11 +51,17 @@ class VerifierExecutorTest {
         val jdkDescriptor = JdkDescriptor(File(jdkPath))
         val verifierParams = VerifierParameters(externalClassesPrefixes, problemsFilters, EmptyResolver, NotFoundDependencyFinder())
         val tasks = listOf(pluginCoordinate to ideDescriptor)
-        val emptyReporterSetProvider = object : ReporterSetProvider {
-          override fun provide(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): ReporterSet =
-              ReporterSet(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
+        val emptyReporterSetProvider = object : VerificationReportersProvider {
+          override val globalMessageReporters: List<Reporter<String>> = emptyList()
+
+          override val globalProgressReporters: List<Reporter<Double>> = emptyList()
+
+          override fun close() = Unit
+
+          override fun getReporterSetForPluginVerification(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): VerificationReporterSet =
+              VerificationReporterSet(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
         }
-        VerificationReportageImpl(emptyList(), emptyList(), IdleReporter(), emptyReporterSetProvider).use { verificationReportage ->
+        VerificationReportageImpl(emptyReporterSetProvider).use { verificationReportage ->
           Verification.run(verifierParams, pluginDetailsProvider, tasks, verificationReportage, jdkDescriptor).single()
         }
       }

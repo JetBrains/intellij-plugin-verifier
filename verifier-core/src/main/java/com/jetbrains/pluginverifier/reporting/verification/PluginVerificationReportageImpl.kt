@@ -11,7 +11,7 @@ import com.jetbrains.pluginverifier.results.warnings.Warning
 class PluginVerificationReportageImpl(private val verificationReportage: VerificationReportage,
                                       override val plugin: PluginCoordinate,
                                       override val ideVersion: IdeVersion,
-                                      private val reporterSet: ReporterSet) : PluginVerificationReportage {
+                                      private val reporterSet: VerificationReporterSet) : PluginVerificationReportage {
   @Volatile
   private var startTime: Long = 0
 

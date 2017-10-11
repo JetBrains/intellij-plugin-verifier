@@ -6,7 +6,10 @@ import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.*
+import com.jetbrains.pluginverifier.misc.createDir
+import com.jetbrains.pluginverifier.misc.deleteLogged
+import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
+import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.settings.dependencies.AllMissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
@@ -112,17 +115,6 @@ object OptionsParser {
       return IgnoredProblemsFilter(problemsToIgnore)
     }
     return null
-  }
-
-  fun getSaveIgnoredProblemsFile(opts: CmdOpts): File {
-    val file = if (opts.saveIgnoredProblemsFile != null) {
-      File(opts.saveIgnoredProblemsFile!!)
-    } else {
-      val verificationReportsDirectory = getVerificationReportsDirectory(opts)
-      File(verificationReportsDirectory, "ignored-problems.txt")
-    }
-    file.deleteLogged()
-    return file.create()
   }
 
   private fun createDocumentedProblemsFilter(opts: CmdOpts): ProblemsFilter? {

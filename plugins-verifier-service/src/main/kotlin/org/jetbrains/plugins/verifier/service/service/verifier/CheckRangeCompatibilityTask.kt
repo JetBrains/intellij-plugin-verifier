@@ -13,11 +13,10 @@ import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.reporting.Reporter
-import com.jetbrains.pluginverifier.reporting.common.IdleReporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
-import com.jetbrains.pluginverifier.reporting.verification.ReporterSet
-import com.jetbrains.pluginverifier.reporting.verification.ReporterSetProvider
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterSet
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportersProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.Result
@@ -100,12 +99,16 @@ class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
   }
 
   private fun createVerificationReportage(progress: TaskProgress) = VerificationReportageImpl(
-      messageReporters = listOf(LogReporter(LOG)),
-      progressReporters = listOf(DelegateProgressReporter(progress)),
-      allIgnoredProblemsReporter = IdleReporter(),
-      reporterSetProvider = object : ReporterSetProvider {
-        override fun provide(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): ReporterSet {
-          return ReporterSet(
+      reporterSetProvider = object : VerificationReportersProvider {
+
+        override val globalMessageReporters: List<Reporter<String>> = listOf(LogReporter(LOG))
+
+        override val globalProgressReporters: List<Reporter<Double>> = listOf(DelegateProgressReporter(progress))
+
+        override fun close() = Unit
+
+        override fun getReporterSetForPluginVerification(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): VerificationReporterSet {
+          return VerificationReporterSet(
               verdictReporters = listOf(LogReporter(LOG)),
               messageReporters = listOf(LogReporter(LOG)),
               progressReporters = listOf(DelegateProgressReporter(progress)),

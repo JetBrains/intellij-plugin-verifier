@@ -12,7 +12,7 @@ import java.io.Closeable
 /**
  * @author Sergey Patrikeev
  */
-data class ReporterSet(
+data class VerificationReporterSet(
     val verdictReporters: List<Reporter<Verdict>>,
     val messageReporters: List<Reporter<String>>,
     val progressReporters: List<Reporter<Double>>,
