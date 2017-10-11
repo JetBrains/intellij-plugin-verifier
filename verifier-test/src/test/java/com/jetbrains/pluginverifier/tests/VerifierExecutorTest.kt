@@ -19,6 +19,14 @@ import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterS
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportersProvider
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.access.AccessType
+import com.jetbrains.pluginverifier.results.instruction.Instruction
+import com.jetbrains.pluginverifier.results.location.ClassLocation
+import com.jetbrains.pluginverifier.results.location.FieldLocation
+import com.jetbrains.pluginverifier.results.location.Location
+import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.location.classpath.ClassPath
+import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.SymbolicReference
@@ -101,11 +109,11 @@ class VerifierExecutorTest {
       assertTrue("Redundant problems: \n$message", redundantProblems.isEmpty())
     }
 
-    val PUBLIC_CLASS_AF = AccessFlags(0x21)
-    val PUBLIC_METHOD_AF = AccessFlags(0x1)
-    val PUBLIC_INTERFACE_AF = AccessFlags(0x601)
-    val PUBLIC_ABSTRACT_METHOD_AF = AccessFlags(0x401)
-    val PUBLIC_ABSTRACT_CLASS_AF = AccessFlags(0x421)
+    val PUBLIC_CLASS_AF = Modifiers(0x21)
+    val PUBLIC_METHOD_AF = Modifiers(0x1)
+    val PUBLIC_INTERFACE_AF = Modifiers(0x601)
+    val PUBLIC_ABSTRACT_METHOD_AF = Modifiers(0x401)
+    val PUBLIC_ABSTRACT_CLASS_AF = Modifiers(0x421)
 
     val PLUGIN_CLASS_PATH = ClassPath(ClassPath.Type.ROOT, "mock-plugin-1.0.jar")
     val IDEA_CLASS_PATH = ClassPath(ClassPath.Type.JAR_FILE, "after-idea-1.0.jar")
@@ -116,18 +124,18 @@ class VerifierExecutorTest {
         methodDescriptor: String,
         parameterNames: List<String>,
         signature: String?,
-        accessFlags: AccessFlags
-    ): MethodLocation = Location.fromMethod(hostClass, methodName, methodDescriptor, parameterNames, signature, accessFlags)
+        modifiers: Modifiers
+    ): MethodLocation = Location.fromMethod(hostClass, methodName, methodDescriptor, parameterNames, signature, modifiers)
 
-    fun pluginClass(className: String, signature: String?, accessFlags: AccessFlags): ClassLocation = Location.fromClass(className, signature, PLUGIN_CLASS_PATH, accessFlags)
+    fun pluginClass(className: String, signature: String?, modifiers: Modifiers): ClassLocation = Location.fromClass(className, signature, PLUGIN_CLASS_PATH, modifiers)
 
     fun pluginField(
         hostClass: ClassLocation,
         fieldName: String,
         fieldDescriptor: String,
         signature: String?,
-        accessFlags: AccessFlags
-    ): FieldLocation = Location.fromField(hostClass, fieldName, fieldDescriptor, signature, accessFlags)
+        modifiers: Modifiers
+    ): FieldLocation = Location.fromField(hostClass, fieldName, fieldDescriptor, signature, modifiers)
   }
 
   @Test
@@ -226,7 +234,7 @@ class VerifierExecutorTest {
         "()Z",
         emptyList(),
         null,
-        AccessFlags(0x11)
+        Modifiers(0x11)
     )
     val overridingClass = pluginClass("mock/plugin/OverrideFinalMethodProblem", null, PUBLIC_CLASS_AF)
     val problem = OverridingFinalMethodProblem(finalMethod, overridingClass)
@@ -263,7 +271,7 @@ class VerifierExecutorTest {
             "finalField",
             "I",
             null,
-            AccessFlags(0x11)
+            Modifiers(0x11)
         ), accessor, Instruction.PUT_FIELD
     )
     assertProblemFound(problem,
@@ -281,7 +289,7 @@ class VerifierExecutorTest {
             "staticFinalField",
             "I",
             null,
-            AccessFlags(0x19)
+            Modifiers(0x19)
         ),
         accessor,
         Instruction.PUT_STATIC
@@ -341,7 +349,7 @@ class VerifierExecutorTest {
             "staticField",
             "I",
             null,
-            AccessFlags(0x9)
+            Modifiers(0x9)
         ),
         accessor,
         Instruction.GET_FIELD
@@ -356,7 +364,7 @@ class VerifierExecutorTest {
   fun superClassBecameInterface() {
     val problem = SuperClassBecameInterfaceProblem(
         pluginClass("mock/plugin/inheritance/SuperClassBecameInterface", null, PUBLIC_CLASS_AF),
-        Location.fromClass("misc/BecomeInterface", null, IDEA_CLASS_PATH, AccessFlags(0x601))
+        Location.fromClass("misc/BecomeInterface", null, IDEA_CLASS_PATH, Modifiers(0x601))
     )
     assertProblemFound(problem,
         "Class mock.plugin.inheritance.SuperClassBecameInterface has a *super class* misc.BecomeInterface which is actually an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.",
@@ -455,7 +463,7 @@ class VerifierExecutorTest {
     val pluginClass = pluginClass("mock/plugin/finals/InheritFromFinalClass", null, PUBLIC_CLASS_AF)
     val problem = InheritFromFinalClassProblem(
         pluginClass,
-        Location.fromClass("finals/BecomeFinal", null, IDEA_CLASS_PATH, AccessFlags(0x31))
+        Location.fromClass("finals/BecomeFinal", null, IDEA_CLASS_PATH, Modifiers(0x31))
     )
     assertProblemFound(problem,
         "Class mock.plugin.finals.InheritFromFinalClass inherits from a final class finals.BecomeFinal. This can lead to **VerifyError** exception at runtime.",
@@ -491,7 +499,7 @@ class VerifierExecutorTest {
             "()V",
             emptyList(),
             null,
-            AccessFlags(0x9)
+            Modifiers(0x9)
         ),
         pluginMethod(pluginClass("mock/plugin/invokeVirtualOnStatic/SmartEnterProcessorUser", null, PUBLIC_CLASS_AF), "main", "()V", emptyList(), null, PUBLIC_METHOD_AF),
         Instruction.INVOKE_VIRTUAL
@@ -511,7 +519,7 @@ class VerifierExecutorTest {
             "()V",
             emptyList(),
             null,
-            AccessFlags(0x9)
+            Modifiers(0x9)
         ),
         pluginMethod(pluginClass("mock/plugin/invokespecial/Child", null, PUBLIC_ABSTRACT_CLASS_AF), "invokeSpecialOnStaticMethod", "()V", emptyList(), null, PUBLIC_METHOD_AF),
         Instruction.INVOKE_SPECIAL
@@ -531,7 +539,7 @@ class VerifierExecutorTest {
             "()V",
             emptyList(),
             null,
-            AccessFlags(0x9)
+            Modifiers(0x9)
         ),
         pluginMethod(pluginClass("mock/plugin/invokeClassMethodOnInterface/Caller", null, PUBLIC_CLASS_AF), "call3", "(Lstatics/MethodBecameStatic;)V", listOf("b"), null, PUBLIC_METHOD_AF),
         Instruction.INVOKE_INTERFACE
@@ -668,7 +676,7 @@ class VerifierExecutorTest {
             "()V",
             emptyList(),
             null,
-            AccessFlags(0x2)
+            Modifiers(0x2)
         ),
         caller,
         Instruction.INVOKE_SPECIAL,
@@ -682,7 +690,7 @@ class VerifierExecutorTest {
 
   @Test
   fun illegalAccessToPrivateOrProtectedOrPackagePrivateField() {
-    fun accessProblem(methodWithProblem: String, fieldName: String, fieldContainer: String, accessType: AccessType, fieldAccessFlag: AccessFlags): IllegalFieldAccessProblem {
+    fun accessProblem(methodWithProblem: String, fieldName: String, fieldContainer: String, accessType: AccessType, fieldAccessFlag: Modifiers): IllegalFieldAccessProblem {
       val accessor = pluginMethod(pluginClass("mock/plugin/field/FieldProblemsContainer", null, PUBLIC_CLASS_AF), methodWithProblem, "()V", emptyList(), null, PUBLIC_METHOD_AF)
 
       return IllegalFieldAccessProblem(
@@ -705,17 +713,17 @@ class VerifierExecutorTest {
     }
 
 
-    assertProblemFound(accessProblem("accessPrivateField", "privateField", "fields/FieldsContainer", AccessType.PRIVATE, AccessFlags(0x2)),
+    assertProblemFound(accessProblem("accessPrivateField", "privateField", "fields/FieldsContainer", AccessType.PRIVATE, Modifiers(0x2)),
         "Method mock.plugin.field.FieldProblemsContainer.accessPrivateField() : void contains a *getfield* instruction referencing a private field fields.FieldsContainer.privateField : int that a class mock.plugin.field.FieldProblemsContainer doesn't have access to. This can lead to **IllegalAccessError** exception at runtime.",
         "Illegal access to a private field fields.FieldsContainer.privateField : int"
     )
 
-    assertProblemFound(accessProblem("accessProtectedField", "protectedField", "fields/otherPackage/OtherFieldsContainer", AccessType.PROTECTED, AccessFlags(0x4)),
+    assertProblemFound(accessProblem("accessProtectedField", "protectedField", "fields/otherPackage/OtherFieldsContainer", AccessType.PROTECTED, Modifiers(0x4)),
         "Method mock.plugin.field.FieldProblemsContainer.accessProtectedField() : void contains a *getfield* instruction referencing a protected field fields.otherPackage.OtherFieldsContainer.protectedField : int that a class mock.plugin.field.FieldProblemsContainer doesn't have access to. This can lead to **IllegalAccessError** exception at runtime.",
         "Illegal access to a protected field fields.otherPackage.OtherFieldsContainer.protectedField : int"
     )
 
-    assertProblemFound(accessProblem("accessPackageField", "packageField", "fields/otherPackage/OtherFieldsContainer", AccessType.PACKAGE_PRIVATE, AccessFlags(0x0)),
+    assertProblemFound(accessProblem("accessPackageField", "packageField", "fields/otherPackage/OtherFieldsContainer", AccessType.PACKAGE_PRIVATE, Modifiers(0x0)),
         "Method mock.plugin.field.FieldProblemsContainer.accessPackageField() : void contains a *getfield* instruction referencing a package-private field fields.otherPackage.OtherFieldsContainer.packageField : int that a class mock.plugin.field.FieldProblemsContainer doesn't have access to. This can lead to **IllegalAccessError** exception at runtime.",
         "Illegal access to a package-private field fields.otherPackage.OtherFieldsContainer.packageField : int"
     )
@@ -742,7 +750,7 @@ class VerifierExecutorTest {
         pluginMethod(pluginClass("mock/plugin/field/FieldProblemsContainer", null, PUBLIC_CLASS_AF), "accessUnknownClassOfArray", "()V", emptyList(), null, PUBLIC_METHOD_AF),
         pluginMethod(pluginClass("mock/plugin/field/FieldProblemsContainer", null, PUBLIC_CLASS_AF), "accessUnknownClass", "()V", emptyList(), null, PUBLIC_METHOD_AF),
 
-        pluginField(pluginClass("mock/plugin/FieldTypeNotFound", null, PUBLIC_CLASS_AF), "myNonExistingClass", "Lnon/existing/NonExistingClass;", null, AccessFlags(0x2)),
+        pluginField(pluginClass("mock/plugin/FieldTypeNotFound", null, PUBLIC_CLASS_AF), "myNonExistingClass", "Lnon/existing/NonExistingClass;", null, Modifiers(0x2)),
 
         pluginClass("mock/plugin/ParentDoesntExist", null, PUBLIC_CLASS_AF)
     )
@@ -841,7 +849,7 @@ class VerifierExecutorTest {
   @Test
   fun illegalAccessToPackagePrivateClass() {
     val problem = IllegalClassAccessProblem(
-        Location.fromClass("access/other/BecamePackagePrivate", null, IDEA_CLASS_PATH, AccessFlags(0x20)),
+        Location.fromClass("access/other/BecamePackagePrivate", null, IDEA_CLASS_PATH, Modifiers(0x20)),
         AccessType.PACKAGE_PRIVATE,
         pluginMethod(
             pluginClass("mock/plugin/access/IllegalAccess", null, PUBLIC_CLASS_AF),

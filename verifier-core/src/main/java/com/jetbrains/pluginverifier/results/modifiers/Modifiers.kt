@@ -1,8 +1,8 @@
-package com.jetbrains.pluginverifier.results.problems
+package com.jetbrains.pluginverifier.results.modifiers
 
-data class AccessFlags(val flags: Int) {
+data class Modifiers(private val flags: Int) {
 
-  enum class Flag(val flag: Int) {
+  enum class Modifier(val flag: Int) {
     PUBLIC(0x0001), // class, field, method
     PRIVATE(0x0002), // class, field, method
     PROTECTED(0x0004), // class, field, method
@@ -25,6 +25,6 @@ data class AccessFlags(val flags: Int) {
     DEPRECATED(0x20000) // class, field, method
   }
 
-  fun contains(flag: Flag): Boolean = flags.and(flag.flag) != 0
+  fun contains(flag: Modifier): Boolean = flags.and(flag.flag) != 0
 
 }
