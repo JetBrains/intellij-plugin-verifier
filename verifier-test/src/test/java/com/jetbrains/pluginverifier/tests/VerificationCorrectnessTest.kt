@@ -38,7 +38,7 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.io.File
 
-class VerifierExecutorTest {
+class VerificationCorrectnessTest {
 
   companion object {
     lateinit var result: Verdict.MissingDependencies
