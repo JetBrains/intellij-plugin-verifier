@@ -28,6 +28,14 @@ fun <K, V> Map<K, Iterable<V>>.multimapFromMap(): Multimap<K, V> {
 
 fun String.formatMessage(vararg args: Any): String = MessageFormat(this).format(args)
 
+fun <T, R> T.doLogged(action: String, block: T.() -> R) {
+  try {
+    block()
+  } catch (e: Exception) {
+    LOG.error("Unable to $action", e)
+  }
+}
+
 fun <T : Closeable?> T.closeLogged() {
   try {
     this?.close()

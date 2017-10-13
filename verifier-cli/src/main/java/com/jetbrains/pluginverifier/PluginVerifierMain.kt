@@ -87,6 +87,9 @@ object PluginVerifierMain {
     val runner = findTaskRunner(command)
     val parametersBuilder = runner.getParametersBuilder(pluginRepository, ideRepository, pluginDetailsProvider)
 
+    val verificationReportsDirectory = OptionsParser.getVerificationReportsDirectory(opts)
+    println("Verification reports directory: $verificationReportsDirectory")
+
     val parameters = try {
       parametersBuilder.build(opts, freeArgs)
     } catch (e: IllegalArgumentException) {
@@ -96,7 +99,7 @@ object PluginVerifierMain {
 
     val taskResult = parameters.use {
       println("Task ${runner.commandName} parameters: $parameters")
-      createVerificationReportage(opts).use { verificationReportage ->
+      createVerificationReportage(verificationReportsDirectory, opts.printPluginVerificationProgress).use { verificationReportage ->
         runner
             .createTask(parameters, pluginRepository, pluginDetailsProvider)
             .execute(verificationReportage)
@@ -107,13 +110,11 @@ object PluginVerifierMain {
     taskResult.printResults(printerOptions, pluginRepository)
   }
 
-  private fun createVerificationReportage(opts: CmdOpts): VerificationReportage {
+  private fun createVerificationReportage(verificationReportsDirectory: File, printPluginVerificationProgress: Boolean): VerificationReportage {
     val logger = LoggerFactory.getLogger("verification")
     val messageReporters = listOf(LogReporter<String>(logger))
     val progressReporters = emptyList<Reporter<Double>>()
-    val verificationReportsDirectory = OptionsParser.getVerificationReportsDirectory(opts)
-    println("Verification reports directory: $verificationReportsDirectory")
-    val printPluginVerificationProgress = opts.printPluginVerificationProgress
+
     val reporterSetProvider = MainVerificationReportersProvider(messageReporters, progressReporters, verificationReportsDirectory, printPluginVerificationProgress)
     return VerificationReportageImpl(reporterSetProvider)
   }
