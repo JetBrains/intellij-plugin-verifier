@@ -48,9 +48,12 @@ class VerificationCorrectnessTest {
 
     lateinit var actualDeprecatedUsages: Set<DeprecatedApiUsage>
 
-    lateinit var redundantProblems: MutableSet<Problem>
+    /**
+     * The list is required here to take repetition of the problem into account.
+     */
+    lateinit var redundantProblems: MutableList<Problem>
 
-    lateinit var redundantDeprecated: MutableSet<DeprecatedApiUsage>
+    lateinit var redundantDeprecated: MutableList<DeprecatedApiUsage>
 
     private fun doIdeaAndPluginVerification(ideaFile: File, pluginFile: File): Result {
       val pluginCoordinate = PluginCoordinate.ByFile(pluginFile)
@@ -91,8 +94,8 @@ class VerificationCorrectnessTest {
       result = verdict as Verdict.MissingDependencies
       actualProblems = result.problems
       actualDeprecatedUsages = result.deprecatedUsages
-      redundantProblems = actualProblems.toMutableSet()
-      redundantDeprecated = actualDeprecatedUsages.toMutableSet()
+      redundantProblems = actualProblems.toMutableList()
+      redundantDeprecated = actualDeprecatedUsages.toMutableList()
     }
 
     private fun prepareTestEnvironment() {
@@ -169,6 +172,25 @@ class VerificationCorrectnessTest {
   }
 
   @Test
+  fun `deprecated method is used`() {
+    //Auxiliary deprecated usage.
+    assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.method() : void")
+    assertDeprecatedUsageFound("Method <init>() : void of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.method() : void")
+
+    assertDeprecatedUsageFound("Deprecated method deprecated.DeprecatedMethod.foo(int x) : void is used in mock.plugin.deprecated.DeprecatedUser.method() : void")
+  }
+
+  @Test
+  fun `usage of the method of the deprecated class`() {
+    assertDeprecatedUsageFound("Method foo() : void of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.method() : void")
+  }
+
+  @Test
+  fun `deprecated constructor is used`() {
+    assertDeprecatedUsageFound("Deprecated method deprecated.DeprecatedMethod.<init>() : void is used in mock.plugin.deprecated.DeprecatedUser.method() : void")
+  }
+
+  @Test
   fun `overriding deprecated method`() {
     assertDeprecatedUsageFound("Deprecated method deprecated.DeprecatedMethod.foo(int x) : void is used in mock.plugin.deprecated.OverrideDeprecatedMethod.foo(int x) : void")
   }
@@ -179,10 +201,21 @@ class VerificationCorrectnessTest {
   }
 
   @Test
-  fun `deprecated class is used in method`() {
+  fun `deprecated class is used`() {
+    //Auxiliary deprecated usage.
+    assertDeprecatedUsageFound("Method <init>() : void of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.clazz() : void")
+
     assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.clazz() : void")
+  }
+
+  @Test
+  fun `deprecated with comment class is used`() {
+    //Auxiliary deprecated usage.
+    assertDeprecatedUsageFound("Method <init>() : void of the deprecated class deprecated.DeprecatedWithCommentClass is used in mock.plugin.deprecated.DeprecatedUser.clazzWithComment() : void")
+
     assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedWithCommentClass is used in mock.plugin.deprecated.DeprecatedUser.clazzWithComment() : void")
   }
+
 
   @Test
   fun `deprecated field usage`() {
@@ -191,8 +224,9 @@ class VerificationCorrectnessTest {
 
   @Test
   fun `field of the deprecated class usage`() {
-    //Auxiliary usage
+    //Auxiliary usages
     assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.field() : void")
+    assertDeprecatedUsageFound("Method <init>() : void of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.field() : void")
 
     assertDeprecatedUsageFound("Field x : int of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.field() : void")
   }

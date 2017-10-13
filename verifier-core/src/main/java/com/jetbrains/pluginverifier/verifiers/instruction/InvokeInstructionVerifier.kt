@@ -1,6 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.jetbrains.pluginverifier.results.access.AccessType
+import com.jetbrains.pluginverifier.results.deprecated.DeprecatedClassMethodUsage
+import com.jetbrains.pluginverifier.results.deprecated.DeprecatedMethodUsage
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.SymbolicReference
@@ -336,7 +338,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
        * Otherwise, if method lookup succeeds and the referenced method is not accessible (§5.4.4) to D,
        * method resolution throws an IllegalAccessError.
        */
-      return checkMethodIsAccessible(resolvedMethod)
+      return checkMethodIsAccessibleOrDeprecated(resolvedMethod)
     }
 
     ctx.registerProblem(MethodNotFoundProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor), getFromMethod(), instruction))
@@ -354,7 +356,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
        * Otherwise, if method lookup succeeds and the referenced method is not accessible (§5.4.4) to D,
        * method resolution throws an IllegalAccessError.
        */
-      return checkMethodIsAccessible(resolvedMethod)
+      return checkMethodIsAccessibleOrDeprecated(resolvedMethod)
     }
 
     ctx.registerProblem(MethodNotFoundProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor), getFromMethod(), instruction))
@@ -371,9 +373,9 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
    * and is declared by a class in the same run-time package as D.
    * - R is private and is declared in D.
    */
-  fun checkMethodIsAccessible(location: ResolvedMethod): ResolvedMethod? {
-    val definingClass = location.definingClass
-    val methodNode = location.methodNode
+  fun checkMethodIsAccessibleOrDeprecated(resolvedMethod: ResolvedMethod): ResolvedMethod? {
+    val definingClass = resolvedMethod.definingClass
+    val methodNode = resolvedMethod.methodNode
 
     var accessProblem: AccessType? = null
 
@@ -397,12 +399,23 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     }
 
     if (accessProblem != null) {
-      val methodDeclaration = ctx.fromMethod(location.definingClass, location.methodNode)
+      val methodDeclaration = ctx.fromMethod(resolvedMethod.definingClass, resolvedMethod.methodNode)
       val problem = IllegalMethodAccessProblem(methodDeclaration, getFromMethod(), instruction, accessProblem)
       ctx.registerProblem(problem)
       return null
     }
-    return location
+    checkMethodIsDeprecated(resolvedMethod)
+    return resolvedMethod
+  }
+
+  private fun checkMethodIsDeprecated(resolvedMethod: ResolvedMethod) {
+    with(resolvedMethod) {
+      if (methodNode.isDeprecated()) {
+        ctx.registerDeprecatedUsage(DeprecatedMethodUsage(ctx.fromMethod(definingClass, methodNode), getFromMethod()))
+      } else if (definingClass.isDeprecated()) {
+        ctx.registerDeprecatedUsage(DeprecatedClassMethodUsage(ctx.fromClass(definingClass), getFromMethod(), ctx.fromMethod(definingClass, methodNode)))
+      }
+    }
   }
 
   /**
