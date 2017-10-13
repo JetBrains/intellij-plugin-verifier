@@ -21,9 +21,9 @@ val toSimpleJavaClassName: (String) -> String = { binaryName -> binaryName.subst
 
 private fun FieldLocation.toFieldType(fieldTypeOption: FieldTypeOption): String {
   val descriptorConverter = when (fieldTypeOption) {
-    FieldTypeOption.NO_HOST -> return ""
-    FieldTypeOption.SIMPLE_HOST_NAME -> toSimpleJavaClassName
-    FieldTypeOption.FULL_HOST_NAME -> toFullJavaClassName
+    FieldTypeOption.NO_TYPE -> return ""
+    FieldTypeOption.SIMPLE_TYPE -> toSimpleJavaClassName
+    FieldTypeOption.FULL_TYPE -> toFullJavaClassName
   }
   return if (signature.isNotEmpty()) {
     convertFieldSignature(signature, descriptorConverter)

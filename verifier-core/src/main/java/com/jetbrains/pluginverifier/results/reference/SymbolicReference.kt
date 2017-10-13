@@ -29,7 +29,7 @@ data class FieldReference(val hostClass: ClassReference,
                           val fieldName: String,
                           val fieldDescriptor: String) : SymbolicReference {
 
-  override fun toString(): String = formatFieldReference(HostClassOption.FULL_HOST_NAME, FieldTypeOption.SIMPLE_HOST_NAME)
+  override fun toString(): String = formatFieldReference(HostClassOption.FULL_HOST_NAME, FieldTypeOption.SIMPLE_TYPE)
 
 }
 

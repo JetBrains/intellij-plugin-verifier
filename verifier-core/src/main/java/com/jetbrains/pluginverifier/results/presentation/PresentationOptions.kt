@@ -13,7 +13,7 @@ enum class HostClassOption {
 }
 
 enum class FieldTypeOption {
-  NO_HOST, SIMPLE_HOST_NAME, FULL_HOST_NAME
+  NO_TYPE, SIMPLE_TYPE, FULL_TYPE
 }
 
 enum class MethodParameterTypeOption {
