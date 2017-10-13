@@ -93,6 +93,10 @@ private fun VerificationContext.resolveAllDirectParents(classNode: ClassNode): L
 }
 
 fun VerificationContext.isSubclassOf(child: ClassNode, possibleParent: ClassNode): Boolean {
+  if (possibleParent.name == "java/lang/Object") {
+    return true
+  }
+
   val directParents = resolveAllDirectParents(child)
 
   val queue = LinkedList<ClassNode>()
