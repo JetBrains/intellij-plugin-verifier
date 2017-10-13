@@ -179,9 +179,11 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
           appendln("because $reason:")
           for ((shortDescription, allWithShortDescription) in allWithReason.groupBy { it.problem.shortDescription }) {
             appendln("  $shortDescription:")
-            val allPlugins = allWithShortDescription.map { it.plugin }
-            allPlugins.forEach {
-              appendln("    " + it)
+            for ((plugin, allWithPlugin) in allWithShortDescription.groupBy { it.plugin }) {
+              appendln("    $plugin:")
+              for (ignoredEvent in allWithPlugin) {
+                appendln("      ${ignoredEvent.problem.fullDescription}")
+              }
             }
           }
         }
