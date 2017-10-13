@@ -51,13 +51,13 @@ object OptionsParser {
     return File(directoryName).createDir()
   }
 
-  fun parseOutputOptions(opts: CmdOpts): OutputOptions = OutputOptions(
+  fun parseOutputOptions(opts: CmdOpts, verificationReportsDirectory: File): OutputOptions = OutputOptions(
       createMissingDependencyIgnorer(opts),
       opts.needTeamCityLog,
       TeamCityResultPrinter.GroupBy.parse(opts.teamCityGroupType),
       opts.htmlReportFile?.let { File(it) },
       opts.dumpBrokenPluginsFile,
-      getVerificationReportsDirectory(opts)
+      verificationReportsDirectory
   )
 
   private fun createMissingDependencyIgnorer(opts: CmdOpts): MissingDependencyIgnoring {

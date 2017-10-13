@@ -106,7 +106,7 @@ object PluginVerifierMain {
       }
     }
 
-    val outputOptions = OptionsParser.parseOutputOptions(opts)
+    val outputOptions = OptionsParser.parseOutputOptions(opts, verificationReportsDirectory)
     val taskResultsPrinter = runner.createTaskResultsPrinter(outputOptions, pluginRepository)
     taskResultsPrinter.printResults(taskResult)
   }
