@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers
 
+import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
@@ -9,6 +10,7 @@ import com.jetbrains.pluginverifier.results.reference.ClassReference
 import org.objectweb.asm.tree.ClassNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.*
 
 sealed class ClsResolution {
   object NotFound : ClsResolution()
@@ -73,15 +75,33 @@ fun VerificationContext.checkClassExistsOrExternal(className: String, lookup: Cl
   resolveClassOrProblem(className, lookup, registerMissing)
 }
 
+@Suppress("UNCHECKED_CAST")
+private fun VerificationContext.resolveAllDirectParents(classNode: ClassNode): List<ClassNode> {
+  val parents = classNode.superName.singletonOrEmpty() + (classNode.interfaces as? List<String>).orEmpty()
+  return parents.mapNotNull { resolveClassOrProblem(it, classNode, { fromClass(classNode) }) }
+}
+
 fun VerificationContext.isSubclassOf(child: ClassNode, possibleParent: ClassNode): Boolean {
-  var current: ClassNode? = child
-  while (current != null) {
-    if (possibleParent.name == current.name) {
+  val directParents = resolveAllDirectParents(child)
+
+  val queue = LinkedList<ClassNode>()
+  queue.addAll(directParents)
+
+  val visited = hashSetOf<String>()
+  visited.addAll(directParents.map { it.name })
+
+  while (queue.isNotEmpty()) {
+    val node = queue.poll()
+    if (node.name == possibleParent.name) {
       return true
     }
-    val superName = current.superName ?: return false
-    current = resolveClassOrProblem(superName, current, { fromClass(current!!) })
+
+    resolveAllDirectParents(node).filterNot { it.name in visited }.forEach {
+      visited.add(it.name)
+      queue.addLast(it)
+    }
   }
+
   return false
 }
 
