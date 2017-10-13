@@ -158,7 +158,7 @@ class VerifierExecutorTest {
   }
 
   private fun assertProblemFound(problem: Problem, expectedFullDescription: String, expectedShortDescription: String) {
-    assertTrue("${problem.shortDescription} is not found", actualProblems.contains(problem))
+    assertTrue("Problem is not found:\n${problem.fullDescription}\nall problems of the same class: ${actualProblems.filterIsInstance(problem.javaClass).joinToString("\n") { it.fullDescription }}", actualProblems.contains(problem))
     redundantProblems.remove(problem)
     assertThat(problem.shortDescription, `is`(expectedShortDescription))
     assertThat(problem.fullDescription, `is`(expectedFullDescription))
@@ -662,6 +662,35 @@ class VerifierExecutorTest {
     assertProblemFound(problem,
         "Method mock.plugin.non.existing.InvokeRemovedMethod.foo() : void contains an *invokevirtual* instruction referencing an unresolved method non.existing.Child.removedMethod() : void. This can lead to **NoSuchMethodError** exception at runtime.",
         "Invocation of unresolved method non.existing.Child.removedMethod() : void"
+    )
+  }
+
+  @Test
+  fun `method signature changed because the generic parameter type of the enclosing class deleted`() {
+    val methodReference = SymbolicReference.methodOf("generics/Base", "foo", "(Ljava/lang/Number;)V")
+
+    val caller = pluginMethod(pluginClass("mock/plugin/generics/NoSuchMethodError", null, PUBLIC_CLASS_AF), "error", "(Lgenerics/Base;)V", listOf("base"), "(Lgenerics/Base<Ljava/lang/Integer;>;)V", PUBLIC_METHOD_AF)
+    val problem = MethodNotFoundProblem(
+        methodReference,
+        caller,
+        Instruction.INVOKE_VIRTUAL
+    )
+
+    assertProblemFound(problem,
+        "Method mock.plugin.generics.NoSuchMethodError.error(generics.Base<?> base) : void contains an *invokevirtual* instruction referencing an unresolved method generics.Base.foo(Number) : void. This can lead to **NoSuchMethodError** exception at runtime.", "Invocation of unresolved method generics.Base.foo(Number) : void")
+
+    val methodLocation = Location.fromMethod(Location.fromClass("generics/Base", "<T:Ljava/lang/Number;>Ljava/lang/Object;", IDEA_CLASS_PATH, PUBLIC_ABSTRACT_CLASS_AF),
+        "foo",
+        "(Ljava/lang/Number;)V",
+        listOf("arg0"),
+        "(TT;)V",
+        PUBLIC_ABSTRACT_METHOD_AF)
+
+    val notImplementedProblem = MethodNotImplementedProblem(methodLocation, pluginClass("mock/plugin/generics/Subclass", "Lgenerics/Base<Ljava/lang/Integer;>;", PUBLIC_CLASS_AF))
+    assertProblemFound(
+        notImplementedProblem,
+        "Non-abstract class mock.plugin.generics.Subclass inherits from generics.Base<T> but doesn't implement the abstract method foo(T arg0) : void. This can lead to **AbstractMethodError** exception at runtime.",
+        "Abstract method generics.Base<T>.foo(T arg0) : void is not implemented"
     )
   }
 
