@@ -4,6 +4,12 @@ package deprecated;
  * @author Sergey Patrikeev
  */
 public class DeprecatedMethod {
+
+  @Deprecated
+  public DeprecatedMethod() {
+
+  }
+
   @Deprecated
   public void foo(int x) {
 

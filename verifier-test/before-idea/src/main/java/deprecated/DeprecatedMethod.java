@@ -8,9 +8,6 @@ public class DeprecatedMethod {
 
   }
 
-  /**
-   * @deprecated don't use!
-   */
   public void foo(double x) {
 
   }
