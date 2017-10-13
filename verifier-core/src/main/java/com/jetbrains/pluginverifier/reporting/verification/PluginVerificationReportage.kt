@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
 import java.io.Closeable
@@ -31,5 +32,7 @@ interface PluginVerificationReportage : Closeable {
   fun logVerdict(verdict: Verdict)
 
   fun logProblemIgnored(problem: Problem, reason: String)
+
+  fun logDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage)
 
 }

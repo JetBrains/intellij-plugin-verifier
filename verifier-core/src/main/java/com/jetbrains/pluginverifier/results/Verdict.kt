@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.results
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.misc.pluralize
+import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
 
@@ -10,7 +11,8 @@ sealed class Verdict {
   /**
    * Indicates that the Plugin doesn't have compatibility problems with the checked IDE.
    */
-  data class OK(val dependenciesGraph: DependenciesGraph) : Verdict() {
+  data class OK(val dependenciesGraph: DependenciesGraph,
+                val deprecatedUsages: Set<DeprecatedApiUsage>) : Verdict() {
     override fun toString() = "OK"
   }
 
@@ -18,7 +20,8 @@ sealed class Verdict {
    * The plugin has minor problems listed in [warnings].
    */
   data class Warnings(val warnings: Set<Warning>,
-                      val dependenciesGraph: DependenciesGraph) : Verdict() {
+                      val dependenciesGraph: DependenciesGraph,
+                      val deprecatedUsages: Set<DeprecatedApiUsage>) : Verdict() {
     override fun toString(): String = "Found ${warnings.size} " + "warning".pluralize(warnings.size)
   }
 
@@ -30,7 +33,8 @@ sealed class Verdict {
    */
   data class MissingDependencies(val dependenciesGraph: DependenciesGraph,
                                  val problems: Set<Problem>,
-                                 val warnings: Set<Warning>) : Verdict() {
+                                 val warnings: Set<Warning>,
+                                 val deprecatedUsages: Set<DeprecatedApiUsage>) : Verdict() {
     override fun toString(): String = "Missing ${directMissingDependencies.size} direct plugins and modules " + "dependency".pluralize(directMissingDependencies.size) + " and ${problems.size} " + "problem".pluralize(problems.size)
 
     val directMissingDependencies = dependenciesGraph.start.missingDependencies
@@ -42,7 +46,8 @@ sealed class Verdict {
    */
   data class Problems(val problems: Set<Problem>,
                       val dependenciesGraph: DependenciesGraph,
-                      val warnings: Set<Warning>) : Verdict() {
+                      val warnings: Set<Warning>,
+                      val deprecatedUsages: Set<DeprecatedApiUsage>) : Verdict() {
     override fun toString(): String = "Found ${problems.size} compatibility " + "problem".pluralize(problems.size) + " and ${warnings.size} " + "warning".pluralize(warnings.size)
   }
 

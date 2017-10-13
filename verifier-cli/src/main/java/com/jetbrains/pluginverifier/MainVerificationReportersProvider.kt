@@ -17,6 +17,7 @@ import com.jetbrains.pluginverifier.reporting.progress.LogSteppedProgressReporte
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterSet
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportersProvider
 import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
 import org.slf4j.Logger
@@ -67,9 +68,11 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
         warningReporters = createWarningReporters(pluginVerificationDirectory),
         problemsReporters = createProblemReporters(pluginVerificationDirectory),
         dependenciesGraphReporters = createDependencyGraphReporters(pluginVerificationDirectory),
-        ignoredProblemReporters = createIgnoredProblemReporters(pluginLogger, pluginVerificationDirectory, ideVersion)
+        ignoredProblemReporters = createIgnoredProblemReporters(pluginLogger, pluginVerificationDirectory, ideVersion),
+        deprecatedReporters = createDeprecatedReporters(pluginVerificationDirectory)
     )
   }
+
 
   private fun getIdeResultsDirectory(ideVersion: IdeVersion) =
       verificationReportsDirectory.resolve("$ideVersion".replaceInvalidFileNameCharacters())
@@ -98,6 +101,10 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
 
   private fun createWarningReporters(pluginVerificationDirectory: File) = buildList<Reporter<Warning>> {
     add(FileReporter(File(pluginVerificationDirectory, "warnings.txt")))
+  }
+
+  private fun createDeprecatedReporters(pluginVerificationDirectory: File) = buildList<Reporter<DeprecatedApiUsage>> {
+    add(FileReporter(File(pluginVerificationDirectory, "deprecated-usages.txt")))
   }
 
   private fun createMessageReporters(pluginLogger: Logger) = buildList<Reporter<String>> {

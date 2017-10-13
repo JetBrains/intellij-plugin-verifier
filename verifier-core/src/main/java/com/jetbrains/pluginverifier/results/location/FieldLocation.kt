@@ -11,5 +11,5 @@ data class FieldLocation(val hostClass: ClassLocation,
                          val signature: String,
                          val modifiers: Modifiers) : Location {
 
-  override fun toString(): String = formatFieldLocation(HostClassOption.FULL_HOST_WITH_SIGNATURE, FieldTypeOption.SIMPLE_HOST_NAME)
+  override fun toString(): String = formatFieldLocation(HostClassOption.FULL_HOST_WITH_SIGNATURE, FieldTypeOption.SIMPLE_TYPE)
 }

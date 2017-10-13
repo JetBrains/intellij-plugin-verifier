@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
 
@@ -52,6 +53,10 @@ class PluginVerificationReportageImpl(private val verificationReportage: Verific
 
   override fun logProblemIgnored(problem: Problem, reason: String) {
     reporterSet.ignoredProblemReporters.forEach { it.report(ProblemIgnoredEvent(plugin, ideVersion, problem, reason)) }
+  }
+
+  override fun logDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
+    reporterSet.deprecatedReporters.forEach { it.report(deprecatedApiUsage) }
   }
 
   override fun close() {

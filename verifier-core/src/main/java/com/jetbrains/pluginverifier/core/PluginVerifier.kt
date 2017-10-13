@@ -171,18 +171,18 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
   private fun VerificationResultHolder.toVerdict(): Verdict {
     val dependenciesGraph = getDependenciesGraph()
     if (dependenciesGraph.start.missingDependencies.isNotEmpty()) {
-      return Verdict.MissingDependencies(dependenciesGraph, problems, warnings)
+      return Verdict.MissingDependencies(dependenciesGraph, problems, warnings, deprecatedUsages)
     }
 
     if (problems.isNotEmpty()) {
-      return Verdict.Problems(problems, dependenciesGraph, warnings)
+      return Verdict.Problems(problems, dependenciesGraph, warnings, deprecatedUsages)
     }
 
     if (warnings.isNotEmpty()) {
-      return Verdict.Warnings(warnings, dependenciesGraph)
+      return Verdict.Warnings(warnings, dependenciesGraph, deprecatedUsages)
     }
 
-    return Verdict.OK(dependenciesGraph)
+    return Verdict.OK(dependenciesGraph, deprecatedUsages)
   }
 
 }

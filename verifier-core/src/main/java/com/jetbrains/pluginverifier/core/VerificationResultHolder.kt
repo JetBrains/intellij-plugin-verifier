@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
+import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
 
@@ -21,6 +22,8 @@ class VerificationResultHolder(private val idePlugin: IdePlugin,
 
   val warnings: MutableSet<Warning> = hashSetOf()
 
+  val deprecatedUsages: MutableSet<DeprecatedApiUsage> = hashSetOf()
+
   private var dependenciesGraph: DependenciesGraph? = null
 
   private val ignoredProblems = hashSetOf<Problem>()
@@ -32,6 +35,11 @@ class VerificationResultHolder(private val idePlugin: IdePlugin,
   }
 
   fun getDependenciesGraph(): DependenciesGraph = dependenciesGraph!!
+
+  fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
+    deprecatedUsages.add(deprecatedApiUsage)
+    pluginVerificationReportage.logDeprecatedUsage(deprecatedApiUsage)
+  }
 
   fun registerProblem(problem: Problem) {
     if (problem !in problems && problem !in ignoredProblems) {
