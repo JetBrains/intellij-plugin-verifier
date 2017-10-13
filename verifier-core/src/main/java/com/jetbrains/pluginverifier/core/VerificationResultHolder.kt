@@ -37,8 +37,10 @@ class VerificationResultHolder(private val idePlugin: IdePlugin,
   fun getDependenciesGraph(): DependenciesGraph = dependenciesGraph!!
 
   fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
-    deprecatedUsages.add(deprecatedApiUsage)
-    pluginVerificationReportage.logDeprecatedUsage(deprecatedApiUsage)
+    if (deprecatedApiUsage !in deprecatedUsages) {
+      deprecatedUsages.add(deprecatedApiUsage)
+      pluginVerificationReportage.logDeprecatedUsage(deprecatedApiUsage)
+    }
   }
 
   fun registerProblem(problem: Problem) {
