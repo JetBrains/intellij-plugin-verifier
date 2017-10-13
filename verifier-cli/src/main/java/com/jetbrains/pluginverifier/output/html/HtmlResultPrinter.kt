@@ -28,35 +28,33 @@ class HtmlResultPrinter(val ideVersions: List<IdeVersion>,
   override fun printResults(results: List<Result>) {
     PrintWriter(htmlFile.create()).use {
       val htmlBuilder = HtmlBuilder(it)
-      doPrintResults(htmlBuilder, results)
+      htmlBuilder.doPrintResults(results)
     }
   }
 
-  private fun doPrintResults(htmlBuilder: HtmlBuilder, results: List<Result>) {
-    htmlBuilder.apply {
-      html {
-        head {
-          title("Verification result of IDE ${ideVersions.joinToString()}")
-          script(src = "https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.9.1.min.js", type = "text/javascript")
-          script(src = "https://code.jquery.com/ui/1.9.2/jquery-ui.min.js", type = "text/javascript")
-          link(rel = "stylesheet", href = "https://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css", type = "text/css")
-          style(type = "text/css") { unsafe(loadReportCss()) }
+  private fun HtmlBuilder.doPrintResults(results: List<Result>) {
+    html {
+      head {
+        title("Verification result of IDE ${ideVersions.joinToString()}")
+        script(src = "https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.9.1.min.js", type = "text/javascript")
+        script(src = "https://code.jquery.com/ui/1.9.2/jquery-ui.min.js", type = "text/javascript")
+        link(rel = "stylesheet", href = "https://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css", type = "text/css")
+        style(type = "text/css") { unsafe(loadReportCss()) }
+      }
+      body {
+        h2 { +ideVersions.joinToString() }
+        label {
+          unsafe("""<input id="problematicOnlyCB" type="checkbox" onchange="if ($('#problematicOnlyCB').is(':checked')) {$('body').addClass('problematicOnly')} else {$('body').removeClass('problematicOnly')}">""")
+          +"Show problematic plugins only"
         }
-        body {
-          h2 { +ideVersions.joinToString() }
-          label {
-            unsafe("""<input id="problematicOnlyCB" type="checkbox" onchange="if ($('#problematicOnlyCB').is(':checked')) {$('body').addClass('problematicOnly')} else {$('body').removeClass('problematicOnly')}">""")
-            +"Show problematic plugins only"
+        if (results.isEmpty()) {
+          +"No plugins checked"
+        } else {
+          results.sortedBy { it.plugin.pluginId }.groupBy { it.plugin.pluginId }.forEach { (pluginId, pluginResults) ->
+            appendPluginResults(pluginResults, pluginId)
           }
-          if (results.isEmpty()) {
-            +"No plugins checked"
-          } else {
-            results.sortedBy { it.plugin.pluginId }.groupBy { it.plugin.pluginId }.forEach { (pluginId, pluginResults) ->
-              appendPluginResults(pluginResults, pluginId)
-            }
-          }
-          script { unsafe(loadReportScript()) }
         }
+        script { unsafe(loadReportScript()) }
       }
     }
   }

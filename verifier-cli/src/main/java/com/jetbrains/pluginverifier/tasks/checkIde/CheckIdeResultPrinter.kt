@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tasks.checkIde
 
-import com.jetbrains.pluginverifier.misc.create
+import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
@@ -21,34 +21,35 @@ import java.io.PrintWriter
 class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginRepository: PluginRepository) : TaskResultPrinter {
 
   override fun printResults(taskResult: TaskResult) {
-    val checkIdeResult = (taskResult as CheckIdeResult)
+    with(taskResult as CheckIdeResult) {
+      if (outputOptions.needTeamCityLog) {
+        printTcLog(outputOptions.teamCityGroupType, true, this)
+      } else {
+        printOnStdOut(this)
+      }
 
-    if (outputOptions.needTeamCityLog) {
-      printTcLog(outputOptions.teamCityGroupType, true, checkIdeResult)
-    } else {
-      printOnStdOut(checkIdeResult)
-    }
+      saveToHtmlFile(outputOptions.verificationReportsDirectory, this)
 
-    if (outputOptions.htmlReportFile != null) {
-      saveToHtmlFile(outputOptions.htmlReportFile, checkIdeResult)
-    }
-
-    if (outputOptions.dumpBrokenPluginsFile != null) {
-      val brokenPlugins = checkIdeResult.results
-          .filter { it.verdict !is Verdict.OK && it.verdict !is Verdict.Warnings }
-          .map { it.plugin }
-          .map { PluginIdAndVersion(it.pluginId, it.version) }
-          .distinct()
-      IdeResourceUtil.dumbBrokenPluginsList(File(outputOptions.dumpBrokenPluginsFile), brokenPlugins)
+      if (outputOptions.dumpBrokenPluginsFile != null) {
+        val brokenPlugins = results
+            .filter { it.verdict !is Verdict.OK && it.verdict !is Verdict.Warnings }
+            .map { it.plugin }
+            .map { PluginIdAndVersion(it.pluginId, it.version) }
+            .distinct()
+        IdeResourceUtil.dumbBrokenPluginsList(File(outputOptions.dumpBrokenPluginsFile), brokenPlugins)
+      }
     }
   }
 
-  fun saveToHtmlFile(htmlFile: File, checkIdeResult: CheckIdeResult) {
+  fun saveToHtmlFile(verificationReportsDirectory: File, checkIdeResult: CheckIdeResult) {
+    val htmlReportFile = verificationReportsDirectory
+        .resolve(checkIdeResult.ideVersion.toString().replaceInvalidFileNameCharacters())
+        .resolve("report.html")
+
     with(checkIdeResult) {
-      HtmlResultPrinter(listOf(ideVersion), { (pluginId, pluginVersion) ->
-        PluginIdAndVersion(pluginId, pluginVersion) in excludedPlugins
-      }, htmlFile.create(), outputOptions.missingDependencyIgnoring
-      ).printResults(results)
+      val isExcluded: (PluginIdAndVersion) -> Boolean = { (pluginId, pluginVersion) -> PluginIdAndVersion(pluginId, pluginVersion) in excludedPlugins }
+      val htmlResultPrinter = HtmlResultPrinter(listOf(ideVersion), isExcluded, htmlReportFile, outputOptions.missingDependencyIgnoring)
+      htmlResultPrinter.printResults(results)
     }
   }
 

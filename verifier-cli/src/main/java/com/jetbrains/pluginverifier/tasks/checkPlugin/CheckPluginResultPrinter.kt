@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
-import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
@@ -28,7 +27,7 @@ class CheckPluginResultPrinter(private val outputOptions: OutputOptions,
     }
 
     if (outputOptions.htmlReportFile != null) {
-      printToHtml(outputOptions.htmlReportFile, checkPluginResult)
+      saveToHtml(outputOptions.htmlReportFile, checkPluginResult)
     }
   }
 
@@ -62,10 +61,10 @@ class CheckPluginResultPrinter(private val outputOptions: OutputOptions,
     }
   }
 
-  private fun printToHtml(file: File, checkPluginResult: CheckPluginResult) {
+  private fun saveToHtml(htmlFile: File, checkPluginResult: CheckPluginResult) {
     with(checkPluginResult) {
       val ideVersions = results.map { it.ideVersion }.distinct()
-      HtmlResultPrinter(ideVersions, { false }, file.create(), outputOptions.missingDependencyIgnoring).printResults(results)
+      HtmlResultPrinter(ideVersions, { false }, htmlFile, outputOptions.missingDependencyIgnoring).printResults(results)
     }
   }
 

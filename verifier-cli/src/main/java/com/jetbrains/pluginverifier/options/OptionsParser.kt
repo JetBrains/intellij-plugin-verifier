@@ -56,7 +56,8 @@ object OptionsParser {
       opts.needTeamCityLog,
       TeamCityResultPrinter.GroupBy.parse(opts.teamCityGroupType),
       opts.htmlReportFile?.let { File(it) },
-      opts.dumpBrokenPluginsFile
+      opts.dumpBrokenPluginsFile,
+      getVerificationReportsDirectory(opts)
   )
 
   private fun createMissingDependencyIgnorer(opts: CmdOpts): MissingDependencyIgnoring {

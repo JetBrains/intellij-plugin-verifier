@@ -8,7 +8,6 @@ import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeResultPrinter
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.output.TrunkApiChangesOutput
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.result.TrunkApiChanges
-import java.io.File
 
 /**
  * @author Sergey Patrikeev
@@ -22,15 +21,10 @@ class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions,
         val trunkApiChanges = TrunkApiChanges.create(releaseResult, trunkResult)
         TrunkApiChangesOutput(TeamCityLog(System.out), pluginRepository).printTrunkApiCompareResult(trunkApiChanges)
       }
-      if (outputOptions.htmlReportFile != null) {
-        val ideResultPrinter = CheckIdeResultPrinter(outputOptions, pluginRepository)
-
-        val trunkHtmlReportFileName = outputOptions.htmlReportFile.name + "-trunk-${trunkResult.ideVersion}.html"
-        ideResultPrinter.saveToHtmlFile(File(trunkHtmlReportFileName), trunkResult)
-
-        val releaseHtmlReportFileName = outputOptions.htmlReportFile.name + "-release-${releaseResult.ideVersion}.html"
-        ideResultPrinter.saveToHtmlFile(File(releaseHtmlReportFileName), releaseResult)
-      }
+      val verificationReportsDirectory = outputOptions.verificationReportsDirectory
+      val ideResultPrinter = CheckIdeResultPrinter(outputOptions, pluginRepository)
+      ideResultPrinter.saveToHtmlFile(verificationReportsDirectory, trunkResult)
+      ideResultPrinter.saveToHtmlFile(verificationReportsDirectory, releaseResult)
     }
   }
 
