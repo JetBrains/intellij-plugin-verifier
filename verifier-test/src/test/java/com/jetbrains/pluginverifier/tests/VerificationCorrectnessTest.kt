@@ -185,6 +185,19 @@ class VerificationCorrectnessTest {
   }
 
   @Test
+  fun `deprecated field usage`() {
+    assertDeprecatedUsageFound("Deprecated field deprecated.DeprecatedField.x : int is used in mock.plugin.deprecated.DeprecatedUser.field() : void")
+  }
+
+  @Test
+  fun `field of the deprecated class usage`() {
+    //Auxiliary usage
+    assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.field() : void")
+
+    assertDeprecatedUsageFound("Field x : int of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.field() : void")
+  }
+
+  @Test
   fun notImplementedAbstractMethodFromInterface() {
     val notImplementedMethod = Location.fromMethod(
         Location.fromClass("com/intellij/openapi/components/PersistentStateComponent", "<T:Ljava/lang/Object;>Ljava/lang/Object;", IDEA_CLASS_PATH, PUBLIC_INTERFACE_AF),
