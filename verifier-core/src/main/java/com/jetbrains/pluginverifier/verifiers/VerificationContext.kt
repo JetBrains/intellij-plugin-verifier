@@ -60,7 +60,7 @@ data class VerificationContext(
       Location.fromClass(clazz.name, clazz.signature, getClassPath(clazz), Modifiers(clazz.access))
 
   fun fromMethod(hostClass: ClassNode, method: MethodNode): MethodLocation =
-      Location.fromMethod(fromClass(hostClass), method.name, method.desc, BytecodeUtil.getParameterNames(method), method.signature, Modifiers(method.access))
+      Location.fromMethod(fromClass(hostClass), method.name, method.desc, method.getParameterNames(), method.signature, Modifiers(method.access))
 
   fun fromField(hostClass: ClassNode, field: FieldNode): FieldLocation =
       Location.fromField(fromClass(hostClass), field.name, field.desc, field.signature, Modifiers(field.access))

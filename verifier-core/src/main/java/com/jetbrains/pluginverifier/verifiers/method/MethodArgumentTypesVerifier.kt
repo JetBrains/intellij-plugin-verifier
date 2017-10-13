@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers.method
 
-import com.jetbrains.pluginverifier.verifiers.BytecodeUtil
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.checkClassExistsOrExternal
+import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescr
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
@@ -15,7 +15,7 @@ class MethodArgumentTypesVerifier : MethodVerifier {
     val methodType = Type.getType(method.desc)
     val argumentTypes = methodType.argumentTypes
     for (type in argumentTypes) {
-      val argDescr = BytecodeUtil.extractClassNameFromDescr(type.descriptor) ?: continue
+      val argDescr = type.descriptor.extractClassNameFromDescr() ?: continue
       ctx.checkClassExistsOrExternal(argDescr, clazz, { ctx.fromMethod(clazz, method) })
     }
 

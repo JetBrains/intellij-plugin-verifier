@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers.field
 
-import com.jetbrains.pluginverifier.verifiers.BytecodeUtil
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.checkClassExistsOrExternal
+import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescr
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 
@@ -11,7 +11,7 @@ import org.objectweb.asm.tree.FieldNode
  */
 class FieldTypeVerifier : FieldVerifier {
   override fun verify(clazz: ClassNode, field: FieldNode, ctx: VerificationContext) {
-    val className = BytecodeUtil.extractClassNameFromDescr(field.desc) ?: return
+    val className = field.desc.extractClassNameFromDescr() ?: return
 
     ctx.checkClassExistsOrExternal(className, clazz, { ctx.fromField(clazz, field) })
   }

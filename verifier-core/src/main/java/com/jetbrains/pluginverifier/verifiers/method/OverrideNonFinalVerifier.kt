@@ -1,9 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.method
 
 import com.jetbrains.pluginverifier.results.problems.OverridingFinalMethodProblem
-import com.jetbrains.pluginverifier.verifiers.BytecodeUtil
-import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.resolveClassOrProblem
+import com.jetbrains.pluginverifier.verifiers.*
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
@@ -16,7 +14,7 @@ class OverrideNonFinalVerifier : MethodVerifier {
 
   @Suppress("UNCHECKED_CAST")
   override fun verify(clazz: ClassNode, method: MethodNode, ctx: VerificationContext) {
-    if (BytecodeUtil.isPrivate(method)) return
+    if (method.isPrivate()) return
 
     /*
     According to JVM 8 specification the static methods cannot <i>override</i> the parent methods.
@@ -24,7 +22,7 @@ class OverrideNonFinalVerifier : MethodVerifier {
     but Java Virtual Machine (at least the 8-th version) allows to invoke such methods and doesn't complain
     during the class-file verification
      */
-    if (BytecodeUtil.isStatic(method)) return
+    if (method.isStatic()) return
 
     val superClass = clazz.superName
 
@@ -36,7 +34,7 @@ class OverrideNonFinalVerifier : MethodVerifier {
 
     while (parent != null) {
       val sameMethod = (parent.methods as List<MethodNode>).firstOrNull { it.name == method.name && it.desc == method.desc }
-      if (sameMethod != null && BytecodeUtil.isFinal(sameMethod)) {
+      if (sameMethod != null && sameMethod.isFinal()) {
         val methodLocation = ctx.fromMethod(parent, sameMethod)
         val thisClass = ctx.fromClass(clazz)
         ctx.registerProblem(OverridingFinalMethodProblem(methodLocation, thisClass))

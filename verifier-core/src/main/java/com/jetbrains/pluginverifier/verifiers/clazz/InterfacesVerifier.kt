@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers.clazz
 
 import com.jetbrains.pluginverifier.results.problems.SuperInterfaceBecameClassProblem
-import com.jetbrains.pluginverifier.verifiers.BytecodeUtil
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.isInterface
 import com.jetbrains.pluginverifier.verifiers.resolveClassOrProblem
 import org.objectweb.asm.tree.ClassNode
 
@@ -16,7 +16,7 @@ class InterfacesVerifier : ClassVerifier {
     clazz.interfaces
         .filterIsInstance(String::class.java)
         .mapNotNull { ctx.resolveClassOrProblem(it, clazz, { ctx.fromClass(clazz) }) }
-        .filterNot { BytecodeUtil.isInterface(it) }
+        .filterNot { it.isInterface() }
         .forEach { ctx.registerProblem(SuperInterfaceBecameClassProblem(ctx.fromClass(clazz), ctx.fromClass(it))) }
   }
 }

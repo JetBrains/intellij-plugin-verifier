@@ -41,10 +41,10 @@ fun VerificationContext.resolveClass(className: String, lookup: ClassNode): ClsR
     return ClsResolution.InvalidClassFile("Unable to read class-file $className using ASM Java Bytecode engineering library. Internal error: ${e.message}")
   }
   if (node != null) {
-    if (!BytecodeUtil.isClassAccessibleToOtherClass(node, lookup)) {
-      return ClsResolution.IllegalAccess(node, BytecodeUtil.getAccessType(node.access))
+    if (!isClassAccessibleToOtherClass(node, lookup)) {
+      return ClsResolution.IllegalAccess(node, node.access.getAccessType())
     }
-    return if (BytecodeUtil.isDeprecated(node)) {
+    return if (node.isDeprecated()) {
       ClsResolution.FoundDeprecated(node)
     } else {
       ClsResolution.Found(node)

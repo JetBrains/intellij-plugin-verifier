@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers.method
 
-import com.jetbrains.pluginverifier.verifiers.BytecodeUtil
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.checkClassExistsOrExternal
+import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescr
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
@@ -14,7 +14,7 @@ class MethodThrowsVerifier : MethodVerifier {
   override fun verify(clazz: ClassNode, method: MethodNode, ctx: VerificationContext) {
     val exceptions = method.exceptions as List<String>
     for (exception in exceptions) {
-      val descr = BytecodeUtil.extractClassNameFromDescr(exception) ?: continue
+      val descr = exception.extractClassNameFromDescr() ?: continue
       ctx.checkClassExistsOrExternal(descr, clazz, { ctx.fromMethod(clazz, method) })
     }
   }

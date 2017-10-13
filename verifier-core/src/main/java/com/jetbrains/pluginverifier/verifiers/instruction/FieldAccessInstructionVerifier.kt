@@ -55,7 +55,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     /*
     Otherwise, if the resolved field is a static field, putfield throws an IncompatibleClassChangeError.
      */
-    if (BytecodeUtil.isStatic(found.fieldNode)) {
+    if (found.fieldNode.isStatic()) {
       val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
       ctx.registerProblem(NonStaticAccessOfStaticFieldProblem(fieldDeclaration, getFromMethod(), Instruction.PUT_FIELD))
     }
@@ -69,7 +69,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     This check is according to the JVM 8 spec, but Kotlin and others violate it (Java 8 doesn't complain too)
     if (!(StringUtil.equals(location.getClassNode().name, verifiedClass.name) && "<init>".equals(verifierMethod.name))) {
     */
-    if (BytecodeUtil.isFinal(found.fieldNode)) {
+    if (found.fieldNode.isFinal()) {
       if (found.definingClass.name != verifiableClass.name) {
         val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
         val accessor = getFromMethod()
@@ -82,7 +82,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     val found = resolveField() ?: return
 
     //Otherwise, if the resolved field is a static field, getfield throws an IncompatibleClassChangeError.
-    if (BytecodeUtil.isStatic(found.fieldNode)) {
+    if (found.fieldNode.isStatic()) {
       val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
       ctx.registerProblem(NonStaticAccessOfStaticFieldProblem(fieldDeclaration, getFromMethod(), Instruction.GET_FIELD))
     }
@@ -92,7 +92,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     val found = resolveField() ?: return
 
     //Otherwise, if the resolved field is not a static (class) field or an interface field, putstatic throws an IncompatibleClassChangeError.
-    if (!BytecodeUtil.isStatic(found.fieldNode)) {
+    if (!found.fieldNode.isStatic()) {
       val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
       val methodLocation = getFromMethod()
       ctx.registerProblem(StaticAccessOfNonStaticFieldProblem(fieldDeclaration, methodLocation, Instruction.PUT_STATIC))
@@ -104,7 +104,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
 
     if (!(StringUtil.equals(location.getClassNode().name, verifiedClass.name) && "<clinit>".equals(verifierMethod.name))) {
     */
-    if (BytecodeUtil.isFinal(found.fieldNode)) {
+    if (found.fieldNode.isFinal()) {
       if (found.definingClass.name != verifiableClass.name) {
         val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
         val accessor = getFromMethod()
@@ -118,7 +118,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     val found = resolveField() ?: return
 
     //Otherwise, if the resolved field is not a static (class) field or an interface field, getstatic throws an IncompatibleClassChangeError.
-    if (!BytecodeUtil.isStatic(found.fieldNode)) {
+    if (!found.fieldNode.isStatic()) {
       val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
       val methodLocation = getFromMethod()
       ctx.registerProblem(StaticAccessOfNonStaticFieldProblem(fieldDeclaration, methodLocation, Instruction.GET_STATIC))
@@ -133,20 +133,20 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     var accessProblem: AccessType? = null
 
     when {
-      BytecodeUtil.isPrivate(fieldNode) ->
+      fieldNode.isPrivate() ->
         if (verifiableClass.name != definingClass.name) {
           //accessing to the private field of the other class
           accessProblem = AccessType.PRIVATE
         }
-      BytecodeUtil.isProtected(fieldNode) -> {
-        if (!BytecodeUtil.haveTheSamePackage(verifiableClass, definingClass)) {
+      fieldNode.isProtected() -> {
+        if (!haveTheSamePackage(verifiableClass, definingClass)) {
           if (!ctx.isSubclassOf(verifiableClass, definingClass)) {
             accessProblem = AccessType.PROTECTED
           }
         }
       }
-      BytecodeUtil.isDefaultAccess(fieldNode) ->
-        if (!BytecodeUtil.haveTheSamePackage(verifiableClass, definingClass)) {
+      fieldNode.isDefaultAccess() ->
+        if (!haveTheSamePackage(verifiableClass, definingClass)) {
           accessProblem = AccessType.PACKAGE_PRIVATE
         }
     }
@@ -170,7 +170,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
   private fun resolveField(): ResolvedField? {
     if (fieldOwner.startsWith("[")) {
       //check that the array type exists
-      val arrayType = BytecodeUtil.extractClassNameFromDescr(fieldOwner)
+      val arrayType = fieldOwner.extractClassNameFromDescr()
       if (arrayType != null) {
         ctx.checkClassExistsOrExternal(arrayType, verifiableClass, { getFromMethod() })
       }
