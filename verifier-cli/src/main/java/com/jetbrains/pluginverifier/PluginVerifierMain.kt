@@ -14,6 +14,7 @@ import com.jetbrains.pluginverifier.tasks.TaskRunner
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeRunner
 import com.jetbrains.pluginverifier.tasks.checkPlugin.CheckPluginRunner
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiRunner
+import com.jetbrains.pluginverifier.tasks.deprecatedUsages.DeprecatedUsagesRunner
 import com.sampullara.cli.Args
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
@@ -23,7 +24,7 @@ import kotlin.system.exitProcess
 
 object PluginVerifierMain {
 
-  private val taskRunners: List<TaskRunner> = listOf(CheckPluginRunner(), CheckIdeRunner(), CheckTrunkApiRunner())
+  private val taskRunners: List<TaskRunner> = listOf(CheckPluginRunner(), CheckIdeRunner(), CheckTrunkApiRunner(), DeprecatedUsagesRunner())
 
   private val DEFAULT_IDE_REPOSITORY_URL = "https://jetbrains.com"
 
