@@ -106,8 +106,9 @@ object PluginVerifierMain {
       }
     }
 
-    val printerOptions = OptionsParser.parseOutputOptions(opts)
-    taskResult.printResults(printerOptions, pluginRepository)
+    val outputOptions = OptionsParser.parseOutputOptions(opts)
+    val taskResultsPrinter = runner.createTaskResultsPrinter(outputOptions, pluginRepository)
+    taskResultsPrinter.printResults(taskResult)
   }
 
   private fun createVerificationReportage(verificationReportsDirectory: File, printPluginVerificationProgress: Boolean): VerificationReportage {

@@ -1,9 +1,11 @@
 package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
+import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParameters
+import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 import com.jetbrains.pluginverifier.tasks.TaskRunner
 
 class CheckTrunkApiRunner : TaskRunner() {
@@ -20,5 +22,8 @@ class CheckTrunkApiRunner : TaskRunner() {
       pluginRepository: PluginRepository,
       pluginDetailsProvider: PluginDetailsProvider
   ) = CheckTrunkApiTask(parameters as CheckTrunkApiParams, pluginRepository, pluginDetailsProvider)
+
+  override fun createTaskResultsPrinter(outputOptions: OutputOptions, pluginRepository: PluginRepository): TaskResultPrinter =
+      CheckTrunkApiResultPrinter(outputOptions, pluginRepository)
 
 }

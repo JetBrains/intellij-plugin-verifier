@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.tasks
 
+import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -22,5 +23,7 @@ abstract class TaskRunner {
       pluginRepository: PluginRepository,
       pluginDetailsProvider: PluginDetailsProvider
   ): Task
+
+  abstract fun createTaskResultsPrinter(outputOptions: OutputOptions, pluginRepository: PluginRepository): TaskResultPrinter
 
 }
