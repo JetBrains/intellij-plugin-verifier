@@ -1,18 +1,10 @@
 package com.jetbrains.pluginverifier.results
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
-
-data class Result(val plugin: PluginInfo,
-                  val ideVersion: IdeVersion,
-                  val verdict: Verdict) {
-  override fun toString(): String = "Plugin $plugin and #$ideVersion: $verdict"
-}
 
 sealed class Verdict {
   /**
