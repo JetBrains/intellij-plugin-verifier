@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.core.VerificationResultHolder
+import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.Location
@@ -21,6 +22,10 @@ data class VerificationContext(
 
   fun registerProblem(problem: Problem) {
     resultHolder.registerProblem(problem)
+  }
+
+  fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
+    resultHolder.registerDeprecatedUsage(deprecatedApiUsage)
   }
 
   fun isExternalClass(className: String): Boolean = externalClassesPrefixes.any { it.isNotEmpty() && className.startsWith(it) }
