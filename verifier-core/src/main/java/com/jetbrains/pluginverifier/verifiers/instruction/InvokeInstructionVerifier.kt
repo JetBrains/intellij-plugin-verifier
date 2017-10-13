@@ -42,7 +42,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     if (methodOwner.startsWith("[")) {
       val arrayType = BytecodeUtil.extractClassNameFromDescr(methodOwner)
       if (arrayType != null) {
-        ctx.checkClassExistsOrExternal(arrayType, { getFromMethod() })
+        ctx.checkClassExistsOrExternal(arrayType, verifiableClass, { getFromMethod() })
       }
       return
     }

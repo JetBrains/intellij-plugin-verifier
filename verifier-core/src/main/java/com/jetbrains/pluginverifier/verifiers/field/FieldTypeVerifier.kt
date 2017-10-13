@@ -13,6 +13,6 @@ class FieldTypeVerifier : FieldVerifier {
   override fun verify(clazz: ClassNode, field: FieldNode, ctx: VerificationContext) {
     val className = BytecodeUtil.extractClassNameFromDescr(field.desc) ?: return
 
-    ctx.checkClassExistsOrExternal(className, { ctx.fromField(clazz, field) })
+    ctx.checkClassExistsOrExternal(className, clazz, { ctx.fromField(clazz, field) })
   }
 }

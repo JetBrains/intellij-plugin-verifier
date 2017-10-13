@@ -17,7 +17,7 @@ class MethodTryCatchVerifier : MethodVerifier {
     for (block in blocks) {
       val catchException = block.type ?: continue
       val descr = BytecodeUtil.extractClassNameFromDescr(catchException) ?: continue
-      ctx.checkClassExistsOrExternal(descr, { ctx.fromMethod(clazz, method) })
+      ctx.checkClassExistsOrExternal(descr, clazz, { ctx.fromMethod(clazz, method) })
     }
   }
 }

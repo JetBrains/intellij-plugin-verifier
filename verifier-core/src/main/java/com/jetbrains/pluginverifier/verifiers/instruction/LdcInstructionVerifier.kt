@@ -19,6 +19,6 @@ class LdcInstructionVerifier : InstructionVerifier {
     val descriptor = constant.descriptor
     val className = BytecodeUtil.extractClassNameFromDescr(descriptor) ?: return
 
-    ctx.checkClassExistsOrExternal(className, { ctx.fromMethod(clazz, method) })
+    ctx.checkClassExistsOrExternal(className, clazz, { ctx.fromMethod(clazz, method) })
   }
 }

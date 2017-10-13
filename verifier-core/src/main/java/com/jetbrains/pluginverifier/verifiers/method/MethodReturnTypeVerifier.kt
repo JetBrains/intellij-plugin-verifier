@@ -20,6 +20,6 @@ class MethodReturnTypeVerifier : MethodVerifier {
 
     val returnTypeDesc = BytecodeUtil.extractClassNameFromDescr(descriptor) ?: return
 
-    ctx.checkClassExistsOrExternal(returnTypeDesc, { ctx.fromMethod(clazz, method) })
+    ctx.checkClassExistsOrExternal(returnTypeDesc, clazz, { ctx.fromMethod(clazz, method) })
   }
 }

@@ -15,7 +15,7 @@ class MethodThrowsVerifier : MethodVerifier {
     val exceptions = method.exceptions as List<String>
     for (exception in exceptions) {
       val descr = BytecodeUtil.extractClassNameFromDescr(exception) ?: continue
-      ctx.checkClassExistsOrExternal(descr, { ctx.fromMethod(clazz, method) })
+      ctx.checkClassExistsOrExternal(descr, clazz, { ctx.fromMethod(clazz, method) })
     }
   }
 }

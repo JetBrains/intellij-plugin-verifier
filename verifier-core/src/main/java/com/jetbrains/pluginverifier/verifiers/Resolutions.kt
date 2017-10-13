@@ -69,10 +69,8 @@ fun VerificationContext.resolveClassOrProblem(className: String,
   }
 }
 
-fun VerificationContext.checkClassExistsOrExternal(className: String, registerMissing: () -> Location) {
-  if (!isExternalClass(className) && !classLoader.containsClass(className)) {
-    registerProblem(ClassNotFoundProblem(ClassReference(className), registerMissing.invoke()))
-  }
+fun VerificationContext.checkClassExistsOrExternal(className: String, lookup: ClassNode, registerMissing: () -> Location) {
+  resolveClassOrProblem(className, lookup, registerMissing)
 }
 
 fun VerificationContext.isSubclassOf(child: ClassNode, possibleParent: ClassNode): Boolean {
