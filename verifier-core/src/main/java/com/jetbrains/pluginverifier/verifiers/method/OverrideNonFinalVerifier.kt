@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.method
 
+import com.jetbrains.pluginverifier.results.deprecated.DeprecatedMethodUsage
 import com.jetbrains.pluginverifier.results.problems.OverridingFinalMethodProblem
 import com.jetbrains.pluginverifier.verifiers.*
 import org.objectweb.asm.tree.ClassNode
@@ -32,13 +33,23 @@ class OverrideNonFinalVerifier : MethodVerifier {
 
     var parent: ClassNode? = ctx.resolveClassOrProblem(superClass, clazz, { ctx.fromMethod(clazz, method) }) ?: return
 
+    /**
+     * Traverse the super-classes up to the java.lang.Object and check that the verified class
+     * doesn't override a final method.
+     * Java interfaces are not allowed to have final methods so it works.
+     */
     while (parent != null) {
       val sameMethod = (parent.methods as List<MethodNode>).firstOrNull { it.name == method.name && it.desc == method.desc }
-      if (sameMethod != null && sameMethod.isFinal()) {
+      if (sameMethod != null) {
         val methodLocation = ctx.fromMethod(parent, sameMethod)
-        val thisClass = ctx.fromClass(clazz)
-        ctx.registerProblem(OverridingFinalMethodProblem(methodLocation, thisClass))
-        return
+        if (sameMethod.isDeprecated()) {
+          val usageLocation = ctx.fromMethod(clazz, method)
+          ctx.registerDeprecatedUsage(DeprecatedMethodUsage(methodLocation, usageLocation))
+        }
+        if (sameMethod.isFinal()) {
+          ctx.registerProblem(OverridingFinalMethodProblem(methodLocation, ctx.fromClass(clazz)))
+          return
+        }
       }
       val superName = parent.superName ?: break
       val superNode = ctx.resolveClassOrProblem(superName, parent, { ctx.fromClass(parent!!) }) ?: break

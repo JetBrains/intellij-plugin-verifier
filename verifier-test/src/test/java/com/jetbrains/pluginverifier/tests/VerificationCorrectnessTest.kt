@@ -16,6 +16,7 @@ import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.access.AccessType
+import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
@@ -39,11 +40,17 @@ import java.io.File
 class VerificationCorrectnessTest {
 
   companion object {
+    var shouldCheckRedundantProblems: Boolean = false
+
     lateinit var result: Verdict.MissingDependencies
 
     lateinit var actualProblems: Set<Problem>
 
-    lateinit var redundantProblems: MutableList<Problem>
+    lateinit var actualDeprecatedUsages: Set<DeprecatedApiUsage>
+
+    lateinit var redundantProblems: MutableSet<Problem>
+
+    lateinit var redundantDeprecated: MutableSet<DeprecatedApiUsage>
 
     private fun doIdeaAndPluginVerification(ideaFile: File, pluginFile: File): Result {
       val pluginCoordinate = PluginCoordinate.ByFile(pluginFile)
@@ -83,7 +90,9 @@ class VerificationCorrectnessTest {
       assertTrue(verdict is Verdict.MissingDependencies)
       result = verdict as Verdict.MissingDependencies
       actualProblems = result.problems
-      redundantProblems = actualProblems.toMutableList()
+      actualDeprecatedUsages = result.deprecatedUsages
+      redundantProblems = actualProblems.toMutableSet()
+      redundantDeprecated = actualDeprecatedUsages.toMutableSet()
     }
 
     private fun prepareTestEnvironment() {
@@ -93,9 +102,14 @@ class VerificationCorrectnessTest {
 
     @AfterClass
     @JvmStatic
-    fun assertNoRedundantProblems() {
-      val message = redundantProblems.joinToString(separator = "\n") { "${it.shortDescription}:\n    ${it.fullDescription}" }
-      assertTrue("Redundant problems: \n$message", redundantProblems.isEmpty())
+    fun assertNoRedundantProblemsAndDeprecatedUsages() {
+      if (shouldCheckRedundantProblems) {
+        val message = redundantProblems.joinToString(separator = "\n") { "${it.shortDescription}:\n    ${it.fullDescription}" }
+        assertTrue("Redundant problems: \n$message", redundantProblems.isEmpty())
+
+        val deprecatedMessage = redundantDeprecated.joinToString(separator = "\n") { "${it.description}\n" }
+        assertTrue("Redundant deprecated usages found: \n" + deprecatedMessage, redundantDeprecated.isEmpty())
+      }
     }
 
     val PUBLIC_CLASS_AF = Modifiers(0x21)
@@ -141,6 +155,33 @@ class VerificationCorrectnessTest {
     redundantProblems.remove(problem)
     assertThat(problem.shortDescription, `is`(expectedShortDescription))
     assertThat(problem.fullDescription, `is`(expectedFullDescription))
+  }
+
+  private fun assertDeprecatedUsageFound(description: String) {
+    val foundDeprecatedUsage = actualDeprecatedUsages.find { description == it.description }
+    assertTrue("Deprecated is not found:\n$description\nall deprecated:\n" + actualDeprecatedUsages.joinToString("\n"), foundDeprecatedUsage != null)
+    redundantDeprecated.remove(foundDeprecatedUsage)
+  }
+
+  @Test
+  fun `test is run on the whole class`() {
+    shouldCheckRedundantProblems = true
+  }
+
+  @Test
+  fun `overriding deprecated method`() {
+    assertDeprecatedUsageFound("Deprecated method deprecated.DeprecatedMethod.foo(int x) : void is used in mock.plugin.deprecated.OverrideDeprecatedMethod.foo(int x) : void")
+  }
+
+  @Test
+  fun `use default deprecated constructor`() {
+    assertDeprecatedUsageFound("Deprecated method deprecated.DeprecatedMethod.<init>() : void is used in mock.plugin.deprecated.OverrideDeprecatedMethod.<init>() : void")
+  }
+
+  @Test
+  fun `deprecated class is used in method`() {
+    assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.clazz() : void")
+    assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedWithCommentClass is used in mock.plugin.deprecated.DeprecatedUser.clazzWithComment() : void")
   }
 
   @Test
