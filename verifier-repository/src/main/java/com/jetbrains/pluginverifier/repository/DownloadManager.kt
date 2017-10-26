@@ -238,11 +238,11 @@ class DownloadManager(private val downloadDir: File,
       try {
         pluginFile = downloadUpdate(updateInfo)
       } catch (e: NotFound404ResponseException) {
-        return DownloadPluginResult.NotFound(updateInfo, "Plugin $updateInfo is not found the Plugin Repository")
+        return DownloadPluginResult.NotFound("Plugin $updateInfo is not found the Plugin Repository")
       } catch (e: Exception) {
         val message = "Unable to download update $updateInfo" + (if (e.message != null) " " + e.message else "")
         LOG.info(message, e)
-        return DownloadPluginResult.FailedToDownload(updateInfo, message + ": " + e.message)
+        return DownloadPluginResult.FailedToDownload(message + ": " + e.message)
       }
     }
 
@@ -258,6 +258,6 @@ class DownloadManager(private val downloadDir: File,
       throw e
     }
 
-    return DownloadPluginResult.Found(updateInfo, lock)
+    return DownloadPluginResult.Found(lock)
   }
 }
