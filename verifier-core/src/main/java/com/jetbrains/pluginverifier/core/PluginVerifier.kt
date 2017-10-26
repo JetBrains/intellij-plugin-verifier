@@ -98,14 +98,12 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
     if (pluginWarnings != null) {
       resultHolder.addPluginWarnings(pluginWarnings)
     }
-    if (pluginClassesLocations != null) {
-      runVerification(plugin, pluginClassesLocations, resultHolder)
-    }
+    runVerification(plugin, pluginClassesLocations, resultHolder)
     return resultHolder.toVerdict()
   }
 
   private fun runVerification(plugin: IdePlugin,
-                              pluginClassesLocations: IdePluginClassesLocations,
+                              pluginClassesLocations: IdePluginClassesLocations?,
                               resultHolder: VerificationResultHolder) {
     val depGraph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
     try {
@@ -115,21 +113,23 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
       val apiGraph = DepGraph2ApiGraphConverter().convert(depGraph, start)
       resultHolder.setDependenciesGraph(apiGraph)
 
-      val pluginResolver = pluginClassesLocations.createPluginClassLoader()
-      val dependenciesResolver = depGraph.toDependenciesClassesResolver()
-      //don't close this classLoader because it contains the client's resolvers.
-      val classLoader = createClassLoader(pluginResolver, dependenciesResolver)
-      val checkClasses = getClassesForCheck(pluginClassesLocations)
+      if (pluginClassesLocations != null) {
+        val pluginResolver = pluginClassesLocations.createPluginClassLoader()
+        val dependenciesResolver = depGraph.toDependenciesClassesResolver()
+        //don't close this classLoader because it contains the client's resolvers.
+        val classLoader = createClassLoader(pluginResolver, dependenciesResolver)
+        val checkClasses = getClassesForCheck(pluginClassesLocations)
 
-      val verificationContext = VerificationContext(classLoader, resultHolder, verifierParameters.externalClassesPrefixes)
-      val progressIndicator = object : Reporter<Double> {
-        override fun close() = Unit
+        val verificationContext = VerificationContext(classLoader, resultHolder, verifierParameters.externalClassesPrefixes)
+        val progressIndicator = object : Reporter<Double> {
+          override fun close() = Unit
 
-        override fun report(t: Double) {
-          pluginVerificationReportage.logProgress(t)
+          override fun report(t: Double) {
+            pluginVerificationReportage.logProgress(t)
+          }
         }
+        runVerification(verificationContext, checkClasses, progressIndicator)
       }
-      runVerification(verificationContext, checkClasses, progressIndicator)
     } finally {
       depGraph.vertexSet().forEach { it.pluginDetails.closeLogged() }
     }
