@@ -10,8 +10,7 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
-import com.jetbrains.pluginverifier.repository.local.meta.LocalRepositoryMetadataParser
+import com.jetbrains.pluginverifier.repository.local.LocalPluginRepositoryFactory
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
@@ -68,8 +67,8 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository, val ide
     val releaseVersion = releaseIdeDescriptor.ideVersion
     val trunkVersion = trunkIdeDescriptor.ideVersion
 
-    val releaseLocalRepository = apiOpts.releaseLocalPluginRepositoryRoot?.let { createLocalPluginRepository(releaseVersion, File(it)) }
-    val trunkLocalRepository = apiOpts.trunkLocalPluginRepositoryRoot?.let { createLocalPluginRepository(trunkVersion, File(it)) }
+    val releaseLocalRepository = apiOpts.releaseLocalPluginRepositoryRoot?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(releaseVersion, File(it)) }
+    val trunkLocalRepository = apiOpts.trunkLocalPluginRepositoryRoot?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(trunkVersion, File(it)) }
 
     val jetBrainsPluginIds = getJetBrainsPluginIds(apiOpts)
 
@@ -94,17 +93,6 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository, val ide
         trunkLocalRepository,
         pluginCoordinates
     )
-  }
-
-  private fun createLocalPluginRepository(ideVersion: IdeVersion, repositoryRoot: File): LocalPluginRepository {
-    val repositoryMetadataXml = repositoryRoot.resolve("plugins.xml")
-    require(repositoryMetadataXml.exists(), { "Local repository meta-file $repositoryMetadataXml is not found" })
-    val plugins = try {
-      LocalRepositoryMetadataParser().parseFromXml(repositoryMetadataXml)
-    } catch (e: Exception) {
-      throw IllegalArgumentException("Unable to parse meta-file $repositoryMetadataXml", e)
-    }
-    return LocalPluginRepository(ideVersion, plugins)
   }
 
   private fun getJetBrainsPluginIds(apiOpts: CheckTrunkApiOpts): List<String> {
@@ -151,8 +139,8 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository, val ide
 
     @set:Argument("release-jetbrains-plugins", alias = "rjbp", description = "The root of the local plugin repository containing JetBrains plugins compatible with the release IDE. " +
         "The local repository is a set of non-bundled JetBrains plugins built from the same sources (see Installers/<artifacts>/IU-plugins). " +
-        "There must be a meta-file 'plugins.xml' providing info about available plugins. On the release IDE verification, the JetBrains plugins will be taken from the " +
-        "local repository if possible and from the public repository, otherwise.")
+        "If a meta-file 'plugins.xml' is available, the repository content will be read from it, otherwise we will read the plugin descriptors from every plugin-like file under the specified directory." +
+        "On the release IDE verification, the JetBrains plugins will be taken from the local repository if present and from the public repository, otherwise.")
     var releaseLocalPluginRepositoryRoot: String? = null
 
     @set:Argument("trunk-jetbrains-plugins", alias = "tjbp", description = "The same as --release-local-repository but specifies the local repository of the trunk IDE.")
