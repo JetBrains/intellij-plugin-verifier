@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin-repository>
+  <category name="Category">
+    <idea-plugin size="123456">
+      <name>plugin name</name>
+      <id>plugin.id</id>
+      <version>1.0</version>
+      <idea-version since-build="181.468" until-build="181.468"/>
+      <vendor>JetBrains</vendor>
+      <download-url>file.zip</download-url>
+      <description><![CDATA[
+    Long enough description.
+  ]]></description>
+    </idea-plugin>
+  </category>
+</plugin-repository>
