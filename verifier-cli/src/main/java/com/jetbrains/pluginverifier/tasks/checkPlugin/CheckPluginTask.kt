@@ -48,7 +48,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
 
   override fun execute(verificationReportage: VerificationReportage): CheckPluginResult {
     val pluginCoordinates = parameters.pluginCoordinates
-    val allPluginsToCheck = pluginCoordinates.map { pluginDetailsProvider.fetchPluginDetails(it) }
+    val allPluginsToCheck = pluginCoordinates.map { pluginDetailsProvider.providePluginDetails(it) }
     try {
       return doExecute(verificationReportage, allPluginsToCheck)
     } finally {

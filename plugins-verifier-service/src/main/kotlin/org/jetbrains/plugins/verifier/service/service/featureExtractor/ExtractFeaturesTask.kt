@@ -18,7 +18,7 @@ class ExtractFeaturesTask(val pluginCoordinate: PluginCoordinate,
   override fun presentableName(): String = "Features of $pluginCoordinate"
 
   override fun computeResult(progress: TaskProgress): FeaturesResult {
-    val pluginDetails = ServerInstance.pluginDetailsProvider.fetchPluginDetails(pluginCoordinate)
+    val pluginDetails = ServerInstance.pluginDetailsProvider.providePluginDetails(pluginCoordinate)
     pluginDetails.use {
       return when (pluginDetails) {
         is PluginDetails.ByFileLock -> doFeatureExtraction(pluginDetails.plugin)

@@ -28,7 +28,7 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
       PluginIdAndVersion(updateInfo.pluginId, updateInfo.version) in parameters.excludedPlugins
     }
     is PluginCoordinate.ByFile -> {
-      pluginDetailsProvider.fetchPluginDetails(pluginCoordinate).use { pluginDetails ->
+      pluginDetailsProvider.providePluginDetails(pluginCoordinate).use { pluginDetails ->
         val plugin = pluginDetails.plugin
         if (plugin != null) {
           return PluginIdAndVersion(plugin.pluginId ?: "", plugin.pluginVersion ?: "") in parameters.excludedPlugins

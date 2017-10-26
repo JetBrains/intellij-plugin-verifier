@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.repository.FileLock
 import java.io.File
 
 class PluginDetailsProviderImpl(private val extractDirectory: File) : PluginDetailsProvider {
-  override fun fetchByExistingPlugins(plugin: IdePlugin): PluginDetails {
+  override fun provideDetailsByExistingPlugins(plugin: IdePlugin): PluginDetails {
     val originalFile = plugin.originalFile
     return if (originalFile != null) {
       val pluginClassesLocations = try {
@@ -26,7 +26,7 @@ class PluginDetailsProviderImpl(private val extractDirectory: File) : PluginDeta
     }
   }
 
-  override fun fetchPluginDetails(pluginCoordinate: PluginCoordinate): PluginDetails {
+  override fun providePluginDetails(pluginCoordinate: PluginCoordinate): PluginDetails {
     val pluginFileFindResult = pluginCoordinate.fileFinder.findPluginFile()
     return when (pluginFileFindResult) {
       is PluginFileFinder.Result.Found -> createPluginDetailsByFileLock(pluginFileFindResult.pluginFileLock)

@@ -128,7 +128,7 @@ class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
   }
 
   override fun computeResult(progress: TaskProgress): CheckRangeCompatibilityResult =
-      pluginDetailsProvider.fetchPluginDetails(pluginCoordinate).use { pluginDetails ->
+      pluginDetailsProvider.providePluginDetails(pluginCoordinate).use { pluginDetails ->
         when (pluginDetails) {
           is PluginDetails.NotFound -> CheckRangeCompatibilityResult(updateInfo, CheckRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = pluginDetails.reason)
           is PluginDetails.FailedToDownload -> CheckRangeCompatibilityResult(updateInfo, CheckRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = pluginDetails.reason)

@@ -9,9 +9,9 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
  * Created by Sergey.Patrikeev
  */
 class MockPluginDetailsProvider(private val coordinatesToDetails: Map<PluginCoordinate, PluginDetails>) : PluginDetailsProvider {
-  override fun fetchPluginDetails(pluginCoordinate: PluginCoordinate): PluginDetails =
+  override fun providePluginDetails(pluginCoordinate: PluginCoordinate): PluginDetails =
       coordinatesToDetails[pluginCoordinate] ?: PluginDetails.NotFound("Not found $pluginCoordinate")
 
-  override fun fetchByExistingPlugins(plugin: IdePlugin): PluginDetails =
+  override fun provideDetailsByExistingPlugins(plugin: IdePlugin): PluginDetails =
       PluginDetails.FoundOpenPluginWithoutClasses(plugin)
 }

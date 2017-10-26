@@ -50,7 +50,7 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
   }
 
   private fun createPluginAndDoVerification(): Result {
-    val pluginDetails = pluginDetailsProvider.fetchPluginDetails(pluginCoordinate)
+    val pluginDetails = pluginDetailsProvider.providePluginDetails(pluginCoordinate)
     return pluginDetails.use {
       val pluginInfo = pluginDetails.toPluginInfo()
       val verdict = pluginDetails.calculateVerdict()
