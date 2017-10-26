@@ -10,13 +10,9 @@ import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
-import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterSet
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportersProvider
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.access.AccessType
@@ -30,7 +26,9 @@ import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.SymbolicReference
+import com.jetbrains.pluginverifier.tests.mocks.EmptyReporterSetProvider
 import com.jetbrains.pluginverifier.tests.mocks.NotFoundDependencyFinder
+import com.jetbrains.pluginverifier.tests.mocks.TestJdkDescriptorProvider
 import org.hamcrest.core.Is.`is`
 import org.junit.AfterClass
 import org.junit.Assert.*
@@ -49,7 +47,7 @@ class VerificationCorrectnessTest {
 
     private fun doIdeaAndPluginVerification(ideaFile: File, pluginFile: File): Result {
       val pluginCoordinate = PluginCoordinate.ByFile(pluginFile)
-      val jdkDescriptor = getJdkDescriptor()
+      val jdkDescriptor = TestJdkDescriptorProvider.getJdkDescriptorForTests()
 
       val tempFolder = Files.createTempDir()
       tempFolder.deleteOnExit()
@@ -59,30 +57,11 @@ class VerificationCorrectnessTest {
         val problemsFilters = OptionsParser.getProblemsFilters(CmdOpts(documentedProblemsPageUrl = null))
         val verifierParams = VerifierParameters(externalClassesPrefixes, problemsFilters, EmptyResolver, NotFoundDependencyFinder())
         val tasks = listOf(pluginCoordinate to ideDescriptor)
-        val emptyReporterSetProvider = object : VerificationReportersProvider {
-          override val globalMessageReporters: List<Reporter<String>> = emptyList()
 
-          override val globalProgressReporters: List<Reporter<Double>> = emptyList()
-
-          override fun close() = Unit
-
-          override fun getReporterSetForPluginVerification(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): VerificationReporterSet =
-              VerificationReporterSet(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
-        }
-        VerificationReportageImpl(emptyReporterSetProvider).use { verificationReportage ->
+        VerificationReportageImpl(EmptyReporterSetProvider).use { verificationReportage ->
           Verification.run(verifierParams, pluginDetailsProvider, tasks, verificationReportage, jdkDescriptor).single()
         }
       }
-    }
-
-    private fun getJdkDescriptor(): JdkDescriptor {
-      val jdk8 = "/usr/lib/jvm/java-8-oracle"
-      val jdkPath = System.getenv("JAVA_HOME") ?: jdk8
-      if ('9' in jdkPath) {
-        //Todo: support the java 9
-        return JdkDescriptor(File(jdk8))
-      }
-      return JdkDescriptor(File(jdkPath))
     }
 
     @BeforeClass

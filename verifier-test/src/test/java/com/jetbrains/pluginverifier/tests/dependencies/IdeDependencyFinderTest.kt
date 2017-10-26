@@ -82,7 +82,7 @@ class IdeDependencyFinderTest {
       }
 
       override fun downloadPluginFile(update: UpdateInfo): DownloadPluginResult {
-        return DownloadPluginResult.FailedToDownload(update, "Failed to download test.")
+        return DownloadPluginResult.FailedToDownload("Failed to download test.")
       }
     }
 
