@@ -64,6 +64,19 @@ inline fun <T : Closeable?, R> T.closeOnException(block: (T) -> R): R {
 
 fun String.toSystemIndependentName() = replace('\\', '/')
 
+fun <T> List<T>.listPresentationInColumns(columns: Int, minColumnWidth: Int): String {
+  val list = this
+  return buildString {
+    var pos = 0
+    while (pos < list.size) {
+      val subList = list.subList(pos, minOf(pos + columns, list.size))
+      val row = subList.map { it.toString() }.joinToString(separator = "") { it.padEnd(minColumnWidth) }
+      appendln(row)
+      pos += columns
+    }
+  }
+}
+
 fun File.create(): File {
   if (this.parentFile != null) {
     FileUtils.forceMkdir(this.parentFile)

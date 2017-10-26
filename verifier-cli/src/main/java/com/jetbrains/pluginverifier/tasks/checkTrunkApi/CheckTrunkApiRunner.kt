@@ -15,7 +15,7 @@ class CheckTrunkApiRunner : TaskRunner() {
       pluginRepository: PluginRepository,
       ideRepository: IdeRepository,
       pluginDetailsProvider: PluginDetailsProvider
-  ) = CheckTrunkApiParamsBuilder(ideRepository)
+  ) = CheckTrunkApiParamsBuilder(pluginRepository, ideRepository)
 
   override fun createTask(
       parameters: TaskParameters,

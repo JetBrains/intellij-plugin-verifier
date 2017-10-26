@@ -2,11 +2,16 @@ package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
 import com.google.common.util.concurrent.AtomicDouble
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.misc.listPresentationInColumns
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
+import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.IdeRepository
+import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
+import com.jetbrains.pluginverifier.repository.local.meta.LocalRepositoryMetadataParser
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
@@ -18,12 +23,13 @@ import java.util.concurrent.TimeUnit
 /**
  * @author Sergey Patrikeev
  */
-class CheckTrunkApiParamsBuilder(val ideRepository: IdeRepository) : TaskParametersBuilder {
+class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository, val ideRepository: IdeRepository) : TaskParametersBuilder {
 
   private companion object {
     val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiParamsBuilder::class.java)
   }
 
+  //todo: close the IdeDescriptors in case of exception
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckTrunkApiParams {
     val apiOpts = CheckTrunkApiOpts()
     val args = Args.parse(apiOpts, freeArgs.toTypedArray(), false)
@@ -31,37 +37,74 @@ class CheckTrunkApiParamsBuilder(val ideRepository: IdeRepository) : TaskParamet
       throw IllegalArgumentException("The IDE to be checked is not specified")
     }
 
-    val ideDescriptor = OptionsParser.createIdeDescriptor(File(args[0]), opts)
+    val trunkIdeDescriptor = OptionsParser.createIdeDescriptor(File(args[0]), opts)
     val jdkDescriptor = JdkDescriptor(OptionsParser.getJdkDir(opts))
 
-    val majorIdeFile: File
-    val deleteMajorOnExit: Boolean
+    val releaseIdeFile: File
+    val deleteReleaseIdeOnExit: Boolean
 
     when {
       apiOpts.majorIdePath != null -> {
-        majorIdeFile = File(apiOpts.majorIdePath)
-        if (!majorIdeFile.isDirectory) {
-          throw IllegalArgumentException("The specified major IDE doesn't exist: $majorIdeFile")
+        releaseIdeFile = File(apiOpts.majorIdePath)
+        if (!releaseIdeFile.isDirectory) {
+          throw IllegalArgumentException("The specified major IDE doesn't exist: $releaseIdeFile")
         }
-        deleteMajorOnExit = false
+        deleteReleaseIdeOnExit = false
       }
       apiOpts.majorIdeVersion != null -> {
         val ideVersion = parseIdeVersion(apiOpts.majorIdeVersion!!)
-        majorIdeFile = this.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "download ide $ideVersion") {
+        releaseIdeFile = this.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "download ide $ideVersion") {
           downloadIdeByVersion(ideVersion)
         }
-        deleteMajorOnExit = !apiOpts.saveMajorIdeFile
+        deleteReleaseIdeOnExit = !apiOpts.saveMajorIdeFile
       }
       else -> throw IllegalArgumentException("Neither the version (-miv) nor the path to the IDE (-mip) with which to compare API problems specified")
     }
+    val releaseIdeDescriptor = OptionsParser.createIdeDescriptor(releaseIdeFile, opts)
 
     val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
     val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
-    val majorIdeDescriptor = OptionsParser.createIdeDescriptor(majorIdeFile, opts)
+    val releaseVersion = releaseIdeDescriptor.ideVersion
+    val trunkVersion = trunkIdeDescriptor.ideVersion
+
+    val releaseLocalRepository = apiOpts.releaseLocalPluginRepositoryRoot?.let { createLocalPluginRepository(releaseVersion, File(it)) }
+    val trunkLocalRepository = apiOpts.trunkLocalPluginRepositoryRoot?.let { createLocalPluginRepository(trunkVersion, File(it)) }
 
     val jetBrainsPluginIds = getJetBrainsPluginIds(apiOpts)
-    return CheckTrunkApiParams(ideDescriptor, majorIdeDescriptor, externalClassesPrefixes, problemsFilters, jdkDescriptor, jetBrainsPluginIds, deleteMajorOnExit, majorIdeFile)
+
+    val releaseCompatibleUpdates = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch last compatible updates with $releaseVersion") {
+      getLastCompatibleUpdates(releaseVersion)
+    }
+    val pluginsToCheck = releaseCompatibleUpdates.filterNot { it.pluginId in jetBrainsPluginIds }
+    val pluginCoordinates = pluginsToCheck.map { PluginCoordinate.ByUpdateInfo(it, pluginRepository) }
+
+    println("The following updates will be checked with both #$trunkVersion and #$releaseVersion:\n" + pluginsToCheck.sortedBy { it.updateId }.listPresentationInColumns(4, 60))
+
+    return CheckTrunkApiParams(
+        trunkIdeDescriptor,
+        releaseIdeDescriptor,
+        externalClassesPrefixes,
+        problemsFilters,
+        jdkDescriptor,
+        jetBrainsPluginIds,
+        deleteReleaseIdeOnExit,
+        releaseIdeFile,
+        releaseLocalRepository,
+        trunkLocalRepository,
+        pluginCoordinates
+    )
+  }
+
+  private fun createLocalPluginRepository(ideVersion: IdeVersion, repositoryRoot: File): LocalPluginRepository {
+    val repositoryMetadataXml = repositoryRoot.resolve("plugins.xml")
+    require(repositoryMetadataXml.exists(), { "Local repository meta-file $repositoryMetadataXml is not found" })
+    val plugins = try {
+      LocalRepositoryMetadataParser().parseFromXml(repositoryMetadataXml)
+    } catch (e: Exception) {
+      throw IllegalArgumentException("Unable to parse meta-file $repositoryMetadataXml", e)
+    }
+    return LocalPluginRepository(ideVersion, plugins)
   }
 
   private fun getJetBrainsPluginIds(apiOpts: CheckTrunkApiOpts): List<String> {
@@ -105,6 +148,17 @@ class CheckTrunkApiParamsBuilder(val ideRepository: IdeRepository) : TaskParamet
         "Compatible versions of these plugins will be downloaded and installed to the release and trunk IDE before verification. " +
         "Found compatibility problems differences will be reported as if it were breakages of trunk API compared to release API.")
     var jetBrainsPluginsFile: String? = null
+
+    @set:Argument("release-jetbrains-plugins", alias = "rjbp", description = "The root of the local plugin repository containing JetBrains plugins compatible with the release IDE. " +
+        "The local repository is a set of non-bundled JetBrains plugins built from the same sources (see Installers/<artifacts>/IU-plugins). " +
+        "There must be a meta-file 'plugins.xml' providing info about available plugins. On the release IDE verification, the JetBrains plugins will be taken from the " +
+        "local repository if possible and from the public repository, otherwise.")
+    var releaseLocalPluginRepositoryRoot: String? = null
+
+    @set:Argument("trunk-jetbrains-plugins", alias = "tjbp", description = "The same as --release-local-repository but specifies the local repository of the trunk IDE.")
+    var trunkLocalPluginRepositoryRoot: String? = null
+
+
   }
 
 }

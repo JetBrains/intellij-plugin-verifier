@@ -16,6 +16,7 @@ import com.jetbrains.pluginverifier.tasks.checkPlugin.CheckPluginRunner
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiRunner
 import com.sampullara.cli.Args
 import org.apache.commons.io.FileUtils
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import kotlin.system.exitProcess
@@ -59,6 +60,8 @@ object PluginVerifierMain {
 
   private val ideDownloadDir: File = File(getVerifierHomeDir(), "ides").createDir()
 
+  private val LOG: Logger = LoggerFactory.getLogger(PluginVerifierMain::class.java)
+
   @JvmStatic
   fun main(args: Array<String>) {
     val opts = CmdOpts()
@@ -93,6 +96,7 @@ object PluginVerifierMain {
     val parameters = try {
       parametersBuilder.build(opts, freeArgs)
     } catch (e: IllegalArgumentException) {
+      LOG.error("Unable to prepare verification parameters", e)
       System.err.println(e.message)
       exitProcess(1)
     }
