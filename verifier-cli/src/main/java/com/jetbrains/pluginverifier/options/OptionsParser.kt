@@ -198,35 +198,21 @@ object OptionsParser {
     val pluginsFile = opts.pluginsToCheckFile
     if (pluginsFile != null) {
       try {
-        BufferedReader(FileReader(pluginsFile)).use { reader ->
-          var s: String?
-          while (true) {
-            s = reader.readLine()
-            if (s == null) break
-            s = s.trim { it <= ' ' }
-            if (s.isEmpty() || s.startsWith("//")) continue
-
-            var checkAllBuilds = true
-            if (s.endsWith("$")) {
-              s = s.substring(0, s.length - 1).trim { it <= ' ' }
-              checkAllBuilds = false
+        File(pluginsFile).readLines()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && !it.startsWith("//") }
+            .forEach { fullLine ->
+              val trimmed = fullLine.trim('$').trim()
+              if (trimmed.isNotEmpty()) {
+                if (fullLine.startsWith("$") || fullLine.endsWith("$")) {
+                  pluginsCheckLastBuilds.add(trimmed)
+                } else {
+                  pluginsCheckLastBuilds.add(trimmed)
+                }
+              }
             }
-            if (s.startsWith("$")) {
-              s = s.substring(1).trim { it <= ' ' }
-              checkAllBuilds = false
-            }
-
-            if (s.isEmpty()) continue
-
-            if (checkAllBuilds) {
-              pluginsCheckAllBuilds.add(s)
-            } else {
-              pluginsCheckLastBuilds.add(s)
-            }
-          }
-        }
       } catch (e: IOException) {
-        throw RuntimeException("Failed to read plugins file " + pluginsFile + ": " + e.message, e)
+        throw RuntimeException("Failed to read plugins to check file " + pluginsFile + ": " + e.message, e)
       }
 
     }
