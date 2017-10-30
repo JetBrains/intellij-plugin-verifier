@@ -18,7 +18,7 @@ import com.jetbrains.pluginverifier.results.presentation.formatFieldLocation
 data class DeprecatedClassFieldUsage(override val deprecatedElement: ClassLocation,
                                      override val usageLocation: Location,
                                      val field: FieldLocation) : DeprecatedApiUsage() {
-  override val shortDescription: String = "Deprecated class' field usage ${field.formatFieldLocation(FULL_HOST_NAME, NO_TYPE)}"
+  override val shortDescription: String = "Field of a deprecated class is used ${field.formatFieldLocation(FULL_HOST_NAME, NO_TYPE)}"
 
   override val fullDescription: String = "Field ${field.formatFieldLocation(NO_HOST, SIMPLE_TYPE)} of the deprecated " +
       "class ${deprecatedElement.formatClassLocation(FULL_NAME, WITH_GENERICS)} is used in ${usageLocation.formatUsageLocation()}"
