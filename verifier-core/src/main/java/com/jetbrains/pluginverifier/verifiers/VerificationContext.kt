@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.core.VerificationResultHolder
+import com.jetbrains.pluginverifier.misc.impossible
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
@@ -16,6 +17,7 @@ import org.objectweb.asm.tree.MethodNode
 
 data class VerificationContext(
     val classLoader: Resolver,
+    val ideClassLoader: Resolver,
     val resultHolder: VerificationResultHolder,
     val externalClassesPrefixes: List<String>
 ) {
@@ -25,8 +27,19 @@ data class VerificationContext(
   }
 
   fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
-    resultHolder.registerDeprecatedUsage(deprecatedApiUsage)
+    val deprecatedElement = deprecatedApiUsage.deprecatedElement
+    val hostClass = when (deprecatedElement) {
+      is ClassLocation -> deprecatedElement
+      is MethodLocation -> deprecatedElement.hostClass
+      is FieldLocation -> deprecatedElement.hostClass
+      else -> impossible()
+    }
+    if (isIdeClass(hostClass.className)) {
+      resultHolder.registerDeprecatedUsage(deprecatedApiUsage)
+    }
   }
+
+  private fun isIdeClass(className: String): Boolean = ideClassLoader.containsClass(className)
 
   fun isExternalClass(className: String): Boolean = externalClassesPrefixes.any { it.isNotEmpty() && className.startsWith(it) }
 
