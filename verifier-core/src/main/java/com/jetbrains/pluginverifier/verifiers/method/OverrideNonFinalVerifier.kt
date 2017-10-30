@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers.method
 
-import com.jetbrains.pluginverifier.results.deprecated.DeprecatedMethodUsage
 import com.jetbrains.pluginverifier.results.problems.OverridingFinalMethodProblem
 import com.jetbrains.pluginverifier.verifiers.*
 import org.objectweb.asm.tree.ClassNode
@@ -15,7 +14,7 @@ class OverrideNonFinalVerifier : MethodVerifier {
 
   @Suppress("UNCHECKED_CAST")
   override fun verify(clazz: ClassNode, method: MethodNode, ctx: VerificationContext) {
-    if (method.isPrivate()) return
+    if (method.isPrivate() || method.isConstructor() || method.isClassInitializer()) return
 
     /*
     According to JVM 8 specification the static methods cannot <i>override</i> the parent methods.
@@ -31,29 +30,22 @@ class OverrideNonFinalVerifier : MethodVerifier {
       return
     }
 
-    var parent: ClassNode? = ctx.resolveClassOrProblem(superClass, clazz, { ctx.fromMethod(clazz, method) }) ?: return
-
     /**
      * Traverse the super-classes up to the java.lang.Object and check that the verified class
      * doesn't override a final method.
      * Java interfaces are not allowed to have final methods so it works.
      */
-    while (parent != null) {
-      val sameMethod = (parent.methods as List<MethodNode>).firstOrNull { it.name == method.name && it.desc == method.desc }
-      if (sameMethod != null) {
-        val methodLocation = ctx.fromMethod(parent, sameMethod)
-        if (sameMethod.isDeprecated()) {
-          val usageLocation = ctx.fromMethod(clazz, method)
-          ctx.registerDeprecatedUsage(DeprecatedMethodUsage(methodLocation, usageLocation))
-        }
-        if (sameMethod.isFinal()) {
-          ctx.registerProblem(OverridingFinalMethodProblem(methodLocation, ctx.fromClass(clazz)))
-          return
-        }
+    ClassParentsVisitor(ctx, false).visitClassAndParents(clazz) { parent ->
+      if (parent.name == clazz.name) {
+        return@visitClassAndParents true
       }
-      val superName = parent.superName ?: break
-      val superNode = ctx.resolveClassOrProblem(superName, parent, { ctx.fromClass(parent!!) }) ?: break
-      parent = superNode
+      val sameMethod = (parent.methods as List<MethodNode>).firstOrNull { it.name == method.name && it.desc == method.desc }
+      if (sameMethod != null && sameMethod.isFinal()) {
+        val methodLocation = ctx.fromMethod(parent, sameMethod)
+        ctx.registerProblem(OverridingFinalMethodProblem(methodLocation, ctx.fromClass(clazz)))
+        return@visitClassAndParents false
+      }
+      return@visitClassAndParents true
     }
   }
 

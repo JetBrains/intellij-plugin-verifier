@@ -13,48 +13,32 @@ class AbstractMethodVerifier : ClassVerifier {
   override fun verify(clazz: ClassNode, ctx: VerificationContext) {
     if (clazz.isAbstract() || clazz.isInterface()) return
 
-    val abstractMethods = hashMapOf<Method, MethodLocation>()
-    val implementedMethods = hashMapOf<Method, MethodLocation>()
-    traverseTree(clazz, ctx, hashSetOf(), abstractMethods, implementedMethods)
+    val abstractMethods = hashMapOf<MethodSignature, MethodLocation>()
+    val implementedMethods = hashMapOf<MethodSignature, MethodLocation>()
 
-    val classLocation = ctx.fromClass(clazz)
+    ClassParentsVisitor(ctx, true).visitClassAndParents(clazz) { parent ->
+      @Suppress("UNCHECKED_CAST")
+      (parent.methods as List<MethodNode>).forEach { method ->
+        if (!method.isPrivate() && !method.isStatic()) {
+          val methodLocation = ctx.fromMethod(parent, method)
+          val methodSignature = MethodSignature(method.name, method.desc)
+          if (method.isAbstract()) {
+            abstractMethods.put(methodSignature, methodLocation)
+          } else {
+            implementedMethods.put(methodSignature, methodLocation)
+          }
+        }
+      }
+      return@visitClassAndParents true
+    }
+
+    val currentClass = ctx.fromClass(clazz)
     (abstractMethods.keys - implementedMethods.keys).forEach { method ->
       val abstractMethod = abstractMethods[method]!!
-      ctx.registerProblem(MethodNotImplementedProblem(abstractMethod, classLocation))
+      ctx.registerProblem(MethodNotImplementedProblem(abstractMethod, currentClass))
     }
   }
 
-  private data class Method(val name: String, val descriptor: String)
+  private data class MethodSignature(val name: String, val descriptor: String)
 
-  @Suppress("UNCHECKED_CAST")
-  private fun traverseTree(clazz: ClassNode,
-                           ctx: VerificationContext,
-                           visitedClasses: MutableSet<String>,
-                           abstractMethods: MutableMap<Method, MethodLocation>,
-                           implementedMethods: MutableMap<Method, MethodLocation>) {
-    (clazz.methods as List<MethodNode>).forEach {
-      if (!it.isPrivate() && !it.isStatic()) {
-        val methodLocation = ctx.fromMethod(clazz, it)
-        if (it.isAbstract()) {
-          abstractMethods.put(Method(it.name, it.desc), methodLocation)
-        } else {
-          implementedMethods.put(Method(it.name, it.desc), methodLocation)
-        }
-      }
-    }
-
-    visitedClasses.add(clazz.name)
-
-    val superName: String = clazz.superName ?: "java/lang/Object"
-
-    (listOf(superName) + (clazz.interfaces as List<String>)).forEach { clsName ->
-      if (!visitedClasses.contains(clsName)) {
-        val node = ctx.resolveClassOrProblem(clsName, clazz, { ctx.fromClass(clazz) })
-        if (node != null) {
-          traverseTree(node, ctx, visitedClasses, abstractMethods, implementedMethods)
-        }
-      }
-    }
-
-  }
 }

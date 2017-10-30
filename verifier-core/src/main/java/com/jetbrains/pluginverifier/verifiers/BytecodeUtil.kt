@@ -101,6 +101,10 @@ fun MethodNode.isDefaultAccess(): Boolean = !isPublic() && !this.isProtected() &
 
 fun MethodNode.isAbstract(): Boolean = access and Opcodes.ACC_ABSTRACT != 0
 
+fun MethodNode.isConstructor(): Boolean = name == "<init>"
+
+fun MethodNode.isClassInitializer(): Boolean = name == "<clinit>"
+
 fun FieldNode.isProtected(): Boolean = access and Opcodes.ACC_PROTECTED != 0
 
 fun MethodNode.isProtected(): Boolean = access and Opcodes.ACC_PROTECTED != 0

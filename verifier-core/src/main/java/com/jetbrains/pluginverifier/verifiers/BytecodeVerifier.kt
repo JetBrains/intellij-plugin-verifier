@@ -32,7 +32,8 @@ class BytecodeVerifier {
       MethodArgumentTypesVerifier(),
       MethodLocalVarsVerifier(),
       MethodThrowsVerifier(),
-      MethodTryCatchVerifier()
+      MethodTryCatchVerifier(),
+      DeprecatedMethodOverriddenVerifier()
   )
 
   private val instructionVerifiers = arrayOf(

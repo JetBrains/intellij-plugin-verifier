@@ -36,7 +36,7 @@ data class DocPackageRemoved(val packageName: String) : DocumentedProblem {
 
 data class DocAbstractMethodAdded(val hostClass: String, val methodName: String) : DocumentedProblem {
   override fun isDocumenting(problem: Problem): Boolean =
-      problem is MethodNotImplementedProblem && problem.method.hostClass.className == hostClass && problem.method.methodName == methodName
+      problem is MethodNotImplementedProblem && problem.abstractMethod.hostClass.className == hostClass && problem.abstractMethod.methodName == methodName
 }
 
 data class DocClassMovedToPackage(val oldClassName: String, val newPackageName: String) : DocumentedProblem {

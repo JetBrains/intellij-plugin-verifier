@@ -192,8 +192,15 @@ class VerificationCorrectnessTest {
 
   @Test
   fun `overriding deprecated method`() {
-    assertDeprecatedUsageFound("Deprecated method deprecated.DeprecatedMethod.foo(int x) : void is used in mock.plugin.deprecated.OverrideDeprecatedMethod.foo(int x) : void")
+    assertDeprecatedUsageFound("Deprecated method deprecated.DeprecatedMethod.foo(int x) : void is overridden in class mock.plugin.deprecated.OverrideDeprecatedMethod")
   }
+
+  @Test
+  fun `overriding deprecated interface method`() {
+    assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedInterface is used in mock.plugin.deprecated.OverrideDeprecatedMethod")
+    assertDeprecatedUsageFound("Deprecated method deprecated.DeprecatedInterface.bar() : void is overridden in class mock.plugin.deprecated.OverrideDeprecatedMethod")
+  }
+
 
   @Test
   fun `use default deprecated constructor`() {
