@@ -90,7 +90,8 @@ class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
           externalClassesPrefixes = emptyList(),
           problemFilters = emptyList(),
           externalClassPath = EmptyResolver,
-          dependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsProvider)
+          dependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsProvider),
+          findDeprecatedApiUsages = true
       )
       val results = Verification.run(verifierParameters, pluginDetailsProvider, listOf(pluginCoordinate to ideDescriptor), verificationReportage, jdkDescriptor)
       allResults.addAll(results)

@@ -120,7 +120,7 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
         val classLoader = createClassLoader(pluginResolver, dependenciesResolver)
         val checkClasses = getClassesForCheck(pluginClassesLocations)
 
-        val verificationContext = VerificationContext(classLoader, ideDescriptor.ideResolver, resultHolder, verifierParameters.externalClassesPrefixes)
+        val verificationContext = VerificationContext(classLoader, ideDescriptor.ideResolver, resultHolder, verifierParameters.externalClassesPrefixes, verifierParameters.findDeprecatedApiUsages)
         val progressIndicator = object : Reporter<Double> {
           override fun close() = Unit
 

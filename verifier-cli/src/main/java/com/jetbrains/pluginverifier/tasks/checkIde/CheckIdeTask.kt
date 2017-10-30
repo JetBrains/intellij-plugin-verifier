@@ -39,7 +39,7 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
   }
 
   private fun doExecute(notExcludedPlugins: List<PluginCoordinate>, reportage: VerificationReportage): CheckIdeResult {
-    val verifierParams = VerifierParameters(parameters.externalClassesPrefixes, parameters.problemsFilters, parameters.externalClassPath, parameters.dependencyFinder)
+    val verifierParams = VerifierParameters(parameters.externalClassesPrefixes, parameters.problemsFilters, parameters.externalClassPath, parameters.dependencyFinder, false)
     val tasks = notExcludedPlugins.map { it to parameters.ideDescriptor }
     val results = Verification.run(verifierParams, pluginDetailsProvider, tasks, reportage, parameters.jdkDescriptor)
     return CheckIdeResult(parameters.ideDescriptor.ideVersion, results, parameters.excludedPlugins, getMissingUpdatesProblems())

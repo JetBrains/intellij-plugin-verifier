@@ -27,5 +27,10 @@ data class VerifierParameters(
     /**
      * This finder will be used to resolve plugin dependencies.
      */
-    val dependencyFinder: DependencyFinder
+    val dependencyFinder: DependencyFinder,
+
+    /**
+     * Whether the usages of deprecated IntelliJ Platform API must be reported or not
+     */
+    val findDeprecatedApiUsages: Boolean
 )

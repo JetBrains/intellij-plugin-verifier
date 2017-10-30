@@ -19,7 +19,8 @@ data class VerificationContext(
     val classLoader: Resolver,
     val ideClassLoader: Resolver,
     val resultHolder: VerificationResultHolder,
-    val externalClassesPrefixes: List<String>
+    val externalClassesPrefixes: List<String>,
+    val findDeprecatedApiUsages: Boolean
 ) {
 
   fun registerProblem(problem: Problem) {
@@ -27,15 +28,17 @@ data class VerificationContext(
   }
 
   fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
-    val deprecatedElement = deprecatedApiUsage.deprecatedElement
-    val hostClass = when (deprecatedElement) {
-      is ClassLocation -> deprecatedElement
-      is MethodLocation -> deprecatedElement.hostClass
-      is FieldLocation -> deprecatedElement.hostClass
-      else -> impossible()
-    }
-    if (isIdeClass(hostClass.className)) {
-      resultHolder.registerDeprecatedUsage(deprecatedApiUsage)
+    if (findDeprecatedApiUsages) {
+      val deprecatedElement = deprecatedApiUsage.deprecatedElement
+      val hostClass = when (deprecatedElement) {
+        is ClassLocation -> deprecatedElement
+        is MethodLocation -> deprecatedElement.hostClass
+        is FieldLocation -> deprecatedElement.hostClass
+        else -> impossible()
+      }
+      if (isIdeClass(hostClass.className)) {
+        resultHolder.registerDeprecatedUsage(deprecatedApiUsage)
+      }
     }
   }
 

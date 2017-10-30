@@ -65,7 +65,13 @@ class VerificationCorrectnessTest {
       return IdeCreator.createByFile(ideaFile, IdeVersion.createIdeVersion("IU-145.500")).use { ideDescriptor ->
         val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
         val problemsFilters = OptionsParser.getProblemsFilters(CmdOpts(documentedProblemsPageUrl = null))
-        val verifierParams = VerifierParameters(externalClassesPrefixes, problemsFilters, EmptyResolver, NotFoundDependencyFinder())
+        val verifierParams = VerifierParameters(
+            externalClassesPrefixes,
+            problemsFilters,
+            EmptyResolver,
+            NotFoundDependencyFinder(),
+            true
+        )
         val tasks = listOf(pluginCoordinate to ideDescriptor)
 
         VerificationReportageImpl(EmptyReporterSetProvider).use { verificationReportage ->

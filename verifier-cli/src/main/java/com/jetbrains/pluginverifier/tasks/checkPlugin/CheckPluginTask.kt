@@ -75,7 +75,8 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
         parameters.externalClassesPrefixes,
         parameters.problemsFilters,
         parameters.externalClasspath,
-        dependencyFinder
+        dependencyFinder,
+        true
     )
     val tasks = listOf(pluginCoordinate to ideDescriptor)
     return Verification.run(verifierParams, pluginDetailsProvider, tasks, reportage, parameters.jdkDescriptor).single()

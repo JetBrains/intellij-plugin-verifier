@@ -17,7 +17,8 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
         emptyList(),
         emptyList(),
         EmptyResolver,
-        parameters.dependencyFinder
+        parameters.dependencyFinder,
+        true
     )
     val tasks = parameters.pluginsToCheck.map { it to parameters.ideDescriptor }
     val results = Verification.run(verifierParams, pluginDetailsProvider, tasks, verificationReportage, parameters.jdkDescriptor)
