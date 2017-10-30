@@ -23,13 +23,15 @@ abstract class DeprecatedApiUsage {
 
   abstract val usageLocation: Location
 
-  abstract val description: String
+  abstract val shortDescription: String
 
-  final override fun equals(other: Any?): Boolean = other is DeprecatedApiUsage && description == other.description
+  abstract val fullDescription: String
 
-  final override fun hashCode(): Int = description.hashCode()
+  final override fun equals(other: Any?): Boolean = other is DeprecatedApiUsage && fullDescription == other.fullDescription
 
-  final override fun toString(): String = description
+  final override fun hashCode(): Int = fullDescription.hashCode()
+
+  final override fun toString(): String = fullDescription
 }
 
 fun Location.formatUsageLocation(): String = when (this) {

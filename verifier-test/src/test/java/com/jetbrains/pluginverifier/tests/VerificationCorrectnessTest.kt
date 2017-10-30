@@ -110,7 +110,7 @@ class VerificationCorrectnessTest {
         val message = redundantProblems.joinToString(separator = "\n") { "${it.shortDescription}:\n    ${it.fullDescription}" }
         assertTrue("Redundant problems: \n$message", redundantProblems.isEmpty())
 
-        val deprecatedMessage = redundantDeprecated.joinToString(separator = "\n") { "${it.description}\n" }
+        val deprecatedMessage = redundantDeprecated.joinToString(separator = "\n") { "${it.fullDescription}\n" }
         assertTrue("Redundant deprecated usages found: \n" + deprecatedMessage, redundantDeprecated.isEmpty())
       }
     }
@@ -161,7 +161,7 @@ class VerificationCorrectnessTest {
   }
 
   private fun assertDeprecatedUsageFound(description: String) {
-    val foundDeprecatedUsage = actualDeprecatedUsages.find { description == it.description }
+    val foundDeprecatedUsage = actualDeprecatedUsages.find { description == it.fullDescription }
     assertTrue("Deprecated is not found:\n$description\nall deprecated:\n" + actualDeprecatedUsages.joinToString("\n"), foundDeprecatedUsage != null)
     redundantDeprecated.remove(foundDeprecatedUsage)
   }
