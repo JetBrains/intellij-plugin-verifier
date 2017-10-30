@@ -22,12 +22,16 @@ import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedPr
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsParser
 import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.parameters.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
+import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -179,6 +183,83 @@ object OptionsParser {
     }
 
     return m
+  }
+
+  /**
+   * (id-s of plugins to check all builds, id-s of plugins to check last builds)
+   */
+  fun parsePluginsToCheck(opts: CmdOpts): Pair<List<String>, List<String>> {
+    val pluginsCheckAllBuilds = arrayListOf<String>()
+    val pluginsCheckLastBuilds = arrayListOf<String>()
+
+    pluginsCheckAllBuilds.addAll(opts.pluginToCheckAllBuilds)
+    pluginsCheckLastBuilds.addAll(opts.pluginToCheckLastBuild)
+
+    val pluginsFile = opts.pluginsToCheckFile
+    if (pluginsFile != null) {
+      try {
+        BufferedReader(FileReader(pluginsFile)).use { reader ->
+          var s: String?
+          while (true) {
+            s = reader.readLine()
+            if (s == null) break
+            s = s.trim { it <= ' ' }
+            if (s.isEmpty() || s.startsWith("//")) continue
+
+            var checkAllBuilds = true
+            if (s.endsWith("$")) {
+              s = s.substring(0, s.length - 1).trim { it <= ' ' }
+              checkAllBuilds = false
+            }
+            if (s.startsWith("$")) {
+              s = s.substring(1).trim { it <= ' ' }
+              checkAllBuilds = false
+            }
+
+            if (s.isEmpty()) continue
+
+            if (checkAllBuilds) {
+              pluginsCheckAllBuilds.add(s)
+            } else {
+              pluginsCheckLastBuilds.add(s)
+            }
+          }
+        }
+      } catch (e: IOException) {
+        throw RuntimeException("Failed to read plugins file " + pluginsFile + ": " + e.message, e)
+      }
+
+    }
+
+    return Pair<List<String>, List<String>>(pluginsCheckAllBuilds, pluginsCheckLastBuilds)
+  }
+
+  fun requestUpdatesToCheckByIds(checkAllBuildsPluginIds: List<String>,
+                                 checkLastBuildsPluginIds: List<String>,
+                                 ideVersion: IdeVersion,
+                                 pluginRepository: PluginRepository): List<UpdateInfo> {
+    if (checkAllBuildsPluginIds.isEmpty() && checkLastBuildsPluginIds.isEmpty()) {
+      return pluginRepository.getLastCompatibleUpdates(ideVersion)
+    } else {
+      val result = arrayListOf<UpdateInfo>()
+
+      checkAllBuildsPluginIds.flatMapTo(result) {
+        pluginRepository.getAllCompatibleUpdatesOfPlugin(ideVersion, it)
+      }
+
+      checkLastBuildsPluginIds.distinct().mapNotNullTo(result) {
+        pluginRepository.getAllCompatibleUpdatesOfPlugin(ideVersion, it)
+            .sortedByDescending { it.updateId }
+            .firstOrNull()
+      }
+
+      return result
+    }
+  }
+
+  fun parseExcludedPlugins(opts: CmdOpts): List<PluginIdAndVersion> {
+    val epf = opts.excludedPluginsFile ?: return emptyList()
+    return IdeResourceUtil.readBrokenPluginsFromFile(File(epf))
   }
 
 }

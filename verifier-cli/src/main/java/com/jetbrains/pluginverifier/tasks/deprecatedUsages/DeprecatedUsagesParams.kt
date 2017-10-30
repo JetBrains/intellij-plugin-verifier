@@ -1,22 +1,24 @@
 package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 
+import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
+import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
+import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.tasks.TaskParameters
-import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeParams
 
 
-data class DeprecatedUsagesParams(val checkIdeParams: CheckIdeParams) : TaskParameters {
-  override fun presentableText(): String = with(checkIdeParams) {
-    """Deprecated usages detection parameters:
-IDE to be checked: $ideDescriptor
+data class DeprecatedUsagesParams(val ideDescriptor: IdeDescriptor,
+                                  val jdkDescriptor: JdkDescriptor,
+                                  val pluginsToCheck: List<PluginCoordinate>,
+                                  val dependencyFinder: DependencyFinder) : TaskParameters {
+  override fun presentableText(): String = """Deprecated usages detection parameters:
+IDE to check: $ideDescriptor
 JDK: $jdkDescriptor
-Plugins to be checked: [${pluginsToCheck.joinToString()}]
-Excluded plugins: [${excludedPlugins.joinToString()}]
+Plugins to check: [${pluginsToCheck.joinToString()}]
 """
-  }
-
 
   override fun close() {
-    checkIdeParams.close()
+    ideDescriptor.close()
   }
 
   override fun toString(): String = presentableText()

@@ -1,23 +1,16 @@
 package com.jetbrains.pluginverifier.tasks.checkIde
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.parameters.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
-import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
-import java.io.BufferedReader
 import java.io.File
-import java.io.FileReader
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 class CheckIdeParamsBuilder(val pluginRepository: PluginRepository, val pluginDetailsProvider: PluginDetailsProvider) : TaskParametersBuilder {
@@ -35,95 +28,18 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository, val pluginDe
       OptionsParser.getExternalClassPath(opts).closeOnException { externalClassPath ->
         val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
-        val (checkAllBuilds, checkLastBuilds) = parsePluginToCheckList(opts)
-
-        val excludedPlugins = parseExcludedPlugins(opts)
+        val (checkAllBuilds, checkLastBuilds) = OptionsParser.parsePluginsToCheck(opts)
 
         val pluginsToCheck = this.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch updates to check with ${ideDescriptor.ideVersion}") {
-          getDescriptorsToCheck(checkAllBuilds, checkLastBuilds, ideDescriptor.ideVersion)
+          OptionsParser.requestUpdatesToCheckByIds(checkAllBuilds, checkLastBuilds, ideDescriptor.ideVersion, pluginRepository)
+              .map { PluginCoordinate.ByUpdateInfo(it, pluginRepository) }
         }
-        val dependencyResolver = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsProvider)
-        return CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, excludedPlugins, externalClassesPrefixes, externalClassPath, checkAllBuilds, problemsFilters, dependencyResolver)
+
+        val excludedPlugins = OptionsParser.parseExcludedPlugins(opts)
+        val ideDependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsProvider)
+        return CheckIdeParams(ideDescriptor, jdkDescriptor, pluginsToCheck, excludedPlugins, externalClassesPrefixes, externalClassPath, checkAllBuilds, problemsFilters, ideDependencyFinder)
       }
     }
-  }
-
-  /**
-   * (id-s of plugins to check all builds, id-s of plugins to check last builds)
-   */
-  private fun parsePluginToCheckList(opts: CmdOpts): Pair<List<String>, List<String>> {
-    val pluginsCheckAllBuilds = arrayListOf<String>()
-    val pluginsCheckLastBuilds = arrayListOf<String>()
-
-    pluginsCheckAllBuilds.addAll(opts.pluginToCheckAllBuilds)
-    pluginsCheckLastBuilds.addAll(opts.pluginToCheckLastBuild)
-
-    val pluginsFile = opts.pluginsToCheckFile
-    if (pluginsFile != null) {
-      try {
-        BufferedReader(FileReader(pluginsFile)).use { reader ->
-          var s: String?
-          while (true) {
-            s = reader.readLine()
-            if (s == null) break
-            s = s.trim { it <= ' ' }
-            if (s.isEmpty() || s.startsWith("//")) continue
-
-            var checkAllBuilds = true
-            if (s.endsWith("$")) {
-              s = s.substring(0, s.length - 1).trim { it <= ' ' }
-              checkAllBuilds = false
-            }
-            if (s.startsWith("$")) {
-              s = s.substring(1).trim { it <= ' ' }
-              checkAllBuilds = false
-            }
-
-            if (s.isEmpty()) continue
-
-            if (checkAllBuilds) {
-              pluginsCheckAllBuilds.add(s)
-            } else {
-              pluginsCheckLastBuilds.add(s)
-            }
-          }
-        }
-      } catch (e: IOException) {
-        throw RuntimeException("Failed to read plugins file " + pluginsFile + ": " + e.message, e)
-      }
-
-    }
-
-    return Pair<List<String>, List<String>>(pluginsCheckAllBuilds, pluginsCheckLastBuilds)
-  }
-
-
-  private fun getDescriptorsToCheck(checkAllBuilds: List<String>, checkLastBuilds: List<String>, ideVersion: IdeVersion) =
-      getUpdateInfosToCheck(checkAllBuilds, checkLastBuilds, ideVersion).map { PluginCoordinate.ByUpdateInfo(it, pluginRepository) }
-
-  private fun getUpdateInfosToCheck(checkAllBuilds: List<String>, checkLastBuilds: List<String>, ideVersion: IdeVersion): List<UpdateInfo> {
-    if (checkAllBuilds.isEmpty() && checkLastBuilds.isEmpty()) {
-      return pluginRepository.getLastCompatibleUpdates(ideVersion)
-    } else {
-      val myActualUpdatesToCheck = arrayListOf<UpdateInfo>()
-
-      checkAllBuilds.flatMapTo(myActualUpdatesToCheck) {
-        pluginRepository.getAllCompatibleUpdatesOfPlugin(ideVersion, it)
-      }
-
-      checkLastBuilds.distinct().mapNotNullTo(myActualUpdatesToCheck) {
-        pluginRepository.getAllCompatibleUpdatesOfPlugin(ideVersion, it)
-            .sortedByDescending { it.updateId }
-            .firstOrNull()
-      }
-
-      return myActualUpdatesToCheck
-    }
-  }
-
-  private fun parseExcludedPlugins(opts: CmdOpts): List<PluginIdAndVersion> {
-    val epf = opts.excludedPluginsFile ?: return emptyList()
-    return IdeResourceUtil.readBrokenPluginsFromFile(File(epf))
   }
 
 }
