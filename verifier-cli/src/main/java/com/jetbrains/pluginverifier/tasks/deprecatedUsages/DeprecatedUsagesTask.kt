@@ -6,6 +6,8 @@ import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.tasks.Task
 
 class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
@@ -22,8 +24,20 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
     )
     val tasks = parameters.pluginsToCheck.map { it to parameters.ideDescriptor }
     val results = Verification.run(verifierParams, pluginDetailsProvider, tasks, verificationReportage, parameters.jdkDescriptor)
-    return DeprecatedUsagesResult(parameters.ideDescriptor.ideVersion, results)
+    val pluginToDeprecatedUsages = results.associateBy({ it.plugin }, { it.verdict.toDeprecatedUsages() })
+    return DeprecatedUsagesResult(parameters.ideDescriptor.ideVersion, pluginToDeprecatedUsages)
   }
+
+  private fun Verdict.toDeprecatedUsages(): Set<DeprecatedApiUsage> = when (this) {
+    is Verdict.OK -> deprecatedUsages
+    is Verdict.Warnings -> deprecatedUsages
+    is Verdict.MissingDependencies -> deprecatedUsages
+    is Verdict.Problems -> deprecatedUsages
+    is Verdict.NotFound -> emptySet()
+    is Verdict.FailedToDownload -> emptySet()
+    is Verdict.Bad -> emptySet()
+  }
+
 
 }
 
