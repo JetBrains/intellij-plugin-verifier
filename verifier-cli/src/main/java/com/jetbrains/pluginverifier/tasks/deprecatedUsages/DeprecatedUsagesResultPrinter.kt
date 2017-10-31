@@ -11,15 +11,14 @@ import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val pluginRepository: PluginRepository) : TaskResultPrinter {
 
   override fun printResults(taskResult: TaskResult) {
-    with(taskResult as DeprecatedUsagesResult) {
-      for ((plugin, deprecatedApiUsages) in results) {
-        if (deprecatedApiUsages.isNotEmpty()) {
-          println("Deprecated usages of $plugin:")
-          deprecatedApiUsages.groupBy { it.shortDescription }.forEach { (shortDescription, allWithShortDescription) ->
-            println("  $shortDescription")
-            allWithShortDescription.forEach {
-              println("      $it")
-            }
+    val deprecatedResult = taskResult as DeprecatedUsagesResult
+    for ((plugin, deprecatedApiUsages) in deprecatedResult.pluginDeprecatedUsages) {
+      if (deprecatedApiUsages.isNotEmpty()) {
+        println("Deprecated usages of $plugin:")
+        deprecatedApiUsages.groupBy { it.shortDescription }.forEach { (shortDescription, allWithShortDescription) ->
+          println("  $shortDescription")
+          allWithShortDescription.forEach {
+            println("      $it")
           }
         }
       }

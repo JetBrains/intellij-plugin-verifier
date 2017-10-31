@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.clazz
 
 import com.jetbrains.pluginverifier.results.problems.SuperClassBecameInterfaceProblem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.fromClass
 import com.jetbrains.pluginverifier.verifiers.isInterface
 import com.jetbrains.pluginverifier.verifiers.resolveClassOrProblem
 import org.objectweb.asm.tree.ClassNode

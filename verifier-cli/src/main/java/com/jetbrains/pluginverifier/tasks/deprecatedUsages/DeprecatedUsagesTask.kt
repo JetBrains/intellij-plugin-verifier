@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.tasks.Task
+import com.jetbrains.pluginverifier.verifiers.IdeClassesVisitor
 
 class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
                            val pluginRepository: PluginRepository,
@@ -25,7 +26,8 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
     val tasks = parameters.pluginsToCheck.map { it to parameters.ideDescriptor }
     val results = Verification.run(verifierParams, pluginDetailsProvider, tasks, verificationReportage, parameters.jdkDescriptor)
     val pluginToDeprecatedUsages = results.associateBy({ it.plugin }, { it.verdict.toDeprecatedUsages() })
-    return DeprecatedUsagesResult(parameters.ideDescriptor.ideVersion, pluginToDeprecatedUsages)
+    val deprecatedIdeApiElements = IdeClassesVisitor().detectIdeDeprecatedApiElements(parameters.ideDescriptor)
+    return DeprecatedUsagesResult(parameters.ideDescriptor.ideVersion, pluginToDeprecatedUsages, deprecatedIdeApiElements)
   }
 
   private fun Verdict.toDeprecatedUsages(): Set<DeprecatedApiUsage> = when (this) {
