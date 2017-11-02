@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.misc
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import org.apache.commons.io.FileUtils
+import org.atteo.evo.inflector.English
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.File
@@ -119,14 +120,7 @@ fun String.pluralizeWithNumber(times: Int): String = "$times " + this.pluralize(
 
 fun String.pluralize(times: Int): String {
   if (times < 0) throw IllegalArgumentException("Negative value")
-  if (times <= 1) {
-    return this
-  } else {
-    if (this.endsWith("y")) {
-      return this.dropLast(1) + "ies"
-    }
-    return this + "s"
-  }
+  return English.plural(this, times)
 }
 
 fun <T> List<T>.listEndsWith(vararg ending: T): Boolean {
