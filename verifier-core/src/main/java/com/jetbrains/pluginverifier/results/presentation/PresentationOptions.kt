@@ -20,6 +20,10 @@ enum class MethodParameterTypeOption {
   SIMPLE_PARAM_CLASS_NAME, FULL_PARAM_CLASS_NAME
 }
 
+enum class MethodParameterNameOption {
+  NO_PARAMETER_NAMES, WITH_PARAM_NAMES_IF_AVAILABLE
+}
+
 enum class MethodReturnTypeOption {
   SIMPLE_RETURN_TYPE_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME
 }

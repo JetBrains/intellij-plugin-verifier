@@ -57,14 +57,15 @@ private fun ClassLocation.formatHostClass(hostClassOption: HostClassOption): Str
 
 fun MethodLocation.formatMethodLocation(hostClassOption: HostClassOption,
                                         methodParameterTypeOption: MethodParameterTypeOption,
-                                        methodReturnTypeOption: MethodReturnTypeOption): String = buildString {
+                                        methodReturnTypeOption: MethodReturnTypeOption,
+                                        methodParameterNameOption: MethodParameterNameOption): String = buildString {
   val formattedHost = hostClass.formatHostClass(hostClassOption)
   if (formattedHost.isNotEmpty()) {
     append(formattedHost + ".")
   }
   append("$methodName(")
-  val (params, returnType) = methodParametersWithNamesAndReturnType(methodParameterTypeOption, methodReturnTypeOption)
-  append(params.joinToString())
+  val (paramAndNames, returnType) = methodParametersWithNamesAndReturnType(methodParameterTypeOption, methodReturnTypeOption, methodParameterNameOption)
+  append(paramAndNames.joinToString())
   append(") : $returnType")
 }
 
@@ -80,17 +81,16 @@ fun FieldLocation.formatFieldLocation(hostClassOption: HostClassOption, fieldTyp
   }
 }
 
-private fun MethodLocation.zipWithNames(parametersTypes: List<String>): List<String> {
-  val names: List<String> = if (parameterNames.size == parametersTypes.size) {
-    parameterNames
-  } else {
-    (0 until parametersTypes.size).map { "arg$it" }
-  }
-  return parametersTypes.zip(names).map { "${it.first} ${it.second}" }
-}
+private fun MethodLocation.zipWithNamesIfPossible(parametersTypes: List<String>): List<String> =
+    if (parameterNames.size == parametersTypes.size) {
+      parametersTypes.zip(parameterNames).map { "${it.first} ${it.second}" }
+    } else {
+      parametersTypes
+    }
 
 private fun MethodLocation.methodParametersWithNamesAndReturnType(methodParameterTypeOption: MethodParameterTypeOption,
-                                                                  methodReturnTypeOption: MethodReturnTypeOption): Pair<List<String>, String> {
+                                                                  methodReturnTypeOption: MethodReturnTypeOption,
+                                                                  methodParameterNameOption: MethodParameterNameOption): Pair<List<String>, String> {
   val paramsConverter = when (methodParameterTypeOption) {
     MethodParameterTypeOption.SIMPLE_PARAM_CLASS_NAME -> toSimpleJavaClassName
     MethodParameterTypeOption.FULL_PARAM_CLASS_NAME -> toFullJavaClassName
@@ -105,6 +105,8 @@ private fun MethodLocation.methodParametersWithNamesAndReturnType(methodParamete
     val (paramsTs, returnT) = splitMethodDescriptorOnRawParametersAndReturnTypes(methodDescriptor)
     (paramsTs.map { convertJvmDescriptorToNormalPresentation(it, paramsConverter) }) to (convertJvmDescriptorToNormalPresentation(returnT, returnConverter))
   }
-  val withNames = zipWithNames(parametersTypes)
-  return withNames to returnType
+  return when (methodParameterNameOption) {
+    MethodParameterNameOption.NO_PARAMETER_NAMES -> parametersTypes to returnType
+    MethodParameterNameOption.WITH_PARAM_NAMES_IF_AVAILABLE -> zipWithNamesIfPossible(parametersTypes) to returnType
+  }
 }
