@@ -17,11 +17,11 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
 
   override fun execute(verificationReportage: VerificationReportage): DeprecatedUsagesResult {
     val verifierParams = VerifierParameters(
-        emptyList(),
-        emptyList(),
-        EmptyResolver,
-        parameters.dependencyFinder,
-        true
+        externalClassesPrefixes = emptyList(),
+        problemFilters = emptyList(),
+        externalClassPath = EmptyResolver,
+        dependencyFinder = parameters.dependencyFinder,
+        findDeprecatedApiUsages = true
     )
     val tasks = parameters.pluginsToCheck.map { it to parameters.ideDescriptor }
     val results = Verification.run(verifierParams, pluginDetailsProvider, tasks, verificationReportage, parameters.jdkDescriptor)
