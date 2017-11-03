@@ -118,9 +118,17 @@ fun File.deleteLogged(): Boolean = try {
 
 fun String.pluralizeWithNumber(times: Int): String = "$times " + this.pluralize(times)
 
+private val knownPluralForms = mapOf(
+    "this" to "these",
+    "is" to "are"
+)
+
 fun String.pluralize(times: Int): String {
   if (times < 0) throw IllegalArgumentException("Negative value")
-  return English.plural(this, times)
+  if (times == 1) {
+    return this
+  }
+  return knownPluralForms[this] ?: English.plural(this, times)
 }
 
 fun <T> List<T>.listEndsWith(vararg ending: T): Boolean {
