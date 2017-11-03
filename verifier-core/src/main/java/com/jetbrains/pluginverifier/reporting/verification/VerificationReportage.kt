@@ -15,4 +15,6 @@ interface VerificationReportage : Closeable {
 
   fun logPluginVerificationFinished(pluginVerificationReportage: PluginVerificationReportage)
 
+  fun logVerificationStage(stageMessage: String)
+
 }

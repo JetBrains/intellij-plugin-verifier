@@ -18,6 +18,10 @@ class VerificationReportageImpl(private val reporterSetProvider: VerificationRep
     reporterSetProvider.globalMessageReporters.forEach { it.report(message) }
   }
 
+  override fun logVerificationStage(stageMessage: String) {
+    reportMessage(stageMessage)
+  }
+
   @Synchronized
   override fun logPluginVerificationFinished(pluginVerificationReportage: PluginVerificationReportage) {
     ++verifiedPlugins
