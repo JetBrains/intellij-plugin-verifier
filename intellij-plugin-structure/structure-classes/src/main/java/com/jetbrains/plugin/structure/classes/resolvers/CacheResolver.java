@@ -1,15 +1,17 @@
 package com.jetbrains.plugin.structure.classes.resolvers;
 
-import com.jetbrains.plugin.structure.classes.utils.LRUCache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Sergey Patrikeev
@@ -17,7 +19,14 @@ import java.util.Set;
 public class CacheResolver extends Resolver {
 
   private final Resolver myDelegate;
-  private final LRUCache<String, SoftReference<ClassNode>> myCache;
+  /**
+   * An exception indicating that a class file is not found in the @myDelegate resolver.
+   * It lacks the stack trace which gives us less overhead.
+   * It is necessary because the guava caches require to throw an exception if a key isn't found.
+   */
+  private final static Exception CLASS_NOT_FOUND_IN_CACHE_EXCEPTION = new Exception("Not found", null, false, false) {
+  };
+  private final LoadingCache<String, ClassNode> myCache;
 
   public CacheResolver(@NotNull Resolver delegate) {
     this(delegate, 1000);
@@ -25,19 +34,32 @@ public class CacheResolver extends Resolver {
 
   public CacheResolver(@NotNull Resolver delegate, int cacheSize) {
     myDelegate = delegate;
-    myCache = new LRUCache<String, SoftReference<ClassNode>>(cacheSize);
+    myCache = CacheBuilder.newBuilder()
+        .maximumSize(cacheSize)
+        .build(new CacheLoader<String, ClassNode>() {
+          @Override
+          public ClassNode load(String key) throws Exception {
+            ClassNode classNode = myDelegate.findClass(key);
+            if (classNode == null) {
+              throw CLASS_NOT_FOUND_IN_CACHE_EXCEPTION;
+            }
+            return classNode;
+          }
+        });
   }
 
   @Override
   @Nullable
   public ClassNode findClass(@NotNull String className) throws IOException {
-    SoftReference<ClassNode> reference = myCache.get(className);
-    ClassNode node = reference == null ? null : reference.get();
-    if (node == null) {
-      node = myDelegate.findClass(className);
-      myCache.put(className, new SoftReference<ClassNode>(node));
+    try {
+      return myCache.get(className);
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (CLASS_NOT_FOUND_IN_CACHE_EXCEPTION == cause) {
+        return null;
+      }
+      throw new IOException(e);
     }
-    return node;
   }
 
   @Override

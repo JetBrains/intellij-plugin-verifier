@@ -74,7 +74,7 @@ class JarFileResolver(jar: File) : Resolver() {
   override fun getFinalResolvers(): List<Resolver> = listOf(this as Resolver)
 
   override fun findClass(className: String): ClassNode? =
-      if (classes.contains(className)) evaluateNode(className) else null
+      if (className in classes) evaluateNode(className) else null
 
   private fun evaluateNode(className: String): ClassNode? {
     val entry = jarFile.getEntry(className + CLASS_SUFFIX) ?: return null
