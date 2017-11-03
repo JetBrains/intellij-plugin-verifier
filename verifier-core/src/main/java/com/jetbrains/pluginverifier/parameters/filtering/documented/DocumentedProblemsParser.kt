@@ -7,36 +7,50 @@ package com.jetbrains.pluginverifier.parameters.filtering.documented
  */
 class DocumentedProblemsParser {
 
-  private companion object {
-    const val DELIM = '|'
+  companion object {
+    private const val COLUMNS_DELIMITER = '|'
 
-    const val IDENTIFIER = "[\\w.()]+"
+    private val METHOD_PARAMS = "\\([^\\)]*\\)"
 
-    val pattern2Parser = mapOf<Regex, (List<String>) -> DocumentedProblem>(
+    private val IDENTIFIER = "[\\w.$]+"
+
+    //todo: don't ignore the method parameter types.
+    private val pattern2Parser = mapOf<Regex, (List<String>) -> DocumentedProblem>(
         Regex("($IDENTIFIER) class removed") to { s -> DocClassRemoved(s[0].toInternalName()) },
-        Regex("($IDENTIFIER)\\.($IDENTIFIER) method removed") to { s -> DocMethodRemoved(s[0].toInternalName(), s[1]) },
+        Regex("($IDENTIFIER)\\.($IDENTIFIER)($METHOD_PARAMS)? method removed") to { s -> DocMethodRemoved(s[0].toInternalName(), s[1]) },
+        Regex("($IDENTIFIER)\\.($IDENTIFIER)($METHOD_PARAMS)? method return type changed.*") to { s -> DocMethodReturnTypeChanged(s[0].toInternalName(), s[1]) },
+        Regex("($IDENTIFIER)\\.($IDENTIFIER)($METHOD_PARAMS)? method parameter type changed.*") to { s -> DocMethodParameterTypeChanged(s[0].toInternalName(), s[1]) },
+        Regex("($IDENTIFIER)\\.($IDENTIFIER)($METHOD_PARAMS)? method visibility changed.*") to { s -> DocMethodVisibilityChanged(s[0].toInternalName(), s[1]) },
         Regex("($IDENTIFIER)\\.($IDENTIFIER) field removed") to { s -> DocFieldRemoved(s[0].toInternalName(), s[1]) },
+        Regex("($IDENTIFIER)\\.($IDENTIFIER) field type changed.*") to { s -> DocFieldTypeChanged(s[0].toInternalName(), s[1]) },
+        Regex("($IDENTIFIER)\\.($IDENTIFIER) field visibility changed.*") to { s -> DocFieldVisibilityChanged(s[0].toInternalName(), s[1]) },
         Regex("($IDENTIFIER) package removed") to { s -> DocPackageRemoved(s[0].toInternalName()) },
         Regex("($IDENTIFIER)\\.($IDENTIFIER) abstract method added") to { s -> DocAbstractMethodAdded(s[0].toInternalName(), s[1]) },
         Regex("($IDENTIFIER) class moved to package ($IDENTIFIER)") to { s -> DocClassMovedToPackage(s[0].toInternalName(), s[1].toInternalName()) }
     )
 
     /**
-     * Gets rid of the markdown code quotes and links
+     * Gets rid of the markdown code quotes and links.
      */
-    fun unwrapMarkdownFeatures(markdownWord: String): String {
+    fun unwrapMarkdownTags(text: String): String {
       //Matches Markdown links: [some-text](http://example.com)
-      if (markdownWord.matches(Regex("\\[.*]\\(.*\\)"))) {
-        return unwrapMarkdownFeatures(markdownWord.substringAfter("[").substringBefore("]"))
+
+      val markdownLinksRegex = Regex("\\[(.*)]\\(.*\\)")
+      var result = text
+      while (markdownLinksRegex in result) {
+        result = result.replace(markdownLinksRegex, "$1")
       }
+
       //Matches Markdown code: `val x = 5`
-      if (markdownWord.startsWith('`') && markdownWord.endsWith('`')) {
-        return markdownWord.substring(1, markdownWord.length - 1)
+      val codeQuotesRegex = Regex("`(.*)`")
+      while (codeQuotesRegex in result) {
+        result = result.replace(codeQuotesRegex, "$1")
       }
-      return markdownWord
+
+      return result
     }
 
-    fun String.toInternalName(): String = replace('.', '/')
+    private fun String.toInternalName(): String = replace('.', '/')
   }
 
   fun parse(pageBody: String): List<DocumentedProblem> = pageBody.lineSequence()
@@ -45,11 +59,11 @@ class DocumentedProblemsParser {
        * Matches column definition lines like
        * | a | b |
        */
-      .filter { it.startsWith(DELIM) && it.endsWith(DELIM) && it.count { it == DELIM } == 3 }
+      .filter { it.startsWith(COLUMNS_DELIMITER) && it.endsWith(COLUMNS_DELIMITER) && it.count { it == COLUMNS_DELIMITER } == 3 }
       /**
        * Extracts content of the first column
        */
-      .map { it.substring(1, it.length - 1).split(DELIM) }
+      .map { it.substring(1, it.length - 1).split(COLUMNS_DELIMITER) }
       .filter { it.size == 2 && it[0].isNotBlank() }
       .map { it[0].trim() }
       /**
@@ -59,7 +73,7 @@ class DocumentedProblemsParser {
       .toList()
 
   private fun parseDescription(text: String): DocumentedProblem? {
-    val unwrappedMarkdown = text.split(' ').joinToString(" ") { unwrapMarkdownFeatures(it) }
+    val unwrappedMarkdown = unwrapMarkdownTags(text)
     for ((pattern, parser) in pattern2Parser) {
       val matchResult = pattern.matchEntire(unwrappedMarkdown)
       if (matchResult != null) {
