@@ -7,7 +7,6 @@ import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
 import java.util.concurrent.Callable
 import java.util.concurrent.ForkJoinPool
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Collectors
 
 class IdeClassesVisitor {
@@ -23,18 +22,15 @@ class IdeClassesVisitor {
     }).get()
   }
 
-  private val c = AtomicInteger()
-
   @Suppress("UNCHECKED_CAST")
   private fun Resolver.findDeprecatedApiOfClass(className: String): Set<Location> {
-    val get = c.incrementAndGet()
-    if (get % 10 == 0) {
-      println("Finished $get")
-    }
-
     val deprecatedElements = hashSetOf<Location>()
 
-    val classNode = findClass(className)
+    val classNode = try {
+      findClass(className)
+    } catch (e: Exception) {
+      null
+    }
     if (classNode != null) {
       val methods = classNode.methods as List<MethodNode>
       val fields = classNode.fields as List<FieldNode>
