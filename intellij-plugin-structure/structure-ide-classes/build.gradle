@@ -15,7 +15,6 @@ jpsJarsTree.include 'jps-model.jar', 'util.jar', 'log4j.jar', 'trove4j.jar', 'jd
 dependencies {
   compile project(':structure-ide')
   compile project(':structure-classes')
-  compile group: 'org.ow2.asm', name: 'asm-all', version: '5.2'
   jpsDependency group: 'com.jetbrains.intellij.idea', name: 'jps-standalone', version: jpsVersion, ext: 'zip'
   compile jpsJarsTree
 }
