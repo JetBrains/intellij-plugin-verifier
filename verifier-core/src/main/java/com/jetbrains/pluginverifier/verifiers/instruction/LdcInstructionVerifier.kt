@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.checkClassExistsOrExternal
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescr
 import com.jetbrains.pluginverifier.verifiers.fromMethod
+import com.jetbrains.pluginverifier.verifiers.resolveClassOrProblem
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
@@ -16,9 +16,12 @@ class LdcInstructionVerifier : InstructionVerifier {
 
     val constant = instr.cst as? Type ?: return
 
-    val descriptor = constant.descriptor
-    val className = descriptor.extractClassNameFromDescr() ?: return
+    val className = constant.descriptor.extractClassNameFromDescr() ?: return
 
-    ctx.checkClassExistsOrExternal(className, clazz, { ctx.fromMethod(clazz, method) })
+    //Otherwise, if the run-time constant pool entry is a symbolic reference to a class (§5.1),
+    // then the named class is resolved (§5.4.3.1)
+    //During resolution of a symbolic reference to a class, any of the exceptions pertaining
+    // to class resolution (§5.4.3.1) can be thrown.
+    ctx.resolveClassOrProblem(className, clazz, { ctx.fromMethod(clazz, method) })
   }
 }

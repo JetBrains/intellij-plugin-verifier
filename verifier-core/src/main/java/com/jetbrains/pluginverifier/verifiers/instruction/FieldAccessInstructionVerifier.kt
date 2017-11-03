@@ -174,7 +174,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
       //check that the array type exists
       val arrayType = fieldOwner.extractClassNameFromDescr()
       if (arrayType != null) {
-        ctx.checkClassExistsOrExternal(arrayType, verifiableClass, { getFromMethod() })
+        ctx.resolveClassOrProblem(arrayType, verifiableClass, { getFromMethod() })
       }
       return null
     }

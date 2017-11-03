@@ -82,8 +82,12 @@ fun VerificationContext.resolveClassOrProblem(className: String,
   }
 }
 
-fun VerificationContext.checkClassExistsOrExternal(className: String, lookup: ClassNode, registerMissing: () -> Location) {
-  resolveClassOrProblem(className, lookup, registerMissing)
+//todo: check the cases when the accessibility must be checked.
+fun VerificationContext.checkClassExistsOrExternal(className: String, lookup: ClassNode, lookupLocation: () -> Location) {
+  val resolution = resolveClass(className, lookup)
+  if (resolution is ClsResolution.NotFound) {
+    registerProblem(ClassNotFoundProblem(ClassReference(className), lookupLocation()))
+  }
 }
 
 @Suppress("UNCHECKED_CAST")
