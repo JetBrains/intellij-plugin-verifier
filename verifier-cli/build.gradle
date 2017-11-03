@@ -3,8 +3,12 @@ dependencies {
   compile project(':verifier-core')
 }
 
+apply plugin: 'com.github.johnrengelman.shadow'
+
 shadowJar {
   manifest {
     attributes 'Main-Class': 'com.jetbrains.pluginverifier.PluginVerifierMain'
   }
 }
+
+jar.finalizedBy(shadowJar)

@@ -18,7 +18,6 @@ def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.
 configure(allprojects) {
   apply plugin: 'java'
   apply plugin: 'kotlin'
-  apply plugin: 'com.github.johnrengelman.shadow'
 
   group = 'org.jetbrains.intellij.plugins'
 
@@ -68,17 +67,6 @@ configure(childProjects.values()) {
     }
   }
 
-  shadowJar {
-    String internalPrefix = 'org.jetbrains.pluginverifier.internal.'
-
-    relocate('org.objectweb.asm', internalPrefix + 'asm') {}
-    relocate('org.apache.commons', internalPrefix + 'apachecommons') {}
-    relocate('org.jdom', internalPrefix + 'jdom') {}
-    relocate('org.intellij.lang.annotations', internalPrefix + 'intellijannotations') {}
-    relocate('org.jetbrains.annotations', internalPrefix + 'jetbrainsannotation') {}
-  }
-
-  jar.finalizedBy(shadowJar)
 }
 
 apply plugin: 'com.jfrog.bintray'
@@ -99,7 +87,9 @@ publishing {
       pub.from proj.components.java
       proj.artifacts
       pub.artifact proj.sourcesJar
-      pub.artifact proj.shadowJar
+      if (proj.hasProperty("shadowJar")) {
+        pub.artifact proj.shadowJar
+      }
     }
 
     VerifierCliPublication(MavenPublication) { configurePublication(it, ':verifier-cli') }

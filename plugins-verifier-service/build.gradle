@@ -10,7 +10,6 @@ buildscript {
   }
   dependencies {
     classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
-    classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   }
 }
