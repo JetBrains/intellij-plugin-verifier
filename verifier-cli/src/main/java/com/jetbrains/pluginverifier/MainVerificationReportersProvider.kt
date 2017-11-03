@@ -152,7 +152,7 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
     buildString {
       append("Plugin $pluginCoordinate and #$ideVersion verification: ")
       if (progress == 1.0) {
-        append("finished")
+        append("100% finished")
       } else {
         append("%.2f".format(progress * 100) + " % completed")
       }
