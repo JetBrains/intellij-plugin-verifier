@@ -18,6 +18,6 @@ interface PluginRepository {
 
   fun getIdOfPluginDeclaringModule(moduleId: String): String?
 
-  fun getPluginOverviewUrl(update: UpdateInfo): String?
+  fun getPluginOverviewUrl(pluginInfo: PluginInfo): String?
 
 }

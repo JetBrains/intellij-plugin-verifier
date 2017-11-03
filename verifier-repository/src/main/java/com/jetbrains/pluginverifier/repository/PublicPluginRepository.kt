@@ -30,7 +30,11 @@ class PublicPluginRepository(private val repositoryUrl: String,
     repositoryApi.downloadFile(it.updateId).executeSuccessfully()
   })
 
-  override fun getPluginOverviewUrl(update: UpdateInfo): String? = repositoryUrl + "/plugin/index?xmlId=" + update.pluginId
+  override fun getPluginOverviewUrl(pluginInfo: PluginInfo): String? = if (pluginInfo is UpdateInfo) {
+    repositoryUrl + "/plugin/index?xmlId=" + pluginInfo.pluginId
+  } else {
+    null
+  }
 
   override fun getUpdateInfoById(updateId: Int): UpdateInfo? {
     val call = repositoryApi.getUpdateInfoById(updateId)

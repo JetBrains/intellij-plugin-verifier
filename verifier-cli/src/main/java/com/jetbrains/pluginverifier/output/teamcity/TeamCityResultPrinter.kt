@@ -187,7 +187,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     val problems = verdict.problems
     val missingDependencies = verdict.directMissingDependencies
     if (problems.isNotEmpty() || missingDependencies.any { !it.dependency.isOptional }) {
-      val pluginLink = getPluginLink(plugin)
+      val pluginLink = repository.getPluginOverviewUrl(plugin)
       val overview = buildString {
         append("Plugin URL: $pluginLink").append("\n")
         if (problems.isNotEmpty()) {
@@ -216,7 +216,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
   private fun printProblems(plugin: PluginInfo,
                             testName: String,
                             problems: Set<Problem>) {
-    val pluginLink = getPluginLink(plugin)
+    val pluginLink = repository.getPluginOverviewUrl(plugin)
     val overview = "Plugin URL: $pluginLink\n$plugin has ${problems.size} ${"problem".pluralize(problems.size)}\n"
     val problemsContent = getProblemsContent(problems)
     tcLog.testStdErr(testName, problemsContent)
@@ -308,7 +308,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
             tcLog.testSuiteStarted(problem.shortDescription).use {
               val testName = "($plugin)"
               tcLog.testStarted(testName).use {
-                val pluginUrl = getPluginLink(plugin)
+                val pluginUrl = repository.getPluginOverviewUrl(plugin)
                 tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: $plugin", problem.fullDescription)
               }
             }
@@ -319,8 +319,6 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
 
     printMissingDependenciesAsTests(results)
   }
-
-  private fun getPluginLink(pluginInfo: PluginInfo): String? = (pluginInfo as? UpdateInfo)?.let { repository.getPluginOverviewUrl(it) }
 
   private fun printMissingDependenciesAsTests(results: List<Result>) {
     val missingToRequired = collectMissingDependenciesForRequiringPlugins(results)
