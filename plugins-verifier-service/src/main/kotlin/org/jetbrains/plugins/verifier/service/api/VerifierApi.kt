@@ -55,7 +55,6 @@ private data class ApiVerificationResult(@SerializedName("ideVersion") val ideVe
 
 private data class ApiVerificationVerdict(@SerializedName("verdictType") val verdictType: VerdictType,
                                           @SerializedName("dependenciesGraph") val dependenciesGraph: ApiDependenciesGraph,
-                                          @SerializedName("missingDependencies") val missingDependencies: List<ApiDependenciesGraph.MissingDependency> = emptyList(),
                                           @SerializedName("warnings") val warnings: List<ApiWarning> = emptyList(),
                                           @SerializedName("problems") val problems: List<ApiProblem> = emptyList()) {
   enum class VerdictType {
@@ -125,14 +124,12 @@ private fun convertVerdict(verdict: Verdict): ApiVerificationVerdict {
   val convertedGraph = convertDependencyGraph(dependenciesGraph)
   return when (verdict) {
     is Verdict.OK -> ApiVerificationVerdict(OK, convertedGraph)
-    is Verdict.Warnings -> ApiVerificationVerdict(WARNINGS, convertedGraph, warnings = convertWarnings(verdict.warnings))
-    is Verdict.MissingDependencies -> ApiVerificationVerdict(MISSING_DEPENDENCIES, convertedGraph, convertMissingDependencies(verdict), convertWarnings(verdict.warnings), convertProblems(verdict.problems))
-    is Verdict.Problems -> ApiVerificationVerdict(PROBLEMS, convertedGraph, emptyList(), convertWarnings(verdict.warnings), convertProblems(verdict.problems))
+    is Verdict.Warnings -> ApiVerificationVerdict(WARNINGS, convertedGraph)
+    is Verdict.MissingDependencies -> ApiVerificationVerdict(MISSING_DEPENDENCIES, convertedGraph, convertWarnings(verdict.warnings), convertProblems(verdict.problems))
+    is Verdict.Problems -> ApiVerificationVerdict(PROBLEMS, convertedGraph, convertWarnings(verdict.warnings), convertProblems(verdict.problems))
     is Verdict.Bad, is Verdict.NotFound, is Verdict.FailedToDownload -> throw RuntimeException()
   }
 }
-
-private fun convertMissingDependencies(verdict: Verdict.MissingDependencies) = verdict.directMissingDependencies.map { convertMissingDependency(it) }
 
 private fun convertProblems(problems: Set<Problem>): List<ApiProblem> = problems.map { ApiProblem(it.fullDescription) }
 
