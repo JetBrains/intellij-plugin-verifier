@@ -6,7 +6,7 @@ configurations {
   jpsDependency
 }
 
-ext.jpsVersion = '172.3968.16'
+ext.jpsVersion = '173.3531.6'
 ext.jpsPath = file("$buildDir/download/jps-standalone")
 
 FileTree jpsJarsTree = fileTree(dir: "$jpsPath")
