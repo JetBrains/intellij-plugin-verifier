@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package org.jetbrains.plugins.verifier.service.api;
+
+import "org/jetbrains/plugins/verifier/service/api/dependencies-graphs.proto";
+
+option java_generate_equals_and_hash = true;
+
+message Warning {
+    string message = 1;
+}
+
+message Problem {
+    string message = 1;
+}
+
+message InvalidPluginProblem {
+    string message = 1;
+    Level level = 2;
+
+    enum Level {
+        ERROR = 0;
+        WARNING = 1;
+    }
+}
+
+message VerificationResult {
+
+    string ide_version = 1;
+
+    DependenciesGraph dependencies_graph = 2;
+
+    repeated Warning warnings = 3;
+
+    repeated Problem problems = 4;
+
+    enum VerdictType {
+        OK = 0;
+        WARNINGS = 1;
+        MISSING_DEPENDENCIES = 2;
+        PROBLEMS = 3;
+    }
+
+}

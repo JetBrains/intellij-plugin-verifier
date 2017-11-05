@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.ResponseBody
+import org.jetbrains.plugins.verifier.service.api.UpdateRangeCompatibilityResults
 import org.jetbrains.plugins.verifier.service.api.prepareVerificationResponse
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.params.JdkVersion
@@ -15,7 +16,7 @@ import org.jetbrains.plugins.verifier.service.service.ServerInstance
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskStatus
 import org.jetbrains.plugins.verifier.service.util.UpdateInfoCache
-import org.jetbrains.plugins.verifier.service.util.createJsonRequestBody
+import org.jetbrains.plugins.verifier.service.util.createByteArrayRequestBody
 import org.jetbrains.plugins.verifier.service.util.createStringRequestBody
 import retrofit2.Call
 import retrofit2.Retrofit
@@ -127,7 +128,7 @@ class VerifierService : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES) {
   private fun getUpdatesToCheck(availableIde: IdeVersion, userName: String, password: String) =
       getVerifierConnector().getUpdatesToCheck(createStringRequestBody(availableIde.asString()), createStringRequestBody(userName), createStringRequestBody(password))
 
-  private fun sendUpdateCheckResult(checkResult: String, userName: String, password: String): Call<ResponseBody> =
-      getVerifierConnector().sendUpdateCheckResult(createJsonRequestBody(checkResult), createStringRequestBody(userName), createStringRequestBody(password))
+  private fun sendUpdateCheckResult(checkResult: UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult, userName: String, password: String): Call<ResponseBody> =
+      getVerifierConnector().sendUpdateCheckResult(createByteArrayRequestBody(checkResult.toByteArray()), createStringRequestBody(userName), createStringRequestBody(password))
 
 }

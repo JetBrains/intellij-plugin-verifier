@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package org.jetbrains.plugins.verifier.service.api;
+
+import "org/jetbrains/plugins/verifier/service/api/verification-results.proto";
+
+option java_generate_equals_and_hash = true;
+
+message UpdateRangeCompatibilityResult {
+
+    enum ResultType {
+        NON_DOWNLOADABLE = 0;
+        NO_COMPATIBLE_IDES = 1;
+        INVALID_PLUGIN = 2;
+        VERIFICATION_DONE = 3;
+    }
+
+    int32 update_id = 1;
+    ResultType result_type = 2;
+    repeated VerificationResult ide_verification_results = 3;
+    repeated InvalidPluginProblem invalid_plugin_problems = 4;
+    string non_downloadable_reason = 5;
+}
