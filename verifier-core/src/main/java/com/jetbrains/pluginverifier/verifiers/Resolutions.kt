@@ -47,19 +47,12 @@ fun VerificationContext.resolveClassOrProblem(className: String,
   return with(resolution) {
     when (this) {
       is ClsResolution.Found -> {
-        var evaluatedLocation: Location? = null
         if (!isClassAccessibleToOtherClass(node, lookup)) {
-          if (evaluatedLocation == null) {
-            evaluatedLocation = lookupLocation()
-          }
-          registerProblem(IllegalClassAccessProblem(fromClass(node), node.access.getAccessType(), evaluatedLocation))
+          registerProblem(IllegalClassAccessProblem(fromClass(node), node.access.getAccessType(), lookupLocation()))
           return null
         }
         if (node.isDeprecated()) {
-          if (evaluatedLocation == null) {
-            evaluatedLocation = lookupLocation()
-          }
-          registerDeprecatedUsage(DeprecatedClassUsage(fromClass(node), evaluatedLocation))
+          registerDeprecatedUsage(DeprecatedClassUsage(fromClass(node), lookupLocation()))
         }
         node
       }
