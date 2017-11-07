@@ -53,6 +53,7 @@ fun VerificationContext.resolveClassOrProblem(className: String,
             evaluatedLocation = lookupLocation()
           }
           registerProblem(IllegalClassAccessProblem(fromClass(node), node.access.getAccessType(), evaluatedLocation))
+          return null
         }
         if (node.isDeprecated()) {
           if (evaluatedLocation == null) {

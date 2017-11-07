@@ -10,9 +10,11 @@ import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
 
 object EmptyPluginVerificationReportage : PluginVerificationReportage {
-  override val plugin: PluginCoordinate = impossible()
+  override val plugin: PluginCoordinate
+    get() = impossible()
 
-  override val ideVersion: IdeVersion = impossible()
+  override val ideVersion: IdeVersion
+    get() = impossible()
 
   override fun logVerificationStarted() = Unit
 
