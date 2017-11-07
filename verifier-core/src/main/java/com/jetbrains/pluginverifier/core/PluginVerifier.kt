@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.graph.DepEdge
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
@@ -94,17 +95,18 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
   private fun calculateVerdict(plugin: IdePlugin,
                                pluginWarnings: List<PluginProblem>?,
                                pluginClassesLocations: IdePluginClassesLocations?): Verdict {
-    val resultHolder = VerificationResultHolder(plugin, ideDescriptor.ideVersion, verifierParameters.problemFilters, pluginVerificationReportage)
+    val resultHolder = VerificationResultHolder(pluginVerificationReportage)
     if (pluginWarnings != null) {
       resultHolder.addPluginWarnings(pluginWarnings)
     }
-    runVerification(plugin, pluginClassesLocations, resultHolder)
+    runVerification(plugin, pluginClassesLocations, resultHolder, ideDescriptor.ideVersion)
     return resultHolder.toVerdict()
   }
 
   private fun runVerification(plugin: IdePlugin,
                               pluginClassesLocations: IdePluginClassesLocations?,
-                              resultHolder: VerificationResultHolder) {
+                              resultHolder: VerificationResultHolder,
+                              ideVersion: IdeVersion) {
     val depGraph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
     try {
       val start = DepVertex(plugin.pluginId!!, PluginDetails.FoundOpenPluginWithoutClasses(plugin))
@@ -120,7 +122,16 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
         val classLoader = createClassLoader(pluginResolver, dependenciesResolver)
         val checkClasses = getClassesForCheck(pluginClassesLocations)
 
-        val verificationContext = VerificationContext(classLoader, ideDescriptor.ideResolver, resultHolder, verifierParameters.externalClassesPrefixes, verifierParameters.findDeprecatedApiUsages)
+        val verificationContext = VerificationContext(
+            plugin,
+            ideVersion,
+            classLoader,
+            ideDescriptor.ideResolver,
+            resultHolder,
+            verifierParameters.externalClassesPrefixes,
+            verifierParameters.findDeprecatedApiUsages,
+            verifierParameters.problemFilters
+        )
         val progressIndicator = object : Reporter<Double> {
           override fun close() = Unit
 

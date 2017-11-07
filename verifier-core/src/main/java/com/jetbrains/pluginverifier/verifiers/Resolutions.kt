@@ -99,6 +99,13 @@ private fun VerificationContext.resolveAllDirectParents(classNode: ClassNode): L
 fun VerificationContext.isSubclassOf(child: ClassNode, possibleParent: ClassNode): Boolean =
     isSubclassOf(child, possibleParent.name)
 
+fun VerificationContext.isSubclassOrSelf(childClassName: String, possibleParentName: String): Boolean {
+  if (childClassName == possibleParentName) {
+    return true
+  }
+  return isSubclassOf(childClassName, possibleParentName)
+}
+
 fun VerificationContext.isSubclassOf(childClassName: String, possibleParentName: String): Boolean {
   val childClass = (resolveClass(childClassName) as? ClsResolution.Found)?.node ?: return false
   return isSubclassOf(childClass, possibleParentName)
