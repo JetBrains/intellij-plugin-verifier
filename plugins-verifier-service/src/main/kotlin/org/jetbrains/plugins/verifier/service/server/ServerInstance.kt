@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.service
+package org.jetbrains.plugins.verifier.service.server
 
 import com.google.gson.Gson
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
+import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.storage.FileManager
@@ -35,7 +36,7 @@ object ServerInstance : Closeable {
   private val downloadDirMaxSpaceMb: Long by lazy {
     val diskSpace = Settings.MAX_DISK_SPACE_MB.getAsInt()
     if (diskSpace < MIN_DISK_SPACE_MB) {
-      throw IllegalStateException("Too few available disk space: required at least $MIN_DISK_SPACE_MB Mb")
+      throw IllegalStateException("Too few available disk space: required at least ${MIN_DISK_SPACE_MB} Mb")
     } else {
       (diskSpace * DOWNLOAD_DIR_PROPORTION).toLong()
     }

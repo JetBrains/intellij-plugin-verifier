@@ -1,11 +1,10 @@
-package org.jetbrains.plugins.verifier.service.api
+package org.jetbrains.plugins.verifier.service.service.features
 
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.intellij.feature.extractor.ExtensionPoint
 import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import org.jetbrains.plugins.verifier.service.service.ServerInstance
-import org.jetbrains.plugins.verifier.service.service.featureExtractor.FeaturesResult
+import org.jetbrains.plugins.verifier.service.server.ServerInstance
 
 fun prepareFeaturesResponse(updateInfo: UpdateInfo,
                             resultType: FeaturesResult.ResultType,

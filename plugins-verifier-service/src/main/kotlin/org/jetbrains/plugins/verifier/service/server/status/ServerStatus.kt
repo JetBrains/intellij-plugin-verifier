@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.status
+package org.jetbrains.plugins.verifier.service.server.status
 
 import org.apache.commons.io.FileUtils
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskId

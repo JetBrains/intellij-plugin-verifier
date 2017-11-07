@@ -3,8 +3,8 @@ package org.jetbrains.plugins.verifier.service.service.ide
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.AvailableIde
 import com.jetbrains.pluginverifier.repository.IdeRepository
-import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.service.BaseService
+import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import java.util.concurrent.TimeUnit
 
 /**

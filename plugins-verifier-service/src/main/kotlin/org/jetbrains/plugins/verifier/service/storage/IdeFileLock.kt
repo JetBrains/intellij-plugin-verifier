@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.ide
+package org.jetbrains.plugins.verifier.service.storage
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.io.Closeable

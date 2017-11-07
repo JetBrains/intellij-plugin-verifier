@@ -1,13 +1,13 @@
-package org.jetbrains.plugins.verifier.service.servlets
+package org.jetbrains.plugins.verifier.service.server.servlets
 
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.bytesToGigabytes
 import com.jetbrains.pluginverifier.misc.bytesToMegabytes
-import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
+import org.jetbrains.plugins.verifier.service.server.ServerInstance
+import org.jetbrains.plugins.verifier.service.server.status.ServerStatus
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.service.ServerInstance
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.status.ServerStatus
+import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
 import java.text.SimpleDateFormat

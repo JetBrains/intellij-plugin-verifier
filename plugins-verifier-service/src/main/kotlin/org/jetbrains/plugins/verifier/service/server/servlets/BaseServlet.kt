@@ -1,9 +1,9 @@
-package org.jetbrains.plugins.verifier.service.servlets
+package org.jetbrains.plugins.verifier.service.server.servlets
 
 import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.typeToken
 import com.google.gson.Gson
-import org.jetbrains.plugins.verifier.service.service.ServerInstance
+import org.jetbrains.plugins.verifier.service.server.ServerInstance
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -55,7 +55,7 @@ abstract class BaseServlet : HttpServlet() {
       val parameter = req.getParameter(parameterName) ?: return null
       try {
         return GSON.fromJson<T>(parameter)
-      } catch(e: Exception) {
+      } catch (e: Exception) {
         LOG.error("Unable to deserialize parameter $parameterName: $parameter", e)
         return null
       }

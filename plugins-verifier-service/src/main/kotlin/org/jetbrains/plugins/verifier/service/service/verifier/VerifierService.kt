@@ -8,16 +8,15 @@ import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.api.UpdateRangeCompatibilityResults
-import org.jetbrains.plugins.verifier.service.api.prepareVerificationResponse
-import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
-import org.jetbrains.plugins.verifier.service.params.JdkVersion
+import org.jetbrains.plugins.verifier.service.server.ServerInstance
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.service.ServerInstance
+import org.jetbrains.plugins.verifier.service.service.networking.createByteArrayRequestBody
+import org.jetbrains.plugins.verifier.service.service.networking.createStringRequestBody
+import org.jetbrains.plugins.verifier.service.service.repository.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.util.UpdateInfoCache
-import org.jetbrains.plugins.verifier.service.util.createByteArrayRequestBody
-import org.jetbrains.plugins.verifier.service.util.createStringRequestBody
+import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
+import org.jetbrains.plugins.verifier.service.storage.JdkVersion
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -36,19 +35,19 @@ class VerifierService : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES) {
 
   private val updatesMissingCompatibleIde = ConcurrentSkipListSet<UpdateInfo>(Comparator { u1, u2 -> u1.updateId - u2.updateId })
 
-  private val repo2VerifierApi = hashMapOf<String, VerificationApi>()
+  private val repo2VerifierApi = hashMapOf<String, VerificationPluginRepositoryConnector>()
 
-  private fun getVerifierConnector(): VerificationApi {
+  private fun getVerifierConnector(): VerificationPluginRepositoryConnector {
     val repositoryUrl = Settings.VERIFIER_SERVICE_REPOSITORY_URL.get()
     return repo2VerifierApi.getOrPut(repositoryUrl, { createVerifier(repositoryUrl) })
   }
 
-  private fun createVerifier(repositoryUrl: String): VerificationApi = Retrofit.Builder()
+  private fun createVerifier(repositoryUrl: String): VerificationPluginRepositoryConnector = Retrofit.Builder()
       .baseUrl(repositoryUrl)
       .addConverterFactory(GsonConverterFactory.create(ServerInstance.GSON))
       .client(makeOkHttpClient(LOG.isDebugEnabled, 5, TimeUnit.MINUTES))
       .build()
-      .create(VerificationApi::class.java)
+      .create(VerificationPluginRepositoryConnector::class.java)
 
   override fun doServe() {
     val updateId2IdeVersions = LinkedHashMultimap.create<Int, IdeVersion>()

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.service.featureExtractor
+package org.jetbrains.plugins.verifier.service.service.features
 
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -7,11 +7,11 @@ import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import org.jetbrains.plugins.verifier.service.ide.IdeFileLock
-import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
-import org.jetbrains.plugins.verifier.service.service.ServerInstance
+import org.jetbrains.plugins.verifier.service.server.ServerInstance
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTask
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskProgress
+import org.jetbrains.plugins.verifier.service.storage.IdeFileLock
+import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 
 class ExtractFeaturesServiceTask(val pluginCoordinate: PluginCoordinate,
                                  private val updateInfo: UpdateInfo) : ServiceTask() {

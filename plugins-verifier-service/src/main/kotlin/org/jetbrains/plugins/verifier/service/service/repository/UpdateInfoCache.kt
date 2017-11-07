@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.util
+package org.jetbrains.plugins.verifier.service.service.repository
 
 import com.google.gson.Gson
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient

@@ -2,7 +2,6 @@ package org.jetbrains.plugins.verifier.service.service.tasks
 
 import com.google.common.collect.EvictingQueue
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import org.jetbrains.plugins.verifier.service.progress.DefaultProgressService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.concurrent.CompletableFuture

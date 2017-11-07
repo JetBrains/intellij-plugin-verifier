@@ -1,11 +1,9 @@
-package org.jetbrains.plugins.verifier.service.ide
+package org.jetbrains.plugins.verifier.service.storage
 
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
-import org.jetbrains.plugins.verifier.service.storage.FileManager
-import org.jetbrains.plugins.verifier.service.storage.FileType
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -88,7 +86,7 @@ object IdeFilesManager {
     if (ideFile.isDirectory) {
       val version: IdeVersion = try {
         IdeManager.createManager().createIde(ideFile).version
-      } catch(e: Exception) {
+      } catch (e: Exception) {
         LOG.error("The IDE file $ideFile is invalid", e)
         throw e
       }
@@ -108,7 +106,7 @@ object IdeFilesManager {
 
         val version: IdeVersion = try {
           IdeManager.createManager().createIde(tempDirectory).version
-        } catch(e: Exception) {
+        } catch (e: Exception) {
           LOG.error("The IDE file $tempDirectory is not a valid IDE", e)
           throw e
         }
@@ -130,7 +128,7 @@ object IdeFilesManager {
     try {
       ideDir.copyRecursively(destination, true)
       LOG.info("IDE #$version is saved")
-    } catch(e: Exception) {
+    } catch (e: Exception) {
       destination.deleteLogged()
       throw e
     }

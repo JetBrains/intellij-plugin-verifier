@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.service.featureExtractor
+package org.jetbrains.plugins.verifier.service.service.features
 
 import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.pluginverifier.repository.UpdateInfo

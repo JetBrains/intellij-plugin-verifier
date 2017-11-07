@@ -1,17 +1,16 @@
-package org.jetbrains.plugins.verifier.service.service.featureExtractor
+package org.jetbrains.plugins.verifier.service.service.features
 
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import org.jetbrains.plugins.verifier.service.api.prepareFeaturesResponse
+import org.jetbrains.plugins.verifier.service.server.ServerInstance
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.service.ServerInstance
+import org.jetbrains.plugins.verifier.service.service.networking.createJsonRequestBody
+import org.jetbrains.plugins.verifier.service.service.networking.createStringRequestBody
+import org.jetbrains.plugins.verifier.service.service.repository.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.util.UpdateInfoCache
-import org.jetbrains.plugins.verifier.service.util.createJsonRequestBody
-import org.jetbrains.plugins.verifier.service.util.createStringRequestBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
@@ -27,19 +26,19 @@ class FeatureService : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES) {
 
   private val lastProceedDate: MutableMap<UpdateInfo, Long> = hashMapOf()
 
-  private val repo2FeatureExtractorApi = hashMapOf<String, FeaturesApi>()
+  private val repo2FeatureExtractorApi = hashMapOf<String, FeaturesPluginRepositoryConnector>()
 
-  private fun getFeaturesApiConnector(): FeaturesApi {
+  private fun getFeaturesApiConnector(): FeaturesPluginRepositoryConnector {
     val repositoryUrl = Settings.FEATURE_EXTRACTOR_REPOSITORY_URL.get()
     return repo2FeatureExtractorApi.getOrPut(repositoryUrl, { createFeatureExtractor(repositoryUrl) })
   }
 
-  private fun createFeatureExtractor(repositoryUrl: String): FeaturesApi = Retrofit.Builder()
+  private fun createFeatureExtractor(repositoryUrl: String): FeaturesPluginRepositoryConnector = Retrofit.Builder()
       .baseUrl(repositoryUrl)
       .addConverterFactory(GsonConverterFactory.create(ServerInstance.GSON))
       .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
-      .create(FeaturesApi::class.java)
+      .create(FeaturesPluginRepositoryConnector::class.java)
 
   override fun doServe() {
     val updatesToExtract = getUpdatesToExtract()
@@ -94,7 +93,7 @@ class FeatureService : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES) {
     val pluginsResult = prepareFeaturesResponse(updateInfo, resultType, extractorResult.features)
     try {
       sendExtractedFeatures(pluginsResult, pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully()
-    } catch(e: Exception) {
+    } catch (e: Exception) {
       LOG.error("Unable to send check result of the plugin ${extractorResult.updateInfo}", e)
     }
   }

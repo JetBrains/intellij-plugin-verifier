@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.util
+package org.jetbrains.plugins.verifier.service.service.networking
 
 import okhttp3.MediaType
 import okhttp3.RequestBody

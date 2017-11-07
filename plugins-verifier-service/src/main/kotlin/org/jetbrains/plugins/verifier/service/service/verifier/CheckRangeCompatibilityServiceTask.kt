@@ -21,10 +21,10 @@ import com.jetbrains.pluginverifier.reporting.verification.VerificationReporters
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.Result
-import org.jetbrains.plugins.verifier.service.ide.IdeFileLock
-import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTask
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskProgress
+import org.jetbrains.plugins.verifier.service.storage.IdeFileLock
+import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.storage.JdkManager
 import org.slf4j.LoggerFactory
 

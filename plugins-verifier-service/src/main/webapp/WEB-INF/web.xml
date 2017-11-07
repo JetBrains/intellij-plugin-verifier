@@ -6,17 +6,17 @@
 
     <servlet>
         <servlet-name>ide</servlet-name>
-        <servlet-class>org.jetbrains.plugins.verifier.service.servlets.IdeServlet</servlet-class>
+        <servlet-class>org.jetbrains.plugins.verifier.service.server.servlets.IdeServlet</servlet-class>
     </servlet>
 
     <servlet>
         <servlet-name>info</servlet-name>
-        <servlet-class>org.jetbrains.plugins.verifier.service.servlets.InfoServlet</servlet-class>
+        <servlet-class>org.jetbrains.plugins.verifier.service.server.servlets.InfoServlet</servlet-class>
     </servlet>
 
 
     <listener>
-        <listener-class>org.jetbrains.plugins.verifier.service.startup.ServerStartupListener</listener-class>
+        <listener-class>org.jetbrains.plugins.verifier.service.server.startup.ServerStartupListener</listener-class>
     </listener>
 
     <servlet-mapping>

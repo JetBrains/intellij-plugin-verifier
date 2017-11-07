@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.service.featureExtractor
+package org.jetbrains.plugins.verifier.service.service.features
 
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -7,7 +7,7 @@ import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
 
-interface FeaturesApi {
+interface FeaturesPluginRepositoryConnector {
 
   @Multipart
   @POST("/feature/getUpdatesToExtractFeatures")

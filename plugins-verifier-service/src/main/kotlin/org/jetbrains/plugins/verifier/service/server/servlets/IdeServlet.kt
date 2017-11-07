@@ -1,10 +1,10 @@
-package org.jetbrains.plugins.verifier.service.servlets
+package org.jetbrains.plugins.verifier.service.server.servlets
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
-import org.jetbrains.plugins.verifier.service.service.ServerInstance
+import org.jetbrains.plugins.verifier.service.server.ServerInstance
 import org.jetbrains.plugins.verifier.service.service.ide.DeleteIdeRunner
 import org.jetbrains.plugins.verifier.service.service.ide.UploadIdeRunner
+import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 

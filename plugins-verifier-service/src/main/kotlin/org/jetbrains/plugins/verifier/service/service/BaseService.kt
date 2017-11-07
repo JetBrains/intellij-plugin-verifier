@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import org.jetbrains.plugins.verifier.service.server.ServerInstance
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
