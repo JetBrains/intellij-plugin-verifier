@@ -2,10 +2,10 @@ package org.jetbrains.plugins.verifier.service.service.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
-import org.jetbrains.plugins.verifier.service.tasks.BooleanServiceTaskResult
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskProgress
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskResult
+import org.jetbrains.plugins.verifier.service.service.tasks.BooleanServiceTaskResult
+import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTask
+import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskProgress
+import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

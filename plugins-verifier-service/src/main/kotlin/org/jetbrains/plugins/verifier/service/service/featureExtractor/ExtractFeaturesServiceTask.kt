@@ -10,8 +10,8 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.ide.IdeFileLock
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.service.ServerInstance
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskProgress
+import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTask
+import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskProgress
 
 class ExtractFeaturesServiceTask(val pluginCoordinate: PluginCoordinate,
                                  private val updateInfo: UpdateInfo) : ServiceTask() {

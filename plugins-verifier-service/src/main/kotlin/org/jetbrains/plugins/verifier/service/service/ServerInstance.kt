@@ -6,10 +6,10 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
+import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.jetbrains.plugins.verifier.service.storage.FileType
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTasksManager
 import java.io.Closeable
 import java.io.File
 

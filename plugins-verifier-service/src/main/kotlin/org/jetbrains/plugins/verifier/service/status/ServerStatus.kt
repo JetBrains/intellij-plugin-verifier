@@ -1,10 +1,10 @@
 package org.jetbrains.plugins.verifier.service.status
 
 import org.apache.commons.io.FileUtils
+import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskId
+import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
+import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
 import org.jetbrains.plugins.verifier.service.storage.FileManager
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskId
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTasksManager
 import java.util.*
 
 data class RunningTaskInfo(val taskId: ServiceTaskId,

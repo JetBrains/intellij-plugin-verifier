@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.progress
 
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskProgress
+import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskProgress
 
 open class DefaultProgressService : ServiceTaskProgress {
 

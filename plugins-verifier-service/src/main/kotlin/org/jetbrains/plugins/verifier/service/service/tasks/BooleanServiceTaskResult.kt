@@ -1,3 +1,3 @@
-package org.jetbrains.plugins.verifier.service.tasks
+package org.jetbrains.plugins.verifier.service.service.tasks
 
 data class BooleanServiceTaskResult(val value: Boolean) : ServiceTaskResult

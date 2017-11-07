@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.tasks
+package org.jetbrains.plugins.verifier.service.service.tasks
 
 data class ServiceTaskStatus(val taskId: ServiceTaskId,
                              val startTime: Long,

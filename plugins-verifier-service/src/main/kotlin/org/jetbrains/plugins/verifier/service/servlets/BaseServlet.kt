@@ -4,7 +4,7 @@ import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.typeToken
 import com.google.gson.Gson
 import org.jetbrains.plugins.verifier.service.service.ServerInstance
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTasksManager
+import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.InputStream

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.tasks
+package org.jetbrains.plugins.verifier.service.service.tasks
 
 import com.google.common.collect.EvictingQueue
 import com.google.common.util.concurrent.ThreadFactoryBuilder

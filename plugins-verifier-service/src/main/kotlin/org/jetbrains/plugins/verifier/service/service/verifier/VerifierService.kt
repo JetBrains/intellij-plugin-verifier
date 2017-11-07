@@ -13,8 +13,8 @@ import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.params.JdkVersion
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.ServerInstance
+import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
 import org.jetbrains.plugins.verifier.service.util.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.util.createByteArrayRequestBody
 import org.jetbrains.plugins.verifier.service.util.createStringRequestBody

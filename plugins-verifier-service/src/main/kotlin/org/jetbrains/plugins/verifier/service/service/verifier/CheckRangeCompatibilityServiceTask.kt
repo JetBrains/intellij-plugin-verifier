@@ -23,9 +23,9 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.Result
 import org.jetbrains.plugins.verifier.service.ide.IdeFileLock
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
+import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTask
+import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskProgress
 import org.jetbrains.plugins.verifier.service.storage.JdkManager
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskProgress
 import org.slf4j.LoggerFactory
 
 class CheckRangeCompatibilityServiceTask(private val updateInfo: UpdateInfo,

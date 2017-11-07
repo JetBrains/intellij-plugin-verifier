@@ -3,7 +3,7 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.Result
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskResult
+import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskResult
 
 /**
  * @author Sergey Patrikeev
