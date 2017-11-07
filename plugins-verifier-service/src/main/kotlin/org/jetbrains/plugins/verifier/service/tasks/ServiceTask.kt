@@ -3,9 +3,9 @@ package org.jetbrains.plugins.verifier.service.tasks
 /**
  * @author Sergey Patrikeev
  */
-abstract class Task<out R> {
+abstract class ServiceTask<out R> {
 
-  abstract fun computeResult(progress: TaskProgress): R
+  abstract fun computeResult(progress: ServiceTaskProgress): R
 
   abstract fun presentableName(): String
 

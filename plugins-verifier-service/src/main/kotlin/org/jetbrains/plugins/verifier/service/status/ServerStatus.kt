@@ -2,15 +2,15 @@ package org.jetbrains.plugins.verifier.service.status
 
 import org.apache.commons.io.FileUtils
 import org.jetbrains.plugins.verifier.service.storage.FileManager
-import org.jetbrains.plugins.verifier.service.tasks.TaskId
-import org.jetbrains.plugins.verifier.service.tasks.TaskManager
-import org.jetbrains.plugins.verifier.service.tasks.TaskStatus
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskId
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTasksManager
 import java.util.*
 
-data class RunningTaskInfo(val taskId: TaskId,
+data class RunningTaskInfo(val taskId: ServiceTaskId,
                            val taskName: String,
                            val startedDate: Date,
-                           val state: TaskStatus.State,
+                           val state: ServiceTaskStatus.State,
                            val progress: Double,
                            val totalTimeMs: Long,
                            val progressText: String)
@@ -22,7 +22,7 @@ data class MemoryInfo(val totalMemory: Long,
 
 data class DiskUsageInfo(val totalUsage: Long)
 
-class ServerStatus(private val taskManager: TaskManager) {
+class ServerStatus(private val taskManager: ServiceTasksManager) {
 
   fun getRunningTasks(): List<RunningTaskInfo> = taskManager.listTasks().map {
     RunningTaskInfo(it.taskId, it.taskName, Date(it.startTime), it.state, it.progress.getFraction(), it.elapsedTime(), it.progress.getText())

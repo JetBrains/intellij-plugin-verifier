@@ -24,23 +24,23 @@ import com.jetbrains.pluginverifier.results.Result
 import org.jetbrains.plugins.verifier.service.ide.IdeFileLock
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.storage.JdkManager
-import org.jetbrains.plugins.verifier.service.tasks.Task
-import org.jetbrains.plugins.verifier.service.tasks.TaskProgress
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskProgress
 import org.slf4j.LoggerFactory
 
-class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
-                                  val pluginCoordinate: PluginCoordinate,
-                                  private val params: CheckRangeParams,
-                                  private val ideVersions: List<IdeVersion>? = null,
-                                  private val pluginRepository: PluginRepository,
-                                  private val pluginDetailsProvider: PluginDetailsProvider) : Task<CheckRangeCompatibilityResult>() {
+class CheckRangeCompatibilityServiceTask(private val updateInfo: UpdateInfo,
+                                         val pluginCoordinate: PluginCoordinate,
+                                         private val params: CheckRangeParams,
+                                         private val ideVersions: List<IdeVersion>,
+                                         private val pluginRepository: PluginRepository,
+                                         private val pluginDetailsProvider: PluginDetailsProvider) : ServiceTask<CheckRangeCompatibilityResult>() {
   companion object {
-    private val LOG = LoggerFactory.getLogger(CheckRangeCompatibilityTask::class.java)
+    private val LOG = LoggerFactory.getLogger(CheckRangeCompatibilityServiceTask::class.java)
   }
 
   override fun presentableName(): String = "Check $pluginCoordinate with IDE from [since; until]"
 
-  private fun doRangeVerification(plugin: IdePlugin, progress: TaskProgress): CheckRangeCompatibilityResult {
+  private fun doRangeVerification(plugin: IdePlugin, progress: ServiceTaskProgress): CheckRangeCompatibilityResult {
     val sinceBuild = plugin.sinceBuild!!
     val untilBuild = plugin.untilBuild
     val jdkDescriptor = JdkDescriptor(JdkManager.getJdkHome(params.jdkVersion))
@@ -61,7 +61,7 @@ class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
                                   updateInfo: UpdateInfo,
                                   ideLocks: List<IdeFileLock>,
                                   jdkDescriptor: JdkDescriptor,
-                                  progress: TaskProgress): CheckRangeCompatibilityResult {
+                                  progress: ServiceTaskProgress): CheckRangeCompatibilityResult {
     val ideDescriptors = arrayListOf<IdeDescriptor>()
     try {
       ideLocks.mapTo(ideDescriptors) { IdeCreator.createByFile(it.ideFile, null) }
@@ -71,7 +71,7 @@ class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
     }
   }
 
-  private class DelegateProgressReporter(private val taskProgress: TaskProgress) : Reporter<Double> {
+  private class DelegateProgressReporter(private val taskProgress: ServiceTaskProgress) : Reporter<Double> {
     override fun report(t: Double) {
       taskProgress.setFraction(t)
     }
@@ -83,7 +83,7 @@ class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
                                          updateInfo: UpdateInfo,
                                          ideDescriptors: List<IdeDescriptor>,
                                          jdkDescriptor: JdkDescriptor,
-                                         progress: TaskProgress): CheckRangeCompatibilityResult {
+                                         progress: ServiceTaskProgress): CheckRangeCompatibilityResult {
     val verificationReportage = createVerificationReportage(progress)
     val allResults = arrayListOf<Result>()
     for (ideDescriptor in ideDescriptors) {
@@ -100,7 +100,7 @@ class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
     return CheckRangeCompatibilityResult(updateInfo, CheckRangeCompatibilityResult.ResultType.VERIFICATION_DONE, allResults)
   }
 
-  private fun createVerificationReportage(progress: TaskProgress) = VerificationReportageImpl(
+  private fun createVerificationReportage(progress: ServiceTaskProgress) = VerificationReportageImpl(
       reporterSetProvider = object : VerificationReportersProvider {
 
         override val globalMessageReporters: List<Reporter<String>> = listOf(LogReporter(LOG))
@@ -125,12 +125,12 @@ class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
   )
 
   private fun getAvailableIdesMatchingSinceUntilBuild(sinceBuild: IdeVersion, untilBuild: IdeVersion?): List<IdeFileLock> = IdeFilesManager.lockAndAccess {
-    (ideVersions ?: IdeFilesManager.ideList())
+    ideVersions
         .filter { sinceBuild <= it && (untilBuild == null || it <= untilBuild) }
         .mapNotNull { IdeFilesManager.getIdeLock(it) }
   }
 
-  override fun computeResult(progress: TaskProgress): CheckRangeCompatibilityResult =
+  override fun computeResult(progress: ServiceTaskProgress): CheckRangeCompatibilityResult =
       pluginDetailsProvider.providePluginDetails(pluginCoordinate).use { pluginDetails ->
         when (pluginDetails) {
           is PluginDetails.NotFound -> CheckRangeCompatibilityResult(updateInfo, CheckRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = pluginDetails.reason)

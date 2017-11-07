@@ -14,7 +14,7 @@ import org.jetbrains.plugins.verifier.service.params.JdkVersion
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.ServerInstance
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.tasks.TaskStatus
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
 import org.jetbrains.plugins.verifier.service.util.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.util.createByteArrayRequestBody
 import org.jetbrains.plugins.verifier.service.util.createStringRequestBody
@@ -86,7 +86,7 @@ class VerifierService : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES) {
 
     val pluginCoordinate = PluginCoordinate.ByUpdateInfo(updateInfo, ServerInstance.pluginRepository)
     val rangeRunnerParams = CheckRangeParams(JdkVersion.JAVA_8_ORACLE)
-    val runner = CheckRangeCompatibilityTask(updateInfo, pluginCoordinate, rangeRunnerParams, versions, ServerInstance.pluginRepository, ServerInstance.pluginDetailsProvider)
+    val runner = CheckRangeCompatibilityServiceTask(updateInfo, pluginCoordinate, rangeRunnerParams, versions, ServerInstance.pluginRepository, ServerInstance.pluginDetailsProvider)
     val taskStatus = taskManager.enqueue(
         runner,
         { taskResult -> onSuccess(taskResult, updateInfo) },
@@ -97,11 +97,11 @@ class VerifierService : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES) {
     LOG.info("Check [since; until] for $updateInfo is scheduled #${taskStatus.taskId}")
   }
 
-  private fun onCompletion(task: CheckRangeCompatibilityTask) {
+  private fun onCompletion(task: CheckRangeCompatibilityServiceTask) {
     verifiableUpdates.remove((task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo)
   }
 
-  private fun onError(error: Throwable, taskStatus: TaskStatus, task: CheckRangeCompatibilityTask) {
+  private fun onError(error: Throwable, taskStatus: ServiceTaskStatus, task: CheckRangeCompatibilityServiceTask) {
     val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
     LOG.error("Unable to check $updateInfo (task #${taskStatus.taskId})", error)
   }

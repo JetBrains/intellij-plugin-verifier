@@ -10,14 +10,14 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.ide.IdeFileLock
 import org.jetbrains.plugins.verifier.service.ide.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.service.ServerInstance
-import org.jetbrains.plugins.verifier.service.tasks.Task
-import org.jetbrains.plugins.verifier.service.tasks.TaskProgress
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskProgress
 
-class ExtractFeaturesTask(val pluginCoordinate: PluginCoordinate,
-                          private val updateInfo: UpdateInfo) : Task<FeaturesResult>() {
+class ExtractFeaturesServiceTask(val pluginCoordinate: PluginCoordinate,
+                                 private val updateInfo: UpdateInfo) : ServiceTask<FeaturesResult>() {
   override fun presentableName(): String = "Features of $pluginCoordinate"
 
-  override fun computeResult(progress: TaskProgress): FeaturesResult {
+  override fun computeResult(progress: ServiceTaskProgress): FeaturesResult {
     val pluginDetails = ServerInstance.pluginDetailsProvider.providePluginDetails(pluginCoordinate)
     pluginDetails.use {
       return when (pluginDetails) {

@@ -9,7 +9,7 @@ import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.jetbrains.plugins.verifier.service.storage.FileType
-import org.jetbrains.plugins.verifier.service.tasks.TaskManager
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTasksManager
 import java.io.Closeable
 import java.io.File
 
@@ -51,7 +51,7 @@ object ServerInstance : Closeable {
 
   val ideRepository: IdeRepository = IdeRepository(FileManager.getTypeDir(FileType.IDE), Settings.IDE_REPOSITORY_URL.get())
 
-  val taskManager = TaskManager(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
+  val taskManager = ServiceTasksManager(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
 
   val services = arrayListOf<BaseService>()
 

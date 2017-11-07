@@ -8,7 +8,7 @@ import org.jetbrains.plugins.verifier.service.api.prepareFeaturesResponse
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.ServerInstance
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.tasks.TaskStatus
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
 import org.jetbrains.plugins.verifier.service.util.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.util.createJsonRequestBody
 import org.jetbrains.plugins.verifier.service.util.createStringRequestBody
@@ -65,7 +65,7 @@ class FeatureService : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES) {
 
     lastProceedDate[updateInfo] = System.currentTimeMillis()
 
-    val runner = ExtractFeaturesTask(PluginCoordinate.ByUpdateInfo(updateInfo, ServerInstance.pluginRepository), updateInfo)
+    val runner = ExtractFeaturesServiceTask(PluginCoordinate.ByUpdateInfo(updateInfo, ServerInstance.pluginRepository), updateInfo)
     val taskStatus = taskManager.enqueue(
         runner,
         { onSuccess(it) },
@@ -76,11 +76,11 @@ class FeatureService : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES) {
     LOG.info("Extract features of $updateInfo is scheduled with taskId #${taskStatus.taskId}")
   }
 
-  private fun onCompletion(task: ExtractFeaturesTask) {
+  private fun onCompletion(task: ExtractFeaturesServiceTask) {
     inProgressUpdates.remove((task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo)
   }
 
-  private fun onError(error: Throwable, taskStatus: TaskStatus, task: ExtractFeaturesTask) {
+  private fun onError(error: Throwable, taskStatus: ServiceTaskStatus, task: ExtractFeaturesServiceTask) {
     val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
     LOG.error("Unable to extract features of $updateInfo (#${taskStatus.taskId})", error)
   }

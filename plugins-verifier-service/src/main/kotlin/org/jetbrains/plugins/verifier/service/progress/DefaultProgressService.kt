@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.verifier.service.progress
 
-import org.jetbrains.plugins.verifier.service.tasks.TaskProgress
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskProgress
 
-open class DefaultProgress : TaskProgress {
+open class DefaultProgressService : ServiceTaskProgress {
 
   @Volatile private var progress: Double = 0.0
   @Volatile private var text: String = ""

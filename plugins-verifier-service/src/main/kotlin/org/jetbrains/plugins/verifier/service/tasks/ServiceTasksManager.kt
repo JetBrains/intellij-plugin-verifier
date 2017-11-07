@@ -2,24 +2,24 @@ package org.jetbrains.plugins.verifier.service.tasks
 
 import com.google.common.collect.EvictingQueue
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import org.jetbrains.plugins.verifier.service.progress.DefaultProgress
+import org.jetbrains.plugins.verifier.service.progress.DefaultProgressService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Supplier
 
 /**
  * @author Sergey Patrikeev
  */
-class TaskManager(concurrency: Int) {
+class ServiceTasksManager(concurrency: Int) {
 
   companion object {
-    val LOG: Logger = LoggerFactory.getLogger(TaskManager::class.java)
+    val LOG: Logger = LoggerFactory.getLogger(ServiceTasksManager::class.java)
   }
 
-  private val nextTaskId = AtomicInteger()
+  private val nextTaskId = AtomicLong()
 
   private val executorService = Executors.newFixedThreadPool(concurrency,
       ThreadFactoryBuilder()
@@ -28,27 +28,27 @@ class TaskManager(concurrency: Int) {
           .build()
   )
 
-  private val tasks = EvictingQueue.create<TaskStatus>(1000)
+  private val tasks = EvictingQueue.create<ServiceTaskStatus>(1000)
 
   @Synchronized
-  fun listTasks(): List<TaskStatus> = tasks.toList()
+  fun listTasks(): List<ServiceTaskStatus> = tasks.toList()
 
   @Synchronized
-  fun <Res, Tsk : Task<Res>> enqueue(task: Tsk,
-                                     onSuccess: (Res) -> Unit,
-                                     onError: (Throwable, TaskStatus, Tsk) -> Unit,
-                                     onCompletion: (TaskStatus, Tsk) -> Unit): TaskStatus {
-    val taskId = TaskId(nextTaskId.incrementAndGet())
+  fun <Res, Tsk : ServiceTask<Res>> enqueue(task: Tsk,
+                                            onSuccess: (Res) -> Unit,
+                                            onError: (Throwable, ServiceTaskStatus, Tsk) -> Unit,
+                                            onCompletion: (ServiceTaskStatus, Tsk) -> Unit): ServiceTaskStatus {
+    val taskId = ServiceTaskId(nextTaskId.incrementAndGet())
 
-    val taskProgress = DefaultProgress()
+    val taskProgress = DefaultProgressService()
     taskProgress.setFraction(0.0)
     taskProgress.setText("Waiting to start...")
 
-    val taskStatus = TaskStatus(taskId, System.currentTimeMillis(), null, TaskStatus.State.WAITING, taskProgress, task.presentableName())
+    val taskStatus = ServiceTaskStatus(taskId, System.currentTimeMillis(), null, ServiceTaskStatus.State.WAITING, taskProgress, task.presentableName())
     tasks.add(taskStatus)
 
     val taskFuture = CompletableFuture.supplyAsync(Supplier {
-      taskStatus.state = TaskStatus.State.RUNNING
+      taskStatus.state = ServiceTaskStatus.State.RUNNING
       taskProgress.setText("Running...")
       task.computeResult(taskProgress)
     }, executorService)
@@ -56,11 +56,11 @@ class TaskManager(concurrency: Int) {
     taskFuture
         .whenComplete { result, error ->
           if (result != null) {
-            taskStatus.state = TaskStatus.State.SUCCESS
+            taskStatus.state = ServiceTaskStatus.State.SUCCESS
             onSuccess(result)
             taskProgress.setText("Finished successfully")
           } else {
-            taskStatus.state = TaskStatus.State.ERROR
+            taskStatus.state = ServiceTaskStatus.State.ERROR
             onError(error, taskStatus, task)
             taskProgress.setText("Finished with error")
           }
@@ -74,7 +74,7 @@ class TaskManager(concurrency: Int) {
     return taskStatus
   }
 
-  fun <T> enqueue(task: Task<T>): TaskStatus = enqueue(task, {}, { _, _, _ -> }, { _, _ -> })
+  fun <T> enqueue(serviceTask: ServiceTask<T>): ServiceTaskStatus = enqueue(serviceTask, {}, { _, _, _ -> }, { _, _ -> })
 
   fun stop() {
     LOG.info("Stopping task manager")

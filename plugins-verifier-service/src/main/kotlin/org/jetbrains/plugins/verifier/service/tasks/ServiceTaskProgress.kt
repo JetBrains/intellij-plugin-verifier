@@ -3,7 +3,7 @@ package org.jetbrains.plugins.verifier.service.tasks
 /**
  * @author Sergey Patrikeev
  */
-interface TaskProgress {
+interface ServiceTaskProgress {
 
   fun getFraction(): Double
 
