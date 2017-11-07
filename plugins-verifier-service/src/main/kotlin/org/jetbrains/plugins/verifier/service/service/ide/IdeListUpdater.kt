@@ -48,7 +48,11 @@ class IdeListUpdater(val ideRepository: IdeRepository) : BaseService("IdeListUpd
 
     val runner = UploadIdeRunner(availableIde = availableIde, ideRepository = ideRepository)
 
-    val taskStatus = taskManager.enqueue(runner, { }, { _, _, _ -> }) { _, _ -> downloadingIdes.remove(version) }
+    val taskStatus = taskManager.enqueue(
+        runner,
+        { },
+        { _, _ -> }
+    ) { _ -> downloadingIdes.remove(version) }
     LOG.info("Uploading IDE version #$version (task #${taskStatus.taskId})")
 
     downloadingIdes.add(version)

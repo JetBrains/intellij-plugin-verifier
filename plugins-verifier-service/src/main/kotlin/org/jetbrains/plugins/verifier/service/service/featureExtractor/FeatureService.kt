@@ -68,9 +68,9 @@ class FeatureService : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES) {
     val runner = ExtractFeaturesServiceTask(PluginCoordinate.ByUpdateInfo(updateInfo, ServerInstance.pluginRepository), updateInfo)
     val taskStatus = taskManager.enqueue(
         runner,
-        { onSuccess(it) },
-        { t, tid, task -> onError(t, tid, task) },
-        { _, task -> onCompletion(task) }
+        { onSuccess(it as FeaturesResult) },
+        { t, tid -> onError(t, tid, runner) },
+        { _ -> onCompletion(runner) }
     )
     inProgressUpdates.add(updateInfo)
     LOG.info("Extract features of $updateInfo is scheduled with taskId #${taskStatus.taskId}")

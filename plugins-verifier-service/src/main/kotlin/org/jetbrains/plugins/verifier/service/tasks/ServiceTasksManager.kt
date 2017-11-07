@@ -34,10 +34,10 @@ class ServiceTasksManager(concurrency: Int) {
   fun listTasks(): List<ServiceTaskStatus> = tasks.toList()
 
   @Synchronized
-  fun <Res, Tsk : ServiceTask<Res>> enqueue(task: Tsk,
-                                            onSuccess: (Res) -> Unit,
-                                            onError: (Throwable, ServiceTaskStatus, Tsk) -> Unit,
-                                            onCompletion: (ServiceTaskStatus, Tsk) -> Unit): ServiceTaskStatus {
+  fun enqueue(task: ServiceTask,
+              onSuccess: (ServiceTaskResult) -> Unit,
+              onError: (Throwable, ServiceTaskStatus) -> Unit,
+              onCompletion: (ServiceTaskStatus) -> Unit): ServiceTaskStatus {
     val taskId = ServiceTaskId(nextTaskId.incrementAndGet())
 
     val taskProgress = DefaultProgressService()
@@ -61,20 +61,20 @@ class ServiceTasksManager(concurrency: Int) {
             taskProgress.setText("Finished successfully")
           } else {
             taskStatus.state = ServiceTaskStatus.State.ERROR
-            onError(error, taskStatus, task)
+            onError(error, taskStatus)
             taskProgress.setText("Finished with error")
           }
           taskStatus.endTime = System.currentTimeMillis()
           taskProgress.setFraction(1.0)
         }
         .whenComplete { _, _ ->
-          onCompletion(taskStatus, task)
+          onCompletion(taskStatus)
         }
 
     return taskStatus
   }
 
-  fun <T> enqueue(serviceTask: ServiceTask<T>): ServiceTaskStatus = enqueue(serviceTask, {}, { _, _, _ -> }, { _, _ -> })
+  fun enqueue(serviceTask: ServiceTask): ServiceTaskStatus = enqueue(serviceTask, {}, { _, _ -> }, { _ -> })
 
   fun stop() {
     LOG.info("Stopping task manager")

@@ -14,7 +14,7 @@ import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskProgress
 
 class ExtractFeaturesServiceTask(val pluginCoordinate: PluginCoordinate,
-                                 private val updateInfo: UpdateInfo) : ServiceTask<FeaturesResult>() {
+                                 private val updateInfo: UpdateInfo) : ServiceTask() {
   override fun presentableName(): String = "Features of $pluginCoordinate"
 
   override fun computeResult(progress: ServiceTaskProgress): FeaturesResult {

@@ -89,9 +89,9 @@ class VerifierService : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES) {
     val runner = CheckRangeCompatibilityServiceTask(updateInfo, pluginCoordinate, rangeRunnerParams, versions, ServerInstance.pluginRepository, ServerInstance.pluginDetailsProvider)
     val taskStatus = taskManager.enqueue(
         runner,
-        { taskResult -> onSuccess(taskResult, updateInfo) },
-        { error, tid, task -> onError(error, tid, task) },
-        { _, task -> onCompletion(task) }
+        { taskResult -> onSuccess(taskResult as CheckRangeCompatibilityResult, updateInfo) },
+        { error, tid -> onError(error, tid, runner) },
+        { _ -> onCompletion(runner) }
     )
     verifiableUpdates.add(updateInfo)
     LOG.info("Check [since; until] for $updateInfo is scheduled #${taskStatus.taskId}")

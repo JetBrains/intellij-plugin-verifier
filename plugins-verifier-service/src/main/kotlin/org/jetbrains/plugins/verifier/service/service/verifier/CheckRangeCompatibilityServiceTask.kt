@@ -33,7 +33,7 @@ class CheckRangeCompatibilityServiceTask(private val updateInfo: UpdateInfo,
                                          private val params: CheckRangeParams,
                                          private val ideVersions: List<IdeVersion>,
                                          private val pluginRepository: PluginRepository,
-                                         private val pluginDetailsProvider: PluginDetailsProvider) : ServiceTask<CheckRangeCompatibilityResult>() {
+                                         private val pluginDetailsProvider: PluginDetailsProvider) : ServiceTask() {
   companion object {
     private val LOG = LoggerFactory.getLogger(CheckRangeCompatibilityServiceTask::class.java)
   }
@@ -132,13 +132,15 @@ class CheckRangeCompatibilityServiceTask(private val updateInfo: UpdateInfo,
 
   override fun computeResult(progress: ServiceTaskProgress): CheckRangeCompatibilityResult =
       pluginDetailsProvider.providePluginDetails(pluginCoordinate).use { pluginDetails ->
-        when (pluginDetails) {
-          is PluginDetails.NotFound -> CheckRangeCompatibilityResult(updateInfo, CheckRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = pluginDetails.reason)
-          is PluginDetails.FailedToDownload -> CheckRangeCompatibilityResult(updateInfo, CheckRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = pluginDetails.reason)
-          is PluginDetails.BadPlugin -> CheckRangeCompatibilityResult(updateInfo, CheckRangeCompatibilityResult.ResultType.INVALID_PLUGIN, invalidPluginProblems = pluginDetails.pluginErrorsAndWarnings)
-          is PluginDetails.ByFileLock -> doRangeVerification(pluginDetails.plugin, progress)
-          is PluginDetails.FoundOpenPluginAndClasses -> doRangeVerification(pluginDetails.plugin, progress)
-          is PluginDetails.FoundOpenPluginWithoutClasses -> doRangeVerification(pluginDetails.plugin, progress)
+        with(pluginDetails) {
+          when (this) {
+            is PluginDetails.NotFound -> CheckRangeCompatibilityResult(updateInfo, CheckRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = reason)
+            is PluginDetails.FailedToDownload -> CheckRangeCompatibilityResult(updateInfo, CheckRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = reason)
+            is PluginDetails.BadPlugin -> CheckRangeCompatibilityResult(updateInfo, CheckRangeCompatibilityResult.ResultType.INVALID_PLUGIN, invalidPluginProblems = pluginErrorsAndWarnings)
+            is PluginDetails.ByFileLock -> doRangeVerification(plugin, progress)
+            is PluginDetails.FoundOpenPluginAndClasses -> doRangeVerification(plugin, progress)
+            is PluginDetails.FoundOpenPluginWithoutClasses -> doRangeVerification(plugin, progress)
+          }
         }
       }
 }
