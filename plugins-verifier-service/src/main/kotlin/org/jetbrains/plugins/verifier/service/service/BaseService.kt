@@ -3,6 +3,7 @@ package org.jetbrains.plugins.verifier.service.service
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.jetbrains.plugins.verifier.service.server.ServerInstance
 import org.jetbrains.plugins.verifier.service.setting.Settings
+import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
@@ -35,6 +36,8 @@ abstract class BaseService(val serviceName: String,
   protected val pluginRepositoryPassword: String = Settings.PLUGIN_REPOSITORY_VERIFIER_PASSWORD.get()
 
   protected val taskManager = ServerInstance.taskManager
+
+  protected val ideFilesManager: IdeFilesManager = ServerInstance.ideFilesManager
 
   fun getState() = state
 

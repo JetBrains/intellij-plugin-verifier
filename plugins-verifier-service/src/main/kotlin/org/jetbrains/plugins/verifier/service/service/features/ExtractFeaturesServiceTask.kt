@@ -11,7 +11,6 @@ import org.jetbrains.plugins.verifier.service.server.ServerInstance
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTask
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskProgress
 import org.jetbrains.plugins.verifier.service.storage.IdeFileLock
-import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 
 class ExtractFeaturesServiceTask(val pluginCoordinate: PluginCoordinate,
                                  private val updateInfo: UpdateInfo) : ServiceTask() {
@@ -45,9 +44,13 @@ class ExtractFeaturesServiceTask(val pluginCoordinate: PluginCoordinate,
     }
   }
 
-  private fun getSomeIdeMatchingSinceUntilBuilds(sinceBuild: IdeVersion, untilBuild: IdeVersion?): IdeFileLock = IdeFilesManager.lockAndAccess {
-    val isMatching: (IdeVersion) -> Boolean = { sinceBuild <= it && (untilBuild == null || it <= untilBuild) }
-    val maxCompatibleOrGlobalCompatible = IdeFilesManager.ideList().filter(isMatching).max() ?: IdeFilesManager.ideList().max()!!
-    IdeFilesManager.getIdeLock(maxCompatibleOrGlobalCompatible)!!
+  private fun getSomeIdeMatchingSinceUntilBuilds(sinceBuild: IdeVersion, untilBuild: IdeVersion?): IdeFileLock = with(ServerInstance.ideFilesManager) {
+    lockAndAccess {
+      val isMatching: (IdeVersion) -> Boolean = { sinceBuild <= it && (untilBuild == null || it <= untilBuild) }
+      val maxCompatibleOrGlobalCompatible = ideList().filter(isMatching).max() ?: ideList().max()!!
+      getIdeLock(maxCompatibleOrGlobalCompatible)!!
+    }
   }
+
+
 }

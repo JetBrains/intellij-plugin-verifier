@@ -1,10 +1,10 @@
 package org.jetbrains.plugins.verifier.service.server.status
 
 import org.apache.commons.io.FileUtils
+import org.jetbrains.plugins.verifier.service.server.ServerInstance
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskId
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
-import org.jetbrains.plugins.verifier.service.storage.FileManager
 import java.util.*
 
 data class RunningTaskInfo(val taskId: ServiceTaskId,
@@ -33,8 +33,7 @@ class ServerStatus(private val taskManager: ServiceTasksManager) {
 
 
   fun getDiskUsage(): DiskUsageInfo {
-    val dir = FileManager.getAppHomeDirectory()
-    val size = FileUtils.sizeOf(dir)
+    val size = FileUtils.sizeOf(ServerInstance.appHomeDir)
     return DiskUsageInfo(size)
   }
 

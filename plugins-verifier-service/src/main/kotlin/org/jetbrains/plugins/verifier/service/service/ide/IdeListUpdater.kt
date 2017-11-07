@@ -4,7 +4,6 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.AvailableIde
 import com.jetbrains.pluginverifier.repository.IdeRepository
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import java.util.concurrent.TimeUnit
 
 /**
@@ -15,7 +14,7 @@ class IdeListUpdater(val ideRepository: IdeRepository) : BaseService("IdeListUpd
   private val downloadingIdes: MutableSet<IdeVersion> = hashSetOf()
 
   override fun doServe() {
-    val alreadyIdes = IdeFilesManager.ideList()
+    val alreadyIdes = ideFilesManager.ideList()
 
     val relevantIdes: List<AvailableIde> = fetchRelevantIdes()
 

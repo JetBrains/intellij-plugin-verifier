@@ -4,7 +4,6 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jetbrains.plugins.verifier.service.server.ServerInstance
 import org.jetbrains.plugins.verifier.service.service.ide.DeleteIdeRunner
 import org.jetbrains.plugins.verifier.service.service.ide.UploadIdeRunner
-import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
@@ -16,7 +15,7 @@ class IdeServlet : BaseServlet() {
     when {
       path.endsWith("uploadIde") -> processUploadIde(req, resp)
       path.endsWith("deleteIde") -> processDeleteIde(req, resp)
-      else -> sendJson(resp, IdeFilesManager.ideList())
+      else -> sendJson(resp, ServerInstance.ideFilesManager.ideList())
     }
   }
 
@@ -38,14 +37,14 @@ class IdeServlet : BaseServlet() {
       return
     }
     val ideRunner = UploadIdeRunner(availableIde, ServerInstance.ideRepository)
-    val taskStatus = getTaskManager().enqueue(ideRunner)
+    val taskStatus = ServerInstance.taskManager.enqueue(ideRunner)
     sendOk(resp, "Uploading $ideVersion (#${taskStatus.taskId})")
   }
 
   private fun processDeleteIde(req: HttpServletRequest, resp: HttpServletResponse) {
     val ideVersion = parseIdeVersionParameter(req, resp) ?: return
     val deleteIdeRunner = DeleteIdeRunner(ideVersion)
-    val taskStatus = getTaskManager().enqueue(deleteIdeRunner)
+    val taskStatus = ServerInstance.taskManager.enqueue(deleteIdeRunner)
     sendOk(resp, "Deleting $ideVersion (#${taskStatus.taskId})")
   }
 

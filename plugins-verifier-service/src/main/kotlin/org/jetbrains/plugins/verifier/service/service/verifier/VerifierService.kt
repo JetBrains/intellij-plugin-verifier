@@ -15,7 +15,6 @@ import org.jetbrains.plugins.verifier.service.service.networking.createStringReq
 import org.jetbrains.plugins.verifier.service.service.repository.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.storage.JdkVersion
 import retrofit2.Call
 import retrofit2.Retrofit
@@ -52,7 +51,7 @@ class VerifierService : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES) {
   override fun doServe() {
     val updateId2IdeVersions = LinkedHashMultimap.create<Int, IdeVersion>()
 
-    for (ideVersion in IdeFilesManager.ideList()) {
+    for (ideVersion in ideFilesManager.ideList()) {
       getUpdatesToCheck(ideVersion).forEach { updateId ->
         updateId2IdeVersions.put(updateId, ideVersion)
       }
@@ -85,7 +84,7 @@ class VerifierService : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES) {
 
     val pluginCoordinate = PluginCoordinate.ByUpdateInfo(updateInfo, ServerInstance.pluginRepository)
     val rangeRunnerParams = CheckRangeParams(JdkVersion.JAVA_8_ORACLE)
-    val runner = CheckRangeCompatibilityServiceTask(updateInfo, pluginCoordinate, rangeRunnerParams, versions, ServerInstance.pluginRepository, ServerInstance.pluginDetailsProvider)
+    val runner = CheckRangeCompatibilityServiceTask(updateInfo, pluginCoordinate, rangeRunnerParams, versions, ServerInstance.pluginRepository, ServerInstance.pluginDetailsProvider, ServerInstance.ideFilesManager)
     val taskStatus = taskManager.enqueue(
         runner,
         { taskResult -> onSuccess(taskResult as CheckRangeCompatibilityResult, updateInfo) },

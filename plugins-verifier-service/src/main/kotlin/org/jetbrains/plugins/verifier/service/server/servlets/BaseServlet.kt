@@ -3,8 +3,6 @@ package org.jetbrains.plugins.verifier.service.server.servlets
 import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.typeToken
 import com.google.gson.Gson
-import org.jetbrains.plugins.verifier.service.server.ServerInstance
-import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.InputStream
@@ -82,11 +80,11 @@ abstract class BaseServlet : HttpServlet() {
     sendBytes(resp, json.toByteArray(StandardCharsets.UTF_8))
   }
 
-  fun getTaskManager(): ServiceTasksManager = ServerInstance.taskManager
-
-  fun getAppVersion(): String? = servletContext.getResourceAsStream("/META-INF/MANIFEST.MF")?.use { inputStream ->
-    val manifest = Manifest(inputStream)
-    manifest.mainAttributes.getValue("Plugin-Verifier-Service-Version")
+  val appVersion: String? by lazy {
+    servletContext.getResourceAsStream("/META-INF/MANIFEST.MF")?.use { inputStream ->
+      val manifest = Manifest(inputStream)
+      manifest.mainAttributes.getValue("Plugin-Verifier-Service-Version")
+    }
   }
 
 }

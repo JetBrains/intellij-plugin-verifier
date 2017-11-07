@@ -9,7 +9,7 @@ import java.io.File
 
 //todo: provide a cache of IdeDescriptors
 //todo: merge it with IdeRepository from verifier module
-object IdeFilesManager {
+class IdeFilesManager(private val fileManager: FileManager) {
 
   private val LOG = LoggerFactory.getLogger(IdeFilesManager::class.java)
 
@@ -17,7 +17,7 @@ object IdeFilesManager {
   private val lockedIdes: MutableMap<IdeVersion, Int> = hashMapOf()
   private val deleteQueue: MutableSet<IdeVersion> = hashSetOf()
 
-  private data class IdeFileLockImpl(override val ideFile: File, override val ideVersion: IdeVersion) : IdeFileLock {
+  private inner class IdeFileLockImpl(override val ideFile: File, override val ideVersion: IdeVersion) : IdeFileLock {
     override fun close() = releaseLock(this)
 
     override fun toString(): String = ideVersion.toString()
@@ -43,7 +43,7 @@ object IdeFilesManager {
   private fun onRelease(version: IdeVersion) {
     if (deleteQueue.contains(version)) {
       deleteQueue.remove(version)
-      val ideFile = FileManager.getFileByName(version.asString(), FileType.IDE)
+      val ideFile = fileManager.getFileByName(version.asString(), FileType.IDE)
       LOG.info("Deleting the IDE file $ideFile")
       if (ideFile.isDirectory) {
         ideFile.deleteLogged()
@@ -52,11 +52,11 @@ object IdeFilesManager {
   }
 
   @Synchronized
-  fun ideList(): List<IdeVersion> = FileManager.getFilesOfType(FileType.IDE).map { it -> IdeVersion.createIdeVersion(it.name) }.toList()
+  fun ideList(): List<IdeVersion> = fileManager.getFilesOfType(FileType.IDE).map { it -> IdeVersion.createIdeVersion(it.name) }.toList()
 
   @Synchronized
   fun getIdeLock(version: IdeVersion): IdeFileLock? {
-    val ideFile = FileManager.getFileByName(version.asString(), FileType.IDE)
+    val ideFile = fileManager.getFileByName(version.asString(), FileType.IDE)
     if (!ideFile.isDirectory) {
       return null
     }
@@ -94,7 +94,7 @@ object IdeFilesManager {
     }
 
     if (ideFile.isFile) {
-      val tempDirectory = FileManager.createTempDirectory(ideFile.name)
+      val tempDirectory = fileManager.createTempDirectory(ideFile.name)
 
       try {
         try {
@@ -124,7 +124,7 @@ object IdeFilesManager {
       return false
     }
 
-    val destination = FileManager.getFileByName(version.asString(), FileType.IDE)
+    val destination = fileManager.getFileByName(version.asString(), FileType.IDE)
     try {
       ideDir.copyRecursively(destination, true)
       LOG.info("IDE #$version is saved")

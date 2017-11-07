@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.server
 
 import com.google.gson.Gson
+import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.IdeRepository
@@ -11,6 +12,7 @@ import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.storage.FileManager
 import org.jetbrains.plugins.verifier.service.storage.FileType
+import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import java.io.Closeable
 import java.io.File
 
@@ -20,18 +22,20 @@ import java.io.File
 object ServerInstance : Closeable {
   val GSON: Gson = Gson()
 
-  private val loadedPluginsDir: File by lazy {
-    File(FileManager.getAppHomeDirectory(), "loaded-plugins")
-  }
+  val appHomeDir = Settings.APP_HOME_DIRECTORY.getAsFile().createDir()
 
-  private val extractedPluginsDir: File by lazy {
-    File(FileManager.getAppHomeDirectory(), "extracted-plugins")
-  }
+  private val loadedPluginsDir: File = appHomeDir.resolve("loaded-plugins").createDir()
+
+  private val extractedPluginsDir: File = appHomeDir.resolve("extracted-plugins").createDir()
 
   private val MIN_DISK_SPACE_MB: Int = 10000
 
   //50% of available disk space is for plugins download dir
   private val DOWNLOAD_DIR_PROPORTION: Double = 0.5
+
+  val fileManager: FileManager = FileManager(appHomeDir)
+
+  val ideFilesManager: IdeFilesManager = IdeFilesManager(fileManager)
 
   private val downloadDirMaxSpaceMb: Long by lazy {
     val diskSpace = Settings.MAX_DISK_SPACE_MB.getAsInt()
@@ -50,7 +54,7 @@ object ServerInstance : Closeable {
     PluginDetailsProviderImpl(extractedPluginsDir)
   }
 
-  val ideRepository: IdeRepository = IdeRepository(FileManager.getTypeDir(FileType.IDE), Settings.IDE_REPOSITORY_URL.get())
+  val ideRepository: IdeRepository = IdeRepository(fileManager.getTypeDir(FileType.IDE), Settings.IDE_REPOSITORY_URL.get())
 
   val taskManager = ServiceTasksManager(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
 

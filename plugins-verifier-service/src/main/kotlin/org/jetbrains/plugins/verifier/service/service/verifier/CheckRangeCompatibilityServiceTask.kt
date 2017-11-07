@@ -33,7 +33,8 @@ class CheckRangeCompatibilityServiceTask(private val updateInfo: UpdateInfo,
                                          private val params: CheckRangeParams,
                                          private val ideVersions: List<IdeVersion>,
                                          private val pluginRepository: PluginRepository,
-                                         private val pluginDetailsProvider: PluginDetailsProvider) : ServiceTask() {
+                                         private val pluginDetailsProvider: PluginDetailsProvider,
+                                         private val ideFilesManager: IdeFilesManager) : ServiceTask() {
   companion object {
     private val LOG = LoggerFactory.getLogger(CheckRangeCompatibilityServiceTask::class.java)
   }
@@ -124,10 +125,10 @@ class CheckRangeCompatibilityServiceTask(private val updateInfo: UpdateInfo,
       }
   )
 
-  private fun getAvailableIdesMatchingSinceUntilBuild(sinceBuild: IdeVersion, untilBuild: IdeVersion?): List<IdeFileLock> = IdeFilesManager.lockAndAccess {
+  private fun getAvailableIdesMatchingSinceUntilBuild(sinceBuild: IdeVersion, untilBuild: IdeVersion?): List<IdeFileLock> = ideFilesManager.lockAndAccess {
     ideVersions
         .filter { sinceBuild <= it && (untilBuild == null || it <= untilBuild) }
-        .mapNotNull { IdeFilesManager.getIdeLock(it) }
+        .mapNotNull { ideFilesManager.getIdeLock(it) }
   }
 
   override fun computeResult(progress: ServiceTaskProgress): CheckRangeCompatibilityResult =

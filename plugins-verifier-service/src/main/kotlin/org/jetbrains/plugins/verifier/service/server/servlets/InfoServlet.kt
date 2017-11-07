@@ -7,7 +7,6 @@ import org.jetbrains.plugins.verifier.service.server.ServerInstance
 import org.jetbrains.plugins.verifier.service.server.status.ServerStatus
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
 import java.text.SimpleDateFormat
@@ -16,7 +15,7 @@ import javax.servlet.http.HttpServletResponse
 
 class InfoServlet : BaseServlet() {
 
-  private val serverStatus = ServerStatus(getTaskManager())
+  private val serverStatus = ServerStatus(ServerInstance.taskManager)
 
   companion object {
     private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd hh:mm:ss")
@@ -81,7 +80,7 @@ class InfoServlet : BaseServlet() {
         body {
           div {
             h1 {
-              +("Plugin Verifier Service " + getAppVersion())
+              +("Plugin Verifier Service " + appVersion)
             }
             h2 {
               +"Runtime parameters:"
@@ -131,7 +130,7 @@ class InfoServlet : BaseServlet() {
               +"Available IDEs: "
             }
             ul {
-              IdeFilesManager.ideList().forEach {
+              ServerInstance.ideFilesManager.ideList().forEach {
                 li {
                   +it.toString()
                 }

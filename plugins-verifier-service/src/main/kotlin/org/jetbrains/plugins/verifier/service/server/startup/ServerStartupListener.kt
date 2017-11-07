@@ -7,8 +7,6 @@ import org.jetbrains.plugins.verifier.service.service.ide.IdeListUpdater
 import org.jetbrains.plugins.verifier.service.service.repository.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.storage.FileManager
-import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import org.slf4j.LoggerFactory
 import javax.servlet.ServletContextEvent
 import javax.servlet.ServletContextListener
@@ -49,7 +47,7 @@ class ServerStartupListener : ServletContextListener {
 
   private fun prepareUpdateInfoCacheForExistingIdes() {
     try {
-      IdeFilesManager.ideList().forEach {
+      ServerInstance.ideFilesManager.ideList().forEach {
         ServerInstance.pluginRepository.getLastCompatibleUpdates(it).forEach {
           UpdateInfoCache.update(it)
         }
@@ -60,7 +58,7 @@ class ServerStartupListener : ServletContextListener {
   }
 
   private fun cleanUpTempDirs() {
-    FileManager.getTempDirectory().deleteLogged()
+    ServerInstance.fileManager.getTempDirectory().deleteLogged()
   }
 
 
