@@ -134,7 +134,7 @@ class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val plugin
             teamCityLog.testStdErr(testName, fullTestMessage)
             val testMessage = buildString {
               appendln("There " + "is".pluralize(numberOfPlugins) + " $numberOfPlugins " + "plugin".pluralize(numberOfPlugins) + " checked.")
-              append("The compatible " + "version".pluralize(numberOfPlugins) + " of the " + "plugin".pluralize(numberOfPlugins) + "was".pluralize(numberOfPlugins) + " selected based on IDE version $ideVersionForCompatiblePlugins")
+              append("The compatible " + "version".pluralize(numberOfPlugins) + " of the " + "plugin".pluralize(numberOfPlugins) + " " + "was".pluralize(numberOfPlugins) + " selected based on IDE version $ideVersionForCompatiblePlugins")
             }
             teamCityLog.testFailed(testName, testMessage, "")
           }
