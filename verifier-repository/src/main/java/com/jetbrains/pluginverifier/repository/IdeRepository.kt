@@ -191,6 +191,8 @@ class IdeRepository(private val downloadDir: File, private val repositoryUrl: St
     }
   }
 
+  override fun toString(): String = "IDE Repository on $repositoryUrl"
+
   private val repository: IdeRepositoryApi = Retrofit.Builder()
       .baseUrl(repositoryUrl.trimEnd('/') + '/')
       .addConverterFactory(GsonConverterFactory.create(Gson()))

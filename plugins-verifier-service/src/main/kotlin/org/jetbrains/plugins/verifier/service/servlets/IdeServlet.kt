@@ -13,12 +13,10 @@ class IdeServlet : BaseServlet() {
   //todo: protect IDEs which are explicitly uploaded by this method from removing by the IDE cleaner
   override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
     val path = getPath(req, resp) ?: return
-    if (path.endsWith("uploadIde")) {
-      processUploadIde(req, resp)
-    } else if (path.endsWith("deleteIde")) {
-      processDeleteIde(req, resp)
-    } else {
-      sendJson(resp, IdeFilesManager.ideList())
+    when {
+      path.endsWith("uploadIde") -> processUploadIde(req, resp)
+      path.endsWith("deleteIde") -> processDeleteIde(req, resp)
+      else -> sendJson(resp, IdeFilesManager.ideList())
     }
   }
 
@@ -34,7 +32,12 @@ class IdeServlet : BaseServlet() {
 
   private fun processUploadIde(req: HttpServletRequest, resp: HttpServletResponse) {
     val ideVersion = parseIdeVersionParameter(req, resp) ?: return
-    val ideRunner = UploadIdeRunner(ideVersion, ideRepository = ServerInstance.ideRepository)
+    val availableIde = ServerInstance.ideRepository.fetchIndex().find { it.version.asStringWithoutProductCode() == ideVersion.asStringWithoutProductCode() }
+    if (availableIde == null) {
+      sendNotFound(resp, "IDE with version $ideVersion is not found in the ${ServerInstance.ideRepository}")
+      return
+    }
+    val ideRunner = UploadIdeRunner(availableIde, ServerInstance.ideRepository)
     val taskStatus = getTaskManager().enqueue(ideRunner)
     sendOk(resp, "Uploading $ideVersion (#${taskStatus.taskId})")
   }

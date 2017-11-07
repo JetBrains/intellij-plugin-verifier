@@ -46,7 +46,7 @@ class IdeListUpdater(val ideRepository: IdeRepository) : BaseService("IdeListUpd
       return
     }
 
-    val runner = UploadIdeRunner(availableIde = availableIde, ideRepository = ideRepository)
+    val runner = UploadIdeRunner(availableIde, ideRepository)
 
     val taskStatus = taskManager.enqueue(
         runner,
