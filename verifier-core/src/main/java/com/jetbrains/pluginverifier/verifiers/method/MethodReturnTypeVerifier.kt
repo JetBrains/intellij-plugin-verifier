@@ -21,6 +21,6 @@ class MethodReturnTypeVerifier : MethodVerifier {
 
     val returnTypeDesc = descriptor.extractClassNameFromDescr() ?: return
 
-    ctx.checkClassExistsOrExternal(returnTypeDesc, clazz, { ctx.fromMethod(clazz, method) })
+    ctx.checkClassExistsOrExternal(returnTypeDesc, { ctx.fromMethod(clazz, method) })
   }
 }

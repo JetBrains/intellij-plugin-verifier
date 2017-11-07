@@ -17,7 +17,7 @@ class MethodArgumentTypesVerifier : MethodVerifier {
     val argumentTypes = methodType.argumentTypes
     for (type in argumentTypes) {
       val argDescr = type.descriptor.extractClassNameFromDescr() ?: continue
-      ctx.checkClassExistsOrExternal(argDescr, clazz, { ctx.fromMethod(clazz, method) })
+      ctx.checkClassExistsOrExternal(argDescr, { ctx.fromMethod(clazz, method) })
     }
 
 
