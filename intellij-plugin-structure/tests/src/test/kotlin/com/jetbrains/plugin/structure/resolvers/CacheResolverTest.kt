@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.resolvers
 
 import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
+import com.jetbrains.plugin.structure.classes.resolvers.FixedClassesResolver
 import org.junit.Assert.*
 import org.junit.Test
 import org.objectweb.asm.tree.ClassNode
@@ -19,7 +20,7 @@ class CacheResolverTest {
     val classNode = ClassNode()
     val className = "a"
     val cacheResolver = CacheResolver(
-        HardCodedResolver(mapOf(className to classNode))
+        FixedClassesResolver(mapOf(className to classNode))
     )
     assertEquals(1, cacheResolver.allClasses.size)
     assertEquals(classNode, cacheResolver.findClass(className))
