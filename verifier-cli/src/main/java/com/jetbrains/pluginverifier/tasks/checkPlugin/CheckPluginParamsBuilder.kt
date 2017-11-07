@@ -31,33 +31,37 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
     }
   }
 
-  private fun getPluginsToCheck(pluginToTestArg: String, ideVersions: List<IdeVersion>? = null): List<PluginCoordinate> {
-    if (pluginToTestArg.startsWith("@")) {
-      val pluginListFile = File(pluginToTestArg.substring(1))
-      val pluginPaths = pluginListFile.readLines()
-      return ideVersions!!.flatMap { fetchPlugins(it, pluginListFile, pluginPaths) }
-    } else if (pluginToTestArg.matches("#\\d+".toRegex())) {
-      val updateId = Integer.parseInt(pluginToTestArg.drop(1))
-      val updateInfo = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "get update information for update #$updateId") {
-        getUpdateInfoById(updateId)
-      } ?: throw IllegalArgumentException("Update #$updateId is not found in the Plugin Repository")
-      return listOf(PluginCoordinate.ByUpdateInfo(updateInfo, pluginRepository))
-    } else {
-      val file = File(pluginToTestArg)
-      if (!file.exists()) {
-        throw IllegalArgumentException("The file $file doesn't exist")
+  private fun getPluginsToCheck(pluginToTestArg: String, ideVersions: List<IdeVersion>): List<PluginCoordinate> {
+    when {
+      pluginToTestArg.startsWith("@") -> {
+        val pluginListFile = File(pluginToTestArg.substring(1))
+        val pluginPaths = pluginListFile.readLines().map { it.trim() }.filterNot { it.isEmpty() }
+        return ideVersions.flatMap {
+          getPluginCoordinates(pluginListFile, it, pluginPaths)
+        }
       }
-      return listOf(PluginCoordinate.ByFile(file))
+      pluginToTestArg.matches("#\\d+".toRegex()) -> {
+        val updateId = Integer.parseInt(pluginToTestArg.drop(1))
+        val updateInfo = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "get update information for update #$updateId") {
+          getUpdateInfoById(updateId)
+        } ?: throw IllegalArgumentException("Update #$updateId is not found in the Plugin Repository")
+        return listOf(PluginCoordinate.ByUpdateInfo(updateInfo, pluginRepository))
+      }
+      else -> {
+        val file = File(pluginToTestArg)
+        if (!file.exists()) {
+          throw IllegalArgumentException("The file $file doesn't exist")
+        }
+        return listOf(PluginCoordinate.ByFile(file))
+      }
     }
   }
 
-  fun fetchPlugins(ideVersion: IdeVersion, pluginListFile: File, pluginPaths: List<String>): List<PluginCoordinate> =
+  private fun getPluginCoordinates(pluginListFile: File, ideVersion: IdeVersion, pluginPaths: List<String>): List<PluginCoordinate> =
       pluginPaths
-          .map(String::trim)
-          .filter(String::isNotEmpty)
           .flatMap {
             if (it.startsWith("id:")) {
-              downloadPluginBuilds(it.substringAfter("id:"), ideVersion)
+              getCompatiblePluginVersions(it.substringAfter("id:"), ideVersion)
             } else {
               var pluginFile = File(it)
               if (!pluginFile.isAbsolute) {
@@ -70,7 +74,7 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
             }
           }
 
-  private fun downloadPluginBuilds(pluginId: String, ideVersion: IdeVersion): List<PluginCoordinate> {
+  private fun getCompatiblePluginVersions(pluginId: String, ideVersion: IdeVersion): List<PluginCoordinate> {
     val allCompatibleUpdatesOfPlugin = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch all compatible updates of plugin $pluginId with $ideVersion") {
       getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId)
     }
