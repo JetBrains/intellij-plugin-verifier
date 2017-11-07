@@ -207,7 +207,7 @@ object OptionsParser {
                 if (fullLine.startsWith("$") || fullLine.endsWith("$")) {
                   pluginsCheckLastBuilds.add(trimmed)
                 } else {
-                  pluginsCheckLastBuilds.add(trimmed)
+                  pluginsCheckAllBuilds.add(trimmed)
                 }
               }
             }
