@@ -220,6 +220,14 @@ object OptionsParser {
     return Pair<List<String>, List<String>>(pluginsCheckAllBuilds, pluginsCheckLastBuilds)
   }
 
+  /**
+   * Requests the plugins' information for plugins with specified id-s.
+   *
+   * Parameter [ideVersion] is used to select the compatible versions of these plugins, that is,
+   * only the updates whose [since; until] range contains the [ideVersion] will be selected.
+   * [checkAllBuildsPluginIds] is a list of plugin id-s of plugins for which every build (aka plugin version) will be selected.
+   * [checkLastBuildsPluginIds] is a list of plugin id-s of plugins for which only the newest build (version) will be selected.
+   */
   fun requestUpdatesToCheckByIds(checkAllBuildsPluginIds: List<String>,
                                  checkLastBuildsPluginIds: List<String>,
                                  ideVersion: IdeVersion,

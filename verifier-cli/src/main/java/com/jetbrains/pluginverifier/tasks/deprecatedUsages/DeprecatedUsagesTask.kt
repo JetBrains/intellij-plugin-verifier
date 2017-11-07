@@ -32,7 +32,7 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
       verificationReportage.logVerificationStage("Scan of all the deprecated API elements of ${ideDescriptor.ideVersion} is about to start")
       val deprecatedIdeApiElements = IdeClassesVisitor().detectIdeDeprecatedApiElements(ideDescriptor)
       verificationReportage.logVerificationStage("All stages are complete")
-      return DeprecatedUsagesResult(ideDescriptor.ideVersion, pluginToDeprecatedUsages, deprecatedIdeApiElements)
+      return DeprecatedUsagesResult(ideDescriptor.ideVersion, ideVersionForCompatiblePlugins, pluginToDeprecatedUsages, deprecatedIdeApiElements)
     }
   }
 

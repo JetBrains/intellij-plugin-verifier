@@ -120,7 +120,8 @@ fun String.pluralizeWithNumber(times: Int): String = "$times " + this.pluralize(
 
 private val knownPluralForms = mapOf(
     "this" to "these",
-    "is" to "are"
+    "is" to "are",
+    "was" to "were"
 )
 
 fun String.pluralize(times: Int): String {

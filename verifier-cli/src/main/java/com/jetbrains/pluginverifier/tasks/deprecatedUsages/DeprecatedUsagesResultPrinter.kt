@@ -50,7 +50,7 @@ class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val plugin
          *     org.plugin.two:2.0 (1 usage)
          */
         if (deprecatedIdeApiToPluginUsages.isNotEmpty()) {
-          val testName = "(Mostly used $ideVersion deprecated API)"
+          val testName = "(Mostly used $verifiedIdeVersion deprecated API)"
           teamCityLog.testStarted(testName).use {
             val sortedByNumberOfPlugins = deprecatedIdeApiToPluginUsages.toList()
                 .sortedWith(compareByDescending<Pair<Location, MutableMap<PluginInfo, Int>>> { it.second.size }.thenBy { it.first.locationType })
@@ -75,7 +75,7 @@ class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val plugin
             }
             teamCityLog.testStdErr(testName, fullTestMessage)
             teamCityLog.testFailed(testName, "There " + "is".pluralize(deprecatedIdeApiToPluginUsages.size) + " ${deprecatedIdeApiToPluginUsages.size} deprecated API " +
-                "element".pluralize(deprecatedIdeApiToPluginUsages.size) + " in $ideVersion used in the checked plugins.\n" +
+                "element".pluralize(deprecatedIdeApiToPluginUsages.size) + " in $verifiedIdeVersion used in the checked plugins.\n" +
                 "You can explore concrete usages' details by looking into the verification-results " +
                 "directory of a specific plugin (see the build artifacts), or via the Find External Usages action of the API Watcher plugin", "")
           }
@@ -93,11 +93,11 @@ class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val plugin
         val unusedIdeDeprecatedElements = deprecatedIdeApiElements - deprecatedIdeApiToPluginUsages.keys
         val unusedIdeApiElementsNumber = unusedIdeDeprecatedElements.size
         if (unusedIdeDeprecatedElements.isNotEmpty()) {
-          val testName = "(Unused $ideVersion deprecated API elements)"
+          val testName = "(Unused $verifiedIdeVersion deprecated API elements)"
           teamCityLog.testStarted(testName).use {
             val fullTestMessage = buildString {
               for ((locationType, unusedApiElementsWithType) in unusedIdeDeprecatedElements.groupBy { it.locationType }) {
-                appendln("There " + "is".pluralize(unusedApiElementsWithType.size) + " ${unusedApiElementsWithType.size} " + "deprecated API " + locationType.pluralize(unusedApiElementsWithType.size) + " in $ideVersion unused in checked plugins:")
+                appendln("There " + "is".pluralize(unusedApiElementsWithType.size) + " ${unusedApiElementsWithType.size} " + "deprecated API " + locationType.pluralize(unusedApiElementsWithType.size) + " in $verifiedIdeVersion unused in checked plugins:")
                 val formattedUnusedUsages = unusedApiElementsWithType.map { it.formatUsageLocation() }.sorted()
                 for (unusedElement in formattedUnusedUsages) {
                   append("  ")
@@ -108,7 +108,7 @@ class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val plugin
             }
             teamCityLog.testStdErr(testName, fullTestMessage)
             teamCityLog.testFailed(testName, "There " + "is".pluralize(unusedIdeApiElementsNumber) + " $unusedIdeApiElementsNumber deprecated API " +
-                "element".pluralize(unusedIdeApiElementsNumber) + " in $ideVersion unused in the checked plugins.", ""
+                "element".pluralize(unusedIdeApiElementsNumber) + " in $verifiedIdeVersion unused in the checked plugins.", ""
             )
           }
         }
@@ -132,20 +132,24 @@ class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val plugin
                   }
             }
             teamCityLog.testStdErr(testName, fullTestMessage)
-            teamCityLog.testFailed(testName, "There " + "is".pluralize(numberOfPlugins) + " $numberOfPlugins " + "plugin".pluralize(numberOfPlugins) + " checked", "")
+            val testMessage = buildString {
+              appendln("There " + "is".pluralize(numberOfPlugins) + " $numberOfPlugins " + "plugin".pluralize(numberOfPlugins) + " checked.")
+              append("The compatible " + "version".pluralize(numberOfPlugins) + " of the " + "plugin".pluralize(numberOfPlugins) + "was".pluralize(numberOfPlugins) + " selected based on IDE version $ideVersionForCompatiblePlugins")
+            }
+            teamCityLog.testFailed(testName, testMessage, "")
           }
         }
 
         if (deprecatedIdeApiToPluginUsages.isNotEmpty() || unusedIdeDeprecatedElements.isNotEmpty()) {
           teamCityLog.buildStatusFailure(
               buildString {
-                append("In $ideVersion found ${deprecatedIdeApiElements.size} deprecated API " + "element".pluralize(deprecatedIdeApiElements.size) + ": ")
+                append("In $verifiedIdeVersion found ${deprecatedIdeApiElements.size} deprecated API " + "element".pluralize(deprecatedIdeApiElements.size) + ": ")
                 append("${deprecatedIdeApiToPluginUsages.size} " + "is".pluralize(deprecatedIdeApiToPluginUsages.size) + " used in $numberOfPlugins checked " + "plugin".pluralize(numberOfPlugins))
                 append(" and $unusedIdeApiElementsNumber " + "is".pluralize(unusedIdeApiElementsNumber) + " unused in " + "this".pluralize(numberOfPlugins) + " " + "plugin".pluralize(numberOfPlugins))
               }
           )
         } else {
-          teamCityLog.buildStatusSuccess("API of $ideVersion is up to date with $allPluginsHavingDeprecatedApiUsages " + "plugin".pluralize(numberOfPlugins) + " being checked")
+          teamCityLog.buildStatusSuccess("API of $verifiedIdeVersion is up to date with $allPluginsHavingDeprecatedApiUsages " + "plugin".pluralize(numberOfPlugins) + " being checked")
         }
       }
 
