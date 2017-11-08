@@ -229,7 +229,7 @@ class DownloadManager(private val downloadDir: File,
     }
   }
 
-  fun getOrLoadUpdate(updateInfo: UpdateInfo): DownloadPluginResult {
+  fun getOrDownloadPlugin(updateInfo: UpdateInfo): DownloadPluginResult {
     var pluginFile = getCachedFile(updateInfo)
 
     if (pluginFile == null || pluginFile.length() < BROKEN_FILE_THRESHOLD_BYTES) {
