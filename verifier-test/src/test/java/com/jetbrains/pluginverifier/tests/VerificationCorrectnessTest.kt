@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
+import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
@@ -68,10 +69,9 @@ class VerificationCorrectnessTest {
             externalClassesPrefixes,
             emptyList(),
             EmptyResolver,
-            NotFoundDependencyFinder(),
             true
         )
-        val tasks = listOf(pluginCoordinate to ideDescriptor)
+        val tasks = listOf(VerifierTask(pluginCoordinate, ideDescriptor, NotFoundDependencyFinder()))
 
         VerificationReportageImpl(EmptyReporterSetProvider).use { verificationReportage ->
           Verification.run(verifierParams, pluginDetailsProvider, tasks, verificationReportage, jdkDescriptor).single()

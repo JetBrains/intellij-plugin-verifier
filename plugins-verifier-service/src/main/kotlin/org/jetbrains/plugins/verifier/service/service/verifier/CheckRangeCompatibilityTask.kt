@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
+import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
@@ -86,14 +87,14 @@ class CheckRangeCompatibilityTask(private val updateInfo: UpdateInfo,
     val verificationReportage = createVerificationReportage(progress)
     val allResults = arrayListOf<Result>()
     for (ideDescriptor in ideDescriptors) {
+      val dependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsProvider)
       val verifierParameters = VerifierParameters(
           externalClassesPrefixes = emptyList(),
           problemFilters = emptyList(),
           externalClassPath = EmptyResolver,
-          dependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsProvider),
           findDeprecatedApiUsages = true
       )
-      val results = Verification.run(verifierParameters, pluginDetailsProvider, listOf(pluginCoordinate to ideDescriptor), verificationReportage, jdkDescriptor)
+      val results = Verification.run(verifierParameters, pluginDetailsProvider, listOf(VerifierTask(pluginCoordinate, ideDescriptor, dependencyFinder)), verificationReportage, jdkDescriptor)
       allResults.addAll(results)
     }
     return CheckRangeCompatibilityResult(updateInfo, CheckRangeCompatibilityResult.ResultType.VERIFICATION_DONE, allResults)

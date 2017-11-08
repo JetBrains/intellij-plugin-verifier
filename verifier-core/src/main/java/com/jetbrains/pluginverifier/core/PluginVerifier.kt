@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.dependencies.graph.DepEdge
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
+import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
@@ -32,6 +33,7 @@ import java.util.concurrent.Callable
 
 class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
                      private val ideDescriptor: IdeDescriptor,
+                     private val dependencyFinder: DependencyFinder,
                      private val runtimeResolver: Resolver,
                      private val verifierParameters: VerifierParameters,
                      private val pluginDetailsProvider: PluginDetailsProvider,
@@ -110,7 +112,7 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
     val depGraph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
     try {
       val start = DepVertex(plugin.pluginId!!, PluginDetails.FoundOpenPluginWithoutClasses(plugin))
-      DepGraphBuilder(verifierParameters.dependencyFinder).fillDependenciesGraph(start, depGraph)
+      DepGraphBuilder(dependencyFinder).fillDependenciesGraph(start, depGraph)
 
       val apiGraph = DepGraph2ApiGraphConverter().convert(depGraph, start)
       resultHolder.setDependenciesGraph(apiGraph)

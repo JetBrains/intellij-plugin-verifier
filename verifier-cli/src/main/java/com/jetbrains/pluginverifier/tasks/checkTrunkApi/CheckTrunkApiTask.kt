@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.core.Verification
+import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.dependencies.resolution.BundledPluginDependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.LocalRepositoryDependencyFinder
@@ -49,10 +50,9 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
         parameters.externalClassesPrefixes,
         parameters.problemsFilters,
         EmptyResolver,
-        dependencyFinder,
         false
     )
-    val tasks = pluginsToCheck.map { it to ideDescriptor }
+    val tasks = pluginsToCheck.map { VerifierTask(it, ideDescriptor, dependencyFinder) }
     return Verification.run(
         verifierParams,
         pluginDetailsProvider,

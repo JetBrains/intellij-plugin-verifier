@@ -5,9 +5,7 @@ import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
-import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.results.Result
@@ -36,7 +34,7 @@ class VerifierExecutor(concurrentWorkers: Int) : Closeable {
   }
 
   fun verify(
-      tasks: List<Pair<PluginCoordinate, IdeDescriptor>>,
+      tasks: List<VerifierTask>,
       jdkDescriptor: JdkDescriptor,
       parameters: VerifierParameters,
       pluginDetailsProvider: PluginDetailsProvider,
@@ -46,15 +44,15 @@ class VerifierExecutor(concurrentWorkers: Int) : Closeable {
   }
 
   private fun runVerificationConcurrently(
-      tasks: List<Pair<PluginCoordinate, IdeDescriptor>>,
+      tasks: List<VerifierTask>,
       parameters: VerifierParameters,
       jdkResolver: Resolver,
       pluginDetailsProvider: PluginDetailsProvider,
       reportage: VerificationReportage
   ): List<Result> {
-    for ((pluginCoordinate, ideDescriptor) in tasks) {
+    for ((pluginCoordinate, ideDescriptor, dependencyFinder) in tasks) {
       val pluginLogger = reportage.createPluginLogger(pluginCoordinate, ideDescriptor)
-      val verifier = PluginVerifier(pluginCoordinate, ideDescriptor, jdkResolver, parameters, pluginDetailsProvider, pluginLogger)
+      val verifier = PluginVerifier(pluginCoordinate, ideDescriptor, dependencyFinder, jdkResolver, parameters, pluginDetailsProvider, pluginLogger)
       completionService.submit(verifier)
     }
     return waitForAllResults(completionService, tasks.size)

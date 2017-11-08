@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
+import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
@@ -25,8 +26,8 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
   }
 
   private fun doExecute(notExcludedPlugins: List<PluginCoordinate>, reportage: VerificationReportage): CheckIdeResult {
-    val verifierParams = VerifierParameters(parameters.externalClassesPrefixes, parameters.problemsFilters, parameters.externalClassPath, parameters.dependencyFinder, false)
-    val tasks = notExcludedPlugins.map { it to parameters.ideDescriptor }
+    val verifierParams = VerifierParameters(parameters.externalClassesPrefixes, parameters.problemsFilters, parameters.externalClassPath, false)
+    val tasks = notExcludedPlugins.map { VerifierTask(it, parameters.ideDescriptor, parameters.dependencyFinder) }
     val results = Verification.run(verifierParams, pluginDetailsProvider, tasks, reportage, parameters.jdkDescriptor)
     return CheckIdeResult(parameters.ideDescriptor.ideVersion, results, parameters.excludedPlugins, getMissingUpdatesProblems())
   }

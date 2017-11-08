@@ -1,9 +1,7 @@
 package com.jetbrains.pluginverifier.core
 
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
-import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.results.Result
@@ -18,7 +16,7 @@ object Verification {
 
   fun run(verifierParameters: VerifierParameters,
           pluginDetailsProvider: PluginDetailsProvider,
-          tasks: List<Pair<PluginCoordinate, IdeDescriptor>>,
+          tasks: List<VerifierTask>,
           reportage: VerificationReportage,
           jdkDescriptor: JdkDescriptor): List<Result> {
     val concurrentWorkers = estimateNumberOfConcurrentWorkers(reportage)

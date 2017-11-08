@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.pluginverifier.core.Verification
+import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
@@ -22,10 +23,9 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
           externalClassesPrefixes = emptyList(),
           problemFilters = emptyList(),
           externalClassPath = EmptyResolver,
-          dependencyFinder = dependencyFinder,
           findDeprecatedApiUsages = true
       )
-      val tasks = pluginsToCheck.map { it to ideDescriptor }
+      val tasks = pluginsToCheck.map { VerifierTask(it, ideDescriptor, dependencyFinder) }
       verificationReportage.logVerificationStage("Search of the deprecated API of ${ideDescriptor.ideVersion} in " + "plugin".pluralizeWithNumber(pluginsToCheck.size) + " is about to start")
       val results = Verification.run(verifierParams, pluginDetailsProvider, tasks, verificationReportage, jdkDescriptor)
       val pluginToDeprecatedUsages = results.associateBy({ it.plugin }, { it.verdict.toDeprecatedUsages() })

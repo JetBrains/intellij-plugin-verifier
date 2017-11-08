@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.parameters
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 
 /**
@@ -23,11 +22,6 @@ data class VerifierParameters(
      * The Resolver for external classes. The verification can refer to them.
      */
     val externalClassPath: Resolver,
-
-    /**
-     * This finder will be used to resolve plugin dependencies.
-     */
-    val dependencyFinder: DependencyFinder,
 
     /**
      * Whether the usages of deprecated IntelliJ Platform API must be reported or not
