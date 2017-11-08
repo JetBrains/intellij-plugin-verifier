@@ -36,9 +36,13 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
       val allBrokenPlugins = (releaseIde.getIdeBrokenListedPlugins() + trunkIde.getIdeBrokenListedPlugins()).toSet()
       val pluginsToCheck = pluginsToCheck.filterNot { it.toPluginIdAndVersion(pluginDetailsProvider) in allBrokenPlugins }
       val executorService = Executors.newFixedThreadPool(2)
-      val releaseResults = executorService.submit(Callable { checkIde(releaseIde, pluginsToCheck, ReleaseFinder(), verificationReportage) })
-      val trunkResults = executorService.submit(Callable { checkIde(trunkIde, pluginsToCheck, TrunkFinder(), verificationReportage) })
-      return CheckTrunkApiResult.create(releaseIde.ideVersion, releaseResults.get(), trunkIde.ideVersion, trunkResults.get())
+      try {
+        val releaseResults = executorService.submit(Callable { checkIde(releaseIde, pluginsToCheck, ReleaseFinder(), verificationReportage) })
+        val trunkResults = executorService.submit(Callable { checkIde(trunkIde, pluginsToCheck, TrunkFinder(), verificationReportage) })
+        return CheckTrunkApiResult.create(releaseIde.ideVersion, releaseResults.get(), trunkIde.ideVersion, trunkResults.get())
+      } finally {
+        executorService.shutdownNow()
+      }
     }
   }
 
