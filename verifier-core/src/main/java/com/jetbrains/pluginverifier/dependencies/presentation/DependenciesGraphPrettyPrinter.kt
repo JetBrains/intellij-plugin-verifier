@@ -21,9 +21,7 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
 
     const val FAILED_DEPENDENCY_PREFIX = "(failed)"
 
-    const val OPTIONAL_DEPENDENCY_PREFIX = "[optional]"
-
-    const val MODULE_DEPENDENCY_PREFIX = "[module]"
+    const val OPTIONAL_DEPENDENCY_PREFIX = "(optional)"
   }
 
   private val visitedNodes = hashSetOf<DependencyNode>()
@@ -35,7 +33,7 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
   private fun recursivelyCalculateLines(currentNode: DependencyNode): List<String> {
     if (currentNode in visitedNodes) {
       //This node has already been printed with all its dependencies.
-      return listOf("$currentNode ${TRANSITIVE_DEPENDENCY_SUFFIX}")
+      return listOf("$currentNode $TRANSITIVE_DEPENDENCY_SUFFIX")
     }
     visitedNodes.add(currentNode)
     val result = arrayListOf<String>()
@@ -48,13 +46,13 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
       val childLines = recursivelyCalculateLines(edge.to)
       val headerLine = childLines.first().let { line ->
         buildString {
-          if (edge.dependency.isModule) {
-            append(MODULE_DEPENDENCY_PREFIX + " ")
-          }
           if (edge.dependency.isOptional) {
             append(OPTIONAL_DEPENDENCY_PREFIX + " ")
           }
           append(line)
+          if (edge.dependency.isModule) {
+            append(" " + "[declaring module ${edge.dependency.id}]")
+          }
         }
       }
       val tailLines = childLines.drop(1)
@@ -62,7 +60,7 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
     }
 
     currentNode.missingDependencies.mapTo(childrenLines) { missingDependency ->
-      listOf("${FAILED_DEPENDENCY_PREFIX} ${missingDependency.dependency}: ${missingDependency.missingReason}")
+      listOf("$FAILED_DEPENDENCY_PREFIX ${missingDependency.dependency}: ${missingDependency.missingReason}")
     }
 
     if (childrenLines.isNotEmpty()) {

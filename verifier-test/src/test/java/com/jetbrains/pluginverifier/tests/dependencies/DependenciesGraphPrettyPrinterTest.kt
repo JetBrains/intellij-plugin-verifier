@@ -80,10 +80,10 @@ class DependenciesGraphPrettyPrinterTest {
 start:1.0
 +--- b:1.0
 |    +--- c:1.0
-|    |    +--- [module] [optional] optional.module:<unspecified>
+|    |    +--- (optional) optional.module:<unspecified> [declaring module optional.module]
 |    |    +--- (failed) e: plugin e is not found
 |    |    \--- (failed) f (optional): plugin e is not found
-|    \--- [module] some.module:<unspecified>
+|    \--- some.module:<unspecified> [declaring module some.module]
 \--- c:1.0 (*)
 """.trim(), prettyPresentation)
   }
