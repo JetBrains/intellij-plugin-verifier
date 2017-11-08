@@ -10,9 +10,9 @@ data class FreeSpaceReport(val usedSpace: Long,
                            val watchedDirectory: File) {
 
   override fun toString(): String = buildString {
-    append("Directory $watchedDirectory space: ")
+    append("$watchedDirectory: ")
     append("${availableSpace.bytesToMegabytes()} Mb available; ")
-    append("${lowSpaceThreshold.bytesToMegabytes()} Mb desired;")
+    append("${lowSpaceThreshold.bytesToMegabytes()} Mb desired; ")
     append("${usedSpace.bytesToMegabytes()} Mb occupied;")
   }
 

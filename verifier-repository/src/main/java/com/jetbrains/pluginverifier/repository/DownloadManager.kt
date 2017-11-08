@@ -72,7 +72,7 @@ class DownloadManager(private val downloadDir: File,
     releaseOldLocks()
     val newSpaceReport = spaceWatcher.getSpaceReport()
     if (newSpaceReport.availableSpace < newSpaceReport.lowSpaceThreshold) {
-      LOG.warn("Not enough space: $newSpaceReport")
+      LOG.warn("Available space is less than a recommended threshold: $newSpaceReport")
       deleteUnusedPlugins()
     }
   }
@@ -85,15 +85,13 @@ class DownloadManager(private val downloadDir: File,
         .filter { Ints.tryParse(it.nameWithoutExtension) != null }
         .sortedByDescending { it.length() }
 
-    LOG.info("Unused updates to be deleted: [{}]", updatesToDelete.joinToString())
-
     for (update in updatesToDelete) {
       val spaceReport = spaceWatcher.getSpaceReport()
       if (spaceReport.availableSpace > spaceReport.enoughSpaceThreshold) {
         LOG.info("Enough space after cleanup ${spaceReport.availableSpace.bytesToMegabytes()} Mb > ${spaceReport.enoughSpaceThreshold.bytesToMegabytes()} Mb")
         break
       }
-      LOG.info("Deleting unused update $update with size ${update.length().bytesToMegabytes()} Mb")
+      LOG.info("Deleting unused update $update of size ${update.length().bytesToMegabytes()} Mb")
       update.deleteLogged()
     }
 
