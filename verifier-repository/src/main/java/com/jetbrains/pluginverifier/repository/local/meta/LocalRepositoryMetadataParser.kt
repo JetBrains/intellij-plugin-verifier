@@ -22,7 +22,9 @@ class LocalRepositoryMetadataParser {
             IdeVersion.createIdeVersion(plugin.ideaVersion.sinceBuild),
             plugin.ideaVersion.untilBuild?.let { IdeVersion.createIdeVersion(it) },
             plugin.vendor.name,
-            xmlFile.resolveSibling(plugin.downloadUrl)
+            xmlFile.resolveSibling(plugin.downloadUrl),
+            //todo: in fact, this is not defined in the plugins.xml. The only way to fetch this info is to read plugin descriptors.
+            definedModules = emptySet()
         )
       }
     }

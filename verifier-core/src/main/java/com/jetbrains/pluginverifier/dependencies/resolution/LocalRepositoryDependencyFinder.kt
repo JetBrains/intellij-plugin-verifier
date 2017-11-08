@@ -11,10 +11,11 @@ import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
 class LocalRepositoryDependencyFinder(private val localPluginRepository: LocalPluginRepository,
                                       private val pluginDetailsProvider: PluginDetailsProvider) : DependencyFinder {
   override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
-    if (dependency.isModule) {
-      return DependencyFinder.Result.NotFound("Modules are not supported by the local repositories: $dependency")
+    val localPlugin = if (dependency.isModule) {
+      localPluginRepository.findPluginByModule(dependency.id)
+    } else {
+      localPluginRepository.findPluginById(dependency.id)
     }
-    val localPlugin = localPluginRepository.findPluginById(dependency.id)
     return if (localPlugin != null) {
       DependencyFinder.Result.FoundCoordinates(PluginCoordinate.ByFile(localPlugin.pluginFile), pluginDetailsProvider)
     } else {

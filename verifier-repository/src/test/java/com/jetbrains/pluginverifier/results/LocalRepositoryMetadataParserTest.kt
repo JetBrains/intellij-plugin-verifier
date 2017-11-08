@@ -24,7 +24,8 @@ class LocalRepositoryMetadataParserTest {
             IdeVersion.createIdeVersion("181.468"),
             IdeVersion.createIdeVersion("181.468"),
             "JetBrains",
-            xmlFile.resolveSibling("file.zip")
+            xmlFile.resolveSibling("file.zip"),
+            emptySet()
         )
     )
     Assert.assertEquals(expected, parsed)

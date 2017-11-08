@@ -11,12 +11,7 @@ import java.io.File
  */
 object LocalPluginRepositoryFactory {
   fun createLocalPluginRepository(ideVersion: IdeVersion, repositoryRoot: File): LocalPluginRepository {
-    val repositoryMetadataXml = repositoryRoot.resolve("plugins.xml")
-    return if (repositoryMetadataXml.exists()) {
-      createLocalPluginRepositoryByMetadata(repositoryMetadataXml, ideVersion)
-    } else {
-      createLocalPluginRepositoryByFiles(ideVersion, repositoryRoot)
-    }
+    return createLocalPluginRepositoryByFiles(ideVersion, repositoryRoot)
   }
 
   private fun createLocalPluginRepositoryByFiles(ideVersion: IdeVersion, repositoryRoot: File): LocalPluginRepository {
@@ -27,7 +22,7 @@ object LocalPluginRepositoryFactory {
       val pluginCreationResult = pluginManager.createPlugin(pluginFile)
       if (pluginCreationResult is PluginCreationSuccess) {
         val localPluginInfo = with(pluginCreationResult.plugin) {
-          LocalPluginInfo(pluginId!!, pluginVersion!!, pluginName ?: pluginId!!, sinceBuild!!, untilBuild, vendor, pluginFile)
+          LocalPluginInfo(pluginId!!, pluginVersion!!, pluginName ?: pluginId!!, sinceBuild!!, untilBuild, vendor, pluginFile, definedModules)
         }
         plugins.add(localPluginInfo)
       }
@@ -35,6 +30,10 @@ object LocalPluginRepositoryFactory {
     return LocalPluginRepository(ideVersion, plugins)
   }
 
+  /**
+   * The plugins.xml meta-file doesn't have the definition of modules contained in the plugins
+   * so we actually have to read the plugin descriptors.
+   */
   private fun createLocalPluginRepositoryByMetadata(repositoryMetadataXml: File, ideVersion: IdeVersion): LocalPluginRepository {
     val plugins = try {
       LocalRepositoryMetadataParser().parseFromXml(repositoryMetadataXml)

@@ -10,4 +10,5 @@ data class LocalPluginInfo(override val pluginId: String,
                            val sinceBuild: IdeVersion,
                            val untilBuild: IdeVersion?,
                            val vendor: String?,
-                           val pluginFile: File) : PluginInfo
+                           val pluginFile: File,
+                           val definedModules: Set<String>) : PluginInfo

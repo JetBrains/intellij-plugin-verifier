@@ -79,7 +79,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
         return bundledFound
       }
 
-      if (dependency.id in parameters.jetBrainsPluginIds) {
+      if (dependency.isModule || dependency.id in parameters.jetBrainsPluginIds) {
         if (releaseLocalRepositoryFinder != null) {
           val locallyFound = releaseLocalRepositoryFinder.findPluginDependency(dependency)
           if (locallyFound !is DependencyFinder.Result.NotFound) {

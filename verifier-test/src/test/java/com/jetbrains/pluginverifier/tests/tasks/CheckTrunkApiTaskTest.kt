@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.tests.tasks
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion.createIdeVersion
+import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
@@ -13,109 +14,181 @@ import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiParams
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiTask
 import com.jetbrains.pluginverifier.tests.mocks.*
-import org.junit.Assert.assertEquals
+import org.hamcrest.Matchers.containsInAnyOrder
+import org.hamcrest.Matchers.instanceOf
+import org.junit.Assert.assertThat
 import org.junit.Test
 import java.io.File
 
 /**
  * Created by Sergey.Patrikeev
  */
+@Suppress("MemberVisibilityCanPrivate")
 class CheckTrunkApiTaskTest {
+
+  val someJetBrainsPluginId = "org.jetbrains.plugin"
+
+  val someJetBrainsModule = "org.jetbrains.module"
+
+  val someJetBrainsPluginContainingModuleId = "org.jetbrains.module.container"
+
+  val someJetBrainsMockPlugin1 = MockIdePlugin(
+      pluginId = someJetBrainsPluginId,
+      pluginVersion = "1.0",
+      originalFile = File("jetbrains.1.0")
+  )
+
+  val someJetBrainsMockPlugin2 = MockIdePlugin(
+      pluginId = someJetBrainsPluginId,
+      pluginVersion = "2.0",
+      originalFile = File("jetbrains.2.0")
+  )
+
+  val someJetBrainsMockPluginContainingModule = MockIdePlugin(
+      pluginId = someJetBrainsPluginContainingModuleId,
+      pluginVersion = "1.0",
+      definedModules = setOf(someJetBrainsModule),
+      originalFile = File("jetbrains.module.container")
+  )
+
+  val pluginToCheck = MockIdePlugin(
+      pluginId = "plugin.to.check",
+      pluginVersion = "1.0",
+      dependencies = listOf(
+          //Dependency by id
+          PluginDependencyImpl(someJetBrainsPluginId, false, false),
+
+          //Dependency on module which is defined in [someJetBrainsPluginContainingModuleId]
+          PluginDependencyImpl(someJetBrainsModule, false, true)
+      ),
+      originalFile = File("plugin.to.check.file")
+  )
+
+  val releaseVersion = createIdeVersion("IU-173.1")
+
+  val trunkVersion = createIdeVersion("IU-181.1")
+
+  val releaseIde = MockIde(releaseVersion)
+
+  val trunkIde = MockIde(trunkVersion)
+
   @Test
-  fun `local plugins repository is used and the local plugins are resolved`() {
-    val releaseVersion = createIdeVersion("IU-173.1")
-    val trunkVersion = createIdeVersion("IU-181.1")
-
-    val releaseIde = MockIde(releaseVersion)
-    val trunkIde = MockIde(trunkVersion)
-
-    val someJetbrainsPluginId = "org.jetbrains.plugin"
-
-    val pluginToCheckFile = File("plugin to check")
-
-    val someJetBrainsMockPlugin1 = MockIdePlugin(
-        pluginId = someJetbrainsPluginId,
-        pluginVersion = "1.0"
-    )
-
-    val someJetBrainsMockPlugin2 = MockIdePlugin(
-        pluginId = someJetbrainsPluginId,
-        pluginVersion = "2.0"
-    )
-
-    val pluginToCheck = MockIdePlugin(
-        pluginId = "plugin.to.check",
-        pluginVersion = "1.0",
-        dependencies = listOf(PluginDependencyImpl(someJetbrainsPluginId, false, false))
-    )
-
-    val jetBrainsPluginFile1 = File("jetbrains.1.0")
-    val jetBrainsPluginFile2 = File("jetbrains.2.0")
-
+  fun `local plugins repository is used and the local plugins are resolved both by id and by module id`() {
+    val releaseLocalPluginsRepository = createReleaseLocalRepositoryForTest()
+    val trunkLocalPluginsRepository = createTrunkLocalRepositoryForTest()
+    val checkTrunkApiParams = createTrunkApiParamsForTest(releaseIde, trunkIde, releaseLocalPluginsRepository, trunkLocalPluginsRepository)
+    val pluginDetailsProvider = createPluginDetailsProviderForTest(pluginToCheck)
     val checkTrunkApiTask = CheckTrunkApiTask(
-        CheckTrunkApiParams(
-            IdeDescriptor(releaseIde, EmptyResolver),
-            IdeDescriptor(trunkIde, EmptyResolver),
-            emptyList(),
-            emptyList(),
-            TestJdkDescriptorProvider.getJdkDescriptorForTests(),
-            listOf(someJetbrainsPluginId),
-            false,
-            File("release ide file"),
-            LocalPluginRepository(releaseVersion, listOf(
-                LocalPluginInfo(
-                    someJetbrainsPluginId,
-                    "1.0",
-                    "plugin name",
-                    releaseVersion,
-                    releaseVersion,
-                    "JetBrains",
-                    jetBrainsPluginFile1
-                )
-            )),
-            LocalPluginRepository(trunkVersion, listOf(
-                LocalPluginInfo(
-                    someJetbrainsPluginId,
-                    "2.0",
-                    "plugin name",
-                    trunkVersion,
-                    trunkVersion,
-                    "JetBrains",
-                    jetBrainsPluginFile2
-                )
-            )),
-            listOf(PluginCoordinate.ByFile(pluginToCheckFile))
-        ),
+        checkTrunkApiParams,
         EmptyPublicPluginRepository,
-        MockPluginDetailsProvider(
-            mapOf(
-                PluginCoordinate.ByFile(jetBrainsPluginFile1) to PluginDetails.FoundOpenPluginWithoutClasses(
-                    someJetBrainsMockPlugin1
-                ),
-                PluginCoordinate.ByFile(jetBrainsPluginFile2) to PluginDetails.FoundOpenPluginWithoutClasses(
-                    someJetBrainsMockPlugin2
-                ),
-                PluginCoordinate.ByFile(pluginToCheckFile) to PluginDetails.FoundOpenPluginWithoutClasses(
-                    pluginToCheck
-                )
-            )
-        )
+        pluginDetailsProvider
     )
 
-    val verificationReportage = VerificationReportageImpl(EmptyReporterSetProvider)
+    assertPluginsAreProperlyResolved(checkTrunkApiTask)
+  }
 
-    val (_, releaseResults, _, trunkResults, _) = checkTrunkApiTask.execute(verificationReportage)
-    val trunkVerdict = trunkResults.single().verdict as Verdict.OK
-    val releaseVerdict = releaseResults.single().verdict as Verdict.OK
+  private fun assertPluginsAreProperlyResolved(checkTrunkApiTask: CheckTrunkApiTask) {
+    val (_, releaseResults, _, trunkResults, _) = checkTrunkApiTask.execute(VerificationReportageImpl(EmptyReporterSetProvider))
+    val trunkVerdict = trunkResults.single().verdict
+    val releaseVerdict = releaseResults.single().verdict
 
-    val trunkGraph = trunkVerdict.dependenciesGraph
-    val releaseGraph = releaseVerdict.dependenciesGraph
+    assertThat(trunkVerdict, instanceOf(Verdict.OK::class.java))
+    assertThat(releaseVerdict, instanceOf(Verdict.OK::class.java))
 
-    val trunkJBUsed = trunkGraph.vertices.find { it.id == someJetbrainsPluginId }!!
-    val releaseJBUsed = releaseGraph.vertices.find { it.id == someJetbrainsPluginId }!!
+    val trunkGraph = (trunkVerdict as Verdict.OK).dependenciesGraph
+    val releaseGraph = (releaseVerdict as Verdict.OK).dependenciesGraph
 
-    assertEquals("1.0", releaseJBUsed.version)
-    assertEquals("2.0", trunkJBUsed.version)
+    assertThat(trunkGraph.vertices.drop(1), containsInAnyOrder(
+        DependencyNode(someJetBrainsPluginId, "2.0", emptyList()),
+        DependencyNode(someJetBrainsPluginContainingModuleId, "1.0", emptyList())
+    ))
+
+    assertThat(releaseGraph.vertices.drop(1), containsInAnyOrder(
+        DependencyNode(someJetBrainsPluginId, "1.0", emptyList()),
+        DependencyNode(someJetBrainsPluginContainingModuleId, "1.0", emptyList())
+    ))
+  }
+
+  private fun createPluginDetailsProviderForTest(pluginToCheck: MockIdePlugin): MockPluginDetailsProvider {
+    return MockPluginDetailsProvider(
+        listOf(someJetBrainsMockPlugin1, someJetBrainsMockPlugin2, someJetBrainsMockPluginContainingModule, pluginToCheck)
+            .associateBy({ PluginCoordinate.ByFile(it.originalFile!!) }) {
+              PluginDetails.FoundOpenPluginWithoutClasses(it)
+            }
+    )
+  }
+
+  private fun createTrunkApiParamsForTest(
+      releaseIde: MockIde,
+      trunkIde: MockIde,
+      releaseLocalPluginsRepository: LocalPluginRepository,
+      trunkLocalPluginsRepository: LocalPluginRepository
+  ): CheckTrunkApiParams {
+    return CheckTrunkApiParams(
+        IdeDescriptor(releaseIde, EmptyResolver),
+        IdeDescriptor(trunkIde, EmptyResolver),
+        emptyList(),
+        emptyList(),
+        TestJdkDescriptorProvider.getJdkDescriptorForTests(),
+        listOf(someJetBrainsPluginId),
+        false,
+        File("release ide file"),
+        releaseLocalPluginsRepository,
+        trunkLocalPluginsRepository,
+        listOf(PluginCoordinate.ByFile(pluginToCheck.originalFile!!))
+    )
+  }
+
+  private fun createReleaseLocalRepositoryForTest(): LocalPluginRepository {
+    return LocalPluginRepository(releaseVersion, listOf(
+        LocalPluginInfo(
+            someJetBrainsPluginId,
+            "1.0",
+            "plugin name",
+            releaseVersion,
+            releaseVersion,
+            "JetBrains",
+            someJetBrainsMockPlugin1.originalFile!!,
+            emptySet()
+        ),
+
+        LocalPluginInfo(
+            someJetBrainsPluginContainingModuleId,
+            "1.0",
+            "module container",
+            releaseVersion,
+            releaseVersion,
+            "JetBrains",
+            someJetBrainsMockPluginContainingModule.originalFile!!,
+            setOf(someJetBrainsModule)
+        )
+    ))
+  }
+
+  private fun createTrunkLocalRepositoryForTest(): LocalPluginRepository {
+    return LocalPluginRepository(trunkVersion, listOf(
+        LocalPluginInfo(
+            someJetBrainsPluginId,
+            "2.0",
+            "plugin name",
+            trunkVersion,
+            trunkVersion,
+            "JetBrains",
+            someJetBrainsMockPlugin2.originalFile!!,
+            emptySet()
+        ),
+
+        LocalPluginInfo(
+            someJetBrainsPluginContainingModuleId,
+            "1.0",
+            "module container",
+            trunkVersion,
+            trunkVersion,
+            "JetBrains",
+            someJetBrainsMockPluginContainingModule.originalFile!!,
+            setOf(someJetBrainsModule)
+        )
+    ))
   }
 
 
