@@ -132,6 +132,19 @@ fun String.pluralize(times: Int): String {
   return knownPluralForms[this] ?: English.plural(this, times)
 }
 
+fun <T> List<T>.splitList(condition: (T) -> Boolean): Pair<List<T>, List<T>> {
+  val match = arrayListOf<T>()
+  val nonMatch = arrayListOf<T>()
+  for (t in this) {
+    if (condition(t)) {
+      match.add(t)
+    } else {
+      nonMatch.add(t)
+    }
+  }
+  return match to nonMatch
+}
+
 fun <T> List<T>.listEndsWith(vararg ending: T): Boolean {
   if (ending.isEmpty()) {
     return true

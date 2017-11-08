@@ -20,7 +20,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
                       private val pluginRepository: PluginRepository,
                       private val pluginDetailsProvider: PluginDetailsProvider) : Task() {
 
-  private fun getDependencyResolver(ide: Ide, pluginDetails: List<PluginDetails>): DependencyFinder = object : DependencyFinder {
+  private fun createDependencyFinder(ide: Ide, pluginDetails: List<PluginDetails>): DependencyFinder = object : DependencyFinder {
 
     private val ideDependencyResolver = IdeDependencyFinder(ide, pluginRepository, pluginDetailsProvider)
 
@@ -59,7 +59,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
   private fun doExecute(progress: VerificationReportage, pluginDetails: List<PluginDetails>): CheckPluginResult {
     val results = arrayListOf<Result>()
     parameters.ideDescriptors.forEach { ideDescriptor ->
-      val dependencyResolver = getDependencyResolver(ideDescriptor.ide, pluginDetails)
+      val dependencyResolver = createDependencyFinder(ideDescriptor.ide, pluginDetails)
       parameters.pluginCoordinates.mapTo(results) {
         doVerification(it, ideDescriptor, dependencyResolver, progress)
       }

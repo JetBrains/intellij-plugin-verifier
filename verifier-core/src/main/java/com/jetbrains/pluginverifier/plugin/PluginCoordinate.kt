@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.plugin
 
+import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import java.io.File
@@ -28,4 +29,14 @@ sealed class PluginCoordinate {
 
   }
 
+}
+
+fun PluginCoordinate.toPluginIdAndVersion(pluginDetailsProvider: PluginDetailsProvider): PluginIdAndVersion? = when (this) {
+  is PluginCoordinate.ByUpdateInfo -> PluginIdAndVersion(updateInfo.pluginId, updateInfo.version)
+  is PluginCoordinate.ByFile -> {
+    pluginDetailsProvider.providePluginDetails(this).use { pluginDetails ->
+      val plugin = pluginDetails.plugin
+      return plugin?.let { PluginIdAndVersion(it.pluginId ?: "", it.pluginVersion ?: "") }
+    }
+  }
 }

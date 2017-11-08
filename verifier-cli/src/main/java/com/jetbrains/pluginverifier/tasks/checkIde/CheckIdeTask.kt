@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.plugin.toPluginIdAndVersion
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -17,25 +18,10 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
                    val pluginRepository: PluginRepository,
                    val pluginDetailsProvider: PluginDetailsProvider) : Task() {
 
+  //todo: get rid of excludedPlugins here?
   override fun execute(verificationReportage: VerificationReportage): CheckIdeResult {
-    val notExcludedPlugins = parameters.pluginsToCheck.filterNot { isExcluded(it) }
+    val notExcludedPlugins = parameters.pluginsToCheck.filterNot { it.toPluginIdAndVersion(pluginDetailsProvider) in parameters.excludedPlugins }
     return doExecute(notExcludedPlugins, verificationReportage)
-  }
-
-  private fun isExcluded(pluginCoordinate: PluginCoordinate) = when (pluginCoordinate) {
-    is PluginCoordinate.ByUpdateInfo -> {
-      val updateInfo = pluginCoordinate.updateInfo
-      PluginIdAndVersion(updateInfo.pluginId, updateInfo.version) in parameters.excludedPlugins
-    }
-    is PluginCoordinate.ByFile -> {
-      pluginDetailsProvider.providePluginDetails(pluginCoordinate).use { pluginDetails ->
-        val plugin = pluginDetails.plugin
-        if (plugin != null) {
-          return PluginIdAndVersion(plugin.pluginId ?: "", plugin.pluginVersion ?: "") in parameters.excludedPlugins
-        }
-        return true
-      }
-    }
   }
 
   private fun doExecute(notExcludedPlugins: List<PluginCoordinate>, reportage: VerificationReportage): CheckIdeResult {

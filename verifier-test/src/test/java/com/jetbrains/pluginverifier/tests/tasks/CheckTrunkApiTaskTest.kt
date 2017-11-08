@@ -104,10 +104,9 @@ class CheckTrunkApiTaskTest {
 
     val verificationReportage = VerificationReportageImpl(EmptyReporterSetProvider)
 
-    val checkTrunkApiResult = checkTrunkApiTask.execute(verificationReportage)
-    val (trunkResult, releaseResult) = checkTrunkApiResult
-    val trunkVerdict = trunkResult.results.single().verdict as Verdict.OK
-    val releaseVerdict = releaseResult.results.single().verdict as Verdict.OK
+    val (_, releaseResults, _, trunkResults, _) = checkTrunkApiTask.execute(verificationReportage)
+    val trunkVerdict = trunkResults.single().verdict as Verdict.OK
+    val releaseVerdict = releaseResults.single().verdict as Verdict.OK
 
     val trunkGraph = trunkVerdict.dependenciesGraph
     val releaseGraph = releaseVerdict.dependenciesGraph
