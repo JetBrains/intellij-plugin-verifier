@@ -181,7 +181,7 @@ class DownloadManager(private val downloadDir: File,
    *  @return true if [tempFile] has been moved to [finalFile], false otherwise
    */
   @Synchronized
-  private fun moveDownloaded(tempFile: File, finalFile: File, updateInfo: UpdateInfo): Boolean {
+  private fun moveDownloaded(tempFile: File, finalFile: File): Boolean {
     if (finalFile.exists()) {
       if (finalFile.isCorrupterPluginFile()) {
         FileUtils.forceDelete(finalFile)
@@ -207,7 +207,7 @@ class DownloadManager(private val downloadDir: File,
      */
     val lock = registerLock(pluginFile)
     val moved = lock.closeOnException {
-      moveDownloaded(tempFile, pluginFile, updateInfo)
+      moveDownloaded(tempFile, pluginFile)
     }
     if (moved) {
       LOG.debug("Plugin $updateInfo is saved into $pluginFile")
