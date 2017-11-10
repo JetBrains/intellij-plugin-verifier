@@ -5,6 +5,10 @@ import org.objectweb.asm.tree.ClassNode
 class ClassParentsVisitor(private val context: VerificationContext,
                           private val visitInterfaces: Boolean) {
 
+  companion object {
+    const val JAVA_LANG_OBJECT = "java/lang/Object"
+  }
+
   private val visitedClasses: MutableSet<String> = hashSetOf()
 
   fun visitClass(currentClass: ClassNode, visitSelf: Boolean, classProcessor: (ClassNode) -> Boolean) {
@@ -14,7 +18,7 @@ class ClassParentsVisitor(private val context: VerificationContext,
       return
     }
 
-    val superName: String = currentClass.superName ?: "java/lang/Object"
+    val superName: String = currentClass.superName ?: JAVA_LANG_OBJECT
 
     val superClassName = listOf(superName)
     @Suppress("UNCHECKED_CAST")

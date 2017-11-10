@@ -106,7 +106,7 @@ fun VerificationContext.isSubclassOf(childClassName: String, possibleParentName:
 }
 
 fun VerificationContext.isSubclassOf(child: ClassNode, possibleParentName: String): Boolean {
-  if (possibleParentName == "java/lang/Object") {
+  if (possibleParentName == ClassParentsVisitor.JAVA_LANG_OBJECT) {
     return true
   }
 
