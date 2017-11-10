@@ -35,17 +35,15 @@ class OverrideNonFinalVerifier : MethodVerifier {
      * doesn't override a final method.
      * Java interfaces are not allowed to have final methods so it works.
      */
-    ClassParentsVisitor(ctx, false).visitClassAndParents(clazz) { parent ->
-      if (parent.name == clazz.name) {
-        return@visitClassAndParents true
-      }
+    ClassParentsVisitor(ctx, false).visitClass(clazz, false) { parent ->
       val sameMethod = (parent.methods as List<MethodNode>).firstOrNull { it.name == method.name && it.desc == method.desc }
       if (sameMethod != null && sameMethod.isFinal()) {
         val methodLocation = ctx.fromMethod(parent, sameMethod)
         ctx.registerProblem(OverridingFinalMethodProblem(methodLocation, ctx.fromClass(clazz)))
-        return@visitClassAndParents false
+        false
+      } else {
+        true
       }
-      return@visitClassAndParents true
     }
   }
 

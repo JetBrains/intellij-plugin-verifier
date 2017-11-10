@@ -7,10 +7,10 @@ class ClassParentsVisitor(private val context: VerificationContext,
 
   private val visitedClasses: MutableSet<String> = hashSetOf()
 
-  fun visitClassAndParents(currentClass: ClassNode, classProcessor: (ClassNode) -> Boolean) {
+  fun visitClass(currentClass: ClassNode, visitSelf: Boolean, classProcessor: (ClassNode) -> Boolean) {
     visitedClasses.add(currentClass.name)
 
-    if (!classProcessor(currentClass)) {
+    if (visitSelf && !classProcessor(currentClass)) {
       return
     }
 
@@ -27,7 +27,7 @@ class ClassParentsVisitor(private val context: VerificationContext,
       if (clsName !in visitedClasses) {
         val parentNode = context.resolveClassOrProblem(clsName, currentClass, { context.fromClass(currentClass) })
         if (parentNode != null) {
-          visitClassAndParents(parentNode, classProcessor)
+          visitClass(parentNode, true, classProcessor)
         }
       }
     }

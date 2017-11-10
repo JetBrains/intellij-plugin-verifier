@@ -17,17 +17,15 @@ class DeprecatedMethodOverriddenVerifier : MethodVerifier {
       return
     }
 
-    ClassParentsVisitor(ctx, true).visitClassAndParents(clazz) { parent ->
-      if (parent.name == clazz.name) {
-        return@visitClassAndParents true
-      }
+    ClassParentsVisitor(ctx, true).visitClass(clazz, false) { parent ->
       val sameMethod = (parent.methods as List<MethodNode>).firstOrNull { it.name == method.name && it.desc == method.desc }
       if (sameMethod != null && sameMethod.isDeprecated()) {
         val methodLocation = ctx.fromMethod(parent, sameMethod)
         ctx.registerDeprecatedUsage(DeprecatedMethodOverridden(methodLocation, ctx.fromMethod(clazz, method)))
-        return@visitClassAndParents false
+        false
+      } else {
+        true
       }
-      return@visitClassAndParents true
     }
   }
 

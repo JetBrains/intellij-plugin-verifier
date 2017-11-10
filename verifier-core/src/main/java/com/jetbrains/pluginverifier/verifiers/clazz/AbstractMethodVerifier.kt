@@ -16,7 +16,7 @@ class AbstractMethodVerifier : ClassVerifier {
     val abstractMethods = hashMapOf<MethodSignature, MethodLocation>()
     val implementedMethods = hashMapOf<MethodSignature, MethodLocation>()
 
-    ClassParentsVisitor(ctx, true).visitClassAndParents(clazz) { parent ->
+    ClassParentsVisitor(ctx, true).visitClass(clazz, true) { parent ->
       @Suppress("UNCHECKED_CAST")
       (parent.methods as List<MethodNode>).forEach { method ->
         if (!method.isPrivate() && !method.isStatic()) {
@@ -29,7 +29,7 @@ class AbstractMethodVerifier : ClassVerifier {
           }
         }
       }
-      return@visitClassAndParents true
+      true
     }
 
     val currentClass = ctx.fromClass(clazz)
