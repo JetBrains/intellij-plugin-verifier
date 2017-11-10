@@ -4,12 +4,14 @@ import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
+import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
 import org.slf4j.LoggerFactory
 import java.io.File
 
 //todo: provide a cache of IdeDescriptors
 //todo: merge it with IdeRepository from verifier module
-class IdeFilesManager(private val fileManager: FileManager) {
+class IdeFilesManager(private val fileManager: FileManager,
+                      private val ideFilesDir: File) {
 
   private val LOG = LoggerFactory.getLogger(IdeFilesManager::class.java)
 
@@ -43,7 +45,7 @@ class IdeFilesManager(private val fileManager: FileManager) {
   private fun onRelease(version: IdeVersion) {
     if (deleteQueue.contains(version)) {
       deleteQueue.remove(version)
-      val ideFile = fileManager.getFileByName(version.asString(), FileType.IDE)
+      val ideFile = getIdeFileForVersion(version)
       LOG.info("Deleting the IDE file $ideFile")
       if (ideFile.isDirectory) {
         ideFile.deleteLogged()
@@ -51,12 +53,24 @@ class IdeFilesManager(private val fileManager: FileManager) {
     }
   }
 
+  private fun getIdeFileForVersion(version: IdeVersion) =
+      ideFilesDir.resolve(version.asString().replaceInvalidFileNameCharacters())
+
   @Synchronized
-  fun ideList(): List<IdeVersion> = fileManager.getFilesOfType(FileType.IDE).map { it -> IdeVersion.createIdeVersion(it.name) }.toList()
+  fun ideList(): List<IdeVersion> = ideFilesDir
+      .listFiles()
+      .mapNotNull { createIdeVersionSafe(it) }
+      .toList()
+
+  private fun createIdeVersionSafe(ideFile: File) = try {
+    IdeVersion.createIdeVersion(ideFile.name)
+  } catch (e: Exception) {
+    null
+  }
 
   @Synchronized
   fun getIdeLock(version: IdeVersion): IdeFileLock? {
-    val ideFile = fileManager.getFileByName(version.asString(), FileType.IDE)
+    val ideFile = getIdeFileForVersion(version)
     if (!ideFile.isDirectory) {
       return null
     }
@@ -124,7 +138,7 @@ class IdeFilesManager(private val fileManager: FileManager) {
       return false
     }
 
-    val destination = fileManager.getFileByName(version.asString(), FileType.IDE)
+    val destination = getIdeFileForVersion(version)
     try {
       ideDir.copyRecursively(destination, true)
       LOG.info("IDE #$version is saved")

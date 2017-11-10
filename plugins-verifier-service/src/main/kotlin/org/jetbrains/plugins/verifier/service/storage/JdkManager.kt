@@ -1,15 +1,14 @@
 package org.jetbrains.plugins.verifier.service.storage
 
-import org.jetbrains.plugins.verifier.service.setting.Settings
 import java.io.File
 
 enum class JdkVersion {
   JAVA_8_ORACLE
 }
 
-object JdkManager {
+class JdkManager(private val jdk8path: File) {
 
   fun getJdkHome(version: JdkVersion): File = when (version) {
-    JdkVersion.JAVA_8_ORACLE -> File(Settings.JDK_8_HOME.get())
+    JdkVersion.JAVA_8_ORACLE -> jdk8path
   }
 }

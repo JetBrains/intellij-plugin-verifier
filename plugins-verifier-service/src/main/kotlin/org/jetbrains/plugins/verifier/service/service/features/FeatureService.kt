@@ -1,16 +1,15 @@
 package org.jetbrains.plugins.verifier.service.service.features
 
+import com.google.gson.Gson
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import org.jetbrains.plugins.verifier.service.server.ServerInstance
+import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.networking.createJsonRequestBody
 import org.jetbrains.plugins.verifier.service.service.networking.createStringRequestBody
-import org.jetbrains.plugins.verifier.service.service.repository.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
-import org.jetbrains.plugins.verifier.service.setting.Settings
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
@@ -18,9 +17,7 @@ import java.util.concurrent.TimeUnit
 /**
  * @author Sergey Patrikeev
  */
-class FeatureService : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES) {
-
-  private val UPDATE_PROCESS_MIN_PAUSE_MILLIS = TimeUnit.MINUTES.toMillis(10)
+class FeatureService(serverContext: ServerContext, private val repositoryUrl: String) : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, serverContext) {
 
   private val inProgressUpdates: MutableSet<UpdateInfo> = hashSetOf()
 
@@ -29,13 +26,12 @@ class FeatureService : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES) {
   private val repo2FeatureExtractorApi = hashMapOf<String, FeaturesPluginRepositoryConnector>()
 
   private fun getFeaturesApiConnector(): FeaturesPluginRepositoryConnector {
-    val repositoryUrl = Settings.FEATURE_EXTRACTOR_REPOSITORY_URL.get()
     return repo2FeatureExtractorApi.getOrPut(repositoryUrl, { createFeatureExtractor(repositoryUrl) })
   }
 
   private fun createFeatureExtractor(repositoryUrl: String): FeaturesPluginRepositoryConnector = Retrofit.Builder()
       .baseUrl(repositoryUrl)
-      .addConverterFactory(GsonConverterFactory.create(ServerInstance.GSON))
+      .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
       .create(FeaturesPluginRepositoryConnector::class.java)
@@ -52,7 +48,7 @@ class FeatureService : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES) {
   }
 
   private fun schedule(updateId: Int) {
-    val updateInfo = UpdateInfoCache.getUpdateInfo(updateId) ?: return
+    val updateInfo = serverContext.updateInfoCache.getUpdateInfo(updateId) ?: return
     if (updateInfo in inProgressUpdates) {
       return
     }
@@ -64,8 +60,12 @@ class FeatureService : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES) {
 
     lastProceedDate[updateInfo] = System.currentTimeMillis()
 
-    val runner = ExtractFeaturesServiceTask(PluginCoordinate.ByUpdateInfo(updateInfo, ServerInstance.pluginRepository), updateInfo)
-    val taskStatus = taskManager.enqueue(
+    val runner = ExtractFeaturesServiceTask(
+        PluginCoordinate.ByUpdateInfo(updateInfo, serverContext.pluginRepository),
+        updateInfo,
+        serverContext
+    )
+    val taskStatus = serverContext.taskManager.enqueue(
         runner,
         { onSuccess(it as FeaturesResult) },
         { t, tid -> onError(t, tid, runner) },
@@ -92,19 +92,27 @@ class FeatureService : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES) {
 
     val pluginsResult = prepareFeaturesResponse(updateInfo, resultType, extractorResult.features)
     try {
-      sendExtractedFeatures(pluginsResult, pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully()
+      sendExtractedFeatures(pluginsResult).executeSuccessfully()
     } catch (e: Exception) {
       LOG.error("Unable to send check result of the plugin ${extractorResult.updateInfo}", e)
     }
   }
 
-  private fun getUpdatesToExtract(): List<Int> = getUpdatesToExtractFeatures(pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully().body().sortedDescending()
+  private fun getUpdatesToExtract(): List<Int> = getUpdatesToExtractFeatures().executeSuccessfully().body().sortedDescending()
 
-  private fun getUpdatesToExtractFeatures(userName: String, password: String) =
-      getFeaturesApiConnector().getUpdatesToExtractFeatures(createStringRequestBody(userName), createStringRequestBody(password))
+  private val userNameRequestBody = createStringRequestBody(serverContext.authorizationData.pluginRepositoryUserName)
+
+  private val passwordRequestBody = createStringRequestBody(serverContext.authorizationData.pluginRepositoryPassword)
+
+  private fun getUpdatesToExtractFeatures() =
+      getFeaturesApiConnector().getUpdatesToExtractFeatures(userNameRequestBody, passwordRequestBody)
 
 
-  private fun sendExtractedFeatures(featuresJsonResponse: String, userName: String, password: String) =
-      getFeaturesApiConnector().sendExtractedFeatures(createJsonRequestBody(featuresJsonResponse), createStringRequestBody(userName), createStringRequestBody(password))
+  private fun sendExtractedFeatures(featuresJsonResponse: String) =
+      getFeaturesApiConnector().sendExtractedFeatures(createJsonRequestBody(featuresJsonResponse), userNameRequestBody, passwordRequestBody)
+
+  companion object {
+    private val UPDATE_PROCESS_MIN_PAUSE_MILLIS = TimeUnit.MINUTES.toMillis(10)
+  }
 
 }

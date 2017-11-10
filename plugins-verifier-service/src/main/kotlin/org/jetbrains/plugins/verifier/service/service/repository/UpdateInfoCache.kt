@@ -4,7 +4,6 @@ import com.google.gson.Gson
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import retrofit2.Call
@@ -19,14 +18,16 @@ import java.util.concurrent.TimeUnit
 /**
  * @author Sergey Patrikeev
  */
-object UpdateInfoCache {
+class UpdateInfoCache(repositoryUrl: String) {
 
-  private val LOG: Logger = LoggerFactory.getLogger(UpdateInfoCache.javaClass)
+  companion object {
+    private val LOG: Logger = LoggerFactory.getLogger(UpdateInfoCache::class.java)
+  }
 
   private val cache: ConcurrentMap<Int, UpdateInfo> = ConcurrentHashMap()
 
   private val api: GetUpdateInfoApi = Retrofit.Builder()
-      .baseUrl(Settings.DOWNLOAD_PLUGINS_REPOSITORY_URL.get())
+      .baseUrl(repositoryUrl)
       .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.google.common.collect.LinkedHashMultimap
+import com.google.gson.Gson
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
@@ -8,13 +9,11 @@ import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.api.UpdateRangeCompatibilityResults
-import org.jetbrains.plugins.verifier.service.server.ServerInstance
+import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.networking.createByteArrayRequestBody
 import org.jetbrains.plugins.verifier.service.service.networking.createStringRequestBody
-import org.jetbrains.plugins.verifier.service.service.repository.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
-import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.storage.JdkVersion
 import retrofit2.Call
 import retrofit2.Retrofit
@@ -22,11 +21,13 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.TimeUnit
 
-class VerifierService : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES) {
+class VerifierService(serverContext: ServerContext, private val repositoryUrl: String) : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES, serverContext) {
 
-  private val UPDATE_MISSING_IDE_PAUSE_MS = TimeUnit.DAYS.toMillis(1)
+  companion object {
+    private val UPDATE_MISSING_IDE_PAUSE_MS = TimeUnit.DAYS.toMillis(1)
 
-  private val UPDATE_CHECK_MIN_PAUSE_MS = TimeUnit.MINUTES.toMillis(10)
+    private val UPDATE_CHECK_MIN_PAUSE_MS = TimeUnit.MINUTES.toMillis(10)
+  }
 
   private val verifiableUpdates: MutableSet<UpdateInfo> = hashSetOf()
 
@@ -37,13 +38,12 @@ class VerifierService : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES) {
   private val repo2VerifierApi = hashMapOf<String, VerificationPluginRepositoryConnector>()
 
   private fun getVerifierConnector(): VerificationPluginRepositoryConnector {
-    val repositoryUrl = Settings.VERIFIER_SERVICE_REPOSITORY_URL.get()
     return repo2VerifierApi.getOrPut(repositoryUrl, { createVerifier(repositoryUrl) })
   }
 
   private fun createVerifier(repositoryUrl: String): VerificationPluginRepositoryConnector = Retrofit.Builder()
       .baseUrl(repositoryUrl)
-      .addConverterFactory(GsonConverterFactory.create(ServerInstance.GSON))
+      .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(makeOkHttpClient(LOG.isDebugEnabled, 5, TimeUnit.MINUTES))
       .build()
       .create(VerificationPluginRepositoryConnector::class.java)
@@ -51,7 +51,7 @@ class VerifierService : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES) {
   override fun doServe() {
     val updateId2IdeVersions = LinkedHashMultimap.create<Int, IdeVersion>()
 
-    for (ideVersion in ideFilesManager.ideList()) {
+    for (ideVersion in serverContext.ideFilesManager.ideList()) {
       getUpdatesToCheck(ideVersion).forEach { updateId ->
         updateId2IdeVersions.put(updateId, ideVersion)
       }
@@ -68,10 +68,10 @@ class VerifierService : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES) {
   }
 
   private fun getUpdatesToCheck(ideVersion: IdeVersion): List<Int> =
-      getUpdatesToCheck(ideVersion, pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully().body().sortedDescending()
+      getUpdatesToCheck0(ideVersion).executeSuccessfully().body().sortedDescending()
 
   private fun schedule(updateId: Int, versions: List<IdeVersion>) {
-    val updateInfo = UpdateInfoCache.getUpdateInfo(updateId) ?: return
+    val updateInfo = serverContext.updateInfoCache.getUpdateInfo(updateId) ?: return
     if (updateInfo in verifiableUpdates) {
       return
     }
@@ -82,10 +82,16 @@ class VerifierService : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES) {
 
     lastCheckDate[updateInfo] = System.currentTimeMillis()
 
-    val pluginCoordinate = PluginCoordinate.ByUpdateInfo(updateInfo, ServerInstance.pluginRepository)
+    val pluginCoordinate = PluginCoordinate.ByUpdateInfo(updateInfo, serverContext.pluginRepository)
     val rangeRunnerParams = CheckRangeParams(JdkVersion.JAVA_8_ORACLE)
-    val runner = CheckRangeCompatibilityServiceTask(updateInfo, pluginCoordinate, rangeRunnerParams, versions, ServerInstance.pluginRepository, ServerInstance.pluginDetailsProvider, ServerInstance.ideFilesManager)
-    val taskStatus = taskManager.enqueue(
+    val runner = CheckRangeCompatibilityServiceTask(
+        updateInfo,
+        pluginCoordinate,
+        rangeRunnerParams,
+        versions,
+        serverContext
+    )
+    val taskStatus = serverContext.taskManager.enqueue(
         runner,
         { taskResult -> onSuccess(taskResult as CheckRangeCompatibilityResult, updateInfo) },
         { error, tid -> onError(error, tid, runner) },
@@ -117,16 +123,29 @@ class VerifierService : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES) {
     val verificationResult = prepareVerificationResponse(compatibilityResult)
 
     try {
-      sendUpdateCheckResult(verificationResult, pluginRepositoryUserName, pluginRepositoryPassword).executeSuccessfully()
+      sendUpdateCheckResult(verificationResult).executeSuccessfully()
     } catch(e: Exception) {
       LOG.error("Unable to send verification result of ${compatibilityResult.updateInfo}", e)
     }
   }
 
-  private fun getUpdatesToCheck(availableIde: IdeVersion, userName: String, password: String) =
-      getVerifierConnector().getUpdatesToCheck(createStringRequestBody(availableIde.asString()), createStringRequestBody(userName), createStringRequestBody(password))
+  private val userNameRequestBody = createStringRequestBody(serverContext.authorizationData.pluginRepositoryUserName)
 
-  private fun sendUpdateCheckResult(checkResult: UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult, userName: String, password: String): Call<ResponseBody> =
-      getVerifierConnector().sendUpdateCheckResult(createByteArrayRequestBody(checkResult.toByteArray()), createStringRequestBody(userName), createStringRequestBody(password))
+  private val passwordRequestBody = createStringRequestBody(serverContext.authorizationData.pluginRepositoryPassword)
+
+  private fun getUpdatesToCheck0(availableIde: IdeVersion) =
+      getVerifierConnector().getUpdatesToCheck(
+          createStringRequestBody(availableIde.asString()),
+          userNameRequestBody,
+          passwordRequestBody
+      )
+
+  private fun sendUpdateCheckResult(checkResult: UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult): Call<ResponseBody> =
+      getVerifierConnector()
+          .sendUpdateCheckResult(
+              createByteArrayRequestBody(checkResult.toByteArray()),
+              userNameRequestBody,
+              passwordRequestBody
+          )
 
 }

@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.jetbrains.plugins.verifier.service.server.ServerInstance
+import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.tasks.BooleanServiceTaskResult
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTask
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskProgress
@@ -12,14 +12,14 @@ import org.slf4j.LoggerFactory
 /**
  * @author Sergey Patrikeev
  */
-class DeleteIdeRunner(val ideVersion: IdeVersion) : ServiceTask() {
+class DeleteIdeRunner(val ideVersion: IdeVersion, serverContext: ServerContext) : ServiceTask(serverContext) {
 
   private val LOG: Logger = LoggerFactory.getLogger(DeleteIdeRunner::class.java)
 
   override fun presentableName(): String = "DeleteIde #$ideVersion"
 
   override fun computeResult(progress: ServiceTaskProgress): ServiceTaskResult {
-    ServerInstance.ideFilesManager.deleteIde(ideVersion)
+    serverContext.ideFilesManager.deleteIde(ideVersion)
     LOG.info("Delete IDE #$ideVersion task is enqueued for IdeFilesManager")
     return BooleanServiceTaskResult(true)
   }

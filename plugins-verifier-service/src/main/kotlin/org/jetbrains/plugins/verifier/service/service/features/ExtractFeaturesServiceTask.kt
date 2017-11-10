@@ -7,17 +7,18 @@ import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import org.jetbrains.plugins.verifier.service.server.ServerInstance
+import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTask
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskProgress
 import org.jetbrains.plugins.verifier.service.storage.IdeFileLock
 
 class ExtractFeaturesServiceTask(val pluginCoordinate: PluginCoordinate,
-                                 private val updateInfo: UpdateInfo) : ServiceTask() {
+                                 private val updateInfo: UpdateInfo,
+                                 serverContext: ServerContext) : ServiceTask(serverContext) {
   override fun presentableName(): String = "Features of $pluginCoordinate"
 
   override fun computeResult(progress: ServiceTaskProgress): FeaturesResult {
-    val pluginDetails = ServerInstance.pluginDetailsProvider.providePluginDetails(pluginCoordinate)
+    val pluginDetails = serverContext.pluginDetailsProvider.providePluginDetails(pluginCoordinate)
     pluginDetails.use {
       return when (pluginDetails) {
         is PluginDetails.ByFileLock -> doFeatureExtraction(pluginDetails.plugin)
@@ -44,7 +45,7 @@ class ExtractFeaturesServiceTask(val pluginCoordinate: PluginCoordinate,
     }
   }
 
-  private fun getSomeIdeMatchingSinceUntilBuilds(sinceBuild: IdeVersion, untilBuild: IdeVersion?): IdeFileLock = with(ServerInstance.ideFilesManager) {
+  private fun getSomeIdeMatchingSinceUntilBuilds(sinceBuild: IdeVersion, untilBuild: IdeVersion?): IdeFileLock = with(serverContext.ideFilesManager) {
     lockAndAccess {
       val isMatching: (IdeVersion) -> Boolean = { sinceBuild <= it && (untilBuild == null || it <= untilBuild) }
       val maxCompatibleOrGlobalCompatible = ideList().filter(isMatching).max() ?: ideList().max()!!

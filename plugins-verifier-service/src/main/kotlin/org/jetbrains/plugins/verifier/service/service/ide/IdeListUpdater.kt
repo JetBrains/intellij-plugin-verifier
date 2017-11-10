@@ -2,19 +2,19 @@ package org.jetbrains.plugins.verifier.service.service.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.AvailableIde
-import com.jetbrains.pluginverifier.repository.IdeRepository
+import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import java.util.concurrent.TimeUnit
 
 /**
  * @author Sergey Patrikeev
  */
-class IdeListUpdater(val ideRepository: IdeRepository) : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES) {
+class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES, serverContext) {
 
   private val downloadingIdes: MutableSet<IdeVersion> = hashSetOf()
 
   override fun doServe() {
-    val alreadyIdes = ideFilesManager.ideList()
+    val alreadyIdes = serverContext.ideFilesManager.ideList()
 
     val relevantIdes: List<AvailableIde> = fetchRelevantIdes()
 
@@ -34,8 +34,8 @@ class IdeListUpdater(val ideRepository: IdeRepository) : BaseService("IdeListUpd
 
   private fun enqueueDeleteIde(ideVersion: IdeVersion) {
     LOG.info("Delete the IDE #$ideVersion because it is not necessary anymore")
-    val task = DeleteIdeRunner(ideVersion)
-    val taskStatus = taskManager.enqueue(task)
+    val task = DeleteIdeRunner(ideVersion, serverContext)
+    val taskStatus = serverContext.taskManager.enqueue(task)
     LOG.info("Delete IDE #$ideVersion is enqueued with taskId=#${taskStatus.taskId}")
   }
 
@@ -45,9 +45,9 @@ class IdeListUpdater(val ideRepository: IdeRepository) : BaseService("IdeListUpd
       return
     }
 
-    val runner = UploadIdeRunner(availableIde, ideRepository)
+    val runner = UploadIdeRunner(availableIde, serverContext)
 
-    val taskStatus = taskManager.enqueue(
+    val taskStatus = serverContext.taskManager.enqueue(
         runner,
         { },
         { _, _ -> }
@@ -58,7 +58,7 @@ class IdeListUpdater(val ideRepository: IdeRepository) : BaseService("IdeListUpd
   }
 
   private fun fetchRelevantIdes(): List<AvailableIde> {
-    val index = ideRepository.fetchIndex()
+    val index = serverContext.ideRepository.fetchIndex()
 
     val branchToVersions: Map<Int, List<AvailableIde>> = index
         .filterNot { it.isCommunity }

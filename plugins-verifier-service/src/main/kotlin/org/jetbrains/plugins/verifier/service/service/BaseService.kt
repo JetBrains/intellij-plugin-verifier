@@ -1,9 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import org.jetbrains.plugins.verifier.service.server.ServerInstance
-import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
+import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
@@ -12,7 +10,8 @@ import java.util.concurrent.TimeUnit
 abstract class BaseService(val serviceName: String,
                            private val initialDelay: Long,
                            private val period: Long,
-                           private val timeUnit: TimeUnit) {
+                           private val timeUnit: TimeUnit,
+                           protected val serverContext: ServerContext) {
 
   enum class State {
     NOT_STARTED, SLEEPING, RUNNING, PAUSED, STOPPED
@@ -30,14 +29,6 @@ abstract class BaseService(val serviceName: String,
             .build()
     )
   }
-
-  protected val pluginRepositoryUserName: String = Settings.PLUGIN_REPOSITORY_VERIFIER_USERNAME.get()
-
-  protected val pluginRepositoryPassword: String = Settings.PLUGIN_REPOSITORY_VERIFIER_PASSWORD.get()
-
-  protected val taskManager = ServerInstance.taskManager
-
-  protected val ideFilesManager: IdeFilesManager = ServerInstance.ideFilesManager
 
   fun getState() = state
 

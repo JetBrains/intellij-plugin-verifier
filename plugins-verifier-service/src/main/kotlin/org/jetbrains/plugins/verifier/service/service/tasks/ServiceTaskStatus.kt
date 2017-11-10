@@ -9,7 +9,16 @@ data class ServiceTaskStatus(val taskId: ServiceTaskId,
 
   fun elapsedTime(): Long = (endTime ?: System.currentTimeMillis()) - startTime
 
-  override fun toString(): String = "(Id=${taskId.id}; State=$state; Time=${elapsedTime() / 1000} s; Progress:${progress.getFraction()}; Text:${progress.getText()}; Task-name: $taskName)"
+  override fun toString(): String = buildString {
+    append("(")
+    append("Id=" + taskId.id + "; ")
+    append("State=$state; ")
+    append("Time=" + (elapsedTime() / 1000) + " s; ")
+    append("Progress=" + progress.getFraction() + "; ")
+    append("Text=" + progress.getText() + "; ")
+    append("Task-name=" + taskName)
+    append(")")
+  }
 
   enum class State {
     WAITING,

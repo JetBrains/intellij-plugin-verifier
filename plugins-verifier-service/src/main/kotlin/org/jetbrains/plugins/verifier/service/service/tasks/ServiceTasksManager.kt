@@ -4,6 +4,7 @@ import com.google.common.collect.EvictingQueue
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicLong
@@ -30,7 +31,19 @@ class ServiceTasksManager(concurrency: Int) {
   private val tasks = EvictingQueue.create<ServiceTaskStatus>(1000)
 
   @Synchronized
-  fun listTasks(): List<ServiceTaskStatus> = tasks.toList()
+  fun getRunningTasks(): List<RunningTaskInfo> = tasks
+      .map { it.toRunningTaskInfo() }
+      .sortedByDescending { it.startedDate }
+
+  private fun ServiceTaskStatus.toRunningTaskInfo() = RunningTaskInfo(
+      taskId,
+      taskName,
+      Date(startTime),
+      state,
+      progress.getFraction(),
+      elapsedTime(),
+      progress.getText()
+  )
 
   @Synchronized
   fun enqueue(task: ServiceTask,

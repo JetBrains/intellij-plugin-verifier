@@ -34,7 +34,9 @@ data class AvailableIde(val version: IdeVersion,
 
 class IdeRepository(private val downloadDir: File, private val repositoryUrl: String) {
 
-  private val LOG: Logger = LoggerFactory.getLogger(IdeRepository::class.java)
+  companion object {
+    private val LOG: Logger = LoggerFactory.getLogger(IdeRepository::class.java)
+  }
 
   private fun parseDocument(document: Document, snapshots: Boolean): List<AvailableIde> {
     val table = document.getElementsByTag("table")[0]

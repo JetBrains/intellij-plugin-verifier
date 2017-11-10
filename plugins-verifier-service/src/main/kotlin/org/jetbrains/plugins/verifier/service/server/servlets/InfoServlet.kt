@@ -3,10 +3,9 @@ package org.jetbrains.plugins.verifier.service.server.servlets
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.bytesToGigabytes
 import com.jetbrains.pluginverifier.misc.bytesToMegabytes
-import org.jetbrains.plugins.verifier.service.server.ServerInstance
-import org.jetbrains.plugins.verifier.service.server.status.ServerStatus
+import org.jetbrains.plugins.verifier.service.server.status.getDiskUsage
+import org.jetbrains.plugins.verifier.service.server.status.getMemoryInfo
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.setting.Settings
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
 import java.text.SimpleDateFormat
@@ -14,8 +13,6 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 class InfoServlet : BaseServlet() {
-
-  private val serverStatus = ServerStatus(ServerInstance.taskManager)
 
   companion object {
     private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd hh:mm:ss")
@@ -25,7 +22,7 @@ class InfoServlet : BaseServlet() {
     val path = getPath(req, resp) ?: return
     if (path.endsWith("control-service")) {
       val adminPassword = req.getParameter("admin-password")
-      if (adminPassword == null || adminPassword != Settings.SERVICE_ADMIN_PASSWORD.get()) {
+      if (adminPassword == null || adminPassword != serverContext.authorizationData.serviceAdminPassword) {
         resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Incorrect password")
         return
       }
@@ -47,7 +44,7 @@ class InfoServlet : BaseServlet() {
   }
 
   private fun changeServiceState(serviceName: String, resp: HttpServletResponse, action: (BaseService) -> Boolean) {
-    val service = ServerInstance.services.find { it.serviceName == serviceName }
+    val service = serverContext.allServices.find { it.serviceName == serviceName }
     if (service == null) {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Service $serviceName is not found")
     } else {
@@ -86,7 +83,7 @@ class InfoServlet : BaseServlet() {
               +"Runtime parameters:"
             }
             ul {
-              Settings.values().forEach { s ->
+              serverContext.startupSettings.forEach { s ->
                 li {
                   +(s.key + " = " + if (s.encrypted) "*****" else s.get())
                 }
@@ -97,13 +94,13 @@ class InfoServlet : BaseServlet() {
               +"Status:"
             }
             ul {
-              val (totalMemory, freeMemory, usedMemory, maxMemory) = serverStatus.getMemoryInfo()
+              val (totalMemory, freeMemory, usedMemory, maxMemory) = getMemoryInfo()
               li { +"Total memory: ${totalMemory.bytesToMegabytes()} Mb" }
               li { +"Free memory: ${freeMemory.bytesToMegabytes()} Mb" }
               li { +"Used memory: ${usedMemory.bytesToMegabytes()} Mb" }
               li { +"Max memory: ${maxMemory.bytesToMegabytes()} Mb" }
 
-              val (totalUsage) = serverStatus.getDiskUsage()
+              val (totalUsage) = serverContext.applicationHomeDirectory.getDiskUsage()
               li { +"Total disk usage: ${totalUsage.bytesToGigabytes()} Gb" }
             }
 
@@ -111,7 +108,7 @@ class InfoServlet : BaseServlet() {
               +"Services:"
             }
             ul {
-              ServerInstance.services.forEach { service ->
+              serverContext.allServices.forEach { service ->
                 val serviceName = service.serviceName
                 li {
                   +(serviceName + " - ${service.getState()}")
@@ -130,7 +127,7 @@ class InfoServlet : BaseServlet() {
               +"Available IDEs: "
             }
             ul {
-              ServerInstance.ideFilesManager.ideList().forEach {
+              serverContext.ideFilesManager.ideList().forEach {
                 li {
                   +it.toString()
                 }
@@ -151,7 +148,7 @@ class InfoServlet : BaseServlet() {
                 th { +"Total time (ms)" }
               }
 
-              serverStatus.getRunningTasks().forEach { (taskId, taskName, startedDate, state, progress, totalTimeMs, message) ->
+              serverContext.taskManager.getRunningTasks().forEach { (taskId, taskName, startedDate, state, progress, totalTimeMs, message) ->
                 tr {
                   td { +taskId.toString() }
                   td { +taskName }

@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.verifier.service.server.servlets
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.jetbrains.plugins.verifier.service.server.ServerInstance
 import org.jetbrains.plugins.verifier.service.service.ide.DeleteIdeRunner
 import org.jetbrains.plugins.verifier.service.service.ide.UploadIdeRunner
 import javax.servlet.http.HttpServletRequest
@@ -15,7 +14,7 @@ class IdeServlet : BaseServlet() {
     when {
       path.endsWith("uploadIde") -> processUploadIde(req, resp)
       path.endsWith("deleteIde") -> processDeleteIde(req, resp)
-      else -> sendJson(resp, ServerInstance.ideFilesManager.ideList())
+      else -> sendJson(resp, serverContext.ideFilesManager.ideList())
     }
   }
 
@@ -31,20 +30,20 @@ class IdeServlet : BaseServlet() {
 
   private fun processUploadIde(req: HttpServletRequest, resp: HttpServletResponse) {
     val ideVersion = parseIdeVersionParameter(req, resp) ?: return
-    val availableIde = ServerInstance.ideRepository.fetchIndex().find { it.version.asStringWithoutProductCode() == ideVersion.asStringWithoutProductCode() }
+    val availableIde = serverContext.ideRepository.fetchIndex().find { it.version.asStringWithoutProductCode() == ideVersion.asStringWithoutProductCode() }
     if (availableIde == null) {
-      sendNotFound(resp, "IDE with version $ideVersion is not found in the ${ServerInstance.ideRepository}")
+      sendNotFound(resp, "IDE with version $ideVersion is not found in the ${serverContext.ideRepository}")
       return
     }
-    val ideRunner = UploadIdeRunner(availableIde, ServerInstance.ideRepository)
-    val taskStatus = ServerInstance.taskManager.enqueue(ideRunner)
+    val ideRunner = UploadIdeRunner(availableIde, serverContext)
+    val taskStatus = serverContext.taskManager.enqueue(ideRunner)
     sendOk(resp, "Uploading $ideVersion (#${taskStatus.taskId})")
   }
 
   private fun processDeleteIde(req: HttpServletRequest, resp: HttpServletResponse) {
     val ideVersion = parseIdeVersionParameter(req, resp) ?: return
-    val deleteIdeRunner = DeleteIdeRunner(ideVersion)
-    val taskStatus = ServerInstance.taskManager.enqueue(deleteIdeRunner)
+    val deleteIdeRunner = DeleteIdeRunner(ideVersion, serverContext)
+    val taskStatus = serverContext.taskManager.enqueue(deleteIdeRunner)
     sendOk(resp, "Deleting $ideVersion (#${taskStatus.taskId})")
   }
 
