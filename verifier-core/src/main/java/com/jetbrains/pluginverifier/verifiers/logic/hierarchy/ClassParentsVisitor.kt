@@ -9,10 +9,6 @@ import org.objectweb.asm.tree.ClassNode
 class ClassParentsVisitor(private val context: VerificationContext,
                           private val visitInterfaces: Boolean) {
 
-  companion object {
-    const val JAVA_LANG_OBJECT = "java/lang/Object"
-  }
-
   private val visitedClasses = hashSetOf<String>()
 
   fun visitClass(currentClass: ClassNode,
