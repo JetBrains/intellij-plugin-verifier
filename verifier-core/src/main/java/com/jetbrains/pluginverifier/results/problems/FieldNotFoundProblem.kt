@@ -16,14 +16,20 @@ data class FieldNotFoundProblem(val field: FieldReference,
 
   override val shortDescription = "Access to unresolved field {0}".formatMessage(field)
 
-  override val fullDescription = buildString {
+  private val descriptionMainPart = buildString {
     append("Method {0} contains a *{1}* instruction referencing an unresolved field {2}. ".formatMessage(
         accessor.formatMethodLocation(HostClassOption.FULL_HOST_NAME, MethodParameterTypeOption.FULL_PARAM_CLASS_NAME, MethodReturnTypeOption.FULL_RETURN_TYPE_CLASS_NAME, MethodParameterNameOption.WITH_PARAM_NAMES_IF_AVAILABLE),
         instruction,
         field
     ))
     append("This can lead to **NoSuchFieldError** exception at runtime.")
+  }
+
+  override val fullDescription = buildString {
+    append(descriptionMainPart)
     append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("field", fieldOwnerHierarchy, ideVersion))
   }
 
+  override val equalityReference: String
+    get() = descriptionMainPart
 }

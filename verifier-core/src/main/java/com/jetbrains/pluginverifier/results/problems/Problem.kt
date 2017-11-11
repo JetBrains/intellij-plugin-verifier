@@ -9,10 +9,13 @@ abstract class Problem {
 
   abstract val fullDescription: String
 
+  protected open val equalityReference: String
+    get() = fullDescription
+
   final override fun toString(): String = fullDescription
 
-  final override fun equals(other: Any?): Boolean = other is Problem && fullDescription == other.fullDescription
+  final override fun equals(other: Any?): Boolean = other is Problem && equalityReference == other.equalityReference
 
-  final override fun hashCode(): Int = fullDescription.hashCode()
+  final override fun hashCode(): Int = equalityReference.hashCode()
 
 }

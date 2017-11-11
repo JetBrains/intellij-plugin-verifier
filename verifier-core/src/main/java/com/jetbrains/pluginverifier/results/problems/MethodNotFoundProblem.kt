@@ -24,16 +24,23 @@ data class MethodNotFoundProblem(val method: MethodReference,
 
   override val shortDescription = "Invocation of unresolved method {0}".formatMessage(method.formatMethodReference(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME))
 
-  override val fullDescription = buildString {
+  private val descriptionMainPart = buildString {
     append("Method {0} contains an *{1}* instruction referencing an unresolved method {2}. ".formatMessage(
         caller.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE),
         instruction,
         method
     ))
     append("This can lead to **NoSuchMethodError** exception at runtime.")
+  }
+
+  override val fullDescription = buildString {
+    append(descriptionMainPart)
     if (instruction != Instruction.INVOKE_SPECIAL) {
       append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("method", methodOwnerHierarchy, ideVersion))
     }
   }
+
+  override val equalityReference: String
+    get() = descriptionMainPart
 
 }
