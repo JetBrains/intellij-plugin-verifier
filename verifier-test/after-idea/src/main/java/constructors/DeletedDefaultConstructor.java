@@ -1,6 +1,6 @@
 package constructors;
 
-public class DeletedDefaultConstructor {
+public class DeletedDefaultConstructor extends SomeOtherClass {
 
   //no default anymore
 

@@ -492,4 +492,31 @@ class VerificationCorrectnessTest {
         "Illegal access to package-private class access.other.BecamePackagePrivate"
     )
   }
+
+  @Test
+  fun `method of the IDE class was invoked virtually on plugin's subclass`() {
+    assertProblemFound("Method mock.plugin.non.existing.InvokeRemovedMethod.invokeVirtual() : void contains an *invokevirtual* instruction referencing an unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void. " +
+        "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class belonging " +
+        "to IU-145.500 (non.existing.Parent) or in the super interfaces belonging to IU-145.500 (interfaces.SomeInterface, interfaces.SomeInterface2)",
+        "Invocation of unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void"
+    )
+  }
+
+  @Test
+  fun `static method of the IDE class was invoked on plugin's subclass`() {
+    assertProblemFound("Method mock.plugin.non.existing.InvokeRemovedMethod.invokeStatic() : void contains an *invokevirtual* instruction referencing an unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void. " +
+        "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class belonging " +
+        "to IU-145.500 (non.existing.Parent) or in the super interfaces belonging to IU-145.500 (interfaces.SomeInterface, interfaces.SomeInterface2)",
+        "Invocation of unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void"
+    )
+  }
+
+  @Test
+  fun `field of the IDE classes was accessed on plugin's subclass`() {
+    assertProblemFound("Method mock.plugin.non.existing.AccessRemovedField.foo() : void contains a *getfield* instruction referencing an unresolved field mock.plugin.non.existing.InheritField.removedField : int. " +
+        "This can lead to **NoSuchFieldError** exception at runtime. The field might have been declared in the super class belonging " +
+        "to IU-145.500 (non.existing.Parent) or in the super interfaces belonging to IU-145.500 (interfaces.SomeInterface, interfaces.SomeInterface2)",
+        "Access to unresolved field mock.plugin.non.existing.InheritField.removedField : int"
+    )
+  }
 }

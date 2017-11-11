@@ -36,7 +36,7 @@ object HierarchicalProblemsDescription {
         //in one of the $ideVersion
         append("in the super " + "class".pluralize(ideSuperClasses.size) + " belonging to $ideVersion")
         append(" (")
-        append(ideSuperClasses.joinToString(transform = toFullJavaClassName))
+        append(ideSuperClasses.sorted().joinToString(transform = toFullJavaClassName))
         append(")")
       }
       if (ideSuperInterfaces.isNotEmpty()) {
@@ -44,8 +44,8 @@ object HierarchicalProblemsDescription {
           append(" or ")
         }
         append("in the super " + "interface".pluralize(ideSuperInterfaces.size) + " belonging to $ideVersion")
-        append("(")
-        append(ideSuperInterfaces.joinToString(transform = toFullJavaClassName))
+        append(" (")
+        append(ideSuperInterfaces.sorted().joinToString(transform = toFullJavaClassName))
         append(")")
       }
     }

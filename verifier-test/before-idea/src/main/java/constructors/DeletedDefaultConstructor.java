@@ -1,5 +1,5 @@
 package constructors;
 
-public class DeletedDefaultConstructor {
+public class DeletedDefaultConstructor extends SomeOtherClass {
 
 }

@@ -31,7 +31,9 @@ data class MethodNotFoundProblem(val method: MethodReference,
         method
     ))
     append("This can lead to **NoSuchMethodError** exception at runtime.")
-    append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("method", methodOwnerHierarchy, ideVersion))
+    if (instruction != Instruction.INVOKE_SPECIAL) {
+      append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("method", methodOwnerHierarchy, ideVersion))
+    }
   }
 
 }
