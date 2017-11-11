@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.method
 
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedMethodOverridden
 import com.jetbrains.pluginverifier.verifiers.*
+import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassParentsVisitor
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
@@ -17,7 +18,7 @@ class DeprecatedMethodOverriddenVerifier : MethodVerifier {
       return
     }
 
-    ClassParentsVisitor(ctx, true).visitClass(clazz, false) { parent ->
+    ClassParentsVisitor(ctx, true).visitClass(clazz, false, onEnter = { parent ->
       val sameMethod = (parent.methods as List<MethodNode>).firstOrNull { it.name == method.name && it.desc == method.desc }
       if (sameMethod != null && sameMethod.isDeprecated()) {
         val methodLocation = ctx.fromMethod(parent, sameMethod)
@@ -26,7 +27,7 @@ class DeprecatedMethodOverriddenVerifier : MethodVerifier {
       } else {
         true
       }
-    }
+    })
   }
 
 }
