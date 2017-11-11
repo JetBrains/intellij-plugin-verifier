@@ -18,6 +18,7 @@ import com.jetbrains.pluginverifier.tests.bytecode.createClassNode
 import com.jetbrains.pluginverifier.tests.mocks.MOCK_METHOD_LOCATION
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassHierarchyBuilder
 import net.bytebuddy.ByteBuddy
 import org.hamcrest.collection.IsIn.isIn
 import org.junit.Assert.assertThat
@@ -47,13 +48,17 @@ class DocumentedProblemsReportingTest {
     val methodFooIsNotFoundProblem = MethodNotFoundProblem(
         MethodReference(classBReference, "foo", "()V"),
         MOCK_METHOD_LOCATION,
-        Instruction.INVOKE_VIRTUAL
+        Instruction.INVOKE_VIRTUAL,
+        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY,
+        IdeVersion.createIdeVersion("IU-163")
     )
 
     val fieldXNotFoundProblem = FieldNotFoundProblem(
         FieldReference(classBReference, "x", "I"),
         MOCK_METHOD_LOCATION,
-        Instruction.GET_FIELD
+        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY,
+        Instruction.GET_FIELD,
+        IdeVersion.createIdeVersion("IU-163")
     )
 
     return mapOf(

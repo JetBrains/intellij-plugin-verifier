@@ -51,7 +51,7 @@ data class VerificationContext(
     else -> impossible()
   }
 
-  private fun isIdeClass(className: String): Boolean = ideClassLoader.containsClass(className)
+  fun isIdeClass(className: String): Boolean = ideClassLoader.containsClass(className)
 
   fun isExternalClass(className: String): Boolean = externalClassesPrefixes.any { it.isNotEmpty() && className.startsWith(it) }
 

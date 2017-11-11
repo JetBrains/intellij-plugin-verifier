@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.IllegalClassAccessProblem
 import com.jetbrains.pluginverifier.results.problems.InvalidClassFileProblem
 import com.jetbrains.pluginverifier.results.reference.ClassReference
-import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassParentsVisitor
+import com.jetbrains.pluginverifier.verifiers.logic.CommonClassNames
 import org.objectweb.asm.tree.ClassNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -107,7 +107,7 @@ fun VerificationContext.isSubclassOf(childClassName: String, possibleParentName:
 }
 
 fun VerificationContext.isSubclassOf(child: ClassNode, possibleParentName: String): Boolean {
-  if (possibleParentName == ClassParentsVisitor.JAVA_LANG_OBJECT) {
+  if (possibleParentName == CommonClassNames.JAVA_LANG_OBJECT) {
     return true
   }
 

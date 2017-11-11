@@ -7,6 +7,8 @@ import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.SymbolicReference
 import com.jetbrains.pluginverifier.verifiers.*
+import com.jetbrains.pluginverifier.verifiers.logic.CommonClassNames
+import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassHierarchyBuilder
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
@@ -77,19 +79,18 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     which gives the name and descriptor (§4.3.3) of the method as well as a symbolic reference
     to the class or interface in which the method is to be found. The named method is resolved.
      */
-    val resolved: ResolvedMethod
-    if (ownerNode.isInterface()) {
-      resolved = resolveInterfaceMethod(ownerNode) ?: return
+    val resolved = if (ownerNode.isInterface()) {
+      resolveInterfaceMethod(ownerNode)
     } else {
-      resolved = resolveClassMethod(ownerNode) ?: return
-    }
+      resolveClassMethod(ownerNode)
+    } ?: return
 
     /*
     Otherwise, if the resolved method is an instance initialization method, and the class in which it is declared
     is not the class symbolically referenced by the instruction, a NoSuchMethodError is thrown.
      */
     if (resolved.methodNode.name == "<init>" && resolved.definingClass.name != methodOwner) {
-      ctx.registerProblem(MethodNotFoundProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor), getFromMethod(), instruction))
+      registerMethodNotFoundProblem(ownerNode)
     }
 
     /*
@@ -187,7 +188,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
        the same name and descriptor as the resolved method, then it is the method to be invoked.
     */
     if (classRef.isInterface()) {
-      val objectClass = ctx.resolveClassOrProblem("java/lang/Object", classRef, { ctx.fromClass(classRef) }) ?: return null
+      val objectClass = ctx.resolveClassOrProblem(CommonClassNames.JAVA_LANG_OBJECT, classRef, { ctx.fromClass(classRef) }) ?: return null
       val match = (objectClass.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc && it.isPublic() }
       if (match != null) {
         return 3 to ResolvedMethod(objectClass, match)
@@ -341,7 +342,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       return checkMethodIsAccessibleOrDeprecated(resolvedMethod)
     }
 
-    ctx.registerProblem(MethodNotFoundProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor), getFromMethod(), instruction))
+    registerMethodNotFoundProblem(ownerNode)
     return null
   }
 
@@ -359,8 +360,20 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       return checkMethodIsAccessibleOrDeprecated(resolvedMethod)
     }
 
-    ctx.registerProblem(MethodNotFoundProblem(SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor), getFromMethod(), instruction))
+    registerMethodNotFoundProblem(ownerNode)
     return null
+  }
+
+  private fun registerMethodNotFoundProblem(ownerNode: ClassNode) {
+    val methodReference = SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)
+    val methodOwnerHierarchy = ClassHierarchyBuilder(ctx).buildClassHierarchy(ownerNode)
+    ctx.registerProblem(MethodNotFoundProblem(
+        methodReference,
+        getFromMethod(),
+        instruction,
+        methodOwnerHierarchy,
+        ctx.ideVersion
+    ))
   }
 
   /**
@@ -453,7 +466,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     interface method reference, which has its ACC_PUBLIC flag set and does not have its ACC_STATIC flag set,
     method lookup succeeds.
     */
-    val objectClass = ctx.resolveClassOrProblem("java/lang/Object", interfaceNode, { ctx.fromClass(interfaceNode) }) ?: return FAILED_LOOKUP
+    val objectClass = ctx.resolveClassOrProblem(CommonClassNames.JAVA_LANG_OBJECT, interfaceNode, { ctx.fromClass(interfaceNode) }) ?: return FAILED_LOOKUP
     val objectMethod = (objectClass.methods as List<MethodNode>).firstOrNull { it.name == methodName && it.desc == methodDescriptor && it.isPublic() && !it.isStatic() }
     if (objectMethod != null) {
       return LookupResult(false, ResolvedMethod(objectClass, objectMethod))

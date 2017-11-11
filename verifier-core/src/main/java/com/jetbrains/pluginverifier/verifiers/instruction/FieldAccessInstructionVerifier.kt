@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.SymbolicReference
 import com.jetbrains.pluginverifier.verifiers.*
+import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassHierarchyBuilder
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 
@@ -179,20 +180,32 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
       return null
     }
 
-    val resolveClass = ctx.resolveClassOrProblem(fieldOwner, verifiableClass, { getFromMethod() }) ?: return null
+    val ownerNode = ctx.resolveClassOrProblem(fieldOwner, verifiableClass, { getFromMethod() }) ?: return null
 
-    val (fail, resolvedField) = resolveFieldSteps(resolveClass)
+    val (fail, resolvedField) = resolveFieldSteps(ownerNode)
     if (fail) {
       return null
     }
     if (resolvedField == null) {
-      val fieldReference = SymbolicReference.fieldOf(fieldOwner, fieldName, fieldDescriptor)
-      ctx.registerProblem(FieldNotFoundProblem(fieldReference, getFromMethod(), instruction))
+      registerFieldNotFoundProblem(ownerNode)
     } else {
       checkFieldIsAccessible(resolvedField)
       checkFieldIsDeprecated(resolvedField)
     }
     return resolvedField
+  }
+
+  //todo: test the field's and method's problems descriptions properly.
+  private fun registerFieldNotFoundProblem(ownerNode: ClassNode) {
+    val fieldReference = SymbolicReference.fieldOf(fieldOwner, fieldName, fieldDescriptor)
+    val fieldOwnerHierarchy = ClassHierarchyBuilder(ctx).buildClassHierarchy(ownerNode)
+    ctx.registerProblem(FieldNotFoundProblem(
+        fieldReference,
+        getFromMethod(),
+        fieldOwnerHierarchy,
+        instruction,
+        ctx.ideVersion
+    ))
   }
 
   private fun checkFieldIsDeprecated(resolvedField: ResolvedField) {
