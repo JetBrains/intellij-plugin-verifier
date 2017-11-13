@@ -104,7 +104,8 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository, val ide
 
   private fun downloadIdeByVersion(ideVersion: IdeVersion): File {
     val lastProgress = AtomicDouble()
-    return ideRepository.getOrDownloadIde(ideVersion) {
+    val ideDescriptor = ideRepository.fetchAvailableIdeDescriptor(ideVersion) ?: throw RuntimeException("IDE $ideVersion is not found in $ideRepository")
+    return ideRepository.ideDownloader.getOrDownloadIde(ideDescriptor) {
       if (it - lastProgress.get() > 0.1) {
         LOG.info("IDE #$ideVersion downloading progress ${(it * 100).toInt()}%")
         lastProgress.set(it)

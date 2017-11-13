@@ -17,7 +17,7 @@ class UploadIdeRunner(val availableIde: AvailableIde,
   override fun presentableName(): String = "Downloading IDE #$availableIde"
 
   override fun computeResult(progress: ServiceTaskProgress): ServiceTaskResult {
-    val ideFile = serverContext.ideRepository.getOrDownloadIde(availableIde) {
+    val ideFile = serverContext.ideRepository.ideDownloader.getOrDownloadIde(availableIde) {
       progress.setFraction(it)
     }
 
