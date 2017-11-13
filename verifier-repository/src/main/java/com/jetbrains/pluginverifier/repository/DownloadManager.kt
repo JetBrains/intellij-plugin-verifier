@@ -5,13 +5,11 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.network.NotFound404ResponseException
-import okhttp3.MediaType
-import okhttp3.ResponseBody
+import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
+import com.jetbrains.pluginverifier.repository.downloader.PluginDownloader
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import retrofit2.Response
 import java.io.File
 import java.io.IOException
 import java.util.*
@@ -20,22 +18,16 @@ import java.util.concurrent.TimeUnit
 
 class DownloadManager(private val downloadDir: File,
                       downloadDirMaxSpace: Long,
-                      private val downloader: (UpdateInfo) -> Response<ResponseBody>) {
+                      private val pluginDownloader: PluginDownloader) {
 
   private companion object {
     val LOG: Logger = LoggerFactory.getLogger(DownloadManager::class.java)
-
-    val TEMP_DOWNLOAD_PREFIX = "plugin_"
-
-    val TEMP_DOWNLOAD_SUFFIX = "_download"
 
     val FORGOTTEN_LOCKS_GC_TIMEOUT_MS: Long = TimeUnit.HOURS.toMillis(8)
 
     val BROKEN_FILE_THRESHOLD_BYTES = 200
 
     fun File.isCorrupterPluginFile(): Boolean = length() < BROKEN_FILE_THRESHOLD_BYTES
-
-    val JAR_CONTENT_TYPE = MediaType.parse("application/java-archive")
   }
 
   private inner class FileLockImpl(val locked: File, val id: Long, val lockDate: Long) : FileLock() {
@@ -83,7 +75,7 @@ class DownloadManager(private val downloadDir: File,
   private fun deleteUnusedPlugins() {
     val updatesToDelete = downloadDir
         .listFiles()!!
-        .filterNot { it.name.startsWith(TEMP_DOWNLOAD_PREFIX) && it.name.endsWith(TEMP_DOWNLOAD_SUFFIX) }
+        .filterNot { it.name.startsWith(PluginDownloader.TEMP_PLUGIN_DOWNLOAD_PREFIX) }
         .filterNot { it in locksAcquired }
         .filter { Ints.tryParse(it.nameWithoutExtension) != null }
         .sortedByDescending { it.length() }
@@ -160,21 +152,6 @@ class DownloadManager(private val downloadDir: File,
     return null
   }
 
-  private fun doDownloadAndGuessPluginFileName(updateInfo: UpdateInfo, tempFile: File): String {
-    val updateId = updateInfo.updateId
-    val response = downloader(updateInfo)
-    FileUtils.copyInputStreamToFile(response.body().byteStream(), tempFile)
-    val extension = guessExtension(response)
-    return "$updateId.$extension"
-  }
-
-  private fun guessExtension(response: Response<ResponseBody>): String =
-      if (response.body().contentType() == JAR_CONTENT_TYPE) {
-        "jar"
-      } else {
-        "zip"
-      }
-
   /**
    *  Provides the thread safety when multiple threads attempt to load the same plugin.
    *
@@ -194,12 +171,16 @@ class DownloadManager(private val downloadDir: File,
     return true
   }
 
-  private fun downloadPlugin(updateInfo: UpdateInfo, tempFile: File): FileLock {
-    val guessedFileName = doDownloadAndGuessPluginFileName(updateInfo, tempFile)
+  private fun getFinalPluginFile(updateInfo: UpdateInfo, tempFile: File): File {
+    val extension = tempFile.extension
+    return File(downloadDir, "${updateInfo.updateId}.$extension")
+  }
+
+  private fun saveDownloadedPluginToFinalFile(updateInfo: UpdateInfo, tempFile: File): FileLock {
     if (tempFile.isCorrupterPluginFile()) {
       throw IOException(getCorruptedMessage(updateInfo, tempFile))
     }
-    val pluginFile = File(downloadDir, guessedFileName)
+    val pluginFile = getFinalPluginFile(updateInfo, tempFile)
     /*
     We must register the file lock before moving the temp file to the final file because
     there could be another thread which removes the final file before we managed to register a lock for it.
@@ -219,16 +200,6 @@ class DownloadManager(private val downloadDir: File,
 
   private fun getCorruptedMessage(updateInfo: UpdateInfo, tempFile: File) =
       "Corrupter plugin file $updateInfo: the file size is only ${tempFile.length()} bytes"
-
-  private fun downloadPlugin(updateInfo: UpdateInfo): FileLock {
-    val tempFile = File.createTempFile(TEMP_DOWNLOAD_PREFIX, TEMP_DOWNLOAD_SUFFIX, downloadDir)
-    LOG.debug("Downloading update $updateInfo to $tempFile")
-    try {
-      return downloadPlugin(updateInfo, tempFile)
-    } finally {
-      tempFile.deleteLogged()
-    }
-  }
 
   /**
    * Searches the plugin by [updateInfo] coordinates in the local cache and
@@ -251,15 +222,22 @@ class DownloadManager(private val downloadDir: File,
       }
     }
 
-    val downloadedPlugin = try {
-      downloadPlugin(updateInfo)
-    } catch (e: NotFound404ResponseException) {
-      return DownloadPluginResult.NotFound("Plugin $updateInfo is not found the Plugin Repository")
-    } catch (e: Exception) {
-      //todo: provide a human readable error message: maybe find a library capable of this?
-      val message = "Unable to download plugin $updateInfo" + (if (e.message != null) " " + e.message else "")
-      LOG.info(message, e)
-      return DownloadPluginResult.FailedToDownload(message + ": " + e.message)
+    val downloadResult = pluginDownloader.download(updateInfo)
+    val fileLock = when (downloadResult) {
+      is DownloadResult.Downloaded -> {
+        try {
+          saveDownloadedPluginToFinalFile(updateInfo, downloadResult.file)
+        } catch (e: Exception) {
+          LOG.debug("Failed to save the downloaded plugin $updateInfo", e)
+          return DownloadPluginResult.FailedToDownload("Failed to download plugin $updateInfo" + if (e.message.isNullOrBlank()) "" else ": " + e.message)
+        }
+      }
+      is DownloadResult.FailedToDownload -> {
+        return DownloadPluginResult.FailedToDownload(downloadResult.reason)
+      }
+      is DownloadResult.NotFound -> {
+        return DownloadPluginResult.NotFound(downloadResult.reason)
+      }
     }
 
     try {
@@ -268,10 +246,10 @@ class DownloadManager(private val downloadDir: File,
         removeUnusedPlugins()
       }
     } catch (e: Throwable) {
-      downloadedPlugin.release()
+      fileLock.release()
       throw e
     }
 
-    return DownloadPluginResult.Found(downloadedPlugin)
+    return DownloadPluginResult.Found(fileLock)
   }
 }

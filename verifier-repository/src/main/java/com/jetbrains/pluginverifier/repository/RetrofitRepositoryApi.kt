@@ -1,11 +1,9 @@
 package com.jetbrains.pluginverifier.repository
 
 import com.google.gson.annotations.SerializedName
-import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Query
-import retrofit2.http.Streaming
 
 internal interface RetrofitRepositoryApi {
 
@@ -20,10 +18,6 @@ internal interface RetrofitRepositoryApi {
 
   @GET("/manager/originalCompatibleUpdatesByPluginIds")
   fun getOriginalCompatibleUpdatesByPluginIds(@Query("build") build: String, @Query("pluginIds") pluginId: String): Call<List<UpdateInfoResponse>>
-
-  @GET("/plugin/download/?noStatistic=true")
-  @Streaming
-  fun downloadFile(@Query("updateId") updateId: Int): Call<ResponseBody>
 }
 
 internal data class UpdateInfoResponse(@SerializedName("pluginId") val pluginId: String,

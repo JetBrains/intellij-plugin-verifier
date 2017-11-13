@@ -6,13 +6,15 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
+import com.jetbrains.pluginverifier.repository.downloader.PluginDownloader
+import com.jetbrains.pluginverifier.storage.FileManager
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
 import java.net.HttpURLConnection
 import java.util.concurrent.TimeUnit
 
-class PublicPluginRepository(private val repositoryUrl: String,
+class PublicPluginRepository(val repositoryUrl: String,
                              downloadDir: File,
                              downloadDirMaxSpace: Long) : PluginRepository {
   /**
@@ -26,9 +28,11 @@ class PublicPluginRepository(private val repositoryUrl: String,
       "com.intellij.modules.python", "Pythonid",
       "com.intellij.modules.swift.lang", "com.intellij.clion-swift")
 
-  private val downloadManager = DownloadManager(downloadDir.createDir(), downloadDirMaxSpace, {
-    repositoryApi.downloadFile(it.updateId).executeSuccessfully()
-  })
+  private val downloadManager = DownloadManager(
+      downloadDir.createDir(),
+      downloadDirMaxSpace,
+      PluginDownloader(repositoryUrl, FileManager(downloadDir))
+  )
 
   override fun getPluginOverviewUrl(pluginInfo: PluginInfo): String? = if (pluginInfo is UpdateInfo) {
     repositoryUrl + "/plugin/index?xmlId=" + pluginInfo.pluginId
@@ -83,5 +87,7 @@ class PublicPluginRepository(private val repositoryUrl: String,
       .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
       .create(RetrofitRepositoryApi::class.java)
+
+  override fun toString(): String = repositoryUrl
 
 }
