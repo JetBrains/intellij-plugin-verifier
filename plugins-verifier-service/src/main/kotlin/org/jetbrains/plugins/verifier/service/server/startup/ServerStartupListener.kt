@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.verifier.service.server.startup
 
+import com.jetbrains.pluginverifier.ide.IdeFilesManager
+import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
-import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
+import com.jetbrains.pluginverifier.storage.FileManager
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.features.FeatureService
 import org.jetbrains.plugins.verifier.service.service.ide.IdeListUpdater
@@ -12,8 +14,6 @@ import org.jetbrains.plugins.verifier.service.service.repository.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.storage.FileManager
-import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.storage.JdkManager
 import org.slf4j.LoggerFactory
 import javax.servlet.ServletContextEvent

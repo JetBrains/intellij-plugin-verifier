@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier
 
+import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
@@ -8,7 +9,6 @@ import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
-import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskRunner
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeRunner

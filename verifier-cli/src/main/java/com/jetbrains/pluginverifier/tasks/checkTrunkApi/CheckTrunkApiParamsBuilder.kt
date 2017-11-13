@@ -2,13 +2,13 @@ package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
 import com.google.common.util.concurrent.AtomicDouble
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.listPresentationInColumns
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
-import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepositoryFactory
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder

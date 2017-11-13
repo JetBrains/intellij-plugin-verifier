@@ -3,6 +3,7 @@ package org.jetbrains.plugins.verifier.service.service.features
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.ide.IdeFileLock
 import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
@@ -10,7 +11,6 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTask
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskProgress
-import org.jetbrains.plugins.verifier.service.storage.IdeFileLock
 
 class ExtractFeaturesServiceTask(val pluginCoordinate: PluginCoordinate,
                                  private val updateInfo: UpdateInfo,

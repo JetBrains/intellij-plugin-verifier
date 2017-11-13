@@ -1,15 +1,15 @@
 package org.jetbrains.plugins.verifier.service.server
 
+import com.jetbrains.pluginverifier.ide.IdeFilesManager
+import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
-import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.storage.FileManager
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.repository.AuthorizationData
 import org.jetbrains.plugins.verifier.service.service.repository.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.storage.FileManager
-import org.jetbrains.plugins.verifier.service.storage.IdeFilesManager
 import org.jetbrains.plugins.verifier.service.storage.JdkManager
 import java.io.Closeable
 import java.io.File

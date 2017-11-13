@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.repository
+package com.jetbrains.pluginverifier.ide
 
 import com.google.gson.Gson
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion

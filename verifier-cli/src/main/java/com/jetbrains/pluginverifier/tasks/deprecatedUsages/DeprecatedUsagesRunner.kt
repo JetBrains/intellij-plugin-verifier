@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 
+import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
-import com.jetbrains.pluginverifier.repository.IdeRepository
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParameters
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter

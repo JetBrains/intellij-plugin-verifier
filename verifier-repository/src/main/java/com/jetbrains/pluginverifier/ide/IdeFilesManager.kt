@@ -1,10 +1,11 @@
-package org.jetbrains.plugins.verifier.service.storage
+package com.jetbrains.pluginverifier.ide
 
-import com.jetbrains.plugin.structure.ide.IdeManager
+import com.jetbrains.plugin.structure.base.utils.FileUtil
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
 import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
+import com.jetbrains.pluginverifier.storage.FileManager
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -91,49 +92,34 @@ class IdeFilesManager(private val fileManager: FileManager,
   }
 
   @Synchronized
-  fun addIde(ideFile: File): Boolean {
+  fun addIde(ideFile: File, version: IdeVersion): Boolean {
     LOG.info("Adding IDE from file $ideFile")
     if (!ideFile.exists()) {
       throw IllegalArgumentException("The IDE file $ideFile doesn't exist")
     }
 
     if (ideFile.isDirectory) {
-      val version: IdeVersion = try {
-        IdeManager.createManager().createIde(ideFile).version
-      } catch (e: Exception) {
-        LOG.error("The IDE file $ideFile is invalid", e)
-        throw e
-      }
-      return addIde(ideFile, version)
+      return addIdeDirectory(ideFile, version)
     }
 
-    if (ideFile.isFile) {
-      val tempDirectory = fileManager.createTempDirectory(ideFile.name)
-
-      try {
-        try {
-          ideFile.extractTo(tempDirectory)
-        } catch (e: Exception) {
-          LOG.error("Unable to extract $ideFile", e)
-          throw e
-        }
-
-        val version: IdeVersion = try {
-          IdeManager.createManager().createIde(tempDirectory).version
-        } catch (e: Exception) {
-          LOG.error("The IDE file $tempDirectory is not a valid IDE", e)
-          throw e
-        }
-        return addIde(tempDirectory, version)
-      } finally {
-        tempDirectory.deleteLogged()
-      }
+    if (ideFile.isFile && FileUtil.isZip(ideFile)) {
+      return extractTemporaryAndAddDirectory(ideFile, version)
     }
 
     throw IllegalArgumentException("Invalid file $ideFile")
   }
 
-  private fun addIde(ideDir: File, version: IdeVersion): Boolean {
+  private fun extractTemporaryAndAddDirectory(ideArchive: File, version: IdeVersion): Boolean {
+    val tempDirectory = fileManager.createTempDirectory(ideArchive.name)
+    try {
+      ideArchive.extractTo(tempDirectory)
+      return addIdeDirectory(tempDirectory, version)
+    } finally {
+      tempDirectory.deleteLogged()
+    }
+  }
+
+  private fun addIdeDirectory(ideDir: File, version: IdeVersion): Boolean {
     if (lockedIdes.contains(version)) {
       return false
     }

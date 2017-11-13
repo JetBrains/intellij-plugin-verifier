@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.ide
 
+import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.repository.AvailableIde
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.tasks.BooleanServiceTaskResult
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTask
@@ -22,7 +22,7 @@ class UploadIdeRunner(val availableIde: AvailableIde,
     }
 
     try {
-      val ideAdded = serverContext.ideFilesManager.addIde(ideFile)
+      val ideAdded = serverContext.ideFilesManager.addIde(ideFile, availableIde.version)
       return BooleanServiceTaskResult(ideAdded)
     } finally {
       ideFile.deleteLogged()

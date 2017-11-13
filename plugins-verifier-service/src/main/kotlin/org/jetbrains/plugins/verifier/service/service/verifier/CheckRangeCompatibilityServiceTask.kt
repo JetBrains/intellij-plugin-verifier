@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
+import com.jetbrains.pluginverifier.ide.IdeFileLock
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
@@ -22,7 +23,6 @@ import com.jetbrains.pluginverifier.results.Result
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTask
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskProgress
-import org.jetbrains.plugins.verifier.service.storage.IdeFileLock
 import org.slf4j.LoggerFactory
 
 class CheckRangeCompatibilityServiceTask(private val updateInfo: UpdateInfo,

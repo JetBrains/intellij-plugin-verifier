@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.repository.AvailableIde
+import com.jetbrains.pluginverifier.ide.AvailableIde
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import java.util.concurrent.TimeUnit
