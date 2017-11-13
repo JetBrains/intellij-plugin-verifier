@@ -2,6 +2,8 @@ package mock.plugin.non.existing;
 
 public class AccessRemovedField {
   public void foo() {
-    int removedField = new InheritField().removedField;
+    InheritField inheritField = new InheritField();
+    int removedField = inheritField.removedField;
+    Object field = InheritField.FINAL_FIELD;
   }
 }

@@ -25,27 +25,32 @@ object HierarchicalProblemsDescription {
   fun presentableElementMightHaveBeenDeclaredInIdeSuperTypes(
       elementType: String,
       ownerHierarchy: ClassHierarchy,
-      ideVersion: IdeVersion
+      ideVersion: IdeVersion,
+      canBeDeclaredInSuperClass: Boolean,
+      canBeDeclaredInSuperInterface: Boolean
   ): String {
-    val (ideSuperClasses, ideSuperInterfaces) = findIdeSuperClassesAndInterfaces(ownerHierarchy)
-    return if (ideSuperClasses.isEmpty() && ideSuperInterfaces.isEmpty()) {
+    val (allSuperClasses, allSuperInterfaces) = findIdeSuperClassesAndInterfaces(ownerHierarchy)
+
+    val superClasses = if (canBeDeclaredInSuperClass) allSuperClasses else emptySet()
+    val superInterfaces = if (canBeDeclaredInSuperInterface) allSuperInterfaces else emptySet()
+
+    return if (superClasses.isEmpty() && superInterfaces.isEmpty()) {
       ""
     } else buildString {
       append(" The $elementType might have been declared ")
-      if (ideSuperClasses.isNotEmpty()) {
-        //in one of the $ideVersion
-        append("in the super " + "class".pluralize(ideSuperClasses.size) + " belonging to $ideVersion")
+      if (superClasses.isNotEmpty()) {
+        append("in the super " + "class".pluralize(superClasses.size) + " belonging to $ideVersion")
         append(" (")
-        append(ideSuperClasses.sorted().joinToString(transform = toFullJavaClassName))
+        append(superClasses.sorted().joinToString(transform = toFullJavaClassName))
         append(")")
       }
-      if (ideSuperInterfaces.isNotEmpty()) {
-        if (ideSuperClasses.isNotEmpty()) {
+      if (superInterfaces.isNotEmpty()) {
+        if (superClasses.isNotEmpty()) {
           append(" or ")
         }
-        append("in the super " + "interface".pluralize(ideSuperInterfaces.size) + " belonging to $ideVersion")
+        append("in the super " + "interface".pluralize(superInterfaces.size) + " belonging to $ideVersion")
         append(" (")
-        append(ideSuperInterfaces.sorted().joinToString(transform = toFullJavaClassName))
+        append(superInterfaces.sorted().joinToString(transform = toFullJavaClassName))
         append(")")
       }
     }

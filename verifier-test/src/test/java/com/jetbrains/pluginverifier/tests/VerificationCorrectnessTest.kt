@@ -512,11 +512,20 @@ class VerificationCorrectnessTest {
   }
 
   @Test
-  fun `field of the IDE classes was accessed on plugin's subclass`() {
+  fun `instance field of the IDE class was accessed on plugin's subclass`() {
     assertProblemFound("Method mock.plugin.non.existing.AccessRemovedField.foo() : void contains a *getfield* instruction referencing an unresolved field mock.plugin.non.existing.InheritField.removedField : int. " +
         "This can lead to **NoSuchFieldError** exception at runtime. The field might have been declared in the super class belonging " +
-        "to IU-145.500 (non.existing.Parent) or in the super interfaces belonging to IU-145.500 (interfaces.SomeInterface, interfaces.SomeInterface2)",
+        "to IU-145.500 (non.existing.Parent)",
         "Access to unresolved field mock.plugin.non.existing.InheritField.removedField : int"
+    )
+  }
+
+  @Test
+  fun `final static field of the IDE interface was accessed in plugin`() {
+    assertProblemFound("Method mock.plugin.non.existing.AccessRemovedField.foo() : void contains a *getstatic* instruction referencing an unresolved field mock.plugin.non.existing.InheritField.FINAL_FIELD : Object. " +
+        "This can lead to **NoSuchFieldError** exception at runtime. The field might have been declared in the super class belonging " +
+        "to IU-145.500 (non.existing.Parent) or in the super interfaces belonging to IU-145.500 (interfaces.SomeInterface, interfaces.SomeInterface2)",
+        "Access to unresolved field mock.plugin.non.existing.InheritField.FINAL_FIELD : Object"
     )
   }
 }

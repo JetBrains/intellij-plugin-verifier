@@ -36,7 +36,7 @@ data class MethodNotFoundProblem(val method: MethodReference,
   override val fullDescription = buildString {
     append(descriptionMainPart)
     if (instruction != Instruction.INVOKE_SPECIAL) {
-      append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("method", methodOwnerHierarchy, ideVersion))
+      append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("method", methodOwnerHierarchy, ideVersion, true, true))
     }
   }
 

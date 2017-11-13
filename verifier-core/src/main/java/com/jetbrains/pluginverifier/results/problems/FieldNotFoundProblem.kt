@@ -27,7 +27,9 @@ data class FieldNotFoundProblem(val field: FieldReference,
 
   override val fullDescription = buildString {
     append(descriptionMainPart)
-    append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("field", fieldOwnerHierarchy, ideVersion))
+    //Non-static fields can only be declared in super classes.
+    val canBeDeclaredInSuperInterface = instruction == Instruction.GET_STATIC || instruction == Instruction.PUT_STATIC
+    append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("field", fieldOwnerHierarchy, ideVersion, true, canBeDeclaredInSuperInterface))
   }
 
   override val equalityReference: String
