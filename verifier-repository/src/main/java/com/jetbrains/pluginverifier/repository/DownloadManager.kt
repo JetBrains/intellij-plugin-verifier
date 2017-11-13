@@ -1,116 +1,80 @@
 package com.jetbrains.pluginverifier.repository
 
 import com.google.common.primitives.Ints
-import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.misc.deleteLogged
+import com.jetbrains.pluginverifier.repository.cleanup.FileSweeper
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.PluginDownloader
+import com.jetbrains.pluginverifier.repository.validation.FileValidator
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
-import java.util.*
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
-class DownloadManager(private val downloadDir: File,
-                      downloadDirMaxSpace: Long,
-                      private val pluginDownloader: PluginDownloader) {
+class DownloadManager(val downloadDir: File,
+                      private val pluginDownloader: PluginDownloader,
+                      private val fileSweeper: FileSweeper,
+                      private val fileValidator: FileValidator) {
 
   private companion object {
     val LOG: Logger = LoggerFactory.getLogger(DownloadManager::class.java)
-
-    val FORGOTTEN_LOCKS_GC_TIMEOUT_MS: Long = TimeUnit.HOURS.toMillis(8)
-
-    val BROKEN_FILE_THRESHOLD_BYTES = 200
-
-    fun File.isCorrupterPluginFile(): Boolean = length() < BROKEN_FILE_THRESHOLD_BYTES
   }
 
-  private inner class FileLockImpl(val locked: File, val id: Long, val lockDate: Long) : FileLock() {
+  private inner class FileLockImpl(val locked: File,
+                                   val id: Long,
+                                   override val lockTime: Long) : FileLock() {
     override fun getFile(): File = locked
 
     override fun release() {
       releaseLock(this)
     }
-  }
 
-  init {
-    Executors.newSingleThreadScheduledExecutor(
-        ThreadFactoryBuilder()
-            .setDaemon(true)
-            .setNameFormat("download-mng-gc-%d")
-            .build()
-    ).scheduleAtFixedRate({ removeUnusedPlugins() }, 5, 30, TimeUnit.SECONDS)
+    override fun equals(other: Any?): Boolean = other is FileLockImpl && id == other.id
+
+    override fun hashCode(): Int = id.hashCode()
   }
 
   private var nextId: Long = 0
 
-  private val locksAcquired: MutableMap<File, Int> = hashMapOf()
+  private val locksAcquired: MutableMap<File, MutableSet<FileLockImpl>> = hashMapOf()
 
   private val busyLocks: MutableMap<Long, FileLockImpl> = hashMapOf()
 
   //it is not used yet
   private val deleteQueue: MutableSet<File> = hashSetOf()
 
-  private val spaceWatcher = FreeDiskSpaceWatcher(downloadDir, downloadDirMaxSpace)
-
   @Synchronized
-  private fun removeUnusedPlugins() {
-    val spaceReport = spaceWatcher.getSpaceReport()
-    LOG.info("It's time to remove unused plugins from cache. Download cache usage: ${spaceReport.usedSpace.bytesToMegabytes()} Mb; " +
-        "Estimated available space (Mb): ${spaceReport.availableSpace.bytesToMegabytes()}")
-
-    releaseOldLocks()
-    val newSpaceReport = spaceWatcher.getSpaceReport()
-    if (newSpaceReport.availableSpace < newSpaceReport.lowSpaceThreshold) {
-      LOG.warn("Available space is less than a recommended threshold: $newSpaceReport")
-      deleteUnusedPlugins()
-    }
-  }
-
-  private fun deleteUnusedPlugins() {
-    val updatesToDelete = downloadDir
+  fun getAvailableFiles(): List<AvailableFile> {
+    return downloadDir
         .listFiles()!!
         .filterNot { it.name.startsWith(PluginDownloader.TEMP_PLUGIN_DOWNLOAD_PREFIX) }
-        .filterNot { it in locksAcquired }
         .filter { Ints.tryParse(it.nameWithoutExtension) != null }
-        .sortedByDescending { it.length() }
-
-    for (update in updatesToDelete) {
-      val spaceReport = spaceWatcher.getSpaceReport()
-      if (spaceReport.availableSpace > spaceReport.enoughSpaceThreshold) {
-        LOG.info("Enough space after cleanup ${spaceReport.availableSpace.bytesToMegabytes()} Mb > ${spaceReport.enoughSpaceThreshold.bytesToMegabytes()} Mb")
-        break
-      }
-      LOG.info("Deleting unused update $update of size ${update.length().bytesToMegabytes()} Mb")
-      update.deleteLogged()
-    }
-
-    val spaceReport = spaceWatcher.getSpaceReport()
-    if (spaceReport.availableSpace < spaceReport.lowSpaceThreshold) {
-      LOG.warn("Available space after cleanup is not sufficient! ${spaceReport.availableSpace.bytesToMegabytes()} Mb < ${spaceReport.lowSpaceThreshold.bytesToMegabytes()} Mb")
-    }
+        .map {
+          AvailableFile(
+              it,
+              it.length(),
+              locksAcquired[it] ?: emptySet()
+          )
+        }
+        .sortedBy { it.size }
   }
 
-  private fun releaseOldLocks() {
-    busyLocks.values
-        .filter { System.currentTimeMillis() - it.lockDate > FORGOTTEN_LOCKS_GC_TIMEOUT_MS }
-        .forEach {
-          LOG.warn("Forgotten lock found: $it; lock date = ${Date(it.lockDate)}")
-          releaseLock(it)
-        }
+  @Synchronized
+  fun remove(file: File) {
+    if (locksAcquired[file].orEmpty().isEmpty()) {
+      file.deleteLogged()
+    } else {
+      deleteQueue.add(file)
+    }
   }
 
   @Synchronized
   private fun registerLock(pluginFile: File): FileLock {
     val id = nextId++
-    val cnt = locksAcquired.getOrPut(pluginFile, { 0 })
-    locksAcquired.put(pluginFile, cnt + 1)
     val lock = FileLockImpl(pluginFile, id, System.currentTimeMillis())
+    locksAcquired.getOrPut(pluginFile, { hashSetOf() }).add(lock)
     busyLocks.put(id, lock)
     return lock
   }
@@ -119,12 +83,10 @@ class DownloadManager(private val downloadDir: File,
   private fun releaseLock(lock: FileLockImpl) {
     if (busyLocks.containsKey(lock.id)) {
       busyLocks.remove(lock.id)
-      val cnt = locksAcquired[lock.locked]!!
-      if (cnt == 1) {
-        locksAcquired.remove(lock.locked)
+      val fileLocks = locksAcquired[lock.locked]!!
+      fileLocks.remove(lock)
+      if (fileLocks.isEmpty()) {
         onResourceRelease(lock.locked)
-      } else {
-        locksAcquired[lock.locked] = cnt - 1
       }
     }
   }
@@ -142,11 +104,11 @@ class DownloadManager(private val downloadDir: File,
   private fun getCachedPlugin(updateInfo: UpdateInfo): FileLock? {
     val updateId = updateInfo.updateId
     val asZip = File(downloadDir, "$updateId.zip")
-    if (asZip.exists() && !asZip.isCorrupterPluginFile()) {
+    if (asZip.exists() && fileValidator.isValid(asZip)) {
       return registerLock(asZip)
     }
     val asJar = File(downloadDir, "$updateId.jar")
-    if (asJar.exists() && !asJar.isCorrupterPluginFile()) {
+    if (asJar.exists() && fileValidator.isValid(asJar)) {
       return registerLock(asJar)
     }
     return null
@@ -160,7 +122,7 @@ class DownloadManager(private val downloadDir: File,
   @Synchronized
   private fun moveDownloaded(tempFile: File, finalFile: File): Boolean {
     if (finalFile.exists()) {
-      if (finalFile.isCorrupterPluginFile()) {
+      if (!fileValidator.isValid(finalFile)) {
         FileUtils.forceDelete(finalFile)
       } else {
         return false
@@ -177,7 +139,7 @@ class DownloadManager(private val downloadDir: File,
   }
 
   private fun saveDownloadedPluginToFinalFile(updateInfo: UpdateInfo, tempFile: File): FileLock {
-    if (tempFile.isCorrupterPluginFile()) {
+    if (!fileValidator.isValid(tempFile)) {
       throw IOException(getCorruptedMessage(updateInfo, tempFile))
     }
     val pluginFile = getFinalPluginFile(updateInfo, tempFile)
@@ -215,7 +177,7 @@ class DownloadManager(private val downloadDir: File,
   fun getOrDownloadPlugin(updateInfo: UpdateInfo): DownloadPluginResult {
     val cachedPlugin = getCachedPlugin(updateInfo)
     if (cachedPlugin != null) {
-      if (cachedPlugin.getFile().isCorrupterPluginFile()) {
+      if (!fileValidator.isValid(cachedPlugin.getFile())) {
         cachedPlugin.release()
       } else {
         return DownloadPluginResult.Found(cachedPlugin)
@@ -241,10 +203,7 @@ class DownloadManager(private val downloadDir: File,
     }
 
     try {
-      val spaceReport = spaceWatcher.getSpaceReport()
-      if (spaceReport.availableSpace < spaceReport.lowSpaceThreshold) {
-        removeUnusedPlugins()
-      }
+      fileSweeper.sweep(this)
     } catch (e: Throwable) {
       fileLock.release()
       throw e

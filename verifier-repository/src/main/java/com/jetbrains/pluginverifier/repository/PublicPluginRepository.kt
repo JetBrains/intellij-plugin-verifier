@@ -6,7 +6,9 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
+import com.jetbrains.pluginverifier.repository.cleanup.PluginRepositoryFileSweeper
 import com.jetbrains.pluginverifier.repository.downloader.PluginDownloader
+import com.jetbrains.pluginverifier.repository.validation.PluginFileValidator
 import com.jetbrains.pluginverifier.storage.FileManager
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -30,8 +32,9 @@ class PublicPluginRepository(val repositoryUrl: String,
 
   private val downloadManager = DownloadManager(
       downloadDir.createDir(),
-      downloadDirMaxSpace,
-      PluginDownloader(repositoryUrl, FileManager(downloadDir))
+      PluginDownloader(repositoryUrl, FileManager(downloadDir)),
+      PluginRepositoryFileSweeper(FreeDiskSpaceWatcher(downloadDir, downloadDirMaxSpace)),
+      PluginFileValidator()
   )
 
   override fun getPluginOverviewUrl(pluginInfo: PluginInfo): String? = if (pluginInfo is UpdateInfo) {
