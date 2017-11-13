@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.network
 
+import okhttp3.MediaType
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response

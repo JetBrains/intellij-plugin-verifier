@@ -7,8 +7,8 @@ import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.service.networking.createJsonRequestBody
-import org.jetbrains.plugins.verifier.service.service.networking.createStringRequestBody
+import com.jetbrains.pluginverifier.network.createJsonRequestBody
+import com.jetbrains.pluginverifier.network.createStringRequestBody
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

@@ -11,8 +11,8 @@ import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.api.UpdateRangeCompatibilityResults
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.service.networking.createByteArrayRequestBody
-import org.jetbrains.plugins.verifier.service.service.networking.createStringRequestBody
+import com.jetbrains.pluginverifier.network.createByteArrayRequestBody
+import com.jetbrains.pluginverifier.network.createStringRequestBody
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
 import org.jetbrains.plugins.verifier.service.storage.JdkVersion
 import retrofit2.Call
