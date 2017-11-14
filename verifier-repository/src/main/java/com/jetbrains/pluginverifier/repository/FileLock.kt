@@ -3,13 +3,14 @@ package com.jetbrains.pluginverifier.repository
 import java.io.Closeable
 import java.io.File
 
-abstract class FileLock : Closeable {
+//todo: move it
+interface FileLock : Closeable {
 
-  abstract val lockTime: Long
+  val lockTime: Long
 
-  abstract fun getFile(): File
+  val file: File
 
-  abstract fun release()
+  fun release()
 
   override fun close() = release()
 }

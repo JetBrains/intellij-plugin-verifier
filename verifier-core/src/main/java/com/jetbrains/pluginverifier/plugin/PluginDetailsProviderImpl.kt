@@ -37,7 +37,7 @@ class PluginDetailsProviderImpl(private val extractDirectory: File) : PluginDeta
 
   private fun createPluginDetailsByFileLock(pluginFileLock: FileLock): PluginDetails {
     try {
-      val pluginFile = pluginFileLock.getFile()
+      val pluginFile = pluginFileLock.file
       val creationResult = IdePluginManager.createManager(extractDirectory).createPlugin(pluginFile)
       if (creationResult is PluginCreationSuccess<IdePlugin>) {
         val pluginClassesLocations = try {
