@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.repository.cleanup
 
-import com.jetbrains.pluginverifier.repository.DownloadManager
+import com.jetbrains.pluginverifier.repository.files.FileRepository
 
-interface FileSweeper {
-  fun sweep(downloadManager: DownloadManager)
+interface FileSweeper<K> {
+  fun sweep(fileRepository: FileRepository<K>)
 }

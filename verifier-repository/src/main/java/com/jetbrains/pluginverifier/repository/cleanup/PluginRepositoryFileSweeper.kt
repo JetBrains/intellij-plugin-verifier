@@ -1,15 +1,16 @@
 package com.jetbrains.pluginverifier.repository.cleanup
 
 import com.jetbrains.pluginverifier.misc.bytesToMegabytes
-import com.jetbrains.pluginverifier.repository.AvailableFile
-import com.jetbrains.pluginverifier.repository.DownloadManager
 import com.jetbrains.pluginverifier.repository.FreeDiskSpaceWatcher
+import com.jetbrains.pluginverifier.repository.UpdateId
+import com.jetbrains.pluginverifier.repository.files.AvailableFile
+import com.jetbrains.pluginverifier.repository.files.FileRepository
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class PluginRepositoryFileSweeper(private val spaceWatcher: FreeDiskSpaceWatcher) : FileSweeper {
+class PluginRepositoryFileSweeper(private val spaceWatcher: FreeDiskSpaceWatcher) : FileSweeper<UpdateId> {
 
   private companion object {
     val LOG: Logger = LoggerFactory.getLogger(PluginRepositoryFileSweeper::class.java)
@@ -17,42 +18,42 @@ class PluginRepositoryFileSweeper(private val spaceWatcher: FreeDiskSpaceWatcher
     val LOCKS_TTL: Long = TimeUnit.HOURS.toMillis(8)
   }
 
-  override fun sweep(downloadManager: DownloadManager) {
+  override fun sweep(fileRepository: FileRepository<UpdateId>) {
     val spaceReport = spaceWatcher.getSpaceReport()
     if (spaceReport.availableSpace < spaceReport.lowSpaceThreshold) {
       LOG.info("It's time to remove unused plugins from cache. Download cache usage: ${spaceReport.usedSpace.bytesToMegabytes()} Mb; " +
           "Estimated available space (Mb): ${spaceReport.availableSpace.bytesToMegabytes()}")
 
-      removeUnusedPlugins(downloadManager)
+      removeUnusedPlugins(fileRepository)
     }
   }
 
-  private fun warnForgottenLocks(availableFiles: List<AvailableFile>) {
+  private fun warnForgottenLocks(availableFiles: List<AvailableFile<UpdateId>>) {
     for (availableFile in availableFiles) {
-      availableFile.locks
+      availableFile.registeredLocks
           .filter { System.currentTimeMillis() - it.lockTime > LOCKS_TTL }
           .forEach { lock -> LOG.warn("Forgotten lock found: $availableFile; lock date = ${Date(lock.lockTime)}") }
     }
   }
 
 
-  private fun removeUnusedPlugins(downloadManager: DownloadManager) {
+  //todo: remove the updates using LRU order
+  private fun removeUnusedPlugins(downloadManager: FileRepository<UpdateId>) {
     val availableFiles = downloadManager.getAvailableFiles()
     warnForgottenLocks(availableFiles)
 
     val updatesToDelete = availableFiles
-        .filter { it.locks.isEmpty() }
+        .filter { it.registeredLocks.isEmpty() }
         .sortedByDescending { it.size }
-        .map { it.file }
 
-    for (update in updatesToDelete) {
+    for ((key, _, size, _) in updatesToDelete) {
       val spaceReport = spaceWatcher.getSpaceReport()
       if (spaceReport.availableSpace > spaceReport.enoughSpaceThreshold) {
         LOG.info("Enough space after cleanup ${spaceReport.availableSpace.bytesToMegabytes()} Mb > ${spaceReport.enoughSpaceThreshold.bytesToMegabytes()} Mb")
         break
       }
-      LOG.info("Deleting unused update $update of size ${update.length().bytesToMegabytes()} Mb")
-      downloadManager.remove(update)
+      LOG.info("Deleting unused update $key of size ${size.bytesToMegabytes()} Mb")
+      downloadManager.remove(key)
     }
 
     val spaceReport = spaceWatcher.getSpaceReport()

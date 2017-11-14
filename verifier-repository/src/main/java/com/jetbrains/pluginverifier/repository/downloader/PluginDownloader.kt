@@ -5,8 +5,7 @@ import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.NotFound404ResponseException
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.network.jarContentMediaType
-import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.storage.FileManager
+import com.jetbrains.pluginverifier.repository.UpdateId
 import okhttp3.ResponseBody
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
@@ -17,6 +16,8 @@ import retrofit2.Retrofit
 import retrofit2.http.GET
 import retrofit2.http.Query
 import retrofit2.http.Streaming
+import java.io.File
+import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
 internal interface PluginDownloadConnector {
@@ -25,42 +26,42 @@ internal interface PluginDownloadConnector {
   fun downloadPlugin(@Query("updateId") updateId: Int): Call<ResponseBody>
 }
 
-class PluginDownloader(private val pluginRepositoryUrl: String,
-                       private val fileManager: FileManager) : Downloader<UpdateInfo> {
+class PluginDownloader(private val pluginRepositoryUrl: String) : Downloader<UpdateId> {
 
-  companion object {
+  private companion object {
     val LOG: Logger = LoggerFactory.getLogger(PluginDownloader::class.java)
 
     val TEMP_PLUGIN_DOWNLOAD_PREFIX = "download-plugin"
   }
 
   private val repositoryDownloadConnector = Retrofit.Builder()
-      .baseUrl(pluginRepositoryUrl + '/')
+      .baseUrl(pluginRepositoryUrl.trimEnd('/') + '/')
       .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
       .create(PluginDownloadConnector::class.java)
 
-  override fun download(coordinate: UpdateInfo): DownloadResult {
-    val updateId = coordinate.updateId
+  override fun download(destinationDirectory: File, key: UpdateId): DownloadResult {
     return try {
-      doDownloadToTempFile(updateId, coordinate)
+      doDownloadToTempFile(key.id, destinationDirectory)
     } catch (e: NotFound404ResponseException) {
-      DownloadResult.NotFound("Plugin $coordinate is not found in the Plugin Repository $pluginRepositoryUrl")
+      DownloadResult.NotFound("Plugin $key is not found in the Plugin Repository $pluginRepositoryUrl")
     } catch (e: Exception) {
       //todo: provide a human readable error message: maybe find a library capable of this?
-      val message = "Unable to download plugin $coordinate" + if (e.message.isNullOrBlank()) "" else ": " + e.message
+      val message = "Unable to download plugin $key" + if (e.message.isNullOrBlank()) "" else ": " + e.message
+      LOG.debug(message, e)
       DownloadResult.FailedToDownload(message, e)
     }
   }
 
-  private fun doDownloadToTempFile(updateId: Int, coordinate: UpdateInfo): DownloadResult.Downloaded {
+  private fun doDownloadToTempFile(updateId: Int, destinationDirectory: File): DownloadResult.Downloaded {
     val response = repositoryDownloadConnector.downloadPlugin(updateId).executeSuccessfully()
     val extension = response.guessExtension()
-    val tempFile = fileManager.createTempFile("$TEMP_PLUGIN_DOWNLOAD_PREFIX-$updateId.$extension")
-    LOG.debug("Downloading plugin $coordinate to $tempFile")
+    val prefix = "$TEMP_PLUGIN_DOWNLOAD_PREFIX-$updateId.$extension"
+    val tempFile = Files.createTempDirectory(destinationDirectory.toPath(), prefix).toFile()
+    LOG.debug("Downloading plugin #$updateId to $tempFile")
     return try {
       FileUtils.copyInputStreamToFile(response.body().byteStream(), tempFile)
-      DownloadResult.Downloaded(tempFile)
+      DownloadResult.Downloaded(tempFile, extension)
     } catch (e: Exception) {
       tempFile.deleteLogged()
       throw e
