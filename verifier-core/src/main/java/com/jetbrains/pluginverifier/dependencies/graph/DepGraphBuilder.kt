@@ -35,7 +35,6 @@ class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
     is DependencyFinder.Result.FoundCoordinates -> pluginDetailsProvider.providePluginDetails(pluginCoordinate)
     is DependencyFinder.Result.PluginAndDetailsProvider -> pluginDetailsProvider.provideDetailsByExistingPlugins(plugin)
     is DependencyFinder.Result.FoundOpenPluginWithoutClasses -> PluginDetails.FoundOpenPluginWithoutClasses(plugin)
-    is DependencyFinder.Result.FoundOpenPluginAndClasses -> PluginDetails.FoundOpenPluginAndClasses(plugin, pluginClassesLocations, warnings)
     is DependencyFinder.Result.NotFound -> PluginDetails.NotFound(reason)
     is DependencyFinder.Result.DefaultIdeaModule -> null
   }

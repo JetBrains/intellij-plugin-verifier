@@ -20,10 +20,6 @@ interface DependencyFinder {
 
     data class FoundOpenPluginWithoutClasses(val plugin: IdePlugin) : Result()
 
-    data class FoundOpenPluginAndClasses(val plugin: IdePlugin,
-                                         val warnings: List<PluginProblem>,
-                                         val pluginClassesLocations: IdePluginClassesLocations) : Result()
-
     data class NotFound(val reason: String) : Result()
 
     data class DefaultIdeaModule(val moduleId: String) : Result()
