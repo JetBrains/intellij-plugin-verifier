@@ -3,13 +3,14 @@ package com.jetbrains.pluginverifier.repository
 import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.cleanup.PluginRepositoryFileSweeper
 import com.jetbrains.pluginverifier.repository.downloader.PluginDownloader
+import com.jetbrains.pluginverifier.repository.files.FileRepositoryImpl
+import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
+import com.jetbrains.pluginverifier.repository.files.PluginFileNameProvider
 import com.jetbrains.pluginverifier.repository.validation.PluginFileValidator
-import com.jetbrains.pluginverifier.storage.FileManager
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
@@ -30,11 +31,12 @@ class PublicPluginRepository(val repositoryUrl: String,
       "com.intellij.modules.python", "Pythonid",
       "com.intellij.modules.swift.lang", "com.intellij.clion-swift")
 
-  private val downloadManager = DownloadManager(
-      downloadDir.createDir(),
-      PluginDownloader(repositoryUrl, FileManager(downloadDir)),
-      PluginRepositoryFileSweeper(FreeDiskSpaceWatcher(downloadDir, downloadDirMaxSpace)),
-      PluginFileValidator()
+  private val downloadManager = FileRepositoryImpl(
+      downloadDir,
+      PluginDownloader(repositoryUrl),
+      PluginFileNameProvider(),
+      PluginFileValidator(),
+      PluginRepositoryFileSweeper(FreeDiskSpaceWatcher(downloadDir, downloadDirMaxSpace))
   )
 
   override fun getPluginOverviewUrl(pluginInfo: PluginInfo): String? = if (pluginInfo is UpdateInfo) {
@@ -82,7 +84,7 @@ class PublicPluginRepository(val repositoryUrl: String,
   override fun getIdOfPluginDeclaringModule(moduleId: String): String? =
       INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
 
-  override fun downloadPluginFile(update: UpdateInfo): DownloadPluginResult = downloadManager.getOrDownloadPlugin(update)
+  override fun downloadPluginFile(update: UpdateInfo): FileRepositoryResult = downloadManager.get(UpdateId(update.updateId))
 
   private val repositoryApi = Retrofit.Builder()
       .baseUrl(repositoryUrl + '/')

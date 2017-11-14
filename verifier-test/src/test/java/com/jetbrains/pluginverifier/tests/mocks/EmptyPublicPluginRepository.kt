@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.tests.mocks
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.repository.DownloadPluginResult
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 
 /**
  * Created by Sergey.Patrikeev
@@ -18,7 +18,7 @@ object EmptyPublicPluginRepository : PluginRepository {
 
   override fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo>? = null
 
-  override fun downloadPluginFile(update: UpdateInfo): DownloadPluginResult = DownloadPluginResult.NotFound("")
+  override fun downloadPluginFile(update: UpdateInfo): FileRepositoryResult = FileRepositoryResult.NotFound("")
 
   override fun getUpdateInfoById(updateId: Int): UpdateInfo? = null
 
