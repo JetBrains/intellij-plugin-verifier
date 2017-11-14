@@ -56,8 +56,9 @@ class PluginDownloader(private val pluginRepositoryUrl: String) : Downloader<Upd
   private fun doDownloadToTempFile(updateId: Int, destinationDirectory: File): DownloadResult.Downloaded {
     val response = repositoryDownloadConnector.downloadPlugin(updateId).executeSuccessfully()
     val extension = response.guessExtension()
-    val prefix = "$TEMP_PLUGIN_DOWNLOAD_PREFIX-$updateId.$extension"
-    val tempFile = Files.createTempDirectory(destinationDirectory.toPath(), prefix).toFile()
+    val prefix = "$TEMP_PLUGIN_DOWNLOAD_PREFIX-$updateId"
+    val suffix = if (extension.isNotEmpty()) "." + extension else ""
+    val tempFile = Files.createTempFile(destinationDirectory.toPath(), prefix, suffix).toFile()
     LOG.debug("Downloading plugin #$updateId to $tempFile")
     return try {
       FileUtils.copyInputStreamToFile(response.body().byteStream(), tempFile)
