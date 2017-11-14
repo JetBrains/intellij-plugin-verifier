@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.results
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.repository.DownloadPluginResult
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
+import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import org.apache.commons.io.FileUtils
 import org.junit.Assert.*
 import org.junit.Rule
@@ -73,10 +73,10 @@ class TestMainPluginRepository {
     val updateInfo = getRepository().getUpdateInfoById(25128) //.gitignore 1.3.3
     assertNotNull(updateInfo)
     val downloadPluginResult = getRepository().downloadPluginFile(updateInfo!!)
-    assertTrue(downloadPluginResult is DownloadPluginResult.Found)
-    val fileLock = (downloadPluginResult as DownloadPluginResult.Found).fileLock
+    assertTrue(downloadPluginResult is FileRepositoryResult.Found)
+    val fileLock = (downloadPluginResult as FileRepositoryResult.Found).lockedFile
     assertNotNull(fileLock)
-    assertTrue(fileLock.getFile().length() > 0)
+    assertTrue(fileLock.file.length() > 0)
     fileLock.release()
   }
 

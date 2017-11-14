@@ -10,8 +10,8 @@ import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
-import com.jetbrains.pluginverifier.repository.DownloadPluginResult
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
@@ -23,6 +23,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.lang.Exception
 
 /**
  * @author Sergey Patrikeev
@@ -81,8 +82,8 @@ class IdeDependencyFinderTest {
         return if (pluginId == "externalPlugin") UpdateInfo(pluginId, pluginId, "1.0", 0, null) else null
       }
 
-      override fun downloadPluginFile(update: UpdateInfo): DownloadPluginResult {
-        return DownloadPluginResult.FailedToDownload("Failed to download test.")
+      override fun downloadPluginFile(update: UpdateInfo): FileRepositoryResult {
+        return FileRepositoryResult.Failed("Failed to download test.", Exception())
       }
     }
 
