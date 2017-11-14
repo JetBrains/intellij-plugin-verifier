@@ -6,17 +6,18 @@ import java.io.File
 import java.nio.file.Files
 
 /**
+ * todo: rename?
  * @author Sergey Patrikeev
  */
-class FileManager(homeDirectory: File) {
+class FileManager(private val directory: File) {
 
-  private val tempDirectoryRoot = homeDirectory.resolve("temp").createDir().toPath()
+  private val tempDirectory = directory.resolve("temp").createDir()
 
-  fun createTempDirectory(name: String): File = Files.createTempDirectory(tempDirectoryRoot, name).toFile()
+  fun createTempDirectory(name: String): File = Files.createTempDirectory(tempDirectory.toPath(), name).toFile()
 
-  fun createTempFile(suffix: String): File = Files.createTempFile(tempDirectoryRoot, "temp", suffix).toFile()
+  fun createTempFile(suffix: String): File = Files.createTempFile(tempDirectory.toPath(), "temp", suffix).toFile()
 
-  fun cleanupTempDirectories() = tempDirectoryRoot.toFile().deleteLogged()
+  fun cleanupTempDirectories() = tempDirectory.deleteLogged()
 
 }
 
