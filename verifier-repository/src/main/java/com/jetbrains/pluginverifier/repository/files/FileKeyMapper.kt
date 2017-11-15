@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.repository.files
 
 import java.io.File
 
-interface FileNameProvider<K> {
+interface FileKeyMapper<K> {
 
   fun getFileNameWithoutExtension(key: K): String
 

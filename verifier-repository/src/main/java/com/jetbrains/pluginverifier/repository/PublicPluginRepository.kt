@@ -9,8 +9,7 @@ import com.jetbrains.pluginverifier.repository.cleanup.PluginRepositoryFileSweep
 import com.jetbrains.pluginverifier.repository.downloader.PluginDownloader
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryImpl
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
-import com.jetbrains.pluginverifier.repository.files.PluginFileNameProvider
-import com.jetbrains.pluginverifier.repository.validation.PluginFileValidator
+import com.jetbrains.pluginverifier.repository.files.PluginFileKeyMapper
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
@@ -34,8 +33,7 @@ class PublicPluginRepository(val repositoryUrl: String,
   private val downloadManager = FileRepositoryImpl(
       downloadDir,
       PluginDownloader(repositoryUrl),
-      PluginFileNameProvider(),
-      PluginFileValidator(),
+      PluginFileKeyMapper(),
       PluginRepositoryFileSweeper(FreeDiskSpaceWatcher(downloadDir, downloadDirMaxSpace))
   )
 

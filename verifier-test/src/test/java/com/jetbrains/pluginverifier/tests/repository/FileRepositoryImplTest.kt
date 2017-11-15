@@ -27,8 +27,7 @@ class FileRepositoryImplTest {
     val fileRepository: FileRepository<Int> = FileRepositoryImpl(
         folder,
         MockDownloader(),
-        MockFileNameProvider(),
-        MockFileValidator(),
+        MockFileKeyMapper(),
         MockFileSweeper()
     )
     assertEquals(emptyList<AvailableFile<Int>>(), fileRepository.getAvailableFiles())
@@ -61,8 +60,7 @@ class FileRepositoryImplTest {
     val fileRepository = FileRepositoryImpl(
         folder,
         MockDownloader(),
-        MockFileNameProvider(),
-        MockFileValidator(),
+        MockFileKeyMapper(),
         MockFileSweeper()
     )
 
@@ -82,8 +80,7 @@ class FileRepositoryImplTest {
     val fileRepository = FileRepositoryImpl(
         tempFolder.newFolder(),
         downloader,
-        MockFileNameProvider(),
-        MockFileValidator(),
+        MockFileKeyMapper(),
         MockFileSweeper()
     )
 

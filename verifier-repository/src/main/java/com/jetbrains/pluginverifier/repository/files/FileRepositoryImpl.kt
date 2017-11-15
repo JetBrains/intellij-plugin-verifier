@@ -7,7 +7,6 @@ import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.cleanup.FileSweeper
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
-import com.jetbrains.pluginverifier.repository.validation.FileValidator
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -20,8 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class FileRepositoryImpl<K>(private val repositoryDir: File,
                             private val downloader: Downloader<K>,
-                            private val fileNameProvider: FileNameProvider<K>,
-                            private val fileValidator: FileValidator,
+                            private val fileKeyMapper: FileKeyMapper<K>,
                             private val fileSweeper: FileSweeper<K>) : FileRepository<K> {
 
   private companion object {
@@ -52,11 +50,9 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   private fun readInitiallyAvailableFiles() {
     val existingFiles = repositoryDir.listFiles() ?: throw IOException("Unable to read directory content: $repositoryDir")
     for (file in existingFiles) {
-      if (fileValidator.isValid(file)) {
-        val key = fileNameProvider.getKey(file)
+      val key = fileKeyMapper.getKey(file)
         if (key != null) {
           key2File[key] = file
-        }
       }
     }
   }
@@ -132,7 +128,8 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   @Synchronized
   private fun moveDownloaded(downloaded: File, finalFile: File): Boolean {
     if (finalFile.exists()) {
-      if (fileValidator.isValid(finalFile)) {
+      val isValid = fileKeyMapper.getKey(finalFile) != null
+      if (isValid) {
         return false
       } else {
         finalFile.deleteLogged()
@@ -194,7 +191,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   }
 
   private fun getFinalFile(key: K, extension: String): File {
-    val finalFileName = fileNameProvider.getFileNameWithoutExtension(key) + if (extension.isEmpty()) "" else "." + extension
+    val finalFileName = fileKeyMapper.getFileNameWithoutExtension(key) + if (extension.isEmpty()) "" else "." + extension
     return File(repositoryDir, finalFileName)
   }
 
