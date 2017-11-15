@@ -1,10 +1,7 @@
 package com.jetbrains.pluginverifier.repository.files
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.jetbrains.pluginverifier.misc.bytesToMegabytes
-import com.jetbrains.pluginverifier.misc.createDir
-import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.misc.pluralize
+import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.repository.cleanup.KeyUsageStatistic
 import com.jetbrains.pluginverifier.repository.cleanup.SweepInfo
 import com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy
@@ -226,7 +223,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   private fun getFileForKey(key: K, extension: String): File {
     val finalFileName = fileKeyMapper.getFileNameWithoutExtension(key) + if (extension.isEmpty()) "" else "." + extension
-    return File(repositoryDir, finalFileName)
+    return File(repositoryDir, finalFileName.replaceInvalidFileNameCharacters())
   }
 
   @Synchronized
