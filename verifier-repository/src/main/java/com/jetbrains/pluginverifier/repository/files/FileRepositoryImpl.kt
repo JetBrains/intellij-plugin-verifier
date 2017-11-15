@@ -12,6 +12,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
 import java.util.concurrent.Executors
 import java.util.concurrent.FutureTask
 import java.util.concurrent.atomic.AtomicInteger
@@ -150,7 +151,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
         keyDownloading.second.incrementAndGet()
         keyDownloading.first to false
       } else {
-        val task = FutureTask { downloader.download(downloadDirectory, key) }
+        val task = FutureTask { doDownload(key) }
         this.downloading[key] = task to AtomicInteger(1)
         task to true
       }
@@ -171,6 +172,11 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
         }
       }
     }
+  }
+
+  private fun doDownload(key: K): DownloadResult {
+    val tempFile = Files.createTempFile(downloadDirectory.toPath(), "download", "").toFile()
+    return downloader.download(key, tempFile)
   }
 
   private fun DownloadResult.toFileRepositoryResult(key: K): FileRepositoryResult = when (this) {

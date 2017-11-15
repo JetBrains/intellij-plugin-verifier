@@ -13,7 +13,7 @@ class OnlyOneDownloadAtTimeDownloader : Downloader<Int> {
 
   private val downloadResult = DownloadResult.NotFound("Not found")
 
-  override fun download(destinationDirectory: File, key: Int): DownloadResult {
+  override fun download(key: Int, destination: File): DownloadResult {
     val thread = downloading[key]
     if (thread != null) {
       errors.add(AssertionError("Key $key is already being downloaded by $thread; current thread = " + Thread.currentThread()))
