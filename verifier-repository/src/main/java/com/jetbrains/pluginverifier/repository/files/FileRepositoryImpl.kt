@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.repository.files
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.cleanup.FileSweeper
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
@@ -152,7 +151,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
         keyDownloading.first to false
       } else {
         val task = FutureTask { doDownload(key) }
-        this.downloading[key] = task to AtomicInteger(1)
+        downloading[key] = task to AtomicInteger(1)
         task to true
       }
     }
@@ -176,44 +175,40 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   private fun doDownload(key: K): DownloadResult {
     val tempFile = Files.createTempFile(downloadDirectory.toPath(), "download", "").toFile()
-    return downloader.download(key, tempFile)
+    try {
+      val downloadResult = downloader.download(key, tempFile)
+      if (downloadResult is DownloadResult.Downloaded) {
+        val finalFile = saveTempFileToFinalFile(key, tempFile, downloadResult.extension)
+        registerFileByKey(key, finalFile)
+        return DownloadResult.Downloaded(finalFile, downloadResult.extension)
+      }
+      return downloadResult
+    } catch (e: Throwable) {
+      tempFile.deleteLogged()
+      throw e
+    }
   }
 
-  private fun DownloadResult.toFileRepositoryResult(key: K): FileRepositoryResult = when (this) {
-    is DownloadResult.Downloaded -> {
-      val finalFile = getFinalFile(key, extension)
-      val fileLock = synchronized(this) {
-        if (file.exists()) {
-          saveDownloadedToFinalFile(key, file, finalFile)
-        } else {
-          assert(has(key))
-          registerLock(key)
-        }
-      }
-      FileRepositoryResult.Found(fileLock)
-    }
+  private fun saveTempFileToFinalFile(key: K, tempFile: File, extension: String): File {
+    val finalFile = getFileForKey(key, extension)
+    assert(!finalFile.exists())
+    FileUtils.moveFile(tempFile, finalFile)
+    return finalFile
+  }
+
+  private fun DownloadResult.toFileRepositoryResult(key: K) = when (this) {
+    is DownloadResult.Downloaded -> FileRepositoryResult.Found(registerLock(key))
     is DownloadResult.NotFound -> FileRepositoryResult.NotFound(reason)
     is DownloadResult.FailedToDownload -> FileRepositoryResult.Failed(reason, error)
   }
 
-  private fun getFinalFile(key: K, extension: String): File {
+  private fun getFileForKey(key: K, extension: String): File {
     val finalFileName = fileKeyMapper.getFileNameWithoutExtension(key) + if (extension.isEmpty()) "" else "." + extension
     return File(repositoryDir, finalFileName)
   }
 
-  @Synchronized
-  private fun saveDownloadedToFinalFile(key: K, downloadedFile: File, finalFile: File): FileLock {
-    assert(downloadedFile.exists())
-    if (moveDownloaded(downloadedFile, finalFile)) {
-      LOG.debug("$key is saved into $finalFile")
-    } else {
-      LOG.debug("Another thread has downloaded $key into $finalFile")
-    }
-    registerFileByKey(key, finalFile)
-    return registerLock(key)
-  }
-
   private fun registerFileByKey(key: K, finalFile: File) {
+    assert(key !in key2File)
     key2File[key] = finalFile
   }
 
