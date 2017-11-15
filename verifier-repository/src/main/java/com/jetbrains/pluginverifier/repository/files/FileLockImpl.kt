@@ -2,9 +2,10 @@ package com.jetbrains.pluginverifier.repository.files
 
 import com.jetbrains.pluginverifier.repository.FileLock
 import java.io.File
+import java.time.Instant
 
 internal class FileLockImpl<K>(override val file: File,
-                               override val lockTime: Long,
+                               override val lockTime: Instant,
                                val key: K,
                                private val lockId: Long,
                                private val repository: FileRepositoryImpl<K>) : FileLock {

@@ -1,8 +1,10 @@
 package com.jetbrains.pluginverifier.repository.files
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.misc.deleteLogged
+import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.cleanup.KeyUsageStatistic
 import com.jetbrains.pluginverifier.repository.cleanup.SweepInfo
@@ -15,7 +17,9 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
-import java.util.*
+import java.time.Clock
+import java.time.Duration
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.Executors
 import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
@@ -24,10 +28,13 @@ import java.util.concurrent.TimeUnit
 class FileRepositoryImpl<K>(private val repositoryDir: File,
                             private val downloader: Downloader<K>,
                             private val fileKeyMapper: FileKeyMapper<K>,
-                            private val sweepPolicy: SweepPolicy<K>) : FileRepository<K> {
+                            private val sweepPolicy: SweepPolicy<K>,
+                            private val clock: Clock = Clock.systemUTC()) : FileRepository<K> {
 
   private companion object {
     val LOG: Logger = LoggerFactory.getLogger(FileRepositoryImpl::class.java)
+
+    val LOCK_TIME_TO_LIVE_DURATION = Duration.of(1, ChronoUnit.HOURS)
   }
 
   private data class RepositoryState<K>(var totalSpaceUsage: Long = 0,
@@ -121,7 +128,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
       assert(repositoryState.has(key))
       repositoryState.get(key)!!
     }
-    val lockTime = System.currentTimeMillis()
+    val lockTime = clock.instant()
     val lock = FileLockImpl(file, lockTime, key, nextId++, this)
     key2Locks.getOrPut(key, { hashSetOf() }).add(lock)
     val keyUsageStatistic = statistics.getOrPut(key, { KeyUsageStatistic(key, lockTime, 0) })
@@ -234,10 +241,12 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   private fun detectForgottenLocks() {
     for ((key, locks) in key2Locks) {
       for (lock in locks) {
-        //todo: do it better
-        val isForgotten = System.currentTimeMillis() - lock.lockTime > TimeUnit.HOURS.toMillis(1)
+        val now = clock.instant()
+        val lockTime = lock.lockTime
+        val maxUnlockTime = lockTime.plus(LOCK_TIME_TO_LIVE_DURATION)
+        val isForgotten = now.isAfter(maxUnlockTime)
         if (isForgotten) {
-          LOG.warn("Forgotten lock found for $key on ${lock.file}; lock date = ${Date(lock.lockTime)}")
+          LOG.warn("Forgotten lock found for $key on ${lock.file}; lock date = $lockTime")
         }
       }
     }
@@ -249,11 +258,22 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     val usageStatistics = availableFiles.asSequence()
         .map { it.key }
         .associateBy({ it }) { statistics[it]!! }
+
     val sweepInfo = SweepInfo(repositoryState.totalSpaceUsage, availableFiles, usageStatistics)
-    val filesForDeletion = sweepPolicy.selectKeysForDeletion(sweepInfo)
-    for (key in filesForDeletion) {
-      remove(key)
+    val filesForDeletion = sweepPolicy.selectFilesForDeletion(sweepInfo)
+
+    if (filesForDeletion.isNotEmpty()) {
+      val deletionsSize = filesForDeletion.map { it.size }.sum()
+      LOG.info("It's time to remove unused files.\n" +
+          "Space usage: ${repositoryState.totalSpaceUsage.bytesToMegabytes()} Mb;\n" +
+          "${filesForDeletion.size} " + "file".pluralize(filesForDeletion.size) +
+          " will be removed having total size " + deletionsSize.bytesToMegabytes() + "Mb"
+      )
+      for (availableFile in filesForDeletion) {
+        remove(availableFile.key)
+      }
     }
+
   }
 
   /**
