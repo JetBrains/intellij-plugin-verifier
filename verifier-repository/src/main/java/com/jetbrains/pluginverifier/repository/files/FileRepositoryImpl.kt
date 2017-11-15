@@ -62,7 +62,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   private val repositoryState = RepositoryState<K>()
 
-  private var nextId: Long = 0
+  private var nextLockId: Long = 0
 
   private val key2Locks = hashMapOf<K, MutableSet<FileLock>>()
 
@@ -128,7 +128,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
       repositoryState.get(key)!!
     }
     val lockTime = clock.instant()
-    val lock = FileLockImpl(file, lockTime, key, nextId++, this)
+    val lock = FileLockImpl(file, lockTime, key, nextLockId++, this)
     key2Locks.getOrPut(key, { hashSetOf() }).add(lock)
     val keyUsageStatistic = statistics.getOrPut(key, { KeyUsageStatistic(key, lockTime, 0) })
     keyUsageStatistic.timesAccessed++
