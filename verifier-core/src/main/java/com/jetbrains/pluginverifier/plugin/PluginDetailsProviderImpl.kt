@@ -8,7 +8,7 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLo
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.misc.closeLogged
-import com.jetbrains.pluginverifier.repository.FileLock
+import com.jetbrains.pluginverifier.repository.files.FileLock
 import java.io.File
 
 class PluginDetailsProviderImpl(private val extractDirectory: File) : PluginDetailsProvider {

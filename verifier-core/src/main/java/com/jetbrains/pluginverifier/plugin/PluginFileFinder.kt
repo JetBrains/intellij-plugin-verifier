@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.plugin
 
-import com.jetbrains.pluginverifier.repository.FileLock
+import com.jetbrains.pluginverifier.repository.files.FileLock
 
 /**
  * @author Sergey Patrikeev

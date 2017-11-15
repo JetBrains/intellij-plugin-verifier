@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.repository.files
 
-import com.jetbrains.pluginverifier.repository.FileLock
 import java.io.File
 import java.time.Instant
 

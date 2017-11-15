@@ -5,7 +5,6 @@ import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.cleanup.KeyUsageStatistic
 import com.jetbrains.pluginverifier.repository.cleanup.SweepInfo
 import com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy

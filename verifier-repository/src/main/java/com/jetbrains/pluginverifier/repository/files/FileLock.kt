@@ -1,10 +1,9 @@
-package com.jetbrains.pluginverifier.repository
+package com.jetbrains.pluginverifier.repository.files
 
 import java.io.Closeable
 import java.io.File
 import java.time.Instant
 
-//todo: move it
 interface FileLock : Closeable {
 
   val lockTime: Instant
