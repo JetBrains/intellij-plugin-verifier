@@ -193,19 +193,29 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   }
 
   private fun doDownload(key: K): DownloadResult {
-    val tempFile = Files.createTempFile(downloadDirectory.toPath(), "download", "").toFile()
+    val tempFileOrDirectory = createTempFileOrDirectory()
     try {
-      val downloadResult = downloader.download(key, tempFile)
+      val downloadResult = downloader.download(key, tempFileOrDirectory)
       if (downloadResult is DownloadResult.Downloaded) {
-        val finalFile = saveTempFileToFinalFile(key, tempFile, downloadResult.extension)
+        val finalFile = saveTempFileToFinalFile(key, tempFileOrDirectory, downloadResult.extension)
         repositoryState.addFile(key, finalFile)
         return DownloadResult.Downloaded(downloadResult.extension)
       }
       return downloadResult
     } catch (e: Throwable) {
-      tempFile.deleteLogged()
+      tempFileOrDirectory.deleteLogged()
       throw e
     }
+  }
+
+  private fun createTempFileOrDirectory(): File {
+    val tempPrefix = "download"
+    val tempFileOrDir = if (fileKeyMapper.directoriesStored) {
+      Files.createTempDirectory(downloadDirectory.toPath(), tempPrefix)
+    } else {
+      Files.createTempFile(downloadDirectory.toPath(), tempPrefix, "")
+    }
+    return tempFileOrDir.toFile()
   }
 
   private fun saveTempFileToFinalFile(key: K, tempFile: File, extension: String): File {

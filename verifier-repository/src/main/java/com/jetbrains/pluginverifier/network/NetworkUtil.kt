@@ -1,9 +1,10 @@
 package com.jetbrains.pluginverifier.network
 
-import okhttp3.MediaType
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.File
+import java.io.InputStream
 import java.lang.RuntimeException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -67,5 +68,29 @@ private fun <T, R> Call<T>.executeWithInterruptionCheck(onSuccess: (Response<T>)
     }
   } else {
     onFailure(error!!)
+  }
+}
+
+fun copyInputStreamWithProgress(inputStream: InputStream,
+                                expectedSize: Long,
+                                destinationFile: File,
+                                progress: (Double) -> Unit) {
+  val buffer = ByteArray(4 * 1024)
+  if (expectedSize == 0L) {
+    throw IllegalArgumentException("File is empty")
+  }
+
+  inputStream.use { input ->
+    destinationFile.outputStream().buffered().use { output ->
+      var count: Long = 0
+      var n: Int
+      while (true) {
+        n = input.read(buffer)
+        if (n == -1) break
+        output.write(buffer, 0, n)
+        count += n
+        progress(count.toDouble() / expectedSize)
+      }
+    }
   }
 }
