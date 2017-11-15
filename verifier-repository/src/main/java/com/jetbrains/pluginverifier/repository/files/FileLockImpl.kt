@@ -3,11 +3,11 @@ package com.jetbrains.pluginverifier.repository.files
 import com.jetbrains.pluginverifier.repository.FileLock
 import java.io.File
 
-class FileLockImpl<K>(override val file: File,
-                      override val lockTime: Long,
-                      val key: K,
-                      private val lockId: Long,
-                      private val repository: FileRepositoryImpl<K>) : FileLock {
+internal class FileLockImpl<K>(override val file: File,
+                               override val lockTime: Long,
+                               val key: K,
+                               private val lockId: Long,
+                               private val repository: FileRepositoryImpl<K>) : FileLock {
 
   override fun release() = repository.releaseLock(this)
 

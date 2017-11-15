@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.repository.files
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.misc.deleteLogged
+import com.jetbrains.pluginverifier.repository.FileLock
 import com.jetbrains.pluginverifier.repository.cleanup.FileSweeper
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
@@ -14,7 +15,6 @@ import java.io.IOException
 import java.nio.file.Files
 import java.util.concurrent.Executors
 import java.util.concurrent.FutureTask
-import java.util.concurrent.atomic.AtomicInteger
 
 
 class FileRepositoryImpl<K>(private val repositoryDir: File,
@@ -28,13 +28,13 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   private var nextId: Long = 0
 
-  private val key2Locks = hashMapOf<K, MutableSet<FileLockImpl<K>>>()
+  private val key2Locks = hashMapOf<K, MutableSet<FileLock>>()
 
   private val key2File = hashMapOf<K, File>()
 
   private val deleteQueue = hashSetOf<K>()
 
-  private val downloading = hashMapOf<K, Pair<FutureTask<DownloadResult>, AtomicInteger>>()
+  private val downloading = hashMapOf<K, FutureTask<DownloadResult>>()
 
   private val sweeperExecutor = Executors.newSingleThreadExecutor(
       ThreadFactoryBuilder()
@@ -51,8 +51,8 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     val existingFiles = repositoryDir.listFiles() ?: throw IOException("Unable to read directory content: $repositoryDir")
     for (file in existingFiles) {
       val key = fileKeyMapper.getKey(file)
-        if (key != null) {
-          key2File[key] = file
+      if (key != null) {
+        key2File[key] = file
       }
     }
   }
@@ -77,7 +77,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   @Synchronized
   private fun isLockedKey(key: K) =
-      key2Locks[key].orEmpty().isNotEmpty() || key in downloading
+      key2Locks[key].orEmpty().isNotEmpty()
 
   @Synchronized
   override fun getAvailableFiles() = key2File.map { (key, file) ->
@@ -86,19 +86,23 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   }
 
   @Synchronized
-  private fun registerLock(key: K): FileLockImpl<K> {
-    val file = key2File[key]!!
+  private fun registerLock(key: K, isFake: Boolean): FileLockImpl<K> {
+    val file = if (isFake) {
+      File("Fake")
+    } else {
+      assert(key in key2File)
+      key2File[key]!!
+    }
     val lock = FileLockImpl(file, System.currentTimeMillis(), key, nextId++, this)
     key2Locks.getOrPut(key, { hashSetOf() }).add(lock)
     return lock
   }
 
   @Synchronized
-  fun releaseLock(lock: FileLockImpl<K>) {
+  internal fun releaseLock(lock: FileLockImpl<K>) {
     val key = lock.key
     val fileLocks = key2Locks[key]
     if (fileLocks != null) {
-      assert(key !in downloading)
       fileLocks.remove(lock)
       if (fileLocks.isEmpty()) {
         key2Locks.remove(key)
@@ -144,15 +148,15 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   }
 
   private fun fetchFile(key: K): FileRepositoryResult {
-    val (downloadTask, runInCurrentThread) = synchronized(this) {
-      val keyDownloading = downloading[key]
-      if (keyDownloading != null) {
-        keyDownloading.second.incrementAndGet()
-        keyDownloading.first to false
+    val (downloadTask, runInCurrentThread, waitingLock) = synchronized(this) {
+      val waitingLock = registerLock(key, true)
+      val existingTask = downloading[key]
+      if (existingTask != null) {
+        Triple(existingTask, false, waitingLock)
       } else {
-        val task = FutureTask { doDownload(key) }
-        downloading[key] = task to AtomicInteger(1)
-        task to true
+        val downloadTask = FutureTask { doDownload(key) }
+        downloading[key] = downloadTask
+        Triple(downloadTask, true, waitingLock)
       }
     }
 
@@ -165,8 +169,9 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
       val downloadResult = downloadTask.get()
       return downloadResult.toFileRepositoryResult(key)
     } finally {
-      synchronized(this) {
-        if (downloading[key]!!.second.decrementAndGet() == 0) {
+      waitingLock.release()
+      if (runInCurrentThread) {
+        synchronized(this) {
           downloading.remove(key)
         }
       }
@@ -197,7 +202,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   }
 
   private fun DownloadResult.toFileRepositoryResult(key: K) = when (this) {
-    is DownloadResult.Downloaded -> FileRepositoryResult.Found(registerLock(key))
+    is DownloadResult.Downloaded -> FileRepositoryResult.Found(registerLock(key, false))
     is DownloadResult.NotFound -> FileRepositoryResult.NotFound(reason)
     is DownloadResult.FailedToDownload -> FileRepositoryResult.Failed(reason, error)
   }
@@ -215,7 +220,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   @Synchronized
   private fun lockFileIfExists(key: K): FileLockImpl<K>? {
     if (key in key2File) {
-      return registerLock(key)
+      return registerLock(key, false)
     }
     return null
   }
