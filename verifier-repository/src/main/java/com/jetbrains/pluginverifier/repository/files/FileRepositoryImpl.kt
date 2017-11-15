@@ -4,7 +4,9 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.repository.FileLock
-import com.jetbrains.pluginverifier.repository.cleanup.FileSweeper
+import com.jetbrains.pluginverifier.repository.cleanup.KeyUsageStatistic
+import com.jetbrains.pluginverifier.repository.cleanup.SweepInfo
+import com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
 import org.apache.commons.io.FileUtils
@@ -13,38 +15,69 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.FutureTask
+import java.util.concurrent.TimeUnit
 
 
 class FileRepositoryImpl<K>(private val repositoryDir: File,
                             private val downloader: Downloader<K>,
                             private val fileKeyMapper: FileKeyMapper<K>,
-                            private val fileSweeper: FileSweeper<K>) : FileRepository<K> {
+                            private val sweepPolicy: SweepPolicy<K>) : FileRepository<K> {
 
   private companion object {
     val LOG: Logger = LoggerFactory.getLogger(FileRepositoryImpl::class.java)
   }
 
+  private data class RepositoryState<K>(var totalSpaceUsage: Long = 0,
+                                        val files: MutableMap<K, File> = hashMapOf()) {
+    fun addFile(key: K, file: File) {
+      assert(key !in files)
+      LOG.debug("Adding file by $key: $file")
+      totalSpaceUsage += file.length()
+      files[key] = file
+    }
+
+    fun has(key: K) = key in files
+
+    fun get(key: K) = files[key]
+
+    fun deleteFile(key: K) {
+      assert(key in files)
+      val file = files[key]!!
+      LOG.debug("Deleting file by $key: $file")
+      totalSpaceUsage -= file.length()
+      files.remove(key)
+    }
+
+    fun getAvailableFiles() = files.map { (key, file) -> AvailableFile(key, file, file.length()) }
+  }
+
+  private val repositoryState = RepositoryState<K>()
+
   private var nextId: Long = 0
 
   private val key2Locks = hashMapOf<K, MutableSet<FileLock>>()
-
-  private val key2File = hashMapOf<K, File>()
 
   private val deleteQueue = hashSetOf<K>()
 
   private val downloading = hashMapOf<K, FutureTask<DownloadResult>>()
 
-  private val sweeperExecutor = Executors.newSingleThreadExecutor(
-      ThreadFactoryBuilder()
-          .setDaemon(true)
-          .build()
-  )
+  private val statistics = hashMapOf<K, KeyUsageStatistic<K>>()
 
   init {
     repositoryDir.createDir()
     readInitiallyAvailableFiles()
+    runForgottenLocksInspector()
+  }
+
+  private fun runForgottenLocksInspector() {
+    Executors.newSingleThreadScheduledExecutor(
+        ThreadFactoryBuilder()
+            .setDaemon(true)
+            .build()
+    ).scheduleAtFixedRate({ detectForgottenLocks() }, 1, 60, TimeUnit.MINUTES)
   }
 
   private fun readInitiallyAvailableFiles() {
@@ -52,25 +85,26 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     for (file in existingFiles) {
       val key = fileKeyMapper.getKey(file)
       if (key != null) {
-        key2File[key] = file
+        repositoryState.addFile(key, file)
       }
     }
   }
 
   @Synchronized
-  override fun has(key: K): Boolean = key in key2File
+  override fun has(key: K): Boolean = repositoryState.has(key)
 
   @Synchronized
   override fun remove(key: K): Boolean {
-    val file = key2File[key] ?: return false
+    if (!repositoryState.has(key)) {
+      return false
+    }
     val isLocked = isLockedKey(key)
     return if (isLocked) {
-      LOG.debug("File by $key is already locked: $file. Putting it into deletion queue.")
+      LOG.debug("File by $key is locked. Putting it into deletion queue.")
       deleteQueue.add(key)
       false
     } else {
-      LOG.debug("Removing unlocked file by $key: $file")
-      file.deleteLogged()
+      repositoryState.deleteFile(key)
       true
     }
   }
@@ -80,21 +114,18 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
       key2Locks[key].orEmpty().isNotEmpty()
 
   @Synchronized
-  override fun getAvailableFiles() = key2File.map { (key, file) ->
-    val fileLocks = key2Locks[key].orEmpty()
-    AvailableFile(key, file, file.length(), fileLocks)
-  }
-
-  @Synchronized
   private fun registerLock(key: K, isFake: Boolean): FileLockImpl<K> {
     val file = if (isFake) {
       File("Fake")
     } else {
-      assert(key in key2File)
-      key2File[key]!!
+      assert(repositoryState.has(key))
+      repositoryState.get(key)!!
     }
-    val lock = FileLockImpl(file, System.currentTimeMillis(), key, nextId++, this)
+    val lockTime = System.currentTimeMillis()
+    val lock = FileLockImpl(file, lockTime, key, nextId++, this)
     key2Locks.getOrPut(key, { hashSetOf() }).add(lock)
+    val keyUsageStatistic = statistics.getOrPut(key, { KeyUsageStatistic(key, lockTime, 0) })
+    keyUsageStatistic.timesAccessed++
     return lock
   }
 
@@ -106,6 +137,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
       fileLocks.remove(lock)
       if (fileLocks.isEmpty()) {
         key2Locks.remove(key)
+        statistics.remove(key)
         onResourceRelease(key)
       }
     }
@@ -116,31 +148,10 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     assert(!isLockedKey(key))
     if (key in deleteQueue) {
       deleteQueue.remove(key)
-      val file = key2File.remove(key)
-      if (file != null) {
-        LOG.debug("Deleting file by $key: $file")
-        file.deleteLogged()
+      if (repositoryState.has(key)) {
+        repositoryState.deleteFile(key)
       }
     }
-  }
-
-  /**
-   *  Provides the thread safety when multiple threads attempt to load the same file.
-   *
-   *  @return true if [downloaded] has been moved to [finalFile], false otherwise
-   */
-  @Synchronized
-  private fun moveDownloaded(downloaded: File, finalFile: File): Boolean {
-    if (finalFile.exists()) {
-      val isValid = fileKeyMapper.getKey(finalFile) != null
-      if (isValid) {
-        return false
-      } else {
-        finalFile.deleteLogged()
-      }
-    }
-    FileUtils.moveFile(downloaded, finalFile)
-    return true
   }
 
   private val downloadDirectory by lazy {
@@ -184,7 +195,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
       val downloadResult = downloader.download(key, tempFile)
       if (downloadResult is DownloadResult.Downloaded) {
         val finalFile = saveTempFileToFinalFile(key, tempFile, downloadResult.extension)
-        registerFileByKey(key, finalFile)
+        repositoryState.addFile(key, finalFile)
         return DownloadResult.Downloaded(finalFile, downloadResult.extension)
       }
       return downloadResult
@@ -212,17 +223,37 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     return File(repositoryDir, finalFileName)
   }
 
-  private fun registerFileByKey(key: K, finalFile: File) {
-    assert(key !in key2File)
-    key2File[key] = finalFile
-  }
-
   @Synchronized
   private fun lockFileIfExists(key: K): FileLockImpl<K>? {
-    if (key in key2File) {
+    if (repositoryState.has(key)) {
       return registerLock(key, false)
     }
     return null
+  }
+
+  private fun detectForgottenLocks() {
+    for ((key, locks) in key2Locks) {
+      for (lock in locks) {
+        //todo: do it better
+        val isForgotten = System.currentTimeMillis() - lock.lockTime > TimeUnit.HOURS.toMillis(1)
+        if (isForgotten) {
+          LOG.warn("Forgotten lock found for $key on ${lock.file}; lock date = ${Date(lock.lockTime)}")
+        }
+      }
+    }
+  }
+
+  @Synchronized
+  override fun sweep() {
+    val availableFiles = repositoryState.getAvailableFiles()
+    val usageStatistics = availableFiles.asSequence()
+        .map { it.key }
+        .associateBy({ it }) { statistics[it]!! }
+    val sweepInfo = SweepInfo(repositoryState.totalSpaceUsage, availableFiles, usageStatistics)
+    val filesForDeletion = sweepPolicy.selectKeysForDeletion(sweepInfo)
+    for (key in filesForDeletion) {
+      remove(key)
+    }
   }
 
   /**
@@ -244,7 +275,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     return try {
       fetchFile(key)
     } finally {
-      sweeperExecutor.submit { fileSweeper.sweep(this) }
+      sweep()
     }
   }
 

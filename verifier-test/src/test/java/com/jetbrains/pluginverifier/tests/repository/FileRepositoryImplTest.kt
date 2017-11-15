@@ -1,10 +1,8 @@
 package com.jetbrains.pluginverifier.tests.repository
 
-import com.jetbrains.pluginverifier.repository.files.AvailableFile
 import com.jetbrains.pluginverifier.repository.files.FileRepository
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryImpl
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
-import org.hamcrest.Matchers.hasSize
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -28,9 +26,8 @@ class FileRepositoryImplTest {
         folder,
         MockDownloader(),
         MockFileKeyMapper(),
-        MockFileSweeper()
+        MockSweepPolicy()
     )
-    assertEquals(emptyList<AvailableFile<Int>>(), fileRepository.getAvailableFiles())
 
     val get0 = fileRepository.get(0) as FileRepositoryResult.Found
     val get0Locked = get0.lockedFile
@@ -38,13 +35,6 @@ class FileRepositoryImplTest {
     val expectedFile = File(folder, "0")
     assertEquals(expectedFile, get0File)
     assertEquals("0", get0File.readText())
-
-    val availableFiles = fileRepository.getAvailableFiles()
-    assertThat(availableFiles, hasSize(1))
-    val availableFile = availableFiles.single()
-    assertEquals(expectedFile, availableFile.file)
-    assertEquals(setOf(get0Locked), availableFile.registeredLocks)
-    assertEquals(expectedFile.length(), availableFile.size)
 
     assertFalse(fileRepository.remove(0))
     get0Locked.release()
@@ -61,7 +51,7 @@ class FileRepositoryImplTest {
         folder,
         MockDownloader(),
         MockFileKeyMapper(),
-        MockFileSweeper()
+        MockSweepPolicy()
     )
 
     val get0 = fileRepository.get(0) as FileRepositoryResult.Found
@@ -81,7 +71,7 @@ class FileRepositoryImplTest {
         tempFolder.newFolder(),
         downloader,
         MockFileKeyMapper(),
-        MockFileSweeper()
+        MockSweepPolicy()
     )
 
     val numberOfThreads = 10
