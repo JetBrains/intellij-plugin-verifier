@@ -7,6 +7,6 @@ import java.io.File
 class MockDownloader : Downloader<Int> {
   override fun download(key: Int, destination: File): DownloadResult {
     destination.writeText(key.toString())
-    return DownloadResult.Downloaded(destination, "")
+    return DownloadResult.Downloaded("")
   }
 }

@@ -56,7 +56,7 @@ class PluginDownloader(private val pluginRepositoryUrl: String) : Downloader<Upd
     LOG.debug("Downloading plugin #$updateId to $destination")
     return try {
       FileUtils.copyInputStreamToFile(response.body().byteStream(), destination)
-      DownloadResult.Downloaded(destination, extension)
+      DownloadResult.Downloaded(extension)
     } catch (e: Exception) {
       destination.deleteLogged()
       throw e

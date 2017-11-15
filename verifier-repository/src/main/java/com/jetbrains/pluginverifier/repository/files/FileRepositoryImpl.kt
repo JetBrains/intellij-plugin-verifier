@@ -199,7 +199,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
       if (downloadResult is DownloadResult.Downloaded) {
         val finalFile = saveTempFileToFinalFile(key, tempFile, downloadResult.extension)
         repositoryState.addFile(key, finalFile)
-        return DownloadResult.Downloaded(finalFile, downloadResult.extension)
+        return DownloadResult.Downloaded(downloadResult.extension)
       }
       return downloadResult
     } catch (e: Throwable) {
