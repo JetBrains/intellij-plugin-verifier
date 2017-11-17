@@ -8,5 +8,9 @@ interface FileRepository<K> {
 
   fun has(key: K): Boolean
 
+  fun getAllExistingKeys(): Set<K>
+
+  fun <R> lockAndAccess(block: () -> R): R
+
   fun sweep()
 }

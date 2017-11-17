@@ -42,6 +42,8 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
       files[key] = file
     }
 
+    fun getAllKeys() = files.keys
+
     fun has(key: K) = key in files
 
     fun get(key: K) = files[key]
@@ -92,6 +94,12 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
       }
     }
   }
+
+  @Synchronized
+  override fun <R> lockAndAccess(block: () -> R): R = block()
+
+  @Synchronized
+  override fun getAllExistingKeys(): Set<K> = repositoryState.getAllKeys()
 
   @Synchronized
   override fun has(key: K): Boolean = repositoryState.has(key)
