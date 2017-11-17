@@ -15,6 +15,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.time.Clock
 import java.time.Duration
+import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.Executors
 import java.util.concurrent.FutureTask
@@ -40,7 +41,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     fun addFile(key: K, file: File) {
       assert(key !in files)
       LOG.debug("Adding file by $key: $file")
-      val fileSize = file.length()
+      val fileSize = FileUtils.sizeOf(file)
       totalSpaceUsage += fileSize
       files[key] = FileInfo(file, fileSize)
     }
@@ -53,10 +54,11 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
     fun deleteFile(key: K) {
       assert(key in files)
-      val fileInfo = files[key]!!
-      LOG.debug("Deleting file by $key: $fileInfo")
-      totalSpaceUsage -= fileInfo.size
+      val (file, size) = files[key]!!
+      LOG.debug("Deleting file by $key: $file")
+      totalSpaceUsage -= size
       files.remove(key)
+      file.deleteLogged()
     }
   }
 
@@ -87,13 +89,19 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   }
 
   private fun readInitiallyAvailableFiles() {
-    val existingFiles = repositoryDir.listFiles() ?: throw IOException("Unable to read directory content: $repositoryDir")
+    val existingFiles = repositoryDir.listFiles()
+        ?: throw IOException("Unable to read directory content: $repositoryDir")
     for (file in existingFiles) {
       val key = fileKeyMapper.getKey(file)
       if (key != null) {
-        repositoryState.addFile(key, file)
+        addFileWithEmptyStatistic(key, file)
       }
     }
+  }
+
+  private fun addFileWithEmptyStatistic(key: K, file: File) {
+    repositoryState.addFile(key, file)
+    statistics[key] = UsageStatistic(Instant.EPOCH, 0)
   }
 
   @Synchronized
@@ -107,23 +115,19 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   @Synchronized
   override fun remove(key: K): Boolean {
-    if (!repositoryState.has(key)) {
-      return false
-    }
     val isLocked = isLockedKey(key)
     return if (isLocked) {
       LOG.debug("File by $key is locked. Putting it into deletion queue.")
       deleteQueue.add(key)
       false
     } else {
-      repositoryState.deleteFile(key)
+      doRemove(key)
       true
     }
   }
 
   @Synchronized
-  private fun isLockedKey(key: K) =
-      key2Locks[key].orEmpty().isNotEmpty()
+  private fun isLockedKey(key: K) = key2Locks[key].orEmpty().isNotEmpty()
 
   @Synchronized
   private fun registerLock(key: K, isFake: Boolean): FileLockImpl<K> {
@@ -149,21 +153,18 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
       fileLocks.remove(lock)
       if (fileLocks.isEmpty()) {
         key2Locks.remove(key)
-        statistics.remove(key)
-        onResourceRelease(key)
+        if (key in deleteQueue) {
+          deleteQueue.remove(key)
+          doRemove(key)
+        }
       }
     }
   }
 
   @Synchronized
-  private fun onResourceRelease(key: K) {
-    assert(!isLockedKey(key))
-    if (key in deleteQueue) {
-      deleteQueue.remove(key)
-      if (repositoryState.has(key)) {
-        repositoryState.deleteFile(key)
-      }
-    }
+  private fun doRemove(key: K) {
+    repositoryState.deleteFile(key)
+    statistics.remove(key)
   }
 
   private val downloadDirectory by lazy {
@@ -202,36 +203,33 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   }
 
   private fun doDownload(key: K): DownloadResult {
-    val tempFileOrDirectory = createTempFileOrDirectory(key)
+    val tempDirectory = createTempDirectoryForDownload(key)
     try {
-      val downloadResult = downloader.download(key, tempFileOrDirectory)
+      val downloadResult = downloader.download(key, tempDirectory)
       if (downloadResult is DownloadResult.Downloaded) {
-        val finalFile = saveTempFileToFinalFile(key, tempFileOrDirectory, downloadResult.extension)
-        repositoryState.addFile(key, finalFile)
-        return DownloadResult.Downloaded(downloadResult.extension)
+        val destination = getDestinationFileForKey(key, downloadResult.extension)
+        assert(!destination.exists())
+        saveTempDownloadedFileToFinalDestination(downloadResult.downloadedTempFile, destination)
+        addFileWithEmptyStatistic(key, destination)
+        return DownloadResult.Downloaded(destination, downloadResult.extension)
       }
       return downloadResult
-    } catch (e: Throwable) {
-      tempFileOrDirectory.deleteLogged()
-      throw e
+    } finally {
+      tempDirectory.deleteLogged()
     }
   }
 
-  private fun createTempFileOrDirectory(key: K): File {
-    val tempPrefix = "download-" + getFileName(key, "") + "-"
-    val tempFileOrDir = if (fileKeyMapper.directoriesStored) {
-      Files.createTempDirectory(downloadDirectory.toPath(), tempPrefix)
+  private fun createTempDirectoryForDownload(key: K): File = Files.createTempDirectory(
+      downloadDirectory.toPath(),
+      "download-" + getFileNameForKey(key, "") + "-"
+  ).toFile()
+
+  private fun saveTempDownloadedFileToFinalDestination(tempDownloaded: File, destination: File) {
+    if (tempDownloaded.isDirectory) {
+      FileUtils.moveDirectory(tempDownloaded, destination)
     } else {
-      Files.createTempFile(downloadDirectory.toPath(), tempPrefix, "")
+      FileUtils.moveFile(tempDownloaded, destination)
     }
-    return tempFileOrDir.toFile()
-  }
-
-  private fun saveTempFileToFinalFile(key: K, tempFile: File, extension: String): File {
-    val finalFile = getFileForKey(key, extension)
-    assert(!finalFile.exists())
-    FileUtils.moveFile(tempFile, finalFile)
-    return finalFile
   }
 
   private fun DownloadResult.toFileRepositoryResult(key: K) = when (this) {
@@ -240,12 +238,12 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     is DownloadResult.FailedToDownload -> FileRepositoryResult.Failed(reason, error)
   }
 
-  private fun getFileForKey(key: K, extension: String): File {
-    val finalFileName = getFileName(key, extension)
+  private fun getDestinationFileForKey(key: K, extension: String): File {
+    val finalFileName = getFileNameForKey(key, extension)
     return File(repositoryDir, finalFileName)
   }
 
-  private fun getFileName(key: K, extension: String): String {
+  private fun getFileNameForKey(key: K, extension: String): String {
     val nameWithoutExtension = fileKeyMapper.getFileNameWithoutExtension(key)
     val fullName = nameWithoutExtension + if (extension.isEmpty()) "" else "." + extension
     return fullName.replaceInvalidFileNameCharacters()
@@ -275,11 +273,9 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   @Synchronized
   override fun sweep() {
-    val availableFiles = repositoryState
-        .files
-        .map { (key, fileInfo) ->
-          AvailableFile(key, fileInfo.file, fileInfo.size, statistics[key]!!)
-        }
+    val availableFiles = repositoryState.files.map { (key, fileInfo) ->
+      AvailableFile(key, fileInfo.file, fileInfo.size, statistics[key]!!)
+    }
 
     val sweepInfo = SweepInfo(repositoryState.totalSpaceUsage, availableFiles)
     val filesForDeletion = sweepPolicy.selectFilesForDeletion(sweepInfo)
@@ -311,14 +307,18 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
    */
   override fun get(key: K): FileRepositoryResult {
     val lockedFile = lockFileIfExists(key)
-    if (lockedFile != null) {
-      return FileRepositoryResult.Found(lockedFile)
-    }
-    return try {
+    val result = if (lockedFile != null) {
+      FileRepositoryResult.Found(lockedFile)
+    } else {
       fetchFile(key)
-    } finally {
-      sweep()
     }
+    try {
+      sweep()
+    } catch (e: Throwable) {
+      (result as? FileRepositoryResult.Found)?.lockedFile?.release()
+      throw e
+    }
+    return result
   }
 
 }

@@ -5,8 +5,9 @@ import com.jetbrains.pluginverifier.repository.downloader.Downloader
 import java.io.File
 
 class MockDownloader : Downloader<Int> {
-  override fun download(key: Int, destination: File): DownloadResult {
-    destination.writeText(key.toString())
-    return DownloadResult.Downloaded("")
+  override fun download(key: Int, tempDirectory: File): DownloadResult {
+    val file = tempDirectory.resolve(key.toString())
+    file.writeText(key.toString())
+    return DownloadResult.Downloaded(file, "")
   }
 }

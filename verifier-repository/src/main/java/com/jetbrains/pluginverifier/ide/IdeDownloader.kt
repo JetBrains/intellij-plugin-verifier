@@ -16,6 +16,7 @@ import retrofit2.http.Streaming
 import retrofit2.http.Url
 import java.io.File
 import java.net.URL
+import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
 private interface IdeRepositoryConnector {
@@ -23,7 +24,6 @@ private interface IdeRepositoryConnector {
   @Streaming
   fun downloadIde(@Url downloadUrl: String): Call<ResponseBody>
 }
-
 
 class IdeDownloader(private val ideRepository: IdeRepository,
                     private val downloadProgress: (Double) -> Unit) : Downloader<IdeVersion> {
@@ -35,12 +35,15 @@ class IdeDownloader(private val ideRepository: IdeRepository,
       .create(IdeRepositoryConnector::class.java)
 
 
-  override fun download(key: IdeVersion, destination: File): DownloadResult {
-    val downloadUrl = ideRepository.fetchAvailableIdeDescriptor(key)?.downloadUrl
-        ?: return DownloadResult.NotFound("IDE $key is not found in $ideRepository")
-
-    val zippedIde = destination.resolve(destination.name + ".zip")
+  override fun download(key: IdeVersion, tempDirectory: File): DownloadResult {
+    val zippedIde = Files.createTempFile(tempDirectory.toPath(), "", ".zip").toFile()
     try {
+      val downloadUrl = try {
+        ideRepository.fetchAvailableIdeDescriptor(key)?.downloadUrl
+      } catch (e: Exception) {
+        null
+      } ?: return DownloadResult.NotFound("IDE $key is not found in $ideRepository")
+
       try {
         doDownloadTo(downloadUrl, zippedIde)
       } catch (e: Exception) {
@@ -48,11 +51,16 @@ class IdeDownloader(private val ideRepository: IdeRepository,
         return DownloadResult.FailedToDownload("Unable to download $key: ${e.message}", e)
       }
 
+      val destinationDir = Files.createTempDirectory(tempDirectory.toPath(), "").toFile()
       return try {
-        zippedIde.extractTo(destination)
-        DownloadResult.Downloaded("zip")
+        zippedIde.extractTo(destinationDir)
+        DownloadResult.Downloaded(destinationDir, "")
       } catch (e: Exception) {
-        DownloadResult.FailedToDownload("Unable to save $key: ${e.message}", e)
+        destinationDir.deleteLogged()
+        DownloadResult.FailedToDownload("Unable to extract $key zip: ${e.message}", e)
+      } catch (e: Throwable) {
+        destinationDir.deleteLogged()
+        throw e
       }
     } finally {
       zippedIde.deleteLogged()

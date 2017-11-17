@@ -10,8 +10,6 @@ class PluginFileKeyMapper : FileKeyMapper<UpdateId> {
     val BROKEN_FILE_THRESHOLD_BYTES = 200
   }
 
-  override val directoriesStored: Boolean = false
-
   override fun getFileNameWithoutExtension(key: UpdateId): String =
       key.id.toString()
 

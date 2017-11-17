@@ -11,6 +11,14 @@ class IdeRepository(val repositoryUrl: String) {
 
   private val releasesRepoUrl = repositoryUrl.trimEnd('/') + "/intellij-repository/releases/"
 
+  companion object {
+    fun setProductCodeIfAbsent(ideVersion: IdeVersion, productCode: String): IdeVersion = if (ideVersion.productCode.isEmpty())
+      IdeVersion.createIdeVersion("$productCode-" + ideVersion.asStringWithoutProductCode())
+    else {
+      ideVersion
+    }
+  }
+
   /**
    * Parse the repository's HTML page:
    * https://www.jetbrains.com/intellij-repository/releases/
@@ -34,14 +42,14 @@ class IdeRepository(val repositoryUrl: String) {
       val ideaIU = artifacts.getElementsContainingOwnText("ideaIU.zip")
       if (ideaIU.isNotEmpty()) {
         val downloadIdeaIU = URL(ideaIU[0].attr("href"))
-        val fullVersion = buildNumber.withFullProductNameIfNecessary("IU")
+        val fullVersion = setProductCodeIfAbsent(buildNumber, "IU")
         result.add(AvailableIde(fullVersion, isRelease, false, snapshots, downloadIdeaIU))
       }
 
       val ideaIC = artifacts.getElementsContainingOwnText("ideaIC.zip")
       if (ideaIC.isNotEmpty()) {
         val downloadIdeaIC = URL(ideaIC[0].attr("href"))
-        val fullVersion = buildNumber.withFullProductNameIfNecessary("IC")
+        val fullVersion = setProductCodeIfAbsent(buildNumber, "IC")
         result.add(AvailableIde(fullVersion, isRelease, true, snapshots, downloadIdeaIC))
       }
     }
@@ -49,12 +57,6 @@ class IdeRepository(val repositoryUrl: String) {
     return result
   }
 
-  private fun IdeVersion.withFullProductNameIfNecessary(productName: String): IdeVersion =
-      if (productCode.isEmpty())
-        IdeVersion.createIdeVersion("$productName-" + asStringWithoutProductCode())
-      else {
-        this
-      }
 
   private fun getRepositoryUrl(snapshots: Boolean) = if (snapshots) snapshotsRepoUrl else releasesRepoUrl
 
@@ -68,7 +70,7 @@ class IdeRepository(val repositoryUrl: String) {
   }
 
   fun fetchAvailableIdeDescriptor(ideVersion: IdeVersion, snapshots: Boolean = false): AvailableIde? {
-    val fullIdeVersion = ideVersion.withFullProductNameIfNecessary("IU")
+    val fullIdeVersion = setProductCodeIfAbsent(ideVersion, "IU")
     return fetchIndex(snapshots).find { it.version == fullIdeVersion }
   }
 

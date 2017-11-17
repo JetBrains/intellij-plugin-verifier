@@ -17,6 +17,7 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 import retrofit2.http.Streaming
 import java.io.File
+import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
 internal interface PluginDownloadConnector {
@@ -37,28 +38,27 @@ class PluginDownloader(private val pluginRepositoryUrl: String) : Downloader<Upd
       .build()
       .create(PluginDownloadConnector::class.java)
 
-  override fun download(key: UpdateId, destination: File): DownloadResult {
-    return try {
-      doDownloadTo(key, destination)
-    } catch (e: NotFound404ResponseException) {
-      DownloadResult.NotFound("Plugin $key is not found in the Plugin Repository $pluginRepositoryUrl")
-    } catch (e: Exception) {
-      //todo: provide a human readable error message: maybe find a library capable of this?
-      val message = "Unable to download plugin $key" + if (e.message.isNullOrBlank()) "" else ": " + e.message
-      LOG.debug(message, e)
-      DownloadResult.FailedToDownload(message, e)
-    }
+  override fun download(key: UpdateId, tempDirectory: File): DownloadResult = try {
+    doDownload(key, tempDirectory)
+  } catch (e: NotFound404ResponseException) {
+    DownloadResult.NotFound("Plugin $key is not found in the Plugin Repository $pluginRepositoryUrl")
+  } catch (e: Exception) {
+    //todo: provide a human readable error message: maybe find a library capable of this?
+    val message = "Unable to download plugin $key" + if (e.message.isNullOrBlank()) "" else ": " + e.message
+    LOG.debug(message, e)
+    DownloadResult.FailedToDownload(message, e)
   }
 
-  private fun doDownloadTo(updateId: UpdateId, destination: File): DownloadResult.Downloaded {
+  private fun doDownload(updateId: UpdateId, tempDirectory: File): DownloadResult.Downloaded {
     val response = repositoryDownloadConnector.downloadPlugin(updateId.id).executeSuccessfully()
     val extension = response.guessExtension()
-    LOG.debug("Downloading plugin #$updateId to $destination")
+    val downloadedTempFile = Files.createTempFile(tempDirectory.toPath(), "${updateId.id}", ".$extension").toFile()
     return try {
-      FileUtils.copyInputStreamToFile(response.body().byteStream(), destination)
-      DownloadResult.Downloaded(extension)
-    } catch (e: Exception) {
-      destination.deleteLogged()
+      LOG.debug("Downloading plugin $updateId to $tempDirectory")
+      FileUtils.copyInputStreamToFile(response.body().byteStream(), downloadedTempFile)
+      DownloadResult.Downloaded(downloadedTempFile, extension)
+    } catch (e: Throwable) {
+      downloadedTempFile.deleteLogged()
       throw e
     }
   }

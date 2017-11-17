@@ -5,16 +5,14 @@ import com.jetbrains.pluginverifier.repository.files.FileKeyMapper
 import java.io.File
 
 class IdeFileKeyMapper : FileKeyMapper<IdeVersion> {
-  override val directoriesStored: Boolean = true
 
   override fun getFileNameWithoutExtension(key: IdeVersion): String =
-      key.asStringWithoutProductCode()
+      key.asString()
 
-  override fun getKey(file: File): IdeVersion? {
-    if (file.isDirectory) {
-      return createIdeVersionSafe(file)
-    }
-    return null
+  override fun getKey(file: File): IdeVersion? = if (file.isDirectory) {
+    createIdeVersionSafe(file)?.let { IdeRepository.setProductCodeIfAbsent(it, "IU") }
+  } else {
+    null
   }
 
   private fun createIdeVersionSafe(file: File): IdeVersion? = try {

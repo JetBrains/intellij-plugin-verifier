@@ -8,11 +8,8 @@ import org.codehaus.plexus.archiver.tar.TarGZipUnArchiver
 import org.codehaus.plexus.archiver.zip.ZipUnArchiver
 import org.codehaus.plexus.logging.Logger
 import org.codehaus.plexus.logging.console.ConsoleLogger
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
-
-private val LOG = LoggerFactory.getLogger("UnarchiveLogger")
 
 fun File.extractTo(destination: File): File {
   if (!this.isFile) {
@@ -31,10 +28,8 @@ fun File.extractTo(destination: File): File {
 
     stripTopLevelDirectory(destination)
   } catch(e: Exception) {
-    val message = "Unable to extract $this to $destination"
-    LOG.error(message, e)
     destination.deleteLogged()
-    throw IOException(message, e)
+    throw IOException("Unable to extract $this to $destination", e)
   }
 
   return destination
@@ -42,10 +37,10 @@ fun File.extractTo(destination: File): File {
 
 private fun createUnArchiver(file: File): AbstractUnArchiver {
   val name = file.name.toLowerCase()
-  when {
-    name.endsWith(".tar.gz") -> return TarGZipUnArchiver(file)
-    name.endsWith(".tar.bz2") -> return TarBZip2UnArchiver(file)
-    name.endsWith(".zip") -> return ZipUnArchiver(file)
+  return when {
+    name.endsWith(".tar.gz") -> TarGZipUnArchiver(file)
+    name.endsWith(".tar.bz2") -> TarBZip2UnArchiver(file)
+    name.endsWith(".zip") -> ZipUnArchiver(file)
     else -> throw RuntimeException("Unable to extract - unknown file extension: " + name)
   }
 }

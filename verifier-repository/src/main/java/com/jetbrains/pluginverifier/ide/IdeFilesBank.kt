@@ -6,6 +6,8 @@ import com.jetbrains.pluginverifier.repository.cleanup.LruFileSizeSweepPolicy
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryImpl
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
 
 //todo: provide a cache of IdeDescriptors
@@ -13,6 +15,10 @@ class IdeFilesBank(val ideRepository: IdeRepository,
                    bankDirectory: File,
                    diskSpaceSetting: DiskSpaceSetting,
                    downloadProgress: (Double) -> Unit) {
+
+  companion object {
+    private val LOG: Logger = LoggerFactory.getLogger(IdeFilesBank::class.java)
+  }
 
   private val ideFilesRepository = FileRepositoryImpl(
       bankDirectory,
@@ -33,6 +39,17 @@ class IdeFilesBank(val ideRepository: IdeRepository,
   fun deleteIde(key: IdeVersion) =
       ideFilesRepository.remove(key)
 
-  fun getIdeLock(key: IdeVersion): FileLock? =
-      (ideFilesRepository.get(key) as? FileRepositoryResult.Found)?.lockedFile
+  fun getIdeLock(key: IdeVersion): FileLock? = with(ideFilesRepository.get(key)) {
+    when (this) {
+      is FileRepositoryResult.Found -> lockedFile
+      is FileRepositoryResult.NotFound -> {
+        LOG.info("IDE $key is not found: $reason")
+        null
+      }
+      is FileRepositoryResult.Failed -> {
+        LOG.info("Unable to download IDE $key: $reason", error)
+        null
+      }
+    }
+  }
 }
