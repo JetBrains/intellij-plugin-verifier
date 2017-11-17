@@ -8,7 +8,6 @@ import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
-import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTask
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskProgress
@@ -51,7 +50,7 @@ class ExtractFeaturesServiceTask(val pluginCoordinate: PluginCoordinate,
     lockAndAccess {
       val isMatching: (IdeVersion) -> Boolean = { sinceBuild <= it && (untilBuild == null || it <= untilBuild) }
       val maxCompatibleOrGlobalCompatible = getAvailableIdeVersions().filter(isMatching).max() ?: getAvailableIdeVersions().max()!!
-      (get(maxCompatibleOrGlobalCompatible) as FileRepositoryResult.Found).lockedFile
+      getIdeLock(maxCompatibleOrGlobalCompatible)!!
     }
   }
 

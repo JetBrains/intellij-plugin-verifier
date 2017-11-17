@@ -19,7 +19,6 @@ import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterS
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportersProvider
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
-import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import com.jetbrains.pluginverifier.results.Result
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTask
@@ -124,7 +123,7 @@ class CheckRangeCompatibilityServiceTask(private val updateInfo: UpdateInfo,
   private fun getAvailableIdesMatchingSinceUntilBuild(sinceBuild: IdeVersion, untilBuild: IdeVersion?): List<FileLock> = serverContext.ideFilesBank.lockAndAccess {
     ideVersions
         .filter { sinceBuild <= it && (untilBuild == null || it <= untilBuild) }
-        .mapNotNull { (serverContext.ideFilesBank.get(it) as? FileRepositoryResult.Found)?.lockedFile }
+        .mapNotNull { (serverContext.ideFilesBank.getIdeLock(it)) }
   }
 
   override fun computeResult(progress: ServiceTaskProgress): CheckRangeCompatibilityResult =

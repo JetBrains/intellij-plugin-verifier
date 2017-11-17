@@ -11,7 +11,6 @@ import com.jetbrains.pluginverifier.plugin.IdleFileLock
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.files.FileLock
-import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepositoryFactory
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import com.sampullara.cli.Args
@@ -100,11 +99,9 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
     return emptyList()
   }
 
-  private fun downloadIdeByVersion(ideVersion: IdeVersion): FileLock {
-    val ideDescriptor = ideFilesBank.get(ideVersion) as? FileRepositoryResult.Found
-        ?: throw RuntimeException("IDE $ideVersion is not found in $ideFilesBank")
-    return ideDescriptor.lockedFile
-  }
+  private fun downloadIdeByVersion(ideVersion: IdeVersion): FileLock =
+      ideFilesBank.getIdeLock(ideVersion)
+          ?: throw RuntimeException("IDE $ideVersion is not found in $ideFilesBank")
 
   private fun parseIdeVersion(ideVersion: String): IdeVersion {
     try {

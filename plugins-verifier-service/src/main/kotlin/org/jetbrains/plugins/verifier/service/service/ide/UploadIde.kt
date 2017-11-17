@@ -16,8 +16,8 @@ class UploadIdeRunner(serverContext: ServerContext,
   override fun presentableName(): String = "Downloading IDE #$ideVersion"
 
   override fun computeResult(progress: ServiceTaskProgress): ServiceTaskResult {
-    serverContext.ideFilesBank.get(ideVersion)
-    return BooleanServiceTaskResult(true)
+    val success = serverContext.ideFilesBank.getIdeLock(ideVersion) != null
+    return BooleanServiceTaskResult(success)
   }
 
 }
