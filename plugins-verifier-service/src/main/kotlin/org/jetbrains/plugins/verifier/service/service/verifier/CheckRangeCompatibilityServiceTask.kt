@@ -6,7 +6,6 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
-import com.jetbrains.pluginverifier.ide.IdeFileLock
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
@@ -19,6 +18,8 @@ import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterSet
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportersProvider
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.files.FileLock
+import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import com.jetbrains.pluginverifier.results.Result
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTask
@@ -55,12 +56,12 @@ class CheckRangeCompatibilityServiceTask(private val updateInfo: UpdateInfo,
 
   private fun checkPluginWithIdes(pluginCoordinate: PluginCoordinate,
                                   updateInfo: UpdateInfo,
-                                  ideLocks: List<IdeFileLock>,
+                                  ideLocks: List<FileLock>,
                                   jdkDescriptor: JdkDescriptor,
                                   progress: ServiceTaskProgress): CheckRangeCompatibilityResult {
     val ideDescriptors = arrayListOf<IdeDescriptor>()
     try {
-      ideLocks.mapTo(ideDescriptors) { IdeCreator.createByFile(it.ideFile, null) }
+      ideLocks.mapTo(ideDescriptors) { IdeCreator.createByFile(it.file, null) }
       return checkPluginWithSeveralIdes(pluginCoordinate, updateInfo, ideDescriptors, jdkDescriptor, progress)
     } finally {
       ideDescriptors.forEach { it.close() }
@@ -120,10 +121,10 @@ class CheckRangeCompatibilityServiceTask(private val updateInfo: UpdateInfo,
       }
   )
 
-  private fun getAvailableIdesMatchingSinceUntilBuild(sinceBuild: IdeVersion, untilBuild: IdeVersion?): List<IdeFileLock> = serverContext.ideFilesManager.lockAndAccess {
+  private fun getAvailableIdesMatchingSinceUntilBuild(sinceBuild: IdeVersion, untilBuild: IdeVersion?): List<FileLock> = serverContext.ideFilesBank.lockAndAccess {
     ideVersions
         .filter { sinceBuild <= it && (untilBuild == null || it <= untilBuild) }
-        .mapNotNull { serverContext.ideFilesManager.getIdeLock(it) }
+        .mapNotNull { (serverContext.ideFilesBank.get(it) as? FileRepositoryResult.Found)?.lockedFile }
   }
 
   override fun computeResult(progress: ServiceTaskProgress): CheckRangeCompatibilityResult =

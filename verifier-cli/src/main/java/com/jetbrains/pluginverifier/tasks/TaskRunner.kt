@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tasks
 
-import com.jetbrains.pluginverifier.ide.IdeRepository
+import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -14,7 +14,7 @@ abstract class TaskRunner {
 
   abstract fun getParametersBuilder(
       pluginRepository: PluginRepository,
-      ideRepository: IdeRepository,
+      ideFilesBank: IdeFilesBank,
       pluginDetailsProvider: PluginDetailsProvider
   ): TaskParametersBuilder
 

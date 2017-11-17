@@ -6,9 +6,9 @@ import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
+import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParameters
-import java.io.File
 
 
 data class CheckTrunkApiParams(val trunkIde: IdeDescriptor,
@@ -18,7 +18,7 @@ data class CheckTrunkApiParams(val trunkIde: IdeDescriptor,
                                val jdkDescriptor: JdkDescriptor,
                                val jetBrainsPluginIds: List<String>,
                                private val deleteReleaseIdeOnExit: Boolean,
-                               private val releaseIdeFile: File,
+                               private val releaseIdeFile: FileLock,
                                val releaseLocalPluginsRepository: LocalPluginRepository?,
                                val trunkLocalPluginsRepository: LocalPluginRepository?,
                                val pluginsToCheck: List<PluginCoordinate>) : TaskParameters {
@@ -32,8 +32,9 @@ JDK: $jdkDescriptor
   override fun close() {
     trunkIde.closeLogged()
     releaseIde.closeLogged()
+    releaseIdeFile.release()
     if (deleteReleaseIdeOnExit) {
-      releaseIdeFile.deleteLogged()
+      releaseIdeFile.file.deleteLogged()
     }
   }
 

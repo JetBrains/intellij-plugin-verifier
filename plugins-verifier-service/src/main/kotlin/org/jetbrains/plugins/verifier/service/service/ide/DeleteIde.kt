@@ -6,21 +6,16 @@ import org.jetbrains.plugins.verifier.service.service.tasks.BooleanServiceTaskRe
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTask
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskProgress
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskResult
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 /**
  * @author Sergey Patrikeev
  */
 class DeleteIdeRunner(val ideVersion: IdeVersion, serverContext: ServerContext) : ServiceTask(serverContext) {
 
-  private val LOG: Logger = LoggerFactory.getLogger(DeleteIdeRunner::class.java)
-
   override fun presentableName(): String = "DeleteIde #$ideVersion"
 
   override fun computeResult(progress: ServiceTaskProgress): ServiceTaskResult {
-    serverContext.ideFilesManager.deleteIde(ideVersion)
-    LOG.info("Delete IDE #$ideVersion task is enqueued for IdeFilesManager")
+    serverContext.ideFilesBank.deleteIde(ideVersion)
     return BooleanServiceTaskResult(true)
   }
 

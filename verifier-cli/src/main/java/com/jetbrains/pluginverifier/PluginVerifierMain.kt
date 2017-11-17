@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier
 
+import com.google.common.util.concurrent.AtomicDouble
+import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -10,6 +12,7 @@ import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
+import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.tasks.TaskRunner
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeRunner
 import com.jetbrains.pluginverifier.tasks.checkPlugin.CheckPluginRunner
@@ -50,11 +53,6 @@ object PluginVerifierMain {
     System.getProperty("plugin.repository.url")?.trimEnd('/') ?: DEFAULT_PLUGIN_REPOSITORY_URL ?: throw RuntimeException("Plugin repository URL is not specified")
   }
 
-  private val downloadDirMaxSpace: Long? by lazy {
-    System.getProperty("plugin.verifier.cache.dir.max.space")?.let { it.toLong() * FileUtils.ONE_MB }
-  }
-
-
   private val downloadDir: File = File(getVerifierHomeDir(), "loaded-plugins").createDir()
 
   private val extractDir: File = File(getVerifierHomeDir(), "extracted-plugins").createDir()
@@ -83,13 +81,17 @@ object PluginVerifierMain {
     val command = freeArgs[0]
     freeArgs = freeArgs.drop(1)
 
-    val downloadDirMaxSpace = downloadDirMaxSpace ?: 5 * FileUtils.ONE_GB
-    val pluginRepository = PublicPluginRepository(pluginRepositoryUrl, downloadDir, downloadDirMaxSpace)
-    val ideRepository = IdeRepository(ideDownloadDir, ideRepositoryUrl)
+    val pluginDownloadDirDiskSpaceSetting = getPluginDownloadDirDiskSpaceSetting()
+    val pluginRepository = PublicPluginRepository(pluginRepositoryUrl, downloadDir, pluginDownloadDirDiskSpaceSetting)
+
+    val ideRepository = IdeRepository(ideRepositoryUrl)
+
+    val ideFilesDiskSetting = getIdeDownloadDirDiskSpaceSetting()
+    val ideFilesBank = IdeFilesBank(ideRepository, ideDownloadDir, ideFilesDiskSetting, getIdeDownloadProgressListener())
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractDir)
 
     val runner = findTaskRunner(command)
-    val parametersBuilder = runner.getParametersBuilder(pluginRepository, ideRepository, pluginDetailsProvider)
+    val parametersBuilder = runner.getParametersBuilder(pluginRepository, ideFilesBank, pluginDetailsProvider)
 
     val verificationReportsDirectory = OptionsParser.getVerificationReportsDirectory(opts)
     println("Verification reports directory: $verificationReportsDirectory")
@@ -114,6 +116,28 @@ object PluginVerifierMain {
     val outputOptions = OptionsParser.parseOutputOptions(opts, verificationReportsDirectory)
     val taskResultsPrinter = runner.createTaskResultsPrinter(outputOptions, pluginRepository)
     taskResultsPrinter.printResults(taskResult)
+  }
+
+  private fun getIdeDownloadProgressListener(): (Double) -> Unit {
+    val lastProgress = AtomicDouble()
+    return { currentProgress ->
+      if (currentProgress == 1.0 || currentProgress - lastProgress.get() > 0.1) {
+        LOG.info("IDE downloading progress ${(currentProgress * 100).toInt()}%")
+        lastProgress.set(currentProgress)
+      }
+    }
+  }
+
+  private fun getIdeDownloadDirDiskSpaceSetting(): DiskSpaceSetting {
+    val ideDownloadDirMaxSpace = System.getProperty("plugin.verifier.cache.ide.dir.max.space")?.let { it.toLong() * FileUtils.ONE_MB }
+        ?: 5 * FileUtils.ONE_GB
+    return DiskSpaceSetting(ideDownloadDirMaxSpace)
+  }
+
+  private fun getPluginDownloadDirDiskSpaceSetting(): DiskSpaceSetting {
+    val downloadDirMaxSpace = System.getProperty("plugin.verifier.cache.dir.max.space")?.let { it.toLong() * FileUtils.ONE_MB }
+        ?: 5 * FileUtils.ONE_GB
+    return DiskSpaceSetting(downloadDirMaxSpace)
   }
 
   private fun createVerificationReportage(verificationReportsDirectory: File, printPluginVerificationProgress: Boolean): VerificationReportage {

@@ -3,11 +3,12 @@ package org.jetbrains.plugins.verifier.service.service.features
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.ide.IdeFileLock
 import com.jetbrains.pluginverifier.parameters.ide.IdeCreator
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.files.FileLock
+import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTask
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskProgress
@@ -36,8 +37,9 @@ class ExtractFeaturesServiceTask(val pluginCoordinate: PluginCoordinate,
     val sinceBuild = plugin.sinceBuild!!
     val untilBuild = plugin.untilBuild
 
-    getSomeIdeMatchingSinceUntilBuilds(sinceBuild, untilBuild).use { ideFileLock ->
-      IdeCreator.createByFile(ideFileLock.ideFile, null).use { (ide, ideResolver) ->
+    val ideFileLock = getSomeIdeMatchingSinceUntilBuilds(sinceBuild, untilBuild)
+    ideFileLock.use {
+      IdeCreator.createByFile(ideFileLock.file, null).use { (ide, ideResolver) ->
         val extractorResult = FeaturesExtractor.extractFeatures(ide, ideResolver, plugin)
         val resultType = if (extractorResult.extractedAll) FeaturesResult.ResultType.EXTRACTED_ALL else FeaturesResult.ResultType.EXTRACTED_PARTIALLY
         return FeaturesResult(updateInfo, resultType, extractorResult.features)
@@ -45,11 +47,11 @@ class ExtractFeaturesServiceTask(val pluginCoordinate: PluginCoordinate,
     }
   }
 
-  private fun getSomeIdeMatchingSinceUntilBuilds(sinceBuild: IdeVersion, untilBuild: IdeVersion?): IdeFileLock = with(serverContext.ideFilesManager) {
+  private fun getSomeIdeMatchingSinceUntilBuilds(sinceBuild: IdeVersion, untilBuild: IdeVersion?): FileLock = with(serverContext.ideFilesBank) {
     lockAndAccess {
       val isMatching: (IdeVersion) -> Boolean = { sinceBuild <= it && (untilBuild == null || it <= untilBuild) }
-      val maxCompatibleOrGlobalCompatible = ideList().filter(isMatching).max() ?: ideList().max()!!
-      getIdeLock(maxCompatibleOrGlobalCompatible)!!
+      val maxCompatibleOrGlobalCompatible = getAvailableIdeVersions().filter(isMatching).max() ?: getAvailableIdeVersions().max()!!
+      (get(maxCompatibleOrGlobalCompatible) as FileRepositoryResult.Found).lockedFile
     }
   }
 

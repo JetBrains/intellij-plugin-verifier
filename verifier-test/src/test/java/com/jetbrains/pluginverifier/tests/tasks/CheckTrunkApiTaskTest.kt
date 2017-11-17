@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion.createIdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.plugin.IdleFileLock
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
@@ -132,7 +133,7 @@ class CheckTrunkApiTaskTest {
         TestJdkDescriptorProvider.getJdkDescriptorForTests(),
         listOf(someJetBrainsPluginId),
         false,
-        File("release ide file"),
+        IdleFileLock(File("release ide file")),
         releaseLocalPluginsRepository,
         trunkLocalPluginsRepository,
         listOf(PluginCoordinate.ByFile(pluginToCheck.originalFile!!))

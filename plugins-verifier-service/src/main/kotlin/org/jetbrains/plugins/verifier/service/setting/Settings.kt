@@ -41,6 +41,8 @@ enum class Settings(val key: String,
 
   fun getAsInt(): Int = get().toInt()
 
+  fun getAsLong(): Long = get().toLong()
+
   companion object {
     private val PUBLIC_PLUGIN_REPOSITORY_URL = "https://plugins.jetbrains.com"
   }

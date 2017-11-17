@@ -7,7 +7,6 @@ import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.copyInputStreamWithProgress
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
-import com.jetbrains.pluginverifier.repository.downloader.DownloadUrlProvider
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -26,20 +25,19 @@ private interface IdeRepositoryConnector {
 }
 
 
-class IdeDownloader(private val ideRepositoryUrl: String,
-                    private val ideDownloadUrlProvider: DownloadUrlProvider<IdeVersion>,
+class IdeDownloader(private val ideRepository: IdeRepository,
                     private val downloadProgress: (Double) -> Unit) : Downloader<IdeVersion> {
 
   private val repositoryConnector = Retrofit.Builder()
-      .baseUrl(ideRepositoryUrl.trimEnd('/') + '/')
+      .baseUrl(ideRepository.repositoryUrl.trimEnd('/') + '/')
       .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
       .create(IdeRepositoryConnector::class.java)
 
 
   override fun download(key: IdeVersion, destination: File): DownloadResult {
-    val downloadUrl = ideDownloadUrlProvider.getDownloadUrl(key)
-        ?: return DownloadResult.NotFound("IDE $key is not found in $ideRepositoryUrl")
+    val downloadUrl = ideRepository.fetchAvailableIdeDescriptor(key)?.downloadUrl
+        ?: return DownloadResult.NotFound("IDE $key is not found in $ideRepository")
 
     val zippedIde = destination.resolve(destination.name + ".zip")
     try {

@@ -1,10 +1,8 @@
 package org.jetbrains.plugins.verifier.service.server
 
-import com.jetbrains.pluginverifier.ide.IdeFilesManager
-import com.jetbrains.pluginverifier.ide.IdeRepository
+import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.storage.FileManager
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.repository.AuthorizationData
 import org.jetbrains.plugins.verifier.service.service.repository.UpdateInfoCache
@@ -18,11 +16,9 @@ import java.io.File
  * @author Sergey Patrikeev
  */
 class ServerContext(val applicationHomeDirectory: File,
-                    val fileManager: FileManager,
-                    val ideFilesManager: IdeFilesManager,
+                    val ideFilesBank: IdeFilesBank,
                     val pluginRepository: PluginRepository,
                     val pluginDetailsProvider: PluginDetailsProvider,
-                    val ideRepository: IdeRepository,
                     val taskManager: ServiceTasksManager,
                     val authorizationData: AuthorizationData,
                     val jdkManager: JdkManager,

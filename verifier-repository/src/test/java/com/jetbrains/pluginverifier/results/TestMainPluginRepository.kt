@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.results
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
+import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import org.apache.commons.io.FileUtils
 import org.junit.Assert.*
@@ -21,7 +22,7 @@ class TestMainPluginRepository {
 
   private fun getRepository(): PluginRepository {
     val tempDownloadFolder = temporaryFolder.newFolder()
-    return PublicPluginRepository("https://plugins.jetbrains.com", tempDownloadFolder, 100 * FileUtils.ONE_MB)
+    return PublicPluginRepository("https://plugins.jetbrains.com", tempDownloadFolder, DiskSpaceSetting(100 * FileUtils.ONE_MB))
   }
 
   @Test

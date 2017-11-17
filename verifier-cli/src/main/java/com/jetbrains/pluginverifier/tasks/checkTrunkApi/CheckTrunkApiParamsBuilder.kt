@@ -1,32 +1,29 @@
 package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
-import com.google.common.util.concurrent.AtomicDouble
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.ide.IdeRepository
+import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.misc.listPresentationInColumns
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
+import com.jetbrains.pluginverifier.plugin.IdleFileLock
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.files.FileLock
+import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepositoryFactory
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.concurrent.TimeUnit
 
 /**
  * @author Sergey Patrikeev
  */
-class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository, val ideRepository: IdeRepository) : TaskParametersBuilder {
-
-  private companion object {
-    val LOG: Logger = LoggerFactory.getLogger(CheckTrunkApiParamsBuilder::class.java)
-  }
+class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
+                                 val ideFilesBank: IdeFilesBank) : TaskParametersBuilder {
 
   //todo: close the IdeDescriptors in case of exception
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckTrunkApiParams {
@@ -39,27 +36,28 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository, val ide
     val trunkIdeDescriptor = OptionsParser.createIdeDescriptor(File(args[0]), opts)
     val jdkDescriptor = JdkDescriptor(OptionsParser.getJdkDir(opts))
 
-    val releaseIdeFile: File
+    val releaseIdeFileLock: FileLock
     val deleteReleaseIdeOnExit: Boolean
 
     when {
       apiOpts.majorIdePath != null -> {
-        releaseIdeFile = File(apiOpts.majorIdePath)
-        if (!releaseIdeFile.isDirectory) {
-          throw IllegalArgumentException("The specified major IDE doesn't exist: $releaseIdeFile")
+        val majorPath = File(apiOpts.majorIdePath)
+        if (!majorPath.isDirectory) {
+          throw IllegalArgumentException("The specified major IDE doesn't exist: $majorPath")
         }
+        releaseIdeFileLock = IdleFileLock(majorPath)
         deleteReleaseIdeOnExit = false
       }
       apiOpts.majorIdeVersion != null -> {
         val ideVersion = parseIdeVersion(apiOpts.majorIdeVersion!!)
-        releaseIdeFile = this.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "download ide $ideVersion") {
+        releaseIdeFileLock = this.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "download ide $ideVersion") {
           downloadIdeByVersion(ideVersion)
         }
         deleteReleaseIdeOnExit = !apiOpts.saveMajorIdeFile
       }
       else -> throw IllegalArgumentException("Neither the version (-miv) nor the path to the IDE (-mip) with which to compare API problems specified")
     }
-    val releaseIdeDescriptor = OptionsParser.createIdeDescriptor(releaseIdeFile, opts)
+    val releaseIdeDescriptor = OptionsParser.createIdeDescriptor(releaseIdeFileLock.file, opts)
 
     val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
     val problemsFilters = OptionsParser.getProblemsFilters(opts)
@@ -102,15 +100,10 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository, val ide
     return emptyList()
   }
 
-  private fun downloadIdeByVersion(ideVersion: IdeVersion): File {
-    val lastProgress = AtomicDouble()
-    val ideDescriptor = ideRepository.fetchAvailableIdeDescriptor(ideVersion) ?: throw RuntimeException("IDE $ideVersion is not found in $ideRepository")
-    return ideRepository.ideDownloader.getOrDownloadIde(ideDescriptor) {
-      if (it - lastProgress.get() > 0.1) {
-        LOG.info("IDE #$ideVersion downloading progress ${(it * 100).toInt()}%")
-        lastProgress.set(it)
-      }
-    }
+  private fun downloadIdeByVersion(ideVersion: IdeVersion): FileLock {
+    val ideDescriptor = ideFilesBank.get(ideVersion) as? FileRepositoryResult.Found
+        ?: throw RuntimeException("IDE $ideVersion is not found in $ideFilesBank")
+    return ideDescriptor.lockedFile
   }
 
   private fun parseIdeVersion(ideVersion: String): IdeVersion {

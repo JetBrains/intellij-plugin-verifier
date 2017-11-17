@@ -4,6 +4,8 @@ import com.google.common.collect.LinkedHashMultimap
 import com.google.gson.Gson
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
+import com.jetbrains.pluginverifier.network.createByteArrayRequestBody
+import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -11,8 +13,6 @@ import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.api.UpdateRangeCompatibilityResults
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import com.jetbrains.pluginverifier.network.createByteArrayRequestBody
-import com.jetbrains.pluginverifier.network.createStringRequestBody
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
 import org.jetbrains.plugins.verifier.service.storage.JdkVersion
 import retrofit2.Call
@@ -51,7 +51,7 @@ class VerifierService(serverContext: ServerContext, private val repositoryUrl: S
   override fun doServe() {
     val updateId2IdeVersions = LinkedHashMultimap.create<Int, IdeVersion>()
 
-    for (ideVersion in serverContext.ideFilesManager.ideList()) {
+    for (ideVersion in serverContext.ideFilesBank.getAvailableIdeVersions()) {
       getUpdatesToCheck(ideVersion).forEach { updateId ->
         updateId2IdeVersions.put(updateId, ideVersion)
       }

@@ -14,12 +14,12 @@ class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater
   private val downloadingIdes: MutableSet<IdeVersion> = hashSetOf()
 
   override fun doServe() {
-    val alreadyIdes = serverContext.ideFilesManager.ideList()
+    val alreadyIdes: Set<IdeVersion> = serverContext.ideFilesBank.getAvailableIdeVersions()
 
     val relevantIdes: List<AvailableIde> = fetchRelevantIdes()
 
     val missingIdes: List<AvailableIde> = relevantIdes.filterNot { it.version in alreadyIdes }
-    val redundantIdes: List<IdeVersion> = alreadyIdes - relevantIdes.map { it.version }
+    val redundantIdes: Set<IdeVersion> = alreadyIdes - relevantIdes.map { it.version }
 
     LOG.info("Available IDEs: $alreadyIdes;\nMissing IDEs: $missingIdes;\nRedundant IDEs: $redundantIdes")
 
@@ -45,7 +45,7 @@ class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater
       return
     }
 
-    val runner = UploadIdeRunner(availableIde, serverContext)
+    val runner = UploadIdeRunner(serverContext, availableIde.version)
 
     val taskStatus = serverContext.taskManager.enqueue(
         runner,
@@ -58,7 +58,7 @@ class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater
   }
 
   private fun fetchRelevantIdes(): List<AvailableIde> {
-    val index = serverContext.ideRepository.fetchIndex()
+    val index = serverContext.ideFilesBank.ideRepository.fetchIndex()
 
     val branchToVersions: Map<Int, List<AvailableIde>> = index
         .filterNot { it.isCommunity }

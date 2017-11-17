@@ -3,16 +3,13 @@ package com.jetbrains.pluginverifier.ide
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import java.io.File
 import java.net.URL
 
-class IdeRepository(downloadDir: File, private val repositoryUrl: String) {
+class IdeRepository(val repositoryUrl: String) {
 
   private val snapshotsRepoUrl = repositoryUrl.trimEnd('/') + "/intellij-repository/snapshots/"
 
   private val releasesRepoUrl = repositoryUrl.trimEnd('/') + "/intellij-repository/releases/"
-
-  val ideDownloader: IdeDownloader = IdeDownloader(repositoryUrl, downloadDir)
 
   /**
    * Parse the repository's HTML page:

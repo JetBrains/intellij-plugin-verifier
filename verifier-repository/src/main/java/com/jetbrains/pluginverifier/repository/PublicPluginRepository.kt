@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 
 class PublicPluginRepository(val repositoryUrl: String,
                              downloadDir: File,
-                             downloadDirMaxSpace: Long) : PluginRepository {
+                             diskSpaceSetting: DiskSpaceSetting) : PluginRepository {
   /**
    * TODO: implement this mapping on the Plugins Repository.
    * The list of IntelliJ plugins which define some modules
@@ -35,7 +35,7 @@ class PublicPluginRepository(val repositoryUrl: String,
       downloadDir,
       PluginDownloader(repositoryUrl),
       PluginFileKeyMapper(),
-      LruSweepPolicy(DiskSpaceSetting(downloadDirMaxSpace))
+      LruSweepPolicy(diskSpaceSetting)
   )
 
   override fun getPluginOverviewUrl(pluginInfo: PluginInfo): String? = if (pluginInfo is UpdateInfo) {

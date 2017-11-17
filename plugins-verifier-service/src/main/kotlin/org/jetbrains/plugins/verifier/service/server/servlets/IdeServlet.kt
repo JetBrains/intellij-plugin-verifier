@@ -14,7 +14,7 @@ class IdeServlet : BaseServlet() {
     when {
       path.endsWith("uploadIde") -> processUploadIde(req, resp)
       path.endsWith("deleteIde") -> processDeleteIde(req, resp)
-      else -> sendJson(resp, serverContext.ideFilesManager.ideList())
+      else -> sendJson(resp, serverContext.ideFilesBank.getAvailableIdeVersions())
     }
   }
 
@@ -30,12 +30,12 @@ class IdeServlet : BaseServlet() {
 
   private fun processUploadIde(req: HttpServletRequest, resp: HttpServletResponse) {
     val ideVersion = parseIdeVersionParameter(req, resp) ?: return
-    val availableIde = serverContext.ideRepository.fetchIndex().find { it.version.asStringWithoutProductCode() == ideVersion.asStringWithoutProductCode() }
+    val availableIde = serverContext.ideFilesBank.ideRepository.fetchIndex().find { it.version.asStringWithoutProductCode() == ideVersion.asStringWithoutProductCode() }
     if (availableIde == null) {
-      sendNotFound(resp, "IDE with version $ideVersion is not found in the ${serverContext.ideRepository}")
+      sendNotFound(resp, "IDE with version $ideVersion is not found in the ${serverContext.ideFilesBank.ideRepository}")
       return
     }
-    val ideRunner = UploadIdeRunner(availableIde, serverContext)
+    val ideRunner = UploadIdeRunner(serverContext, availableIde.version)
     val taskStatus = serverContext.taskManager.enqueue(ideRunner)
     sendOk(resp, "Uploading $ideVersion (#${taskStatus.taskId})")
   }
