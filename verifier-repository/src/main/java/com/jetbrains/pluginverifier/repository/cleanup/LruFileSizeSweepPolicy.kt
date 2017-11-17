@@ -4,7 +4,7 @@ import com.jetbrains.pluginverifier.repository.files.AvailableFile
 import java.time.Instant
 import java.util.*
 
-class LruSweepPolicy<K>(private val diskSpaceSetting: DiskSpaceSetting) : SweepPolicy<K> {
+class LruFileSizeSweepPolicy<K>(private val diskSpaceSetting: DiskSpaceSetting) : SweepPolicy<K> {
 
   override fun selectFilesForDeletion(sweepInfo: SweepInfo<K>): List<AvailableFile<K>> {
     val availableSpace = diskSpaceSetting.maxSpaceUsage - sweepInfo.totalSpaceUsed

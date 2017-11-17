@@ -86,7 +86,7 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
         jdkDescriptor,
         jetBrainsPluginIds,
         deleteReleaseIdeOnExit,
-        releaseIdeFile,
+        releaseIdeFileLock,
         releaseLocalRepository,
         trunkLocalRepository,
         pluginCoordinates

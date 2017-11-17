@@ -6,7 +6,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
-import com.jetbrains.pluginverifier.repository.cleanup.LruSweepPolicy
+import com.jetbrains.pluginverifier.repository.cleanup.LruFileSizeSweepPolicy
 import com.jetbrains.pluginverifier.repository.downloader.PluginDownloader
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryImpl
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
@@ -35,7 +35,7 @@ class PublicPluginRepository(val repositoryUrl: String,
       downloadDir,
       PluginDownloader(repositoryUrl),
       PluginFileKeyMapper(),
-      LruSweepPolicy(diskSpaceSetting)
+      LruFileSizeSweepPolicy(diskSpaceSetting)
   )
 
   override fun getPluginOverviewUrl(pluginInfo: PluginInfo): String? = if (pluginInfo is UpdateInfo) {

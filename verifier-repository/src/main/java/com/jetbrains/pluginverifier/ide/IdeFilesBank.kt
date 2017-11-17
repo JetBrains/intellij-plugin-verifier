@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
-import com.jetbrains.pluginverifier.repository.cleanup.LruSweepPolicy
+import com.jetbrains.pluginverifier.repository.cleanup.LruFileSizeSweepPolicy
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryImpl
 import java.io.File
 
@@ -16,7 +16,7 @@ class IdeFilesBank(val ideRepository: IdeRepository,
       bankDirectory,
       IdeDownloader(ideRepository, downloadProgress),
       IdeFileKeyMapper(),
-      LruSweepPolicy(diskSpaceSetting)
+      LruFileSizeSweepPolicy(diskSpaceSetting)
   )
 
   fun <R> lockAndAccess(block: () -> R) =

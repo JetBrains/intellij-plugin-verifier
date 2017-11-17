@@ -25,7 +25,7 @@ class FileRepositoryImplTest {
     val fileRepository: FileRepository<Int> = FileRepositoryImpl(
         folder,
         MockDownloader(),
-        MockFileKeyMapper(),
+        IntFileKeyMapper(),
         MockSweepPolicy()
     )
 
@@ -50,7 +50,7 @@ class FileRepositoryImplTest {
     val fileRepository = FileRepositoryImpl(
         folder,
         MockDownloader(),
-        MockFileKeyMapper(),
+        IntFileKeyMapper(),
         MockSweepPolicy()
     )
 
@@ -70,7 +70,7 @@ class FileRepositoryImplTest {
     val fileRepository = FileRepositoryImpl(
         tempFolder.newFolder(),
         downloader,
-        MockFileKeyMapper(),
+        IntFileKeyMapper(),
         MockSweepPolicy()
     )
 
