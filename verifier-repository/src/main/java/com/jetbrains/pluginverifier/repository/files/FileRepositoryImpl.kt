@@ -2,9 +2,9 @@ package com.jetbrains.pluginverifier.repository.files
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.pluginverifier.misc.*
-import com.jetbrains.pluginverifier.repository.cleanup.KeyUsageStatistic
 import com.jetbrains.pluginverifier.repository.cleanup.SweepInfo
 import com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy
+import com.jetbrains.pluginverifier.repository.cleanup.UsageStatistic
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
 import org.apache.commons.io.FileUtils
@@ -30,16 +30,19 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   private companion object {
     val LOG: Logger = LoggerFactory.getLogger(FileRepositoryImpl::class.java)
 
-    val LOCK_TIME_TO_LIVE_DURATION = Duration.of(1, ChronoUnit.HOURS)
+    val LOCK_TIME_TO_LIVE_DURATION: Duration = Duration.of(1, ChronoUnit.HOURS)
   }
 
+  private data class FileInfo(val file: File, val size: Long)
+
   private data class RepositoryState<K>(var totalSpaceUsage: Long = 0,
-                                        val files: MutableMap<K, File> = hashMapOf()) {
+                                        val files: MutableMap<K, FileInfo> = hashMapOf()) {
     fun addFile(key: K, file: File) {
       assert(key !in files)
       LOG.debug("Adding file by $key: $file")
-      totalSpaceUsage += file.length()
-      files[key] = file
+      val fileSize = file.length()
+      totalSpaceUsage += fileSize
+      files[key] = FileInfo(file, fileSize)
     }
 
     fun getAllKeys() = files.keys
@@ -50,13 +53,11 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
     fun deleteFile(key: K) {
       assert(key in files)
-      val file = files[key]!!
-      LOG.debug("Deleting file by $key: $file")
-      totalSpaceUsage -= file.length()
+      val fileInfo = files[key]!!
+      LOG.debug("Deleting file by $key: $fileInfo")
+      totalSpaceUsage -= fileInfo.size
       files.remove(key)
     }
-
-    fun getAvailableFiles() = files.map { (key, file) -> AvailableFile(key, file, file.length()) }
   }
 
   private val repositoryState = RepositoryState<K>()
@@ -69,7 +70,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   private val downloading = hashMapOf<K, FutureTask<DownloadResult>>()
 
-  private val statistics = hashMapOf<K, KeyUsageStatistic<K>>()
+  private val statistics = hashMapOf<K, UsageStatistic>()
 
   init {
     repositoryDir.createDir()
@@ -126,16 +127,16 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   @Synchronized
   private fun registerLock(key: K, isFake: Boolean): FileLockImpl<K> {
-    val file = if (isFake) {
-      File("Fake")
+    val fileInfo = if (isFake) {
+      FileInfo(File("Indicates that the file is being downloaded. It is not accessed ever."), 0)
     } else {
       assert(repositoryState.has(key))
       repositoryState.get(key)!!
     }
     val lockTime = clock.instant()
-    val lock = FileLockImpl(file, lockTime, key, nextLockId++, this)
+    val lock = FileLockImpl(fileInfo.file, lockTime, key, nextLockId++, this)
     key2Locks.getOrPut(key, { hashSetOf() }).add(lock)
-    val keyUsageStatistic = statistics.getOrPut(key, { KeyUsageStatistic(key, lockTime, 0) })
+    val keyUsageStatistic = statistics.getOrPut(key, { UsageStatistic(lockTime, 0) })
     keyUsageStatistic.timesAccessed++
     return lock
   }
@@ -268,12 +269,13 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   @Synchronized
   override fun sweep() {
-    val availableFiles = repositoryState.getAvailableFiles()
-    val usageStatistics = availableFiles.asSequence()
-        .map { it.key }
-        .associateBy({ it }) { statistics[it]!! }
+    val availableFiles = repositoryState
+        .files
+        .map { (key, fileInfo) ->
+          AvailableFile(key, fileInfo.file, fileInfo.size, statistics[key]!!)
+        }
 
-    val sweepInfo = SweepInfo(repositoryState.totalSpaceUsage, availableFiles, usageStatistics)
+    val sweepInfo = SweepInfo(repositoryState.totalSpaceUsage, availableFiles)
     val filesForDeletion = sweepPolicy.selectFilesForDeletion(sweepInfo)
 
     if (filesForDeletion.isNotEmpty()) {

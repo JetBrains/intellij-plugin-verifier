@@ -1,5 +1,8 @@
 package com.jetbrains.pluginverifier.tests.repository
 
+import com.jetbrains.pluginverifier.repository.cleanup.SweepInfo
+import com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy
+import com.jetbrains.pluginverifier.repository.files.AvailableFile
 import com.jetbrains.pluginverifier.repository.files.FileRepository
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryImpl
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
@@ -89,5 +92,40 @@ class FileRepositoryImplTest {
     }
 
     assertThat(downloader.errors, org.hamcrest.Matchers.empty())
+  }
+
+  private fun <K> FileRepository<K>.getFound(k: K) = get(k) as FileRepositoryResult.Found
+
+  @Test
+  fun `file sweeper removes files using LRU order when the file is released`() {
+    val n = 2
+    val lruNSweepPolicy = object : SweepPolicy<Int> {
+      override fun selectFilesForDeletion(sweepInfo: SweepInfo<Int>): List<AvailableFile<Int>> =
+          sweepInfo.availableFiles
+              .sortedBy { it.usageStatistic.lastAccessTime }
+              .dropLast(n)
+    }
+
+    val fileRepository = FileRepositoryImpl(
+        tempFolder.newFolder(),
+        MockDownloader(),
+        IntFileKeyMapper(),
+        lruNSweepPolicy
+    )
+
+    val found0 = fileRepository.getFound(0)
+    val found1 = fileRepository.getFound(1)
+    val found2 = fileRepository.getFound(2)
+
+    assertTrue(fileRepository.has(0))
+    assertTrue(fileRepository.has(1))
+    assertTrue(fileRepository.has(2))
+
+    found0.lockedFile.release()
+    found1.lockedFile.release()
+    found2.lockedFile.release()
+    assertFalse(fileRepository.has(0))
+    assertTrue(fileRepository.has(1))
+    assertTrue(fileRepository.has(2))
   }
 }

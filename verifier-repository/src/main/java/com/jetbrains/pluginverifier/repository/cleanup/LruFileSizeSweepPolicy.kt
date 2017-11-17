@@ -14,8 +14,7 @@ class LruFileSizeSweepPolicy<K>(private val diskSpaceSetting: DiskSpaceSetting) 
       val lastUsedToCandidate = TreeMap<Instant, AvailableFile<K>>()
 
       for (availableFile in sweepInfo.availableFiles) {
-        val usageStatistic = sweepInfo.usageStatistics[availableFile.key]!!
-        lastUsedToCandidate[usageStatistic.lastAccessTime] = availableFile
+        lastUsedToCandidate[availableFile.usageStatistic.lastAccessTime] = availableFile
       }
 
       val delete = arrayListOf<AvailableFile<K>>()
