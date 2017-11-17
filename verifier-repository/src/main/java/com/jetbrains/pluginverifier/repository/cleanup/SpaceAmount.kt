@@ -25,6 +25,9 @@ data class SpaceAmount(private val bytes: Long) : Comparable<SpaceAmount> {
   operator fun times(multiplier: Double) =
       SpaceAmount((bytes * multiplier).toLong())
 
+  operator fun times(multiplier: Long) =
+      SpaceAmount(bytes * multiplier)
+
   operator fun plus(otherAmount: SpaceAmount) =
       SpaceAmount(bytes + otherAmount.bytes)
 

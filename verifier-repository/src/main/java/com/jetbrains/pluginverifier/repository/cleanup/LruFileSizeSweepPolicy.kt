@@ -11,25 +11,32 @@ class LruFileSizeSweepPolicy<K>(private val diskSpaceSetting: DiskSpaceSetting) 
     if (availableSpace >= diskSpaceSetting.lowSpaceThreshold) {
       return emptyList()
     } else {
-      val lastUsedToCandidate = TreeMap<Instant, AvailableFile<K>>()
+      val freeFiles = sweepInfo.availableFiles.filterNot { it.isLocked }
+      if (freeFiles.isNotEmpty()) {
+        val lastUsedToCandidate = TreeMap<Instant, AvailableFile<K>>()
 
-      for (availableFile in sweepInfo.availableFiles) {
-        lastUsedToCandidate[availableFile.usageStatistic.lastAccessTime] = availableFile
-      }
-
-      val delete = arrayListOf<AvailableFile<K>>()
-      var needSpace = diskSpaceSetting.lowSpaceThreshold - availableSpace
-      for ((_, candidate) in lastUsedToCandidate) {
-        if (needSpace > SpaceAmount.ZERO_SPACE) {
-          delete.add(candidate)
-          needSpace -= candidate.size
-        } else {
-          break
+        for (freeFile in freeFiles) {
+          lastUsedToCandidate[freeFile.usageStatistic.lastAccessTime] = freeFile
         }
-      }
 
-      return delete
+        val deleteFiles = arrayListOf<AvailableFile<K>>()
+        var needToFreeSpace = estimateNeedToFreeSpace(availableSpace)
+        for ((_, candidate) in lastUsedToCandidate) {
+          if (needToFreeSpace > SpaceAmount.ZERO_SPACE) {
+            deleteFiles.add(candidate)
+            needToFreeSpace -= candidate.size
+          } else {
+            break
+          }
+        }
+
+        return deleteFiles
+      }
     }
+    return emptyList()
   }
+
+  private fun estimateNeedToFreeSpace(availableSpace: SpaceAmount) =
+      diskSpaceSetting.lowSpaceThreshold * 2 - availableSpace
 
 }

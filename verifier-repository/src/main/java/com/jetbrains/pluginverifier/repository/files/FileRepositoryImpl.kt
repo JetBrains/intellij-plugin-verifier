@@ -37,12 +37,12 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   private data class FileInfo(val file: File, val size: SpaceAmount)
 
-  private data class RepositoryState<K>(var totalSpaceUsage: SpaceAmount = SpaceAmount.ZERO_SPACE,
-                                        val files: MutableMap<K, FileInfo> = hashMapOf()) {
+  private data class RepositoryFilesRegistrar<K>(var totalSpaceUsage: SpaceAmount = SpaceAmount.ZERO_SPACE,
+                                                 val files: MutableMap<K, FileInfo> = hashMapOf()) {
     fun addFile(key: K, file: File) {
       assert(key !in files)
-      LOG.debug("Adding file by $key: $file")
       val fileSize = file.fileSize
+      LOG.debug("Adding file by $key of size $fileSize: $file")
       totalSpaceUsage += fileSize
       files[key] = FileInfo(file, fileSize)
     }
@@ -56,14 +56,14 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     fun deleteFile(key: K) {
       assert(key in files)
       val (file, size) = files[key]!!
-      LOG.debug("Deleting file by $key: $file")
+      LOG.debug("Deleting file by $key of size $size: $file")
       totalSpaceUsage -= size
       files.remove(key)
       file.deleteLogged()
     }
   }
 
-  private val repositoryState = RepositoryState<K>()
+  private val filesRegistrar = RepositoryFilesRegistrar<K>()
 
   private var nextLockId: Long = 0
 
@@ -101,7 +101,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   }
 
   private fun addFileWithEmptyStatistic(key: K, file: File) {
-    repositoryState.addFile(key, file)
+    filesRegistrar.addFile(key, file)
     statistics[key] = UsageStatistic(Instant.EPOCH, 0)
   }
 
@@ -109,19 +109,20 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   override fun <R> lockAndAccess(block: () -> R): R = block()
 
   @Synchronized
-  override fun getAllExistingKeys(): Set<K> = repositoryState.getAllKeys()
+  override fun getAllExistingKeys() = filesRegistrar.getAllKeys()
 
   @Synchronized
-  override fun has(key: K): Boolean = repositoryState.has(key)
+  override fun has(key: K) = filesRegistrar.has(key)
 
   @Synchronized
   override fun remove(key: K): Boolean {
     val isLocked = isLockedKey(key)
     return if (isLocked) {
-      LOG.debug("File by $key is locked. Putting it into deletion queue.")
+      LOG.debug("File by $key is locked, so putting it into deletion queue.")
       deleteQueue.add(key)
       false
     } else {
+      LOG.debug("Delete file by $key as it isn't locked now")
       doRemove(key)
       true
     }
@@ -131,12 +132,12 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   private fun isLockedKey(key: K) = key2Locks[key].orEmpty().isNotEmpty()
 
   @Synchronized
-  private fun registerLock(key: K, isFake: Boolean): FileLockImpl<K> {
-    val fileInfo = if (isFake) {
-      FileInfo(File("Indicates that the file is being downloaded. It is not accessed ever."), SpaceAmount.ZERO_SPACE)
+  private fun registerLock(key: K, isDownloadingLock: Boolean): FileLockImpl<K> {
+    val fileInfo = if (isDownloadingLock) {
+      FileInfo(File("Indicates that the file is being downloaded. It is never accessed."), SpaceAmount.ZERO_SPACE)
     } else {
-      assert(repositoryState.has(key))
-      repositoryState.get(key)!!
+      assert(filesRegistrar.has(key))
+      filesRegistrar.get(key)!!
     }
     val lockTime = clock.instant()
     val lock = FileLockImpl(fileInfo.file, lockTime, key, nextLockId++, this)
@@ -164,7 +165,8 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   @Synchronized
   private fun doRemove(key: K) {
-    repositoryState.deleteFile(key)
+    assert(key !in downloading)
+    filesRegistrar.deleteFile(key)
     statistics.remove(key)
   }
 
@@ -172,7 +174,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     File(repositoryDir, "downloads").createDir()
   }
 
-  private fun fetchFile(key: K): FileRepositoryResult {
+  private fun downloadOrWait(key: K): FileRepositoryResult {
     val (downloadTask, runInCurrentThread, waitingLock) = synchronized(this) {
       val waitingLock = registerLock(key, true)
       val existingTask = downloading[key]
@@ -220,7 +222,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     }
   }
 
-  private fun createTempDirectoryForDownload(key: K): File = Files.createTempDirectory(
+  private fun createTempDirectoryForDownload(key: K) = Files.createTempDirectory(
       downloadDirectory.toPath(),
       "download-" + getFileNameForKey(key, "") + "-"
   ).toFile()
@@ -252,7 +254,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   @Synchronized
   private fun lockFileIfExists(key: K): FileLockImpl<K>? {
-    if (repositoryState.has(key)) {
+    if (filesRegistrar.has(key)) {
       return registerLock(key, false)
     }
     return null
@@ -274,17 +276,17 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   @Synchronized
   override fun sweep() {
-    val availableFiles = repositoryState.files.map { (key, fileInfo) ->
-      AvailableFile(key, fileInfo.file, fileInfo.size, statistics[key]!!)
+    val availableFiles = filesRegistrar.files.map { (key, fileInfo) ->
+      AvailableFile(key, fileInfo.file, fileInfo.size, statistics[key]!!, isLockedKey(key))
     }
 
-    val sweepInfo = SweepInfo(repositoryState.totalSpaceUsage, availableFiles)
+    val sweepInfo = SweepInfo(filesRegistrar.totalSpaceUsage, availableFiles)
     val filesForDeletion = sweepPolicy.selectFilesForDeletion(sweepInfo)
 
     if (filesForDeletion.isNotEmpty()) {
       val deletionsSize = filesForDeletion.map { it.size }.reduce { acc, spaceAmount -> acc + spaceAmount }
       LOG.info("It's time to remove unused files.\n" +
-          "Space usage: ${repositoryState.totalSpaceUsage};\n" +
+          "Space usage: ${filesRegistrar.totalSpaceUsage};\n" +
           "${filesForDeletion.size} " + "file".pluralize(filesForDeletion.size) +
           " will be removed having total size $deletionsSize"
       )
@@ -311,7 +313,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     val result = if (lockedFile != null) {
       FileRepositoryResult.Found(lockedFile)
     } else {
-      fetchFile(key)
+      downloadOrWait(key)
     }
     try {
       sweep()

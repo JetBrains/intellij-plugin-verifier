@@ -2,5 +2,5 @@ package com.jetbrains.pluginverifier.repository.cleanup
 
 data class DiskSpaceSetting(
     val maxSpaceUsage: SpaceAmount,
-    val lowSpaceThreshold: SpaceAmount = SpaceAmount.ofGigabytes(3)
+    val lowSpaceThreshold: SpaceAmount = maxSpaceUsage * 0.2
 )
