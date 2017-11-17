@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.reporting.verification
 
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
+import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import java.io.Closeable
 
 /**
@@ -9,7 +10,7 @@ import java.io.Closeable
  */
 interface VerificationReportage : Closeable {
 
-  fun logVerificationExecutorCreated(availableMemory: Long, availableCpu: Long, concurrencyLevel: Int)
+  fun logVerificationExecutorCreated(availableMemory: SpaceAmount, availableCpu: Long, concurrencyLevel: Int)
 
   fun createPluginLogger(pluginCoordinate: PluginCoordinate, ideDescriptor: IdeDescriptor): PluginVerificationReportage
 

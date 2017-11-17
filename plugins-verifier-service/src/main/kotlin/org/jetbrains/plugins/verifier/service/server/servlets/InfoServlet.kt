@@ -1,9 +1,7 @@
 package org.jetbrains.plugins.verifier.service.server.servlets
 
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
-import com.jetbrains.pluginverifier.misc.bytesToGigabytes
-import com.jetbrains.pluginverifier.misc.bytesToMegabytes
-import org.jetbrains.plugins.verifier.service.server.status.getDiskUsage
+import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import org.jetbrains.plugins.verifier.service.server.status.getMemoryInfo
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import java.io.ByteArrayOutputStream
@@ -95,13 +93,13 @@ class InfoServlet : BaseServlet() {
             }
             ul {
               val (totalMemory, freeMemory, usedMemory, maxMemory) = getMemoryInfo()
-              li { +"Total memory: ${totalMemory.bytesToMegabytes()} Mb" }
-              li { +"Free memory: ${freeMemory.bytesToMegabytes()} Mb" }
-              li { +"Used memory: ${usedMemory.bytesToMegabytes()} Mb" }
-              li { +"Max memory: ${maxMemory.bytesToMegabytes()} Mb" }
+              li { +"Total memory: $totalMemory" }
+              li { +"Free memory: $freeMemory" }
+              li { +"Used memory: $usedMemory" }
+              li { +"Max memory: $maxMemory" }
 
-              val (totalUsage) = serverContext.applicationHomeDirectory.getDiskUsage()
-              li { +"Total disk usage: ${totalUsage.bytesToGigabytes()} Gb" }
+              val totalUsage = serverContext.applicationHomeDirectory.fileSize
+              li { +"Total disk usage: $totalUsage" }
             }
 
             h2 {

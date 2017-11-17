@@ -1,17 +1,17 @@
 package com.jetbrains.pluginverifier.reporting.verification
 
-import com.jetbrains.pluginverifier.misc.bytesToMegabytes
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
+import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 
 class VerificationReportageImpl(private val reporterSetProvider: VerificationReportersProvider) : VerificationReportage {
   private var verifiedPlugins: Int = 0
 
   private var totalPlugins: Int = 0
 
-  override fun logVerificationExecutorCreated(availableMemory: Long, availableCpu: Long, concurrencyLevel: Int) {
-    reportMessage("Available memory: ${availableMemory.bytesToMegabytes()} Mb; Available CPU = $availableCpu; Concurrency level = $concurrencyLevel")
+  override fun logVerificationExecutorCreated(availableMemory: SpaceAmount, availableCpu: Long, concurrencyLevel: Int) {
+    reportMessage("Available memory: $availableMemory; Available CPU = $availableCpu; Concurrency level = $concurrencyLevel")
   }
 
   private fun reportMessage(message: String) {

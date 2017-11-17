@@ -13,6 +13,7 @@ import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
+import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.tasks.TaskRunner
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeRunner
 import com.jetbrains.pluginverifier.tasks.checkPlugin.CheckPluginRunner
@@ -128,16 +129,16 @@ object PluginVerifierMain {
     }
   }
 
-  private fun getIdeDownloadDirDiskSpaceSetting(): DiskSpaceSetting {
-    val ideDownloadDirMaxSpace = System.getProperty("plugin.verifier.cache.ide.dir.max.space")?.let { it.toLong() * FileUtils.ONE_MB }
-        ?: 5 * FileUtils.ONE_GB
-    return DiskSpaceSetting(ideDownloadDirMaxSpace)
-  }
+  private fun getIdeDownloadDirDiskSpaceSetting(): DiskSpaceSetting =
+      ofMegabytes("plugin.verifier.cache.ide.dir.max.space", 5 * 1024)
 
-  private fun getPluginDownloadDirDiskSpaceSetting(): DiskSpaceSetting {
-    val downloadDirMaxSpace = System.getProperty("plugin.verifier.cache.dir.max.space")?.let { it.toLong() * FileUtils.ONE_MB }
-        ?: 5 * FileUtils.ONE_GB
-    return DiskSpaceSetting(downloadDirMaxSpace)
+  private fun getPluginDownloadDirDiskSpaceSetting(): DiskSpaceSetting =
+      ofMegabytes("plugin.verifier.cache.dir.max.space", 5 * 1024)
+
+  private fun ofMegabytes(propertyName: String, defaultAmount: Long): DiskSpaceSetting {
+    val property = System.getProperty(propertyName)?.toLong() ?: defaultAmount
+    val megabytes = SpaceAmount.ofMegabytes(property)
+    return DiskSpaceSetting(megabytes)
   }
 
   private fun createVerificationReportage(verificationReportsDirectory: File, printPluginVerificationProgress: Boolean): VerificationReportage {

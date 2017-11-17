@@ -6,8 +6,8 @@ import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
+import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.storage.FileManager
-import org.apache.commons.io.FileUtils
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.features.FeatureService
 import org.jetbrains.plugins.verifier.service.service.ide.IdeListUpdater
@@ -78,13 +78,13 @@ class ServerStartupListener : ServletContextListener {
     )
   }
 
-  private val maxDiskSpaceUsage = Settings.MAX_DISK_SPACE_MB.getAsLong().coerceAtLeast(10000) * FileUtils.ONE_MB
+  private val maxDiskSpaceUsage = SpaceAmount.ofMegabytes(Settings.MAX_DISK_SPACE_MB.getAsLong().coerceAtLeast(10000))
 
-  private fun getIdeDownloadDirDiskSpaceSetting(): DiskSpaceSetting =
-      DiskSpaceSetting(DiskUsageDistributionSetting.IDE_DOWNLOAD_DIR.getAbsoluteDiskSpace(maxDiskSpaceUsage))
+  private fun getIdeDownloadDirDiskSpaceSetting() =
+      DiskSpaceSetting(DiskUsageDistributionSetting.IDE_DOWNLOAD_DIR.getIntendedSpace(maxDiskSpaceUsage))
 
-  private fun getPluginDownloadDirDiskSpaceSetting(): DiskSpaceSetting =
-      DiskSpaceSetting(DiskUsageDistributionSetting.PLUGIN_DOWNLOAD_DIR.getAbsoluteDiskSpace(maxDiskSpaceUsage))
+  private fun getPluginDownloadDirDiskSpaceSetting() =
+      DiskSpaceSetting(DiskUsageDistributionSetting.PLUGIN_DOWNLOAD_DIR.getIntendedSpace(maxDiskSpaceUsage))
 
   override fun contextInitialized(sce: ServletContextEvent) {
     LOG.info("Server is ready to start")

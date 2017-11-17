@@ -162,10 +162,6 @@ fun String.replaceInvalidFileNameCharacters(): String = replace(Regex("[^a-zA-Z0
 
 fun impossible(): Nothing = throw AssertionError("Impossible")
 
-fun Long.bytesToMegabytes(digits: Int = 2): String = "%.${digits}f".format(this.toDouble() / FileUtils.ONE_MB)
-
-fun Long.bytesToGigabytes(digits: Int = 3): String = "%.${digits}f".format(this.toDouble() / FileUtils.ONE_GB)
-
 fun <T, R> T.tryInvokeSeveralTimes(attempts: Int,
                                    attemptsDelay: Long,
                                    attemptsDelayTimeUnit: TimeUnit,

@@ -2,5 +2,5 @@ package com.jetbrains.pluginverifier.repository.cleanup
 
 import com.jetbrains.pluginverifier.repository.files.AvailableFile
 
-data class SweepInfo<K>(val totalSpaceUsed: Long,
+data class SweepInfo<K>(val totalSpaceUsed: SpaceAmount,
                         val availableFiles: List<AvailableFile<K>>)

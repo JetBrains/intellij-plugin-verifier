@@ -20,7 +20,7 @@ class LruFileSizeSweepPolicy<K>(private val diskSpaceSetting: DiskSpaceSetting) 
       val delete = arrayListOf<AvailableFile<K>>()
       var needSpace = diskSpaceSetting.lowSpaceThreshold - availableSpace
       for ((_, candidate) in lastUsedToCandidate) {
-        if (needSpace > 0) {
+        if (needSpace > SpaceAmount.ZERO_SPACE) {
           delete.add(candidate)
           needSpace -= candidate.size
         } else {

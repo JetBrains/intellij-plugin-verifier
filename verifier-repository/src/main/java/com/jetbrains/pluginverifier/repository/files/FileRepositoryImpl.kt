@@ -1,10 +1,11 @@
 package com.jetbrains.pluginverifier.repository.files
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.jetbrains.pluginverifier.misc.*
-import com.jetbrains.pluginverifier.repository.cleanup.SweepInfo
-import com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy
-import com.jetbrains.pluginverifier.repository.cleanup.UsageStatistic
+import com.jetbrains.pluginverifier.misc.createDir
+import com.jetbrains.pluginverifier.misc.deleteLogged
+import com.jetbrains.pluginverifier.misc.pluralize
+import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
+import com.jetbrains.pluginverifier.repository.cleanup.*
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
 import org.apache.commons.io.FileUtils
@@ -34,14 +35,14 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     val LOCK_TIME_TO_LIVE_DURATION: Duration = Duration.of(1, ChronoUnit.HOURS)
   }
 
-  private data class FileInfo(val file: File, val size: Long)
+  private data class FileInfo(val file: File, val size: SpaceAmount)
 
-  private data class RepositoryState<K>(var totalSpaceUsage: Long = 0,
+  private data class RepositoryState<K>(var totalSpaceUsage: SpaceAmount = SpaceAmount.ZERO_SPACE,
                                         val files: MutableMap<K, FileInfo> = hashMapOf()) {
     fun addFile(key: K, file: File) {
       assert(key !in files)
       LOG.debug("Adding file by $key: $file")
-      val fileSize = FileUtils.sizeOf(file)
+      val fileSize = file.fileSize
       totalSpaceUsage += fileSize
       files[key] = FileInfo(file, fileSize)
     }
@@ -132,7 +133,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   @Synchronized
   private fun registerLock(key: K, isFake: Boolean): FileLockImpl<K> {
     val fileInfo = if (isFake) {
-      FileInfo(File("Indicates that the file is being downloaded. It is not accessed ever."), 0)
+      FileInfo(File("Indicates that the file is being downloaded. It is not accessed ever."), SpaceAmount.ZERO_SPACE)
     } else {
       assert(repositoryState.has(key))
       repositoryState.get(key)!!
@@ -281,11 +282,11 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     val filesForDeletion = sweepPolicy.selectFilesForDeletion(sweepInfo)
 
     if (filesForDeletion.isNotEmpty()) {
-      val deletionsSize = filesForDeletion.map { it.size }.sum()
+      val deletionsSize = filesForDeletion.map { it.size }.reduce { acc, spaceAmount -> acc + spaceAmount }
       LOG.info("It's time to remove unused files.\n" +
-          "Space usage: ${repositoryState.totalSpaceUsage.bytesToMegabytes()} Mb;\n" +
+          "Space usage: ${repositoryState.totalSpaceUsage};\n" +
           "${filesForDeletion.size} " + "file".pluralize(filesForDeletion.size) +
-          " will be removed having total size " + deletionsSize.bytesToMegabytes() + "Mb"
+          " will be removed having total size $deletionsSize"
       )
       for (availableFile in filesForDeletion) {
         remove(availableFile.key)
