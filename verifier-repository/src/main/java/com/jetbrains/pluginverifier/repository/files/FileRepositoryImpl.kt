@@ -202,7 +202,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   }
 
   private fun doDownload(key: K): DownloadResult {
-    val tempFileOrDirectory = createTempFileOrDirectory()
+    val tempFileOrDirectory = createTempFileOrDirectory(key)
     try {
       val downloadResult = downloader.download(key, tempFileOrDirectory)
       if (downloadResult is DownloadResult.Downloaded) {
@@ -217,8 +217,8 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     }
   }
 
-  private fun createTempFileOrDirectory(): File {
-    val tempPrefix = "download"
+  private fun createTempFileOrDirectory(key: K): File {
+    val tempPrefix = "download-" + getFileName(key, "") + "-"
     val tempFileOrDir = if (fileKeyMapper.directoriesStored) {
       Files.createTempDirectory(downloadDirectory.toPath(), tempPrefix)
     } else {
@@ -241,8 +241,14 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   }
 
   private fun getFileForKey(key: K, extension: String): File {
-    val finalFileName = fileKeyMapper.getFileNameWithoutExtension(key) + if (extension.isEmpty()) "" else "." + extension
-    return File(repositoryDir, finalFileName.replaceInvalidFileNameCharacters())
+    val finalFileName = getFileName(key, extension)
+    return File(repositoryDir, finalFileName)
+  }
+
+  private fun getFileName(key: K, extension: String): String {
+    val nameWithoutExtension = fileKeyMapper.getFileNameWithoutExtension(key)
+    val fullName = nameWithoutExtension + if (extension.isEmpty()) "" else "." + extension
+    return fullName.replaceInvalidFileNameCharacters()
   }
 
   @Synchronized
