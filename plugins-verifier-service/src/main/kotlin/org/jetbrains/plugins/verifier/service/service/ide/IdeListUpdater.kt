@@ -16,10 +16,10 @@ class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater
   override fun doServe() {
     val alreadyIdes: Set<IdeVersion> = serverContext.ideFilesBank.getAvailableIdeVersions()
 
-    val relevantIdes: List<AvailableIde> = fetchRelevantIdes()
+    val necessaryIdes: Set<IdeVersion> = fetchRelevantIdes().map { it.version }.toSet()
 
-    val missingIdes: List<AvailableIde> = relevantIdes.filterNot { it.version in alreadyIdes }
-    val redundantIdes: Set<IdeVersion> = alreadyIdes - relevantIdes.map { it.version }
+    val missingIdes: Set<IdeVersion> = necessaryIdes - alreadyIdes
+    val redundantIdes: Set<IdeVersion> = alreadyIdes - necessaryIdes.map { it }
 
     LOG.info("Available IDEs: $alreadyIdes;\nMissing IDEs: $missingIdes;\nRedundant IDEs: $redundantIdes")
 
@@ -39,35 +39,38 @@ class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater
     LOG.info("Delete IDE #$ideVersion is enqueued with taskId=#${taskStatus.taskId}")
   }
 
-  private fun enqueueUploadIde(availableIde: AvailableIde) {
-    val version = availableIde.version
-    if (downloadingIdes.contains(version)) {
+  private fun enqueueUploadIde(ideVersion: IdeVersion) {
+    if (downloadingIdes.contains(ideVersion)) {
       return
     }
 
-    val runner = UploadIdeRunner(serverContext, availableIde.version)
+    val runner = UploadIdeRunner(serverContext, ideVersion)
 
     val taskStatus = serverContext.taskManager.enqueue(
         runner,
         { },
         { _, _ -> }
-    ) { _ -> downloadingIdes.remove(version) }
-    LOG.info("Uploading IDE version #$version (task #${taskStatus.taskId})")
+    ) { _ -> downloadingIdes.remove(ideVersion) }
+    LOG.info("Uploading IDE version #$ideVersion (task #${taskStatus.taskId})")
 
-    downloadingIdes.add(version)
+    downloadingIdes.add(ideVersion)
   }
 
-  private fun fetchRelevantIdes(): List<AvailableIde> {
+  private fun fetchRelevantIdes(): Set<AvailableIde> {
     val index = serverContext.ideFilesBank.ideRepository.fetchIndex()
 
     val branchToVersions: Map<Int, List<AvailableIde>> = index
         .filterNot { it.isCommunity }
         .groupBy { it.version.baselineVersion }
 
-    val lastBranchBuilds = branchToVersions.mapValues { it.value.maxBy { it.version } }.values.filterNotNull()
-    val lastBranchReleases = branchToVersions.mapValues { it.value.filter { it.isRelease }.maxBy { it.version } }.values.filterNotNull()
+    val lastBranchBuilds = branchToVersions
+        .mapValues { it.value.maxBy { it.version } }
+        .values.filterNotNull()
+    val lastBranchReleases = branchToVersions
+        .mapValues { it.value.filter { it.isRelease }.maxBy { it.version } }
+        .values.filterNotNull()
 
-    return (lastBranchBuilds + lastBranchReleases)
+    return (lastBranchBuilds + lastBranchReleases).toSet()
   }
 
 
