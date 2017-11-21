@@ -273,25 +273,26 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   @Synchronized
   override fun sweep() {
-    val availableFiles = filesRegistrar.files.map { (key, fileInfo) ->
-      AvailableFile(key, fileInfo, statistics[key]!!, isLockedKey(key))
-    }
+    if (sweepPolicy.isNecessary(filesRegistrar.totalSpaceUsage)) {
+      val availableFiles = filesRegistrar.files.map { (key, fileInfo) ->
+        AvailableFile(key, fileInfo, statistics[key]!!, isLockedKey(key))
+      }
 
-    val sweepInfo = SweepInfo(filesRegistrar.totalSpaceUsage, availableFiles)
-    val filesForDeletion = sweepPolicy.selectFilesForDeletion(sweepInfo)
+      val sweepInfo = SweepInfo(filesRegistrar.totalSpaceUsage, availableFiles)
+      val filesForDeletion = sweepPolicy.selectFilesForDeletion(sweepInfo)
 
-    if (filesForDeletion.isNotEmpty()) {
-      val deletionsSize = filesForDeletion.map { it.fileInfo.size }.reduce { acc, spaceAmount -> acc + spaceAmount }
-      LOG.info("It's time to remove unused files.\n" +
-          "Space usage: ${filesRegistrar.totalSpaceUsage};\n" +
-          "${filesForDeletion.size} " + "file".pluralize(filesForDeletion.size) +
-          " will be removed having total size $deletionsSize"
-      )
-      for (availableFile in filesForDeletion) {
-        remove(availableFile.key)
+      if (filesForDeletion.isNotEmpty()) {
+        val deletionsSize = filesForDeletion.map { it.fileInfo.size }.reduce { acc, spaceAmount -> acc + spaceAmount }
+        LOG.info("It's time to remove unused files.\n" +
+            "Space usage: ${filesRegistrar.totalSpaceUsage};\n" +
+            "${filesForDeletion.size} " + "file".pluralize(filesForDeletion.size) +
+            " will be removed having total size $deletionsSize"
+        )
+        for (availableFile in filesForDeletion) {
+          remove(availableFile.key)
+        }
       }
     }
-
   }
 
   /**

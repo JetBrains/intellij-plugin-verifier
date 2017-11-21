@@ -6,11 +6,17 @@ import java.util.*
 
 class LruFileSizeSweepPolicy<K>(private val diskSpaceSetting: DiskSpaceSetting) : SweepPolicy<K> {
 
+  private fun estimateFreeSpaceAmount(totalSpaceUsed: SpaceAmount) =
+      diskSpaceSetting.maxSpaceUsage - totalSpaceUsed
+
+  private fun estimateNeedToFreeSpace(availableSpace: SpaceAmount) =
+      diskSpaceSetting.lowSpaceThreshold * 2 - availableSpace
+
+  override fun isNecessary(totalSpaceUsed: SpaceAmount): Boolean =
+      estimateFreeSpaceAmount(totalSpaceUsed) < diskSpaceSetting.lowSpaceThreshold
+
   override fun selectFilesForDeletion(sweepInfo: SweepInfo<K>): List<AvailableFile<K>> {
-    val availableSpace = diskSpaceSetting.maxSpaceUsage - sweepInfo.totalSpaceUsed
-    if (availableSpace >= diskSpaceSetting.lowSpaceThreshold) {
-      return emptyList()
-    } else {
+    if (isNecessary(sweepInfo.totalSpaceUsed)) {
       val freeFiles = sweepInfo.availableFiles.filterNot { it.isLocked }
       if (freeFiles.isNotEmpty()) {
         val lastUsedToCandidate = TreeMap<Instant, AvailableFile<K>>()
@@ -20,7 +26,8 @@ class LruFileSizeSweepPolicy<K>(private val diskSpaceSetting: DiskSpaceSetting) 
         }
 
         val deleteFiles = arrayListOf<AvailableFile<K>>()
-        var needToFreeSpace = estimateNeedToFreeSpace(availableSpace)
+        val estimatedFreeSpaceAmount = estimateFreeSpaceAmount(sweepInfo.totalSpaceUsed)
+        var needToFreeSpace = estimateNeedToFreeSpace(estimatedFreeSpaceAmount)
         for ((_, candidate) in lastUsedToCandidate) {
           if (needToFreeSpace > SpaceAmount.ZERO_SPACE) {
             deleteFiles.add(candidate)
@@ -35,8 +42,5 @@ class LruFileSizeSweepPolicy<K>(private val diskSpaceSetting: DiskSpaceSetting) 
     }
     return emptyList()
   }
-
-  private fun estimateNeedToFreeSpace(availableSpace: SpaceAmount) =
-      diskSpaceSetting.lowSpaceThreshold * 2 - availableSpace
 
 }

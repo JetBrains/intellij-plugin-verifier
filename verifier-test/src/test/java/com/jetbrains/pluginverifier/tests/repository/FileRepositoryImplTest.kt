@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.tests.repository
 
+import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.SweepInfo
 import com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy
 import com.jetbrains.pluginverifier.repository.files.AvailableFile
@@ -100,6 +101,8 @@ class FileRepositoryImplTest {
   fun `file sweeper removes files using LRU order when the file is released`() {
     val n = 2
     val lruNSweepPolicy = object : SweepPolicy<Int> {
+      override fun isNecessary(totalSpaceUsed: SpaceAmount): Boolean = true
+
       override fun selectFilesForDeletion(sweepInfo: SweepInfo<Int>): List<AvailableFile<Int>> =
           sweepInfo.availableFiles
               .sortedBy { it.usageStatistic.lastAccessTime }
