@@ -8,7 +8,7 @@ import org.jetbrains.plugins.verifier.service.service.repository.AuthorizationDa
 import org.jetbrains.plugins.verifier.service.service.repository.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.storage.JdkManager
+import org.jetbrains.plugins.verifier.service.service.jdks.JdkManager
 import java.io.Closeable
 import java.io.File
 

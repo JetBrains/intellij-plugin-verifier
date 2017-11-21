@@ -14,7 +14,7 @@ import org.jetbrains.plugins.verifier.service.api.UpdateRangeCompatibilityResult
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
-import org.jetbrains.plugins.verifier.service.storage.JdkVersion
+import org.jetbrains.plugins.verifier.service.service.jdks.JdkVersion
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

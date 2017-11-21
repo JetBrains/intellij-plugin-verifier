@@ -17,7 +17,7 @@ import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
 import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetting
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.storage.JdkManager
+import org.jetbrains.plugins.verifier.service.service.jdks.JdkManager
 import org.slf4j.LoggerFactory
 import javax.servlet.ServletContextEvent
 import javax.servlet.ServletContextListener
