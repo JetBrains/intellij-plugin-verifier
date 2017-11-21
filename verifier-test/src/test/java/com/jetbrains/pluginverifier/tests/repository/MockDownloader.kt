@@ -8,6 +8,6 @@ class MockDownloader : Downloader<Int> {
   override fun download(key: Int, tempDirectory: File): DownloadResult {
     val file = tempDirectory.resolve(key.toString())
     file.writeText(key.toString())
-    return DownloadResult.Downloaded(file, "")
+    return DownloadResult.Downloaded(file, "", false)
   }
 }

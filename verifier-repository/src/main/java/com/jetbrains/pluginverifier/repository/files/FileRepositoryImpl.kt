@@ -209,7 +209,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     try {
       val downloadResult = downloader.download(key, tempDirectory)
       if (downloadResult is DownloadResult.Downloaded) {
-        return saveDownloadedFileToFinalDestination(key, downloadResult.downloadedTempFile, downloadResult.extension)
+        return saveDownloadedFileToFinalDestination(key, downloadResult.downloadedTempFile, downloadResult.extension, downloadResult.isDirectory)
       }
       return downloadResult
     } finally {
@@ -218,21 +218,24 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   }
 
   @Synchronized
-  private fun saveDownloadedFileToFinalDestination(key: K, tempDownloadedFile: File, extension: String): DownloadResult {
-    val destination = getDestinationFileForKey(key, extension)
+  private fun saveDownloadedFileToFinalDestination(key: K,
+                                                   tempDownloadedFile: File,
+                                                   extension: String,
+                                                   isDirectory: Boolean): DownloadResult {
+    val destination = createDestinationFileForKey(key, extension, isDirectory)
     try {
       moveFileOrDirectory(tempDownloadedFile, destination)
     } catch (e: Exception) {
       return DownloadResult.FailedToDownload("Unable to download $key", e)
     }
     addFileWithEmptyStatistic(key, destination)
-    return DownloadResult.Downloaded(destination, extension)
+    return DownloadResult.Downloaded(destination, extension, isDirectory)
   }
 
   @Synchronized
   private fun createTempDirectoryForDownload(key: K) = Files.createTempDirectory(
       downloadDirectory.toPath(),
-      "download-" + getFileNameForKey(key, "") + "-"
+      "download-" + getFileNameForKey(key, "", true) + "-"
   ).toFile()
 
   private fun moveFileOrDirectory(fileOrDirectory: File, destination: File) {
@@ -251,15 +254,15 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   }
 
   @Synchronized
-  private fun getDestinationFileForKey(key: K, extension: String): File {
-    val finalFileName = getFileNameForKey(key, extension)
+  private fun createDestinationFileForKey(key: K, extension: String, isDirectory: Boolean): File {
+    val finalFileName = getFileNameForKey(key, extension, isDirectory)
     return File(repositoryDir, finalFileName)
   }
 
   @Synchronized
-  private fun getFileNameForKey(key: K, extension: String): String {
+  private fun getFileNameForKey(key: K, extension: String, isDirectory: Boolean): String {
     val nameWithoutExtension = fileKeyMapper.getFileNameWithoutExtension(key)
-    val fullName = nameWithoutExtension + if (extension.isEmpty()) "" else "." + extension
+    val fullName = nameWithoutExtension + if (isDirectory) "" else "." + extension
     return fullName.replaceInvalidFileNameCharacters()
   }
 

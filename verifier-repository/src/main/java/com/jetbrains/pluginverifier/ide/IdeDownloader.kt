@@ -54,7 +54,7 @@ class IdeDownloader(private val ideRepository: IdeRepository,
       val destinationDir = Files.createTempDirectory(tempDirectory.toPath(), "").toFile()
       return try {
         zippedIde.extractTo(destinationDir)
-        DownloadResult.Downloaded(destinationDir, "")
+        DownloadResult.Downloaded(destinationDir, "", true)
       } catch (e: Exception) {
         destinationDir.deleteLogged()
         DownloadResult.FailedToDownload("Unable to extract $key zip: ${e.message}", e)
