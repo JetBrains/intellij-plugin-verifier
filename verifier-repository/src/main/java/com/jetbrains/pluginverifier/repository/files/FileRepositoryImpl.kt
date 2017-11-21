@@ -22,7 +22,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 
-
 class FileRepositoryImpl<K>(private val repositoryDir: File,
                             private val downloader: Downloader<K>,
                             private val fileKeyMapper: FileKeyMapper<K>,
@@ -34,8 +33,6 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
     val LOCK_TIME_TO_LIVE_DURATION: Duration = Duration.of(1, ChronoUnit.HOURS)
   }
-
-  private data class FileInfo(val file: File, val size: SpaceAmount)
 
   private data class RepositoryFilesRegistrar<K>(var totalSpaceUsage: SpaceAmount = SpaceAmount.ZERO_SPACE,
                                                  val files: MutableMap<K, FileInfo> = hashMapOf()) {
@@ -277,14 +274,14 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   @Synchronized
   override fun sweep() {
     val availableFiles = filesRegistrar.files.map { (key, fileInfo) ->
-      AvailableFile(key, fileInfo.file, fileInfo.size, statistics[key]!!, isLockedKey(key))
+      AvailableFile(key, fileInfo, statistics[key]!!, isLockedKey(key))
     }
 
     val sweepInfo = SweepInfo(filesRegistrar.totalSpaceUsage, availableFiles)
     val filesForDeletion = sweepPolicy.selectFilesForDeletion(sweepInfo)
 
     if (filesForDeletion.isNotEmpty()) {
-      val deletionsSize = filesForDeletion.map { it.size }.reduce { acc, spaceAmount -> acc + spaceAmount }
+      val deletionsSize = filesForDeletion.map { it.fileInfo.size }.reduce { acc, spaceAmount -> acc + spaceAmount }
       LOG.info("It's time to remove unused files.\n" +
           "Space usage: ${filesRegistrar.totalSpaceUsage};\n" +
           "${filesForDeletion.size} " + "file".pluralize(filesForDeletion.size) +

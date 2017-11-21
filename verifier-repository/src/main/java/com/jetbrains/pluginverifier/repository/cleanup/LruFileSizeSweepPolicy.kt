@@ -24,7 +24,7 @@ class LruFileSizeSweepPolicy<K>(private val diskSpaceSetting: DiskSpaceSetting) 
         for ((_, candidate) in lastUsedToCandidate) {
           if (needToFreeSpace > SpaceAmount.ZERO_SPACE) {
             deleteFiles.add(candidate)
-            needToFreeSpace -= candidate.size
+            needToFreeSpace -= candidate.fileInfo.size
           } else {
             break
           }
