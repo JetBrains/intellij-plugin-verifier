@@ -1,10 +1,7 @@
 package com.jetbrains.pluginverifier.repository.files
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.jetbrains.pluginverifier.misc.createDir
-import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
+import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.repository.cleanup.*
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
@@ -72,10 +69,18 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   private val statistics = hashMapOf<K, UsageStatistic>()
 
+  private val downloadDirectory = File(repositoryDir, "downloads")
+
   init {
     repositoryDir.createDir()
+    clearDownloadDirectory()
     readInitiallyAvailableFiles()
     runForgottenLocksInspector()
+  }
+
+  private fun clearDownloadDirectory() {
+    downloadDirectory.forceDeleteIfExists()
+    downloadDirectory.createDir()
   }
 
   private fun runForgottenLocksInspector() {
@@ -167,10 +172,6 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     assert(key !in downloading)
     filesRegistrar.deleteFile(key)
     statistics.remove(key)
-  }
-
-  private val downloadDirectory by lazy {
-    File(repositoryDir, "downloads").createDir()
   }
 
   private fun downloadOrWait(key: K): FileRepositoryResult {

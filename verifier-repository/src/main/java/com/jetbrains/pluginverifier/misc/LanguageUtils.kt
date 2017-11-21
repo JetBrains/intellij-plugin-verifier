@@ -106,10 +106,14 @@ fun checkIfInterrupted() {
 
 fun <T> T?.singletonOrEmpty(): List<T> = if (this == null) emptyList() else listOf(this)
 
-fun File.deleteLogged(): Boolean = try {
+fun File.forceDeleteIfExists() {
   if (exists()) {
     FileUtils.forceDelete(this)
   }
+}
+
+fun File.deleteLogged(): Boolean = try {
+  forceDeleteIfExists()
   true
 } catch (e: Exception) {
   LOG.error("Unable to delete $this", e)
