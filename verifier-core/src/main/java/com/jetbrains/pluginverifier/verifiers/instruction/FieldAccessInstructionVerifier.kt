@@ -156,7 +156,8 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
 
     if (accessProblem != null) {
       val fieldDeclaration = ctx.fromField(location.definingClass, location.fieldNode)
-      ctx.registerProblem(IllegalFieldAccessProblem(fieldDeclaration, getFromMethod(), instruction, accessProblem))
+      val fieldBytecodeReference = SymbolicReference.fieldOf(fieldOwner, fieldName, fieldDescriptor)
+      ctx.registerProblem(IllegalFieldAccessProblem(fieldBytecodeReference, fieldDeclaration, getFromMethod(), instruction, accessProblem))
     }
   }
 

@@ -413,7 +413,8 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
 
     if (accessProblem != null) {
       val methodDeclaration = ctx.fromMethod(resolvedMethod.definingClass, resolvedMethod.methodNode)
-      val problem = IllegalMethodAccessProblem(methodDeclaration, getFromMethod(), instruction, accessProblem)
+      val methodReference = SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)
+      val problem = IllegalMethodAccessProblem(methodReference, methodDeclaration, accessProblem, getFromMethod(), instruction)
       ctx.registerProblem(problem)
       return null
     }

@@ -408,22 +408,22 @@ class VerificationCorrectnessTest {
 
   @Test
   fun constructorBecamePrivate() {
-    assertProblemFound("Method mock.plugin.AccessChangedProblem.foo() : void contains an *invokespecial* instruction referencing a private method com.intellij.openapi.diagnostic.LogUtil.<init>() : void that a class mock.plugin.AccessChangedProblem doesn't have access to. This can lead to **IllegalAccessError** exception at runtime.",
+    assertProblemFound("Method mock.plugin.AccessChangedProblem.foo() : void contains an *invokespecial* instruction referencing a private method com.intellij.openapi.diagnostic.LogUtil.<init>() : void inaccessible to a class mock.plugin.AccessChangedProblem. This can lead to **IllegalAccessError** exception at runtime.",
         "Illegal invocation of private method com.intellij.openapi.diagnostic.LogUtil.<init>() : void"
     )
   }
 
   @Test
   fun illegalAccessToPrivateOrProtectedOrPackagePrivateField() {
-    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.accessPrivateField() : void contains a *getfield* instruction referencing a private field fields.FieldsContainer.privateField : int that a class mock.plugin.field.FieldProblemsContainer doesn't have access to. This can lead to **IllegalAccessError** exception at runtime.",
+    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.accessPrivateField() : void contains a *getfield* instruction referencing a private field fields.FieldsContainer.privateField : int inaccessible to a class mock.plugin.field.FieldProblemsContainer. This can lead to **IllegalAccessError** exception at runtime.",
         "Illegal access to a private field fields.FieldsContainer.privateField : int"
     )
 
-    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.accessProtectedField() : void contains a *getfield* instruction referencing a protected field fields.otherPackage.OtherFieldsContainer.protectedField : int that a class mock.plugin.field.FieldProblemsContainer doesn't have access to. This can lead to **IllegalAccessError** exception at runtime.",
+    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.accessProtectedField() : void contains a *getfield* instruction referencing a protected field fields.otherPackage.OtherFieldsContainer.protectedField : int inaccessible to a class mock.plugin.field.FieldProblemsContainer. This can lead to **IllegalAccessError** exception at runtime.",
         "Illegal access to a protected field fields.otherPackage.OtherFieldsContainer.protectedField : int"
     )
 
-    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.accessPackageField() : void contains a *getfield* instruction referencing a package-private field fields.otherPackage.OtherFieldsContainer.packageField : int that a class mock.plugin.field.FieldProblemsContainer doesn't have access to. This can lead to **IllegalAccessError** exception at runtime.",
+    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.accessPackageField() : void contains a *getfield* instruction referencing a package-private field fields.otherPackage.OtherFieldsContainer.packageField : int inaccessible to a class mock.plugin.field.FieldProblemsContainer. This can lead to **IllegalAccessError** exception at runtime.",
         "Illegal access to a package-private field fields.otherPackage.OtherFieldsContainer.packageField : int"
     )
   }
@@ -527,5 +527,21 @@ class VerificationCorrectnessTest {
         "to IU-145.500 (non.existing.Parent) or in the super interfaces belonging to IU-145.500 (interfaces.SomeInterface, interfaces.SomeInterface2)",
         "Access to unresolved field mock.plugin.non.existing.InheritField.FINAL_FIELD : Object"
     )
+  }
+
+  @Test
+  fun `virtual method became protected in superclass that a class doesn't have access to`() {
+    assertProblemFound("Method mock.plugin.access.VirtualAccess.virtualMethodBecameProtected() : void contains an *invokevirtual* instruction referencing access.AccessProblemDerived.foo() : void " +
+        "which is resolved to a protected method access.AccessProblemBase.foo() : void inaccessible to a class mock.plugin.access.VirtualAccess. " +
+        "This can lead to **IllegalAccessError** exception at runtime.",
+        "Illegal invocation of protected method access.AccessProblemBase.foo() : void")
+  }
+
+  @Test
+  fun `field became protected in superclass that a class doesn't have access to`() {
+    assertProblemFound("Method mock.plugin.access.VirtualAccess.inheritedFieldBecameProtected() : void contains a *getfield* instruction referencing access.AccessProblemDerived.x : int " +
+        "which is resolved to a protected field access.AccessProblemBase.x : int inaccessible to a class mock.plugin.access.VirtualAccess. " +
+        "This can lead to **IllegalAccessError** exception at runtime.",
+        "Illegal access to a protected field access.AccessProblemBase.x : int")
   }
 }

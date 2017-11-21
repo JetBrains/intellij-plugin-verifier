@@ -8,16 +8,31 @@ import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentat
 import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentation.splitMethodDescriptorOnRawParametersAndReturnTypes
 
 /**
+ * Convert the simple binary class name of the possibly nested class to Java-like presentation.
+ *
+ * SomeClass -> SomeClass
+ * SomeClass$Nested -> SomeClass.Nested
+ * SomeClass$Static$Inner -> SomeClass.Static.Inner
+ * SomeClass$ -> SomeClass$
+ */
+private fun String.toNormalNestedClassNames() = if (endsWith("$")) {
+  javaClass::class.qualifiedName
+  trimEnd('$').replace('$', '.') + takeLastWhile { it == '$' }
+} else {
+  replace('$', '.')
+}
+
+/**
  * Converts class name in binary form into Java-like presentation.
  * E.g. 'org/some/Class$Inner1$Inner2' -> 'org.some.Class.Inner1.Inner2'
  */
-val toFullJavaClassName: (String) -> String = { binaryName -> binaryName.replace('/', '.').replace('$', '.') }
+val toFullJavaClassName: (String) -> String = { binaryName -> binaryName.replace('/', '.').toNormalNestedClassNames() }
 
 /**
  * Cuts off the package of the class and converts the simple name of the class to Java-like presentation
  * E.g. 'org/some/Class$Inner1$Inner2' -> 'Class.Inner1.Inner2'
  */
-val toSimpleJavaClassName: (String) -> String = { binaryName -> binaryName.substringAfterLast("/").replace('$', '.') }
+val toSimpleJavaClassName: (String) -> String = { binaryName -> binaryName.substringAfterLast("/").toNormalNestedClassNames() }
 
 private fun FieldLocation.toFieldType(fieldTypeOption: FieldTypeOption): String {
   val descriptorConverter = when (fieldTypeOption) {
