@@ -86,6 +86,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     ).scheduleAtFixedRate({ detectForgottenLocks() }, 1, 60, TimeUnit.MINUTES)
   }
 
+  @Synchronized
   private fun readInitiallyAvailableFiles() {
     val existingFiles = repositoryDir.listFiles()
         ?: throw IOException("Unable to read directory content: $repositoryDir")
@@ -97,6 +98,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     }
   }
 
+  @Synchronized
   private fun addFileWithEmptyStatistic(key: K, file: File) {
     filesRegistrar.addFile(key, file)
     statistics[key] = UsageStatistic(Instant.EPOCH, 0)
@@ -207,11 +209,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     try {
       val downloadResult = downloader.download(key, tempDirectory)
       if (downloadResult is DownloadResult.Downloaded) {
-        val destination = getDestinationFileForKey(key, downloadResult.extension)
-        assert(!destination.exists())
-        saveTempDownloadedFileToFinalDestination(downloadResult.downloadedTempFile, destination)
-        addFileWithEmptyStatistic(key, destination)
-        return DownloadResult.Downloaded(destination, downloadResult.extension)
+        return saveDownloadedFileToFinalDestination(key, downloadResult.downloadedTempFile, downloadResult.extension)
       }
       return downloadResult
     } finally {
@@ -219,16 +217,30 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     }
   }
 
+  @Synchronized
+  private fun saveDownloadedFileToFinalDestination(key: K, tempDownloadedFile: File, extension: String): DownloadResult {
+    val destination = getDestinationFileForKey(key, extension)
+    try {
+      moveFileOrDirectory(tempDownloadedFile, destination)
+    } catch (e: Exception) {
+      return DownloadResult.FailedToDownload("Unable to download $key", e)
+    }
+    addFileWithEmptyStatistic(key, destination)
+    return DownloadResult.Downloaded(destination, extension)
+  }
+
+  @Synchronized
   private fun createTempDirectoryForDownload(key: K) = Files.createTempDirectory(
       downloadDirectory.toPath(),
       "download-" + getFileNameForKey(key, "") + "-"
   ).toFile()
 
-  private fun saveTempDownloadedFileToFinalDestination(tempDownloaded: File, destination: File) {
-    if (tempDownloaded.isDirectory) {
-      FileUtils.moveDirectory(tempDownloaded, destination)
+  private fun moveFileOrDirectory(fileOrDirectory: File, destination: File) {
+    assert(!destination.exists())
+    if (fileOrDirectory.isDirectory) {
+      FileUtils.moveDirectory(fileOrDirectory, destination)
     } else {
-      FileUtils.moveFile(tempDownloaded, destination)
+      FileUtils.moveFile(fileOrDirectory, destination)
     }
   }
 
@@ -238,11 +250,13 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     is DownloadResult.FailedToDownload -> FileRepositoryResult.Failed(reason, error)
   }
 
+  @Synchronized
   private fun getDestinationFileForKey(key: K, extension: String): File {
     val finalFileName = getFileNameForKey(key, extension)
     return File(repositoryDir, finalFileName)
   }
 
+  @Synchronized
   private fun getFileNameForKey(key: K, extension: String): String {
     val nameWithoutExtension = fileKeyMapper.getFileNameWithoutExtension(key)
     val fullName = nameWithoutExtension + if (extension.isEmpty()) "" else "." + extension
@@ -257,6 +271,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     return null
   }
 
+  @Synchronized
   private fun detectForgottenLocks() {
     for ((key, locks) in key2Locks) {
       for (lock in locks) {
