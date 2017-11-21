@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.repository.cleanup
 
+import com.google.common.collect.TreeMultimap
 import com.jetbrains.pluginverifier.repository.files.AvailableFile
 import java.time.Instant
-import java.util.*
 
 class LruFileSizeSweepPolicy<K>(private val diskSpaceSetting: DiskSpaceSetting) : SweepPolicy<K> {
 
@@ -19,16 +19,19 @@ class LruFileSizeSweepPolicy<K>(private val diskSpaceSetting: DiskSpaceSetting) 
     if (isNecessary(sweepInfo.totalSpaceUsed)) {
       val freeFiles = sweepInfo.availableFiles.filterNot { it.isLocked }
       if (freeFiles.isNotEmpty()) {
-        val lastUsedToCandidate = TreeMap<Instant, AvailableFile<K>>()
+        val lastUsedToCandidate = TreeMultimap.create(
+            naturalOrder<Instant>(),
+            compareByDescending<AvailableFile<K>> { it.fileInfo.size }
+        )
 
         for (freeFile in freeFiles) {
-          lastUsedToCandidate[freeFile.usageStatistic.lastAccessTime] = freeFile
+          lastUsedToCandidate.put(freeFile.usageStatistic.lastAccessTime, freeFile)
         }
 
         val deleteFiles = arrayListOf<AvailableFile<K>>()
         val estimatedFreeSpaceAmount = estimateFreeSpaceAmount(sweepInfo.totalSpaceUsed)
         var needToFreeSpace = estimateNeedToFreeSpace(estimatedFreeSpaceAmount)
-        for ((_, candidate) in lastUsedToCandidate) {
+        for ((_, candidate) in lastUsedToCandidate.entries()) {
           if (needToFreeSpace > SpaceAmount.ZERO_SPACE) {
             deleteFiles.add(candidate)
             needToFreeSpace -= candidate.fileInfo.size

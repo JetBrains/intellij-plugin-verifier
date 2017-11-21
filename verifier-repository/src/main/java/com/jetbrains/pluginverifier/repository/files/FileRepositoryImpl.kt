@@ -117,11 +117,11 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   override fun remove(key: K): Boolean {
     val isLocked = isLockedKey(key)
     return if (isLocked) {
-      LOG.debug("File by $key is locked, so putting it into deletion queue.")
+      LOG.debug("Deletion of $key: file is locked, delete later.")
       deleteQueue.add(key)
       false
     } else {
-      LOG.debug("Delete file by $key as it isn't locked now")
+      LOG.debug("Deletion of $key: non-locked, delete now")
       doRemove(key)
       true
     }
@@ -301,8 +301,8 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
       if (filesForDeletion.isNotEmpty()) {
         val deletionsSize = filesForDeletion.map { it.fileInfo.size }.reduce { acc, spaceAmount -> acc + spaceAmount }
-        LOG.info("It's time to remove unused files.\n" +
-            "Space usage: ${filesRegistrar.totalSpaceUsage};\n" +
+        LOG.info("It's time to remove unused files. " +
+            "Space usage: ${filesRegistrar.totalSpaceUsage}. " +
             "${filesForDeletion.size} " + "file".pluralize(filesForDeletion.size) +
             " will be removed having total size $deletionsSize"
         )
