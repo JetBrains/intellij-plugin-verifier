@@ -6,11 +6,6 @@ import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.tasks.TaskResult
 
-/**
- * @author Sergey Patrikeev
- */
-data class PluginComparingResult(val releaseResult: Result, val trunkResult: Result)
-
 data class CheckTrunkApiResult(val releaseIdeVersion: IdeVersion,
                                val releaseResults: List<Result>,
                                val trunkIdeVersion: IdeVersion,
@@ -33,7 +28,7 @@ data class CheckTrunkApiResult(val releaseIdeVersion: IdeVersion,
         if (oldNotChecked || newNotChecked) {
           continue
         }
-        comparingResults[plugin] = PluginComparingResult(oldResult, newResult)
+        comparingResults[plugin] = PluginComparingResult(plugin, oldResult, newResult)
       }
 
       return CheckTrunkApiResult(releaseIdeVersion, releaseResults, trunkIdeVersion, trunkResults, comparingResults)

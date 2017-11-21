@@ -50,19 +50,10 @@ class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions,
 
   private fun CheckTrunkApiResult.getNewPluginProblems(): Multimap<PluginInfo, Problem> {
     val result = HashMultimap.create<PluginInfo, Problem>()
-    for ((plugin, cmpResult) in comparingResults.entries) {
-      val releaseProblems = cmpResult.releaseResult.verdict.getProblems()
-      val trunkProblems = cmpResult.trunkResult.verdict.getProblems()
-      val newProblems = trunkProblems - releaseProblems
-      result.putAll(plugin, newProblems)
+    for ((plugin, cmp) in comparingResults) {
+      result.putAll(plugin, cmp.getNewApiProblems())
     }
     return result
-  }
-
-  private fun Verdict.getProblems() = when (this) {
-    is Verdict.NotFound, is Verdict.Bad, is Verdict.OK, is Verdict.Warnings, is Verdict.FailedToDownload -> emptySet()
-    is Verdict.MissingDependencies -> problems
-    is Verdict.Problems -> problems
   }
 
   private fun getPluginUrl(pluginInfo: PluginInfo) = (pluginInfo as? UpdateInfo)?.let { pluginRepository.getPluginOverviewUrl(it) }
@@ -70,8 +61,8 @@ class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions,
   private fun printTrunkApiCompareResult(apiChanges: CheckTrunkApiResult) {
     val tcLog = TeamCityLog(System.out)
 
-    val plugin2NewProblems: Multimap<PluginInfo, Problem> = apiChanges.getNewPluginProblems()
-    val problem2Plugins: Multimap<Problem, PluginInfo> = Multimaps.invertFrom(plugin2NewProblems, HashMultimap.create())
+    val plugin2NewProblems = apiChanges.getNewPluginProblems()
+    val problem2Plugins = Multimaps.invertFrom(plugin2NewProblems, HashMultimap.create<Problem, PluginInfo>())
 
     val allProblems = problem2Plugins.keySet()
 
@@ -117,7 +108,7 @@ class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions,
       (this.verdict as? Verdict.MissingDependencies)?.dependenciesGraph?.getResolvedDependency(dependency)
 
   private fun getMissingDependenciesDetails(apiChanges: CheckTrunkApiResult, plugin: PluginInfo): String {
-    val (releaseResult, trunkResult) = apiChanges.comparingResults[plugin] ?: return ""
+    val (_, releaseResult, trunkResult) = apiChanges.comparingResults[plugin] ?: return ""
     val releaseMissingDependencies = releaseResult.getDirectMissingDependencies()
     val trunkMissingDependencies = trunkResult.getDirectMissingDependencies()
 
