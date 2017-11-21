@@ -33,8 +33,8 @@ data class DocClassRemoved(val className: String) : DocumentedProblem {
 data class DocMethodRemoved(val hostClass: String, val methodName: String) : DocumentedProblem {
   override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
       problem is MethodNotFoundProblem
-          && problem.method.methodName == methodName
-          && verificationContext.isSubclassOrSelf(problem.method.hostClass.className, hostClass)
+          && problem.unresolvedMethod.methodName == methodName
+          && verificationContext.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
 }
 
 /**
@@ -46,8 +46,8 @@ data class DocMethodRemoved(val hostClass: String, val methodName: String) : Doc
 data class DocMethodReturnTypeChanged(val hostClass: String, val methodName: String) : DocumentedProblem {
   override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
       problem is MethodNotFoundProblem
-          && problem.method.methodName == methodName
-          && verificationContext.isSubclassOrSelf(problem.method.hostClass.className, hostClass)
+          && problem.unresolvedMethod.methodName == methodName
+          && verificationContext.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
 }
 
 /**
@@ -55,7 +55,7 @@ data class DocMethodReturnTypeChanged(val hostClass: String, val methodName: Str
  */
 data class DocMethodVisibilityChanged(val hostClass: String, val methodName: String) : DocumentedProblem {
   override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
-      problem is IllegalMethodAccessProblem && problem.method.hostClass.className == hostClass && problem.method.methodName == methodName
+      problem is IllegalMethodAccessProblem && problem.inaccessibleMethod.hostClass.className == hostClass && problem.inaccessibleMethod.methodName == methodName
 }
 
 /**
@@ -67,8 +67,8 @@ data class DocMethodVisibilityChanged(val hostClass: String, val methodName: Str
 data class DocMethodParameterTypeChanged(val hostClass: String, val methodName: String) : DocumentedProblem {
   override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
       problem is MethodNotFoundProblem
-          && problem.method.methodName == methodName
-          && verificationContext.isSubclassOrSelf(problem.method.hostClass.className, hostClass)
+          && problem.unresolvedMethod.methodName == methodName
+          && verificationContext.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
 }
 
 /**
@@ -80,8 +80,8 @@ data class DocMethodParameterTypeChanged(val hostClass: String, val methodName: 
 data class DocFieldRemoved(val hostClass: String, val fieldName: String) : DocumentedProblem {
   override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
       problem is FieldNotFoundProblem
-          && problem.field.fieldName == fieldName
-          && verificationContext.isSubclassOrSelf(problem.field.hostClass.className, hostClass)
+          && problem.unresolvedField.fieldName == fieldName
+          && verificationContext.isSubclassOrSelf(problem.unresolvedField.hostClass.className, hostClass)
 }
 
 /**
@@ -93,8 +93,8 @@ data class DocFieldRemoved(val hostClass: String, val fieldName: String) : Docum
 data class DocFieldTypeChanged(val hostClass: String, val fieldName: String) : DocumentedProblem {
   override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
       problem is FieldNotFoundProblem
-          && problem.field.fieldName == fieldName
-          && verificationContext.isSubclassOrSelf(problem.field.hostClass.className, hostClass)
+          && problem.unresolvedField.fieldName == fieldName
+          && verificationContext.isSubclassOrSelf(problem.unresolvedField.hostClass.className, hostClass)
 }
 
 /**
@@ -102,7 +102,7 @@ data class DocFieldTypeChanged(val hostClass: String, val fieldName: String) : D
  */
 data class DocFieldVisibilityChanged(val hostClass: String, val fieldName: String) : DocumentedProblem {
   override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
-      problem is IllegalFieldAccessProblem && problem.field.hostClass.className == hostClass && problem.field.fieldName == fieldName
+      problem is IllegalFieldAccessProblem && problem.inaccessibleField.hostClass.className == hostClass && problem.inaccessibleField.fieldName == fieldName
 }
 
 /**

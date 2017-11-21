@@ -16,19 +16,19 @@ import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 import com.jetbrains.pluginverifier.results.presentation.formatMethodReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 
-data class MethodNotFoundProblem(val method: MethodReference,
+data class MethodNotFoundProblem(val unresolvedMethod: MethodReference,
                                  val caller: MethodLocation,
                                  val instruction: Instruction,
                                  val methodOwnerHierarchy: ClassHierarchy,
                                  val ideVersion: IdeVersion) : Problem() {
 
-  override val shortDescription = "Invocation of unresolved method {0}".formatMessage(method.formatMethodReference(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME))
+  override val shortDescription = "Invocation of unresolved method {0}".formatMessage(unresolvedMethod.formatMethodReference(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME))
 
   private val descriptionMainPart = buildString {
     append("Method {0} contains an *{1}* instruction referencing an unresolved method {2}. ".formatMessage(
         caller.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE),
         instruction,
-        method
+        unresolvedMethod
     ))
     append("This can lead to **NoSuchMethodError** exception at runtime.")
   }

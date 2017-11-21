@@ -8,19 +8,19 @@ import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.presentation.*
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 
-data class FieldNotFoundProblem(val field: FieldReference,
+data class FieldNotFoundProblem(val unresolvedField: FieldReference,
                                 val accessor: MethodLocation,
                                 val fieldOwnerHierarchy: ClassHierarchy,
                                 val instruction: Instruction,
                                 val ideVersion: IdeVersion) : Problem() {
 
-  override val shortDescription = "Access to unresolved field {0}".formatMessage(field)
+  override val shortDescription = "Access to unresolved field {0}".formatMessage(unresolvedField)
 
   private val descriptionMainPart = buildString {
     append("Method {0} contains a *{1}* instruction referencing an unresolved field {2}. ".formatMessage(
         accessor.formatMethodLocation(HostClassOption.FULL_HOST_NAME, MethodParameterTypeOption.FULL_PARAM_CLASS_NAME, MethodReturnTypeOption.FULL_RETURN_TYPE_CLASS_NAME, MethodParameterNameOption.WITH_PARAM_NAMES_IF_AVAILABLE),
         instruction,
-        field
+        unresolvedField
     ))
     append("This can lead to **NoSuchFieldError** exception at runtime.")
   }
