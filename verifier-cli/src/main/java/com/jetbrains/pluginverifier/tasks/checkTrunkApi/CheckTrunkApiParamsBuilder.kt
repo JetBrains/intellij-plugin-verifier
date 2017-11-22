@@ -74,7 +74,7 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
     val releaseCompatibleUpdates = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch last compatible updates with $releaseVersion") {
       getLastCompatibleUpdates(releaseVersion)
     }
-    val pluginsToCheck = releaseCompatibleUpdates.filterNot { it.pluginId in jetBrainsPluginIds }
+    val pluginsToCheck = releaseCompatibleUpdates.filterNot { it.pluginId in jetBrainsPluginIds }.sortedByDescending { it.updateId }
     val pluginCoordinates = pluginsToCheck.map { PluginCoordinate.ByUpdateInfo(it, pluginRepository) }
 
     println("The following updates will be checked with both #$trunkVersion and #$releaseVersion:\n" + pluginsToCheck.sortedBy { it.updateId }.listPresentationInColumns(4, 60))
