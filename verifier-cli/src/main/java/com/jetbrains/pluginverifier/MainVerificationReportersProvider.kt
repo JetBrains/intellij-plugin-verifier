@@ -5,7 +5,6 @@ import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.misc.buildList
 import com.jetbrains.pluginverifier.misc.closeLogged
-import com.jetbrains.pluginverifier.misc.doLogged
 import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.reporting.Reporter
@@ -28,6 +27,10 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
                                         override val globalProgressReporters: List<Reporter<Double>>,
                                         private val verificationReportsDirectory: File,
                                         private val printPluginVerificationProgress: Boolean) : VerificationReportersProvider {
+
+  companion object {
+    private val LOG = LoggerFactory.getLogger(MainVerificationReportersProvider::class.java)
+  }
 
   private val ideVersion2AllIgnoredProblemsReporter = hashMapOf<IdeVersion, CollectingReporter<ProblemIgnoredEvent>>()
 
@@ -171,8 +174,10 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
       if (allIdeIgnoredProblems.isNotEmpty()) {
         val ignoredProblemsText = formatIgnoredProblemsOfIde(ideVersion, allIdeIgnoredProblems)
         val ignoredProblemsFile = getIdeResultsDirectory(ideVersion).resolve("all-ignored-problems.txt")
-        ignoredProblemsFile.doLogged("save ignored problems of $ideVersion") {
-          writeText(ignoredProblemsText)
+        try {
+          ignoredProblemsFile.writeText(ignoredProblemsText)
+        } catch (e: Exception) {
+          LOG.error("Unable to save ignored problems of $ideVersion", e)
         }
       }
     }

@@ -1,33 +1,12 @@
 package com.jetbrains.pluginverifier.misc
 
-import com.google.common.collect.ArrayListMultimap
-import com.google.common.collect.Multimap
-import org.apache.commons.io.FileUtils
-import org.atteo.evo.inflector.English
 import org.slf4j.LoggerFactory
-import java.io.Closeable
-import java.io.File
-import java.io.IOException
-import java.text.MessageFormat
 import java.util.concurrent.TimeUnit
 
 /**
  * @author Sergey Patrikeev
  */
 private val LOG = LoggerFactory.getLogger("LanguageUtils")
-
-/**
- * Creates a Guava multimap using the input map.
- */
-fun <K, V> Map<K, Iterable<V>>.multimapFromMap(): Multimap<K, V> {
-  val result = ArrayListMultimap.create<K, V>()
-  for ((key, values) in this) {
-    result.putAll(key, values)
-  }
-  return result
-}
-
-fun String.formatMessage(vararg args: Any): String = MessageFormat(this).format(args)
 
 fun <T, R> T.doLogged(action: String, block: T.() -> R) {
   try {
@@ -37,132 +16,11 @@ fun <T, R> T.doLogged(action: String, block: T.() -> R) {
   }
 }
 
-fun <T : Closeable?> T.closeLogged() {
-  try {
-    this?.close()
-  } catch(e: Exception) {
-    LOG.error("Unable to close $this", e)
-  }
-}
-
-inline fun <T : Closeable?, R> List<T>.closeOnException(block: (List<T>) -> R): R {
-  try {
-    return block(this)
-  } catch (e: Throwable) {
-    this.forEach { t: T -> t?.closeLogged() }
-    throw e
-  }
-}
-
-inline fun <T : Closeable?, R> T.closeOnException(block: (T) -> R): R {
-  try {
-    return block(this)
-  } catch (e: Throwable) {
-    this?.closeLogged()
-    throw e
-  }
-}
-
-fun String.toSystemIndependentName() = replace('\\', '/')
-
-fun <T> List<T>.listPresentationInColumns(columns: Int, minColumnWidth: Int): String {
-  val list = this
-  return buildString {
-    var pos = 0
-    while (pos < list.size) {
-      val subList = list.subList(pos, minOf(pos + columns, list.size))
-      val row = subList.map { it.toString() }.joinToString(separator = "") { it.padEnd(minColumnWidth) }
-      appendln(row)
-      pos += columns
-    }
-  }
-}
-
-fun File.create(): File {
-  if (this.parentFile != null) {
-    FileUtils.forceMkdir(this.parentFile)
-  }
-  this.createNewFile()
-  return this
-}
-
-inline fun <T> buildList(builderAction: MutableList<T>.() -> Unit): List<T> = arrayListOf<T>().apply(builderAction)
-
-fun File.createDir(): File {
-  if (!isDirectory) {
-    FileUtils.forceMkdir(this)
-    if (!isDirectory) {
-      throw IOException("Failed to create directory ${this}")
-    }
-  }
-  return this
-}
-
 fun checkIfInterrupted() {
   if (Thread.currentThread().isInterrupted) {
     throw InterruptedException()
   }
 }
-
-fun <T> T?.singletonOrEmpty(): List<T> = if (this == null) emptyList() else listOf(this)
-
-fun File.forceDeleteIfExists() {
-  if (exists()) {
-    FileUtils.forceDelete(this)
-  }
-}
-
-fun File.deleteLogged(): Boolean = try {
-  forceDeleteIfExists()
-  true
-} catch (e: Exception) {
-  LOG.error("Unable to delete $this", e)
-  false
-}
-
-fun String.pluralizeWithNumber(times: Int): String = "$times " + this.pluralize(times)
-
-private val knownPluralForms = mapOf(
-    "this" to "these",
-    "is" to "are",
-    "was" to "were"
-)
-
-fun String.pluralize(times: Int): String {
-  if (times < 0) throw IllegalArgumentException("Negative value")
-  if (times == 1) {
-    return this
-  }
-  return knownPluralForms[this] ?: English.plural(this, times)
-}
-
-fun <T> List<T>.splitList(condition: (T) -> Boolean): Pair<List<T>, List<T>> {
-  val match = arrayListOf<T>()
-  val nonMatch = arrayListOf<T>()
-  for (t in this) {
-    if (condition(t)) {
-      match.add(t)
-    } else {
-      nonMatch.add(t)
-    }
-  }
-  return match to nonMatch
-}
-
-fun <T> List<T>.listEndsWith(vararg ending: T): Boolean {
-  if (ending.isEmpty()) {
-    return true
-  }
-  if (size < ending.size) {
-    return false
-  }
-  if (size == ending.size) {
-    return this == ending.toList()
-  }
-  return ending.indices.all { index -> ending[index] == this[size - ending.size + index] }
-}
-
-fun String.replaceInvalidFileNameCharacters(): String = replace(Regex("[^a-zA-Z0-9.#\\-() ]"), "_")
 
 fun impossible(): Nothing = throw AssertionError("Impossible")
 
