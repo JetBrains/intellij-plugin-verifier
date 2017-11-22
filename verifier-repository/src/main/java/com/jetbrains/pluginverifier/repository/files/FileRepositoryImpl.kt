@@ -75,6 +75,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
     repositoryDir.createDir()
     clearDownloadDirectory()
     readInitiallyAvailableFiles()
+    sweep()
     runForgottenLocksInspector()
   }
 

@@ -5,7 +5,9 @@ import java.io.File
 
 class IntFileKeyMapper : FileKeyMapper<Int> {
 
-  override fun getKey(file: File): Int? = file.nameWithoutExtension.toInt()
+  override fun getKey(file: File): Int? {
+    return file.nameWithoutExtension.toIntOrNull()
+  }
 
   override fun getFileNameWithoutExtension(key: Int): String = key.toString()
 }

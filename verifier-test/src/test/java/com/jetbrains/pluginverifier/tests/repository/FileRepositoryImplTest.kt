@@ -1,8 +1,7 @@
 package com.jetbrains.pluginverifier.tests.repository
 
-import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
-import com.jetbrains.pluginverifier.repository.cleanup.SweepInfo
-import com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy
+import com.jetbrains.pluginverifier.repository.cleanup.*
+import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount.Companion.ONE_BYTE
 import com.jetbrains.pluginverifier.repository.files.AvailableFile
 import com.jetbrains.pluginverifier.repository.files.FileRepository
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryImpl
@@ -131,4 +130,31 @@ class FileRepositoryImplTest {
     assertTrue(fileRepository.has(1))
     assertTrue(fileRepository.has(2))
   }
+
+  @Test
+  fun `delete the heaviest files on repository creation if necessary`() {
+    val repositoryDir = tempFolder.newFolder()
+
+    //create 10 files of size 1 byte
+    for (i in 1..10) {
+      val file = repositoryDir.resolve(i.toString())
+      file.writeBytes(byteArrayOf(0))
+      assertTrue(file.fileSize == ONE_BYTE)
+    }
+    assertTrue(repositoryDir.fileSize == ONE_BYTE * 10)
+
+    //create the file repository with maximum cache size of 5 bytes,
+    // low space threshold 2 bytes and after-cleanup free space 3 bytes
+    FileRepositoryImpl(
+        repositoryDir,
+        MockDownloader(),
+        IntFileKeyMapper(),
+        LruFileSizeSweepPolicy(DiskSpaceSetting(ONE_BYTE * 5, ONE_BYTE * 2, ONE_BYTE * 3))
+    )
+
+    //cleanup procedure on repository startup must make its size 2 bytes (i.e. remove 8 files)
+    val repoSize = repositoryDir.fileSize
+    assertEquals(ONE_BYTE * 2, repoSize)
+  }
+
 }

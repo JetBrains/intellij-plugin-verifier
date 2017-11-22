@@ -13,6 +13,8 @@ data class SpaceAmount(private val bytes: Long) : Comparable<SpaceAmount> {
 
     fun ofGigabytes(gigabytes: Long) = SpaceAmount(SpaceUnit.GIGO_BYTE.toBytes(gigabytes).toLong())
 
+    val ONE_BYTE = ofBytes(1)
+
     val ONE_KILO_BYTE = ofKilobytes(1)
 
     val ONE_MEGA_BYTE = ofMegabytes(1)
@@ -26,6 +28,9 @@ data class SpaceAmount(private val bytes: Long) : Comparable<SpaceAmount> {
       SpaceAmount((bytes * multiplier).toLong())
 
   operator fun times(multiplier: Long) =
+      SpaceAmount(bytes * multiplier)
+
+  operator fun times(multiplier: Int) =
       SpaceAmount(bytes * multiplier)
 
   operator fun plus(otherAmount: SpaceAmount) =
