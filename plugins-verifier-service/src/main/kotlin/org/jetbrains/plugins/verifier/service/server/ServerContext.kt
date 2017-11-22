@@ -4,18 +4,18 @@ import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import org.jetbrains.plugins.verifier.service.service.BaseService
+import org.jetbrains.plugins.verifier.service.service.jdks.JdkManager
 import org.jetbrains.plugins.verifier.service.service.repository.AuthorizationData
 import org.jetbrains.plugins.verifier.service.service.repository.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.service.jdks.JdkManager
 import java.io.Closeable
-import java.io.File
+import java.nio.file.Path
 
 /**
  * @author Sergey Patrikeev
  */
-class ServerContext(val applicationHomeDirectory: File,
+class ServerContext(val applicationHomeDirectory: Path,
                     val ideFilesBank: IdeFilesBank,
                     val pluginRepository: PluginRepository,
                     val pluginDetailsProvider: PluginDetailsProvider,

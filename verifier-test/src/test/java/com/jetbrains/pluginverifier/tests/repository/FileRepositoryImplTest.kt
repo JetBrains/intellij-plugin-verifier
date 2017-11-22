@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.tests.repository
 
+import com.jetbrains.pluginverifier.misc.readText
+import com.jetbrains.pluginverifier.misc.writeText
 import com.jetbrains.pluginverifier.repository.cleanup.*
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount.Companion.ONE_BYTE
 import com.jetbrains.pluginverifier.repository.files.AvailableFile
@@ -10,7 +12,7 @@ import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.io.File
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
@@ -22,9 +24,11 @@ class FileRepositoryImplTest {
   @Rule
   var tempFolder: TemporaryFolder = TemporaryFolder()
 
+  private fun TemporaryFolder.newFolderPath(): Path = newFolder().toPath()
+
   @Test
   fun `basic operations`() {
-    val folder = tempFolder.newFolder()
+    val folder = tempFolder.newFolderPath()
     val fileRepository: FileRepository<Int> = FileRepositoryImpl(
         folder,
         MockDownloader(),
@@ -35,7 +39,7 @@ class FileRepositoryImplTest {
     val get0 = fileRepository.get(0) as FileRepositoryResult.Found
     val get0Locked = get0.lockedFile
     val get0File = get0Locked.file
-    val expectedFile = File(folder, "0")
+    val expectedFile = folder.resolve("0")
     assertEquals(expectedFile, get0File)
     assertEquals("0", get0File.readText())
 
@@ -46,7 +50,7 @@ class FileRepositoryImplTest {
 
   @Test
   fun `file repository created with existing files`() {
-    val folder = tempFolder.newFolder()
+    val folder = tempFolder.newFolderPath()
     folder.resolve("0").writeText("0")
     folder.resolve("1").writeText("1")
 
@@ -71,7 +75,7 @@ class FileRepositoryImplTest {
     val downloader = OnlyOneDownloadAtTimeDownloader()
 
     val fileRepository = FileRepositoryImpl(
-        tempFolder.newFolder(),
+        tempFolder.newFolderPath(),
         downloader,
         IntFileKeyMapper(),
         MockSweepPolicy()
@@ -109,7 +113,7 @@ class FileRepositoryImplTest {
     }
 
     val fileRepository = FileRepositoryImpl(
-        tempFolder.newFolder(),
+        tempFolder.newFolderPath(),
         MockDownloader(),
         IntFileKeyMapper(),
         lruNSweepPolicy
@@ -133,13 +137,13 @@ class FileRepositoryImplTest {
 
   @Test
   fun `delete the heaviest files on repository creation if necessary`() {
-    val repositoryDir = tempFolder.newFolder()
+    val repositoryDir = tempFolder.newFolderPath()
 
     //create 10 files of size 1 byte
     for (i in 1..10) {
       val file = repositoryDir.resolve(i.toString())
-      file.writeBytes(byteArrayOf(0))
-      assertTrue(file.fileSize == ONE_BYTE)
+      file.toFile().writeBytes(byteArrayOf(0))
+      assertTrue(file.toFile().fileSize == ONE_BYTE)
     }
     assertTrue(repositoryDir.fileSize == ONE_BYTE * 10)
 

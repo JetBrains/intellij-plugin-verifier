@@ -20,6 +20,7 @@ import org.hamcrest.Matchers.instanceOf
 import org.junit.Assert.assertThat
 import org.junit.Test
 import java.io.File
+import java.nio.file.Paths
 
 /**
  * Created by Sergey.Patrikeev
@@ -113,7 +114,7 @@ class CheckTrunkApiTaskTest {
   private fun createPluginDetailsProviderForTest(pluginToCheck: MockIdePlugin): MockPluginDetailsProvider {
     return MockPluginDetailsProvider(
         listOf(someJetBrainsMockPlugin1, someJetBrainsMockPlugin2, someJetBrainsMockPluginContainingModule, pluginToCheck)
-            .associateBy({ PluginCoordinate.ByFile(it.originalFile!!) }) {
+            .associateBy({ PluginCoordinate.ByFile(it.originalFile!!.toPath()) }) {
               PluginDetails.FoundOpenPluginWithoutClasses(it)
             }
     )
@@ -133,10 +134,10 @@ class CheckTrunkApiTaskTest {
         TestJdkDescriptorProvider.getJdkDescriptorForTests(),
         listOf(someJetBrainsPluginId),
         false,
-        IdleFileLock(File("release ide file")),
+        IdleFileLock(Paths.get("release ide file")),
         releaseLocalPluginsRepository,
         trunkLocalPluginsRepository,
-        listOf(PluginCoordinate.ByFile(pluginToCheck.originalFile!!))
+        listOf(PluginCoordinate.ByFile(pluginToCheck.originalFile!!.toPath()))
     )
   }
 
@@ -149,7 +150,7 @@ class CheckTrunkApiTaskTest {
             releaseVersion,
             releaseVersion,
             "JetBrains",
-            someJetBrainsMockPlugin1.originalFile!!,
+            someJetBrainsMockPlugin1.originalFile!!.toPath(),
             emptySet()
         ),
 
@@ -160,7 +161,7 @@ class CheckTrunkApiTaskTest {
             releaseVersion,
             releaseVersion,
             "JetBrains",
-            someJetBrainsMockPluginContainingModule.originalFile!!,
+            someJetBrainsMockPluginContainingModule.originalFile!!.toPath(),
             setOf(someJetBrainsModule)
         )
     ))
@@ -175,7 +176,7 @@ class CheckTrunkApiTaskTest {
             trunkVersion,
             trunkVersion,
             "JetBrains",
-            someJetBrainsMockPlugin2.originalFile!!,
+            someJetBrainsMockPlugin2.originalFile!!.toPath(),
             emptySet()
         ),
 
@@ -186,7 +187,7 @@ class CheckTrunkApiTaskTest {
             trunkVersion,
             trunkVersion,
             "JetBrains",
-            someJetBrainsMockPluginContainingModule.originalFile!!,
+            someJetBrainsMockPluginContainingModule.originalFile!!.toPath(),
             setOf(someJetBrainsModule)
         )
     ))

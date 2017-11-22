@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.plugin
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import java.io.File
+import java.nio.file.Path
 
 sealed class PluginCoordinate {
 
@@ -21,7 +21,7 @@ sealed class PluginCoordinate {
 
   }
 
-  data class ByFile(val pluginFile: File) : PluginCoordinate() {
+  data class ByFile(val pluginFile: Path) : PluginCoordinate() {
     override val presentableName: String = pluginFile.toString()
 
     override val fileFinder: PluginFileFinder

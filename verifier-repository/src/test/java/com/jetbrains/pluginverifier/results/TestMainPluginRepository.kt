@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
+import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import org.junit.Assert.*
 import org.junit.Rule
@@ -21,7 +22,7 @@ class TestMainPluginRepository {
   var temporaryFolder = TemporaryFolder()
 
   private fun getRepository(): PluginRepository {
-    val tempDownloadFolder = temporaryFolder.newFolder()
+    val tempDownloadFolder = temporaryFolder.newFolder().toPath()
     return PublicPluginRepository("https://plugins.jetbrains.com", tempDownloadFolder, DiskSpaceSetting(SpaceAmount.ofMegabytes(100)))
   }
 
@@ -77,7 +78,7 @@ class TestMainPluginRepository {
     assertTrue(downloadPluginResult is FileRepositoryResult.Found)
     val fileLock = (downloadPluginResult as FileRepositoryResult.Found).lockedFile
     assertNotNull(fileLock)
-    assertTrue(fileLock.file.length() > 0)
+    assertTrue(fileLock.file.fileSize > SpaceAmount.ZERO_SPACE)
     fileLock.release()
   }
 

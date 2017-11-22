@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
+import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.misc.listPresentationInColumns
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -16,6 +17,7 @@ import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import java.io.File
+import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
 /**
@@ -32,7 +34,7 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
       throw IllegalArgumentException("The IDE to be checked is not specified")
     }
 
-    val trunkIdeDescriptor = OptionsParser.createIdeDescriptor(File(args[0]), opts)
+    val trunkIdeDescriptor = OptionsParser.createIdeDescriptor(Paths.get(args[0]), opts)
     val jdkDescriptor = JdkDescriptor(OptionsParser.getJdkDir(opts))
 
     val releaseIdeFileLock: FileLock
@@ -40,7 +42,7 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
 
     when {
       apiOpts.majorIdePath != null -> {
-        val majorPath = File(apiOpts.majorIdePath)
+        val majorPath = Paths.get(apiOpts.majorIdePath)
         if (!majorPath.isDirectory) {
           throw IllegalArgumentException("The specified major IDE doesn't exist: $majorPath")
         }
@@ -64,8 +66,8 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
     val releaseVersion = releaseIdeDescriptor.ideVersion
     val trunkVersion = trunkIdeDescriptor.ideVersion
 
-    val releaseLocalRepository = apiOpts.releaseLocalPluginRepositoryRoot?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(releaseVersion, File(it)) }
-    val trunkLocalRepository = apiOpts.trunkLocalPluginRepositoryRoot?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(trunkVersion, File(it)) }
+    val releaseLocalRepository = apiOpts.releaseLocalPluginRepositoryRoot?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(releaseVersion, Paths.get(it)) }
+    val trunkLocalRepository = apiOpts.trunkLocalPluginRepositoryRoot?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(trunkVersion, Paths.get(it)) }
 
     val jetBrainsPluginIds = getJetBrainsPluginIds(apiOpts)
 

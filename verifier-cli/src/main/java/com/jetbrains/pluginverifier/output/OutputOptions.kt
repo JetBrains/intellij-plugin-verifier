@@ -2,11 +2,11 @@ package com.jetbrains.pluginverifier.output
 
 import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
-import java.io.File
+import java.nio.file.Path
 
 data class OutputOptions(val missingDependencyIgnoring: MissingDependencyIgnoring,
                          val needTeamCityLog: Boolean,
                          val teamCityGroupType: TeamCityResultPrinter.GroupBy,
-                         val htmlReportFile: File?,
+                         val htmlReportFile: Path?,
                          val dumpBrokenPluginsFile: String?,
-                         val verificationReportsDirectory: File)
+                         val verificationReportsDirectory: Path)

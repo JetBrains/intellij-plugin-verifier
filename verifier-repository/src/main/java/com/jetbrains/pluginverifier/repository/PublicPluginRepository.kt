@@ -13,12 +13,12 @@ import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import com.jetbrains.pluginverifier.repository.files.PluginFileKeyMapper
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.io.File
 import java.net.HttpURLConnection
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 class PublicPluginRepository(val repositoryUrl: String,
-                             downloadDir: File,
+                             downloadDir: Path,
                              diskSpaceSetting: DiskSpaceSetting) : PluginRepository {
   /**
    * TODO: implement this mapping on the Plugins Repository.

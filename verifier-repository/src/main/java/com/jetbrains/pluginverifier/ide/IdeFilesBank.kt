@@ -8,11 +8,11 @@ import com.jetbrains.pluginverifier.repository.files.FileRepositoryImpl
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.File
+import java.nio.file.Path
 
 //todo: provide a cache of IdeDescriptors
 class IdeFilesBank(val ideRepository: IdeRepository,
-                   bankDirectory: File,
+                   bankDirectory: Path,
                    diskSpaceSetting: DiskSpaceSetting,
                    downloadProgress: (Double) -> Unit) {
 

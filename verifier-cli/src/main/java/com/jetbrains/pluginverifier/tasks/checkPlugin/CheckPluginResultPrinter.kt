@@ -9,8 +9,8 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
-import java.io.File
 import java.io.PrintWriter
+import java.nio.file.Path
 
 /**
  * @author Sergey Patrikeev
@@ -61,7 +61,7 @@ class CheckPluginResultPrinter(private val outputOptions: OutputOptions,
     }
   }
 
-  private fun saveToHtml(htmlFile: File, checkPluginResult: CheckPluginResult) {
+  private fun saveToHtml(htmlFile: Path, checkPluginResult: CheckPluginResult) {
     with(checkPluginResult) {
       val ideVersions = results.map { it.ideVersion }.distinct()
       HtmlResultPrinter(ideVersions, { false }, htmlFile, outputOptions.missingDependencyIgnoring).printResults(results)

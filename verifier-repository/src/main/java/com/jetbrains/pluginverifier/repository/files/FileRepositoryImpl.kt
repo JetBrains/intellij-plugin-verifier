@@ -8,9 +8,10 @@ import com.jetbrains.pluginverifier.repository.downloader.Downloader
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -19,7 +20,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 
-class FileRepositoryImpl<K>(private val repositoryDir: File,
+class FileRepositoryImpl<K>(private val repositoryDir: Path,
                             private val downloader: Downloader<K>,
                             private val fileKeyMapper: FileKeyMapper<K>,
                             private val sweepPolicy: SweepPolicy<K>,
@@ -33,7 +34,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   private data class RepositoryFilesRegistrar<K>(var totalSpaceUsage: SpaceAmount = SpaceAmount.ZERO_SPACE,
                                                  val files: MutableMap<K, FileInfo> = hashMapOf()) {
-    fun addFile(key: K, file: File) {
+    fun addFile(key: K, file: Path) {
       assert(key !in files)
       val fileSize = file.fileSize
       LOG.debug("Adding file by $key of size $fileSize: $file")
@@ -69,7 +70,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   private val statistics = hashMapOf<K, UsageStatistic>()
 
-  private val downloadDirectory = File(repositoryDir, "downloads")
+  private val downloadDirectory = repositoryDir.resolve("downloads")
 
   init {
     repositoryDir.createDir()
@@ -94,7 +95,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   @Synchronized
   private fun readInitiallyAvailableFiles() {
-    val existingFiles = repositoryDir.listFiles()
+    val existingFiles = Files.list(repositoryDir)
         ?: throw IOException("Unable to read directory content: $repositoryDir")
     for (file in existingFiles) {
       val key = fileKeyMapper.getKey(file)
@@ -105,7 +106,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   }
 
   @Synchronized
-  private fun addFileWithEmptyStatistic(key: K, file: File) {
+  private fun addFileWithEmptyStatistic(key: K, file: Path) {
     filesRegistrar.addFile(key, file)
     statistics[key] = UsageStatistic(Instant.EPOCH, 0)
   }
@@ -139,7 +140,8 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   @Synchronized
   private fun registerLock(key: K, isDownloadingLock: Boolean): FileLockImpl<K> {
     val fileInfo = if (isDownloadingLock) {
-      FileInfo(File("Indicates that the file is being downloaded. It is never accessed."), SpaceAmount.ZERO_SPACE)
+      //Indicates that the file is being downloaded. It is never accessed.
+      FileInfo(Paths.get("Downloading"), SpaceAmount.ZERO_SPACE)
     } else {
       assert(filesRegistrar.has(key))
       filesRegistrar.get(key)!!
@@ -221,7 +223,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   @Synchronized
   private fun saveDownloadedFileToFinalDestination(key: K,
-                                                   tempDownloadedFile: File,
+                                                   tempDownloadedFile: Path,
                                                    extension: String,
                                                    isDirectory: Boolean): DownloadResult {
     val destination = createDestinationFileForKey(key, extension, isDirectory)
@@ -236,16 +238,16 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
 
   @Synchronized
   private fun createTempDirectoryForDownload(key: K) = Files.createTempDirectory(
-      downloadDirectory.toPath(),
+      downloadDirectory,
       "download-" + getFileNameForKey(key, "", true) + "-"
-  ).toFile()
+  )
 
-  private fun moveFileOrDirectory(fileOrDirectory: File, destination: File) {
+  private fun moveFileOrDirectory(fileOrDirectory: Path, destination: Path) {
     assert(!destination.exists())
     if (fileOrDirectory.isDirectory) {
-      FileUtils.moveDirectory(fileOrDirectory, destination)
+      FileUtils.moveDirectory(fileOrDirectory.toFile(), destination.toFile())
     } else {
-      FileUtils.moveFile(fileOrDirectory, destination)
+      FileUtils.moveFile(fileOrDirectory.toFile(), destination.toFile())
     }
   }
 
@@ -256,15 +258,15 @@ class FileRepositoryImpl<K>(private val repositoryDir: File,
   }
 
   @Synchronized
-  private fun createDestinationFileForKey(key: K, extension: String, isDirectory: Boolean): File {
+  private fun createDestinationFileForKey(key: K, extension: String, isDirectory: Boolean): Path {
     val finalFileName = getFileNameForKey(key, extension, isDirectory)
-    return File(repositoryDir, finalFileName)
+    return repositoryDir.resolve(finalFileName)
   }
 
   @Synchronized
   private fun getFileNameForKey(key: K, extension: String, isDirectory: Boolean): String {
     val nameWithoutExtension = fileKeyMapper.getFileNameWithoutExtension(key)
-    val fullName = nameWithoutExtension + if (isDirectory) "" else "." + extension
+    val fullName = nameWithoutExtension + if (isDirectory || extension.isEmpty()) "" else "." + extension
     return fullName.replaceInvalidFileNameCharacters()
   }
 

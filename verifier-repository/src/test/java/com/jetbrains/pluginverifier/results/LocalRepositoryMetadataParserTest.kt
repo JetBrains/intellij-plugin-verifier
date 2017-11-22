@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.repository.local.LocalPluginInfo
 import com.jetbrains.pluginverifier.repository.local.meta.LocalRepositoryMetadataParser
 import org.junit.Assert
 import org.junit.Test
-import java.io.File
+import java.nio.file.Paths
 
 /**
  * Created by Sergey.Patrikeev
@@ -14,7 +14,7 @@ class LocalRepositoryMetadataParserTest {
   @Test
   fun `parse sample plugins xml`() {
     val resourceUrl = LocalRepositoryMetadataParserTest::class.java.classLoader.getResource("plugins.xml")
-    val xmlFile = File(resourceUrl.toURI())
+    val xmlFile = Paths.get(resourceUrl.toURI())
     val parsed = LocalRepositoryMetadataParser().parseFromXml(xmlFile)
     val expected = listOf(
         LocalPluginInfo(

@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.repository.downloader
 
-import java.io.File
+import java.nio.file.Path
 
 sealed class DownloadResult {
-  data class Downloaded(val downloadedTempFile: File, val extension: String, val isDirectory: Boolean) : DownloadResult()
+  data class Downloaded(val downloadedTempFile: Path, val extension: String, val isDirectory: Boolean) : DownloadResult()
 
   data class NotFound(val reason: String) : DownloadResult()
 

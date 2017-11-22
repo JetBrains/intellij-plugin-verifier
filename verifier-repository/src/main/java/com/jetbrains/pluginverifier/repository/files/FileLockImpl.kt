@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.repository.files
 
-import java.io.File
+import java.nio.file.Path
 import java.time.Instant
 
-internal class FileLockImpl<K>(override val file: File,
+internal class FileLockImpl<K>(override val file: Path,
                                override val lockTime: Instant,
                                val key: K,
                                private val lockId: Long,

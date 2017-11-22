@@ -2,8 +2,9 @@ package com.jetbrains.pluginverifier.repository.local.meta
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.local.LocalPluginInfo
-import java.io.File
 import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.Path
 import javax.xml.bind.JAXBContext
 
 /**
@@ -11,8 +12,8 @@ import javax.xml.bind.JAXBContext
  */
 class LocalRepositoryMetadataParser {
 
-  fun parseFromXml(xmlFile: File): List<LocalPluginInfo> {
-    val metadataBean = parseMetadataBean(xmlFile.inputStream())
+  fun parseFromXml(xmlFile: Path): List<LocalPluginInfo> {
+    val metadataBean = parseMetadataBean(Files.newInputStream(xmlFile))
     return metadataBean.categories.flatMap { categoryBean ->
       categoryBean.plugins.map { plugin ->
         LocalPluginInfo(

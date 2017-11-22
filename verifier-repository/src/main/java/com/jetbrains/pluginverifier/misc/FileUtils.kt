@@ -4,6 +4,8 @@ import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
 
 private val LOG = LoggerFactory.getLogger("FileUtils")
 
@@ -43,3 +45,44 @@ fun File.create(): File {
   return this
 }
 
+fun Path.writeText(text: String) {
+  toFile().writeText(text)
+}
+
+fun Path.readText() = toFile().readText()
+
+fun Path.writeBytes(bytes: ByteArray) {
+  toFile().writeBytes(bytes)
+}
+
+fun Path.createDir(): Path {
+  toFile().createDir()
+  return this
+}
+
+fun Path.create(): Path {
+  toFile().create()
+  return this
+}
+
+fun Path.forceDeleteIfExists() {
+  toFile().forceDeleteIfExists()
+}
+
+fun Path.deleteLogged() {
+  toFile().deleteLogged()
+}
+
+fun Path.exists(): Boolean = Files.exists(this)
+
+val Path.isDirectory
+  get() = Files.isDirectory(this)
+
+val Path.nameWithoutExtension
+  get() = toFile().nameWithoutExtension
+
+val Path.simpleName
+  get() = fileName.toString()
+
+val Path.extension
+  get() = toFile().extension

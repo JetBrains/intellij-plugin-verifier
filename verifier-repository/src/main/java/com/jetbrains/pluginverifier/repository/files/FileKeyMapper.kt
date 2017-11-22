@@ -1,11 +1,11 @@
 package com.jetbrains.pluginverifier.repository.files
 
-import java.io.File
+import java.nio.file.Path
 
 interface FileKeyMapper<K> {
 
   fun getFileNameWithoutExtension(key: K): String
 
-  fun getKey(file: File): K?
+  fun getKey(file: Path): K?
 
 }

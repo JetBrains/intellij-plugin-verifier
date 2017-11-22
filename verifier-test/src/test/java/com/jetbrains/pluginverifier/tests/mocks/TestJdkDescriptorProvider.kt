@@ -1,7 +1,8 @@
 package com.jetbrains.pluginverifier.tests.mocks
 
+import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
-import java.io.File
+import java.nio.file.Paths
 
 /**
  * Created by Sergey.Patrikeev
@@ -13,9 +14,9 @@ object TestJdkDescriptorProvider {
     val jdkPath = System.getenv("JAVA_HOME") ?: jdk8Path
     val jdkDir = if ('9' in jdkPath) {
       //Todo: support the java 9
-      File(jdk8Path)
+      Paths.get(jdk8Path)
     } else {
-      File(jdkPath)
+      Paths.get(jdkPath)
     }
     require(jdkDir.isDirectory)
     return JdkDescriptor(jdkDir)

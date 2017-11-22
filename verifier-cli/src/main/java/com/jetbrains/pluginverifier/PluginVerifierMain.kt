@@ -23,7 +23,8 @@ import com.sampullara.cli.Args
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.system.exitProcess
 
 object PluginVerifierMain {
@@ -34,16 +35,16 @@ object PluginVerifierMain {
 
   private val DEFAULT_PLUGIN_REPOSITORY_URL = "https://plugins.jetbrains.com"
 
-  private fun getVerifierHomeDir(): File {
+  private fun getVerifierHomeDir(): Path {
     val verifierHomeDir = System.getProperty("plugin.verifier.home.dir")
     if (verifierHomeDir != null) {
-      return File(verifierHomeDir)
+      return Paths.get(verifierHomeDir)
     }
     val userHome = System.getProperty("user.home")
     if (userHome != null) {
-      return File(userHome, ".pluginVerifier")
+      return Paths.get(userHome, ".pluginVerifier")
     }
-    return File(FileUtils.getTempDirectory(), ".pluginVerifier")
+    return FileUtils.getTempDirectory().toPath().resolve(".pluginVerifier")
   }
 
   private val ideRepositoryUrl: String by lazy {
@@ -54,11 +55,11 @@ object PluginVerifierMain {
     System.getProperty("plugin.repository.url")?.trimEnd('/') ?: DEFAULT_PLUGIN_REPOSITORY_URL ?: throw RuntimeException("Plugin repository URL is not specified")
   }
 
-  private val downloadDir: File = File(getVerifierHomeDir(), "loaded-plugins").createDir()
+  private val downloadDir: Path = getVerifierHomeDir().resolve("loaded-plugins").createDir()
 
-  private val extractDir: File = File(getVerifierHomeDir(), "extracted-plugins").createDir()
+  private val extractDir: Path = getVerifierHomeDir().resolve("extracted-plugins").createDir()
 
-  private val ideDownloadDir: File = File(getVerifierHomeDir(), "ides").createDir()
+  private val ideDownloadDir: Path = getVerifierHomeDir().resolve("ides").createDir()
 
   private val LOG: Logger = LoggerFactory.getLogger(PluginVerifierMain::class.java)
 
@@ -141,7 +142,7 @@ object PluginVerifierMain {
     return DiskSpaceSetting(megabytes)
   }
 
-  private fun createVerificationReportage(verificationReportsDirectory: File, printPluginVerificationProgress: Boolean): VerificationReportage {
+  private fun createVerificationReportage(verificationReportsDirectory: Path, printPluginVerificationProgress: Boolean): VerificationReportage {
     val logger = LoggerFactory.getLogger("verification")
     val messageReporters = listOf(LogReporter<String>(logger))
     val progressReporters = emptyList<Reporter<Double>>()

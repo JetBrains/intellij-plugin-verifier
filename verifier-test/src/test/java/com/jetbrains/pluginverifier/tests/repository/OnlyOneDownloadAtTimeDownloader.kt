@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.tests.repository
 
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
-import java.io.File
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -13,7 +13,7 @@ class OnlyOneDownloadAtTimeDownloader : Downloader<Int> {
 
   private val downloadResult = DownloadResult.NotFound("Not found")
 
-  override fun download(key: Int, tempDirectory: File): DownloadResult {
+  override fun download(key: Int, tempDirectory: Path): DownloadResult {
     val thread = downloading[key]
     if (thread != null) {
       errors.add(AssertionError("Key $key is already being downloaded by $thread; current thread = " + Thread.currentThread()))

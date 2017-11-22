@@ -16,17 +16,18 @@ import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
-import java.io.File
 import java.io.PrintWriter
 import java.nio.charset.Charset
+import java.nio.file.Files
+import java.nio.file.Path
 
 class HtmlResultPrinter(val ideVersions: List<IdeVersion>,
                         val isExcluded: (PluginIdAndVersion) -> Boolean,
-                        val htmlFile: File,
+                        val htmlFile: Path,
                         private val missingDependencyIgnoring: MissingDependencyIgnoring) : ResultPrinter {
 
   override fun printResults(results: List<Result>) {
-    PrintWriter(htmlFile.create()).use {
+    PrintWriter(Files.newBufferedWriter(htmlFile.create())).use {
       val htmlBuilder = HtmlBuilder(it)
       htmlBuilder.doPrintResults(results)
     }
@@ -134,16 +135,14 @@ class HtmlResultPrinter(val ideVersions: List<IdeVersion>,
     }
   }
 
-  private fun HtmlBuilder.printVerificationResult(verdict: Verdict, plugin: PluginInfo) {
-    return when (verdict) {
-      is Verdict.OK -> +"No problems."
-      is Verdict.Warnings -> printWarnings(verdict.warnings)
-      is Verdict.Problems -> printProblems(verdict.problems)
-      is Verdict.Bad -> printShortAndFullDescription(verdict.pluginProblems.joinToString(), plugin.pluginId)
-      is Verdict.NotFound -> printShortAndFullDescription("Plugin $plugin is not found in the Repository", verdict.reason)
-      is Verdict.FailedToDownload -> printShortAndFullDescription("Plugin $plugin is not downloaded from the Repository", verdict.reason)
-      is Verdict.MissingDependencies -> printMissingDependenciesResult(verdict)
-    }
+  private fun HtmlBuilder.printVerificationResult(verdict: Verdict, plugin: PluginInfo) = when (verdict) {
+    is Verdict.OK -> +"No problems."
+    is Verdict.Warnings -> printWarnings(verdict.warnings)
+    is Verdict.Problems -> printProblems(verdict.problems)
+    is Verdict.Bad -> printShortAndFullDescription(verdict.pluginProblems.joinToString(), plugin.pluginId)
+    is Verdict.NotFound -> printShortAndFullDescription("Plugin $plugin is not found in the Repository", verdict.reason)
+    is Verdict.FailedToDownload -> printShortAndFullDescription("Plugin $plugin is not downloaded from the Repository", verdict.reason)
+    is Verdict.MissingDependencies -> printMissingDependenciesResult(verdict)
   }
 
   private fun HtmlBuilder.printMissingDependenciesResult(verdict: Verdict.MissingDependencies) {

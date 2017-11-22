@@ -17,6 +17,7 @@ import retrofit2.http.Url
 import java.io.File
 import java.net.URL
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 private interface IdeRepositoryConnector {
@@ -35,8 +36,8 @@ class IdeDownloader(private val ideRepository: IdeRepository,
       .create(IdeRepositoryConnector::class.java)
 
 
-  override fun download(key: IdeVersion, tempDirectory: File): DownloadResult {
-    val zippedIde = Files.createTempFile(tempDirectory.toPath(), "", ".zip").toFile()
+  override fun download(key: IdeVersion, tempDirectory: Path): DownloadResult {
+    val zippedIde = Files.createTempFile(tempDirectory, "", ".zip").toFile()
     try {
       val downloadUrl = try {
         ideRepository.fetchAvailableIdeDescriptor(key)?.downloadUrl
@@ -51,9 +52,9 @@ class IdeDownloader(private val ideRepository: IdeRepository,
         return DownloadResult.FailedToDownload("Unable to download $key: ${e.message}", e)
       }
 
-      val destinationDir = Files.createTempDirectory(tempDirectory.toPath(), "").toFile()
+      val destinationDir = Files.createTempDirectory(tempDirectory, "")
       return try {
-        zippedIde.extractTo(destinationDir)
+        zippedIde.extractTo(destinationDir.toFile())
         DownloadResult.Downloaded(destinationDir, "", true)
       } catch (e: Exception) {
         destinationDir.deleteLogged()

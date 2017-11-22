@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.parameters.jdk
 
-import java.io.File
+import java.nio.file.Path
 
 /**
  * @author Sergey Patrikeev
  */
-data class JdkDescriptor(val homeDir: File) {
-  override fun toString(): String = homeDir.absolutePath
+data class JdkDescriptor(val homeDir: Path) {
+  override fun toString(): String = homeDir.toAbsolutePath().toString()
 }

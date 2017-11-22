@@ -14,6 +14,7 @@ import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 import java.io.File
 import java.io.PrintWriter
+import java.nio.file.Path
 
 /**
  * @author Sergey Patrikeev
@@ -41,7 +42,7 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
     }
   }
 
-  fun saveToHtmlFile(verificationReportsDirectory: File, checkIdeResult: CheckIdeResult) {
+  fun saveToHtmlFile(verificationReportsDirectory: Path, checkIdeResult: CheckIdeResult) {
     val htmlReportFile = verificationReportsDirectory
         .resolve(checkIdeResult.ideVersion.toString().replaceInvalidFileNameCharacters())
         .resolve("report.html")

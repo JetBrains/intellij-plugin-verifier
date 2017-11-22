@@ -5,7 +5,7 @@ import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.File
+import java.nio.file.Path
 
 /**
  * @author Sergey Patrikeev
@@ -14,9 +14,9 @@ object IdeCreator {
 
   private val LOG: Logger = LoggerFactory.getLogger(IdeCreator::class.java)
 
-  fun createByFile(file: File, ideVersion: IdeVersion?): IdeDescriptor {
+  fun createByFile(file: Path, ideVersion: IdeVersion?): IdeDescriptor {
     LOG.debug("Reading IDE class files from $file")
-    val ide = IdeManager.createManager().createIde(file, ideVersion)
+    val ide = IdeManager.createManager().createIde(file.toFile(), ideVersion)
     val ideResolver = IdeResolverCreator.createIdeResolver(ide)
     return IdeDescriptor(ide, ideResolver)
   }

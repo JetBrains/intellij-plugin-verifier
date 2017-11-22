@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.repository.cleanup
 
 import org.apache.commons.io.FileUtils
 import java.io.File
+import java.nio.file.Path
 
 data class SpaceAmount(private val bytes: Long) : Comparable<SpaceAmount> {
   companion object {
@@ -69,3 +70,6 @@ fun Long.bytesToSpaceAmount() = SpaceAmount.ofBytes(this)
 
 val File.fileSize: SpaceAmount
   get() = FileUtils.sizeOf(this).bytesToSpaceAmount()
+
+val Path.fileSize: SpaceAmount
+  get() = FileUtils.sizeOf(toFile()).bytesToSpaceAmount()

@@ -1,12 +1,13 @@
 package com.jetbrains.pluginverifier.tests
 
-import com.google.common.io.Files
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.misc.deleteLogged
+import com.jetbrains.pluginverifier.misc.exists
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
@@ -26,7 +27,9 @@ import org.junit.AfterClass
 import org.junit.Assert.*
 import org.junit.BeforeClass
 import org.junit.Test
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 class VerificationCorrectnessTest {
 
@@ -46,26 +49,29 @@ class VerificationCorrectnessTest {
 
     lateinit var redundantDeprecated: MutableList<DeprecatedApiUsage>
 
-    private fun doIdeaAndPluginVerification(ideaFile: File, pluginFile: File): Result {
+    private fun doIdeaAndPluginVerification(ideaFile: Path, pluginFile: Path): Result {
       val pluginCoordinate = PluginCoordinate.ByFile(pluginFile)
       val jdkDescriptor = TestJdkDescriptorProvider.getJdkDescriptorForTests()
 
-      val tempFolder = Files.createTempDir()
-      tempFolder.deleteOnExit()
-      val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
-      return IdeCreator.createByFile(ideaFile, IdeVersion.createIdeVersion("IU-145.500")).use { ideDescriptor ->
-        val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
-        val verifierParams = VerifierParameters(
-            externalClassesPrefixes,
-            emptyList(),
-            EmptyResolver,
-            true
-        )
-        val tasks = listOf(VerifierTask(pluginCoordinate, ideDescriptor, NotFoundDependencyFinder()))
+      val tempFolder = Files.createTempDirectory("")
+      try {
+        val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
+        return IdeCreator.createByFile(ideaFile, IdeVersion.createIdeVersion("IU-145.500")).use { ideDescriptor ->
+          val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
+          val verifierParams = VerifierParameters(
+              externalClassesPrefixes,
+              emptyList(),
+              EmptyResolver,
+              true
+          )
+          val tasks = listOf(VerifierTask(pluginCoordinate, ideDescriptor, NotFoundDependencyFinder()))
 
-        VerificationReportageImpl(EmptyReporterSetProvider).use { verificationReportage ->
-          Verification.run(verifierParams, pluginDetailsProvider, tasks, verificationReportage, jdkDescriptor).single()
+          VerificationReportageImpl(EmptyReporterSetProvider).use { verificationReportage ->
+            Verification.run(verifierParams, pluginDetailsProvider, tasks, verificationReportage, jdkDescriptor).single()
+          }
         }
+      } finally {
+        tempFolder.deleteLogged()
       }
     }
 
@@ -73,14 +79,14 @@ class VerificationCorrectnessTest {
     @JvmStatic
     fun verifyMockPlugin() {
       prepareTestEnvironment()
-      var ideaFile = File("build/mocks/after-idea")
+      var ideaFile = Paths.get("build", "mocks", "after-idea")
       if (!ideaFile.exists()) {
-        ideaFile = File("verifier-test/build/mocks/after-idea")
+        ideaFile = Paths.get("verifier-test", "build", "mocks", "after-idea")
       }
       assertTrue(ideaFile.exists())
-      var pluginFile = File("build/mocks/mock-plugin-1.0.jar")
+      var pluginFile = Paths.get("build", "mocks", "mock-plugin-1.0.jar")
       if (!pluginFile.exists()) {
-        pluginFile = File("verifier-test/build/mocks/mock-plugin-1.0.jar")
+        pluginFile = Paths.get("verifier-test", "build", "mocks", "mock-plugin-1.0.jar")
       }
       assertTrue(pluginFile.exists())
       val verificationResult = doIdeaAndPluginVerification(ideaFile, pluginFile)

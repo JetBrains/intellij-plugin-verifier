@@ -6,10 +6,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.createDir
-import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
-import com.jetbrains.pluginverifier.misc.singletonOrEmpty
+import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.settings.dependencies.AllMissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
@@ -32,6 +29,8 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
 import java.io.IOException
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -41,7 +40,7 @@ object OptionsParser {
 
   private val TIMESTAMP_DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd 'at' HH.mm.ss")
 
-  fun getVerificationReportsDirectory(opts: CmdOpts): File {
+  fun getVerificationReportsDirectory(opts: CmdOpts): Path {
     val dir = opts.verificationReportsDir?.let { File(it) }
     if (dir != null) {
       if (dir.exists() && dir.listFiles().orEmpty().isNotEmpty()) {
@@ -52,14 +51,14 @@ object OptionsParser {
     }
     val nowTime = TIMESTAMP_DATE_FORMAT.format(Date())
     val directoryName = ("verification-" + nowTime).replaceInvalidFileNameCharacters()
-    return File(directoryName).createDir()
+    return Paths.get(directoryName).createDir()
   }
 
-  fun parseOutputOptions(opts: CmdOpts, verificationReportsDirectory: File): OutputOptions = OutputOptions(
+  fun parseOutputOptions(opts: CmdOpts, verificationReportsDirectory: Path): OutputOptions = OutputOptions(
       createMissingDependencyIgnorer(opts),
       opts.needTeamCityLog,
       TeamCityResultPrinter.GroupBy.parse(opts.teamCityGroupType),
-      opts.htmlReportFile?.let { File(it) },
+      opts.htmlReportFile?.let { Paths.get(it) },
       opts.dumpBrokenPluginsFile,
       verificationReportsDirectory
   )
@@ -71,7 +70,7 @@ object OptionsParser {
     return SpecifiedMissingDependencyIgnoring(opts.ignoreMissingOptionalDeps.toSet())
   }
 
-  fun createIdeDescriptor(ideToCheckFile: File, opts: CmdOpts): IdeDescriptor {
+  fun createIdeDescriptor(ideToCheckFile: Path, opts: CmdOpts): IdeDescriptor {
     val ideVersion = takeVersionFromCmd(opts)
     return IdeCreator.createByFile(ideToCheckFile, ideVersion)
   }
@@ -89,18 +88,18 @@ object OptionsParser {
     return null
   }
 
-  fun getJdkDir(opts: CmdOpts): File {
-    val runtimeDirectory: File
+  fun getJdkDir(opts: CmdOpts): Path {
+    val runtimeDirectory: Path
 
     if (opts.runtimeDir != null) {
-      runtimeDirectory = File(opts.runtimeDir)
+      runtimeDirectory = Paths.get(opts.runtimeDir)
       if (!runtimeDirectory.isDirectory) {
         throw RuntimeException("Specified runtime directory is not a directory: " + opts.runtimeDir)
       }
     } else {
       val javaHome = System.getenv("JAVA_HOME") ?: throw RuntimeException("JAVA_HOME is not specified")
 
-      runtimeDirectory = File(javaHome)
+      runtimeDirectory = Paths.get(javaHome)
       if (!runtimeDirectory.isDirectory) {
         throw RuntimeException("Invalid JAVA_HOME: " + javaHome)
       }

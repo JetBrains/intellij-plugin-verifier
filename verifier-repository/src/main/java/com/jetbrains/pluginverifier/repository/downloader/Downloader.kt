@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.repository.downloader
 
-import java.io.File
+import java.nio.file.Path
 
 interface Downloader<in K> {
-  fun download(key: K, tempDirectory: File): DownloadResult
+  fun download(key: K, tempDirectory: Path): DownloadResult
 }

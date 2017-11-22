@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.setting
 
-import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 
 /**
  * @author Sergey Patrikeev
@@ -35,7 +36,7 @@ enum class Settings(val key: String,
     return default?.invoke() ?: throw IllegalStateException("The property $key should be set")
   }
 
-  fun getAsFile(): File = File(get())
+  fun getAsFile(): Path = Paths.get(get())
 
   fun getAsBoolean(): Boolean = get().toBoolean()
 

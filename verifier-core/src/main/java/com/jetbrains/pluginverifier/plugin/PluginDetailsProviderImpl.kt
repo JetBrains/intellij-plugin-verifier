@@ -9,9 +9,9 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.repository.files.FileLock
-import java.io.File
+import java.nio.file.Path
 
-class PluginDetailsProviderImpl(private val extractDirectory: File) : PluginDetailsProvider {
+class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDetailsProvider {
   override fun provideDetailsByExistingPlugins(plugin: IdePlugin): PluginDetails {
     val originalFile = plugin.originalFile
     return if (originalFile != null) {
@@ -20,7 +20,7 @@ class PluginDetailsProviderImpl(private val extractDirectory: File) : PluginDeta
       } catch (e: Exception) {
         return PluginDetails.BadPlugin(listOf(UnableToReadPluginClassFilesProblem(e)))
       }
-      PluginDetails.ByFileLock(plugin, pluginClassesLocations, emptyList(), IdleFileLock(originalFile))
+      PluginDetails.ByFileLock(plugin, pluginClassesLocations, emptyList(), IdleFileLock(originalFile.toPath()))
     } else {
       PluginDetails.NotFound("Plugin classes are not found")
     }
@@ -38,7 +38,7 @@ class PluginDetailsProviderImpl(private val extractDirectory: File) : PluginDeta
   private fun createPluginDetailsByFileLock(pluginFileLock: FileLock): PluginDetails {
     try {
       val pluginFile = pluginFileLock.file
-      val creationResult = IdePluginManager.createManager(extractDirectory).createPlugin(pluginFile)
+      val creationResult = IdePluginManager.createManager(extractDirectory.toFile()).createPlugin(pluginFile.toFile())
       if (creationResult is PluginCreationSuccess<IdePlugin>) {
         val pluginClassesLocations = try {
           creationResult.plugin.findPluginClasses()

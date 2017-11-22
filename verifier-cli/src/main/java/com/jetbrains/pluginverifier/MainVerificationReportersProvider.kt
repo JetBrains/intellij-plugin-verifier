@@ -3,9 +3,7 @@ package com.jetbrains.pluginverifier
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
-import com.jetbrains.pluginverifier.misc.buildList
-import com.jetbrains.pluginverifier.misc.closeLogged
-import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
+import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.CollectingReporter
@@ -21,11 +19,12 @@ import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 
 class MainVerificationReportersProvider(override val globalMessageReporters: List<Reporter<String>>,
                                         override val globalProgressReporters: List<Reporter<Double>>,
-                                        private val verificationReportsDirectory: File,
+                                        private val verificationReportsDirectory: Path,
                                         private val printPluginVerificationProgress: Boolean) : VerificationReportersProvider {
 
   companion object {
@@ -89,59 +88,59 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
    * plugin.zip/     <- if the plugin is specified by the local file path
    *     ....
    */
-  private fun createPluginVerificationDirectory(pluginCoordinate: PluginCoordinate): File =
+  private fun createPluginVerificationDirectory(pluginCoordinate: PluginCoordinate): Path =
       when (pluginCoordinate) {
         is PluginCoordinate.ByUpdateInfo -> {
           val updateInfo = pluginCoordinate.updateInfo
           val pluginId = updateInfo.pluginId.replaceInvalidFileNameCharacters()
           val version = "${updateInfo.version} (#${updateInfo.updateId})".replaceInvalidFileNameCharacters()
-          File(pluginId, version)
+          Paths.get(pluginId, version)
         }
         is PluginCoordinate.ByFile -> {
-          File(pluginCoordinate.pluginFile.name)
+          Paths.get(pluginCoordinate.pluginFile.simpleName)
         }
       }
 
-  private fun createWarningReporters(pluginVerificationDirectory: File) = buildList<Reporter<Warning>> {
-    add(FileReporter(File(pluginVerificationDirectory, "warnings.txt")))
+  private fun createWarningReporters(pluginVerificationDirectory: Path) = buildList<Reporter<Warning>> {
+    add(FileReporter(pluginVerificationDirectory.resolve("warnings.txt")))
   }
 
-  private fun createDeprecatedReporters(pluginVerificationDirectory: File) = buildList<Reporter<DeprecatedApiUsage>> {
-    add(FileReporter(File(pluginVerificationDirectory, "deprecated-usages.txt")))
+  private fun createDeprecatedReporters(pluginVerificationDirectory: Path) = buildList<Reporter<DeprecatedApiUsage>> {
+    add(FileReporter(pluginVerificationDirectory.resolve("deprecated-usages.txt")))
   }
 
   private fun createMessageReporters(pluginLogger: Logger) = buildList<Reporter<String>> {
     add(LogReporter(pluginLogger))
   }
 
-  private fun createProblemReporters(pluginVerificationDirectory: File) = buildList<Reporter<Problem>> {
-    add(FileReporter(File(pluginVerificationDirectory, "problems.txt")))
+  private fun createProblemReporters(pluginVerificationDirectory: Path) = buildList<Reporter<Problem>> {
+    add(FileReporter(pluginVerificationDirectory.resolve("problems.txt")))
   }
 
-  private fun createDependencyGraphReporters(pluginVerificationDirectory: File) = buildList<Reporter<DependenciesGraph>> {
-    val file = File(pluginVerificationDirectory, "dependencies.txt")
+  private fun createDependencyGraphReporters(pluginVerificationDirectory: Path) = buildList<Reporter<DependenciesGraph>> {
+    val file = pluginVerificationDirectory.resolve("dependencies.txt")
     val fileReporter = FileReporter<DependenciesGraph>(file, lineProvider = { graph ->
       DependenciesGraphPrettyPrinter(graph).prettyPresentation()
     })
     add(fileReporter)
   }
 
-  private fun createVerdictReporters(pluginLogger: Logger, pluginVerificationDirectory: File) = buildList<Reporter<Verdict>> {
+  private fun createVerdictReporters(pluginLogger: Logger, pluginVerificationDirectory: Path) = buildList<Reporter<Verdict>> {
     if (pluginLogger.isDebugEnabled) {
       add(LogReporter(pluginLogger))
     }
-    add(FileReporter(File(pluginVerificationDirectory, "verdict.txt")))
+    add(FileReporter(pluginVerificationDirectory.resolve("verdict.txt")))
   }
 
   private fun createIgnoredProblemReporters(pluginLogger: Logger,
-                                            pluginVerificationDirectory: File,
+                                            pluginVerificationDirectory: Path,
                                             ideVersion: IdeVersion) = buildList<Reporter<ProblemIgnoredEvent>> {
     val ideCollectingProblemsReporter = ideVersion2AllIgnoredProblemsReporter.getOrPut(ideVersion) { CollectingReporter() }
     add(ideCollectingProblemsReporter)
     if (pluginLogger.isDebugEnabled) {
       add(LogReporter(pluginLogger))
     }
-    add(FileReporter(File(pluginVerificationDirectory, "ignored-problems.txt")))
+    add(FileReporter(pluginVerificationDirectory.resolve("ignored-problems.txt")))
   }
 
   private fun createProgressReporters(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion, pluginLogger: Logger) = buildList<LogSteppedProgressReporter> {

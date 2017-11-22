@@ -13,6 +13,7 @@ import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.misc.closeLogged
+import com.jetbrains.pluginverifier.misc.nameWithoutExtension
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
@@ -28,7 +29,7 @@ import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
-import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.Callable
 
 class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
@@ -85,7 +86,7 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
     is PluginCoordinate.ByFile -> guessPluginIdAndVersion(pluginFile)
   }
 
-  private fun guessPluginIdAndVersion(file: File): PluginIdAndVersion {
+  private fun guessPluginIdAndVersion(file: Path): PluginIdAndVersion {
     val name = file.nameWithoutExtension
     val version = name.substringAfterLast('-')
     return PluginIdAndVersion(name.substringBeforeLast('-'), version)

@@ -5,12 +5,13 @@ import com.jetbrains.pluginverifier.reporting.Reporter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedWriter
-import java.io.File
 import java.io.Writer
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-open class FileReporter<in T>(private val file: File,
+open class FileReporter<in T>(private val file: Path,
                               private val lineProvider: (T) -> String = { it.toString() }) : Reporter<T> {
 
   private var fileWriter: Writer? = null
@@ -20,7 +21,7 @@ open class FileReporter<in T>(private val file: File,
   private var isClosed: Boolean = false
 
   private fun openFileWriter(): BufferedWriter? = try {
-    file.create().bufferedWriter()
+    Files.newBufferedWriter(file.create())
   } catch (e: Exception) {
     ERROR_LOGGER.error("Failed to open file writer for $file", e)
     null

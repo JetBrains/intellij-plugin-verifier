@@ -39,7 +39,7 @@ class VerifierExecutor(concurrentWorkers: Int) : Closeable {
       parameters: VerifierParameters,
       pluginDetailsProvider: PluginDetailsProvider,
       reportage: VerificationReportage
-  ) = JdkResolverCreator.createJdkResolver(jdkDescriptor.homeDir).use { jdkResolver ->
+  ) = JdkResolverCreator.createJdkResolver(jdkDescriptor.homeDir.toFile()).use { jdkResolver ->
     runVerificationConcurrently(tasks, parameters, jdkResolver, pluginDetailsProvider, reportage)
   }
 

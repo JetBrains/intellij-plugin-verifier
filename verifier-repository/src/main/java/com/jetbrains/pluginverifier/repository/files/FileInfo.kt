@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.repository.files
 
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
-import java.io.File
+import java.nio.file.Path
 
-data class FileInfo(val file: File, val size: SpaceAmount)
+data class FileInfo(val file: Path, val size: SpaceAmount)

@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
+import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
@@ -12,7 +13,7 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
-import java.io.File
+import java.nio.file.Paths
 
 class DeprecatedUsagesParamsBuilder(val pluginRepository: PluginRepository,
                                     val pluginDetailsProvider: PluginDetailsProvider) : TaskParametersBuilder {
@@ -22,7 +23,7 @@ class DeprecatedUsagesParamsBuilder(val pluginRepository: PluginRepository,
     if (unparsedArgs.isEmpty()) {
       throw IllegalArgumentException("You have to specify path to IDE which deprecated API usages are to be found. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"")
     }
-    val idePath = File(unparsedArgs[0])
+    val idePath = Paths.get(unparsedArgs[0])
     if (!idePath.isDirectory) {
       throw IllegalArgumentException("IDE path must be a directory: " + idePath)
     }

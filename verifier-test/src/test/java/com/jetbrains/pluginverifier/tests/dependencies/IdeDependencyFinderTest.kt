@@ -22,8 +22,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.io.File
 import java.lang.Exception
+import java.nio.file.Paths
 
 /**
  * @author Sergey Patrikeev
@@ -87,7 +87,7 @@ class IdeDependencyFinderTest {
       }
     }
 
-    val pluginDetailsProvider = PluginDetailsProviderImpl(File("."))
+    val pluginDetailsProvider = PluginDetailsProviderImpl(Paths.get("."))
     val ideDependencyResolver = IdeDependencyFinder(ide, repository, pluginDetailsProvider)
 
     val start = DepVertex("myPlugin", PluginDetails.FoundOpenPluginWithoutClasses(startPlugin))
