@@ -6,11 +6,8 @@ import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.repository.cleanup.*
 import com.jetbrains.pluginverifier.repository.downloader.DownloadExecutor
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
-import com.jetbrains.pluginverifier.repository.downloader.Downloader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.Clock
@@ -55,32 +52,6 @@ class FileRepositoryImpl<K>(private val sweepPolicy: SweepPolicy<K>,
     val LOG: Logger = LoggerFactory.getLogger(FileRepositoryImpl::class.java)
 
     private val LOCK_TIME_TO_LIVE_DURATION: Duration = Duration.of(1, ChronoUnit.HOURS)
-
-    fun <K> createFromExistingFiles(repositoryDir: Path,
-                                    downloader: Downloader<K>,
-                                    fileNameMapper: FileNameMapper<K>,
-                                    sweepPolicy: SweepPolicy<K>,
-                                    clock: Clock = Clock.systemUTC(),
-                                    keyProvider: (Path) -> K? = { null }): FileRepositoryImpl<K> {
-      val downloadExecutor = DownloadExecutor(repositoryDir, downloader, fileNameMapper)
-      val fileRepository = FileRepositoryImpl(sweepPolicy, clock, downloadExecutor)
-      addInitiallyAvailableFiles(fileRepository, repositoryDir, keyProvider)
-      fileRepository.sweep()
-      return fileRepository
-    }
-
-    private fun <K> addInitiallyAvailableFiles(fileRepository: FileRepository<K>,
-                                               repositoryDir: Path,
-                                               keyProvider: (Path) -> K?) {
-      val existingFiles = Files.list(repositoryDir) ?: throw IOException("Unable to read directory content: $repositoryDir")
-      for (file in existingFiles) {
-        val key = keyProvider(file)
-        if (key != null) {
-          fileRepository.add(key, file)
-        }
-      }
-    }
-
   }
 
   private val filesRegistrar = RepositoryFilesRegistrar<K>()

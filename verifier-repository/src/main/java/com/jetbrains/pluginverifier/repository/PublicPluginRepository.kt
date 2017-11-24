@@ -8,9 +8,9 @@ import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.LruFileSizeSweepPolicy
 import com.jetbrains.pluginverifier.repository.downloader.PluginDownloader
-import com.jetbrains.pluginverifier.repository.files.FileRepositoryImpl
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import com.jetbrains.pluginverifier.repository.files.PluginFileNameMapper
+import com.jetbrains.pluginverifier.repository.files.createFromExistingFiles
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.net.HttpURLConnection
@@ -31,7 +31,7 @@ class PublicPluginRepository(val repositoryUrl: String,
       "com.intellij.modules.python", "Pythonid",
       "com.intellij.modules.swift.lang", "com.intellij.clion-swift")
 
-  private val downloadedPluginsFileRepository = FileRepositoryImpl.createFromExistingFiles(
+  private val downloadedPluginsFileRepository = createFromExistingFiles(
       downloadDir,
       PluginDownloader(repositoryUrl),
       PluginFileNameMapper(),

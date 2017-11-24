@@ -4,8 +4,8 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.LruFileSizeSweepPolicy
 import com.jetbrains.pluginverifier.repository.files.FileLock
-import com.jetbrains.pluginverifier.repository.files.FileRepositoryImpl
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
+import com.jetbrains.pluginverifier.repository.files.createFromExistingFiles
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
@@ -20,7 +20,7 @@ class IdeFilesBank(val ideRepository: IdeRepository,
     private val LOG: Logger = LoggerFactory.getLogger(IdeFilesBank::class.java)
   }
 
-  private val ideFilesRepository = FileRepositoryImpl.createFromExistingFiles(
+  private val ideFilesRepository = createFromExistingFiles(
       bankDirectory,
       IdeDownloader(ideRepository, downloadProgress),
       IdeFileNameMapper(),

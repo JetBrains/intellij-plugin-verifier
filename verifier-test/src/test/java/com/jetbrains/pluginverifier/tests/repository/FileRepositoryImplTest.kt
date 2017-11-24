@@ -31,7 +31,7 @@ class FileRepositoryImplTest {
   @Test
   fun `basic operations`() {
     val folder = tempFolder.newFolderPath()
-    val fileRepository: FileRepository<Int> = FileRepositoryImpl.createFromExistingFiles(
+    val fileRepository: FileRepository<Int> = createFromExistingFiles(
         folder,
         SimulationDownloader(),
         IntFileNameMapper(),
@@ -56,7 +56,7 @@ class FileRepositoryImplTest {
     folder.resolve("0").writeText("0")
     folder.resolve("1").writeText("1")
 
-    val fileRepository = FileRepositoryImpl.createFromExistingFiles(
+    val fileRepository = createFromExistingFiles(
         folder,
         SimulationDownloader(),
         IntFileNameMapper(),
@@ -77,7 +77,7 @@ class FileRepositoryImplTest {
   fun `only one of the concurrent threads downloads the file`() {
     val downloader = OnlyOneDownloadAtTimeDownloader()
 
-    val fileRepository = FileRepositoryImpl.createFromExistingFiles(
+    val fileRepository = createFromExistingFiles(
         tempFolder.newFolderPath(),
         downloader,
         IntFileNameMapper(),
@@ -115,7 +115,7 @@ class FileRepositoryImplTest {
               .dropLast(n)
     }
 
-    val fileRepository = FileRepositoryImpl.createFromExistingFiles(
+    val fileRepository = createFromExistingFiles(
         tempFolder.newFolderPath(),
         SimulationDownloader(),
         IntFileNameMapper(),
@@ -152,7 +152,7 @@ class FileRepositoryImplTest {
 
     //create the file repository with maximum cache size of 5 bytes,
     // low space threshold 2 bytes and after-cleanup free space 3 bytes
-    FileRepositoryImpl.createFromExistingFiles(
+    createFromExistingFiles(
         repositoryDir,
         SimulationDownloader(),
         IntFileNameMapper(),
@@ -186,7 +186,7 @@ class FileRepositoryImplTest {
       }
     }
 
-    val fileRepository = FileRepositoryImpl.createFromExistingFiles(
+    val fileRepository = createFromExistingFiles(
         tempFolder.newFolderPath(),
         downloader,
         IntFileNameMapper(),
