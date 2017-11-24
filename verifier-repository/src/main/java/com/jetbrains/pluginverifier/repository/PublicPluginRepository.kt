@@ -31,7 +31,7 @@ class PublicPluginRepository(val repositoryUrl: String,
       "com.intellij.modules.python", "Pythonid",
       "com.intellij.modules.swift.lang", "com.intellij.clion-swift")
 
-  private val downloadManager = FileRepositoryImpl(
+  private val downloadedPluginsFileRepository = FileRepositoryImpl(
       downloadDir,
       PluginDownloader(repositoryUrl),
       PluginFileKeyMapper(),
@@ -83,7 +83,7 @@ class PublicPluginRepository(val repositoryUrl: String,
   override fun getIdOfPluginDeclaringModule(moduleId: String): String? =
       INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
 
-  override fun downloadPluginFile(update: UpdateInfo): FileRepositoryResult = downloadManager.get(UpdateId(update.updateId))
+  override fun downloadPluginFile(update: UpdateInfo): FileRepositoryResult = downloadedPluginsFileRepository.get(UpdateId(update.updateId))
 
   private val repositoryApi = Retrofit.Builder()
       .baseUrl(repositoryUrl + '/')

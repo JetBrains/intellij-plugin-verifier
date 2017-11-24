@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -21,19 +22,22 @@ class TestMainPluginRepository {
   @JvmField
   var temporaryFolder = TemporaryFolder()
 
-  private fun getRepository(): PluginRepository {
+  private lateinit var repository: PluginRepository
+
+  @Before
+  fun prepareRepository() {
     val tempDownloadFolder = temporaryFolder.newFolder().toPath()
-    return PublicPluginRepository("https://plugins.jetbrains.com", tempDownloadFolder, DiskSpaceSetting(SpaceAmount.ofMegabytes(100)))
+    repository = PublicPluginRepository("https://plugins.jetbrains.com", tempDownloadFolder, DiskSpaceSetting(SpaceAmount.ofMegabytes(100)))
   }
 
   @Test
   fun updatesOfPlugin() {
-    assertTrue(getRepository().getAllCompatibleUpdatesOfPlugin(ideVersion, "ActionScript Profiler").isNotEmpty())
+    assertTrue(repository.getAllCompatibleUpdatesOfPlugin(ideVersion, "ActionScript Profiler").isNotEmpty())
   }
 
   @Test
   fun updatesOfExistentPlugin() {
-    val updates = getRepository().getAllUpdatesOfPlugin("Pythonid")
+    val updates = repository.getAllUpdatesOfPlugin("Pythonid")
     assertNotNull(updates)
     assertFalse(updates!!.isEmpty())
     val (pluginId, pluginName, _, _, vendor) = updates[0]
@@ -44,20 +48,20 @@ class TestMainPluginRepository {
 
   @Test
   fun updatesOfNonExistentPlugin() {
-    val updates = getRepository().getAllUpdatesOfPlugin("NON_EXISTENT_PLUGIN")
+    val updates = repository.getAllUpdatesOfPlugin("NON_EXISTENT_PLUGIN")
     assertNull(updates)
   }
 
   @Test
   fun lastUpdate() {
-    val info = getRepository().getLastCompatibleUpdateOfPlugin(ideVersion, "org.jetbrains.kotlin")
+    val info = repository.getLastCompatibleUpdateOfPlugin(ideVersion, "org.jetbrains.kotlin")
     assertNotNull(info)
     assertTrue(info!!.updateId > 20000)
   }
 
   @Test
   fun lastCompatibleUpdates() {
-    val updates = getRepository().getLastCompatibleUpdates(IdeVersion.createIdeVersion("IU-163.2112"))
+    val updates = repository.getLastCompatibleUpdates(IdeVersion.createIdeVersion("IU-163.2112"))
     assertFalse(updates.isEmpty())
   }
 
@@ -66,15 +70,15 @@ class TestMainPluginRepository {
 
   @Test
   fun downloadNonExistentPlugin() {
-    val updateInfo = getRepository().getUpdateInfoById(-1000)
+    val updateInfo = repository.getUpdateInfoById(-1000)
     assertNull(updateInfo)
   }
 
   @Test
   fun downloadExistentPlugin() {
-    val updateInfo = getRepository().getUpdateInfoById(25128) //.gitignore 1.3.3
+    val updateInfo = repository.getUpdateInfoById(25128) //.gitignore 1.3.3
     assertNotNull(updateInfo)
-    val downloadPluginResult = getRepository().downloadPluginFile(updateInfo!!)
+    val downloadPluginResult = repository.downloadPluginFile(updateInfo!!)
     assertTrue(downloadPluginResult is FileRepositoryResult.Found)
     val fileLock = (downloadPluginResult as FileRepositoryResult.Found).lockedFile
     assertNotNull(fileLock)
