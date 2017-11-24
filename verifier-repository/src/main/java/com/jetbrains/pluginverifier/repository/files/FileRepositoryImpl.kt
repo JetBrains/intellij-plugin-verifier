@@ -1,11 +1,13 @@
 package com.jetbrains.pluginverifier.repository.files
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.jetbrains.pluginverifier.misc.*
+import com.jetbrains.pluginverifier.misc.createDir
+import com.jetbrains.pluginverifier.misc.deleteLogged
+import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.repository.cleanup.*
+import com.jetbrains.pluginverifier.repository.downloader.DownloadExecutor
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
-import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -20,9 +22,9 @@ import java.util.concurrent.Executors
 import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 
-class FileRepositoryImpl<K>(private val repositoryDir: Path,
-                            private val downloader: Downloader<K>,
-                            private val fileNameMapper: FileNameMapper<K>,
+class FileRepositoryImpl<K>(repositoryDir: Path,
+                            fileNameMapper: FileNameMapper<K>,
+                            downloader: Downloader<K>,
                             private val sweepPolicy: SweepPolicy<K>,
                             private val clock: Clock = Clock.systemUTC()) : FileRepository<K> {
 
@@ -37,7 +39,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: Path,
                                     sweepPolicy: SweepPolicy<K>,
                                     clock: Clock = Clock.systemUTC(),
                                     keyProvider: (Path) -> K? = { null }): FileRepositoryImpl<K> {
-      val fileRepository = FileRepositoryImpl(repositoryDir, downloader, fileNameMapper, sweepPolicy, clock)
+      val fileRepository = FileRepositoryImpl(repositoryDir, fileNameMapper, downloader, sweepPolicy, clock)
       addInitiallyAvailableFiles(fileRepository, repositoryDir, keyProvider)
       fileRepository.sweep()
       return fileRepository
@@ -95,17 +97,11 @@ class FileRepositoryImpl<K>(private val repositoryDir: Path,
 
   private val statistics = hashMapOf<K, UsageStatistic>()
 
-  private val downloadDirectory = repositoryDir.resolve("downloads")
+  private val downloadExecutor = DownloadExecutor(repositoryDir, downloader, fileNameMapper)
 
   init {
     repositoryDir.createDir()
-    clearDownloadDirectory()
     runForgottenLocksInspector()
-  }
-
-  private fun clearDownloadDirectory() {
-    downloadDirectory.forceDeleteIfExists()
-    downloadDirectory.createDir()
   }
 
   private fun runForgottenLocksInspector() {
@@ -203,7 +199,9 @@ class FileRepositoryImpl<K>(private val repositoryDir: Path,
       if (existingTask != null) {
         Triple(existingTask, false, waitingLock)
       } else {
-        val downloadTask = FutureTask { doDownload(key) }
+        val downloadTask = FutureTask {
+          downloadAndAddFile(key)
+        }
         downloading[key] = downloadTask
         Triple(downloadTask, true, waitingLock)
       }
@@ -227,67 +225,18 @@ class FileRepositoryImpl<K>(private val repositoryDir: Path,
     }
   }
 
-  private fun doDownload(key: K): DownloadResult {
-    val tempDirectory = createTempDirectoryForDownload(key)
-    try {
-      val downloadResult = downloader.download(key, tempDirectory)
-      if (downloadResult is DownloadResult.Downloaded) {
-        return saveDownloadedFileToFinalDestination(key, downloadResult.downloadedTempFile, downloadResult.extension, downloadResult.isDirectory)
-      }
-      return downloadResult
-    } finally {
-      tempDirectory.deleteLogged()
+  private fun downloadAndAddFile(key: K): DownloadResult {
+    val downloadResult = downloadExecutor.download(key)
+    if (downloadResult is DownloadResult.Downloaded) {
+      add(key, downloadResult.downloadedFileOrDirectory)
     }
-  }
-
-  @Synchronized
-  private fun saveDownloadedFileToFinalDestination(key: K,
-                                                   tempDownloadedFile: Path,
-                                                   extension: String,
-                                                   isDirectory: Boolean): DownloadResult {
-    val destination = createDestinationFileForKey(key, extension, isDirectory)
-    try {
-      moveFileOrDirectory(tempDownloadedFile, destination)
-    } catch (e: Exception) {
-      return DownloadResult.FailedToDownload("Unable to download $key", e)
-    }
-    assert(!filesRegistrar.has(key))
-    add(key, destination)
-    return DownloadResult.Downloaded(destination, extension, isDirectory)
-  }
-
-  @Synchronized
-  private fun createTempDirectoryForDownload(key: K) = Files.createTempDirectory(
-      downloadDirectory,
-      "download-" + getFileNameForKey(key, "", true) + "-"
-  )
-
-  private fun moveFileOrDirectory(fileOrDirectory: Path, destination: Path) {
-    assert(!destination.exists())
-    if (fileOrDirectory.isDirectory) {
-      FileUtils.moveDirectory(fileOrDirectory.toFile(), destination.toFile())
-    } else {
-      FileUtils.moveFile(fileOrDirectory.toFile(), destination.toFile())
-    }
+    return downloadResult
   }
 
   private fun DownloadResult.toFileRepositoryResult(key: K) = when (this) {
     is DownloadResult.Downloaded -> FileRepositoryResult.Found(registerLock(key, false))
     is DownloadResult.NotFound -> FileRepositoryResult.NotFound(reason)
     is DownloadResult.FailedToDownload -> FileRepositoryResult.Failed(reason, error)
-  }
-
-  @Synchronized
-  private fun createDestinationFileForKey(key: K, extension: String, isDirectory: Boolean): Path {
-    val finalFileName = getFileNameForKey(key, extension, isDirectory)
-    return repositoryDir.resolve(finalFileName)
-  }
-
-  @Synchronized
-  private fun getFileNameForKey(key: K, extension: String, isDirectory: Boolean): String {
-    val nameWithoutExtension = fileNameMapper.getFileNameWithoutExtension(key)
-    val fullName = nameWithoutExtension + if (isDirectory || extension.isEmpty()) "" else "." + extension
-    return fullName.replaceInvalidFileNameCharacters()
   }
 
   @Synchronized
@@ -339,7 +288,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: Path,
 
   /**
    * Searches the file by [key] in the local cache. If it isn't found there,
-   * downloads the file using [downloader].
+   * downloads the file.
    *
    * The possible results are represented as subclasses of [FileRepositoryResult].
    * If the file is found locally or successfully downloaded, the file lock is registered
