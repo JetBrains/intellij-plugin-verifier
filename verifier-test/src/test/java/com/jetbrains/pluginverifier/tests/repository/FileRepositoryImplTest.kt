@@ -34,7 +34,7 @@ class FileRepositoryImplTest {
     val fileRepository: FileRepository<Int> = FileRepositoryImpl.createFromExistingFiles(
         folder,
         SimulationDownloader(),
-        IntFileKeyMapper(),
+        IntFileNameMapper(),
         IdleSweepPolicy
     )
 
@@ -59,7 +59,7 @@ class FileRepositoryImplTest {
     val fileRepository = FileRepositoryImpl.createFromExistingFiles(
         folder,
         SimulationDownloader(),
-        IntFileKeyMapper(),
+        IntFileNameMapper(),
         IdleSweepPolicy,
         keyProvider = { it.nameWithoutExtension.toIntOrNull() }
     )
@@ -80,7 +80,7 @@ class FileRepositoryImplTest {
     val fileRepository = FileRepositoryImpl.createFromExistingFiles(
         tempFolder.newFolderPath(),
         downloader,
-        IntFileKeyMapper(),
+        IntFileNameMapper(),
         IdleSweepPolicy
     )
 
@@ -118,7 +118,7 @@ class FileRepositoryImplTest {
     val fileRepository = FileRepositoryImpl.createFromExistingFiles(
         tempFolder.newFolderPath(),
         SimulationDownloader(),
-        IntFileKeyMapper(),
+        IntFileNameMapper(),
         lruNSweepPolicy
     )
 
@@ -155,7 +155,7 @@ class FileRepositoryImplTest {
     FileRepositoryImpl.createFromExistingFiles(
         repositoryDir,
         SimulationDownloader(),
-        IntFileKeyMapper(),
+        IntFileNameMapper(),
         LruFileSizeSweepPolicy(DiskSpaceSetting(ONE_BYTE * 5, ONE_BYTE * 2, ONE_BYTE * 3)),
         keyProvider = { it.nameWithoutExtension.toIntOrNull() }
     )
@@ -189,7 +189,7 @@ class FileRepositoryImplTest {
     val fileRepository = FileRepositoryImpl.createFromExistingFiles(
         tempFolder.newFolderPath(),
         downloader,
-        IntFileKeyMapper(),
+        IntFileNameMapper(),
         IdleSweepPolicy
     )
 

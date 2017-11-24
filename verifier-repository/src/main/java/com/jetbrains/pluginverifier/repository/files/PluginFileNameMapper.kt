@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import java.nio.file.Path
 
-class PluginFileKeyMapper : FileKeyMapper<UpdateId> {
+class PluginFileNameMapper : FileNameMapper<UpdateId> {
 
   companion object {
     private val BROKEN_FILE_THRESHOLD = SpaceAmount.ONE_BYTE * 200

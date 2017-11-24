@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
 
 class FileRepositoryImpl<K>(private val repositoryDir: Path,
                             private val downloader: Downloader<K>,
-                            private val fileKeyMapper: FileKeyMapper<K>,
+                            private val fileNameMapper: FileNameMapper<K>,
                             private val sweepPolicy: SweepPolicy<K>,
                             private val clock: Clock = Clock.systemUTC()) : FileRepository<K> {
 
@@ -33,11 +33,11 @@ class FileRepositoryImpl<K>(private val repositoryDir: Path,
 
     fun <K> createFromExistingFiles(repositoryDir: Path,
                                     downloader: Downloader<K>,
-                                    fileKeyMapper: FileKeyMapper<K>,
+                                    fileNameMapper: FileNameMapper<K>,
                                     sweepPolicy: SweepPolicy<K>,
                                     clock: Clock = Clock.systemUTC(),
                                     keyProvider: (Path) -> K? = { null }): FileRepositoryImpl<K> {
-      val fileRepository = FileRepositoryImpl(repositoryDir, downloader, fileKeyMapper, sweepPolicy, clock)
+      val fileRepository = FileRepositoryImpl(repositoryDir, downloader, fileNameMapper, sweepPolicy, clock)
       addInitiallyAvailableFiles(fileRepository, repositoryDir, keyProvider)
       fileRepository.sweep()
       return fileRepository
@@ -285,7 +285,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: Path,
 
   @Synchronized
   private fun getFileNameForKey(key: K, extension: String, isDirectory: Boolean): String {
-    val nameWithoutExtension = fileKeyMapper.getFileNameWithoutExtension(key)
+    val nameWithoutExtension = fileNameMapper.getFileNameWithoutExtension(key)
     val fullName = nameWithoutExtension + if (isDirectory || extension.isEmpty()) "" else "." + extension
     return fullName.replaceInvalidFileNameCharacters()
   }

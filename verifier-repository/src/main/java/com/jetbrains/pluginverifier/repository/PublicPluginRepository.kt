@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.repository.cleanup.LruFileSizeSweepPolicy
 import com.jetbrains.pluginverifier.repository.downloader.PluginDownloader
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryImpl
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
-import com.jetbrains.pluginverifier.repository.files.PluginFileKeyMapper
+import com.jetbrains.pluginverifier.repository.files.PluginFileNameMapper
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.net.HttpURLConnection
@@ -34,9 +34,9 @@ class PublicPluginRepository(val repositoryUrl: String,
   private val downloadedPluginsFileRepository = FileRepositoryImpl.createFromExistingFiles(
       downloadDir,
       PluginDownloader(repositoryUrl),
-      PluginFileKeyMapper(),
+      PluginFileNameMapper(),
       LruFileSizeSweepPolicy(diskSpaceSetting),
-      keyProvider = { PluginFileKeyMapper.getUpdateIdByFile(it) }
+      keyProvider = { PluginFileNameMapper.getUpdateIdByFile(it) }
   )
 
   override fun getPluginOverviewUrl(pluginInfo: PluginInfo): String? = if (pluginInfo is UpdateInfo) {
