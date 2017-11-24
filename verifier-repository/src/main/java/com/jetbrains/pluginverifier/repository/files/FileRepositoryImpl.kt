@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.repository.files
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.repository.cleanup.*
@@ -22,11 +21,9 @@ import java.util.concurrent.Executors
 import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 
-class FileRepositoryImpl<K>(repositoryDir: Path,
-                            fileNameMapper: FileNameMapper<K>,
-                            downloader: Downloader<K>,
-                            private val sweepPolicy: SweepPolicy<K>,
-                            private val clock: Clock = Clock.systemUTC()) : FileRepository<K> {
+class FileRepositoryImpl<K>(private val sweepPolicy: SweepPolicy<K>,
+                            private val clock: Clock,
+                            private val downloadExecutor: DownloadExecutor<K>) : FileRepository<K> {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(FileRepositoryImpl::class.java)
@@ -39,7 +36,8 @@ class FileRepositoryImpl<K>(repositoryDir: Path,
                                     sweepPolicy: SweepPolicy<K>,
                                     clock: Clock = Clock.systemUTC(),
                                     keyProvider: (Path) -> K? = { null }): FileRepositoryImpl<K> {
-      val fileRepository = FileRepositoryImpl(repositoryDir, fileNameMapper, downloader, sweepPolicy, clock)
+      val downloadExecutor = DownloadExecutor(repositoryDir, downloader, fileNameMapper)
+      val fileRepository = FileRepositoryImpl(sweepPolicy, clock, downloadExecutor)
       addInitiallyAvailableFiles(fileRepository, repositoryDir, keyProvider)
       fileRepository.sweep()
       return fileRepository
@@ -97,10 +95,7 @@ class FileRepositoryImpl<K>(repositoryDir: Path,
 
   private val statistics = hashMapOf<K, UsageStatistic>()
 
-  private val downloadExecutor = DownloadExecutor(repositoryDir, downloader, fileNameMapper)
-
   init {
-    repositoryDir.createDir()
     runForgottenLocksInspector()
   }
 

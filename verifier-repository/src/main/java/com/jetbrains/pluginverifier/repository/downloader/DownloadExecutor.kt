@@ -16,6 +16,7 @@ class DownloadExecutor<K>(private val destinationDirectory: Path,
   private val downloadDirectory = destinationDirectory.resolve("downloads")
 
   init {
+    destinationDirectory.createDir()
     downloadDirectory.forceDeleteIfExists()
     downloadDirectory.createDir()
   }
