@@ -21,12 +21,38 @@ import java.util.concurrent.Executors
 import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 
+private data class RepositoryFilesRegistrar<K>(var totalSpaceUsage: SpaceAmount = SpaceAmount.ZERO_SPACE,
+                                               val files: MutableMap<K, FileInfo> = hashMapOf()) {
+  fun addFile(key: K, file: Path) {
+    assert(key !in files)
+    val fileSize = file.fileSize
+    FileRepositoryImpl.LOG.debug("Adding file by $key of size $fileSize: $file")
+    totalSpaceUsage += fileSize
+    files[key] = FileInfo(file, fileSize)
+  }
+
+  fun getAllKeys() = files.keys
+
+  fun has(key: K) = key in files
+
+  fun get(key: K) = files[key]
+
+  fun deleteFile(key: K) {
+    assert(key in files)
+    val (file, size) = files[key]!!
+    FileRepositoryImpl.LOG.debug("Deleting file by $key of size $size: $file")
+    totalSpaceUsage -= size
+    files.remove(key)
+    file.deleteLogged()
+  }
+}
+
 class FileRepositoryImpl<K>(private val sweepPolicy: SweepPolicy<K>,
                             private val clock: Clock,
                             private val downloadExecutor: DownloadExecutor<K>) : FileRepository<K> {
 
   companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(FileRepositoryImpl::class.java)
+    val LOG: Logger = LoggerFactory.getLogger(FileRepositoryImpl::class.java)
 
     private val LOCK_TIME_TO_LIVE_DURATION: Duration = Duration.of(1, ChronoUnit.HOURS)
 
@@ -55,32 +81,6 @@ class FileRepositoryImpl<K>(private val sweepPolicy: SweepPolicy<K>,
       }
     }
 
-  }
-
-  private data class RepositoryFilesRegistrar<K>(var totalSpaceUsage: SpaceAmount = SpaceAmount.ZERO_SPACE,
-                                                 val files: MutableMap<K, FileInfo> = hashMapOf()) {
-    fun addFile(key: K, file: Path) {
-      assert(key !in files)
-      val fileSize = file.fileSize
-      LOG.debug("Adding file by $key of size $fileSize: $file")
-      totalSpaceUsage += fileSize
-      files[key] = FileInfo(file, fileSize)
-    }
-
-    fun getAllKeys() = files.keys
-
-    fun has(key: K) = key in files
-
-    fun get(key: K) = files[key]
-
-    fun deleteFile(key: K) {
-      assert(key in files)
-      val (file, size) = files[key]!!
-      LOG.debug("Deleting file by $key of size $size: $file")
-      totalSpaceUsage -= size
-      files.remove(key)
-      file.deleteLogged()
-    }
   }
 
   private val filesRegistrar = RepositoryFilesRegistrar<K>()
