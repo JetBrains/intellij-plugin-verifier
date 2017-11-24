@@ -124,7 +124,7 @@ class FileRepositoryImpl<K>(private val repositoryDir: Path,
   override fun remove(key: K): Boolean {
     val isLocked = isLockedKey(key)
     return if (isLocked) {
-      LOG.debug("Deletion of $key: file is locked, delete later.")
+      LOG.debug("Deletion of $key: file is locked or is being downloaded, delete later.")
       deleteQueue.add(key)
       false
     } else {

@@ -1,13 +1,12 @@
 package com.jetbrains.pluginverifier.tests.repository
 
+import com.jetbrains.pluginverifier.misc.exists
 import com.jetbrains.pluginverifier.misc.readText
 import com.jetbrains.pluginverifier.misc.writeText
 import com.jetbrains.pluginverifier.repository.cleanup.*
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount.Companion.ONE_BYTE
-import com.jetbrains.pluginverifier.repository.files.AvailableFile
-import com.jetbrains.pluginverifier.repository.files.FileRepository
-import com.jetbrains.pluginverifier.repository.files.FileRepositoryImpl
-import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
+import com.jetbrains.pluginverifier.repository.files.*
+import org.junit.Assert
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -16,6 +15,8 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 
 class FileRepositoryImplTest {
@@ -31,9 +32,9 @@ class FileRepositoryImplTest {
     val folder = tempFolder.newFolderPath()
     val fileRepository: FileRepository<Int> = FileRepositoryImpl(
         folder,
-        MockDownloader(),
+        SimulationDownloader(),
         IntFileKeyMapper(),
-        MockSweepPolicy()
+        IdleSweepPolicy
     )
 
     val get0 = fileRepository.get(0) as FileRepositoryResult.Found
@@ -56,9 +57,9 @@ class FileRepositoryImplTest {
 
     val fileRepository = FileRepositoryImpl(
         folder,
-        MockDownloader(),
+        SimulationDownloader(),
         IntFileKeyMapper(),
-        MockSweepPolicy()
+        IdleSweepPolicy
     )
 
     val get0 = fileRepository.get(0) as FileRepositoryResult.Found
@@ -78,7 +79,7 @@ class FileRepositoryImplTest {
         tempFolder.newFolderPath(),
         downloader,
         IntFileKeyMapper(),
-        MockSweepPolicy()
+        IdleSweepPolicy
     )
 
     val numberOfThreads = 10
@@ -114,7 +115,7 @@ class FileRepositoryImplTest {
 
     val fileRepository = FileRepositoryImpl(
         tempFolder.newFolderPath(),
-        MockDownloader(),
+        SimulationDownloader(),
         IntFileKeyMapper(),
         lruNSweepPolicy
     )
@@ -151,7 +152,7 @@ class FileRepositoryImplTest {
     // low space threshold 2 bytes and after-cleanup free space 3 bytes
     FileRepositoryImpl(
         repositoryDir,
-        MockDownloader(),
+        SimulationDownloader(),
         IntFileKeyMapper(),
         LruFileSizeSweepPolicy(DiskSpaceSetting(ONE_BYTE * 5, ONE_BYTE * 2, ONE_BYTE * 3))
     )
@@ -161,4 +162,59 @@ class FileRepositoryImplTest {
     assertEquals(ONE_BYTE * 2, repoSize)
   }
 
+  /**
+   * Test the following case:
+   *
+   * A thread calls *remove* for a file while another thread is downloading the file.
+   *
+   * The downloading thread must successfully obtain the file lock,
+   * and once it releases the lock, the file must be removed.
+   */
+  @Test
+  fun `delete the file which is being downloaded`() {
+    val downloadStarted = AtomicBoolean()
+    val removeCalled = AtomicBoolean()
+
+    val downloader = SimulationDownloader {
+      downloadStarted.set(true)
+
+      //simulating the downloading until the 'remove' method is called
+      while (!removeCalled.get()) {
+      }
+    }
+
+    val fileRepository = FileRepositoryImpl(
+        tempFolder.newFolderPath(),
+        downloader,
+        IntFileKeyMapper(),
+        IdleSweepPolicy
+    )
+
+    val fileLock = AtomicReference<FileLock>()
+    val downloadThread = Thread {
+      val lockedFile = (fileRepository.get(0) as FileRepositoryResult.Found).lockedFile
+      fileLock.set(lockedFile)
+    }
+
+    val removeThread = Thread {
+      //waiting until the downloading is started
+      while (!downloadStarted.get()) {
+      }
+
+      //call the remove in the time of downloading
+      fileRepository.remove(0)
+
+      removeCalled.set(true)
+    }
+
+    downloadThread.start()
+    removeThread.start()
+
+    downloadThread.join()
+    removeThread.join()
+
+    Assert.assertTrue(fileLock.get().file.exists())
+    fileLock.get().release()
+    Assert.assertFalse(fileLock.get().file.exists())
+  }
 }
