@@ -31,7 +31,7 @@ class PublicPluginRepository(val repositoryUrl: String,
       "com.intellij.modules.python", "Pythonid",
       "com.intellij.modules.swift.lang", "com.intellij.clion-swift")
 
-  private val downloadedPluginsFileRepository = FileRepositoryImpl(
+  private val downloadedPluginsFileRepository = FileRepositoryImpl.createFromExistingFiles(
       downloadDir,
       PluginDownloader(repositoryUrl),
       PluginFileKeyMapper(),

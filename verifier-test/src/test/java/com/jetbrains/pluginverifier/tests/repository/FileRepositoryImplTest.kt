@@ -30,7 +30,7 @@ class FileRepositoryImplTest {
   @Test
   fun `basic operations`() {
     val folder = tempFolder.newFolderPath()
-    val fileRepository: FileRepository<Int> = FileRepositoryImpl(
+    val fileRepository: FileRepository<Int> = FileRepositoryImpl.createFromExistingFiles(
         folder,
         SimulationDownloader(),
         IntFileKeyMapper(),
@@ -55,7 +55,7 @@ class FileRepositoryImplTest {
     folder.resolve("0").writeText("0")
     folder.resolve("1").writeText("1")
 
-    val fileRepository = FileRepositoryImpl(
+    val fileRepository = FileRepositoryImpl.createFromExistingFiles(
         folder,
         SimulationDownloader(),
         IntFileKeyMapper(),
@@ -75,7 +75,7 @@ class FileRepositoryImplTest {
   fun `only one of the concurrent threads downloads the file`() {
     val downloader = OnlyOneDownloadAtTimeDownloader()
 
-    val fileRepository = FileRepositoryImpl(
+    val fileRepository = FileRepositoryImpl.createFromExistingFiles(
         tempFolder.newFolderPath(),
         downloader,
         IntFileKeyMapper(),
@@ -113,7 +113,7 @@ class FileRepositoryImplTest {
               .dropLast(n)
     }
 
-    val fileRepository = FileRepositoryImpl(
+    val fileRepository = FileRepositoryImpl.createFromExistingFiles(
         tempFolder.newFolderPath(),
         SimulationDownloader(),
         IntFileKeyMapper(),
@@ -183,7 +183,7 @@ class FileRepositoryImplTest {
       }
     }
 
-    val fileRepository = FileRepositoryImpl(
+    val fileRepository = FileRepositoryImpl.createFromExistingFiles(
         tempFolder.newFolderPath(),
         downloader,
         IntFileKeyMapper(),

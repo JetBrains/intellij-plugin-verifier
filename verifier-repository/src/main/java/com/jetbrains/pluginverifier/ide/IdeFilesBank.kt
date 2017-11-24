@@ -20,7 +20,7 @@ class IdeFilesBank(val ideRepository: IdeRepository,
     private val LOG: Logger = LoggerFactory.getLogger(IdeFilesBank::class.java)
   }
 
-  private val ideFilesRepository = FileRepositoryImpl(
+  private val ideFilesRepository = FileRepositoryImpl.createFromExistingFiles(
       bankDirectory,
       IdeDownloader(ideRepository, downloadProgress),
       IdeFileKeyMapper(),

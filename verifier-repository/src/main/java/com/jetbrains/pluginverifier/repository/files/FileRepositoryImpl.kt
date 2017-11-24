@@ -26,10 +26,33 @@ class FileRepositoryImpl<K>(private val repositoryDir: Path,
                             private val sweepPolicy: SweepPolicy<K>,
                             private val clock: Clock = Clock.systemUTC()) : FileRepository<K> {
 
-  private companion object {
-    val LOG: Logger = LoggerFactory.getLogger(FileRepositoryImpl::class.java)
+  companion object {
+    private val LOG: Logger = LoggerFactory.getLogger(FileRepositoryImpl::class.java)
 
-    val LOCK_TIME_TO_LIVE_DURATION: Duration = Duration.of(1, ChronoUnit.HOURS)
+    private val LOCK_TIME_TO_LIVE_DURATION: Duration = Duration.of(1, ChronoUnit.HOURS)
+
+    fun <K> createFromExistingFiles(repositoryDir: Path,
+                                    downloader: Downloader<K>,
+                                    fileKeyMapper: FileKeyMapper<K>,
+                                    sweepPolicy: SweepPolicy<K>,
+                                    clock: Clock = Clock.systemUTC()): FileRepositoryImpl<K> {
+      val fileRepository = FileRepositoryImpl(repositoryDir, downloader, fileKeyMapper, sweepPolicy, clock)
+      addInitiallyAvailableFiles(fileRepository, repositoryDir, fileKeyMapper)
+      return fileRepository
+    }
+
+    private fun <K> addInitiallyAvailableFiles(fileRepository: FileRepository<K>,
+                                               repositoryDir: Path,
+                                               fileKeyMapper: FileKeyMapper<K>) {
+      val existingFiles = Files.list(repositoryDir) ?: throw IOException("Unable to read directory content: $repositoryDir")
+      for (file in existingFiles) {
+        val key = fileKeyMapper.getKey(file)
+        if (key != null) {
+          fileRepository.add(key, file)
+        }
+      }
+    }
+
   }
 
   private data class RepositoryFilesRegistrar<K>(var totalSpaceUsage: SpaceAmount = SpaceAmount.ZERO_SPACE,
@@ -75,8 +98,6 @@ class FileRepositoryImpl<K>(private val repositoryDir: Path,
   init {
     repositoryDir.createDir()
     clearDownloadDirectory()
-    readInitiallyAvailableFiles()
-    sweep()
     runForgottenLocksInspector()
   }
 
@@ -94,21 +115,14 @@ class FileRepositoryImpl<K>(private val repositoryDir: Path,
   }
 
   @Synchronized
-  private fun readInitiallyAvailableFiles() {
-    val existingFiles = Files.list(repositoryDir)
-        ?: throw IOException("Unable to read directory content: $repositoryDir")
-    for (file in existingFiles) {
-      val key = fileKeyMapper.getKey(file)
-      if (key != null) {
-        addFileWithEmptyStatistic(key, file)
-      }
+  override fun add(key: K, file: Path): Boolean {
+    if (filesRegistrar.has(key)) {
+      return false
     }
-  }
-
-  @Synchronized
-  private fun addFileWithEmptyStatistic(key: K, file: Path) {
+    assert(key !in statistics)
     filesRegistrar.addFile(key, file)
     statistics[key] = UsageStatistic(Instant.EPOCH, 0)
+    return true
   }
 
   @Synchronized
@@ -232,7 +246,8 @@ class FileRepositoryImpl<K>(private val repositoryDir: Path,
     } catch (e: Exception) {
       return DownloadResult.FailedToDownload("Unable to download $key", e)
     }
-    addFileWithEmptyStatistic(key, destination)
+    assert(!filesRegistrar.has(key))
+    add(key, destination)
     return DownloadResult.Downloaded(destination, extension, isDirectory)
   }
 
