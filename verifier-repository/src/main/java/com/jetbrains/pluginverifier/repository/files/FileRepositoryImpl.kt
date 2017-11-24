@@ -35,18 +35,20 @@ class FileRepositoryImpl<K>(private val repositoryDir: Path,
                                     downloader: Downloader<K>,
                                     fileKeyMapper: FileKeyMapper<K>,
                                     sweepPolicy: SweepPolicy<K>,
-                                    clock: Clock = Clock.systemUTC()): FileRepositoryImpl<K> {
+                                    clock: Clock = Clock.systemUTC(),
+                                    keyProvider: (Path) -> K? = { null }): FileRepositoryImpl<K> {
       val fileRepository = FileRepositoryImpl(repositoryDir, downloader, fileKeyMapper, sweepPolicy, clock)
-      addInitiallyAvailableFiles(fileRepository, repositoryDir, fileKeyMapper)
+      addInitiallyAvailableFiles(fileRepository, repositoryDir, keyProvider)
+      fileRepository.sweep()
       return fileRepository
     }
 
     private fun <K> addInitiallyAvailableFiles(fileRepository: FileRepository<K>,
                                                repositoryDir: Path,
-                                               fileKeyMapper: FileKeyMapper<K>) {
+                                               keyProvider: (Path) -> K?) {
       val existingFiles = Files.list(repositoryDir) ?: throw IOException("Unable to read directory content: $repositoryDir")
       for (file in existingFiles) {
-        val key = fileKeyMapper.getKey(file)
+        val key = keyProvider(file)
         if (key != null) {
           fileRepository.add(key, file)
         }
@@ -163,8 +165,11 @@ class FileRepositoryImpl<K>(private val repositoryDir: Path,
     val lockTime = clock.instant()
     val lock = FileLockImpl(fileInfo.file, lockTime, key, nextLockId++, this)
     key2Locks.getOrPut(key, { hashSetOf() }).add(lock)
-    val keyUsageStatistic = statistics.getOrPut(key, { UsageStatistic(lockTime, 0) })
-    keyUsageStatistic.timesAccessed++
+
+    if (!isDownloadingLock) {
+      val keyUsageStatistic = statistics.getOrPut(key, { UsageStatistic(lockTime, 0) })
+      keyUsageStatistic.timesAccessed++
+    }
     return lock
   }
 

@@ -24,7 +24,8 @@ class IdeFilesBank(val ideRepository: IdeRepository,
       bankDirectory,
       IdeDownloader(ideRepository, downloadProgress),
       IdeFileKeyMapper(),
-      LruFileSizeSweepPolicy(diskSpaceSetting)
+      LruFileSizeSweepPolicy(diskSpaceSetting),
+      keyProvider = { IdeFileKeyMapper.getIdeVersionByFile(it) }
   )
 
   fun <R> lockAndAccess(block: () -> R) =

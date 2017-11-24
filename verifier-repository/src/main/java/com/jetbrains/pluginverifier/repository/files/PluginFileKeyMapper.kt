@@ -8,22 +8,24 @@ import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import java.nio.file.Path
 
 class PluginFileKeyMapper : FileKeyMapper<UpdateId> {
-  private companion object {
-    val BROKEN_FILE_THRESHOLD = SpaceAmount.ONE_BYTE * 200
+
+  companion object {
+    private val BROKEN_FILE_THRESHOLD = SpaceAmount.ONE_BYTE * 200
+
+    private fun Path.isValid() = fileSize > BROKEN_FILE_THRESHOLD
+
+    fun getUpdateIdByFile(file: Path): UpdateId? {
+      if (file.isValid()) {
+        val id = Ints.tryParse(file.nameWithoutExtension)
+        if (id != null) {
+          return UpdateId(id)
+        }
+      }
+      return null
+    }
   }
 
   override fun getFileNameWithoutExtension(key: UpdateId): String =
       key.id.toString()
 
-  override fun getKey(file: Path): UpdateId? {
-    if (file.isValid()) {
-      val id = Ints.tryParse(file.nameWithoutExtension)
-      if (id != null) {
-        return UpdateId(id)
-      }
-    }
-    return null
-  }
-
-  private fun Path.isValid() = fileSize > BROKEN_FILE_THRESHOLD
 }

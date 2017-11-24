@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.tests.repository
 
 import com.jetbrains.pluginverifier.misc.exists
+import com.jetbrains.pluginverifier.misc.nameWithoutExtension
 import com.jetbrains.pluginverifier.misc.readText
 import com.jetbrains.pluginverifier.misc.writeText
 import com.jetbrains.pluginverifier.repository.cleanup.*
@@ -59,7 +60,8 @@ class FileRepositoryImplTest {
         folder,
         SimulationDownloader(),
         IntFileKeyMapper(),
-        IdleSweepPolicy
+        IdleSweepPolicy,
+        keyProvider = { it.nameWithoutExtension.toIntOrNull() }
     )
 
     val get0 = fileRepository.get(0) as FileRepositoryResult.Found
@@ -150,11 +152,12 @@ class FileRepositoryImplTest {
 
     //create the file repository with maximum cache size of 5 bytes,
     // low space threshold 2 bytes and after-cleanup free space 3 bytes
-    FileRepositoryImpl(
+    FileRepositoryImpl.createFromExistingFiles(
         repositoryDir,
         SimulationDownloader(),
         IntFileKeyMapper(),
-        LruFileSizeSweepPolicy(DiskSpaceSetting(ONE_BYTE * 5, ONE_BYTE * 2, ONE_BYTE * 3))
+        LruFileSizeSweepPolicy(DiskSpaceSetting(ONE_BYTE * 5, ONE_BYTE * 2, ONE_BYTE * 3)),
+        keyProvider = { it.nameWithoutExtension.toIntOrNull() }
     )
 
     //cleanup procedure on repository startup must make its size 2 bytes (i.e. remove 8 files)

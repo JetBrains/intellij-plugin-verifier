@@ -35,7 +35,8 @@ class PublicPluginRepository(val repositoryUrl: String,
       downloadDir,
       PluginDownloader(repositoryUrl),
       PluginFileKeyMapper(),
-      LruFileSizeSweepPolicy(diskSpaceSetting)
+      LruFileSizeSweepPolicy(diskSpaceSetting),
+      keyProvider = { PluginFileKeyMapper.getUpdateIdByFile(it) }
   )
 
   override fun getPluginOverviewUrl(pluginInfo: PluginInfo): String? = if (pluginInfo is UpdateInfo) {

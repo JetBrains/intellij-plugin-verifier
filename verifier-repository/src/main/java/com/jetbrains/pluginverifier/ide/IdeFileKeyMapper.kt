@@ -8,19 +8,21 @@ import java.nio.file.Path
 
 class IdeFileKeyMapper : FileKeyMapper<IdeVersion> {
 
+  companion object {
+    fun getIdeVersionByFile(file: Path): IdeVersion? = if (file.isDirectory) {
+      createIdeVersionSafe(file)?.let { IdeRepository.setProductCodeIfAbsent(it, "IU") }
+    } else {
+      null
+    }
+
+    private fun createIdeVersionSafe(file: Path): IdeVersion? = try {
+      IdeVersion.createIdeVersion(file.simpleName)
+    } catch (e: IllegalArgumentException) {
+      null
+    }
+  }
+
   override fun getFileNameWithoutExtension(key: IdeVersion): String =
       key.asString()
-
-  override fun getKey(file: Path): IdeVersion? = if (file.isDirectory) {
-    createIdeVersionSafe(file)?.let { IdeRepository.setProductCodeIfAbsent(it, "IU") }
-  } else {
-    null
-  }
-
-  private fun createIdeVersionSafe(file: Path): IdeVersion? = try {
-    IdeVersion.createIdeVersion(file.simpleName)
-  } catch (e: IllegalArgumentException) {
-    null
-  }
 
 }
