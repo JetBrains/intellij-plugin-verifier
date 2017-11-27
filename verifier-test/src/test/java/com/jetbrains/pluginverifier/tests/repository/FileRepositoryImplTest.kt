@@ -1,9 +1,6 @@
 package com.jetbrains.pluginverifier.tests.repository
 
-import com.jetbrains.pluginverifier.misc.exists
-import com.jetbrains.pluginverifier.misc.nameWithoutExtension
-import com.jetbrains.pluginverifier.misc.readText
-import com.jetbrains.pluginverifier.misc.writeText
+import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.repository.cleanup.*
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount.Companion.ONE_BYTE
 import com.jetbrains.pluginverifier.repository.files.*
@@ -31,7 +28,7 @@ class FileRepositoryImplTest {
   @Test
   fun `basic operations`() {
     val folder = tempFolder.newFolderPath()
-    val fileRepository: FileRepository<Int> = createFromExistingFiles(
+    val fileRepository: FileRepository<Int> = FileRepositoryBuilder().createFromExistingFiles(
         folder,
         SimulationDownloader(),
         IntFileNameMapper(),
@@ -56,7 +53,7 @@ class FileRepositoryImplTest {
     folder.resolve("0").writeText("0")
     folder.resolve("1").writeText("1")
 
-    val fileRepository = createFromExistingFiles(
+    val fileRepository = FileRepositoryBuilder().createFromExistingFiles(
         folder,
         SimulationDownloader(),
         IntFileNameMapper(),
@@ -77,7 +74,7 @@ class FileRepositoryImplTest {
   fun `only one of the concurrent threads downloads the file`() {
     val downloader = OnlyOneDownloadAtTimeDownloader()
 
-    val fileRepository = createFromExistingFiles(
+    val fileRepository = FileRepositoryBuilder().createFromExistingFiles(
         tempFolder.newFolderPath(),
         downloader,
         IntFileNameMapper(),
@@ -115,7 +112,7 @@ class FileRepositoryImplTest {
               .dropLast(n)
     }
 
-    val fileRepository = createFromExistingFiles(
+    val fileRepository = FileRepositoryBuilder().createFromExistingFiles(
         tempFolder.newFolderPath(),
         SimulationDownloader(),
         IntFileNameMapper(),
@@ -152,7 +149,7 @@ class FileRepositoryImplTest {
 
     //create the file repository with maximum cache size of 5 bytes,
     // low space threshold 2 bytes and after-cleanup free space 3 bytes
-    createFromExistingFiles(
+    FileRepositoryBuilder().createFromExistingFiles(
         repositoryDir,
         SimulationDownloader(),
         IntFileNameMapper(),
@@ -186,7 +183,7 @@ class FileRepositoryImplTest {
       }
     }
 
-    val fileRepository = createFromExistingFiles(
+    val fileRepository = FileRepositoryBuilder().createFromExistingFiles(
         tempFolder.newFolderPath(),
         downloader,
         IntFileNameMapper(),
@@ -219,5 +216,30 @@ class FileRepositoryImplTest {
     Assert.assertTrue(fileLock.get().file.exists())
     fileLock.get().release()
     Assert.assertFalse(fileLock.get().file.exists())
+  }
+
+  @Test
+  fun `delete extra files on the repository directory creation`() {
+    val tempFolder = tempFolder.newFolderPath()
+    //These two files are extra files that must be removed on the repository creation
+    tempFolder.resolve("one.txt").writeText("one")
+    tempFolder.resolve("two.txt").writeText("two")
+
+    //This is the only legitimate file
+    val trueFile = tempFolder.resolve("1")
+    trueFile.writeText("1")
+
+    val fileRepository = FileRepositoryBuilder().createFromExistingFiles(
+        tempFolder,
+        SimulationDownloader(),
+        IntFileNameMapper(),
+        IdleSweepPolicy,
+        keyProvider = {
+          it.nameWithoutExtension.toIntOrNull()
+        }
+    )
+
+    assertEquals(setOf(1), fileRepository.getAllExistingKeys())
+    assertEquals(listOf(trueFile), tempFolder.listFiles())
   }
 }

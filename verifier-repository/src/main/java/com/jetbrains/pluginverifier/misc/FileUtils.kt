@@ -6,6 +6,7 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.stream.Collectors
 
 private val LOG = LoggerFactory.getLogger("FileUtils")
 
@@ -74,6 +75,8 @@ fun Path.deleteLogged() {
 }
 
 fun Path.exists(): Boolean = Files.exists(this)
+
+fun Path.listFiles(): List<Path> = Files.list(this).collect(Collectors.toList())
 
 val Path.isDirectory
   get() = Files.isDirectory(this)
