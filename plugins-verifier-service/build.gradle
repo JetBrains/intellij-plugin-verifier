@@ -1,7 +1,7 @@
 buildscript {
   ext {
     kotlin_version = '1.1.4-3'
-    ext.verifierVersion = '1.106'
+    ext.verifierVersion = 'dev'
   }
   repositories {
     jcenter()
@@ -106,7 +106,7 @@ configure(allprojects) {
 
     compile "commons-fileupload:commons-fileupload:1.3.1"
 
-    compile group: 'org.jetbrains.intellij.plugins', name: 'intellij-feature-extractor', version: '1.0'
+    compile group: 'org.jetbrains.intellij.plugins', name: 'intellij-feature-extractor', version: 'dev'
     compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-core', version: rootProject.verifierVersion
 
     compile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'

@@ -3,8 +3,8 @@ repositories {
 }
 
 dependencies {
-  compile "org.jetbrains.intellij.plugins:structure-intellij-classes:$intellijStructureVersion"
-  compile "org.jetbrains.intellij.plugins:structure-ide-classes:$intellijStructureVersion"
+  compile group: 'org.jetbrains.intellij.plugins', name: 'structure-intellij-classes', version: intellijStructureVersion
+  compile group: 'org.jetbrains.intellij.plugins', name: 'structure-ide-classes', version: intellijStructureVersion
   compile 'com.github.spullara.cli-parser:cli-parser:1.1.2'
   compile 'org.jgrapht:jgrapht-core:0.9.2'
   compile project(':verifier-repository')

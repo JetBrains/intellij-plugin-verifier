@@ -1,7 +1,18 @@
+def projectVersion = project.hasProperty('myVersion') ? project.myVersion : 'dev'
+def isDevMode = projectVersion == 'dev'
+def intellijStructureVersion = 'dev'
+if (!isDevMode) {
+  if (project.hasProperty('intellijStructureVersion')) {
+    intellijStructureVersion = project.intellijStructureVersion
+  } else {
+    throw new MissingPropertyException("Version of intellij-structure library to be used is not specified via 'intellijStructureVersion'")
+  }
+}
+project.ext.intellijStructureVersion = intellijStructureVersion
+
 buildscript {
 
   ext.kotlin_version = '1.1.4-3'
-  ext.intellijStructureVersion = '3.3'
 
   repositories {
     jcenter()
@@ -14,15 +25,13 @@ buildscript {
   }
 }
 
-def verifierVersion = project.hasProperty('myVersion') ? project.myVersion : '1.106'
-
 configure(allprojects) {
   apply plugin: 'java'
   apply plugin: 'kotlin'
 
   group = 'org.jetbrains.intellij.plugins'
 
-  version = verifierVersion
+  version = projectVersion
 
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
