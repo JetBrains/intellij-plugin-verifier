@@ -6,11 +6,10 @@ import java.io.File
 /**
  * @author Sergey Patrikeev
  */
-enum class Settings(private val key: String,
-                    private val defaultValue: (String) -> String) {
+enum class Settings(private val key: String, private val defaultValue: () -> String) {
   EXTRACT_DIRECTORY("intellij.structure.temp.dir", { File(FileUtils.getTempDirectory(), "extracted-plugins").absolutePath });
 
-  fun get(): String = System.getProperty(key) ?: defaultValue(key)
+  fun get(): String = System.getProperty(key) ?: defaultValue()
 
   fun getAsFile(): File = File(get())
 }

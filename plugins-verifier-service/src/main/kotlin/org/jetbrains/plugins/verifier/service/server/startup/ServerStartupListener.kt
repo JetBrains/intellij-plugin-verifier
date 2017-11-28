@@ -7,12 +7,12 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
+import com.jetbrains.pluginverifier.repository.plugins.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.features.FeatureService
 import org.jetbrains.plugins.verifier.service.service.ide.IdeListUpdater
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkManager
 import org.jetbrains.plugins.verifier.service.service.repository.AuthorizationData
-import org.jetbrains.plugins.verifier.service.service.repository.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
 import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetting

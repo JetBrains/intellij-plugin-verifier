@@ -3,10 +3,10 @@ package org.jetbrains.plugins.verifier.service.server
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.plugins.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkManager
 import org.jetbrains.plugins.verifier.service.service.repository.AuthorizationData
-import org.jetbrains.plugins.verifier.service.service.repository.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import java.io.Closeable
