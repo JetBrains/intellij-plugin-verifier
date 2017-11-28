@@ -115,7 +115,7 @@ class ServerStartupListener : ServletContextListener {
     try {
       serverContext.ideFilesBank.getAvailableIdeVersions().forEach {
         serverContext.pluginRepository.getLastCompatibleUpdates(it).forEach {
-          serverContext.updateInfoCache.update(it)
+          serverContext.updateInfoCache.addUpdateInfo(it)
         }
       }
     } catch (e: Exception) {

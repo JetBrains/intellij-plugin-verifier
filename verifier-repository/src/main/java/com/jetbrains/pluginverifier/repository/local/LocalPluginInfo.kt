@@ -4,6 +4,9 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import java.nio.file.Path
 
+/**
+ * Identifier of a locally stored plugin.
+ */
 data class LocalPluginInfo(override val pluginId: String,
                            override val version: String,
                            val pluginName: String,

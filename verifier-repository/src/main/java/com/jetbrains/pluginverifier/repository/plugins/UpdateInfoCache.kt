@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.repository.plugins
 
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -16,7 +17,8 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
 
 /**
- * @author Sergey Patrikeev
+ * Cache that provides mapping from update id, which is a unique identifier of
+ * a plugin's build stored in the Plugin Repository, to corresponding [UpdateInfo].
  */
 class UpdateInfoCache(repositoryUrl: String) {
 
@@ -33,9 +35,21 @@ class UpdateInfoCache(repositoryUrl: String) {
       .build()
       .create(GetUpdateInfoApi::class.java)
 
-  fun update(updateInfo: UpdateInfo) {
+  fun addUpdateInfo(updateInfo: UpdateInfo) {
     cache.putIfAbsent(updateInfo.updateId, updateInfo)
   }
+
+  private fun addUpdateInfo(updateInfoGson: UpdateInfoGson) {
+    cache.putIfAbsent(updateInfoGson.updateId, updateInfoGson.toUpdateInfo())
+  }
+
+  private fun UpdateInfoGson.toUpdateInfo() = UpdateInfo(
+      pluginId,
+      pluginName,
+      version,
+      updateId,
+      vendor
+  )
 
   fun getUpdateInfo(updateId: Int): UpdateInfo? {
     val updateInfo = cache[updateId]
@@ -50,7 +64,7 @@ class UpdateInfoCache(repositoryUrl: String) {
     try {
       val batchRequestSize = 1000
       val updates = api.getUpdateInfosForIds(updateId, updateId + batchRequestSize).executeSuccessfully().body()
-      updates.forEach { update(it) }
+      updates.forEach { addUpdateInfo(it) }
     } catch (e: Exception) {
       LOG.error("Unable to get UpdateInfo for Update #$updateId", e)
       updateSingle(updateId)
@@ -60,19 +74,28 @@ class UpdateInfoCache(repositoryUrl: String) {
   private fun updateSingle(updateId: Int) {
     try {
       val info = api.getUpdateInfo(updateId).executeSuccessfully().body()
-      update(info)
+      addUpdateInfo(info)
     } catch (e: Exception) {
       LOG.error("Unable to get UpdateInfo #$updateId", e)
     }
   }
 }
 
+/**
+ * Gson mirror class for [UpdateInfo] used to avoid possible field name conflicts.
+ */
+private data class UpdateInfoGson(@SerializedName("pluginId") val pluginId: String,
+                                  @SerializedName("pluginName") val pluginName: String,
+                                  @SerializedName("pluginVersion") val version: String,
+                                  @SerializedName("updateId") val updateId: Int,
+                                  @SerializedName("vendor") val vendor: String?)
+
 private interface GetUpdateInfoApi {
 
   @POST("/manager/getUpdateInfosForIdsBetween")
-  fun getUpdateInfosForIds(@Query("startId") startId: Int, @Query("endId") endId: Int): Call<List<UpdateInfo>>
+  fun getUpdateInfosForIds(@Query("startId") startId: Int, @Query("endId") endId: Int): Call<List<UpdateInfoGson>>
 
   @POST("/manager/getUpdateInfoById")
-  fun getUpdateInfo(@Query("updateId") updateId: Int): Call<UpdateInfo>
+  fun getUpdateInfo(@Query("updateId") updateId: Int): Call<UpdateInfoGson>
 
 }
