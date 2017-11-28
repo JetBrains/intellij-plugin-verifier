@@ -4,8 +4,6 @@ import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy
 import com.jetbrains.pluginverifier.repository.downloader.DownloadExecutor
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
-import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Clock
 
@@ -18,15 +16,15 @@ class FileRepositoryBuilder {
                                   keyProvider: (Path) -> K? = { null }): FileRepository<K> {
     val downloadExecutor = DownloadExecutor(repositoryDir, downloader, fileNameMapper)
     val fileRepository = FileRepositoryImpl(sweepPolicy, clock, downloadExecutor)
-    readAvailableFiles(fileRepository, repositoryDir, keyProvider)
+    readAvailableFiles(fileRepository, keyProvider, downloadExecutor)
     fileRepository.sweep()
     return fileRepository
   }
 
-  private fun <K> readAvailableFiles(fileRepository: FileRepository<K>,
-                                     repositoryDir: Path,
-                                     keyProvider: (Path) -> K?) {
-    val existingFiles = Files.list(repositoryDir) ?: throw IOException("Unable to read directory content: $repositoryDir")
+  private fun <K> readAvailableFiles(fileRepository: FileRepositoryImpl<K>,
+                                     keyProvider: (Path) -> K?,
+                                     downloadExecutor: DownloadExecutor<K>) {
+    val existingFiles = downloadExecutor.getAvailableFiles()
     for (file in existingFiles) {
       val key = keyProvider(file)
       if (key != null) {

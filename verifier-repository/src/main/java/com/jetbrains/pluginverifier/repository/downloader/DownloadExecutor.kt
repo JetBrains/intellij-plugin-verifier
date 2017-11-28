@@ -7,19 +7,25 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * @author Sergey Patrikeev
+ * Download executor is responsible for downloading files and directories using
+ * provided [downloader] and saving them to the [destinationDirectory] using provided [fileNameMapper].
  */
 class DownloadExecutor<K>(private val destinationDirectory: Path,
                           private val downloader: Downloader<K>,
                           private val fileNameMapper: FileNameMapper<K>) {
 
-  private val downloadDirectory = destinationDirectory.resolve("downloads")
+  private companion object {
+    const val DOWNLOADS_DIRECTORY = "downloads"
+  }
+
+  private val downloadDirectory = destinationDirectory.resolve(DOWNLOADS_DIRECTORY)
 
   init {
     destinationDirectory.createDir()
     downloadDirectory.forceDeleteIfExists()
-    downloadDirectory.createDir()
   }
+
+  fun getAvailableFiles() = destinationDirectory.listFiles()
 
   fun download(key: K): DownloadResult {
     val tempDirectory = createTempDirectoryForDownload(key)
@@ -50,7 +56,7 @@ class DownloadExecutor<K>(private val destinationDirectory: Path,
 
   @Synchronized
   private fun createTempDirectoryForDownload(key: K) = Files.createTempDirectory(
-      downloadDirectory,
+      downloadDirectory.createDir(),
       "download-" + getFileNameForKey(key, "", true) + "-"
   )
 
@@ -70,6 +76,9 @@ class DownloadExecutor<K>(private val destinationDirectory: Path,
 
   private fun getFileNameForKey(key: K, extension: String, isDirectory: Boolean): String {
     val nameWithoutExtension = fileNameMapper.getFileNameWithoutExtension(key)
+    if (nameWithoutExtension == DOWNLOADS_DIRECTORY) {
+      throw IllegalStateException("File or directory named '$DOWNLOADS_DIRECTORY' is prohibited")
+    }
     val fullName = nameWithoutExtension + if (isDirectory || extension.isEmpty()) "" else "." + extension
     return fullName.replaceInvalidFileNameCharacters()
   }

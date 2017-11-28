@@ -223,7 +223,7 @@ class FileRepositoryImplTest {
     val tempFolder = tempFolder.newFolderPath()
     //These two files are extra files that must be removed on the repository creation
     tempFolder.resolve("one.txt").writeText("one")
-    tempFolder.resolve("two.txt").writeText("two")
+    tempFolder.resolve("downloads").createDir()
 
     //This is the only legitimate file
     val trueFile = tempFolder.resolve("1")
