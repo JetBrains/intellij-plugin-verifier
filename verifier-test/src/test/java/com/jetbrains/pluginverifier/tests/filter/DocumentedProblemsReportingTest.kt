@@ -8,8 +8,13 @@ import com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilte
 import com.jetbrains.pluginverifier.parameters.filtering.documented.*
 import com.jetbrains.pluginverifier.reporting.verification.EmptyPluginVerificationReportage
 import com.jetbrains.pluginverifier.results.instruction.Instruction
+import com.jetbrains.pluginverifier.results.location.ClassLocation
+import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.location.classpath.ClassPath
+import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.results.problems.FieldNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.MethodNotFoundProblem
+import com.jetbrains.pluginverifier.results.problems.MethodNotImplementedProblem
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
@@ -61,6 +66,21 @@ class DocumentedProblemsReportingTest {
         IdeVersion.createIdeVersion("IU-163")
     )
 
+    val abstractMethodLocation = MethodLocation(
+        ClassLocation("org/test/I", "", ClassPath(ClassPath.Type.ROOT, ""), Modifiers(0x1)),
+        "abstractMethod",
+        "()V",
+        emptyList(),
+        "",
+        Modifiers(0x1)
+    )
+    val incompleteClass = ClassLocation("org/test/IImplDerived", "", ClassPath(ClassPath.Type.ROOT, ""), Modifiers(0x1))
+
+    val methodNotImplementedProblem = MethodNotImplementedProblem(
+        abstractMethodLocation,
+        incompleteClass
+    )
+
     return mapOf(
         methodFooIsNotFoundProblem to DocMethodRemoved("org/test/A", "foo"),
 
@@ -70,7 +90,9 @@ class DocumentedProblemsReportingTest {
 
         fieldXNotFoundProblem to DocFieldRemoved("org/test/A", "x"),
 
-        fieldXNotFoundProblem to DocFieldTypeChanged("org/test/A", "x")
+        fieldXNotFoundProblem to DocFieldTypeChanged("org/test/A", "x"),
+
+        methodNotImplementedProblem to DocAbstractMethodAdded("org/test/IImpl", "abstractMethod")
     )
   }
 
@@ -98,6 +120,18 @@ class DocumentedProblemsReportingTest {
 
 
   /**
+   * public interface I {
+   *
+   * }
+   *
+   * public class IImpl implements I {
+   *
+   * }
+   *
+   * public class IImplDerived extends IImpl {
+   *
+   * }
+   *
    * public class A {
    *
    * }
@@ -107,6 +141,21 @@ class DocumentedProblemsReportingTest {
    * }
    */
   private fun buildClassesForHierarchicalTest(): List<ClassNode> {
+    val interfaceIDescriptor = ByteBuddy()
+        .makeInterface()
+        .name("org.test.I")
+        .make()
+
+    val interfaceImplDescriptor = ByteBuddy()
+        .subclass(interfaceIDescriptor.typeDescription)
+        .name("org.test.IImpl")
+        .make()
+
+    val interfaceImplDerived = ByteBuddy()
+        .subclass(interfaceImplDescriptor.typeDescription)
+        .name("org.test.IImplDerived")
+        .make()
+
     val classADescriptor = ByteBuddy()
         .subclass(Any::class.java)
         .name("org.test.A")
@@ -117,14 +166,8 @@ class DocumentedProblemsReportingTest {
         .name("org.test.other.B")
         .make()
 
-    val classA = classADescriptor
-        .bytes
-        .createClassNode()
-
-    val classB = classBDescriptor
-        .bytes
-        .createClassNode()
-
-    return listOf(classA, classB)
+    return listOf(classADescriptor, classBDescriptor, interfaceIDescriptor, interfaceImplDescriptor, interfaceImplDerived).map {
+      it.bytes.createClassNode()
+    }
   }
 }

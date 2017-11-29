@@ -118,7 +118,9 @@ data class DocPackageRemoved(val packageName: String) : DocumentedProblem {
  */
 data class DocAbstractMethodAdded(val hostClass: String, val methodName: String) : DocumentedProblem {
   override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
-      problem is MethodNotImplementedProblem && problem.abstractMethod.hostClass.className == hostClass && problem.abstractMethod.methodName == methodName
+      problem is MethodNotImplementedProblem
+          && problem.abstractMethod.methodName == methodName
+          && verificationContext.isSubclassOrSelf(problem.incompleteClass.className, hostClass)
 }
 
 /**
