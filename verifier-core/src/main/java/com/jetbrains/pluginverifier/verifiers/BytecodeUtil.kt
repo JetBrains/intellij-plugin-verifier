@@ -3,10 +3,7 @@ package com.jetbrains.pluginverifier.verifiers
 import com.jetbrains.pluginverifier.results.access.AccessType
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.FieldNode
-import org.objectweb.asm.tree.LocalVariableNode
-import org.objectweb.asm.tree.MethodNode
+import org.objectweb.asm.tree.*
 
 @Suppress("UNCHECKED_CAST")
 fun MethodNode.getParameterNames(): List<String> {
@@ -120,6 +117,12 @@ fun MethodNode.isSynthetic(): Boolean = access and Opcodes.ACC_SYNTHETIC != 0
 fun MethodNode.isBridgeMethod(): Boolean = access and Opcodes.ACC_BRIDGE != 0
 
 fun haveTheSamePackage(first: ClassNode, second: ClassNode): Boolean = extractPackage(first.name) == extractPackage(second.name)
+
+@Suppress("UNCHECKED_CAST")
+fun ClassNode.getInvisibleAnnotations() = (invisibleAnnotations as? List<AnnotationNode>).orEmpty()
+
+@Suppress("UNCHECKED_CAST")
+fun ClassNode.getVisibleAnnotations() = (visibleAnnotations as? List<AnnotationNode>).orEmpty()
 
 /**
  * Access Control

@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.SuperClassVerifier
 import com.jetbrains.pluginverifier.verifiers.field.FieldTypeVerifier
 import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier
+import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 import com.jetbrains.pluginverifier.verifiers.instruction.*
 import com.jetbrains.pluginverifier.verifiers.method.*
 import org.objectweb.asm.tree.AbstractInsnNode
@@ -15,7 +16,14 @@ import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
 
+/**
+ * Bytecode verification entry point, which takes as input
+ * a [VerificationContext] and classes for verification, and
+ * runs available bytecode verifiers against such configuration.
+ */
 class BytecodeVerifier {
+
+  private val verificationFilters = listOf(DynamicallyLoadedFilter())
 
   private val fieldVerifiers = arrayOf<FieldVerifier>(FieldTypeVerifier())
 
@@ -60,10 +68,12 @@ class BytecodeVerifier {
     } catch (e: Exception) {
       null
     }
-    if (node != null) {
+    if (node != null && shouldVerify(node)) {
       verifyClassNode(node, verificationContext)
     }
   }
+
+  private fun shouldVerify(classNode: ClassNode) = verificationFilters.all { it.shouldVerify(classNode) }
 
   @Suppress("UNCHECKED_CAST")
   private fun verifyClassNode(node: ClassNode, ctx: VerificationContext) {
