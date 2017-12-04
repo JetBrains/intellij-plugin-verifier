@@ -2,11 +2,24 @@ package org.jetbrains.plugins.verifier.service.service
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.jetbrains.plugins.verifier.service.server.ServerContext
+import org.jetbrains.plugins.verifier.service.service.BaseService.State
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
+/**
+ * Service is a job that is to be run periodically with
+ * initial delay of [initialDelay] and period of [period] measured in [timeUnit]s.
+ *
+ * Service has a state which is one of [State] constants.
+ * Initially, the service is in [State.NOT_STARTED] state and can be started
+ * by [start] invocation. The service can be [_paused_] [pause] and [_resumed_] [resume] several times,
+ * but it can be [_started_] [start] and [_stopped_] [stop] only once.
+ *
+ * Service implementations must de-allocate resources when the service is stopped. This can be done
+ * by overriding the [onStop].
+ */
 abstract class BaseService(val serviceName: String,
                            private val initialDelay: Long,
                            private val period: Long,
@@ -17,7 +30,7 @@ abstract class BaseService(val serviceName: String,
     NOT_STARTED, SLEEPING, RUNNING, PAUSED, STOPPED
   }
 
-  protected val LOG: Logger = LoggerFactory.getLogger(serviceName)
+  protected val logger: Logger = LoggerFactory.getLogger(serviceName)
 
   private var state: State = State.NOT_STARTED
 
@@ -35,7 +48,7 @@ abstract class BaseService(val serviceName: String,
   @Synchronized
   fun start(): Boolean {
     if (state == State.NOT_STARTED) {
-      LOG.info("Starting $serviceName")
+      logger.info("Starting $serviceName")
       state = State.SLEEPING
       executor.scheduleAtFixedRate({ onServeTime() }, initialDelay, period, timeUnit)
       return true
@@ -46,7 +59,7 @@ abstract class BaseService(val serviceName: String,
   @Synchronized
   fun pause(): Boolean {
     if (state == State.SLEEPING) {
-      LOG.info("Pausing $serviceName")
+      logger.info("Pausing $serviceName")
       state = State.PAUSED
       return true
     }
@@ -56,7 +69,7 @@ abstract class BaseService(val serviceName: String,
   @Synchronized
   fun resume(): Boolean {
     if (state == State.PAUSED) {
-      LOG.info("Resuming $serviceName")
+      logger.info("Resuming $serviceName")
       state = State.SLEEPING
       return true
     }
@@ -66,9 +79,10 @@ abstract class BaseService(val serviceName: String,
   @Synchronized
   fun stop(): Boolean {
     if (state == State.PAUSED || state == State.SLEEPING) {
-      LOG.info("Stopping $serviceName")
+      logger.info("Stopping $serviceName")
       state = State.STOPPED
       executor.shutdownNow()
+      onStop()
       return true
     }
     return false
@@ -80,17 +94,27 @@ abstract class BaseService(val serviceName: String,
       state = State.RUNNING
       val start = System.currentTimeMillis()
       try {
-        LOG.info("$serviceName is going to start")
+        logger.info("$serviceName is going to start")
         doServe()
       } catch (e: Throwable) {
-        LOG.error("$serviceName failed to serve", e)
+        logger.error("$serviceName failed to serve", e)
       } finally {
         val duration = System.currentTimeMillis() - start
-        LOG.info("$serviceName has served in $duration ms")
+        logger.info("$serviceName has served in $duration ms")
         state = State.SLEEPING
       }
     }
   }
 
+  /**
+   * This method is invoked when the next work cycle runs.
+   * It is invoked under _synchronized_ block so the service implementations
+   * are free to modify any state variables.
+   */
   protected abstract fun doServe()
+
+  /**
+   * This method is called once when the service is stopped.
+   */
+  protected open fun onStop() = Unit
 }

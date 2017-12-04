@@ -13,15 +13,23 @@ import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.api.UpdateRangeCompatibilityResults
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkVersion
+import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.TimeUnit
 
-class VerifierService(serverContext: ServerContext, private val repositoryUrl: String) : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES, serverContext) {
+/**
+ * Verifier service is responsible for plugins bytecode verification using the *plugin verifier* tool.
+ *
+ * This service periodically accesses the plugin repository, fetches plugins which should be verified,
+ * and sends the verification reports.
+ * @see [Plugin verifier integration with the Plugins Repository] (https://confluence.jetbrains.com/display/PLREP/plugin-verifier+integration+with+the+plugins.jetbrains.com)
+ */
+class VerifierService(serverContext: ServerContext,
+                      private val repositoryUrl: String) : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES, serverContext) {
 
   companion object {
     private val UPDATE_MISSING_IDE_PAUSE_MS = TimeUnit.DAYS.toMillis(1)
@@ -44,7 +52,7 @@ class VerifierService(serverContext: ServerContext, private val repositoryUrl: S
   private fun createVerifier(repositoryUrl: String): VerificationPluginRepositoryConnector = Retrofit.Builder()
       .baseUrl(repositoryUrl)
       .addConverterFactory(GsonConverterFactory.create(Gson()))
-      .client(makeOkHttpClient(LOG.isDebugEnabled, 5, TimeUnit.MINUTES))
+      .client(makeOkHttpClient(logger.isDebugEnabled, 5, TimeUnit.MINUTES))
       .build()
       .create(VerificationPluginRepositoryConnector::class.java)
 
@@ -57,7 +65,7 @@ class VerifierService(serverContext: ServerContext, private val repositoryUrl: S
       }
     }
 
-    LOG.info("Checking updates: ${updateId2IdeVersions.asMap()}")
+    logger.info("Checking updates: ${updateId2IdeVersions.asMap()}")
 
     for ((updateId, ideVersions) in updateId2IdeVersions.asMap()) {
       if (verifiableUpdates.size > 500) {
@@ -98,7 +106,7 @@ class VerifierService(serverContext: ServerContext, private val repositoryUrl: S
         { _ -> onCompletion(runner) }
     )
     verifiableUpdates.add(updateInfo)
-    LOG.info("Check [since; until] for $updateInfo is scheduled #${taskStatus.taskId}")
+    logger.info("Check [since; until] for $updateInfo is scheduled #${taskStatus.taskId}")
   }
 
   private fun onCompletion(task: CheckRangeCompatibilityServiceTask) {
@@ -107,12 +115,12 @@ class VerifierService(serverContext: ServerContext, private val repositoryUrl: S
 
   private fun onError(error: Throwable, taskStatus: ServiceTaskStatus, task: CheckRangeCompatibilityServiceTask) {
     val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
-    LOG.error("Unable to check $updateInfo (task #${taskStatus.taskId})", error)
+    logger.error("Unable to check $updateInfo (task #${taskStatus.taskId})", error)
   }
 
   private fun onSuccess(compatibilityResult: CheckRangeCompatibilityResult, updateInfo: UpdateInfo) {
     val ideVersionToResult = compatibilityResult.verificationResults.orEmpty().map { it.ideVersion to it.verdict.javaClass.simpleName }
-    LOG.info("Update ${compatibilityResult.updateInfo} is checked: ${compatibilityResult.resultType}: ${ideVersionToResult.joinToString()}")
+    logger.info("Update ${compatibilityResult.updateInfo} is checked: ${compatibilityResult.resultType}: ${ideVersionToResult.joinToString()}")
 
     if (compatibilityResult.resultType == CheckRangeCompatibilityResult.ResultType.NO_COMPATIBLE_IDES) {
       updatesMissingCompatibleIde.add(updateInfo)
@@ -125,7 +133,7 @@ class VerifierService(serverContext: ServerContext, private val repositoryUrl: S
     try {
       sendUpdateCheckResult(verificationResult).executeSuccessfully()
     } catch(e: Exception) {
-      LOG.error("Unable to send verification result of ${compatibilityResult.updateInfo}", e)
+      logger.error("Unable to send verification result of ${compatibilityResult.updateInfo}", e)
     }
   }
 

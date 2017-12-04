@@ -2,20 +2,25 @@ package org.jetbrains.plugins.verifier.service.service.features
 
 import com.google.gson.Gson
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
+import com.jetbrains.pluginverifier.network.createJsonRequestBody
+import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import com.jetbrains.pluginverifier.network.createJsonRequestBody
-import com.jetbrains.pluginverifier.network.createStringRequestBody
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 /**
- * @author Sergey Patrikeev
+ * Feature service is responsible for extracting the plugin features
+ * using the _intellij-feature-extractor_ tool.
+ *
+ * This service periodically accesses the plugin repository, fetches plugins of which features should be extracted,
+ * and sends features' reports.
+ * @see [Feature extractor integration with the plugin repository](https://confluence.jetbrains.com/display/PLREP/features-extractor+integration+with+the+plugins.jetbrains.com)
  */
 class FeatureService(serverContext: ServerContext, private val repositoryUrl: String) : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, serverContext) {
 
@@ -25,9 +30,8 @@ class FeatureService(serverContext: ServerContext, private val repositoryUrl: St
 
   private val repo2FeatureExtractorApi = hashMapOf<String, FeaturesPluginRepositoryConnector>()
 
-  private fun getFeaturesApiConnector(): FeaturesPluginRepositoryConnector {
-    return repo2FeatureExtractorApi.getOrPut(repositoryUrl, { createFeatureExtractor(repositoryUrl) })
-  }
+  private fun getFeaturesApiConnector(): FeaturesPluginRepositoryConnector =
+      repo2FeatureExtractorApi.getOrPut(repositoryUrl, { createFeatureExtractor(repositoryUrl) })
 
   private fun createFeatureExtractor(repositoryUrl: String): FeaturesPluginRepositoryConnector = Retrofit.Builder()
       .baseUrl(repositoryUrl)
@@ -38,7 +42,7 @@ class FeatureService(serverContext: ServerContext, private val repositoryUrl: St
 
   override fun doServe() {
     val updatesToExtract = getUpdatesToExtract()
-    LOG.info("Extracting features of ${updatesToExtract.size} updates: $updatesToExtract")
+    logger.info("Extracting features of ${updatesToExtract.size} updates: $updatesToExtract")
     for (update in updatesToExtract) {
       if (inProgressUpdates.size > 500) {
         return
@@ -72,7 +76,7 @@ class FeatureService(serverContext: ServerContext, private val repositoryUrl: St
         { _ -> onCompletion(runner) }
     )
     inProgressUpdates.add(updateInfo)
-    LOG.info("Extract features of $updateInfo is scheduled with taskId #${taskStatus.taskId}")
+    logger.info("Extract features of $updateInfo is scheduled with taskId #${taskStatus.taskId}")
   }
 
   private fun onCompletion(task: ExtractFeaturesServiceTask) {
@@ -81,20 +85,20 @@ class FeatureService(serverContext: ServerContext, private val repositoryUrl: St
 
   private fun onError(error: Throwable, taskStatus: ServiceTaskStatus, task: ExtractFeaturesServiceTask) {
     val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
-    LOG.error("Unable to extract features of $updateInfo (#${taskStatus.taskId})", error)
+    logger.error("Unable to extract features of $updateInfo (#${taskStatus.taskId})", error)
   }
 
   private fun onSuccess(extractorResult: FeaturesResult) {
     val updateInfo = extractorResult.updateInfo
     val resultType = extractorResult.resultType
     val size = extractorResult.features.size
-    LOG.info("Plugin $updateInfo extracted $size features: ($resultType)")
+    logger.info("Plugin $updateInfo extracted $size features: ($resultType)")
 
     val pluginsResult = prepareFeaturesResponse(updateInfo, resultType, extractorResult.features)
     try {
       sendExtractedFeatures(pluginsResult).executeSuccessfully()
     } catch (e: Exception) {
-      LOG.error("Unable to send check result of the plugin ${extractorResult.updateInfo}", e)
+      logger.error("Unable to send check result of the plugin ${extractorResult.updateInfo}", e)
     }
   }
 

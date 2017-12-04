@@ -23,7 +23,7 @@ class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater
     val missingIdes: Set<IdeVersion> = necessaryIdes - alreadyIdes
     val redundantIdes: Set<IdeVersion> = alreadyIdes - necessaryIdes.map { it }
 
-    LOG.info("Available IDEs: $alreadyIdes;\nMissing IDEs: $missingIdes;\nRedundant IDEs: $redundantIdes")
+    logger.info("Available IDEs: $alreadyIdes;\nMissing IDEs: $missingIdes;\nRedundant IDEs: $redundantIdes")
 
     missingIdes.forEach {
       enqueueUploadIde(it)
@@ -35,10 +35,10 @@ class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater
   }
 
   private fun enqueueDeleteIde(ideVersion: IdeVersion) {
-    LOG.info("Delete the IDE #$ideVersion because it is not necessary anymore")
+    logger.info("Delete the IDE #$ideVersion because it is not necessary anymore")
     val task = DeleteIdeTask(serverContext, ideVersion)
     val taskStatus = serverContext.taskManager.enqueue(task)
-    LOG.info("Delete IDE #$ideVersion is enqueued with taskId=#${taskStatus.taskId}")
+    logger.info("Delete IDE #$ideVersion is enqueued with taskId=#${taskStatus.taskId}")
   }
 
   private fun enqueueUploadIde(ideVersion: IdeVersion) {
@@ -53,7 +53,7 @@ class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater
         { },
         { _, _ -> }
     ) { _ -> downloadingIdes.remove(ideVersion) }
-    LOG.info("Uploading IDE version #$ideVersion (task #${taskStatus.taskId})")
+    logger.info("Uploading IDE version #$ideVersion (task #${taskStatus.taskId})")
 
     downloadingIdes.add(ideVersion)
   }
