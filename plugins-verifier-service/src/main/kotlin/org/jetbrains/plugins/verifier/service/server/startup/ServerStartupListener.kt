@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.plugins.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.server.ServerContext
+import org.jetbrains.plugins.verifier.service.server.ServiceDAO
 import org.jetbrains.plugins.verifier.service.server.database.MapDbServerDatabase
 import org.jetbrains.plugins.verifier.service.service.features.FeatureService
 import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
@@ -23,6 +24,10 @@ import org.slf4j.LoggerFactory
 import javax.servlet.ServletContextEvent
 import javax.servlet.ServletContextListener
 
+/**
+ * Startup initializer that configures the [server context] [ServerContext]
+ * according to passed parameters.
+ */
 class ServerStartupListener : ServletContextListener {
 
   companion object {
@@ -64,10 +69,16 @@ class ServerStartupListener : ServletContextListener {
 
     val ideDownloadDirDiskSpaceSetting = getIdeDownloadDirDiskSpaceSetting()
     val serverDatabase = MapDbServerDatabase(applicationHomeDir)
+    val serviceDAO = ServiceDAO(serverDatabase)
+
+    val ideFilesBank = IdeFilesBank(ideRepository, ideFilesDir, ideDownloadDirDiskSpaceSetting, {})
+    val ideKeeper = IdeKeeper(serviceDAO, ideRepository, ideFilesBank)
+
     return ServerContext(
         applicationHomeDir,
         ideRepository,
-        IdeFilesBank(ideRepository, ideFilesDir, ideDownloadDirDiskSpaceSetting, {}),
+        ideFilesBank,
+        ideKeeper,
         pluginRepository,
         pluginDetailsProvider,
         tasksManager,
@@ -75,6 +86,7 @@ class ServerStartupListener : ServletContextListener {
         jdkManager,
         updateInfoCache,
         settings,
+        serviceDAO,
         serverDatabase
     )
   }
@@ -96,8 +108,7 @@ class ServerStartupListener : ServletContextListener {
 
     val verifierService = VerifierService(serverContext, Settings.VERIFIER_SERVICE_REPOSITORY_URL.get())
     val featureService = FeatureService(serverContext, Settings.FEATURE_EXTRACTOR_REPOSITORY_URL.get())
-    val ideKeeper = IdeKeeper(serverContext)
-    val ideListUpdater = IdeListUpdater(serverContext, ideKeeper)
+    val ideListUpdater = IdeListUpdater(serverContext)
 
     serverContext.addService(verifierService)
     serverContext.addService(featureService)
@@ -119,7 +130,7 @@ class ServerStartupListener : ServletContextListener {
 
   private fun prepareUpdateInfoCacheForExistingIdes() {
     try {
-      serverContext.ideFilesBank.getAvailableIdeVersions().forEach {
+      serverContext.ideKeeper.getAvailableIdeVersions().forEach {
         serverContext.pluginRepository.getLastCompatibleUpdates(it).forEach {
           serverContext.updateInfoCache.addUpdateInfo(it)
         }

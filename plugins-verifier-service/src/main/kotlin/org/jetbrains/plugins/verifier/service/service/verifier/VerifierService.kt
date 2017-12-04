@@ -59,7 +59,7 @@ class VerifierService(serverContext: ServerContext,
   override fun doServe() {
     val updateId2IdeVersions = LinkedHashMultimap.create<Int, IdeVersion>()
 
-    for (ideVersion in serverContext.ideFilesBank.getAvailableIdeVersions()) {
+    for (ideVersion in serverContext.ideKeeper.getAvailableIdeVersions()) {
       getUpdatesToCheck(ideVersion).forEach { updateId ->
         updateId2IdeVersions.put(updateId, ideVersion)
       }

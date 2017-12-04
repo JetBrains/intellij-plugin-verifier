@@ -10,20 +10,19 @@ import java.util.concurrent.TimeUnit
  * on the server. Being run periodically, it determines a list of IDE builds
  * that should be kept by fetching the IDE index from the IDE Repository ([IdeKeeper]).
  */
-class IdeListUpdater(serverContext: ServerContext,
-                     private val ideKeeper: IdeKeeper) : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES, serverContext) {
+class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES, serverContext) {
 
   private val downloadingIdes: MutableSet<IdeVersion> = hashSetOf()
 
   override fun doServe() {
-    val (availableIdes, missingIdes, redundantIdes) = ideKeeper.getIdesList()
-    logger.info("Available IDEs: $availableIdes;\nMissing IDEs: $missingIdes;\nRedundant IDEs: $redundantIdes")
+    val (availableIdes, missingIdes, unnecessaryIdes, manuallyUploadedIdes) = serverContext.ideKeeper.getIdesList()
+    logger.info("Available IDEs: $availableIdes;\nMissing IDEs: $missingIdes;\nUnnecessary IDEs: $unnecessaryIdes\n; Manually uploaded IDEs: $manuallyUploadedIdes")
 
     missingIdes.forEach {
       enqueueUploadIde(it)
     }
 
-    redundantIdes.forEach {
+    unnecessaryIdes.forEach {
       enqueueDeleteIde(it)
     }
   }
@@ -51,7 +50,6 @@ class IdeListUpdater(serverContext: ServerContext,
 
     downloadingIdes.add(ideVersion)
   }
-
 
 
 }

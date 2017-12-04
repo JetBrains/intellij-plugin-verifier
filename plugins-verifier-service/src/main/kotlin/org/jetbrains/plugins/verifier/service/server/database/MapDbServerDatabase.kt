@@ -20,16 +20,24 @@ class MapDbServerDatabase(applicationHomeDir: Path) : ServerDatabase, Closeable 
       .closeOnJvmShutdown()
       .make()
 
-  private val persistentProperties = serverDB
-      .hashMap("properties", Serializer.STRING, Serializer.STRING)
-      .createOrOpen()
 
-  override fun setProperty(key: String, value: String): String? = persistentProperties.put(key, value)
+  @Suppress("UNCHECKED_CAST")
+  private fun <T> ValueType<T>.getSerializer(): Serializer<T> = when (this) {
+    ValueType.STRING -> Serializer.STRING as Serializer<T>
+    ValueType.INT -> Serializer.INTEGER as Serializer<T>
+  }
 
-  override fun getProperty(key: String): String? = persistentProperties.get(key)
+  override fun <T> openOrCreateSet(setName: String, elementType: ValueType<T>) =
+      serverDB
+          .hashSet(setName, elementType.getSerializer<T>())
+          .createOrOpen()
+
+  override fun <K, V> openOrCreateMap(mapName: String, keyType: ValueType<K>, valueType: ValueType<V>) =
+      serverDB
+          .hashMap(mapName, keyType.getSerializer<K>(), valueType.getSerializer<V>())
+          .createOrOpen()
 
   override fun close() {
-    persistentProperties.closeLogged()
     serverDB.closeLogged()
   }
 }

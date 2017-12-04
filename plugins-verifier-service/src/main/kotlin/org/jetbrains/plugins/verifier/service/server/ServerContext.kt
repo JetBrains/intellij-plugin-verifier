@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.plugins.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.server.database.ServerDatabase
 import org.jetbrains.plugins.verifier.service.service.BaseService
+import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkManager
 import org.jetbrains.plugins.verifier.service.service.repository.AuthorizationData
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
@@ -24,6 +25,7 @@ import java.nio.file.Path
 class ServerContext(val applicationHomeDirectory: Path,
                     val ideRepository: IdeRepository,
                     val ideFilesBank: IdeFilesBank,
+                    val ideKeeper: IdeKeeper,
                     val pluginRepository: PluginRepository,
                     val pluginDetailsProvider: PluginDetailsProvider,
                     val taskManager: ServiceTasksManager,
@@ -31,6 +33,7 @@ class ServerContext(val applicationHomeDirectory: Path,
                     val jdkManager: JdkManager,
                     val updateInfoCache: UpdateInfoCache,
                     val startupSettings: List<Settings>,
+                    val serviceDAO: ServiceDAO,
                     val serverDatabase: ServerDatabase) : Closeable {
 
   val allServices = arrayListOf<BaseService>()

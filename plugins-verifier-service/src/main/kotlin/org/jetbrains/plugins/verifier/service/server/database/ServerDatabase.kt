@@ -9,9 +9,9 @@ import java.io.Closeable
  */
 interface ServerDatabase : Closeable {
 
-  fun getProperty(key: String): String?
+  fun <T> openOrCreateSet(setName: String, elementType: ValueType<T>): MutableSet<T>
 
-  fun setProperty(key: String, value: String): String?
+  fun <K, V> openOrCreateMap(mapName: String, keyType: ValueType<K>, valueType: ValueType<V>): MutableMap<K, V>
 
   /**
    * Flush allocated database resources and save data.

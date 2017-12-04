@@ -11,13 +11,12 @@ import javax.servlet.http.HttpServletResponse
  */
 class IdeServlet : BaseServlet() {
 
-  //todo: protect IDEs which are explicitly uploaded by this method from removing by the IDE cleaner
   override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
     val path = getPath(req, resp) ?: return
     when {
       path.endsWith("uploadIde") -> processUploadIde(req, resp)
       path.endsWith("deleteIde") -> processDeleteIde(req, resp)
-      else -> sendJson(resp, serverContext.ideFilesBank.getAvailableIdeVersions())
+      else -> sendJson(resp, serverContext.ideKeeper.getAvailableIdeVersions())
     }
   }
 
@@ -31,22 +30,27 @@ class IdeServlet : BaseServlet() {
   }
 
   private fun processUploadIde(req: HttpServletRequest, resp: HttpServletResponse) {
-    val ideVersion = parseIdeVersionParameter(req, resp) ?: return
-    val availableIde = serverContext.ideRepository.fetchIndex().find { it.version.asStringWithoutProductCode() == ideVersion.asStringWithoutProductCode() }
+    val parameterIdeVersion = parseIdeVersionParameter(req, resp) ?: return
+    val availableIde = serverContext.ideRepository.fetchIndex().find { it.version.asStringWithoutProductCode() == parameterIdeVersion.asStringWithoutProductCode() }
     if (availableIde == null) {
-      sendNotFound(resp, "IDE with version $ideVersion is not found in the ${serverContext.ideRepository}")
+      sendNotFound(resp, "IDE with version $parameterIdeVersion is not found in the ${serverContext.ideRepository}")
       return
     }
-    val ideRunner = UploadIdeTask(serverContext, availableIde.version)
+    val uploadIdeVersion = availableIde.version
+    val ideRunner = UploadIdeTask(serverContext, uploadIdeVersion)
     val taskStatus = serverContext.taskManager.enqueue(ideRunner)
-    sendOk(resp, "Uploading $ideVersion (#${taskStatus.taskId})")
+    serverContext.ideKeeper.registerManuallyUploadedIde(uploadIdeVersion)
+    sendOk(resp, "Uploading $uploadIdeVersion (#${taskStatus.taskId})")
   }
 
   private fun processDeleteIde(req: HttpServletRequest, resp: HttpServletResponse) {
     val ideVersion = parseIdeVersionParameter(req, resp) ?: return
-    val deleteIdeRunner = DeleteIdeTask(serverContext, ideVersion)
-    val taskStatus = serverContext.taskManager.enqueue(deleteIdeRunner)
-    sendOk(resp, "Deleting $ideVersion (#${taskStatus.taskId})")
+    if (serverContext.ideKeeper.isAvailableIde(ideVersion)) {
+      val deleteIdeRunner = DeleteIdeTask(serverContext, ideVersion)
+      val taskStatus = serverContext.taskManager.enqueue(deleteIdeRunner)
+      serverContext.ideKeeper.removeManuallyUploadedIde(ideVersion)
+      sendOk(resp, "Deleting $ideVersion (#${taskStatus.taskId})")
+    }
   }
 
 }
