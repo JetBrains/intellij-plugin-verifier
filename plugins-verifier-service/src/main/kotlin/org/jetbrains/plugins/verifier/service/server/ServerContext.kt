@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.server
 
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
+import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.plugins.UpdateInfoCache
@@ -13,9 +14,13 @@ import java.io.Closeable
 import java.nio.file.Path
 
 /**
- * @author Sergey Patrikeev
+ * Server context aggregates all services and settings necessary to run
+ * the server.
+ *
+ * Server context must be closed on the server shutdown to de-allocate resources.
  */
 class ServerContext(val applicationHomeDirectory: Path,
+                    val ideRepository: IdeRepository,
                     val ideFilesBank: IdeFilesBank,
                     val pluginRepository: PluginRepository,
                     val pluginDetailsProvider: PluginDetailsProvider,

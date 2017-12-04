@@ -8,12 +8,13 @@ import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskProgress
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskResult
 
 /**
- * @author Sergey Patrikeev
+ * Service task responsible for uploading IDE build having the specified [IDE version] [ideVersion]
+ * from the [IDE Repository] [com.jetbrains.pluginverifier.ide.IdeRepository].
  */
-class UploadIdeRunner(serverContext: ServerContext,
-                      val ideVersion: IdeVersion) : ServiceTask(serverContext) {
+class UploadIdeTask(serverContext: ServerContext,
+                    private val ideVersion: IdeVersion) : ServiceTask(serverContext) {
 
-  override fun presentableName(): String = "Downloading IDE #$ideVersion"
+  override fun presentableName(): String = "Downloading IDE $ideVersion"
 
   override fun computeResult(progress: ServiceTaskProgress): ServiceTaskResult {
     val success = serverContext.ideFilesBank.getIdeLock(ideVersion) != null

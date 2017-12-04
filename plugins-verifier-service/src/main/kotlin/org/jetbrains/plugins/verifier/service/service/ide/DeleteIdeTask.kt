@@ -8,9 +8,10 @@ import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskProgress
 import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskResult
 
 /**
- * @author Sergey Patrikeev
+ * Service task responsible for deleting IDE build having the specified [IDE version] [ideVersion].
  */
-class DeleteIdeRunner(val ideVersion: IdeVersion, serverContext: ServerContext) : ServiceTask(serverContext) {
+class DeleteIdeTask(serverContext: ServerContext,
+                    private val ideVersion: IdeVersion) : ServiceTask(serverContext) {
 
   override fun presentableName(): String = "DeleteIde #$ideVersion"
 

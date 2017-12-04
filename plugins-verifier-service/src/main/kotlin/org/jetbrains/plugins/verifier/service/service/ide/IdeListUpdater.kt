@@ -7,7 +7,9 @@ import org.jetbrains.plugins.verifier.service.service.BaseService
 import java.util.concurrent.TimeUnit
 
 /**
- * @author Sergey Patrikeev
+ * Service responsible for maintenance of a set of relevant IDE versions
+ * on the server. Being run periodically, it determines a list of IDE builds
+ * that should be kept by fetching the IDE index from the [IdeRepository] [com.jetbrains.pluginverifier.ide.IdeRepository].
  */
 class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES, serverContext) {
 
@@ -34,7 +36,7 @@ class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater
 
   private fun enqueueDeleteIde(ideVersion: IdeVersion) {
     LOG.info("Delete the IDE #$ideVersion because it is not necessary anymore")
-    val task = DeleteIdeRunner(ideVersion, serverContext)
+    val task = DeleteIdeTask(serverContext, ideVersion)
     val taskStatus = serverContext.taskManager.enqueue(task)
     LOG.info("Delete IDE #$ideVersion is enqueued with taskId=#${taskStatus.taskId}")
   }
@@ -44,7 +46,7 @@ class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater
       return
     }
 
-    val runner = UploadIdeRunner(serverContext, ideVersion)
+    val runner = UploadIdeTask(serverContext, ideVersion)
 
     val taskStatus = serverContext.taskManager.enqueue(
         runner,
@@ -57,7 +59,7 @@ class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater
   }
 
   private fun fetchRelevantIdes(): Set<AvailableIde> {
-    val index = serverContext.ideFilesBank.ideRepository.fetchIndex()
+    val index = serverContext.ideRepository.fetchIndex()
 
     val branchToVersions: Map<Int, List<AvailableIde>> = index
         .filterNot { it.isCommunity }

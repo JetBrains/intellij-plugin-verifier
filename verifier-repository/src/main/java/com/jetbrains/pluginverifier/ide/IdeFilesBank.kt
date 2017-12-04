@@ -10,8 +10,15 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
+/**
+ * Storage of IDE builds kept on the server.
+ *
+ * Each IDE is identified by its [IdeVersion] and can be locked for the use time
+ * to avoid use-remove conflicts when one thread uses the IDE build and another
+ * thread (maybe [UploadIdeTask]) deletes it.
+ */
 //todo: provide a cache of IdeDescriptors
-class IdeFilesBank(val ideRepository: IdeRepository,
+class IdeFilesBank(ideRepository: IdeRepository,
                    bankDirectory: Path,
                    diskSpaceSetting: DiskSpaceSetting,
                    downloadProgress: (Double) -> Unit) {

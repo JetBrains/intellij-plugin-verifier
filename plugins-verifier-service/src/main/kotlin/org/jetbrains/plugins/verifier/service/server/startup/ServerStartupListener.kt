@@ -63,6 +63,7 @@ class ServerStartupListener : ServletContextListener {
     val ideDownloadDirDiskSpaceSetting = getIdeDownloadDirDiskSpaceSetting()
     return ServerContext(
         applicationHomeDir,
+        ideRepository,
         IdeFilesBank(ideRepository, ideFilesDir, ideDownloadDirDiskSpaceSetting, {}),
         pluginRepository,
         pluginDetailsProvider,
