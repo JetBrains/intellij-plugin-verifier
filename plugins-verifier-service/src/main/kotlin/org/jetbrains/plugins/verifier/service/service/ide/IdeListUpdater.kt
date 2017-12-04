@@ -1,29 +1,23 @@
 package org.jetbrains.plugins.verifier.service.service.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.ide.AvailableIde
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import java.util.concurrent.TimeUnit
 
 /**
- * Service responsible for maintenance of a set of relevant IDE versions
+ * Service responsible for maintaining a set of relevant IDE versions
  * on the server. Being run periodically, it determines a list of IDE builds
- * that should be kept by fetching the IDE index from the [IdeRepository] [com.jetbrains.pluginverifier.ide.IdeRepository].
+ * that should be kept by fetching the IDE index from the IDE Repository ([IdeKeeper]).
  */
-class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES, serverContext) {
+class IdeListUpdater(serverContext: ServerContext,
+                     private val ideKeeper: IdeKeeper) : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES, serverContext) {
 
   private val downloadingIdes: MutableSet<IdeVersion> = hashSetOf()
 
   override fun doServe() {
-    val alreadyIdes: Set<IdeVersion> = serverContext.ideFilesBank.getAvailableIdeVersions()
-
-    val necessaryIdes: Set<IdeVersion> = fetchRelevantIdes().map { it.version }.toSet()
-
-    val missingIdes: Set<IdeVersion> = necessaryIdes - alreadyIdes
-    val redundantIdes: Set<IdeVersion> = alreadyIdes - necessaryIdes.map { it }
-
-    logger.info("Available IDEs: $alreadyIdes;\nMissing IDEs: $missingIdes;\nRedundant IDEs: $redundantIdes")
+    val (availableIdes, missingIdes, redundantIdes) = ideKeeper.getIdesList()
+    logger.info("Available IDEs: $availableIdes;\nMissing IDEs: $missingIdes;\nRedundant IDEs: $redundantIdes")
 
     missingIdes.forEach {
       enqueueUploadIde(it)
@@ -58,22 +52,6 @@ class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater
     downloadingIdes.add(ideVersion)
   }
 
-  private fun fetchRelevantIdes(): Set<AvailableIde> {
-    val index = serverContext.ideRepository.fetchIndex()
-
-    val branchToVersions: Map<Int, List<AvailableIde>> = index
-        .filterNot { it.isCommunity }
-        .groupBy { it.version.baselineVersion }
-
-    val lastBranchBuilds = branchToVersions
-        .mapValues { it.value.maxBy { it.version } }
-        .values.filterNotNull()
-    val lastBranchReleases = branchToVersions
-        .mapValues { it.value.filter { it.isRelease }.maxBy { it.version } }
-        .values.filterNotNull()
-
-    return (lastBranchBuilds + lastBranchReleases).toSet()
-  }
 
 
 }
