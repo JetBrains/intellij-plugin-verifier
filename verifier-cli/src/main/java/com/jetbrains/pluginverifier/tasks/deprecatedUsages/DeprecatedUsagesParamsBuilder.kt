@@ -33,7 +33,7 @@ class DeprecatedUsagesParamsBuilder(val pluginRepository: PluginRepository,
      * If the release IDE version is specified, get the compatible plugins' versions based on it.
      * Otherwise, use the version of the verified IDE.
      */
-    val ideVersionForCompatiblePlugins = deprecatedOpts.releaseIdeVersion?.let { IdeVersion.createIdeVersion(it) } ?: ideDescriptor.ideVersion
+    val ideVersionForCompatiblePlugins = deprecatedOpts.releaseIdeVersion?.let { IdeVersion.createIdeVersionIfValid(it) } ?: ideDescriptor.ideVersion
     val updatesToCheck = requestUpdatesToCheck(opts, ideVersionForCompatiblePlugins)
     val pluginCoordinates = updatesToCheck.map { PluginCoordinate.ByUpdateInfo(it, pluginRepository) }
     val ideDependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsProvider)

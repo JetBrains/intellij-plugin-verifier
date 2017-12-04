@@ -23,12 +23,11 @@ class IdeServlet : BaseServlet() {
 
   private fun parseIdeVersionParameter(req: HttpServletRequest, resp: HttpServletResponse): IdeVersion? {
     val ideVersionParam = req.getParameter("ideVersion") ?: return null
-    return try {
-      IdeVersion.createIdeVersion(ideVersionParam)
-    } catch (e: Exception) {
+    val ideVersion = IdeVersion.createIdeVersionIfValid(ideVersionParam)
+    if (ideVersion == null) {
       sendNotFound(resp, "Invalid IDE version: $ideVersionParam")
-      null
     }
+    return ideVersion
   }
 
   private fun processUploadIde(req: HttpServletRequest, resp: HttpServletResponse) {

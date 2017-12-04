@@ -105,14 +105,9 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
       ideFilesBank.getIdeLock(ideVersion)
           ?: throw RuntimeException("IDE $ideVersion is not found in $ideFilesBank")
 
-  private fun parseIdeVersion(ideVersion: String): IdeVersion {
-    try {
-      return IdeVersion.createIdeVersion(ideVersion)
-    } catch (e: Exception) {
-      throw IllegalArgumentException("Invalid IDE version: $ideVersion. Please provide IDE version (with product ID) with which to compare API problems; " +
-          "See https://www.jetbrains.com/intellij-repository/releases/", e)
-    }
-  }
+  private fun parseIdeVersion(ideVersion: String) = IdeVersion.createIdeVersionIfValid(ideVersion)
+      ?: throw IllegalArgumentException("Invalid IDE version: $ideVersion. Please provide IDE version (with product ID) with which to compare API problems; " +
+      "See https://www.jetbrains.com/intellij-repository/releases/")
 
   class CheckTrunkApiOpts {
     @set:Argument("major-ide-version", alias = "miv", description = "The IDE version with which to compare API problems")
