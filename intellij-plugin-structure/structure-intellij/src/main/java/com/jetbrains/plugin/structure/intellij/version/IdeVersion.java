@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.version;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey Patrikeev
@@ -8,24 +9,43 @@ import org.jetbrains.annotations.NotNull;
 public abstract class IdeVersion implements Comparable<IdeVersion> {
 
   /**
-   * Tries to parse specified text as an Ide-version
+   * Tries to parse specified string as IDE version and throws an {@link IllegalArgumentException}
+   * if the string is not a valid IDE version.
    *
-   * @param version a string presentation of version to be parsed
-   * @return an instance of IdeVersion
+   * @param version a string presentation of a version to be parsed
+   * @return an instance of {@link IdeVersion}
    * @throws IllegalArgumentException if specified {@code version} doesn't represent correct {@code IdeVersion}
+   * @see #createIdeVersionIfValid a version of the method that returns null instead of exception
    */
   @NotNull
   public static IdeVersion createIdeVersion(@NotNull String version) throws IllegalArgumentException {
     return IdeVersionImpl.Companion.fromString(version);
   }
 
-  public static boolean isValidIdeVersion(@NotNull String version) {
+  /**
+   * Tries to parse specified string as IDE version and returns null if not succeed.
+   *
+   * @param version a string presentation of a version to be parsed
+   * @return instance of {@link IdeVersion} for specified string, or null
+   * if the string is not a valid IDE version
+   */
+  @Nullable
+  public static IdeVersion createIdeVersionIfValid(@NotNull String version) {
     try {
-      IdeVersionImpl.Companion.fromString(version);
-      return true;
-    } catch (Exception e) {
-      return false;
+      return IdeVersionImpl.Companion.fromString(version);
+    } catch (IllegalArgumentException e) {
+      return null;
     }
+  }
+
+  /**
+   * Determines whether the specified string is a valid {@link IdeVersion}.
+   *
+   * @param version string which must be validated
+   * @return true if the specified string is a valid {@link IdeVersion}, false otherwise
+   */
+  public static boolean isValidIdeVersion(@NotNull String version) {
+    return createIdeVersionIfValid(version) != null;
   }
 
   /**

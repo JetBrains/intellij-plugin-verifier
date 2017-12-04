@@ -255,4 +255,15 @@ public class IdeVersionTest {
     assertTrue(current.compareTo(IdeVersion.createIdeVersion("145.12")) > 0);
   }
 
+  @Test
+  public void validAndInvalidIdeVersions() {
+    assertTrue(IdeVersion.isValidIdeVersion("IU-163.1"));
+    assertTrue(IdeVersion.isValidIdeVersion("IU-163.SNAPSHOT"));
+
+    assertFalse(IdeVersion.isValidIdeVersion("IU-163."));
+    assertFalse(IdeVersion.isValidIdeVersion("SNAPSHOT.163"));
+
+    assertNotNull(IdeVersion.createIdeVersionIfValid("IU-163.1"));
+    assertNotNull(IdeVersion.createIdeVersionIfValid("IU-163.SNAPSHOT"));
+  }
 }
