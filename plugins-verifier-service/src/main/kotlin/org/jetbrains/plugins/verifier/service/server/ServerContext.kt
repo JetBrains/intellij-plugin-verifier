@@ -2,9 +2,11 @@ package org.jetbrains.plugins.verifier.service.server
 
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IdeRepository
+import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.plugins.UpdateInfoCache
+import org.jetbrains.plugins.verifier.service.server.database.ServerDatabase
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkManager
 import org.jetbrains.plugins.verifier.service.service.repository.AuthorizationData
@@ -28,7 +30,8 @@ class ServerContext(val applicationHomeDirectory: Path,
                     val authorizationData: AuthorizationData,
                     val jdkManager: JdkManager,
                     val updateInfoCache: UpdateInfoCache,
-                    val startupSettings: List<Settings>) : Closeable {
+                    val startupSettings: List<Settings>,
+                    val serverDatabase: ServerDatabase) : Closeable {
 
   val allServices = arrayListOf<BaseService>()
 
@@ -39,6 +42,7 @@ class ServerContext(val applicationHomeDirectory: Path,
   override fun close() {
     taskManager.stop()
     allServices.forEach { it.stop() }
+    serverDatabase.closeLogged()
   }
 
 }

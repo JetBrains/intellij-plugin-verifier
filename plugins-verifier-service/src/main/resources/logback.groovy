@@ -13,10 +13,8 @@ appender('STDOUT', ConsoleAppender) {
   }
 }
 
-def home = System.getProperty('verifier.service.home.dir')
-if (!home) {
-  throw new RuntimeException("The property 'verifier.service.home.dir' is not set")
-}
+def home = System.getProperty('verifier.service.home.dir') ?: System.getProperty("user.home") + File.separator + ".verifier-service"
+
 appender('FILE', RollingFileAppender) {
   //the logger is always logging into this file (but rollovers the files according to fileNamePattern)
   file = "$home/log/verifier.log"

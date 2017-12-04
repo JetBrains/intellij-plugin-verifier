@@ -100,6 +100,9 @@ configure(allprojects) {
     compile 'com.squareup.retrofit2:converter-gson:2.1.0'
     compile 'com.squareup.okhttp3:logging-interceptor:3.3.1'
 
+    //Simple map-database engine that allows to store maps on disk: https://github.com/jankotek/mapdb/
+    compile 'org.mapdb:mapdb:3.0.5'
+
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.24'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
     runtime "org.codehaus.groovy:groovy:2.4.12"

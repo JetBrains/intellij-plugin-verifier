@@ -9,7 +9,9 @@ import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.plugins.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.server.ServerContext
+import org.jetbrains.plugins.verifier.service.server.database.MapDbServerDatabase
 import org.jetbrains.plugins.verifier.service.service.features.FeatureService
+import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
 import org.jetbrains.plugins.verifier.service.service.ide.IdeListUpdater
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkManager
 import org.jetbrains.plugins.verifier.service.service.repository.AuthorizationData
@@ -61,6 +63,7 @@ class ServerStartupListener : ServletContextListener {
     val settings: List<Settings> = Settings.values().toList()
 
     val ideDownloadDirDiskSpaceSetting = getIdeDownloadDirDiskSpaceSetting()
+    val serverDatabase = MapDbServerDatabase(applicationHomeDir)
     return ServerContext(
         applicationHomeDir,
         ideRepository,
@@ -71,7 +74,8 @@ class ServerStartupListener : ServletContextListener {
         authorizationData,
         jdkManager,
         updateInfoCache,
-        settings
+        settings,
+        serverDatabase
     )
   }
 
@@ -92,7 +96,8 @@ class ServerStartupListener : ServletContextListener {
 
     val verifierService = VerifierService(serverContext, Settings.VERIFIER_SERVICE_REPOSITORY_URL.get())
     val featureService = FeatureService(serverContext, Settings.FEATURE_EXTRACTOR_REPOSITORY_URL.get())
-    val ideListUpdater = IdeListUpdater(serverContext)
+    val ideKeeper = IdeKeeper(serverContext)
+    val ideListUpdater = IdeListUpdater(serverContext, ideKeeper)
 
     serverContext.addService(verifierService)
     serverContext.addService(featureService)
