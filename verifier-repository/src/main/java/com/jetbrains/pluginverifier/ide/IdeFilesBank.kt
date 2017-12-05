@@ -15,7 +15,7 @@ import java.nio.file.Path
  *
  * Each IDE is identified by its [IdeVersion] and can be locked for the use time
  * to avoid use-remove conflicts when one thread uses the IDE build and another
- * thread (maybe [UploadIdeTask]) deletes it.
+ * thread deletes it.
  */
 //todo: provide a cache of IdeDescriptors
 class IdeFilesBank(ideRepository: IdeRepository,
