@@ -76,7 +76,7 @@ class TestMainPluginRepository {
 
   @Test
   fun downloadExistentPlugin() {
-    val updateInfo = repository.getUpdateInfoById(25128) //.gitignore 1.3.3
+    val updateInfo = repository.getUpdateInfoById(40625) //.gitignore 2.3.2
     assertNotNull(updateInfo)
     val downloadPluginResult = repository.downloadPluginFile(updateInfo!!)
     assertTrue(downloadPluginResult is FileRepositoryResult.Found)
