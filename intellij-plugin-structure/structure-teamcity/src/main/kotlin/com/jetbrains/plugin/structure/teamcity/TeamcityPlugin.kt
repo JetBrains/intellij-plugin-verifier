@@ -22,7 +22,7 @@ data class TeamcityPlugin(
 
 
 fun TeamcityPluginBean.toPlugin() = TeamcityPlugin(
-    pluginId = this.name!!,
+    pluginId = "teamcity_" + this.name!!,
     pluginName = this.displayName!!,
     pluginVersion = this.version!!,
     url = null,
