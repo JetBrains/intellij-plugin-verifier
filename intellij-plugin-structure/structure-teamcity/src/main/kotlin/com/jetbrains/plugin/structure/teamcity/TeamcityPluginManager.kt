@@ -12,14 +12,15 @@ import java.io.IOException
 import java.io.InputStream
 import java.util.zip.ZipFile
 
-class TeamcityPluginManager private constructor(private val logger: Logger) : PluginManager<TeamcityPlugin> {
+class TeamcityPluginManager private constructor(
+    private val logger: Logger, private val validateBean: Boolean) : PluginManager<TeamcityPlugin> {
   companion object {
     private val DESCRIPTOR_NAME = "teamcity-plugin.xml"
 
-    fun createManager(): TeamcityPluginManager =
-        createManager(createDefaultLogger(TeamcityPluginManager::class.java))
+    fun createManager(validateBean: Boolean = false): TeamcityPluginManager =
+        createManager(createDefaultLogger(TeamcityPluginManager::class.java), validateBean)
 
-    fun createManager(logger: Logger): TeamcityPluginManager = TeamcityPluginManager(logger)
+    fun createManager(logger: Logger, validateBean: Boolean = false): TeamcityPluginManager = TeamcityPluginManager(logger, validateBean)
   }
 
   override fun createPlugin(pluginFile: File): PluginCreationResult<TeamcityPlugin> {
@@ -59,6 +60,9 @@ class TeamcityPluginManager private constructor(private val logger: Logger) : Pl
   private fun loadDescriptorFromStream(streamName: String, inputStream: InputStream): PluginCreationResult<TeamcityPlugin> {
     try {
       val bean = extractPluginBean(inputStream)
+
+      if(!validateBean) return PluginCreationSuccess(bean.toPlugin(), emptyList())
+
       val beanValidationResult = validateTeamcityPluginBean(bean)
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
         return PluginCreationFail(beanValidationResult)
