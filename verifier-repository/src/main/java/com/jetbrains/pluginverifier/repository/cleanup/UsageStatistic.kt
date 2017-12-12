@@ -2,5 +2,17 @@ package com.jetbrains.pluginverifier.repository.cleanup
 
 import java.time.Instant
 
-data class UsageStatistic(var lastAccessTime: Instant,
-                          var timesAccessed: Long)
+/**
+ * Recording of the usage statistics of a resource
+ * that can be useful to sort the resources by their importance.
+ */
+data class UsageStatistic(
+    /**
+     * The last time this resource was locked
+     */
+    var lastAccessTime: Instant,
+    /**
+     * The total number of times this resource was accessed
+     */
+    var timesAccessed: Long
+)
