@@ -24,6 +24,8 @@ class UpdateInfoCache(repositoryUrl: String) {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(UpdateInfoCache::class.java)
+
+    private const val BATCH_REQUEST_SIZE = 1000
   }
 
   private val cache: ConcurrentMap<Int, UpdateInfo> = ConcurrentHashMap()
@@ -62,8 +64,9 @@ class UpdateInfoCache(repositoryUrl: String) {
 
   private fun updateBatch(updateId: Int) {
     try {
-      val batchRequestSize = 1000
-      val updates = api.getUpdateInfosForIds(updateId, updateId + batchRequestSize).executeSuccessfully().body()
+      val fromUpdateId = (updateId - BATCH_REQUEST_SIZE / 2).coerceAtLeast(1)
+      val toUpdateId = fromUpdateId + BATCH_REQUEST_SIZE
+      val updates = api.getUpdateInfosForIds(fromUpdateId, toUpdateId).executeSuccessfully().body()
       updates.forEach { addUpdateInfo(it) }
     } catch (e: Exception) {
       LOG.error("Unable to get UpdateInfo for Update #$updateId", e)
