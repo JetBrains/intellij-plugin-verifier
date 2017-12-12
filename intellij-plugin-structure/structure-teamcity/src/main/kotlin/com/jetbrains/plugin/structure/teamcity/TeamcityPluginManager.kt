@@ -17,10 +17,10 @@ class TeamcityPluginManager private constructor(
   companion object {
     private val DESCRIPTOR_NAME = "teamcity-plugin.xml"
 
-    fun createManager(validateBean: Boolean = false): TeamcityPluginManager =
+    fun createManager(validateBean: Boolean = true): TeamcityPluginManager =
         createManager(createDefaultLogger(TeamcityPluginManager::class.java), validateBean)
 
-    fun createManager(logger: Logger, validateBean: Boolean = false): TeamcityPluginManager = TeamcityPluginManager(logger, validateBean)
+    fun createManager(logger: Logger, validateBean: Boolean = true): TeamcityPluginManager = TeamcityPluginManager(logger, validateBean)
   }
 
   override fun createPlugin(pluginFile: File): PluginCreationResult<TeamcityPlugin> {
