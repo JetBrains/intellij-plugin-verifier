@@ -10,7 +10,8 @@ data class TeamcityPluginXmlBuilder(
     var downloadUrl: String = "",
     var email: String = "",
     var deployment: String = "",
-    val vendor: String = "<vendor><name>JetBrains, s.r.o.</name></vendor>",
+    val vendorName: String = "<name>JetBrains, s.r.o.</name>",
+    val vendorUrl: String = "<url>https://jetbrains.com</url>",
     val requirements: String = "",
     val parameters: String = "",
     var additionalContent: String = ""
@@ -25,7 +26,10 @@ data class TeamcityPluginXmlBuilder(
     $description
     $downloadUrl
     $email
-    $vendor
+    <vendor>
+      $vendorName
+      $vendorUrl
+    </vendor>
   </info>
   $requirements
   $deployment

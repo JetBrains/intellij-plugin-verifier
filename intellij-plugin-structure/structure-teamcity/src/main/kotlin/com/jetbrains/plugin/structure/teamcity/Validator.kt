@@ -19,7 +19,10 @@ internal fun validateTeamcityPluginBean(bean: TeamcityPluginBean): List<PluginPr
     problems.add(PropertyNotSpecified("description"))
   }
   if(bean.vendor?.name.isNullOrBlank()) {
-    problems.add(PropertyNotSpecified("vendor"))
+    problems.add(PropertyNotSpecified("vendor name"))
+  }
+  if(bean.vendor?.url.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified("vendor url"))
   }
   return problems
 }
