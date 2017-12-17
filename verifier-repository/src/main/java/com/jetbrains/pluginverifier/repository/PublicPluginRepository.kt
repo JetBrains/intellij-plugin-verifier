@@ -84,7 +84,7 @@ class PublicPluginRepository(val repositoryUrl: String,
   override fun getIdOfPluginDeclaringModule(moduleId: String): String? =
       INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
 
-  override fun downloadPluginFile(update: UpdateInfo): FileRepositoryResult = downloadedPluginsFileRepository.get(UpdateId(update.updateId))
+  override fun downloadPluginFile(update: UpdateInfo): FileRepositoryResult = downloadedPluginsFileRepository.getFile(UpdateId(update.updateId))
 
   private val repositoryApi = Retrofit.Builder()
       .baseUrl(repositoryUrl + '/')

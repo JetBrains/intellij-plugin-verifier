@@ -36,7 +36,7 @@ class IdeFilesBank(ideRepository: IdeRepository,
   )
 
   fun <R> lockAndAccess(block: () -> R) =
-      ideFilesRepository.lockAndAccess(block)
+      ideFilesRepository.lockAndExecute(block)
 
   fun getAvailableIdeVersions() =
       ideFilesRepository.getAllExistingKeys()
@@ -47,7 +47,7 @@ class IdeFilesBank(ideRepository: IdeRepository,
   fun deleteIde(key: IdeVersion) =
       ideFilesRepository.remove(key)
 
-  fun getIdeLock(key: IdeVersion): FileLock? = with(ideFilesRepository.get(key)) {
+  fun getIdeLock(key: IdeVersion): FileLock? = with(ideFilesRepository.getFile(key)) {
     when (this) {
       is FileRepositoryResult.Found -> lockedFile
       is FileRepositoryResult.NotFound -> {

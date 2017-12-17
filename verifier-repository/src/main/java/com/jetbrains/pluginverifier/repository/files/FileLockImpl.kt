@@ -1,17 +1,14 @@
 package com.jetbrains.pluginverifier.repository.files
 
+import com.jetbrains.pluginverifier.repository.resources.ResourceLock
 import java.nio.file.Path
 import java.time.Instant
 
-internal class FileLockImpl<K>(override val file: Path,
-                               override val lockTime: Instant,
-                               val key: K,
-                               private val lockId: Long,
-                               private val repository: FileRepositoryImpl<K>) : FileLock {
+internal data class FileLockImpl(private val resourceLock: ResourceLock<Path>) : FileLock {
 
-  override fun release() = repository.releaseLock(this)
+  override val file: Path = resourceLock.resource
 
-  override fun equals(other: Any?): Boolean = other is FileLockImpl<*> && repository === other.repository && lockId == other.lockId
+  override val lockTime: Instant = resourceLock.lockTime
 
-  override fun hashCode(): Int = lockId.hashCode()
+  override fun release() = resourceLock.release()
 }

@@ -35,7 +35,7 @@ class FileRepositoryImplTest {
         IdleSweepPolicy
     )
 
-    val get0 = fileRepository.get(0) as FileRepositoryResult.Found
+    val get0 = fileRepository.getFile(0) as FileRepositoryResult.Found
     val get0Locked = get0.lockedFile
     val get0File = get0Locked.file
     val expectedFile = folder.resolve("0")
@@ -61,11 +61,11 @@ class FileRepositoryImplTest {
         keyProvider = { it.nameWithoutExtension.toIntOrNull() }
     )
 
-    val get0 = fileRepository.get(0) as FileRepositoryResult.Found
+    val get0 = fileRepository.getFound(0)
     assertEquals("0", get0.lockedFile.file.readText())
     get0.lockedFile.release()
 
-    val get1 = fileRepository.get(1) as FileRepositoryResult.Found
+    val get1 = fileRepository.getFound(1)
     assertEquals("1", get1.lockedFile.file.readText())
     get1.lockedFile.release()
   }
@@ -98,7 +98,7 @@ class FileRepositoryImplTest {
     assertThat(downloader.errors, org.hamcrest.Matchers.empty())
   }
 
-  private fun <K> FileRepository<K>.getFound(k: K) = get(k) as FileRepositoryResult.Found
+  private fun <K> FileRepository<K>.getFound(k: K) = getFile(k) as FileRepositoryResult.Found
 
   @Test
   fun `file sweeper removes files using LRU order when the file is released`() {
@@ -192,7 +192,7 @@ class FileRepositoryImplTest {
 
     val fileLock = AtomicReference<FileLock>()
     val downloadThread = Thread {
-      val lockedFile = (fileRepository.get(0) as FileRepositoryResult.Found).lockedFile
+      val lockedFile = (fileRepository.getFound(0)).lockedFile
       fileLock.set(lockedFile)
     }
 

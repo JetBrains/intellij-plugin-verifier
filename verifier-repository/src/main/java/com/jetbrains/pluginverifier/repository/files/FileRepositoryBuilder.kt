@@ -17,7 +17,7 @@ class FileRepositoryBuilder {
     val downloadExecutor = DownloadExecutor(repositoryDir, downloader, fileNameMapper)
     val fileRepository = FileRepositoryImpl(sweepPolicy, clock, downloadExecutor)
     readAvailableFiles(fileRepository, keyProvider, downloadExecutor)
-    fileRepository.sweep()
+    fileRepository.cleanup()
     return fileRepository
   }
 

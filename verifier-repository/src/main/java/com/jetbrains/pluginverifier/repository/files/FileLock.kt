@@ -1,16 +1,19 @@
 package com.jetbrains.pluginverifier.repository.files
 
-import java.io.Closeable
+import com.jetbrains.pluginverifier.repository.resources.ResourceLock
 import java.nio.file.Path
-import java.time.Instant
 
-interface FileLock : Closeable {
-
-  val lockTime: Instant
+/**
+ * File lock is used to indicate that the [file]
+ * is locked in the [file repository] [FileRepository]
+ * and it cannot be removed until the lock is [released] [release]
+ * by the lock owner.
+ */
+interface FileLock : ResourceLock<Path> {
 
   val file: Path
 
-  fun release()
+  override val resource: Path
+    get() = file
 
-  override fun close() = release()
 }
