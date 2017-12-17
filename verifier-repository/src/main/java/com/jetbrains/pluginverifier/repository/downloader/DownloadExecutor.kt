@@ -10,9 +10,9 @@ import java.nio.file.Path
  * Download executor is responsible for downloading files and directories using
  * provided [downloader] and saving them to the [destinationDirectory] using provided [fileNameMapper].
  */
-class DownloadExecutor<K>(private val destinationDirectory: Path,
-                          private val downloader: Downloader<K>,
-                          private val fileNameMapper: FileNameMapper<K>) {
+class DownloadExecutor<in K>(private val destinationDirectory: Path,
+                             private val downloader: Downloader<K>,
+                             private val fileNameMapper: FileNameMapper<K>) {
 
   private companion object {
     const val DOWNLOADS_DIRECTORY = "downloads"
@@ -61,7 +61,9 @@ class DownloadExecutor<K>(private val destinationDirectory: Path,
   )
 
   private fun moveFileOrDirectory(fileOrDirectory: Path, destination: Path) {
-    assert(!destination.exists())
+    if (destination.exists()) {
+      destination.deleteLogged()
+    }
     if (fileOrDirectory.isDirectory) {
       FileUtils.moveDirectory(fileOrDirectory.toFile(), destination.toFile())
     } else {
