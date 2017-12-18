@@ -202,7 +202,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
         val maxUnlockTime = lockTime.plus(LOCK_TIME_TO_LIVE_DURATION)
         val isForgotten = now.isAfter(maxUnlockTime)
         if (isForgotten) {
-          LOG.warn("Forgotten lock found for $key on ${lock.resource}; lock date = $lockTime")
+          LOG.warn("Forgotten lock found for $key on ${lock.resource}; lock time = $lockTime")
         }
       }
     }

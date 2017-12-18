@@ -1,12 +1,17 @@
 package com.jetbrains.pluginverifier.misc
 
+import org.apache.commons.lang3.time.DurationFormatUtils
 import org.slf4j.LoggerFactory
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 /**
  * @author Sergey Patrikeev
  */
 private val LOG = LoggerFactory.getLogger("LanguageUtils")
+
+fun Duration.formatDuration(format: String): String =
+    DurationFormatUtils.formatDuration(toMillis(), format)
 
 fun <T, R> T.doLogged(action: String, block: T.() -> R) {
   try {

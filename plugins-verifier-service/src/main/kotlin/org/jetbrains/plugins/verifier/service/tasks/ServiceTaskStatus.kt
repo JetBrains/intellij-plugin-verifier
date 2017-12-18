@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.tasks
 
+import com.jetbrains.pluginverifier.misc.formatDuration
 import java.time.Duration
 import java.time.Instant
 
@@ -58,7 +59,7 @@ data class ServiceTaskStatus(
     append("(")
     append("Id=$taskId; ")
     append("State=$state; ")
-    append("Time=$elapsedTime; ")
+    append("Time=${elapsedTime.formatDuration("S")} ms; ")
     append("Progress=" + progress.fraction + "; ")
     append("Text=" + progress.text + "; ")
     append("Task-name=" + presentableName)
