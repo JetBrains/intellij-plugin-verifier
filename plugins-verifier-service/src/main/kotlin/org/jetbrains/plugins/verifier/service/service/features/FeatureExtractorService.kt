@@ -9,7 +9,7 @@ import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
@@ -19,10 +19,12 @@ import java.util.concurrent.TimeUnit
  * using the _intellij-feature-extractor_ tool.
  *
  * This service periodically accesses the plugin repository, fetches plugins of which features should be extracted,
- * and sends features' reports.
- * @see [Feature extractor integration with the plugin repository](https://confluence.jetbrains.com/display/PLREP/features-extractor+integration+with+the+plugins.jetbrains.com)
+ * and sends the features' reports.
+ *
+ * See [Feature extractor integration with the plugin repository](https://confluence.jetbrains.com/display/PLREP/features-extractor+integration+with+the+plugins.jetbrains.com)
  */
-class FeatureService(serverContext: ServerContext, private val repositoryUrl: String) : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, serverContext) {
+class FeatureExtractorService(serverContext: ServerContext,
+                              private val repositoryUrl: String) : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, serverContext) {
 
   private val inProgressUpdates: MutableSet<UpdateInfo> = hashSetOf()
 
@@ -71,7 +73,7 @@ class FeatureService(serverContext: ServerContext, private val repositoryUrl: St
     )
     val taskStatus = serverContext.taskManager.enqueue(
         runner,
-        { onSuccess(it as FeaturesResult) },
+        { result, _ -> onSuccess(result) },
         { t, tid -> onError(t, tid, runner) },
         { _ -> onCompletion(runner) }
     )

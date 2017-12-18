@@ -2,11 +2,13 @@ package org.jetbrains.plugins.verifier.service.service.features
 
 import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskResult
 
+/**
+ * The result of the feature extractor service [task] [FeatureExtractorService].
+ */
 data class FeaturesResult(val updateInfo: UpdateInfo,
                           val resultType: ResultType,
-                          val features: List<ExtensionPointFeatures>) : ServiceTaskResult {
+                          val features: List<ExtensionPointFeatures>) {
   enum class ResultType {
     NOT_FOUND,
     BAD_PLUGIN,

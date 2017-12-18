@@ -16,7 +16,7 @@
 
 
     <listener>
-        <listener-class>org.jetbrains.plugins.verifier.service.server.startup.ServerStartupListener</listener-class>
+        <listener-class>org.jetbrains.plugins.verifier.service.startup.ServerStartupListener</listener-class>
     </listener>
 
     <servlet-mapping>

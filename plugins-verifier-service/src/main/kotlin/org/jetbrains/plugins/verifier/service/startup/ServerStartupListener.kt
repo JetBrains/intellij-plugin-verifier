@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.server.startup
+package org.jetbrains.plugins.verifier.service.startup
 
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IdeRepository
@@ -8,18 +8,18 @@ import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.plugins.UpdateInfoCache
+import org.jetbrains.plugins.verifier.service.database.MapDbServerDatabase
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
-import org.jetbrains.plugins.verifier.service.server.database.MapDbServerDatabase
-import org.jetbrains.plugins.verifier.service.service.features.FeatureService
+import org.jetbrains.plugins.verifier.service.service.features.FeatureExtractorService
 import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
 import org.jetbrains.plugins.verifier.service.service.ide.IdeListUpdater
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkManager
-import org.jetbrains.plugins.verifier.service.service.repository.AuthorizationData
-import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
+import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetting
 import org.jetbrains.plugins.verifier.service.setting.Settings
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTasksManager
 import org.slf4j.LoggerFactory
 import javax.servlet.ServletContextEvent
 import javax.servlet.ServletContextListener
@@ -55,7 +55,7 @@ class ServerStartupListener : ServletContextListener {
 
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractedPluginsDir)
     val ideRepository = IdeRepository(Settings.IDE_REPOSITORY_URL.get())
-    val tasksManager = ServiceTasksManager(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
+    val tasksManager = ServiceTasksManager(Settings.TASK_MANAGER_CONCURRENCY.getAsInt(), 1000)
 
     val authorizationData = AuthorizationData(
         Settings.PLUGIN_REPOSITORY_VERIFIER_USERNAME.get(),
@@ -64,8 +64,6 @@ class ServerStartupListener : ServletContextListener {
     )
 
     val jdkManager = JdkManager(Settings.JDK_8_HOME.getAsFile())
-
-    val settings: List<Settings> = Settings.values().toList()
 
     val ideDownloadDirDiskSpaceSetting = getIdeDownloadDirDiskSpaceSetting()
     val serverDatabase = MapDbServerDatabase(applicationHomeDir)
@@ -85,7 +83,7 @@ class ServerStartupListener : ServletContextListener {
         authorizationData,
         jdkManager,
         updateInfoCache,
-        settings,
+        Settings.values().toList(),
         serviceDAO,
         serverDatabase
     )
@@ -107,7 +105,7 @@ class ServerStartupListener : ServletContextListener {
     prepareUpdateInfoCacheForExistingIdes()
 
     val verifierService = VerifierService(serverContext, Settings.VERIFIER_SERVICE_REPOSITORY_URL.get())
-    val featureService = FeatureService(serverContext, Settings.FEATURE_EXTRACTOR_REPOSITORY_URL.get())
+    val featureService = FeatureExtractorService(serverContext, Settings.FEATURE_EXTRACTOR_REPOSITORY_URL.get())
     val ideListUpdater = IdeListUpdater(serverContext)
 
     serverContext.addService(verifierService)

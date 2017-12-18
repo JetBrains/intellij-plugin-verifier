@@ -1,15 +1,19 @@
 package org.jetbrains.plugins.verifier.service.server.servlets
 
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
+import com.jetbrains.pluginverifier.misc.MemoryInfo
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
-import org.jetbrains.plugins.verifier.service.server.status.getMemoryInfo
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
 import java.text.SimpleDateFormat
+import java.util.*
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
+/**
+ * The servlet handling requests of the server status, health and parameters.
+ */
 class InfoServlet : BaseServlet() {
 
   companion object {
@@ -19,25 +23,29 @@ class InfoServlet : BaseServlet() {
   override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
     val path = getPath(req, resp) ?: return
     if (path.endsWith("control-service")) {
-      val adminPassword = req.getParameter("admin-password")
-      if (adminPassword == null || adminPassword != serverContext.authorizationData.serviceAdminPassword) {
-        resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Incorrect password")
-        return
-      }
-      val serviceName = req.getParameter("service-name")
-      if (serviceName == null) {
-        resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Service name is not specified")
-        return
-      }
-      val command = req.getParameter("command")
-      when (command) {
-        "start" -> changeServiceState(serviceName, resp) { it.start() }
-        "resume" -> changeServiceState(serviceName, resp) { it.resume() }
-        "pause" -> changeServiceState(serviceName, resp) { it.pause() }
-        else -> resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown command")
-      }
+      processServiceControl(req, resp)
     } else {
       processStatus(resp)
+    }
+  }
+
+  private fun processServiceControl(req: HttpServletRequest, resp: HttpServletResponse) {
+    val adminPassword = req.getParameter("admin-password")
+    if (adminPassword == null || adminPassword != serverContext.authorizationData.serviceAdminPassword) {
+      resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Incorrect password")
+      return
+    }
+    val serviceName = req.getParameter("service-name")
+    if (serviceName == null) {
+      resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Service name is not specified")
+      return
+    }
+    val command = req.getParameter("command")
+    when (command) {
+      "start" -> changeServiceState(serviceName, resp) { it.start() }
+      "resume" -> changeServiceState(serviceName, resp) { it.resume() }
+      "pause" -> changeServiceState(serviceName, resp) { it.pause() }
+      else -> resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown command: $command")
     }
   }
 
@@ -55,7 +63,7 @@ class InfoServlet : BaseServlet() {
   }
 
   private fun processStatus(resp: HttpServletResponse) {
-    sendBytes(resp, generateStatusPage(), "text/html")
+    sendContent(resp, generateStatusPage(), "text/html")
   }
 
   private fun generateStatusPage(): ByteArray {
@@ -92,7 +100,7 @@ class InfoServlet : BaseServlet() {
               +"Status:"
             }
             ul {
-              val (totalMemory, freeMemory, usedMemory, maxMemory) = getMemoryInfo()
+              val (totalMemory, freeMemory, usedMemory, maxMemory) = MemoryInfo.getRuntimeMemoryInfo()
               li { +"Total memory: $totalMemory" }
               li { +"Free memory: $freeMemory" }
               li { +"Used memory: $usedMemory" }
@@ -146,15 +154,15 @@ class InfoServlet : BaseServlet() {
                 th { +"Total time (ms)" }
               }
 
-              serverContext.taskManager.getRunningTasks().forEach { (taskId, taskName, startedDate, state, progress, totalTimeMs, message) ->
+              serverContext.taskManager.getRunningTasks().forEach { taskStatus ->
                 tr {
-                  td { +taskId.toString() }
-                  td { +taskName }
-                  td { +DATE_FORMAT.format(startedDate) }
-                  td { +state.toString() }
-                  td { +message }
-                  td { +(progress * 100.0).toString() }
-                  td { +(totalTimeMs.toString()) }
+                  td { +taskStatus.taskId.toString() }
+                  td { +taskStatus.presentableName }
+                  td { +DATE_FORMAT.format(Date(taskStatus.startTime.toEpochMilli())) }
+                  td { +taskStatus.state.toString() }
+                  td { +taskStatus.progress.text }
+                  td { +String.format(".2f", taskStatus.progress.fraction) }
+                  td { +taskStatus.elapsedTime.toMillis() }
                 }
               }
             }

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.server.database
+package org.jetbrains.plugins.verifier.service.database
 
 import java.io.Closeable
 
@@ -9,8 +9,16 @@ import java.io.Closeable
  */
 interface ServerDatabase : Closeable {
 
+  /**
+   * Provides a set of objects with the specified [elementType]
+   * that will be persisted on the database shutdown.
+   */
   fun <T> openOrCreateSet(setName: String, elementType: ValueType<T>): MutableSet<T>
 
+  /**
+   * Provides a map of objects with key types [keyType] and value types [valueType]
+   * that will be persisted on the database shutdown.
+   */
   fun <K, V> openOrCreateMap(mapName: String, keyType: ValueType<K>, valueType: ValueType<V>): MutableMap<K, V>
 
   /**

@@ -8,13 +8,12 @@ import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.createByteArrayRequestBody
 import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkVersion
-import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTaskStatus
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -90,18 +89,15 @@ class VerifierService(serverContext: ServerContext,
 
     lastCheckDate[updateInfo] = System.currentTimeMillis()
 
-    val pluginCoordinate = PluginCoordinate.ByUpdateInfo(updateInfo, serverContext.pluginRepository)
-    val rangeRunnerParams = CheckRangeParams(JdkVersion.JAVA_8_ORACLE)
     val runner = CheckRangeCompatibilityServiceTask(
         updateInfo,
-        pluginCoordinate,
-        rangeRunnerParams,
+        JdkVersion.JAVA_8_ORACLE,
         versions,
         serverContext
     )
     val taskStatus = serverContext.taskManager.enqueue(
         runner,
-        { taskResult -> onSuccess(taskResult as CheckRangeCompatibilityResult, updateInfo) },
+        { taskResult, _ -> onSuccess(taskResult, updateInfo) },
         { error, tid -> onError(error, tid, runner) },
         { _ -> onCompletion(runner) }
     )
@@ -110,11 +106,11 @@ class VerifierService(serverContext: ServerContext,
   }
 
   private fun onCompletion(task: CheckRangeCompatibilityServiceTask) {
-    verifiableUpdates.remove((task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo)
+    verifiableUpdates.remove(task.pluginCoordinate.updateInfo)
   }
 
   private fun onError(error: Throwable, taskStatus: ServiceTaskStatus, task: CheckRangeCompatibilityServiceTask) {
-    val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
+    val updateInfo = task.pluginCoordinate.updateInfo
     logger.error("Unable to check $updateInfo (task #${taskStatus.taskId})", error)
   }
 

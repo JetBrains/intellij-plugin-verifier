@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.verifier.service.server
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.jetbrains.plugins.verifier.service.server.database.ServerDatabase
-import org.jetbrains.plugins.verifier.service.server.database.ValueType
+import org.jetbrains.plugins.verifier.service.database.ServerDatabase
+import org.jetbrains.plugins.verifier.service.database.ValueType
 
 /**
  * Data access object specific for the verifier service.

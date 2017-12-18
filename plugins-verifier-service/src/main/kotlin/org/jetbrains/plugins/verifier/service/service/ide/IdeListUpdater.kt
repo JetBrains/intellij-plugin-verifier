@@ -43,7 +43,7 @@ class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater
 
     val taskStatus = serverContext.taskManager.enqueue(
         runner,
-        { },
+        { _, _ -> },
         { _, _ -> }
     ) { _ -> downloadingIdes.remove(ideVersion) }
     logger.info("Uploading IDE version #$ideVersion (task #${taskStatus.taskId})")

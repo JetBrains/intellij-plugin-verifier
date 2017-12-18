@@ -6,13 +6,13 @@ import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.plugins.UpdateInfoCache
-import org.jetbrains.plugins.verifier.service.server.database.ServerDatabase
+import org.jetbrains.plugins.verifier.service.database.ServerDatabase
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkManager
-import org.jetbrains.plugins.verifier.service.service.repository.AuthorizationData
-import org.jetbrains.plugins.verifier.service.service.tasks.ServiceTasksManager
+import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import org.jetbrains.plugins.verifier.service.setting.Settings
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTasksManager
 import java.io.Closeable
 import java.nio.file.Path
 
@@ -43,7 +43,7 @@ class ServerContext(val applicationHomeDirectory: Path,
   }
 
   override fun close() {
-    taskManager.stop()
+    taskManager.closeLogged()
     allServices.forEach { it.stop() }
     serverDatabase.closeLogged()
   }
