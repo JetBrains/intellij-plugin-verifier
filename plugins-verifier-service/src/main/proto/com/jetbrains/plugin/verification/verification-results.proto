@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package org.jetbrains.plugins.verifier.service.api;
+package com.jetbrains.plugin.verification;
 
-import "org/jetbrains/plugins/verifier/service/api/dependencies-graphs.proto";
+import "com/jetbrains/plugin/verification/dependencies-graphs.proto";
 
 option java_generate_equals_and_hash = true;
 

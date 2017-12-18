@@ -2,6 +2,9 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
+import com.jetbrains.plugin.verification.DependenciesGraphs
+import com.jetbrains.plugin.verification.UpdateRangeCompatibilityResults
+import com.jetbrains.plugin.verification.VerificationResults
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
@@ -10,9 +13,6 @@ import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
-import org.jetbrains.plugins.verifier.service.api.DependenciesGraphs
-import org.jetbrains.plugins.verifier.service.api.UpdateRangeCompatibilityResults
-import org.jetbrains.plugins.verifier.service.api.VerificationResults
 
 fun prepareVerificationResponse(compatibilityResult: CheckRangeCompatibilityResult): UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult {
   val apiResultType = convertToApiResultType(compatibilityResult)

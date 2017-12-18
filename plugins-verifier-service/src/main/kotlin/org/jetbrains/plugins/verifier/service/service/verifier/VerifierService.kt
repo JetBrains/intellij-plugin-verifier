@@ -3,6 +3,7 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 import com.google.common.collect.LinkedHashMultimap
 import com.google.gson.Gson
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.verification.UpdateRangeCompatibilityResults
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.createByteArrayRequestBody
 import com.jetbrains.pluginverifier.network.createStringRequestBody
@@ -10,7 +11,6 @@ import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.ResponseBody
-import org.jetbrains.plugins.verifier.service.api.UpdateRangeCompatibilityResults
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkVersion

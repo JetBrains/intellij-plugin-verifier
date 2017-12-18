@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package org.jetbrains.plugins.verifier.service.api;
+package com.jetbrains.plugin.verification;
 
-import "org/jetbrains/plugins/verifier/service/api/verification-results.proto";
+import "com/jetbrains/plugin/verification/verification-results.proto";
 
 option java_generate_equals_and_hash = true;
 
