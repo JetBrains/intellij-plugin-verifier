@@ -6,8 +6,9 @@ import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
-import java.text.SimpleDateFormat
-import java.util.*
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
@@ -17,7 +18,8 @@ import javax.servlet.http.HttpServletResponse
 class InfoServlet : BaseServlet() {
 
   companion object {
-    private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd hh:mm:ss")
+    private val DATE_FORMAT = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+        .withZone(ZoneId.systemDefault())
   }
 
   override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
@@ -158,7 +160,7 @@ class InfoServlet : BaseServlet() {
                 tr {
                   td { +taskStatus.taskId.toString() }
                   td { +taskStatus.presentableName }
-                  td { +DATE_FORMAT.format(Date(taskStatus.startTime.toEpochMilli())) }
+                  td { +DATE_FORMAT.format(taskStatus.startTime) }
                   td { +taskStatus.state.toString() }
                   td { +taskStatus.progress.text }
                   td { +String.format(".2f", taskStatus.progress.fraction) }
