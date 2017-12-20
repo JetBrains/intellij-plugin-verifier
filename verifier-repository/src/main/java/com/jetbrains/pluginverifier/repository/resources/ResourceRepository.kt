@@ -3,6 +3,24 @@ package com.jetbrains.pluginverifier.repository.resources
 /**
  * Resource repository is a data structure that maintains
  * a set of _resources_ identified by unique [keys].
+ *
+ * The essential difference from the standard cache, such as
+ * one provided by [guava cache] [com.google.common.cache.LoadingCache],
+ * is that for all the keys being [fetched] [get] the [resource lock] [ResourceLock]
+ * is registered. This resource lock, until being [released] [ResourceLock.release],
+ * protects the key from [removing] [remove] by other threads.
+ *
+ * This useful protection property is intended for the cases in which
+ * several concurrent threads access the same shareable resource, such as
+ * a file, and it is necessary to ensure that no thread will remove the file
+ * while it is used by any other thread. Once the file becomes unused, it can be
+ * safely removed.
+ *
+ * The main [implementation] [ResourceRepositoryImpl], in addition to that properties,
+ * provides means to limit the total "weight" of the resources being kept.
+ * In the above example with files, this can be used to set up the maximum disk space
+ * used by all the available files. Once the space exceeds the limit, the unused files
+ * become evicted. The files for eviction are chosen using a configurable [policy] [EvictionPolicy].
  */
 interface ResourceRepository<R, K> {
 
@@ -39,9 +57,10 @@ interface ResourceRepository<R, K> {
    * If the resource is not available in the repository, the [remove] produces no effect
    * and `false` is returned.
    *
-   * If the resource is locked at the time of [remove] invocation, deletion of the resource
-   * from the repository is postponed until all locks of the resource are released.
-   * The `false` is returned in this case.
+   * If the resource is locked or is being fetched by another thread
+   * at the time of [remove] invocation, deletion of the resource
+   * from the repository is postponed until all locks of the
+   * resource are released. `false` is returned in this case.
    */
   fun remove(key: K): Boolean
 
