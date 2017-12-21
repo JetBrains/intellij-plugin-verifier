@@ -9,7 +9,6 @@ import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
  * Its main implementation is [PublicPluginRepository]
  * that corresponds to the [JetBrains Plugins Repository](https://plugins.jetbrains.com/)
  */
-//todo: rename methods in this interface. "update" -> "plugin"
 interface PluginRepository {
 
   /**
@@ -23,20 +22,20 @@ interface PluginRepository {
   fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<UpdateInfo>
 
   /**
-   * Returns all versions of the plugin with plugin.xml id equal to [pluginId]
+   * Returns all versions of the plugin with ID equal to [pluginId]
    * compatible with [ideVersion].
    */
   fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo>
 
   /**
-   * Returns the last version of the plugin with plugin.xml id equal to [pluginId]
+   * Returns the last version of the plugin with ID equal to [pluginId]
    * compatible with [ideVersion].
    */
   fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? =
       getAllCompatibleVersionsOfPlugin(ideVersion, pluginId).maxBy { it.updateId }
 
   /**
-   * Returns all versions of the plugin with XML ID [pluginId].
+   * Returns all versions of the plugin with ID equal to [pluginId].
    */
   fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo>
 
