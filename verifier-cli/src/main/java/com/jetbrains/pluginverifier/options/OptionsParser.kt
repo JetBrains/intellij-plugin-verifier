@@ -227,16 +227,16 @@ object OptionsParser {
                                  ideVersion: IdeVersion,
                                  pluginRepository: PluginRepository): List<UpdateInfo> {
     if (checkAllBuildsPluginIds.isEmpty() && checkLastBuildsPluginIds.isEmpty()) {
-      return pluginRepository.getLastCompatibleUpdates(ideVersion)
+      return pluginRepository.getLastCompatiblePlugins(ideVersion)
     } else {
       val result = arrayListOf<UpdateInfo>()
 
       checkAllBuildsPluginIds.flatMapTo(result) {
-        pluginRepository.getAllCompatibleUpdatesOfPlugin(ideVersion, it)
+        pluginRepository.getAllCompatibleVersionsOfPlugin(ideVersion, it)
       }
 
       checkLastBuildsPluginIds.distinct().mapNotNullTo(result) {
-        pluginRepository.getAllCompatibleUpdatesOfPlugin(ideVersion, it)
+        pluginRepository.getAllCompatibleVersionsOfPlugin(ideVersion, it)
             .sortedByDescending { it.updateId }
             .firstOrNull()
       }

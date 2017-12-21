@@ -29,11 +29,11 @@ class TestTeamCityResultPrinter {
   }
 
   private fun mockRepository(updateInfos: List<UpdateInfo>) = object : MockPluginRepositoryAdapter() {
-    override fun getLastCompatibleUpdates(ideVersion: IdeVersion): List<UpdateInfo> = updateInfos
+    override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<UpdateInfo> = updateInfos
 
-    override fun getLastCompatibleUpdateOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? = updateInfos.find { it.pluginId == pluginId }
+    override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? = updateInfos.find { it.pluginId == pluginId }
 
-    override fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> = updateInfos.toList()
+    override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> = updateInfos.toList()
   }
 
   @Test

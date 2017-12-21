@@ -20,25 +20,25 @@ interface PluginRepository {
   /**
    * Returns all plugins compatible with this [ideVersion].
    */
-  fun getLastCompatibleUpdates(ideVersion: IdeVersion): List<UpdateInfo>
+  fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<UpdateInfo>
 
   /**
    * Returns all versions of the plugin with plugin.xml id equal to [pluginId]
    * compatible with [ideVersion].
    */
-  fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo>
+  fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo>
 
   /**
    * Returns the last version of the plugin with plugin.xml id equal to [pluginId]
    * compatible with [ideVersion].
    */
-  fun getLastCompatibleUpdateOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? =
-      getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId).maxBy { it.updateId }
+  fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? =
+      getAllCompatibleVersionsOfPlugin(ideVersion, pluginId).maxBy { it.updateId }
 
   /**
    * Returns all versions of the plugin with XML ID [pluginId].
    */
-  fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo>
+  fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo>
 
   /**
    * Downloads the file of the plugin by its [updateInfo].

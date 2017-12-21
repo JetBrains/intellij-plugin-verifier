@@ -11,13 +11,13 @@ import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 object EmptyPublicPluginRepository : PluginRepository {
   override fun getAllPlugins(): List<UpdateInfo> = emptyList()
 
-  override fun getLastCompatibleUpdates(ideVersion: IdeVersion): List<UpdateInfo> = emptyList()
+  override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<UpdateInfo> = emptyList()
 
-  override fun getLastCompatibleUpdateOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? = null
+  override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? = null
 
-  override fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> = emptyList()
+  override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> = emptyList()
 
-  override fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo> = emptyList()
+  override fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo> = emptyList()
 
   override fun downloadPluginFile(updateInfo: UpdateInfo): FileRepositoryResult = FileRepositoryResult.NotFound("")
 

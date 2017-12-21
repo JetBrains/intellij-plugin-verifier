@@ -78,7 +78,7 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
 
   private fun getCompatiblePluginVersions(pluginId: String, ideVersion: IdeVersion): List<PluginCoordinate> {
     val allCompatibleUpdatesOfPlugin = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch all compatible updates of plugin $pluginId with $ideVersion") {
-      getAllCompatibleUpdatesOfPlugin(ideVersion, pluginId)
+      getAllCompatibleVersionsOfPlugin(ideVersion, pluginId)
     }
     return allCompatibleUpdatesOfPlugin.map { PluginCoordinate.ByUpdateInfo(it, pluginRepository) }
   }

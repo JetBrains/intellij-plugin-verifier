@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 
 class LastCompatibleSelector(val ideVersion: IdeVersion) : UpdateSelector {
   override fun select(pluginId: String, pluginRepository: PluginRepository): UpdateSelector.Result {
-    val updateInfo = pluginRepository.getLastCompatibleUpdateOfPlugin(ideVersion, pluginId)
+    val updateInfo = pluginRepository.getLastCompatibleVersionOfPlugin(ideVersion, pluginId)
     if (updateInfo != null) {
       return UpdateSelector.Result.Plugin(PluginCoordinate.ByUpdateInfo(updateInfo, pluginRepository))
     }

@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.results
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
@@ -32,12 +33,12 @@ class TestMainPluginRepository {
 
   @Test
   fun updatesOfPlugin() {
-    assertTrue(repository.getAllCompatibleUpdatesOfPlugin(ideVersion, "ActionScript Profiler").isNotEmpty())
+    assertTrue(repository.getAllCompatibleVersionsOfPlugin(ideVersion, "ActionScript Profiler").isNotEmpty())
   }
 
   @Test
   fun updatesOfExistentPlugin() {
-    val updates = repository.getAllUpdatesOfPlugin("Pythonid")
+    val updates = repository.getAllVersionsOfPlugin("Pythonid")
     assertNotNull(updates)
     assertFalse(updates.isEmpty())
     val (pluginId, _, pluginName, _, vendor) = updates[0]
@@ -48,20 +49,20 @@ class TestMainPluginRepository {
 
   @Test
   fun updatesOfNonExistentPlugin() {
-    val updates = repository.getAllUpdatesOfPlugin("NON_EXISTENT_PLUGIN")
-    assertNull(updates)
+    val updates = repository.getAllVersionsOfPlugin("NON_EXISTENT_PLUGIN")
+    assertEquals(emptyList<UpdateInfo>(), updates)
   }
 
   @Test
   fun lastUpdate() {
-    val info = repository.getLastCompatibleUpdateOfPlugin(ideVersion, "org.jetbrains.kotlin")
+    val info = repository.getLastCompatibleVersionOfPlugin(ideVersion, "org.jetbrains.kotlin")
     assertNotNull(info)
     assertTrue(info!!.updateId > 20000)
   }
 
   @Test
   fun lastCompatibleUpdates() {
-    val updates = repository.getLastCompatibleUpdates(IdeVersion.createIdeVersion("IU-163.2112"))
+    val updates = repository.getLastCompatiblePlugins(IdeVersion.createIdeVersion("IU-163.2112"))
     assertFalse(updates.isEmpty())
   }
 

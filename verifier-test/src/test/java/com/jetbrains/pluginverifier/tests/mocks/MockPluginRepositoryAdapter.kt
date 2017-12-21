@@ -9,13 +9,13 @@ import java.net.URL
 open class MockPluginRepositoryAdapter : PluginRepository {
   override fun getAllPlugins(): List<UpdateInfo> = defaultAction()
 
-  override fun getLastCompatibleUpdates(ideVersion: IdeVersion): List<UpdateInfo> = defaultAction()
+  override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<UpdateInfo> = defaultAction()
 
-  override fun getLastCompatibleUpdateOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? = defaultAction()
+  override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? = defaultAction()
 
-  override fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> = defaultAction()
+  override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> = defaultAction()
 
-  override fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo> = defaultAction()
+  override fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo> = defaultAction()
 
   override fun downloadPluginFile(updateInfo: UpdateInfo): FileRepositoryResult = defaultAction()
 

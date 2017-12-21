@@ -78,7 +78,7 @@ class IdeDependencyFinderTest {
       override fun getIdOfPluginDeclaringModule(moduleId: String): String? =
           if (moduleId == "externalModule") "externalPlugin" else null
 
-      override fun getLastCompatibleUpdateOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? =
+      override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? =
           if (pluginId == "externalPlugin") createMockUpdateInfo(pluginId, pluginId, "1.0", 0) else null
 
       override fun downloadPluginFile(updateInfo: UpdateInfo): FileRepositoryResult =

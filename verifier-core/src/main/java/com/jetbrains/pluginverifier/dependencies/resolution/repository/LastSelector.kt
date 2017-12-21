@@ -18,5 +18,5 @@ class LastSelector : UpdateSelector {
   }
 
   private fun getLastUpdate(pluginId: String, pluginRepository: PluginRepository) =
-      pluginRepository.getAllUpdatesOfPlugin(pluginId).maxBy { it.updateId }
+      pluginRepository.getAllVersionsOfPlugin(pluginId).maxBy { it.updateId }
 }

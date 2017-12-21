@@ -127,7 +127,7 @@ class PublicPluginRepository(private val repositoryUrl: String,
     return cache[updateId]
   }
 
-  override fun getAllUpdatesOfPlugin(pluginId: String): List<UpdateInfo> {
+  override fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo> {
     val jsonUpdatesResponse = try {
       repositoryConnector.getUpdates(pluginId).executeSuccessfully().body()
     } catch (e: Exception) {
@@ -190,7 +190,7 @@ class PublicPluginRepository(private val repositoryUrl: String,
   private fun requestAllUpdatesSince(startUpdateId: Int): List<JsonUpdateSinceUntil> =
       repositoryConnector.getAllUpdateSinceAndUntil("139.0", startUpdateId).executeSuccessfully().body()
 
-  override fun getLastCompatibleUpdates(ideVersion: IdeVersion): List<UpdateInfo> =
+  override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<UpdateInfo> =
       repositoryConnector.getAllCompatibleUpdates(ideVersion.asString()).executeSuccessfully().body().map { it.toUpdateInfo() }
 
   private fun String?.createIdeVersion(): IdeVersion? {
@@ -206,8 +206,8 @@ class PublicPluginRepository(private val repositoryUrl: String,
     return (since == null || since <= ideVersion) && (until == null || ideVersion <= until)
   }
 
-  override fun getAllCompatibleUpdatesOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> =
-      getAllUpdatesOfPlugin(pluginId).filter { it.isCompatibleWith(ideVersion) }
+  override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> =
+      getAllVersionsOfPlugin(pluginId).filter { it.isCompatibleWith(ideVersion) }
 
   override fun getIdOfPluginDeclaringModule(moduleId: String): String? =
       INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]

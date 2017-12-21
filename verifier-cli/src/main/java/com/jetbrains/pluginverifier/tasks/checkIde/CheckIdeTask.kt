@@ -35,7 +35,7 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
   private fun getMissingUpdatesProblems(): List<MissingCompatibleUpdate> {
     val ideVersion = parameters.ideDescriptor.ideVersion
     val allCompatiblePlugins = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch last compatible updates with $ideVersion") {
-      getLastCompatibleUpdates(ideVersion)
+      getLastCompatiblePlugins(ideVersion)
     }
     val existingUpdatesForIde = allCompatiblePlugins
         .filterNot { PluginIdAndVersion(it.pluginId, it.version) in parameters.excludedPlugins }
@@ -61,7 +61,7 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
     if (ideVersion.startsWith("IU-")) {
       val communityVersion = "IC-" + ideVersion.substringAfter(ideVersion, "IU-")
       return try {
-        pluginRepository.getLastCompatibleUpdateOfPlugin(IdeVersion.createIdeVersion(communityVersion), pluginId)
+        pluginRepository.getLastCompatibleVersionOfPlugin(IdeVersion.createIdeVersion(communityVersion), pluginId)
       } catch (e: Exception) {
         null
       }
