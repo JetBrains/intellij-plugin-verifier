@@ -7,7 +7,6 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
-import com.jetbrains.pluginverifier.repository.plugins.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.database.MapDbServerDatabase
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
@@ -51,7 +50,6 @@ class ServerStartupListener : ServletContextListener {
 
     val pluginRepositoryUrl = Settings.DOWNLOAD_PLUGINS_REPOSITORY_URL.get()
     val pluginRepository = PublicPluginRepository(pluginRepositoryUrl, loadedPluginsDir, pluginDownloadDirSpaceSetting)
-    val updateInfoCache = UpdateInfoCache(pluginRepositoryUrl)
 
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractedPluginsDir)
     val ideRepository = IdeRepository(Settings.IDE_REPOSITORY_URL.get())
@@ -82,7 +80,6 @@ class ServerStartupListener : ServletContextListener {
         tasksManager,
         authorizationData,
         jdkManager,
-        updateInfoCache,
         Settings.values().toList(),
         serviceDAO,
         serverDatabase
@@ -101,8 +98,6 @@ class ServerStartupListener : ServletContextListener {
     LOG.info("Server is ready to start")
 
     validateSystemProperties()
-
-    prepareUpdateInfoCacheForExistingIdes()
 
     val verifierService = VerifierService(serverContext, Settings.VERIFIER_SERVICE_REPOSITORY_URL.get())
     val featureService = FeatureExtractorService(serverContext, Settings.FEATURE_EXTRACTOR_REPOSITORY_URL.get())
@@ -124,20 +119,6 @@ class ServerStartupListener : ServletContextListener {
 
     sce.servletContext.setAttribute(SERVER_CONTEXT_KEY, serverContext)
   }
-
-
-  private fun prepareUpdateInfoCacheForExistingIdes() {
-    try {
-      serverContext.ideKeeper.getAvailableIdeVersions().forEach {
-        serverContext.pluginRepository.getLastCompatibleUpdates(it).forEach {
-          serverContext.updateInfoCache.addUpdateInfo(it)
-        }
-      }
-    } catch (e: Exception) {
-      LOG.error("Unable to prepare update info cache", e)
-    }
-  }
-
 
   override fun contextDestroyed(sce: ServletContextEvent?) {
     serverContext.close()

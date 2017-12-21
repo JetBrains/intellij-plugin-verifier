@@ -78,7 +78,7 @@ class VerifierService(serverContext: ServerContext,
       getUpdatesToCheck0(ideVersion).executeSuccessfully().body().sortedDescending()
 
   private fun schedule(updateId: Int, versions: List<IdeVersion>) {
-    val updateInfo = serverContext.updateInfoCache.getUpdateInfo(updateId) ?: return
+    val updateInfo = serverContext.pluginRepository.getUpdateInfoById(updateId) ?: return
     if (updateInfo in verifiableUpdates) {
       return
     }

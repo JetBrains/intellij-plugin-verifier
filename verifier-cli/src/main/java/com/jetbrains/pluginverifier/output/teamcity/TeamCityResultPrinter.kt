@@ -148,19 +148,36 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     //........missing optional dependency dep#3
     //pluginTwo
     //...and so on...
-    val lastUpdates: Map<IdeVersion, List<UpdateInfo>> = requestLastVersionsOfCheckedPlugins(results)
+    val ideLastPluginVersions = requestLastVersionsOfCheckedPlugins(results.distinct().map { it.ideVersion })
     results.groupBy { it.plugin.pluginId }.forEach { (pluginId, pluginResults) ->
-      printResultsForSpecificPluginId(pluginId, pluginResults, lastUpdates)
+      printResultsForSpecificPluginId(pluginId, pluginResults, ideLastPluginVersions)
     }
   }
 
+  /**
+   * Generates the test group with name equal to the [pluginId]
+   * and for each verified version of the plugin
+   * creates a separate test. Thus the layout is as follows:
+   *
+   * ```
+   * plugin.id.one <- test group equal to [pluginId]
+   * ....(1.0)     <- test name equal to the plugin's version
+   * ........results of the plugin.id.one:1.0
+   * ....(2.0)
+   * ........results of the plugin.id.one:2.0
+   * plugin.id.two
+   * ....(1.5)
+   * ........results of the plugin id.two:1.5
+   * ....and so on...
+   * ```
+   */
   private fun printResultsForSpecificPluginId(pluginId: String,
                                               pluginResults: List<Result>,
-                                              lastUpdates: Map<IdeVersion, List<UpdateInfo>>) {
+                                              ideLastPluginVersions: Map<IdeVersion, List<PluginInfo>>) {
     tcLog.testSuiteStarted(pluginId).use {
       pluginResults.groupBy { it.plugin.version }.forEach { versionToVerdicts ->
         versionToVerdicts.value.forEach { (plugin, ideVersion, verdict) ->
-          val testName = genTestName(plugin, ideVersion, lastUpdates)
+          val testName = getPluginVersionAsTestName(plugin, ideVersion, ideLastPluginVersions)
           printResultOfSpecificVersion(plugin, verdict, testName)
         }
       }
@@ -187,9 +204,8 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     val problems = verdict.problems
     val missingDependencies = verdict.directMissingDependencies
     if (problems.isNotEmpty() || missingDependencies.any { !it.dependency.isOptional }) {
-      val pluginLink = repository.getPluginOverviewUrl(plugin)
       val overview = buildString {
-        append("Plugin URL: $pluginLink").append("\n")
+        append(getPluginOverviewLink(plugin)).append("\n")
         if (problems.isNotEmpty()) {
           append("$plugin has ${"problem".pluralizeWithNumber(problems.size)}\n")
         }
@@ -207,6 +223,11 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     }
   }
 
+  private fun getPluginOverviewLink(plugin: PluginInfo): String {
+    val url = (plugin as? UpdateInfo)?.browserURL ?: return ""
+    return "Plugin URL: $url"
+  }
+
   private fun printBadPluginResult(verdict: Verdict.Bad, versionTestName: String) {
     val message = "Plugin is invalid: ${verdict.pluginProblems.joinToString()}"
     tcLog.testStdErr(versionTestName, message)
@@ -216,8 +237,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
   private fun printProblems(plugin: PluginInfo,
                             testName: String,
                             problems: Set<Problem>) {
-    val pluginLink = repository.getPluginOverviewUrl(plugin)
-    val overview = "Plugin URL: $pluginLink\n$plugin has ${problems.size} ${"problem".pluralize(problems.size)}\n"
+    val overview = getPluginOverviewLink(plugin) + "\n$plugin has ${problems.size} ${"problem".pluralize(problems.size)}\n"
     val problemsContent = getProblemsContent(problems)
     tcLog.testStdErr(testName, problemsContent)
     tcLog.testFailed(testName, overview, "")
@@ -257,30 +277,46 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     }
   }
 
-  private fun requestLastVersionsOfCheckedPlugins(results: List<Result>): Map<IdeVersion, List<UpdateInfo>> =
-      results
-          .map { it.ideVersion }
-          .distinct()
-          .associate { ideVersion ->
-            try {
-              val lastCompatibleUpdates = repository.getLastCompatibleUpdates(ideVersion)
-              ideVersion to lastCompatibleUpdates.sortedByDescending { it.updateId }.distinctBy { it.pluginId }
-            } catch (e: Exception) {
-              LOG.info("Unable to determine the last compatible updates of IDE $ideVersion")
-              ideVersion to emptyList<UpdateInfo>()
-            }
-          }
+  /**
+   * For each [IDE version] [IdeVersion] returns the last versions
+   * of the plugin available in the [repository] and compatible with
+   * this IDE version.
+   */
+  fun requestLastVersionsOfCheckedPlugins(ideVersions: List<IdeVersion>): Map<IdeVersion, List<UpdateInfo>> =
+      ideVersions.associate {
+        try {
+          val lastCompatibleUpdates = repository.getLastCompatibleUpdates(it)
+          it to lastCompatibleUpdates.sortedByDescending { it.updateId }.distinctBy { it.pluginId }
+        } catch (e: Exception) {
+          LOG.info("Unable to determine the last compatible updates of IDE $it")
+          it to emptyList<UpdateInfo>()
+        }
+      }
 
-  private fun genTestName(pluginInfo: PluginInfo,
-                          ideVersion: IdeVersion,
-                          lastUpdates: Map<IdeVersion, List<UpdateInfo>>): String {
-    val onlyVersion = "(${pluginInfo.version})"
-    val relevant = lastUpdates[ideVersion] ?: return onlyVersion
-    val newest = "(${pluginInfo.version} - newest)"
-    if (pluginInfo is UpdateInfo) {
-      return if (relevant.any { pluginInfo.updateId == it.updateId }) newest else onlyVersion
+  /**
+   * Generates a TC test name in which the verification report will be printed.
+   *
+   * The test name is the [version] [PluginInfo.version] of the plugin
+   * plus, possibly, the suffix 'newest' indicating that this
+   * is the last available version of the plugin.
+   *
+   * The test name is wrapped into parenthesis like so `(<version>)`
+   * to make TC display the version as a whole. Not doing this
+   * would lead to TC arbitrarily splitting the version.
+   *
+   * Examples are:
+   * 1) `(173.3727.144.8)`
+   * 2) `(173.3727.244.997 - newest)`
+   */
+  private fun getPluginVersionAsTestName(pluginInfo: PluginInfo,
+                                         ideVersion: IdeVersion,
+                                         ideLastPluginVersions: Map<IdeVersion, List<PluginInfo>>) = with(pluginInfo) {
+    val lastVersions = ideLastPluginVersions.getOrDefault(ideVersion, emptyList())
+    if (this in lastVersions) {
+      "($version - newest)"
+    } else {
+      "($version)"
     }
-    return if (relevant.find { pluginInfo.pluginId == it.pluginId && pluginInfo.version == it.version } != null) newest else onlyVersion
   }
 
   private fun groupByProblemType(results: List<Result>) {
@@ -308,8 +344,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
             tcLog.testSuiteStarted(problem.shortDescription).use {
               val testName = "($plugin)"
               tcLog.testStarted(testName).use {
-                val pluginUrl = repository.getPluginOverviewUrl(plugin)
-                tcLog.testFailed(testName, "Plugin URL: $pluginUrl\nPlugin: $plugin", problem.fullDescription)
+                tcLog.testFailed(testName, getPluginOverviewLink(plugin) + "\nPlugin: $plugin", problem.fullDescription)
               }
             }
           }

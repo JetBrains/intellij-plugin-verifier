@@ -5,7 +5,6 @@ import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.plugins.UpdateInfoCache
 import org.jetbrains.plugins.verifier.service.database.ServerDatabase
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
@@ -31,7 +30,6 @@ class ServerContext(val applicationHomeDirectory: Path,
                     val taskManager: ServiceTasksManager,
                     val authorizationData: AuthorizationData,
                     val jdkManager: JdkManager,
-                    val updateInfoCache: UpdateInfoCache,
                     val startupSettings: List<Settings>,
                     val serviceDAO: ServiceDAO,
                     val serverDatabase: ServerDatabase) : Closeable {

@@ -56,8 +56,6 @@ class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions,
     return result
   }
 
-  private fun getPluginUrl(pluginInfo: PluginInfo) = (pluginInfo as? UpdateInfo)?.let { pluginRepository.getPluginOverviewUrl(it) }
-
   private fun printTrunkApiCompareResult(apiChanges: CheckTrunkApiResult) {
     val tcLog = TeamCityLog(System.out)
 
@@ -81,7 +79,7 @@ class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions,
                     append("\nThis problem takes place in ${apiChanges.trunkIdeVersion} but not in ${apiChanges.releaseIdeVersion}")
                     append(getMissingDependenciesDetails(apiChanges, plugin))
                   }
-                  val pluginUrl = getPluginUrl(plugin)
+                  val pluginUrl = (plugin as? UpdateInfo)?.browserURL
                   val pluginUrlPart = if (pluginUrl != null) "Plugin URL: $pluginUrl\n" else ""
                   val message = pluginUrlPart + "Plugin: ${plugin.pluginId}:${plugin.version}"
                   tcLog.testFailed(pluginName, message, problemDetails)

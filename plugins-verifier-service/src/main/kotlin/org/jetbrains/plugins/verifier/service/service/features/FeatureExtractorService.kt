@@ -54,7 +54,7 @@ class FeatureExtractorService(serverContext: ServerContext,
   }
 
   private fun schedule(updateId: Int) {
-    val updateInfo = serverContext.updateInfoCache.getUpdateInfo(updateId) ?: return
+    val updateInfo = serverContext.pluginRepository.getUpdateInfoById(updateId) ?: return
     if (updateInfo in inProgressUpdates) {
       return
     }

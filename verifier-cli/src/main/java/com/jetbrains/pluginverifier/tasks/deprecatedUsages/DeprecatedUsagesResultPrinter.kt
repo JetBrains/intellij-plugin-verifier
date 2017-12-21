@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.deprecated.formatUsageLocation
 import com.jetbrains.pluginverifier.results.deprecated.locationType
 import com.jetbrains.pluginverifier.results.location.Location
@@ -127,7 +128,7 @@ class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val plugin
               allCheckedPlugins
                   .sortedBy { it.pluginId }
                   .forEach {
-                    val overviewUrl = pluginRepository.getPluginOverviewUrl(it)?.let { " ($it)" } ?: ""
+                    val overviewUrl = (it as? UpdateInfo)?.browserURL ?: ""
                     appendln("%-50s %-25s%s".format(it.pluginId, it.version, overviewUrl))
                   }
             }

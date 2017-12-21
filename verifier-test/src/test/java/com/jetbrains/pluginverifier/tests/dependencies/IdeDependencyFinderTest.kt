@@ -15,6 +15,7 @@ import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
+import com.jetbrains.pluginverifier.tests.mocks.createMockUpdateInfo
 import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.junit.Assert.assertEquals
@@ -74,17 +75,14 @@ class IdeDependencyFinderTest {
     )
 
     val repository = object : MockPluginRepositoryAdapter() {
-      override fun getIdOfPluginDeclaringModule(moduleId: String): String? {
-        return if (moduleId == "externalModule") "externalPlugin" else null
-      }
+      override fun getIdOfPluginDeclaringModule(moduleId: String): String? =
+          if (moduleId == "externalModule") "externalPlugin" else null
 
-      override fun getLastCompatibleUpdateOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? {
-        return if (pluginId == "externalPlugin") UpdateInfo(pluginId, pluginId, "1.0", 0, null) else null
-      }
+      override fun getLastCompatibleUpdateOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? =
+          if (pluginId == "externalPlugin") createMockUpdateInfo(pluginId, pluginId, "1.0", 0) else null
 
-      override fun downloadPluginFile(update: UpdateInfo): FileRepositoryResult {
-        return FileRepositoryResult.Failed("Failed to download test.", Exception())
-      }
+      override fun downloadPluginFile(updateInfo: UpdateInfo): FileRepositoryResult =
+          FileRepositoryResult.Failed("Failed to download test.", Exception())
     }
 
     val pluginDetailsProvider = PluginDetailsProviderImpl(Paths.get("."))

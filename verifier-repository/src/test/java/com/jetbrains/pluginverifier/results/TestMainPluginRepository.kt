@@ -39,8 +39,8 @@ class TestMainPluginRepository {
   fun updatesOfExistentPlugin() {
     val updates = repository.getAllUpdatesOfPlugin("Pythonid")
     assertNotNull(updates)
-    assertFalse(updates!!.isEmpty())
-    val (pluginId, pluginName, _, _, vendor) = updates[0]
+    assertFalse(updates.isEmpty())
+    val (pluginId, _, pluginName, _, vendor) = updates[0]
     assertEquals("Pythonid", pluginId)
     assertEquals("Python", pluginName)
     assertEquals("JetBrains", vendor)

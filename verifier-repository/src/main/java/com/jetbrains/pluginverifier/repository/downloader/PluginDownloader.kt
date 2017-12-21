@@ -1,16 +1,15 @@
 package com.jetbrains.pluginverifier.repository.downloader
 
-import com.jetbrains.pluginverifier.repository.UpdateId
 import java.net.URL
 import java.nio.file.Path
 
-class PluginDownloader(private val pluginRepositoryUrl: String) : Downloader<UpdateId> {
+class PluginDownloader(private val pluginRepositoryUrl: String) : Downloader<Int> {
 
-  private val urlDownloader = UrlDownloader<UpdateId> {
-    URL(pluginRepositoryUrl.trimEnd('/') + "/plugin/download/?noStatistic=true&updateId=${it.id}")
+  private val urlDownloader = UrlDownloader<Int> {
+    URL(pluginRepositoryUrl.trimEnd('/') + "/plugin/download/?noStatistic=true&updateId=$it")
   }
 
-  override fun download(key: UpdateId, tempDirectory: Path) = with(urlDownloader.download(key, tempDirectory)) {
+  override fun download(key: Int, tempDirectory: Path) = with(urlDownloader.download(key, tempDirectory)) {
     when (this) {
       is DownloadResult.Downloaded -> this
       is DownloadResult.FailedToDownload -> DownloadResult.FailedToDownload("Plugin $key is not downloaded: " + error.message, error)

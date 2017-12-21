@@ -14,4 +14,8 @@ data class LocalPluginInfo(override val pluginId: String,
                            val untilBuild: IdeVersion?,
                            val vendor: String?,
                            val pluginFile: Path,
-                           val definedModules: Set<String>) : PluginInfo
+                           val definedModules: Set<String>) : PluginInfo {
+  override fun equals(other: Any?) = other is LocalPluginInfo && pluginFile == other.pluginFile
+
+  override fun hashCode() = pluginFile.hashCode()
+}

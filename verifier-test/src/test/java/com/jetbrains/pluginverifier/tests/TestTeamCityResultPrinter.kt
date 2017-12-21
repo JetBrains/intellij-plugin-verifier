@@ -12,11 +12,12 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
+import com.jetbrains.pluginverifier.tests.mocks.createMockUpdateInfo
 import org.junit.Assert
 import org.junit.Test
-import java.io.ByteArrayOutputStream
 import java.io.IOException
-import java.io.PrintStream
+import java.io.PrintWriter
+import java.io.StringWriter
 
 /**
  * @author Sergey Patrikeev
@@ -37,7 +38,10 @@ class TestTeamCityResultPrinter {
 
   @Test
   fun `test newest suffix for updates with newest versions`() {
-    val updateInfos = listOf(UpdateInfo("id", "name", "version", 1, ""), UpdateInfo("id", "name", "version 2", 2, ""))
+    val updateInfos = listOf(
+        createMockUpdateInfo("id", "name", "version", 1),
+        createMockUpdateInfo("id", "name", "version 2", 2)
+    )
     val mockRepository = mockRepository(updateInfos)
     val output = getTeamCityOutput(mockRepository, updateInfos)
     Assert.assertEquals("""##teamcity[testSuiteStarted name='id']
@@ -52,7 +56,7 @@ class TestTeamCityResultPrinter {
   @Test
   fun `no repository connection lead to no -newest suffix`() {
     val mockPluginRepository = noConnectionPluginRepository()
-    val output = getTeamCityOutput(mockPluginRepository, listOf(UpdateInfo("id", "name", "v", 1, "vendor")))
+    val output = getTeamCityOutput(mockPluginRepository, listOf(createMockUpdateInfo("id", "name", "v", 1)))
     Assert.assertEquals("""##teamcity[testSuiteStarted name='id']
 ##teamcity[testStarted name='(v)']
 ##teamcity[testFinished name='(v)']
@@ -62,11 +66,15 @@ class TestTeamCityResultPrinter {
 
   private fun getTeamCityOutput(pluginRepository: PluginRepository, pluginInfos: List<PluginInfo>): String {
     val dependencyNode = DependencyNode("id", "version", emptyList())
-    val output = ByteArrayOutputStream().use { bos ->
-      PrintStream(bos, true, "utf-8").use { printStream ->
-        val teamCityLog = TeamCityLog(printStream)
-        val teamCityVPrinter = TeamCityResultPrinter(teamCityLog, TeamCityResultPrinter.GroupBy.BY_PLUGIN, pluginRepository, AllMissingDependencyIgnoring)
-        teamCityVPrinter.printResults(
+    return StringWriter().use { stringWriter ->
+      val tcLog = TeamCityLog(PrintWriter(stringWriter))
+      val tcPrinter = TeamCityResultPrinter(
+          tcLog,
+          TeamCityResultPrinter.GroupBy.BY_PLUGIN,
+          pluginRepository,
+          AllMissingDependencyIgnoring
+      )
+      tcPrinter.printResults(
             pluginInfos.map {
               Result(
                   it,
@@ -75,9 +83,7 @@ class TestTeamCityResultPrinter {
               )
             }
         )
-      }
-      bos.toString("utf-8")
+      stringWriter.toString()
     }
-    return output
   }
 }

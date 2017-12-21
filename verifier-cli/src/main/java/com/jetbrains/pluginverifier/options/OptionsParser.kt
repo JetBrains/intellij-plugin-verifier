@@ -209,7 +209,6 @@ object OptionsParser {
       } catch (e: IOException) {
         throw RuntimeException("Failed to read plugins to check file " + pluginsFile + ": " + e.message, e)
       }
-
     }
 
     return Pair<List<String>, List<String>>(pluginsCheckAllBuilds, pluginsCheckLastBuilds)
