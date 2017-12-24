@@ -65,13 +65,34 @@ interface ResourceRepository<R, K> {
   fun remove(key: K): Boolean
 
   /**
+   * Removes all the [availalble] [has] keys from this repository.
+   * This method behaves as if by invoking of the following code:
+   * ```
+   * with(resourceRepository) {
+   *   lockAndExecute {
+   *     getAllExistingKeys().forEach { remove(it) }
+   *   }
+   * }
+   * ```
+   *
+   * Thus, each non-locked resource is [removed] [remove] immediately,
+   * while the locked keys are scheduled for removing once
+   * their holders [release] [ResourceLock.release] the resource locks.
+   */
+  fun removeAll()
+
+  /**
    * Returns `true` if the resource by specified key is available in
    * the repository, `false` otherwise.
    */
   fun has(key: K): Boolean
 
   /**
-   * Returns all keys available in the repository at the moment.
+   * Returns all keys [available] [has] in the repository at the moment.
+   *
+   * The returned set is an immutable copy of the internal set.
+   * It is not changed on the modifying actions like [add] and [remove].
+   * Thus, it can be safely used with modifying iterations.
    */
   fun getAllExistingKeys(): Set<K>
 

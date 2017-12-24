@@ -75,7 +75,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
   override fun <R> lockAndExecute(block: () -> R): R = block()
 
   @Synchronized
-  override fun getAllExistingKeys() = resourcesRegistrar.getAllKeys()
+  override fun getAllExistingKeys() = resourcesRegistrar.getAllKeys().toSet()
 
   @Synchronized
   override fun has(key: K) = resourcesRegistrar.has(key)
@@ -92,6 +92,11 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
     true
   } else {
     false
+  }
+
+  @Synchronized
+  override fun removeAll() {
+    getAllExistingKeys().forEach { remove(it) }
   }
 
   @Synchronized

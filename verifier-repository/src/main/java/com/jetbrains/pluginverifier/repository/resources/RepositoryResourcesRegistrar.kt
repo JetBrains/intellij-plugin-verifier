@@ -4,7 +4,7 @@ package com.jetbrains.pluginverifier.repository.resources
  * Data structure that maintains a set of registered resources and their total weights.
  *
  * It is initialized with [initial] [totalWeight] total weight of the resources, typically
- * equal zero in the units of chosed weights domain, the [weigher] used to assign
+ * equal zero in the units of chosen weights domain, the [weigher] used to assign
  * weights of the resources in a controlled way and the [disposer] used to deallocate
  * the resources being removed.
  */

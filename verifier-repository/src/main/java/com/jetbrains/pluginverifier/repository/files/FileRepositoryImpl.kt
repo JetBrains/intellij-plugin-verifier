@@ -37,7 +37,6 @@ private class DownloadProvider<K>(private val downloadExecutor: DownloadExecutor
 class FileRepositoryImpl<K>(sweepPolicy: SweepPolicy<K>,
                             clock: Clock,
                             downloadExecutor: DownloadExecutor<K>) : FileRepository<K> {
-
   private val resourceRepository = ResourceRepositoryImpl(
       sweepPolicy,
       clock,
@@ -46,7 +45,6 @@ class FileRepositoryImpl<K>(sweepPolicy: SweepPolicy<K>,
       { SpaceWeight(it.fileSize) },
       { path -> path.deleteLogged() }
   )
-
 
   /**
    * Provides the file by [key]. The file is returned from the
@@ -60,6 +58,8 @@ class FileRepositoryImpl<K>(sweepPolicy: SweepPolicy<K>,
   override fun add(key: K, resource: Path) = resourceRepository.add(key, resource)
 
   override fun remove(key: K) = resourceRepository.remove(key)
+
+  override fun removeAll() = resourceRepository.removeAll()
 
   override fun has(key: K) = resourceRepository.has(key)
 
