@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.repository.resources
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.repository.cleanup.UsageStatistic
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
@@ -258,14 +259,11 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
     } else {
       provideOrWait(key)
     }
-    try {
+    /**
+     * Release the lock if the cleanup procedure has failed.
+     */
+    (result as? ResourceRepositoryResult.Found<*>)?.lockedResource?.closeOnException {
       cleanup()
-    } catch (e: Throwable) {
-      /**
-       * Release the lock if the cleanup procedure has failed.
-       */
-      (result as? ResourceRepositoryResult.Found<*>)?.lockedResource?.release()
-      throw e
     }
     return result
   }
