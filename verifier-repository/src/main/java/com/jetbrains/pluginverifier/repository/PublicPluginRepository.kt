@@ -117,19 +117,6 @@ class PublicPluginRepository(private val repositoryUrl: String,
           .executeSuccessfully().body()
           .mapNotNull { getUpdateInfoById(it.updateId) }
 
-  private fun String?.createRangeIdeVersion(): IdeVersion? {
-    if (this == null || this == "" || this == "0.0") {
-      return null
-    }
-    return IdeVersion.createIdeVersionIfValid(this)
-  }
-
-  private fun UpdateInfo.isCompatibleWith(ideVersion: IdeVersion): Boolean {
-    val since = sinceBuild.createRangeIdeVersion()
-    val until = untilBuild.createRangeIdeVersion()
-    return (since == null || since <= ideVersion) && (until == null || ideVersion <= until)
-  }
-
   override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String) =
       getAllVersionsOfPlugin(pluginId).filter { it.isCompatibleWith(ideVersion) }
 
