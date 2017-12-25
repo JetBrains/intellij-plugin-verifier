@@ -6,7 +6,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.ide.IdeCreator
+import com.jetbrains.pluginverifier.ide.IdeDescriptorCreator
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.exists
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -56,7 +56,7 @@ class VerificationCorrectnessTest {
       val tempFolder = Files.createTempDirectory("")
       try {
         val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
-        return IdeCreator.createByFile(ideaFile, IdeVersion.createIdeVersion("IU-145.500")).use { ideDescriptor ->
+        return IdeDescriptorCreator.createByPath(ideaFile, IdeVersion.createIdeVersion("IU-145.500")).use { ideDescriptor ->
           val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
           val verifierParams = VerifierParameters(
               externalClassesPrefixes,

@@ -7,14 +7,11 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
-/**
- * @author Sergey Patrikeev
- */
-object IdeCreator {
+object IdeDescriptorCreator {
 
-  private val LOG: Logger = LoggerFactory.getLogger(IdeCreator::class.java)
+  private val LOG: Logger = LoggerFactory.getLogger(IdeDescriptorCreator::class.java)
 
-  fun createByFile(file: Path, ideVersion: IdeVersion?): IdeDescriptor {
+  fun createByPath(file: Path, ideVersion: IdeVersion?): IdeDescriptor {
     LOG.debug("Reading IDE class files from $file")
     val ide = IdeManager.createManager().createIde(file.toFile(), ideVersion)
     val ideResolver = IdeResolverCreator.createIdeResolver(ide)

@@ -6,8 +6,8 @@ import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.ide.IdeCreator
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.ide.IdeDescriptorCreator
 import com.jetbrains.pluginverifier.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.output.OutputOptions
@@ -72,7 +72,7 @@ object OptionsParser {
 
   fun createIdeDescriptor(ideToCheckFile: Path, opts: CmdOpts): IdeDescriptor {
     val ideVersion = takeVersionFromCmd(opts)
-    return IdeCreator.createByFile(ideToCheckFile, ideVersion)
+    return IdeDescriptorCreator.createByPath(ideToCheckFile, ideVersion)
   }
 
   private fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {
