@@ -112,24 +112,6 @@ class TeamcityInvalidPluginsTest {
         listOf(PropertyNotSpecified("name")))
   }
 
-  @Test
-  fun `plugin name contains plugin word`() {
-    `test invalid plugin xml`(
-        perfectXmlBuilder.modify {
-          name = "<name>My plugin</name>"
-        },
-        listOf(ForbiddenWordInPluginName))
-  }
-
-  @Test
-  fun `plugin name contains teamcity word`() {
-    `test invalid plugin xml`(
-        perfectXmlBuilder.modify {
-          name = "<name>Teamcity runner</name>"
-        },
-        listOf(ForbiddenWordInPluginName))
-  }
-
 
   @Test
   fun `plugin display name is not specified`() {
@@ -138,6 +120,24 @@ class TeamcityInvalidPluginsTest {
           displayName = ""
         },
         listOf(PropertyNotSpecified("display-name")))
+  }
+
+  @Test
+  fun `plugin display name contains plugin word`() {
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          displayName = "<display-name>My plugin</display-name>"
+        },
+        listOf(ForbiddenWordInPluginName))
+  }
+
+  @Test
+  fun `plugin display name contains teamcity word`() {
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          displayName = "<display-name>Teamcity runner</display-name>"
+        },
+        listOf(ForbiddenWordInPluginName))
   }
 
   @Test

@@ -7,19 +7,21 @@ import com.jetbrains.plugin.structure.teamcity.problems.ForbiddenWordInPluginNam
 
 internal fun validateTeamcityPluginBean(bean: TeamcityPluginBean): List<PluginProblem> {
   val problems = arrayListOf<PluginProblem>()
-  val beanName = bean.name
-  if (beanName == null || beanName.isBlank()) {
+
+  if (bean.name.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("name"))
+  }
+
+  val beanDisplayName = bean.displayName
+  if (beanDisplayName == null || beanDisplayName.isBlank()) {
+    problems.add(PropertyNotSpecified("display-name"))
   } else {
-    val words = beanName.toLowerCase().split(' ')
+    val words = beanDisplayName.toLowerCase().split(' ')
     if (words.any { it in ForbiddenWordInPluginName.forbiddenWords }) {
       problems.add(ForbiddenWordInPluginName)
     }
   }
 
-  if (bean.displayName.isNullOrBlank()) {
-    problems.add(PropertyNotSpecified("display-name"))
-  }
   if (bean.version.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("version"))
   }
