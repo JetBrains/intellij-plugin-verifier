@@ -17,7 +17,7 @@ class LruFileSizeSweepPolicy<K>(private val diskSpaceSetting: DiskSpaceSetting) 
       estimateFreeSpaceAmount(totalSpaceUsed) < diskSpaceSetting.lowSpaceThreshold
 
   private val lruHeaviestFilesComparator = compareBy<AvailableFile<K>> { it.usageStatistic.lastAccessTime }
-      .thenByDescending { it.fileInfo.size }
+      .thenByDescending { it.fileInfo.fileSize }
       .thenBy { it.fileInfo.file.fileName }
 
   override fun selectFilesForDeletion(sweepInfo: SweepInfo<K>): List<AvailableFile<K>> {
@@ -32,7 +32,7 @@ class LruFileSizeSweepPolicy<K>(private val diskSpaceSetting: DiskSpaceSetting) 
         for (candidate in sortedCandidates) {
           if (needToFreeSpace > SpaceAmount.ZERO_SPACE) {
             deleteFiles.add(candidate)
-            needToFreeSpace -= candidate.fileInfo.size
+            needToFreeSpace -= candidate.fileInfo.fileSize
           } else {
             break
           }

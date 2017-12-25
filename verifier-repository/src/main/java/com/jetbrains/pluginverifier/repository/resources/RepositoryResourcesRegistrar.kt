@@ -8,9 +8,9 @@ package com.jetbrains.pluginverifier.repository.resources
  * weights of the resources in a controlled way and the [disposer] used to deallocate
  * the resources being removed.
  */
-internal data class RepositoryResourcesRegistrar<R, K>(var totalWeight: ResourceWeight,
-                                                       val weigher: (R) -> ResourceWeight,
-                                                       val disposer: (R) -> Unit) {
+internal class RepositoryResourcesRegistrar<R, K>(var totalWeight: ResourceWeight,
+                                                  private val weigher: (R) -> ResourceWeight,
+                                                  private val disposer: (R) -> Unit) {
 
   val resources: MutableMap<K, ResourceInfo<R>> = hashMapOf()
 
@@ -36,6 +36,10 @@ internal data class RepositoryResourcesRegistrar<R, K>(var totalWeight: Resource
     ResourceRepositoryImpl.LOG.debug("Deleting resource by $key of weight $weight: $resource")
     totalWeight -= weight
     resources.remove(key)
-    disposer(resource)
+    try {
+      disposer(resource)
+    } catch (e: Exception) {
+      ResourceRepositoryImpl.LOG.error("Unable to dispose the resource $resource", e)
+    }
   }
 }

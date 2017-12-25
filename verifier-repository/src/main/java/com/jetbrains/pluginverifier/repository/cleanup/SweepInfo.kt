@@ -22,7 +22,11 @@ data class SweepInfo<out K>(private val evictionInfo: EvictionInfo<Path, K>) {
    * All the currently available files
    */
   val availableFiles: List<AvailableFile<K>> by lazy {
-    evictionInfo.availableResources.map { AvailableFile(it) }
+    evictionInfo.availableResources.map {
+      with(it) {
+        AvailableFile(key, resourceInfo, usageStatistic, isLocked)
+      }
+    }
   }
 
 }

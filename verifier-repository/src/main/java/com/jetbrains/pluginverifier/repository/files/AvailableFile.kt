@@ -1,7 +1,9 @@
 package com.jetbrains.pluginverifier.repository.files
 
 import com.jetbrains.pluginverifier.repository.cleanup.UsageStatistic
+import com.jetbrains.pluginverifier.repository.downloader.SpaceWeight
 import com.jetbrains.pluginverifier.repository.resources.AvailableResource
+import com.jetbrains.pluginverifier.repository.resources.ResourceInfo
 import java.nio.file.Path
 
 /**
@@ -10,29 +12,14 @@ import java.nio.file.Path
  * This is used to select the files that should be removed on the
  * [cleanup procedure] [com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy].
  */
-data class AvailableFile<out K>(val availableResource: AvailableResource<Path, K>) {
-
-  /**
-   * The key of the file in the [repository] [FileRepository]
-   */
-  val key: K
-    get() = availableResource.key
-
+class AvailableFile<out K>(key: K,
+                           resourceInfo: ResourceInfo<Path>,
+                           usageStatistic: UsageStatistic,
+                           isLocked: Boolean) : AvailableResource<Path, K>(key, resourceInfo, usageStatistic, isLocked) {
   /**
    * File descriptor
    */
   val fileInfo: FileInfo
-    get() = FileInfo(availableResource.resourceInfo)
+    get() = FileInfo(resourceInfo.resource, (resourceInfo.weight as SpaceWeight).spaceAmount)
 
-  /**
-   * Usage statistics of the file
-   */
-  val usageStatistic: UsageStatistic
-    get() = availableResource.usageStatistic
-
-  /**
-   * Indicates whether the file is currently locked in the [FileRepository]
-   */
-  val isLocked: Boolean
-    get() = availableResource.isLocked
 }

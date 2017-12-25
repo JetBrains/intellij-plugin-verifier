@@ -8,13 +8,7 @@ import java.nio.file.Path
 /**
  * Descriptor of the file in the [file repository] [FileRepository].
  *
- * This consists of the [path to the file] [file] and its [size], which can
+ * It consists of the [path to the file] [file] and its [size] [fileSize], which can
  * be used to avoid unnecessary IO-requests.
  */
-data class FileInfo(private val resourceInfo: ResourceInfo<Path>) {
-  val file: Path
-    get() = resourceInfo.resource
-
-  val size: SpaceAmount
-    get() = (resourceInfo.weight as SpaceWeight).spaceAmount
-}
+data class FileInfo(val file: Path, val fileSize: SpaceAmount) : ResourceInfo<Path>(file, SpaceWeight(fileSize))

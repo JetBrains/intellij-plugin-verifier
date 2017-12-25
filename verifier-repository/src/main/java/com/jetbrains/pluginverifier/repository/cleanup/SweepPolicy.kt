@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.repository.cleanup
 
 import com.jetbrains.pluginverifier.repository.downloader.SpaceWeight
 import com.jetbrains.pluginverifier.repository.files.AvailableFile
-import com.jetbrains.pluginverifier.repository.resources.AvailableResource
 import com.jetbrains.pluginverifier.repository.resources.EvictionInfo
 import com.jetbrains.pluginverifier.repository.resources.EvictionPolicy
 import com.jetbrains.pluginverifier.repository.resources.ResourceWeight
@@ -17,8 +16,8 @@ interface SweepPolicy<K> : EvictionPolicy<Path, K> {
   override fun isNecessary(totalWeight: ResourceWeight) =
       isNecessary((totalWeight as SpaceWeight).spaceAmount)
 
-  override fun selectResourcesForDeletion(evictionInfo: EvictionInfo<Path, K>): List<AvailableResource<Path, K>> =
-      selectFilesForDeletion(SweepInfo(evictionInfo)).map { it.availableResource }
+  override fun selectResourcesForDeletion(evictionInfo: EvictionInfo<Path, K>) =
+      selectFilesForDeletion(SweepInfo(evictionInfo))
 
   /**
    * Determines whether it is necessary to carry out the cleanup procedure at the moment.

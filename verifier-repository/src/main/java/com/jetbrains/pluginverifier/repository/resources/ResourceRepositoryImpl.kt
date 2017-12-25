@@ -111,7 +111,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
     assert(resourcesRegistrar.has(key))
     val resourceInfo = resourcesRegistrar.get(key)!!
     val lockTime = clock.instant()
-    val lock = ResourceLockImpl(resourceInfo.resource, lockTime, key, nextLockId++, this)
+    val lock = ResourceLockImpl(lockTime, resourceInfo, key, nextLockId++, this)
     key2Locks.getOrPut(key, { hashSetOf() }).add(lock)
 
     val keyUsageStatistic = statistics.getOrPut(key, { UsageStatistic(lockTime, 0) })

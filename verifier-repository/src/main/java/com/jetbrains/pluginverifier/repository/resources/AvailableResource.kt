@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.repository.cleanup.UsageStatistic
  * This is used to select the resources that should be removed on the
  * [cleanup procedure] [EvictionPolicy].
  */
-data class AvailableResource<out R, out K>(
+open class AvailableResource<out R, out K>(
     /**
      * The key of the resource in the [repository] [ResourceRepository]
      */

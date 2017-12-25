@@ -18,8 +18,8 @@ import java.nio.file.Path
  * thread deletes it.
  */
 //todo: provide a cache of IdeDescriptors
-class IdeFilesBank(ideRepository: IdeRepository,
-                   bankDirectory: Path,
+class IdeFilesBank(private val bankDirectory: Path,
+                   ideRepository: IdeRepository,
                    diskSpaceSetting: DiskSpaceSetting,
                    downloadProgress: (Double) -> Unit) {
 
@@ -60,4 +60,7 @@ class IdeFilesBank(ideRepository: IdeRepository,
       }
     }
   }
+
+  override fun toString() = "IDEs at $bankDirectory"
+
 }
