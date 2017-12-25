@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.tasks
 
 /**
- * Service task is a piece of work to be executed.
+ * Service task is a piece of work to be [executed] [execute].
  *
  * The [presentableName] is used to display the task
  * and its [progress] [ProgressIndicator] on the

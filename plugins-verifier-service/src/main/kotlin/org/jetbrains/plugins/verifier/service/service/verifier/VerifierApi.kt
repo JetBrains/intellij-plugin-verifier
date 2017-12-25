@@ -14,13 +14,13 @@ import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
 
-fun prepareVerificationResponse(compatibilityResult: CheckRangeCompatibilityResult): UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult {
-  val apiResultType = convertToApiResultType(compatibilityResult)
-  val apiResults = compatibilityResult.verificationResults.orEmpty().map { convertVerifierResult(it) }
-  val invalidPluginProblems = compatibilityResult.invalidPluginProblems.orEmpty().map { convertInvalidProblem(it) }
-  val nonDownloadableReason = compatibilityResult.nonDownloadableReason
+fun prepareVerificationResponse(checkRangeResult: CheckRangeTask.Result): UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult {
+  val apiResultType = convertToApiResultType(checkRangeResult)
+  val apiResults = checkRangeResult.verificationResults.orEmpty().map { convertVerifierResult(it) }
+  val invalidPluginProblems = checkRangeResult.invalidPluginProblems.orEmpty().map { convertInvalidProblem(it) }
+  val nonDownloadableReason = checkRangeResult.nonDownloadableReason
   return UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.newBuilder()
-      .setUpdateId(compatibilityResult.updateInfo.updateId)
+      .setUpdateId(checkRangeResult.updateInfo.updateId)
       .setResultType(apiResultType)
       .addAllIdeVerificationResults(apiResults)
       .addAllInvalidPluginProblems(invalidPluginProblems)
@@ -130,9 +130,9 @@ private fun convertWarnings(warnings: Set<Warning>): List<VerificationResults.Wa
       .build()
 }
 
-private fun convertToApiResultType(compatibilityResult: CheckRangeCompatibilityResult): UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType = when (compatibilityResult.resultType) {
-  CheckRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE -> UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE
-  CheckRangeCompatibilityResult.ResultType.NO_COMPATIBLE_IDES -> UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType.NO_COMPATIBLE_IDES
-  CheckRangeCompatibilityResult.ResultType.INVALID_PLUGIN -> UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType.INVALID_PLUGIN
-  CheckRangeCompatibilityResult.ResultType.VERIFICATION_DONE -> UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType.VERIFICATION_DONE
+private fun convertToApiResultType(compatibilityResult: CheckRangeTask.Result): UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType = when (compatibilityResult.resultType) {
+  CheckRangeTask.Result.ResultType.NON_DOWNLOADABLE -> UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE
+  CheckRangeTask.Result.ResultType.NO_COMPATIBLE_IDES -> UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType.NO_COMPATIBLE_IDES
+  CheckRangeTask.Result.ResultType.INVALID_PLUGIN -> UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType.INVALID_PLUGIN
+  CheckRangeTask.Result.ResultType.VERIFICATION_DONE -> UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType.VERIFICATION_DONE
 }

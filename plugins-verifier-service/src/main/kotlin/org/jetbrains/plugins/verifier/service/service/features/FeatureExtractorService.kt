@@ -66,10 +66,10 @@ class FeatureExtractorService(serverContext: ServerContext,
 
     lastProceedDate[updateInfo] = System.currentTimeMillis()
 
-    val runner = ExtractFeaturesServiceTask(
+    val runner = ExtractFeaturesTask(
+        serverContext,
         PluginCoordinate.ByUpdateInfo(updateInfo, serverContext.pluginRepository),
-        updateInfo,
-        serverContext
+        updateInfo
     )
     val taskStatus = serverContext.taskManager.enqueue(
         runner,
@@ -81,16 +81,16 @@ class FeatureExtractorService(serverContext: ServerContext,
     logger.info("Extract features of $updateInfo is scheduled with taskId #${taskStatus.taskId}")
   }
 
-  private fun onCompletion(task: ExtractFeaturesServiceTask) {
+  private fun onCompletion(task: ExtractFeaturesTask) {
     inProgressUpdates.remove((task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo)
   }
 
-  private fun onError(error: Throwable, taskStatus: ServiceTaskStatus, task: ExtractFeaturesServiceTask) {
+  private fun onError(error: Throwable, taskStatus: ServiceTaskStatus, task: ExtractFeaturesTask) {
     val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
     logger.error("Unable to extract features of $updateInfo (#${taskStatus.taskId})", error)
   }
 
-  private fun onSuccess(extractorResult: FeaturesResult) {
+  private fun onSuccess(extractorResult: ExtractFeaturesTask.Result) {
     val updateInfo = extractorResult.updateInfo
     val resultType = extractorResult.resultType
     val size = extractorResult.features.size

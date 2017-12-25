@@ -89,7 +89,7 @@ class VerifierService(serverContext: ServerContext,
 
     lastCheckDate[updateInfo] = System.currentTimeMillis()
 
-    val runner = CheckRangeCompatibilityServiceTask(
+    val runner = CheckRangeTask(
         updateInfo,
         JdkVersion.JAVA_8_ORACLE,
         versions,
@@ -105,20 +105,20 @@ class VerifierService(serverContext: ServerContext,
     logger.info("Check [since; until] for $updateInfo is scheduled #${taskStatus.taskId}")
   }
 
-  private fun onCompletion(task: CheckRangeCompatibilityServiceTask) {
-    verifiableUpdates.remove(task.pluginCoordinate.updateInfo)
+  private fun onCompletion(task: CheckRangeTask) {
+    verifiableUpdates.remove(task.updateInfo)
   }
 
-  private fun onError(error: Throwable, taskStatus: ServiceTaskStatus, task: CheckRangeCompatibilityServiceTask) {
-    val updateInfo = task.pluginCoordinate.updateInfo
+  private fun onError(error: Throwable, taskStatus: ServiceTaskStatus, task: CheckRangeTask) {
+    val updateInfo = task.updateInfo
     logger.error("Unable to check $updateInfo (task #${taskStatus.taskId})", error)
   }
 
-  private fun onSuccess(compatibilityResult: CheckRangeCompatibilityResult, updateInfo: UpdateInfo) {
+  private fun onSuccess(compatibilityResult: CheckRangeTask.Result, updateInfo: UpdateInfo) {
     val ideVersionToResult = compatibilityResult.verificationResults.orEmpty().map { it.ideVersion to it.verdict.javaClass.simpleName }
     logger.info("Update ${compatibilityResult.updateInfo} is checked: ${compatibilityResult.resultType}: ${ideVersionToResult.joinToString()}")
 
-    if (compatibilityResult.resultType == CheckRangeCompatibilityResult.ResultType.NO_COMPATIBLE_IDES) {
+    if (compatibilityResult.resultType == CheckRangeTask.Result.ResultType.NO_COMPATIBLE_IDES) {
       updatesMissingCompatibleIde.add(updateInfo)
     } else {
       updatesMissingCompatibleIde.remove(updateInfo)

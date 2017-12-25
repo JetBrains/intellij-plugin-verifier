@@ -7,7 +7,7 @@ import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 
 fun prepareFeaturesResponse(updateInfo: UpdateInfo,
-                            resultType: FeaturesResult.ResultType,
+                            resultType: ExtractFeaturesTask.Result.ResultType,
                             features: List<ExtensionPointFeatures>): String {
   val updateId = updateInfo.updateId
   val apiResultType = convertResultType(resultType)
@@ -30,11 +30,11 @@ private fun convertExtensionPoint(it: ExtensionPointFeatures): ApiExtensionPoint
   ExtensionPoint.MODULE_TYPE -> ApiExtensionPoint.MODULE_TYPE
 }
 
-private fun convertResultType(resultType: FeaturesResult.ResultType): ApiFeaturesResult.ResultType = when (resultType) {
-  FeaturesResult.ResultType.NOT_FOUND -> ApiFeaturesResult.ResultType.NOT_FOUND
-  FeaturesResult.ResultType.BAD_PLUGIN -> ApiFeaturesResult.ResultType.BAD_PLUGIN
-  FeaturesResult.ResultType.EXTRACTED_ALL -> ApiFeaturesResult.ResultType.EXTRACTED_ALL
-  FeaturesResult.ResultType.EXTRACTED_PARTIALLY -> ApiFeaturesResult.ResultType.EXTRACTED_PARTIALLY
+private fun convertResultType(resultType: ExtractFeaturesTask.Result.ResultType): ApiFeaturesResult.ResultType = when (resultType) {
+  ExtractFeaturesTask.Result.ResultType.NOT_FOUND -> ApiFeaturesResult.ResultType.NOT_FOUND
+  ExtractFeaturesTask.Result.ResultType.BAD_PLUGIN -> ApiFeaturesResult.ResultType.BAD_PLUGIN
+  ExtractFeaturesTask.Result.ResultType.EXTRACTED_ALL -> ApiFeaturesResult.ResultType.EXTRACTED_ALL
+  ExtractFeaturesTask.Result.ResultType.EXTRACTED_PARTIALLY -> ApiFeaturesResult.ResultType.EXTRACTED_PARTIALLY
 }
 
 

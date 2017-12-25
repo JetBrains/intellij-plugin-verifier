@@ -1,9 +1,9 @@
 package org.jetbrains.plugins.verifier.service.startup
 
+import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
-import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
