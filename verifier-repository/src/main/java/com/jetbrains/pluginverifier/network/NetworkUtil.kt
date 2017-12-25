@@ -9,6 +9,10 @@ import java.lang.RuntimeException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
+/**
+ * Executes this [Call] and returns its [Response].
+ * Throws an exception if the call has failed.
+ */
 fun <T> Call<T>.executeSuccessfully(): Response<T> = executeWithInterruptionCheck(
     onSuccess = { success ->
       success
@@ -34,8 +38,8 @@ private val <T> Call<T>.serverUrl: String
 private fun <T, R> Call<T>.executeWithInterruptionCheck(onSuccess: (Response<T>) -> R,
                                                         onProblems: (Response<T>) -> R,
                                                         onFailure: (Throwable) -> R): R {
-  val responseRef = AtomicReference<Response<T>?>(null)
-  val errorRef = AtomicReference<Throwable?>(null)
+  val responseRef = AtomicReference<Response<T>?>()
+  val errorRef = AtomicReference<Throwable?>()
   val finished = AtomicBoolean()
 
   enqueue(object : Callback<T> {
@@ -51,11 +55,27 @@ private fun <T, R> Call<T>.executeWithInterruptionCheck(onSuccess: (Response<T>)
   })
 
   while (!finished.get()) {
-    if (Thread.currentThread().isInterrupted) {
+    if (Thread.interrupted()) {
       cancel()
       throw InterruptedException()
     }
-    Thread.sleep(100)
+
+    //Wait a little bit for the request to complete.
+    try {
+      Thread.sleep(100)
+    } catch (ie: InterruptedException) {
+      //Cancel this Call<T> if the thread has been interrupted
+      cancel()
+      throw ie
+    }
+  }
+
+  /**
+   * Rethrow the InterruptedException as indication
+   * that this Call<T> has been cancelled.
+   */
+  if (isCanceled) {
+    throw InterruptedException()
   }
 
   val response = responseRef.get()
