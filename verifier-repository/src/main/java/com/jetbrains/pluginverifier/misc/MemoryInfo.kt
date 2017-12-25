@@ -21,4 +21,10 @@ data class MemoryInfo(val totalMemory: SpaceAmount,
       )
     }
   }
+
+  override fun toString() = "Total memory: " + totalMemory + "; " +
+      "Free memory: " + freeMemory + "; " +
+      "Used memory: " + usedMemory + "; " +
+      "Max memory: " + maxMemory + "; "
+
 }
