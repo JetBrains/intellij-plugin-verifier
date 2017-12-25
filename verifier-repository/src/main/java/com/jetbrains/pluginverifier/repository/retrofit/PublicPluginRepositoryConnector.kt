@@ -32,9 +32,8 @@ internal data class JsonUpdateInfo(@SerializedName("pluginId") val pluginId: Str
                                    @SerializedName("version", alternate = arrayOf("pluginVersion")) val version: String,
                                    @SerializedName("updateId") val updateId: Int,
                                    @SerializedName("vendor") val vendor: String,
-    //todo: use these fields when the plugin repository provides them.
-                                   @SerializedName("since") val sinceBuild: String?,
-                                   @SerializedName("until") val untilBuild: String?)
+                                   @SerializedName("since") val sinceString: String,
+                                   @SerializedName("until") val untilString: String)
 
 internal data class JsonUpdatesResponse(@SerializedName("pluginXmlId") val pluginId: String,
                                         @SerializedName("pluginName") val pluginName: String,

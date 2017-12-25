@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.repository
 
+import com.google.common.cache.CacheBuilder
 import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -20,10 +21,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.net.URL
 import java.nio.file.Path
-import java.time.Duration
-import java.time.Instant
-import java.time.Instant.now
-import java.time.temporal.ChronoUnit
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 /**
@@ -70,17 +68,14 @@ class PublicPluginRepository(private val repositoryUrl: String,
 
   private val allSinceUntilPluginsRequester = AllSinceUntilPluginsRequester()
 
-  private val allJsonUpdateInfosRequester = JsonUpdateInfosRequester()
+  private val updateInfosRequester = UpdateInfosRequester()
 
   private fun getBrowserUrl(pluginId: String) = URL("$repositoryUrl/plugin/index?xmlId=$pluginId")
 
   private fun getDownloadUrl(updateId: Int) = URL("$repositoryUrl/plugin/download/?noStatistic=true&updateId=$updateId")
 
-  override fun getUpdateInfoById(updateId: Int): UpdateInfo? {
-    val sinceUntil = allSinceUntilPluginsRequester.getSinceUntilById(updateId) ?: return null
-    val updateInfo = allJsonUpdateInfosRequester.getJsonUpdateInfoById(updateId) ?: return null
-    return createUpdateInfo(updateInfo, sinceUntil)
-  }
+  override fun getUpdateInfoById(updateId: Int): UpdateInfo? =
+      updateInfosRequester.getUpdateInfoById(updateId)
 
   override fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo> {
     val jsonUpdatesResponse = try {
@@ -93,24 +88,8 @@ class PublicPluginRepository(private val repositoryUrl: String,
     return jsonUpdatesResponse.updates.mapNotNull { getUpdateInfoById(it.updateId) }
   }
 
-  override fun getAllPlugins() = allSinceUntilPluginsRequester.getAllPlugins()
-      .mapNotNull { getUpdateInfoById(it.updateId) }
-
-  private fun createUpdateInfo(jsonUpdateInfo: JsonUpdateInfo, sinceUntil: JsonUpdateSinceUntil) =
-      with(jsonUpdateInfo) {
-        UpdateInfo(
-            pluginId,
-            version,
-            pluginName,
-            updateId,
-            vendor,
-            sinceUntil.sinceBuild,
-            sinceUntil.untilBuild,
-            getDownloadUrl(updateId),
-            getBrowserUrl(pluginId),
-            repositoryURL
-        )
-      }
+  override fun getAllPlugins() = allSinceUntilPluginsRequester.getAllPluginUpdateIds()
+      .mapNotNull { getUpdateInfoById(it) }
 
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion) =
       repositoryConnector.getAllCompatibleUpdates(ideVersion.asString())
@@ -129,16 +108,52 @@ class PublicPluginRepository(private val repositoryUrl: String,
   override fun toString() = repositoryUrl
 
   /**
-   * This class is responsible for requesting
-   * the general plugin information without the [since; until] ranges.
+   * This class is responsible for requesting the [UpdateInfo]s.
    */
-  private inner class JsonUpdateInfosRequester {
+  private inner class UpdateInfosRequester {
 
-    private val jsonUpdates = hashMapOf<Int, JsonUpdateInfo>()
+    /**
+     * Because of possible changes of *since, until*
+     * values in the repository's database,
+     * it is necessary to occasionally update the caches.
+     * Thus, the values are invalidated every hour.
+     *
+     * The value of the cache is `Optional` because
+     * the guava's caches don't allow to cache `null` values.
+     */
+    private val updateInfos = CacheBuilder
+        .newBuilder()
+        .expireAfterWrite(1, TimeUnit.HOURS)
+        .build<Int, Optional<UpdateInfo>>()
 
-    private val requestedUpdateIds = hashSetOf<Int>()
+    @Synchronized
+    fun getUpdateInfoById(updateId: Int): UpdateInfo? = updateInfos.get(updateId) {
+      requestUpdateInfos(updateId)
+    }.orElse(null)
 
-    private fun requestBatchOfJsonUpdateInfos(updateId: Int) = try {
+    private fun requestUpdateInfos(updateId: Int): Optional<UpdateInfo> {
+      val jsonUpdateInfos = requestBatchOfJsonUpdateInfos(updateId)
+      val updateIdToInfo = jsonUpdateInfos.associateBy { it.updateId }
+      if (updateIdToInfo.isNotEmpty()) {
+        val min = updateIdToInfo.keys.min()!!
+        val max = updateIdToInfo.keys.max()!!
+        /**
+         * Explicitly save `null` value for those update-ids
+         * that don't have a corresponding UpdateInfo.
+         *
+         * This is done to avoid unnecessary request.
+         */
+        for (id in min..max) {
+          updateInfos.put(id, optionalUpdateInfo(updateIdToInfo[id]))
+        }
+      }
+      return optionalUpdateInfo(updateIdToInfo[updateId])
+    }
+
+    private fun optionalUpdateInfo(jsonUpdateInfo: JsonUpdateInfo?): Optional<UpdateInfo> =
+        Optional.ofNullable(jsonUpdateInfo?.toUpdateInfo())
+
+    private fun requestBatchOfJsonUpdateInfos(updateId: Int): List<JsonUpdateInfo> = try {
       val start = (updateId - BATCH_REQUEST_SIZE / 2).coerceAtLeast(1)
       val end = start + BATCH_REQUEST_SIZE
 
@@ -160,92 +175,53 @@ class PublicPluginRepository(private val repositoryUrl: String,
       null
     }
 
-    @Synchronized
-    fun getJsonUpdateInfoById(updateId: Int): JsonUpdateInfo? {
-      if (updateId !in requestedUpdateIds) {
-        requestedUpdateIds.add(updateId)
-
-        val jsonUpdateInfos = requestBatchOfJsonUpdateInfos(updateId)
-        val updateIds = jsonUpdateInfos.map { it.updateId }
-        if (updateIds.isNotEmpty()) {
-          /**
-           * Don't request the same range of update infos twice.
-           */
-          val min = updateIds.min()!!
-          val max = updateIds.max()!!
-          requestedUpdateIds.addAll(min..max)
-
-          jsonUpdateInfos.forEach {
-            jsonUpdates[it.updateId] = it
-          }
-        }
-      }
-      return jsonUpdates[updateId]
-    }
+    private fun JsonUpdateInfo.toUpdateInfo() = UpdateInfo(
+        pluginId,
+        version,
+        pluginName,
+        updateId,
+        vendor,
+        sinceString,
+        untilString,
+        getDownloadUrl(updateId),
+        getBrowserUrl(pluginId),
+        repositoryURL
+    )
 
   }
 
   /**
    * This class is responsible for requesting all available
-   * plugins informations along with the [since; until] ranges
-   * of the plugins.
+   * plugins information.
    *
    * Current implementation uses [allUpdatesSince](https://plugins.jetbrains.com/manager/allUpdatesSince?build=IU-139&updateId=40000)
    * endpoint to request all available plugins.
    * In order to reduce the load on the repository,
    * the class remembers the last requested update id.
-   *
-   * Because of possible changes of *since, until* values in the repository's database,
-   * it is necessary to occasionally do a full
-   * request (with *updateId* value of `1`) to update the caches.
-   * The full request is performed every hour.
    */
   private inner class AllSinceUntilPluginsRequester {
 
-    private val duration = Duration.of(1, ChronoUnit.HOURS)
-
-    private var lastUpdateId = 1
-
-    private var lastFullUpdate: Instant? = null
+    private var lastUpdateId = 0
 
     private val allPlugins = hashMapOf<Int, JsonUpdateSinceUntil>()
 
-    private fun needFullUpdate() = lastFullUpdate == null || now().minus(duration).isAfter(lastFullUpdate)
-
     private fun updateState() {
-      val updates = if (needFullUpdate()) {
-        val fullUpdate = requestSinceUntil(1)
-        lastFullUpdate = now()
-        fullUpdate
-      } else {
-        requestSinceUntil(lastUpdateId + 1)
-      }
-
+      val updates = requestAllPlugins(lastUpdateId + 1)
       updates.forEach {
         allPlugins[it.updateId] = it
         lastUpdateId = maxOf(lastUpdateId, it.updateId)
       }
     }
 
-    private fun requestSinceUntil(startUpdateId: Int) = requestAllUpdatesSince(startUpdateId)
-        .sortedBy { it.updateId }
-
-    private fun requestAllUpdatesSince(startUpdateId: Int) =
+    private fun requestAllPlugins(startUpdateId: Int) =
         repositoryConnector.getAllUpdateSinceAndUntil("1.0", startUpdateId).executeSuccessfully().body()
 
     @Synchronized
-    fun getAllPlugins(): Collection<JsonUpdateSinceUntil> {
+    fun getAllPluginUpdateIds(): Set<Int> {
       updateState()
-      return allPlugins.values
+      return allPlugins.values.mapTo(hashSetOf()) { it.updateId }
     }
 
-    @Synchronized
-    fun getSinceUntilById(updateId: Int): JsonUpdateSinceUntil? {
-      if (updateId > lastUpdateId || needFullUpdate()) {
-        updateState()
-      }
-      return allPlugins[updateId]
-    }
   }
 
 }
