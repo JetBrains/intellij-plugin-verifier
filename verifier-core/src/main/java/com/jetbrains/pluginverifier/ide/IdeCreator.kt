@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.parameters.ide
+package com.jetbrains.pluginverifier.ide
 
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator

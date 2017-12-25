@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.pluginverifier.parameters.ide;
+package com.jetbrains.pluginverifier.ide;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -114,8 +114,7 @@ public class ParametersListUtil {
           }
         }
         escapedQuote = false;
-      }
-      else if (Character.isWhitespace(ch)) {
+      } else if (Character.isWhitespace(ch)) {
         if (!inQuotes) {
           if (token.length() > 0 || nonEmpty) {
             params.add(token.toString());
@@ -124,8 +123,7 @@ public class ParametersListUtil {
           }
           continue;
         }
-      }
-      else if (ch == '\\') {
+      } else if (ch == '\\') {
         if (i < parameterString.length() - 1 && parameterString.charAt(i + 1) == '"') {
           escapedQuote = true;
           if (!keepQuotes) {

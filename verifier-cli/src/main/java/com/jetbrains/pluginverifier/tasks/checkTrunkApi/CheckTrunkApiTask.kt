@@ -10,9 +10,9 @@ import com.jetbrains.pluginverifier.dependencies.resolution.LocalRepositoryDepen
 import com.jetbrains.pluginverifier.dependencies.resolution.RepositoryDependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.repository.LastCompatibleSelector
 import com.jetbrains.pluginverifier.dependencies.resolution.repository.LastSelector
+import com.jetbrains.pluginverifier.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
-import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
-import com.jetbrains.pluginverifier.parameters.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.plugin.toPluginIdAndVersion

@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.results.location.Location
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
