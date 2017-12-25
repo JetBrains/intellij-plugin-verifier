@@ -18,7 +18,7 @@ internal interface PublicPluginRepositoryConnector {
   fun getAllCompatibleUpdates(@Query("build") build: String): Call<List<JsonUpdateInfo>>
 
   @GET("/plugin/updates")
-  fun getUpdates(@Query("xmlId") xmlId: String): Call<JsonUpdatesResponse>
+  fun getPluginUpdates(@Query("xmlId") xmlId: String): Call<JsonUpdatesResponse>
 
   @POST("/manager/getUpdateInfosForIdsBetween")
   fun getUpdateInfosForIdsBetween(@Query("startId") startId: Int, @Query("endId") endId: Int): Call<List<JsonUpdateInfo>>
@@ -31,9 +31,10 @@ internal data class JsonUpdateInfo(@SerializedName("pluginId") val pluginId: Str
                                    @SerializedName("pluginName") val pluginName: String,
                                    @SerializedName("version", alternate = arrayOf("pluginVersion")) val version: String,
                                    @SerializedName("updateId") val updateId: Int,
-                                   @SerializedName("vendor") val vendor: String?,
-                                   @SerializedName("sinceBuild") val sinceBuild: String?,
-                                   @SerializedName("untilBuild") val untilBuild: String?)
+                                   @SerializedName("vendor") val vendor: String,
+    //todo: use these fields when the plugin repository provides them.
+                                   @SerializedName("since") val sinceBuild: String?,
+                                   @SerializedName("until") val untilBuild: String?)
 
 internal data class JsonUpdatesResponse(@SerializedName("pluginXmlId") val pluginId: String,
                                         @SerializedName("pluginName") val pluginName: String,
@@ -48,10 +49,10 @@ internal data class JsonUpdatesResponse(@SerializedName("pluginXmlId") val plugi
       val updateVersion: String,
 
       @SerializedName("since")
-      val since: String?,
+      val sinceBuild: String,
 
       @SerializedName("until")
-      val until: String?
+      val untilBuild: String
   )
 }
 
