@@ -102,7 +102,7 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
   }
 
   private fun downloadIdeByVersion(ideVersion: IdeVersion): FileLock =
-      ideFilesBank.getIdeLock(ideVersion)
+      ideFilesBank.getIdeFileLock(ideVersion)
           ?: throw RuntimeException("IDE $ideVersion is not found in $ideFilesBank")
 
   private fun parseIdeVersion(ideVersion: String) = IdeVersion.createIdeVersionIfValid(ideVersion)
