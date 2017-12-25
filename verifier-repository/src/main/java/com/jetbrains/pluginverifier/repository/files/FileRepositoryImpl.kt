@@ -36,14 +36,16 @@ private class DownloadProvider<K>(private val downloadExecutor: DownloadExecutor
  */
 class FileRepositoryImpl<K>(sweepPolicy: SweepPolicy<K>,
                             clock: Clock,
-                            downloadExecutor: DownloadExecutor<K>) : FileRepository<K> {
+                            downloadExecutor: DownloadExecutor<K>,
+                            presentableName: String = "FileRepository") : FileRepository<K> {
   private val resourceRepository = ResourceRepositoryImpl(
       sweepPolicy,
       clock,
       DownloadProvider(downloadExecutor),
       SpaceWeight(SpaceAmount.ZERO_SPACE),
       { SpaceWeight(it.fileSize) },
-      { path -> path.deleteLogged() }
+      { path -> path.deleteLogged() },
+      presentableName
   )
 
   /**

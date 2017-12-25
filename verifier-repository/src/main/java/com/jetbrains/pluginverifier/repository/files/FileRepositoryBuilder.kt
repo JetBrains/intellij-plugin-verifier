@@ -15,7 +15,7 @@ class FileRepositoryBuilder {
                                   clock: Clock = Clock.systemUTC(),
                                   keyProvider: (Path) -> K? = { null }): FileRepository<K> {
     val downloadExecutor = DownloadExecutor(repositoryDir, downloader, fileNameMapper)
-    val fileRepository = FileRepositoryImpl(sweepPolicy, clock, downloadExecutor)
+    val fileRepository = FileRepositoryImpl(sweepPolicy, clock, downloadExecutor, "File repository at $repositoryDir")
     readAvailableFiles(fileRepository, keyProvider, downloadExecutor)
     fileRepository.cleanup()
     return fileRepository

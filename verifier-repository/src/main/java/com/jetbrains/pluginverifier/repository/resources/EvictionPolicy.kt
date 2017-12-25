@@ -17,5 +17,5 @@ interface EvictionPolicy<R, K> {
    * Given the current state of the [repository] [ResourceRepository]
    * determines which resources must be [removed] [ResourceRepository.remove].
    */
-  fun selectResourcesForDeletion(evictionInfo: EvictionInfo<R, K>): List<AvailableResource<R, K>>
+  fun selectResourcesForEviction(evictionInfo: EvictionInfo<R, K>): List<AvailableResource<R, K>>
 }

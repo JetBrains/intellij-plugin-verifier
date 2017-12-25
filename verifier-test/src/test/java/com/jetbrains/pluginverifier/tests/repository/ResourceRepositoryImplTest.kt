@@ -27,7 +27,8 @@ class ResourceRepositoryImplTest {
       },
       {
         it.close()
-      }
+      },
+      "testRepository"
   )
 
   @Test

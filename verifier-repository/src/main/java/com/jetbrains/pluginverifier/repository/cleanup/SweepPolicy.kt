@@ -16,7 +16,7 @@ interface SweepPolicy<K> : EvictionPolicy<Path, K> {
   override fun isNecessary(totalWeight: ResourceWeight) =
       isNecessary((totalWeight as SpaceWeight).spaceAmount)
 
-  override fun selectResourcesForDeletion(evictionInfo: EvictionInfo<Path, K>) =
+  override fun selectResourcesForEviction(evictionInfo: EvictionInfo<Path, K>) =
       selectFilesForDeletion(SweepInfo(evictionInfo))
 
   /**

@@ -25,4 +25,6 @@ open class AvailableResource<out R, out K>(
      * Indicates whether the resource is currently locked in the [ResourceRepository]
      */
     val isLocked: Boolean
-)
+) {
+  override fun toString() = key.toString()
+}

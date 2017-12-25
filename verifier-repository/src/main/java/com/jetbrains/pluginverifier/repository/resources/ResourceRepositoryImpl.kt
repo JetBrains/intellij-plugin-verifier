@@ -26,7 +26,8 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
                                    private val resourceProvider: ResourceProvider<K, R>,
                                    initialWeight: ResourceWeight,
                                    weigher: (R) -> ResourceWeight,
-                                   disposer: (R) -> Unit) : ResourceRepository<R, K> {
+                                   disposer: (R) -> Unit,
+                                   private val presentableName: String = "ResourceRepository") : ResourceRepository<R, K> {
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(ResourceRepositoryImpl::class.java)
@@ -65,9 +66,9 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
     if (resourcesRegistrar.has(key)) {
       return false
     }
-    assert(key !in statistics)
     resourcesRegistrar.addResource(key, resource)
-    statistics[key] = UsageStatistic(Instant.EPOCH, 0)
+    assert(key !in statistics)
+    updateUsageStatistics(key)
     cleanup()
     return true
   }
@@ -106,16 +107,23 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
   @Synchronized
   private fun isBeingProvided(key: K) = key in waitedKeys
 
+  private fun updateUsageStatistics(key: K): Instant {
+    val now = clock.instant()
+    val usageStatistic = statistics.getOrPut(key) {
+      UsageStatistic(now, 0)
+    }
+    usageStatistic.lastAccessTime = now
+    usageStatistic.timesAccessed++
+    return now
+  }
+
   @Synchronized
   private fun registerLock(key: K): ResourceLockImpl<R, K> {
     assert(resourcesRegistrar.has(key))
     val resourceInfo = resourcesRegistrar.get(key)!!
-    val lockTime = clock.instant()
-    val lock = ResourceLockImpl(lockTime, resourceInfo, key, nextLockId++, this)
+    val now = updateUsageStatistics(key)
+    val lock = ResourceLockImpl(now, resourceInfo, key, nextLockId++, this)
     key2Locks.getOrPut(key, { hashSetOf() }).add(lock)
-
-    val keyUsageStatistic = statistics.getOrPut(key, { UsageStatistic(lockTime, 0) })
-    keyUsageStatistic.timesAccessed++
     return lock
   }
 
@@ -222,16 +230,16 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
       }
 
       val evictionInfo = EvictionInfo(resourcesRegistrar.totalWeight, availableResources)
-      val resourcesForDisposition = evictionPolicy.selectResourcesForDeletion(evictionInfo)
+      val resourcesForEviction = evictionPolicy.selectResourcesForEviction(evictionInfo)
 
-      if (resourcesForDisposition.isNotEmpty()) {
-        val disposedTotalWeight = resourcesForDisposition.map { it.resourceInfo.weight }.reduce { acc, weight -> acc + weight }
-        LOG.info("It's time to dispose unused resources. " +
+      if (resourcesForEviction.isNotEmpty()) {
+        val disposedTotalWeight = resourcesForEviction.map { it.resourceInfo.weight }.reduce { acc, weight -> acc + weight }
+        LOG.info("$presentableName: it's time to evict unused resources. " +
             "Total weight: ${resourcesRegistrar.totalWeight}. " +
-            "${resourcesForDisposition.size} " + "resource".pluralize(resourcesForDisposition.size) +
-            " will be removed having total size $disposedTotalWeight"
+            "${resourcesForEviction.size} " + "resource".pluralize(resourcesForEviction.size) +
+            " will be evicted with total size $disposedTotalWeight"
         )
-        for (availableFile in resourcesForDisposition) {
+        for (availableFile in resourcesForEviction) {
           remove(availableFile.key)
         }
       }
@@ -267,4 +275,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
     }
     return result
   }
+
+  override fun toString() = presentableName
+
 }
