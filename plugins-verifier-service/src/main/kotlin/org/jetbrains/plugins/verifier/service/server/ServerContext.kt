@@ -3,6 +3,8 @@ package org.jetbrains.plugins.verifier.service.server
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.closeLogged
+import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptorsCache
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import org.jetbrains.plugins.verifier.service.database.ServerDatabase
@@ -32,7 +34,9 @@ class ServerContext(val applicationHomeDirectory: Path,
                     val jdkManager: JdkManager,
                     val startupSettings: List<Settings>,
                     val serviceDAO: ServiceDAO,
-                    val serverDatabase: ServerDatabase) : Closeable {
+                    val serverDatabase: ServerDatabase,
+                    val ideDescriptorsCache: IdeDescriptorsCache,
+                    val pluginDetailsCache: PluginDetailsCache) : Closeable {
 
   val allServices = arrayListOf<BaseService>()
 
@@ -41,9 +45,11 @@ class ServerContext(val applicationHomeDirectory: Path,
   }
 
   override fun close() {
-    taskManager.closeLogged()
     allServices.forEach { it.stop() }
+    taskManager.closeLogged()
     serverDatabase.closeLogged()
+    ideDescriptorsCache.closeLogged()
+    pluginDetailsCache.closeLogged()
   }
 
 }

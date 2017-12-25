@@ -3,6 +3,8 @@ package org.jetbrains.plugins.verifier.service.startup
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
+import com.jetbrains.pluginverifier.parameters.ide.IdeDescriptorsCache
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
@@ -34,6 +36,9 @@ class ServerStartupListener : ServletContextListener {
 
     const val SERVER_CONTEXT_KEY = "plugin.verifier.service.server.context"
 
+    private const val PLUGIN_DETAILS_CACHE_SIZE = 30
+
+    private const val IDE_DESCRIPTORS_CACHE_SIZE = 10
   }
 
   private val serverContext by lazy {
@@ -50,8 +55,9 @@ class ServerStartupListener : ServletContextListener {
 
     val pluginRepositoryUrl = Settings.DOWNLOAD_PLUGINS_REPOSITORY_URL.get()
     val pluginRepository = PublicPluginRepository(pluginRepositoryUrl, loadedPluginsDir, pluginDownloadDirSpaceSetting)
-
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractedPluginsDir)
+    val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginRepository, pluginDetailsProvider)
+
     val ideRepository = IdeRepository(Settings.IDE_REPOSITORY_URL.get())
     val tasksManager = ServiceTasksManager(Settings.TASK_MANAGER_CONCURRENCY.getAsInt(), 1000)
 
@@ -67,8 +73,9 @@ class ServerStartupListener : ServletContextListener {
     val serverDatabase = MapDbServerDatabase(applicationHomeDir)
     val serviceDAO = ServiceDAO(serverDatabase)
 
-    val ideFilesBank = IdeFilesBank(ideRepository, ideFilesDir, ideDownloadDirDiskSpaceSetting, {})
+    val ideFilesBank = IdeFilesBank(ideFilesDir, ideRepository, ideDownloadDirDiskSpaceSetting, {})
     val ideKeeper = IdeKeeper(serviceDAO, ideRepository, ideFilesBank)
+    val ideDescriptorsCache = IdeDescriptorsCache(IDE_DESCRIPTORS_CACHE_SIZE, ideFilesBank)
 
     return ServerContext(
         applicationHomeDir,
@@ -82,7 +89,9 @@ class ServerStartupListener : ServletContextListener {
         jdkManager,
         Settings.values().toList(),
         serviceDAO,
-        serverDatabase
+        serverDatabase,
+        ideDescriptorsCache,
+        pluginDetailsCache
     )
   }
 
