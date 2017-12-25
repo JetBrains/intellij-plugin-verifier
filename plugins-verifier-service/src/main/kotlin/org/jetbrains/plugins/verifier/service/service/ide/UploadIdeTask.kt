@@ -13,6 +13,6 @@ class UploadIdeTask(val serverContext: ServerContext,
                     private val ideVersion: IdeVersion) : ServiceTask<Boolean>("Downloading IDE $ideVersion") {
 
   override fun execute(progress: ProgressIndicator) =
-      serverContext.ideFilesBank.getIdeLock(ideVersion) != null
+      serverContext.ideFilesBank.getIdeFileLock(ideVersion) != null
 
 }
