@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.teamcity.TeamcityPlugin
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
+import com.jetbrains.plugin.structure.teamcity.problems.ForbiddenWordInPluginName
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.instanceOf
 import org.junit.Assert.assertThat
@@ -110,6 +111,25 @@ class TeamcityInvalidPluginsTest {
         },
         listOf(PropertyNotSpecified("name")))
   }
+
+  @Test
+  fun `plugin name contains plugin word`() {
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          name = "<name>My plugin</name>"
+        },
+        listOf(ForbiddenWordInPluginName))
+  }
+
+  @Test
+  fun `plugin name contains teamcity word`() {
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          name = "<name>Teamcity runner</name>"
+        },
+        listOf(ForbiddenWordInPluginName))
+  }
+
 
   @Test
   fun `plugin display name is not specified`() {
