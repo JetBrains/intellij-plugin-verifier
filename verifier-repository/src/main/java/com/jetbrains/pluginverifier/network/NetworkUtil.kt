@@ -91,15 +91,14 @@ private fun <T, R> Call<T>.executeWithInterruptionCheck(onSuccess: (Response<T>)
   }
 }
 
-fun copyInputStreamWithProgress(inputStream: InputStream,
-                                expectedSize: Long,
-                                destinationFile: File,
-                                progress: (Double) -> Unit) {
-  val buffer = ByteArray(4 * 1024)
-  if (expectedSize == 0L) {
-    throw IllegalArgumentException("File is empty")
-  }
+fun copyInputStreamToFileWithProgress(inputStream: InputStream,
+                                      expectedSize: Long,
+                                      destinationFile: File,
+                                      progress: (Double) -> Unit) {
+  val bufferSize = 4 * 1024
+  val buffer = ByteArray(bufferSize)
 
+  progress(0.0)
   inputStream.use { input ->
     destinationFile.outputStream().buffered().use { output ->
       var count: Long = 0
@@ -109,8 +108,11 @@ fun copyInputStreamWithProgress(inputStream: InputStream,
         if (n == -1) break
         output.write(buffer, 0, n)
         count += n
-        progress(count.toDouble() / expectedSize)
+        if (expectedSize > 0) {
+          progress(count.toDouble() / expectedSize)
+        }
       }
     }
   }
+  progress(1.0)
 }

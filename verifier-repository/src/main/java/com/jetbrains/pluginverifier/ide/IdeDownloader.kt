@@ -4,7 +4,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
-import com.jetbrains.pluginverifier.network.copyInputStreamWithProgress
+import com.jetbrains.pluginverifier.network.copyInputStreamToFileWithProgress
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
@@ -48,8 +48,7 @@ class IdeDownloader(private val ideRepository: IdeRepository,
       try {
         doDownloadTo(downloadUrl, zippedIde)
       } catch (e: Exception) {
-        //todo: provide clearer messages
-        return DownloadResult.FailedToDownload("Unable to download $key: ${e.message}", e)
+        return DownloadResult.FailedToDownload("Unable to download $key", e)
       }
 
       val destinationDir = Files.createTempDirectory(tempDirectory, "")
@@ -58,7 +57,7 @@ class IdeDownloader(private val ideRepository: IdeRepository,
         DownloadResult.Downloaded(destinationDir, "", true)
       } catch (e: Exception) {
         destinationDir.deleteLogged()
-        DownloadResult.FailedToDownload("Unable to extract $key zip: ${e.message}", e)
+        DownloadResult.FailedToDownload("Unable to extract zip file of $key", e)
       } catch (e: Throwable) {
         destinationDir.deleteLogged()
         throw e
@@ -69,10 +68,13 @@ class IdeDownloader(private val ideRepository: IdeRepository,
   }
 
   private fun doDownloadTo(downloadUrl: URL, destination: File) {
-    val response = repositoryConnector.downloadIde(downloadUrl.toExternalForm()).executeSuccessfully()
-    val expectedSize = response.body().contentLength()
-    response.body().byteStream().use { bodyStream ->
-      copyInputStreamWithProgress(bodyStream, expectedSize, destination, downloadProgress)
+    val responseBody = repositoryConnector
+        .downloadIde(downloadUrl.toExternalForm())
+        .executeSuccessfully().body()
+
+    val expectedSize = responseBody.contentLength()
+    responseBody.byteStream().use { bodyStream ->
+      copyInputStreamToFileWithProgress(bodyStream, expectedSize, destination, downloadProgress)
     }
   }
 

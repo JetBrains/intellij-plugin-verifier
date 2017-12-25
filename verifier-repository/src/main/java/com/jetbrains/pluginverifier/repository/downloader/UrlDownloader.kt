@@ -2,12 +2,8 @@ package com.jetbrains.pluginverifier.repository.downloader
 
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
-import com.jetbrains.pluginverifier.network.NotFound404ResponseException
-import com.jetbrains.pluginverifier.network.executeSuccessfully
-import com.jetbrains.pluginverifier.network.jarContentMediaType
-import com.jetbrains.pluginverifier.network.jsonMediaType
+import com.jetbrains.pluginverifier.network.*
 import okhttp3.ResponseBody
-import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import retrofit2.Call
@@ -62,7 +58,9 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
     val downloadedTempFile = Files.createTempFile(tempDirectory, "", ".$extension")
     return try {
       LOG.debug("Downloading $key to $downloadedTempFile")
-      FileUtils.copyInputStreamToFile(response.body().byteStream(), downloadedTempFile.toFile())
+      val responseBody = response.body()
+      val expectedSize = responseBody.contentLength()
+      copyInputStreamToFileWithProgress(responseBody.byteStream(), expectedSize, downloadedTempFile.toFile(), { })
       DownloadResult.Downloaded(downloadedTempFile, extension, false)
     } catch (e: Throwable) {
       downloadedTempFile.deleteLogged()
