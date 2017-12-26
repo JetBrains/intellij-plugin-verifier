@@ -96,7 +96,9 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
 
   private fun getJetBrainsPluginIds(apiOpts: CheckTrunkApiOpts): List<String> {
     if (apiOpts.jetBrainsPluginsFile != null) {
-      return File(apiOpts.jetBrainsPluginsFile).readLines()
+      val file = File(apiOpts.jetBrainsPluginsFile)
+      require(file.exists()) { "JetBrains plugin IDS file doesn't exist: $file" }
+      return file.readLines()
     }
     return emptyList()
   }
