@@ -70,7 +70,7 @@ class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions,
         val shortDescription2Problems = allProblemsOfClass.groupBy { it.shortDescription }
         for ((shortDescription, problemsWithShortDescription) in shortDescription2Problems) {
           for (problem in problemsWithShortDescription) {
-            tcLog.testSuiteStarted(shortDescription).use {
+            tcLog.testSuiteStarted("($shortDescription)").use {
               for (plugin in problem2Plugins.get(problem)) {
                 val pluginName = "($plugin)"
                 tcLog.testStarted(pluginName).use {
