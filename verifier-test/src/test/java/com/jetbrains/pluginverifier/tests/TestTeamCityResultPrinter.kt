@@ -44,12 +44,12 @@ class TestTeamCityResultPrinter {
     )
     val mockRepository = mockRepository(updateInfos)
     val output = getTeamCityOutput(mockRepository, updateInfos)
-    Assert.assertEquals("""##teamcity[testSuiteStarted name='(id)']
+    Assert.assertEquals("""##teamcity[testSuiteStarted name='id']
 ##teamcity[testStarted name='(version)']
 ##teamcity[testFinished name='(version)']
 ##teamcity[testStarted name='(version 2 - newest)']
 ##teamcity[testFinished name='(version 2 - newest)']
-##teamcity[testSuiteFinished name='(id)']
+##teamcity[testSuiteFinished name='id']
 """, output)
   }
 
@@ -57,10 +57,10 @@ class TestTeamCityResultPrinter {
   fun `no repository connection lead to no -newest suffix`() {
     val mockPluginRepository = noConnectionPluginRepository()
     val output = getTeamCityOutput(mockPluginRepository, listOf(createMockUpdateInfo("id", "name", "v", 1)))
-    Assert.assertEquals("""##teamcity[testSuiteStarted name='(id)']
+    Assert.assertEquals("""##teamcity[testSuiteStarted name='id']
 ##teamcity[testStarted name='(v)']
 ##teamcity[testFinished name='(v)']
-##teamcity[testSuiteFinished name='(id)']
+##teamcity[testSuiteFinished name='id']
 """, output)
   }
 
