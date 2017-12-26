@@ -50,7 +50,8 @@ open class CmdOpts(
     @set:Argument("dump-broken-plugin-list", alias = "d", description = "File to dump broken plugin ids. The broken plugins are those which contain at least one problem as a result of the verification")
     var dumpBrokenPluginsFile: String? = null,
 
-    @set:Argument("html-report", description = "Create HTML report of broken plugins")
+    @set:Argument("html-report", description = "Create HTML report of broken plugins. This field is deprecated as HTML reports are automatically generated in the log directory")
+    @Deprecated("This field is deprecated as HTML reports are automatically generated in the log directory")
     var htmlReportFile: String? = null,
 
     @set:Argument("plugins-to-check-file", alias = "ptcf", description = "File that contains list of plugins to check (e.g. '<IDE-home>/lib/resources.jar/checkedPlugins.txt')")

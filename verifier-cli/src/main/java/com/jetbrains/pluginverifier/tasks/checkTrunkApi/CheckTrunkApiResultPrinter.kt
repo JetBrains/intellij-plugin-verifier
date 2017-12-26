@@ -4,18 +4,14 @@ import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.output.OutputOptions
-import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
@@ -26,26 +22,16 @@ import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 /**
  * @author Sergey Patrikeev
  */
-class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions,
-                                 private val pluginRepository: PluginRepository) : TaskResultPrinter {
+class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions) : TaskResultPrinter {
 
   override fun printResults(taskResult: TaskResult) {
     with(taskResult as CheckTrunkApiResult) {
       if (outputOptions.needTeamCityLog) {
         printTrunkApiCompareResult(this)
       }
-      saveToHtmlFile(releaseIdeVersion, releaseResults)
-      saveToHtmlFile(trunkIdeVersion, trunkResults)
+      outputOptions.saveToHtmlFile(releaseIdeVersion, emptyList(), releaseResults)
+      outputOptions.saveToHtmlFile(trunkIdeVersion, emptyList(), trunkResults)
     }
-  }
-
-  private fun saveToHtmlFile(ideVersion: IdeVersion, results: List<Result>) {
-    val htmlReportFile = outputOptions.verificationReportsDirectory
-        .resolve(ideVersion.toString().replaceInvalidFileNameCharacters())
-        .resolve("report.html")
-
-    val htmlResultPrinter = HtmlResultPrinter(listOf(ideVersion), { false }, htmlReportFile, outputOptions.missingDependencyIgnoring)
-    htmlResultPrinter.printResults(results)
   }
 
   private fun CheckTrunkApiResult.getNewPluginProblems(): Multimap<PluginInfo, Problem> {

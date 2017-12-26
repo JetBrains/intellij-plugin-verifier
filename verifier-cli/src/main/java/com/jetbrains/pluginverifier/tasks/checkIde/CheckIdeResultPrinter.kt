@@ -1,9 +1,7 @@
 package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.pluginverifier.ide.IdeResourceUtil
-import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.output.OutputOptions
-import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
@@ -14,7 +12,6 @@ import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 import java.io.File
 import java.io.PrintWriter
-import java.nio.file.Path
 
 /**
  * @author Sergey Patrikeev
@@ -29,7 +26,7 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
         printOnStdOut(this)
       }
 
-      saveToHtmlFile(outputOptions.verificationReportsDirectory, this)
+      outputOptions.saveToHtmlFile(ideVersion, excludedPlugins, results)
 
       if (outputOptions.dumpBrokenPluginsFile != null) {
         val brokenPlugins = results
@@ -39,18 +36,6 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
             .distinct()
         IdeResourceUtil.dumbBrokenPluginsList(File(outputOptions.dumpBrokenPluginsFile), brokenPlugins)
       }
-    }
-  }
-
-  fun saveToHtmlFile(verificationReportsDirectory: Path, checkIdeResult: CheckIdeResult) {
-    val htmlReportFile = verificationReportsDirectory
-        .resolve(checkIdeResult.ideVersion.toString().replaceInvalidFileNameCharacters())
-        .resolve("report.html")
-
-    with(checkIdeResult) {
-      val isExcluded: (PluginIdAndVersion) -> Boolean = { (pluginId, pluginVersion) -> PluginIdAndVersion(pluginId, pluginVersion) in excludedPlugins }
-      val htmlResultPrinter = HtmlResultPrinter(listOf(ideVersion), isExcluded, htmlReportFile, outputOptions.missingDependencyIgnoring)
-      htmlResultPrinter.printResults(results)
     }
   }
 

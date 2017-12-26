@@ -142,7 +142,8 @@ object PluginVerifierMain {
     return DiskSpaceSetting(megabytes)
   }
 
-  private fun createVerificationReportage(verificationReportsDirectory: Path, printPluginVerificationProgress: Boolean): VerificationReportage {
+  private fun createVerificationReportage(verificationReportsDirectory: Path,
+                                          printPluginVerificationProgress: Boolean): VerificationReportage {
     val logger = LoggerFactory.getLogger("verification")
     val messageReporters = listOf(LogReporter<String>(logger))
     val progressReporters = emptyList<Reporter<Double>>()

@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
 import com.jetbrains.pluginverifier.output.OutputOptions
-import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
@@ -10,7 +9,6 @@ import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 import java.io.PrintWriter
-import java.nio.file.Path
 
 /**
  * @author Sergey Patrikeev
@@ -19,15 +17,16 @@ class CheckPluginResultPrinter(private val outputOptions: OutputOptions,
                                private val pluginRepository: PluginRepository) : TaskResultPrinter {
 
   override fun printResults(taskResult: TaskResult) {
-    val checkPluginResult = taskResult as CheckPluginResult
-    if (outputOptions.needTeamCityLog) {
-      printTcLog(true, checkPluginResult)
-    } else {
-      printOnStdout(checkPluginResult)
-    }
+    with(taskResult as CheckPluginResult) {
+      if (outputOptions.needTeamCityLog) {
+        printTcLog(true, this)
+      } else {
+        printOnStdout(this)
+      }
 
-    if (outputOptions.htmlReportFile != null) {
-      saveToHtml(outputOptions.htmlReportFile, checkPluginResult)
+      results.groupBy { it.ideVersion }.forEach { ideVersion, resultsOfIde ->
+        outputOptions.saveToHtmlFile(ideVersion, emptyList(), resultsOfIde)
+      }
     }
   }
 
@@ -58,13 +57,6 @@ class CheckPluginResultPrinter(private val outputOptions: OutputOptions,
       val printWriter = PrintWriter(System.out)
       WriterResultPrinter(printWriter, outputOptions.missingDependencyIgnoring).printResults(results)
       printWriter.flush()
-    }
-  }
-
-  private fun saveToHtml(htmlFile: Path, checkPluginResult: CheckPluginResult) {
-    with(checkPluginResult) {
-      val ideVersions = results.map { it.ideVersion }.distinct()
-      HtmlResultPrinter(ideVersions, { false }, htmlFile, outputOptions.missingDependencyIgnoring).printResults(results)
     }
   }
 
