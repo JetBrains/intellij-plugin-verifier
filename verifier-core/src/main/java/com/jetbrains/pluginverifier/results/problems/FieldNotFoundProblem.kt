@@ -18,9 +18,14 @@ data class FieldNotFoundProblem(val unresolvedField: FieldReference,
 
   private val descriptionMainPart = buildString {
     append("Method {0} contains a *{1}* instruction referencing an unresolved field {2}. ".formatMessage(
-        accessor.formatMethodLocation(HostClassOption.FULL_HOST_NAME, MethodParameterTypeOption.FULL_PARAM_CLASS_NAME, MethodReturnTypeOption.FULL_RETURN_TYPE_CLASS_NAME, MethodParameterNameOption.WITH_PARAM_NAMES_IF_AVAILABLE),
+        accessor.formatMethodLocation(
+            HostClassOption.FULL_HOST_NAME,
+            MethodParameterTypeOption.FULL_PARAM_CLASS_NAME,
+            MethodReturnTypeOption.FULL_RETURN_TYPE_CLASS_NAME,
+            MethodParameterNameOption.WITH_PARAM_NAMES_IF_AVAILABLE
+        ),
         instruction,
-        unresolvedField
+        unresolvedField.formatFieldReference(HostClassOption.FULL_HOST_NAME, FieldTypeOption.FULL_TYPE)
     ))
     append("This can lead to **NoSuchFieldError** exception at runtime.")
   }

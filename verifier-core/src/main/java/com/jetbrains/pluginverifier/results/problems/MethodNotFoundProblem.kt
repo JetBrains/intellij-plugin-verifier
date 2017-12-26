@@ -28,7 +28,7 @@ data class MethodNotFoundProblem(val unresolvedMethod: MethodReference,
     append("Method {0} contains an *{1}* instruction referencing an unresolved method {2}. ".formatMessage(
         caller.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE),
         instruction,
-        unresolvedMethod
+        unresolvedMethod.formatMethodReference(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME)
     ))
     append("This can lead to **NoSuchMethodError** exception at runtime.")
   }
