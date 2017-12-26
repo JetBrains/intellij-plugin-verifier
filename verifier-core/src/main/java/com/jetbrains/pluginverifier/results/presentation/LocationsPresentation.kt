@@ -10,10 +10,10 @@ import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentat
 /**
  * Convert the simple binary class name of the possibly nested class to Java-like presentation.
  *
- * SomeClass -> SomeClass
- * SomeClass$Nested -> SomeClass.Nested
- * SomeClass$Static$Inner -> SomeClass.Static.Inner
- * SomeClass$ -> SomeClass$
+ * - SomeClass -> SomeClass
+ * - SomeClass$Nested -> SomeClass.Nested
+ * - SomeClass$Static$Inner -> SomeClass.Static.Inner
+ * - SomeClass$ -> SomeClass$
  */
 private fun String.toNormalNestedClassNames() = if (endsWith("$")) {
   javaClass::class.qualifiedName
