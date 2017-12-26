@@ -14,6 +14,7 @@ import com.jetbrains.pluginverifier.repository.files.FileRepositoryBuilder
 import com.jetbrains.pluginverifier.repository.files.PluginFileNameMapper
 import com.jetbrains.pluginverifier.repository.retrofit.JsonUpdateInfo
 import com.jetbrains.pluginverifier.repository.retrofit.JsonUpdateSinceUntil
+import com.jetbrains.pluginverifier.repository.retrofit.JsonUpdatesResponse
 import com.jetbrains.pluginverifier.repository.retrofit.PublicPluginRepositoryConnector
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -85,7 +86,26 @@ class PublicPluginRepository(private val repositoryUrl: String,
     } catch (e: Exception) {
       return emptyList()
     }
-    return jsonUpdatesResponse.updates.mapNotNull { getUpdateInfoById(it.updateId) }
+    return jsonUpdatesResponse.registerUpdateInfos()
+  }
+
+  private fun JsonUpdatesResponse.registerUpdateInfos(): List<UpdateInfo> {
+    val updateInfos = updates.map {
+      UpdateInfo(
+          pluginId,
+          it.updateVersion,
+          pluginName,
+          it.updateId,
+          vendor,
+          it.sinceBuild,
+          it.untilBuild,
+          getDownloadUrl(it.updateId),
+          getBrowserUrl(pluginId),
+          repositoryURL
+      )
+    }
+    updateInfos.forEach { updateInfosRequester.putUpdateInfo(it) }
+    return updateInfos
   }
 
   override fun getAllPlugins() = allSinceUntilPluginsRequester.getAllPluginUpdateIds()
@@ -94,7 +114,7 @@ class PublicPluginRepository(private val repositoryUrl: String,
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion) =
       repositoryConnector.getAllCompatibleUpdates(ideVersion.asString())
           .executeSuccessfully().body()
-          .mapNotNull { getUpdateInfoById(it.updateId) }
+          .map { updateInfosRequester.putJsonUpdateInfo(it) }
 
   override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String) =
       getAllVersionsOfPlugin(pluginId).filter { it.isCompatibleWith(ideVersion) }
@@ -126,10 +146,25 @@ class PublicPluginRepository(private val repositoryUrl: String,
         .expireAfterWrite(1, TimeUnit.HOURS)
         .build<Int, Optional<UpdateInfo>>()
 
+    //synchronized block is used here to avoid
+    //performing unnecessary batch requests
     @Synchronized
     fun getUpdateInfoById(updateId: Int): UpdateInfo? = updateInfos.get(updateId) {
       requestUpdateInfos(updateId)
     }.orElse(null)
+
+    @Synchronized
+    fun putJsonUpdateInfo(jsonUpdateInfo: JsonUpdateInfo): UpdateInfo {
+      val updateInfo = jsonUpdateInfo.toUpdateInfo()
+      updateInfos.put(updateInfo.updateId, Optional.of(updateInfo))
+      return updateInfo
+    }
+
+    @Synchronized
+    fun putUpdateInfo(updateInfo: UpdateInfo): UpdateInfo {
+      updateInfos.put(updateInfo.updateId, Optional.of(updateInfo))
+      return updateInfo
+    }
 
     private fun requestUpdateInfos(updateId: Int): Optional<UpdateInfo> {
       val jsonUpdateInfos = requestBatchOfJsonUpdateInfos(updateId)
