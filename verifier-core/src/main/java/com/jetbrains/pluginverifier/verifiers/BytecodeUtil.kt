@@ -21,21 +21,31 @@ fun MethodNode.getParameterNames(): List<String> {
 }
 
 /**
- * @param this@extractClassNameFromDescr full descriptor (may be an array type or a primitive type)
+ * Peels an internal JVM descriptor of a type.
  *
- * @return null for primitive types and the innermost type for array types
+ * For arrays returns the innermost type.
+ *
+ * For primitive types returns `null`.
+ *
+ * Examples:
+ * - `Lcom/example/Example;` -> `com/example/Example`
+ * - `[[[Lcom/example/Example;` -> `com/example/Example`
+ * - `I`, `D`, `B` -> `null`
+ * - `[[I` -> `null`
  */
 fun String.extractClassNameFromDescr(): String? {
   //prepare array name
-  val descr1 = trimStart('[')
+  val elementType = trimStart('[')
 
-  if (descr1.isPrimitiveType()) return null
-
-  if (descr1.startsWith("L") && descr1.endsWith(";")) {
-    return descr1.substring(1, descr1.length - 1)
+  if (elementType.isPrimitiveType()) {
+    return null
   }
 
-  return descr1
+  if (elementType.startsWith("L") && elementType.endsWith(";")) {
+    return elementType.substring(1, elementType.length - 1)
+  }
+
+  return elementType
 }
 
 private fun String.isPrimitiveType(): Boolean = length == 1 && first() in "ZIJBFSDC"
