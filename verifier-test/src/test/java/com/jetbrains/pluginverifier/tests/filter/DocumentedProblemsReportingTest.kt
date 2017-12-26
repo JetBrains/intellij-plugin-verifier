@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.FixedClassesResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.VerificationResultHolder
 import com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilter
+import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.documented.*
 import com.jetbrains.pluginverifier.reporting.verification.EmptyPluginVerificationReportage
 import com.jetbrains.pluginverifier.results.instruction.Instruction
@@ -30,6 +31,11 @@ import org.junit.Assert.assertThat
 import org.junit.Test
 import org.objectweb.asm.tree.ClassNode
 
+/**
+ * This test asserts that the
+ * [documented] [com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilter]
+ * problems are indeed excluded from the verification reports.
+ */
 class DocumentedProblemsReportingTest {
 
   /**
@@ -39,13 +45,22 @@ class DocumentedProblemsReportingTest {
   @Test
   fun `hierarchical problems should not be reported`() {
     val problemAndItsDocumentation = createProblemAndItsDocumentationTestMap()
+    verify(problemAndItsDocumentation) {
+      createVerificationContextForHierarchicalTest(it)
+    }
+  }
 
-    val problemsFilter = DocumentedProblemsFilter(problemAndItsDocumentation.values.toList())
-    val verificationContext = createVerificationContextForHierarchicalTest(problemsFilter)
-    problemAndItsDocumentation.keys.forEach { verificationContext.registerProblem(it) }
+  private fun verify(problemAndItsDocumentation: Map<Problem, DocumentedProblem>,
+                     contextProvider: (ProblemsFilter) -> VerificationContext) {
+    val problems = problemAndItsDocumentation.keys
+    val documentedProblems = problemAndItsDocumentation.values.toList()
 
+    val problemsFilter = DocumentedProblemsFilter(documentedProblems)
+    val verificationContext = contextProvider(problemsFilter)
+
+    problems.forEach { verificationContext.registerProblem(it) }
     val actualIgnoredProblems = verificationContext.resultHolder.ignoredProblems
-    problemAndItsDocumentation.keys.forEach { problem -> assertThat(problem, isIn(actualIgnoredProblems)) }
+    problems.forEach { problem -> assertThat(problem, isIn(actualIgnoredProblems)) }
   }
 
   private fun createProblemAndItsDocumentationTestMap(): Map<Problem, DocumentedProblem> {
@@ -96,9 +111,14 @@ class DocumentedProblemsReportingTest {
     )
   }
 
-  private fun createVerificationContextForHierarchicalTest(documentedProblemsFilter: DocumentedProblemsFilter): VerificationContext {
+  private fun createVerificationContextForHierarchicalTest(problemsFilter: ProblemsFilter): VerificationContext {
     val classes = buildClassesForHierarchicalTest()
+    return createSimpleVerificationContext(problemsFilter).copy(
+        classLoader = FixedClassesResolver.create(classes)
+    )
+  }
 
+  private fun createSimpleVerificationContext(problemsFilter: ProblemsFilter): VerificationContext {
     val idePlugin = MockIdePlugin(
         pluginId = "pluginId",
         pluginVersion = "1.0"
@@ -109,12 +129,12 @@ class DocumentedProblemsReportingTest {
     return VerificationContext(
         idePlugin,
         ideVersion,
-        FixedClassesResolver.create(classes),
+        EmptyResolver,
         EmptyResolver,
         VerificationResultHolder(EmptyPluginVerificationReportage),
         emptyList(),
         false,
-        listOf(documentedProblemsFilter)
+        listOf(problemsFilter)
     )
   }
 
@@ -168,6 +188,102 @@ class DocumentedProblemsReportingTest {
 
     return listOf(classADescriptor, classBDescriptor, interfaceIDescriptor, interfaceImplDescriptor, interfaceImplDerived).map {
       it.bytes.createClassNode()
+    }
+  }
+
+  /**
+   * Asserts that
+   * - `org.example.Class class removed` documentation covers
+   *  the case of `... unresolved method com.Holder.foo(org.example.Class) : void`
+   *
+   * - `org.example.Class class removed` documentation covers
+   *  the case of `... unresolved field com.Holder.x : org.example.Class`.
+   *
+   *  - `org.example package removed` documentation covers
+   *  the case of `... unresolved method org.example.Class.foo() : void`.
+   *
+   *  - `org.example package removed` documentation covers
+   *  the case of `... unresolved field org.example.Class.x : int`.
+   *
+   * - etc...
+   */
+  @Test
+  fun `documented deletion of a class excludes unresolved methods and fields problems`() {
+    val deletedClassRef = ClassReference("org/some/deleted/Class")
+
+    //method with deleted owner
+    val methodWithRemovedOwnerProblem = MethodNotFoundProblem(
+        MethodReference(deletedClassRef, "foo", "()V"),
+        MOCK_METHOD_LOCATION,
+        Instruction.INVOKE_VIRTUAL,
+        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY,
+        IdeVersion.createIdeVersion("IU-163")
+    )
+
+    //field with deleted owner
+    val fieldWithRemovedOwnerProblem = FieldNotFoundProblem(
+        FieldReference(deletedClassRef, "x", "I"),
+        MOCK_METHOD_LOCATION,
+        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY,
+        Instruction.GET_FIELD,
+        IdeVersion.createIdeVersion("IU-163")
+    )
+
+    val unrelatedClassRef = ClassReference("org/just/some/Class")
+
+    //method with deleted param type
+    val methodWithRemovedClassInSignature = MethodNotFoundProblem(
+        MethodReference(unrelatedClassRef, "foo", "(Lorg/some/deleted/Class;)V"),
+        MOCK_METHOD_LOCATION,
+        Instruction.INVOKE_VIRTUAL,
+        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY,
+        IdeVersion.createIdeVersion("IU-163")
+    )
+
+    //field with deleted param type
+    val fieldWithRemovedClassInType = FieldNotFoundProblem(
+        FieldReference(unrelatedClassRef, "x", "Lorg/some/deleted/Class;"),
+        MOCK_METHOD_LOCATION,
+        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY,
+        Instruction.GET_FIELD,
+        IdeVersion.createIdeVersion("IU-163")
+    )
+
+    val methodWithOwnerFromRemovedPackage = with(methodWithRemovedOwnerProblem) {
+      copy(
+          unresolvedMethod = unresolvedMethod.copy(
+              unresolvedMethod.hostClass.copy(
+                  className = "some/removed/package/Class"
+              )
+          )
+      )
+    }
+
+    val fieldWithOwnerFromRemovedPackage = with(fieldWithRemovedOwnerProblem) {
+      copy(
+          unresolvedField = unresolvedField.copy(
+              unresolvedField.hostClass.copy(
+                  className = "some/removed/package/Class"
+              )
+          )
+      )
+    }
+
+    val docClassRemoved = DocClassRemoved("org/some/deleted/Class")
+    val docPackageRemoved = DocPackageRemoved("some/removed/package")
+    val problemToDocumentation = mapOf(
+        methodWithRemovedOwnerProblem to docClassRemoved,
+        fieldWithRemovedOwnerProblem to docClassRemoved,
+
+        methodWithRemovedClassInSignature to docClassRemoved,
+        fieldWithRemovedClassInType to docClassRemoved,
+
+        methodWithOwnerFromRemovedPackage to docPackageRemoved,
+        fieldWithOwnerFromRemovedPackage to docPackageRemoved
+    )
+
+    verify(problemToDocumentation) {
+      createSimpleVerificationContext(it)
     }
   }
 }

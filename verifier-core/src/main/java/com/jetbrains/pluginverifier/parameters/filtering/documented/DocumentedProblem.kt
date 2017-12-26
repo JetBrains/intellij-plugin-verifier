@@ -1,7 +1,11 @@
 package com.jetbrains.pluginverifier.parameters.filtering.documented
 
+import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentation
 import com.jetbrains.pluginverifier.results.problems.*
+import com.jetbrains.pluginverifier.results.reference.FieldReference
+import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescr
 import com.jetbrains.pluginverifier.verifiers.isSubclassOrSelf
 
 /**
@@ -20,8 +24,13 @@ interface DocumentedProblem {
  * <class name> class removed
  */
 data class DocClassRemoved(val className: String) : DocumentedProblem {
-  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
-      problem is ClassNotFoundProblem && problem.unresolved.className == className
+  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext) =
+      when (problem) {
+        is ClassNotFoundProblem -> problem.unresolved.className == className
+        is MethodNotFoundProblem -> problem.unresolvedMethod.doesMethodDependOnClass(className)
+        is FieldNotFoundProblem -> problem.unresolvedField.doesFieldDependOnClass(className)
+        else -> false
+      }
 }
 
 /**
@@ -109,8 +118,17 @@ data class DocFieldVisibilityChanged(val hostClass: String, val fieldName: Strin
  * <package name> package removed
  */
 data class DocPackageRemoved(val packageName: String) : DocumentedProblem {
-  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
-      problem is ClassNotFoundProblem && problem.unresolved.className.startsWith(packageName + "/")
+
+  private fun String?.isClassInPackage() =
+      this?.startsWith(packageName + "/") ?: false
+
+  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext) =
+      when (problem) {
+        is ClassNotFoundProblem -> problem.unresolved.className.isClassInPackage()
+        is MethodNotFoundProblem -> problem.unresolvedMethod.doesMethodDependOnClass { it.isClassInPackage() }
+        is FieldNotFoundProblem -> problem.unresolvedField.doesFieldDependOnClass { it.isClassInPackage() }
+        else -> false
+      }
 }
 
 /**
@@ -127,6 +145,52 @@ data class DocAbstractMethodAdded(val hostClass: String, val methodName: String)
  * <class name> class moved to package <package name>
  */
 data class DocClassMovedToPackage(val oldClassName: String, val newPackageName: String) : DocumentedProblem {
-  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
-      problem is ClassNotFoundProblem && problem.unresolved.className == oldClassName
+  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext) =
+      when (problem) {
+        is ClassNotFoundProblem -> problem.unresolved.className == oldClassName
+        is MethodNotFoundProblem -> problem.unresolvedMethod.doesMethodDependOnClass { it == oldClassName }
+        is FieldNotFoundProblem -> problem.unresolvedField.doesFieldDependOnClass { it == oldClassName }
+        else -> false
+      }
+}
+
+/**
+ * Checks if the method's signature of _this_ [MethodReference] contains
+ * the class [className].
+ */
+private fun MethodReference.doesMethodDependOnClass(className: String) =
+    doesMethodDependOnClass { it == className }
+
+/**
+ * Checks if the field's signature of _this_ [FieldReference] contains
+ * the class [className].
+ */
+private fun FieldReference.doesFieldDependOnClass(className: String) =
+    doesFieldDependOnClass { it == className }
+
+/**
+ * Checks if the method's signature of _this_ [MethodReference] contains
+ * a class that matches the passed [predicate] [classFinder].
+ */
+private fun MethodReference.doesMethodDependOnClass(classFinder: (String) -> Boolean): Boolean {
+  if (classFinder(hostClass.className)) {
+    return true
+  }
+  val (rawParamTypes, rawReturnType) = JvmDescriptorsPresentation.splitMethodDescriptorOnRawParametersAndReturnTypes(methodDescriptor)
+  val paramClasses = rawParamTypes.mapNotNull { it.extractClassNameFromDescr() }
+  val returnType = rawReturnType.extractClassNameFromDescr()
+
+  return paramClasses.any(classFinder) || (returnType != null && classFinder(returnType))
+}
+
+/**
+ * Checks if the field's signature of _this_ [FieldReference] contains
+ * a class that matches the passed [predicate] [classFinder].
+ */
+private fun FieldReference.doesFieldDependOnClass(classFinder: (String) -> Boolean): Boolean {
+  if (classFinder(hostClass.className)) {
+    return true
+  }
+  val fieldType = fieldDescriptor.extractClassNameFromDescr()
+  return fieldType != null && classFinder(fieldType)
 }

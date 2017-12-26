@@ -2,11 +2,23 @@ package com.jetbrains.pluginverifier.parameters.filtering
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter.Result
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 
+/**
+ * Implementations of this interface can be used
+ * to exclude known and unrelated [problems] [Problem]
+ * from the verifier [results] [Result].
+ */
 interface ProblemsFilter {
-  fun shouldReportProblem(plugin: IdePlugin, ideVersion: IdeVersion, problem: Problem, verificationContext: VerificationContext): Result
+
+  fun shouldReportProblem(
+      plugin: IdePlugin,
+      ideVersion: IdeVersion,
+      problem: Problem,
+      verificationContext: VerificationContext
+  ): Result
 
   sealed class Result {
     object Report : Result()

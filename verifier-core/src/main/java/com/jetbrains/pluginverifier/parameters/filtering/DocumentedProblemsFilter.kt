@@ -6,6 +6,11 @@ import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedPr
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 
+/**
+ * Implementation of the [ProblemsFilter] that drops
+ * the problems documented on the
+ * [Breaking API Changes page](http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html).
+ */
 class DocumentedProblemsFilter(private val documentedProblems: List<DocumentedProblem>) : ProblemsFilter {
 
   override fun shouldReportProblem(plugin: IdePlugin, ideVersion: IdeVersion, problem: Problem, verificationContext: VerificationContext): ProblemsFilter.Result {
