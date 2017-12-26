@@ -128,7 +128,7 @@ class VerificationCorrectnessTest {
 
   private fun assertProblemFound(expectedFullDescription: String, expectedShortDescription: String) {
     val problem = actualProblems.find { it.shortDescription == expectedShortDescription && it.fullDescription == expectedFullDescription }
-    assertNotNull("Problem is not found:\n$expectedFullDescription\nall problems: ${actualProblems.joinToString("\n") { it.fullDescription }}", problem)
+    assertNotNull("Problem is not found:\n$expectedFullDescription\n\nall problems: ${actualProblems.joinToString("\n") { it.fullDescription }}", problem)
     redundantProblems.remove(problem)
     assertThat(problem!!.shortDescription, `is`(expectedShortDescription))
     assertThat(problem.fullDescription, `is`(expectedFullDescription))
@@ -403,7 +403,7 @@ class VerificationCorrectnessTest {
 
   @Test
   fun `method signature changed because the generic parameter type of the enclosing class deleted`() {
-    assertProblemFound("Method mock.plugin.generics.NoSuchMethodError.error(generics.Base<?> base) : void contains an *invokevirtual* instruction referencing an unresolved method generics.Base.foo(Number) : void. This can lead to **NoSuchMethodError** exception at runtime.",
+    assertProblemFound("Method mock.plugin.generics.NoSuchMethodError.error(generics.Base<?> base) : void contains an *invokevirtual* instruction referencing an unresolved method generics.Base.foo(java.lang.Number) : void. This can lead to **NoSuchMethodError** exception at runtime.",
         "Invocation of unresolved method generics.Base.foo(Number) : void")
 
     assertProblemFound(
@@ -528,7 +528,7 @@ class VerificationCorrectnessTest {
 
   @Test
   fun `final static field of the IDE interface was accessed in plugin`() {
-    assertProblemFound("Method mock.plugin.non.existing.AccessRemovedField.foo() : void contains a *getstatic* instruction referencing an unresolved field mock.plugin.non.existing.InheritField.FINAL_FIELD : Object. " +
+    assertProblemFound("Method mock.plugin.non.existing.AccessRemovedField.foo() : void contains a *getstatic* instruction referencing an unresolved field mock.plugin.non.existing.InheritField.FINAL_FIELD : java.lang.Object. " +
         "This can lead to **NoSuchFieldError** exception at runtime. The field might have been declared in the super class belonging " +
         "to IU-145.500 (non.existing.Parent) or in the super interfaces belonging to IU-145.500 (interfaces.SomeInterface, interfaces.SomeInterface2)",
         "Access to unresolved field mock.plugin.non.existing.InheritField.FINAL_FIELD : Object"
