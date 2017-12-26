@@ -54,7 +54,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
       }
       GroupBy.BY_PLUGIN -> {
         missingProblems.forEach { missingProblem ->
-          tcLog.testSuiteStarted("(${missingProblem.pluginId})").use {
+          tcLog.testSuiteStarted(missingProblem.pluginId).use {
             val testName = "(no compatible update)"
             tcLog.testStarted(testName).use {
               tcLog.testFailed(testName, "#$missingProblem\n", "")
@@ -65,7 +65,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
       GroupBy.BY_PROBLEM_TYPE -> {
         tcLog.testSuiteStarted("(no compatible update)").use {
           missingProblems.forEach { problem ->
-            tcLog.testSuiteStarted("(${problem.pluginId})").use {
+            tcLog.testSuiteStarted(problem.pluginId).use {
               val testName = problem.pluginId
               tcLog.testStarted(testName).use {
                 tcLog.testFailed(testName, "#$problem\n", "")
@@ -174,7 +174,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
   private fun printResultsForSpecificPluginId(pluginId: String,
                                               pluginResults: List<Result>,
                                               ideLastPluginVersions: Map<IdeVersion, List<PluginInfo>>) {
-    tcLog.testSuiteStarted("($pluginId)").use {
+    tcLog.testSuiteStarted(pluginId).use {
       pluginResults.groupBy { it.plugin.version }.forEach { versionToVerdicts ->
         versionToVerdicts.value.forEach { (plugin, ideVersion, verdict) ->
           val testName = getPluginVersionAsTestName(plugin, ideVersion, ideLastPluginVersions)
@@ -341,7 +341,9 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
       tcLog.testSuiteStarted("($prefix)").use {
         for (problem in problemsOfClass) {
           for (plugin in problem2Plugin.get(problem)) {
-            tcLog.testSuiteStarted("(${problem.shortDescription})").use {
+            //todo: here and in other `testSuiteStarted` places
+            //it would be better to wrap the string with (parantheses)
+            tcLog.testSuiteStarted(problem.shortDescription).use {
               val testName = "($plugin)"
               tcLog.testStarted(testName).use {
                 tcLog.testFailed(testName, getPluginOverviewLink(plugin) + "\nPlugin: $plugin", problem.fullDescription)
