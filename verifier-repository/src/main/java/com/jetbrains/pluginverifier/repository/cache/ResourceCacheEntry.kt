@@ -1,6 +1,8 @@
 package com.jetbrains.pluginverifier.repository.cache
 
+import com.jetbrains.pluginverifier.repository.resources.ResourceInfo
 import com.jetbrains.pluginverifier.repository.resources.ResourceLock
+import com.jetbrains.pluginverifier.repository.resources.ResourceWeight
 import java.io.Closeable
 
 /**
@@ -15,11 +17,23 @@ import java.io.Closeable
 data class ResourceCacheEntry<out R>(private val resourceLock: ResourceLock<R>) : Closeable {
 
   /**
+   * The descriptor of the [fetched] [ResourceCache.getResourceCacheEntry] resource.
+   */
+  val resourceInfo: ResourceInfo<R>
+    get() = resourceLock.resourceInfo
+
+  /**
    * The resource being [fetched] [ResourceCache.getResourceCacheEntry].
    * It will be deallocated when _this_ entry is [closed] [close].
    */
   val resource: R
-    get() = resourceLock.resource
+    get() = resourceInfo.resource
+
+  /**
+   * The [weight] [ResourceWeight] of the [fetched] [ResourceCache.getResourceCacheEntry] resource.
+   */
+  val resourceWeight: ResourceWeight
+    get() = resourceInfo.weight
 
   override fun close() {
     resourceLock.close()
