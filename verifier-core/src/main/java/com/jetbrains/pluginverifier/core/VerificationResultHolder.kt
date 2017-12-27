@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.core
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsHolder
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
@@ -21,7 +22,13 @@ class VerificationResultHolder(private val pluginVerificationReportage: PluginVe
 
   private var dependenciesGraph: DependenciesGraph? = null
 
-  val ignoredProblems = hashSetOf<Problem>()
+  val ignoredProblemsHolder = IgnoredProblemsHolder(pluginVerificationReportage)
+
+  val pluginProblems = arrayListOf<PluginProblem>()
+
+  var notFoundReason: String? = null
+
+  var failedToDownloadReason: String? = null
 
   fun setDependenciesGraph(graph: DependenciesGraph) {
     dependenciesGraph = graph
@@ -39,16 +46,15 @@ class VerificationResultHolder(private val pluginVerificationReportage: PluginVe
   }
 
   fun registerProblem(problem: Problem) {
-    if (problem !in problems && problem !in ignoredProblems) {
+    if (problem !in problems && !ignoredProblemsHolder.isIgnored(problem)) {
       problems.add(problem)
       pluginVerificationReportage.logNewProblemDetected(problem)
     }
   }
 
   fun registerIgnoredProblem(problem: Problem, ignoreDecisions: List<ProblemsFilter.Result.Ignore>) {
-    if (problem !in problems && problem !in ignoredProblems) {
-      ignoredProblems.add(problem)
-      ignoreDecisions.forEach { pluginVerificationReportage.logProblemIgnored(problem, it.reason) }
+    if (problem !in problems && !ignoredProblemsHolder.isIgnored(problem)) {
+      ignoredProblemsHolder.registerIgnoredProblem(problem, ignoreDecisions)
     }
   }
 

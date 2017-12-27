@@ -79,7 +79,8 @@ class TestTeamCityResultPrinter {
               Result(
                   it,
                   IdeVersion.createIdeVersion("IU-145"),
-                  Verdict.OK(DependenciesGraph(dependencyNode, listOf(dependencyNode), emptyList()), emptySet())
+                  Verdict.OK(DependenciesGraph(dependencyNode, listOf(dependencyNode), emptyList()), emptySet()),
+                  emptySet()
               )
             }
         )

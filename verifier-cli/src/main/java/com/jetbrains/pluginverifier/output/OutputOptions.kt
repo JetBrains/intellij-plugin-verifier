@@ -24,7 +24,7 @@ data class OutputOptions(val missingDependencyIgnoring: MissingDependencyIgnorin
         .resolve("report.html")
 
     val isExcluded: (PluginIdAndVersion) -> Boolean = { (pluginId, pluginVersion) -> PluginIdAndVersion(pluginId, pluginVersion) in excludedPlugins }
-    val htmlResultPrinter = HtmlResultPrinter(listOf(ideVersion), isExcluded, htmlReportFile, missingDependencyIgnoring)
+    val htmlResultPrinter = HtmlResultPrinter(ideVersion, isExcluded, htmlReportFile, missingDependencyIgnoring)
     htmlResultPrinter.printResults(results)
   }
 

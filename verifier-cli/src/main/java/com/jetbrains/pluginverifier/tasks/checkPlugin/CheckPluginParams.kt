@@ -18,7 +18,7 @@ data class CheckPluginParams(val pluginCoordinates: List<PluginCoordinate>,
 
   override fun presentableText(): String = """Check Plugin Configuration parameters:
   JDK: $jdkDescriptor
-  Plugins to be checked: [${pluginCoordinates.joinToString()}]
+  Plugins to be checked (${pluginCoordinates.size}): [${pluginCoordinates.joinToString()}]
   IDE builds to be checked: [${ideDescriptors.joinToString()}]
   External classes prefixes: [${externalClassesPrefixes.joinToString()}]
   """

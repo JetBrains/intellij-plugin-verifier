@@ -1,12 +1,10 @@
 package com.jetbrains.pluginverifier.core
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.graph.DepEdge
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
@@ -46,22 +44,18 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
 
   override fun call(): Result {
     pluginVerificationReportage.logVerificationStarted()
-    try {
-      return createPluginAndDoVerification()
+    return try {
+      createPluginAndDoVerification()
     } finally {
       pluginVerificationReportage.logVerificationFinished()
     }
   }
 
-  private fun createPluginAndDoVerification(): Result {
-    val pluginDetails = pluginDetailsProvider.providePluginDetails(pluginCoordinate)
-    return pluginDetails.use {
-      val pluginInfo = pluginDetails.toPluginInfo()
-      val verdict = pluginDetails.calculateVerdict()
-      pluginVerificationReportage.logVerdict(verdict)
-      Result(pluginInfo, ideDescriptor.ideVersion, verdict)
-    }
-  }
+  private fun createPluginAndDoVerification() =
+      pluginDetailsProvider.providePluginDetails(pluginCoordinate).use { pluginDetails ->
+        val pluginInfo = pluginDetails.toPluginInfo()
+        pluginDetails.doVerification(pluginInfo)
+      }
 
   private fun PluginDetails.toPluginInfo(): PluginInfo = when (this) {
     is PluginDetails.BadPlugin -> pluginCoordinate.toPluginInfo()
@@ -72,13 +66,37 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
     is PluginDetails.FoundOpenPluginWithoutClasses -> plugin.getPluginInfo(pluginCoordinate)
   }
 
-  private fun PluginDetails.calculateVerdict() = when (this) {
-    is PluginDetails.BadPlugin -> Verdict.Bad(pluginErrorsAndWarnings)
-    is PluginDetails.NotFound -> Verdict.NotFound(reason)
-    is PluginDetails.FailedToDownload -> Verdict.FailedToDownload(reason)
+  private fun PluginDetails.doVerification(pluginInfo: PluginInfo): Result {
+    val resultHolder = VerificationResultHolder(pluginVerificationReportage)
+    calculateVerificationResults(resultHolder)
+    val verdict = resultHolder.getVerdict()
+    pluginVerificationReportage.logVerdict(verdict)
+    return Result(
+        pluginInfo,
+        ideDescriptor.ideVersion,
+        verdict,
+        resultHolder.ignoredProblemsHolder.ignoredProblems
+    )
+  }
+
+  private fun PluginDetails.calculateVerificationResults(resultHolder: VerificationResultHolder): Any = when (this) {
+    is PluginDetails.BadPlugin -> {
+      resultHolder.pluginProblems.addAll(pluginErrorsAndWarnings)
+    }
+    is PluginDetails.NotFound -> {
+      resultHolder.notFoundReason = reason
+    }
+    is PluginDetails.FailedToDownload -> {
+      resultHolder.failedToDownloadReason = reason
+    }
     is PluginDetails.ByFileLock,
     is PluginDetails.FoundOpenPluginAndClasses,
-    is PluginDetails.FoundOpenPluginWithoutClasses -> calculateVerdict(plugin!!, warnings, pluginClassesLocations)
+    is PluginDetails.FoundOpenPluginWithoutClasses -> {
+      if (warnings != null) {
+        resultHolder.addPluginWarnings(warnings!!)
+      }
+      runVerification(plugin!!, pluginClassesLocations, resultHolder)
+    }
   }
 
   private fun PluginCoordinate.toPluginInfo(): PluginInfo = when (this) {
@@ -95,21 +113,9 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
   private fun IdePlugin.getPluginInfo(pluginCoordinate: PluginCoordinate): PluginInfo =
       (pluginCoordinate as? PluginCoordinate.ByUpdateInfo)?.updateInfo ?: PluginIdAndVersion(pluginId!!, pluginVersion!!)
 
-  private fun calculateVerdict(plugin: IdePlugin,
-                               pluginWarnings: List<PluginProblem>?,
-                               pluginClassesLocations: IdePluginClassesLocations?): Verdict {
-    val resultHolder = VerificationResultHolder(pluginVerificationReportage)
-    if (pluginWarnings != null) {
-      resultHolder.addPluginWarnings(pluginWarnings)
-    }
-    runVerification(plugin, pluginClassesLocations, resultHolder, ideDescriptor.ideVersion)
-    return resultHolder.toVerdict()
-  }
-
   private fun runVerification(plugin: IdePlugin,
                               pluginClassesLocations: IdePluginClassesLocations?,
-                              resultHolder: VerificationResultHolder,
-                              ideVersion: IdeVersion) {
+                              resultHolder: VerificationResultHolder) {
     val depGraph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
     try {
       val start = DepVertex(plugin.pluginId!!, PluginDetails.FoundOpenPluginWithoutClasses(plugin))
@@ -127,7 +133,7 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
 
         val verificationContext = VerificationContext(
             plugin,
-            ideVersion,
+            ideDescriptor.ideVersion,
             classLoader,
             ideDescriptor.ideResolver,
             resultHolder,
@@ -182,7 +188,19 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
           .map { it.createPluginClassLoader() }
       )
 
-  private fun VerificationResultHolder.toVerdict(): Verdict {
+  private fun VerificationResultHolder.getVerdict(): Verdict {
+    if (notFoundReason != null) {
+      return Verdict.NotFound(notFoundReason!!)
+    }
+
+    if (failedToDownloadReason != null) {
+      return Verdict.FailedToDownload(failedToDownloadReason!!)
+    }
+
+    if (pluginProblems.isNotEmpty()) {
+      return Verdict.Bad(pluginProblems)
+    }
+
     val dependenciesGraph = getDependenciesGraph()
     if (dependenciesGraph.start.missingDependencies.isNotEmpty()) {
       return Verdict.MissingDependencies(dependenciesGraph, problems, warnings, deprecatedUsages)

@@ -23,7 +23,7 @@ data class CheckIdeParams(val ideDescriptor: IdeDescriptor,
   override fun presentableText(): String = """Check IDE configuration parameters:
 IDE to be checked: $ideDescriptor
 JDK: $jdkDescriptor
-Plugins to be checked: [${pluginsToCheck.joinToString()}]
+Plugins to be checked (${pluginsToCheck.size}): [${pluginsToCheck.joinToString()}]
 Excluded plugins: [${excludedPlugins.joinToString()}]
 """
 

@@ -16,7 +16,7 @@ data class DeprecatedUsagesParams(val ideDescriptor: IdeDescriptor,
   override fun presentableText(): String = """Deprecated usages detection parameters:
 IDE to check: $ideDescriptor
 JDK: $jdkDescriptor
-Plugins to check: [${pluginsToCheck.joinToString()}]
+Plugins to check (${pluginsToCheck.size}): [${pluginsToCheck.joinToString()}]
 """
 
   override fun close() {

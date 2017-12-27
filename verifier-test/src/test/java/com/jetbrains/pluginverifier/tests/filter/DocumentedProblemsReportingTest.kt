@@ -56,7 +56,7 @@ class DocumentedProblemsReportingTest {
     val verificationContext = contextProvider(problemsFilter)
 
     problems.forEach { verificationContext.registerProblem(it) }
-    val actualIgnoredProblems = verificationContext.resultHolder.ignoredProblems
+    val actualIgnoredProblems = verificationContext.resultHolder.ignoredProblemsHolder.ignoredProblems
     problems.forEach { problem -> assertThat(problem, isIn(actualIgnoredProblems)) }
   }
 
