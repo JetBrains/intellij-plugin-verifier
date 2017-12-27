@@ -50,7 +50,21 @@ class DocumentedProblemsParser {
       return result
     }
 
-    private fun String.toInternalName(): String = replace('.', '/')
+    /**
+     * Converts a presentable class name to the JVM internal name
+     * (with dots replaced with /-slashes and $-dollars for inner/nested classes)
+     * Examples:
+     * - org.some.Class -> org/some/Class
+     * - com.example.Inner.Class -> com/example/Inner$Class
+     */
+    private fun String.toInternalName(): String {
+      val idx = indexOfFirst { it.isUpperCase() }
+      return if (idx == -1) {
+        replace('.', '/')
+      } else {
+        take(idx).replace('.', '/') + drop(idx).replace('.', '$')
+      }
+    }
   }
 
   fun parse(pageBody: String): List<DocumentedProblem> = pageBody.lineSequence()

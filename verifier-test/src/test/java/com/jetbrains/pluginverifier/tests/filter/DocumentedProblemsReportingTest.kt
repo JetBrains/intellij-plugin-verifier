@@ -13,10 +13,7 @@ import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.location.classpath.ClassPath
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
-import com.jetbrains.pluginverifier.results.problems.FieldNotFoundProblem
-import com.jetbrains.pluginverifier.results.problems.MethodNotFoundProblem
-import com.jetbrains.pluginverifier.results.problems.MethodNotImplementedProblem
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
@@ -96,6 +93,11 @@ class DocumentedProblemsReportingTest {
         incompleteClass
     )
 
+    val classNotFoundProblem = ClassNotFoundProblem(
+        ClassReference("org/test/some/Inner\$Class"),
+        MOCK_METHOD_LOCATION
+    )
+
     return mapOf(
         methodFooIsNotFoundProblem to DocMethodRemoved("org/test/A", "foo"),
 
@@ -107,7 +109,9 @@ class DocumentedProblemsReportingTest {
 
         fieldXNotFoundProblem to DocFieldTypeChanged("org/test/A", "x"),
 
-        methodNotImplementedProblem to DocAbstractMethodAdded("org/test/IImpl", "abstractMethod")
+        methodNotImplementedProblem to DocAbstractMethodAdded("org/test/IImpl", "abstractMethod"),
+
+        classNotFoundProblem to DocClassRemoved("org/test/some/Inner\$Class")
     )
   }
 

@@ -37,10 +37,11 @@ class DocumentedProblemsParserTest {
         DocMethodParameterTypeChanged("com/example/Bar", "changedParameterType"),
         DocMethodVisibilityChanged("com/example/Bar", "methodVisibilityChanged"),
         DocFieldTypeChanged("com/example/Foo", "fieldTypeChanged"),
-        DocFieldVisibilityChanged("com/example/Foo", "fieldVisibilityChanged")
+        DocFieldVisibilityChanged("com/example/Foo", "fieldVisibilityChanged"),
+        DocClassRemoved("com/example/Inner\$Class")
     )
     for (expected in expectedProblems) {
-      assertTrue("$expected is not found:\n${documentedProblems.joinToString("\n")}", expected in documentedProblems)
+      assertTrue("$expected is not found:\n${documentedProblems.joinToString("\n")}\nActual problems:", expected in documentedProblems)
     }
     val redundant = documentedProblems - expectedProblems
     if (redundant.isNotEmpty()) {
