@@ -22,6 +22,9 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.net.URL
 import java.nio.file.Path
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -233,20 +236,39 @@ class PublicPluginRepository(private val repositoryUrl: String,
    * endpoint to request all available plugins.
    * In order to reduce the load on the repository,
    * the class remembers the last requested update id.
+   *
+   * It is necessary to occasionally update the cashes
+   * of this class because the plugins data may be changed
+   * in the repository database: the "since-until" compatibility
+   * ranges may be changed, or new plugins get approved.
+   * We update the caches every hour.
    */
   private inner class AllSinceUntilPluginsRequester {
+
+    private val duration = Duration.of(1, ChronoUnit.HOURS)
 
     private var lastUpdateId = 0
 
     private val allPlugins = hashMapOf<Int, JsonUpdateSinceUntil>()
 
+    private var fullUpdateTime: Instant? = null
+
     private fun updateState() {
-      val updates = requestAllPlugins(lastUpdateId + 1)
+      val updates = if (needFullUpdate()) {
+        fullUpdateTime = Instant.now()
+        requestAllPlugins(1)
+      } else {
+        requestAllPlugins(lastUpdateId + 1)
+      }
+
       updates.forEach {
         allPlugins[it.updateId] = it
         lastUpdateId = maxOf(lastUpdateId, it.updateId)
       }
     }
+
+    private fun needFullUpdate() =
+        fullUpdateTime == null || fullUpdateTime!! <= Instant.now().minus(duration)
 
     private fun requestAllPlugins(startUpdateId: Int) =
         repositoryConnector.getAllUpdateSinceAndUntil("1.0", startUpdateId).executeSuccessfully().body()
