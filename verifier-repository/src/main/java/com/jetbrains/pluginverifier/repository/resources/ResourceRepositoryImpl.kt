@@ -27,12 +27,25 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
                                    initialWeight: ResourceWeight,
                                    weigher: (R) -> ResourceWeight,
                                    disposer: (R) -> Unit,
-                                   private val presentableName: String = "ResourceRepository") : ResourceRepository<R, K> {
+                                   private val presentableName: String = "ResourceRepository",
+                                   /**
+                                    * This optional parameter is used to specify the maximum expected
+                                    * time of a resource lock being in the locked state.
+                                    *
+                                    * It is only used to monitor
+                                    * the unreleased locks and emit a warning if
+                                    * there are long-living locks found which
+                                    * typically means that those locks are not
+                                    * released due to a programming bug.
+                                    *
+                                    * If this parameter is set to `null`, no warnings will be emitted.
+                                    * Note that long-living locks are fine in some cases, like locks
+                                    * for the [resource cache entries] [com.jetbrains.pluginverifier.repository.cache.ResourceCache]
+                                    */
+                                   private val expectedMaximumLockTime: Duration? = Duration.of(1, ChronoUnit.HOURS)) : ResourceRepository<R, K> {
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(ResourceRepositoryImpl::class.java)
-
-    private val LOCK_TIME_TO_LIVE_DURATION: Duration = Duration.of(1, ChronoUnit.HOURS)
   }
 
   private val resourcesRegistrar = RepositoryResourcesRegistrar<R, K>(initialWeight, weigher, disposer)
@@ -50,7 +63,9 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
   private val statistics = hashMapOf<K, UsageStatistic>()
 
   init {
-    runForgottenLocksInspector()
+    if (expectedMaximumLockTime != null) {
+      runForgottenLocksInspector()
+    }
   }
 
   private fun runForgottenLocksInspector() {
@@ -213,7 +228,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
       for (lock in locks) {
         val now = clock.instant()
         val lockTime = lock.lockTime
-        val maxUnlockTime = lockTime.plus(LOCK_TIME_TO_LIVE_DURATION)
+        val maxUnlockTime = lockTime.plus(expectedMaximumLockTime!!)
         val isForgotten = now.isAfter(maxUnlockTime)
         if (isForgotten) {
           LOG.warn("Forgotten lock found for $key on ${lock.resource}; lock time = $lockTime")
