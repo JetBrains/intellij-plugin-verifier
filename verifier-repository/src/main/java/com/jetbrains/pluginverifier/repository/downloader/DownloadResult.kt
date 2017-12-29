@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.repository.downloader
 import java.nio.file.Path
 
 /**
- * Represents possible download outcomes.
+ * Represents possible [download] [Downloader.download] outcomes.
  */
 sealed class DownloadResult {
   /**
