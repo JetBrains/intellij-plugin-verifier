@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.repository.cleanup
 
+import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.repository.resources.ResourceWeight
 
 /**
@@ -17,6 +18,6 @@ data class SizeWeight(val size: Long) : ResourceWeight {
   override fun compareTo(other: ResourceWeight) =
       size.compareTo((other as SizeWeight).size)
 
-  override fun toString() = size.toString()
+  override fun toString() = "element".pluralizeWithNumber(size)
 
 }

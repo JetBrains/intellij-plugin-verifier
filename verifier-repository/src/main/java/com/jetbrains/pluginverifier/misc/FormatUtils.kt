@@ -20,12 +20,18 @@ fun <T> List<T>.listPresentationInColumns(columns: Int, minColumnWidth: Int): St
 
 fun String.pluralizeWithNumber(times: Int): String = "$times " + this.pluralize(times)
 
+fun String.pluralizeWithNumber(times: Long): String = pluralizeWithNumber(times.coerceToIntegerMax())
+
+private fun Long.coerceToIntegerMax() = coerceAtMost(Integer.MAX_VALUE.toLong()).toInt()
+
 private val knownPluralForms = mapOf(
     "this" to "these",
     "that" to "those",
     "is" to "are",
     "was" to "were"
 )
+
+fun String.pluralize(times: Long): String = pluralize(times.coerceToIntegerMax())
 
 fun String.pluralize(times: Int): String {
   if (times < 0) throw IllegalArgumentException("Negative value")

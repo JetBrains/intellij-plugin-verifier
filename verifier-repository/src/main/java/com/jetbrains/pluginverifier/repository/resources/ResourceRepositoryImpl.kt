@@ -249,10 +249,10 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
 
       if (resourcesForEviction.isNotEmpty()) {
         val disposedTotalWeight = resourcesForEviction.map { it.resourceInfo.weight }.reduce { acc, weight -> acc + weight }
-        LOG.info("$presentableName: it's time to evict unused resources. " +
+        LOG.debug("$presentableName: it's time to evict unused resources. " +
             "Total weight: ${resourcesRegistrar.totalWeight}. " +
             "${resourcesForEviction.size} " + "resource".pluralize(resourcesForEviction.size) +
-            " will be evicted with total size $disposedTotalWeight"
+            " will be evicted with total weight $disposedTotalWeight"
         )
         for (availableFile in resourcesForEviction) {
           remove(availableFile.key)
