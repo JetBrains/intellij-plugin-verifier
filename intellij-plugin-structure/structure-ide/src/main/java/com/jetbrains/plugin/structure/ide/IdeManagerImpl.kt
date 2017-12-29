@@ -2,7 +2,6 @@ package com.jetbrains.plugin.structure.ide
 
 import com.google.common.base.Joiner
 import com.google.common.io.Files
-import com.jetbrains.plugin.structure.base.logging.Logger
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -15,6 +14,8 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.io.filefilter.WildcardFileFilter
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.net.URL
@@ -24,7 +25,7 @@ import java.util.*
 /**
  * @author Sergey Patrikeev
  */
-class IdeManagerImpl(private val logger: Logger) : IdeManager() {
+class IdeManagerImpl : IdeManager() {
 
   @Throws(IOException::class)
   override fun createIde(ideDir: File): Ide = createIde(ideDir, null)
@@ -138,12 +139,12 @@ class IdeManagerImpl(private val logger: Logger) : IdeManager() {
         is PluginCreationSuccess -> creationResult.plugin
         is PluginCreationFail -> {
           val problems = creationResult.errorsAndWarnings
-          logger.info("Failed to read plugin " + pluginDirectory + ". Problems: " + Joiner.on(", ").join(problems))
+          LOG.info("Failed to read plugin " + pluginDirectory + ". Problems: " + Joiner.on(", ").join(problems))
           null
         }
       }
     } catch (e: Exception) {
-      logger.info("Unable to create plugin from sources: " + pluginDirectory, e)
+      LOG.info("Unable to create plugin from sources: " + pluginDirectory, e)
     }
 
     return null
@@ -170,6 +171,8 @@ class IdeManagerImpl(private val logger: Logger) : IdeManager() {
   }
 
   companion object {
+
+    private val LOG: Logger = LoggerFactory.getLogger(IdeManagerImpl::class.java)
 
     fun isSourceDir(dir: File): Boolean = File(dir, ".idea").isDirectory
 

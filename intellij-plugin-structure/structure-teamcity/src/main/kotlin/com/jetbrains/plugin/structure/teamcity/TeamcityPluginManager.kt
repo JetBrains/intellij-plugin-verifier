@@ -1,26 +1,26 @@
 package com.jetbrains.plugin.structure.teamcity
 
-import com.jetbrains.plugin.structure.base.logging.Logger
-import com.jetbrains.plugin.structure.base.logging.LoggerFactory.createDefaultLogger
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.FileUtil
 import com.jetbrains.plugin.structure.teamcity.beans.extractPluginBean
 import org.jdom2.input.JDOMParseException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.util.zip.ZipFile
 
-class TeamcityPluginManager private constructor(
-    private val logger: Logger, private val validateBean: Boolean) : PluginManager<TeamcityPlugin> {
+class TeamcityPluginManager private constructor(private val validateBean: Boolean) : PluginManager<TeamcityPlugin> {
   companion object {
     private val DESCRIPTOR_NAME = "teamcity-plugin.xml"
 
-    fun createManager(validateBean: Boolean = true): TeamcityPluginManager =
-        createManager(createDefaultLogger(TeamcityPluginManager::class.java), validateBean)
+    private val LOG: Logger = LoggerFactory.getLogger(TeamcityPluginManager::class.java)
 
-    fun createManager(logger: Logger, validateBean: Boolean = true): TeamcityPluginManager = TeamcityPluginManager(logger, validateBean)
+    fun createManager(validateBean: Boolean = true): TeamcityPluginManager =
+        TeamcityPluginManager(validateBean)
+
   }
 
   override fun createPlugin(pluginFile: File): PluginCreationResult<TeamcityPlugin> {
@@ -37,7 +37,7 @@ class TeamcityPluginManager private constructor(
   private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<TeamcityPlugin> = try {
     loadDescriptorFromZip(ZipFile(pluginFile))
   } catch (e: IOException) {
-    logger.info("Unable to extract plugin zip: $pluginFile", e)
+    LOG.info("Unable to extract plugin zip: $pluginFile", e)
     PluginCreationFail(UnableToExtractZip(pluginFile))
   }
 
@@ -73,7 +73,7 @@ class TeamcityPluginManager private constructor(
       val message = if (lineNumber != -1) "unexpected element on line " + lineNumber else "unexpected elements"
       return PluginCreationFail(UnexpectedDescriptorElements(message))
     } catch (e: Exception) {
-      logger.info("Unable to read plugin descriptor from $streamName", e)
+      LOG.info("Unable to read plugin descriptor from $streamName", e)
       return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME))
     }
   }

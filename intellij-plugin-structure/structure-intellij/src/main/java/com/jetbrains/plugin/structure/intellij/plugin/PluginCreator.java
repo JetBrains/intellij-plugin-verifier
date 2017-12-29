@@ -1,6 +1,5 @@
 package com.jetbrains.plugin.structure.intellij.plugin;
 
-import com.jetbrains.plugin.structure.base.logging.Logger;
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail;
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult;
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess;
@@ -18,6 +17,8 @@ import org.jdom2.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.URL;
@@ -31,6 +32,8 @@ import java.util.regex.Pattern;
  */
 final class PluginCreator {
 
+  private static final Logger LOG = LoggerFactory.getLogger(PluginCreator.class);
+
   private static final int MAX_VERSION_LENGTH = 64;
   private static final int MAX_PROPERTY_LENGTH = 255;
   private static final int MAX_LONG_PROPERTY_LENGTH = 65535;
@@ -40,19 +43,16 @@ final class PluginCreator {
   private final String myDescriptorPath;
   private final boolean myValidateDescriptor;
   private final File myActualFile;
-  private final Logger myLogger;
 
   PluginCreator(@NotNull String descriptorPath,
                 boolean validateDescriptor,
                 @NotNull Document document,
                 @NotNull URL documentUrl,
                 @NotNull XIncludePathResolver pathResolver,
-                @NotNull File actualFile,
-                @NotNull com.jetbrains.plugin.structure.base.logging.Logger logger) {
+                @NotNull File actualFile) {
     myDescriptorPath = descriptorPath;
     myValidateDescriptor = validateDescriptor;
     myActualFile = actualFile;
-    myLogger = logger;
     myPlugin = resolveDocumentAndValidateBean(document, documentUrl, pathResolver);
   }
 
@@ -65,7 +65,6 @@ final class PluginCreator {
     myValidateDescriptor = true;
     myProblems.add(singleProblem);
     myPlugin = null;
-    myLogger = null;
   }
 
   private void validatePluginBean(PluginBean bean) {
@@ -171,7 +170,7 @@ final class PluginCreator {
     try {
       return JDOMXIncluder.resolve(originalDocument, documentUrl.toExternalForm(), false, pathResolver);
     } catch (Exception e) {
-      myLogger.info("Unable to resolve x-include elements of descriptor " + myDescriptorPath, e);
+      LOG.info("Unable to resolve x-include elements of descriptor " + myDescriptorPath + " of " + myActualFile, e);
       registerProblem(new UnresolvedXIncludeElements(myDescriptorPath));
       return null;
     }
@@ -183,7 +182,7 @@ final class PluginCreator {
       return PluginBeanExtractor.extractPluginBean(document);
     } catch (Exception e) {
       registerProblem(new UnableToReadDescriptor(myDescriptorPath));
-      myLogger.error("Unable to read plugin descriptor " + myDescriptorPath, e);
+      LOG.error("Unable to read plugin descriptor " + myDescriptorPath + " of " + myActualFile, e);
       return null;
     }
   }

@@ -1,19 +1,19 @@
 package com.jetbrains.plugin.structure.base.utils
 
-import com.jetbrains.plugin.structure.base.logging.Logger
-import com.jetbrains.plugin.structure.base.logging.LoggerFactory
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.Closeable
 
 /**
  * @author Sergey Patrikeev
  */
-private val LOG: Logger = LoggerFactory.createDefaultLogger("LanguageUtils")
+private val logger: Logger = LoggerFactory.getLogger("LanguageUtils")
 
 fun <T : Closeable?> T.closeLogged() {
   try {
     this?.close()
   } catch (e: Exception) {
-    LOG.error("Unable to close $this", e)
+    logger.error("Unable to close $this", e)
   }
 }
 
