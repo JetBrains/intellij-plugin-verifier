@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.repository.downloader
 
+import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.*
@@ -43,6 +44,7 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
       return DownloadResult.FailedToDownload("Invalid URL", e)
     } ?: return DownloadResult.NotFound("Unknown URL for $key")
 
+    checkIfInterrupted()
     return try {
       doDownload(key, downloadUrl, tempDirectory)
     } catch (e: NotFound404ResponseException) {

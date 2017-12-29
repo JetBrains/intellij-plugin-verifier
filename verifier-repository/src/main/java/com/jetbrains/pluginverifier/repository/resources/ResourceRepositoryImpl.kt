@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.repository.resources
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.repository.cleanup.UsageStatistic
@@ -167,6 +168,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
   }
 
   private fun provideOrWait(key: K): ResourceRepositoryResult<R> {
+    checkIfInterrupted()
     val (provideTask, runInCurrentThread) = synchronized(this) {
       waitedKeys.add(key)
       val task = provisionTasks[key]
@@ -181,7 +183,8 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
       }
     }
 
-    //Run the provision task if the current thread has initialized it.
+    //Run the provision task in the current thread
+    //if the thread has started the provision of this key first.
     if (runInCurrentThread) {
       provideTask.run()
     }
