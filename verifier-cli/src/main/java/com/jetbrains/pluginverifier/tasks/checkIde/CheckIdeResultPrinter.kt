@@ -5,7 +5,6 @@ import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
-import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.tasks.TaskResult
@@ -32,7 +31,6 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
         val brokenPlugins = results
             .filter { it.verdict !is Verdict.OK && it.verdict !is Verdict.Warnings }
             .map { it.plugin }
-            .map { PluginIdAndVersion(it.pluginId, it.version) }
             .distinct()
         IdeResourceUtil.dumbBrokenPluginsList(File(outputOptions.dumpBrokenPluginsFile), brokenPlugins)
       }

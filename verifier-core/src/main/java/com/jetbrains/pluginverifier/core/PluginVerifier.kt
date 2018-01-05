@@ -12,22 +12,21 @@ import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.closeLogged
-import com.jetbrains.pluginverifier.misc.nameWithoutExtension
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.plugin.createPluginInfo
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
-import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.local.createLocalPluginInfo
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
-import java.nio.file.Path
 import java.util.concurrent.Callable
 
 class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
@@ -58,9 +57,10 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
       }
 
   private fun PluginDetails.toPluginInfo(): PluginInfo = when (this) {
-    is PluginDetails.BadPlugin -> pluginCoordinate.toPluginInfo()
-    is PluginDetails.NotFound -> pluginCoordinate.toPluginInfo()
-    is PluginDetails.FailedToDownload -> pluginCoordinate.toPluginInfo()
+    is PluginDetails.BadPlugin -> pluginCoordinate.createPluginInfo(pluginDetailsProvider)
+    is PluginDetails.NotFound -> pluginCoordinate.createPluginInfo(pluginDetailsProvider)
+    is PluginDetails.FailedToDownload -> pluginCoordinate.createPluginInfo(pluginDetailsProvider)
+
     is PluginDetails.ByFileLock -> plugin.getPluginInfo(pluginCoordinate)
     is PluginDetails.FoundOpenPluginAndClasses -> plugin.getPluginInfo(pluginCoordinate)
     is PluginDetails.FoundOpenPluginWithoutClasses -> plugin.getPluginInfo(pluginCoordinate)
@@ -99,19 +99,10 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
     }
   }
 
-  private fun PluginCoordinate.toPluginInfo(): PluginInfo = when (this) {
-    is PluginCoordinate.ByUpdateInfo -> updateInfo
-    is PluginCoordinate.ByFile -> guessPluginIdAndVersion(pluginFile)
+  private fun IdePlugin.getPluginInfo(pluginCoordinate: PluginCoordinate) = when (pluginCoordinate) {
+    is PluginCoordinate.ByUpdateInfo -> pluginCoordinate.updateInfo
+    is PluginCoordinate.ByFile -> createLocalPluginInfo(pluginCoordinate.pluginFile, this)
   }
-
-  private fun guessPluginIdAndVersion(file: Path): PluginIdAndVersion {
-    val name = file.nameWithoutExtension
-    val version = name.substringAfterLast('-')
-    return PluginIdAndVersion(name.substringBeforeLast('-'), version)
-  }
-
-  private fun IdePlugin.getPluginInfo(pluginCoordinate: PluginCoordinate): PluginInfo =
-      (pluginCoordinate as? PluginCoordinate.ByUpdateInfo)?.updateInfo ?: PluginIdAndVersion(pluginId!!, pluginVersion!!)
 
   private fun runVerification(plugin: IdePlugin,
                               pluginClassesLocations: IdePluginClassesLocations?,

@@ -34,12 +34,12 @@ fun createMockUpdateInfo(pluginId: String, pluginName: String, version: String, 
     UpdateInfo(
         pluginId,
         version,
+        exampleUrl,
         pluginName,
         updateId,
         "",
         "",
         "",
-        exampleUrl,
         exampleUrl,
         exampleUrl
     )

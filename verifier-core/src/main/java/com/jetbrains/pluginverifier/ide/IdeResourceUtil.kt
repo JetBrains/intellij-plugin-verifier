@@ -3,7 +3,8 @@ package com.jetbrains.pluginverifier.ide
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.misc.create
-import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
+import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import java.io.File
 import java.io.PrintWriter
 import java.util.jar.JarFile
@@ -42,7 +43,7 @@ object IdeResourceUtil {
       .filterNot { it.startsWith("//") }
       .flatMap { getBrokenPluginsByLine(it) }
 
-  fun dumbBrokenPluginsList(dumpBrokenPluginsFile: File, brokenPlugins: List<PluginIdAndVersion>) {
+  fun dumbBrokenPluginsList(dumpBrokenPluginsFile: File, brokenPlugins: List<PluginInfo>) {
     PrintWriter(dumpBrokenPluginsFile.create()).use { out ->
       out.println("// This file contains list of broken plugins.\n" +
           "// Each line contains plugin ID and list of versions that are broken.\n" +

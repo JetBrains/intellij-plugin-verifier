@@ -23,14 +23,14 @@ open class MockIdePlugin(
     private val underlyingDocument: Document = Document(),
     private val optionalDescriptors: Map<String, IdePlugin> = emptyMap(),
     private val extensions: Multimap<String, Element> = HashMultimap.create(),
-    private val sinceBuild: IdeVersion? = null,
+    private val sinceBuild: IdeVersion = IdeVersion.createIdeVersion("IU-163.1"),
     private val untilBuild: IdeVersion? = null,
     private val definedModules: Set<String> = emptySet(),
     private val originalFile: File? = null
 ) : IdePlugin {
 
   override fun isCompatibleWithIde(ideVersion: IdeVersion) =
-      if (sinceBuild == null) true else sinceBuild <= ideVersion && (untilBuild == null || ideVersion <= untilBuild)
+      sinceBuild <= ideVersion && (untilBuild == null || ideVersion <= untilBuild)
 
   override fun getUntilBuild() = untilBuild
 

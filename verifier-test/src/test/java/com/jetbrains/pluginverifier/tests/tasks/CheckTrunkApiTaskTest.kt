@@ -34,6 +34,8 @@ class CheckTrunkApiTaskTest {
 
   val someJetBrainsPluginContainingModuleId = "org.jetbrains.module.container"
 
+  val repositoryURL = File(".").toURI().toURL()
+
   val someJetBrainsMockPlugin1 = MockIdePlugin(
       pluginId = someJetBrainsPluginId,
       pluginVersion = "1.0",
@@ -146,6 +148,7 @@ class CheckTrunkApiTaskTest {
         LocalPluginInfo(
             someJetBrainsPluginId,
             "1.0",
+            repositoryURL,
             "plugin name",
             releaseVersion,
             releaseVersion,
@@ -157,6 +160,7 @@ class CheckTrunkApiTaskTest {
         LocalPluginInfo(
             someJetBrainsPluginContainingModuleId,
             "1.0",
+            repositoryURL,
             "module container",
             releaseVersion,
             releaseVersion,
@@ -172,6 +176,7 @@ class CheckTrunkApiTaskTest {
         LocalPluginInfo(
             someJetBrainsPluginId,
             "2.0",
+            repositoryURL,
             "plugin name",
             trunkVersion,
             trunkVersion,
@@ -183,6 +188,7 @@ class CheckTrunkApiTaskTest {
         LocalPluginInfo(
             someJetBrainsPluginContainingModuleId,
             "1.0",
+            repositoryURL,
             "module container",
             trunkVersion,
             trunkVersion,

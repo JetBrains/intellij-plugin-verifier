@@ -2,27 +2,22 @@ package com.jetbrains.pluginverifier.repository
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.net.URL
-import java.util.*
 
 /**
  * Aggregates properties of a plugin stored in the Plugin Repository.
  */
 class UpdateInfo(pluginId: String,
                  version: String,
+                 repositoryURL: URL,
                  val pluginName: String,
                  val updateId: Int,
                  val vendor: String,
                  val sinceString: String,
                  val untilString: String,
                  val downloadUrl: URL,
-                 val browserURL: URL,
-                 val repositoryURL: URL) : PluginInfo(pluginId, version) {
+                 val browserURL: URL) : PluginInfo(pluginId, version, repositoryURL) {
 
-  override fun toString(): String = "$pluginId:$version (#$updateId)"
-
-  override fun equals(other: Any?) = other is UpdateInfo && repositoryURL == other.repositoryURL && updateId == other.updateId
-
-  override fun hashCode() = Objects.hash(repositoryURL, updateId)
+  override val presentableName: String = "$pluginId:$version (#$updateId)"
 
   val sinceBuild: IdeVersion?
     get() = sinceString.prepareIdeVersion()

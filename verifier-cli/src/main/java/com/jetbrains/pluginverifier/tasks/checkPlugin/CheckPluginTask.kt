@@ -38,7 +38,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
         .associateBy({ it.toPluginIdAndVersion(pluginDetailsProvider) }) { it }
 
     fun findPluginCoordinate(pluginId: String): PluginCoordinate? {
-      val pluginIdAndVersion = pluginIdAndVersionToCoordinates.keys.find { it?.pluginId == pluginId }
+      val pluginIdAndVersion = pluginIdAndVersionToCoordinates.keys.find { it.pluginId == pluginId }
       if (pluginIdAndVersion != null) {
         return pluginIdAndVersionToCoordinates[pluginIdAndVersion]!!
       }

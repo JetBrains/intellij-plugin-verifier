@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.parameters.filtering
 import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 

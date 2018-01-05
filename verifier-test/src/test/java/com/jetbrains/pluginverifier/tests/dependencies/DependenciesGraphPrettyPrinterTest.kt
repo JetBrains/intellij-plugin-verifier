@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
-import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
+import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
 import org.junit.Assert
 import org.junit.Test
 
@@ -79,11 +79,11 @@ class DependenciesGraphPrettyPrinterTest {
         """
 start:1.0
 +--- b:1.0
-|    +--- some.module:<unspecified> [declaring module some.module]
-|    \--- c:1.0
-|         +--- (optional) optional.module:<unspecified> [declaring module optional.module]
-|         +--- (failed) e: plugin e is not found
-|         \--- (failed) f (optional): plugin e is not found
+|    +--- c:1.0
+|    |    +--- (optional) optional.module:<unspecified> [declaring module optional.module]
+|    |    +--- (failed) e: plugin e is not found
+|    |    \--- (failed) f (optional): plugin e is not found
+|    \--- some.module:<unspecified> [declaring module some.module]
 \--- c:1.0 (*)
 """.trim(), prettyPresentation)
   }

@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.repository.local
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.extension
@@ -23,9 +24,7 @@ object LocalPluginRepositoryFactory {
     for (pluginFile in pluginFiles) {
       val pluginCreationResult = pluginManager.createPlugin(pluginFile.toFile())
       if (pluginCreationResult is PluginCreationSuccess) {
-        val localPluginInfo = with(pluginCreationResult.plugin) {
-          LocalPluginInfo(pluginId!!, pluginVersion!!, pluginName ?: pluginId!!, sinceBuild!!, untilBuild, vendor, pluginFile, definedModules)
-        }
+        val localPluginInfo = createLocalPluginInfo(pluginFile, pluginCreationResult.plugin)
         plugins.add(localPluginInfo)
       }
     }
@@ -33,3 +32,15 @@ object LocalPluginRepositoryFactory {
   }
 
 }
+
+fun createLocalPluginInfo(pluginFile: Path, idePlugin: IdePlugin) = LocalPluginInfo(
+    idePlugin.pluginId!!,
+    idePlugin.pluginVersion!!,
+    pluginFile.toUri().toURL(),
+    idePlugin.pluginName ?: "",
+    idePlugin.sinceBuild!!,
+    idePlugin.untilBuild,
+    idePlugin.vendor,
+    pluginFile,
+    idePlugin.definedModules
+)

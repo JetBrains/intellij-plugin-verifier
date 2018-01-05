@@ -101,14 +101,14 @@ class PublicPluginRepository(private val repositoryUrl: String,
       UpdateInfo(
           pluginId,
           it.updateVersion,
+          repositoryURL,
           pluginName,
           it.updateId,
           vendor,
           it.sinceBuild,
           it.untilBuild,
           getDownloadUrl(it.updateId),
-          getBrowserUrl(pluginId),
-          repositoryURL
+          getBrowserUrl(pluginId)
       )
     }
     updateInfos.forEach { updateInfosRequester.putUpdateInfo(it) }
@@ -220,14 +220,14 @@ class PublicPluginRepository(private val repositoryUrl: String,
     private fun JsonUpdateInfo.toUpdateInfo() = UpdateInfo(
         pluginId,
         version,
+        repositoryURL,
         pluginName,
         updateId,
         vendor,
         sinceString,
         untilString,
         getDownloadUrl(updateId),
-        getBrowserUrl(pluginId),
-        repositoryURL
+        getBrowserUrl(pluginId)
     )
 
   }
