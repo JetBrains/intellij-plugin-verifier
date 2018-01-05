@@ -72,9 +72,7 @@ class ResourceCache<R, in K>(
       initialWeight = SizeWeight(0),
       weigher = { SizeWeight(1) },
       disposer = disposer,
-      presentableName = presentableName,
-      //it is fine for the cache entries to not be released for a long time.
-      expectedMaximumLockTime = null
+      presentableName = presentableName
   )
 
   /**

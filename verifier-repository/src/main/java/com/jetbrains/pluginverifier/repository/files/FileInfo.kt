@@ -11,4 +11,6 @@ import java.nio.file.Path
  * It consists of the [path to the file] [file] and its [size] [fileSize], which can
  * be used to avoid unnecessary IO-requests.
  */
-data class FileInfo(val file: Path, val fileSize: SpaceAmount) : ResourceInfo<Path>(file, SpaceWeight(fileSize))
+data class FileInfo(val file: Path, val fileSize: SpaceAmount) : ResourceInfo<Path>(file, SpaceWeight(fileSize)) {
+  override fun toString() = "File $file of size $fileSize"
+}

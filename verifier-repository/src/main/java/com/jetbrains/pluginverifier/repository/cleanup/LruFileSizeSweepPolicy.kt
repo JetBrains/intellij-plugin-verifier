@@ -3,8 +3,8 @@ package com.jetbrains.pluginverifier.repository.cleanup
 import com.jetbrains.pluginverifier.repository.files.AvailableFile
 
 /**
- * The sweep policy which selects the files based on their last access time.
- * If multiple files have the same last access time, the heaviest one is chosen.
+ * The [sweep policy] [SweepPolicy] that selects the files based on their [last access time] [UsageStatistic.lastAccessTime].
+ * If multiple files have the same last access time, the heaviest one is selected.
  *
  * The policy selects as many files as necessary until the disk usage corresponds to [diskSpaceSetting].
  */

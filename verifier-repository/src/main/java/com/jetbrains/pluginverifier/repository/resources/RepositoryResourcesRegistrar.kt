@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.repository.resources
 
+import org.slf4j.Logger
+
 /**
  * Data structure that maintains a set of registered resources and their total weights.
  *
@@ -10,14 +12,15 @@ package com.jetbrains.pluginverifier.repository.resources
  */
 internal class RepositoryResourcesRegistrar<R, K>(var totalWeight: ResourceWeight,
                                                   private val weigher: (R) -> ResourceWeight,
-                                                  private val disposer: (R) -> Unit) {
+                                                  private val disposer: (R) -> Unit,
+                                                  private val logger: Logger) {
 
   val resources: MutableMap<K, ResourceInfo<R>> = hashMapOf()
 
   fun addResource(key: K, resource: R) {
     assert(key !in resources)
     val resourceWeight = weigher(resource)
-    ResourceRepositoryImpl.LOG.debug("Adding resource by $key of weight $resourceWeight: $resource")
+    logger.debug("Adding resource by $key of weight $resourceWeight: $resource")
     totalWeight += resourceWeight
     resources[key] = ResourceInfo(resource, resourceWeight)
   }
@@ -33,13 +36,13 @@ internal class RepositoryResourcesRegistrar<R, K>(var totalWeight: ResourceWeigh
     val resourceInfo = resources[key]!!
     val resource = resourceInfo.resource
     val weight = resourceInfo.weight
-    ResourceRepositoryImpl.LOG.debug("Deleting resource by $key of weight $weight: $resource")
+    logger.debug("Deleting resource by $key of weight $weight: $resource")
     totalWeight -= weight
     resources.remove(key)
     try {
       disposer(resource)
     } catch (e: Exception) {
-      ResourceRepositoryImpl.LOG.error("Unable to dispose the resource $resource", e)
+      logger.error("Unable to dispose the resource $resource", e)
     }
   }
 }

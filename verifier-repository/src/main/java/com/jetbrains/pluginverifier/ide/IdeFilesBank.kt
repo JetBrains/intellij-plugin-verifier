@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
 /**
- * Storage of IDE builds kept on locally.
+ * Storage of IDE builds kept locally.
  *
  * Each IDE is identified by its [IdeVersion] and can be locked for the use time
  * to avoid use-remove conflicts when one thread uses the IDE build and another
@@ -32,7 +32,8 @@ class IdeFilesBank(private val bankDirectory: Path,
       IdeDownloader(ideRepository, downloadProgress),
       IdeFileNameMapper(),
       LruFileSizeSweepPolicy(diskSpaceSetting),
-      keyProvider = { IdeFileNameMapper.getIdeVersionByFile(it) }
+      keyProvider = { IdeFileNameMapper.getIdeVersionByFile(it) },
+      presentableName = "IDEs at $bankDirectory"
   )
 
   fun <R> lockAndAccess(block: () -> R) =

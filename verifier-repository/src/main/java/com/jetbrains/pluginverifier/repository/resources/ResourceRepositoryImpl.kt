@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.repository.resources
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.misc.pluralize
@@ -10,12 +9,8 @@ import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.Clock
-import java.time.Duration
 import java.time.Instant
-import java.time.temporal.ChronoUnit
-import java.util.concurrent.Executors
 import java.util.concurrent.FutureTask
-import java.util.concurrent.TimeUnit
 
 /**
  * The implementation of the [resource repository] [ResourceRepository]
@@ -28,28 +23,11 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
                                    initialWeight: ResourceWeight,
                                    weigher: (R) -> ResourceWeight,
                                    disposer: (R) -> Unit,
-                                   private val presentableName: String = "ResourceRepository",
-                                   /**
-                                    * This optional parameter is used to specify the maximum expected
-                                    * time of a resource lock being in the locked state.
-                                    *
-                                    * It is only used to monitor
-                                    * the unreleased locks and emit a warning if
-                                    * there are long-living locks found which
-                                    * typically means that those locks are not
-                                    * released due to a programming bug.
-                                    *
-                                    * If this parameter is set to `null`, no warnings will be emitted.
-                                    * Note that long-living locks are fine in some cases, like locks
-                                    * for the [resource cache entries] [com.jetbrains.pluginverifier.repository.cache.ResourceCache]
-                                    */
-                                   private val expectedMaximumLockTime: Duration? = Duration.of(1, ChronoUnit.HOURS)) : ResourceRepository<R, K> {
+                                   private val presentableName: String = "ResourceRepository") : ResourceRepository<R, K> {
 
-  companion object {
-    val LOG: Logger = LoggerFactory.getLogger(ResourceRepositoryImpl::class.java)
-  }
+  private val logger: Logger = LoggerFactory.getLogger(presentableName)
 
-  private val resourcesRegistrar = RepositoryResourcesRegistrar<R, K>(initialWeight, weigher, disposer)
+  private val resourcesRegistrar = RepositoryResourcesRegistrar<R, K>(initialWeight, weigher, disposer, logger)
 
   private var nextLockId: Long = 0
 
@@ -62,20 +40,6 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
   private val provisionTasks = hashMapOf<K, FutureTask<ProvideResult<R>>>()
 
   private val statistics = hashMapOf<K, UsageStatistic>()
-
-  init {
-    if (expectedMaximumLockTime != null) {
-      runForgottenLocksInspector()
-    }
-  }
-
-  private fun runForgottenLocksInspector() {
-    Executors.newSingleThreadScheduledExecutor(
-        ThreadFactoryBuilder()
-            .setDaemon(true)
-            .build()
-    ).scheduleAtFixedRate({ detectForgottenLocks() }, 1, 60, TimeUnit.MINUTES)
-  }
 
   @Synchronized
   override fun add(key: K, resource: R): Boolean {
@@ -100,11 +64,11 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
 
   @Synchronized
   override fun remove(key: K): Boolean = if (isLockedKey(key) || isBeingProvided(key)) {
-    LOG.debug("Deletion of $key: the resource is locked or is being provided, delete later.")
+    logger.debug("Deletion of $key: the resource is locked or is being provided, delete later.")
     deleteQueue.add(key)
     false
   } else if (resourcesRegistrar.has(key)) {
-    LOG.debug("Deletion of $key: non-locked, delete now")
+    logger.debug("Deletion of $key: non-locked, delete now")
     doRemove(key)
     cleanup()
     true
@@ -226,21 +190,6 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
   }
 
   @Synchronized
-  private fun detectForgottenLocks() {
-    for ((key, locks) in key2Locks) {
-      for (lock in locks) {
-        val now = clock.instant()
-        val lockTime = lock.lockTime
-        val maxUnlockTime = lockTime.plus(expectedMaximumLockTime!!)
-        val isForgotten = now.isAfter(maxUnlockTime)
-        if (isForgotten) {
-          LOG.warn("Forgotten lock found for $key on ${lock.resource}; lock time = $lockTime")
-        }
-      }
-    }
-  }
-
-  @Synchronized
   override fun cleanup() {
     if (evictionPolicy.isNecessary(resourcesRegistrar.totalWeight)) {
       val availableResources = resourcesRegistrar.resources.map { (key, resourceInfo) ->
@@ -252,7 +201,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
 
       if (resourcesForEviction.isNotEmpty()) {
         val disposedTotalWeight = resourcesForEviction.map { it.resourceInfo.weight }.reduce { acc, weight -> acc + weight }
-        LOG.debug("$presentableName: it's time to evict unused resources. " +
+        logger.debug("$presentableName: it's time to evict unused resources. " +
             "Total weight: ${resourcesRegistrar.totalWeight}. " +
             "${resourcesForEviction.size} " + "resource".pluralize(resourcesForEviction.size) +
             " will be evicted with total weight $disposedTotalWeight"
