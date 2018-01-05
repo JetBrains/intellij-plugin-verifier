@@ -5,7 +5,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.extension
 import com.jetbrains.pluginverifier.misc.isDirectory
-import com.jetbrains.pluginverifier.repository.local.meta.LocalRepositoryMetadataParser
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -29,19 +28,6 @@ object LocalPluginRepositoryFactory {
         }
         plugins.add(localPluginInfo)
       }
-    }
-    return LocalPluginRepository(ideVersion, plugins)
-  }
-
-  /**
-   * The plugins.xml meta-file doesn't have the definition of modules contained in the plugins
-   * so we actually have to read the plugin descriptors.
-   */
-  private fun createLocalPluginRepositoryByMetadata(repositoryMetadataXml: Path, ideVersion: IdeVersion): LocalPluginRepository {
-    val plugins = try {
-      LocalRepositoryMetadataParser().parseFromXml(repositoryMetadataXml)
-    } catch (e: Exception) {
-      throw IllegalArgumentException("Unable to parse meta-file $repositoryMetadataXml", e)
     }
     return LocalPluginRepository(ideVersion, plugins)
   }
