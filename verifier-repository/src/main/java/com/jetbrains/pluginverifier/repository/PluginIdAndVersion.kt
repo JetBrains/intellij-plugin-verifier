@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.repository
 
-data class PluginIdAndVersion(override val pluginId: String,
-                              override val version: String) : PluginInfo {
+class PluginIdAndVersion(pluginId: String,
+                         version: String) : PluginInfo(pluginId, version) {
   override fun toString(): String = "$pluginId:$version"
 }

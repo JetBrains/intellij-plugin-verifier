@@ -7,14 +7,14 @@ import java.nio.file.Path
 /**
  * Identifier of a locally stored plugin.
  */
-data class LocalPluginInfo(override val pluginId: String,
-                           override val version: String,
-                           val pluginName: String,
-                           val sinceBuild: IdeVersion,
-                           val untilBuild: IdeVersion?,
-                           val vendor: String?,
-                           val pluginFile: Path,
-                           val definedModules: Set<String>) : PluginInfo {
+class LocalPluginInfo(pluginId: String,
+                      version: String,
+                      val pluginName: String,
+                      val sinceBuild: IdeVersion,
+                      val untilBuild: IdeVersion?,
+                      val vendor: String?,
+                      val pluginFile: Path,
+                      val definedModules: Set<String>) : PluginInfo(pluginId, version) {
   override fun equals(other: Any?) = other is LocalPluginInfo && pluginFile == other.pluginFile
 
   override fun hashCode() = pluginFile.hashCode()

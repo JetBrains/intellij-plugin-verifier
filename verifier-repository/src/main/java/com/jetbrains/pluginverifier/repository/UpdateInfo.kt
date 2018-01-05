@@ -6,22 +6,22 @@ import java.net.URL
 /**
  * Aggregates properties of a plugin stored in the Plugin Repository.
  */
-data class UpdateInfo(override val pluginId: String,
-                      override val version: String,
-                      val pluginName: String,
-                      val updateId: Int,
-                      val vendor: String,
-                      val sinceString: String,
-                      val untilString: String,
-                      val downloadUrl: URL,
-                      val browserURL: URL,
-                      val repositoryURL: URL) : PluginInfo {
+class UpdateInfo(pluginId: String,
+                 version: String,
+                 val pluginName: String,
+                 val updateId: Int,
+                 val vendor: String,
+                 val sinceString: String,
+                 val untilString: String,
+                 val downloadUrl: URL,
+                 val browserURL: URL,
+                 val repositoryURL: URL) : PluginInfo(pluginId, version) {
 
   override fun toString(): String = "$pluginId:$version (#$updateId)"
 
-  override fun equals(other: Any?) = other is UpdateInfo && updateId == other.updateId
+  override fun equals(other: Any?) = other is UpdateInfo && downloadUrl == other.downloadUrl
 
-  override fun hashCode() = updateId
+  override fun hashCode() = downloadUrl.hashCode()
 
   val sinceBuild: IdeVersion?
     get() = sinceString.prepareIdeVersion()
