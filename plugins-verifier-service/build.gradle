@@ -1,8 +1,8 @@
 buildscript {
-  ext {
-    kotlin_version = '1.1.4-3'
-    ext.verifierVersion = 'dev'
-  }
+
+  ext.kotlin_version = '1.2.10'
+  ext.verifierVersion = 'dev'
+
   repositories {
     jcenter()
     mavenLocal()
