@@ -23,7 +23,7 @@ data class OutputOptions(val missingDependencyIgnoring: MissingDependencyIgnorin
         .resolve(ideVersion.toString().replaceInvalidFileNameCharacters())
         .resolve("report.html")
 
-    val isExcluded: (PluginIdAndVersion) -> Boolean = { (pluginId, pluginVersion) -> PluginIdAndVersion(pluginId, pluginVersion) in excludedPlugins }
+    val isExcluded: (PluginIdAndVersion) -> Boolean = { it in excludedPlugins }
     val htmlResultPrinter = HtmlResultPrinter(ideVersion, isExcluded, htmlReportFile, missingDependencyIgnoring)
     htmlResultPrinter.printResults(results)
   }

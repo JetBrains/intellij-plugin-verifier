@@ -13,7 +13,8 @@ class IgnoredProblemsFilter(private val problemsToIgnore: Multimap<PluginIdAndVe
     val xmlId = plugin.pluginId
     val version = plugin.pluginVersion
     for ((pluginIdAndVersion, ignoredPattern) in problemsToIgnore.entries()) {
-      val (ignoreXmlId, ignoreVersion) = pluginIdAndVersion
+      val ignoreXmlId = pluginIdAndVersion.pluginId
+      val ignoreVersion = pluginIdAndVersion.version
 
       if (xmlId == ignoreXmlId) {
         if (ignoreVersion.isEmpty() || version == ignoreVersion) {

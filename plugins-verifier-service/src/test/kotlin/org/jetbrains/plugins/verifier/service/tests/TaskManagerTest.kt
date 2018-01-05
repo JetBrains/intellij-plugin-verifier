@@ -27,12 +27,12 @@ class TaskManagerTest {
       val success = AtomicReference<Int>()
       val error = AtomicReference<Throwable>()
 
-      val enqueue = tm.enqueue(
+      tm.enqueue(
           serviceTask,
           onSuccess = { result, _ ->
             success.set(result)
           },
-          onError = { e, s ->
+          onError = { e, _ ->
             error.set(e)
           },
           onCompletion = {
