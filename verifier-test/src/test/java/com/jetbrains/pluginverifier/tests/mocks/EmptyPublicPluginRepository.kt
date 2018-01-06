@@ -5,11 +5,14 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
+import java.net.URL
 
 /**
  * Created by Sergey.Patrikeev
  */
 object EmptyPublicPluginRepository : PluginRepository {
+  override val repositoryURL: URL = URL("http://example.com")
+
   override fun getAllPlugins(): List<PluginInfo> = emptyList()
 
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> = emptyList()

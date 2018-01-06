@@ -56,7 +56,7 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
         if (!file.exists()) {
           throw IllegalArgumentException("The file $file doesn't exist")
         }
-        return listOf(PluginCoordinate.ByFile(file, LocalPluginRepository()))
+        return listOf(PluginCoordinate.ByFile(file, LocalPluginRepository(file.toUri().toURL())))
       }
     }
   }
@@ -74,7 +74,7 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
               if (!pluginFile.exists()) {
                 throw RuntimeException("Plugin file '" + it + "' specified in '" + pluginListFile.absolutePath + "' doesn't exist")
               }
-              listOf(PluginCoordinate.ByFile(pluginFile, LocalPluginRepository()))
+              listOf(PluginCoordinate.ByFile(pluginFile, LocalPluginRepository(pluginFile.toUri().toURL())))
             }
           }
 

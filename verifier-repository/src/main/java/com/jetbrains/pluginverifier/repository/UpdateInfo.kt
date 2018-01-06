@@ -8,7 +8,6 @@ import java.net.URL
  */
 class UpdateInfo(pluginId: String,
                  version: String,
-                 repositoryURL: URL,
                  pluginRepository: PluginRepository,
                  val pluginName: String,
                  val updateId: Int,
@@ -16,7 +15,7 @@ class UpdateInfo(pluginId: String,
                  val sinceString: String,
                  val untilString: String,
                  val downloadUrl: URL,
-                 val browserURL: URL) : PluginInfo(pluginId, version, repositoryURL, pluginRepository) {
+                 val browserURL: URL) : PluginInfo(pluginId, version, pluginRepository) {
 
   override val presentableName: String = "$pluginId:$version (#$updateId)"
 

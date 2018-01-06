@@ -7,11 +7,13 @@ import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import okhttp3.HttpUrl
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.net.URL
 import java.util.concurrent.TimeUnit
 
 /**
@@ -24,19 +26,19 @@ import java.util.concurrent.TimeUnit
  * See [Feature extractor integration with the plugin repository](https://confluence.jetbrains.com/display/PLREP/features-extractor+integration+with+the+plugins.jetbrains.com)
  */
 class FeatureExtractorService(serverContext: ServerContext,
-                              private val repositoryUrl: String) : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, serverContext) {
+                              private val repositoryUrl: URL) : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, serverContext) {
 
   private val inProgressUpdates: MutableSet<UpdateInfo> = hashSetOf()
 
   private val lastProceedDate: MutableMap<UpdateInfo, Long> = hashMapOf()
 
-  private val repo2FeatureExtractorApi = hashMapOf<String, FeaturesPluginRepositoryConnector>()
+  private val repo2FeatureExtractorApi = hashMapOf<URL, FeaturesPluginRepositoryConnector>()
 
   private fun getFeaturesApiConnector(): FeaturesPluginRepositoryConnector =
       repo2FeatureExtractorApi.getOrPut(repositoryUrl, { createFeatureExtractor(repositoryUrl) })
 
-  private fun createFeatureExtractor(repositoryUrl: String): FeaturesPluginRepositoryConnector = Retrofit.Builder()
-      .baseUrl(repositoryUrl)
+  private fun createFeatureExtractor(repositoryUrl: URL): FeaturesPluginRepositoryConnector = Retrofit.Builder()
+      .baseUrl(HttpUrl.get(repositoryUrl))
       .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()

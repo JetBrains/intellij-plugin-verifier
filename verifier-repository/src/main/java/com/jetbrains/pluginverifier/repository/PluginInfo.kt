@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.repository
 
-import java.net.URL
 import java.util.*
 
 /**
@@ -13,17 +12,15 @@ open class PluginInfo(
 
     val version: String,
 
-    val repositoryURL: URL,
-
     val pluginRepository: PluginRepository
 ) {
 
   open val presentableName: String = "$pluginId $version"
 
   final override fun equals(other: Any?) = other is PluginInfo &&
-      pluginId == other.pluginId && version == other.version && repositoryURL == other.repositoryURL
+      pluginId == other.pluginId && version == other.version && pluginRepository == other.pluginRepository
 
-  final override fun hashCode() = Objects.hash(pluginId, version, repositoryURL)
+  final override fun hashCode() = Objects.hash(pluginId, version, pluginRepository)
 
   final override fun toString() = presentableName
 

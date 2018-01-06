@@ -6,8 +6,10 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
+import java.net.URL
 
-data class LocalPluginRepository(val plugins: MutableList<LocalPluginInfo> = arrayListOf()) : PluginRepository {
+class LocalPluginRepository(override val repositoryURL: URL,
+                            val plugins: MutableList<LocalPluginInfo> = arrayListOf()) : PluginRepository {
   companion object {
     private val VERSION_COMPARATOR = compareBy<LocalPluginInfo, String>(VersionComparatorUtil.COMPARATOR, { it.version })
   }

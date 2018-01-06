@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.setting
 
+import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -35,6 +36,8 @@ enum class Settings(val key: String,
     }
     return default?.invoke() ?: throw IllegalStateException("The property $key should be set")
   }
+
+  fun getAsURL(): URL = URL(get().trimEnd('/'))
 
   fun getAsFile(): Path = Paths.get(get())
 

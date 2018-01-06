@@ -8,6 +8,10 @@ import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import java.net.URL
 
 open class MockPluginRepositoryAdapter : PluginRepository {
+
+  override val repositoryURL: URL
+    get() = defaultAction()
+
   override fun getAllPlugins(): List<PluginInfo> = defaultAction()
 
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> = defaultAction()
@@ -30,7 +34,6 @@ open class MockPluginRepositoryAdapter : PluginRepository {
       UpdateInfo(
           pluginId,
           version,
-          exampleUrl,
           this@MockPluginRepositoryAdapter,
           pluginName,
           updateId,

@@ -54,7 +54,7 @@ fun PluginCoordinate.createPluginInfo(pluginDetailsProvider: PluginDetailsProvid
         createLocalPluginInfo(pluginFile, plugin, pluginRepository)
       } else {
         val (pluginId, version) = guessPluginIdAndVersion(pluginFile)
-        PluginInfo(pluginId, version, pluginFile.toUri().toURL(), pluginRepository)
+        PluginInfo(pluginId, version, pluginRepository)
       }
     }
   }

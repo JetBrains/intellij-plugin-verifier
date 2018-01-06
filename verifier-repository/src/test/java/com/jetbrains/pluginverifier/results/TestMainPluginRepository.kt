@@ -13,6 +13,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.net.URL
 
 /**
  * @author Sergey Patrikeev
@@ -28,7 +29,7 @@ class TestMainPluginRepository {
   @Before
   fun prepareRepository() {
     val tempDownloadFolder = temporaryFolder.newFolder().toPath()
-    repository = PublicPluginRepository("https://plugins.jetbrains.com", tempDownloadFolder, DiskSpaceSetting(SpaceAmount.ofMegabytes(100)))
+    repository = PublicPluginRepository(URL("https://plugins.jetbrains.com"), tempDownloadFolder, DiskSpaceSetting(SpaceAmount.ofMegabytes(100)))
   }
 
   @Test

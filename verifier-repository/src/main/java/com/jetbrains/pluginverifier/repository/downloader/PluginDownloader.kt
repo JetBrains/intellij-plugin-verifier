@@ -3,10 +3,10 @@ package com.jetbrains.pluginverifier.repository.downloader
 import java.net.URL
 import java.nio.file.Path
 
-class PluginDownloader(private val pluginRepositoryUrl: String) : Downloader<Int> {
+class PluginDownloader(private val pluginRepositoryUrl: URL) : Downloader<Int> {
 
   private val urlDownloader = UrlDownloader<Int> {
-    URL(pluginRepositoryUrl.trimEnd('/') + "/plugin/download/?noStatistic=true&updateId=$it")
+    URL(pluginRepositoryUrl.toExternalForm().trimEnd('/') + "/plugin/download/?noStatistic=true&updateId=$it")
   }
 
   override fun download(key: Int, tempDirectory: Path) = with(urlDownloader.download(key, tempDirectory)) {

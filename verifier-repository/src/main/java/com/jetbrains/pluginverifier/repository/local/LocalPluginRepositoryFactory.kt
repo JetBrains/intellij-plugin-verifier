@@ -19,7 +19,7 @@ object LocalPluginRepositoryFactory {
   private fun createLocalPluginRepositoryByFiles(repositoryRoot: Path): LocalPluginRepository {
     val pluginManager = IdePluginManager.createManager()
     val pluginFiles = Files.list(repositoryRoot).filter { it.isDirectory || it.extension == "zip" || it.extension == "jar" }
-    val localPluginRepository = LocalPluginRepository()
+    val localPluginRepository = LocalPluginRepository(repositoryRoot.toUri().toURL())
     val plugins = arrayListOf<LocalPluginInfo>()
     for (pluginFile in pluginFiles) {
       val pluginCreationResult = pluginManager.createPlugin(pluginFile.toFile())
@@ -37,7 +37,6 @@ object LocalPluginRepositoryFactory {
 fun createLocalPluginInfo(pluginFile: Path, idePlugin: IdePlugin, pluginRepository: LocalPluginRepository) = LocalPluginInfo(
     idePlugin.pluginId!!,
     idePlugin.pluginVersion!!,
-    pluginFile.toUri().toURL(),
     pluginRepository,
     idePlugin.pluginName ?: "",
     idePlugin.sinceBuild!!,

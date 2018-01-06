@@ -23,6 +23,7 @@ import com.sampullara.cli.Args
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.system.exitProcess
@@ -84,7 +85,7 @@ object PluginVerifierMain {
     freeArgs = freeArgs.drop(1)
 
     val pluginDownloadDirDiskSpaceSetting = getPluginDownloadDirDiskSpaceSetting()
-    val pluginRepository = PublicPluginRepository(pluginRepositoryUrl, downloadDir, pluginDownloadDirDiskSpaceSetting)
+    val pluginRepository = PublicPluginRepository(URL(pluginRepositoryUrl), downloadDir, pluginDownloadDirDiskSpaceSetting)
 
     val ideRepository = IdeRepository(ideRepositoryUrl)
 

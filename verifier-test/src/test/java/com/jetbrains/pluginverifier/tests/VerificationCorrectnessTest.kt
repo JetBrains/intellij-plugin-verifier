@@ -51,7 +51,7 @@ class VerificationCorrectnessTest {
     lateinit var redundantDeprecated: MutableList<DeprecatedApiUsage>
 
     private fun doIdeaAndPluginVerification(ideaFile: Path, pluginFile: Path): Result {
-      val pluginCoordinate = PluginCoordinate.ByFile(pluginFile, LocalPluginRepository())
+      val pluginCoordinate = PluginCoordinate.ByFile(pluginFile, LocalPluginRepository(pluginFile.toUri().toURL()))
       val jdkDescriptor = TestJdkDescriptorProvider.getJdkDescriptorForTests()
 
       val tempFolder = Files.createTempDirectory("")

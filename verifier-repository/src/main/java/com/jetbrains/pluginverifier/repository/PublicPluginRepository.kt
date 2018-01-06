@@ -16,6 +16,7 @@ import com.jetbrains.pluginverifier.repository.retrofit.JsonUpdateInfo
 import com.jetbrains.pluginverifier.repository.retrofit.JsonUpdateSinceUntil
 import com.jetbrains.pluginverifier.repository.retrofit.JsonUpdatesResponse
 import com.jetbrains.pluginverifier.repository.retrofit.PublicPluginRepositoryConnector
+import okhttp3.HttpUrl
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import retrofit2.Retrofit
@@ -32,7 +33,7 @@ import java.util.concurrent.TimeUnit
  * The plugin repository implementation that communicates with
  * [JetBrains Plugins Repository](https://plugins.jetbrains.com/)
  */
-class PublicPluginRepository(private val repositoryUrl: String,
+class PublicPluginRepository(override val repositoryURL: URL,
                              downloadDir: Path,
                              diskSpaceSetting: DiskSpaceSetting) : PluginRepository {
 
@@ -55,7 +56,7 @@ class PublicPluginRepository(private val repositoryUrl: String,
 
   private val downloadedPluginsFileRepository = FileRepositoryBuilder().createFromExistingFiles(
       downloadDir,
-      PluginDownloader(repositoryUrl),
+      PluginDownloader(repositoryURL),
       PluginFileNameMapper(),
       LruFileSizeSweepPolicy(diskSpaceSetting),
       keyProvider = { PluginFileNameMapper.getUpdateIdByFile(it) },
@@ -63,21 +64,19 @@ class PublicPluginRepository(private val repositoryUrl: String,
   )
 
   private val repositoryConnector: PublicPluginRepositoryConnector = Retrofit.Builder()
-      .baseUrl(repositoryUrl.trimEnd('/') + '/')
+      .baseUrl(HttpUrl.get(repositoryURL))
       .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
       .create(PublicPluginRepositoryConnector::class.java)
 
-  private val repositoryURL = URL(repositoryUrl)
-
   private val allSinceUntilPluginsRequester = AllSinceUntilPluginsRequester()
 
   private val updateInfosRequester = UpdateInfosRequester()
 
-  private fun getBrowserUrl(pluginId: String) = URL("$repositoryUrl/plugin/index?xmlId=$pluginId")
+  private fun getBrowserUrl(pluginId: String) = URL("${repositoryURL.toExternalForm().trimEnd('/')}/plugin/index?xmlId=$pluginId")
 
-  private fun getDownloadUrl(updateId: Int) = URL("$repositoryUrl/plugin/download/?noStatistic=true&updateId=$updateId")
+  private fun getDownloadUrl(updateId: Int) = URL("${repositoryURL.toExternalForm().trimEnd('/')}/plugin/download/?noStatistic=true&updateId=$updateId")
 
   override fun getPluginInfoById(updateId: Int): UpdateInfo? =
       updateInfosRequester.getUpdateInfoById(updateId)
@@ -101,7 +100,6 @@ class PublicPluginRepository(private val repositoryUrl: String,
       UpdateInfo(
           pluginId,
           it.updateVersion,
-          repositoryURL,
           this@PublicPluginRepository,
           pluginName,
           it.updateId,
@@ -132,7 +130,7 @@ class PublicPluginRepository(private val repositoryUrl: String,
   override fun downloadPluginFile(pluginInfo: PluginInfo) =
       downloadedPluginsFileRepository.getFile((pluginInfo as UpdateInfo).updateId)
 
-  override fun toString() = repositoryUrl
+  override fun toString(): String = repositoryURL.toExternalForm()
 
   /**
    * This class is responsible for requesting the [UpdateInfo]s.
@@ -220,7 +218,6 @@ class PublicPluginRepository(private val repositoryUrl: String,
     private fun JsonUpdateInfo.toUpdateInfo() = UpdateInfo(
         pluginId,
         version,
-        repositoryURL,
         this@PublicPluginRepository,
         pluginName,
         updateId,

@@ -116,7 +116,7 @@ class CheckTrunkApiTaskTest {
   private fun createPluginDetailsProviderForTest(pluginToCheck: MockIdePlugin): MockPluginDetailsProvider {
     return MockPluginDetailsProvider(
         listOf(someJetBrainsMockPlugin1, someJetBrainsMockPlugin2, someJetBrainsMockPluginContainingModule, pluginToCheck)
-            .associateBy({ PluginCoordinate.ByFile(it.originalFile!!.toPath(), LocalPluginRepository()) }) {
+            .associateBy({ PluginCoordinate.ByFile(it.originalFile!!.toPath(), LocalPluginRepository(repositoryURL)) }) {
               PluginDetails.FoundOpenPluginWithoutClasses(it)
             }
     )
@@ -144,12 +144,11 @@ class CheckTrunkApiTaskTest {
   }
 
   private fun createReleaseLocalRepositoryForTest(): LocalPluginRepository {
-    val localPluginRepository = LocalPluginRepository()
+    val localPluginRepository = LocalPluginRepository(repositoryURL)
     val plugins = listOf(
         LocalPluginInfo(
             someJetBrainsPluginId,
             "1.0",
-            repositoryURL,
             localPluginRepository,
             "plugin name",
             releaseVersion,
@@ -161,7 +160,6 @@ class CheckTrunkApiTaskTest {
         LocalPluginInfo(
             someJetBrainsPluginContainingModuleId,
             "1.0",
-            repositoryURL,
             localPluginRepository,
             "module container",
             releaseVersion,
@@ -175,12 +173,11 @@ class CheckTrunkApiTaskTest {
   }
 
   private fun createTrunkLocalRepositoryForTest(): LocalPluginRepository {
-    val localPluginRepository = LocalPluginRepository()
+    val localPluginRepository = LocalPluginRepository(repositoryURL)
     val plugins = listOf(
         LocalPluginInfo(
             someJetBrainsPluginId,
             "2.0",
-            repositoryURL,
             localPluginRepository,
             "plugin name",
             trunkVersion,
@@ -192,7 +189,6 @@ class CheckTrunkApiTaskTest {
         LocalPluginInfo(
             someJetBrainsPluginContainingModuleId,
             "1.0",
-            repositoryURL,
             localPluginRepository,
             "module container",
             trunkVersion,

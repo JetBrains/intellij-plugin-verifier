@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.network.createByteArrayRequestBody
 import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import okhttp3.HttpUrl
 import okhttp3.ResponseBody
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
@@ -17,6 +18,7 @@ import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.net.URL
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.TimeUnit
 
@@ -28,7 +30,7 @@ import java.util.concurrent.TimeUnit
  * @see [Plugin verifier integration with the Plugins Repository] (https://confluence.jetbrains.com/display/PLREP/plugin-verifier+integration+with+the+plugins.jetbrains.com)
  */
 class VerifierService(serverContext: ServerContext,
-                      private val repositoryUrl: String) : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES, serverContext) {
+                      private val repositoryUrl: URL) : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES, serverContext) {
 
   companion object {
     private val UPDATE_MISSING_IDE_PAUSE_MS = TimeUnit.DAYS.toMillis(1)
@@ -42,14 +44,14 @@ class VerifierService(serverContext: ServerContext,
 
   private val updatesMissingCompatibleIde = ConcurrentSkipListSet<UpdateInfo>(Comparator { u1, u2 -> u1.updateId - u2.updateId })
 
-  private val repo2VerifierApi = hashMapOf<String, VerificationPluginRepositoryConnector>()
+  private val repo2VerifierApi = hashMapOf<URL, VerificationPluginRepositoryConnector>()
 
   private fun getVerifierConnector(): VerificationPluginRepositoryConnector {
     return repo2VerifierApi.getOrPut(repositoryUrl, { createVerifier(repositoryUrl) })
   }
 
-  private fun createVerifier(repositoryUrl: String): VerificationPluginRepositoryConnector = Retrofit.Builder()
-      .baseUrl(repositoryUrl)
+  private fun createVerifier(repositoryUrl: URL): VerificationPluginRepositoryConnector = Retrofit.Builder()
+      .baseUrl(HttpUrl.get(repositoryUrl))
       .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(makeOkHttpClient(logger.isDebugEnabled, 5, TimeUnit.MINUTES))
       .build()
