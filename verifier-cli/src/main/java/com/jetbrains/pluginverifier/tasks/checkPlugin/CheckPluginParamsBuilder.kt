@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import java.io.File
 import java.nio.file.Paths
@@ -45,7 +46,7 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
       pluginToTestArg.matches("#\\d+".toRegex()) -> {
         val updateId = Integer.parseInt(pluginToTestArg.drop(1))
         val updateInfo = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "get update information for update #$updateId") {
-          getUpdateInfoById(updateId)
+          getPluginInfoById(updateId)
         } ?: throw IllegalArgumentException("Update #$updateId is not found in the Plugin Repository")
         return listOf(PluginCoordinate.ByUpdateInfo(updateInfo, pluginRepository))
       }
@@ -80,7 +81,7 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
     val allCompatibleUpdatesOfPlugin = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch all compatible updates of plugin $pluginId with $ideVersion") {
       getAllCompatibleVersionsOfPlugin(ideVersion, pluginId)
     }
-    return allCompatibleUpdatesOfPlugin.map { PluginCoordinate.ByUpdateInfo(it, pluginRepository) }
+    return allCompatibleUpdatesOfPlugin.map { PluginCoordinate.ByUpdateInfo(it as UpdateInfo, pluginRepository) }
   }
 
 

@@ -18,4 +18,7 @@ class LocalPluginInfo(pluginId: String,
   override fun equals(other: Any?) = other is LocalPluginInfo && pluginFile == other.pluginFile
 
   override fun hashCode() = pluginFile.hashCode()
+
+  fun isCompatibleWith(ideVersion: IdeVersion) =
+      sinceBuild <= ideVersion && (untilBuild == null || ideVersion <= untilBuild)
 }

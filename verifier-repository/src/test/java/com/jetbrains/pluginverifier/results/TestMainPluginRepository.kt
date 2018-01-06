@@ -41,7 +41,7 @@ class TestMainPluginRepository {
     val updates = repository.getAllVersionsOfPlugin("Pythonid")
     assertNotNull(updates)
     assertFalse(updates.isEmpty())
-    val update = updates[0]
+    val update = updates[0] as UpdateInfo
     assertEquals("Pythonid", update.pluginId)
     assertEquals("Python", update.pluginName)
     assertEquals("JetBrains", update.vendor)
@@ -55,7 +55,7 @@ class TestMainPluginRepository {
 
   @Test
   fun lastUpdate() {
-    val info = repository.getLastCompatibleVersionOfPlugin(ideVersion, "org.jetbrains.kotlin")
+    val info = repository.getLastCompatibleVersionOfPlugin(ideVersion, "org.jetbrains.kotlin") as? UpdateInfo
     assertNotNull(info)
     assertTrue(info!!.updateId > 20000)
   }
@@ -71,13 +71,13 @@ class TestMainPluginRepository {
 
   @Test
   fun downloadNonExistentPlugin() {
-    val updateInfo = repository.getUpdateInfoById(-1000)
+    val updateInfo = repository.getPluginInfoById(-1000)
     assertNull(updateInfo)
   }
 
   @Test
   fun downloadExistentPlugin() {
-    val updateInfo = repository.getUpdateInfoById(40625) //.gitignore 2.3.2
+    val updateInfo = repository.getPluginInfoById(40625) //.gitignore 2.3.2
     assertNotNull(updateInfo)
     val downloadPluginResult = repository.downloadPluginFile(updateInfo!!)
     assertTrue(downloadPluginResult is FileRepositoryResult.Found)

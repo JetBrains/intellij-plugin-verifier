@@ -79,8 +79,11 @@ class PublicPluginRepository(private val repositoryUrl: String,
 
   private fun getDownloadUrl(updateId: Int) = URL("$repositoryUrl/plugin/download/?noStatistic=true&updateId=$updateId")
 
-  override fun getUpdateInfoById(updateId: Int): UpdateInfo? =
+  override fun getPluginInfoById(updateId: Int): UpdateInfo? =
       updateInfosRequester.getUpdateInfoById(updateId)
+
+  override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): PluginInfo? =
+      getAllCompatibleVersionsOfPlugin(ideVersion, pluginId).maxBy { it.updateId }
 
   override fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo> {
     val jsonUpdatesResponse = try {
@@ -112,22 +115,22 @@ class PublicPluginRepository(private val repositoryUrl: String,
     return updateInfos
   }
 
-  override fun getAllPlugins() = allSinceUntilPluginsRequester.getAllPluginUpdateIds()
-      .mapNotNull { getUpdateInfoById(it) }
+  override fun getAllPlugins(): List<PluginInfo> = allSinceUntilPluginsRequester.getAllPluginUpdateIds()
+      .mapNotNull { getPluginInfoById(it) }
 
-  override fun getLastCompatiblePlugins(ideVersion: IdeVersion) =
+  override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> =
       repositoryConnector.getAllCompatibleUpdates(ideVersion.asString())
           .executeSuccessfully().body()
           .map { updateInfosRequester.putJsonUpdateInfo(it) }
 
-  override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String) =
+  override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> =
       getAllVersionsOfPlugin(pluginId).filter { it.isCompatibleWith(ideVersion) }
 
   override fun getIdOfPluginDeclaringModule(moduleId: String) =
       INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
 
-  override fun downloadPluginFile(updateInfo: UpdateInfo) =
-      downloadedPluginsFileRepository.getFile(updateInfo.updateId)
+  override fun downloadPluginFile(pluginInfo: PluginInfo) =
+      downloadedPluginsFileRepository.getFile((pluginInfo as UpdateInfo).updateId)
 
   override fun toString() = repositoryUrl
 

@@ -21,6 +21,7 @@ import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsFetcher
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsParser
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.slf4j.Logger
@@ -224,11 +225,11 @@ object OptionsParser {
   fun requestUpdatesToCheckByIds(checkAllBuildsPluginIds: List<String>,
                                  checkLastBuildsPluginIds: List<String>,
                                  ideVersion: IdeVersion,
-                                 pluginRepository: PluginRepository): List<UpdateInfo> {
+                                 pluginRepository: PluginRepository): List<PluginInfo> {
     if (checkAllBuildsPluginIds.isEmpty() && checkLastBuildsPluginIds.isEmpty()) {
       return pluginRepository.getLastCompatiblePlugins(ideVersion)
     } else {
-      val result = arrayListOf<UpdateInfo>()
+      val result = arrayListOf<PluginInfo>()
 
       checkAllBuildsPluginIds.flatMapTo(result) {
         pluginRepository.getAllCompatibleVersionsOfPlugin(ideVersion, it)
@@ -236,7 +237,7 @@ object OptionsParser {
 
       checkLastBuildsPluginIds.distinct().mapNotNullTo(result) {
         pluginRepository.getAllCompatibleVersionsOfPlugin(ideVersion, it)
-            .sortedByDescending { it.updateId }
+            .sortedByDescending { (it as UpdateInfo).updateId }
             .firstOrNull()
       }
 

@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
@@ -35,12 +36,12 @@ class DeprecatedUsagesParamsBuilder(val pluginRepository: PluginRepository,
      */
     val ideVersionForCompatiblePlugins = deprecatedOpts.releaseIdeVersion?.let { IdeVersion.createIdeVersionIfValid(it) } ?: ideDescriptor.ideVersion
     val updatesToCheck = requestUpdatesToCheck(opts, ideVersionForCompatiblePlugins)
-    val pluginCoordinates = updatesToCheck.map { PluginCoordinate.ByUpdateInfo(it, pluginRepository) }
+    val pluginCoordinates = updatesToCheck.map { PluginCoordinate.ByUpdateInfo(it as UpdateInfo, pluginRepository) }
     val ideDependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsProvider)
     return DeprecatedUsagesParams(ideDescriptor, JdkDescriptor(jdkDescriptor), pluginCoordinates, ideDependencyFinder, ideVersionForCompatiblePlugins)
   }
 
-  private fun requestUpdatesToCheck(allOpts: CmdOpts, ideVersionForCompatiblePlugins: IdeVersion): List<UpdateInfo> {
+  private fun requestUpdatesToCheck(allOpts: CmdOpts, ideVersionForCompatiblePlugins: IdeVersion): List<PluginInfo> {
     val (checkAllBuilds, checkLastBuilds) = OptionsParser.parsePluginsToCheck(allOpts)
     return OptionsParser.requestUpdatesToCheckByIds(checkAllBuilds, checkLastBuilds, ideVersionForCompatiblePlugins, pluginRepository)
   }

@@ -282,11 +282,11 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
    * of the plugin available in the [repository] and compatible with
    * this IDE version.
    */
-  fun requestLastVersionsOfCheckedPlugins(ideVersions: List<IdeVersion>): Map<IdeVersion, List<UpdateInfo>> =
+  fun requestLastVersionsOfCheckedPlugins(ideVersions: List<IdeVersion>): Map<IdeVersion, List<PluginInfo>> =
       ideVersions.associate {
         try {
           val lastCompatibleUpdates = repository.getLastCompatiblePlugins(it)
-          it to lastCompatibleUpdates.sortedByDescending { it.updateId }.distinctBy { it.pluginId }
+          it to lastCompatibleUpdates.sortedByDescending { (it as UpdateInfo).updateId }.distinctBy { it.pluginId }
         } catch (e: Exception) {
           LOG.info("Unable to determine the last compatible updates of IDE $it")
           it to emptyList<UpdateInfo>()

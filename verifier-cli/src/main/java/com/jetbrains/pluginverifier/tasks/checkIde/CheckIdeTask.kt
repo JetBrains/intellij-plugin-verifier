@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.plugin.toPluginIdAndVersion
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.tasks.Task
@@ -45,7 +46,7 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
     return parameters.pluginIdsToCheckExistingBuilds.distinct()
         .filterNot { existingUpdatesForIde.contains(it) }
         .map {
-          val buildForCommunity = getUpdateCompatibleWithCommunityEdition(it, ideVersion)
+          val buildForCommunity = getUpdateCompatibleWithCommunityEdition(it, ideVersion) as? UpdateInfo
           if (buildForCommunity != null) {
             val details = "\nNote: there is an update (#" + buildForCommunity.updateId + ") compatible with IDEA Community Edition, " +
                 "but the Plugin repository does not offer to install it if you run the IDEA Ultimate."
@@ -56,7 +57,7 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
         }
   }
 
-  private fun getUpdateCompatibleWithCommunityEdition(pluginId: String, version: IdeVersion): UpdateInfo? {
+  private fun getUpdateCompatibleWithCommunityEdition(pluginId: String, version: IdeVersion): PluginInfo? {
     val ideVersion = version.asString()
     if (ideVersion.startsWith("IU-")) {
       val communityVersion = "IC-" + ideVersion.substringAfter(ideVersion, "IU-")

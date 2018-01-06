@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.repository.files.FileLock
+import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import java.nio.file.Path
 
 class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDetailsProvider {

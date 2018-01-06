@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
@@ -33,7 +34,7 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository, val pluginDe
 
         val pluginsToCheck = this.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch updates to check with ${ideDescriptor.ideVersion}") {
           OptionsParser.requestUpdatesToCheckByIds(checkAllBuilds, checkLastBuilds, ideDescriptor.ideVersion, pluginRepository)
-              .map { PluginCoordinate.ByUpdateInfo(it, pluginRepository) }
+              .map { PluginCoordinate.ByUpdateInfo(it as UpdateInfo, pluginRepository) }
         }
 
         val excludedPlugins = OptionsParser.parseExcludedPlugins(opts)

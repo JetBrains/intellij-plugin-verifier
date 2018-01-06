@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
@@ -81,7 +82,7 @@ class IdeDependencyFinderTest {
       override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? =
           if (pluginId == "externalPlugin") createMockUpdateInfo(pluginId, pluginId, "1.0", 0) else null
 
-      override fun downloadPluginFile(updateInfo: UpdateInfo): FileRepositoryResult =
+      override fun downloadPluginFile(pluginInfo: PluginInfo): FileRepositoryResult =
           FileRepositoryResult.Failed("Failed to download test.", Exception())
     }
 
