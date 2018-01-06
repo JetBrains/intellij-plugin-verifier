@@ -102,13 +102,13 @@ class PublicPluginRepository(private val repositoryUrl: String,
           pluginId,
           it.updateVersion,
           repositoryURL,
+          this@PublicPluginRepository,
           pluginName,
           it.updateId,
           vendor,
           it.sinceBuild,
           it.untilBuild,
-          getDownloadUrl(it.updateId),
-          getBrowserUrl(pluginId)
+          getDownloadUrl(it.updateId), getBrowserUrl(pluginId)
       )
     }
     updateInfos.forEach { updateInfosRequester.putUpdateInfo(it) }
@@ -221,13 +221,13 @@ class PublicPluginRepository(private val repositoryUrl: String,
         pluginId,
         version,
         repositoryURL,
+        this@PublicPluginRepository,
         pluginName,
         updateId,
         vendor,
         sinceString,
         untilString,
-        getDownloadUrl(updateId),
-        getBrowserUrl(pluginId)
+        getDownloadUrl(updateId), getBrowserUrl(pluginId)
     )
 
   }

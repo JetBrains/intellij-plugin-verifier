@@ -13,7 +13,9 @@ open class PluginInfo(
 
     val version: String,
 
-    val repositoryURL: URL
+    val repositoryURL: URL,
+
+    val pluginRepository: PluginRepository
 ) {
 
   open val presentableName: String = "$pluginId $version"

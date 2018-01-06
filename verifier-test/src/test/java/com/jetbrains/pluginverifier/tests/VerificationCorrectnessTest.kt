@@ -15,6 +15,7 @@ import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
+import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
@@ -50,7 +51,7 @@ class VerificationCorrectnessTest {
     lateinit var redundantDeprecated: MutableList<DeprecatedApiUsage>
 
     private fun doIdeaAndPluginVerification(ideaFile: Path, pluginFile: Path): Result {
-      val pluginCoordinate = PluginCoordinate.ByFile(pluginFile)
+      val pluginCoordinate = PluginCoordinate.ByFile(pluginFile, LocalPluginRepository())
       val jdkDescriptor = TestJdkDescriptorProvider.getJdkDescriptorForTests()
 
       val tempFolder = Files.createTempDirectory("")

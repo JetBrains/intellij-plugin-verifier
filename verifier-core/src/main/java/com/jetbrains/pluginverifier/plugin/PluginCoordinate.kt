@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.repository.local.createLocalPluginInfo
 import java.nio.file.Path
 
@@ -24,11 +25,15 @@ sealed class PluginCoordinate {
 
   }
 
-  data class ByFile(val pluginFile: Path) : PluginCoordinate() {
+  class ByFile(val pluginFile: Path, val pluginRepository: LocalPluginRepository) : PluginCoordinate() {
     override val presentableName: String = pluginFile.toString()
 
     override val fileFinder: PluginFileFinder
       get() = LocalFileFinder(pluginFile)
+
+    override fun equals(other: Any?): Boolean = other is ByFile && pluginFile == other.pluginFile
+
+    override fun hashCode(): Int = pluginFile.hashCode()
 
   }
 
@@ -46,10 +51,10 @@ fun PluginCoordinate.createPluginInfo(pluginDetailsProvider: PluginDetailsProvid
     pluginDetailsProvider.providePluginDetails(this).use { pluginDetails ->
       val plugin = pluginDetails.plugin
       return if (plugin != null) {
-        createLocalPluginInfo(pluginFile, plugin)
+        createLocalPluginInfo(pluginFile, plugin, pluginRepository)
       } else {
         val (pluginId, version) = guessPluginIdAndVersion(pluginFile)
-        PluginInfo(pluginId, version, pluginFile.toUri().toURL())
+        PluginInfo(pluginId, version, pluginFile.toUri().toURL(), pluginRepository)
       }
     }
   }

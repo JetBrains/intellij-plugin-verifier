@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import java.io.File
 import java.nio.file.Paths
@@ -55,7 +56,7 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
         if (!file.exists()) {
           throw IllegalArgumentException("The file $file doesn't exist")
         }
-        return listOf(PluginCoordinate.ByFile(file))
+        return listOf(PluginCoordinate.ByFile(file, LocalPluginRepository()))
       }
     }
   }
@@ -73,7 +74,7 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
               if (!pluginFile.exists()) {
                 throw RuntimeException("Plugin file '" + it + "' specified in '" + pluginListFile.absolutePath + "' doesn't exist")
               }
-              listOf(PluginCoordinate.ByFile(pluginFile))
+              listOf(PluginCoordinate.ByFile(pluginFile, LocalPluginRepository()))
             }
           }
 

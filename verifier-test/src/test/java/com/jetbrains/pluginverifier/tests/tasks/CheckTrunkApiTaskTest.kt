@@ -116,7 +116,7 @@ class CheckTrunkApiTaskTest {
   private fun createPluginDetailsProviderForTest(pluginToCheck: MockIdePlugin): MockPluginDetailsProvider {
     return MockPluginDetailsProvider(
         listOf(someJetBrainsMockPlugin1, someJetBrainsMockPlugin2, someJetBrainsMockPluginContainingModule, pluginToCheck)
-            .associateBy({ PluginCoordinate.ByFile(it.originalFile!!.toPath()) }) {
+            .associateBy({ PluginCoordinate.ByFile(it.originalFile!!.toPath(), LocalPluginRepository()) }) {
               PluginDetails.FoundOpenPluginWithoutClasses(it)
             }
     )
@@ -139,64 +139,70 @@ class CheckTrunkApiTaskTest {
         IdleFileLock(Paths.get("release ide file")),
         releaseLocalPluginsRepository,
         trunkLocalPluginsRepository,
-        listOf(PluginCoordinate.ByFile(pluginToCheck.originalFile!!.toPath()))
+        listOf(PluginCoordinate.ByFile(pluginToCheck.originalFile!!.toPath(), releaseLocalPluginsRepository))
     )
   }
 
   private fun createReleaseLocalRepositoryForTest(): LocalPluginRepository {
-    return LocalPluginRepository(releaseVersion, listOf(
+    val localPluginRepository = LocalPluginRepository()
+    val plugins = listOf(
         LocalPluginInfo(
             someJetBrainsPluginId,
             "1.0",
             repositoryURL,
+            localPluginRepository,
             "plugin name",
             releaseVersion,
             releaseVersion,
             "JetBrains",
-            someJetBrainsMockPlugin1.originalFile!!.toPath(),
-            emptySet()
+            someJetBrainsMockPlugin1.originalFile!!.toPath(), emptySet()
         ),
 
         LocalPluginInfo(
             someJetBrainsPluginContainingModuleId,
             "1.0",
             repositoryURL,
+            localPluginRepository,
             "module container",
             releaseVersion,
             releaseVersion,
             "JetBrains",
-            someJetBrainsMockPluginContainingModule.originalFile!!.toPath(),
-            setOf(someJetBrainsModule)
+            someJetBrainsMockPluginContainingModule.originalFile!!.toPath(), setOf(someJetBrainsModule)
         )
-    ))
+    )
+    localPluginRepository.plugins.addAll(plugins)
+    return localPluginRepository
   }
 
   private fun createTrunkLocalRepositoryForTest(): LocalPluginRepository {
-    return LocalPluginRepository(trunkVersion, listOf(
+    val localPluginRepository = LocalPluginRepository()
+    val plugins = listOf(
         LocalPluginInfo(
             someJetBrainsPluginId,
             "2.0",
             repositoryURL,
+            localPluginRepository,
             "plugin name",
             trunkVersion,
             trunkVersion,
             "JetBrains",
-            someJetBrainsMockPlugin2.originalFile!!.toPath(),
-            emptySet()
+            someJetBrainsMockPlugin2.originalFile!!.toPath(), emptySet()
         ),
 
         LocalPluginInfo(
             someJetBrainsPluginContainingModuleId,
             "1.0",
             repositoryURL,
+            localPluginRepository,
             "module container",
             trunkVersion,
             trunkVersion,
             "JetBrains",
-            someJetBrainsMockPluginContainingModule.originalFile!!.toPath(),
-            setOf(someJetBrainsModule)
+            someJetBrainsMockPluginContainingModule.originalFile!!.toPath(), setOf(someJetBrainsModule)
         )
-    ))
+    )
+    localPluginRepository.plugins.addAll(plugins)
+    return localPluginRepository
   }
 
 

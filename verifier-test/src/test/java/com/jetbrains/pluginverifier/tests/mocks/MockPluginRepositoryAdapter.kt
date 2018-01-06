@@ -26,20 +26,21 @@ open class MockPluginRepositoryAdapter : PluginRepository {
 
   open fun defaultAction(): Nothing = throw AssertionError("Not required in tests")
 
+  fun createMockUpdateInfo(pluginId: String, pluginName: String, version: String, updateId: Int) =
+      UpdateInfo(
+          pluginId,
+          version,
+          exampleUrl,
+          this@MockPluginRepositoryAdapter,
+          pluginName,
+          updateId,
+          "",
+          "",
+          "",
+          exampleUrl, exampleUrl
+      )
+
 }
 
 private val exampleUrl = URL("http://example.com")
 
-fun createMockUpdateInfo(pluginId: String, pluginName: String, version: String, updateId: Int) =
-    UpdateInfo(
-        pluginId,
-        version,
-        exampleUrl,
-        pluginName,
-        updateId,
-        "",
-        "",
-        "",
-        exampleUrl,
-        exampleUrl
-    )

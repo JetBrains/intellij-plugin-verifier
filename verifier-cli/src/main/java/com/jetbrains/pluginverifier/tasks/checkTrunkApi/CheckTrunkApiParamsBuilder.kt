@@ -67,8 +67,8 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
     val releaseVersion = releaseIdeDescriptor.ideVersion
     val trunkVersion = trunkIdeDescriptor.ideVersion
 
-    val releaseLocalRepository = apiOpts.releaseLocalPluginRepositoryRoot?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(releaseVersion, Paths.get(it)) }
-    val trunkLocalRepository = apiOpts.trunkLocalPluginRepositoryRoot?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(trunkVersion, Paths.get(it)) }
+    val releaseLocalRepository = apiOpts.releaseLocalPluginRepositoryRoot?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it)) }
+    val trunkLocalRepository = apiOpts.trunkLocalPluginRepositoryRoot?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it)) }
 
     val jetBrainsPluginIds = getJetBrainsPluginIds(apiOpts)
 

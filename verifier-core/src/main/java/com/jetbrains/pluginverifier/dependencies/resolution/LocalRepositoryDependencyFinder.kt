@@ -17,7 +17,7 @@ class LocalRepositoryDependencyFinder(private val localPluginRepository: LocalPl
       localPluginRepository.findPluginById(dependency.id)
     }
     return if (localPlugin != null) {
-      DependencyFinder.Result.FoundCoordinates(PluginCoordinate.ByFile(localPlugin.pluginFile), pluginDetailsProvider)
+      DependencyFinder.Result.FoundCoordinates(PluginCoordinate.ByFile(localPlugin.pluginFile, localPluginRepository), pluginDetailsProvider)
     } else {
       DependencyFinder.Result.NotFound("$dependency is not found in the local repository $localPluginRepository")
     }

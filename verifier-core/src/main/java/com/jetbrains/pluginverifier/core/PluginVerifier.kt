@@ -101,7 +101,7 @@ class PluginVerifier(private val pluginCoordinate: PluginCoordinate,
 
   private fun IdePlugin.getPluginInfo(pluginCoordinate: PluginCoordinate) = when (pluginCoordinate) {
     is PluginCoordinate.ByUpdateInfo -> pluginCoordinate.updateInfo
-    is PluginCoordinate.ByFile -> createLocalPluginInfo(pluginCoordinate.pluginFile, this)
+    is PluginCoordinate.ByFile -> createLocalPluginInfo(pluginCoordinate.pluginFile, this, pluginCoordinate.pluginRepository)
   }
 
   private fun runVerification(plugin: IdePlugin,

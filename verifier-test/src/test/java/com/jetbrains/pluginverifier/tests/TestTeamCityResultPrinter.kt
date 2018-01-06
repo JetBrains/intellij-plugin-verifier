@@ -7,12 +7,10 @@ import com.jetbrains.pluginverifier.output.settings.dependencies.AllMissingDepen
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
-import com.jetbrains.pluginverifier.tests.mocks.createMockUpdateInfo
 import org.junit.Assert
 import org.junit.Test
 import java.io.IOException
@@ -24,11 +22,17 @@ import java.io.StringWriter
  */
 class TestTeamCityResultPrinter {
 
+  data class MockUpdateInfo(val id: String, val name: String, val version: String, val updateId: Int)
+
   private fun noConnectionPluginRepository() = object : MockPluginRepositoryAdapter() {
     override fun defaultAction(): Nothing = throw IOException("no connection")
   }
 
-  private fun mockRepository(updateInfos: List<UpdateInfo>) = object : MockPluginRepositoryAdapter() {
+  private fun mockRepository(mockUpdateInfos: List<MockUpdateInfo>) = object : MockPluginRepositoryAdapter() {
+
+    val updateInfos: List<UpdateInfo>
+      get() = mockUpdateInfos.map { createMockUpdateInfo(it.id, it.name, it.version, it.updateId) }
+
     override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> = updateInfos
 
     override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? = updateInfos.find { it.pluginId == pluginId }
@@ -38,11 +42,12 @@ class TestTeamCityResultPrinter {
 
   @Test
   fun `test newest suffix for updates with newest versions`() {
-    val updateInfos = listOf(
-        createMockUpdateInfo("id", "name", "version", 1),
-        createMockUpdateInfo("id", "name", "version 2", 2)
+    val mockUpdateInfos = listOf(
+        MockUpdateInfo("id", "name", "version", 1),
+        MockUpdateInfo("id", "name", "version 2", 2)
     )
-    val mockRepository = mockRepository(updateInfos)
+    val mockRepository = mockRepository(mockUpdateInfos)
+    val updateInfos = mockRepository.updateInfos
     val output = getTeamCityOutput(mockRepository, updateInfos)
     Assert.assertEquals("""##teamcity[testSuiteStarted name='id']
 ##teamcity[testStarted name='(version)']
@@ -56,7 +61,7 @@ class TestTeamCityResultPrinter {
   @Test
   fun `no repository connection lead to no -newest suffix`() {
     val mockPluginRepository = noConnectionPluginRepository()
-    val output = getTeamCityOutput(mockPluginRepository, listOf(createMockUpdateInfo("id", "name", "v", 1)))
+    val output = getTeamCityOutput(mockPluginRepository, listOf(mockPluginRepository.createMockUpdateInfo("id", "name", "v", 1)))
     Assert.assertEquals("""##teamcity[testSuiteStarted name='id']
 ##teamcity[testStarted name='(v)']
 ##teamcity[testFinished name='(v)']
@@ -64,7 +69,7 @@ class TestTeamCityResultPrinter {
 """, output)
   }
 
-  private fun getTeamCityOutput(pluginRepository: PluginRepository, pluginInfos: List<PluginInfo>): String {
+  private fun getTeamCityOutput(pluginRepository: MockPluginRepositoryAdapter, pluginInfos: List<UpdateInfo>): String {
     val dependencyNode = DependencyNode("id", "version", emptyList())
     return StringWriter().use { stringWriter ->
       val tcLog = TeamCityLog(PrintWriter(stringWriter))

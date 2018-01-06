@@ -11,12 +11,13 @@ import java.nio.file.Path
 class LocalPluginInfo(pluginId: String,
                       version: String,
                       repositoryURL: URL,
+                      pluginRepository: LocalPluginRepository,
                       val pluginName: String,
                       val sinceBuild: IdeVersion,
                       val untilBuild: IdeVersion?,
                       val vendor: String?,
                       val pluginFile: Path,
-                      val definedModules: Set<String>) : PluginInfo(pluginId, version, repositoryURL) {
+                      val definedModules: Set<String>) : PluginInfo(pluginId, version, repositoryURL, pluginRepository) {
 
   fun isCompatibleWith(ideVersion: IdeVersion) =
       sinceBuild <= ideVersion && (untilBuild == null || ideVersion <= untilBuild)
