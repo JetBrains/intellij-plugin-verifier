@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.reporting.verification
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.reporting.Reporter
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import java.io.Closeable
 
 /**
@@ -14,5 +14,5 @@ interface VerificationReportersProvider : Closeable {
 
   val globalProgressReporters: List<Reporter<Double>>
 
-  fun getReporterSetForPluginVerification(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): VerificationReporterSet
+  fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, ideVersion: IdeVersion): VerificationReporterSet
 }

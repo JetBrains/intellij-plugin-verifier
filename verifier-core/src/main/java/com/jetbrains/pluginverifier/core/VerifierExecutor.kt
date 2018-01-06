@@ -50,9 +50,9 @@ class VerifierExecutor(concurrentWorkers: Int) : Closeable {
       pluginDetailsProvider: PluginDetailsProvider,
       reportage: VerificationReportage
   ): List<Result> {
-    for ((pluginCoordinate, ideDescriptor, dependencyFinder) in tasks) {
-      val pluginLogger = reportage.createPluginLogger(pluginCoordinate, ideDescriptor)
-      val verifier = PluginVerifier(pluginCoordinate, ideDescriptor, dependencyFinder, jdkResolver, parameters, pluginDetailsProvider, pluginLogger)
+    for ((pluginInfo, ideDescriptor, dependencyFinder) in tasks) {
+      val pluginLogger = reportage.createPluginLogger(pluginInfo, ideDescriptor)
+      val verifier = PluginVerifier(pluginInfo, ideDescriptor, dependencyFinder, jdkResolver, parameters, pluginDetailsProvider, pluginLogger)
       completionService.submit(verifier)
     }
     return waitForAllResults(completionService, tasks.size)

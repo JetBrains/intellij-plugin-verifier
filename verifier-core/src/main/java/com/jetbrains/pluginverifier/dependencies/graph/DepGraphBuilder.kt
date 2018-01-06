@@ -32,7 +32,7 @@ class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
   }
 
   private fun DependencyFinder.Result.toPluginDetails() = when (this) {
-    is DependencyFinder.Result.FoundCoordinates -> pluginDetailsProvider.providePluginDetails(pluginCoordinate)
+    is DependencyFinder.Result.FoundPluginInfo -> pluginDetailsProvider.providePluginDetails(pluginInfo)
     is DependencyFinder.Result.PluginAndDetailsProvider -> pluginDetailsProvider.provideDetailsByExistingPlugins(plugin)
     is DependencyFinder.Result.FoundOpenPluginWithoutClasses -> PluginDetails.FoundOpenPluginWithoutClasses(plugin)
     is DependencyFinder.Result.NotFound -> PluginDetails.NotFound(reason)

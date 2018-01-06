@@ -3,14 +3,14 @@ package com.jetbrains.pluginverifier.reporting.verification
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.misc.impossible
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
 
 object EmptyPluginVerificationReportage : PluginVerificationReportage {
-  override val plugin: PluginCoordinate
+  override val plugin: PluginInfo
     get() = impossible()
 
   override val ideVersion: IdeVersion

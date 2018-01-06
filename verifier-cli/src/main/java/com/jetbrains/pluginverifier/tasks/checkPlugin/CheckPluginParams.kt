@@ -6,10 +6,10 @@ import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.tasks.TaskParameters
 
-data class CheckPluginParams(val pluginCoordinates: List<PluginCoordinate>,
+data class CheckPluginParams(val pluginInfos: List<PluginInfo>,
                              val ideDescriptors: List<IdeDescriptor>,
                              val jdkDescriptor: JdkDescriptor,
                              val externalClassesPrefixes: List<String>,
@@ -18,7 +18,7 @@ data class CheckPluginParams(val pluginCoordinates: List<PluginCoordinate>,
 
   override fun presentableText(): String = """Check Plugin Configuration parameters:
   JDK: $jdkDescriptor
-  Plugins to be checked (${pluginCoordinates.size}): [${pluginCoordinates.joinToString()}]
+  Plugins to be checked (${pluginInfos.size}): [${pluginInfos.joinToString()}]
   IDE builds to be checked: [${ideDescriptors.joinToString()}]
   External classes prefixes: [${externalClassesPrefixes.joinToString()}]
   """

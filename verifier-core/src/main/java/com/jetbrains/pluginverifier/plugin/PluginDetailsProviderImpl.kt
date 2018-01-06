@@ -8,7 +8,9 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLo
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.misc.closeLogged
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
+import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import java.nio.file.Path
 
@@ -27,12 +29,13 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
     }
   }
 
-  override fun providePluginDetails(pluginCoordinate: PluginCoordinate): PluginDetails {
-    val pluginFileFindResult = pluginCoordinate.fileFinder.findPluginFile()
-    return when (pluginFileFindResult) {
-      is PluginFileFinder.Result.Found -> createPluginDetailsByFileLock(pluginFileFindResult.pluginFileLock)
-      is PluginFileFinder.Result.FailedToDownload -> PluginDetails.FailedToDownload(pluginFileFindResult.reason)
-      is PluginFileFinder.Result.NotFound -> PluginDetails.NotFound(pluginFileFindResult.reason)
+  override fun providePluginDetails(pluginInfo: PluginInfo): PluginDetails {
+    return with(pluginInfo.pluginRepository.downloadPluginFile(pluginInfo)) {
+      when (this) {
+        is FileRepositoryResult.Found -> createPluginDetailsByFileLock(lockedFile)
+        is FileRepositoryResult.NotFound -> PluginDetails.FailedToDownload(reason)
+        is FileRepositoryResult.Failed -> PluginDetails.NotFound(reason)
+      }
     }
   }
 

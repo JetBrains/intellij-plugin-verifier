@@ -9,13 +9,13 @@ import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterSet
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportersProvider
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkVersion
@@ -119,8 +119,7 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
     )
 
     val jdkDescriptor = JdkDescriptor(serverContext.jdkManager.getJdkHome(jdkVersion))
-    val pluginCoordinate = PluginCoordinate.ByUpdateInfo(updateInfo, serverContext.pluginRepository)
-    val verifierTask = VerifierTask(pluginCoordinate, ideDescriptor, dependencyFinder)
+    val verifierTask = VerifierTask(updateInfo, ideDescriptor, dependencyFinder)
 
     return Verification.run(
         verifierParameters,
@@ -140,7 +139,7 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
 
         override fun close() = Unit
 
-        override fun getReporterSetForPluginVerification(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion) =
+        override fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, ideVersion: IdeVersion) =
             VerificationReporterSet(
                 verdictReporters = listOf(LogReporter(LOG)),
                 messageReporters = listOf(LogReporter(LOG)),

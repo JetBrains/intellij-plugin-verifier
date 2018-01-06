@@ -2,15 +2,15 @@ package com.jetbrains.pluginverifier.reporting.verification
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
 
 class PluginVerificationReportageImpl(private val verificationReportage: VerificationReportage,
-                                      override val plugin: PluginCoordinate,
+                                      override val plugin: PluginInfo,
                                       override val ideVersion: IdeVersion,
                                       private val reporterSet: VerificationReporterSet) : PluginVerificationReportage {
   @Volatile

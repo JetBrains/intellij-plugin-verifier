@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.reporting.verification
 
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.closeLogged
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 
 class VerificationReportageImpl(private val reporterSetProvider: VerificationReportersProvider) : VerificationReportage {
@@ -31,10 +31,10 @@ class VerificationReportageImpl(private val reporterSetProvider: VerificationRep
   }
 
   @Synchronized
-  override fun createPluginLogger(pluginCoordinate: PluginCoordinate, ideDescriptor: IdeDescriptor): PluginVerificationReportage {
+  override fun createPluginLogger(pluginInfo: PluginInfo, ideDescriptor: IdeDescriptor): PluginVerificationReportage {
     totalPlugins++
-    val reporterSet = reporterSetProvider.getReporterSetForPluginVerification(pluginCoordinate, ideDescriptor.ideVersion)
-    return PluginVerificationReportageImpl(this, pluginCoordinate, ideDescriptor.ideVersion, reporterSet)
+    val reporterSet = reporterSetProvider.getReporterSetForPluginVerification(pluginInfo, ideDescriptor.ideVersion)
+    return PluginVerificationReportageImpl(this, pluginInfo, ideDescriptor.ideVersion, reporterSet)
   }
 
   override fun close() {

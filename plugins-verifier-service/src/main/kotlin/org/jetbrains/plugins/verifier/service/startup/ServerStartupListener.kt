@@ -56,7 +56,7 @@ class ServerStartupListener : ServletContextListener {
     val pluginRepositoryUrl = Settings.DOWNLOAD_PLUGINS_REPOSITORY_URL.getAsURL()
     val pluginRepository = PublicPluginRepository(pluginRepositoryUrl, loadedPluginsDir, pluginDownloadDirSpaceSetting)
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractedPluginsDir)
-    val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginRepository, pluginDetailsProvider)
+    val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginDetailsProvider)
 
     val ideRepository = IdeRepository(Settings.IDE_REPOSITORY_URL.get())
     val tasksManager = ServiceTasksManager(Settings.TASK_MANAGER_CONCURRENCY.getAsInt(), 1000)

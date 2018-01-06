@@ -7,13 +7,13 @@ import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.tasks.TaskParameters
 
 
 data class CheckIdeParams(val ideDescriptor: IdeDescriptor,
                           val jdkDescriptor: JdkDescriptor,
-                          val pluginsToCheck: List<PluginCoordinate>,
+                          val pluginsToCheck: List<PluginInfo>,
                           val excludedPlugins: List<PluginIdAndVersion>,
                           val pluginIdsToCheckExistingBuilds: List<String>,
                           val externalClassPath: Resolver,

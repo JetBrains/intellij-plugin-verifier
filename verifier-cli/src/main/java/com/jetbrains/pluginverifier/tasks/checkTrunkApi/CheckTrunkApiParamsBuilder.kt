@@ -8,7 +8,6 @@ import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
@@ -76,7 +75,7 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
       getLastCompatiblePlugins(releaseVersion)
     }
     val pluginsToCheck = releaseCompatibleUpdates.filterNot { it.pluginId in jetBrainsPluginIds }.sortedByDescending { (it as UpdateInfo).updateId }
-    val pluginCoordinates = pluginsToCheck.map { PluginCoordinate.ByUpdateInfo(it as UpdateInfo, pluginRepository) }
+    val pluginInfos = pluginsToCheck.map { it as UpdateInfo }
 
     println("The following updates will be checked with both #$trunkVersion and #$releaseVersion:\n" + pluginsToCheck.sortedBy { (it as UpdateInfo).updateId }.listPresentationInColumns(4, 60))
 
@@ -91,7 +90,7 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
         releaseIdeFileLock,
         releaseLocalRepository,
         trunkLocalRepository,
-        pluginCoordinates
+        pluginInfos
     )
   }
 

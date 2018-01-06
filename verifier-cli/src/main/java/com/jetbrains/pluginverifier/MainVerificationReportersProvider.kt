@@ -4,7 +4,6 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.misc.*
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.CollectingReporter
 import com.jetbrains.pluginverifier.reporting.common.FileReporter
@@ -13,6 +12,9 @@ import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import com.jetbrains.pluginverifier.reporting.progress.LogSteppedProgressReporter
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterSet
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportersProvider
+import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.local.LocalPluginInfo
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.Problem
@@ -57,16 +59,16 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
    *             com.third.plugin/
    *                 ...
    */
-  override fun getReporterSetForPluginVerification(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): VerificationReporterSet {
+  override fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, ideVersion: IdeVersion): VerificationReporterSet {
     val ideResultsDirectory = getIdeResultsDirectory(ideVersion)
-    val pluginVerificationDirectory = ideResultsDirectory.resolve("plugins").resolve(createPluginVerificationDirectory(pluginCoordinate))
+    val pluginVerificationDirectory = ideResultsDirectory.resolve("plugins").resolve(createPluginVerificationDirectory(pluginInfo))
 
-    val pluginLogger = LoggerFactory.getLogger(pluginCoordinate.presentableName)
+    val pluginLogger = LoggerFactory.getLogger(pluginInfo.presentableName)
 
     return VerificationReporterSet(
         verdictReporters = createVerdictReporters(pluginLogger, pluginVerificationDirectory),
         messageReporters = createMessageReporters(pluginLogger),
-        progressReporters = createProgressReporters(pluginCoordinate, ideVersion, pluginLogger),
+        progressReporters = createProgressReporters(pluginInfo, ideVersion, pluginLogger),
         warningReporters = createWarningReporters(pluginVerificationDirectory),
         problemsReporters = createProblemReporters(pluginVerificationDirectory),
         dependenciesGraphReporters = createDependencyGraphReporters(pluginVerificationDirectory),
@@ -88,17 +90,15 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
    * plugin.zip/     <- if the plugin is specified by the local file path
    *     ....
    */
-  private fun createPluginVerificationDirectory(pluginCoordinate: PluginCoordinate): Path =
-      when (pluginCoordinate) {
-        is PluginCoordinate.ByUpdateInfo -> {
-          val updateInfo = pluginCoordinate.updateInfo
-          val pluginId = updateInfo.pluginId.replaceInvalidFileNameCharacters()
-          val version = "${updateInfo.version} (#${updateInfo.updateId})".replaceInvalidFileNameCharacters()
+  private fun createPluginVerificationDirectory(pluginInfo: PluginInfo): Path =
+      when (pluginInfo) {
+        is UpdateInfo -> {
+          val pluginId = pluginInfo.pluginId.replaceInvalidFileNameCharacters()
+          val version = "${pluginInfo.version} (#${pluginInfo.updateId})".replaceInvalidFileNameCharacters()
           Paths.get(pluginId, version)
         }
-        is PluginCoordinate.ByFile -> {
-          Paths.get(pluginCoordinate.pluginFile.simpleName)
-        }
+        is LocalPluginInfo -> Paths.get(pluginInfo.pluginFile.simpleName)
+        else -> Paths.get(pluginInfo.presentableName)
       }
 
   private fun createWarningReporters(pluginVerificationDirectory: Path) = buildList<Reporter<Warning>> {
@@ -143,16 +143,16 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
     add(FileReporter(pluginVerificationDirectory.resolve("ignored-problems.txt")))
   }
 
-  private fun createProgressReporters(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion, pluginLogger: Logger) = buildList<LogSteppedProgressReporter> {
+  private fun createProgressReporters(pluginInfo: PluginInfo, ideVersion: IdeVersion, pluginLogger: Logger) = buildList<LogSteppedProgressReporter> {
     if (printPluginVerificationProgress) {
-      val logMessageProvider = createProgressMessageProvider(pluginCoordinate, ideVersion)
+      val logMessageProvider = createProgressMessageProvider(pluginInfo, ideVersion)
       add(LogSteppedProgressReporter(pluginLogger, logMessageProvider, step = 0.1))
     }
   }
 
-  private fun createProgressMessageProvider(pluginCoordinate: PluginCoordinate, ideVersion: IdeVersion): (Double) -> String = { progress ->
+  private fun createProgressMessageProvider(pluginInfo: PluginInfo, ideVersion: IdeVersion): (Double) -> String = { progress ->
     buildString {
-      append("Plugin $pluginCoordinate and #$ideVersion verification: ")
+      append("Plugin $pluginInfo and #$ideVersion verification: ")
       if (progress == 1.0) {
         append("100% finished")
       } else {

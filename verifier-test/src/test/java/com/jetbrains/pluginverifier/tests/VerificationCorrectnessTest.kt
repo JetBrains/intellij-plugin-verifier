@@ -12,7 +12,6 @@ import com.jetbrains.pluginverifier.misc.exists
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
@@ -28,6 +27,7 @@ import org.junit.AfterClass
 import org.junit.Assert.*
 import org.junit.BeforeClass
 import org.junit.Test
+import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -51,7 +51,8 @@ class VerificationCorrectnessTest {
     lateinit var redundantDeprecated: MutableList<DeprecatedApiUsage>
 
     private fun doIdeaAndPluginVerification(ideaFile: Path, pluginFile: Path): Result {
-      val pluginCoordinate = PluginCoordinate.ByFile(pluginFile, LocalPluginRepository(pluginFile.toUri().toURL()))
+      val repository = LocalPluginRepository(URL("http://example.com"))
+      val pluginInfo = repository.addPlugin(pluginFile)!!
       val jdkDescriptor = TestJdkDescriptorProvider.getJdkDescriptorForTests()
 
       val tempFolder = Files.createTempDirectory("")
@@ -65,7 +66,7 @@ class VerificationCorrectnessTest {
               EmptyResolver,
               true
           )
-          val tasks = listOf(VerifierTask(pluginCoordinate, ideDescriptor, NotFoundDependencyFinder()))
+          val tasks = listOf(VerifierTask(pluginInfo, ideDescriptor, NotFoundDependencyFinder()))
 
           VerificationReportageImpl(EmptyReporterSetProvider).use { verificationReportage ->
             Verification.run(verifierParams, pluginDetailsProvider, tasks, verificationReportage, jdkDescriptor).single()

@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.misc
 
 import org.apache.commons.lang3.time.DurationFormatUtils
 import org.slf4j.LoggerFactory
+import java.net.URL
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
@@ -28,6 +29,10 @@ fun checkIfInterrupted() {
 }
 
 fun impossible(): Nothing = throw AssertionError("Impossible")
+
+fun URL.safeEquals(other: URL) = toExternalForm().trimEnd('/') == other.toExternalForm().trimEnd('/')
+
+fun URL.safeHashCode() = toExternalForm().trim('/').hashCode()
 
 fun <T, R> T.tryInvokeSeveralTimes(attempts: Int,
                                    attemptsDelay: Long,

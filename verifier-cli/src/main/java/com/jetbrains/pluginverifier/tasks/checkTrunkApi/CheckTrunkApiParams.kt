@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParameters
@@ -21,7 +21,7 @@ data class CheckTrunkApiParams(val trunkIde: IdeDescriptor,
                                private val releaseIdeFile: FileLock,
                                val releaseLocalPluginsRepository: LocalPluginRepository?,
                                val trunkLocalPluginsRepository: LocalPluginRepository?,
-                               val pluginsToCheck: List<PluginCoordinate>) : TaskParameters {
+                               val pluginsToCheck: List<PluginInfo>) : TaskParameters {
   override fun presentableText(): String = """Check Trunk API Configuration Parameters:
 Trunk IDE to be checked: $trunkIde
 Release IDE to compare API with: $releaseIde

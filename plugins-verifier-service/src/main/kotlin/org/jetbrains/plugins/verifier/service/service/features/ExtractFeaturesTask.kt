@@ -4,15 +4,13 @@ import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
 
 class ExtractFeaturesTask(val serverContext: ServerContext,
-                          val pluginCoordinate: PluginCoordinate,
-                          private val updateInfo: UpdateInfo) : ServiceTask<ExtractFeaturesTask.Result>("Features of $pluginCoordinate") {
+                          val updateInfo: UpdateInfo) : ServiceTask<ExtractFeaturesTask.Result>("Features of $updateInfo") {
 
   /**
    * The result of the feature extractor service [task] [FeatureExtractorService].

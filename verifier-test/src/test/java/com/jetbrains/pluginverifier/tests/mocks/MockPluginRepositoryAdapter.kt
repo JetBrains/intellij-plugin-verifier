@@ -9,8 +9,7 @@ import java.net.URL
 
 open class MockPluginRepositoryAdapter : PluginRepository {
 
-  override val repositoryURL: URL
-    get() = defaultAction()
+  override val repositoryURL: URL = URL("http://example.com")
 
   override fun getAllPlugins(): List<PluginInfo> = defaultAction()
 

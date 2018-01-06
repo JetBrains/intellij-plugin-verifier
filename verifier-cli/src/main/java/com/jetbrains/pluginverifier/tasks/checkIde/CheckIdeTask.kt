@@ -6,9 +6,8 @@ import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
+import com.jetbrains.pluginverifier.parameters.filtering.toPluginIdAndVersion
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
-import com.jetbrains.pluginverifier.plugin.toPluginIdAndVersion
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -22,11 +21,11 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
 
   //todo: get rid of excludedPlugins here?
   override fun execute(verificationReportage: VerificationReportage): CheckIdeResult {
-    val notExcludedPlugins = parameters.pluginsToCheck.filterNot { it.toPluginIdAndVersion(pluginDetailsProvider) in parameters.excludedPlugins }
+    val notExcludedPlugins = parameters.pluginsToCheck.filterNot { it.toPluginIdAndVersion() in parameters.excludedPlugins }
     return doExecute(notExcludedPlugins, verificationReportage)
   }
 
-  private fun doExecute(notExcludedPlugins: List<PluginCoordinate>, reportage: VerificationReportage): CheckIdeResult {
+  private fun doExecute(notExcludedPlugins: List<PluginInfo>, reportage: VerificationReportage): CheckIdeResult {
     val verifierParams = VerifierParameters(parameters.externalClassesPrefixes, parameters.problemsFilters, parameters.externalClassPath, false)
     val tasks = notExcludedPlugins.map { VerifierTask(it, parameters.ideDescriptor, parameters.dependencyFinder) }
     val results = Verification.run(verifierParams, pluginDetailsProvider, tasks, reportage, parameters.jdkDescriptor)

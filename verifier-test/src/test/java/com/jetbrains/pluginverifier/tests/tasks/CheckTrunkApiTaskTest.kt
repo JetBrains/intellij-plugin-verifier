@@ -5,7 +5,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion.createIdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
@@ -20,6 +19,7 @@ import org.hamcrest.Matchers.instanceOf
 import org.junit.Assert.assertThat
 import org.junit.Test
 import java.io.File
+import java.net.URL
 import java.nio.file.Paths
 
 /**
@@ -34,7 +34,7 @@ class CheckTrunkApiTaskTest {
 
   val someJetBrainsPluginContainingModuleId = "org.jetbrains.module.container"
 
-  val repositoryURL = File(".").toURI().toURL()
+  val repositoryURL: URL = URL("http://unnecessary.com")
 
   val someJetBrainsMockPlugin1 = MockIdePlugin(
       pluginId = someJetBrainsPluginId,
@@ -116,10 +116,27 @@ class CheckTrunkApiTaskTest {
   private fun createPluginDetailsProviderForTest(pluginToCheck: MockIdePlugin): MockPluginDetailsProvider {
     return MockPluginDetailsProvider(
         listOf(someJetBrainsMockPlugin1, someJetBrainsMockPlugin2, someJetBrainsMockPluginContainingModule, pluginToCheck)
-            .associateBy({ PluginCoordinate.ByFile(it.originalFile!!.toPath(), LocalPluginRepository(repositoryURL)) }) {
-              PluginDetails.FoundOpenPluginWithoutClasses(it)
-            }
+            .associateBy({ createMockLocalPluginInfo(it) }, { PluginDetails.FoundOpenPluginWithoutClasses(it) })
     )
+  }
+
+  private fun createMockLocalPluginInfo(idePlugin: MockIdePlugin): LocalPluginInfo {
+    val localPluginRepository = LocalPluginRepository(repositoryURL)
+    val localPluginInfo = with(idePlugin) {
+      LocalPluginInfo(
+          pluginId!!,
+          pluginVersion!!,
+          localPluginRepository,
+          pluginName,
+          sinceBuild,
+          untilBuild,
+          vendor,
+          originalFile!!.toPath(),
+          definedModules
+      )
+    }
+    localPluginRepository.plugins.add(localPluginInfo)
+    return localPluginInfo
   }
 
   private fun createTrunkApiParamsForTest(
@@ -139,7 +156,7 @@ class CheckTrunkApiTaskTest {
         IdleFileLock(Paths.get("release ide file")),
         releaseLocalPluginsRepository,
         trunkLocalPluginsRepository,
-        listOf(PluginCoordinate.ByFile(pluginToCheck.originalFile!!.toPath(), releaseLocalPluginsRepository))
+        listOf(createMockLocalPluginInfo(pluginToCheck))
     )
   }
 

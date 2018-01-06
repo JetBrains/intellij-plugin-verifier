@@ -1,8 +1,6 @@
 package com.jetbrains.pluginverifier.repository.local
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.misc.extension
 import com.jetbrains.pluginverifier.misc.isDirectory
 import java.nio.file.Files
@@ -17,14 +15,12 @@ object LocalPluginRepositoryFactory {
   }
 
   private fun createLocalPluginRepositoryByFiles(repositoryRoot: Path): LocalPluginRepository {
-    val pluginManager = IdePluginManager.createManager()
     val pluginFiles = Files.list(repositoryRoot).filter { it.isDirectory || it.extension == "zip" || it.extension == "jar" }
     val localPluginRepository = LocalPluginRepository(repositoryRoot.toUri().toURL())
     val plugins = arrayListOf<LocalPluginInfo>()
     for (pluginFile in pluginFiles) {
-      val pluginCreationResult = pluginManager.createPlugin(pluginFile.toFile())
-      if (pluginCreationResult is PluginCreationSuccess) {
-        val localPluginInfo = createLocalPluginInfo(pluginFile, pluginCreationResult.plugin, localPluginRepository)
+      val localPluginInfo = localPluginRepository.addPlugin(pluginFile)
+      if (localPluginInfo != null) {
         plugins.add(localPluginInfo)
       }
     }

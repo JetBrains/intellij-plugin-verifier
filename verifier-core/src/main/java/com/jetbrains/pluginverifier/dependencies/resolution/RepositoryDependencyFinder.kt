@@ -50,7 +50,7 @@ class RepositoryDependencyFinder(private val pluginRepository: PluginRepository,
   private fun selectPlugin(pluginId: String): DependencyFinder.Result {
     val selectResult = updateSelector.select(pluginId, pluginRepository)
     return when (selectResult) {
-      is UpdateSelector.Result.Plugin -> DependencyFinder.Result.FoundCoordinates(selectResult.updateInfo, pluginDetailsProvider)
+      is UpdateSelector.Result.Plugin -> DependencyFinder.Result.FoundPluginInfo(selectResult.updateInfo, pluginDetailsProvider)
       is UpdateSelector.Result.NotFound -> DependencyFinder.Result.NotFound(selectResult.reason)
     }
   }

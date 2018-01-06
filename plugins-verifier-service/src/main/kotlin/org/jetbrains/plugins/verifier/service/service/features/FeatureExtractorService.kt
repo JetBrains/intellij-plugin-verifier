@@ -5,7 +5,6 @@ import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.createJsonRequestBody
 import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.HttpUrl
 import org.jetbrains.plugins.verifier.service.server.ServerContext
@@ -70,7 +69,6 @@ class FeatureExtractorService(serverContext: ServerContext,
 
     val runner = ExtractFeaturesTask(
         serverContext,
-        PluginCoordinate.ByUpdateInfo(updateInfo, serverContext.pluginRepository),
         updateInfo
     )
     val taskStatus = serverContext.taskManager.enqueue(
@@ -84,12 +82,11 @@ class FeatureExtractorService(serverContext: ServerContext,
   }
 
   private fun onCompletion(task: ExtractFeaturesTask) {
-    inProgressUpdates.remove((task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo)
+    inProgressUpdates.remove(task.updateInfo)
   }
 
   private fun onError(error: Throwable, taskStatus: ServiceTaskStatus, task: ExtractFeaturesTask) {
-    val updateInfo = (task.pluginCoordinate as PluginCoordinate.ByUpdateInfo).updateInfo
-    logger.error("Unable to extract features of $updateInfo (#${taskStatus.taskId})", error)
+    logger.error("Unable to extract features of ${task.updateInfo} (#${taskStatus.taskId})", error)
   }
 
   private fun onSuccess(extractorResult: ExtractFeaturesTask.Result) {

@@ -7,10 +7,10 @@ import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
-import com.jetbrains.pluginverifier.plugin.PluginCoordinate
+import com.jetbrains.pluginverifier.parameters.filtering.toPluginIdAndVersion
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
-import com.jetbrains.pluginverifier.plugin.toPluginIdAndVersion
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.Task
 
@@ -26,36 +26,35 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
         findPluginLocally(dependency) ?: ideDependencyResolver.findPluginDependency(dependency)
 
     private fun findPluginLocally(dependency: PluginDependency): DependencyFinder.Result? {
-      val pluginCoordinate = localPlugins.findPluginCoordinate(dependency.id)
-      return pluginCoordinate?.let { DependencyFinder.Result.FoundCoordinates(pluginCoordinate, pluginDetailsProvider) }
+      val pluginInfo = localPlugins.findPluginInfo(dependency.id)
+      return pluginInfo?.let { DependencyFinder.Result.FoundPluginInfo(pluginInfo, pluginDetailsProvider) }
     }
   }
 
-  private class LocalPlugins(private val pluginDetailsProvider: PluginDetailsProvider,
-                             pluginCoordinates: List<PluginCoordinate>) {
+  private class LocalPlugins(pluginInfos: List<PluginInfo>) {
 
-    private val pluginIdAndVersionToCoordinates = pluginCoordinates
-        .associateBy({ it.toPluginIdAndVersion(pluginDetailsProvider) }) { it }
+    private val pluginIdAndVersionToInfo = pluginInfos
+        .associateBy({ it.toPluginIdAndVersion() }) { it }
 
-    fun findPluginCoordinate(pluginId: String): PluginCoordinate? {
-      val pluginIdAndVersion = pluginIdAndVersionToCoordinates.keys.find { it.pluginId == pluginId }
+    fun findPluginInfo(pluginId: String): PluginInfo? {
+      val pluginIdAndVersion = pluginIdAndVersionToInfo.keys.find { it.pluginId == pluginId }
       if (pluginIdAndVersion != null) {
-        return pluginIdAndVersionToCoordinates[pluginIdAndVersion]!!
+        return pluginIdAndVersionToInfo[pluginIdAndVersion]!!
       }
       return null
     }
   }
 
   override fun execute(verificationReportage: VerificationReportage): CheckPluginResult {
-    val localPlugins = LocalPlugins(pluginDetailsProvider, parameters.pluginCoordinates)
+    val localPlugins = LocalPlugins(parameters.pluginInfos)
     return doExecute(verificationReportage, localPlugins)
   }
 
   private fun doExecute(verificationReportage: VerificationReportage, localPlugins: LocalPlugins): CheckPluginResult {
     val tasks = parameters.ideDescriptors.flatMap { ideDescriptor ->
       val dependencyFinder = createDependencyFinder(ideDescriptor.ide, localPlugins)
-      parameters.pluginCoordinates.map { pluginCoordinate ->
-        VerifierTask(pluginCoordinate, ideDescriptor, dependencyFinder)
+      parameters.pluginInfos.map { pluginInfo ->
+        VerifierTask(pluginInfo, ideDescriptor, dependencyFinder)
       }
     }
 
