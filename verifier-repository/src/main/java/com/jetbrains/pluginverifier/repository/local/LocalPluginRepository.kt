@@ -14,31 +14,38 @@ import java.net.URL
 import java.nio.file.Path
 
 class LocalPluginRepository(override val repositoryURL: URL,
-                            val plugins: MutableList<LocalPluginInfo> = arrayListOf()) : PluginRepository {
+                            private val plugins: MutableList<LocalPluginInfo> = arrayListOf()) : PluginRepository {
   companion object {
     private val VERSION_COMPARATOR = compareBy<LocalPluginInfo, String>(VersionComparatorUtil.COMPARATOR, { it.version })
   }
 
+  fun addLocalPlugin(idePlugin: IdePlugin): LocalPluginInfo {
+    val localPluginInfo = createLocalPluginInfo(idePlugin)
+    plugins.add(localPluginInfo)
+    return localPluginInfo
+  }
+
   //todo: log the creation failure. It is the verification result.
-  fun addPlugin(pluginFile: Path): LocalPluginInfo? {
+  fun addLocalPlugin(pluginFile: Path): LocalPluginInfo? {
     val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile.toFile())
     return when (pluginCreationResult) {
       is PluginCreationFail<IdePlugin> -> null
-      is PluginCreationSuccess<IdePlugin> -> {
-        val plugin = pluginCreationResult.plugin
-        LocalPluginInfo(
-            plugin.pluginId!!,
-            plugin.pluginVersion!!,
-            this,
-            plugin.pluginName ?: "",
-            plugin.sinceBuild!!,
-            plugin.untilBuild,
-            plugin.vendor,
-            pluginFile,
-            plugin.definedModules
-        )
-      }
+      is PluginCreationSuccess<IdePlugin> -> addLocalPlugin(pluginCreationResult.plugin)
     }
+  }
+
+  private fun createLocalPluginInfo(idePlugin: IdePlugin) = with(idePlugin) {
+    LocalPluginInfo(
+        pluginId!!,
+        pluginName!!,
+        pluginVersion!!,
+        this@LocalPluginRepository,
+        sinceBuild!!,
+        untilBuild,
+        vendor,
+        originalFile!!.toPath(),
+        definedModules
+    )
   }
 
   override fun getAllPlugins() = plugins

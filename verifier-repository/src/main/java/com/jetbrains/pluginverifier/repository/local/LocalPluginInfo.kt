@@ -6,19 +6,18 @@ import java.nio.file.Path
 
 /**
  * Identifier of a locally stored plugin.
+ * The plugin can be accessed by [pluginFile].
  */
 class LocalPluginInfo(pluginId: String,
+                      pluginName: String,
                       version: String,
                       pluginRepository: LocalPluginRepository,
-                      val pluginName: String?,
-                      val sinceBuild: IdeVersion,
-                      val untilBuild: IdeVersion?,
-                      val vendor: String?,
+                      sinceBuild: IdeVersion,
+                      untilBuild: IdeVersion?,
+                      vendor: String?,
                       val pluginFile: Path,
-                      val definedModules: Set<String>) : PluginInfo(pluginId, version, pluginRepository) {
+                      val definedModules: Set<String>) : PluginInfo(pluginId, pluginName, version, pluginRepository, sinceBuild, untilBuild, vendor) {
 
   override val presentableName = "Plugin at $pluginFile"
 
-  fun isCompatibleWith(ideVersion: IdeVersion) =
-      sinceBuild <= ideVersion && (untilBuild == null || ideVersion <= untilBuild)
 }

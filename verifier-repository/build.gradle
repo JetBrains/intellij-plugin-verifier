@@ -7,6 +7,9 @@ dependencies {
 
   compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
 
+  compile group: 'org.jetbrains.intellij.plugins', name: 'structure-intellij-classes', version: intellijStructureVersion
+  compile group: 'org.jetbrains.intellij.plugins', name: 'structure-ide', version: intellijStructureVersion
+
   compile 'com.squareup.retrofit2:retrofit:2.1.0'
   compile 'com.squareup.retrofit2:converter-gson:2.1.0'
   compile 'com.squareup.okhttp3:logging-interceptor:3.3.1'

@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.repository
 
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.safeEquals
 import com.jetbrains.pluginverifier.misc.safeHashCode
 import java.util.*
@@ -12,10 +13,21 @@ import java.util.*
 open class PluginInfo(
     val pluginId: String,
 
+    val pluginName: String,
+
     val version: String,
 
-    val pluginRepository: PluginRepository
+    val pluginRepository: PluginRepository,
+
+    val sinceBuild: IdeVersion?,
+
+    val untilBuild: IdeVersion?,
+
+    val vendor: String?
 ) {
+
+  fun isCompatibleWith(ideVersion: IdeVersion) =
+      (sinceBuild == null || sinceBuild <= ideVersion) && (untilBuild == null || ideVersion <= untilBuild)
 
   open val presentableName: String = "$pluginId $version"
 

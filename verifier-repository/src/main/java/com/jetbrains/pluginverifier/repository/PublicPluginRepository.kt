@@ -99,18 +99,25 @@ class PublicPluginRepository(override val repositoryURL: URL,
     val updateInfos = updates.map {
       UpdateInfo(
           pluginId,
+          pluginName,
           it.updateVersion,
           this@PublicPluginRepository,
-          pluginName,
-          it.updateId,
+          it.sinceBuild.prepareIdeVersion(),
+          it.untilBuild.prepareIdeVersion(),
           vendor,
-          it.sinceBuild,
-          it.untilBuild,
+          it.updateId,
           getDownloadUrl(it.updateId), getBrowserUrl(pluginId)
       )
     }
     updateInfos.forEach { updateInfosRequester.putUpdateInfo(it) }
     return updateInfos
+  }
+
+  private fun String?.prepareIdeVersion(): IdeVersion? {
+    if (this == null || this == "" || this == "0.0") {
+      return null
+    }
+    return IdeVersion.createIdeVersionIfValid(this)
   }
 
   override fun getAllPlugins(): List<PluginInfo> = allSinceUntilPluginsRequester.getAllPluginUpdateIds()
@@ -217,13 +224,13 @@ class PublicPluginRepository(override val repositoryURL: URL,
 
     private fun JsonUpdateInfo.toUpdateInfo() = UpdateInfo(
         pluginId,
+        pluginName,
         version,
         this@PublicPluginRepository,
-        pluginName,
-        updateId,
+        sinceString.prepareIdeVersion(),
+        untilString.prepareIdeVersion(),
         vendor,
-        sinceString,
-        untilString,
+        updateId,
         getDownloadUrl(updateId), getBrowserUrl(pluginId)
     )
 
