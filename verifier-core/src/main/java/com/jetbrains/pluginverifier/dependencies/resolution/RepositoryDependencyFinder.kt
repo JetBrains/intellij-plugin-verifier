@@ -2,16 +2,17 @@ package com.jetbrains.pluginverifier.dependencies.resolution
 
 import com.google.common.collect.ImmutableSet
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.pluginverifier.dependencies.resolution.repository.UpdateSelector
-import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginRepository
 
 /**
- * @author Sergey Patrikeev
+ * [DependencyFinder] that searches for the dependency in the [PluginRepository].
+ * The [pluginVersionSelector] is used to select a specific version of the plugin
+ * if multiple versions are available.
  */
 class RepositoryDependencyFinder(private val pluginRepository: PluginRepository,
-                                 private val updateSelector: UpdateSelector,
-                                 private val pluginDetailsProvider: PluginDetailsProvider) : DependencyFinder {
+                                 private val pluginVersionSelector: PluginVersionSelector,
+                                 private val pluginDetailsCache: PluginDetailsCache) : DependencyFinder {
 
   private companion object {
     val IDEA_ULTIMATE_MODULES: Set<String> = ImmutableSet.of(
@@ -31,12 +32,12 @@ class RepositoryDependencyFinder(private val pluginRepository: PluginRepository,
     if (dependency.isModule) {
       return resolveModuleDependency(dependency.id)
     }
-    return selectPlugin(dependency.id)
+    return selectPluginVersion(dependency.id)
   }
 
   private fun resolveModuleDependency(moduleId: String): DependencyFinder.Result {
     if (isDefaultModule(moduleId)) {
-      return DependencyFinder.Result.DefaultIdeaModule(moduleId)
+      return DependencyFinder.Result.DefaultIdeModule(moduleId)
     }
     return resolveDeclaringPlugin(moduleId)
   }
@@ -44,14 +45,14 @@ class RepositoryDependencyFinder(private val pluginRepository: PluginRepository,
   private fun resolveDeclaringPlugin(moduleId: String): DependencyFinder.Result {
     val pluginId = pluginRepository.getIdOfPluginDeclaringModule(moduleId)
         ?: return DependencyFinder.Result.NotFound("Module '$moduleId' is not found")
-    return selectPlugin(pluginId)
+    return selectPluginVersion(pluginId)
   }
 
-  private fun selectPlugin(pluginId: String): DependencyFinder.Result {
-    val selectResult = updateSelector.select(pluginId, pluginRepository)
+  private fun selectPluginVersion(pluginId: String): DependencyFinder.Result {
+    val selectResult = pluginVersionSelector.selectPluginVersion(pluginId, pluginRepository)
     return when (selectResult) {
-      is UpdateSelector.Result.Plugin -> DependencyFinder.Result.FoundPluginInfo(selectResult.updateInfo, pluginDetailsProvider)
-      is UpdateSelector.Result.NotFound -> DependencyFinder.Result.NotFound(selectResult.reason)
+      is PluginVersionSelector.Result.Plugin -> DependencyFinder.Result.DetailsProvided(pluginDetailsCache.getPluginDetails(selectResult.pluginInfo))
+      is PluginVersionSelector.Result.NotFound -> DependencyFinder.Result.NotFound(selectResult.reason)
     }
   }
 }

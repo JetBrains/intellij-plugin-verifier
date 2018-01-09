@@ -13,7 +13,7 @@ import org.junit.Assert
 import org.junit.Test
 
 /**
- * @author Sergey Patrikeev
+ * Tests the [DependenciesGraphPrettyPrinter].
  */
 class DependenciesGraphPrettyPrinterTest {
 
@@ -70,7 +70,7 @@ class DependenciesGraphPrettyPrinterTest {
     val vertices = plugin2MissingDependencies.keys.map { createDependencyNode(it) }
     val edges = fromAndTo2Dependencies.map { (fromAndTo, deps) -> DependencyEdge(createDependencyNode(fromAndTo.first), createDependencyNode(fromAndTo.second), deps) }
 
-    val startVertex = vertices.find { it.id == "start" }!!
+    val startVertex = vertices.find { it.pluginId == "start" }!!
     val dependenciesGraph = DependenciesGraph(startVertex, vertices.toList(), edges)
     val prettyPrinter = DependenciesGraphPrettyPrinter(dependenciesGraph)
     val prettyPresentation = prettyPrinter.prettyPresentation().trim()

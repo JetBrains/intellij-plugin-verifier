@@ -51,7 +51,7 @@ private fun convertEdge(dependencyEdge: DependencyEdge): DependenciesGraphs.Depe
         .build()
 
 private fun convertNode(internalNode: DependencyNode): DependenciesGraphs.DependenciesGraph.Node = DependenciesGraphs.DependenciesGraph.Node.newBuilder()
-    .setPluginId(internalNode.id)
+    .setPluginId(internalNode.pluginId)
     .setVersion(internalNode.version)
     .addAllMissingDependencies(internalNode.missingDependencies.map { convertMissingDependency(it) })
     .build()

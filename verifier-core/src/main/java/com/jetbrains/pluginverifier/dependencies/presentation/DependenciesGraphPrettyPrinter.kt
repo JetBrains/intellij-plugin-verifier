@@ -4,7 +4,19 @@ import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 
 /**
- * @author Sergey Patrikeev
+ * Provides the [prettyPresentation] method that prints the [DependenciesGraph] in
+ * a fancy way like the 'gradle dependencies' does:
+ *
+ * ```
+ * start:1.0
+ * +--- b:1.0
+ * |    +--- c:1.0
+ * |    |    +--- (optional) optional.module:<unspecified> [declaring module optional.module]
+ * |    |    +--- (failed) e: plugin e is not found
+ * |    |    \--- (failed) f (optional): plugin e is not found
+ * |    \--- some.module:<unspecified> [declaring module some.module]
+ * \--- c:1.0 (*)
+ * ```
  */
 class DependenciesGraphPrettyPrinter(private val dependenciesGraph: DependenciesGraph) {
 
