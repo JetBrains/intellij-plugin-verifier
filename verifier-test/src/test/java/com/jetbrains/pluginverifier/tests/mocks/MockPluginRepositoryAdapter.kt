@@ -32,13 +32,13 @@ open class MockPluginRepositoryAdapter : PluginRepository {
   fun createMockUpdateInfo(pluginId: String, pluginName: String, version: String, updateId: Int) =
       UpdateInfo(
           pluginId,
+          pluginName,
           version,
           this@MockPluginRepositoryAdapter,
-          pluginName,
+          null,
+          null,
+          "vendor",
           updateId,
-          "",
-          "",
-          "",
           exampleUrl, exampleUrl
       )
 

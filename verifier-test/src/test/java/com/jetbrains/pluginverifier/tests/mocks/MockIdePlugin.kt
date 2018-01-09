@@ -9,9 +9,9 @@ import org.jdom2.Document
 import org.jdom2.Element
 import java.io.File
 
-open class MockIdePlugin(
+data class MockIdePlugin(
     override val pluginId: String? = null,
-    override val pluginName: String? = null,
+    override val pluginName: String? = pluginId,
     override val pluginVersion: String? = null,
     override val description: String? = null,
     override val url: String? = null,
@@ -20,7 +20,7 @@ open class MockIdePlugin(
     override val vendorUrl: String? = null,
     override val changeNotes: String? = null,
     private val dependencies: List<PluginDependency> = emptyList(),
-    private val underlyingDocument: Document = Document(),
+    private val underlyingDocument: Document = Document(Element("idea-plugin")),
     private val optionalDescriptors: Map<String, IdePlugin> = emptyMap(),
     private val extensions: Multimap<String, Element> = HashMultimap.create(),
     private val sinceBuild: IdeVersion = IdeVersion.createIdeVersion("IU-163.1"),
