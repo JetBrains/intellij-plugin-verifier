@@ -36,6 +36,7 @@ JDK: $jdkDescriptor
     if (deleteReleaseIdeOnExit) {
       releaseIdeFile.file.deleteLogged()
     }
+    jdkDescriptor.closeLogged()
   }
 
   override fun toString(): String = presentableText()

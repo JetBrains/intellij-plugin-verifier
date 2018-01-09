@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.tests.mocks
 
+import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
 import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import java.nio.file.Paths
@@ -19,7 +20,7 @@ object TestJdkDescriptorProvider {
       Paths.get(jdkPath)
     }
     require(jdkDir.isDirectory)
-    return JdkDescriptor(jdkDir)
+    return JdkDescriptor(JdkResolverCreator.createJdkResolver(jdkDir.toFile()), jdkDir)
   }
 
 }

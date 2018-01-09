@@ -7,7 +7,6 @@ import com.jetbrains.pluginverifier.misc.listPresentationInColumns
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
@@ -35,7 +34,7 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
     }
 
     val trunkIdeDescriptor = OptionsParser.createIdeDescriptor(Paths.get(args[0]), opts)
-    val jdkDescriptor = JdkDescriptor(OptionsParser.getJdkDir(opts))
+    val jdkDescriptor = OptionsParser.createJdkDescriptor(opts)
 
     val releaseIdeFileLock: FileLock
     val deleteReleaseIdeOnExit: Boolean

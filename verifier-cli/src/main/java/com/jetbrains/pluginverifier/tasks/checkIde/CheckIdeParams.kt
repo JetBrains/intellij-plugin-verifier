@@ -29,6 +29,7 @@ Excluded plugins: [${excludedPlugins.joinToString()}]
 
   override fun close() {
     ideDescriptor.closeLogged()
+    jdkDescriptor.closeLogged()
     externalClassPath.closeLogged()
   }
 
