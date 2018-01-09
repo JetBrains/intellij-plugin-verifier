@@ -1,70 +1,76 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
-import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.core.VerifierTask
+import com.jetbrains.pluginverifier.dependencies.resolution.ChainDependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
+import com.jetbrains.pluginverifier.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
-import com.jetbrains.pluginverifier.parameters.filtering.toPluginIdAndVersion
-import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.local.LocalPluginInfo
 import com.jetbrains.pluginverifier.tasks.Task
 
+/**
+ * The 'check-plugin' [task] [Task] that verifies
+ * each plugin from the [CheckPluginParams.pluginsToCheck]
+ * against each IDE from the [CheckPluginParams.ideDescriptors].
+ *
+ * If one [verified] [CheckPluginParams.pluginsToCheck] plugin depends on
+ * another verified plugin then the [dependency resolution] [DependencyFinder]
+ * prefers the verified plugin to a plugin from the [PluginRepository].
+ */
 class CheckPluginTask(private val parameters: CheckPluginParams,
                       private val pluginRepository: PluginRepository,
-                      private val pluginDetailsProvider: PluginDetailsProvider) : Task() {
+                      private val pluginDetailsCache: PluginDetailsCache) : Task {
 
-  private fun createDependencyFinder(ide: Ide, localPlugins: LocalPlugins): DependencyFinder = object : DependencyFinder {
+  /**
+   * The 'check-plugin' task must try to find the plugin among all the verified plugins:
+   * suppose plugins A and B are verified simultaneously and the A depends on the B.
+   * Then the B must be resolved from the local plugins when checking the A.
+   */
+  private inner class VerifiedPluginsDependencyFinder(private val plugins: List<PluginInfo>) : DependencyFinder {
 
-    private val ideDependencyResolver = IdeDependencyFinder(ide, pluginRepository, pluginDetailsProvider)
+    override fun findPluginDependency(dependency: PluginDependency) =
+        plugins
+            .filterIsInstance<LocalPluginInfo>()
+            .filter { it.pluginId == dependency.id }
+            .maxWith(compareBy(VersionComparatorUtil.COMPARATOR) { it.version })
+            ?.let { DependencyFinder.Result.DetailsProvided(pluginDetailsCache.getPluginDetails(it)) }
+            ?: DependencyFinder.Result.NotFound("Not found among local plugins")
 
-    override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result =
-        findPluginLocally(dependency) ?: ideDependencyResolver.findPluginDependency(dependency)
-
-    private fun findPluginLocally(dependency: PluginDependency): DependencyFinder.Result? {
-      val pluginInfo = localPlugins.findPluginInfo(dependency.id)
-      return pluginInfo?.let { DependencyFinder.Result.FoundPluginInfo(pluginInfo, pluginDetailsProvider) }
-    }
   }
 
-  private class LocalPlugins(pluginInfos: List<PluginInfo>) {
-
-    private val pluginIdAndVersionToInfo = pluginInfos
-        .associateBy({ it.toPluginIdAndVersion() }) { it }
-
-    fun findPluginInfo(pluginId: String): PluginInfo? {
-      val pluginIdAndVersion = pluginIdAndVersionToInfo.keys.find { it.pluginId == pluginId }
-      if (pluginIdAndVersion != null) {
-        return pluginIdAndVersionToInfo[pluginIdAndVersion]!!
-      }
-      return null
-    }
+  /**
+   * Creates the [DependencyFinder] that:
+   * 1) Resolves the [dependency] [PluginDependency] in the [verified] [CheckPluginParams.pluginsToCheck] plugins
+   * 2) If not found, resolves the [dependency] [PluginDependency] using the [IdeDependencyFinder].
+   */
+  private fun createDependencyFinder(ideDescriptor: IdeDescriptor): DependencyFinder {
+    val ideDependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
+    val localPluginDependencyFinder = VerifiedPluginsDependencyFinder(parameters.pluginsToCheck)
+    return ChainDependencyFinder(listOf(localPluginDependencyFinder, ideDependencyFinder))
   }
 
   override fun execute(verificationReportage: VerificationReportage): CheckPluginResult {
-    val localPlugins = LocalPlugins(parameters.pluginInfos)
-    return doExecute(verificationReportage, localPlugins)
-  }
-
-  private fun doExecute(verificationReportage: VerificationReportage, localPlugins: LocalPlugins): CheckPluginResult {
     val tasks = parameters.ideDescriptors.flatMap { ideDescriptor ->
-      val dependencyFinder = createDependencyFinder(ideDescriptor.ide, localPlugins)
-      parameters.pluginInfos.map { pluginInfo ->
+      val dependencyFinder = createDependencyFinder(ideDescriptor)
+      parameters.pluginsToCheck.map { pluginInfo ->
         VerifierTask(pluginInfo, ideDescriptor, dependencyFinder)
       }
     }
-
     val verifierParams = VerifierParameters(
         parameters.externalClassesPrefixes,
         parameters.problemsFilters,
         parameters.externalClasspath,
         true
     )
-    val results = Verification.run(verifierParams, pluginDetailsProvider, tasks, verificationReportage, parameters.jdkDescriptor)
+    val results = Verification.run(verifierParams, pluginDetailsCache, tasks, verificationReportage, parameters.jdkDescriptor)
     return CheckPluginResult(results)
   }
 
