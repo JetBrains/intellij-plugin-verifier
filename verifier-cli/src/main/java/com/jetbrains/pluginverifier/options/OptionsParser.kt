@@ -4,7 +4,6 @@ import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
 import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
@@ -112,10 +111,9 @@ object OptionsParser {
     return runtimeDirectory
   }
 
-  fun getExternalClassPath(opts: CmdOpts): Resolver =
-      UnionResolver.create(opts.externalClasspath.map { JarFileResolver(File(it)) })
+  fun getExternalClassPath(opts: CmdOpts) = UnionResolver.create(opts.externalClasspath.map { JarFileResolver(File(it)) })
 
-  fun getExternalClassesPrefixes(opts: CmdOpts): List<String> = opts.externalClassesPrefixes.map { it.replace('.', '/') }
+  fun getExternalClassesPrefixes(opts: CmdOpts) = opts.externalClassesPrefixes.map { it.replace('.', '/') }
 
   private fun createIgnoredProblemsFilter(opts: CmdOpts): ProblemsFilter? {
     if (opts.ignoreProblemsFile != null) {
@@ -189,9 +187,20 @@ object OptionsParser {
   }
 
   /**
-   * (id-s of plugins to check all builds, id-s of plugins to check last builds)
+   * Parses a file containing a list of plugin IDs to check.
+   * ```
+   * plugin.one
+   * $plugin.two
+   * //comment
+   * plugin.three$
+   * ```
+   *
+   * If '$' is specified as a prefix or a suffix, only the last version
+   * of the plugin will be checked. Otherwise, all versions of the plugin will be checked.
+   *
+   * Returns (ID-s of plugins to check all builds, ID-s of plugins to check last builds)
    */
-  fun parsePluginsToCheck(opts: CmdOpts): Pair<List<String>, List<String>> {
+  private fun parseAllAndLastPluginIdsToCheck(opts: CmdOpts): Pair<List<String>, List<String>> {
     val pluginsCheckAllBuilds = arrayListOf<String>()
     val pluginsCheckLastBuilds = arrayListOf<String>()
 
@@ -219,7 +228,12 @@ object OptionsParser {
       }
     }
 
-    return Pair<List<String>, List<String>>(pluginsCheckAllBuilds, pluginsCheckLastBuilds)
+    return pluginsCheckAllBuilds to pluginsCheckLastBuilds
+  }
+
+  fun parsePluginsToCheck(opts: CmdOpts, ideVersion: IdeVersion, pluginRepository: PluginRepository): List<PluginInfo> {
+    val (allVersions, lastVersions) = parseAllAndLastPluginIdsToCheck(opts)
+    return requestUpdatesToCheckByIds(allVersions, lastVersions, ideVersion, pluginRepository)
   }
 
   /**

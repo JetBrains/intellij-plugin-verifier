@@ -101,7 +101,7 @@ object PluginVerifierMain {
 
   private fun runVerification(
       command: String,
-      freeArgs: MutableList<String>,
+      freeArgs: List<String>,
       pluginRepository: PluginRepository,
       ideFilesBank: IdeFilesBank,
       pluginDetailsCache: PluginDetailsCache,
@@ -113,26 +113,32 @@ object PluginVerifierMain {
     val verificationReportsDirectory = OptionsParser.getVerificationReportsDirectory(opts)
     println("Verification reports directory: $verificationReportsDirectory")
 
-    val parameters = try {
-      parametersBuilder.build(opts, freeArgs)
-    } catch (e: IllegalArgumentException) {
-      LOG.error("Unable to prepare verification parameters", e)
-      System.err.println(e.message)
-      exitProcess(1)
-    }
+    createVerificationReportage(
+        verificationReportsDirectory,
+        opts.printPluginVerificationProgress
+    ).use { verificationReportage ->
 
-    val taskResult = parameters.use {
-      println("Task ${runner.commandName} parameters: $parameters")
-      createVerificationReportage(verificationReportsDirectory, opts.printPluginVerificationProgress).use { verificationReportage ->
+      val parameters = try {
+        parametersBuilder.build(opts, freeArgs, verificationReportage)
+      } catch (e: IllegalArgumentException) {
+        LOG.error("Unable to prepare verification parameters", e)
+        System.err.println(e.message)
+        exitProcess(1)
+      }
+
+      val taskResult = parameters.use {
+        println("Task ${runner.commandName} parameters: $parameters")
+
         runner
             .createTask(parameters, pluginRepository, pluginDetailsCache)
             .execute(verificationReportage)
       }
-    }
 
-    val outputOptions = OptionsParser.parseOutputOptions(opts, verificationReportsDirectory)
-    val taskResultsPrinter = runner.createTaskResultsPrinter(outputOptions, pluginRepository)
-    taskResultsPrinter.printResults(taskResult)
+      val outputOptions = OptionsParser.parseOutputOptions(opts, verificationReportsDirectory)
+      val taskResultsPrinter = runner.createTaskResultsPrinter(outputOptions, pluginRepository)
+      taskResultsPrinter.printResults(taskResult)
+
+    }
   }
 
   private fun getIdeDownloadProgressListener(): (Double) -> Unit {

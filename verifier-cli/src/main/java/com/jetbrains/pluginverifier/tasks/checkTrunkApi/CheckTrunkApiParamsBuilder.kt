@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.misc.listPresentationInColumns
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
@@ -26,7 +27,7 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
                                  val ideFilesBank: IdeFilesBank) : TaskParametersBuilder {
 
   //todo: close the IdeDescriptors in case of exception
-  override fun build(opts: CmdOpts, freeArgs: List<String>): CheckTrunkApiParams {
+  override fun build(opts: CmdOpts, freeArgs: List<String>, verificationReportage: VerificationReportage): CheckTrunkApiParams {
     val apiOpts = CheckTrunkApiOpts()
     val args = Args.parse(apiOpts, freeArgs.toTypedArray(), false)
     if (args.isEmpty()) {

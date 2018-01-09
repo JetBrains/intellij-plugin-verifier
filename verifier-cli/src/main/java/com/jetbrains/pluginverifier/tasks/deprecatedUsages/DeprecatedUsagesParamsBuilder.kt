@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
@@ -16,7 +16,7 @@ import java.nio.file.Paths
 
 class DeprecatedUsagesParamsBuilder(val pluginRepository: PluginRepository,
                                     val pluginDetailsCache: PluginDetailsCache) : TaskParametersBuilder {
-  override fun build(opts: CmdOpts, freeArgs: List<String>): DeprecatedUsagesParams {
+  override fun build(opts: CmdOpts, freeArgs: List<String>, verificationReportage: VerificationReportage): DeprecatedUsagesParams {
     val deprecatedOpts = DeprecatedUsagesOpts()
     val unparsedArgs = Args.parse(deprecatedOpts, freeArgs.toTypedArray(), false)
     if (unparsedArgs.isEmpty()) {
@@ -32,16 +32,11 @@ class DeprecatedUsagesParamsBuilder(val pluginRepository: PluginRepository,
      * If the release IDE version is specified, get the compatible plugins' versions based on it.
      * Otherwise, use the version of the verified IDE.
      */
-    val ideVersionForCompatiblePlugins = deprecatedOpts.releaseIdeVersion?.let { IdeVersion.createIdeVersionIfValid(it) } ?: ideDescriptor.ideVersion
-    val updatesToCheck = requestUpdatesToCheck(opts, ideVersionForCompatiblePlugins)
+    val ideVersion = deprecatedOpts.releaseIdeVersion?.let { IdeVersion.createIdeVersionIfValid(it) } ?: ideDescriptor.ideVersion
+    val updatesToCheck = OptionsParser.parsePluginsToCheck(opts, ideVersion, pluginRepository)
     val pluginInfos = updatesToCheck.map { it as UpdateInfo }
     val dependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
-    return DeprecatedUsagesParams(ideDescriptor, jdkDescriptor, pluginInfos, dependencyFinder, ideVersionForCompatiblePlugins)
-  }
-
-  private fun requestUpdatesToCheck(allOpts: CmdOpts, ideVersionForCompatiblePlugins: IdeVersion): List<PluginInfo> {
-    val (checkAllBuilds, checkLastBuilds) = OptionsParser.parsePluginsToCheck(allOpts)
-    return OptionsParser.requestUpdatesToCheckByIds(checkAllBuilds, checkLastBuilds, ideVersionForCompatiblePlugins, pluginRepository)
+    return DeprecatedUsagesParams(ideDescriptor, jdkDescriptor, pluginInfos, dependencyFinder, ideVersion)
   }
 
   class DeprecatedUsagesOpts {

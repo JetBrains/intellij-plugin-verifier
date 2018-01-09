@@ -1,8 +1,13 @@
 package com.jetbrains.pluginverifier.tasks
 
 import com.jetbrains.pluginverifier.options.CmdOpts
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 
+/**
+ * [Builds] [build] the [TaskParameters] of the upcoming verification
+ * by provided [CmdOpts] and a list of CLI arguments.
+ */
 interface TaskParametersBuilder {
   //todo: build of parameters might take much time so we should log the progress of its separate steps
-  fun build(opts: CmdOpts, freeArgs: List<String>): TaskParameters
+  fun build(opts: CmdOpts, freeArgs: List<String>, verificationReportage: VerificationReportage): TaskParameters
 }
