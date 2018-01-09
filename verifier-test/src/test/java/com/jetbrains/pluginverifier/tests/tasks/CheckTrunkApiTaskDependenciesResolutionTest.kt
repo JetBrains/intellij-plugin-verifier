@@ -170,7 +170,7 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
         if (details != null) {
           return PluginDetailsProvider.Result.Provided(details)
         }
-        return PluginDetailsProvider.Result.BadPlugin(emptyList())
+        return PluginDetailsProvider.Result.InvalidPlugin(emptyList())
       }
     }
   }
