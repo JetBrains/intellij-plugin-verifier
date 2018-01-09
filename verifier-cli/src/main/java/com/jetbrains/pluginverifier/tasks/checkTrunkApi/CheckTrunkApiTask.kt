@@ -4,18 +4,13 @@ import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.core.VerifierTask
-import com.jetbrains.pluginverifier.dependencies.resolution.BundledPluginDependencyFinder
-import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
-import com.jetbrains.pluginverifier.dependencies.resolution.LocalRepositoryDependencyFinder
-import com.jetbrains.pluginverifier.dependencies.resolution.RepositoryDependencyFinder
-import com.jetbrains.pluginverifier.dependencies.resolution.repository.LastCompatibleSelector
-import com.jetbrains.pluginverifier.dependencies.resolution.repository.LastSelector
+import com.jetbrains.pluginverifier.dependencies.resolution.*
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
 import com.jetbrains.pluginverifier.parameters.filtering.toPluginIdAndVersion
-import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -29,7 +24,7 @@ import java.util.concurrent.Executors
  */
 class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
                         private val pluginRepository: PluginRepository,
-                        private val pluginDetailsProvider: PluginDetailsProvider) : Task() {
+                        private val pluginDetailsCache: PluginDetailsCache) : Task {
 
   override fun execute(verificationReportage: VerificationReportage): CheckTrunkApiResult {
     with(parameters) {
@@ -59,7 +54,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
     val tasks = pluginsToCheck.map { VerifierTask(it, ideDescriptor, dependencyFinder) }
     return Verification.run(
         verifierParams,
-        pluginDetailsProvider,
+        pluginDetailsCache,
         tasks,
         verificationReportage,
         parameters.jdkDescriptor
@@ -69,13 +64,13 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
   private fun IdeDescriptor.getIdeBrokenListedPlugins(): List<PluginIdAndVersion> =
       IdeResourceUtil.getBrokenPluginsListedInIde(ide) ?: emptyList()
 
-  private val publicRepositoryReleaseCompatibleFinder = RepositoryDependencyFinder(pluginRepository, LastCompatibleSelector(parameters.releaseIde.ideVersion), pluginDetailsProvider)
+  private val publicRepositoryReleaseCompatibleFinder = RepositoryDependencyFinder(pluginRepository, LastCompatibleVersionSelector(parameters.releaseIde.ideVersion), pluginDetailsCache)
 
   private inner class ReleaseFinder : DependencyFinder {
 
-    private val releaseBundledFinder = BundledPluginDependencyFinder(parameters.releaseIde.ide, pluginDetailsProvider)
+    private val releaseBundledFinder = BundledPluginDependencyFinder(parameters.releaseIde.ide)
 
-    private val releaseLocalRepositoryFinder = parameters.releaseLocalPluginsRepository?.let { LocalRepositoryDependencyFinder(it, pluginDetailsProvider) }
+    private val releaseLocalRepositoryFinder = parameters.releaseLocalPluginsRepository?.let { LocalRepositoryDependencyFinder(it, pluginDetailsCache) }
 
     override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
       val bundledFound = releaseBundledFinder.findPluginDependency(dependency)
@@ -98,11 +93,11 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
 
   private inner class TrunkFinder : DependencyFinder {
 
-    private val trunkBundledFinder = BundledPluginDependencyFinder(parameters.trunkIde.ide, pluginDetailsProvider)
+    private val trunkBundledFinder = BundledPluginDependencyFinder(parameters.trunkIde.ide)
 
-    private val trunkLocalFinder = parameters.trunkLocalPluginsRepository?.let { LocalRepositoryDependencyFinder(it, pluginDetailsProvider) }
+    private val trunkLocalFinder = parameters.trunkLocalPluginsRepository?.let { LocalRepositoryDependencyFinder(it, pluginDetailsCache) }
 
-    private val downloadLastUpdateResolver = RepositoryDependencyFinder(pluginRepository, LastSelector(), pluginDetailsProvider)
+    private val downloadLastUpdateResolver = RepositoryDependencyFinder(pluginRepository, LastVersionSelector(), pluginDetailsCache)
 
     override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
       val bundledFound = trunkBundledFinder.findPluginDependency(dependency)

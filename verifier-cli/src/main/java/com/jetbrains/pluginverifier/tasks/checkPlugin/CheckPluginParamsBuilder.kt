@@ -7,7 +7,6 @@ import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -28,13 +27,13 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
           "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963")
     }
     val ideDescriptors = freeArgs.drop(1).map { Paths.get(it) }.map { OptionsParser.createIdeDescriptor(it, opts) }
-    val pluginInfos = getPluginsToCheck(freeArgs[0], ideDescriptors.map { it.ideVersion })
-    val jdkDescriptor = JdkDescriptor(OptionsParser.getJdkDir(opts))
+    val pluginsToCheck = getPluginsToCheck(freeArgs[0], ideDescriptors.map { it.ideVersion })
+    val jdkDescriptor = OptionsParser.createJdkDescriptor(opts)
     val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
     val externalClasspath = OptionsParser.getExternalClassPath(opts)
     externalClasspath.closeOnException {
       val problemsFilters = OptionsParser.getProblemsFilters(opts)
-      return CheckPluginParams(pluginInfos, ideDescriptors, jdkDescriptor, externalClassesPrefixes, problemsFilters, externalClasspath)
+      return CheckPluginParams(pluginsToCheck, ideDescriptors, jdkDescriptor, externalClassesPrefixes, problemsFilters, externalClasspath)
     }
   }
 
@@ -65,7 +64,7 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository) : TaskPar
   }
 
   private fun createLocalPluginInfo(file: Path): LocalPluginInfo? =
-      LocalPluginRepository(file.toUri().toURL()).addPlugin(file)
+      LocalPluginRepository(file.toUri().toURL()).addLocalPlugin(file)
 
   private fun getPlugins(pluginListFile: File, ideVersion: IdeVersion, pluginPaths: List<String>): List<PluginInfo> =
       pluginPaths

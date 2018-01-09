@@ -6,11 +6,13 @@ import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
@@ -92,9 +94,21 @@ object PluginVerifierMain {
     val ideFilesDiskSetting = getIdeDownloadDirDiskSpaceSetting()
     val ideFilesBank = IdeFilesBank(ideDownloadDir, ideRepository, ideFilesDiskSetting, getIdeDownloadProgressListener())
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractDir)
+    PluginDetailsCache(10, pluginDetailsProvider).use {
+      runVerification(command, freeArgs, pluginRepository, ideFilesBank, it, opts)
+    }
+  }
 
+  private fun runVerification(
+      command: String,
+      freeArgs: MutableList<String>,
+      pluginRepository: PluginRepository,
+      ideFilesBank: IdeFilesBank,
+      pluginDetailsCache: PluginDetailsCache,
+      opts: CmdOpts
+  ) {
     val runner = findTaskRunner(command)
-    val parametersBuilder = runner.getParametersBuilder(pluginRepository, ideFilesBank, pluginDetailsProvider)
+    val parametersBuilder = runner.getParametersBuilder(pluginRepository, ideFilesBank, pluginDetailsCache)
 
     val verificationReportsDirectory = OptionsParser.getVerificationReportsDirectory(opts)
     println("Verification reports directory: $verificationReportsDirectory")
@@ -111,7 +125,7 @@ object PluginVerifierMain {
       println("Task ${runner.commandName} parameters: $parameters")
       createVerificationReportage(verificationReportsDirectory, opts.printPluginVerificationProgress).use { verificationReportage ->
         runner
-            .createTask(parameters, pluginRepository, pluginDetailsProvider)
+            .createTask(parameters, pluginRepository, pluginDetailsCache)
             .execute(verificationReportage)
       }
     }

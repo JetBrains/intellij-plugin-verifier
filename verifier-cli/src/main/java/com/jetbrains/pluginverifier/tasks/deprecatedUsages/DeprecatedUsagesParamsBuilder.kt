@@ -5,8 +5,7 @@ import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
-import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -16,7 +15,7 @@ import com.sampullara.cli.Argument
 import java.nio.file.Paths
 
 class DeprecatedUsagesParamsBuilder(val pluginRepository: PluginRepository,
-                                    val pluginDetailsProvider: PluginDetailsProvider) : TaskParametersBuilder {
+                                    val pluginDetailsCache: PluginDetailsCache) : TaskParametersBuilder {
   override fun build(opts: CmdOpts, freeArgs: List<String>): DeprecatedUsagesParams {
     val deprecatedOpts = DeprecatedUsagesOpts()
     val unparsedArgs = Args.parse(deprecatedOpts, freeArgs.toTypedArray(), false)
@@ -28,7 +27,7 @@ class DeprecatedUsagesParamsBuilder(val pluginRepository: PluginRepository,
       throw IllegalArgumentException("IDE path must be a directory: " + idePath)
     }
     val ideDescriptor = OptionsParser.createIdeDescriptor(idePath, opts)
-    val jdkDescriptor = OptionsParser.getJdkDir(opts)
+    val jdkDescriptor = OptionsParser.createJdkDescriptor(opts)
     /**
      * If the release IDE version is specified, get the compatible plugins' versions based on it.
      * Otherwise, use the version of the verified IDE.
@@ -36,8 +35,8 @@ class DeprecatedUsagesParamsBuilder(val pluginRepository: PluginRepository,
     val ideVersionForCompatiblePlugins = deprecatedOpts.releaseIdeVersion?.let { IdeVersion.createIdeVersionIfValid(it) } ?: ideDescriptor.ideVersion
     val updatesToCheck = requestUpdatesToCheck(opts, ideVersionForCompatiblePlugins)
     val pluginInfos = updatesToCheck.map { it as UpdateInfo }
-    val ideDependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsProvider)
-    return DeprecatedUsagesParams(ideDescriptor, JdkDescriptor(jdkDescriptor), pluginInfos, ideDependencyFinder, ideVersionForCompatiblePlugins)
+    val dependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
+    return DeprecatedUsagesParams(ideDescriptor, jdkDescriptor, pluginInfos, dependencyFinder, ideVersionForCompatiblePlugins)
   }
 
   private fun requestUpdatesToCheck(allOpts: CmdOpts, ideVersionForCompatiblePlugins: IdeVersion): List<PluginInfo> {

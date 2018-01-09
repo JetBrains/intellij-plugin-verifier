@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.output.OutputOptions
-import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParameters
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
@@ -14,14 +14,14 @@ class CheckIdeRunner : TaskRunner() {
   override fun getParametersBuilder(
       pluginRepository: PluginRepository,
       ideFilesBank: IdeFilesBank,
-      pluginDetailsProvider: PluginDetailsProvider
-  ) = CheckIdeParamsBuilder(pluginRepository, pluginDetailsProvider)
+      pluginDetailsCache: PluginDetailsCache
+  ) = CheckIdeParamsBuilder(pluginRepository, pluginDetailsCache)
 
   override fun createTask(
       parameters: TaskParameters,
       pluginRepository: PluginRepository,
-      pluginDetailsProvider: PluginDetailsProvider
-  ) = CheckIdeTask(parameters as CheckIdeParams, pluginRepository, pluginDetailsProvider)
+      pluginDetailsCache: PluginDetailsCache
+  ) = CheckIdeTask(parameters as CheckIdeParams, pluginRepository, pluginDetailsCache)
 
   override fun createTaskResultsPrinter(outputOptions: OutputOptions, pluginRepository: PluginRepository): TaskResultPrinter =
       CheckIdeResultPrinter(outputOptions, pluginRepository)

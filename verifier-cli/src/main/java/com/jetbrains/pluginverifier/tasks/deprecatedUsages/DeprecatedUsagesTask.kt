@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
-import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.Verdict
@@ -15,7 +15,7 @@ import com.jetbrains.pluginverifier.verifiers.IdeClassesVisitor
 
 class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
                            val pluginRepository: PluginRepository,
-                           val pluginDetailsProvider: PluginDetailsProvider) : Task() {
+                           val pluginDetailsCache: PluginDetailsCache) : Task {
 
   override fun execute(verificationReportage: VerificationReportage): DeprecatedUsagesResult {
     with(parameters) {
@@ -27,7 +27,7 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
       )
       val tasks = pluginsToCheck.map { VerifierTask(it, ideDescriptor, dependencyFinder) }
       verificationReportage.logVerificationStage("Search of the deprecated API of ${ideDescriptor.ideVersion} in " + "plugin".pluralizeWithNumber(pluginsToCheck.size) + " is about to start")
-      val results = Verification.run(verifierParams, pluginDetailsProvider, tasks, verificationReportage, jdkDescriptor)
+      val results = Verification.run(verifierParams, pluginDetailsCache, tasks, verificationReportage, jdkDescriptor)
       val pluginToDeprecatedUsages = results.associateBy({ it.plugin }, { it.verdict.toDeprecatedUsages() })
       verificationReportage.logVerificationStage("Scan of all the deprecated API elements of ${ideDescriptor.ideVersion} is about to start")
       val deprecatedIdeApiElements = IdeClassesVisitor().detectIdeDeprecatedApiElements(ideDescriptor)
