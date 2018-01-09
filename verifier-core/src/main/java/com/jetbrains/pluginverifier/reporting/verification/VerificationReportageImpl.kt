@@ -3,16 +3,11 @@ package com.jetbrains.pluginverifier.reporting.verification
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 
 class VerificationReportageImpl(private val reporterSetProvider: VerificationReportersProvider) : VerificationReportage {
   private var verifiedPlugins: Int = 0
 
   private var totalPlugins: Int = 0
-
-  override fun logVerificationExecutorCreated(availableMemory: SpaceAmount, availableCpu: Long, concurrencyLevel: Int) {
-    reportMessage("Available memory: $availableMemory; Available CPU = $availableCpu; Concurrency level = $concurrencyLevel")
-  }
 
   private fun reportMessage(message: String) {
     reporterSetProvider.globalMessageReporters.forEach { it.report(message) }
@@ -31,7 +26,7 @@ class VerificationReportageImpl(private val reporterSetProvider: VerificationRep
   }
 
   @Synchronized
-  override fun createPluginLogger(pluginInfo: PluginInfo, ideDescriptor: IdeDescriptor): PluginVerificationReportage {
+  override fun createPluginReportage(pluginInfo: PluginInfo, ideDescriptor: IdeDescriptor): PluginVerificationReportage {
     totalPlugins++
     val reporterSet = reporterSetProvider.getReporterSetForPluginVerification(pluginInfo, ideDescriptor.ideVersion)
     return PluginVerificationReportageImpl(this, pluginInfo, ideDescriptor.ideVersion, reporterSet)

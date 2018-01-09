@@ -11,7 +11,9 @@ import com.jetbrains.pluginverifier.results.warnings.Warning
 import java.io.Closeable
 
 /**
- * @author Sergey Patrikeev
+ * Set of configured [reporters] [Reporter] used
+ * by the [PluginVerificationReportage] to report and save the
+ * verification stages and results.
  */
 data class VerificationReporterSet(
     val verdictReporters: List<Reporter<Verdict>>,

@@ -10,7 +10,16 @@ import com.jetbrains.pluginverifier.results.warnings.Warning
 import java.io.Closeable
 
 /**
- * @author Sergey Patrikeev
+ * Allows to save the plugin verification stages and results
+ * in a configurable way.
+ *
+ * For instance, it is possible to configure the [PluginVerificationReportage]
+ * using a [VerificationReporterSet] in such a way that
+ * the results of each plugin verification would be saved to a dedicated directory.
+ *
+ * This interface extends [Closeable] to indicate that there could be
+ * resources allocated, such as opens file streams.
+ * Thus, the [PluginVerificationReportage] must be closed after the usage.
  */
 interface PluginVerificationReportage : Closeable {
   val plugin: PluginInfo
