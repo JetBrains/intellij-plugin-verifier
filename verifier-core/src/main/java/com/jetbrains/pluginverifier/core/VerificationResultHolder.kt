@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
 
 /**
- * @author Sergey Patrikeev
+ * Aggregates the plugin verification results.
  */
 class VerificationResultHolder(private val pluginVerificationReportage: PluginVerificationReportage) {
 
@@ -20,23 +20,15 @@ class VerificationResultHolder(private val pluginVerificationReportage: PluginVe
 
   val deprecatedUsages: MutableSet<DeprecatedApiUsage> = hashSetOf()
 
-  private var dependenciesGraph: DependenciesGraph? = null
+  var dependenciesGraph: DependenciesGraph? = null
 
   val ignoredProblemsHolder = IgnoredProblemsHolder(pluginVerificationReportage)
 
-  val pluginProblems = arrayListOf<PluginProblem>()
-
-  var notFoundReason: String? = null
-
-  var failedToDownloadReason: String? = null
-
-  fun setDependenciesGraph(graph: DependenciesGraph) {
-    dependenciesGraph = graph
-    pluginVerificationReportage.logDependencyGraph(graph)
-    addCycleWarningIfExists(graph)
-  }
-
-  fun getDependenciesGraph(): DependenciesGraph = dependenciesGraph!!
+  /**
+   * Holds the [warnings] [PluginProblem.Level.WARNING]
+   * of the plugin structure.
+   */
+  val pluginWarnings = arrayListOf<PluginProblem>()
 
   fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
     if (deprecatedApiUsage !in deprecatedUsages) {
@@ -65,7 +57,7 @@ class VerificationResultHolder(private val pluginVerificationReportage: PluginVe
     }
   }
 
-  private fun addCycleWarningIfExists(dependenciesGraph: DependenciesGraph) {
+  fun addCycleWarningIfExists(dependenciesGraph: DependenciesGraph) {
     val cycles = dependenciesGraph.getCycles()
     if (cycles.isNotEmpty()) {
       val nodes = cycles[0]

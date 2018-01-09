@@ -3,6 +3,10 @@ package com.jetbrains.pluginverifier.parameters.filtering
 import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
 import com.jetbrains.pluginverifier.results.problems.Problem
 
+/**
+ * Holds the [Problem]s that have been ignored by [ProblemsFilter].
+ * Those problems will be logged using the [pluginVerificationReportage].
+ */
 class IgnoredProblemsHolder(private val pluginVerificationReportage: PluginVerificationReportage) {
 
   val ignoredProblems = hashSetOf<Problem>()
