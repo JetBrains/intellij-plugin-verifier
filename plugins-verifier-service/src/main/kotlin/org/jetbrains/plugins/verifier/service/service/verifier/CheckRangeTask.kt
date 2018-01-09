@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
@@ -9,7 +10,7 @@ import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
-import com.jetbrains.pluginverifier.plugin.PluginDetails
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
@@ -52,30 +53,13 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
 
   }
 
-  override fun execute(progress: ProgressIndicator): Result =
-      serverContext.pluginDetailsCache.getPluginDetails(updateInfo).use { pluginDetailsCacheEntry ->
-        val pluginDetails = pluginDetailsCacheEntry.resource
-        with(pluginDetails) {
-          when (this) {
-            is PluginDetails.NotFound -> Result(
-                updateInfo,
-                Result.ResultType.NON_DOWNLOADABLE,
-                nonDownloadableReason = reason
-            )
-            is PluginDetails.FailedToDownload -> Result(
-                updateInfo,
-                Result.ResultType.NON_DOWNLOADABLE,
-                nonDownloadableReason = reason
-            )
-            is PluginDetails.BadPlugin -> Result(
-                updateInfo,
-                Result.ResultType.INVALID_PLUGIN,
-                invalidPluginProblems = pluginErrorsAndWarnings
-            )
-            is PluginDetails.ByFileLock,
-            is PluginDetails.FoundOpenPluginAndClasses,
-            is PluginDetails.FoundOpenPluginWithoutClasses -> doVerification(progress)
-          }
+  override fun execute(progress: ProgressIndicator) =
+      with(serverContext.pluginDetailsCache.getPluginDetails(updateInfo)) {
+        when (this) {
+          is PluginDetailsCache.Result.FileNotFound -> Result(updateInfo, Result.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = reason)
+          is PluginDetailsCache.Result.InvalidPlugin -> Result(updateInfo, Result.ResultType.INVALID_PLUGIN, invalidPluginProblems = pluginErrors)
+          is PluginDetailsCache.Result.Provided -> doVerification(progress)
+          is PluginDetailsCache.Result.Failed -> throw error
         }
       }
 
@@ -108,7 +92,7 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
     val dependencyFinder = IdeDependencyFinder(
         ideDescriptor.ide,
         serverContext.pluginRepository,
-        serverContext.pluginDetailsProvider
+        serverContext.pluginDetailsCache
     )
 
     val verifierParameters = VerifierParameters(
@@ -118,16 +102,20 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
         findDeprecatedApiUsages = true
     )
 
-    val jdkDescriptor = JdkDescriptor(serverContext.jdkManager.getJdkHome(jdkVersion))
-    val verifierTask = VerifierTask(updateInfo, ideDescriptor, dependencyFinder)
+    val jdkHomeDir = serverContext.jdkManager.getJdkHome(jdkVersion)
+    JdkResolverCreator.createJdkResolver(jdkHomeDir.toFile()).use { jdkClassesResolver ->
+      val jdkDescriptor = JdkDescriptor(jdkClassesResolver, jdkHomeDir)
 
-    return Verification.run(
-        verifierParameters,
-        serverContext.pluginDetailsProvider,
-        listOf(verifierTask),
-        verificationReportage,
-        jdkDescriptor
-    )
+      val verifierTask = VerifierTask(updateInfo, ideDescriptor, dependencyFinder)
+
+      return Verification.run(
+          verifierParameters,
+          serverContext.pluginDetailsCache,
+          listOf(verifierTask),
+          verificationReportage,
+          jdkDescriptor
+      )
+    }
   }
 
   private fun createVerificationReportage(progress: ProgressIndicator) = VerificationReportageImpl(

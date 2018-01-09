@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.options
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
+import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
 import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
@@ -21,6 +22,7 @@ import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsFetcher
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsParser
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -75,6 +77,12 @@ object OptionsParser {
     return IdeDescriptorCreator.createByPath(ideToCheckFile, ideVersion)
   }
 
+  fun createJdkDescriptor(opts: CmdOpts): JdkDescriptor {
+    val jdkHomeDir = getJdkHomeDir(opts)
+    val jdkClassesResolver = JdkResolverCreator.createJdkResolver(jdkHomeDir.toFile())
+    return JdkDescriptor(jdkClassesResolver, jdkHomeDir)
+  }
+
   private fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {
     val build = opts.actualIdeVersion
     if (!build.isNullOrBlank()) {
@@ -84,7 +92,7 @@ object OptionsParser {
     return null
   }
 
-  fun getJdkDir(opts: CmdOpts): Path {
+  private fun getJdkHomeDir(opts: CmdOpts): Path {
     val runtimeDirectory: Path
 
     if (opts.runtimeDir != null) {

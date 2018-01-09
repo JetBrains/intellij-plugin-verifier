@@ -4,6 +4,7 @@ import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
@@ -26,20 +27,19 @@ class ExtractFeaturesTask(val serverContext: ServerContext,
     }
   }
 
-  override fun execute(progress: ProgressIndicator) =
-      getSomeCompatibleIde().use { ideCacheEntryDescriptor ->
-        val ideDescriptor = ideCacheEntryDescriptor.resource
-
-        serverContext.pluginDetailsCache.getPluginDetails(updateInfo).use { pluginDetailsCacheEntry ->
-          val plugin = pluginDetailsCacheEntry.resource.plugin
-              ?: return Result(updateInfo, Result.ResultType.BAD_PLUGIN, emptyList())
-
-          runFeatureExtractor(ideDescriptor, plugin)
-        }
+  override fun execute(progress: ProgressIndicator) = getSomeCompatibleIde().use {
+    val ideDescriptor = it.resource
+    with(serverContext.pluginDetailsCache.getPluginDetails(updateInfo)) {
+      when (this) {
+        is PluginDetailsCache.Result.Provided -> runFeatureExtractor(ideDescriptor, pluginDetails.plugin)
+        is PluginDetailsCache.Result.FileNotFound -> Result(updateInfo, Result.ResultType.NOT_FOUND, emptyList())
+        is PluginDetailsCache.Result.InvalidPlugin -> Result(updateInfo, Result.ResultType.BAD_PLUGIN, emptyList())
+        is PluginDetailsCache.Result.Failed -> throw error
       }
+    }
+  }
 
-  private fun runFeatureExtractor(ideDescriptor: IdeDescriptor,
-                                  plugin: IdePlugin): Result {
+  private fun runFeatureExtractor(ideDescriptor: IdeDescriptor, plugin: IdePlugin): Result {
     val extractorResult = FeaturesExtractor.extractFeatures(ideDescriptor.ide, ideDescriptor.ideResolver, plugin)
     val resultType = when {
       extractorResult.extractedAll -> Result.ResultType.EXTRACTED_ALL

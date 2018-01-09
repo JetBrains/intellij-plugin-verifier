@@ -13,8 +13,9 @@ import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginDetails
-import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -26,35 +27,61 @@ import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
 import java.util.concurrent.Callable
 
+/**
+ * The verification worker that:
+ * 1) Downloads the plugin file specified by [pluginInfo] and reads its class files.
+ * 2) Builds the dependencies graph of the plugin using the provided [dependencyFinder].
+ * 3) Runs the [bytecode verification] [BytecodeVerifier]
+ * of plugins' classes against classes of the [IDE] [ideDescriptor],
+ * classes of the resolved dependencies and classes of the [jdkDescriptor].
+ * The [parameters] [verifierParameters] are used to configure the verification.
+ * The [pluginVerificationReportage] is used to log the verification steps,
+ * progress, and the results.
+ * The [pluginDetailsCache] is used to create the [PluginDetails] of the verified
+ * plugin and its dependencies.
+ */
 class PluginVerifier(private val pluginInfo: PluginInfo,
                      private val ideDescriptor: IdeDescriptor,
                      private val dependencyFinder: DependencyFinder,
-                     private val runtimeResolver: Resolver,
+                     private val jdkDescriptor: JdkDescriptor,
                      private val verifierParameters: VerifierParameters,
-                     private val pluginDetailsProvider: PluginDetailsProvider,
-                     private val pluginVerificationReportage: PluginVerificationReportage) : Callable<Result> {
+                     private val pluginVerificationReportage: PluginVerificationReportage,
+                     private val pluginDetailsCache: PluginDetailsCache) : Callable<Result> {
 
   companion object {
+    /**
+     * [Selectors] [ClassesSelector] of the plugins' classes
+     * that constitute the plugin class loader.
+     */
     private val classesSelectors = listOf(MainClassesSelector(), ExternalBuildClassesSelector())
   }
 
   override fun call(): Result {
     pluginVerificationReportage.logVerificationStarted()
     return try {
-      createPluginAndDoVerification()
+      doVerification()
     } finally {
       pluginVerificationReportage.logVerificationFinished()
     }
   }
 
-  private fun createPluginAndDoVerification() =
-      pluginDetailsProvider.providePluginDetails(pluginInfo).use { pluginDetails ->
-        pluginDetails.doVerification(pluginInfo)
+  private fun doVerification() = pluginDetailsCache.getPluginDetails(pluginInfo).use {
+    with(it) {
+      when (this) {
+        is PluginDetailsCache.Result.Provided -> doVerification(pluginDetails, pluginInfo)
+        is PluginDetailsCache.Result.InvalidPlugin -> Result(pluginInfo, ideDescriptor.ideVersion, Verdict.Bad(pluginErrors), emptySet())
+        is PluginDetailsCache.Result.FileNotFound -> Result(pluginInfo, ideDescriptor.ideVersion, Verdict.NotFound(reason), emptySet())
+        is PluginDetailsCache.Result.Failed -> throw error
       }
+    }
+  }
 
-  private fun PluginDetails.doVerification(pluginInfo: PluginInfo): Result {
+  private fun doVerification(pluginDetails: PluginDetails, pluginInfo: PluginInfo): Result {
     val resultHolder = VerificationResultHolder(pluginVerificationReportage)
-    calculateVerificationResults(resultHolder)
+
+    resultHolder.addPluginWarnings(pluginDetails.pluginWarnings)
+    runVerification(pluginDetails.plugin, pluginDetails.pluginClassesLocations, resultHolder)
+
     val verdict = resultHolder.getVerdict()
     pluginVerificationReportage.logVerdict(verdict)
     return Result(
@@ -65,72 +92,79 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     )
   }
 
-  private fun PluginDetails.calculateVerificationResults(resultHolder: VerificationResultHolder): Any = when (this) {
-    is PluginDetails.BadPlugin -> {
-      resultHolder.pluginProblems.addAll(pluginErrorsAndWarnings)
-    }
-    is PluginDetails.NotFound -> {
-      resultHolder.notFoundReason = reason
-    }
-    is PluginDetails.FailedToDownload -> {
-      resultHolder.failedToDownloadReason = reason
-    }
-    is PluginDetails.ByFileLock,
-    is PluginDetails.FoundOpenPluginAndClasses,
-    is PluginDetails.FoundOpenPluginWithoutClasses -> {
-      if (warnings != null) {
-        resultHolder.addPluginWarnings(warnings!!)
-      }
-      runVerification(plugin!!, pluginClassesLocations, resultHolder)
-    }
-  }
-
   private fun runVerification(plugin: IdePlugin,
-                              pluginClassesLocations: IdePluginClassesLocations?,
+                              pluginClassesLocations: IdePluginClassesLocations,
                               resultHolder: VerificationResultHolder) {
     val depGraph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
     try {
-      val start = DepVertex(plugin.pluginId!!, PluginDetails.FoundOpenPluginWithoutClasses(plugin))
-      DepGraphBuilder(dependencyFinder).fillDependenciesGraph(start, depGraph)
-
-      val apiGraph = DepGraph2ApiGraphConverter().convert(depGraph, start)
-      resultHolder.setDependenciesGraph(apiGraph)
-
-      if (pluginClassesLocations != null) {
-        val pluginResolver = pluginClassesLocations.createPluginClassLoader()
-        val dependenciesResolver = depGraph.toDependenciesClassesResolver()
-        //don't close this classLoader because it contains the client's resolvers.
-        val classLoader = createClassLoader(pluginResolver, dependenciesResolver)
-        val checkClasses = getClassesForCheck(pluginClassesLocations)
-
-        val verificationContext = VerificationContext(
-            plugin,
-            ideDescriptor.ideVersion,
-            classLoader,
-            ideDescriptor.ideResolver,
-            resultHolder,
-            verifierParameters.externalClassesPrefixes,
-            verifierParameters.findDeprecatedApiUsages,
-            verifierParameters.problemFilters
-        )
-        val progressIndicator = object : Reporter<Double> {
-          override fun close() = Unit
-
-          override fun report(t: Double) {
-            pluginVerificationReportage.logProgress(t)
-          }
-        }
-        runVerification(verificationContext, checkClasses, progressIndicator)
-      }
+      buildDependenciesGraph(plugin, depGraph, resultHolder)
+      runVerification(plugin, depGraph, resultHolder, pluginClassesLocations)
     } finally {
-      depGraph.vertexSet().forEach { it.pluginDetails.closeLogged() }
+      /**
+       * Deallocate the dependencies' resources.
+       */
+      depGraph.vertexSet().forEach { it.dependencyResult.closeLogged() }
     }
   }
 
-  private fun getClassesForCheck(pluginClassesLocations: IdePluginClassesLocations): Set<String> =
+  private fun buildDependenciesGraph(plugin: IdePlugin,
+                                     depGraph: DirectedGraph<DepVertex, DepEdge>,
+                                     resultHolder: VerificationResultHolder) {
+    val start = DepVertex(plugin.pluginId!!, DependencyFinder.Result.FoundPlugin(plugin))
+    DepGraphBuilder(dependencyFinder).buildDependenciesGraph(depGraph, start)
+
+    val apiGraph = DepGraph2ApiGraphConverter().convert(depGraph, start)
+    resultHolder.dependenciesGraph = apiGraph
+    pluginVerificationReportage.logDependencyGraph(apiGraph)
+    resultHolder.addCycleWarningIfExists(apiGraph)
+  }
+
+  private fun runVerification(
+      plugin: IdePlugin,
+      depGraph: DirectedGraph<DepVertex, DepEdge>,
+      resultHolder: VerificationResultHolder,
+      pluginClassesLocations: IdePluginClassesLocations
+  ) {
+    val pluginResolver = pluginClassesLocations.createPluginClassLoader()
+    val dependenciesResolver = depGraph.toDependenciesClassesResolver()
+    //don't close this classLoader because it contains the client's resolvers.
+    val classLoader = createClassLoader(pluginResolver, dependenciesResolver)
+    val checkClasses = getClassesForCheck(pluginClassesLocations)
+
+    buildVerificationContextAndDoVerification(plugin, classLoader, resultHolder, checkClasses)
+  }
+
+  private fun buildVerificationContextAndDoVerification(
+      plugin: IdePlugin,
+      classLoader: Resolver,
+      resultHolder: VerificationResultHolder,
+      checkClasses: Set<String>
+  ) {
+    val verificationContext = VerificationContext(
+        plugin,
+        ideDescriptor.ideVersion,
+        classLoader,
+        ideDescriptor.ideResolver,
+        resultHolder,
+        verifierParameters.externalClassesPrefixes,
+        verifierParameters.findDeprecatedApiUsages,
+        verifierParameters.problemFilters
+    )
+
+    val progressIndicator = object : Reporter<Double> {
+      override fun close() = Unit
+
+      override fun report(t: Double) {
+        pluginVerificationReportage.logProgress(t)
+      }
+    }
+    runVerification(verificationContext, checkClasses, progressIndicator)
+  }
+
+  private fun getClassesForCheck(pluginClassesLocations: IdePluginClassesLocations) =
       classesSelectors.flatMapTo(hashSetOf()) { it.getClassesForCheck(pluginClassesLocations) }
 
-  private fun createClassLoader(pluginResolver: Resolver, dependenciesResolver: Resolver): Resolver =
+  private fun createClassLoader(pluginResolver: Resolver, dependenciesResolver: Resolver) =
       CacheResolver(getVerificationClassLoader(dependenciesResolver, pluginResolver))
 
   private fun IdePluginClassesLocations.createPluginClassLoader(): Resolver {
@@ -148,32 +182,27 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
    * 2) if not found, among the classes of the used JDK
    * 3) if not found, among the libraries of the checked IDE
    * 4) if not found, among the classes of the plugin dependencies' classes
-   * 5) if not found, it is finally searched in the external classes specified in the verification arguments.
+   * 5) if not found, it is finally searched in the external classes specified in the verification parameters.
    */
   private fun getVerificationClassLoader(dependenciesResolver: Resolver, mainPluginResolver: Resolver) = UnionResolver.create(
-      listOf(mainPluginResolver, runtimeResolver, ideDescriptor.ideResolver, dependenciesResolver, verifierParameters.externalClassPath)
+      listOf(mainPluginResolver, jdkDescriptor.jdkClassesResolver, ideDescriptor.ideResolver, dependenciesResolver, verifierParameters.externalClassPath)
   )
 
-  private fun DirectedGraph<DepVertex, DepEdge>.toDependenciesClassesResolver(): Resolver =
-      UnionResolver.create(vertexSet()
-          .mapNotNull { it.pluginDetails.pluginClassesLocations }
+  private fun DirectedGraph<DepVertex, DepEdge>.toDependenciesClassesResolver() = UnionResolver.create(
+      vertexSet()
+          .mapNotNull {
+            val cacheResult = (it.dependencyResult as? DependencyFinder.Result.DetailsProvided)?.pluginDetailsCacheResult
+            (cacheResult as? PluginDetailsCache.Result.Provided)?.pluginDetails?.pluginClassesLocations
+          }
           .map { it.createPluginClassLoader() }
-      )
+  )
 
   private fun VerificationResultHolder.getVerdict(): Verdict {
-    if (notFoundReason != null) {
-      return Verdict.NotFound(notFoundReason!!)
+    if (pluginWarnings.isNotEmpty()) {
+      return Verdict.Bad(pluginWarnings)
     }
 
-    if (failedToDownloadReason != null) {
-      return Verdict.FailedToDownload(failedToDownloadReason!!)
-    }
-
-    if (pluginProblems.isNotEmpty()) {
-      return Verdict.Bad(pluginProblems)
-    }
-
-    val dependenciesGraph = getDependenciesGraph()
+    val dependenciesGraph = dependenciesGraph!!
     if (dependenciesGraph.start.missingDependencies.isNotEmpty()) {
       return Verdict.MissingDependencies(dependenciesGraph, problems, warnings, deprecatedUsages)
     }
