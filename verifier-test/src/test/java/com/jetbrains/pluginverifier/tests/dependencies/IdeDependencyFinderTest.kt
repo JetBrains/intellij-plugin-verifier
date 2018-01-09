@@ -7,8 +7,9 @@ import com.jetbrains.pluginverifier.dependencies.graph.DepEdge
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
+import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
-import com.jetbrains.pluginverifier.plugin.PluginDetails
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -86,15 +87,16 @@ class IdeDependencyFinderTest {
     }
 
     val pluginDetailsProvider = PluginDetailsProviderImpl(Paths.get("."))
-    val ideDependencyResolver = IdeDependencyFinder(ide, repository, pluginDetailsProvider)
+    val pluginDetailsCache = PluginDetailsCache(10, pluginDetailsProvider)
+    val ideDependencyResolver = IdeDependencyFinder(ide, repository, pluginDetailsCache)
 
-    val start = DepVertex("myPlugin", PluginDetails.FoundOpenPluginWithoutClasses(startPlugin))
+    val start = DepVertex("myPlugin", DependencyFinder.Result.FoundPlugin(startPlugin))
     val graph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
     val depGraphBuilder = DepGraphBuilder(ideDependencyResolver)
-    depGraphBuilder.fillDependenciesGraph(start, graph)
+    depGraphBuilder.buildDependenciesGraph(graph, start)
 
     val dependenciesGraph = DepGraph2ApiGraphConverter().convert(graph, start)
-    val deps = dependenciesGraph.vertices.map { it.id }
+    val deps = dependenciesGraph.vertices.map { it.pluginId }
     assertEquals(setOf("myPlugin", "test", "somePlugin", "moduleContainer"), deps.toSet())
 
     assertEquals(listOf(MissingDependency(externalModuleDependency, "Failed to download test.")), dependenciesGraph.start.missingDependencies)

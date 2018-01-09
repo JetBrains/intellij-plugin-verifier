@@ -2,25 +2,29 @@ package com.jetbrains.pluginverifier.dependencies.resolution
 
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.pluginverifier.dependencies.resolution.repository.LastCompatibleSelector
-import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginRepository
 
 /**
- * @author Sergey Patrikeev
+ * [DependencyFinder] that searches for the
+ * dependency among the [bundled] [Ide.getBundledPlugins] [ide] plugins,
+ * or the [last compatible] [LastCompatibleVersionSelector] plugin in the [PluginRepository].
  */
-class IdeDependencyFinder(ide: Ide, pluginRepository: PluginRepository, pluginDetailsProvider: PluginDetailsProvider) : DependencyFinder {
-  private val bundledResolver = BundledPluginDependencyFinder(ide, pluginDetailsProvider)
+class IdeDependencyFinder(ide: Ide,
+                          pluginRepository: PluginRepository,
+                          pluginDetailsCache: PluginDetailsCache) : DependencyFinder {
 
-  private val repositoryDependencyFinder = RepositoryDependencyFinder(pluginRepository, LastCompatibleSelector(ide.version), pluginDetailsProvider)
+  private val bundledPluginFinder = BundledPluginDependencyFinder(ide)
 
-  override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
-    val result = bundledResolver.findPluginDependency(dependency)
-    if (result is DependencyFinder.Result.NotFound) {
-      return repositoryDependencyFinder.findPluginDependency(dependency)
-    }
-    return result
-  }
+  private val repositoryDependencyFinder = RepositoryDependencyFinder(
+      pluginRepository,
+      LastCompatibleVersionSelector(ide.version),
+      pluginDetailsCache
+  )
 
+  private val dependencyFinder = ChainDependencyFinder(listOf(bundledPluginFinder, repositoryDependencyFinder))
+
+  override fun findPluginDependency(dependency: PluginDependency) =
+      dependencyFinder.findPluginDependency(dependency)
 
 }

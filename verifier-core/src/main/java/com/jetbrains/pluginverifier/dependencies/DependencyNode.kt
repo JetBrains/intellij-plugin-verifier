@@ -1,7 +1,15 @@
 package com.jetbrains.pluginverifier.dependencies
 
-data class DependencyNode(val id: String,
+/**
+ * Represents a node in the [DependenciesGraph].
+ *
+ * The node is a plugin [pluginId] and [version].
+ *
+ * The plugin could depend on modules and plugins that might not
+ * be resolved. Those modules and plugins are  [missingDependencies].
+ */
+data class DependencyNode(val pluginId: String,
                           val version: String,
                           val missingDependencies: List<MissingDependency>) {
-  override fun toString(): String = "$id:$version"
+  override fun toString(): String = "$pluginId:$version"
 }

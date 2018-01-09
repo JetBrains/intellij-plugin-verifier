@@ -6,6 +6,14 @@ import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphWal
 import java.util.*
 import kotlin.collections.ArrayList
 
+/**
+ * Graph of [plugin dependencies] [com.jetbrains.plugin.structure.intellij.plugin.PluginDependency]
+ * built for the plugin verification.
+ *
+ * The graph is stored as a set of [vertices] and [edges].
+ *
+ * The verified plugin is [start].
+ */
 data class DependenciesGraph(val start: DependencyNode,
                              val vertices: List<DependencyNode>,
                              val edges: List<DependencyEdge>) {

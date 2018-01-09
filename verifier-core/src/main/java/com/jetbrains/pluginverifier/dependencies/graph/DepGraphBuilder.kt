@@ -2,41 +2,48 @@ package com.jetbrains.pluginverifier.dependencies.graph
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
-import com.jetbrains.pluginverifier.plugin.PluginDetails
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import org.jgrapht.DirectedGraph
 
+/**
+ * Builds the dependencies graph using the [dependencyFinder].
+ */
 class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
 
-  fun fillDependenciesGraph(current: DepVertex, directedGraph: DirectedGraph<DepVertex, DepEdge>) {
-    if (!directedGraph.containsVertex(current)) {
-      directedGraph.addVertex(current)
-      val plugin = current.pluginDetails.plugin
+  /**
+   * Transitively resolves all the dependencies and adds
+   * corresponding [vertices] [DepVertex] to the [graph]
+   * starting from the [start].
+   */
+  fun buildDependenciesGraph(graph: DirectedGraph<DepVertex, DepEdge>, start: DepVertex) {
+    if (!graph.containsVertex(start)) {
+      graph.addVertex(start)
+      val plugin = start.dependencyResult.getPlugin()
       if (plugin != null) {
         for (pluginDependency in plugin.dependencies) {
-          val dependency = resolveDependency(pluginDependency, directedGraph) ?: continue
-          fillDependenciesGraph(dependency, directedGraph)
-          directedGraph.addEdge(current, dependency, DepEdge(pluginDependency))
+          val resolvedDependency = resolveDependency(pluginDependency, graph)
+          buildDependenciesGraph(graph, resolvedDependency)
+          graph.addEdge(start, resolvedDependency, DepEdge(pluginDependency))
         }
       }
     }
   }
 
-  private fun resolveDependency(pluginDependency: PluginDependency, directedGraph: DirectedGraph<DepVertex, DepEdge>): DepVertex? {
-    val alreadyResolved = directedGraph.vertexSet().find { pluginDependency.id == it.dependencyId }
-    if (alreadyResolved == null) {
-      val resolvedPluginDependency = dependencyFinder.findPluginDependency(pluginDependency)
-      val pluginDetails = resolvedPluginDependency.toPluginDetails() ?: return null
-      return DepVertex(pluginDependency.id, pluginDetails)
+  private fun DependencyFinder.Result.getPlugin() = when (this) {
+    is DependencyFinder.Result.DetailsProvided -> when (pluginDetailsCacheResult) {
+      is PluginDetailsCache.Result.Provided -> pluginDetailsCacheResult.pluginDetails.plugin
+      is PluginDetailsCache.Result.InvalidPlugin -> null
+      is PluginDetailsCache.Result.Failed -> null
+      is PluginDetailsCache.Result.FileNotFound -> null
     }
-    return alreadyResolved
+    is DependencyFinder.Result.FoundPlugin -> plugin
+    is DependencyFinder.Result.NotFound -> null
+    is DependencyFinder.Result.DefaultIdeModule -> null
   }
 
-  private fun DependencyFinder.Result.toPluginDetails() = when (this) {
-    is DependencyFinder.Result.FoundPluginInfo -> pluginDetailsProvider.providePluginDetails(pluginInfo)
-    is DependencyFinder.Result.PluginAndDetailsProvider -> pluginDetailsProvider.provideDetailsByExistingPlugins(plugin)
-    is DependencyFinder.Result.FoundOpenPluginWithoutClasses -> PluginDetails.FoundOpenPluginWithoutClasses(plugin)
-    is DependencyFinder.Result.NotFound -> PluginDetails.NotFound(reason)
-    is DependencyFinder.Result.DefaultIdeaModule -> null
-  }
+  private fun resolveDependency(pluginDependency: PluginDependency, directedGraph: DirectedGraph<DepVertex, DepEdge>) =
+      directedGraph.vertexSet()
+          .find { pluginDependency.id == it.dependencyId }
+          ?: DepVertex(pluginDependency.id, dependencyFinder.findPluginDependency(pluginDependency))
 
 }
