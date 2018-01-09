@@ -83,23 +83,29 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
 
   /**
    * Creates a directory for reports of the plugin in the verified IDE:
+   * ```
    * com.plugin.id/  <- if the plugin is specified by its plugin-id and version
    *     1.0.0/
    *          ....
    *     2.0.0/
    * plugin.zip/     <- if the plugin is specified by the local file path
    *     ....
+   * ```
    */
-  private fun createPluginVerificationDirectory(pluginInfo: PluginInfo): Path =
-      when (pluginInfo) {
-        is UpdateInfo -> {
-          val pluginId = pluginInfo.pluginId.replaceInvalidFileNameCharacters()
-          val version = "${pluginInfo.version} (#${pluginInfo.updateId})".replaceInvalidFileNameCharacters()
-          Paths.get(pluginId, version)
-        }
-        is LocalPluginInfo -> Paths.get(pluginInfo.pluginFile.simpleName)
-        else -> Paths.get(pluginInfo.presentableName)
+  private fun createPluginVerificationDirectory(pluginInfo: PluginInfo): Path? {
+    val pluginId = pluginInfo.pluginId.replaceInvalidFileNameCharacters()
+    return when (pluginInfo) {
+      is UpdateInfo -> {
+        val version = "${pluginInfo.version} (#${pluginInfo.updateId})".replaceInvalidFileNameCharacters()
+        Paths.get(pluginId, version)
       }
+      is LocalPluginInfo -> {
+        val version = "${pluginInfo.version} (${pluginInfo.pluginFile.simpleName})".replaceInvalidFileNameCharacters()
+        Paths.get(pluginId, version)
+      }
+      else -> Paths.get(pluginId, pluginInfo.version.replaceInvalidFileNameCharacters())
+    }
+  }
 
   private fun createWarningReporters(pluginVerificationDirectory: Path) = buildList<Reporter<Warning>> {
     add(FileReporter(pluginVerificationDirectory.resolve("warnings.txt")))
