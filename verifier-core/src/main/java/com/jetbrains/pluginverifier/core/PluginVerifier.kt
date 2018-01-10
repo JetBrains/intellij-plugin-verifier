@@ -25,6 +25,7 @@ import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
+import org.slf4j.LoggerFactory
 import java.util.concurrent.Callable
 
 /**
@@ -49,6 +50,9 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
                      private val pluginDetailsCache: PluginDetailsCache) : Callable<Result> {
 
   companion object {
+
+    private val LOG = LoggerFactory.getLogger(PluginVerifier::class.java)
+
     /**
      * [Selectors] [ClassesSelector] of the plugins' classes
      * that constitute the plugin class loader.
@@ -60,6 +64,9 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     pluginVerificationReportage.logVerificationStarted()
     return try {
       doVerification()
+    } catch (e: Throwable) {
+      LOG.error("Unable to verify $pluginInfo against $ideDescriptor", e)
+      throw e
     } finally {
       pluginVerificationReportage.logVerificationFinished()
     }
