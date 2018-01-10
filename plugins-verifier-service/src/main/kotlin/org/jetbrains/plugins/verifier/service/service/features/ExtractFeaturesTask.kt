@@ -30,11 +30,13 @@ class ExtractFeaturesTask(val serverContext: ServerContext,
   override fun execute(progress: ProgressIndicator) = getSomeCompatibleIde().use {
     val ideDescriptor = it.resource
     with(serverContext.pluginDetailsCache.getPluginDetails(updateInfo)) {
-      when (this) {
-        is PluginDetailsCache.Result.Provided -> runFeatureExtractor(ideDescriptor, pluginDetails.plugin)
-        is PluginDetailsCache.Result.FileNotFound -> Result(updateInfo, Result.ResultType.NOT_FOUND, emptyList())
-        is PluginDetailsCache.Result.InvalidPlugin -> Result(updateInfo, Result.ResultType.BAD_PLUGIN, emptyList())
-        is PluginDetailsCache.Result.Failed -> throw error
+      use {
+        when (this) {
+          is PluginDetailsCache.Result.Provided -> runFeatureExtractor(ideDescriptor, pluginDetails.plugin)
+          is PluginDetailsCache.Result.FileNotFound -> Result(updateInfo, Result.ResultType.NOT_FOUND, emptyList())
+          is PluginDetailsCache.Result.InvalidPlugin -> Result(updateInfo, Result.ResultType.BAD_PLUGIN, emptyList())
+          is PluginDetailsCache.Result.Failed -> throw error
+        }
       }
     }
   }

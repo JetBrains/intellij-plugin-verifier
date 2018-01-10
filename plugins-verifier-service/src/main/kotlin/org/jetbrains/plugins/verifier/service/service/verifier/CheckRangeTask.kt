@@ -10,7 +10,6 @@ import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
-import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
@@ -18,6 +17,7 @@ import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterS
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportersProvider
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.results.Verdict
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkVersion
 import org.jetbrains.plugins.verifier.service.service.verifier.CheckRangeTask.Result
@@ -53,17 +53,7 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
 
   }
 
-  override fun execute(progress: ProgressIndicator) =
-      with(serverContext.pluginDetailsCache.getPluginDetails(updateInfo)) {
-        when (this) {
-          is PluginDetailsCache.Result.FileNotFound -> Result(updateInfo, Result.ResultType.NON_DOWNLOADABLE, nonDownloadableReason = reason)
-          is PluginDetailsCache.Result.InvalidPlugin -> Result(updateInfo, Result.ResultType.INVALID_PLUGIN, invalidPluginProblems = pluginErrors)
-          is PluginDetailsCache.Result.Provided -> doVerification(progress)
-          is PluginDetailsCache.Result.Failed -> throw error
-        }
-      }
-
-  private fun doVerification(progress: ProgressIndicator): Result {
+  override fun execute(progress: ProgressIndicator): Result {
     val ideDescriptorEntries = serverContext.ideDescriptorsCache.getIdeDescriptors { availableIdeVersions ->
       availableIdeVersions.filter {
         it in toCheckIdeVersions && updateInfo.isCompatibleWith(it)
@@ -85,6 +75,12 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
   private fun checkPluginWithIdes(ideDescriptors: List<IdeDescriptor>, progress: ProgressIndicator): Result {
     val verificationReportage = createVerificationReportage(progress)
     val allResults = ideDescriptors.flatMap { checkPluginWithIde(it, verificationReportage) }
+    if (allResults.any { it.verdict is Verdict.NotFound }) {
+      return Result(updateInfo, Result.ResultType.NON_DOWNLOADABLE)
+    }
+    if (allResults.any { it.verdict is Verdict.Bad }) {
+      return Result(updateInfo, Result.ResultType.INVALID_PLUGIN)
+    }
     return Result(updateInfo, Result.ResultType.VERIFICATION_DONE, allResults)
   }
 
