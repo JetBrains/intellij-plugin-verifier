@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.misc.listPresentationInColumns
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
@@ -26,7 +27,8 @@ import java.util.concurrent.TimeUnit
  * @author Sergey Patrikeev
  */
 class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
-                                 val ideFilesBank: IdeFilesBank) : TaskParametersBuilder {
+                                 val ideFilesBank: IdeFilesBank,
+                                 val verificationReportage: VerificationReportage) : TaskParametersBuilder {
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckTrunkApiParams {
     val apiOpts = CheckTrunkApiOpts()
@@ -35,6 +37,7 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
       throw IllegalArgumentException("The IDE to be checked is not specified")
     }
 
+    verificationReportage.logVerificationStage("Reading classes of the TRUNK IDE ${args[0]}")
     val trunkIdeDescriptor = OptionsParser.createIdeDescriptor(Paths.get(args[0]), opts)
     return trunkIdeDescriptor.closeOnException {
       buildParameters(opts, apiOpts, trunkIdeDescriptor)
@@ -64,6 +67,7 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
       else -> throw IllegalArgumentException("Neither the version (-miv) nor the path to the IDE (-mip) with which to compare API problems are specified")
     }
 
+    verificationReportage.logVerificationStage("Reading classes of the RELEASE IDE ${releaseIdeFileLock.file}")
     val releaseIdeDescriptor = OptionsParser.createIdeDescriptor(releaseIdeFileLock.file, opts)
     return releaseIdeDescriptor.closeOnException {
       releaseIdeFileLock.closeOnException {
@@ -88,11 +92,13 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
 
     val releaseLocalRepository = apiOpts.releaseLocalPluginRepositoryRoot
         ?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it)) }
+
     val trunkLocalRepository = apiOpts.trunkLocalPluginRepositoryRoot
         ?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it)) }
 
     val jetBrainsPluginIds = getJetBrainsPluginIds(apiOpts)
 
+    verificationReportage.logVerificationStage("Requesting a list of plugins compatible with the RELEASE IDE $releaseVersion")
     val releaseCompatibleUpdates = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch last compatible updates with $releaseVersion") {
       getLastCompatiblePlugins(releaseVersion)
     }
@@ -103,7 +109,12 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
         .sortedByDescending { (it as UpdateInfo).updateId }
     )
 
-    println("The following updates will be checked with both #$trunkVersion and #$releaseVersion:\n" + pluginsToCheck.plugins.sortedBy { (it as UpdateInfo).updateId }.listPresentationInColumns(4, 60))
+    println("The following updates will be checked with both " +
+        "#$trunkVersion and #$releaseVersion:\n" +
+        pluginsToCheck.plugins
+            .sortedBy { (it as UpdateInfo).updateId }
+            .listPresentationInColumns(4, 60)
+    )
 
     val jdkDescriptor = OptionsParser.createJdkDescriptor(opts)
     return jdkDescriptor.closeOnException {
@@ -138,7 +149,7 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
 
 }
 
-private class CheckTrunkApiOpts {
+class CheckTrunkApiOpts {
   @set:Argument("major-ide-version", alias = "miv", description = "The IDE version with which to compare API problems")
   var majorIdeVersion: String? = null
 

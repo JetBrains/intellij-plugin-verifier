@@ -16,7 +16,7 @@ class CheckTrunkApiRunner : CommandRunner() {
       pluginRepository: PluginRepository,
       ideFilesBank: IdeFilesBank,
       pluginDetailsCache: PluginDetailsCache, verificationReportage: VerificationReportage
-  ) = CheckTrunkApiParamsBuilder(pluginRepository, ideFilesBank)
+  ) = CheckTrunkApiParamsBuilder(pluginRepository, ideFilesBank, verificationReportage)
 
   override fun createTask(
       parameters: TaskParameters,
