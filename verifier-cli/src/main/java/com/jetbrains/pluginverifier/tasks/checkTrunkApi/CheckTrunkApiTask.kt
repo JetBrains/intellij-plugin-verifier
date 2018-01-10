@@ -35,7 +35,13 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
       try {
         val releaseResults = executorService.submit(Callable { checkIde(releaseIde, pluginsToCheck, ReleaseFinder(), verificationReportage) })
         val trunkResults = executorService.submit(Callable { checkIde(trunkIde, pluginsToCheck, TrunkFinder(), verificationReportage) })
-        return CheckTrunkApiResult.create(releaseIde.ideVersion, releaseResults.get(), trunkIde.ideVersion, trunkResults.get(), pluginsToCheck.invalidPluginFiles)
+        return CheckTrunkApiResult.create(
+            releaseIde.ideVersion,
+            releaseResults.get(),
+            trunkIde.ideVersion,
+            trunkResults.get(),
+            pluginsToCheck.invalidPluginFiles
+        )
       } finally {
         executorService.shutdownNow()
       }
