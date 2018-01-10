@@ -8,6 +8,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.closeOnException
+import com.jetbrains.pluginverifier.misc.deleteLogged
+import com.jetbrains.pluginverifier.misc.listFiles
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import java.nio.file.Path
@@ -17,6 +19,12 @@ import java.nio.file.Path
  * uses the [extractDirectory] for extracting the `.zip`-ped plugins.
  */
 class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDetailsProvider {
+
+  init {
+    for (oldPlugin in extractDirectory.listFiles()) {
+      oldPlugin.deleteLogged()
+    }
+  }
 
   override fun providePluginDetails(pluginInfo: PluginInfo, pluginFileLock: FileLock): PluginDetailsProvider.Result {
     pluginFileLock.closeOnException {
