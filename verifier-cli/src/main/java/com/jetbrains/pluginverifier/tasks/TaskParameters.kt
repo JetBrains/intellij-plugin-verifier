@@ -11,6 +11,11 @@ import java.io.Closeable
  * [IDE descriptors] [IdeDescriptor] and [file locks] [com.jetbrains.pluginverifier.repository.files.FileLock].
  * Thus, the [parameters] [TaskParameters] must be closed after usage.
  */
-interface TaskParameters : Closeable {
-  fun presentableText(): String
+abstract class TaskParameters(
+    /**
+     * Plugins to be verified in this task.
+     */
+    val pluginsToCheck: PluginsToCheck
+) : Closeable {
+  abstract fun presentableText(): String
 }

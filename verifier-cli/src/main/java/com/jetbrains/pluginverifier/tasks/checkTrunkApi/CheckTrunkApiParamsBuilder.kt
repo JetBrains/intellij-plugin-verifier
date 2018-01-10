@@ -7,12 +7,12 @@ import com.jetbrains.pluginverifier.misc.listPresentationInColumns
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepositoryFactory
+import com.jetbrains.pluginverifier.tasks.PluginsToCheck
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
@@ -27,7 +27,7 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
                                  val ideFilesBank: IdeFilesBank) : TaskParametersBuilder {
 
   //todo: close the IdeDescriptors in case of exception
-  override fun build(opts: CmdOpts, freeArgs: List<String>, verificationReportage: VerificationReportage): CheckTrunkApiParams {
+  override fun build(opts: CmdOpts, freeArgs: List<String>): CheckTrunkApiParams {
     val apiOpts = CheckTrunkApiOpts()
     val args = Args.parse(apiOpts, freeArgs.toTypedArray(), false)
     if (args.isEmpty()) {
@@ -74,12 +74,16 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
     val releaseCompatibleUpdates = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch last compatible updates with $releaseVersion") {
       getLastCompatiblePlugins(releaseVersion)
     }
-    val pluginsToCheck = releaseCompatibleUpdates.filterNot { it.pluginId in jetBrainsPluginIds }.sortedByDescending { (it as UpdateInfo).updateId }
-    val pluginInfos = pluginsToCheck.map { it as UpdateInfo }
+    val pluginsToCheck = PluginsToCheck()
+    pluginsToCheck.plugins.addAll(releaseCompatibleUpdates
+        .filterNot { it.pluginId in jetBrainsPluginIds }
+        .sortedByDescending { (it as UpdateInfo).updateId }
+    )
 
-    println("The following updates will be checked with both #$trunkVersion and #$releaseVersion:\n" + pluginsToCheck.sortedBy { (it as UpdateInfo).updateId }.listPresentationInColumns(4, 60))
+    println("The following updates will be checked with both #$trunkVersion and #$releaseVersion:\n" + pluginsToCheck.plugins.sortedBy { (it as UpdateInfo).updateId }.listPresentationInColumns(4, 60))
 
     return CheckTrunkApiParams(
+        pluginsToCheck,
         trunkIdeDescriptor,
         releaseIdeDescriptor,
         externalClassesPrefixes,
@@ -89,8 +93,7 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
         deleteReleaseIdeOnExit,
         releaseIdeFileLock,
         releaseLocalRepository,
-        trunkLocalRepository,
-        pluginInfos
+        trunkLocalRepository
     )
   }
 

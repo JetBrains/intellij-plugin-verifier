@@ -4,19 +4,22 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import com.jetbrains.pluginverifier.tasks.TaskResult
 
-data class CheckTrunkApiResult(val releaseIdeVersion: IdeVersion,
-                               val releaseResults: List<Result>,
-                               val trunkIdeVersion: IdeVersion,
-                               val trunkResults: List<Result>,
-                               val comparingResults: Map<PluginInfo, PluginComparingResult>) : TaskResult {
+class CheckTrunkApiResult(invalidPluginFiles: List<InvalidPluginFile>,
+                          val releaseIdeVersion: IdeVersion,
+                          val releaseResults: List<Result>,
+                          val trunkIdeVersion: IdeVersion,
+                          val trunkResults: List<Result>,
+                          val comparingResults: Map<PluginInfo, PluginComparingResult>) : TaskResult(invalidPluginFiles) {
 
   companion object {
     fun create(releaseIdeVersion: IdeVersion,
                releaseResults: List<Result>,
                trunkIdeVersion: IdeVersion,
-               trunkResults: List<Result>): CheckTrunkApiResult {
+               trunkResults: List<Result>,
+               invalidPluginFiles: MutableList<InvalidPluginFile>): CheckTrunkApiResult {
       val trunkPlugin2Result = trunkResults.associateBy { it.plugin }
       val releasePlugin2Result = releaseResults.associateBy { it.plugin }
       val comparingResults = hashMapOf<PluginInfo, PluginComparingResult>()
@@ -31,7 +34,7 @@ data class CheckTrunkApiResult(val releaseIdeVersion: IdeVersion,
         comparingResults[plugin] = PluginComparingResult(plugin, oldResult, newResult)
       }
 
-      return CheckTrunkApiResult(releaseIdeVersion, releaseResults, trunkIdeVersion, trunkResults, comparingResults)
+      return CheckTrunkApiResult(invalidPluginFiles, releaseIdeVersion, releaseResults, trunkIdeVersion, trunkResults, comparingResults)
     }
 
   }

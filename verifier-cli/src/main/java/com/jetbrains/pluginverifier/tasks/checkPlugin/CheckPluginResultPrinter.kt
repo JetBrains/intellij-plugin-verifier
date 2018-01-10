@@ -19,7 +19,7 @@ class CheckPluginResultPrinter(private val outputOptions: OutputOptions,
   override fun printResults(taskResult: TaskResult) {
     with(taskResult as CheckPluginResult) {
       if (outputOptions.needTeamCityLog) {
-        printTcLog(true, this)
+        printTcLog(true)
       } else {
         printOnStdout(this)
       }
@@ -30,32 +30,43 @@ class CheckPluginResultPrinter(private val outputOptions: OutputOptions,
     }
   }
 
-  private fun printTcLog(setBuildStatus: Boolean, checkPluginResult: CheckPluginResult) {
-    with(checkPluginResult) {
-      val tcLog = TeamCityLog(System.out)
-      val vPrinter = TeamCityResultPrinter(tcLog, outputOptions.teamCityGroupType, pluginRepository, outputOptions.missingDependencyIgnoring)
-      vPrinter.printResults(results)
-      if (setBuildStatus) {
-        val totalProblemsNumber = results.flatMap {
-          val verdict = it.verdict
-          when (verdict) {
-            is Verdict.Problems -> verdict.problems
-            is Verdict.MissingDependencies -> verdict.problems  //some problems might have been caused by missing dependencies
-            is Verdict.Bad -> setOf(Any())
-            is Verdict.OK, is Verdict.Warnings, is Verdict.NotFound, is Verdict.FailedToDownload -> emptySet()
-          }
-        }.distinct().size
-        if (totalProblemsNumber > 0) {
-          tcLog.buildStatusFailure("$totalProblemsNumber problem${if (totalProblemsNumber > 0) "s" else ""} found")
-        }
+  private fun CheckPluginResult.printTcLog(setBuildStatus: Boolean) {
+    val tcLog = TeamCityLog(System.out)
+    TeamCityResultPrinter(
+        tcLog,
+        outputOptions.teamCityGroupType,
+        pluginRepository,
+        outputOptions.missingDependencyIgnoring
+    ).printResults(results)
+
+    TeamCityResultPrinter.printInvalidPluginFiles(tcLog, invalidPluginFiles)
+
+    if (setBuildStatus) {
+      setTeamCityBuildStatus(tcLog)
+    }
+  }
+
+  private fun CheckPluginResult.setTeamCityBuildStatus(tcLog: TeamCityLog) {
+    val totalProblemsNumber = results.flatMap {
+      val verdict = it.verdict
+      when (verdict) {
+        is Verdict.Problems -> verdict.problems
+        is Verdict.MissingDependencies -> verdict.problems  //some problems might have been caused by missing dependencies
+        is Verdict.Bad -> setOf(Any())
+        is Verdict.OK, is Verdict.Warnings, is Verdict.NotFound, is Verdict.FailedToDownload -> emptySet()
       }
+    }.distinct().size
+    if (totalProblemsNumber > 0) {
+      tcLog.buildStatusFailure("$totalProblemsNumber problem${if (totalProblemsNumber > 0) "s" else ""} found")
     }
   }
 
   private fun printOnStdout(checkPluginResult: CheckPluginResult) {
     with(checkPluginResult) {
       val printWriter = PrintWriter(System.out)
-      WriterResultPrinter(printWriter, outputOptions.missingDependencyIgnoring).printResults(results)
+      val writerResultPrinter = WriterResultPrinter(printWriter, outputOptions.missingDependencyIgnoring)
+      writerResultPrinter.printResults(results)
+      writerResultPrinter.printInvalidPluginFiles(invalidPluginFiles)
       printWriter.flush()
     }
   }

@@ -15,6 +15,7 @@ import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import com.jetbrains.pluginverifier.tasks.checkIde.MissingCompatibleUpdate
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -45,6 +46,24 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
       }
       return words.joinToString(" ") { it.toLowerCase() }
     }
+
+    fun printInvalidPluginFiles(tcLog: TeamCityLog, invalidPluginFiles: List<InvalidPluginFile>) {
+      if (invalidPluginFiles.isNotEmpty()) {
+        val testName = "(invalid plugins)"
+        tcLog.testStarted(testName).use {
+          val message = buildString {
+            for ((pluginFile, pluginErrors) in invalidPluginFiles) {
+              append(pluginFile)
+              for (pluginError in pluginErrors) {
+                append("    $pluginError")
+              }
+            }
+          }
+          tcLog.testFailed(testName, message, "")
+        }
+      }
+    }
+
   }
 
   fun printNoCompatibleUpdatesProblems(missingProblems: List<MissingCompatibleUpdate>) {

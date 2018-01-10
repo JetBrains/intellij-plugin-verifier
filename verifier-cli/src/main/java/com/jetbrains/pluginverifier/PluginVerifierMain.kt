@@ -16,7 +16,7 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
-import com.jetbrains.pluginverifier.tasks.TaskRunner
+import com.jetbrains.pluginverifier.tasks.CommandRunner
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeRunner
 import com.jetbrains.pluginverifier.tasks.checkPlugin.CheckPluginRunner
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiRunner
@@ -32,7 +32,12 @@ import kotlin.system.exitProcess
 
 object PluginVerifierMain {
 
-  private val taskRunners: List<TaskRunner> = listOf(CheckPluginRunner(), CheckIdeRunner(), CheckTrunkApiRunner(), DeprecatedUsagesRunner())
+  private val commandRunners: List<CommandRunner> = listOf(
+      CheckPluginRunner(),
+      CheckIdeRunner(),
+      CheckTrunkApiRunner(),
+      DeprecatedUsagesRunner()
+  )
 
   private val DEFAULT_IDE_REPOSITORY_URL = "https://jetbrains.com"
 
@@ -107,9 +112,6 @@ object PluginVerifierMain {
       pluginDetailsCache: PluginDetailsCache,
       opts: CmdOpts
   ) {
-    val runner = findTaskRunner(command)
-    val parametersBuilder = runner.getParametersBuilder(pluginRepository, ideFilesBank, pluginDetailsCache)
-
     val verificationReportsDirectory = OptionsParser.getVerificationReportsDirectory(opts)
     println("Verification reports directory: $verificationReportsDirectory")
 
@@ -118,8 +120,11 @@ object PluginVerifierMain {
         opts.printPluginVerificationProgress
     ).use { verificationReportage ->
 
+      val runner = findTaskRunner(command)
+      val parametersBuilder = runner.getParametersBuilder(pluginRepository, ideFilesBank, pluginDetailsCache, verificationReportage)
+
       val parameters = try {
-        parametersBuilder.build(opts, freeArgs, verificationReportage)
+        parametersBuilder.build(opts, freeArgs)
       } catch (e: IllegalArgumentException) {
         LOG.error("Unable to prepare verification parameters", e)
         System.err.println(e.message)
@@ -173,7 +178,7 @@ object PluginVerifierMain {
     return VerificationReportageImpl(reporterSetProvider)
   }
 
-  private fun findTaskRunner(command: String?) = taskRunners.find { command == it.commandName }
-      ?: throw IllegalArgumentException("Unsupported command: $command. Supported commands: ${taskRunners.map { it.commandName }}")
+  private fun findTaskRunner(command: String?) = commandRunners.find { command == it.commandName }
+      ?: throw IllegalArgumentException("Unsupported command: $command. Supported commands: ${commandRunners.map { it.commandName }}")
 
 }

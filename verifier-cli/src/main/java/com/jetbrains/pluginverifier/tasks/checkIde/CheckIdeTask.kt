@@ -21,15 +21,30 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
 
   //todo: get rid of excludedPlugins here?
   override fun execute(verificationReportage: VerificationReportage): CheckIdeResult {
-    val notExcludedPlugins = parameters.pluginsToCheck.filterNot { it.toPluginIdAndVersion() in parameters.excludedPlugins }
-    return doExecute(notExcludedPlugins, verificationReportage)
-  }
+    val verifierParams = VerifierParameters(
+        parameters.externalClassesPrefixes,
+        parameters.problemsFilters,
+        parameters.externalClassPath,
+        false
+    )
+    val tasks = parameters.pluginsToCheck.plugins
+        .filterNot { it.toPluginIdAndVersion() in parameters.excludedPlugins }
+        .map { VerifierTask(it, parameters.ideDescriptor, parameters.dependencyFinder) }
 
-  private fun doExecute(notExcludedPlugins: List<PluginInfo>, reportage: VerificationReportage): CheckIdeResult {
-    val verifierParams = VerifierParameters(parameters.externalClassesPrefixes, parameters.problemsFilters, parameters.externalClassPath, false)
-    val tasks = notExcludedPlugins.map { VerifierTask(it, parameters.ideDescriptor, parameters.dependencyFinder) }
-    val results = Verification.run(verifierParams, pluginDetailsCache, tasks, reportage, parameters.jdkDescriptor)
-    return CheckIdeResult(parameters.ideDescriptor.ideVersion, results, parameters.excludedPlugins, getMissingUpdatesProblems())
+    val results = Verification.run(
+        verifierParams,
+        pluginDetailsCache,
+        tasks,
+        verificationReportage,
+        parameters.jdkDescriptor
+    )
+    return CheckIdeResult(
+        parameters.pluginsToCheck.invalidPluginFiles,
+        parameters.ideDescriptor.ideVersion,
+        results,
+        parameters.excludedPlugins,
+        getMissingUpdatesProblems()
+    )
   }
 
   private fun getMissingUpdatesProblems(): List<MissingCompatibleUpdate> {

@@ -12,9 +12,9 @@ import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
 import com.jetbrains.pluginverifier.parameters.filtering.toPluginIdAndVersion
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
-import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.Result
+import com.jetbrains.pluginverifier.tasks.PluginsToCheck
 import com.jetbrains.pluginverifier.tasks.Task
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
@@ -29,12 +29,13 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
   override fun execute(verificationReportage: VerificationReportage): CheckTrunkApiResult {
     with(parameters) {
       val allBrokenPlugins = (releaseIde.getIdeBrokenListedPlugins() + trunkIde.getIdeBrokenListedPlugins()).toSet()
-      val pluginsToCheck = pluginsToCheck.filterNot { it.toPluginIdAndVersion() in allBrokenPlugins }
+      val pluginsToCheck = PluginsToCheck()
+      pluginsToCheck.plugins.addAll(pluginsToCheck.plugins.filterNot { it.toPluginIdAndVersion() in allBrokenPlugins })
       val executorService = Executors.newFixedThreadPool(2)
       try {
         val releaseResults = executorService.submit(Callable { checkIde(releaseIde, pluginsToCheck, ReleaseFinder(), verificationReportage) })
         val trunkResults = executorService.submit(Callable { checkIde(trunkIde, pluginsToCheck, TrunkFinder(), verificationReportage) })
-        return CheckTrunkApiResult.create(releaseIde.ideVersion, releaseResults.get(), trunkIde.ideVersion, trunkResults.get())
+        return CheckTrunkApiResult.create(releaseIde.ideVersion, releaseResults.get(), trunkIde.ideVersion, trunkResults.get(), pluginsToCheck.invalidPluginFiles)
       } finally {
         executorService.shutdownNow()
       }
@@ -42,7 +43,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
   }
 
   private fun checkIde(ideDescriptor: IdeDescriptor,
-                       pluginsToCheck: List<PluginInfo>,
+                       pluginsToCheck: PluginsToCheck,
                        dependencyFinder: DependencyFinder,
                        verificationReportage: VerificationReportage): List<Result> {
     val verifierParams = VerifierParameters(
@@ -51,7 +52,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
         EmptyResolver,
         false
     )
-    val tasks = pluginsToCheck.map { VerifierTask(it, ideDescriptor, dependencyFinder) }
+    val tasks = pluginsToCheck.plugins.map { VerifierTask(it, ideDescriptor, dependencyFinder) }
     return Verification.run(
         verifierParams,
         pluginDetailsCache,

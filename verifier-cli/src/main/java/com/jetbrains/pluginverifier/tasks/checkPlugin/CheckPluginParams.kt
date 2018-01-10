@@ -6,19 +6,19 @@ import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
-import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.tasks.PluginsToCheck
 import com.jetbrains.pluginverifier.tasks.TaskParameters
 
-data class CheckPluginParams(val pluginsToCheck: List<PluginInfo>,
-                             val ideDescriptors: List<IdeDescriptor>,
-                             val jdkDescriptor: JdkDescriptor,
-                             val externalClassesPrefixes: List<String>,
-                             val problemsFilters: List<ProblemsFilter>,
-                             val externalClasspath: Resolver = EmptyResolver) : TaskParameters {
+class CheckPluginParams(pluginsToCheck: PluginsToCheck,
+                        val ideDescriptors: List<IdeDescriptor>,
+                        val jdkDescriptor: JdkDescriptor,
+                        val externalClassesPrefixes: List<String>,
+                        val problemsFilters: List<ProblemsFilter>,
+                        val externalClasspath: Resolver = EmptyResolver) : TaskParameters(pluginsToCheck) {
 
   override fun presentableText(): String = """Check Plugin Configuration parameters:
   JDK: $jdkDescriptor
-  Plugins to be checked (${pluginsToCheck.size}): [${pluginsToCheck.joinToString()}]
+  Plugins to be checked (${pluginsToCheck.plugins.size}): [${pluginsToCheck.plugins.joinToString()}]
   IDE builds to be checked: [${ideDescriptors.joinToString()}]
   External classes prefixes: [${externalClassesPrefixes.joinToString()}]
   """

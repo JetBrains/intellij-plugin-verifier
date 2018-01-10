@@ -6,9 +6,7 @@ import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
@@ -16,7 +14,7 @@ import java.nio.file.Paths
 
 class DeprecatedUsagesParamsBuilder(val pluginRepository: PluginRepository,
                                     val pluginDetailsCache: PluginDetailsCache) : TaskParametersBuilder {
-  override fun build(opts: CmdOpts, freeArgs: List<String>, verificationReportage: VerificationReportage): DeprecatedUsagesParams {
+  override fun build(opts: CmdOpts, freeArgs: List<String>): DeprecatedUsagesParams {
     val deprecatedOpts = DeprecatedUsagesOpts()
     val unparsedArgs = Args.parse(deprecatedOpts, freeArgs.toTypedArray(), false)
     if (unparsedArgs.isEmpty()) {
@@ -33,10 +31,9 @@ class DeprecatedUsagesParamsBuilder(val pluginRepository: PluginRepository,
      * Otherwise, use the version of the verified IDE.
      */
     val ideVersion = deprecatedOpts.releaseIdeVersion?.let { IdeVersion.createIdeVersionIfValid(it) } ?: ideDescriptor.ideVersion
-    val updatesToCheck = OptionsParser.parsePluginsToCheck(opts, ideVersion, pluginRepository)
-    val pluginInfos = updatesToCheck.map { it as UpdateInfo }
+    val pluginsToCheck = OptionsParser.parsePluginsToCheck(opts, ideVersion, pluginRepository)
     val dependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
-    return DeprecatedUsagesParams(ideDescriptor, jdkDescriptor, pluginInfos, dependencyFinder, ideVersion)
+    return DeprecatedUsagesParams(pluginsToCheck, ideDescriptor, jdkDescriptor, dependencyFinder, ideVersion)
   }
 
   class DeprecatedUsagesOpts {

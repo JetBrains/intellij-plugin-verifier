@@ -77,6 +77,8 @@ class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions) : Tas
       }
     }
 
+    TeamCityResultPrinter.printInvalidPluginFiles(tcLog, apiChanges.invalidPluginFiles)
+
     val newProblemsCnt = allProblems.distinctBy { it.shortDescription }.size
     if (newProblemsCnt > 0) {
       tcLog.buildStatusFailure("$newProblemsCnt new " + "problem".pluralize(newProblemsCnt) + " detected in ${apiChanges.trunkIdeVersion} compared to ${apiChanges.releaseIdeVersion}")

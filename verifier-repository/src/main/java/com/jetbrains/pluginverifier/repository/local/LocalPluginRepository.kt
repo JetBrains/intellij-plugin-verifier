@@ -1,9 +1,6 @@
 package com.jetbrains.pluginverifier.repository.local
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -11,8 +8,10 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import java.net.URL
-import java.nio.file.Path
 
+/**
+ * [PluginRepository] consisting of [locally] [LocalPluginInfo] stored plugins.
+ */
 class LocalPluginRepository(override val repositoryURL: URL,
                             private val plugins: MutableList<LocalPluginInfo> = arrayListOf()) : PluginRepository {
   companion object {
@@ -23,15 +22,6 @@ class LocalPluginRepository(override val repositoryURL: URL,
     val localPluginInfo = createLocalPluginInfo(idePlugin)
     plugins.add(localPluginInfo)
     return localPluginInfo
-  }
-
-  //todo: log the creation failure. It is the verification result.
-  fun addLocalPlugin(pluginFile: Path): LocalPluginInfo? {
-    val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile.toFile())
-    return when (pluginCreationResult) {
-      is PluginCreationFail<IdePlugin> -> null
-      is PluginCreationSuccess<IdePlugin> -> addLocalPlugin(pluginCreationResult.plugin)
-    }
   }
 
   private fun createLocalPluginInfo(idePlugin: IdePlugin) = with(idePlugin) {

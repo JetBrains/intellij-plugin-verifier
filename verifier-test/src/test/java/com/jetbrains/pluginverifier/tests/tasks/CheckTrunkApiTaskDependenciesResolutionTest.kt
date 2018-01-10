@@ -16,6 +16,7 @@ import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.tasks.PluginsToCheck
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiParams
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiTask
 import com.jetbrains.pluginverifier.tests.mocks.*
@@ -126,7 +127,9 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
           EmptyPublicPluginRepository,
           pluginDetailsCache
       )
-      val (_, releaseResults, _, trunkResults, _) = checkTrunkApiTask.execute(VerificationReportageImpl(EmptyReporterSetProvider))
+      val checkTrunkApiResult = checkTrunkApiTask.execute(VerificationReportageImpl(EmptyReporterSetProvider))
+      val releaseResults = checkTrunkApiResult.releaseResults
+      val trunkResults = checkTrunkApiResult.trunkResults
       val releaseVerdict = releaseResults.single().verdict
       val trunkVerdict = trunkResults.single().verdict
       assertPluginsAreProperlyResolved(releaseVerdict, trunkVerdict)
@@ -175,19 +178,23 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
     }
   }
 
-  private fun createTrunkApiParamsForTest(releaseIde: MockIde, trunkIde: MockIde) = CheckTrunkApiParams(
-      IdeDescriptor(trunkIde, EmptyResolver),
-      IdeDescriptor(releaseIde, EmptyResolver),
-      emptyList(),
-      emptyList(),
-      TestJdkDescriptorProvider.getJdkDescriptorForTests(),
-      listOf(someJetBrainsPluginId),
-      false,
-      IdleFileLock(Paths.get("unnecessary")),
-      createLocalRepository(releaseSomeJetBrainsMockPlugin, releaseVersion),
-      createLocalRepository(trunkSomeJetBrainsMockPlugin, trunkVersion),
-      listOf(LocalPluginRepository(repositoryURL).addLocalPlugin(pluginToCheck))
-  )
+  private fun createTrunkApiParamsForTest(releaseIde: MockIde, trunkIde: MockIde): CheckTrunkApiParams {
+    val pluginsToCheck = PluginsToCheck()
+    pluginsToCheck.plugins.add(LocalPluginRepository(repositoryURL).addLocalPlugin(pluginToCheck))
+    return CheckTrunkApiParams(
+        pluginsToCheck,
+        IdeDescriptor(trunkIde, EmptyResolver),
+        IdeDescriptor(releaseIde, EmptyResolver),
+        emptyList(),
+        emptyList(),
+        TestJdkDescriptorProvider.getJdkDescriptorForTests(),
+        listOf(someJetBrainsPluginId),
+        false,
+        IdleFileLock(Paths.get("unnecessary")),
+        createLocalRepository(releaseSomeJetBrainsMockPlugin, releaseVersion),
+        createLocalRepository(trunkSomeJetBrainsMockPlugin, trunkVersion)
+    )
+  }
 
   /**
    * Creates the [LocalPluginRepository] consisting of

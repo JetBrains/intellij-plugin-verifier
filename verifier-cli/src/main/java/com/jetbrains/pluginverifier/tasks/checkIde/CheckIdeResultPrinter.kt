@@ -67,7 +67,9 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
   private fun printOnStdOut(checkIdeResult: CheckIdeResult) {
     with(checkIdeResult) {
       val printWriter = PrintWriter(System.out)
-      WriterResultPrinter(printWriter, outputOptions.missingDependencyIgnoring).printResults(results)
+      val resultPrinter = WriterResultPrinter(printWriter, outputOptions.missingDependencyIgnoring)
+      resultPrinter.printResults(results)
+      resultPrinter.printInvalidPluginFiles(invalidPluginFiles)
       printWriter.flush()
     }
   }

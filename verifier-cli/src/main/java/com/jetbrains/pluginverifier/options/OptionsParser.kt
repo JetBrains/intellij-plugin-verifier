@@ -25,6 +25,7 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.tasks.PluginsToCheck
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedReader
@@ -231,9 +232,11 @@ object OptionsParser {
     return pluginsCheckAllBuilds to pluginsCheckLastBuilds
   }
 
-  fun parsePluginsToCheck(opts: CmdOpts, ideVersion: IdeVersion, pluginRepository: PluginRepository): List<PluginInfo> {
+  fun parsePluginsToCheck(opts: CmdOpts, ideVersion: IdeVersion, pluginRepository: PluginRepository): PluginsToCheck {
+    val pluginsToCheck = PluginsToCheck()
     val (allVersions, lastVersions) = parseAllAndLastPluginIdsToCheck(opts)
-    return requestUpdatesToCheckByIds(allVersions, lastVersions, ideVersion, pluginRepository)
+    pluginsToCheck.plugins.addAll(requestUpdatesToCheckByIds(allVersions, lastVersions, ideVersion, pluginRepository))
+    return pluginsToCheck
   }
 
   /**

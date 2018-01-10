@@ -17,23 +17,27 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
                            val pluginRepository: PluginRepository,
                            val pluginDetailsCache: PluginDetailsCache) : Task {
 
-  override fun execute(verificationReportage: VerificationReportage): DeprecatedUsagesResult {
-    with(parameters) {
-      val verifierParams = VerifierParameters(
-          externalClassesPrefixes = emptyList(),
-          problemFilters = emptyList(),
-          externalClassPath = EmptyResolver,
-          findDeprecatedApiUsages = true
-      )
-      val tasks = pluginsToCheck.map { VerifierTask(it, ideDescriptor, dependencyFinder) }
-      verificationReportage.logVerificationStage("Search of the deprecated API of ${ideDescriptor.ideVersion} in " + "plugin".pluralizeWithNumber(pluginsToCheck.size) + " is about to start")
-      val results = Verification.run(verifierParams, pluginDetailsCache, tasks, verificationReportage, jdkDescriptor)
-      val pluginToDeprecatedUsages = results.associateBy({ it.plugin }, { it.verdict.toDeprecatedUsages() })
-      verificationReportage.logVerificationStage("Scan of all the deprecated API elements of ${ideDescriptor.ideVersion} is about to start")
-      val deprecatedIdeApiElements = IdeClassesVisitor().detectIdeDeprecatedApiElements(ideDescriptor)
-      verificationReportage.logVerificationStage("All stages are complete")
-      return DeprecatedUsagesResult(ideDescriptor.ideVersion, ideVersionForCompatiblePlugins, pluginToDeprecatedUsages, deprecatedIdeApiElements)
-    }
+  override fun execute(verificationReportage: VerificationReportage) = with(parameters) {
+    val verifierParams = VerifierParameters(
+        externalClassesPrefixes = emptyList(),
+        problemFilters = emptyList(),
+        externalClassPath = EmptyResolver,
+        findDeprecatedApiUsages = true
+    )
+    val tasks = pluginsToCheck.plugins.map { VerifierTask(it, ideDescriptor, dependencyFinder) }
+    verificationReportage.logVerificationStage("Search of the deprecated API of ${ideDescriptor.ideVersion} in " + "plugin".pluralizeWithNumber(pluginsToCheck.plugins.size) + " is about to start")
+    val results = Verification.run(verifierParams, pluginDetailsCache, tasks, verificationReportage, jdkDescriptor)
+    val pluginToDeprecatedUsages = results.associateBy({ it.plugin }, { it.verdict.toDeprecatedUsages() })
+    verificationReportage.logVerificationStage("Scan of all the deprecated API elements of ${ideDescriptor.ideVersion} is about to start")
+    val deprecatedIdeApiElements = IdeClassesVisitor().detectIdeDeprecatedApiElements(ideDescriptor)
+    verificationReportage.logVerificationStage("All stages are complete")
+    DeprecatedUsagesResult(
+        pluginsToCheck.invalidPluginFiles,
+        ideDescriptor.ideVersion,
+        ideVersionForCompatiblePlugins,
+        pluginToDeprecatedUsages,
+        deprecatedIdeApiElements
+    )
   }
 
   private fun Verdict.toDeprecatedUsages(): Set<DeprecatedApiUsage> = when (this) {

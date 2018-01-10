@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
+import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import java.io.PrintWriter
 
 class WriterResultPrinter(private val out: PrintWriter,
@@ -29,7 +30,19 @@ class WriterResultPrinter(private val out: PrintWriter,
     }
   }
 
-  private fun printMissingDependencies(verdict: Verdict.MissingDependencies, ideVersion: IdeVersion, plugin: PluginInfo) {
+  fun printInvalidPluginFiles(invalidPluginFiles: List<InvalidPluginFile>) {
+    out.println("The following files specified for the verification are not valid plugins:")
+    for ((pluginFile, pluginErrors) in invalidPluginFiles) {
+      out.println("    $pluginFile")
+      for (pluginError in pluginErrors) {
+        out.println("        $pluginError")
+      }
+    }
+  }
+
+  private fun printMissingDependencies(verdict: Verdict.MissingDependencies,
+                                       ideVersion: IdeVersion,
+                                       plugin: PluginInfo) {
     printDependencies(verdict)
     printWarnings(ideVersion, plugin, verdict.warnings)
     printProblems(ideVersion, plugin, verdict.problems)
