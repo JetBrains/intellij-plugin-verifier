@@ -80,7 +80,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     val resultHolder = VerificationResultHolder(pluginVerificationReportage)
 
     resultHolder.addPluginWarnings(pluginDetails.pluginWarnings)
-    runVerification(pluginDetails.plugin, pluginDetails.pluginClassesLocations, resultHolder)
+    runVerification(pluginDetails, resultHolder)
 
     val verdict = resultHolder.getVerdict()
     pluginVerificationReportage.logVerdict(verdict)
@@ -92,13 +92,12 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     )
   }
 
-  private fun runVerification(plugin: IdePlugin,
-                              pluginClassesLocations: IdePluginClassesLocations,
+  private fun runVerification(pluginDetails: PluginDetails,
                               resultHolder: VerificationResultHolder) {
     val depGraph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
     try {
-      buildDependenciesGraph(plugin, depGraph, resultHolder)
-      runVerification(plugin, depGraph, resultHolder, pluginClassesLocations)
+      buildDependenciesGraph(pluginDetails.plugin, depGraph, resultHolder)
+      runVerification(depGraph, resultHolder, pluginDetails)
     } finally {
       /**
        * Deallocate the dependencies' resources.
@@ -120,18 +119,17 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
   }
 
   private fun runVerification(
-      plugin: IdePlugin,
       depGraph: DirectedGraph<DepVertex, DepEdge>,
       resultHolder: VerificationResultHolder,
-      pluginClassesLocations: IdePluginClassesLocations
+      pluginDetails: PluginDetails
   ) {
-    val pluginResolver = pluginClassesLocations.createPluginClassLoader()
+    val pluginResolver = pluginDetails.pluginClassesLocations.createPluginClassLoader()
     val dependenciesResolver = depGraph.toDependenciesClassesResolver()
     //don't close this classLoader because it contains the client's resolvers.
     val classLoader = createClassLoader(pluginResolver, dependenciesResolver)
-    val checkClasses = getClassesForCheck(pluginClassesLocations)
+    val checkClasses = getClassesForCheck(pluginDetails.pluginClassesLocations)
 
-    buildVerificationContextAndDoVerification(plugin, classLoader, resultHolder, checkClasses)
+    buildVerificationContextAndDoVerification(pluginDetails.plugin, classLoader, resultHolder, checkClasses)
   }
 
   private fun buildVerificationContextAndDoVerification(
