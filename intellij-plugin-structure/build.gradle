@@ -74,6 +74,7 @@ publishing {
     IdePublication(MavenPublication) { configurePublication(it, ':structure-ide') }
     IdeClassesPublication(MavenPublication) { configurePublication(it, ':structure-ide-classes') }
     TeamCityPublication(MavenPublication) { configurePublication(it, ':structure-teamcity') }
+    DotNetPublication(MavenPublication) { configurePublication(it, ':structure-dotnet') }
   }
 }
 

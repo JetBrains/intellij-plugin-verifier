@@ -1,0 +1,6 @@
+dependencies {
+  compile project(':structure-base')
+  compile("org.jonnyzzz.kotlin.xml.bind:jdom:0.1.9") {
+    exclude group: "org.jetbrains.kotlin"
+  }
+}
