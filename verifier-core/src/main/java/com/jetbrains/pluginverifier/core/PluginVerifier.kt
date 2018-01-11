@@ -62,14 +62,15 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
 
   override fun call(): Result {
     pluginVerificationReportage.logVerificationStarted()
-    val result = try {
-      doVerification()
+    try {
+      val result = doVerification()
+      pluginVerificationReportage.logVerificationFinished(result.verdict.toString())
+      return result
     } catch (e: Throwable) {
       LOG.error("Unable to verify $pluginInfo against $ideDescriptor", e)
+      pluginVerificationReportage.logVerificationFinished("Failed with exception: ${e.message}")
       throw e
     }
-    pluginVerificationReportage.logVerificationFinished(result)
-    return result
   }
 
   private fun doVerification() = pluginDetailsCache.getPluginDetails(pluginInfo).use {
