@@ -42,7 +42,7 @@ class DepGraph2ApiGraphConverter {
               is PluginDetailsCache.Result.Provided -> null
               is PluginDetailsCache.Result.InvalidPlugin -> MissingDependency(
                   dependency,
-                  "Dependency $dependency is invalid: " + pluginErrors
+                  pluginErrors
                       .filter { it.level == PluginProblem.Level.ERROR }
                       .joinToString()
               )
