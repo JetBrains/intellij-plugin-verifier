@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.mocks.modify
 import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.collection.IsCollectionWithSize.hasSize
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThat
 import org.junit.Rule
 import org.junit.Test
@@ -42,17 +43,45 @@ class IdeTest {
     val ideaFolder = temporaryFolder.newFolder("idea")
     File(ideaFolder, "build.txt").writeText("IU-163.1.2.3")
 
+    /**
+     * Create /plugins/somePlugin/META-INF/plugin.xml
+     * of some bundled plugin.
+     */
     val pluginsFolder = File(ideaFolder, "plugins")
     val somePluginFolder = File(pluginsFolder, "somePlugin")
     val bundledXml = File(somePluginFolder, "META-INF/plugin.xml")
     bundledXml.parentFile.mkdirs()
     bundledXml.writeText(bundledPluginXmlContent)
 
+    /**
+     * Create a /lib/resources.jar/META-INF/plugin.xml
+     * that contains the `IDEA-CORE` plugin.
+     */
+    val ideaPluginXml = temporaryFolder.newFolder().resolve("META-INF").resolve("plugin.xml")
+    ideaPluginXml.parentFile.mkdirs()
+    ideaPluginXml.writeText(perfectXmlBuilder.apply {
+      id = "<id>idea.plugin</id>"
+      modules = listOf("some.idea.module")
+    }.asString())
+
+    val resourcesJar = ideaFolder.resolve("lib").resolve("resources.jar")
+    resourcesJar.parentFile.mkdirs()
+    JarFileUtils.createJarFile(
+        listOf(
+            JarFileEntry(ideaPluginXml, "META-INF/plugin.xml")
+        ),
+        resourcesJar
+    )
+
     val ide = IdeManager.createManager().createIde(ideaFolder)
     assertThat(ide.version, `is`(IdeVersion.createIdeVersion("IU-163.1.2.3")))
-    assertThat(ide.bundledPlugins, hasSize(1))
-    val plugin = ide.bundledPlugins[0]!!
-    assertThat(plugin.pluginId, `is`("someId"))
+    assertThat(ide.bundledPlugins, hasSize(2))
+    val bundledPlugin = ide.bundledPlugins[0]!!
+    val ideaCorePlugin = ide.bundledPlugins[1]!!
+    assertEquals("someId", bundledPlugin.pluginId)
+    assertEquals("idea.plugin", ideaCorePlugin.pluginId)
+    assertEquals("some.idea.module", ideaCorePlugin.definedModules.single())
+    assertEquals(ideaCorePlugin, ide.getPluginByModule("some.idea.module"))
   }
 
   @Test

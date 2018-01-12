@@ -24,23 +24,24 @@ data class PluginXmlBuilder(
   $description
   $changeNotes
   $ideaVersion
-  ${modules.map { "<module>$it</module>" }.joinToString(separator = "\n")}
+  ${modules.map { "<module value=\"$it\"/>" }.joinToString(separator = "\n")}
   ${depends.map { "<depends>$it</depends>" }.joinToString(separator = "\n")}
   $additionalContent
   $ideaPluginTagClose
 """
 }
 
-val perfectXmlBuilder: PluginXmlBuilder = PluginXmlBuilder().apply {
-  id = "<id>someId</id>"
-  name = "<name>someName</name>"
-  version = "<version>someVersion</version>"
-  vendor = """<vendor email="vendor.com" url="url">vendor</vendor>"""
-  description = "<description>this description is looooooooooong enough</description>"
-  changeNotes = "<change-notes>these change-notes are looooooooooong enough</change-notes>"
-  ideaVersion = """<idea-version since-build="131.1"/>"""
-  depends = listOf("com.intellij.modules.lang")
-}
+val perfectXmlBuilder: PluginXmlBuilder
+  get() = PluginXmlBuilder().apply {
+    id = "<id>someId</id>"
+    name = "<name>someName</name>"
+    version = "<version>someVersion</version>"
+    vendor = """<vendor email="vendor.com" url="url">vendor</vendor>"""
+    description = "<description>this description is looooooooooong enough</description>"
+    changeNotes = "<change-notes>these change-notes are looooooooooong enough</change-notes>"
+    ideaVersion = """<idea-version since-build="131.1"/>"""
+    depends = listOf("com.intellij.modules.lang")
+  }
 
 fun PluginXmlBuilder.modify(block: PluginXmlBuilder.() -> Unit): String {
   val copy = copy()

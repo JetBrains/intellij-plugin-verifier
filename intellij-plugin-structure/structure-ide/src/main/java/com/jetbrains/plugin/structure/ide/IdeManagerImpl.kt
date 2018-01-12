@@ -22,21 +22,24 @@ import java.net.URL
 import java.nio.charset.Charset
 import java.util.*
 
-/**
- * @author Sergey Patrikeev
- */
 class IdeManagerImpl : IdeManager() {
 
-  @Throws(IOException::class)
   override fun createIde(ideDir: File): Ide = createIde(ideDir, null)
 
-  @Throws(IOException::class)
   override fun createIde(idePath: File, version: IdeVersion?): Ide {
     if (!idePath.exists()) {
       throw IllegalArgumentException("IDE file $idePath is not found")
     }
-    val bundled = if (isSourceDir(idePath)) getDummyPluginsFromSources(idePath) else getIdeaPlugins(idePath)
-    val ideVersion = version ?: if (isSourceDir(idePath)) readVersionFromSourcesDir(idePath) else readVersionFromBinaries(idePath)
+    val bundled = if (isSourceDir(idePath)) {
+      getDummyPluginsFromSources(idePath)
+    } else {
+      readBundledPlugins(idePath)
+    }
+    val ideVersion = version ?: if (isSourceDir(idePath)) {
+      readVersionFromSourcesDir(idePath)
+    } else {
+      readVersionFromBinaries(idePath)
+    }
     return IdeImpl(idePath, ideVersion, bundled)
   }
 
@@ -45,7 +48,6 @@ class IdeManagerImpl : IdeManager() {
     return osName.contains("mac os x") || osName.contains("darwin") || osName.contains("osx")
   }
 
-  @Throws(IOException::class)
   private fun readVersionFromBinaries(idePath: File): IdeVersion {
     if (isMacOs()) {
       val versionFile = File(idePath, "Resources/build.txt")
@@ -60,7 +62,6 @@ class IdeManagerImpl : IdeManager() {
     return readBuildNumber(versionFile)
   }
 
-  @Throws(IOException::class)
   private fun readVersionFromSourcesDir(idePath: File): IdeVersion {
     val buildFile = File(idePath, "build.txt")
     if (buildFile.exists()) {
@@ -104,13 +105,11 @@ class IdeManagerImpl : IdeManager() {
     }
   }
 
-  @Throws(IOException::class)
   private fun readBuildNumber(versionFile: File): IdeVersion {
     val buildNumberString = Files.toString(versionFile, Charset.defaultCharset()).trim { it <= ' ' }
     return IdeVersion.createIdeVersion(buildNumberString)
   }
 
-  @Throws(IOException::class)
   private fun getDummyPluginsFromSources(ideaDir: File): List<IdePlugin> = when {
     isUltimate(ideaDir) -> getDummyPlugins(getUltimateClassesRoot(ideaDir))
     isCommunity(ideaDir) -> getDummyPlugins(getCommunityClassesRoot(ideaDir))
@@ -130,21 +129,21 @@ class IdeManagerImpl : IdeManager() {
       .filter { "META-INF" == it.name && it.isDirectory && it.parentFile != null }
       .map { it.parentFile }
       .filter { it.isDirectory }
-      .mapNotNull { createPluginByDir(it, pathResolver) }
+      .mapNotNull { createPlugin(it, pathResolver) }
 
-  private fun createPluginByDir(pluginDirectory: File, pathResolver: XIncludePathResolver): IdePlugin? {
+  private fun createPlugin(pluginFile: File, pathResolver: XIncludePathResolver): IdePlugin? {
     try {
-      val creationResult = IdePluginManager.createManager(pathResolver).createPlugin(pluginDirectory, false)
+      val creationResult = IdePluginManager.createManager(pathResolver).createPlugin(pluginFile, false)
       return when (creationResult) {
         is PluginCreationSuccess -> creationResult.plugin
         is PluginCreationFail -> {
           val problems = creationResult.errorsAndWarnings
-          LOG.info("Failed to read plugin " + pluginDirectory + ". Problems: " + Joiner.on(", ").join(problems))
+          LOG.info("Failed to read plugin " + pluginFile + ". Problems: " + Joiner.on(", ").join(problems))
           null
         }
       }
     } catch (e: Exception) {
-      LOG.info("Unable to create plugin from sources: " + pluginDirectory, e)
+      LOG.info("Unable to create plugin from sources: " + pluginFile, e)
     }
 
     return null
@@ -157,17 +156,44 @@ class IdeManagerImpl : IdeManager() {
       val parts = path.split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
       if (parts.size >= 2) {
         val key = "/" + parts[parts.size - 2] + "/" + parts[parts.size - 1]
-        xmlDescriptors.put(key, file)
+        xmlDescriptors[key] = file
       }
     }
     return PluginFromSourceXIncludePathResolver(xmlDescriptors)
   }
 
-  @Throws(IOException::class)
-  private fun getIdeaPlugins(ideaDir: File): List<IdePlugin> {
+  private fun readBundledPlugins(ideaDir: File): List<IdePlugin> {
+    val plugins = readFromPluginsDir(ideaDir)
+    val ideaCorePlugin = readIdeaCorePlugin(ideaDir)
+    return if (ideaCorePlugin != null) {
+      plugins + listOf(ideaCorePlugin)
+    } else {
+      plugins
+    }
+  }
+
+  /**
+   * The plugin 'IDEA CORE' is specially treated by com.intellij.ide.plugins.PluginManagerCore.
+   * In the binary distribution the plugin resides in the /lib/resources.jar file.
+   */
+  private fun readIdeaCorePlugin(ideaDir: File): IdePlugin? {
+    val resourcesJar = ideaDir.resolve("lib").resolve("resources.jar")
+    if (!resourcesJar.exists()) {
+      LOG.info("IDEA CORE plugin is not found the /lib/resources.jar")
+      return null
+    }
+    return createPlugin(resourcesJar, DefaultXIncludePathResolver())
+  }
+
+  /**
+   * Reads the plugins from the /plugins directory.
+   */
+  private fun readFromPluginsDir(ideaDir: File): List<IdePlugin> {
     val pluginsDir = File(ideaDir, "plugins")
     val pluginsFiles = pluginsDir.listFiles() ?: return emptyList()
-    return pluginsFiles.filter { it.isDirectory }.mapNotNull { createPluginByDir(it, DefaultXIncludePathResolver()) }
+    return pluginsFiles
+        .filter { it.isDirectory }
+        .mapNotNull { createPlugin(it, DefaultXIncludePathResolver()) }
   }
 
   companion object {
