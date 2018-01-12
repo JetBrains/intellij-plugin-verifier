@@ -7,6 +7,10 @@ import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 
+/**
+ * [ClassesSelector] that selects classes used for the external build processes,
+ * such as JPS classes bundled into the Kotlin plugin (`/lib/jps`).
+ */
 class ExternalBuildClassesSelector : ClassesSelector {
   override fun getClassLoader(classesLocations: IdePluginClassesLocations): Resolver =
       classesLocations.getResolver(CompileServerExtensionKey) ?: EmptyResolver

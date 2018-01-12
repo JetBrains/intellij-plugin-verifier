@@ -55,7 +55,8 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
 
     /**
      * [Selectors] [ClassesSelector] of the plugins' classes
-     * that constitute the plugin class loader.
+     * that which classes constitute the plugin class loader
+     * used for the verification and which classes should be verified.
      */
     private val classesSelectors = listOf(MainClassesSelector(), ExternalBuildClassesSelector())
   }

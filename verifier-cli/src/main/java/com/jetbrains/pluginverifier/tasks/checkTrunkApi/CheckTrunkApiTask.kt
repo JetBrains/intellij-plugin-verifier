@@ -74,6 +74,14 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
 
   private val publicRepositoryReleaseCompatibleFinder = RepositoryDependencyFinder(pluginRepository, LastCompatibleVersionSelector(parameters.releaseIde.ideVersion), pluginDetailsCache)
 
+  /**
+   * [DependencyFinder] for the verification of the [release] [CheckTrunkApiParams.releaseIde] that:
+   * 1) Resolves a [dependency] [PluginDependency] among the [bundled] [releaseBundledFinder] plugins of the _release_ IDE.
+   * 2) If not resolved, if the dependency is a JetBrains-developed plugin,
+   * resolves the dependency in the [local] [releaseLocalRepositoryFinder]
+   * plugins repository that consists of plugins which were built from the same sources as the _release_ IDE was.
+   * 3) Finally, resolves the dependency using the [RepositoryDependencyFinder] of [pluginRepository].
+   */
   private inner class ReleaseFinder : DependencyFinder {
 
     private val releaseBundledFinder = BundledPluginDependencyFinder(parameters.releaseIde.ide)
@@ -99,6 +107,21 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
     }
   }
 
+  /**
+   * [DependencyFinder] for the verification of the [trunk] [CheckTrunkApiParams.trunkIde] that:
+   * 1) Resolves a [dependency] [PluginDependency] among the [bundled] [trunkBundledFinder] plugins of the _trunk_ IDE.
+   * 2) If not resolved, if the dependency is a JetBrains-developed plugin,
+   * resolves the dependency in the [local] [trunkLocalFinder] plugins repository
+   * that consists of plugins which were built from the same sources as the _trunk_ IDE was.
+   * 3) Finally, resolves the dependency using the [RepositoryDependencyFinder] such that
+   * - if the dependency is a JetBrains-developed plugin, the _last_ version of it is requested
+   * in the repository.
+   * - otherwise, resolves a version of the dependency that is compatible with the _release_ IDE.
+   *
+   * This is quite important thing to note because we consider that
+   * the IntelliJ API is represented by both the IDE's classes and all classes of
+   * the JetBrains plugins that could be dependencies of third-party plugins.
+   */
   private inner class TrunkFinder : DependencyFinder {
 
     private val trunkBundledFinder = BundledPluginDependencyFinder(parameters.trunkIde.ide)
