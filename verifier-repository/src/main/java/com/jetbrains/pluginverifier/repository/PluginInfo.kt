@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.misc.safeHashCode
 import java.util.*
 
 /**
- * Identifier of an abstract plugin, which may
+ * Identifier of a IDE plugin, which may
  * represent either a [plugin from the Plugin Repository] [UpdateInfo],
  * or a [locally stored plugin] [com.jetbrains.pluginverifier.repository.local.LocalPluginInfo].
  */
