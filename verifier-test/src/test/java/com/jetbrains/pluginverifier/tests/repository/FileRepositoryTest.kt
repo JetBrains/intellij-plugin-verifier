@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 
-class FileRepositoryImplTest {
+class FileRepositoryTest {
 
   @JvmField
   @Rule
@@ -88,7 +88,7 @@ class FileRepositoryImplTest {
         Callable {
           //Add random delay before taking the 0-th element
           Thread.sleep(Math.abs(Random().nextLong()) % 1000)
-          fileRepository.get(0)
+          fileRepository.getFile(0)
         }
       })
     } finally {

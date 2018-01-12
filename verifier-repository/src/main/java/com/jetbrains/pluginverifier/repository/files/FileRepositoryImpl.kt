@@ -5,39 +5,22 @@ import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import com.jetbrains.pluginverifier.repository.downloader.DownloadExecutor
-import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
+import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
 import com.jetbrains.pluginverifier.repository.downloader.SpaceWeight
-import com.jetbrains.pluginverifier.repository.provider.ProvideResult
-import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
+import com.jetbrains.pluginverifier.repository.resources.ResourceRepository
 import com.jetbrains.pluginverifier.repository.resources.ResourceRepositoryImpl
+import com.jetbrains.pluginverifier.repository.resources.ResourceRepositoryResult
 import java.nio.file.Path
 import java.time.Clock
 
 /**
- * Resource provider that downloads a file or directory using the [downloadExecutor].
+ * File repository is the refinement of the
+ * [resource repository] [ResourceRepository] for files.
  */
-private class DownloadProvider<K>(private val downloadExecutor: DownloadExecutor<K>) : ResourceProvider<K, Path> {
-  override fun provide(key: K): ProvideResult<Path> {
-    val download = downloadExecutor.download(key)
-    return with(download) {
-      when (this) {
-        is DownloadResult.Downloaded -> ProvideResult.Provided(downloadedFileOrDirectory)
-        is DownloadResult.NotFound -> ProvideResult.NotFound(reason)
-        is DownloadResult.FailedToDownload -> ProvideResult.Failed(reason, error)
-      }
-    }
-  }
-}
-
-/**
- * The implementation of the file repository which
- * can be safely used in a concurrent environment where
- * multiple threads can add, use and remove the files.
- */
-class FileRepositoryImpl<K>(sweepPolicy: SweepPolicy<K>,
-                            clock: Clock,
-                            downloadExecutor: DownloadExecutor<K>,
-                            presentableName: String = "FileRepository") : FileRepository<K> {
+class FileRepository<K>(sweepPolicy: SweepPolicy<K>,
+                        clock: Clock,
+                        downloadExecutor: DownloadExecutor<K>,
+                        presentableName: String = "FileRepository") {
   private val resourceRepository = ResourceRepositoryImpl(
       sweepPolicy,
       clock,
@@ -50,25 +33,35 @@ class FileRepositoryImpl<K>(sweepPolicy: SweepPolicy<K>,
 
   /**
    * Provides the file by [key]. The file is returned from the
-   * file repository cache or is [downloaded] [DownloadProvider].
+   * local cache or is [downloaded] [DownloadProvider].
    *
-   * This method is thread safe. In case several threads attempt to get the same file, only one
+   * The possible results are represented as subclasses of [FileRepositoryResult].
+   * If the file is found locally or successfully downloaded, a [file lock] [FileLock] is registered
+   * for the file, so it will be protected against deletions by other threads.
+   *
+   *  This method is thread safe. In case several threads attempt to get the same file, only one
    * of them will download it while others will wait for the first to complete.
    */
-  override fun get(key: K) = resourceRepository.get(key)
+  fun getFile(key: K): FileRepositoryResult = with(resourceRepository.get(key)) {
+    when (this) {
+      is ResourceRepositoryResult.Found -> FileRepositoryResult.Found(FileLockImpl(lockedResource))
+      is ResourceRepositoryResult.NotFound -> FileRepositoryResult.NotFound(reason)
+      is ResourceRepositoryResult.Failed -> FileRepositoryResult.Failed(reason, error)
+    }
+  }
 
-  override fun add(key: K, resource: Path) = resourceRepository.add(key, resource)
+  fun add(key: K, resource: Path) = resourceRepository.add(key, resource)
 
-  override fun remove(key: K) = resourceRepository.remove(key)
+  fun remove(key: K) = resourceRepository.remove(key)
 
-  override fun removeAll() = resourceRepository.removeAll()
+  fun removeAll() = resourceRepository.removeAll()
 
-  override fun has(key: K) = resourceRepository.has(key)
+  fun has(key: K) = resourceRepository.has(key)
 
-  override fun getAllExistingKeys() = resourceRepository.getAllExistingKeys()
+  fun getAllExistingKeys() = resourceRepository.getAllExistingKeys()
 
-  override fun <R> lockAndExecute(block: () -> R) = resourceRepository.lockAndExecute(block)
+  fun <R> lockAndExecute(block: () -> R) = resourceRepository.lockAndExecute(block)
 
-  override fun cleanup() = resourceRepository.cleanup()
+  fun cleanup() = resourceRepository.cleanup()
 
 }
