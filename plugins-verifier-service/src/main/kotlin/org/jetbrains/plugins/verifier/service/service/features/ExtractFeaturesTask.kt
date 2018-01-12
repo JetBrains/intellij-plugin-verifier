@@ -9,9 +9,15 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class ExtractFeaturesTask(val serverContext: ServerContext,
                           val updateInfo: UpdateInfo) : ServiceTask<ExtractFeaturesTask.Result>("Features of $updateInfo") {
+
+  companion object {
+    private val LOG: Logger = LoggerFactory.getLogger(ExtractFeaturesTask::class.java)
+  }
 
   /**
    * The result of the feature extractor service [task] [FeatureExtractorService].
@@ -35,7 +41,10 @@ class ExtractFeaturesTask(val serverContext: ServerContext,
           is PluginDetailsCache.Result.Provided -> runFeatureExtractor(ideDescriptor, pluginDetails.plugin)
           is PluginDetailsCache.Result.FileNotFound -> Result(updateInfo, Result.ResultType.NOT_FOUND, emptyList())
           is PluginDetailsCache.Result.InvalidPlugin -> Result(updateInfo, Result.ResultType.BAD_PLUGIN, emptyList())
-          is PluginDetailsCache.Result.Failed -> throw error
+          is PluginDetailsCache.Result.Failed -> {
+            LOG.info("Unable to get plugin details for $updateInfo", error)
+            Result(updateInfo, Result.ResultType.NOT_FOUND, emptyList())
+          }
         }
       }
     }

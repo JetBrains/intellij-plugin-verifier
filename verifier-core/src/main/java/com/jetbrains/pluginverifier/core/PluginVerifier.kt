@@ -80,7 +80,10 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
         is PluginDetailsCache.Result.Provided -> doVerification(pluginDetails, pluginInfo)
         is PluginDetailsCache.Result.InvalidPlugin -> Result(pluginInfo, ideDescriptor.ideVersion, Verdict.Bad(pluginErrors), emptySet())
         is PluginDetailsCache.Result.FileNotFound -> Result(pluginInfo, ideDescriptor.ideVersion, Verdict.NotFound(reason), emptySet())
-        is PluginDetailsCache.Result.Failed -> throw error
+        is PluginDetailsCache.Result.Failed -> {
+          LOG.info("Unable to get plugin details for $pluginInfo", error)
+          Result(pluginInfo, ideDescriptor.ideVersion, Verdict.NotFound("Plugin $pluginInfo was not downloaded due to ${error.message}"), emptySet())
+        }
       }
     }
   }
