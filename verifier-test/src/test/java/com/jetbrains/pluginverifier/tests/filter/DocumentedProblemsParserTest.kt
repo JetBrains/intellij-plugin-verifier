@@ -38,7 +38,11 @@ class DocumentedProblemsParserTest {
         DocMethodVisibilityChanged("com/example/Bar", "methodVisibilityChanged"),
         DocFieldTypeChanged("com/example/Foo", "fieldTypeChanged"),
         DocFieldVisibilityChanged("com/example/Foo", "fieldVisibilityChanged"),
-        DocClassRemoved("com/example/Inner\$Class")
+        DocClassRemoved("com/example/Inner\$Class"),
+        DocMethodParameterTypeChanged("com/example/Foo", "foo"),
+        DocMethodRemoved("com/example/Baz", "<init>"),
+        DocMethodParameterTypeChanged("com/example/Baf", "<init>"),
+        DocMethodParameterTypeChanged("com/example/Bam", "<init>")
     )
     for (expected in expectedProblems) {
       assertTrue("$expected is not found:\n${documentedProblems.joinToString("\n")}\nActual problems:", expected in documentedProblems)

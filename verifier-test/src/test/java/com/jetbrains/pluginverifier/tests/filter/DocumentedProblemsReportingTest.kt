@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilte
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.documented.*
 import com.jetbrains.pluginverifier.reporting.verification.EmptyPluginVerificationReportage
+import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
@@ -23,8 +24,7 @@ import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassHierarchyBuilder
 import net.bytebuddy.ByteBuddy
-import org.hamcrest.collection.IsIn.isIn
-import org.junit.Assert.assertThat
+import org.junit.Assert.fail
 import org.junit.Test
 import org.objectweb.asm.tree.ClassNode
 
@@ -42,25 +42,30 @@ class DocumentedProblemsReportingTest {
   @Test
   fun `hierarchical problems should not be reported`() {
     val problemAndItsDocumentation = createProblemAndItsDocumentationTestMap()
-    verify(problemAndItsDocumentation) {
-      createVerificationContextForHierarchicalTest(it)
+    verify(problemAndItsDocumentation, createVerificationContextForHierarchicalTest())
+  }
+
+  private fun verify(problemAndItsDocumentation: List<Pair<Problem, DocumentedProblem>>,
+                     verificationContext: VerificationContext) {
+    val problems = problemAndItsDocumentation.map { it.first }
+    val documentedProblems = problemAndItsDocumentation.map { it.second }
+
+    val problemsFilter = DocumentedProblemsFilter(documentedProblems)
+
+    for (problem in problems) {
+      val shouldReportProblem = problemsFilter.shouldReportProblem(
+          verificationContext.plugin,
+          verificationContext.ideVersion,
+          problem,
+          verificationContext
+      )
+      if (shouldReportProblem !is ProblemsFilter.Result.Ignore) {
+        fail("Problem is not ignored:\n$problem")
+      }
     }
   }
 
-  private fun verify(problemAndItsDocumentation: Map<Problem, DocumentedProblem>,
-                     contextProvider: (ProblemsFilter) -> VerificationContext) {
-    val problems = problemAndItsDocumentation.keys
-    val documentedProblems = problemAndItsDocumentation.values.toList()
-
-    val problemsFilter = DocumentedProblemsFilter(documentedProblems)
-    val verificationContext = contextProvider(problemsFilter)
-
-    problems.forEach { verificationContext.registerProblem(it) }
-    val actualIgnoredProblems = verificationContext.resultHolder.ignoredProblemsHolder.ignoredProblems
-    problems.forEach { problem -> assertThat(problem, isIn(actualIgnoredProblems)) }
-  }
-
-  private fun createProblemAndItsDocumentationTestMap(): Map<Problem, DocumentedProblem> {
+  private fun createProblemAndItsDocumentationTestMap(): List<Pair<Problem, DocumentedProblem>> {
     val classBReference = ClassReference("org/test/other/B")
     val methodFooIsNotFoundProblem = MethodNotFoundProblem(
         MethodReference(classBReference, "foo", "()V"),
@@ -68,6 +73,38 @@ class DocumentedProblemsReportingTest {
         Instruction.INVOKE_VIRTUAL,
         ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY,
         IdeVersion.createIdeVersion("IU-163")
+    )
+
+    val constructorIsNotFoundProblem = methodFooIsNotFoundProblem.copy(
+        unresolvedMethod = methodFooIsNotFoundProblem.unresolvedMethod.copy(
+            methodName = "<init>"
+        )
+    )
+
+    val illegalMethodAccessProblem = IllegalMethodAccessProblem(
+        constructorIsNotFoundProblem.unresolvedMethod,
+        MethodLocation(
+            ClassLocation(
+                "org/test/other/B",
+                "",
+                ClassPath(ClassPath.Type.ROOT, ""),
+                Modifiers(0)
+            ),
+            "foo",
+            "()V",
+            emptyList(),
+            "",
+            Modifiers(0)
+        ),
+        AccessType.PRIVATE,
+        MOCK_METHOD_LOCATION,
+        Instruction.INVOKE_SPECIAL
+    )
+
+    val illegalConstructorAccessProblem = illegalMethodAccessProblem.copy(
+        inaccessibleMethod = illegalMethodAccessProblem.inaccessibleMethod.copy(
+            methodName = "<init>"
+        )
     )
 
     val fieldXNotFoundProblem = FieldNotFoundProblem(
@@ -98,7 +135,7 @@ class DocumentedProblemsReportingTest {
         MOCK_METHOD_LOCATION
     )
 
-    return mapOf(
+    return listOf(
         methodFooIsNotFoundProblem to DocMethodRemoved("org/test/A", "foo"),
 
         methodFooIsNotFoundProblem to DocMethodReturnTypeChanged("org/test/A", "foo"),
@@ -111,18 +148,26 @@ class DocumentedProblemsReportingTest {
 
         methodNotImplementedProblem to DocAbstractMethodAdded("org/test/IImpl", "abstractMethod"),
 
-        classNotFoundProblem to DocClassRemoved("org/test/some/Inner\$Class")
+        classNotFoundProblem to DocClassRemoved("org/test/some/Inner\$Class"),
+
+        constructorIsNotFoundProblem to DocMethodRemoved("org/test/other/B", "<init>"),
+
+        constructorIsNotFoundProblem to DocMethodParameterTypeChanged("org/test/other/B", "<init>"),
+
+        illegalMethodAccessProblem to DocMethodVisibilityChanged("org/test/other/B", "foo"),
+
+        illegalConstructorAccessProblem to DocMethodVisibilityChanged("org/test/other/B", "<init>")
     )
   }
 
-  private fun createVerificationContextForHierarchicalTest(problemsFilter: ProblemsFilter): VerificationContext {
+  private fun createVerificationContextForHierarchicalTest(): VerificationContext {
     val classes = buildClassesForHierarchicalTest()
-    return createSimpleVerificationContext(problemsFilter).copy(
+    return createSimpleVerificationContext().copy(
         classLoader = FixedClassesResolver.create(classes)
     )
   }
 
-  private fun createSimpleVerificationContext(problemsFilter: ProblemsFilter): VerificationContext {
+  private fun createSimpleVerificationContext(): VerificationContext {
     val idePlugin = MockIdePlugin(
         pluginId = "pluginId",
         pluginVersion = "1.0"
@@ -138,7 +183,7 @@ class DocumentedProblemsReportingTest {
         VerificationResultHolder(EmptyPluginVerificationReportage),
         emptyList(),
         false,
-        listOf(problemsFilter)
+        emptyList()
     )
   }
 
@@ -275,7 +320,7 @@ class DocumentedProblemsReportingTest {
 
     val docClassRemoved = DocClassRemoved("org/some/deleted/Class")
     val docPackageRemoved = DocPackageRemoved("some/removed/package")
-    val problemToDocumentation = mapOf(
+    val problemToDocumentation = listOf(
         methodWithRemovedOwnerProblem to docClassRemoved,
         fieldWithRemovedOwnerProblem to docClassRemoved,
 
@@ -286,8 +331,6 @@ class DocumentedProblemsReportingTest {
         fieldWithOwnerFromRemovedPackage to docPackageRemoved
     )
 
-    verify(problemToDocumentation) {
-      createSimpleVerificationContext(it)
-    }
+    verify(problemToDocumentation, createSimpleVerificationContext())
   }
 }

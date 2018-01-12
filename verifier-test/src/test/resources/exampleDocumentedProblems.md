@@ -65,3 +65,7 @@ NOTE: You are allowed to prettify the pattern using markdown-features:
 | `com.example.Bar.methodVisibilityChanged()` method visibility changed from `public` to `private` | It is a comment why |
 | `com.example.Foo.fieldTypeChanged` field type changed from `String` to `int` | It is a comment why |
 | `com.example.Foo.fieldVisibilityChanged` field visibility changed from `public` to `private` | It is a comment why |
+| `com.example.Foo.foo` method parameter `int` removed | It is a comment why |
+| `com.example.Baz` constructor removed | It is a comment why |
+| `com.example.Baf` constructor parameter `ParamType` removed | It is a comment why |
+| `com.example.Bam` constructor parameter `ParamType` type changed | It is a comment why |
