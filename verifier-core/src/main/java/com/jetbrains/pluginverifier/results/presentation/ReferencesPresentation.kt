@@ -10,6 +10,13 @@ fun ClassReference.formatClassReference(classReferenceOption: ClassOption): Stri
       ClassOption.FULL_NAME -> toFullJavaClassName(className)
     }
 
+val MethodReference.methodOrConstructorWord: String
+  get() = if (methodName == "<init>") {
+    "constructor"
+  } else {
+    "method"
+  }
+
 fun MethodReference.formatMethodReference(hostClassOption: HostClassOption,
                                           methodParameterTypeOption: MethodParameterTypeOption,
                                           methodReturnTypeOption: MethodReturnTypeOption): String = buildString {

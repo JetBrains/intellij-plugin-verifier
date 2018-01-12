@@ -287,7 +287,7 @@ class VerificationCorrectnessTest {
         "Instantiation of an interface misc.BecomeInterface"
     )
 
-    assertProblemFound("Method mock.plugin.news.NewProblems.newInterface() : void contains an *invokespecial* instruction referencing an unresolved method misc.BecomeInterface.<init>() : void. This can lead to **NoSuchMethodError** exception at runtime.",
+    assertProblemFound("Method mock.plugin.news.NewProblems.newInterface() : void contains an *invokespecial* instruction referencing an unresolved constructor misc.BecomeInterface.<init>() : void. This can lead to **NoSuchMethodError** exception at runtime.",
         "Invocation of unresolved method misc.BecomeInterface.<init>() : void"
     )
   }
@@ -305,7 +305,7 @@ class VerificationCorrectnessTest {
         "Incompatible change of super class misc.BecomeInterface to interface"
     )
 
-    assertProblemFound("Method mock.plugin.inheritance.SuperClassBecameInterface.<init>() : void contains an *invokespecial* instruction referencing an unresolved method misc.BecomeInterface.<init>() : void. This can lead to **NoSuchMethodError** exception at runtime.",
+    assertProblemFound("Constructor mock.plugin.inheritance.SuperClassBecameInterface.<init>() : void contains an *invokespecial* instruction referencing an unresolved constructor misc.BecomeInterface.<init>() : void. This can lead to **NoSuchMethodError** exception at runtime.",
         "Invocation of unresolved method misc.BecomeInterface.<init>() : void"
     )
   }
@@ -390,7 +390,7 @@ class VerificationCorrectnessTest {
 
   @Test
   fun missingDefaultConstructor() {
-    assertProblemFound("Method mock.plugin.constructors.MissingDefaultConstructor.<init>() : void contains an *invokespecial* instruction referencing an unresolved method constructors.DeletedDefaultConstructor.<init>() : void. This can lead to **NoSuchMethodError** exception at runtime.",
+    assertProblemFound("Constructor mock.plugin.constructors.MissingDefaultConstructor.<init>() : void contains an *invokespecial* instruction referencing an unresolved constructor constructors.DeletedDefaultConstructor.<init>() : void. This can lead to **NoSuchMethodError** exception at runtime.",
         "Invocation of unresolved method constructors.DeletedDefaultConstructor.<init>() : void"
     )
   }

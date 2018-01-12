@@ -14,6 +14,7 @@ import com.jetbrains.pluginverifier.results.presentation.MethodReturnTypeOption.
 import com.jetbrains.pluginverifier.results.presentation.MethodReturnTypeOption.SIMPLE_RETURN_TYPE_CLASS_NAME
 import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 import com.jetbrains.pluginverifier.results.presentation.formatMethodReference
+import com.jetbrains.pluginverifier.results.presentation.methodOrConstructorWord
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 
 data class MethodNotFoundProblem(val unresolvedMethod: MethodReference,
@@ -25,7 +26,7 @@ data class MethodNotFoundProblem(val unresolvedMethod: MethodReference,
   override val shortDescription = "Invocation of unresolved method {0}".formatMessage(unresolvedMethod.formatMethodReference(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME))
 
   private val descriptionMainPart = buildString {
-    append("Method {0} contains an *{1}* instruction referencing an unresolved method {2}. ".formatMessage(
+    append("${caller.methodOrConstructorWord.capitalize()} {0} contains an *{1}* instruction referencing an unresolved ${unresolvedMethod.methodOrConstructorWord} {2}. ".formatMessage(
         caller.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE),
         instruction,
         unresolvedMethod.formatMethodReference(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME)
