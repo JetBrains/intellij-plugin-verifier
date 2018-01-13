@@ -132,7 +132,8 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
                 problemsReporters = emptyList(),
                 dependenciesGraphReporters = listOf(LogReporter(LOG)),
                 ignoredProblemReporters = emptyList(),
-                deprecatedReporters = emptyList()
+                deprecatedReporters = emptyList(),
+                exceptionReporters = listOf(LogReporter(LOG))
             )
       }
   )

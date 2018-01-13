@@ -60,8 +60,16 @@ class VerifierExecutor(private val concurrentWorkers: Int, private val pluginDet
   ): List<Result> {
     val workers = tasks.map { (pluginInfo, ideDescriptor, dependencyFinder) ->
       val pluginVerificationReportage = reportage.createPluginReportage(pluginInfo, ideDescriptor.ideVersion)
-      val verifier = PluginVerifier(pluginInfo, ideDescriptor, dependencyFinder, jdkDescriptor, parameters, pluginVerificationReportage, pluginDetailsCache)
-      completionService.submit(verifier)
+      val pluginVerifier = PluginVerifier(
+          pluginInfo,
+          ideDescriptor,
+          dependencyFinder,
+          jdkDescriptor,
+          parameters,
+          pluginVerificationReportage,
+          pluginDetailsCache
+      )
+      completionService.submit(pluginVerifier)
     }
     return waitForAllResults(workers)
   }

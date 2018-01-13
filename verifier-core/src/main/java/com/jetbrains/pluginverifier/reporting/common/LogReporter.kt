@@ -3,16 +3,11 @@ package com.jetbrains.pluginverifier.reporting.common
 import com.jetbrains.pluginverifier.reporting.Reporter
 import org.slf4j.Logger
 
-/**
- * @author Sergey Patrikeev
- */
-open class LogReporter<in T>(private val logger: Logger,
-                             private val lineProvider: (T) -> String = { it.toString() }) : Reporter<T> {
+open class LogReporter<in T>(protected val logger: Logger) : Reporter<T> {
   override fun close() = Unit
 
   override fun report(t: T) {
-    val line = lineProvider(t)
-    reportLine(line)
+    logger.info(t.toString())
   }
 
   fun reportLine(line: String) {

@@ -30,6 +30,8 @@ interface PluginVerificationReportage : Closeable {
 
   fun logVerificationFinished(message: String)
 
+  fun logException(message: String, exception: Throwable)
+
   fun logDependencyGraph(dependenciesGraph: DependenciesGraph)
 
   fun logNewProblemDetected(problem: Problem)

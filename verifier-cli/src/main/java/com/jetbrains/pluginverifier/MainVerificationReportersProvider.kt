@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.CollectingReporter
 import com.jetbrains.pluginverifier.reporting.common.FileReporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
+import com.jetbrains.pluginverifier.reporting.common.MessageAndException
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import com.jetbrains.pluginverifier.reporting.progress.LogSteppedProgressReporter
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterSet
@@ -19,6 +20,7 @@ import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
@@ -73,7 +75,8 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
         problemsReporters = createProblemReporters(pluginVerificationDirectory),
         dependenciesGraphReporters = createDependencyGraphReporters(pluginVerificationDirectory),
         ignoredProblemReporters = createIgnoredProblemReporters(pluginLogger, pluginVerificationDirectory, ideVersion),
-        deprecatedReporters = createDeprecatedReporters(pluginVerificationDirectory)
+        deprecatedReporters = createDeprecatedReporters(pluginVerificationDirectory),
+        exceptionReporters = createExceptionReporters(pluginVerificationDirectory, pluginLogger)
     )
   }
 
@@ -113,6 +116,17 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
 
   private fun createDeprecatedReporters(pluginVerificationDirectory: Path) = buildList<Reporter<DeprecatedApiUsage>> {
     add(FileReporter(pluginVerificationDirectory.resolve("deprecated-usages.txt")))
+  }
+
+  private fun createExceptionReporters(pluginVerificationDirectory: Path, pluginLogger: Logger) = buildList<Reporter<MessageAndException>> {
+    add(FileReporter(pluginVerificationDirectory.resolve("exception.txt")) {
+      it.message + "\n" + ExceptionUtils.getStackTrace(it.exception)
+    })
+    add(object : LogReporter<MessageAndException>(pluginLogger) {
+      override fun report(t: MessageAndException) {
+        logger.info(t.message, t.exception)
+      }
+    })
   }
 
   private fun createMessageReporters(pluginLogger: Logger) = buildList<Reporter<String>> {

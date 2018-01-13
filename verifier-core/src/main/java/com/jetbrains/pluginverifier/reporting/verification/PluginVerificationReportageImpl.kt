@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.reporting.verification
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.reporting.common.MessageAndException
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.Verdict
@@ -25,6 +26,10 @@ class PluginVerificationReportageImpl(private val verificationReportage: Verific
     val elapsedTime = System.currentTimeMillis() - startTime
     reportMessage("Finished in ${"%.2f".format(elapsedTime / 1000.0)} seconds: $message")
     verificationReportage.logPluginVerificationFinished(this)
+  }
+
+  override fun logException(message: String, exception: Throwable) {
+    reporterSet.exceptionReporters.forEach { it.report(MessageAndException(message, exception)) }
   }
 
   override fun logProgress(completed: Double) {

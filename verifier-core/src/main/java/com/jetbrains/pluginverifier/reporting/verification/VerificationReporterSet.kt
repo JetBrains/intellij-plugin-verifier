@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.reporting.verification
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.reporting.Reporter
+import com.jetbrains.pluginverifier.reporting.common.MessageAndException
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
@@ -23,7 +24,8 @@ data class VerificationReporterSet(
     val problemsReporters: List<Reporter<Problem>>,
     val dependenciesGraphReporters: List<Reporter<DependenciesGraph>>,
     val ignoredProblemReporters: List<Reporter<ProblemIgnoredEvent>>,
-    val deprecatedReporters: List<Reporter<DeprecatedApiUsage>>
+    val deprecatedReporters: List<Reporter<DeprecatedApiUsage>>,
+    val exceptionReporters: List<Reporter<MessageAndException>>
 ) : Closeable {
   override fun close() {
     verdictReporters.forEach { it.closeLogged() }
@@ -34,5 +36,6 @@ data class VerificationReporterSet(
     dependenciesGraphReporters.forEach { it.closeLogged() }
     ignoredProblemReporters.forEach { it.closeLogged() }
     deprecatedReporters.forEach { it.closeLogged() }
+    exceptionReporters.forEach { it.closeLogged() }
   }
 }

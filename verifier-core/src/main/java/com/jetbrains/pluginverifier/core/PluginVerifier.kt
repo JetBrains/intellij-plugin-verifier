@@ -12,10 +12,12 @@ import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.closeLogged
+import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
+import com.jetbrains.pluginverifier.plugin.UnableToReadPluginClassFilesProblem
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -25,7 +27,6 @@ import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
-import org.slf4j.LoggerFactory
 import java.util.concurrent.Callable
 
 /**
@@ -51,8 +52,6 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
 
   companion object {
 
-    private val LOG = LoggerFactory.getLogger(PluginVerifier::class.java)
-
     /**
      * [Selectors] [ClassesSelector] of the plugins' classes
      * that which classes constitute the plugin class loader
@@ -68,7 +67,6 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
       pluginVerificationReportage.logVerificationFinished(result.verdict.toString())
       return result
     } catch (e: Throwable) {
-      LOG.error("Unable to verify $pluginInfo against $ideDescriptor", e)
       pluginVerificationReportage.logVerificationFinished("Failed with exception: ${e.message}")
       throw e
     }
@@ -81,7 +79,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
         is PluginDetailsCache.Result.InvalidPlugin -> Result(pluginInfo, ideDescriptor.ideVersion, Verdict.Bad(pluginErrors), emptySet())
         is PluginDetailsCache.Result.FileNotFound -> Result(pluginInfo, ideDescriptor.ideVersion, Verdict.NotFound(reason), emptySet())
         is PluginDetailsCache.Result.Failed -> {
-          LOG.info("Unable to get plugin details for $pluginInfo", error)
+          pluginVerificationReportage.logException("Plugin $pluginInfo was not downloaded", error)
           Result(pluginInfo, ideDescriptor.ideVersion, Verdict.NotFound("Plugin $pluginInfo was not downloaded due to ${error.message}"), emptySet())
         }
       }
@@ -92,7 +90,10 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     val resultHolder = VerificationResultHolder(pluginVerificationReportage)
 
     resultHolder.addPluginWarnings(pluginDetails.pluginWarnings)
-    runVerification(pluginDetails, resultHolder)
+    val badResult = runVerification(pluginDetails, resultHolder)
+    if (badResult != null) {
+      return badResult
+    }
 
     val verdict = resultHolder.getVerdict()
     pluginVerificationReportage.logVerdict(verdict)
@@ -105,11 +106,11 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
   }
 
   private fun runVerification(pluginDetails: PluginDetails,
-                              resultHolder: VerificationResultHolder) {
+                              resultHolder: VerificationResultHolder): Result? {
     val depGraph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
     try {
       buildDependenciesGraph(pluginDetails.plugin, depGraph, resultHolder)
-      runVerification(depGraph, resultHolder, pluginDetails)
+      return runVerification(depGraph, resultHolder, pluginDetails)
     } finally {
       /**
        * Deallocate the dependencies' resources.
@@ -134,14 +135,21 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
       depGraph: DirectedGraph<DepVertex, DepEdge>,
       resultHolder: VerificationResultHolder,
       pluginDetails: PluginDetails
-  ) {
-    val pluginResolver = pluginDetails.pluginClassesLocations.createPluginClassLoader()
-    val dependenciesResolver = depGraph.toDependenciesClassesResolver()
+  ): Result? {
+    val pluginResolver = try {
+      pluginDetails.pluginClassesLocations.createPluginClassLoader()
+    } catch (e: Exception) {
+      pluginVerificationReportage.logException("Unable to read verified plugin $pluginInfo classes", e)
+      return Result(pluginInfo, ideDescriptor.ideVersion, Verdict.Bad(listOf(UnableToReadPluginClassFilesProblem(e))), emptySet())
+    }
+
+    val dependenciesResolver = depGraph.createDependenciesResolver()
     //don't close this classLoader because it contains the client's resolvers.
     val classLoader = createClassLoader(pluginResolver, dependenciesResolver)
     val checkClasses = getClassesForCheck(pluginDetails.pluginClassesLocations)
 
     buildVerificationContextAndDoVerification(pluginDetails.plugin, classLoader, resultHolder, checkClasses)
+    return null
   }
 
   private fun buildVerificationContextAndDoVerification(
@@ -198,14 +206,29 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
       listOf(mainPluginResolver, jdkDescriptor.jdkClassesResolver, ideDescriptor.ideResolver, dependenciesResolver, verifierParameters.externalClassPath)
   )
 
-  private fun DirectedGraph<DepVertex, DepEdge>.toDependenciesClassesResolver() = UnionResolver.create(
-      vertexSet()
-          .mapNotNull {
-            val cacheResult = (it.dependencyResult as? DependencyFinder.Result.DetailsProvided)?.pluginDetailsCacheResult
-            (cacheResult as? PluginDetailsCache.Result.Provided)?.pluginDetails?.pluginClassesLocations
+  private fun DirectedGraph<DepVertex, DepEdge>.createDependenciesResolver(): Resolver {
+    val dependenciesResolvers = arrayListOf<Resolver>()
+    dependenciesResolvers.closeOnException {
+      for (depVertex in vertexSet()) {
+        val depPluginClassesLocations = depVertex.getIdePluginClassesLocations()
+        if (depPluginClassesLocations != null) {
+          val pluginResolver = try {
+            depPluginClassesLocations.createPluginClassLoader()
+          } catch (e: Exception) {
+            pluginVerificationReportage.logException("Unable to read classes of dependency ${depVertex.dependencyId}", e)
+            continue
           }
-          .map { it.createPluginClassLoader() }
-  )
+          dependenciesResolvers.add(pluginResolver)
+        }
+      }
+    }
+    return UnionResolver.create(dependenciesResolvers)
+  }
+
+  private fun DepVertex.getIdePluginClassesLocations(): IdePluginClassesLocations? {
+    val cacheResult = (dependencyResult as? DependencyFinder.Result.DetailsProvided)?.pluginDetailsCacheResult
+    return (cacheResult as? PluginDetailsCache.Result.Provided)?.pluginDetails?.pluginClassesLocations
+  }
 
   private fun VerificationResultHolder.getVerdict(): Verdict {
     if (pluginWarnings.isNotEmpty()) {

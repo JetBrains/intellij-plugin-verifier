@@ -24,6 +24,8 @@ object EmptyPluginVerificationReportage : PluginVerificationReportage {
 
   override fun logNewProblemDetected(problem: Problem) = Unit
 
+  override fun logException(message: String, exception: Throwable) = Unit
+
   override fun logNewWarningDetected(warning: Warning) = Unit
 
   override fun logProgress(completed: Double) = Unit

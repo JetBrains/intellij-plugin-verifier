@@ -14,5 +14,5 @@ object EmptyReporterSetProvider : VerificationReportersProvider {
   override fun close() = Unit
 
   override fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, ideVersion: IdeVersion): VerificationReporterSet =
-      VerificationReporterSet(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
+      VerificationReporterSet(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
 }
