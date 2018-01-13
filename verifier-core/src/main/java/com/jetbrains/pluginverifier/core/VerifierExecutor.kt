@@ -96,9 +96,14 @@ class VerifierExecutor(private val concurrentWorkers: Int, private val pluginDet
     } finally {
       for (worker in workers) {
         try {
-          //Force wait for the worker to finish.
-          //It is necessary in case the current thread has been interrupted
-          //and the interruption has sent to all the workers.
+          /**
+           * Force wait for the worker to finish.
+           * It's necessary in case of an exception has been
+           * thrown by any of the workers in `.get()` which
+           * means that the verification is corrupted,
+           * or if the current thread has been interrupted
+           * which means that the verification has been cancelled.
+           */
           worker.get()
         } catch (e: Throwable) {
           val interruptedException = e.findCause(InterruptedException::class.java)
