@@ -100,10 +100,13 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
 
   private fun addPluginToCheckFromFile(pluginFile: Path,
                                        localPluginRepository: LocalPluginRepository,
-                                       pluginsToCheck: PluginsToCheck): Any =
+                                       pluginsToCheck: PluginsToCheck): Unit =
       with(IdePluginManager.createManager().createPlugin(pluginFile.toFile())) {
         when (this) {
-          is PluginCreationSuccess -> localPluginRepository.addLocalPlugin(plugin)
+          is PluginCreationSuccess -> {
+            val localPluginInfo = localPluginRepository.addLocalPlugin(plugin)
+            pluginsToCheck.plugins.add(localPluginInfo)
+          }
           is PluginCreationFail -> {
             verificationReportage.logVerificationStage("Plugin is invalid in $pluginFile: ${errorsAndWarnings.joinToString()}")
             pluginsToCheck.invalidPluginFiles.add(
