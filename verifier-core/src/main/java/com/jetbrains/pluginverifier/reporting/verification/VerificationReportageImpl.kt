@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.reporting.verification
 
-import com.jetbrains.pluginverifier.ide.IdeDescriptor
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.repository.PluginInfo
 
@@ -26,10 +26,10 @@ class VerificationReportageImpl(private val reporterSetProvider: VerificationRep
   }
 
   @Synchronized
-  override fun createPluginReportage(pluginInfo: PluginInfo, ideDescriptor: IdeDescriptor): PluginVerificationReportage {
+  override fun createPluginReportage(pluginInfo: PluginInfo, ideVersion: IdeVersion): PluginVerificationReportage {
     totalPlugins++
-    val reporterSet = reporterSetProvider.getReporterSetForPluginVerification(pluginInfo, ideDescriptor.ideVersion)
-    return PluginVerificationReportageImpl(this, pluginInfo, ideDescriptor.ideVersion, reporterSet)
+    val reporterSet = reporterSetProvider.getReporterSetForPluginVerification(pluginInfo, ideVersion)
+    return PluginVerificationReportageImpl(this, pluginInfo, ideVersion, reporterSet)
   }
 
   override fun close() {
