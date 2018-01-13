@@ -135,6 +135,9 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
       resultHolder: VerificationResultHolder,
       pluginDetails: PluginDetails
   ): Result? {
+    /**
+     * Create the plugin's own classes resolver.
+     */
     val pluginResolver = try {
       pluginDetails.pluginClassesLocations.createPluginClassLoader()
     } catch (e: Exception) {
@@ -142,10 +145,31 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
       return createResult(Verdict.Bad(listOf(UnableToReadPluginClassFilesProblem(e))))
     }
 
+    /**
+     * Create the dependent plugins' resolvers.
+     */
     val dependenciesResolver = depGraph.createDependenciesResolver()
-    //don't close this classLoader because it contains the client's resolvers.
-    val classLoader = createClassLoader(pluginResolver, dependenciesResolver)
-    val checkClasses = getClassesForCheck(pluginDetails.pluginClassesLocations)
+
+    /**
+     * Create the plugin's class loader used during the verification.
+     * Don't close this classLoader because it contains the client's resolvers.
+     */
+    val classLoader = try {
+      createClassLoader(pluginResolver, dependenciesResolver)
+    } catch (e: Exception) {
+      pluginVerificationReportage.logException("Unable to create plugin class loader of $pluginInfo", e)
+      return createResult(Verdict.Bad(listOf(UnableToReadPluginClassFilesProblem(e))))
+    }
+
+    /**
+     * Select the classes for the verification.
+     */
+    val checkClasses = try {
+      getClassesForCheck(pluginDetails.pluginClassesLocations)
+    } catch (e: Exception) {
+      pluginVerificationReportage.logException("Unable to select classes for check of $pluginInfo", e)
+      return createResult(Verdict.Bad(listOf(UnableToReadPluginClassFilesProblem(e))))
+    }
 
     buildVerificationContextAndDoVerification(pluginDetails.plugin, classLoader, resultHolder, checkClasses)
     return null
