@@ -65,6 +65,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     pluginVerificationReportage.logVerificationStarted()
     try {
       val result = doVerification()
+      pluginVerificationReportage.logVerdict(result.verdict)
       pluginVerificationReportage.logVerificationFinished(result.verdict.toString())
       return result
     } catch (e: Throwable) {
@@ -100,7 +101,6 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     }
 
     val verdict = resultHolder.getVerdict()
-    pluginVerificationReportage.logVerdict(verdict)
     return createResult(verdict, resultHolder.ignoredProblemsHolder.ignoredProblems)
   }
 
