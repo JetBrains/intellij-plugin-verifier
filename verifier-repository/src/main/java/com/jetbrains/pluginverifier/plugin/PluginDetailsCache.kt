@@ -34,10 +34,16 @@ class PluginDetailsCache(cacheSize: Int, pluginDetailsProvider: PluginDetailsPro
   fun getPluginDetails(pluginInfo: PluginInfo): Result {
     return with(resourceCache.getResourceCacheEntry(pluginInfo)) {
       when (this) {
-        is ResourceCacheEntryResult.Found -> with(resourceCacheEntry.resource) {
-          when (this) {
-            is PluginDetailsProvider.Result.Provided -> Result.Provided(this)
-            is PluginDetailsProvider.Result.InvalidPlugin -> Result.InvalidPlugin(this)
+        is ResourceCacheEntryResult.Found -> {
+          return with(resourceCacheEntry.resource) {
+            when (this) {
+              is PluginDetailsProvider.Result.Provided -> {
+                Result.Provided(resourceCacheEntry, pluginDetails)
+              }
+              is PluginDetailsProvider.Result.InvalidPlugin -> {
+                Result.InvalidPlugin(resourceCacheEntry, pluginErrors)
+              }
+            }
           }
         }
         is ResourceCacheEntryResult.Failed -> Result.Failed(message, error)
@@ -62,15 +68,14 @@ class PluginDetailsCache(cacheSize: Int, pluginDetailsProvider: PluginDetailsPro
          * [Resource cache entry] [ResourceCacheEntry] that protects the
          * [pluginDetails] until the entry is closed.
          */
-        private val resourceCacheEntry: PluginDetailsProvider.Result.Provided
-    ) : Result() {
+        private val resourceCacheEntry: ResourceCacheEntry<PluginDetailsProvider.Result>,
 
-      /**
-       * The provided [PluginDetails].
-       * It will be closed when [_this_] [Result.Provided] is closed.
-       */
-      val pluginDetails: PluginDetails
-        get() = resourceCacheEntry.pluginDetails
+        /**
+         * The provided [PluginDetails].
+         * It will be closed when [_this_] [Result.Provided] is closed.
+         */
+        val pluginDetails: PluginDetails
+    ) : Result() {
 
       override fun close() = resourceCacheEntry.close()
     }
@@ -84,18 +89,17 @@ class PluginDetailsCache(cacheSize: Int, pluginDetailsProvider: PluginDetailsPro
          * [Resource cache entry] [ResourceCacheEntry] that protects the
          * [pluginDetails] until the entry is closed.
          */
-        private val resourceCacheEntry: PluginDetailsProvider.Result.InvalidPlugin
+        private val resourceCacheEntry: ResourceCacheEntry<PluginDetailsProvider.Result>,
+
+        /**
+         * The [errors] [PluginProblem.Level.ERROR] of the plugin
+         * that make it invalid. It can also contain the [warnings] [PluginProblem.Level.WARNING]
+         * of the plugin's structure.
+         */
+        val pluginErrors: List<PluginProblem>
     ) : Result() {
 
-      /**
-       * The [errors] [PluginProblem.Level.ERROR] of the plugin
-       * that make it invalid. It can also contain the [warnings] [PluginProblem.Level.WARNING]
-       * of the plugin's structure.
-       */
-      val pluginErrors: List<PluginProblem>
-        get() = resourceCacheEntry.pluginErrors
-
-      override fun close() = Unit
+      override fun close() = resourceCacheEntry.close()
     }
 
     /**
