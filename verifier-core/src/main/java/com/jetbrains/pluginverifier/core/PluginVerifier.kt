@@ -23,6 +23,7 @@ import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationRep
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.jgrapht.DirectedGraph
@@ -75,18 +76,21 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
   private fun doVerification() = pluginDetailsCache.getPluginDetails(pluginInfo).use {
     with(it) {
       when (this) {
-        is PluginDetailsCache.Result.Provided -> doVerification(pluginDetails, pluginInfo)
-        is PluginDetailsCache.Result.InvalidPlugin -> Result(pluginInfo, ideDescriptor.ideVersion, Verdict.Bad(pluginErrors), emptySet())
-        is PluginDetailsCache.Result.FileNotFound -> Result(pluginInfo, ideDescriptor.ideVersion, Verdict.NotFound(reason), emptySet())
+        is PluginDetailsCache.Result.Provided -> doVerification(pluginDetails)
+        is PluginDetailsCache.Result.InvalidPlugin -> createResult(Verdict.Bad(pluginErrors))
+        is PluginDetailsCache.Result.FileNotFound -> createResult(Verdict.NotFound(reason))
         is PluginDetailsCache.Result.Failed -> {
           pluginVerificationReportage.logException("Plugin $pluginInfo was not downloaded", error)
-          Result(pluginInfo, ideDescriptor.ideVersion, Verdict.NotFound("Plugin $pluginInfo was not downloaded due to ${error.message}"), emptySet())
+          createResult(Verdict.NotFound("Plugin $pluginInfo was not downloaded due to ${error.message}"))
         }
       }
     }
   }
 
-  private fun doVerification(pluginDetails: PluginDetails, pluginInfo: PluginInfo): Result {
+  private fun createResult(verdict: Verdict, ignoredProblems: Set<Problem> = emptySet()) =
+      Result(pluginInfo, ideDescriptor.ideVersion, verdict, ignoredProblems)
+
+  private fun doVerification(pluginDetails: PluginDetails): Result {
     val resultHolder = VerificationResultHolder(pluginVerificationReportage)
 
     resultHolder.addPluginWarnings(pluginDetails.pluginWarnings)
@@ -97,12 +101,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
 
     val verdict = resultHolder.getVerdict()
     pluginVerificationReportage.logVerdict(verdict)
-    return Result(
-        pluginInfo,
-        ideDescriptor.ideVersion,
-        verdict,
-        resultHolder.ignoredProblemsHolder.ignoredProblems
-    )
+    return createResult(verdict, resultHolder.ignoredProblemsHolder.ignoredProblems)
   }
 
   private fun runVerification(pluginDetails: PluginDetails,
@@ -140,7 +139,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
       pluginDetails.pluginClassesLocations.createPluginClassLoader()
     } catch (e: Exception) {
       pluginVerificationReportage.logException("Unable to read verified plugin $pluginInfo classes", e)
-      return Result(pluginInfo, ideDescriptor.ideVersion, Verdict.Bad(listOf(UnableToReadPluginClassFilesProblem(e))), emptySet())
+      return createResult(Verdict.Bad(listOf(UnableToReadPluginClassFilesProblem(e))))
     }
 
     val dependenciesResolver = depGraph.createDependenciesResolver()
