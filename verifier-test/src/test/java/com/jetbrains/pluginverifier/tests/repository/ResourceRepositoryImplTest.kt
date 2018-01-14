@@ -7,10 +7,11 @@ import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import com.jetbrains.pluginverifier.repository.resources.ResourceLock
 import com.jetbrains.pluginverifier.repository.resources.ResourceRepositoryImpl
 import com.jetbrains.pluginverifier.repository.resources.ResourceRepositoryResult
-import org.junit.Assert.assertEquals
+import org.junit.Assert.*
 import org.junit.Test
 import java.io.Closeable
 import java.time.Clock
+import java.util.concurrent.atomic.AtomicInteger
 
 class ResourceRepositoryImplTest {
 
@@ -106,4 +107,35 @@ class ResourceRepositoryImplTest {
 
     assertEquals((0 until size).toSet(), evictedResources)
   }
+
+  @Test
+  fun `resource is not removed until the last lock is released`() {
+    val locksCnt = AtomicInteger()
+    val resourceRepository = createSizedResourceRepository(1) { i ->
+      Closeable {
+        if (locksCnt.get() > 0) {
+          fail("The resource must not be removed as it has locks registered for it")
+        }
+      }
+    }
+    val key = 1
+    val lockOne = (resourceRepository.get(key) as ResourceRepositoryResult.Found).lockedResource
+    locksCnt.incrementAndGet()
+
+    val lockTwo = (resourceRepository.get(key) as ResourceRepositoryResult.Found).lockedResource
+    locksCnt.incrementAndGet()
+
+    resourceRepository.remove(key)
+
+    assertTrue(resourceRepository.has(key))
+    locksCnt.decrementAndGet()
+    lockOne.release()
+
+    assertTrue(resourceRepository.has(key))
+    locksCnt.decrementAndGet()
+    lockTwo.release()
+
+    assertFalse(resourceRepository.has(key))
+  }
+
 }
