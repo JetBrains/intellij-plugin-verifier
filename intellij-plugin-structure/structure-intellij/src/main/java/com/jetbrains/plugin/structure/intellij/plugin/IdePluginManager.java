@@ -28,7 +28,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -164,8 +166,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     }
     sortFilesWithRespectToRootDirectoryName(root, files);
 
-    List<URL> metaInfUrls = getInLibMetaInfUrls(files);
-    XIncludePathResolver pathResolver = new PluginXmlXIncludePathResolver(metaInfUrls);
+    XIncludePathResolver pathResolver = new PluginXmlXIncludePathResolver(Arrays.asList(files));
 
     PluginCreator okOrPartiallyBrokenResult = null;
 
@@ -215,22 +216,6 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
         return 0;
       }
     });
-  }
-
-  @NotNull
-  private List<URL> getInLibMetaInfUrls(File[] files) {
-    List<URL> inLibJarUrls = new ArrayList<URL>();
-    for (File file : files) {
-      if (FileUtil.INSTANCE.isJar(file) || FileUtil.INSTANCE.isZip(file)) {
-        try {
-          String metaInfUrl = URLUtil.getJarEntryURL(file, "META-INF").toExternalForm();
-          inLibJarUrls.add(new URL(metaInfUrl));
-        } catch (Exception e) {
-          LOG.warn("Unable to create URL for " + file + " META-INF root", e);
-        }
-      }
-    }
-    return inLibJarUrls;
   }
 
   @NotNull

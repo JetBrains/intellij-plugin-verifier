@@ -2,77 +2,63 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.utils.FileUtil
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil
-import org.jetbrains.annotations.NotNull
+import com.jetbrains.plugin.structure.intellij.utils.xincludes.DefaultXIncludePathResolver
+import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludeException
 import org.jetbrains.annotations.Nullable
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.net.MalformedURLException
 import java.net.URL
-import java.util.*
 
-class PluginXmlXIncludePathResolver extends DefaultXIncludePathResolver {
+class PluginXmlXIncludePathResolver(files: List<File>) : DefaultXIncludePathResolver() {
 
-  private static final Logger logger = LoggerFactory.getLogger(PluginXmlXIncludePathResolver.class)
+  private val metaInfUrls = getMetaInfUrls(files)
 
-      private final List < URL > myPluginMetaInfUrls
+  private fun getMetaInfUrls(files: List<File>) =
+      files.asSequence()
+          .filter { FileUtil.isJar(it) || FileUtil.isZip(it) }
+          .mapNotNull {
+            try {
+              URLUtil.getJarEntryURL(it, "META-INF")
+            } catch (e: MalformedURLException) {
+              null
+            }
+          }.toList()
 
-      public PluginXmlXIncludePathResolver (@NotNull List<File> files) {
-    myPluginMetaInfUrls = getUrls(files)
-  }
-
-      @ NotNull
-      private List < URL > getUrls (@NotNull List<File> files) {
-    List<URL> inLibJarUrls = new ArrayList<URL>()
-    for (File file : files) {
-    if (FileUtil.INSTANCE.isJar(file) || FileUtil.INSTANCE.isZip(file)) {
+  private fun defaultResolve(relativePath: String, @Nullable base: String?): URL {
+    return if (base != null && relativePath.startsWith("/META-INF/")) {
       try {
-        String metaInfUrl = URLUtil . getJarEntryURL (file, "META-INF").toExternalForm()
-        inLibJarUrls.add(new URL (metaInfUrl))
-      } catch (Exception e) {
-        logger.warn("Unable to create URL for " + file + " META-INF root", e)
+        URL(URL(base), ".." + relativePath)
+      } catch (e: MalformedURLException) {
+        throw XIncludeException(e)
       }
-    }
-  }
-    return inLibJarUrls
-  }
-
-  @NotNull
-  private URL defaultResolve(@NotNull String relativePath, @Nullable String base) {
-    if (base != null && relativePath.startsWith("/META-INF/")) {
-      //for plugin descriptor the root is a directory containing the META-INF
-      try {
-        return new URL (new URL (base), ".."+relativePath)
-      } catch (MalformedURLException e) {
-        throw new XIncludeException (e)
-      }
-    }
-    return super.resolvePath(relativePath, base)
-  }
-
-  @NotNull
-  private URL getMetaInfRelativeUrl(@NotNull URL metaInf, @NotNull String relativePath) throws MalformedURLException {
-    if (relativePath.startsWith("/")) {
-      return new URL (metaInf, ".."+relativePath)
     } else {
-      return new URL (metaInf, relativePath)
+      super.resolvePath(relativePath, base)
     }
   }
 
-  @NotNull
-  @Override
-  public URL resolvePath(@NotNull String relativePath, @Nullable String base) {
-    URL url = defaultResolve (relativePath, base)
-    if (!URLUtil.resourceExists(url)) {
-      for (URL metaInf : myPluginMetaInfUrls) {
-        try {
-          URL entryUrl = getMetaInfRelativeUrl (metaInf, relativePath)
-          if (URLUtil.resourceExists(entryUrl)) {
-            return entryUrl
-          }
-        } catch (MalformedURLException ignored) {
-        }
+  private fun getRelativeUrl(base: URL, path: String) =
+      if (path.startsWith("/")) {
+        URL(base, ".." + path)
+      } else {
+        URL(base, path)
       }
+
+  override fun resolvePath(relativePath: String, base: String?): URL {
+    val url = defaultResolve(relativePath, base)
+    if (URLUtil.resourceExists(url)) {
+      return url
     }
-    return url
+
+    return metaInfUrls.asSequence()
+        .mapNotNull {
+          try {
+            getRelativeUrl(it, relativePath)
+          } catch (e: MalformedURLException) {
+            null
+          }
+        }
+        .filter { URLUtil.resourceExists(it) }
+        .firstOrNull()
+        ?: url
   }
 }

@@ -46,9 +46,9 @@ public class URLUtil {
    * separate method is needed, since jar URLs open jars via JarFactory and thus keep them
    * mapped into memory.
    *
-   * @param url url
-   * @return input stream
-   * @throws IOException if problems
+   * @param url url to open stream of
+   * @return input stream of the specified URL
+   * @throws IOException if IO problems occur
    */
   @NotNull
   public static InputStream openStream(@NotNull URL url) throws IOException {
@@ -237,7 +237,7 @@ public class URLUtil {
     while (path.startsWith("file:")) {
       path = StringUtil.trimStart(path, "file:");
     }
-    return path.split("\\!/");
+    return path.split(JAR_SEPARATOR);
   }
 
   @NotNull
