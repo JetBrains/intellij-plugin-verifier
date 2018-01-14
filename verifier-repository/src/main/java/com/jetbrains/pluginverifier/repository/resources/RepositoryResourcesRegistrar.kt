@@ -19,14 +19,14 @@ internal class RepositoryResourcesRegistrar<R, K>(var totalWeight: ResourceWeigh
 
   fun addResource(key: K, resource: R): Boolean {
     if (key in resources) {
-      logger.debug("add($key): the resource by this key already exists. Disposing the duplicate resource.")
+      logger.debug("add($key): the $resource is already available. Disposing the duplicate resource.")
       safeDispose(key, resource)
       return false
     }
 
     val resourceWeight = weigher(resource)
     totalWeight += resourceWeight
-    logger.debug("add($key): adding the resource of weight $resourceWeight. Total weight: $totalWeight")
+    logger.debug("add($key): adding the $resource of weight $resourceWeight. Total weight: $totalWeight")
     resources[key] = ResourceInfo(resource, resourceWeight)
     return true
   }
@@ -43,7 +43,7 @@ internal class RepositoryResourcesRegistrar<R, K>(var totalWeight: ResourceWeigh
     val resource = resourceInfo.resource
     val weight = resourceInfo.weight
     totalWeight -= weight
-    logger.debug("remove($key): removing the resource of weight $weight. Total weight $totalWeight")
+    logger.debug("remove($key): removing the $resource of weight $weight. Total weight: $totalWeight")
     resources.remove(key)
     safeDispose(key, resource)
   }

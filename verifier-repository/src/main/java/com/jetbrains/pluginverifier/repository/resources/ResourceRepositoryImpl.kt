@@ -108,7 +108,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
     val now = updateUsageStatistics(key)
     val lockId = nextLockId++
     val lock = ResourceLockImpl(now, resourceInfo, key, lockId, this)
-    logger.debug("get($key): registering a lock #$lockId")
+    logger.debug("get($key): lock is registered $lock ")
     key2Locks.getOrPut(key, { hashSetOf() }).add(lock)
     return lock
   }
@@ -118,13 +118,13 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
     val key = lock.key
     val resourceLocks = key2Locks[key]
     if (resourceLocks != null) {
-      logger.debug("releasing lock #${lock.lockId} for key $key")
+      logger.debug("releasing lock $lock")
       resourceLocks.remove(lock)
       if (resourceLocks.isEmpty()) {
         key2Locks.remove(key)
       }
     } else {
-      logger.debug("attempt to release an unregistered lock #${lock.lockId}")
+      logger.debug("attempt to release an unregistered lock $lock")
     }
     if (key in removeQueue) {
       removeQueue.remove(key)
@@ -144,14 +144,15 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
     checkIfInterrupted()
     val (addTask, runInCurrentThread) = synchronized(this) {
       if (resourcesRegistrar.has(key)) {
-        logger.debug("get($key): the resource is available")
-        return ResourceRepositoryResult.Found(registerLock(key))
+        val lock = registerLock(key)
+        logger.debug("get($key): the resource is available and a lock is registered $lock")
+        return ResourceRepositoryResult.Found(lock)
       }
 
       waitedKeys.add(key)
       val task = additionTasks[key]
       if (task != null) {
-        logger.debug("get($key): waiting for another thread to finish fetching of the resource")
+        logger.debug("get($key): waiting for another thread to finish fetching the resource")
         task to false
       } else {
         logger.debug("get($key): fetching the resource in the current thread")

@@ -60,7 +60,7 @@ class PublicPluginRepository(override val repositoryURL: URL,
       PluginFileNameMapper(),
       LruFileSizeSweepPolicy(diskSpaceSetting),
       keyProvider = { PluginFileNameMapper.getUpdateIdByFile(it) },
-      presentableName = "Plugin files at $downloadDir"
+      presentableName = "downloaded-plugins"
   )
 
   private val repositoryConnector: PublicPluginRepositoryConnector = Retrofit.Builder()

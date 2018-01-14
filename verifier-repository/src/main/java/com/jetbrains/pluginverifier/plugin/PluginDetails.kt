@@ -46,4 +46,7 @@ data class PluginDetails(
     pluginClassesLocations.closeLogged()
     pluginFileLock.closeLogged()
   }
+
+  override fun toString() = "PluginDetails($pluginInfo)"
+
 }

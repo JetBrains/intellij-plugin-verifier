@@ -23,11 +23,11 @@ interface PluginDetailsProvider {
    */
   sealed class Result : Closeable {
 
-    class Provided(val pluginDetails: PluginDetails) : Result() {
+    data class Provided(val pluginDetails: PluginDetails) : Result() {
       override fun close() = pluginDetails.close()
     }
 
-    class InvalidPlugin(val pluginErrors: List<PluginProblem>) : Result() {
+    data class InvalidPlugin(val pluginErrors: List<PluginProblem>) : Result() {
       override fun close() = Unit
     }
 
