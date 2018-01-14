@@ -70,7 +70,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
       return result
     } catch (e: Throwable) {
       pluginVerificationReportage.logVerificationFinished("Failed with exception: ${e.message}")
-      throw e
+      throw RuntimeException("Failed to verify $pluginInfo against $ideDescriptor", e)
     }
   }
 
