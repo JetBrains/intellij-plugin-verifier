@@ -73,14 +73,21 @@ class VerifierExecutor(private val concurrentWorkers: Int, private val pluginDet
       for (finished in 1..workers.size) {
         while (true) {
           if (Thread.currentThread().isInterrupted) {
-            for (worker in workers) {
-              worker.cancel(true)
+            workers.forEach {
+              it.cancel(true)
             }
             throw InterruptedException()
           }
           val future = completionService.poll(500, TimeUnit.MILLISECONDS)
           if (future != null) {
-            val result = future.get()
+            val result = try {
+              future.get()
+            } catch (e: Exception) {
+              workers.forEach {
+                it.cancel(true)
+              }
+              throw e
+            }
             results.add(result)
             break
           }
