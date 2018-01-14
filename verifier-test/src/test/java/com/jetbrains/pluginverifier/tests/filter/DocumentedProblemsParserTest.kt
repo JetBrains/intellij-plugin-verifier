@@ -5,9 +5,6 @@ import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedPr
 import org.junit.Assert.*
 import org.junit.Test
 
-/**
- * @author Sergey Patrikeev
- */
 class DocumentedProblemsParserTest {
 
   private val parser: DocumentedProblemsParser = DocumentedProblemsParser()

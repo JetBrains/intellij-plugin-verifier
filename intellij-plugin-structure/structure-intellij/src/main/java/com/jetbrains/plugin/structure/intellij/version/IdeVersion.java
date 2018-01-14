@@ -3,9 +3,6 @@ package com.jetbrains.plugin.structure.intellij.version;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Patrikeev
- */
 public abstract class IdeVersion implements Comparable<IdeVersion> {
 
   /**

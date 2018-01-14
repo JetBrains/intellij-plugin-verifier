@@ -12,9 +12,6 @@ import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 import java.io.File
 import java.io.PrintWriter
 
-/**
- * @author Sergey Patrikeev
- */
 class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginRepository: PluginRepository) : TaskResultPrinter {
 
   override fun printResults(taskResult: TaskResult) {

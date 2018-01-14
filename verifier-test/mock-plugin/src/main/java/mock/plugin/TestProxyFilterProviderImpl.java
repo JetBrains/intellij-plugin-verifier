@@ -2,9 +2,6 @@ package mock.plugin;
 
 import com.intellij.execution.testframework.sm.runner.TestProxyFilterProvider;
 
-/**
- * @author Sergey Patrikeev
- */
 public class TestProxyFilterProviderImpl implements TestProxyFilterProvider {
 
   //FilterImpl is a constriction of Filter interface

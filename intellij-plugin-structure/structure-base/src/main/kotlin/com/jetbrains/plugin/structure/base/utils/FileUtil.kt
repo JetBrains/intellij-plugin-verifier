@@ -5,9 +5,6 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.IOException
 
-/**
- * @author Sergey Patrikeev
- */
 object FileUtil {
 
   private val TEMP_DIR_ATTEMPTS = 10000

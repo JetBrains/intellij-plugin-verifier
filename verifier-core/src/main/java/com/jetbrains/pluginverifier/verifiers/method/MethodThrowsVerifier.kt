@@ -7,9 +7,6 @@ import com.jetbrains.pluginverifier.verifiers.fromMethod
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
-/**
- * @author Sergey Patrikeev
- */
 class MethodThrowsVerifier : MethodVerifier {
   @Suppress("UNCHECKED_CAST")
   override fun verify(clazz: ClassNode, method: MethodNode, ctx: VerificationContext) {

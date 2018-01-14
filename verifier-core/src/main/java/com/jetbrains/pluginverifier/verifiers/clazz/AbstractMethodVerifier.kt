@@ -7,9 +7,6 @@ import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassParentsVisito
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
-/**
- * @author Sergey Patrikeev
- */
 class AbstractMethodVerifier : ClassVerifier {
   override fun verify(clazz: ClassNode, ctx: VerificationContext) {
     if (clazz.isAbstract() || clazz.isInterface()) return

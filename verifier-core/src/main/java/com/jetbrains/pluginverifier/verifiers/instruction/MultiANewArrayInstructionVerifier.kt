@@ -9,9 +9,6 @@ import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 import org.objectweb.asm.tree.MultiANewArrayInsnNode
 
-/**
- * @author Sergey Patrikeev
- */
 class MultiANewArrayInstructionVerifier : InstructionVerifier {
   override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, ctx: VerificationContext) {
     if (instr !is MultiANewArrayInsnNode) return

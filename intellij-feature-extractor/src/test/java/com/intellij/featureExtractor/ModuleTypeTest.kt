@@ -5,9 +5,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * @author Sergey Patrikeev
- */
 class ModuleTypeTest : FeatureExtractorTestBase() {
 
   private fun assertModuleIdFound(className: String, moduleId: String) {

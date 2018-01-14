@@ -11,9 +11,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Sergey Patrikeev
- */
 public class PluginXmlXIncludePathResolver extends DefaultXIncludePathResolver {
 
   private final List<URL> myPluginMetaInfUrls;

@@ -2,9 +2,6 @@ package featureExtractor.facetType;
 
 import com.intellij.facet.FacetType;
 
-/**
- * @author Sergey Patrikeev
- */
 public class Constant2 extends FacetType<SomeFacet> {
 
   public Constant2() {

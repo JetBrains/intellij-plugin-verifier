@@ -8,9 +8,6 @@ import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.LocalVariableNode
 import org.objectweb.asm.tree.MethodNode
 
-/**
- * @author Sergey Patrikeev
- */
 class MethodLocalVarsVerifier : MethodVerifier {
   @Suppress("UNCHECKED_CAST")
   override fun verify(clazz: ClassNode, method: MethodNode, ctx: VerificationContext) {

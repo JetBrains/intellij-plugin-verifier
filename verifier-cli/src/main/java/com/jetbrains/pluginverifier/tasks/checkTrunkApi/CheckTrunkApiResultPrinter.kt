@@ -19,9 +19,6 @@ import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 
-/**
- * @author Sergey Patrikeev
- */
 class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions) : TaskResultPrinter {
 
   override fun printResults(taskResult: TaskResult) {

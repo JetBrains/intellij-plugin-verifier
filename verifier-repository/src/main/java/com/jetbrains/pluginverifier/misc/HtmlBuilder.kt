@@ -3,9 +3,6 @@ package com.jetbrains.pluginverifier.misc
 import com.google.common.html.HtmlEscapers
 import java.io.PrintWriter
 
-/**
- * @author Sergey Patrikeev
- */
 class HtmlBuilder(val output: PrintWriter) {
   fun tag(tagName: String, block: () -> Unit = {}, attr: Map<String, String> = emptyMap()) {
     val renderedAttributes = renderAttributes(attr)

@@ -4,9 +4,6 @@ import com.jetbrains.intellij.feature.extractor.core.RunConfigurationExtractor
 import org.junit.Assert
 import org.junit.Test
 
-/**
- * @author Sergey Patrikeev
- */
 class ConfigurationTypeTest : FeatureExtractorTestBase() {
   @Test
   fun constantConfiguration() {

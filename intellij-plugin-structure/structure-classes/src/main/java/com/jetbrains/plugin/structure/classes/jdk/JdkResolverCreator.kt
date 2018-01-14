@@ -5,9 +5,6 @@ import com.jetbrains.plugin.structure.classes.utils.JarsUtils
 
 import java.io.File
 
-/**
- * @author Sergey Patrikeev
- */
 object JdkResolverCreator {
 
   private val MANDATORY_JARS = setOf("rt.jar")

@@ -4,9 +4,6 @@ import org.jsoup.Connection
 import org.jsoup.Jsoup
 import java.util.concurrent.TimeUnit
 
-/**
- * @author Sergey Patrikeev
- */
 class DocumentedProblemsFetcher {
 
   fun fetchPage(documentedPageUrl: String): String =

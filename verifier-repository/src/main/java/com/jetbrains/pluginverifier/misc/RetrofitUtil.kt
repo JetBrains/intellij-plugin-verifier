@@ -7,9 +7,6 @@ import okhttp3.logging.HttpLoggingInterceptor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-/**
- * @author Sergey Patrikeev
- */
 fun makeOkHttpClient(needLog: Boolean, timeOut: Long, timeUnit: TimeUnit): OkHttpClient = OkHttpClient.Builder()
     .dispatcher(Dispatcher(Executors.newCachedThreadPool(
         ThreadFactoryBuilder()

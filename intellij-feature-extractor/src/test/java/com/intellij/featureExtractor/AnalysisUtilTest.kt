@@ -6,9 +6,6 @@ import org.junit.Test
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
-/**
- * @author Sergey Patrikeev
- */
 @Suppress("UNCHECKED_CAST")
 class AnalysisUtilTest : FeatureExtractorTestBase() {
   @Test

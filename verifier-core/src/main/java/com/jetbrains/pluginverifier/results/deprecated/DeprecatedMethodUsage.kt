@@ -8,9 +8,6 @@ import com.jetbrains.pluginverifier.results.presentation.MethodParameterTypeOpti
 import com.jetbrains.pluginverifier.results.presentation.MethodReturnTypeOption.SIMPLE_RETURN_TYPE_CLASS_NAME
 import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 
-/**
- * @author Sergey Patrikeev
- */
 data class DeprecatedMethodUsage(override val deprecatedElement: MethodLocation,
                                  override val usageLocation: Location) : DeprecatedApiUsage() {
   override val shortDescription: String = "Deprecated method usage ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}"

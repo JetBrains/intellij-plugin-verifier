@@ -6,9 +6,6 @@ import com.jetbrains.pluginverifier.results.presentation.FieldTypeOption
 import com.jetbrains.pluginverifier.results.presentation.HostClassOption.FULL_HOST_NAME
 import com.jetbrains.pluginverifier.results.presentation.formatFieldLocation
 
-/**
- * @author Sergey Patrikeev
- */
 data class DeprecatedFieldUsage(override val deprecatedElement: FieldLocation,
                                 override val usageLocation: Location) : DeprecatedApiUsage() {
   override val shortDescription: String = "Deprecated field usage ${deprecatedElement.formatFieldLocation(FULL_HOST_NAME, FieldTypeOption.NO_TYPE)}"

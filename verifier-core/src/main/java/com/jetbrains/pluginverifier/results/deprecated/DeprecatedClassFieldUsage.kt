@@ -12,9 +12,6 @@ import com.jetbrains.pluginverifier.results.presentation.HostClassOption.NO_HOST
 import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
 import com.jetbrains.pluginverifier.results.presentation.formatFieldLocation
 
-/**
- * @author Sergey Patrikeev
- */
 data class DeprecatedClassFieldUsage(override val deprecatedElement: ClassLocation,
                                      override val usageLocation: Location,
                                      val field: FieldLocation) : DeprecatedApiUsage() {

@@ -1,8 +1,5 @@
 package com.intellij.openapi.fileTypes;
 
-/**
- * @author Sergey Patrikeev
- */
 public interface FileTypeConsumer {
   String EXTENSION_DELIMITER = ";";
 

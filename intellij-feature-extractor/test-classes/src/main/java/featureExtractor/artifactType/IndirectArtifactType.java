@@ -1,8 +1,5 @@
 package featureExtractor.artifactType;
 
-/**
- * @author Sergey Patrikeev
- */
 public class IndirectArtifactType extends AbstractBaseArtifactType {
 
   private static final String CONSTANT = "IndirectArtifactId";

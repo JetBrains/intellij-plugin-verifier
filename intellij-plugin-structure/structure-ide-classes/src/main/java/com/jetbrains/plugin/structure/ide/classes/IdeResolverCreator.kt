@@ -15,9 +15,6 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.File
 import java.io.IOException
 
-/**
- * @author Sergey Patrikeev
- */
 object IdeResolverCreator {
 
   @JvmStatic

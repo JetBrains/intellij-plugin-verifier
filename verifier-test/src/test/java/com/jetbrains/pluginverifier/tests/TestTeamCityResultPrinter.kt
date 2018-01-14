@@ -17,9 +17,6 @@ import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
 
-/**
- * @author Sergey Patrikeev
- */
 class TestTeamCityResultPrinter {
 
   data class MockUpdateInfo(val id: String, val name: String, val version: String, val updateId: Int)

@@ -7,9 +7,6 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 
-/**
- * @author Sergey Patrikeev
- */
 class ClassFilesResolver(private val root: File) : Resolver() {
 
   private val allClasses = hashMapOf<String, File>()

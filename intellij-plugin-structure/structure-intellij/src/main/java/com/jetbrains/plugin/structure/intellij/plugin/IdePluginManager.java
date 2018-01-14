@@ -34,9 +34,6 @@ import java.util.zip.ZipFile;
 
 import static com.jetbrains.plugin.structure.intellij.utils.StringUtil.toSystemIndependentName;
 
-/**
- * @author Sergey Patrikeev
- */
 public final class IdePluginManager implements PluginManager<IdePlugin> {
 
   private static final Logger LOG = LoggerFactory.getLogger(IdePluginManager.class);

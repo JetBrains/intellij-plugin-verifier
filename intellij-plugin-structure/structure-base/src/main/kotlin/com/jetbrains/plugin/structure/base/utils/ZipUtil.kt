@@ -12,9 +12,6 @@ import org.codehaus.plexus.logging.console.ConsoleLogger
 import java.io.File
 import java.io.IOException
 
-/**
- * @author Sergey Patrikeev
- */
 object ZipUtil {
   @Throws(IOException::class)
   fun extractZip(pluginZip: File, destDir: File) {

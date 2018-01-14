@@ -4,9 +4,6 @@ import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
 
-/**
- * @author Sergey Patrikeev
- */
 enum class Settings(val key: String,
                     private val default: (() -> String?)? = null,
                     val encrypted: Boolean = false) {

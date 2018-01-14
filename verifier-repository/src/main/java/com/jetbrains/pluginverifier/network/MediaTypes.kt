@@ -3,9 +3,6 @@ package com.jetbrains.pluginverifier.network
 import okhttp3.MediaType
 import okhttp3.RequestBody
 
-/**
- * @author Sergey Patrikeev
- */
 val stringMediaType: MediaType = MediaType.parse("text/plain")
 
 val jsonMediaType: MediaType = MediaType.parse("application/json")

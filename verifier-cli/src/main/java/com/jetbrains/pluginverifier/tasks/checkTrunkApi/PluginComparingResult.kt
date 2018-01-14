@@ -5,9 +5,6 @@ import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.problems.*
 
-/**
- * @author Sergey Patrikeev
- */
 data class PluginComparingResult(val plugin: PluginInfo,
                                  val releaseResult: Result,
                                  val trunkResult: Result) {

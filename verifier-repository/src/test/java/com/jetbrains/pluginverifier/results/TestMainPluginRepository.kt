@@ -15,9 +15,6 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.net.URL
 
-/**
- * @author Sergey Patrikeev
- */
 class TestMainPluginRepository {
 
   @Rule

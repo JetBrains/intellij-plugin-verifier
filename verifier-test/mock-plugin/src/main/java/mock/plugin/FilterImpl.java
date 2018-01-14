@@ -2,9 +2,6 @@ package mock.plugin;
 
 import com.intellij.execution.filters.Filter;
 
-/**
- * @author Sergey Patrikeev
- */
 public class FilterImpl implements Filter {
   public FilterImpl() {
   }

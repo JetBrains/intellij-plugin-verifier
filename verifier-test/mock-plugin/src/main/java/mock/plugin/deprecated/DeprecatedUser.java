@@ -5,9 +5,6 @@ import deprecated.DeprecatedField;
 import deprecated.DeprecatedMethod;
 import deprecated.DeprecatedWithCommentClass;
 
-/**
- * @author Sergey Patrikeev
- */
 public class DeprecatedUser {
   public void clazz() {
     new DeprecatedClass();

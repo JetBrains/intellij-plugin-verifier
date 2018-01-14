@@ -4,9 +4,6 @@ import com.jetbrains.intellij.feature.extractor.core.FacetTypeExtractor
 import org.junit.Assert
 import org.junit.Test
 
-/**
- * @author Sergey Patrikeev
- */
 class FacetTypeTests : FeatureExtractorTestBase() {
   @Test
   fun constant() {

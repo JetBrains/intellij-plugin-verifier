@@ -5,9 +5,6 @@ import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 
-/**
- * @author Sergey Patrikeev
- */
 public class MatcherFileTypeFactory extends FileTypeFactory {
 
   private static String FIRST_EXTENSION = "firstExactName";

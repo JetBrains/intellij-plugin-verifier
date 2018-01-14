@@ -3,9 +3,6 @@ package com.jetbrains.plugin.structure.classes.resolvers
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
 
-/**
- * @author Sergey Patrikeev
- */
 object EmptyResolver : Resolver() {
 
   override fun findClass(className: String): ClassNode? = null

@@ -4,9 +4,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import non.existing.NonExistingClass;
 import non.existing.NonExistingException;
 
-/**
- * @author Sergey Patrikeev
- */
 public class MethodProblems {
   public NonExistingClass brokenReturn() {
     return null;
@@ -20,7 +17,7 @@ public class MethodProblems {
     NonExistingClass brokenLocalVar = null;
   }
 
-  public void brokenThrows() throws NonExistingException {
+  public void brokenThrows() {
 
   }
 

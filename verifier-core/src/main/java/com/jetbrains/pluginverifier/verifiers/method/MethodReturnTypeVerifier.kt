@@ -8,9 +8,6 @@ import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
-/**
- * @author Sergey Patrikeev
- */
 class MethodReturnTypeVerifier : MethodVerifier {
   override fun verify(clazz: ClassNode, method: MethodNode, ctx: VerificationContext) {
     val methodType = Type.getType(method.desc)

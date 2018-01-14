@@ -2,9 +2,6 @@ package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
-/**
- * @author Sergey Patrikeev
- */
 data class MissingCompatibleUpdate(val pluginId: String,
                                    val ideVersion: IdeVersion,
                                    val details: String) {

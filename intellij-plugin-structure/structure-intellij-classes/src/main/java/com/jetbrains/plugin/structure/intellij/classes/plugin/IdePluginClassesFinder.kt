@@ -18,9 +18,6 @@ import java.io.Closeable
 import java.io.File
 import java.io.IOException
 
-/**
- * @author Sergey Patrikeev
- */
 class IdePluginClassesFinder private constructor(private val idePlugin: IdePlugin,
                                                  private val extractDirectory: File,
                                                  private val locatorKeys: List<LocationKey>) {

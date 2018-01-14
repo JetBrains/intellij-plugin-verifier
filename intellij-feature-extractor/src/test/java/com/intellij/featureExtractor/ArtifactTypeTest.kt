@@ -4,9 +4,6 @@ import com.jetbrains.intellij.feature.extractor.core.ArtifactTypeExtractor
 import org.junit.Assert
 import org.junit.Test
 
-/**
- * @author Sergey Patrikeev
- */
 class ArtifactTypeTest : FeatureExtractorTestBase() {
 
   private fun assertExtractArtifactType(className: String, artifactTypes: List<String>) {

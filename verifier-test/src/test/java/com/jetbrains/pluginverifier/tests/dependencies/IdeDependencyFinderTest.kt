@@ -27,9 +27,6 @@ import org.junit.rules.TemporaryFolder
 import java.lang.Exception
 import java.nio.file.Paths
 
-/**
- * @author Sergey Patrikeev
- */
 class IdeDependencyFinderTest {
 
   @JvmField

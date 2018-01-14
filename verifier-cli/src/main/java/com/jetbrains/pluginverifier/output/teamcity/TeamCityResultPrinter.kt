@@ -21,9 +21,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 
-/**
- * @author Sergey Patrikeev
- */
 class TeamCityResultPrinter(private val tcLog: TeamCityLog,
                             private val groupBy: GroupBy,
                             private val repository: PluginRepository,

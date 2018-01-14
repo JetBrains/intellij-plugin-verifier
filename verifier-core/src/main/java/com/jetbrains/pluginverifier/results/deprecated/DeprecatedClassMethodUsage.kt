@@ -13,9 +13,6 @@ import com.jetbrains.pluginverifier.results.presentation.MethodReturnTypeOption.
 import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
 import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 
-/**
- * @author Sergey Patrikeev
- */
 data class DeprecatedClassMethodUsage(override val deprecatedElement: ClassLocation,
                                       override val usageLocation: Location,
                                       val method: MethodLocation) : DeprecatedApiUsage() {

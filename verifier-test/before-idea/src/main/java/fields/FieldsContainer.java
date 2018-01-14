@@ -1,8 +1,5 @@
 package fields;
 
-/**
- * @author Sergey Patrikeev
- */
 public class FieldsContainer {
 
   public static int staticFinalField;

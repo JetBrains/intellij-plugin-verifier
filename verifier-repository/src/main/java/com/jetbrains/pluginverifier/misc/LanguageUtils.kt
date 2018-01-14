@@ -6,9 +6,6 @@ import java.net.URL
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
-/**
- * @author Sergey Patrikeev
- */
 private val LOG = LoggerFactory.getLogger("LanguageUtils")
 
 fun Duration.formatDuration(format: String): String =

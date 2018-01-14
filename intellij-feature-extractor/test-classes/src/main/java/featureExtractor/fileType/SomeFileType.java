@@ -2,9 +2,6 @@ package featureExtractor.fileType;
 
 import com.intellij.openapi.fileTypes.FileType;
 
-/**
- * @author Sergey Patrikeev
- */
 public class SomeFileType implements FileType {
   @Override
   public String getName() {

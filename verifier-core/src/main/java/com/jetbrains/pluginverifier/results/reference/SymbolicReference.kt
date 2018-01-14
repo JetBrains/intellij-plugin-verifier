@@ -2,9 +2,6 @@ package com.jetbrains.pluginverifier.results.reference
 
 import com.jetbrains.pluginverifier.results.presentation.*
 
-/**
- * @author Sergey Patrikeev
- */
 interface SymbolicReference {
   companion object {
 

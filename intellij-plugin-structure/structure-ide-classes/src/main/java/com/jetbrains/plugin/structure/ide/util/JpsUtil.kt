@@ -4,9 +4,6 @@ import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 
-/**
- * @author Sergey Patrikeev
- */
 fun loadProject(projectPath: String, pathVariables: Map<String, String>): JpsProject {
   setDummyIdeaHomePath(projectPath)
   val model = JpsElementFactory.getInstance().createModel()

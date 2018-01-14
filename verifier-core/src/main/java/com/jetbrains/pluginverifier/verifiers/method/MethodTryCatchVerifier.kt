@@ -8,9 +8,6 @@ import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 import org.objectweb.asm.tree.TryCatchBlockNode
 
-/**
- * @author Sergey Patrikeev
- */
 class MethodTryCatchVerifier : MethodVerifier {
   @Suppress("UNCHECKED_CAST")
   override fun verify(clazz: ClassNode, method: MethodNode, ctx: VerificationContext) {

@@ -3,9 +3,6 @@ package com.jetbrains.pluginverifier.results.location
 import com.jetbrains.pluginverifier.results.location.classpath.ClassPath
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 
-/**
- * @author Sergey Patrikeev
- */
 interface Location {
 
   companion object {

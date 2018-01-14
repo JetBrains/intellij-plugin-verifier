@@ -4,9 +4,6 @@ import fields.FieldsContainer;
 import fields.otherPackage.OtherFieldsContainer;
 import non.existing.NonExistingClass;
 
-/**
- * @author Sergey Patrikeev
- */
 public class FieldProblemsContainer {
 
   public void accessDeletedField() {

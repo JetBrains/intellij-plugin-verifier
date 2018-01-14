@@ -9,9 +9,6 @@ import com.jetbrains.plugin.structure.intellij.problems.PluginZipIsEmpty
 import org.apache.commons.io.FileUtils
 import java.io.File
 
-/**
- * @author Sergey Patrikeev
- */
 object PluginExtractor {
 
   fun extractPlugin(pluginZip: File, extractDirectory: File): ExtractorResult {

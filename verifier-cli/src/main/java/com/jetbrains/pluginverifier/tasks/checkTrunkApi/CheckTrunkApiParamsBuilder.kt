@@ -23,9 +23,6 @@ import java.io.File
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
-/**
- * @author Sergey Patrikeev
- */
 class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
                                  val ideFilesBank: IdeFilesBank,
                                  val verificationReportage: VerificationReportage) : TaskParametersBuilder {

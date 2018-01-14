@@ -10,9 +10,6 @@ import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 import java.io.PrintWriter
 
-/**
- * @author Sergey Patrikeev
- */
 class CheckPluginResultPrinter(private val outputOptions: OutputOptions,
                                private val pluginRepository: PluginRepository) : TaskResultPrinter {
 

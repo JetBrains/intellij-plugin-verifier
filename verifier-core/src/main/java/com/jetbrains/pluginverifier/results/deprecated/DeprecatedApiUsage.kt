@@ -16,9 +16,6 @@ import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
 import com.jetbrains.pluginverifier.results.presentation.formatFieldLocation
 import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 
-/**
- * @author Sergey Patrikeev
- */
 abstract class DeprecatedApiUsage {
   abstract val deprecatedElement: Location
 

@@ -2,9 +2,6 @@ package mock.plugin.lambda;
 
 import invocation.InvocationProblems;
 
-/**
- * @author Sergey Patrikeev
- */
 public class LambdaProblems {
 
   public void invokeDeletedFromLambda() {

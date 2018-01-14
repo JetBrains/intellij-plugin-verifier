@@ -1,8 +1,5 @@
 package com.jetbrains.pluginverifier.results.problems
 
-/**
- * @author Sergey Patrikeev
- */
 abstract class Problem {
 
   abstract val shortDescription: String

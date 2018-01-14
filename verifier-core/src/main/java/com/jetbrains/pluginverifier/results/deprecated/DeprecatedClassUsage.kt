@@ -7,9 +7,6 @@ import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureO
 import com.jetbrains.pluginverifier.results.presentation.ClassOption.FULL_NAME
 import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
 
-/**
- * @author Sergey Patrikeev
- */
 data class DeprecatedClassUsage(override val deprecatedElement: ClassLocation,
                                 override val usageLocation: Location) : DeprecatedApiUsage() {
   override val shortDescription: String = "Deprecated class usage ${deprecatedElement.formatClassLocation(FULL_NAME, NO_GENERICS)}"

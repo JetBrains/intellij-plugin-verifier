@@ -8,9 +8,6 @@ import org.objectweb.asm.tree.MethodNode
 import org.objectweb.asm.tree.VarInsnNode
 import org.objectweb.asm.tree.analysis.SourceValue
 
-/**
- * @author Sergey Patrikeev
- */
 class ModuleTypeExtractor(resolver: Resolver) : Extractor(resolver) {
 
   private val MODULE_TYPE_CLASS_NAME = "com/intellij/openapi/module/ModuleType"

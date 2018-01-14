@@ -1,8 +1,5 @@
 package deprecated;
 
-/**
- * @author Sergey Patrikeev
- */
 public class DeprecatedField {
   public int x;
 

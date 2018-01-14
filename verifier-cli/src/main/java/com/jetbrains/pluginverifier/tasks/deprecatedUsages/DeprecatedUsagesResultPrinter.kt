@@ -13,9 +13,6 @@ import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 
-/**
- * @author Sergey Patrikeev
- */
 class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val pluginRepository: PluginRepository) : TaskResultPrinter {
 
   private companion object {

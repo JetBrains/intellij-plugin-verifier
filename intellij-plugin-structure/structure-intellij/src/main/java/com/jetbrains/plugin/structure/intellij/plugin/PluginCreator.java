@@ -27,9 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-/**
- * @author Sergey Patrikeev
- */
 final class PluginCreator {
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginCreator.class);

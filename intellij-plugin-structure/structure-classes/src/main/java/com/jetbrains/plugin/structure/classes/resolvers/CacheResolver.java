@@ -13,9 +13,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
-/**
- * @author Sergey Patrikeev
- */
 public class CacheResolver extends Resolver {
 
   private final Resolver myDelegate;
