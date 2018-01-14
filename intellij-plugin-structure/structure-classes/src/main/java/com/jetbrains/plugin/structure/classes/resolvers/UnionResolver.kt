@@ -1,45 +1,58 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
-import org.objectweb.asm.tree.ClassNode
-import java.io.File
 import java.io.IOException
 
+/**
+ * [Resolver] that unites several [resolvers] with the class-path like order
+ * of the classes [resolution] [findClass].
+ */
 class UnionResolver private constructor(private val resolvers: List<Resolver>) : Resolver() {
 
-  override fun getAllClasses(): Set<String> = resolvers.flatMapTo(hashSetOf()) { it.allClasses }
+  private val classNameToResolver: Map<String, Resolver> = {
+    val result = hashMapOf<String, Resolver>()
+    /**
+     * We want to support the class path search order,
+     * so the `class-name -> resolver` mapping should prefer
+     * the first resolver in the [resolvers] list in
+     * case several resolvers contain the same class.
+     */
+    for (resolver in resolvers.asReversed()) {
+      for (className in resolver.allClasses) {
+        result[className] = resolver
+      }
+    }
+    result
+  }()
 
-  override fun isEmpty(): Boolean = resolvers.all { it.isEmpty }
+  override fun getAllClasses() = classNameToResolver.keys
 
-  override fun containsClass(className: String): Boolean = resolvers.any { it.containsClass(className) }
+  override fun isEmpty() = classNameToResolver.isEmpty()
 
-  override fun getClassPath(): List<File> = resolvers.flatMap { it.classPath }
+  override fun containsClass(className: String) = className in classNameToResolver
 
-  override fun getFinalResolvers(): List<Resolver> = resolvers.flatMap { it.finalResolvers }
+  override fun getClassPath() = resolvers.flatMap { it.classPath }
+
+  override fun getFinalResolvers() = resolvers.flatMap { it.finalResolvers }
 
   @Throws(IOException::class)
-  override fun findClass(className: String): ClassNode? = resolvers
-      .asSequence()
-      .map { it.findClass(className) }
-      .firstOrNull { it != null }
+  override fun findClass(className: String) = classNameToResolver[className]?.findClass(className)
 
-  override fun getClassLocation(className: String): Resolver? = resolvers
-      .asSequence()
-      .map { it.getClassLocation(className) }
-      .firstOrNull { it != null }
+  override fun getClassLocation(className: String) = classNameToResolver[className]?.getClassLocation(className)
 
   @Throws(IOException::class)
   override fun close() {
-    var first: IOException? = null
-    for (resolver in resolvers) {
-      try {
-        resolver.close()
-      } catch (e: IOException) {
-        first = e
-      }
-    }
+    val firstException = resolvers.asSequence()
+        .mapNotNull {
+          try {
+            it.close()
+            null
+          } catch (e: Exception) {
+            e
+          }
+        }.firstOrNull()
 
-    if (first != null) {
-      throw first
+    if (firstException != null) {
+      throw firstException
     }
   }
 
@@ -47,15 +60,24 @@ class UnionResolver private constructor(private val resolvers: List<Resolver>) :
 
     @JvmStatic
     fun create(resolvers: Iterable<Resolver>): Resolver {
-      val nonEmptyResolvers = resolvers.filterNot { it.isEmpty }
-      if (nonEmptyResolvers.isEmpty()) {
-        return EmptyResolver
-      } else if (nonEmptyResolvers.size == 1) {
-        return nonEmptyResolvers[0]
-      } else {
-        val finalResolvers = nonEmptyResolvers.flatMap { it.finalResolvers }
-        val uniqueResolvers = finalResolvers.distinctBy { it.classPath }
-        return UnionResolver(uniqueResolvers)
+      val nonEmpty = resolvers.filterNot { it.isEmpty }
+      return when {
+        nonEmpty.isEmpty() -> EmptyResolver
+        nonEmpty.size == 1 -> nonEmpty[0]
+        else -> {
+          /**
+           * Remove duplicate Resolvers built
+           * from the same class paths.
+           */
+          /**
+           * Remove duplicate Resolvers built
+           * from the same class paths.
+           */
+          val uniqueResolvers = nonEmpty
+              .flatMap { it.finalResolvers }
+              .distinctBy { it.classPath }
+          UnionResolver(uniqueResolvers)
+        }
       }
     }
   }
