@@ -32,7 +32,7 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
           "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963")
     }
     val ideDescriptors = freeArgs.drop(1).map { Paths.get(it) }.map {
-      verificationReportage.logVerificationStage("Reading IDE class files from $it")
+      verificationReportage.logVerificationStage("Reading IDE $it")
       OptionsParser.createIdeDescriptor(it, opts)
     }
     val pluginsToCheck = getPluginsToCheck(freeArgs[0], ideDescriptors.map { it.ideVersion })

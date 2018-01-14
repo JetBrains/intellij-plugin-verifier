@@ -37,7 +37,7 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
       throw IllegalArgumentException("The IDE to be checked is not specified")
     }
 
-    verificationReportage.logVerificationStage("Reading classes of the TRUNK IDE ${args[0]}")
+    verificationReportage.logVerificationStage("Reading classes of the trunk IDE ${args[0]}")
     val trunkIdeDescriptor = OptionsParser.createIdeDescriptor(Paths.get(args[0]), opts)
     return trunkIdeDescriptor.closeOnException {
       buildParameters(opts, apiOpts, trunkIdeDescriptor)
@@ -67,7 +67,7 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
       else -> throw IllegalArgumentException("Neither the version (-miv) nor the path to the IDE (-mip) with which to compare API problems are specified")
     }
 
-    verificationReportage.logVerificationStage("Reading classes of the RELEASE IDE ${releaseIdeFileLock.file}")
+    verificationReportage.logVerificationStage("Reading classes of the release IDE ${releaseIdeFileLock.file}")
     val releaseIdeDescriptor = OptionsParser.createIdeDescriptor(releaseIdeFileLock.file, opts)
     return releaseIdeDescriptor.closeOnException {
       releaseIdeFileLock.closeOnException {
