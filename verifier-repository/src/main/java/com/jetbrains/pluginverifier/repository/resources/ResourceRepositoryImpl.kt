@@ -122,13 +122,15 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
       resourceLocks.remove(lock)
       if (resourceLocks.isEmpty()) {
         key2Locks.remove(key)
+
+        if (key in removeQueue) {
+          logger.debug("removing the $key as it is enqueued for removing and it has been just released")
+          removeQueue.remove(key)
+          doRemove(key)
+        }
       }
     } else {
       logger.debug("attempt to release an unregistered lock $lock")
-    }
-    if (key in removeQueue) {
-      removeQueue.remove(key)
-      doRemove(key)
     }
   }
 
