@@ -41,6 +41,11 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
 
   private val statistics = hashMapOf<K, UsageStatistic>()
 
+  /**
+   * todo: addition can exceed limit of the [evictionPolicy]
+   * add the resource only if its weight is less than the limit
+   * otherwise wait for the available weight to appear.
+   */
   @Synchronized
   override fun add(key: K, resource: R): Boolean {
     if (resourcesRegistrar.addResource(key, resource)) {

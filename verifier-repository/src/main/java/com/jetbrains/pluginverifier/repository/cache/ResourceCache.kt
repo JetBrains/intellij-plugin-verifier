@@ -17,8 +17,26 @@ import java.time.Instant
  * Resource cache is intended to cache any resources which
  * fetching may be expensive.
  *
- * The cache must be [closed] [close] on the application shutdown to
- * dispose the resources.
+ * Initially, the cache is empty.
+ * The resources are fetched and cached on demand: if a resource
+ * requested by a [key] [K] is not available in the cache,
+ * the [resourceProvider] provides the corresponding resource. It works
+ * concurrently, meaning that in case several threads request a resource
+ * by the same key, only one of them will actually provide the resource,
+ * while others will wait for the first to complete.
+ *
+ * The resources are [returned] [getResourceCacheEntry] wrapped in [ResourceCacheEntry]
+ * that protect them from eviction from the cache while the resources
+ * are used by requesting threads. Only once all the [cache entries] [ResourceCacheEntry]
+ * of a resource by a specific [key] [K] get [closed] [ResourceCacheEntry.close],
+ * the resource _may be_ [disposed] [disposer]. Note that it is not necessarily happens
+ * immediately as the same resource may be requested once again shortly.
+ *
+ * todo: provide more guarantees on this. don't add the resource to cache if it leads to exceeding the size limit.
+ * The cache is limited in size of [cacheSize], though it is possible
+ * to exceed this limit if all the requested resources are locked.
+ * While there are available "slots" in the cache, the resources are not disposed.
+ * All the unreleased resources will be [disposed] [disposer] once the cache is [closed] [close].
  */
 class ResourceCache<R, in K>(
     /**
@@ -27,12 +45,12 @@ class ResourceCache<R, in K>(
      * The [cleanup] [SizeEvictionPolicy] procedure will be
      * carried out once the cache size reaches this value.
      */
-    cacheSize: Long,
+    private val cacheSize: Long,
     /**
      * The resource [provider] [ResourceProvider] that
      * provides the requested resources by [keys] [K].
      */
-    resourceProvider: ResourceProvider<K, R>,
+    private val resourceProvider: ResourceProvider<K, R>,
     /**
      * The disposer used to close the resources.
      *
@@ -41,7 +59,7 @@ class ResourceCache<R, in K>(
      * or when the resources are removed from the [resourceRepository].
      * On [close], all the resources are removed and closed.
      */
-    disposer: (R) -> Unit,
+    private val disposer: (R) -> Unit,
     /**
      * The cache name that can be used for logging and debug purposes
      */
@@ -59,11 +77,10 @@ class ResourceCache<R, in K>(
    * Initially, the repository is empty, meaning that there
    * are no resources opened.
    *
-   * The repository is limited in size with [cacheSize]
-   * parameter of the constructor.
+   * The repository is limited in size of [cacheSize].
    *
    * When the repository is full and a new resource is requested,
-   * the unused resources are [closed] [disposer].
+   * the unused resources are [disposed] [disposer].
    */
   private val resourceRepository = ResourceRepositoryImpl(
       SizeEvictionPolicy(cacheSize),
