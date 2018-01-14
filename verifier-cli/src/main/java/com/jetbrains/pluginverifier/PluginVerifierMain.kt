@@ -1,6 +1,8 @@
 package com.jetbrains.pluginverifier
 
 import com.google.common.util.concurrent.AtomicDouble
+import com.jetbrains.pluginverifier.PluginVerifierMain.commandRunners
+import com.jetbrains.pluginverifier.PluginVerifierMain.main
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
@@ -30,6 +32,10 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.system.exitProcess
 
+/**
+ * The plugin verifier CLI entry point declaring the [main].
+ * The available commands are [commandRunners].
+ */
 object PluginVerifierMain {
 
   private val commandRunners: List<CommandRunner> = listOf(
@@ -43,31 +49,35 @@ object PluginVerifierMain {
 
   private val DEFAULT_PLUGIN_REPOSITORY_URL = "https://plugins.jetbrains.com"
 
-  private fun getVerifierHomeDir(): Path {
+  private val verifierHomeDir: Path by lazy {
     val verifierHomeDir = System.getProperty("plugin.verifier.home.dir")
     if (verifierHomeDir != null) {
-      return Paths.get(verifierHomeDir)
+      Paths.get(verifierHomeDir)
+    } else {
+      val userHome = System.getProperty("user.home")
+      if (userHome != null) {
+        Paths.get(userHome, ".pluginVerifier")
+      } else {
+        FileUtils.getTempDirectory().toPath().resolve(".pluginVerifier")
+      }
     }
-    val userHome = System.getProperty("user.home")
-    if (userHome != null) {
-      return Paths.get(userHome, ".pluginVerifier")
-    }
-    return FileUtils.getTempDirectory().toPath().resolve(".pluginVerifier")
   }
 
   private val ideRepositoryUrl: String by lazy {
-    System.getProperty("ide.repository.url")?.trimEnd('/') ?: DEFAULT_IDE_REPOSITORY_URL ?: throw RuntimeException("IDE repository URL is not specified")
+    System.getProperty("ide.repository.url")?.trimEnd('/')
+        ?: DEFAULT_IDE_REPOSITORY_URL
   }
 
   private val pluginRepositoryUrl: String by lazy {
-    System.getProperty("plugin.repository.url")?.trimEnd('/') ?: DEFAULT_PLUGIN_REPOSITORY_URL ?: throw RuntimeException("Plugin repository URL is not specified")
+    System.getProperty("plugin.repository.url")?.trimEnd('/')
+        ?: DEFAULT_PLUGIN_REPOSITORY_URL
   }
 
-  private val downloadDir: Path = getVerifierHomeDir().resolve("loaded-plugins").createDir()
+  private val downloadDir: Path = verifierHomeDir.resolve("loaded-plugins").createDir()
 
-  private val extractDir: Path = getVerifierHomeDir().resolve("extracted-plugins").createDir()
+  private val extractDir: Path = verifierHomeDir.resolve("extracted-plugins").createDir()
 
-  private val ideDownloadDir: Path = getVerifierHomeDir().resolve("ides").createDir()
+  private val ideDownloadDir: Path = verifierHomeDir.resolve("ides").createDir()
 
   private val LOG: Logger = LoggerFactory.getLogger(PluginVerifierMain::class.java)
 

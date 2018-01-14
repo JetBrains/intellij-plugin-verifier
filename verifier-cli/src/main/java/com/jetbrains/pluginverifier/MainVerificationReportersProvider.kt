@@ -26,6 +26,33 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.nio.file.Paths
 
+/**
+ * [VerificationReportersProvider] that creates the following files layout
+ * for saving the verification reports:
+ * ```
+ * <verification-dir>/
+ *     <IDE #1>/
+ *         all-ignored-problems.txt
+ *         plugins/
+ *             com.plugin.one/
+ *                 1.0/
+ *                     warnings.txt
+ *                     problems.txt
+ *                     verdict.txt
+ *                     dependencies.txt
+ *                     ignored-problems.txt
+ *                 2.0/
+ *                     ...
+ *             com.another.plugin/
+ *                 1.5.0/
+ *                     ...
+ *     <IDE #2>/
+ *         all-ignored-problems.txt
+ *         plugins/
+ *             com.third.plugin/
+ *                 ...
+ * ```
+ */
 class MainVerificationReportersProvider(override val globalMessageReporters: List<Reporter<String>>,
                                         override val globalProgressReporters: List<Reporter<Double>>,
                                         private val verificationReportsDirectory: Path,
@@ -37,30 +64,6 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
 
   private val ideVersion2AllIgnoredProblemsReporter = hashMapOf<IdeVersion, CollectingReporter<ProblemIgnoredEvent>>()
 
-  /**
-   * The layout of directories looks like this:
-   * verification-TIMESTAMP/
-   *     IU-171.1234/
-   *         all-ignored-problems.txt
-   *         plugins/
-   *             com.plugin.one/
-   *                 1.0/
-   *                     warnings.txt
-   *                     problems.txt
-   *                     verdict.txt
-   *                     dependencies.txt
-   *                     ignored-problems.txt
-   *                 2.0/
-   *                     ...
-   *             com.another.plugin/
-   *                 1.5.0/
-   *                     ...
-   *     IU-172.5678/
-   *         all-ignored-problems.txt
-   *         plugins/
-   *             com.third.plugin/
-   *                 ...
-   */
   override fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, ideVersion: IdeVersion): VerificationReporterSet {
     val ideResultsDirectory = getIdeResultsDirectory(ideVersion)
     val pluginVerificationDirectory = ideResultsDirectory.resolve("plugins").resolve(createPluginVerificationDirectory(pluginInfo))
