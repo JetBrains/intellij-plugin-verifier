@@ -40,7 +40,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
             .filterIsInstance<LocalPluginInfo>()
             .filter { it.pluginId == dependency.id }
             .maxWith(compareBy(VersionComparatorUtil.COMPARATOR) { it.version })
-            ?.let { DependencyFinder.Result.DetailsProvided(pluginDetailsCache.getPluginDetails(it)) }
+            ?.let { DependencyFinder.Result.DetailsProvided(pluginDetailsCache.getPluginDetailsCacheEntry(it)) }
             ?: DependencyFinder.Result.NotFound("Not found among local plugins")
 
   }

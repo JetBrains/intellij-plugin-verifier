@@ -35,7 +35,7 @@ class ExtractFeaturesTask(val serverContext: ServerContext,
 
   override fun execute(progress: ProgressIndicator) = getSomeCompatibleIde().use {
     val ideDescriptor = it.resource
-    with(serverContext.pluginDetailsCache.getPluginDetails(updateInfo)) {
+    with(serverContext.pluginDetailsCache.getPluginDetailsCacheEntry(updateInfo)) {
       use {
         when (this) {
           is PluginDetailsCache.Result.Provided -> runFeatureExtractor(ideDescriptor, pluginDetails.plugin)

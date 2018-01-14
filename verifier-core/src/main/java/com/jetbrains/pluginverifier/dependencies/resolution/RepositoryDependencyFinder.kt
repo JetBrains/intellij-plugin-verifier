@@ -51,7 +51,7 @@ class RepositoryDependencyFinder(private val pluginRepository: PluginRepository,
   private fun selectPluginVersion(pluginId: String): DependencyFinder.Result {
     val selectResult = pluginVersionSelector.selectPluginVersion(pluginId, pluginRepository)
     return when (selectResult) {
-      is PluginVersionSelector.Result.Plugin -> DependencyFinder.Result.DetailsProvided(pluginDetailsCache.getPluginDetails(selectResult.pluginInfo))
+      is PluginVersionSelector.Result.Selected -> DependencyFinder.Result.DetailsProvided(pluginDetailsCache.getPluginDetailsCacheEntry(selectResult.pluginInfo))
       is PluginVersionSelector.Result.NotFound -> DependencyFinder.Result.NotFound(selectResult.reason)
     }
   }

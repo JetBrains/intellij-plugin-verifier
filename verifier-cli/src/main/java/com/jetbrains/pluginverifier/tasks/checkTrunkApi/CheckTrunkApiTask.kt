@@ -8,16 +8,11 @@ import com.jetbrains.pluginverifier.dependencies.resolution.*
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
-import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
 import com.jetbrains.pluginverifier.parameters.filtering.toPluginIdAndVersion
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
-import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.results.Result
 import com.jetbrains.pluginverifier.tasks.Task
-import java.util.concurrent.Callable
-import java.util.concurrent.Executors
 
 /**
  * The 'check-trunk-api' task that runs the verification
@@ -32,55 +27,52 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
     with(parameters) {
       val allBrokenPlugins = (releaseIde.getIdeBrokenListedPlugins() + trunkIde.getIdeBrokenListedPlugins()).toSet()
       val pluginInfosToCheck = pluginsToCheck.plugins.filterNot { it.toPluginIdAndVersion() in allBrokenPlugins }
-      val executorService = Executors.newFixedThreadPool(2)
-      try {
-        val releaseResults = executorService.submit(Callable { checkIde(releaseIde, pluginInfosToCheck, ReleaseFinder(), verificationReportage) })
-        val trunkResults = executorService.submit(Callable { checkIde(trunkIde, pluginInfosToCheck, TrunkFinder(), verificationReportage) })
-        return CheckTrunkApiResult.create(
-            releaseIde.ideVersion,
-            releaseResults.get(),
-            trunkIde.ideVersion,
-            trunkResults.get(),
-            pluginsToCheck.invalidPluginFiles
-        )
-      } finally {
-        executorService.shutdownNow()
+
+      val verifierParameters = VerifierParameters(
+          parameters.externalClassesPrefixes,
+          parameters.problemsFilters,
+          EmptyResolver,
+          false
+      )
+
+      val verifierTasks = arrayListOf<VerifierTask>()
+      pluginInfosToCheck.mapTo(verifierTasks) {
+        VerifierTask(it, releaseIde, ReleaseFinder())
       }
+      pluginInfosToCheck.mapTo(verifierTasks) {
+        VerifierTask(it, trunkIde, TrunkFinder())
+      }
+
+      val results = Verification.run(
+          verifierParameters,
+          pluginDetailsCache,
+          verifierTasks,
+          verificationReportage,
+          jdkDescriptor
+      )
+
+      return CheckTrunkApiResult.create(
+          releaseIde.ideVersion,
+          results.filter { it.ideVersion == releaseIde.ideVersion },
+          trunkIde.ideVersion,
+          results.filter { it.ideVersion == trunkIde.ideVersion },
+          pluginsToCheck.invalidPluginFiles
+      )
     }
   }
 
-  private fun checkIde(ideDescriptor: IdeDescriptor,
-                       pluginsToCheck: List<PluginInfo>,
-                       dependencyFinder: DependencyFinder,
-                       verificationReportage: VerificationReportage): List<Result> {
-    val verifierParams = VerifierParameters(
-        parameters.externalClassesPrefixes,
-        parameters.problemsFilters,
-        EmptyResolver,
-        false
-    )
-    val tasks = pluginsToCheck.map { VerifierTask(it, ideDescriptor, dependencyFinder) }
-    return Verification.run(
-        verifierParams,
-        pluginDetailsCache,
-        tasks,
-        verificationReportage,
-        parameters.jdkDescriptor
-    )
-  }
-
-  private fun IdeDescriptor.getIdeBrokenListedPlugins(): List<PluginIdAndVersion> =
-      IdeResourceUtil.getBrokenPluginsListedInIde(ide) ?: emptyList()
+  private fun IdeDescriptor.getIdeBrokenListedPlugins() =
+      IdeResourceUtil.getBrokenPluginsListedInIde(ide).orEmpty()
 
   private val publicRepositoryReleaseCompatibleFinder = RepositoryDependencyFinder(pluginRepository, LastCompatibleVersionSelector(parameters.releaseIde.ideVersion), pluginDetailsCache)
 
   /**
-   * [DependencyFinder] for the verification of the [release] [CheckTrunkApiParams.releaseIde] that:
+   * [DependencyFinder] for the verification of the [release] [CheckTrunkApiParams.releaseIde] IDE that:
    * 1) Resolves a [dependency] [PluginDependency] among the [bundled] [releaseBundledFinder] plugins of the _release_ IDE.
    * 2) If not resolved, if the dependency is a JetBrains-developed plugin,
-   * resolves the dependency in the [local] [releaseLocalRepositoryFinder]
+   * resolves the plugin in the [local] [releaseLocalRepositoryFinder]
    * plugins repository that consists of plugins which were built from the same sources as the _release_ IDE was.
-   * 3) Finally, resolves the dependency using the [RepositoryDependencyFinder] of [pluginRepository].
+   * 3) Finally, resolves the dependency using the [RepositoryDependencyFinder] of the [pluginRepository].
    */
   private inner class ReleaseFinder : DependencyFinder {
 
@@ -108,18 +100,17 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
   }
 
   /**
-   * [DependencyFinder] for the verification of the [trunk] [CheckTrunkApiParams.trunkIde] that:
+   * [DependencyFinder] for the verification of the [trunk] [CheckTrunkApiParams.trunkIde] IDE that:
    * 1) Resolves a [dependency] [PluginDependency] among the [bundled] [trunkBundledFinder] plugins of the _trunk_ IDE.
    * 2) If not resolved, if the dependency is a JetBrains-developed plugin,
-   * resolves the dependency in the [local] [trunkLocalFinder] plugins repository
+   * resolves the plugin in the [local] [trunkLocalFinder] plugins repository
    * that consists of plugins which were built from the same sources as the _trunk_ IDE was.
    * 3) Finally, resolves the dependency using the [RepositoryDependencyFinder] such that
    * - if the dependency is a JetBrains-developed plugin, the _last_ version of it is requested
-   * in the repository.
+   * from the repository.
    * - otherwise, resolves a version of the dependency that is compatible with the _release_ IDE.
    *
-   * This is quite important thing to note because we consider that
-   * the IntelliJ API is represented by both the IDE's classes and all classes of
+   * Note that we consider the IntelliJ API is both the IDE's classes and all the classes of
    * the JetBrains plugins that could be dependencies of third-party plugins.
    */
   private inner class TrunkFinder : DependencyFinder {

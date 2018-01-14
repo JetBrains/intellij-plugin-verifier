@@ -55,8 +55,8 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
 
     /**
      * [Selectors] [ClassesSelector] of the plugins' classes
-     * that which classes constitute the plugin class loader
-     * used for the verification and which classes should be verified.
+     * that constitute the plugin [class loader] [ClassesSelector.getClassLoader]
+     * and classes that should be [verified] [ClassesSelector.getClassesForCheck].
      */
     private val classesSelectors = listOf(MainClassesSelector(), ExternalBuildClassesSelector())
   }
@@ -74,7 +74,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     }
   }
 
-  private fun doVerification() = pluginDetailsCache.getPluginDetails(pluginInfo).use {
+  private fun doVerification() = pluginDetailsCache.getPluginDetailsCacheEntry(pluginInfo).use {
     with(it) {
       when (this) {
         is PluginDetailsCache.Result.Provided -> doVerification(pluginDetails)
@@ -141,7 +141,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     val pluginResolver = try {
       pluginDetails.pluginClassesLocations.createPluginClassLoader()
     } catch (e: Exception) {
-      pluginVerificationReportage.logException("Unable to read verified plugin $pluginInfo classes", e)
+      pluginVerificationReportage.logException("Unable to read classes of the verified plugin $pluginInfo", e)
       return createResult(Verdict.Bad(listOf(UnableToReadPluginClassFilesProblem(e))))
     }
 
@@ -155,14 +155,14 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
      * Don't close this classLoader because it contains the client's resolvers.
      */
     val classLoader = try {
-      createClassLoader(pluginResolver, dependenciesResolver)
+      getVerificationClassLoader(pluginResolver, dependenciesResolver)
     } catch (e: Exception) {
-      pluginVerificationReportage.logException("Unable to create plugin class loader of $pluginInfo", e)
+      pluginVerificationReportage.logException("Unable to create the plugin class loader of $pluginInfo", e)
       return createResult(Verdict.Bad(listOf(UnableToReadPluginClassFilesProblem(e))))
     }
 
     /**
-     * Select the classes for the verification.
+     * Select classes for the verification.
      */
     val checkClasses = try {
       getClassesForCheck(pluginDetails.pluginClassesLocations)
@@ -199,23 +199,16 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
         pluginVerificationReportage.logProgress(t)
       }
     }
-    runVerification(verificationContext, checkClasses, progressIndicator)
+
+    BytecodeVerifier().verify(checkClasses, verificationContext, progressIndicator)
   }
 
   private fun getClassesForCheck(pluginClassesLocations: IdePluginClassesLocations) =
       classesSelectors.flatMapTo(hashSetOf()) { it.getClassesForCheck(pluginClassesLocations) }
 
-  private fun createClassLoader(pluginResolver: Resolver, dependenciesResolver: Resolver) =
-      CacheResolver(getVerificationClassLoader(dependenciesResolver, pluginResolver))
-
-  private fun IdePluginClassesLocations.createPluginClassLoader(): Resolver {
-    val selectedClassLoaders = classesSelectors.map { it.getClassLoader(this) }
-    return UnionResolver.create(selectedClassLoaders)
-  }
-
-  private fun runVerification(verificationContext: VerificationContext, checkClasses: Set<String>, progressReporter: Reporter<Double>) {
-    BytecodeVerifier().verify(checkClasses, verificationContext, progressReporter)
-  }
+  private fun IdePluginClassesLocations.createPluginClassLoader() = UnionResolver.create(
+      classesSelectors.map { it.getClassLoader(this) }
+  )
 
   /**
    * Specifies the order of the classes resolution:
@@ -225,18 +218,25 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
    * 4) if not found, among the classes of the plugin dependencies' classes
    * 5) if not found, it is finally searched in the external classes specified in the verification parameters.
    */
-  private fun getVerificationClassLoader(dependenciesResolver: Resolver, mainPluginResolver: Resolver) = UnionResolver.create(
-      listOf(mainPluginResolver, jdkDescriptor.jdkClassesResolver, ideDescriptor.ideResolver, dependenciesResolver, verifierParameters.externalClassPath)
-  )
+  private fun getVerificationClassLoader(mainPluginResolver: Resolver, dependenciesResolver: Resolver) = CacheResolver(
+      UnionResolver.create(
+          listOf(
+              mainPluginResolver,
+              jdkDescriptor.jdkClassesResolver,
+              ideDescriptor.ideResolver,
+              dependenciesResolver,
+              verifierParameters.externalClassPath
+          )
+      ))
 
   private fun DirectedGraph<DepVertex, DepEdge>.createDependenciesResolver(): Resolver {
     val dependenciesResolvers = arrayListOf<Resolver>()
     dependenciesResolvers.closeOnException {
       for (depVertex in vertexSet()) {
-        val depPluginClassesLocations = depVertex.getIdePluginClassesLocations()
-        if (depPluginClassesLocations != null) {
+        val classesLocations = depVertex.getIdePluginClassesLocations()
+        if (classesLocations != null) {
           val pluginResolver = try {
-            depPluginClassesLocations.createPluginClassLoader()
+            classesLocations.createPluginClassLoader()
           } catch (e: Exception) {
             pluginVerificationReportage.logException("Unable to read classes of dependency ${depVertex.dependencyId}", e)
             continue

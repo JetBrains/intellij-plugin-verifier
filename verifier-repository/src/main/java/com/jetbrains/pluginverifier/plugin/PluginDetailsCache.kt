@@ -28,21 +28,20 @@ class PluginDetailsCache(cacheSize: Int, pluginDetailsProvider: PluginDetailsPro
   )
 
   /**
-   * Provides the [PluginDetails] of the given [pluginInfo].
-   * The possible results are represented as instances of [Result].
+   * Provides the [PluginDetails] of the given [pluginInfo]
+   * wrapped in a [Result].
    */
-  fun getPluginDetails(pluginInfo: PluginInfo): Result {
+  fun getPluginDetailsCacheEntry(pluginInfo: PluginInfo): Result {
     return with(resourceCache.getResourceCacheEntry(pluginInfo)) {
       when (this) {
         is ResourceCacheEntryResult.Found -> {
-          return with(resourceCacheEntry.resource) {
+          with(resourceCacheEntry.resource) {
             when (this) {
-              is PluginDetailsProvider.Result.Provided -> {
+              is PluginDetailsProvider.Result.Provided ->
                 Result.Provided(resourceCacheEntry, pluginDetails)
-              }
-              is PluginDetailsProvider.Result.InvalidPlugin -> {
+
+              is PluginDetailsProvider.Result.InvalidPlugin ->
                 Result.InvalidPlugin(resourceCacheEntry, pluginErrors)
-              }
             }
           }
         }
@@ -55,8 +54,8 @@ class PluginDetailsCache(cacheSize: Int, pluginDetailsProvider: PluginDetailsPro
   override fun close() = resourceCache.close()
 
   /**
-   * Represents possible results of the [getPluginDetails].
-   * It must be closed after usage to deallocate the [Provided.resourceCacheEntry].
+   * Represents possible results of the [getPluginDetailsCacheEntry].
+   * It must be closed after usage to release the [Provided.resourceCacheEntry].
    */
   sealed class Result : Closeable {
 
@@ -65,14 +64,16 @@ class PluginDetailsCache(cacheSize: Int, pluginDetailsProvider: PluginDetailsPro
      */
     data class Provided(
         /**
-         * [Resource cache entry] [ResourceCacheEntry] that protects the
+         * [ResourceCacheEntry] that protects the
          * [pluginDetails] until the entry is closed.
          */
         private val resourceCacheEntry: ResourceCacheEntry<PluginDetailsProvider.Result>,
 
         /**
          * The provided [PluginDetails].
-         * It will be closed when [_this_] [Result.Provided] is closed.
+         *
+         * It _must not_ be closed directly as it will be closed
+         * by the [ResourceCache] at the entry disposition time.
          */
         val pluginDetails: PluginDetails
     ) : Result() {
@@ -82,7 +83,7 @@ class PluginDetailsCache(cacheSize: Int, pluginDetailsProvider: PluginDetailsPro
 
     /**
      * The [PluginDetails] are not provided because the plugin
-     * passed to [getPluginDetails] is [invalid] [pluginErrors].
+     * passed to [getPluginDetailsCacheEntry] is [invalid] [pluginErrors].
      */
     data class InvalidPlugin(
         /**
@@ -103,7 +104,7 @@ class PluginDetailsCache(cacheSize: Int, pluginDetailsProvider: PluginDetailsPro
     }
 
     /**
-     * The [getPluginDetails] is failed with [error].
+     * The [getPluginDetailsCacheEntry] is failed with [error].
      * The presentable reason is [reason].
      */
     data class Failed(val reason: String, val error: Throwable) : Result() {
@@ -112,7 +113,7 @@ class PluginDetailsCache(cacheSize: Int, pluginDetailsProvider: PluginDetailsPro
 
     /**
      * The [PluginDetails] are not provided because the file
-     * of the plugin passed to [getPluginDetails] is not found.
+     * of the plugin passed to [getPluginDetailsCacheEntry] is not found.
      */
     data class FileNotFound(val reason: String) : Result() {
       override fun close() = Unit

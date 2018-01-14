@@ -18,7 +18,7 @@ import java.io.Closeable
  * the results of each plugin verification would be saved to a dedicated directory.
  *
  * This interface extends [Closeable] to indicate that there could be
- * resources allocated, such as opens file streams.
+ * resources allocated, such as open file streams.
  * Thus, the [PluginVerificationReportage] must be closed after the usage.
  */
 interface PluginVerificationReportage : Closeable {

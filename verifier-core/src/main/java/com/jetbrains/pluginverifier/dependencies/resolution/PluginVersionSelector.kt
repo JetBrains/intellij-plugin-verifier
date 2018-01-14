@@ -12,7 +12,7 @@ interface PluginVersionSelector {
   fun selectPluginVersion(pluginId: String, pluginRepository: PluginRepository): Result
 
   sealed class Result {
-    data class Plugin(val pluginInfo: PluginInfo) : Result()
+    data class Selected(val pluginInfo: PluginInfo) : Result()
 
     data class NotFound(val reason: String) : Result()
   }

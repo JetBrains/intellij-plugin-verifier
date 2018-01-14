@@ -12,7 +12,7 @@ class LastCompatibleVersionSelector(val ideVersion: IdeVersion) : PluginVersionS
   override fun selectPluginVersion(pluginId: String, pluginRepository: PluginRepository): PluginVersionSelector.Result {
     val updateInfo = pluginRepository.getLastCompatibleVersionOfPlugin(ideVersion, pluginId) as? UpdateInfo
     if (updateInfo != null) {
-      return PluginVersionSelector.Result.Plugin(updateInfo)
+      return PluginVersionSelector.Result.Selected(updateInfo)
     }
     return PluginVersionSelector.Result.NotFound("Plugin $pluginId doesn't have a build compatible with ${ideVersion}")
   }

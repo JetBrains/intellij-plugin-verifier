@@ -61,6 +61,10 @@ object IdeResourceUtil {
     getBrokenPluginsByLines(it.readLines())
   }
 
+  /**
+   * Returns contents of the `<IDE>/lib/resources/brokenPlugins.txt` file
+   * which is a list of plugins that must not be installed in the IDE.
+   */
   fun getBrokenPluginsListedInIde(ide: Ide): List<PluginIdAndVersion>? {
     val ideResourceFile = readIdeResourceLines(ide, RESOURCES_JAR_PATH, BROKEN_PLUGINS_FILE_NAME) ?: return null
     return getBrokenPluginsByLines(ideResourceFile)

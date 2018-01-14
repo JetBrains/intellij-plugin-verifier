@@ -17,7 +17,7 @@ class LocalRepositoryDependencyFinder(private val localPluginRepository: LocalPl
       localPluginRepository.findPluginById(dependency.id)
     }
     return if (localPlugin != null) {
-      DependencyFinder.Result.DetailsProvided(pluginDetailsCache.getPluginDetails(localPlugin))
+      DependencyFinder.Result.DetailsProvided(pluginDetailsCache.getPluginDetailsCacheEntry(localPlugin))
     } else {
       DependencyFinder.Result.NotFound("$dependency is not found in the local repository $localPluginRepository")
     }

@@ -17,7 +17,7 @@ class LastVersionSelector : PluginVersionSelector {
     return if (lastUpdate == null) {
       PluginVersionSelector.Result.NotFound("Plugin $pluginId is not found in the Plugin Repository")
     } else {
-      PluginVersionSelector.Result.Plugin(lastUpdate)
+      PluginVersionSelector.Result.Selected(lastUpdate)
     }
   }
 

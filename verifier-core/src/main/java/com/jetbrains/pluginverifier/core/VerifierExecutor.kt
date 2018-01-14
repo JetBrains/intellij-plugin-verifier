@@ -43,19 +43,12 @@ class VerifierExecutor(private val concurrentWorkers: Int, private val pluginDet
    * Runs the [tasks] concurrently on the thread pool allocated for this [VerifierExecutor].
    * The [jdkDescriptor] is used to resolve the JDK classes.
    * The [parameters] configure the verification.
-   * The [reportage] is used to save the verification stages and result.
+   * The [reportage] is used to save the verification stages and results.
    */
   fun verify(
       tasks: List<VerifierTask>,
       jdkDescriptor: JdkDescriptor,
       parameters: VerifierParameters,
-      reportage: VerificationReportage
-  ) = runVerificationConcurrently(tasks, parameters, jdkDescriptor, reportage)
-
-  private fun runVerificationConcurrently(
-      tasks: List<VerifierTask>,
-      parameters: VerifierParameters,
-      jdkDescriptor: JdkDescriptor,
       reportage: VerificationReportage
   ): List<Result> {
     val workers = tasks.map { (pluginInfo, ideDescriptor, dependencyFinder) ->
