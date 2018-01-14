@@ -33,24 +33,23 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
 
   private val key2Locks = hashMapOf<K, MutableSet<ResourceLock<R>>>()
 
-  private val deleteQueue = hashSetOf<K>()
+  private val removeQueue = hashSetOf<K>()
 
   private val waitedKeys = hashSetOf<K>()
 
-  private val provisionTasks = hashMapOf<K, FutureTask<ProvideResult<R>>>()
+  private val additionTasks = hashMapOf<K, FutureTask<ProvideResult<R>>>()
 
   private val statistics = hashMapOf<K, UsageStatistic>()
 
   @Synchronized
   override fun add(key: K, resource: R): Boolean {
-    if (resourcesRegistrar.has(key)) {
-      return false
+    if (resourcesRegistrar.addResource(key, resource)) {
+      assert(key !in statistics)
+      updateUsageStatistics(key)
+      cleanup()
+      return true
     }
-    resourcesRegistrar.addResource(key, resource)
-    assert(key !in statistics)
-    updateUsageStatistics(key)
-    cleanup()
-    return true
+    return false
   }
 
   @Synchronized
@@ -64,11 +63,11 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
 
   @Synchronized
   override fun remove(key: K): Boolean = if (isLockedKey(key) || isBeingProvided(key)) {
-    logger.debug("Deletion of $key: the resource is locked or is being provided, delete later.")
-    deleteQueue.add(key)
+    logger.debug("remove($key): the resource is locked or is being provided, enqueue for removing later.")
+    removeQueue.add(key)
     false
   } else if (resourcesRegistrar.has(key)) {
-    logger.debug("Deletion of $key: non-locked, delete now")
+    logger.debug("remove($key): the resource is not locked, deleting now")
     doRemove(key)
     cleanup()
     true
@@ -98,11 +97,13 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
   }
 
   @Synchronized
-  private fun registerLock(key: K): ResourceLockImpl<R, K> {
+  private fun registerLock(key: K): ResourceLock<R> {
     assert(resourcesRegistrar.has(key))
     val resourceInfo = resourcesRegistrar.get(key)!!
     val now = updateUsageStatistics(key)
-    val lock = ResourceLockImpl(now, resourceInfo, key, nextLockId++, this)
+    val lockId = nextLockId++
+    val lock = ResourceLockImpl(now, resourceInfo, key, lockId, this)
+    logger.debug("get($key): registering a lock #$lockId")
     key2Locks.getOrPut(key, { hashSetOf() }).add(lock)
     return lock
   }
@@ -112,62 +113,72 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
     val key = lock.key
     val resourceLocks = key2Locks[key]
     if (resourceLocks != null) {
+      logger.debug("releasing lock #${lock.lockId} for key $key")
       resourceLocks.remove(lock)
       if (resourceLocks.isEmpty()) {
         key2Locks.remove(key)
       }
+    } else {
+      logger.debug("attempt to release an unregistered lock #${lock.lockId}")
     }
-    if (key in deleteQueue) {
-      deleteQueue.remove(key)
+    if (key in removeQueue) {
+      removeQueue.remove(key)
       doRemove(key)
     }
   }
 
   @Synchronized
   private fun doRemove(key: K) {
-    assert(key !in provisionTasks)
+    assert(key !in additionTasks)
     assert(key !in waitedKeys)
-    resourcesRegistrar.deleteResource(key)
+    resourcesRegistrar.removeResource(key)
     statistics.remove(key)
   }
 
-  private fun provideOrWait(key: K): ResourceRepositoryResult<R> {
+  private fun getOrWait(key: K): ResourceRepositoryResult<R> {
     checkIfInterrupted()
-    val (provideTask, runInCurrentThread) = synchronized(this) {
+    val (addTask, runInCurrentThread) = synchronized(this) {
+      if (resourcesRegistrar.has(key)) {
+        logger.debug("get($key): the resource is available")
+        return ResourceRepositoryResult.Found(registerLock(key))
+      }
+
       waitedKeys.add(key)
-      val task = provisionTasks[key]
+      val task = additionTasks[key]
       if (task != null) {
+        logger.debug("get($key): waiting for another thread to finish fetching of the resource")
         task to false
       } else {
-        val provideTask = FutureTask {
-          provideAndAddResource(key)
+        logger.debug("get($key): fetching the resource in the current thread")
+        val addTask = FutureTask {
+          getAndAddResource(key)
         }
-        provisionTasks[key] = provideTask
-        provideTask to true
+        additionTasks[key] = addTask
+        addTask to true
       }
     }
 
     //Run the provision task in the current thread
     //if the thread has started the provision of this key first.
     if (runInCurrentThread) {
-      provideTask.run()
+      addTask.run()
     }
 
     try {
-      val provideResult = provideTask.get()
+      val provideResult = addTask.get()
       return provideResult.registerLockIfProvided(key)
     } finally {
       synchronized(this) {
         waitedKeys.remove(key)
 
         if (runInCurrentThread) {
-          provisionTasks.remove(key)
+          additionTasks.remove(key)
         }
       }
     }
   }
 
-  private fun provideAndAddResource(key: K): ProvideResult<R> {
+  private fun getAndAddResource(key: K): ProvideResult<R> {
     val provideResult = resourceProvider.provide(key)
     if (provideResult is ProvideResult.Provided<R>) {
       add(key, provideResult.resource)
@@ -182,14 +193,6 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
   }
 
   @Synchronized
-  private fun lockResourceIfExists(key: K): ResourceLockImpl<R, K>? {
-    if (resourcesRegistrar.has(key)) {
-      return registerLock(key)
-    }
-    return null
-  }
-
-  @Synchronized
   override fun cleanup() {
     if (evictionPolicy.isNecessary(resourcesRegistrar.totalWeight)) {
       val availableResources = resourcesRegistrar.resources.map { (key, resourceInfo) ->
@@ -201,7 +204,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
 
       if (resourcesForEviction.isNotEmpty()) {
         val disposedTotalWeight = resourcesForEviction.map { it.resourceInfo.weight }.reduce { acc, weight -> acc + weight }
-        logger.debug("$presentableName: it's time to evict unused resources. " +
+        logger.debug("it's time to evict unused resources. " +
             "Total weight: ${resourcesRegistrar.totalWeight}. " +
             "${resourcesForEviction.size} " + "resource".pluralize(resourcesForEviction.size) +
             " will be evicted with total weight $disposedTotalWeight"
@@ -228,12 +231,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
    * of them provides the resource while others wait for the first to complete and return the same resource.
    */
   override fun get(key: K): ResourceRepositoryResult<R> {
-    val lockedResource = lockResourceIfExists(key)
-    val result = if (lockedResource != null) {
-      ResourceRepositoryResult.Found(lockedResource)
-    } else {
-      provideOrWait(key)
-    }
+    val result = getOrWait(key)
     /**
      * Release the lock if the cleanup procedure has failed.
      */
