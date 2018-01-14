@@ -17,7 +17,7 @@ public class MethodProblems {
     NonExistingClass brokenLocalVar = null;
   }
 
-  public void brokenThrows() {
+  public void brokenThrows() throws NonExistingException {
 
   }
 
