@@ -20,7 +20,11 @@ fun <T, R> T.doLogged(action: String, block: T.() -> R) {
 }
 
 fun checkIfInterrupted() {
-  if (Thread.currentThread().isInterrupted) {
+  Thread.currentThread().checkIfInterrupted()
+}
+
+fun Thread.checkIfInterrupted() {
+  if (isInterrupted) {
     throw InterruptedException()
   }
 }

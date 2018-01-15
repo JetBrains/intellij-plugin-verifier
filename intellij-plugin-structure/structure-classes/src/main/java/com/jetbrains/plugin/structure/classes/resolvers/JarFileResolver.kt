@@ -7,15 +7,13 @@ import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import java.util.jar.JarFile
 
-class JarFileResolver(jar: File) : Resolver() {
+class JarFileResolver(private val ioJarFile: File) : Resolver() {
 
   private companion object {
     private const val CLASS_SUFFIX = ".class"
 
     private const val SERVICE_PROVIDERS_PREFIX = "META-INF/services/"
   }
-
-  private val ioJarFile: File
 
   private val jarFile: JarFile
 
@@ -24,13 +22,12 @@ class JarFileResolver(jar: File) : Resolver() {
   private val serviceProviders: MutableSet<String> = hashSetOf()
 
   init {
-    if (!jar.exists()) {
-      throw IllegalArgumentException("Jar file $jar doesn't exist")
+    if (!ioJarFile.exists()) {
+      throw IllegalArgumentException("Jar file $ioJarFile doesn't exist")
     }
-    if (!FileUtil.isJar(jar)) {
-      throw IllegalArgumentException("File $jar is not a jar archive")
+    if (!FileUtil.isJar(ioJarFile)) {
+      throw IllegalArgumentException("File $ioJarFile is not a jar archive")
     }
-    ioJarFile = jar
 
     jarFile = JarFile(ioJarFile)
     try {
@@ -74,15 +71,24 @@ class JarFileResolver(jar: File) : Resolver() {
     get() = listOf(this)
 
   override fun processAllClasses(processor: (ClassNode) -> Boolean): Boolean {
-    //todo: speedup.
-    return allClasses.asSequence()
-        .mapNotNull { findClass(it) }
-        .all(processor)
+    for (jarEntry in jarFile.entries().iterator()) {
+      val entryName = jarEntry.name
+      if (entryName.endsWith(CLASS_SUFFIX)) {
+        val className = entryName.substringBeforeLast(CLASS_SUFFIX)
+        jarFile.getInputStream(jarEntry).use { entryInputStream ->
+          val classNode = AsmUtil.readClassNode(className, entryInputStream)
+          if (!processor(classNode)) {
+            return false
+          }
+        }
+      }
+    }
+    return true
   }
 
-  override fun containsClass(className: String): Boolean = classes.contains(className)
+  override fun containsClass(className: String) = className in classes
 
-  override fun findClass(className: String): ClassNode? =
+  override fun findClass(className: String) =
       if (className in classes) evaluateNode(className) else null
 
   private fun evaluateNode(className: String): ClassNode? {
@@ -92,10 +98,8 @@ class JarFileResolver(jar: File) : Resolver() {
     }
   }
 
-  override fun getClassLocation(className: String): Resolver? = if (containsClass(className)) this else null
+  override fun getClassLocation(className: String) = if (containsClass(className)) this else null
 
-  override fun close() {
-    jarFile.close()
-  }
+  override fun close() = jarFile.close()
 
 }
