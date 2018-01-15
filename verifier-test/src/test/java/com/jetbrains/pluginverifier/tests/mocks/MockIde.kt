@@ -11,9 +11,9 @@ data class MockIde(
     private val bundledPlugins: List<IdePlugin> = emptyList()
 ) : Ide() {
 
-  override fun getIdePath(): File = idePath
+  override fun getIdePath() = idePath
 
-  override fun getVersion(): IdeVersion = ideVersion
+  override fun getVersion() = ideVersion
 
-  override fun getBundledPlugins(): List<IdePlugin> = bundledPlugins
+  override fun getBundledPlugins() = bundledPlugins
 }

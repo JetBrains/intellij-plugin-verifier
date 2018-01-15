@@ -53,7 +53,6 @@ class DepGraph2ApiGraphConverter {
         }
         is DependencyFinder.Result.NotFound -> MissingDependency(dependency, reason)
         is DependencyFinder.Result.FoundPlugin -> null
-        is DependencyFinder.Result.Skip -> null
       }
     }
   }
@@ -68,7 +67,6 @@ class DepGraph2ApiGraphConverter {
       }
       is DependencyFinder.Result.FoundPlugin -> plugin
       is DependencyFinder.Result.NotFound -> null
-      is DependencyFinder.Result.Skip -> null
     }
   }
 

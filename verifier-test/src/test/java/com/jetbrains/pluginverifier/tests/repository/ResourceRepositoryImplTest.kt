@@ -111,7 +111,7 @@ class ResourceRepositoryImplTest {
   @Test
   fun `resource is not removed until the last lock is released`() {
     val locksCnt = AtomicInteger()
-    val resourceRepository = createSizedResourceRepository(1) { i ->
+    val resourceRepository = createSizedResourceRepository(1) {
       Closeable {
         if (locksCnt.get() > 0) {
           fail("The resource must not be removed as it has locks registered for it")

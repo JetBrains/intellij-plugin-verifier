@@ -25,7 +25,7 @@ class IdePluginClassesFinder private constructor(private val idePlugin: IdePlugi
   private fun findPluginClasses(): IdePluginClassesLocations {
     val pluginFile = idePlugin.originalFile
     if (pluginFile == null) {
-      throw IllegalArgumentException("Class path cannot be created for optional plugin descriptor $idePlugin")
+      throw IllegalArgumentException("Class path cannot be created for a virtual plugin descriptor $idePlugin")
     } else if (!pluginFile.exists()) {
       throw IllegalArgumentException("Plugin file doesn't exist " + pluginFile)
     } else if (!pluginFile.isDirectory && !isJar(pluginFile) && !isZip(pluginFile)) {
@@ -76,7 +76,11 @@ class IdePluginClassesFinder private constructor(private val idePlugin: IdePlugi
         idePlugin: IdePlugin,
         additionalKeys: List<LocationKey> = emptyList()
     ): IdePluginClassesLocations {
-      val extractDirectory = if (idePlugin is IdePluginImpl) idePlugin.extractDirectory else Settings.EXTRACT_DIRECTORY.getAsFile()
+      val extractDirectory = if (idePlugin is IdePluginImpl) {
+        idePlugin.extractDirectory
+      } else {
+        Settings.EXTRACT_DIRECTORY.getAsFile()
+      }
       return findPluginClasses(idePlugin, extractDirectory, additionalKeys)
     }
 

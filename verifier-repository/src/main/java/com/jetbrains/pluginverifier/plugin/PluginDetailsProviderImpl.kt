@@ -28,11 +28,11 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
     pluginFileLock.closeOnException {
       val pluginFile = pluginFileLock.file
       val pluginCreationResult = IdePluginManager.createManager(extractDirectory.toFile()).createPlugin(pluginFile.toFile())
-      if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
-        return findPluginClasses(pluginInfo, pluginFileLock, pluginCreationResult.plugin, pluginCreationResult.warnings)
+      return if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
+        findPluginClasses(pluginInfo, pluginFileLock, pluginCreationResult.plugin, pluginCreationResult.warnings)
       } else {
         pluginFileLock.closeLogged()
-        return PluginDetailsProvider.Result.InvalidPlugin((pluginCreationResult as PluginCreationFail<*>).errorsAndWarnings)
+        PluginDetailsProvider.Result.InvalidPlugin((pluginCreationResult as PluginCreationFail<*>).errorsAndWarnings)
       }
     }
   }

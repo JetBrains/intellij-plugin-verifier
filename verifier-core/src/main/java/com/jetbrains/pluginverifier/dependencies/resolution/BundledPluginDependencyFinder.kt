@@ -22,18 +22,6 @@ class BundledPluginDependencyFinder(val ide: Ide,
     }
 
     if (bundledPluginInfo != null) {
-      if (dependency.isModule && id in bundledPluginInfo.idePlugin.definedModules) {
-        /**
-         * Skip the module dependency on itself. An example is the IDEA CORE plugin
-         * that declares a module 'com.intellij.modules.lang' that is contained in the IDEA CORE:
-         *
-         * PlatformLangPlugin.xml (declares module 'com.intellij.modules.lang') ->
-         *  x-include /idea/RichPlatformPlugin.xml ->
-         *  x-include /META-INF/DesignerCorePlugin.xml ->
-         *  depends on module 'com.intellij.modules.lang'
-         */
-        return DependencyFinder.Result.Skip
-      }
       return DependencyFinder.Result.DetailsProvided(pluginDetailsCache.getPluginDetailsCacheEntry(bundledPluginInfo))
     }
     return DependencyFinder.Result.NotFound("Dependency $id is not found among the bundled plugins of $ide")

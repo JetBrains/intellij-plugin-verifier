@@ -23,7 +23,20 @@ class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
         for (pluginDependency in plugin.dependencies) {
           val resolvedDependency = resolveDependency(pluginDependency, graph)
           buildDependenciesGraph(graph, resolvedDependency)
-          graph.addEdge(start, resolvedDependency, DepEdge(pluginDependency))
+
+          /**
+           * Skip the dependency on itself.
+           * An example of a plugin that declares a transitive dependency
+           * on itself through modules dependencies is the 'IDEA CORE' plugin:
+           *
+           * PlatformLangPlugin.xml (declares module 'com.intellij.modules.lang') ->
+           *   x-include /idea/RichPlatformPlugin.xml ->
+           *   x-include /META-INF/DesignerCorePlugin.xml ->
+           *   depends on module 'com.intellij.modules.lang'
+           */
+          if (start.dependencyId != resolvedDependency.dependencyId) {
+            graph.addEdge(start, resolvedDependency, DepEdge(pluginDependency))
+          }
         }
       }
     }
@@ -38,7 +51,6 @@ class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
     }
     is DependencyFinder.Result.FoundPlugin -> plugin
     is DependencyFinder.Result.NotFound -> null
-    is DependencyFinder.Result.Skip -> null
   }
 
   private fun resolveDependency(pluginDependency: PluginDependency, directedGraph: DirectedGraph<DepVertex, DepEdge>) =

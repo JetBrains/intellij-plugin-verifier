@@ -51,11 +51,5 @@ interface DependencyFinder {
       override fun close() = Unit
     }
 
-    /**
-     * The dependency should be skipped.
-     */
-    object Skip : Result() {
-      override fun close() = Unit
-    }
   }
 }
