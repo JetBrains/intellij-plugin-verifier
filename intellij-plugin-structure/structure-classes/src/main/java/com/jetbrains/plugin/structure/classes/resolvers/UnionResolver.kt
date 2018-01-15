@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import org.objectweb.asm.tree.ClassNode
 import java.io.IOException
 
 /**
@@ -24,15 +25,24 @@ class UnionResolver private constructor(private val resolvers: List<Resolver>) :
     result
   }()
 
-  override fun getAllClasses() = classNameToResolver.keys
+  override val allClasses
+    get() = classNameToResolver.keys
 
-  override fun isEmpty() = classNameToResolver.isEmpty()
+  override val isEmpty
+    get() = classNameToResolver.isEmpty()
+
+  override val classPath
+    get() = resolvers.flatMap { it.classPath }
+
+  override val finalResolvers
+    get() = resolvers.flatMap { it.finalResolvers }
+
+  override fun processAllClasses(processor: (ClassNode) -> Boolean) =
+      resolvers
+          .asSequence()
+          .all { it.processAllClasses(processor) }
 
   override fun containsClass(className: String) = className in classNameToResolver
-
-  override fun getClassPath() = resolvers.flatMap { it.classPath }
-
-  override fun getFinalResolvers() = resolvers.flatMap { it.finalResolvers }
 
   @Throws(IOException::class)
   override fun findClass(className: String) = classNameToResolver[className]?.findClass(className)

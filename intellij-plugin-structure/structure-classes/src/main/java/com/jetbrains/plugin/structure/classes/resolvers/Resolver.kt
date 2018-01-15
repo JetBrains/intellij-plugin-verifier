@@ -76,4 +76,12 @@ abstract class Resolver : Closeable {
    */
   abstract fun containsClass(className: String): Boolean
 
+  /**
+   * Runs the given [processor] on [every] [allClasses] class contained in _this_ [Resolver].
+   * The [processor] returns `true` to continue processing and `false` to stop.
+   *
+   * @return `true` if all the classes are processed, and `false` if processing has been stopped.
+   */
+  abstract fun processAllClasses(processor: (ClassNode) -> Boolean): Boolean
+
 }

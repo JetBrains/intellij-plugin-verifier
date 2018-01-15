@@ -4,6 +4,10 @@ import org.objectweb.asm.tree.ClassNode
 import java.io.File
 
 class FixedClassesResolver(private val classes: Map<String, ClassNode>) : Resolver() {
+  override fun processAllClasses(processor: (ClassNode) -> Boolean) =
+      classes.values
+          .asSequence()
+          .all(processor)
 
   companion object {
     fun create(classes: List<ClassNode>): Resolver {
@@ -15,15 +19,19 @@ class FixedClassesResolver(private val classes: Map<String, ClassNode>) : Resolv
 
   override fun getClassLocation(className: String): Resolver? = this
 
-  override fun getAllClasses(): Set<String> = classes.keys
+  override val allClasses
+    get() = classes.keys
 
-  override fun isEmpty(): Boolean = classes.isEmpty()
+  override val isEmpty
+    get() = classes.isEmpty()
 
-  override fun containsClass(className: String): Boolean = className in classes
+  override val classPath
+    get() = emptyList<File>()
 
-  override fun getClassPath(): List<File> = emptyList()
+  override val finalResolvers
+    get() = listOf(this)
 
-  override fun getFinalResolvers(): List<Resolver> = listOf(this)
+  override fun containsClass(className: String) = className in classes
 
   override fun close() = Unit
 }

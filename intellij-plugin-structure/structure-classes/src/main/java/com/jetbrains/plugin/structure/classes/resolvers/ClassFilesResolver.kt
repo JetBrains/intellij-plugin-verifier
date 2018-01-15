@@ -5,12 +5,12 @@ import org.apache.commons.io.FileUtils
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import java.io.IOException
-import java.util.*
 
 class ClassFilesResolver(private val root: File) : Resolver() {
 
-  private val allClasses = hashMapOf<String, File>()
-  private val classPath = hashSetOf<File>()
+  private val nameToClassFile = hashMapOf<String, File>()
+
+  private val classPaths = linkedSetOf<File>()
 
   init {
     val classFiles = FileUtils.listFiles(root.canonicalFile, arrayOf("class"), true)
@@ -18,8 +18,8 @@ class ClassFilesResolver(private val root: File) : Resolver() {
       val className = AsmUtil.readClassName(classFile)
       val classRoot = getClassRoot(classFile, className)
       if (classRoot != null) {
-        allClasses.put(className, classFile)
-        classPath.add(classRoot)
+        nameToClassFile.put(className, classFile)
+        classPaths.add(classRoot)
       }
     }
   }
@@ -35,9 +35,11 @@ class ClassFilesResolver(private val root: File) : Resolver() {
 
   @Throws(IOException::class)
   override fun findClass(className: String): ClassNode? {
-    val file = allClasses[className] ?: return null
-    return AsmUtil.readClassFromFile(file)
+    val file = nameToClassFile[className] ?: return null
+    return readClassNode(file)
   }
+
+  private fun readClassNode(classFile: File) = AsmUtil.readClassFromFile(classFile)
 
   override fun getClassLocation(className: String): Resolver? = if (containsClass(className)) {
     this
@@ -45,19 +47,27 @@ class ClassFilesResolver(private val root: File) : Resolver() {
     null
   }
 
-  override fun getAllClasses(): Set<String> = allClasses.keys
+  override val allClasses
+    get() = nameToClassFile.keys
 
-  override fun isEmpty(): Boolean = allClasses.isEmpty()
+  override val isEmpty
+    get() = nameToClassFile.isEmpty()
 
-  override fun containsClass(className: String): Boolean = allClasses.containsKey(className)
+  override fun containsClass(className: String) = className in nameToClassFile
 
-  override fun getClassPath(): List<File> =  ArrayList(classPath)
+  override val classPath
+    get() = classPaths.toList()
 
-  override fun getFinalResolvers(): List<Resolver> = listOf(this as Resolver)
+  override val finalResolvers
+    get() = listOf(this)
 
-  override fun close() {
-    //nothing to do
-  }
+  override fun close() = Unit
 
-  override fun toString(): String = root.canonicalPath
+  override fun processAllClasses(processor: (ClassNode) -> Boolean) =
+      nameToClassFile.values
+          .asSequence()
+          .map { readClassNode(it) }
+          .all { processor(it) }
+
+  override fun toString() = root.canonicalPath
 }

@@ -61,17 +61,26 @@ class JarFileResolver(jar: File) : Resolver() {
 
   val implementedServiceProviders: Set<String> = serviceProviders
 
-  override fun getAllClasses(): Set<String> = classes
+  override val allClasses
+    get() = classes
 
-  override fun toString(): String = ioJarFile.name
+  override val isEmpty
+    get() = classes.isEmpty()
 
-  override fun isEmpty(): Boolean = classes.isEmpty()
+  override val classPath
+    get() = listOf(ioJarFile)
+
+  override val finalResolvers
+    get() = listOf(this)
+
+  override fun processAllClasses(processor: (ClassNode) -> Boolean): Boolean {
+    //todo: speedup.
+    return allClasses.asSequence()
+        .mapNotNull { findClass(it) }
+        .all(processor)
+  }
 
   override fun containsClass(className: String): Boolean = classes.contains(className)
-
-  override fun getClassPath(): List<File> = listOf(ioJarFile)
-
-  override fun getFinalResolvers(): List<Resolver> = listOf(this as Resolver)
 
   override fun findClass(className: String): ClassNode? =
       if (className in classes) evaluateNode(className) else null

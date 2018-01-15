@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.classes.resolvers;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
@@ -100,5 +101,10 @@ public class CacheResolver extends Resolver {
   @Override
   public void close() throws IOException {
     myDelegate.close();
+  }
+
+  @Override
+  public boolean processAllClasses(@NotNull Function1<? super ClassNode, Boolean> processor) {
+    return myDelegate.processAllClasses(processor);
   }
 }

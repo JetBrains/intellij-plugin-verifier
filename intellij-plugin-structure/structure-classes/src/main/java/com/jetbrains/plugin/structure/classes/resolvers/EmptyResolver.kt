@@ -4,25 +4,24 @@ import org.objectweb.asm.tree.ClassNode
 import java.io.File
 
 object EmptyResolver : Resolver() {
+  override fun processAllClasses(processor: (ClassNode) -> Boolean) = true
 
-  override fun findClass(className: String): ClassNode? = null
+  override fun findClass(className: String) = null
 
-  override fun getClassLocation(className: String): Resolver? = null
+  override fun getClassLocation(className: String) = null
 
-  override fun getAllClasses(): Set<String> = emptySet()
+  override fun containsClass(className: String) = false
 
-  override fun isEmpty(): Boolean = true
+  override val allClasses = emptySet<String>()
 
-  override fun containsClass(className: String): Boolean = false
+  override val isEmpty = true
 
-  override fun getClassPath(): List<File> = emptyList()
+  override val classPath = emptyList<File>()
 
-  override fun getFinalResolvers(): List<Resolver> = emptyList()
+  override val finalResolvers = emptyList<Resolver>()
 
-  override fun toString(): String = "EmptyResolver"
+  override fun toString() = "EmptyResolver"
 
-  override fun close() {
-    //do nothing
-  }
+  override fun close() = Unit
 
 }
