@@ -1,14 +1,11 @@
-package com.jetbrains.plugin.structure.classes.resolvers;
+package com.jetbrains.plugin.structure.classes.resolvers
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.tree.ClassNode;
-
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Set;
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
+import org.objectweb.asm.tree.ClassNode
+import java.io.File
+import java.io.IOException
+import java.util.Set
 
 /**
  * <p>Provides an access to the byte-code of a class by its name via the {@link #findClass(String)}.
@@ -18,7 +15,7 @@ import java.util.Set;
  * Some resolvers may extract the classes in the temporary directory for performance reasons, so {@link #close()} will
  * clean the used disk space.</p>
  */
-public abstract class Resolver implements Closeable {
+abstract class Resolver implements Closeable {
 
   /**
    * Returns a class-file node with the specified name. If {@code this} resolver contains multiple
@@ -29,7 +26,7 @@ public abstract class Resolver implements Closeable {
    * @throws IOException if IO error occurs, e.g. file .class-file was deleted
    */
   @Nullable
-  public abstract ClassNode findClass(@NotNull String className) throws IOException;
+  public abstract ClassNode findClass (@NotNull String className) throws IOException
 
   /**
    * Returns the resolver which contains the given class: invocation of {@link #findClass(String)} on the
@@ -40,7 +37,7 @@ public abstract class Resolver implements Closeable {
    * @return actual class resolver or {@code null} if {@code this} resolver doesn't contain a specified class
    */
   @Nullable
-  public abstract Resolver getClassLocation(@NotNull String className);
+  public abstract Resolver getClassLocation (@NotNull String className)
 
   /**
    * Returns the <i>binary</i> names of all the contained classes.
@@ -48,14 +45,14 @@ public abstract class Resolver implements Closeable {
    * @return all the classes names in the <i>binary</i> form.
    */
   @NotNull
-  public abstract Set<String> getAllClasses();
+  public abstract Set<String> getAllClasses ()
 
   /**
    * Checks whether this resolver contains any class. Classes can be obtained through {@link #getAllClasses()}.
    *
    * @return true if this resolver is not empty, false otherwise
    */
-  public abstract boolean isEmpty();
+  public abstract boolean isEmpty ()
 
   /**
    * Returns true if {@code this} Resolver contains the given class. It may be faster
@@ -64,7 +61,7 @@ public abstract class Resolver implements Closeable {
    * @param className class name in <i>binary</i> form (see JVM specification)
    * @return {@code true} if class is in Resolver, {@code false} otherwise
    */
-  public abstract boolean containsClass(@NotNull String className);
+  public abstract boolean containsClass (@NotNull String className)
 
   /**
    * Returns the roots from which this resolver loads the classes
@@ -72,7 +69,7 @@ public abstract class Resolver implements Closeable {
    * @return roots of the classes
    */
   @NotNull
-  public abstract List<File> getClassPath();
+  public abstract List<File> getClassPath ()
 
   /**
    * Returns the resolvers that actually constitute the given resolver
@@ -80,6 +77,6 @@ public abstract class Resolver implements Closeable {
    * @return final resolvers
    */
   @NotNull
-  public abstract List<Resolver> getFinalResolvers();
+  public abstract List<Resolver> getFinalResolvers ()
 
 }
