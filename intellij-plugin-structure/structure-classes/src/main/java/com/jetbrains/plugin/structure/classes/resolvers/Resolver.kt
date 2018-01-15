@@ -81,7 +81,9 @@ abstract class Resolver : Closeable {
    * The [processor] returns `true` to continue processing and `false` to stop.
    *
    * @return `true` if all the classes are processed, and `false` if processing has been stopped.
+   * @throws IOException if the processing has failed due to an IO error
    */
+  @Throws(IOException::class)
   abstract fun processAllClasses(processor: (ClassNode) -> Boolean): Boolean
 
 }
