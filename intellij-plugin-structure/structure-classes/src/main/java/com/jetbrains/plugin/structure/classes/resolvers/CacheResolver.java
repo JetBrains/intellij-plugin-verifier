@@ -104,7 +104,7 @@ public class CacheResolver extends Resolver {
   }
 
   @Override
-  public boolean processAllClasses(@NotNull Function1<? super ClassNode, Boolean> processor) {
+  public boolean processAllClasses(@NotNull Function1<? super ClassNode, Boolean> processor) throws IOException {
     return myDelegate.processAllClasses(processor);
   }
 }
