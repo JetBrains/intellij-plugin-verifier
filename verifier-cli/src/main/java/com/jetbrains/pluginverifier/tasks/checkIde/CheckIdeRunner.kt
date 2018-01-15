@@ -18,8 +18,9 @@ class CheckIdeRunner : CommandRunner() {
   override fun getParametersBuilder(
       pluginRepository: PluginRepository,
       ideFilesBank: IdeFilesBank,
-      pluginDetailsCache: PluginDetailsCache, verificationReportage: VerificationReportage
-  ) = CheckIdeParamsBuilder(pluginRepository, pluginDetailsCache)
+      pluginDetailsCache: PluginDetailsCache,
+      verificationReportage: VerificationReportage
+  ) = CheckIdeParamsBuilder(pluginRepository, pluginDetailsCache, verificationReportage)
 
   override fun createTask(
       parameters: TaskParameters,

@@ -184,7 +184,13 @@ object PluginVerifierMain {
     val messageReporters = listOf(LogReporter<String>(logger))
     val progressReporters = emptyList<Reporter<Double>>()
 
-    val reporterSetProvider = MainVerificationReportersProvider(messageReporters, progressReporters, verificationReportsDirectory, printPluginVerificationProgress)
+    val reporterSetProvider = MainVerificationReportersProvider(
+        messageReporters,
+        progressReporters,
+        verificationReportsDirectory,
+        printPluginVerificationProgress,
+        logger
+    )
     return VerificationReportageImpl(reporterSetProvider)
   }
 

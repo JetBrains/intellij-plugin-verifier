@@ -30,6 +30,12 @@ class TestMainPluginRepository {
   }
 
   @Test
+  fun `last compatible plugins for IDE`() {
+    val plugins = repository.getLastCompatiblePlugins(IdeVersion.createIdeVersion("173.3727.127"))
+    assertFalse(plugins.isEmpty())
+  }
+
+  @Test
   fun updatesOfPlugin() {
     assertTrue(repository.getAllCompatibleVersionsOfPlugin(ideVersion, "ActionScript Profiler").isNotEmpty())
   }

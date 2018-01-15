@@ -8,7 +8,8 @@ import java.util.*
 /**
  * Identifier of a IDE plugin, which may
  * represent either a [plugin from the Plugin Repository] [UpdateInfo],
- * or a [locally stored plugin] [com.jetbrains.pluginverifier.repository.local.LocalPluginInfo].
+ * a [locally stored plugin] [com.jetbrains.pluginverifier.repository.local.LocalPluginInfo],
+ * or a [bundled] [com.jetbrains.pluginverifier.repository.bundled.BundledPluginInfo] IDE plugin.
  */
 open class PluginInfo(
     val pluginId: String,

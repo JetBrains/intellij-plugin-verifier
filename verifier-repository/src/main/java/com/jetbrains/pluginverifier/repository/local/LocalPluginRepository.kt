@@ -15,7 +15,7 @@ import java.net.URL
 class LocalPluginRepository(override val repositoryURL: URL,
                             private val plugins: MutableList<LocalPluginInfo> = arrayListOf()) : PluginRepository {
   companion object {
-    private val VERSION_COMPARATOR = compareBy<LocalPluginInfo, String>(VersionComparatorUtil.COMPARATOR, { it.version })
+    val VERSION_COMPARATOR = compareBy<PluginInfo, String>(VersionComparatorUtil.COMPARATOR, { it.version })
   }
 
   fun addLocalPlugin(idePlugin: IdePlugin): LocalPluginInfo {

@@ -113,7 +113,7 @@ class IdeManagerImpl : IdeManager() {
       throw XIncludeException("Unable to resolve " + normalizedPath + if (base != null) " against " + base else "")
     }
 
-    override fun resolvePath(relativePath: String, base: String?): URL = try {
+    override fun resolvePath(relativePath: String, base: String?) = try {
       //try the parent resolver
       val res = super.resolvePath(relativePath, base)
       URLUtil.openStream(res)
@@ -140,13 +140,14 @@ class IdeManagerImpl : IdeManager() {
     return getDummyPlugins(allXmlFiles, pathResolver)
   }
 
-  private fun getDummyPlugins(xmlFiles: Collection<File>, pathResolver: XIncludePathResolver): List<IdePlugin> = xmlFiles
-      .filter { "plugin.xml" == it.name }
-      .map { it.absoluteFile.parentFile }
-      .filter { "META-INF" == it.name && it.isDirectory && it.parentFile != null }
-      .map { it.parentFile }
-      .filter { it.isDirectory }
-      .mapNotNull { safeCreatePlugin(it, pathResolver) }
+  private fun getDummyPlugins(xmlFiles: Collection<File>, pathResolver: XIncludePathResolver) =
+      xmlFiles
+          .filter { "plugin.xml" == it.name }
+          .map { it.absoluteFile.parentFile }
+          .filter { "META-INF" == it.name && it.isDirectory && it.parentFile != null }
+          .map { it.parentFile }
+          .filter { it.isDirectory }
+          .mapNotNull { safeCreatePlugin(it, pathResolver) }
 
   private fun safeCreatePlugin(pluginFile: File, pathResolver: XIncludePathResolver): IdePlugin? {
     try {

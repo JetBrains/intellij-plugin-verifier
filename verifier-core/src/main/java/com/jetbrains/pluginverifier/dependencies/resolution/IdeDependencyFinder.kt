@@ -14,7 +14,7 @@ class IdeDependencyFinder(ide: Ide,
                           pluginRepository: PluginRepository,
                           pluginDetailsCache: PluginDetailsCache) : DependencyFinder {
 
-  private val bundledPluginFinder = BundledPluginDependencyFinder(ide)
+  private val bundledPluginFinder = BundledPluginDependencyFinder(ide, pluginDetailsCache)
 
   private val repositoryDependencyFinder = RepositoryDependencyFinder(
       pluginRepository,

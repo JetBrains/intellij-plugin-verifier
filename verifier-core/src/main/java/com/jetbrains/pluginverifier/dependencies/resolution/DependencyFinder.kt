@@ -52,9 +52,9 @@ interface DependencyFinder {
     }
 
     /**
-     * The dependency points to a default module of the verified IDE.
+     * The dependency should be skipped.
      */
-    data class DefaultIdeModule(val moduleId: String) : Result() {
+    object Skip : Result() {
       override fun close() = Unit
     }
   }

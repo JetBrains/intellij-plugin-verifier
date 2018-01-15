@@ -38,7 +38,7 @@ class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
     }
     is DependencyFinder.Result.FoundPlugin -> plugin
     is DependencyFinder.Result.NotFound -> null
-    is DependencyFinder.Result.DefaultIdeModule -> null
+    is DependencyFinder.Result.Skip -> null
   }
 
   private fun resolveDependency(pluginDependency: PluginDependency, directedGraph: DirectedGraph<DepVertex, DepEdge>) =

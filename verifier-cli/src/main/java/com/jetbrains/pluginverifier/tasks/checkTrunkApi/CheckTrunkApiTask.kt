@@ -76,7 +76,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
    */
   private inner class ReleaseFinder : DependencyFinder {
 
-    private val releaseBundledFinder = BundledPluginDependencyFinder(parameters.releaseIde.ide)
+    private val releaseBundledFinder = BundledPluginDependencyFinder(parameters.releaseIde.ide, pluginDetailsCache)
 
     private val releaseLocalRepositoryFinder = parameters.releaseLocalPluginsRepository?.let { LocalRepositoryDependencyFinder(it, pluginDetailsCache) }
 
@@ -115,7 +115,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
    */
   private inner class TrunkFinder : DependencyFinder {
 
-    private val trunkBundledFinder = BundledPluginDependencyFinder(parameters.trunkIde.ide)
+    private val trunkBundledFinder = BundledPluginDependencyFinder(parameters.trunkIde.ide, pluginDetailsCache)
 
     private val trunkLocalFinder = parameters.trunkLocalPluginsRepository?.let { LocalRepositoryDependencyFinder(it, pluginDetailsCache) }
 

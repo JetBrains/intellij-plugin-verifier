@@ -164,7 +164,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     //........missing optional dependency dep#3
     //pluginTwo
     //...and so on...
-    val ideLastPluginVersions = requestLastVersionsOfCheckedPlugins(results.distinct().map { it.ideVersion })
+    val ideLastPluginVersions = requestLastVersionsOfCheckedPlugins(results.map { it.ideVersion }.distinct())
     results.groupBy { it.plugin.pluginId }.forEach { (pluginId, pluginResults) ->
       printResultsForSpecificPluginId(pluginId, pluginResults, ideLastPluginVersions)
     }
@@ -298,7 +298,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
    * of the plugin available in the [repository] and compatible with
    * this IDE version.
    */
-  fun requestLastVersionsOfCheckedPlugins(ideVersions: List<IdeVersion>): Map<IdeVersion, List<PluginInfo>> =
+  private fun requestLastVersionsOfCheckedPlugins(ideVersions: List<IdeVersion>): Map<IdeVersion, List<PluginInfo>> =
       ideVersions.associate {
         try {
           val lastCompatibleUpdates = repository.getLastCompatiblePlugins(it)

@@ -78,10 +78,10 @@ class PublicPluginRepository(override val repositoryURL: URL,
 
   private fun getDownloadUrl(updateId: Int) = URL("${repositoryURL.toExternalForm().trimEnd('/')}/plugin/download/?noStatistic=true&updateId=$updateId")
 
-  override fun getPluginInfoById(updateId: Int): UpdateInfo? =
+  override fun getPluginInfoById(updateId: Int) =
       updateInfosRequester.getUpdateInfoById(updateId)
 
-  override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): PluginInfo? =
+  override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String) =
       getAllCompatibleVersionsOfPlugin(ideVersion, pluginId).maxBy { it.updateId }
 
   override fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo> {
@@ -113,22 +113,22 @@ class PublicPluginRepository(override val repositoryURL: URL,
     return updateInfos
   }
 
-  private fun String?.prepareIdeVersion(): IdeVersion? {
-    if (this == null || this == "" || this == "0.0") {
-      return null
-    }
-    return IdeVersion.createIdeVersionIfValid(this)
-  }
+  private fun String?.prepareIdeVersion(): IdeVersion? =
+      if (this == null || this == "" || this == "0.0") {
+        null
+      } else {
+        IdeVersion.createIdeVersionIfValid(this)
+      }
 
-  override fun getAllPlugins(): List<PluginInfo> = allSinceUntilPluginsRequester.getAllPluginUpdateIds()
+  override fun getAllPlugins() = allSinceUntilPluginsRequester.getAllPluginUpdateIds()
       .mapNotNull { getPluginInfoById(it) }
 
-  override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> =
+  override fun getLastCompatiblePlugins(ideVersion: IdeVersion) =
       repositoryConnector.getAllCompatibleUpdates(ideVersion.asString())
           .executeSuccessfully().body()
           .map { updateInfosRequester.putJsonUpdateInfo(it) }
 
-  override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String): List<UpdateInfo> =
+  override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String) =
       getAllVersionsOfPlugin(pluginId).filter { it.isCompatibleWith(ideVersion) }
 
   override fun getIdOfPluginDeclaringModule(moduleId: String) =

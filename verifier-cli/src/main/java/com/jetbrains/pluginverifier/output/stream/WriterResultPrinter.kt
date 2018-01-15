@@ -31,11 +31,13 @@ class WriterResultPrinter(private val out: PrintWriter,
   }
 
   fun printInvalidPluginFiles(invalidPluginFiles: List<InvalidPluginFile>) {
-    out.println("The following files specified for the verification are not valid plugins:")
-    for ((pluginFile, pluginErrors) in invalidPluginFiles) {
-      out.println("    $pluginFile")
-      for (pluginError in pluginErrors) {
-        out.println("        $pluginError")
+    if (invalidPluginFiles.isNotEmpty()) {
+      out.println("The following files specified for the verification are not valid plugins:")
+      for ((pluginFile, pluginErrors) in invalidPluginFiles) {
+        out.println("    $pluginFile")
+        for (pluginError in pluginErrors) {
+          out.println("        $pluginError")
+        }
       }
     }
   }

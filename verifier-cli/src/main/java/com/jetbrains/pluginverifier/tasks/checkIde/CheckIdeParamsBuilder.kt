@@ -7,13 +7,15 @@ import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
 class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
-                            val pluginDetailsCache: PluginDetailsCache) : TaskParametersBuilder {
+                            val pluginDetailsCache: PluginDetailsCache,
+                            val verificationReportage: VerificationReportage) : TaskParametersBuilder {
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckIdeParams {
     if (freeArgs.isEmpty()) {
       throw IllegalArgumentException("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"")
@@ -22,6 +24,7 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
     if (!ideFile.isDirectory) {
       throw IllegalArgumentException("IDE path must be a directory: " + ideFile)
     }
+    verificationReportage.logVerificationStage("Reading classes of IDE $ideFile")
     OptionsParser.createIdeDescriptor(ideFile, opts).closeOnException { ideDescriptor ->
       val jdkDescriptor = OptionsParser.createJdkDescriptor(opts)
       val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
