@@ -17,7 +17,6 @@ import java.nio.file.Path
  * to avoid use-remove conflicts when one thread uses the IDE build and another
  * thread deletes it.
  */
-//todo: provide a cache of IdeDescriptors
 class IdeFilesBank(private val bankDirectory: Path,
                    ideRepository: IdeRepository,
                    diskSpaceSetting: DiskSpaceSetting,
@@ -33,20 +32,16 @@ class IdeFilesBank(private val bankDirectory: Path,
       IdeFileNameMapper(),
       LruFileSizeSweepPolicy(diskSpaceSetting),
       keyProvider = { IdeFileNameMapper.getIdeVersionByFile(it) },
-      presentableName = "IDEs at $bankDirectory"
+      presentableName = "IDEs"
   )
 
-  fun <R> lockAndAccess(block: () -> R) =
-      ideFilesRepository.lockAndExecute(block)
+  fun <R> lockAndAccess(block: () -> R) = ideFilesRepository.lockAndExecute(block)
 
-  fun getAvailableIdeVersions() =
-      ideFilesRepository.getAllExistingKeys()
+  fun getAvailableIdeVersions() = ideFilesRepository.getAllExistingKeys()
 
-  fun has(key: IdeVersion) =
-      ideFilesRepository.has(key)
+  fun hasIde(key: IdeVersion) = ideFilesRepository.has(key)
 
-  fun deleteIde(key: IdeVersion) =
-      ideFilesRepository.remove(key)
+  fun deleteIde(key: IdeVersion) = ideFilesRepository.remove(key)
 
   fun getIdeFileLock(key: IdeVersion): FileLock? = with(ideFilesRepository.getFile(key)) {
     when (this) {

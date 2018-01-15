@@ -14,6 +14,6 @@ abstract class ServiceTask<out T>(val presentableName: String) {
    */
   abstract fun execute(progress: ProgressIndicator): T
 
-  override fun toString(): String = presentableName
+  final override fun toString(): String = presentableName
 
 }

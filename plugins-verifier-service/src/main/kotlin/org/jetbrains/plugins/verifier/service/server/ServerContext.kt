@@ -5,12 +5,11 @@ import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import org.jetbrains.plugins.verifier.service.database.ServerDatabase
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
-import org.jetbrains.plugins.verifier.service.service.jdks.JdkManager
+import org.jetbrains.plugins.verifier.service.service.jdks.JdkDescriptorsCache
 import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTasksManager
@@ -28,10 +27,9 @@ class ServerContext(val applicationHomeDirectory: Path,
                     val ideFilesBank: IdeFilesBank,
                     val ideKeeper: IdeKeeper,
                     val pluginRepository: PluginRepository,
-                    val pluginDetailsProvider: PluginDetailsProvider,
                     val taskManager: ServiceTasksManager,
                     val authorizationData: AuthorizationData,
-                    val jdkManager: JdkManager,
+                    val jdkManager: JdkDescriptorsCache,
                     val startupSettings: List<Settings>,
                     val serviceDAO: ServiceDAO,
                     val serverDatabase: ServerDatabase,

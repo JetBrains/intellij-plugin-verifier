@@ -20,12 +20,15 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
-private interface IdeRepositoryConnector {
+private interface DownloadConnector {
   @GET
   @Streaming
-  fun downloadIde(@Url downloadUrl: String): Call<ResponseBody>
+  fun downloadByUrl(@Url downloadUrl: String): Call<ResponseBody>
 }
 
+/**
+ * [Downloader] of the IDEs from the [IdeRepository].
+ */
 class IdeDownloader(private val ideRepository: IdeRepository,
                     private val downloadProgress: (Double) -> Unit) : Downloader<IdeVersion> {
 
@@ -33,7 +36,7 @@ class IdeDownloader(private val ideRepository: IdeRepository,
       .baseUrl(ideRepository.repositoryUrl.trimEnd('/') + '/')
       .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
-      .create(IdeRepositoryConnector::class.java)
+      .create(DownloadConnector::class.java)
 
 
   override fun download(key: IdeVersion, tempDirectory: Path): DownloadResult {
@@ -68,8 +71,9 @@ class IdeDownloader(private val ideRepository: IdeRepository,
   }
 
   private fun doDownloadTo(downloadUrl: URL, destination: File) {
+    downloadProgress(0.0)
     val responseBody = repositoryConnector
-        .downloadIde(downloadUrl.toExternalForm())
+        .downloadByUrl(downloadUrl.toExternalForm())
         .executeSuccessfully().body()
 
     val expectedSize = responseBody.contentLength()

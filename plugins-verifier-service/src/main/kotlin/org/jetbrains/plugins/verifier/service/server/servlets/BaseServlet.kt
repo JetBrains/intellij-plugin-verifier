@@ -16,8 +16,7 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 /**
- * The base servlet of the server that
- * contains a reference to the [context] [serverContext]
+ * The base servlet that contains a reference to the [context] [serverContext]
  * and utility methods used for communication.
  */
 abstract class BaseServlet : HttpServlet() {

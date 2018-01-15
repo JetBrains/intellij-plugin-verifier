@@ -9,14 +9,16 @@ import java.nio.file.Path
 class IdeFileNameMapper : FileNameMapper<IdeVersion> {
 
   companion object {
-    fun getIdeVersionByFile(file: Path): IdeVersion? = if (file.isDirectory) {
-      IdeVersion.createIdeVersionIfValid(file.simpleName)?.let { IdeRepository.setProductCodeIfAbsent(it, "IU") }
-    } else {
-      null
-    }
+    fun getIdeVersionByFile(file: Path) =
+        if (file.isDirectory) {
+          IdeVersion.createIdeVersionIfValid(file.simpleName)
+              ?.let { IdeRepository.setProductCodeIfAbsent(it, "IU") }
+        } else {
+          null
+        }
 
   }
 
-  override fun getFileNameWithoutExtension(key: IdeVersion): String = key.asString()
+  override fun getFileNameWithoutExtension(key: IdeVersion) = key.asString()
 
 }

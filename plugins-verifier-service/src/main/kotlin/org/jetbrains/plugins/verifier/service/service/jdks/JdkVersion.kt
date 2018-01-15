@@ -9,7 +9,7 @@ package org.jetbrains.plugins.verifier.service.service.jdks
  * uses the JDKs for the bytecode verifications.
  *
  * The path to the JDK of a concrete version
- * can be obtained using the [JdkManager].
+ * can be obtained using the [JdkDescriptorsCache].
  */
 enum class JdkVersion {
   JAVA_8_ORACLE

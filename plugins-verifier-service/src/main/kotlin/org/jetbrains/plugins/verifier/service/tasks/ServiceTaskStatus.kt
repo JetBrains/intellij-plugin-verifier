@@ -66,5 +66,7 @@ data class ServiceTaskStatus(
     append(")")
   }
 
+  override fun equals(other: Any?) = other is ServiceTaskStatus && taskId == other.taskId
 
+  override fun hashCode() = taskId.hashCode()
 }

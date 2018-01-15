@@ -10,6 +10,8 @@ sealed class ResourceCacheEntryResult<R> {
   /**
    * The resource cache [entry] [ResourceCacheEntry] has been
    * successfully [fetched] [ResourceCache.getResourceCacheEntry].
+   * The [entry] [resourceCacheEntry] must be closed after
+   * the resource's usage to release the associated lock in the [ResourceCache].
    */
   data class Found<R>(val resourceCacheEntry: ResourceCacheEntry<R>,
                       val fetchTime: Duration) : ResourceCacheEntryResult<R>()

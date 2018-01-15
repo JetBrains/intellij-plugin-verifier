@@ -14,6 +14,10 @@ import com.jetbrains.pluginverifier.results.Verdict
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.results.warnings.Warning
 
+/**
+ * Converts the internal verifier [results] [CheckRangeTask.Result]
+ * to the protocol API version of [results] [UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult].
+ */
 fun prepareVerificationResponse(checkRangeResult: CheckRangeTask.Result): UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult {
   val apiResultType = convertToApiResultType(checkRangeResult)
   val apiResults = checkRangeResult.verificationResults.orEmpty().map { convertVerifierResult(it) }

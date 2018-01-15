@@ -25,7 +25,7 @@ class IdeKeeper(private val serviceDAO: ServiceDAO,
     serviceDAO.removeManuallyUploadedIde(ideVersion)
   }
 
-  fun isAvailableIde(ideVersion: IdeVersion): Boolean = ideFilesBank.has(ideVersion)
+  fun isAvailableIde(ideVersion: IdeVersion): Boolean = ideFilesBank.hasIde(ideVersion)
 
   fun getAvailableIdeVersions(): Set<IdeVersion> = ideFilesBank.getAvailableIdeVersions()
 
@@ -49,9 +49,9 @@ class IdeKeeper(private val serviceDAO: ServiceDAO,
     val manuallyUploadedIdes = serviceDAO.getManuallyUploadedIdes()
 
     val missingIdes: Set<IdeVersion> = relevantIdes - availableIdes
-    val redundantIdes: Set<IdeVersion> = availableIdes - relevantIdes.map { it } - manuallyUploadedIdes
+    val unnecessaryIdes: Set<IdeVersion> = availableIdes - relevantIdes.map { it } - manuallyUploadedIdes
 
-    return IdesList(availableIdes, missingIdes, redundantIdes, manuallyUploadedIdes)
+    return IdesList(availableIdes, missingIdes, unnecessaryIdes, manuallyUploadedIdes)
   }
 
   /**

@@ -15,7 +15,7 @@ import org.jetbrains.plugins.verifier.service.server.ServiceDAO
 import org.jetbrains.plugins.verifier.service.service.features.FeatureExtractorService
 import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
 import org.jetbrains.plugins.verifier.service.service.ide.IdeListUpdater
-import org.jetbrains.plugins.verifier.service.service.jdks.JdkManager
+import org.jetbrains.plugins.verifier.service.service.jdks.JdkDescriptorsCache
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
 import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetting
@@ -27,7 +27,7 @@ import javax.servlet.ServletContextListener
 
 /**
  * Startup initializer that configures the [server context] [ServerContext]
- * according to passed parameters.
+ * according to passed [settings] [Settings].
  */
 class ServerStartupListener : ServletContextListener {
 
@@ -67,7 +67,7 @@ class ServerStartupListener : ServletContextListener {
         Settings.SERVICE_ADMIN_PASSWORD.get()
     )
 
-    val jdkManager = JdkManager(Settings.JDK_8_HOME.getAsFile())
+    val jdkManager = JdkDescriptorsCache(Settings.JDK_8_HOME.getAsFile())
 
     val ideDownloadDirDiskSpaceSetting = getIdeDownloadDirDiskSpaceSetting()
     val serverDatabase = MapDbServerDatabase(applicationHomeDir)
@@ -83,7 +83,6 @@ class ServerStartupListener : ServletContextListener {
         ideFilesBank,
         ideKeeper,
         pluginRepository,
-        pluginDetailsProvider,
         tasksManager,
         authorizationData,
         jdkManager,

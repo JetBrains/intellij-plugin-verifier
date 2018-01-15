@@ -10,7 +10,10 @@ package org.jetbrains.plugins.verifier.service.tasks
  */
 enum class ServiceTaskState {
   WAITING,
+
   RUNNING,
+
   SUCCESS,
+
   ERROR,
 }

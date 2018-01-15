@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
@@ -9,14 +8,15 @@ import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterSet
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportersProvider
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.results.Verdict
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkVersion
@@ -25,9 +25,12 @@ import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
 import org.slf4j.LoggerFactory
 
+private typealias VerifierResult = com.jetbrains.pluginverifier.results.Result
+
 /**
  * The service task that runs the plugin verification
- * of the [updateInfo] against (since; until)-compatible [toCheckIdeVersions] and
+ * of the [updateInfo] against (since; until)-compatible
+ * IDEs from the [toCheckIdeVersions] and
  * returns the aggregated [result] [Result].
  */
 class CheckRangeTask(val updateInfo: UpdateInfo,
@@ -41,7 +44,7 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
 
   data class Result(val updateInfo: UpdateInfo,
                     val resultType: ResultType,
-                    val verificationResults: List<com.jetbrains.pluginverifier.results.Result>? = null,
+                    val verificationResults: List<VerifierResult>? = null,
                     val invalidPluginProblems: List<PluginProblem>? = null,
                     val nonDownloadableReason: String? = null) {
     enum class ResultType {
@@ -84,7 +87,8 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
     return Result(updateInfo, Result.ResultType.VERIFICATION_DONE, allResults)
   }
 
-  private fun checkPluginWithIde(ideDescriptor: IdeDescriptor, verificationReportage: VerificationReportageImpl): List<com.jetbrains.pluginverifier.results.Result> {
+  private fun checkPluginWithIde(ideDescriptor: IdeDescriptor,
+                                 verificationReportage: VerificationReportage): List<VerifierResult> {
     val dependencyFinder = IdeDependencyFinder(
         ideDescriptor.ide,
         serverContext.pluginRepository,
@@ -98,19 +102,33 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
         findDeprecatedApiUsages = true
     )
 
-    val jdkHomeDir = serverContext.jdkManager.getJdkHome(jdkVersion)
-    JdkResolverCreator.createJdkResolver(jdkHomeDir.toFile()).use { jdkClassesResolver ->
-      val jdkDescriptor = JdkDescriptor(jdkClassesResolver, jdkHomeDir)
+    return with(serverContext.jdkManager.getJdkResolver(jdkVersion)) {
+      when (this) {
+        is ResourceCacheEntryResult.Found -> {
+          resourceCacheEntry.use {
+            val verifierTask = VerifierTask(updateInfo, ideDescriptor, dependencyFinder)
+            return Verification.run(
+                verifierParameters,
+                serverContext.pluginDetailsCache,
+                listOf(verifierTask),
+                verificationReportage,
+                resourceCacheEntry.resource
+            )
+          }
+        }
+        is ResourceCacheEntryResult.Failed -> throw error
+        is ResourceCacheEntryResult.NotFound -> throw IllegalStateException(message)
+      }
+    }
+  }
 
-      val verifierTask = VerifierTask(updateInfo, ideDescriptor, dependencyFinder)
+  private fun createDelegatingReporter(progress: ProgressIndicator): Reporter<Double> {
+    return object : Reporter<Double> {
+      override fun report(t: Double) {
+        progress.fraction = t
+      }
 
-      return Verification.run(
-          verifierParameters,
-          serverContext.pluginDetailsCache,
-          listOf(verifierTask),
-          verificationReportage,
-          jdkDescriptor
-      )
+      override fun close() = Unit
     }
   }
 
@@ -119,7 +137,7 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
 
         override val globalMessageReporters = listOf<Reporter<String>>(LogReporter(LOG))
 
-        override val globalProgressReporters = listOf(DelegateProgressReporter(progress))
+        override val globalProgressReporters = listOf(createDelegatingReporter(progress))
 
         override fun close() = Unit
 
@@ -127,7 +145,7 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
             VerificationReporterSet(
                 verdictReporters = listOf(LogReporter(LOG)),
                 messageReporters = listOf(LogReporter(LOG)),
-                progressReporters = listOf(DelegateProgressReporter(progress)),
+                progressReporters = listOf(createDelegatingReporter(progress)),
                 warningReporters = emptyList(),
                 problemsReporters = emptyList(),
                 dependenciesGraphReporters = listOf(LogReporter(LOG)),

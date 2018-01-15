@@ -9,6 +9,12 @@ import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import java.io.Closeable
 
+/**
+ * Caches the [IdeDescriptor]s by keys equal to [IdeVersion]s.
+ *
+ * The cache must be [closed] [close] on the application shutdown
+ * to deallocate all the [IdeDescriptor]s.
+ */
 class IdeDescriptorsCache(cacheSize: Int,
                           private val ideFilesBank: IdeFilesBank) : Closeable {
 
@@ -19,14 +25,24 @@ class IdeDescriptorsCache(cacheSize: Int,
       "IdeDescriptorsCache"
   )
 
+  /**
+   * Atomically [selects] [selector] an IDE from a set of [available] [IdeFilesBank.getAvailableIdeVersions] IDEs
+   * and registers a [ResourceCacheEntry] for the [IdeDescriptor].
+   * The cache's state is not modified until this method returns.
+   */
   fun getIdeDescriptor(selector: (Iterable<IdeVersion>) -> IdeVersion): ResourceCacheEntry<IdeDescriptor> =
-      getIdeDescriptors { availableIdeVersions ->
-        listOf(selector(availableIdeVersions))
+      getIdeDescriptors {
+        listOf(selector(it))
       }.single()
 
+  /**
+   * Atomically [selects] [selector] several IDEs from a set of all [available] [IdeFilesBank.getAvailableIdeVersions] IDEs
+   * and registers the [ResourceCacheEntry]s for the corresponding [IdeDescriptor]s.
+   * The cache's state is not modified until this method returns.
+   */
   fun getIdeDescriptors(selector: (Iterable<IdeVersion>) -> List<IdeVersion>): List<ResourceCacheEntry<IdeDescriptor>> {
-    //Register fake locks that prevents IDEs from deletion
-    //while requesting the resource cache entries.
+    //Register fake locks protecting IDEs from deletion
+    //while requesting the cache entries.
     val ides = arrayListOf<Pair<IdeVersion, FileLock>>()
     try {
       ideFilesBank.lockAndAccess {
@@ -44,13 +60,14 @@ class IdeDescriptorsCache(cacheSize: Int,
     val result = arrayListOf<ResourceCacheEntry<IdeDescriptor>>()
     try {
       for ((ideVersion, _) in ides) {
-        val ideDescriptor = getIdeDescriptor(ideVersion)
-        result.add(ideDescriptor)
+        result.add(getIdeDescriptorCacheEntry(ideVersion))
       }
     } catch (e: Throwable) {
       result.forEach { it.close() }
       throw e
     } finally {
+      //Release all the fake locks as they
+      //are handed over to the [ResourceCacheEntry]s.
       ides.forEach {
         it.second.release()
       }
@@ -58,7 +75,7 @@ class IdeDescriptorsCache(cacheSize: Int,
     return result
   }
 
-  private fun getIdeDescriptor(ideVersion: IdeVersion): ResourceCacheEntry<IdeDescriptor> {
+  private fun getIdeDescriptorCacheEntry(ideVersion: IdeVersion): ResourceCacheEntry<IdeDescriptor> {
     val resourceCacheEntryResult = resourceCache.getResourceCacheEntry(ideVersion)
     return with(resourceCacheEntryResult) {
       when (this) {
@@ -69,6 +86,9 @@ class IdeDescriptorsCache(cacheSize: Int,
     }
   }
 
+  /**
+   * Implementation of the [ResourceProvider] that provides the IDE files from the [ideFilesBank].
+   */
   private class IdeDescriptorResourceProvider(private val ideFilesBank: IdeFilesBank) : ResourceProvider<IdeVersion, IdeDescriptor> {
 
     override fun provide(key: IdeVersion): ProvideResult<IdeDescriptor> {

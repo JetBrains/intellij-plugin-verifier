@@ -6,6 +6,10 @@ import com.jetbrains.intellij.feature.extractor.ExtensionPoint
 import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 
+/**
+ * Converts the internal feature extractor [results] [ExtractFeaturesTask.Result]
+ * to the protocol API version of [results] [ApiFeaturesResult].
+ */
 fun prepareFeaturesResponse(updateInfo: UpdateInfo,
                             resultType: ExtractFeaturesTask.Result.ResultType,
                             features: List<ExtensionPointFeatures>): String {

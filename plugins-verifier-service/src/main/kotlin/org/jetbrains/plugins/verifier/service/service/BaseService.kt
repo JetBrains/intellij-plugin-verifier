@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
  * by [start] invocation. The service can be [_paused_] [pause] and [_resumed_] [resume] several times,
  * but it can be [_started_] [start] and [_stopped_] [stop] only once.
  *
- * Service implementations must de-allocate resources when the service is stopped. This can be done
+ * Service implementations may want to de-allocate resources when the service is stopped. This can be done
  * by overriding the [onStop].
  */
 abstract class BaseService(val serviceName: String,

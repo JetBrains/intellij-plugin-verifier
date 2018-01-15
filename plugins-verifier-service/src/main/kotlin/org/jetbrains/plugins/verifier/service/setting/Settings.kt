@@ -4,6 +4,9 @@ import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
 
+/**
+ * Provides handy access to the settings and system properties.
+ */
 enum class Settings(val key: String,
                     private val default: (() -> String?)? = null,
                     val encrypted: Boolean = false) {

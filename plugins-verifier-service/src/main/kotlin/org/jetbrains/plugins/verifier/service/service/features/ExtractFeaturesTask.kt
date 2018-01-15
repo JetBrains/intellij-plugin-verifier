@@ -12,6 +12,9 @@ import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+/**
+ * [ServiceTask] that runs the [feature extractor] [FeaturesExtractor] for the [updateInfo].
+ */
 class ExtractFeaturesTask(val serverContext: ServerContext,
                           val updateInfo: UpdateInfo) : ServiceTask<ExtractFeaturesTask.Result>("Features of $updateInfo") {
 
@@ -35,8 +38,8 @@ class ExtractFeaturesTask(val serverContext: ServerContext,
 
   override fun execute(progress: ProgressIndicator) = getSomeCompatibleIde().use {
     val ideDescriptor = it.resource
-    with(serverContext.pluginDetailsCache.getPluginDetailsCacheEntry(updateInfo)) {
-      use {
+    serverContext.pluginDetailsCache.getPluginDetailsCacheEntry(updateInfo).use {
+      with(it) {
         when (this) {
           is PluginDetailsCache.Result.Provided -> runFeatureExtractor(ideDescriptor, pluginDetails.plugin)
           is PluginDetailsCache.Result.FileNotFound -> Result(updateInfo, Result.ResultType.NOT_FOUND, emptyList())
@@ -59,8 +62,12 @@ class ExtractFeaturesTask(val serverContext: ServerContext,
     return Result(updateInfo, resultType, extractorResult.features)
   }
 
-  private fun getSomeCompatibleIde() = serverContext.ideDescriptorsCache.getIdeDescriptor { availableIdes ->
-    availableIdes.find { updateInfo.isCompatibleWith(it) }!!
-  }
+  /**
+   * Selects any IDE compatible with the [updateInfo] among all the IDEs available in the cache now.
+   */
+  private fun getSomeCompatibleIde() =
+      serverContext.ideDescriptorsCache.getIdeDescriptor { availableIdes ->
+        availableIdes.find { updateInfo.isCompatibleWith(it) }!!
+      }
 
 }

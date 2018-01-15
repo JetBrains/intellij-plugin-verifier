@@ -5,6 +5,10 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import java.net.URL
 
+/**
+ * Utility class that requests metadata from the [IDE repository](https://www.jetbrains.com/intellij-repository/releases)
+ * on [available] [AvailableIde] IDEs.
+ */
 class IdeRepository(val repositoryUrl: String) {
 
   private val snapshotsRepoUrl = repositoryUrl.trimEnd('/') + "/intellij-repository/snapshots/"
