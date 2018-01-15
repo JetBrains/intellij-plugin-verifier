@@ -70,18 +70,12 @@ fun VerificationContext.resolveClassOrProblem(className: String,
   }
 }
 
+private fun VerificationContext.classExists(className: String) = classLoader.containsClass(className)
+
 //todo: check the cases when the accessibility must be checked.
 fun VerificationContext.checkClassExistsOrExternal(className: String, lookupLocation: () -> Location) {
-  val resolution = resolveClass(className)
-  return when (resolution) {
-    ClsResolution.NotFound -> {
-      registerProblem(ClassNotFoundProblem(ClassReference(className), lookupLocation()))
-    }
-    is ClsResolution.InvalidClassFile -> {
-      registerProblem(InvalidClassFileProblem(ClassReference(className), lookupLocation(), resolution.reason))
-    }
-    ClsResolution.ExternalClass -> Unit
-    is ClsResolution.Found -> Unit
+  if (!isExternalClass(className) && !classExists(className)) {
+    registerProblem(ClassNotFoundProblem(ClassReference(className), lookupLocation()))
   }
 }
 
