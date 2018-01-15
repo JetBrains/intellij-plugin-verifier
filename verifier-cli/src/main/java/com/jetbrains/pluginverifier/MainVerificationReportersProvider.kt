@@ -56,7 +56,8 @@ import java.nio.file.Paths
 class MainVerificationReportersProvider(override val globalMessageReporters: List<Reporter<String>>,
                                         override val globalProgressReporters: List<Reporter<Double>>,
                                         private val verificationReportsDirectory: Path,
-                                        private val printPluginVerificationProgress: Boolean) : VerificationReportersProvider {
+                                        private val printPluginVerificationProgress: Boolean,
+                                        private val logger: Logger) : VerificationReportersProvider {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(MainVerificationReportersProvider::class.java)
@@ -68,18 +69,16 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
     val ideResultsDirectory = getIdeResultsDirectory(ideVersion)
     val pluginVerificationDirectory = ideResultsDirectory.resolve("plugins").resolve(createPluginVerificationDirectory(pluginInfo))
 
-    val pluginLogger = LoggerFactory.getLogger(pluginInfo.presentableName)
-
     return VerificationReporterSet(
-        verdictReporters = createVerdictReporters(pluginLogger, pluginVerificationDirectory),
-        messageReporters = createMessageReporters(pluginLogger),
-        progressReporters = createProgressReporters(pluginInfo, ideVersion, pluginLogger),
+        verdictReporters = createVerdictReporters(pluginVerificationDirectory),
+        messageReporters = createMessageReporters(),
+        progressReporters = createProgressReporters(pluginInfo, ideVersion),
         warningReporters = createWarningReporters(pluginVerificationDirectory),
         problemsReporters = createProblemReporters(pluginVerificationDirectory),
         dependenciesGraphReporters = createDependencyGraphReporters(pluginVerificationDirectory),
-        ignoredProblemReporters = createIgnoredProblemReporters(pluginLogger, pluginVerificationDirectory, ideVersion),
+        ignoredProblemReporters = createIgnoredProblemReporters(pluginVerificationDirectory, ideVersion),
         deprecatedReporters = createDeprecatedReporters(pluginVerificationDirectory),
-        exceptionReporters = createExceptionReporters(pluginVerificationDirectory, pluginLogger)
+        exceptionReporters = createExceptionReporters(pluginVerificationDirectory)
     )
   }
 
@@ -121,19 +120,19 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
     add(FileReporter(pluginVerificationDirectory.resolve("deprecated-usages.txt")))
   }
 
-  private fun createExceptionReporters(pluginVerificationDirectory: Path, pluginLogger: Logger) = buildList<Reporter<MessageAndException>> {
+  private fun createExceptionReporters(pluginVerificationDirectory: Path) = buildList<Reporter<MessageAndException>> {
     add(FileReporter(pluginVerificationDirectory.resolve("exception.txt")) {
       it.message + "\n" + ExceptionUtils.getStackTrace(it.exception)
     })
-    add(object : LogReporter<MessageAndException>(pluginLogger) {
+    add(object : LogReporter<MessageAndException>(logger) {
       override fun report(t: MessageAndException) {
         logger.info(t.message, t.exception)
       }
     })
   }
 
-  private fun createMessageReporters(pluginLogger: Logger) = buildList<Reporter<String>> {
-    add(LogReporter(pluginLogger))
+  private fun createMessageReporters() = buildList<Reporter<String>> {
+    add(LogReporter(logger))
   }
 
   private fun createProblemReporters(pluginVerificationDirectory: Path) = buildList<Reporter<Problem>> {
@@ -148,28 +147,27 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
     add(fileReporter)
   }
 
-  private fun createVerdictReporters(pluginLogger: Logger, pluginVerificationDirectory: Path) = buildList<Reporter<Verdict>> {
-    if (pluginLogger.isDebugEnabled) {
-      add(LogReporter(pluginLogger))
+  private fun createVerdictReporters(pluginVerificationDirectory: Path) = buildList<Reporter<Verdict>> {
+    if (logger.isDebugEnabled) {
+      add(LogReporter(logger))
     }
     add(FileReporter(pluginVerificationDirectory.resolve("verdict.txt")))
   }
 
-  private fun createIgnoredProblemReporters(pluginLogger: Logger,
-                                            pluginVerificationDirectory: Path,
+  private fun createIgnoredProblemReporters(pluginVerificationDirectory: Path,
                                             ideVersion: IdeVersion) = buildList<Reporter<ProblemIgnoredEvent>> {
     val ideCollectingProblemsReporter = ideVersion2AllIgnoredProblemsReporter.getOrPut(ideVersion) { CollectingReporter() }
     add(ideCollectingProblemsReporter)
-    if (pluginLogger.isDebugEnabled) {
-      add(LogReporter(pluginLogger))
+    if (logger.isDebugEnabled) {
+      add(LogReporter(logger))
     }
     add(FileReporter(pluginVerificationDirectory.resolve("ignored-problems.txt")))
   }
 
-  private fun createProgressReporters(pluginInfo: PluginInfo, ideVersion: IdeVersion, pluginLogger: Logger) = buildList<LogSteppedProgressReporter> {
+  private fun createProgressReporters(pluginInfo: PluginInfo, ideVersion: IdeVersion) = buildList<LogSteppedProgressReporter> {
     if (printPluginVerificationProgress) {
       val logMessageProvider = createProgressMessageProvider(pluginInfo, ideVersion)
-      add(LogSteppedProgressReporter(pluginLogger, logMessageProvider, step = 0.1))
+      add(LogSteppedProgressReporter(logger, logMessageProvider, step = 0.1))
     }
   }
 

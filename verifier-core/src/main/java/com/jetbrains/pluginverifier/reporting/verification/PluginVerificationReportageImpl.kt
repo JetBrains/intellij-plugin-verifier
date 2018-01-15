@@ -18,13 +18,13 @@ class PluginVerificationReportageImpl(private val verificationReportage: Verific
   private var startTime: Long = 0
 
   override fun logVerificationStarted() {
-    reportMessage("Start verification of $plugin with $ideVersion")
+    reportMessage("Start verification of $plugin against $ideVersion")
     startTime = System.currentTimeMillis()
   }
 
   override fun logVerificationFinished(message: String) {
     val elapsedTime = System.currentTimeMillis() - startTime
-    reportMessage("Finished in ${"%.2f".format(elapsedTime / 1000.0)} seconds: $message")
+    reportMessage("Finished verification of $plugin against $ideVersion in ${"%.2f".format(elapsedTime / 1000.0)} seconds: $message")
     verificationReportage.logPluginVerificationFinished(this)
   }
 
