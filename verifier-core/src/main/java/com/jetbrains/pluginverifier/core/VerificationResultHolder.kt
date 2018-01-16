@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.Problem
-import com.jetbrains.pluginverifier.results.warnings.Warning
+import com.jetbrains.pluginverifier.results.warnings.DependenciesCycleWarning
 
 /**
  * Aggregates the plugin verification results.
@@ -16,7 +16,7 @@ class VerificationResultHolder(private val pluginVerificationReportage: PluginVe
 
   val problems: MutableSet<Problem> = hashSetOf()
 
-  val warnings: MutableSet<Warning> = hashSetOf()
+  val warnings: MutableSet<PluginProblem> = hashSetOf()
 
   val deprecatedUsages: MutableSet<DeprecatedApiUsage> = hashSetOf()
 
@@ -50,7 +50,7 @@ class VerificationResultHolder(private val pluginVerificationReportage: PluginVe
     }
   }
 
-  private fun registerWarning(warning: Warning) {
+  private fun registerWarning(warning: PluginProblem) {
     if (warning !in warnings) {
       warnings.add(warning)
       pluginVerificationReportage.logNewWarningDetected(warning)
@@ -58,17 +58,17 @@ class VerificationResultHolder(private val pluginVerificationReportage: PluginVe
   }
 
   fun addCycleWarningIfExists(dependenciesGraph: DependenciesGraph) {
-    val cycles = dependenciesGraph.getCycles()
+    val cycles = dependenciesGraph.getAllCycles()
     if (cycles.isNotEmpty()) {
       val nodes = cycles[0]
-      val cycle = nodes.joinToString(separator = " -> ") + " -> " + nodes[0]
-      registerWarning(Warning("The plugin ${dependenciesGraph.start} is on the dependencies cycle: $cycle"))
+      val cyclePresentation = nodes.joinToString(separator = " -> ") + " -> " + nodes[0]
+      registerWarning(DependenciesCycleWarning(cyclePresentation))
     }
   }
 
   fun addPluginWarnings(pluginWarnings: List<PluginProblem>) {
     pluginWarnings.forEach {
-      registerWarning(Warning(it.message))
+      registerWarning(it)
     }
   }
 

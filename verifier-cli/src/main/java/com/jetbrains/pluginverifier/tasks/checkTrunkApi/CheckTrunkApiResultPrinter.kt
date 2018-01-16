@@ -6,15 +6,13 @@ import com.google.common.collect.Multimaps
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
-import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.results.Result
-import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
@@ -87,8 +85,8 @@ class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions) : Tas
   private fun DependenciesGraph.getResolvedDependency(dependency: PluginDependency): DependencyNode? =
       edges.find { it.dependency == dependency }?.to
 
-  private fun Result.getResolvedDependency(dependency: PluginDependency): DependencyNode? =
-      (this.verdict as? Verdict.MissingDependencies)?.dependenciesGraph?.getResolvedDependency(dependency)
+  private fun VerificationResult.getResolvedDependency(dependency: PluginDependency): DependencyNode? =
+      (this as? VerificationResult.MissingDependencies)?.dependenciesGraph?.getResolvedDependency(dependency)
 
   private fun getMissingDependenciesDetails(apiChanges: CheckTrunkApiResult, plugin: PluginInfo): String {
     val (_, releaseResult, trunkResult) = apiChanges.comparingResults[plugin] ?: return ""
@@ -123,13 +121,9 @@ class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions) : Tas
     return ""
   }
 
-  private fun Result.getDirectMissingDependencies(): List<MissingDependency> {
-    val verdict = this.verdict
-    return when (verdict) {
-      is Verdict.MissingDependencies -> verdict.directMissingDependencies
-      else -> emptyList()
-    }
+  private fun VerificationResult.getDirectMissingDependencies() = when (this) {
+    is VerificationResult.MissingDependencies -> directMissingDependencies
+    else -> emptyList()
   }
-
 
 }

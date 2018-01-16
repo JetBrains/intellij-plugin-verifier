@@ -43,7 +43,7 @@ class TestDependenciesGraph {
 
   @Test
   fun testNoCycles() {
-    assertTrue(SIMPLE_GRAPH_WITH_NO_CYCLES.getCycles().isEmpty())
+    assertTrue(SIMPLE_GRAPH_WITH_NO_CYCLES.getAllCycles().isEmpty())
   }
 
   @Test
@@ -57,7 +57,7 @@ class TestDependenciesGraph {
 
   @Test
   fun testCycle() {
-    val cycles = GRAPH_WITH_A_CYCLE.getCycles()
+    val cycles = GRAPH_WITH_A_CYCLE.getAllCycles()
     assertTrue(cycles.isNotEmpty())
     assertTrue(listOf(a, c, d) == cycles[0] || listOf(a, b, d) == cycles[0])
   }

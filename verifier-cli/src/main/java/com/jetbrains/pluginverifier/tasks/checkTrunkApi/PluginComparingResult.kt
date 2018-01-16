@@ -1,21 +1,20 @@
 package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.results.Result
-import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.*
 
 data class PluginComparingResult(val plugin: PluginInfo,
-                                 val releaseResult: Result,
-                                 val trunkResult: Result) {
+                                 val releaseResult: VerificationResult,
+                                 val trunkResult: VerificationResult) {
 
   /**
    * Determines the problems of the Trunk IDE which were not present in the Release IDE
    * with respect to possible problems transformations.
    */
   fun getNewApiProblems(): Set<Problem> {
-    val releaseProblems = releaseResult.verdict.getProblems()
-    val trunkProblems = trunkResult.verdict.getProblems()
+    val releaseProblems = releaseResult.getProblems()
+    val trunkProblems = trunkResult.getProblems()
     return trunkProblems.filterNotTo(hashSetOf()) { isOldProblem(it, releaseProblems) }
   }
 
@@ -67,14 +66,14 @@ data class PluginComparingResult(val plugin: PluginInfo,
     }
   }
 
-  private fun Verdict.getProblems() = when (this) {
-    is Verdict.NotFound,
-    is Verdict.Bad,
-    is Verdict.OK,
-    is Verdict.Warnings,
-    is Verdict.FailedToDownload -> emptySet()
-    is Verdict.MissingDependencies -> problems
-    is Verdict.Problems -> problems
+  private fun VerificationResult.getProblems() = when (this) {
+    is VerificationResult.NotFound,
+    is VerificationResult.InvalidPlugin,
+    is VerificationResult.OK,
+    is VerificationResult.Warnings,
+    is VerificationResult.FailedToDownload -> emptySet()
+    is VerificationResult.MissingDependencies -> problems
+    is VerificationResult.Problems -> problems
   }
 
 }

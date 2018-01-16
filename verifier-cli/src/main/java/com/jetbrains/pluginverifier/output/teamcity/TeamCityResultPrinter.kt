@@ -11,8 +11,7 @@ import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependen
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.results.Result
-import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
@@ -95,7 +94,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
   }
 
 
-  override fun printResults(results: List<Result>) {
+  override fun printResults(results: List<VerificationResult>) {
     when (groupBy) {
       GroupBy.NOT_GROUPED -> notGrouped(results)
       GroupBy.BY_PROBLEM_TYPE -> groupByProblemType(results)
@@ -103,7 +102,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     }
   }
 
-  private fun notGrouped(results: List<Result>) {
+  private fun notGrouped(results: List<VerificationResult>) {
     //problem1 (in a:1.0, a:1.2, b:1.0)
     //problem2 (in a:1.0, c:1.3)
     //missing dependencies: missing#1 (required for plugin1, plugin2, plugin3)
@@ -113,11 +112,11 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     printMissingDependenciesAndRequiredPluginsAsBuildProblem(results)
   }
 
-  private fun printProblemAndAffectedPluginsAsBuildProblem(results: List<Result>) {
+  private fun printProblemAndAffectedPluginsAsBuildProblem(results: List<VerificationResult>) {
     val shortDescription2Plugins: Multimap<String, PluginInfo> = HashMultimap.create()
-    for ((plugin, _, verdict) in results) {
-      for (problem in getProblemsOfVerdict(verdict)) {
-        shortDescription2Plugins.put(problem.shortDescription, plugin)
+    for (result in results) {
+      for (problem in result.getProblems()) {
+        shortDescription2Plugins.put(problem.shortDescription, result.plugin)
       }
     }
     shortDescription2Plugins.asMap().forEach { description, allPluginsWithThisProblem ->
@@ -125,23 +124,27 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     }
   }
 
-  private fun getProblemsOfVerdict(verdict: Verdict) = when (verdict) {
-    is Verdict.Problems -> verdict.problems
-    is Verdict.MissingDependencies -> verdict.problems
-    is Verdict.OK, is Verdict.Warnings, is Verdict.Bad, is Verdict.NotFound, is Verdict.FailedToDownload -> emptySet()
+  private fun VerificationResult.getProblems() = when (this) {
+    is VerificationResult.Problems -> problems
+    is VerificationResult.MissingDependencies -> problems
+    is VerificationResult.OK,
+    is VerificationResult.Warnings,
+    is VerificationResult.InvalidPlugin,
+    is VerificationResult.NotFound,
+    is VerificationResult.FailedToDownload -> emptySet()
   }
 
-  private fun printMissingDependenciesAndRequiredPluginsAsBuildProblem(results: List<Result>) {
+  private fun printMissingDependenciesAndRequiredPluginsAsBuildProblem(results: List<VerificationResult>) {
     val missingToRequired = collectMissingDependenciesForRequiringPlugins(results)
     missingToRequired.asMap().entries.forEach {
       tcLog.buildProblem("Missing dependency ${it.key} (required for ${it.value.joinToString()})")
     }
   }
 
-  private fun collectMissingDependenciesForRequiringPlugins(results: List<Result>): Multimap<MissingDependency, PluginInfo> {
+  private fun collectMissingDependenciesForRequiringPlugins(results: List<VerificationResult>): Multimap<MissingDependency, PluginInfo> {
     val missingToRequiring = HashMultimap.create<MissingDependency, PluginInfo>()
-    results.filter { it.verdict is Verdict.MissingDependencies }.forEach {
-      (it.verdict as Verdict.MissingDependencies).directMissingDependencies.forEach { missingDependency ->
+    results.filter { it is VerificationResult.MissingDependencies }.forEach {
+      (it as VerificationResult.MissingDependencies).directMissingDependencies.forEach { missingDependency ->
         missingToRequiring.put(missingDependency, it.plugin)
       }
     }
@@ -149,7 +152,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
   }
 
 
-  private fun groupByPlugin(results: List<Result>) {
+  private fun groupByPlugin(results: List<VerificationResult>) {
     //pluginOne
     //....(1.0)
     //........#invoking unknown method
@@ -188,37 +191,37 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
    * ```
    */
   private fun printResultsForSpecificPluginId(pluginId: String,
-                                              pluginResults: List<Result>,
+                                              pluginResults: List<VerificationResult>,
                                               ideLastPluginVersions: Map<IdeVersion, List<PluginInfo>>) {
     tcLog.testSuiteStarted(pluginId).use {
-      pluginResults.groupBy { it.plugin.version }.forEach { versionToVerdicts ->
-        versionToVerdicts.value.forEach { (plugin, ideVersion, verdict) ->
-          val testName = getPluginVersionAsTestName(plugin, ideVersion, ideLastPluginVersions)
-          printResultOfSpecificVersion(plugin, verdict, testName)
+      pluginResults.groupBy { it.plugin.version }.forEach { versionToResults ->
+        versionToResults.value.forEach { result ->
+          val testName = getPluginVersionAsTestName(result.plugin, result.ideVersion, ideLastPluginVersions)
+          printResultOfSpecificVersion(result.plugin, result, testName)
         }
       }
     }
   }
 
   private fun printResultOfSpecificVersion(plugin: PluginInfo,
-                                           verdict: Verdict,
+                                           verificationResult: VerificationResult,
                                            testName: String) {
     tcLog.testStarted(testName).use {
-      return@use when (verdict) {
-        is Verdict.Problems -> printProblems(plugin, testName, verdict.problems)
-        is Verdict.MissingDependencies -> printMissingDependencies(plugin, verdict, testName)
-        is Verdict.Bad -> printBadPluginResult(verdict, testName)
-        is Verdict.OK, is Verdict.Warnings, is Verdict.NotFound, is Verdict.FailedToDownload -> {
+      return@use when (verificationResult) {
+        is VerificationResult.Problems -> printProblems(plugin, testName, verificationResult.problems)
+        is VerificationResult.MissingDependencies -> printMissingDependencies(plugin, verificationResult, testName)
+        is VerificationResult.InvalidPlugin -> printBadPluginResult(verificationResult, testName)
+        is VerificationResult.OK, is VerificationResult.Warnings, is VerificationResult.NotFound, is VerificationResult.FailedToDownload -> {
         }
       }
     }
   }
 
   private fun printMissingDependencies(plugin: PluginInfo,
-                                       verdict: Verdict.MissingDependencies,
+                                       verificationResult: VerificationResult.MissingDependencies,
                                        testName: String) {
-    val problems = verdict.problems
-    val missingDependencies = verdict.directMissingDependencies
+    val problems = verificationResult.problems
+    val missingDependencies = verificationResult.directMissingDependencies
     if (problems.isNotEmpty() || missingDependencies.any { !it.dependency.isOptional }) {
       val overview = buildString {
         append(getPluginOverviewLink(plugin)).append("\n")
@@ -233,7 +236,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
           appendMissingDependencies(missingDependencies.filter { it.dependency.isOptional && !missingDependencyIgnoring.ignoreMissingOptionalDependency(it.dependency) })
         }
       }
-      val problemsContent = getMissingDependenciesProblemsContent(verdict)
+      val problemsContent = getMissingDependenciesProblemsContent(verificationResult)
       tcLog.testStdErr(testName, overview)
       tcLog.testFailed(testName, problemsContent, "")
     }
@@ -244,8 +247,8 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     return "Plugin URL: $url"
   }
 
-  private fun printBadPluginResult(verdict: Verdict.Bad, versionTestName: String) {
-    val message = "Plugin is invalid: ${verdict.pluginProblems.joinToString()}"
+  private fun printBadPluginResult(verificationResult: VerificationResult.InvalidPlugin, versionTestName: String) {
+    val message = "Plugin is invalid: ${verificationResult.pluginProblems.joinToString()}"
     tcLog.testStdErr(versionTestName, message)
     tcLog.testFailed(versionTestName, message, "")
   }
@@ -265,9 +268,9 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
             "#$short\n" + fulls.joinToString(separator = "\n") { "    $it" }
           }
 
-  private fun getMissingDependenciesProblemsContent(verdict: Verdict.MissingDependencies): String {
-    val problems = verdict.problems
-    val missingDependencies = verdict.directMissingDependencies
+  private fun getMissingDependenciesProblemsContent(verificationResult: VerificationResult.MissingDependencies): String {
+    val problems = verificationResult.problems
+    val missingDependencies = verificationResult.directMissingDependencies
 
     val notFoundClassesProblems = problems.filterIsInstance<ClassNotFoundProblem>()
     return if (missingDependencies.isNotEmpty() && notFoundClassesProblems.size > 20) {
@@ -335,7 +338,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     }
   }
 
-  private fun groupByProblemType(results: List<Result>) {
+  private fun groupByProblemType(results: List<VerificationResult>) {
     //accessing to unknown class SomeClass
     //....(pluginOne:1.2.0)
     //....(pluginTwo:2.0.0)
@@ -345,9 +348,9 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     //....(missing#1)
     //.........Required for plugin1, plugin2, plugin3
     val problem2Plugin: Multimap<Problem, PluginInfo> = HashMultimap.create()
-    for ((plugin, _, verdict) in results) {
-      for (problem in getProblemsOfVerdict(verdict)) {
-        problem2Plugin.put(problem, plugin)
+    for (result in results) {
+      for (problem in result.getProblems()) {
+        problem2Plugin.put(problem, result.plugin)
       }
     }
 
@@ -373,7 +376,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     printMissingDependenciesAsTests(results)
   }
 
-  private fun printMissingDependenciesAsTests(results: List<Result>) {
+  private fun printMissingDependenciesAsTests(results: List<VerificationResult>) {
     val missingToRequired = collectMissingDependenciesForRequiringPlugins(results)
     if (!missingToRequired.isEmpty) {
       tcLog.testSuiteStarted("(missing dependencies)").use {

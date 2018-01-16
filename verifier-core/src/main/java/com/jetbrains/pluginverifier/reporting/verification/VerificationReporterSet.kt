@@ -1,14 +1,14 @@
 package com.jetbrains.pluginverifier.reporting.verification
 
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.MessageAndException
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
-import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.Problem
-import com.jetbrains.pluginverifier.results.warnings.Warning
 import java.io.Closeable
 
 /**
@@ -17,10 +17,10 @@ import java.io.Closeable
  * verification stages and results.
  */
 data class VerificationReporterSet(
-    val verdictReporters: List<Reporter<Verdict>>,
+    val verificationResultReporters: List<Reporter<VerificationResult>>,
     val messageReporters: List<Reporter<String>>,
     val progressReporters: List<Reporter<Double>>,
-    val warningReporters: List<Reporter<Warning>>,
+    val warningReporters: List<Reporter<PluginProblem>>,
     val problemsReporters: List<Reporter<Problem>>,
     val dependenciesGraphReporters: List<Reporter<DependenciesGraph>>,
     val ignoredProblemReporters: List<Reporter<ProblemIgnoredEvent>>,
@@ -28,7 +28,7 @@ data class VerificationReporterSet(
     val exceptionReporters: List<Reporter<MessageAndException>>
 ) : Closeable {
   override fun close() {
-    verdictReporters.forEach { it.closeLogged() }
+    verificationResultReporters.forEach { it.closeLogged() }
     messageReporters.forEach { it.closeLogged() }
     progressReporters.forEach { it.closeLogged() }
     problemsReporters.forEach { it.closeLogged() }

@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier
 
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
@@ -16,10 +17,9 @@ import com.jetbrains.pluginverifier.reporting.verification.VerificationReporters
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.local.LocalPluginInfo
-import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.Problem
-import com.jetbrains.pluginverifier.results.warnings.Warning
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -38,7 +38,7 @@ import java.nio.file.Paths
  *                 1.0/
  *                     warnings.txt
  *                     problems.txt
- *                     verdict.txt
+ *                     verification-result.txt
  *                     dependencies.txt
  *                     ignored-problems.txt
  *                 2.0/
@@ -70,7 +70,7 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
     val pluginVerificationDirectory = ideResultsDirectory.resolve("plugins").resolve(createPluginVerificationDirectory(pluginInfo))
 
     return VerificationReporterSet(
-        verdictReporters = createVerdictReporters(pluginVerificationDirectory),
+        verificationResultReporters = createResultsReporters(pluginVerificationDirectory),
         messageReporters = createMessageReporters(),
         progressReporters = createProgressReporters(pluginInfo, ideVersion),
         warningReporters = createWarningReporters(pluginVerificationDirectory),
@@ -112,7 +112,7 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
     }
   }
 
-  private fun createWarningReporters(pluginVerificationDirectory: Path) = buildList<Reporter<Warning>> {
+  private fun createWarningReporters(pluginVerificationDirectory: Path) = buildList<Reporter<PluginProblem>> {
     add(FileReporter(pluginVerificationDirectory.resolve("warnings.txt")))
   }
 
@@ -147,11 +147,11 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
     add(fileReporter)
   }
 
-  private fun createVerdictReporters(pluginVerificationDirectory: Path) = buildList<Reporter<Verdict>> {
+  private fun createResultsReporters(pluginVerificationDirectory: Path) = buildList<Reporter<VerificationResult>> {
     if (logger.isDebugEnabled) {
       add(LogReporter(logger))
     }
-    add(FileReporter(pluginVerificationDirectory.resolve("verdict.txt")))
+    add(FileReporter(pluginVerificationDirectory.resolve("verification-result.txt")))
   }
 
   private fun createIgnoredProblemReporters(pluginVerificationDirectory: Path,

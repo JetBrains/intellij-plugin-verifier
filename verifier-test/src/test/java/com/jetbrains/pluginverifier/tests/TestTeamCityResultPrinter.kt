@@ -8,8 +8,7 @@ import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.results.Result
-import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
 import org.junit.Assert
 import org.junit.Test
@@ -78,10 +77,11 @@ class TestTeamCityResultPrinter {
       )
       tcPrinter.printResults(
             pluginInfos.map {
-              Result(
+              VerificationResult.OK(
                   it,
                   IdeVersion.createIdeVersion("IU-145"),
-                  Verdict.OK(DependenciesGraph(dependencyNode, listOf(dependencyNode), emptyList()), emptySet()),
+                  emptySet(),
+                  DependenciesGraph(dependencyNode, listOf(dependencyNode), emptyList()),
                   emptySet()
               )
             }

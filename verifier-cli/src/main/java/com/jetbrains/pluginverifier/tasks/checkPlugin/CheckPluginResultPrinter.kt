@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 import java.io.PrintWriter
@@ -45,12 +45,14 @@ class CheckPluginResultPrinter(private val outputOptions: OutputOptions,
 
   private fun CheckPluginResult.setTeamCityBuildStatus(tcLog: TeamCityLog) {
     val totalProblemsNumber = results.flatMap {
-      val verdict = it.verdict
-      when (verdict) {
-        is Verdict.Problems -> verdict.problems
-        is Verdict.MissingDependencies -> verdict.problems  //some problems might have been caused by missing dependencies
-        is Verdict.Bad -> setOf(Any())
-        is Verdict.OK, is Verdict.Warnings, is Verdict.NotFound, is Verdict.FailedToDownload -> emptySet()
+      when (it) {
+        is VerificationResult.Problems -> it.problems
+        is VerificationResult.MissingDependencies -> it.problems  //some problems might have been caused by missing dependencies
+        is VerificationResult.InvalidPlugin -> setOf(Any())
+        is VerificationResult.OK,
+        is VerificationResult.Warnings,
+        is VerificationResult.NotFound,
+        is VerificationResult.FailedToDownload -> emptySet()
       }
     }.distinct().size
     if (totalProblemsNumber > 0) {

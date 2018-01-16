@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
-import com.jetbrains.pluginverifier.results.Result
+import com.jetbrains.pluginverifier.results.VerificationResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.Closeable
@@ -33,7 +33,7 @@ class VerifierExecutor(private val concurrentWorkers: Int, private val pluginDet
           .build()
   )
 
-  private val completionService = ExecutorCompletionService<Result>(executor)
+  private val completionService = ExecutorCompletionService<VerificationResult>(executor)
 
   override fun close() {
     executor.shutdownNow()
@@ -50,7 +50,7 @@ class VerifierExecutor(private val concurrentWorkers: Int, private val pluginDet
       jdkDescriptor: JdkDescriptor,
       parameters: VerifierParameters,
       reportage: VerificationReportage
-  ): List<Result> {
+  ): List<VerificationResult> {
     val workers = tasks.map { (pluginInfo, ideDescriptor, dependencyFinder) ->
       val pluginVerificationReportage = reportage.createPluginReportage(pluginInfo, ideDescriptor.ideVersion)
       val pluginVerifier = PluginVerifier(
@@ -67,8 +67,8 @@ class VerifierExecutor(private val concurrentWorkers: Int, private val pluginDet
     return waitForAllResults(workers)
   }
 
-  private fun waitForAllResults(workers: List<Future<Result>>): List<Result> {
-    val results = arrayListOf<Result>()
+  private fun waitForAllResults(workers: List<Future<VerificationResult>>): List<VerificationResult> {
+    val results = arrayListOf<VerificationResult>()
     try {
       for (finished in 1..workers.size) {
         while (true) {

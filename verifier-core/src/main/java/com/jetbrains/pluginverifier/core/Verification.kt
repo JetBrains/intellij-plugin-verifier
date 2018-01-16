@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceUnit
 import com.jetbrains.pluginverifier.repository.cleanup.bytesToSpaceAmount
-import com.jetbrains.pluginverifier.results.Result
+import com.jetbrains.pluginverifier.results.VerificationResult
 
 /**
  * The main verification entry point that allows
@@ -22,7 +22,7 @@ object Verification {
           pluginDetailsCache: PluginDetailsCache,
           tasks: List<VerifierTask>,
           reportage: VerificationReportage,
-          jdkDescriptor: JdkDescriptor): List<Result> {
+          jdkDescriptor: JdkDescriptor): List<VerificationResult> {
     val concurrentWorkers = estimateNumberOfConcurrentWorkers(reportage)
     return VerifierExecutor(concurrentWorkers, pluginDetailsCache).use {
       it.verify(tasks, jdkDescriptor, verifierParameters, reportage)

@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
-import com.jetbrains.pluginverifier.results.Result
+import com.jetbrains.pluginverifier.results.VerificationResult
 import java.nio.file.Path
 
 data class OutputOptions(val missingDependencyIgnoring: MissingDependencyIgnoring,
@@ -17,7 +17,7 @@ data class OutputOptions(val missingDependencyIgnoring: MissingDependencyIgnorin
 
   fun saveToHtmlFile(ideVersion: IdeVersion,
                      excludedPlugins: List<PluginIdAndVersion>,
-                     results: List<Result>) {
+                     results: List<VerificationResult>) {
 
     val htmlReportFile = verificationReportsDirectory
         .resolve(ideVersion.toString().replaceInvalidFileNameCharacters())

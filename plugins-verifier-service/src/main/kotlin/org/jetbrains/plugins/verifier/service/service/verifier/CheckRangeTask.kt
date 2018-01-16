@@ -17,15 +17,13 @@ import com.jetbrains.pluginverifier.reporting.verification.VerificationReporters
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
-import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.VerificationResult
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkVersion
 import org.jetbrains.plugins.verifier.service.service.verifier.CheckRangeTask.Result
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
 import org.slf4j.LoggerFactory
-
-private typealias VerifierResult = com.jetbrains.pluginverifier.results.Result
 
 /**
  * The service task that runs the plugin verification
@@ -44,7 +42,7 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
 
   data class Result(val updateInfo: UpdateInfo,
                     val resultType: ResultType,
-                    val verificationResults: List<VerifierResult>? = null,
+                    val verificationResults: List<VerificationResult>? = null,
                     val invalidPluginProblems: List<PluginProblem>? = null,
                     val nonDownloadableReason: String? = null) {
     enum class ResultType {
@@ -78,17 +76,17 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
   private fun checkPluginWithIdes(ideDescriptors: List<IdeDescriptor>, progress: ProgressIndicator): Result {
     val verificationReportage = createVerificationReportage(progress)
     val allResults = ideDescriptors.flatMap { checkPluginWithIde(it, verificationReportage) }
-    if (allResults.any { it.verdict is Verdict.NotFound }) {
+    if (allResults.any { it is VerificationResult.NotFound }) {
       return Result(updateInfo, Result.ResultType.NON_DOWNLOADABLE)
     }
-    if (allResults.any { it.verdict is Verdict.Bad }) {
+    if (allResults.any { it is VerificationResult.InvalidPlugin }) {
       return Result(updateInfo, Result.ResultType.INVALID_PLUGIN)
     }
     return Result(updateInfo, Result.ResultType.VERIFICATION_DONE, allResults)
   }
 
   private fun checkPluginWithIde(ideDescriptor: IdeDescriptor,
-                                 verificationReportage: VerificationReportage): List<VerifierResult> {
+                                 verificationReportage: VerificationReportage): List<VerificationResult> {
     val dependencyFinder = IdeDependencyFinder(
         ideDescriptor.ide,
         serverContext.pluginRepository,
@@ -143,7 +141,7 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
 
         override fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, ideVersion: IdeVersion) =
             VerificationReporterSet(
-                verdictReporters = listOf(LogReporter(LOG)),
+                verificationResultReporters = listOf(LogReporter(LOG)),
                 messageReporters = listOf(LogReporter(LOG)),
                 progressReporters = listOf(createDelegatingReporter(progress)),
                 warningReporters = emptyList(),

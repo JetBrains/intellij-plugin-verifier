@@ -1,12 +1,12 @@
 package com.jetbrains.pluginverifier.reporting.verification
 
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.Problem
-import com.jetbrains.pluginverifier.results.warnings.Warning
 import java.io.Closeable
 
 /**
@@ -36,11 +36,11 @@ interface PluginVerificationReportage : Closeable {
 
   fun logNewProblemDetected(problem: Problem)
 
-  fun logNewWarningDetected(warning: Warning)
+  fun logNewWarningDetected(warning: PluginProblem)
 
   fun logProgress(completed: Double)
 
-  fun logVerdict(verdict: Verdict)
+  fun logVerificationResult(verificationResult: VerificationResult)
 
   fun logProblemIgnored(problem: Problem, reason: String)
 

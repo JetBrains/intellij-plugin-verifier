@@ -10,16 +10,25 @@ import kotlin.collections.ArrayList
  * Graph of [plugin dependencies] [com.jetbrains.plugin.structure.intellij.plugin.PluginDependency]
  * built for the plugin verification.
  *
- * The graph is stored as a set of [vertices] and [edges].
+ * The graph is stored as a set of [vertices] and [edges] starting at the [verifiedPlugin].
  *
- * The verified plugin is [start].
+ * The [nodes] [DependencyNode] contain additional data
+ * on [missing] [MissingDependency] dependencies.
  */
-data class DependenciesGraph(val start: DependencyNode,
+data class DependenciesGraph(val verifiedPlugin: DependencyNode,
                              val vertices: List<DependencyNode>,
                              val edges: List<DependencyEdge>) {
 
-  fun getCycles(): List<List<DependencyNode>> = DependenciesGraphCycleFinder(this).findAllCycles().map { it.reversed() }
+  /**
+   * Returns all cycles in this graph.
+   * The dependencies cycles are harmful and should be fixed.
+   */
+  fun getAllCycles() = DependenciesGraphCycleFinder(this).findAllCycles().map { it.reversed() }
 
+  /**
+   * Finds all the transitive dependencies starting at the [verifiedPlugin]
+   * and returns all the paths ending in [MissingDependency]s.
+   */
   fun getMissingDependencyPaths(): List<MissingDependencyPath> {
     val breadCrumbs: Deque<DependencyNode> = LinkedList()
     val result: MutableList<MissingDependencyPath> = arrayListOf()
@@ -30,10 +39,10 @@ data class DependenciesGraph(val start: DependencyNode,
       result.addAll(elements)
     }
     val onExit: (DependencyNode) -> Unit = { breadCrumbs.removeLast() }
-    DependenciesGraphWalker(this, onVisit, onExit).walk(start)
+    DependenciesGraphWalker(this, onVisit, onExit).walk(verifiedPlugin)
     return result
   }
 
-  override fun toString(): String = DependenciesGraphPrettyPrinter(this).prettyPresentation()
+  override fun toString() = DependenciesGraphPrettyPrinter(this).prettyPresentation()
 
 }

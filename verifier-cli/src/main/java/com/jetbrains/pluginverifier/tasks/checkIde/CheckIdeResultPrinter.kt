@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 import java.io.File
@@ -26,7 +26,7 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
 
       if (outputOptions.dumpBrokenPluginsFile != null) {
         val brokenPlugins = results
-            .filter { it.verdict !is Verdict.OK && it.verdict !is Verdict.Warnings }
+            .filter { it !is VerificationResult.OK && it !is VerificationResult.Warnings }
             .map { it.plugin }
             .distinct()
         IdeResourceUtil.dumbBrokenPluginsList(File(outputOptions.dumpBrokenPluginsFile), brokenPlugins)
@@ -43,12 +43,15 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
       resultPrinter.printResults(results)
       resultPrinter.printNoCompatibleUpdatesProblems(noCompatibleUpdatesProblems)
       if (setBuildStatus) {
-        val totalProblemsNumber: Int = results.flatMap {
-          val verdict = it.verdict
-          when (verdict) {
-            is Verdict.Problems -> verdict.problems //some problems might have been caused by missing dependencies
-            is Verdict.Bad -> setOf(Any())
-            is Verdict.OK, is Verdict.Warnings, is Verdict.NotFound, is Verdict.MissingDependencies, is Verdict.FailedToDownload -> emptySet()
+        val totalProblemsNumber = results.flatMap {
+          when (it) {
+            is VerificationResult.Problems -> it.problems
+            is VerificationResult.MissingDependencies -> it.problems //some problems might have been caused by missing dependencies
+            is VerificationResult.InvalidPlugin -> setOf(Any())
+            is VerificationResult.OK,
+            is VerificationResult.Warnings,
+            is VerificationResult.NotFound,
+            is VerificationResult.FailedToDownload -> emptySet()
           }
         }.distinct().size
         if (totalProblemsNumber > 0) {

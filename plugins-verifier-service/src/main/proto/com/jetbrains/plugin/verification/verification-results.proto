@@ -34,7 +34,7 @@ message VerificationResult {
 
     repeated Problem problems = 4;
 
-    enum VerdictType {
+    enum ResultType {
         OK = 0;
         WARNINGS = 1;
         MISSING_DEPENDENCIES = 2;

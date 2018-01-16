@@ -9,10 +9,8 @@ import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.results.Result
-import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.Problem
-import com.jetbrains.pluginverifier.results.warnings.Warning
 
 /**
  * Converts the internal verifier [results] [CheckRangeTask.Result]
@@ -42,7 +40,7 @@ private fun convertInvalidProblem(pluginProblem: PluginProblem): VerificationRes
         .build()
 
 private fun convertDependencyGraph(dependenciesGraph: DependenciesGraph): DependenciesGraphs.DependenciesGraph = DependenciesGraphs.DependenciesGraph.newBuilder()
-    .setStart(convertNode(dependenciesGraph.start))
+    .setStart(convertNode(dependenciesGraph.verifiedPlugin))
     .addAllVertices(dependenciesGraph.vertices.map { convertNode(it) })
     .addAllEdges(dependenciesGraph.edges.map { convertEdge(it) })
     .build()
@@ -72,11 +70,10 @@ private fun convertPluginDependency(dependency: PluginDependency) =
         .setIsOptional(dependency.isOptional)
         .build()
 
-private fun convertVerifierResult(result: Result): VerificationResults.VerificationResult {
-  val verdict = result.verdict
-  val problems = verdict.getProblems()
-  val warnings = verdict.getWarnings()
-  val dependenciesGraph = verdict.getDependenciesGraph()
+private fun convertVerifierResult(result: VerificationResult): VerificationResults.VerificationResult {
+  val problems = result.getProblems()
+  val warnings = result.getWarnings()
+  val dependenciesGraph = result.getDependenciesGraph()
 
   return VerificationResults.VerificationResult.newBuilder()
       .setIdeVersion(result.ideVersion.asString())
@@ -86,39 +83,39 @@ private fun convertVerifierResult(result: Result): VerificationResults.Verificat
       .build()
 }
 
-private fun Verdict.getWarnings(): Set<Warning> = with(this) {
+private fun VerificationResult.getWarnings(): Set<PluginProblem> = with(this) {
   when (this) {
-    is Verdict.OK -> emptySet()
-    is Verdict.Warnings -> warnings
-    is Verdict.MissingDependencies -> warnings
-    is Verdict.Problems -> warnings
-    is Verdict.Bad -> emptySet()
-    is Verdict.NotFound -> emptySet()
-    is Verdict.FailedToDownload -> emptySet()
+    is VerificationResult.OK -> emptySet()
+    is VerificationResult.Warnings -> warnings
+    is VerificationResult.MissingDependencies -> warnings
+    is VerificationResult.Problems -> warnings
+    is VerificationResult.InvalidPlugin -> emptySet()
+    is VerificationResult.NotFound -> emptySet()
+    is VerificationResult.FailedToDownload -> emptySet()
   }
 }
 
-private fun Verdict.getProblems(): Set<Problem> = with(this) {
+private fun VerificationResult.getProblems(): Set<Problem> = with(this) {
   when (this) {
-    is Verdict.OK -> emptySet()
-    is Verdict.Warnings -> emptySet()
-    is Verdict.MissingDependencies -> this.problems
-    is Verdict.Problems -> this.problems
-    is Verdict.Bad -> emptySet()
-    is Verdict.NotFound -> emptySet()
-    is Verdict.FailedToDownload -> emptySet()
+    is VerificationResult.OK -> emptySet()
+    is VerificationResult.Warnings -> emptySet()
+    is VerificationResult.MissingDependencies -> this.problems
+    is VerificationResult.Problems -> this.problems
+    is VerificationResult.InvalidPlugin -> emptySet()
+    is VerificationResult.NotFound -> emptySet()
+    is VerificationResult.FailedToDownload -> emptySet()
   }
 }
 
-private fun Verdict.getDependenciesGraph(): DependenciesGraph? = with(this) {
+private fun VerificationResult.getDependenciesGraph(): DependenciesGraph? = with(this) {
   when (this) {
-    is Verdict.OK -> dependenciesGraph
-    is Verdict.Warnings -> dependenciesGraph
-    is Verdict.MissingDependencies -> dependenciesGraph
-    is Verdict.Problems -> dependenciesGraph
-    is Verdict.Bad -> null
-    is Verdict.NotFound -> null
-    is Verdict.FailedToDownload -> null
+    is VerificationResult.OK -> dependenciesGraph
+    is VerificationResult.Warnings -> dependenciesGraph
+    is VerificationResult.MissingDependencies -> dependenciesGraph
+    is VerificationResult.Problems -> dependenciesGraph
+    is VerificationResult.InvalidPlugin -> null
+    is VerificationResult.NotFound -> null
+    is VerificationResult.FailedToDownload -> null
   }
 }
 
@@ -128,7 +125,7 @@ private fun convertProblems(problems: Set<Problem>): List<VerificationResults.Pr
       .build()
 }
 
-private fun convertWarnings(warnings: Set<Warning>): List<VerificationResults.Warning> = warnings.map {
+private fun convertWarnings(warnings: Set<PluginProblem>): List<VerificationResults.Warning> = warnings.map {
   VerificationResults.Warning.newBuilder()
       .setMessage(it.message)
       .build()

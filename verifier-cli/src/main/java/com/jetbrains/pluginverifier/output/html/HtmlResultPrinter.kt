@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.output.html
 
 import com.google.common.io.Resources
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
@@ -10,10 +11,8 @@ import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
-import com.jetbrains.pluginverifier.results.Result
-import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.Problem
-import com.jetbrains.pluginverifier.results.warnings.Warning
 import java.io.PrintWriter
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -24,14 +23,14 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
                         val htmlFile: Path,
                         private val missingDependencyIgnoring: MissingDependencyIgnoring) : ResultPrinter {
 
-  override fun printResults(results: List<Result>) {
+  override fun printResults(results: List<VerificationResult>) {
     PrintWriter(Files.newBufferedWriter(htmlFile.create())).use {
       val htmlBuilder = HtmlBuilder(it)
       htmlBuilder.doPrintResults(results)
     }
   }
 
-  private fun HtmlBuilder.doPrintResults(results: List<Result>) {
+  private fun HtmlBuilder.doPrintResults(results: List<VerificationResult>) {
     html {
       head {
         title("Verification result of IDE $ideVersion")
@@ -58,7 +57,7 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
     }
   }
 
-  private fun HtmlBuilder.appendPluginResults(pluginResults: List<Result>, pluginId: String) {
+  private fun HtmlBuilder.appendPluginResults(pluginResults: List<VerificationResult>, pluginId: String) {
     div(classes = "plugin " + getPluginStyle(pluginResults)) {
       h3 {
         span(classes = "pMarker") { +"    " }
@@ -73,34 +72,32 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
     }
   }
 
-  private fun getPluginStyle(pluginResults: List<Result>): String {
-    val verdicts = pluginResults
-        .filterNot { isExcluded(PluginIdAndVersion(it.plugin.pluginId, it.plugin.version)) }
-        .map { it.verdict }
-    if (verdicts.any { it is Verdict.Problems }) {
+  private fun getPluginStyle(pluginResults: List<VerificationResult>): String {
+    val results = pluginResults.filterNot { isExcluded(PluginIdAndVersion(it.plugin.pluginId, it.plugin.version)) }
+    if (results.any { it is VerificationResult.Problems }) {
       return "pluginHasProblems"
     }
-    if (verdicts.any { it is Verdict.MissingDependencies }) {
+    if (results.any { it is VerificationResult.MissingDependencies }) {
       return "missingDeps"
     }
-    if (verdicts.any { it is Verdict.Bad }) {
+    if (results.any { it is VerificationResult.InvalidPlugin }) {
       return "badPlugin"
     }
-    if (verdicts.any { it is Verdict.Warnings }) {
+    if (results.any { it is VerificationResult.Warnings }) {
       return "warnings"
     }
     return "pluginOk"
   }
 
-  private fun HtmlBuilder.printPluginResult(result: Result) {
-    val verdictStyle = when (result.verdict) {
-      is Verdict.OK -> "updateOk"
-      is Verdict.Warnings -> "warnings"
-      is Verdict.MissingDependencies -> "missingDeps"
-      is Verdict.Problems -> "updateHasProblems"
-      is Verdict.Bad -> "badPlugin"
-      is Verdict.NotFound -> "notFound"
-      is Verdict.FailedToDownload -> "failedToDownload"
+  private fun HtmlBuilder.printPluginResult(result: VerificationResult) {
+    val resultStyle = when (result) {
+      is VerificationResult.OK -> "updateOk"
+      is VerificationResult.Warnings -> "warnings"
+      is VerificationResult.MissingDependencies -> "missingDeps"
+      is VerificationResult.Problems -> "updateHasProblems"
+      is VerificationResult.InvalidPlugin -> "badPlugin"
+      is VerificationResult.NotFound -> "notFound"
+      is VerificationResult.FailedToDownload -> "failedToDownload"
     }
 
     val excludedStyle = if (isExcluded(PluginIdAndVersion(result.plugin.pluginId, result.plugin.version))) {
@@ -109,7 +106,7 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
       ""
     }
 
-    div(classes = "update $verdictStyle $excludedStyle") {
+    div(classes = "update $resultStyle $excludedStyle") {
       h3 {
         printUpdateHeader(result)
       }
@@ -119,62 +116,62 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
     }
   }
 
-  private fun HtmlBuilder.printUpdateHeader(result: Result) {
+  private fun HtmlBuilder.printUpdateHeader(result: VerificationResult) {
     span(classes = "uMarker") { +"    " }
     +result.plugin.version
     small { +result.plugin.toString() }
     small {
-      +with(result.verdict) {
+      +with(result) {
         when (this) {
-          is Verdict.OK -> "OK"
-          is Verdict.Warnings -> "${warnings.size} " + "warning".pluralize(warnings.size) + " found"
-          is Verdict.Problems -> "${problems.size} " + "problem".pluralize(problems.size) + " found"
-          is Verdict.MissingDependencies -> "Plugin has " +
+          is VerificationResult.OK -> "OK"
+          is VerificationResult.Warnings -> "${warnings.size} " + "warning".pluralize(warnings.size) + " found"
+          is VerificationResult.Problems -> "${problems.size} " + "problem".pluralize(problems.size) + " found"
+          is VerificationResult.MissingDependencies -> "Plugin has " +
               "${directMissingDependencies.size} missing direct " + "dependency".pluralize(directMissingDependencies.size) + " and " +
               "${problems.size} " + "problem".pluralize(problems.size)
-          is Verdict.Bad -> "Plugin is invalid"
-          is Verdict.NotFound -> "Plugin ${result.plugin} is not found in the Repository"
-          is Verdict.FailedToDownload -> "Plugin ${result.plugin} is not downloaded from the Repository"
+          is VerificationResult.InvalidPlugin -> "Plugin is invalid"
+          is VerificationResult.NotFound -> "Plugin ${result.plugin} is not found in the Repository"
+          is VerificationResult.FailedToDownload -> "Plugin ${result.plugin} is not downloaded from the Repository"
         }
       }
     }
   }
 
-  private fun HtmlBuilder.printVerificationResult(result: Result) {
+  private fun HtmlBuilder.printVerificationResult(result: VerificationResult) {
     printProblemsAndWarnings(result)
     if (result.ignoredProblems.isNotEmpty()) {
       printIgnoredProblems(result)
     }
   }
 
-  private fun HtmlBuilder.printIgnoredProblems(result: Result) {
+  private fun HtmlBuilder.printIgnoredProblems(result: VerificationResult) {
     printShortAndFullDescription("The following " + "problem".pluralize(result.ignoredProblems.size) + " " + "was".pluralize(result.ignoredProblems.size) + " ignored") {
       printProblems(result.ignoredProblems)
     }
   }
 
-  private fun HtmlBuilder.printProblemsAndWarnings(result: Result) {
-    with(result.verdict) {
+  private fun HtmlBuilder.printProblemsAndWarnings(result: VerificationResult) {
+    with(result) {
       when (this) {
-        is Verdict.OK -> +"No problems."
-        is Verdict.Warnings -> printWarnings(warnings)
-        is Verdict.Problems -> printProblems(problems)
-        is Verdict.Bad -> printShortAndFullDescription(pluginProblems.joinToString(), result.plugin.pluginId)
-        is Verdict.NotFound -> printShortAndFullDescription("Plugin ${result.plugin} is not found in the Repository", reason)
-        is Verdict.FailedToDownload -> printShortAndFullDescription("Plugin ${result.plugin} is not downloaded from the Repository", reason)
-        is Verdict.MissingDependencies -> printMissingDependenciesResult(this)
+        is VerificationResult.OK -> +"No problems."
+        is VerificationResult.Warnings -> printWarnings(warnings)
+        is VerificationResult.Problems -> printProblems(problems)
+        is VerificationResult.InvalidPlugin -> printShortAndFullDescription(pluginProblems.joinToString(), result.plugin.pluginId)
+        is VerificationResult.NotFound -> printShortAndFullDescription("Plugin ${result.plugin} is not found in the Repository", reason)
+        is VerificationResult.FailedToDownload -> printShortAndFullDescription("Plugin ${result.plugin} is not downloaded from the Repository", reason)
+        is VerificationResult.MissingDependencies -> printMissingDependenciesResult(this)
       }
     }
   }
 
-  private fun HtmlBuilder.printMissingDependenciesResult(verdict: Verdict.MissingDependencies) {
-    printProblems(verdict.problems)
-    val missingDependencies = verdict.directMissingDependencies
+  private fun HtmlBuilder.printMissingDependenciesResult(verificationResult: VerificationResult.MissingDependencies) {
+    printProblems(verificationResult.problems)
+    val missingDependencies = verificationResult.directMissingDependencies
     printMissingDependencies(missingDependencies.filterNot { it.dependency.isOptional })
     printMissingDependencies(missingDependencies.filter { it.dependency.isOptional && !missingDependencyIgnoring.ignoreMissingOptionalDependency(it.dependency) })
   }
 
-  private fun HtmlBuilder.printWarnings(warnings: Set<Warning>) {
+  private fun HtmlBuilder.printWarnings(warnings: Set<PluginProblem>) {
     p {
       warnings.forEach {
         +it.toString()

@@ -19,11 +19,10 @@ import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.UnableToReadPluginClassFilesProblem
 import com.jetbrains.pluginverifier.reporting.Reporter
+import com.jetbrains.pluginverifier.reporting.verification.EmptyPluginVerificationReportage.ideVersion
 import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.results.Result
-import com.jetbrains.pluginverifier.results.Verdict
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.jgrapht.DirectedGraph
@@ -49,7 +48,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
                      private val jdkDescriptor: JdkDescriptor,
                      private val verifierParameters: VerifierParameters,
                      private val pluginVerificationReportage: PluginVerificationReportage,
-                     private val pluginDetailsCache: PluginDetailsCache) : Callable<Result> {
+                     private val pluginDetailsCache: PluginDetailsCache) : Callable<VerificationResult> {
 
   companion object {
 
@@ -61,12 +60,12 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     private val classesSelectors = listOf(MainClassesSelector(), ExternalBuildClassesSelector())
   }
 
-  override fun call(): Result {
+  override fun call(): VerificationResult {
     pluginVerificationReportage.logVerificationStarted()
     try {
       val result = doVerification()
-      pluginVerificationReportage.logVerdict(result.verdict)
-      pluginVerificationReportage.logVerificationFinished(result.verdict.toString())
+      pluginVerificationReportage.logVerificationResult(result)
+      pluginVerificationReportage.logVerificationFinished(result.toString())
       return result
     } catch (e: Throwable) {
       pluginVerificationReportage.logVerificationFinished("Failed with exception: ${e.message}")
@@ -78,20 +77,17 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     with(it) {
       when (this) {
         is PluginDetailsCache.Result.Provided -> doVerification(pluginDetails)
-        is PluginDetailsCache.Result.InvalidPlugin -> createResult(Verdict.Bad(pluginErrors))
-        is PluginDetailsCache.Result.FileNotFound -> createResult(Verdict.NotFound(reason))
+        is PluginDetailsCache.Result.InvalidPlugin -> VerificationResult.InvalidPlugin(pluginInfo, ideDescriptor.ideVersion, emptySet(), pluginErrors)
+        is PluginDetailsCache.Result.FileNotFound -> VerificationResult.NotFound(pluginInfo, ideDescriptor.ideVersion, emptySet(), reason)
         is PluginDetailsCache.Result.Failed -> {
           pluginVerificationReportage.logException("Plugin $pluginInfo was not downloaded", error)
-          createResult(Verdict.NotFound("Plugin $pluginInfo was not downloaded due to ${error.message}"))
+          VerificationResult.FailedToDownload(pluginInfo, ideDescriptor.ideVersion, emptySet(), "Plugin $pluginInfo was not downloaded due to ${error.message}")
         }
       }
     }
   }
 
-  private fun createResult(verdict: Verdict, ignoredProblems: Set<Problem> = emptySet()) =
-      Result(pluginInfo, ideDescriptor.ideVersion, verdict, ignoredProblems)
-
-  private fun doVerification(pluginDetails: PluginDetails): Result {
+  private fun doVerification(pluginDetails: PluginDetails): VerificationResult {
     val resultHolder = VerificationResultHolder(pluginVerificationReportage)
 
     resultHolder.addPluginWarnings(pluginDetails.pluginWarnings)
@@ -100,12 +96,11 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
       return badResult
     }
 
-    val verdict = resultHolder.getVerdict()
-    return createResult(verdict, resultHolder.ignoredProblemsHolder.ignoredProblems)
+    return resultHolder.getVerificationResult()
   }
 
   private fun runVerification(pluginDetails: PluginDetails,
-                              resultHolder: VerificationResultHolder): Result? {
+                              resultHolder: VerificationResultHolder): VerificationResult? {
     val depGraph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
     try {
       buildDependenciesGraph(pluginDetails.plugin, depGraph, resultHolder)
@@ -134,7 +129,16 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
       depGraph: DirectedGraph<DepVertex, DepEdge>,
       resultHolder: VerificationResultHolder,
       pluginDetails: PluginDetails
-  ): Result? {
+  ): VerificationResult? {
+    val ignoredProblems = resultHolder.ignoredProblemsHolder.ignoredProblems
+
+    fun createInvalidPluginResult(e: Exception) = VerificationResult.InvalidPlugin(
+        pluginInfo,
+        ideVersion,
+        ignoredProblems,
+        listOf(UnableToReadPluginClassFilesProblem(e))
+    )
+
     /**
      * Create the plugin's own classes resolver.
      */
@@ -142,7 +146,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
       pluginDetails.pluginClassesLocations.createPluginClassLoader()
     } catch (e: Exception) {
       pluginVerificationReportage.logException("Unable to read classes of the verified plugin $pluginInfo", e)
-      return createResult(Verdict.Bad(listOf(UnableToReadPluginClassFilesProblem(e))))
+      return createInvalidPluginResult(e)
     }
 
     /**
@@ -158,7 +162,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
       getVerificationClassLoader(pluginResolver, dependenciesResolver)
     } catch (e: Exception) {
       pluginVerificationReportage.logException("Unable to create the plugin class loader of $pluginInfo", e)
-      return createResult(Verdict.Bad(listOf(UnableToReadPluginClassFilesProblem(e))))
+      return createInvalidPluginResult(e)
     }
 
     /**
@@ -168,7 +172,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
       getClassesForCheck(pluginDetails.pluginClassesLocations)
     } catch (e: Exception) {
       pluginVerificationReportage.logException("Unable to select classes for check of $pluginInfo", e)
-      return createResult(Verdict.Bad(listOf(UnableToReadPluginClassFilesProblem(e))))
+      return createInvalidPluginResult(e)
     }
 
     buildVerificationContextAndDoVerification(pluginDetails.plugin, classLoader, resultHolder, checkClasses)
@@ -253,25 +257,28 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     return (cacheResult as? PluginDetailsCache.Result.Provided)?.pluginDetails?.pluginClassesLocations
   }
 
-  private fun VerificationResultHolder.getVerdict(): Verdict {
+  private fun VerificationResultHolder.getVerificationResult(): VerificationResult {
+    val ignoredProblems = ignoredProblemsHolder.ignoredProblems
+    val ideVersion = ideDescriptor.ideVersion
+
     if (pluginWarnings.isNotEmpty()) {
-      return Verdict.Bad(pluginWarnings)
+      return VerificationResult.InvalidPlugin(pluginInfo, ideVersion, ignoredProblems, pluginWarnings)
     }
 
     val dependenciesGraph = dependenciesGraph!!
-    if (dependenciesGraph.start.missingDependencies.isNotEmpty()) {
-      return Verdict.MissingDependencies(dependenciesGraph, problems, warnings, deprecatedUsages)
+    if (dependenciesGraph.verifiedPlugin.missingDependencies.isNotEmpty()) {
+      return VerificationResult.MissingDependencies(pluginInfo, ideVersion, ignoredProblems, dependenciesGraph, problems, warnings, deprecatedUsages)
     }
 
     if (problems.isNotEmpty()) {
-      return Verdict.Problems(problems, dependenciesGraph, warnings, deprecatedUsages)
+      return VerificationResult.Problems(pluginInfo, ideVersion, ignoredProblems, problems, dependenciesGraph, warnings, deprecatedUsages)
     }
 
     if (warnings.isNotEmpty()) {
-      return Verdict.Warnings(warnings, dependenciesGraph, deprecatedUsages)
+      return VerificationResult.Warnings(pluginInfo, ideVersion, ignoredProblems, warnings, dependenciesGraph, deprecatedUsages)
     }
 
-    return Verdict.OK(dependenciesGraph, deprecatedUsages)
+    return VerificationResult.OK(pluginInfo, ideVersion, ignoredProblems, dependenciesGraph, deprecatedUsages)
   }
 
 }

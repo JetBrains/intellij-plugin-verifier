@@ -112,7 +112,7 @@ class IdeDependencyFinderTest {
     val deps = dependenciesGraph.vertices.map { it.pluginId }
     assertEquals(setOf("myPlugin", "test", "moduleContainer", "somePlugin", "com.intellij"), deps.toSet())
 
-    assertEquals(listOf(MissingDependency(externalModuleDependency, "Failed to download test.")), dependenciesGraph.start.missingDependencies)
+    assertEquals(listOf(MissingDependency(externalModuleDependency, "Failed to download test.")), dependenciesGraph.verifiedPlugin.missingDependencies)
     assertTrue(dependenciesGraph.getMissingDependencyPaths().size == 1)
   }
 

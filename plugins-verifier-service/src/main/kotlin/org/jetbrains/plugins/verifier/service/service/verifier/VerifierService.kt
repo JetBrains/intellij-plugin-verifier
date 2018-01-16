@@ -117,7 +117,7 @@ class VerifierService(serverContext: ServerContext,
   }
 
   private fun onSuccess(compatibilityResult: CheckRangeTask.Result, updateInfo: UpdateInfo) {
-    val ideVersionToResult = compatibilityResult.verificationResults.orEmpty().map { it.ideVersion to it.verdict.javaClass.simpleName }
+    val ideVersionToResult = compatibilityResult.verificationResults.orEmpty().map { it.ideVersion to it.javaClass.simpleName }
     logger.info("Update ${compatibilityResult.updateInfo} is checked: ${compatibilityResult.resultType}: ${ideVersionToResult.joinToString()}")
 
     if (compatibilityResult.resultType == CheckRangeTask.Result.ResultType.NO_COMPATIBLE_IDES) {

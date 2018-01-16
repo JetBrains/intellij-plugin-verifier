@@ -39,7 +39,7 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
   private val visitedNodes = hashSetOf<DependencyNode>()
 
   fun prettyPresentation(): String {
-    return recursivelyCalculateLines(dependenciesGraph.start).joinToString(separator = "\n")
+    return recursivelyCalculateLines(dependenciesGraph.verifiedPlugin).joinToString(separator = "\n")
   }
 
   private fun recursivelyCalculateLines(currentNode: DependencyNode): List<String> {

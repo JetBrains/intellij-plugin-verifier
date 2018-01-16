@@ -15,7 +15,7 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
-import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tasks.PluginsToCheck
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiParams
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiTask
@@ -130,18 +130,19 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
       val checkTrunkApiResult = checkTrunkApiTask.execute(VerificationReportageImpl(EmptyReporterSetProvider))
       val releaseResults = checkTrunkApiResult.releaseResults
       val trunkResults = checkTrunkApiResult.trunkResults
-      val releaseVerdict = releaseResults.single().verdict
-      val trunkVerdict = trunkResults.single().verdict
-      assertPluginsAreProperlyResolved(releaseVerdict, trunkVerdict)
+      val releaseResult = releaseResults.single()
+      val trunkResult = trunkResults.single()
+      assertPluginsAreProperlyResolved(releaseResult, trunkResult)
     }
   }
 
-  private fun assertPluginsAreProperlyResolved(releaseVerdict: Verdict, trunkVerdict: Verdict) {
-    assertThat(trunkVerdict, instanceOf(Verdict.OK::class.java))
-    assertThat(releaseVerdict, instanceOf(Verdict.OK::class.java))
+  private fun assertPluginsAreProperlyResolved(releaseVerificationResult: VerificationResult,
+                                               trunkVerificationResult: VerificationResult) {
+    assertThat(trunkVerificationResult, instanceOf(VerificationResult.OK::class.java))
+    assertThat(releaseVerificationResult, instanceOf(VerificationResult.OK::class.java))
 
-    val trunkGraph = (trunkVerdict as Verdict.OK).dependenciesGraph
-    val releaseGraph = (releaseVerdict as Verdict.OK).dependenciesGraph
+    val trunkGraph = (trunkVerificationResult as VerificationResult.OK).dependenciesGraph
+    val releaseGraph = (releaseVerificationResult as VerificationResult.OK).dependenciesGraph
 
     assertThat(trunkGraph.vertices.drop(1), containsInAnyOrder(
         DependencyNode(someJetBrainsPluginId, "2.0", emptyList()),

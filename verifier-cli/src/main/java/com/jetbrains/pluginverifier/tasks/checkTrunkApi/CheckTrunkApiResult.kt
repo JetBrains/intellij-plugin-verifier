@@ -2,23 +2,22 @@ package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.results.Result
-import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import com.jetbrains.pluginverifier.tasks.TaskResult
 
 class CheckTrunkApiResult(invalidPluginFiles: List<InvalidPluginFile>,
                           val releaseIdeVersion: IdeVersion,
-                          val releaseResults: List<Result>,
+                          val releaseResults: List<VerificationResult>,
                           val trunkIdeVersion: IdeVersion,
-                          val trunkResults: List<Result>,
+                          val trunkResults: List<VerificationResult>,
                           val comparingResults: Map<PluginInfo, PluginComparingResult>) : TaskResult(invalidPluginFiles) {
 
   companion object {
     fun create(releaseIdeVersion: IdeVersion,
-               releaseResults: List<Result>,
+               releaseResults: List<VerificationResult>,
                trunkIdeVersion: IdeVersion,
-               trunkResults: List<Result>,
+               trunkResults: List<VerificationResult>,
                invalidPluginFiles: MutableList<InvalidPluginFile>): CheckTrunkApiResult {
       val trunkPlugin2Result = trunkResults.associateBy { it.plugin }
       val releasePlugin2Result = releaseResults.associateBy { it.plugin }
@@ -26,8 +25,8 @@ class CheckTrunkApiResult(invalidPluginFiles: List<InvalidPluginFile>,
 
       for ((plugin, newResult) in trunkPlugin2Result) {
         val oldResult = releasePlugin2Result[plugin] ?: continue
-        val oldNotChecked = oldResult.verdict is Verdict.NotFound || oldResult.verdict is Verdict.FailedToDownload
-        val newNotChecked = newResult.verdict is Verdict.NotFound || newResult.verdict is Verdict.FailedToDownload
+        val oldNotChecked = oldResult is VerificationResult.NotFound || oldResult is VerificationResult.FailedToDownload
+        val newNotChecked = newResult is VerificationResult.NotFound || newResult is VerificationResult.FailedToDownload
         if (oldNotChecked || newNotChecked) {
           continue
         }

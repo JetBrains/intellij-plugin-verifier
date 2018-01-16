@@ -18,8 +18,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
-import com.jetbrains.pluginverifier.results.Result
-import com.jetbrains.pluginverifier.results.Verdict
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.Problem
 import com.jetbrains.pluginverifier.tests.mocks.EmptyReporterSetProvider
@@ -40,7 +39,7 @@ class VerificationCorrectnessTest {
   companion object {
     var shouldCheckRedundantProblems: Boolean = false
 
-    lateinit var result: Verdict.MissingDependencies
+    lateinit var result: VerificationResult.MissingDependencies
 
     lateinit var actualProblems: Set<Problem>
 
@@ -53,7 +52,7 @@ class VerificationCorrectnessTest {
 
     lateinit var redundantDeprecated: MutableList<DeprecatedApiUsage>
 
-    private fun doIdeaAndPluginVerification(ideaFile: Path, pluginFile: Path): Result {
+    private fun doIdeaAndPluginVerification(ideaFile: Path, pluginFile: Path): VerificationResult {
       val repository = LocalPluginRepository(URL("http://example.com"))
       val idePlugin = (IdePluginManager.createManager().createPlugin(pluginFile.toFile()) as PluginCreationSuccess).plugin
 
@@ -98,9 +97,7 @@ class VerificationCorrectnessTest {
       }
       assertTrue(pluginFile.exists())
       val verificationResult = doIdeaAndPluginVerification(ideaFile, pluginFile)
-      val verdict = verificationResult.verdict
-      assertTrue(verdict is Verdict.MissingDependencies)
-      result = verdict as Verdict.MissingDependencies
+      result = verificationResult as VerificationResult.MissingDependencies
       actualProblems = result.problems
       actualDeprecatedUsages = result.deprecatedUsages
       redundantProblems = actualProblems.toMutableList()
