@@ -16,13 +16,13 @@ import com.jetbrains.pluginverifier.results.problems.Problem
  * Converts the internal verifier [results] [CheckRangeTask.Result]
  * to the protocol API version of [results] [UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult].
  */
-fun prepareVerificationResponse(checkRangeResult: CheckRangeTask.Result): UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult {
-  val apiResultType = convertToApiResultType(checkRangeResult)
-  val apiResults = checkRangeResult.verificationResults.orEmpty().map { convertVerifierResult(it) }
-  val invalidPluginProblems = checkRangeResult.invalidPluginProblems.orEmpty().map { convertInvalidProblem(it) }
-  val nonDownloadableReason = checkRangeResult.nonDownloadableReason
+fun CheckRangeTask.Result.prepareVerificationResponse(): UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult {
+  val apiResultType = toApiResultType()
+  val apiResults = verificationResults.orEmpty().map { convertVerifierResult(it) }
+  val invalidPluginProblems = invalidPluginProblems.orEmpty().map { convertInvalidProblem(it) }
+  val nonDownloadableReason = nonDownloadableReason
   return UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.newBuilder()
-      .setUpdateId(checkRangeResult.updateInfo.updateId)
+      .setUpdateId(updateInfo.updateId)
       .setResultType(apiResultType)
       .addAllIdeVerificationResults(apiResults)
       .addAllInvalidPluginProblems(invalidPluginProblems)
@@ -131,7 +131,7 @@ private fun convertWarnings(warnings: Set<PluginProblem>): List<VerificationResu
       .build()
 }
 
-private fun convertToApiResultType(compatibilityResult: CheckRangeTask.Result): UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType = when (compatibilityResult.resultType) {
+private fun CheckRangeTask.Result.toApiResultType(): UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType = when (resultType) {
   CheckRangeTask.Result.ResultType.NON_DOWNLOADABLE -> UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE
   CheckRangeTask.Result.ResultType.NO_COMPATIBLE_IDES -> UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType.NO_COMPATIBLE_IDES
   CheckRangeTask.Result.ResultType.INVALID_PLUGIN -> UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType.INVALID_PLUGIN

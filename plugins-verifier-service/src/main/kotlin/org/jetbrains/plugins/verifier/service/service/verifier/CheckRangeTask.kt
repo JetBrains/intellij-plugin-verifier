@@ -52,6 +52,7 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
       VERIFICATION_DONE
     }
 
+    override fun toString() = resultType.toString()
   }
 
   override fun execute(progress: ProgressIndicator): Result {
