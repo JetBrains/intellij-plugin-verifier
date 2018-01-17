@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.verifier.service.database
 
+import org.mapdb.DataInput2
+import org.mapdb.DataOutput2
 import org.mapdb.Serializer
 
 /**
@@ -20,6 +22,23 @@ sealed class ValueType<T> {
    */
   object SERIALIZABLE : ValueType<Any>() {
     override val serializer: Serializer<Any> = Serializer.JAVA
+  }
+
+  /**
+   * [ValueType] of any value that can be converted
+   * to and obtained from a string.
+   */
+  class StringBased<T>(val toString: (T) -> String,
+                       val fromString: (String) -> T) : ValueType<T>() {
+
+    override val serializer = object : Serializer<T> {
+      override fun serialize(out: DataOutput2, value: T) {
+        Serializer.STRING.serialize(out, toString(value))
+      }
+
+      override fun deserialize(input: DataInput2, available: Int) =
+          fromString(Serializer.STRING.deserialize(input, available))
+    }
   }
 
   abstract val serializer: Serializer<T>

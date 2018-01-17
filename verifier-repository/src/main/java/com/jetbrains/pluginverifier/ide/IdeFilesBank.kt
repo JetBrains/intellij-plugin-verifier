@@ -39,19 +39,19 @@ class IdeFilesBank(private val bankDirectory: Path,
 
   fun getAvailableIdeVersions() = ideFilesRepository.getAllExistingKeys()
 
-  fun hasIde(key: IdeVersion) = ideFilesRepository.has(key)
+  fun isAvailable(ideVersion: IdeVersion) = ideFilesRepository.has(ideVersion)
 
-  fun deleteIde(key: IdeVersion) = ideFilesRepository.remove(key)
+  fun deleteIde(ideVersion: IdeVersion) = ideFilesRepository.remove(ideVersion)
 
-  fun getIdeFileLock(key: IdeVersion): FileLock? = with(ideFilesRepository.getFile(key)) {
+  fun getIdeFileLock(ideVersion: IdeVersion): FileLock? = with(ideFilesRepository.getFile(ideVersion)) {
     when (this) {
       is FileRepositoryResult.Found -> lockedFile
       is FileRepositoryResult.NotFound -> {
-        LOG.info("IDE $key is not found: $reason")
+        LOG.info("IDE $ideVersion is not found: $reason")
         null
       }
       is FileRepositoryResult.Failed -> {
-        LOG.info("Unable to download IDE $key: $reason", error)
+        LOG.info("Unable to download IDE $ideVersion: $reason", error)
         null
       }
     }

@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
 import java.util.*
@@ -13,21 +12,20 @@ import java.util.concurrent.TimeUnit
  * that should be kept by fetching the IDE index from the IDE Repository ([IdeKeeper]).
  */
 class IdeListUpdater(taskManager: ServiceTaskManager,
-                     private val ideKeeper: IdeKeeper,
-                     private val ideFilesBank: IdeFilesBank)
+                     private val ideKeeper: IdeKeeper)
   : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES, taskManager) {
 
   private val downloadingIdes = Collections.synchronizedSet(hashSetOf<IdeVersion>())
 
   override fun doServe() {
-    val (availableIdes, missingIdes, unnecessaryIdes, manuallyUploadedIdes) = ideKeeper.getIdesList()
+    val (availableIdes, missingIdes, unnecessaryIdes, manuallyDownloadedIdes) = ideKeeper.getIdesList()
     logger.info("""Available IDEs: $availableIdes;
       Missing IDEs: $missingIdes;
       Unnecessary IDEs: $unnecessaryIdes;
-      Manually uploaded IDEs: $manuallyUploadedIdes""")
+      Manually downloaded IDEs: $manuallyDownloadedIdes""")
 
     missingIdes.forEach {
-      enqueueUploadIde(it)
+      enqueueDownloadIde(it)
     }
 
     unnecessaryIdes.forEach {
@@ -37,24 +35,24 @@ class IdeListUpdater(taskManager: ServiceTaskManager,
 
   private fun enqueueDeleteIde(ideVersion: IdeVersion) {
     logger.info("Delete IDE #$ideVersion because it is not necessary anymore")
-    val task = DeleteIdeTask(ideFilesBank, ideVersion)
+    val task = DeleteIdeTask(ideKeeper, ideVersion)
     val taskStatus = taskManager.enqueue(task)
     logger.info("Delete IDE #$ideVersion is enqueued with taskId=#${taskStatus.taskId}")
   }
 
-  private fun enqueueUploadIde(ideVersion: IdeVersion) {
+  private fun enqueueDownloadIde(ideVersion: IdeVersion) {
     if (downloadingIdes.contains(ideVersion)) {
       return
     }
 
-    val runner = UploadIdeTask(ideFilesBank, ideVersion)
+    val runner = DownloadIdeTask(ideKeeper, ideVersion)
 
     val taskStatus = taskManager.enqueue(
         runner,
         { _, _ -> },
         { _, _ -> }
     ) { _ -> downloadingIdes.remove(ideVersion) }
-    logger.info("Uploading IDE version #$ideVersion (task #${taskStatus.taskId})")
+    logger.info("Downloading IDE version #$ideVersion (task #${taskStatus.taskId})")
 
     downloadingIdes.add(ideVersion)
   }

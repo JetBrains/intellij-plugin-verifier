@@ -2,19 +2,19 @@ package org.jetbrains.plugins.verifier.service.server.servlets
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jetbrains.plugins.verifier.service.service.ide.DeleteIdeTask
-import org.jetbrains.plugins.verifier.service.service.ide.UploadIdeTask
+import org.jetbrains.plugins.verifier.service.service.ide.DownloadIdeTask
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 /**
- * Servlet responsible for IDE uploading and removing.
+ * Servlet responsible for IDE downloading and removing.
  */
 class IdeServlet : BaseServlet() {
 
   override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
     val path = getPath(req, resp) ?: return
     when {
-      path.endsWith("uploadIde") -> processUploadIde(req, resp)
+      path.endsWith("download") -> processDownloadIde(req, resp)
       path.endsWith("deleteIde") -> processDeleteIde(req, resp)
       else -> sendJson(resp, serverContext.ideKeeper.getAvailableIdeVersions())
     }
@@ -29,26 +29,26 @@ class IdeServlet : BaseServlet() {
     return ideVersion
   }
 
-  private fun processUploadIde(req: HttpServletRequest, resp: HttpServletResponse) {
+  private fun processDownloadIde(req: HttpServletRequest, resp: HttpServletResponse) {
     val parameterIdeVersion = parseIdeVersionParameter(req, resp) ?: return
     val availableIde = serverContext.ideRepository.fetchIndex().find { it.version.asStringWithoutProductCode() == parameterIdeVersion.asStringWithoutProductCode() }
     if (availableIde == null) {
       sendNotFound(resp, "IDE with version $parameterIdeVersion is not found in the ${serverContext.ideRepository}")
       return
     }
-    val uploadIdeVersion = availableIde.version
-    val ideRunner = UploadIdeTask(serverContext.ideFilesBank, uploadIdeVersion)
+    val ideVersion = availableIde.version
+    val ideRunner = DownloadIdeTask(serverContext.ideKeeper, ideVersion)
     val taskStatus = serverContext.taskManager.enqueue(ideRunner)
-    serverContext.ideKeeper.registerManuallyUploadedIde(uploadIdeVersion)
-    sendOk(resp, "Uploading $uploadIdeVersion (#${taskStatus.taskId})")
+    serverContext.ideKeeper.registerManuallyDownloadedIde(ideVersion)
+    sendOk(resp, "Downloading $ideVersion (#${taskStatus.taskId})")
   }
 
   private fun processDeleteIde(req: HttpServletRequest, resp: HttpServletResponse) {
     val ideVersion = parseIdeVersionParameter(req, resp) ?: return
     if (serverContext.ideKeeper.isAvailableIde(ideVersion)) {
-      val deleteIdeRunner = DeleteIdeTask(serverContext.ideFilesBank, ideVersion)
+      val deleteIdeRunner = DeleteIdeTask(serverContext.ideKeeper, ideVersion)
       val taskStatus = serverContext.taskManager.enqueue(deleteIdeRunner)
-      serverContext.ideKeeper.removeManuallyUploadedIde(ideVersion)
+      serverContext.ideKeeper.removeManuallyDownloadedIde(ideVersion)
       sendOk(resp, "Deleting $ideVersion (#${taskStatus.taskId})")
     }
   }

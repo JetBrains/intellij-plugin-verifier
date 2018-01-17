@@ -11,19 +11,13 @@ class ServiceDAO(serverDatabase: ServerDatabase) {
 
   private val properties = serverDatabase.openOrCreateMap("properties", ValueType.STRING, ValueType.STRING)
 
-  private val manuallyUploadedIdes: MutableSet<String> = serverDatabase.openOrCreateSet("manuallyUploadedIdes", ValueType.STRING)
-
-  fun addManuallyUploadedIde(ideVersion: IdeVersion) {
-    manuallyUploadedIdes.add(ideVersion.toString())
-  }
-
-  fun getManuallyUploadedIdes(): Set<IdeVersion> =
-      manuallyUploadedIdes.map { IdeVersion.createIdeVersion(it) }.toSet()
-
-  fun removeManuallyUploadedIde(ideVersion: IdeVersion) {
-    manuallyUploadedIdes.remove(ideVersion.toString())
-  }
-
+  val manuallyDownloadedIdes: MutableSet<IdeVersion> = serverDatabase.openOrCreateSet(
+      "manuallyDownloadedIdes",
+      ValueType.StringBased(
+          toString = { it.asString() },
+          fromString = { IdeVersion.createIdeVersion(it) }
+      )
+  )
 
   fun setProperty(key: String, value: String): String? = properties.put(key, value)
 

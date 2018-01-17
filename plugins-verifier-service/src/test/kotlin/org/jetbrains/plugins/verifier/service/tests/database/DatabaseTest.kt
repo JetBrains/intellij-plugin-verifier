@@ -33,16 +33,20 @@ class DatabaseTest {
     }
   }
 
+  private fun <T, R> openSetAndRun(valueType: ValueType<T>, f: MutableSet<T>.() -> R) =
+      MapDbServerDatabase(temp).use {
+        val set = it.openOrCreateSet("set", valueType)
+        f(set)
+      }
+
   @Test
   fun `database set open-write-recreate-read`() {
-    MapDbServerDatabase(temp).use { db ->
-      val set = db.openOrCreateSet("newMap", ValueType.STRING)
-      set.addAll(listOf("one", "two", "three"))
+    openSetAndRun(ValueType.STRING) {
+      addAll(listOf("one", "two", "three"))
     }
 
-    MapDbServerDatabase(temp).use { db ->
-      val set = db.openOrCreateSet("newMap", ValueType.STRING)
-      assertEquals(setOf("one", "two", "three"), set)
+    openSetAndRun(ValueType.STRING) {
+      assertEquals(setOf("one", "two", "three"), this)
     }
   }
 
@@ -58,6 +62,25 @@ class DatabaseTest {
       val set = db.openOrCreateSet("lists", ValueType.SERIALIZABLE)
       assertEquals(1, set.size)
       assertEquals(list, set.first())
+    }
+  }
+
+  @Test
+  fun `serialization of the toString serializer`() {
+    val valueType = ValueType.StringBased(
+        toString = { it.toString() },
+        fromString = { Integer.parseInt(it) }
+    )
+
+    openSetAndRun(valueType) {
+      add(1)
+      add(2)
+      add(2)
+      remove(1)
+    }
+
+    openSetAndRun(valueType) {
+      assertEquals(setOf(2), this)
     }
   }
 }

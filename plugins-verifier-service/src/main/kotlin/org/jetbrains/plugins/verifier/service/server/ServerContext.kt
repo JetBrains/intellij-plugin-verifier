@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.verifier.service.server
 
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
-import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
@@ -24,7 +23,6 @@ import java.nio.file.Path
  */
 class ServerContext(val applicationHomeDirectory: Path,
                     val ideRepository: IdeRepository,
-                    val ideFilesBank: IdeFilesBank,
                     val ideKeeper: IdeKeeper,
                     val pluginRepository: PluginRepository,
                     val taskManager: ServiceTaskManager,

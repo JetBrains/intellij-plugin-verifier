@@ -17,27 +17,31 @@ class IdeKeeper(private val serviceDAO: ServiceDAO,
                 private val ideRepository: IdeRepository,
                 private val ideFilesBank: IdeFilesBank) {
 
-  fun registerManuallyUploadedIde(ideVersion: IdeVersion) {
-    serviceDAO.addManuallyUploadedIde(ideVersion)
+  fun registerManuallyDownloadedIde(ideVersion: IdeVersion) {
+    serviceDAO.manuallyDownloadedIdes.add(ideVersion)
   }
 
-  fun removeManuallyUploadedIde(ideVersion: IdeVersion) {
-    serviceDAO.removeManuallyUploadedIde(ideVersion)
+  fun removeManuallyDownloadedIde(ideVersion: IdeVersion) {
+    serviceDAO.manuallyDownloadedIdes.remove(ideVersion)
   }
 
-  fun isAvailableIde(ideVersion: IdeVersion): Boolean = ideFilesBank.hasIde(ideVersion)
+  fun isAvailableIde(ideVersion: IdeVersion): Boolean = ideFilesBank.isAvailable(ideVersion)
 
   fun getAvailableIdeVersions(): Set<IdeVersion> = ideFilesBank.getAvailableIdeVersions()
 
+  fun getIdeFileLock(ideVersion: IdeVersion) = ideFilesBank.getIdeFileLock(ideVersion)
+
+  fun deleteIde(ideVersion: IdeVersion) = ideFilesBank.deleteIde(ideVersion)
+
   /**
    * Holds versions of [available] [availableIdes], [missing] [missingIdes] and [unnecessary] [unnecessaryIdes] IDEs.
-   * The _missing_ IDEs are to be uploaded, and the _unnecessary_ IDEs are to be removed from the server.
-   * IDE versions specified in [manuallyUploadedIdes] are uploaded manually and should not be affected.
+   * The _missing_ IDEs are to be downloaded, and the _unnecessary_ IDEs are to be removed from the server.
+   * IDE versions specified in [manuallyDownloadedIdes] are downloaded manually and should not be affected.
    */
   data class IdesList(val availableIdes: Set<IdeVersion>,
                       val missingIdes: Set<IdeVersion>,
                       val unnecessaryIdes: Set<IdeVersion>,
-                      val manuallyUploadedIdes: Set<IdeVersion>)
+                      val manuallyDownloadedIdes: Set<IdeVersion>)
 
   /**
    * Returns the list of IDEs which must be kept on the server or be deleted because of not being needed.
@@ -46,12 +50,12 @@ class IdeKeeper(private val serviceDAO: ServiceDAO,
     val availableIdes: Set<IdeVersion> = getAvailableIdeVersions()
     val relevantIdes: Set<IdeVersion> = fetchRelevantIdes().map { it.version }.toSet()
 
-    val manuallyUploadedIdes = serviceDAO.getManuallyUploadedIdes()
+    val manuallyDownloadedIdes = serviceDAO.manuallyDownloadedIdes
 
     val missingIdes: Set<IdeVersion> = relevantIdes - availableIdes
-    val unnecessaryIdes: Set<IdeVersion> = availableIdes - relevantIdes.map { it } - manuallyUploadedIdes
+    val unnecessaryIdes: Set<IdeVersion> = availableIdes - relevantIdes.map { it } - manuallyDownloadedIdes
 
-    return IdesList(availableIdes, missingIdes, unnecessaryIdes, manuallyUploadedIdes)
+    return IdesList(availableIdes, missingIdes, unnecessaryIdes, manuallyDownloadedIdes)
   }
 
   /**
