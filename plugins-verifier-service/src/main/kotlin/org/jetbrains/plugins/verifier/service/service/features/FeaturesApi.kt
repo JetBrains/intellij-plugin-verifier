@@ -4,26 +4,21 @@ import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.intellij.feature.extractor.ExtensionPoint
 import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
-import com.jetbrains.pluginverifier.repository.UpdateInfo
 
 /**
  * Converts the internal feature extractor [results] [ExtractFeaturesTask.Result]
  * to the protocol API version of [results] [ApiFeaturesResult].
  */
-fun prepareFeaturesResponse(updateInfo: UpdateInfo,
-                            resultType: ExtractFeaturesTask.Result.ResultType,
-                            features: List<ExtensionPointFeatures>): String {
+fun ExtractFeaturesTask.Result.prepareFeaturesResponse(): String {
   val updateId = updateInfo.updateId
-  val apiResultType = convertResultType(resultType)
+  val apiResultType = resultType.convertResultType()
   val apiFeatures = convertFeatures(features)
   return Gson().toJson(ApiFeaturesResult(updateId, apiResultType, apiFeatures))
 }
 
-private fun convertFeatures(features: List<ExtensionPointFeatures>): List<ApiExtensionPointFeatures> {
-  return features.map {
-    val apiExtensionPoint = convertExtensionPoint(it)
-    ApiExtensionPointFeatures(apiExtensionPoint, it.epImplementorName, it.featureNames)
-  }
+private fun convertFeatures(features: List<ExtensionPointFeatures>): List<ApiExtensionPointFeatures> = features.map {
+  val apiExtensionPoint = convertExtensionPoint(it)
+  ApiExtensionPointFeatures(apiExtensionPoint, it.epImplementorName, it.featureNames)
 }
 
 private fun convertExtensionPoint(it: ExtensionPointFeatures): ApiExtensionPoint = when (it.extensionPoint) {
@@ -34,7 +29,7 @@ private fun convertExtensionPoint(it: ExtensionPointFeatures): ApiExtensionPoint
   ExtensionPoint.MODULE_TYPE -> ApiExtensionPoint.MODULE_TYPE
 }
 
-private fun convertResultType(resultType: ExtractFeaturesTask.Result.ResultType): ApiFeaturesResult.ResultType = when (resultType) {
+private fun ExtractFeaturesTask.Result.ResultType.convertResultType(): ApiFeaturesResult.ResultType = when (this) {
   ExtractFeaturesTask.Result.ResultType.NOT_FOUND -> ApiFeaturesResult.ResultType.NOT_FOUND
   ExtractFeaturesTask.Result.ResultType.BAD_PLUGIN -> ApiFeaturesResult.ResultType.BAD_PLUGIN
   ExtractFeaturesTask.Result.ResultType.EXTRACTED_ALL -> ApiFeaturesResult.ResultType.EXTRACTED_ALL

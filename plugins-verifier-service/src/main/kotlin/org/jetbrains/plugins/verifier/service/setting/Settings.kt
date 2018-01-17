@@ -15,9 +15,7 @@ enum class Settings(val key: String,
   MAX_DISK_SPACE_MB("verifier.service.max.disk.space.mb", { (50 * 1024).toString() }),
   IDE_REPOSITORY_URL("verifier.service.ide.repository.url", { "https://www.jetbrains.com" }),
 
-  VERIFIER_SERVICE_REPOSITORY_URL("verifier.service.verification.plugin.repository.url", { PUBLIC_PLUGIN_REPOSITORY_URL }),
-  FEATURE_EXTRACTOR_REPOSITORY_URL("verifier.service.feature.extractor.plugin.repository.url", { PUBLIC_PLUGIN_REPOSITORY_URL }),
-  DOWNLOAD_PLUGINS_REPOSITORY_URL("verifier.service.download.plugins.repository.url", { PUBLIC_PLUGIN_REPOSITORY_URL }),
+  PLUGINS_REPOSITORY_URL("verifier.service.plugins.repository.url", { PUBLIC_PLUGIN_REPOSITORY_URL }),
 
   ENABLE_FEATURE_EXTRACTOR_SERVICE("verifier.service.enable.feature.extractor.service", { "false" }),
   ENABLE_PLUGIN_VERIFIER_SERVICE("verifier.service.enable.plugin.verifier.service", { "false" }),

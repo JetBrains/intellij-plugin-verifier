@@ -2,21 +2,12 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.google.common.collect.LinkedHashMultimap
 import com.google.common.collect.Multimap
-import com.google.gson.Gson
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.makeOkHttpClient
-import com.jetbrains.pluginverifier.network.createByteArrayRequestBody
-import com.jetbrains.pluginverifier.network.createStringRequestBody
-import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import okhttp3.HttpUrl
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkVersion
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import java.net.URL
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -31,22 +22,15 @@ import java.util.concurrent.TimeUnit
  *
  * [Plugin verifier integration with the Plugins Repository](https://confluence.jetbrains.com/display/PLREP/plugin-verifier+integration+with+the+plugins.jetbrains.com)
  */
-class VerifierService(serverContext: ServerContext, repositoryUrl: URL) : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES, serverContext) {
+class VerifierService(serverContext: ServerContext,
+                      private val verifierServiceProtocol: VerifierServiceProtocol)
+  : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES, serverContext) {
 
   private val verifiableUpdates = hashSetOf<UpdateInfo>()
 
   private val lastCheckDate = hashMapOf<UpdateInfo, Instant>()
 
   private val updatesMissingCompatibleIde = TreeSet<UpdateInfo>(compareBy { it.updateId })
-
-  private val repositoryConnector: VerificationPluginRepositoryConnector by lazy {
-    Retrofit.Builder()
-        .baseUrl(HttpUrl.get(repositoryUrl))
-        .addConverterFactory(GsonConverterFactory.create(Gson()))
-        .client(makeOkHttpClient(logger.isDebugEnabled, 5, TimeUnit.MINUTES))
-        .build()
-        .create(VerificationPluginRepositoryConnector::class.java)
-  }
 
   override fun doServe() {
     val updateToIdes = requestUpdatesToCheck()
@@ -69,24 +53,18 @@ class VerifierService(serverContext: ServerContext, repositoryUrl: URL) : BaseSe
   }
 
   private fun requestUpdatesToCheck(): Multimap<UpdateInfo, IdeVersion> {
-    val updateId2IdeVersions = LinkedHashMultimap.create<UpdateInfo, IdeVersion>()
-
+    val updateInfoToIdes = LinkedHashMultimap.create<UpdateInfo, IdeVersion>()
     for (ideVersion in serverContext.ideKeeper.getAvailableIdeVersions()) {
-      requestUpdatesToCheck(ideVersion).forEach { updateId ->
-        updateId2IdeVersions.put(updateId, ideVersion)
+      verifierServiceProtocol.requestUpdatesToCheck(ideVersion).forEach {
+        updateInfoToIdes.put(it, ideVersion)
       }
     }
-    return updateId2IdeVersions
+    return updateInfoToIdes
   }
-
-  private fun requestUpdatesToCheck(ideVersion: IdeVersion) =
-      requestUpdatesToCheck0(ideVersion)
-          .sortedDescending()
-          .mapNotNull { serverContext.pluginRepository.getPluginInfoById(it) }
 
   private fun schedule(updateInfo: UpdateInfo, versions: List<IdeVersion>) {
     lastCheckDate[updateInfo] = Instant.now()
-
+    verifiableUpdates.add(updateInfo)
     val task = CheckRangeTask(
         updateInfo,
         JdkVersion.JAVA_8_ORACLE,
@@ -99,7 +77,6 @@ class VerifierService(serverContext: ServerContext, repositoryUrl: URL) : BaseSe
         { error, tid -> onError(error, tid, task) },
         { onCompletion(task) }
     )
-    verifiableUpdates.add(updateInfo)
     logger.info("Check [since; until] for $updateInfo is scheduled #${taskStatus.taskId}")
   }
 
@@ -122,28 +99,10 @@ class VerifierService(serverContext: ServerContext, repositoryUrl: URL) : BaseSe
     }
 
     try {
-      sendUpdateCheckResult(result)
+      verifierServiceProtocol.sendVerificationResult(result)
     } catch (e: Exception) {
       logger.error("Unable to send verification result of ${result.updateInfo}", e)
     }
   }
-
-  private val userNameRequestBody = createStringRequestBody(serverContext.authorizationData.pluginRepositoryUserName)
-
-  private val passwordRequestBody = createStringRequestBody(serverContext.authorizationData.pluginRepositoryPassword)
-
-  private fun requestUpdatesToCheck0(availableIde: IdeVersion) =
-      repositoryConnector.getUpdatesToCheck(
-          createStringRequestBody(availableIde.asString()),
-          userNameRequestBody,
-          passwordRequestBody
-      ).executeSuccessfully().body()
-
-  private fun sendUpdateCheckResult(result: CheckRangeTask.Result) =
-      repositoryConnector.sendUpdateCheckResult(
-          createByteArrayRequestBody(result.prepareVerificationResponse().toByteArray()),
-          userNameRequestBody,
-          passwordRequestBody
-      ).executeSuccessfully()
 
 }

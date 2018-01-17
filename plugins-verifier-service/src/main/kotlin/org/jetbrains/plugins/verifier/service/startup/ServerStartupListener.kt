@@ -12,10 +12,12 @@ import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import org.jetbrains.plugins.verifier.service.database.MapDbServerDatabase
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
+import org.jetbrains.plugins.verifier.service.service.features.DefaultFeatureServiceProtocol
 import org.jetbrains.plugins.verifier.service.service.features.FeatureExtractorService
 import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
 import org.jetbrains.plugins.verifier.service.service.ide.IdeListUpdater
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkDescriptorsCache
+import org.jetbrains.plugins.verifier.service.service.verifier.DefaultVerifierServiceProtocol
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
 import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetting
@@ -53,7 +55,7 @@ class ServerStartupListener : ServletContextListener {
 
     val pluginDownloadDirSpaceSetting = getPluginDownloadDirDiskSpaceSetting()
 
-    val pluginRepositoryUrl = Settings.DOWNLOAD_PLUGINS_REPOSITORY_URL.getAsURL()
+    val pluginRepositoryUrl = Settings.PLUGINS_REPOSITORY_URL.getAsURL()
     val pluginRepository = PublicPluginRepository(pluginRepositoryUrl, loadedPluginsDir, pluginDownloadDirSpaceSetting)
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractedPluginsDir)
     val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginDetailsProvider)
@@ -107,8 +109,11 @@ class ServerStartupListener : ServletContextListener {
 
     validateSystemProperties()
 
-    val verifierService = VerifierService(serverContext, Settings.VERIFIER_SERVICE_REPOSITORY_URL.getAsURL())
-    val featureService = FeatureExtractorService(serverContext, Settings.FEATURE_EXTRACTOR_REPOSITORY_URL.getAsURL())
+    val verifierServiceProtocol = DefaultVerifierServiceProtocol(serverContext.authorizationData, serverContext.pluginRepository)
+    val verifierService = VerifierService(serverContext, verifierServiceProtocol)
+
+    val featureServiceProtocol = DefaultFeatureServiceProtocol(serverContext.authorizationData, serverContext.pluginRepository)
+    val featureService = FeatureExtractorService(serverContext, featureServiceProtocol)
     val ideListUpdater = IdeListUpdater(serverContext)
 
     serverContext.addService(verifierService)
