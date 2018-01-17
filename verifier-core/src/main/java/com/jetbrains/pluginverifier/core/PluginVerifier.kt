@@ -35,7 +35,7 @@ import java.util.concurrent.Callable
  * 2) Builds the dependencies graph of the plugin using the provided [dependencyFinder].
  * 3) Runs the [bytecode verification] [BytecodeVerifier]
  * of plugins' classes against classes of the [IDE] [ideDescriptor],
- * classes of the resolved dependencies and classes of the [jdkDescriptor].
+ * classes of the resolved dependencies and classes of the [JDK] [jdkDescriptor].
  * The [parameters] [verifierParameters] are used to configure the verification.
  * The [pluginVerificationReportage] is used to log the verification steps,
  * progress, and the results.

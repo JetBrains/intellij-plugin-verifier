@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
@@ -12,8 +13,8 @@ import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import java.nio.file.Paths
 
-class DeprecatedUsagesParamsBuilder(val pluginRepository: PluginRepository,
-                                    val pluginDetailsCache: PluginDetailsCache) : TaskParametersBuilder {
+class DeprecatedUsagesParamsBuilder(private val pluginRepository: PluginRepository,
+                                    private val pluginDetailsCache: PluginDetailsCache) : TaskParametersBuilder {
   override fun build(opts: CmdOpts, freeArgs: List<String>): DeprecatedUsagesParams {
     val deprecatedOpts = DeprecatedUsagesOpts()
     val unparsedArgs = Args.parse(deprecatedOpts, freeArgs.toTypedArray(), false)
@@ -25,7 +26,7 @@ class DeprecatedUsagesParamsBuilder(val pluginRepository: PluginRepository,
       throw IllegalArgumentException("IDE path must be a directory: " + idePath)
     }
     val ideDescriptor = OptionsParser.createIdeDescriptor(idePath, opts)
-    val jdkDescriptor = OptionsParser.createJdkDescriptor(opts)
+    val jdkDescriptorsCache = JdkDescriptorsCache()
     /**
      * If the release IDE version is specified, get the compatible plugins' versions based on it.
      * Otherwise, use the version of the verified IDE.
@@ -33,7 +34,14 @@ class DeprecatedUsagesParamsBuilder(val pluginRepository: PluginRepository,
     val ideVersion = deprecatedOpts.releaseIdeVersion?.let { IdeVersion.createIdeVersionIfValid(it) } ?: ideDescriptor.ideVersion
     val pluginsToCheck = OptionsParser.parsePluginsToCheck(opts, ideVersion, pluginRepository)
     val dependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
-    return DeprecatedUsagesParams(pluginsToCheck, ideDescriptor, jdkDescriptor, dependencyFinder, ideVersion)
+    return DeprecatedUsagesParams(
+        pluginsToCheck,
+        OptionsParser.getJdkPath(opts),
+        ideDescriptor,
+        jdkDescriptorsCache,
+        dependencyFinder,
+        ideVersion
+    )
   }
 
   class DeprecatedUsagesOpts {

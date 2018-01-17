@@ -64,12 +64,13 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
       }
     }
     val verifierParams = VerifierParameters(
+        parameters.jdkPath,
         parameters.externalClassesPrefixes,
         parameters.problemsFilters,
         parameters.externalClasspath,
         true
     )
-    val results = Verification.run(verifierParams, pluginDetailsCache, tasks, verificationReportage, parameters.jdkDescriptor)
+    val results = Verification.run(verifierParams, pluginDetailsCache, tasks, verificationReportage, parameters.jdkDescriptorsCache)
     return CheckPluginResult(parameters.pluginsToCheck.invalidPluginFiles, results)
   }
 

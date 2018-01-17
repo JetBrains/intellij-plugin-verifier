@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.options
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
-import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
 import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -21,7 +20,7 @@ import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsFetcher
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsParser
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
+import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -77,11 +76,7 @@ object OptionsParser {
     return IdeDescriptorCreator.createByPath(ideToCheckFile, ideVersion)
   }
 
-  fun createJdkDescriptor(opts: CmdOpts): JdkDescriptor {
-    val jdkHomeDir = getJdkHomeDir(opts)
-    val jdkClassesResolver = JdkResolverCreator.createJdkResolver(jdkHomeDir.toFile())
-    return JdkDescriptor(jdkClassesResolver, jdkHomeDir)
-  }
+  fun getJdkPath(opts: CmdOpts) = JdkPath(getJdkHomeDir(opts))
 
   private fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {
     val build = opts.actualIdeVersion

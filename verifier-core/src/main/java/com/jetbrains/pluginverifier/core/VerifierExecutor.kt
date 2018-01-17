@@ -20,7 +20,9 @@ import java.util.concurrent.*
  * [plugin details] [com.jetbrains.pluginverifier.plugin.PluginDetails]
  * of the verified and dependent plugins.
  */
-class VerifierExecutor(private val concurrentWorkers: Int, private val pluginDetailsCache: PluginDetailsCache) : Closeable {
+class VerifierExecutor(private val concurrentWorkers: Int,
+                       private val pluginDetailsCache: PluginDetailsCache,
+                       private val jdkDescriptor: JdkDescriptor) : Closeable {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(VerifierExecutor::class.java)
@@ -41,13 +43,11 @@ class VerifierExecutor(private val concurrentWorkers: Int, private val pluginDet
 
   /**
    * Runs the [tasks] concurrently on the thread pool allocated for this [VerifierExecutor].
-   * The [jdkDescriptor] is used to resolve the JDK classes.
    * The [parameters] configure the verification.
    * The [reportage] is used to save the verification stages and results.
    */
   fun verify(
       tasks: List<VerifierTask>,
-      jdkDescriptor: JdkDescriptor,
       parameters: VerifierParameters,
       reportage: VerificationReportage
   ): List<VerificationResult> {

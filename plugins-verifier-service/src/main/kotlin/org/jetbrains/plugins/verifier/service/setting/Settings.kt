@@ -37,7 +37,7 @@ enum class Settings(val key: String,
 
   fun getAsURL(): URL = URL(get().trimEnd('/'))
 
-  fun getAsFile(): Path = Paths.get(get())
+  fun getAsPath(): Path = Paths.get(get())
 
   fun getAsBoolean(): Boolean = get().toBoolean()
 

@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion.createIdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
@@ -184,16 +185,16 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
     pluginsToCheck.plugins.add(LocalPluginRepository(repositoryURL).addLocalPlugin(pluginToCheck))
     return CheckTrunkApiParams(
         pluginsToCheck,
+        TestJdkDescriptorProvider.getJdkPathForTests(),
         IdeDescriptor(trunkIde, EmptyResolver),
         IdeDescriptor(releaseIde, EmptyResolver),
         emptyList(),
         emptyList(),
-        TestJdkDescriptorProvider.getJdkDescriptorForTests(),
+        JdkDescriptorsCache(),
         listOf(someJetBrainsPluginId),
         false,
         IdleFileLock(Paths.get("unnecessary")),
-        createLocalRepository(releaseSomeJetBrainsMockPlugin, releaseVersion),
-        createLocalRepository(trunkSomeJetBrainsMockPlugin, trunkVersion)
+        createLocalRepository(releaseSomeJetBrainsMockPlugin, releaseVersion), createLocalRepository(trunkSomeJetBrainsMockPlugin, trunkVersion)
     )
   }
 

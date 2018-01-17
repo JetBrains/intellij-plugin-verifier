@@ -14,6 +14,7 @@ import com.jetbrains.pluginverifier.misc.exists
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
@@ -57,7 +58,7 @@ class VerificationCorrectnessTest {
       val idePlugin = (IdePluginManager.createManager().createPlugin(pluginFile.toFile()) as PluginCreationSuccess).plugin
 
       val pluginInfo = repository.addLocalPlugin(idePlugin)
-      val jdkDescriptor = TestJdkDescriptorProvider.getJdkDescriptorForTests()
+      val jdkPath = TestJdkDescriptorProvider.getJdkPathForTests()
 
       val tempFolder = Files.createTempDirectory("")
       try {
@@ -66,6 +67,7 @@ class VerificationCorrectnessTest {
         return IdeDescriptorCreator.createByPath(ideaFile, IdeVersion.createIdeVersion("IU-145.500")).use { ideDescriptor ->
           val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
           val verifierParams = VerifierParameters(
+              jdkPath,
               externalClassesPrefixes,
               emptyList(),
               EmptyResolver,
@@ -74,7 +76,7 @@ class VerificationCorrectnessTest {
           val tasks = listOf(VerifierTask(pluginInfo, ideDescriptor, NotFoundDependencyFinder()))
 
           VerificationReportageImpl(EmptyReporterSetProvider).use { verificationReportage ->
-            Verification.run(verifierParams, pluginDetailsCache, tasks, verificationReportage, jdkDescriptor).single()
+            Verification.run(verifierParams, pluginDetailsCache, tasks, verificationReportage, JdkDescriptorsCache()).single()
           }
         }
       } finally {

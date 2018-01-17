@@ -4,12 +4,13 @@ import com.google.common.collect.LinkedHashMultimap
 import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
+import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
-import org.jetbrains.plugins.verifier.service.service.jdks.JdkDescriptorsCache
-import org.jetbrains.plugins.verifier.service.service.jdks.JdkVersion
+import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
 import java.time.Duration
@@ -76,7 +77,7 @@ class VerifierService(taskManager: ServiceTaskManager,
     verifiableUpdates.add(updateInfo)
     val task = CheckRangeTask(
         updateInfo,
-        JdkVersion.JAVA_8_ORACLE,
+        JdkPath(Settings.JDK_8_HOME.getAsPath()),
         versions,
         pluginDetailsCache,
         ideDescriptorsCache,

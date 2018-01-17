@@ -9,6 +9,8 @@ import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
+import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
@@ -18,10 +20,7 @@ import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterS
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportersProvider
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.results.VerificationResult
-import org.jetbrains.plugins.verifier.service.service.jdks.JdkDescriptorsCache
-import org.jetbrains.plugins.verifier.service.service.jdks.JdkVersion
 import org.jetbrains.plugins.verifier.service.service.verifier.CheckRangeTask.Result
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
@@ -34,11 +33,11 @@ import org.slf4j.LoggerFactory
  * returns the aggregated [result] [Result].
  */
 class CheckRangeTask(val updateInfo: UpdateInfo,
-                     private val jdkVersion: JdkVersion,
+                     private val jdkPath: JdkPath,
                      private val toCheckIdeVersions: List<IdeVersion>,
                      private val pluginDetailsCache: PluginDetailsCache,
                      private val ideDescriptorsCache: IdeDescriptorsCache,
-                     private val jdkManager: JdkDescriptorsCache)
+                     private val jdkDescriptorsCache: JdkDescriptorsCache)
   : ServiceTask<CheckRangeTask.Result>("Check $updateInfo with IDE from [since; until]") {
 
   companion object {
@@ -100,30 +99,21 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
     )
 
     val verifierParameters = VerifierParameters(
+        jdkPath = jdkPath,
         externalClassesPrefixes = emptyList(),
         problemFilters = emptyList(),
         externalClassPath = EmptyResolver,
         findDeprecatedApiUsages = true
     )
 
-    return with(jdkManager.getJdkResolver(jdkVersion)) {
-      when (this) {
-        is ResourceCacheEntryResult.Found -> {
-          resourceCacheEntry.use {
-            val verifierTask = VerifierTask(updateInfo, ideDescriptor, dependencyFinder)
-            return Verification.run(
-                verifierParameters,
-                pluginDetailsCache,
-                listOf(verifierTask),
-                verificationReportage,
-                resourceCacheEntry.resource
-            )
-          }
-        }
-        is ResourceCacheEntryResult.Failed -> throw error
-        is ResourceCacheEntryResult.NotFound -> throw IllegalStateException(message)
-      }
-    }
+    val verifierTask = VerifierTask(updateInfo, ideDescriptor, dependencyFinder)
+    return Verification.run(
+        verifierParameters,
+        pluginDetailsCache,
+        listOf(verifierTask),
+        verificationReportage,
+        jdkDescriptorsCache
+    )
   }
 
   private fun createDelegatingReporter(progress: ProgressIndicator): Reporter<Double> {

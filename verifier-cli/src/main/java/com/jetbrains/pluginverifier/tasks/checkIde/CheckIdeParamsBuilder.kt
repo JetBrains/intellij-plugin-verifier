@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -26,7 +27,7 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
     }
     verificationReportage.logVerificationStage("Reading classes of IDE $ideFile")
     OptionsParser.createIdeDescriptor(ideFile, opts).closeOnException { ideDescriptor ->
-      val jdkDescriptor = OptionsParser.createJdkDescriptor(opts)
+      val jdkDescriptorsCache = JdkDescriptorsCache()
       val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
       OptionsParser.getExternalClassPath(opts).closeOnException { externalClassPath ->
         val problemsFilters = OptionsParser.getProblemsFilters(opts)
@@ -37,10 +38,12 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
 
         val excludedPlugins = OptionsParser.parseExcludedPlugins(opts)
         val ideDependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
+        val jdkPath = OptionsParser.getJdkPath(opts)
         return CheckIdeParams(
             pluginsToCheck,
+            jdkPath,
             ideDescriptor,
-            jdkDescriptor,
+            jdkDescriptorsCache,
             excludedPlugins,
             externalClassesPrefixes,
             externalClassPath,

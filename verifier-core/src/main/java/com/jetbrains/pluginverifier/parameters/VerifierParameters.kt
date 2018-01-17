@@ -2,11 +2,17 @@ package com.jetbrains.pluginverifier.parameters
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
+import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 
 /**
  * Accumulates parameters of the upcoming verification.
  */
 data class VerifierParameters(
+
+    /**
+     * The JDK to be used for the verification
+     */
+    val jdkPath: JdkPath,
 
     /**
      * Ignore missing classes having the listed packages

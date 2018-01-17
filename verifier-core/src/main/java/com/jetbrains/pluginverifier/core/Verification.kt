@@ -2,9 +2,10 @@ package com.jetbrains.pluginverifier.core
 
 import com.jetbrains.pluginverifier.core.Verification.run
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
+import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceUnit
 import com.jetbrains.pluginverifier.repository.cleanup.bytesToSpaceAmount
 import com.jetbrains.pluginverifier.results.VerificationResult
@@ -22,10 +23,21 @@ object Verification {
           pluginDetailsCache: PluginDetailsCache,
           tasks: List<VerifierTask>,
           reportage: VerificationReportage,
-          jdkDescriptor: JdkDescriptor): List<VerificationResult> {
+          jdkDescriptorsCache: JdkDescriptorsCache): List<VerificationResult> {
     val concurrentWorkers = estimateNumberOfConcurrentWorkers(reportage)
-    return VerifierExecutor(concurrentWorkers, pluginDetailsCache).use {
-      it.verify(tasks, jdkDescriptor, verifierParameters, reportage)
+    return with(jdkDescriptorsCache.getJdkResolver(verifierParameters.jdkPath)) {
+      when (this) {
+        is ResourceCacheEntryResult.Found -> {
+          resourceCacheEntry.use {
+            val jdkDescriptor = resourceCacheEntry.resource
+            VerifierExecutor(concurrentWorkers, pluginDetailsCache, jdkDescriptor).use {
+              it.verify(tasks, verifierParameters, reportage)
+            }
+          }
+        }
+        is ResourceCacheEntryResult.Failed -> throw error
+        is ResourceCacheEntryResult.NotFound -> throw IllegalArgumentException("JDK ${verifierParameters.jdkPath} is not found")
+      }
     }
   }
 

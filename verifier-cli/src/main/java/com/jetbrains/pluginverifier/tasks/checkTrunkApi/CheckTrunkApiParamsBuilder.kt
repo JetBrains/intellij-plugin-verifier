@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.misc.listPresentationInColumns
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -23,9 +24,9 @@ import java.io.File
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
-class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
-                                 val ideFilesBank: IdeFilesBank,
-                                 val verificationReportage: VerificationReportage) : TaskParametersBuilder {
+class CheckTrunkApiParamsBuilder(private val pluginRepository: PluginRepository,
+                                 private val ideFilesBank: IdeFilesBank,
+                                 private val verificationReportage: VerificationReportage) : TaskParametersBuilder {
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckTrunkApiParams {
     val apiOpts = CheckTrunkApiOpts()
@@ -113,15 +114,16 @@ class CheckTrunkApiParamsBuilder(val pluginRepository: PluginRepository,
             .listPresentationInColumns(4, 60)
     )
 
-    val jdkDescriptor = OptionsParser.createJdkDescriptor(opts)
-    return jdkDescriptor.closeOnException {
+    val jdkDescriptorsCache = JdkDescriptorsCache()
+    return jdkDescriptorsCache.closeOnException {
       CheckTrunkApiParams(
           pluginsToCheck,
+          OptionsParser.getJdkPath(opts),
           trunkIdeDescriptor,
           releaseIdeDescriptor,
           externalClassesPrefixes,
           problemsFilters,
-          jdkDescriptor,
+          jdkDescriptorsCache,
           jetBrainsPluginIds,
           deleteReleaseIdeOnExit,
           releaseIdeFileLock,

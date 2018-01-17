@@ -4,6 +4,7 @@ import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
@@ -16,7 +17,6 @@ import org.jetbrains.plugins.verifier.service.service.features.DefaultFeatureSer
 import org.jetbrains.plugins.verifier.service.service.features.FeatureExtractorService
 import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
 import org.jetbrains.plugins.verifier.service.service.ide.IdeListUpdater
-import org.jetbrains.plugins.verifier.service.service.jdks.JdkDescriptorsCache
 import org.jetbrains.plugins.verifier.service.service.verifier.DefaultVerifierServiceProtocol
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
 import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
@@ -48,7 +48,7 @@ class ServerStartupListener : ServletContextListener {
   }
 
   private fun createServerContext(): ServerContext {
-    val applicationHomeDir = Settings.APP_HOME_DIRECTORY.getAsFile().createDir()
+    val applicationHomeDir = Settings.APP_HOME_DIRECTORY.getAsPath().createDir()
     val loadedPluginsDir = applicationHomeDir.resolve("loaded-plugins").createDir()
     val extractedPluginsDir = applicationHomeDir.resolve("extracted-plugins").createDir()
     val ideFilesDir = applicationHomeDir.resolve("ides").createDir()
@@ -69,7 +69,7 @@ class ServerStartupListener : ServletContextListener {
         Settings.SERVICE_ADMIN_PASSWORD.get()
     )
 
-    val jdkManager = JdkDescriptorsCache(Settings.JDK_8_HOME.getAsFile())
+    val jdkDescriptorsCache = JdkDescriptorsCache()
 
     val ideDownloadDirDiskSpaceSetting = getIdeDownloadDirDiskSpaceSetting()
     val serverDatabase = MapDbServerDatabase(applicationHomeDir)
@@ -86,7 +86,7 @@ class ServerStartupListener : ServletContextListener {
         pluginRepository,
         tasksManager,
         authorizationData,
-        jdkManager,
+        jdkDescriptorsCache,
         Settings.values().toList(),
         serviceDAO,
         serverDatabase,
@@ -116,7 +116,7 @@ class ServerStartupListener : ServletContextListener {
           ideKeeper,
           pluginDetailsCache,
           ideDescriptorsCache,
-          jdkManager
+          jdkDescriptorsCache
       )
 
       val featureServiceProtocol = DefaultFeatureServiceProtocol(authorizationData, pluginRepository)

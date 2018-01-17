@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.misc.exists
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -36,12 +37,20 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
       OptionsParser.createIdeDescriptor(it, opts)
     }
     val pluginsToCheck = getPluginsToCheck(freeArgs[0], ideDescriptors.map { it.ideVersion })
-    val jdkDescriptor = OptionsParser.createJdkDescriptor(opts)
+    val jdkDescriptorsCache = JdkDescriptorsCache()
     val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
     val externalClasspath = OptionsParser.getExternalClassPath(opts)
     externalClasspath.closeOnException {
       val problemsFilters = OptionsParser.getProblemsFilters(opts)
-      return CheckPluginParams(pluginsToCheck, ideDescriptors, jdkDescriptor, externalClassesPrefixes, problemsFilters, externalClasspath)
+      return CheckPluginParams(
+          pluginsToCheck,
+          OptionsParser.getJdkPath(opts),
+          ideDescriptors,
+          jdkDescriptorsCache,
+          externalClassesPrefixes,
+          problemsFilters,
+          externalClasspath
+      )
     }
   }
 

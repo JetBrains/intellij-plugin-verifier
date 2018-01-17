@@ -1,8 +1,7 @@
 package com.jetbrains.pluginverifier.tests.mocks
 
-import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
 import com.jetbrains.pluginverifier.misc.isDirectory
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
+import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import java.nio.file.Paths
 
 /**
@@ -10,7 +9,7 @@ import java.nio.file.Paths
  */
 object TestJdkDescriptorProvider {
 
-  fun getJdkDescriptorForTests(): JdkDescriptor {
+  fun getJdkPathForTests(): JdkPath {
     val jdk8Path = "/usr/lib/jvm/java-8-oracle"
     val jdkPath = System.getenv("JAVA_HOME") ?: jdk8Path
     val jdkDir = if ('9' in jdkPath) {
@@ -20,7 +19,7 @@ object TestJdkDescriptorProvider {
       Paths.get(jdkPath)
     }
     require(jdkDir.isDirectory)
-    return JdkDescriptor(JdkResolverCreator.createJdkResolver(jdkDir.toFile()), jdkDir)
+    return JdkPath(jdkDir)
   }
 
 }
