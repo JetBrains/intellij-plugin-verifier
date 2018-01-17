@@ -22,7 +22,7 @@ import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
 import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetting
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTasksManager
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
 import org.slf4j.LoggerFactory
 import javax.servlet.ServletContextEvent
 import javax.servlet.ServletContextListener
@@ -61,7 +61,7 @@ class ServerStartupListener : ServletContextListener {
     val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginDetailsProvider)
 
     val ideRepository = IdeRepository(Settings.IDE_REPOSITORY_URL.get())
-    val tasksManager = ServiceTasksManager(Settings.TASK_MANAGER_CONCURRENCY.getAsInt(), 1000)
+    val tasksManager = ServiceTaskManager(Settings.TASK_MANAGER_CONCURRENCY.getAsInt(), 1000)
 
     val authorizationData = AuthorizationData(
         Settings.PLUGIN_REPOSITORY_VERIFIER_USERNAME.get(),
@@ -109,28 +109,47 @@ class ServerStartupListener : ServletContextListener {
 
     validateSystemProperties()
 
-    val verifierServiceProtocol = DefaultVerifierServiceProtocol(serverContext.authorizationData, serverContext.pluginRepository)
-    val verifierService = VerifierService(serverContext, verifierServiceProtocol)
+    with(serverContext) {
+      val verifierServiceProtocol = DefaultVerifierServiceProtocol(authorizationData, pluginRepository)
+      val verifierService = VerifierService(
+          taskManager,
+          verifierServiceProtocol,
+          ideKeeper,
+          pluginDetailsCache,
+          ideDescriptorsCache,
+          jdkManager
+      )
 
-    val featureServiceProtocol = DefaultFeatureServiceProtocol(serverContext.authorizationData, serverContext.pluginRepository)
-    val featureService = FeatureExtractorService(serverContext, featureServiceProtocol)
-    val ideListUpdater = IdeListUpdater(serverContext)
+      val featureServiceProtocol = DefaultFeatureServiceProtocol(authorizationData, pluginRepository)
 
-    serverContext.addService(verifierService)
-    serverContext.addService(featureService)
-    serverContext.addService(ideListUpdater)
+      val featureService = FeatureExtractorService(
+          taskManager,
+          featureServiceProtocol,
+          ideDescriptorsCache,
+          pluginDetailsCache
+      )
+      val ideListUpdater = IdeListUpdater(
+          taskManager,
+          ideKeeper,
+          ideFilesBank
+      )
 
-    if (Settings.ENABLE_PLUGIN_VERIFIER_SERVICE.getAsBoolean()) {
-      verifierService.start()
+      addService(verifierService)
+      addService(featureService)
+      addService(ideListUpdater)
+
+      if (Settings.ENABLE_PLUGIN_VERIFIER_SERVICE.getAsBoolean()) {
+        verifierService.start()
+      }
+      if (Settings.ENABLE_FEATURE_EXTRACTOR_SERVICE.getAsBoolean()) {
+        featureService.start()
+      }
+      if (Settings.ENABLE_IDE_LIST_UPDATER.getAsBoolean()) {
+        ideListUpdater.start()
+      }
+
+      sce.servletContext.setAttribute(SERVER_CONTEXT_KEY, serverContext)
     }
-    if (Settings.ENABLE_FEATURE_EXTRACTOR_SERVICE.getAsBoolean()) {
-      featureService.start()
-    }
-    if (Settings.ENABLE_IDE_LIST_UPDATER.getAsBoolean()) {
-      ideListUpdater.start()
-    }
-
-    sce.servletContext.setAttribute(SERVER_CONTEXT_KEY, serverContext)
   }
 
   override fun contextDestroyed(sce: ServletContextEvent?) {

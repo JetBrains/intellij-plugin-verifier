@@ -37,7 +37,7 @@ class IdeServlet : BaseServlet() {
       return
     }
     val uploadIdeVersion = availableIde.version
-    val ideRunner = UploadIdeTask(serverContext, uploadIdeVersion)
+    val ideRunner = UploadIdeTask(serverContext.ideFilesBank, uploadIdeVersion)
     val taskStatus = serverContext.taskManager.enqueue(ideRunner)
     serverContext.ideKeeper.registerManuallyUploadedIde(uploadIdeVersion)
     sendOk(resp, "Uploading $uploadIdeVersion (#${taskStatus.taskId})")
@@ -46,7 +46,7 @@ class IdeServlet : BaseServlet() {
   private fun processDeleteIde(req: HttpServletRequest, resp: HttpServletResponse) {
     val ideVersion = parseIdeVersionParameter(req, resp) ?: return
     if (serverContext.ideKeeper.isAvailableIde(ideVersion)) {
-      val deleteIdeRunner = DeleteIdeTask(serverContext, ideVersion)
+      val deleteIdeRunner = DeleteIdeTask(serverContext.ideFilesBank, ideVersion)
       val taskStatus = serverContext.taskManager.enqueue(deleteIdeRunner)
       serverContext.ideKeeper.removeManuallyUploadedIde(ideVersion)
       sendOk(resp, "Deleting $ideVersion (#${taskStatus.taskId})")

@@ -15,9 +15,9 @@ import java.util.function.Supplier
  * Service tasks manager responsible for enqueuing service [tasks] [ServiceTask]
  * and executing the completion callbacks.
  */
-class ServiceTasksManager(concurrency: Int, maxKeepResults: Int) : Closeable {
+class ServiceTaskManager(concurrency: Int, maxKeepResults: Int) : Closeable {
   companion object {
-    val LOG: Logger = LoggerFactory.getLogger(ServiceTasksManager::class.java)
+    val LOG: Logger = LoggerFactory.getLogger(ServiceTaskManager::class.java)
   }
 
   private val nextTaskId = AtomicLong()

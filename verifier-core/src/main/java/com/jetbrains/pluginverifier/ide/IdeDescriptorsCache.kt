@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import java.io.Closeable
 
 /**
- * Caches the [IdeDescriptor]s by keys equal to [IdeVersion]s.
+ * Caches the [IdeDescriptor]s by [IdeVersion]s.
  *
  * The cache must be [closed] [close] on the application shutdown
  * to deallocate all the [IdeDescriptor]s.

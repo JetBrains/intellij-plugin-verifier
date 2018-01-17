@@ -4,9 +4,9 @@ import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
 import org.slf4j.Logger
@@ -15,8 +15,9 @@ import org.slf4j.LoggerFactory
 /**
  * [ServiceTask] that runs the [feature extractor] [FeaturesExtractor] for the [updateInfo].
  */
-class ExtractFeaturesTask(val serverContext: ServerContext,
-                          val updateInfo: UpdateInfo) : ServiceTask<ExtractFeaturesTask.Result>("Features of $updateInfo") {
+class ExtractFeaturesTask(val updateInfo: UpdateInfo,
+                          val ideDescriptorsCache: IdeDescriptorsCache,
+                          val pluginDetailsCache: PluginDetailsCache) : ServiceTask<ExtractFeaturesTask.Result>("Features of $updateInfo") {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(ExtractFeaturesTask::class.java)
@@ -38,7 +39,7 @@ class ExtractFeaturesTask(val serverContext: ServerContext,
 
   override fun execute(progress: ProgressIndicator) = getSomeCompatibleIde().use {
     val ideDescriptor = it.resource
-    serverContext.pluginDetailsCache.getPluginDetailsCacheEntry(updateInfo).use {
+    pluginDetailsCache.getPluginDetailsCacheEntry(updateInfo).use {
       with(it) {
         when (this) {
           is PluginDetailsCache.Result.Provided -> runFeatureExtractor(ideDescriptor, pluginDetails.plugin)
@@ -66,7 +67,7 @@ class ExtractFeaturesTask(val serverContext: ServerContext,
    * Selects any IDE compatible with the [updateInfo] among all the IDEs available in the cache now.
    */
   private fun getSomeCompatibleIde() =
-      serverContext.ideDescriptorsCache.getIdeDescriptor { availableIdes ->
+      ideDescriptorsCache.getIdeDescriptor { availableIdes ->
         availableIdes.find { updateInfo.isCompatibleWith(it) }!!
       }
 

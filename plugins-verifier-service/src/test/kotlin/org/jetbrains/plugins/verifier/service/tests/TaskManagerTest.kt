@@ -2,8 +2,8 @@ package org.jetbrains.plugins.verifier.service.tests
 
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTasksManager
 import org.junit.Assert.*
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicBoolean
@@ -11,8 +11,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 class TaskManagerTest {
   @Test
-  fun `general functionality of the service tasks manager`() {
-    ServiceTasksManager(4, 1000).use { tm ->
+  fun `general functionality of the service task manager`() {
+    ServiceTaskManager(4, 1000).use { tm ->
       val finish = AtomicBoolean()
 
       val serviceTask: ServiceTask<Int> = object : ServiceTask<Int>("testTask") {

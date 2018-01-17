@@ -7,7 +7,9 @@ import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
@@ -18,7 +20,7 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.results.VerificationResult
-import org.jetbrains.plugins.verifier.service.server.ServerContext
+import org.jetbrains.plugins.verifier.service.service.jdks.JdkDescriptorsCache
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkVersion
 import org.jetbrains.plugins.verifier.service.service.verifier.CheckRangeTask.Result
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
@@ -34,7 +36,10 @@ import org.slf4j.LoggerFactory
 class CheckRangeTask(val updateInfo: UpdateInfo,
                      private val jdkVersion: JdkVersion,
                      private val toCheckIdeVersions: List<IdeVersion>,
-                     val serverContext: ServerContext) : ServiceTask<CheckRangeTask.Result>("Check $updateInfo with IDE from [since; until]") {
+                     private val pluginDetailsCache: PluginDetailsCache,
+                     private val ideDescriptorsCache: IdeDescriptorsCache,
+                     private val jdkManager: JdkDescriptorsCache)
+  : ServiceTask<CheckRangeTask.Result>("Check $updateInfo with IDE from [since; until]") {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(CheckRangeTask::class.java)
@@ -56,7 +61,7 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
   }
 
   override fun execute(progress: ProgressIndicator): Result {
-    val ideDescriptorEntries = serverContext.ideDescriptorsCache.getIdeDescriptors { availableIdeVersions ->
+    val ideDescriptorEntries = ideDescriptorsCache.getIdeDescriptors { availableIdeVersions ->
       availableIdeVersions.filter {
         it in toCheckIdeVersions && updateInfo.isCompatibleWith(it)
       }
@@ -90,8 +95,8 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
                                  verificationReportage: VerificationReportage): List<VerificationResult> {
     val dependencyFinder = IdeDependencyFinder(
         ideDescriptor.ide,
-        serverContext.pluginRepository,
-        serverContext.pluginDetailsCache
+        updateInfo.pluginRepository,
+        pluginDetailsCache
     )
 
     val verifierParameters = VerifierParameters(
@@ -101,14 +106,14 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
         findDeprecatedApiUsages = true
     )
 
-    return with(serverContext.jdkManager.getJdkResolver(jdkVersion)) {
+    return with(jdkManager.getJdkResolver(jdkVersion)) {
       when (this) {
         is ResourceCacheEntryResult.Found -> {
           resourceCacheEntry.use {
             val verifierTask = VerifierTask(updateInfo, ideDescriptor, dependencyFinder)
             return Verification.run(
                 verifierParameters,
-                serverContext.pluginDetailsCache,
+                pluginDetailsCache,
                 listOf(verifierTask),
                 verificationReportage,
                 resourceCacheEntry.resource

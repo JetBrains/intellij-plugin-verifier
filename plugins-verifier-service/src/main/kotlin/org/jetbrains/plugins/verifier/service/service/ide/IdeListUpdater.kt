@@ -1,8 +1,9 @@
 package org.jetbrains.plugins.verifier.service.service.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.jetbrains.plugins.verifier.service.server.ServerContext
+import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import org.jetbrains.plugins.verifier.service.service.BaseService
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -11,12 +12,15 @@ import java.util.concurrent.TimeUnit
  * on the server. Being run periodically, it determines a list of IDE builds
  * that should be kept by fetching the IDE index from the IDE Repository ([IdeKeeper]).
  */
-class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES, serverContext) {
+class IdeListUpdater(taskManager: ServiceTaskManager,
+                     private val ideKeeper: IdeKeeper,
+                     private val ideFilesBank: IdeFilesBank)
+  : BaseService("IdeListUpdater", 0, 30, TimeUnit.MINUTES, taskManager) {
 
   private val downloadingIdes = Collections.synchronizedSet(hashSetOf<IdeVersion>())
 
   override fun doServe() {
-    val (availableIdes, missingIdes, unnecessaryIdes, manuallyUploadedIdes) = serverContext.ideKeeper.getIdesList()
+    val (availableIdes, missingIdes, unnecessaryIdes, manuallyUploadedIdes) = ideKeeper.getIdesList()
     logger.info("""Available IDEs: $availableIdes;
       Missing IDEs: $missingIdes;
       Unnecessary IDEs: $unnecessaryIdes;
@@ -33,8 +37,8 @@ class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater
 
   private fun enqueueDeleteIde(ideVersion: IdeVersion) {
     logger.info("Delete IDE #$ideVersion because it is not necessary anymore")
-    val task = DeleteIdeTask(serverContext, ideVersion)
-    val taskStatus = serverContext.taskManager.enqueue(task)
+    val task = DeleteIdeTask(ideFilesBank, ideVersion)
+    val taskStatus = taskManager.enqueue(task)
     logger.info("Delete IDE #$ideVersion is enqueued with taskId=#${taskStatus.taskId}")
   }
 
@@ -43,9 +47,9 @@ class IdeListUpdater(serverContext: ServerContext) : BaseService("IdeListUpdater
       return
     }
 
-    val runner = UploadIdeTask(serverContext, ideVersion)
+    val runner = UploadIdeTask(ideFilesBank, ideVersion)
 
-    val taskStatus = serverContext.taskManager.enqueue(
+    val taskStatus = taskManager.enqueue(
         runner,
         { _, _ -> },
         { _, _ -> }

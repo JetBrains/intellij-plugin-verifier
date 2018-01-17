@@ -3,10 +3,14 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 import com.google.common.collect.LinkedHashMultimap
 import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
+import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
+import org.jetbrains.plugins.verifier.service.service.jdks.JdkDescriptorsCache
 import org.jetbrains.plugins.verifier.service.service.jdks.JdkVersion
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
 import java.time.Duration
 import java.time.Instant
@@ -22,9 +26,14 @@ import java.util.concurrent.TimeUnit
  *
  * [Plugin verifier integration with the Plugins Repository](https://confluence.jetbrains.com/display/PLREP/plugin-verifier+integration+with+the+plugins.jetbrains.com)
  */
-class VerifierService(serverContext: ServerContext,
-                      private val verifierServiceProtocol: VerifierServiceProtocol)
-  : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES, serverContext) {
+class VerifierService(taskManager: ServiceTaskManager,
+                      private val verifierServiceProtocol: VerifierServiceProtocol,
+                      private val ideKeeper: IdeKeeper,
+                      private val pluginDetailsCache: PluginDetailsCache,
+                      private val ideDescriptorsCache: IdeDescriptorsCache,
+                      private val jdkDescriptorsCache: JdkDescriptorsCache)
+
+  : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES, taskManager) {
 
   private val verifiableUpdates = hashSetOf<UpdateInfo>()
 
@@ -54,7 +63,7 @@ class VerifierService(serverContext: ServerContext,
 
   private fun requestUpdatesToCheck(): Multimap<UpdateInfo, IdeVersion> {
     val updateInfoToIdes = LinkedHashMultimap.create<UpdateInfo, IdeVersion>()
-    for (ideVersion in serverContext.ideKeeper.getAvailableIdeVersions()) {
+    for (ideVersion in ideKeeper.getAvailableIdeVersions()) {
       verifierServiceProtocol.requestUpdatesToCheck(ideVersion).forEach {
         updateInfoToIdes.put(it, ideVersion)
       }
@@ -69,9 +78,11 @@ class VerifierService(serverContext: ServerContext,
         updateInfo,
         JdkVersion.JAVA_8_ORACLE,
         versions,
-        serverContext
+        pluginDetailsCache,
+        ideDescriptorsCache,
+        jdkDescriptorsCache
     )
-    val taskStatus = serverContext.taskManager.enqueue(
+    val taskStatus = taskManager.enqueue(
         task,
         { taskResult, _ -> onSuccess(taskResult, updateInfo) },
         { error, tid -> onError(error, tid, task) },

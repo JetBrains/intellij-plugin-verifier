@@ -1,18 +1,18 @@
 package org.jetbrains.plugins.verifier.service.service.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.jetbrains.plugins.verifier.service.server.ServerContext
+import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
 
 /**
  * Service task responsible for deleting IDE build having the specified [IDE version] [ideVersion].
  */
-class DeleteIdeTask(val serverContext: ServerContext,
+class DeleteIdeTask(val ideFilesBank: IdeFilesBank,
                     private val ideVersion: IdeVersion) : ServiceTask<Boolean>("DeleteIde #$ideVersion") {
 
   override fun execute(progress: ProgressIndicator): Boolean {
-    serverContext.ideFilesBank.deleteIde(ideVersion)
+    ideFilesBank.deleteIde(ideVersion)
     return true
   }
 

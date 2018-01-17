@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.verifier.service.service.features
 
+import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.service.BaseService
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
 import java.time.Duration
 import java.time.Instant
@@ -18,9 +20,11 @@ import java.util.concurrent.TimeUnit
  *
  * See [Feature extractor integration with the plugin repository](https://confluence.jetbrains.com/display/PLREP/features-extractor+integration+with+the+plugins.jetbrains.com)
  */
-class FeatureExtractorService(serverContext: ServerContext,
-                              private val featureServiceProtocol: FeatureServiceProtocol)
-  : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, serverContext) {
+class FeatureExtractorService(taskManager: ServiceTaskManager,
+                              private val featureServiceProtocol: FeatureServiceProtocol,
+                              private val ideDescriptorsCache: IdeDescriptorsCache,
+                              private val pluginDetailsCache: PluginDetailsCache)
+  : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, taskManager) {
 
   private val processingUpdates = hashSetOf<UpdateInfo>()
 
@@ -49,10 +53,11 @@ class FeatureExtractorService(serverContext: ServerContext,
     lastProceedDate[updateInfo] = Instant.now()
 
     val runner = ExtractFeaturesTask(
-        serverContext,
-        updateInfo
+        updateInfo,
+        ideDescriptorsCache,
+        pluginDetailsCache
     )
-    val taskStatus = serverContext.taskManager.enqueue(
+    val taskStatus = taskManager.enqueue(
         runner,
         { result, _ -> onSuccess(result) },
         { t, tid -> onError(t, tid, runner) },
