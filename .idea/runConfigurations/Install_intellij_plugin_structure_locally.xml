@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="install verifier" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="Install intellij-plugin-structure locally" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="executionName" />
-      <option name="externalProjectPath" value="$PROJECT_DIR$" />
+      <option name="externalProjectPath" value="$PROJECT_DIR$/intellij-plugin-structure" />
       <option name="externalSystemIdString" value="GRADLE" />
       <option name="scriptParameters" value="" />
       <option name="taskDescriptions">
@@ -16,6 +16,7 @@
       </option>
       <option name="vmOptions" value="" />
     </ExternalSystemSettings>
+    <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <method />
   </configuration>
 </component>
