@@ -17,7 +17,7 @@ import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
  *
  * The verification outcome can be one of the following:
  * - [OK]
- * - [Warnings]
+ * - [StructureWarnings]
  * - [MissingDependencies]
  * - [Problems]
  * - [InvalidPlugin]
@@ -65,12 +65,12 @@ sealed class VerificationResult(
    *
    * The [deprecatedUsages] contain the plugin's references during the IDE [deprecated] [DeprecatedApiUsage] API.
    */
-  class Warnings(pluginInfo: PluginInfo,
-                 ideVersion: IdeVersion,
-                 ignoredProblems: Set<CompatibilityProblem>,
-                 val pluginStructureWarnings: Set<PluginStructureWarning>,
-                 val dependenciesGraph: DependenciesGraph,
-                 val deprecatedUsages: Set<DeprecatedApiUsage>) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
+  class StructureWarnings(pluginInfo: PluginInfo,
+                          ideVersion: IdeVersion,
+                          ignoredProblems: Set<CompatibilityProblem>,
+                          val pluginStructureWarnings: Set<PluginStructureWarning>,
+                          val dependenciesGraph: DependenciesGraph,
+                          val deprecatedUsages: Set<DeprecatedApiUsage>) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
     override fun toString() = "Found ${pluginStructureWarnings.size} " + "warning".pluralize(pluginStructureWarnings.size)
   }
 
@@ -128,13 +128,13 @@ sealed class VerificationResult(
   }
 
   /**
-   * The [plugin]'s structure is invalid due to [pluginStructureErros].
+   * The [plugin]'s structure is invalid due to [pluginStructureErrors].
    */
   class InvalidPlugin(pluginInfo: PluginInfo,
                       ideVersion: IdeVersion,
                       ignoredProblems: Set<CompatibilityProblem>,
-                      val pluginStructureErros: List<PluginStructureError>) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
-    override fun toString() = "Plugin is invalid: ${pluginStructureErros.joinToString()}"
+                      val pluginStructureErrors: List<PluginStructureError>) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
+    override fun toString() = "Plugin is invalid: ${pluginStructureErrors.joinToString()}"
   }
 
   /**

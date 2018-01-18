@@ -75,7 +75,12 @@ class IdeDescriptorsCache(cacheSize: Int,
     return result
   }
 
-  private fun getIdeDescriptorCacheEntry(ideVersion: IdeVersion): ResourceCacheEntry<IdeDescriptor> {
+  /**
+   * Atomically creates an [IdeDescriptor] for IDE [ideVersion]
+   * and registers a [ResourceCacheEntry] for it.
+   * The cache's state is not modified until this method returns.
+   */
+  fun getIdeDescriptorCacheEntry(ideVersion: IdeVersion): ResourceCacheEntry<IdeDescriptor> {
     val resourceCacheEntryResult = resourceCache.getResourceCacheEntry(ideVersion)
     return with(resourceCacheEntryResult) {
       when (this) {

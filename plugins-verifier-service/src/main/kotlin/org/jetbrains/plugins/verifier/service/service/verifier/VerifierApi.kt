@@ -87,7 +87,7 @@ private fun convertVerifierResult(result: VerificationResult): VerificationResul
 private fun VerificationResult.getWarnings(): Set<PluginStructureWarning> = with(this) {
   when (this) {
     is VerificationResult.OK -> emptySet()
-    is VerificationResult.Warnings -> pluginStructureWarnings
+    is VerificationResult.StructureWarnings -> pluginStructureWarnings
     is VerificationResult.MissingDependencies -> pluginStructureWarnings
     is VerificationResult.Problems -> pluginStructureWarnings
     is VerificationResult.InvalidPlugin -> emptySet()
@@ -99,7 +99,7 @@ private fun VerificationResult.getWarnings(): Set<PluginStructureWarning> = with
 private fun VerificationResult.getProblems(): Set<CompatibilityProblem> = with(this) {
   when (this) {
     is VerificationResult.OK -> emptySet()
-    is VerificationResult.Warnings -> emptySet()
+    is VerificationResult.StructureWarnings -> emptySet()
     is VerificationResult.MissingDependencies -> this.problems
     is VerificationResult.Problems -> this.problems
     is VerificationResult.InvalidPlugin -> emptySet()
@@ -111,7 +111,7 @@ private fun VerificationResult.getProblems(): Set<CompatibilityProblem> = with(t
 private fun VerificationResult.getDependenciesGraph(): DependenciesGraph? = with(this) {
   when (this) {
     is VerificationResult.OK -> dependenciesGraph
-    is VerificationResult.Warnings -> dependenciesGraph
+    is VerificationResult.StructureWarnings -> dependenciesGraph
     is VerificationResult.MissingDependencies -> dependenciesGraph
     is VerificationResult.Problems -> dependenciesGraph
     is VerificationResult.InvalidPlugin -> null

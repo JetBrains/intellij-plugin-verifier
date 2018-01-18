@@ -303,7 +303,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     }
 
     if (pluginStructureWarnings.isNotEmpty()) {
-      return VerificationResult.Warnings(
+      return VerificationResult.StructureWarnings(
           pluginInfo,
           ideVersion,
           ignoredProblems,

@@ -50,7 +50,7 @@ class CheckPluginResultPrinter(private val outputOptions: OutputOptions,
         is VerificationResult.MissingDependencies -> it.problems  //some problems might have been caused by missing dependencies
         is VerificationResult.InvalidPlugin -> setOf(Any())
         is VerificationResult.OK,
-        is VerificationResult.Warnings,
+        is VerificationResult.StructureWarnings,
         is VerificationResult.NotFound,
         is VerificationResult.FailedToDownload -> emptySet()
       }

@@ -26,7 +26,7 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
 
       if (outputOptions.dumpBrokenPluginsFile != null) {
         val brokenPlugins = results
-            .filter { it !is VerificationResult.OK && it !is VerificationResult.Warnings }
+            .filter { it !is VerificationResult.OK && it !is VerificationResult.StructureWarnings }
             .map { it.plugin }
             .distinct()
         IdeResourceUtil.dumbBrokenPluginsList(File(outputOptions.dumpBrokenPluginsFile), brokenPlugins)
@@ -49,7 +49,7 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
             is VerificationResult.MissingDependencies -> it.problems //some problems might have been caused by missing dependencies
             is VerificationResult.InvalidPlugin -> setOf(Any())
             is VerificationResult.OK,
-            is VerificationResult.Warnings,
+            is VerificationResult.StructureWarnings,
             is VerificationResult.NotFound,
             is VerificationResult.FailedToDownload -> emptySet()
           }

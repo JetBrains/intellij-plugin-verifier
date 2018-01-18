@@ -128,7 +128,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     is VerificationResult.Problems -> problems
     is VerificationResult.MissingDependencies -> problems
     is VerificationResult.OK,
-    is VerificationResult.Warnings,
+    is VerificationResult.StructureWarnings,
     is VerificationResult.InvalidPlugin,
     is VerificationResult.NotFound,
     is VerificationResult.FailedToDownload -> emptySet()
@@ -211,7 +211,10 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
         is VerificationResult.Problems -> printProblems(plugin, testName, verificationResult.problems)
         is VerificationResult.MissingDependencies -> printMissingDependencies(plugin, verificationResult, testName)
         is VerificationResult.InvalidPlugin -> printBadPluginResult(verificationResult, testName)
-        is VerificationResult.OK, is VerificationResult.Warnings, is VerificationResult.NotFound, is VerificationResult.FailedToDownload -> {
+        is VerificationResult.OK,
+        is VerificationResult.StructureWarnings,
+        is VerificationResult.NotFound,
+        is VerificationResult.FailedToDownload -> {
         }
       }
     }
@@ -248,7 +251,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
   }
 
   private fun printBadPluginResult(verificationResult: VerificationResult.InvalidPlugin, versionTestName: String) {
-    val message = "Plugin is invalid: ${verificationResult.pluginStructureErros.joinToString()}"
+    val message = "Plugin is invalid: ${verificationResult.pluginStructureErrors.joinToString()}"
     tcLog.testStdErr(versionTestName, message)
     tcLog.testFailed(versionTestName, message, "")
   }

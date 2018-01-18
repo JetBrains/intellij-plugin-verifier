@@ -83,7 +83,7 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
     if (results.any { it is VerificationResult.InvalidPlugin }) {
       return "badPlugin"
     }
-    if (results.any { it is VerificationResult.Warnings }) {
+    if (results.any { it is VerificationResult.StructureWarnings }) {
       return "warnings"
     }
     return "pluginOk"
@@ -92,7 +92,7 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
   private fun HtmlBuilder.printPluginResult(result: VerificationResult) {
     val resultStyle = when (result) {
       is VerificationResult.OK -> "updateOk"
-      is VerificationResult.Warnings -> "warnings"
+      is VerificationResult.StructureWarnings -> "warnings"
       is VerificationResult.MissingDependencies -> "missingDeps"
       is VerificationResult.Problems -> "updateHasProblems"
       is VerificationResult.InvalidPlugin -> "badPlugin"
@@ -124,7 +124,7 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
       +with(result) {
         when (this) {
           is VerificationResult.OK -> "OK"
-          is VerificationResult.Warnings -> "${pluginStructureWarnings.size} " + "warning".pluralize(pluginStructureWarnings.size) + " found"
+          is VerificationResult.StructureWarnings -> "${pluginStructureWarnings.size} " + "warning".pluralize(pluginStructureWarnings.size) + " found"
           is VerificationResult.Problems -> "${problems.size} " + "problem".pluralize(problems.size) + " found"
           is VerificationResult.MissingDependencies -> "Plugin has " +
               "${directMissingDependencies.size} missing direct " + "dependency".pluralize(directMissingDependencies.size) + " and " +
@@ -154,9 +154,9 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
     with(result) {
       when (this) {
         is VerificationResult.OK -> +"No problems."
-        is VerificationResult.Warnings -> printWarnings(pluginStructureWarnings)
+        is VerificationResult.StructureWarnings -> printWarnings(pluginStructureWarnings)
         is VerificationResult.Problems -> printProblems(problems)
-        is VerificationResult.InvalidPlugin -> printShortAndFullDescription(pluginStructureErros.joinToString(), result.plugin.pluginId)
+        is VerificationResult.InvalidPlugin -> printShortAndFullDescription(pluginStructureErrors.joinToString(), result.plugin.pluginId)
         is VerificationResult.NotFound -> printShortAndFullDescription("Plugin ${result.plugin} is not found in the Repository", reason)
         is VerificationResult.FailedToDownload -> printShortAndFullDescription("Plugin ${result.plugin} is not downloaded from the Repository", reason)
         is VerificationResult.MissingDependencies -> printMissingDependenciesResult(this)

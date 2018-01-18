@@ -42,7 +42,7 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
 
   private fun VerificationResult.toDeprecatedUsages() = when (this) {
     is VerificationResult.OK -> deprecatedUsages
-    is VerificationResult.Warnings -> deprecatedUsages
+    is VerificationResult.StructureWarnings -> deprecatedUsages
     is VerificationResult.MissingDependencies -> deprecatedUsages
     is VerificationResult.Problems -> deprecatedUsages
     is VerificationResult.NotFound -> emptySet()
