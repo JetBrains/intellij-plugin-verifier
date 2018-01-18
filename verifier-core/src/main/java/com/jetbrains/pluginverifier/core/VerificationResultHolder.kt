@@ -14,21 +14,15 @@ import com.jetbrains.pluginverifier.results.warnings.DependenciesCycleWarning
  */
 class VerificationResultHolder(private val pluginVerificationReportage: PluginVerificationReportage) {
 
-  val problems: MutableSet<CompatibilityProblem> = hashSetOf()
+  val compatibilityProblems: MutableSet<CompatibilityProblem> = hashSetOf()
 
-  val warnings: MutableSet<PluginProblem> = hashSetOf()
+  val pluginWarnings: MutableSet<PluginProblem> = hashSetOf()
 
   val deprecatedUsages: MutableSet<DeprecatedApiUsage> = hashSetOf()
 
   var dependenciesGraph: DependenciesGraph? = null
 
   val ignoredProblemsHolder = IgnoredProblemsHolder(pluginVerificationReportage)
-
-  /**
-   * Holds the [warnings] [PluginProblem.Level.WARNING]
-   * of the plugin structure.
-   */
-  val pluginWarnings = arrayListOf<PluginProblem>()
 
   fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
     if (deprecatedApiUsage !in deprecatedUsages) {
@@ -38,21 +32,21 @@ class VerificationResultHolder(private val pluginVerificationReportage: PluginVe
   }
 
   fun registerProblem(problem: CompatibilityProblem) {
-    if (problem !in problems && !ignoredProblemsHolder.isIgnored(problem)) {
-      problems.add(problem)
+    if (problem !in compatibilityProblems && !ignoredProblemsHolder.isIgnored(problem)) {
+      compatibilityProblems.add(problem)
       pluginVerificationReportage.logNewProblemDetected(problem)
     }
   }
 
   fun registerIgnoredProblem(problem: CompatibilityProblem, ignoreDecisions: List<ProblemsFilter.Result.Ignore>) {
-    if (problem !in problems && !ignoredProblemsHolder.isIgnored(problem)) {
+    if (problem !in compatibilityProblems && !ignoredProblemsHolder.isIgnored(problem)) {
       ignoredProblemsHolder.registerIgnoredProblem(problem, ignoreDecisions)
     }
   }
 
   private fun registerWarning(warning: PluginProblem) {
-    if (warning !in warnings) {
-      warnings.add(warning)
+    if (warning !in pluginWarnings) {
+      pluginWarnings.add(warning)
       pluginVerificationReportage.logNewWarningDetected(warning)
     }
   }

@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.output.html
 
 import com.google.common.io.Resources
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
@@ -13,6 +12,7 @@ import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependen
 import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import java.io.PrintWriter
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -124,7 +124,7 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
       +with(result) {
         when (this) {
           is VerificationResult.OK -> "OK"
-          is VerificationResult.Warnings -> "${warnings.size} " + "warning".pluralize(warnings.size) + " found"
+          is VerificationResult.Warnings -> "${pluginStructureWarnings.size} " + "warning".pluralize(pluginStructureWarnings.size) + " found"
           is VerificationResult.Problems -> "${problems.size} " + "problem".pluralize(problems.size) + " found"
           is VerificationResult.MissingDependencies -> "Plugin has " +
               "${directMissingDependencies.size} missing direct " + "dependency".pluralize(directMissingDependencies.size) + " and " +
@@ -154,9 +154,9 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
     with(result) {
       when (this) {
         is VerificationResult.OK -> +"No problems."
-        is VerificationResult.Warnings -> printWarnings(warnings)
+        is VerificationResult.Warnings -> printWarnings(pluginStructureWarnings)
         is VerificationResult.Problems -> printProblems(problems)
-        is VerificationResult.InvalidPlugin -> printShortAndFullDescription(pluginProblems.joinToString(), result.plugin.pluginId)
+        is VerificationResult.InvalidPlugin -> printShortAndFullDescription(pluginStructureErros.joinToString(), result.plugin.pluginId)
         is VerificationResult.NotFound -> printShortAndFullDescription("Plugin ${result.plugin} is not found in the Repository", reason)
         is VerificationResult.FailedToDownload -> printShortAndFullDescription("Plugin ${result.plugin} is not downloaded from the Repository", reason)
         is VerificationResult.MissingDependencies -> printMissingDependenciesResult(this)
@@ -171,7 +171,7 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
     printMissingDependencies(missingDependencies.filter { it.dependency.isOptional && !missingDependencyIgnoring.ignoreMissingOptionalDependency(it.dependency) })
   }
 
-  private fun HtmlBuilder.printWarnings(warnings: Set<PluginProblem>) {
+  private fun HtmlBuilder.printWarnings(warnings: Set<PluginStructureWarning>) {
     p {
       warnings.forEach {
         +it.toString()

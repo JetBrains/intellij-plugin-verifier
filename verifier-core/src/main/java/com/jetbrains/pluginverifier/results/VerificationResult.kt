@@ -8,6 +8,8 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult.*
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.results.structure.PluginStructureError
+import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 
 /**
  * Represents possible outcomes of verifying
@@ -38,9 +40,9 @@ sealed class VerificationResult(
 ) {
 
   /**
-   * Indicates that the [plugin] neither has the structure [problems] [PluginProblem.Level.ERROR]
-   * nor the structure [warnings] [PluginProblem.Level.WARNING] nor
-   * the compatibility [problems] [CompatibilityProblem] when running in the [IDE] [ideVersion].
+   * The [plugin] neither has the structure [errors] [PluginStructureError]
+   * nor the structure [warnings] [PluginStructureWarning] nor
+   * the [compatibility problems] [CompatibilityProblem] when running in the [IDE] [ideVersion].
    *
    * The [dependenciesGraph] holds versions and relations between
    * the dependent plugins that were used during the [plugin] verification.
@@ -56,7 +58,7 @@ sealed class VerificationResult(
   }
 
   /**
-   * The [plugin]'s structure has [warnings] that should be fixed.
+   * The [plugin]'s structure has [pluginStructureWarnings] that should be fixed.
    *
    * The [dependenciesGraph] holds versions and relations between
    * the dependent plugins that were used during the [plugin] verification.
@@ -66,10 +68,10 @@ sealed class VerificationResult(
   class Warnings(pluginInfo: PluginInfo,
                  ideVersion: IdeVersion,
                  ignoredProblems: Set<CompatibilityProblem>,
-                 val warnings: Set<PluginProblem>,
+                 val pluginStructureWarnings: Set<PluginStructureWarning>,
                  val dependenciesGraph: DependenciesGraph,
                  val deprecatedUsages: Set<DeprecatedApiUsage>) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
-    override fun toString() = "Found ${warnings.size} " + "warning".pluralize(warnings.size)
+    override fun toString() = "Found ${pluginStructureWarnings.size} " + "warning".pluralize(pluginStructureWarnings.size)
   }
 
   /**
@@ -86,8 +88,8 @@ sealed class VerificationResult(
    * For example, the problems of type "class X is unresolved" might have been
    * reported because the class `X` resides in some of the unresolved dependencies.
    *
-   * The [warnings] contain the plugin's structure [warnings] [PluginProblem.Level.WARNING]
-   * that should be fixed.
+   * The [pluginStructureWarnings] are the [warnings] [PluginProblem.Level.WARNING]
+   * of the plugin structure that should be fixed.
    *
    * The [deprecatedUsages] contain the plugin's references during the IDE [deprecated] [DeprecatedApiUsage] API.
    */
@@ -96,7 +98,7 @@ sealed class VerificationResult(
                             ignoredProblems: Set<CompatibilityProblem>,
                             val dependenciesGraph: DependenciesGraph,
                             val problems: Set<CompatibilityProblem>,
-                            val warnings: Set<PluginProblem>,
+                            val pluginStructureWarnings: Set<PluginStructureWarning>,
                             val deprecatedUsages: Set<DeprecatedApiUsage>) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
     override fun toString() = "Missing ${directMissingDependencies.size} direct plugins and modules " + "dependency".pluralize(directMissingDependencies.size) + " and ${problems.size} " + "problem".pluralize(problems.size)
 
@@ -110,7 +112,7 @@ sealed class VerificationResult(
    * The [dependenciesGraph] holds versions and relations between
    * the dependent plugins that were used during the [plugin] verification.
    *
-   * The [warnings] contain the plugin's structure [warnings] [PluginProblem.Level.WARNING]
+   * The [pluginStructureWarnings] contain the plugin's structure [pluginStructureWarnings] [PluginProblem.Level.WARNING]
    * that should be fixed.
    *
    * The [deprecatedUsages] contain the plugin's references during the IDE [deprecated] [DeprecatedApiUsage] API.
@@ -120,19 +122,19 @@ sealed class VerificationResult(
                  ignoredProblems: Set<CompatibilityProblem>,
                  val problems: Set<CompatibilityProblem>,
                  val dependenciesGraph: DependenciesGraph,
-                 val warnings: Set<PluginProblem>,
+                 val pluginStructureWarnings: Set<PluginStructureWarning>,
                  val deprecatedUsages: Set<DeprecatedApiUsage>) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
-    override fun toString() = "Found ${problems.size} compatibility " + "problem".pluralize(problems.size) + " and ${warnings.size} " + "warning".pluralize(warnings.size)
+    override fun toString() = "Found ${problems.size} compatibility " + "problem".pluralize(problems.size) + " and ${pluginStructureWarnings.size} " + "warning".pluralize(pluginStructureWarnings.size)
   }
 
   /**
-   * The [plugin]'s structure is invalid due to [pluginProblems].
+   * The [plugin]'s structure is invalid due to [pluginStructureErros].
    */
   class InvalidPlugin(pluginInfo: PluginInfo,
                       ideVersion: IdeVersion,
                       ignoredProblems: Set<CompatibilityProblem>,
-                      val pluginProblems: List<PluginProblem>) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
-    override fun toString() = "Plugin is invalid: ${pluginProblems.joinToString()}"
+                      val pluginStructureErros: List<PluginStructureError>) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
+    override fun toString() = "Plugin is invalid: ${pluginStructureErros.joinToString()}"
   }
 
   /**

@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 
 /**
  * Converts the internal verifier [results] [CheckRangeTask.Result]
@@ -83,12 +84,12 @@ private fun convertVerifierResult(result: VerificationResult): VerificationResul
       .build()
 }
 
-private fun VerificationResult.getWarnings(): Set<PluginProblem> = with(this) {
+private fun VerificationResult.getWarnings(): Set<PluginStructureWarning> = with(this) {
   when (this) {
     is VerificationResult.OK -> emptySet()
-    is VerificationResult.Warnings -> warnings
-    is VerificationResult.MissingDependencies -> warnings
-    is VerificationResult.Problems -> warnings
+    is VerificationResult.Warnings -> pluginStructureWarnings
+    is VerificationResult.MissingDependencies -> pluginStructureWarnings
+    is VerificationResult.Problems -> pluginStructureWarnings
     is VerificationResult.InvalidPlugin -> emptySet()
     is VerificationResult.NotFound -> emptySet()
     is VerificationResult.FailedToDownload -> emptySet()
@@ -125,7 +126,7 @@ private fun convertProblems(problems: Set<CompatibilityProblem>): List<Verificat
       .build()
 }
 
-private fun convertWarnings(warnings: Set<PluginProblem>): List<VerificationResults.Warning> = warnings.map {
+private fun convertWarnings(warnings: Set<PluginStructureWarning>): List<VerificationResults.Warning> = warnings.map {
   VerificationResults.Warning.newBuilder()
       .setMessage(it.message)
       .build()

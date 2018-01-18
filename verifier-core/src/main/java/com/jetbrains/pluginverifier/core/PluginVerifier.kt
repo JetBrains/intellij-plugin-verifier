@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.core
 
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
@@ -23,6 +24,8 @@ import com.jetbrains.pluginverifier.reporting.verification.EmptyPluginVerificati
 import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
+import com.jetbrains.pluginverifier.results.structure.PluginStructureError
+import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.jgrapht.DirectedGraph
@@ -77,7 +80,14 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     with(it) {
       when (this) {
         is PluginDetailsCache.Result.Provided -> doVerification(pluginDetails)
-        is PluginDetailsCache.Result.InvalidPlugin -> VerificationResult.InvalidPlugin(pluginInfo, ideDescriptor.ideVersion, emptySet(), pluginErrors)
+        is PluginDetailsCache.Result.InvalidPlugin -> VerificationResult.InvalidPlugin(
+            pluginInfo,
+            ideDescriptor.ideVersion,
+            emptySet(),
+            pluginErrors
+                .filter { it.level == PluginProblem.Level.ERROR }
+                .map { PluginStructureError(it.message) }
+        )
         is PluginDetailsCache.Result.FileNotFound -> VerificationResult.NotFound(pluginInfo, ideDescriptor.ideVersion, emptySet(), reason)
         is PluginDetailsCache.Result.Failed -> {
           pluginVerificationReportage.logException("Plugin $pluginInfo was not downloaded", error)
@@ -136,7 +146,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
         pluginInfo,
         ideVersion,
         ignoredProblems,
-        listOf(UnableToReadPluginClassFilesProblem(e))
+        listOf(PluginStructureError(UnableToReadPluginClassFilesProblem(e).message))
     )
 
     /**
@@ -258,24 +268,49 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
   }
 
   private fun VerificationResultHolder.getVerificationResult(): VerificationResult {
-    val ignoredProblems = ignoredProblemsHolder.ignoredProblems
     val ideVersion = ideDescriptor.ideVersion
 
-    if (pluginWarnings.isNotEmpty()) {
-      return VerificationResult.InvalidPlugin(pluginInfo, ideVersion, ignoredProblems, pluginWarnings)
-    }
+    val ignoredProblems = ignoredProblemsHolder.ignoredProblems
+
+    val pluginStructureWarnings = pluginWarnings
+        .filter { it.level == PluginProblem.Level.WARNING }
+        .mapTo(hashSetOf()) { PluginStructureWarning(it.message) }
 
     val dependenciesGraph = dependenciesGraph!!
+
     if (dependenciesGraph.verifiedPlugin.missingDependencies.isNotEmpty()) {
-      return VerificationResult.MissingDependencies(pluginInfo, ideVersion, ignoredProblems, dependenciesGraph, problems, warnings, deprecatedUsages)
+      return VerificationResult.MissingDependencies(
+          pluginInfo,
+          ideVersion,
+          ignoredProblems,
+          dependenciesGraph,
+          compatibilityProblems,
+          pluginStructureWarnings,
+          deprecatedUsages
+      )
     }
 
-    if (problems.isNotEmpty()) {
-      return VerificationResult.Problems(pluginInfo, ideVersion, ignoredProblems, problems, dependenciesGraph, warnings, deprecatedUsages)
+    if (compatibilityProblems.isNotEmpty()) {
+      return VerificationResult.Problems(
+          pluginInfo,
+          ideVersion,
+          ignoredProblems,
+          compatibilityProblems,
+          dependenciesGraph,
+          pluginStructureWarnings,
+          deprecatedUsages
+      )
     }
 
-    if (warnings.isNotEmpty()) {
-      return VerificationResult.Warnings(pluginInfo, ideVersion, ignoredProblems, warnings, dependenciesGraph, deprecatedUsages)
+    if (pluginStructureWarnings.isNotEmpty()) {
+      return VerificationResult.Warnings(
+          pluginInfo,
+          ideVersion,
+          ignoredProblems,
+          pluginStructureWarnings,
+          dependenciesGraph,
+          deprecatedUsages
+      )
     }
 
     return VerificationResult.OK(pluginInfo, ideVersion, ignoredProblems, dependenciesGraph, deprecatedUsages)
