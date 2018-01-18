@@ -21,7 +21,7 @@ data class MethodNotFoundProblem(val unresolvedMethod: MethodReference,
                                  val caller: MethodLocation,
                                  val instruction: Instruction,
                                  val methodOwnerHierarchy: ClassHierarchy,
-                                 val ideVersion: IdeVersion) : Problem() {
+                                 val ideVersion: IdeVersion) : CompatibilityProblem() {
 
   override val shortDescription = "Invocation of unresolved method {0}".formatMessage(unresolvedMethod.formatMethodReference(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME))
 

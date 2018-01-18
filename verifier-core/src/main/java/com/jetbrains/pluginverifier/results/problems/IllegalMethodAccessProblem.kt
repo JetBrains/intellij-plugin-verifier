@@ -21,7 +21,7 @@ data class IllegalMethodAccessProblem(val bytecodeMethodReference: MethodReferen
                                       val inaccessibleMethod: MethodLocation,
                                       val methodAccessModifier: AccessType,
                                       val caller: MethodLocation,
-                                      val instruction: Instruction) : Problem() {
+                                      val instruction: Instruction) : CompatibilityProblem() {
 
   override val shortDescription = "Illegal invocation of {0} method {1}".formatMessage(methodAccessModifier, inaccessibleMethod)
 

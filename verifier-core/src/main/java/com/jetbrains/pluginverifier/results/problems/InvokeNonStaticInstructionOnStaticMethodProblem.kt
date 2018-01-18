@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.results.location.MethodLocation
 
 data class InvokeNonStaticInstructionOnStaticMethodProblem(val resolvedMethod: MethodLocation,
                                                            val caller: MethodLocation,
-                                                           val instruction: Instruction) : Problem() {
+                                                           val instruction: Instruction) : CompatibilityProblem() {
 
   override val shortDescription = "Attempt to execute a non-static instruction *{0}* on a static method {1}".formatMessage(instruction, resolvedMethod)
 

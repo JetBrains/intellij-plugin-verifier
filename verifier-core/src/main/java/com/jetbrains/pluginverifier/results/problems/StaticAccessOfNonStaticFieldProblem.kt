@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.results.location.MethodLocation
 
 data class StaticAccessOfNonStaticFieldProblem(val field: FieldLocation,
                                                val accessor: MethodLocation,
-                                               val instruction: Instruction) : Problem() {
+                                               val instruction: Instruction) : CompatibilityProblem() {
 
   override val shortDescription = "Attempt to execute a static access instruction *{0}* on a non-static field {1}".formatMessage(instruction, field)
 

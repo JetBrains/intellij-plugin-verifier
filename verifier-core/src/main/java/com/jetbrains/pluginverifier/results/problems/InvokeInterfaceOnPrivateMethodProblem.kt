@@ -4,7 +4,7 @@ import com.jetbrains.pluginverifier.misc.formatMessage
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 
 data class InvokeInterfaceOnPrivateMethodProblem(val resolvedMethod: MethodLocation,
-                                                 val caller: MethodLocation) : Problem() {
+                                                 val caller: MethodLocation) : CompatibilityProblem() {
 
   override val shortDescription = "Attempt to execute an *invokeinterface* instruction on a private method {0}".formatMessage(resolvedMethod)
 

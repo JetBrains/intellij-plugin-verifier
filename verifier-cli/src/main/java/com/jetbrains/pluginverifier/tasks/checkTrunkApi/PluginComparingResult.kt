@@ -12,7 +12,7 @@ data class PluginComparingResult(val plugin: PluginInfo,
    * Determines the problems of the Trunk IDE which were not present in the Release IDE
    * with respect to possible problems transformations.
    */
-  fun getNewApiProblems(): Set<Problem> {
+  fun getNewApiProblems(): Set<CompatibilityProblem> {
     val releaseProblems = releaseResult.getProblems()
     val trunkProblems = trunkResult.getProblems()
     return trunkProblems.filterNotTo(hashSetOf()) { isOldProblem(it, releaseProblems) }
@@ -22,7 +22,7 @@ data class PluginComparingResult(val plugin: PluginInfo,
    * Determines whether the [problem] is present in [oldProblems]
    * or is equivalent to any of the [oldProblems].
    */
-  private fun isOldProblem(problem: Problem, oldProblems: Set<Problem>): Boolean {
+  private fun isOldProblem(problem: CompatibilityProblem, oldProblems: Set<CompatibilityProblem>): Boolean {
     if (problem in oldProblems) {
       return true
     }

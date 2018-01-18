@@ -11,7 +11,7 @@ import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.location.MethodLocation
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 
 data class VerificationContext(
     val plugin: IdePlugin,
@@ -24,7 +24,7 @@ data class VerificationContext(
     val problemFilters: List<ProblemsFilter>
 ) {
 
-  fun registerProblem(problem: Problem) {
+  fun registerProblem(problem: CompatibilityProblem) {
     val shouldReportDecisions = problemFilters.map { it.shouldReportProblem(plugin, ideVersion, problem, this) }
     val ignoreDecisions = shouldReportDecisions.filterIsInstance<ProblemsFilter.Result.Ignore>()
     if (ignoreDecisions.isNotEmpty()) {

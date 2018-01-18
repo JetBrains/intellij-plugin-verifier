@@ -19,7 +19,7 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.local.LocalPluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -135,7 +135,7 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
     add(LogReporter(logger))
   }
 
-  private fun createProblemReporters(pluginVerificationDirectory: Path) = buildList<Reporter<Problem>> {
+  private fun createProblemReporters(pluginVerificationDirectory: Path) = buildList<Reporter<CompatibilityProblem>> {
     add(FileReporter(pluginVerificationDirectory.resolve("problems.txt")))
   }
 

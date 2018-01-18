@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 
 data class IllegalClassAccessProblem(val unavailableClass: ClassLocation,
                                      val access: AccessType,
-                                     val usage: Location) : Problem() {
+                                     val usage: Location) : CompatibilityProblem() {
 
   override val shortDescription = "Illegal access to {0} class {1}".formatMessage(access, unavailableClass)
 

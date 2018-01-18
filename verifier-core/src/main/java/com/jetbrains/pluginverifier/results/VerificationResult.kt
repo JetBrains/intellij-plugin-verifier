@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult.*
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 
 /**
  * Represents possible outcomes of verifying
@@ -32,15 +32,15 @@ sealed class VerificationResult(
      */
     val ideVersion: IdeVersion,
     /**
-     * Compatibility [Problem]s that were manually ignored.
+     * Compatibility [CompatibilityProblem]s that were manually ignored.
      */
-    val ignoredProblems: Set<Problem>
+    val ignoredProblems: Set<CompatibilityProblem>
 ) {
 
   /**
    * Indicates that the [plugin] neither has the structure [problems] [PluginProblem.Level.ERROR]
    * nor the structure [warnings] [PluginProblem.Level.WARNING] nor
-   * the compatibility [problems] [Problem] when running in the [IDE] [ideVersion].
+   * the compatibility [problems] [CompatibilityProblem] when running in the [IDE] [ideVersion].
    *
    * The [dependenciesGraph] holds versions and relations between
    * the dependent plugins that were used during the [plugin] verification.
@@ -49,7 +49,7 @@ sealed class VerificationResult(
    */
   class OK(pluginInfo: PluginInfo,
            ideVersion: IdeVersion,
-           ignoredProblems: Set<Problem>,
+           ignoredProblems: Set<CompatibilityProblem>,
            val dependenciesGraph: DependenciesGraph,
            val deprecatedUsages: Set<DeprecatedApiUsage>) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
     override fun toString() = "OK"
@@ -65,7 +65,7 @@ sealed class VerificationResult(
    */
   class Warnings(pluginInfo: PluginInfo,
                  ideVersion: IdeVersion,
-                 ignoredProblems: Set<Problem>,
+                 ignoredProblems: Set<CompatibilityProblem>,
                  val warnings: Set<PluginProblem>,
                  val dependenciesGraph: DependenciesGraph,
                  val deprecatedUsages: Set<DeprecatedApiUsage>) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
@@ -81,7 +81,7 @@ sealed class VerificationResult(
    * - [direct] [DependenciesGraph.verifiedPlugin] and [transitive] [DependenciesGraph.getMissingDependencyPaths] missing dependencies
    * - [reasons] [com.jetbrains.pluginverifier.dependencies.MissingDependency.missingReason] why the dependencies are missing
    *
-   * The [problems] may contain the compatibility [problems] [Problem],
+   * The [problems] may contain the compatibility [problems] [CompatibilityProblem],
    * some of which might have been caused by miss of the dependencies.
    * For example, the problems of type "class X is unresolved" might have been
    * reported because the class `X` resides in some of the unresolved dependencies.
@@ -93,9 +93,9 @@ sealed class VerificationResult(
    */
   class MissingDependencies(pluginInfo: PluginInfo,
                             ideVersion: IdeVersion,
-                            ignoredProblems: Set<Problem>,
+                            ignoredProblems: Set<CompatibilityProblem>,
                             val dependenciesGraph: DependenciesGraph,
-                            val problems: Set<Problem>,
+                            val problems: Set<CompatibilityProblem>,
                             val warnings: Set<PluginProblem>,
                             val deprecatedUsages: Set<DeprecatedApiUsage>) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
     override fun toString() = "Missing ${directMissingDependencies.size} direct plugins and modules " + "dependency".pluralize(directMissingDependencies.size) + " and ${problems.size} " + "problem".pluralize(problems.size)
@@ -117,8 +117,8 @@ sealed class VerificationResult(
    */
   class Problems(pluginInfo: PluginInfo,
                  ideVersion: IdeVersion,
-                 ignoredProblems: Set<Problem>,
-                 val problems: Set<Problem>,
+                 ignoredProblems: Set<CompatibilityProblem>,
+                 val problems: Set<CompatibilityProblem>,
                  val dependenciesGraph: DependenciesGraph,
                  val warnings: Set<PluginProblem>,
                  val deprecatedUsages: Set<DeprecatedApiUsage>) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
@@ -130,7 +130,7 @@ sealed class VerificationResult(
    */
   class InvalidPlugin(pluginInfo: PluginInfo,
                       ideVersion: IdeVersion,
-                      ignoredProblems: Set<Problem>,
+                      ignoredProblems: Set<CompatibilityProblem>,
                       val pluginProblems: List<PluginProblem>) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
     override fun toString() = "Plugin is invalid: ${pluginProblems.joinToString()}"
   }
@@ -140,7 +140,7 @@ sealed class VerificationResult(
    */
   class NotFound(pluginInfo: PluginInfo,
                  ideVersion: IdeVersion,
-                 ignoredProblems: Set<Problem>,
+                 ignoredProblems: Set<CompatibilityProblem>,
                  val reason: String) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
     override fun toString() = "Plugin is not found: $reason"
   }
@@ -151,7 +151,7 @@ sealed class VerificationResult(
    */
   class FailedToDownload(pluginInfo: PluginInfo,
                          ideVersion: IdeVersion,
-                         ignoredProblems: Set<Problem>,
+                         ignoredProblems: Set<CompatibilityProblem>,
                          val reason: String) : VerificationResult(pluginInfo, ideVersion, ignoredProblems)
 
 }

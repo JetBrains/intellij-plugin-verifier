@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.results.reference.ClassReference
 
 data class InvalidClassFileProblem(val brokenClass: ClassReference,
                                    val usage: Location,
-                                   val reason: String) : Problem() {
+                                   val reason: String) : CompatibilityProblem() {
 
   override val shortDescription = "Invalid class-file {0}".formatMessage(brokenClass)
 

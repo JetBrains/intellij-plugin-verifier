@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 
 data class ClassNotFoundProblem(val unresolved: ClassReference,
-                                val usage: Location) : Problem() {
+                                val usage: Location) : CompatibilityProblem() {
 
   override val shortDescription = "Access to unresolved class {0}".formatMessage(unresolved)
 

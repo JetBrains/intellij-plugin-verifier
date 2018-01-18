@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
 import com.jetbrains.pluginverifier.results.VerificationResult
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import java.io.PrintWriter
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -188,7 +188,7 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
 
   private fun loadReportCss() = Resources.toString(HtmlResultPrinter::class.java.getResource("/reportCss.css"), Charset.forName("UTF-8"))
 
-  private fun HtmlBuilder.printProblems(problems: Set<Problem>) {
+  private fun HtmlBuilder.printProblems(problems: Set<CompatibilityProblem>) {
     problems
         .sortedBy { it.shortDescription }
         .groupBy { it.shortDescription }

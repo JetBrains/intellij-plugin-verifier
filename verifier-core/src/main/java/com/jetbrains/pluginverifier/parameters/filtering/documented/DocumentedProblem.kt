@@ -17,14 +17,14 @@ import com.jetbrains.pluginverifier.verifiers.isSubclassOrSelf
  * @author Sergey Patrikeev
  */
 interface DocumentedProblem {
-  fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean
+  fun isDocumenting(problem: CompatibilityProblem, verificationContext: VerificationContext): Boolean
 }
 
 /**
  * <class name> class removed
  */
 data class DocClassRemoved(val className: String) : DocumentedProblem {
-  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext) =
+  override fun isDocumenting(problem: CompatibilityProblem, verificationContext: VerificationContext) =
       when (problem) {
         is ClassNotFoundProblem -> problem.unresolved.className == className
         is MethodNotFoundProblem -> problem.unresolvedMethod.doesMethodDependOnClass(className)
@@ -40,7 +40,7 @@ data class DocClassRemoved(val className: String) : DocumentedProblem {
  * if a method 'foo' of type A was removed, problem 'method B.foo is not found' will not be reported
  */
 data class DocMethodRemoved(val hostClass: String, val methodName: String) : DocumentedProblem {
-  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
+  override fun isDocumenting(problem: CompatibilityProblem, verificationContext: VerificationContext): Boolean =
       problem is MethodNotFoundProblem
           && problem.unresolvedMethod.methodName == methodName
           && verificationContext.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
@@ -53,7 +53,7 @@ data class DocMethodRemoved(val hostClass: String, val methodName: String) : Doc
  * if the return type of method 'foo' of type A was changed, problem 'method B.foo is not found' will not be reported
  */
 data class DocMethodReturnTypeChanged(val hostClass: String, val methodName: String) : DocumentedProblem {
-  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
+  override fun isDocumenting(problem: CompatibilityProblem, verificationContext: VerificationContext): Boolean =
       problem is MethodNotFoundProblem
           && problem.unresolvedMethod.methodName == methodName
           && verificationContext.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
@@ -63,7 +63,7 @@ data class DocMethodReturnTypeChanged(val hostClass: String, val methodName: Str
  * <class name>.<method name> method visibility changed from <before> to <after>
  */
 data class DocMethodVisibilityChanged(val hostClass: String, val methodName: String) : DocumentedProblem {
-  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
+  override fun isDocumenting(problem: CompatibilityProblem, verificationContext: VerificationContext): Boolean =
       problem is IllegalMethodAccessProblem && problem.inaccessibleMethod.hostClass.className == hostClass && problem.inaccessibleMethod.methodName == methodName
 }
 
@@ -74,7 +74,7 @@ data class DocMethodVisibilityChanged(val hostClass: String, val methodName: Str
  * if the parameter type of method 'foo' of type A was changed, problem 'method B.foo is not found' will not be reported
  */
 data class DocMethodParameterTypeChanged(val hostClass: String, val methodName: String) : DocumentedProblem {
-  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
+  override fun isDocumenting(problem: CompatibilityProblem, verificationContext: VerificationContext): Boolean =
       problem is MethodNotFoundProblem
           && problem.unresolvedMethod.methodName == methodName
           && verificationContext.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
@@ -87,7 +87,7 @@ data class DocMethodParameterTypeChanged(val hostClass: String, val methodName: 
  * if a field 'x' of type A was removed, problem 'field B.x is not found' will not be reported
  */
 data class DocFieldRemoved(val hostClass: String, val fieldName: String) : DocumentedProblem {
-  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
+  override fun isDocumenting(problem: CompatibilityProblem, verificationContext: VerificationContext): Boolean =
       problem is FieldNotFoundProblem
           && problem.unresolvedField.fieldName == fieldName
           && verificationContext.isSubclassOrSelf(problem.unresolvedField.hostClass.className, hostClass)
@@ -100,7 +100,7 @@ data class DocFieldRemoved(val hostClass: String, val fieldName: String) : Docum
  * if the field type of a field 'x' of type A was changed, problem 'field B.x is not found' will not be reported
  */
 data class DocFieldTypeChanged(val hostClass: String, val fieldName: String) : DocumentedProblem {
-  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
+  override fun isDocumenting(problem: CompatibilityProblem, verificationContext: VerificationContext): Boolean =
       problem is FieldNotFoundProblem
           && problem.unresolvedField.fieldName == fieldName
           && verificationContext.isSubclassOrSelf(problem.unresolvedField.hostClass.className, hostClass)
@@ -110,7 +110,7 @@ data class DocFieldTypeChanged(val hostClass: String, val fieldName: String) : D
  * <class name>.<field name> field visibility changed from <before> to <after>
  */
 data class DocFieldVisibilityChanged(val hostClass: String, val fieldName: String) : DocumentedProblem {
-  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
+  override fun isDocumenting(problem: CompatibilityProblem, verificationContext: VerificationContext): Boolean =
       problem is IllegalFieldAccessProblem && problem.inaccessibleField.hostClass.className == hostClass && problem.inaccessibleField.fieldName == fieldName
 }
 
@@ -122,7 +122,7 @@ data class DocPackageRemoved(val packageName: String) : DocumentedProblem {
   private fun String?.isClassInPackage() =
       this?.startsWith(packageName + "/") ?: false
 
-  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext) =
+  override fun isDocumenting(problem: CompatibilityProblem, verificationContext: VerificationContext) =
       when (problem) {
         is ClassNotFoundProblem -> problem.unresolved.className.isClassInPackage()
         is MethodNotFoundProblem -> problem.unresolvedMethod.doesMethodDependOnClass { it.isClassInPackage() }
@@ -135,7 +135,7 @@ data class DocPackageRemoved(val packageName: String) : DocumentedProblem {
  * <class name>.<method name> abstract method added
  */
 data class DocAbstractMethodAdded(val hostClass: String, val methodName: String) : DocumentedProblem {
-  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext): Boolean =
+  override fun isDocumenting(problem: CompatibilityProblem, verificationContext: VerificationContext): Boolean =
       problem is MethodNotImplementedProblem
           && problem.abstractMethod.methodName == methodName
           && verificationContext.isSubclassOrSelf(problem.incompleteClass.className, hostClass)
@@ -145,7 +145,7 @@ data class DocAbstractMethodAdded(val hostClass: String, val methodName: String)
  * <class name> class moved to package <package name>
  */
 data class DocClassMovedToPackage(val oldClassName: String, val newPackageName: String) : DocumentedProblem {
-  override fun isDocumenting(problem: Problem, verificationContext: VerificationContext) =
+  override fun isDocumenting(problem: CompatibilityProblem, verificationContext: VerificationContext) =
       when (problem) {
         is ClassNotFoundProblem -> problem.unresolved.className == oldClassName
         is MethodNotFoundProblem -> problem.unresolvedMethod.doesMethodDependOnClass { it == oldClassName }

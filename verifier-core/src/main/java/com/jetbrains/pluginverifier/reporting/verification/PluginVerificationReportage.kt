@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import java.io.Closeable
 
 /**
@@ -34,7 +34,7 @@ interface PluginVerificationReportage : Closeable {
 
   fun logDependencyGraph(dependenciesGraph: DependenciesGraph)
 
-  fun logNewProblemDetected(problem: Problem)
+  fun logNewProblemDetected(problem: CompatibilityProblem)
 
   fun logNewWarningDetected(warning: PluginProblem)
 
@@ -42,7 +42,7 @@ interface PluginVerificationReportage : Closeable {
 
   fun logVerificationResult(verificationResult: VerificationResult)
 
-  fun logProblemIgnored(problem: Problem, reason: String)
+  fun logProblemIgnored(problem: CompatibilityProblem, reason: String)
 
   fun logDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage)
 

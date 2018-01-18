@@ -13,7 +13,7 @@ import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
 import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 
 data class MethodNotImplementedProblem(val abstractMethod: MethodLocation,
-                                       val incompleteClass: ClassLocation) : Problem() {
+                                       val incompleteClass: ClassLocation) : CompatibilityProblem() {
 
   override val shortDescription = "Abstract method ${abstractMethod.formatMethodLocation(FULL_HOST_WITH_SIGNATURE, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)} is not implemented"
 

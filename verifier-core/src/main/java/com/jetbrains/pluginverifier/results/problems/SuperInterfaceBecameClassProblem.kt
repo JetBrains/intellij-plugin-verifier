@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 
 data class SuperInterfaceBecameClassProblem(val child: ClassLocation,
-                                            val clazz: ClassLocation) : Problem() {
+                                            val clazz: ClassLocation) : CompatibilityProblem() {
 
   override val shortDescription = "Incompatible change of super interface {0} to class".formatMessage(clazz)
 

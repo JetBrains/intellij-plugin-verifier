@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.results.VerificationResult
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 
 /**
  * Converts the internal verifier [results] [CheckRangeTask.Result]
@@ -95,7 +95,7 @@ private fun VerificationResult.getWarnings(): Set<PluginProblem> = with(this) {
   }
 }
 
-private fun VerificationResult.getProblems(): Set<Problem> = with(this) {
+private fun VerificationResult.getProblems(): Set<CompatibilityProblem> = with(this) {
   when (this) {
     is VerificationResult.OK -> emptySet()
     is VerificationResult.Warnings -> emptySet()
@@ -119,7 +119,7 @@ private fun VerificationResult.getDependenciesGraph(): DependenciesGraph? = with
   }
 }
 
-private fun convertProblems(problems: Set<Problem>): List<VerificationResults.Problem> = problems.map {
+private fun convertProblems(problems: Set<CompatibilityProblem>): List<VerificationResults.Problem> = problems.map {
   VerificationResults.Problem.newBuilder()
       .setMessage(it.fullDescription)
       .build()

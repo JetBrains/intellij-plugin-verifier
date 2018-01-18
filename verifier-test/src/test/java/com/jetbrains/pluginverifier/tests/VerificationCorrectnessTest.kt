@@ -21,7 +21,7 @@ import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tests.mocks.EmptyReporterSetProvider
 import com.jetbrains.pluginverifier.tests.mocks.NotFoundDependencyFinder
 import com.jetbrains.pluginverifier.tests.mocks.TestJdkDescriptorProvider
@@ -42,14 +42,14 @@ class VerificationCorrectnessTest {
 
     lateinit var result: VerificationResult.MissingDependencies
 
-    lateinit var actualProblems: Set<Problem>
+    lateinit var actualProblems: Set<CompatibilityProblem>
 
     lateinit var actualDeprecatedUsages: Set<DeprecatedApiUsage>
 
     /**
      * The list is required here to take repetition of the problem into account.
      */
-    lateinit var redundantProblems: MutableList<Problem>
+    lateinit var redundantProblems: MutableList<CompatibilityProblem>
 
     lateinit var redundantDeprecated: MutableList<DeprecatedApiUsage>
 

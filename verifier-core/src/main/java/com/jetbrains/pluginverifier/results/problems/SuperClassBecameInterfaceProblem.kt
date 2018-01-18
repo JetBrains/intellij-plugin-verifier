@@ -4,7 +4,7 @@ import com.jetbrains.pluginverifier.misc.formatMessage
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 
 data class SuperClassBecameInterfaceProblem(val child: ClassLocation,
-                                            val interfaze: ClassLocation) : Problem() {
+                                            val interfaze: ClassLocation) : CompatibilityProblem() {
 
   override val shortDescription = "Incompatible change of super class {0} to interface".formatMessage(interfaze)
 

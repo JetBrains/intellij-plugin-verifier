@@ -45,7 +45,7 @@ class DocumentedProblemsReportingTest {
     verify(problemAndItsDocumentation, createVerificationContextForHierarchicalTest())
   }
 
-  private fun verify(problemAndItsDocumentation: List<Pair<Problem, DocumentedProblem>>,
+  private fun verify(problemAndItsDocumentation: List<Pair<CompatibilityProblem, DocumentedProblem>>,
                      verificationContext: VerificationContext) {
     val problems = problemAndItsDocumentation.map { it.first }
     val documentedProblems = problemAndItsDocumentation.map { it.second }
@@ -65,7 +65,7 @@ class DocumentedProblemsReportingTest {
     }
   }
 
-  private fun createProblemAndItsDocumentationTestMap(): List<Pair<Problem, DocumentedProblem>> {
+  private fun createProblemAndItsDocumentationTestMap(): List<Pair<CompatibilityProblem, DocumentedProblem>> {
     val classBReference = ClassReference("org/test/other/B")
     val methodFooIsNotFoundProblem = MethodNotFoundProblem(
         MethodReference(classBReference, "foo", "()V"),

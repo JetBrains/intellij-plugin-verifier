@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.results.problems
 
-abstract class Problem {
+abstract class CompatibilityProblem {
 
   abstract val shortDescription: String
 
@@ -11,7 +11,7 @@ abstract class Problem {
 
   final override fun toString(): String = fullDescription
 
-  final override fun equals(other: Any?): Boolean = other is Problem && equalityReference == other.equalityReference
+  final override fun equals(other: Any?): Boolean = other is CompatibilityProblem && equalityReference == other.equalityReference
 
   final override fun hashCode(): Int = equalityReference.hashCode()
 

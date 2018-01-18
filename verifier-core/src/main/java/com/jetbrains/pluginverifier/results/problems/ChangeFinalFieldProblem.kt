@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.results.location.MethodLocation
 
 data class ChangeFinalFieldProblem(val field: FieldLocation,
                                    val accessor: MethodLocation,
-                                   val instruction: Instruction) : Problem() {
+                                   val instruction: Instruction) : CompatibilityProblem() {
 
   override val shortDescription = "Attempt to change a final field {0}".formatMessage(field)
 

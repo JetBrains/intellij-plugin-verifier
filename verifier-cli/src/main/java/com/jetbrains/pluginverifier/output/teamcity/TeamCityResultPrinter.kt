@@ -13,7 +13,7 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import com.jetbrains.pluginverifier.tasks.checkIde.MissingCompatibleUpdate
 import org.slf4j.Logger
@@ -31,7 +31,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     /**
      * Converts string like "com.some.package.name.MyClassNameProblem" to "my class name"
      */
-    fun convertProblemClassNameToSentence(clazz: Class<Problem>): String {
+    fun convertProblemClassNameToSentence(clazz: Class<CompatibilityProblem>): String {
       val name = clazz.name.substringAfterLast(".")
       var words = name.split("(?=[A-Z])".toRegex())
       if (words.isEmpty()) {
@@ -255,14 +255,14 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
 
   private fun printProblems(plugin: PluginInfo,
                             testName: String,
-                            problems: Set<Problem>) {
+                            problems: Set<CompatibilityProblem>) {
     val overview = getPluginOverviewLink(plugin) + "\n$plugin has ${problems.size} ${"problem".pluralize(problems.size)}\n"
     val problemsContent = getProblemsContent(problems)
     tcLog.testStdErr(testName, problemsContent)
     tcLog.testFailed(testName, overview, "")
   }
 
-  private fun getProblemsContent(problems: Set<Problem>): String =
+  private fun getProblemsContent(problems: Set<CompatibilityProblem>): String =
       problems.groupBy({ it.shortDescription }, { it.fullDescription }).entries
           .joinToString(separator = "\n") { (short, fulls) ->
             "#$short\n" + fulls.joinToString(separator = "\n") { "    $it" }
@@ -282,7 +282,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
 
   private fun getTooManyUnknownClassesProblems(missingDependencies: List<MissingDependency>,
                                                notFoundClassesProblems: List<ClassNotFoundProblem>,
-                                               problems: Set<Problem>): String {
+                                               problems: Set<CompatibilityProblem>): String {
     val otherProblems: String = getProblemsContent(problems.filterNot { it in notFoundClassesProblems }.sortedBy { it.javaClass.name }.toSet())
     return "There are too much missing classes (${notFoundClassesProblems.size});\n" +
         "it's probably because of missing plugins (${missingDependencies.map { it.dependency }.joinToString()});\n" +
@@ -347,7 +347,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     //missing dependencies
     //....(missing#1)
     //.........Required for plugin1, plugin2, plugin3
-    val problem2Plugin: Multimap<Problem, PluginInfo> = HashMultimap.create()
+    val problem2Plugin: Multimap<CompatibilityProblem, PluginInfo> = HashMultimap.create()
     for (result in results) {
       for (problem in result.getProblems()) {
         problem2Plugin.put(problem, result.plugin)

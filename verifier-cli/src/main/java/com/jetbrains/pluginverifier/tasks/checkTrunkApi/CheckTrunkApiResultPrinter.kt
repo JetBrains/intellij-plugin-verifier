@@ -13,7 +13,7 @@ import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 
@@ -29,8 +29,8 @@ class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions) : Tas
     }
   }
 
-  private fun CheckTrunkApiResult.getNewPluginProblems(): Multimap<PluginInfo, Problem> {
-    val result = HashMultimap.create<PluginInfo, Problem>()
+  private fun CheckTrunkApiResult.getNewPluginProblems(): Multimap<PluginInfo, CompatibilityProblem> {
+    val result = HashMultimap.create<PluginInfo, CompatibilityProblem>()
     for ((plugin, cmp) in comparingResults) {
       result.putAll(plugin, cmp.getNewApiProblems())
     }
@@ -41,7 +41,7 @@ class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions) : Tas
     val tcLog = TeamCityLog(System.out)
 
     val plugin2NewProblems = apiChanges.getNewPluginProblems()
-    val problem2Plugins = Multimaps.invertFrom(plugin2NewProblems, HashMultimap.create<Problem, PluginInfo>())
+    val problem2Plugins = Multimaps.invertFrom(plugin2NewProblems, HashMultimap.create<CompatibilityProblem, PluginInfo>())
 
     val allProblems = problem2Plugins.keySet()
 

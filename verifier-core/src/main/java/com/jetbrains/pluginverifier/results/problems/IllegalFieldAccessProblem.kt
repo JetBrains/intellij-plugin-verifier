@@ -22,7 +22,7 @@ data class IllegalFieldAccessProblem(val fieldBytecodeReference: FieldReference,
                                      val inaccessibleField: FieldLocation,
                                      val accessor: MethodLocation,
                                      val instruction: Instruction,
-                                     val fieldAccess: AccessType) : Problem() {
+                                     val fieldAccess: AccessType) : CompatibilityProblem() {
 
   override val shortDescription = "Illegal access to a {0} field {1}".formatMessage(fieldAccess, inaccessibleField)
 

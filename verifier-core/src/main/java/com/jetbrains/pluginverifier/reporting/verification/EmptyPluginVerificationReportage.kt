@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.misc.impossible
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 
 object EmptyPluginVerificationReportage : PluginVerificationReportage {
   override val plugin: PluginInfo
@@ -22,7 +22,7 @@ object EmptyPluginVerificationReportage : PluginVerificationReportage {
 
   override fun logDependencyGraph(dependenciesGraph: DependenciesGraph) = Unit
 
-  override fun logNewProblemDetected(problem: Problem) = Unit
+  override fun logNewProblemDetected(problem: CompatibilityProblem) = Unit
 
   override fun logException(message: String, exception: Throwable) = Unit
 
@@ -32,7 +32,7 @@ object EmptyPluginVerificationReportage : PluginVerificationReportage {
 
   override fun logVerificationResult(verificationResult: VerificationResult) = Unit
 
-  override fun logProblemIgnored(problem: Problem, reason: String) = Unit
+  override fun logProblemIgnored(problem: CompatibilityProblem, reason: String) = Unit
 
   override fun logDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) = Unit
 

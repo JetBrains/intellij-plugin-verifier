@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 
 data class AbstractClassInstantiationProblem(val abstractClass: ClassLocation,
-                                             val creator: MethodLocation) : Problem() {
+                                             val creator: MethodLocation) : CompatibilityProblem() {
 
   override val shortDescription = "Instantiation of an abstract class {0}".formatMessage(abstractClass)
 

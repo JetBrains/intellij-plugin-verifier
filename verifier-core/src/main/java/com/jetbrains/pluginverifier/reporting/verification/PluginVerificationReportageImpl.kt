@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 
 class PluginVerificationReportageImpl(private val verificationReportage: VerificationReportage,
                                       override val plugin: PluginInfo,
@@ -36,7 +36,7 @@ class PluginVerificationReportageImpl(private val verificationReportage: Verific
     reporterSet.progressReporters.forEach { it.report(completed) }
   }
 
-  override fun logNewProblemDetected(problem: Problem) {
+  override fun logNewProblemDetected(problem: CompatibilityProblem) {
     reporterSet.problemsReporters.forEach { it.report(problem) }
   }
 
@@ -56,7 +56,7 @@ class PluginVerificationReportageImpl(private val verificationReportage: Verific
     reporterSet.messageReporters.forEach { it.report(message) }
   }
 
-  override fun logProblemIgnored(problem: Problem, reason: String) {
+  override fun logProblemIgnored(problem: CompatibilityProblem, reason: String) {
     reporterSet.ignoredProblemReporters.forEach { it.report(ProblemIgnoredEvent(plugin, ideVersion, problem, reason)) }
   }
 

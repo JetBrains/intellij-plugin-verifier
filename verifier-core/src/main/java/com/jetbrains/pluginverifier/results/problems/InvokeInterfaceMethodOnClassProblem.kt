@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.results.reference.MethodReference
 
 data class InvokeInterfaceMethodOnClassProblem(val methodReference: MethodReference,
                                                val caller: MethodLocation,
-                                               val instruction: Instruction) : Problem() {
+                                               val instruction: Instruction) : CompatibilityProblem() {
 
   override val shortDescription = "Incompatible change of interface {0} to class".formatMessage(methodReference.hostClass)
 

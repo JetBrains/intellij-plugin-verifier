@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 
 data class InheritFromFinalClassProblem(val child: ClassLocation,
-                                        val finalClass: ClassLocation) : Problem() {
+                                        val finalClass: ClassLocation) : CompatibilityProblem() {
 
   override val shortDescription = "Inheritance from a final class {0}".formatMessage(finalClass)
 

@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.reporting.common.MessageAndException
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import java.io.Closeable
 
 /**
@@ -21,7 +21,7 @@ data class VerificationReporterSet(
     val messageReporters: List<Reporter<String>>,
     val progressReporters: List<Reporter<Double>>,
     val warningReporters: List<Reporter<PluginProblem>>,
-    val problemsReporters: List<Reporter<Problem>>,
+    val problemsReporters: List<Reporter<CompatibilityProblem>>,
     val dependenciesGraphReporters: List<Reporter<DependenciesGraph>>,
     val ignoredProblemReporters: List<Reporter<ProblemIgnoredEvent>>,
     val deprecatedReporters: List<Reporter<DeprecatedApiUsage>>,

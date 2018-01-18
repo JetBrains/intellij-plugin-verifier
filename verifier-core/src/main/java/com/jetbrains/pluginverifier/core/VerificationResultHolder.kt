@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsHolder
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.warnings.DependenciesCycleWarning
 
 /**
@@ -14,7 +14,7 @@ import com.jetbrains.pluginverifier.results.warnings.DependenciesCycleWarning
  */
 class VerificationResultHolder(private val pluginVerificationReportage: PluginVerificationReportage) {
 
-  val problems: MutableSet<Problem> = hashSetOf()
+  val problems: MutableSet<CompatibilityProblem> = hashSetOf()
 
   val warnings: MutableSet<PluginProblem> = hashSetOf()
 
@@ -37,14 +37,14 @@ class VerificationResultHolder(private val pluginVerificationReportage: PluginVe
     }
   }
 
-  fun registerProblem(problem: Problem) {
+  fun registerProblem(problem: CompatibilityProblem) {
     if (problem !in problems && !ignoredProblemsHolder.isIgnored(problem)) {
       problems.add(problem)
       pluginVerificationReportage.logNewProblemDetected(problem)
     }
   }
 
-  fun registerIgnoredProblem(problem: Problem, ignoreDecisions: List<ProblemsFilter.Result.Ignore>) {
+  fun registerIgnoredProblem(problem: CompatibilityProblem, ignoreDecisions: List<ProblemsFilter.Result.Ignore>) {
     if (problem !in problems && !ignoredProblemsHolder.isIgnored(problem)) {
       ignoredProblemsHolder.registerIgnoredProblem(problem, ignoreDecisions)
     }

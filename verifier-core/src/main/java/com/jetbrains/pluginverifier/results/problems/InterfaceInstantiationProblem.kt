@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 
 data class InterfaceInstantiationProblem(val interfaze: ClassLocation,
-                                         val creator: MethodLocation) : Problem() {
+                                         val creator: MethodLocation) : CompatibilityProblem() {
 
   override val shortDescription = "Instantiation of an interface {0}".formatMessage(interfaze)
 

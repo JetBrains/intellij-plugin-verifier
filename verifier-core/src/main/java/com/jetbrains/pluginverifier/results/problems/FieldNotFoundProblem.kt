@@ -12,7 +12,7 @@ data class FieldNotFoundProblem(val unresolvedField: FieldReference,
                                 val accessor: MethodLocation,
                                 val fieldOwnerHierarchy: ClassHierarchy,
                                 val instruction: Instruction,
-                                val ideVersion: IdeVersion) : Problem() {
+                                val ideVersion: IdeVersion) : CompatibilityProblem() {
 
   override val shortDescription = "Access to unresolved field {0}".formatMessage(unresolvedField)
 

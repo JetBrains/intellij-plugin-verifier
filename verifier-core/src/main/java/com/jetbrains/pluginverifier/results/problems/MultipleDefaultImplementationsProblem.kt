@@ -9,7 +9,7 @@ data class MultipleDefaultImplementationsProblem(val caller: MethodLocation,
                                                  val methodReference: MethodReference,
                                                  val instruction: Instruction,
                                                  val implementation1: MethodLocation,
-                                                 val implementation2: MethodLocation) : Problem() {
+                                                 val implementation2: MethodLocation) : CompatibilityProblem() {
 
   override val shortDescription = "Multiple default implementations of method {0}".formatMessage(methodReference)
 

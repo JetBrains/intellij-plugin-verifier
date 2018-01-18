@@ -14,7 +14,7 @@ import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
 import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 
 data class OverridingFinalMethodProblem(val finalMethod: MethodLocation,
-                                        val invalidClass: ClassLocation) : Problem() {
+                                        val invalidClass: ClassLocation) : CompatibilityProblem() {
 
   override val shortDescription = "Overriding a final method ${finalMethod.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}"
 

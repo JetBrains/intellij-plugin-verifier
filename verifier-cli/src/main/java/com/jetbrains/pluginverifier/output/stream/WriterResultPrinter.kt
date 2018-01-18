@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
-import com.jetbrains.pluginverifier.results.problems.Problem
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import java.io.PrintWriter
 
@@ -88,7 +88,7 @@ class WriterResultPrinter(private val out: PrintWriter,
     }
   }
 
-  private fun printProblems(ideVersion: IdeVersion, plugin: PluginInfo, problems: Set<Problem>) {
+  private fun printProblems(ideVersion: IdeVersion, plugin: PluginInfo, problems: Set<CompatibilityProblem>) {
     val problemsCnt = problems.size
     out.println("With IDE #$ideVersion plugin $plugin has $problemsCnt " + "problem".pluralize(problemsCnt))
     problems.groupBy({ it.shortDescription }, { it.fullDescription }).forEach {
