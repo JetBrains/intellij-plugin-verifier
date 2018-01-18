@@ -40,9 +40,12 @@
             <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-base" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-classes" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-ide" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-ide-classes" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-intellij" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-intellij-classes" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-teamcity" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/tests" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/tests/mock-compile-library" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/tests/mock-plugin" />
             <option value="$PROJECT_DIR$/intellij-plugin-structure/tests/teamcity-mock-plugin" />
           </set>
@@ -70,6 +73,22 @@
                   <project path="$PROJECT_DIR$/verifier-test/mock-plugin" />
                 </projects>
               </build>
+              <build path="$PROJECT_DIR$/intellij-plugin-structure">
+                <projects>
+                  <project path="$PROJECT_DIR$/intellij-plugin-structure" />
+                  <project path="$PROJECT_DIR$/intellij-plugin-structure/structure-base" />
+                  <project path="$PROJECT_DIR$/intellij-plugin-structure/structure-classes" />
+                  <project path="$PROJECT_DIR$/intellij-plugin-structure/structure-ide" />
+                  <project path="$PROJECT_DIR$/intellij-plugin-structure/structure-ide-classes" />
+                  <project path="$PROJECT_DIR$/intellij-plugin-structure/structure-intellij" />
+                  <project path="$PROJECT_DIR$/intellij-plugin-structure/structure-intellij-classes" />
+                  <project path="$PROJECT_DIR$/intellij-plugin-structure/structure-teamcity" />
+                  <project path="$PROJECT_DIR$/intellij-plugin-structure/tests" />
+                  <project path="$PROJECT_DIR$/intellij-plugin-structure/tests/mock-compile-library" />
+                  <project path="$PROJECT_DIR$/intellij-plugin-structure/tests/mock-plugin" />
+                  <project path="$PROJECT_DIR$/intellij-plugin-structure/tests/teamcity-mock-plugin" />
+                </projects>
+              </build>
             </builds>
           </compositeBuild>
         </compositeConfiguration>
@@ -81,6 +100,18 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/intellij-feature-extractor" />
             <option value="$PROJECT_DIR$/intellij-feature-extractor/test-classes" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-base" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-classes" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-ide" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-ide-classes" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-intellij" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-intellij-classes" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/structure-teamcity" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/tests" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/tests/mock-compile-library" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/tests/mock-plugin" />
+            <option value="$PROJECT_DIR$/intellij-plugin-structure/tests/teamcity-mock-plugin" />
             <option value="$PROJECT_DIR$/plugins-verifier-service" />
             <option value="$PROJECT_DIR$/verifier-cli" />
             <option value="$PROJECT_DIR$/verifier-core" />

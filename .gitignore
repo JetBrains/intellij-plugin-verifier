@@ -6,6 +6,7 @@ plugins-verifier-service/src/generated
 .idea/inspectionProfiles
 .idea/codeStyleSettings.xml
 .idea/modules/*
+.idea/gradle.xml
 for_tests/
 classes/*
 **/build
