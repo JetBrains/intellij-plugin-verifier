@@ -44,7 +44,7 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
     is VerificationResult.OK -> deprecatedUsages
     is VerificationResult.StructureWarnings -> deprecatedUsages
     is VerificationResult.MissingDependencies -> deprecatedUsages
-    is VerificationResult.Problems -> deprecatedUsages
+    is VerificationResult.CompatibilityProblems -> deprecatedUsages
     is VerificationResult.NotFound -> emptySet()
     is VerificationResult.FailedToDownload -> emptySet()
     is VerificationResult.InvalidPlugin -> emptySet()

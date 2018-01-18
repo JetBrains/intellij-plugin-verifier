@@ -73,7 +73,7 @@ data class PluginComparingResult(val plugin: PluginInfo,
     is VerificationResult.StructureWarnings,
     is VerificationResult.FailedToDownload -> emptySet()
     is VerificationResult.MissingDependencies -> problems
-    is VerificationResult.Problems -> problems
+    is VerificationResult.CompatibilityProblems -> problems
   }
 
 }

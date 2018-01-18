@@ -21,7 +21,7 @@ class WriterResultPrinter(private val out: PrintWriter,
         return@forEach when (this) {
           is VerificationResult.OK -> out.println("With IDE #$ideVersion the plugin $plugin is OK")
           is VerificationResult.StructureWarnings -> out.println("With IDE #$ideVersion the plugin $plugin has ${pluginStructureWarnings.size} " + "warning".pluralize(pluginStructureWarnings.size) + " : ${pluginStructureWarnings.joinToString(separator = "\n")}")
-          is VerificationResult.Problems -> printProblemsResult(ideVersion, plugin, this)
+          is VerificationResult.CompatibilityProblems -> printProblemsResult(ideVersion, plugin, this)
           is VerificationResult.MissingDependencies -> printMissingDependencies(this, ideVersion, plugin)
           is VerificationResult.InvalidPlugin -> out.println("The plugin $plugin is broken: ${pluginStructureErrors.joinToString()}")
           is VerificationResult.NotFound -> out.println("The plugin $plugin is not found: $reason")
@@ -61,7 +61,7 @@ class WriterResultPrinter(private val out: PrintWriter,
 
   private fun printProblemsResult(ideVersion: IdeVersion,
                                   plugin: PluginInfo,
-                                  verificationResult: VerificationResult.Problems) {
+                                  verificationResult: VerificationResult.CompatibilityProblems) {
     printProblems(ideVersion, plugin, verificationResult.problems)
     printWarnings(ideVersion, plugin, verificationResult.pluginStructureWarnings)
   }

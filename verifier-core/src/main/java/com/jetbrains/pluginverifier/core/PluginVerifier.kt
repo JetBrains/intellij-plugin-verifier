@@ -291,7 +291,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     }
 
     if (compatibilityProblems.isNotEmpty()) {
-      return VerificationResult.Problems(
+      return VerificationResult.CompatibilityProblems(
           pluginInfo,
           ideVersion,
           ignoredProblems,

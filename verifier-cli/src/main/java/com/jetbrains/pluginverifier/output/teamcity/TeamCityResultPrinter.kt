@@ -125,7 +125,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
   }
 
   private fun VerificationResult.getProblems() = when (this) {
-    is VerificationResult.Problems -> problems
+    is VerificationResult.CompatibilityProblems -> problems
     is VerificationResult.MissingDependencies -> problems
     is VerificationResult.OK,
     is VerificationResult.StructureWarnings,
@@ -208,7 +208,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
                                            testName: String) {
     tcLog.testStarted(testName).use {
       return@use when (verificationResult) {
-        is VerificationResult.Problems -> printProblems(plugin, testName, verificationResult.problems)
+        is VerificationResult.CompatibilityProblems -> printProblems(plugin, testName, verificationResult.problems)
         is VerificationResult.MissingDependencies -> printMissingDependencies(plugin, verificationResult, testName)
         is VerificationResult.InvalidPlugin -> printBadPluginResult(verificationResult, testName)
         is VerificationResult.OK,

@@ -19,7 +19,7 @@ import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
  * - [OK]
  * - [StructureWarnings]
  * - [MissingDependencies]
- * - [Problems]
+ * - [CompatibilityProblems]
  * - [InvalidPlugin]
  * - [NotFound]
  * - [FailedToDownload]
@@ -117,13 +117,13 @@ sealed class VerificationResult(
    *
    * The [deprecatedUsages] contain the plugin's references during the IDE [deprecated] [DeprecatedApiUsage] API.
    */
-  class Problems(pluginInfo: PluginInfo,
-                 ideVersion: IdeVersion,
-                 ignoredProblems: Set<CompatibilityProblem>,
-                 val problems: Set<CompatibilityProblem>,
-                 val dependenciesGraph: DependenciesGraph,
-                 val pluginStructureWarnings: Set<PluginStructureWarning>,
-                 val deprecatedUsages: Set<DeprecatedApiUsage>) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
+  class CompatibilityProblems(pluginInfo: PluginInfo,
+                              ideVersion: IdeVersion,
+                              ignoredProblems: Set<CompatibilityProblem>,
+                              val problems: Set<CompatibilityProblem>,
+                              val dependenciesGraph: DependenciesGraph,
+                              val pluginStructureWarnings: Set<PluginStructureWarning>,
+                              val deprecatedUsages: Set<DeprecatedApiUsage>) : VerificationResult(pluginInfo, ideVersion, ignoredProblems) {
     override fun toString() = "Found ${problems.size} compatibility " + "problem".pluralize(problems.size) + " and ${pluginStructureWarnings.size} " + "warning".pluralize(pluginStructureWarnings.size)
   }
 
