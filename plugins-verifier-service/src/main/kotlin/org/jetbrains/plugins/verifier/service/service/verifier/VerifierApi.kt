@@ -1,47 +1,44 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.verification.DependenciesGraphs
-import com.jetbrains.plugin.verification.UpdateRangeCompatibilityResults
 import com.jetbrains.plugin.verification.VerificationResults
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 
 /**
- * Converts the internal verifier [results] [CheckRangeTask.Result]
- * to the protocol API version of [results] [UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult].
+ * Converts the internal verifier [result] [VerificationResult]
+ * to the protocol API version of [result] [VerificationResults.VerificationResult].
  */
-fun CheckRangeTask.Result.prepareVerificationResponse(): UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult {
-  val apiResultType = toApiResultType()
-  val apiResults = verificationResults.orEmpty().map { convertVerifierResult(it) }
-  val invalidPluginProblems = invalidPluginProblems.orEmpty().map { convertInvalidProblem(it) }
-  val nonDownloadableReason = nonDownloadableReason
-  return UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.newBuilder()
-      .setUpdateId(updateInfo.updateId)
-      .setResultType(apiResultType)
-      .addAllIdeVerificationResults(apiResults)
-      .addAllInvalidPluginProblems(invalidPluginProblems)
-      .apply { if (nonDownloadableReason != null) setNonDownloadableReason(nonDownloadableReason) }
+fun VerificationResult.prepareVerificationResponse(): VerificationResults.VerificationResult {
+  val problems = getCompatibilityProblems()
+  val pluginStructureWarnings = getPluginStructureWarnings().map { it.convertPluginStructureWarning() }
+  val pluginStructureErrors = (this as? VerificationResult.InvalidPlugin)?.pluginStructureErrors.orEmpty().map { it.convertPluginStructureError() }
+  val dependenciesGraph = getDependenciesGraph()?.let { convertDependencyGraph(it) }
+  val resultType = convertResultType()
+  val compatibilityProblems = problems.map { it.convertCompatibilityProblem() }
+  val nonDownloadableReason = (this as? VerificationResult.FailedToDownload)?.reason
+  return VerificationResults.VerificationResult.newBuilder()
+      .setUpdateId((plugin as UpdateInfo).updateId)
+      .setIdeVersion(ideVersion.asString())
+      .setDependenciesGraph(dependenciesGraph)
+      .setResultType(resultType)
+      .addAllPluginStructureWarnings(pluginStructureWarnings)
+      .addAllPluginStructureErrors(pluginStructureErrors)
+      .addAllCompatibilityProblems(compatibilityProblems)
+      .setNonDownloadableReason(nonDownloadableReason)
       .build()
 }
 
-private fun convertInvalidProblem(pluginProblem: PluginProblem): VerificationResults.InvalidPluginProblem =
-    VerificationResults.InvalidPluginProblem.newBuilder()
-        .setMessage(pluginProblem.message)
-        .setLevel(when (pluginProblem.level) {
-          PluginProblem.Level.ERROR -> VerificationResults.InvalidPluginProblem.Level.ERROR
-          PluginProblem.Level.WARNING -> VerificationResults.InvalidPluginProblem.Level.WARNING
-        })
-        .build()
-
-private fun convertDependencyGraph(dependenciesGraph: DependenciesGraph): DependenciesGraphs.DependenciesGraph = DependenciesGraphs.DependenciesGraph.newBuilder()
-    .setStart(convertNode(dependenciesGraph.verifiedPlugin))
+private fun convertDependencyGraph(dependenciesGraph: DependenciesGraph) = DependenciesGraphs.DependenciesGraph.newBuilder()
+    .setVerifiedPlugin(convertNode(dependenciesGraph.verifiedPlugin))
     .addAllVertices(dependenciesGraph.vertices.map { convertNode(it) })
     .addAllEdges(dependenciesGraph.edges.map { convertEdge(it) })
     .build()
@@ -71,70 +68,63 @@ private fun convertPluginDependency(dependency: PluginDependency) =
         .setIsOptional(dependency.isOptional)
         .build()
 
-private fun convertVerifierResult(result: VerificationResult): VerificationResults.VerificationResult {
-  val problems = result.getProblems()
-  val warnings = result.getWarnings()
-  val dependenciesGraph = result.getDependenciesGraph()
-
-  return VerificationResults.VerificationResult.newBuilder()
-      .setIdeVersion(result.ideVersion.asString())
-      .addAllProblems(convertProblems(problems))
-      .addAllWarnings(convertWarnings(warnings))
-      .apply { if (dependenciesGraph != null) setDependenciesGraph(convertDependencyGraph(dependenciesGraph)) }
-      .build()
-}
-
-private fun VerificationResult.getWarnings(): Set<PluginStructureWarning> = with(this) {
+private fun VerificationResult.getPluginStructureWarnings() = with(this) {
   when (this) {
     is VerificationResult.OK -> emptySet()
     is VerificationResult.StructureWarnings -> pluginStructureWarnings
     is VerificationResult.MissingDependencies -> pluginStructureWarnings
-    is VerificationResult.Problems -> pluginStructureWarnings
+    is VerificationResult.CompatibilityProblems -> pluginStructureWarnings
     is VerificationResult.InvalidPlugin -> emptySet()
     is VerificationResult.NotFound -> emptySet()
     is VerificationResult.FailedToDownload -> emptySet()
   }
 }
 
-private fun VerificationResult.getProblems(): Set<CompatibilityProblem> = with(this) {
+private fun VerificationResult.getCompatibilityProblems() = with(this) {
   when (this) {
     is VerificationResult.OK -> emptySet()
     is VerificationResult.StructureWarnings -> emptySet()
-    is VerificationResult.MissingDependencies -> this.problems
-    is VerificationResult.Problems -> this.problems
+    is VerificationResult.MissingDependencies -> problems
+    is VerificationResult.CompatibilityProblems -> problems
     is VerificationResult.InvalidPlugin -> emptySet()
     is VerificationResult.NotFound -> emptySet()
     is VerificationResult.FailedToDownload -> emptySet()
   }
 }
 
-private fun VerificationResult.getDependenciesGraph(): DependenciesGraph? = with(this) {
+private fun VerificationResult.getDependenciesGraph() = with(this) {
   when (this) {
     is VerificationResult.OK -> dependenciesGraph
     is VerificationResult.StructureWarnings -> dependenciesGraph
     is VerificationResult.MissingDependencies -> dependenciesGraph
-    is VerificationResult.Problems -> dependenciesGraph
+    is VerificationResult.CompatibilityProblems -> dependenciesGraph
     is VerificationResult.InvalidPlugin -> null
     is VerificationResult.NotFound -> null
     is VerificationResult.FailedToDownload -> null
   }
 }
 
-private fun convertProblems(problems: Set<CompatibilityProblem>): List<VerificationResults.Problem> = problems.map {
-  VerificationResults.Problem.newBuilder()
-      .setMessage(it.fullDescription)
-      .build()
-}
+private fun CompatibilityProblem.convertCompatibilityProblem() =
+    VerificationResults.CompatibilityProblem.newBuilder()
+        .setMessage(fullDescription)
+        .build()
 
-private fun convertWarnings(warnings: Set<PluginStructureWarning>): List<VerificationResults.Warning> = warnings.map {
-  VerificationResults.Warning.newBuilder()
-      .setMessage(it.message)
-      .build()
-}
+private fun PluginStructureWarning.convertPluginStructureWarning() =
+    VerificationResults.PluginStructureWarning.newBuilder()
+        .setMessage(message)
+        .build()
 
-private fun CheckRangeTask.Result.toApiResultType(): UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType = when (resultType) {
-  CheckRangeTask.Result.ResultType.NON_DOWNLOADABLE -> UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType.NON_DOWNLOADABLE
-  CheckRangeTask.Result.ResultType.NO_COMPATIBLE_IDES -> UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType.NO_COMPATIBLE_IDES
-  CheckRangeTask.Result.ResultType.INVALID_PLUGIN -> UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType.INVALID_PLUGIN
-  CheckRangeTask.Result.ResultType.VERIFICATION_DONE -> UpdateRangeCompatibilityResults.UpdateRangeCompatibilityResult.ResultType.VERIFICATION_DONE
+private fun PluginStructureError.convertPluginStructureError() =
+    VerificationResults.PluginStructureError.newBuilder()
+        .setMessage(message)
+        .build()
+
+private fun VerificationResult.convertResultType() = when (this) {
+  is VerificationResult.OK -> VerificationResults.VerificationResult.ResultType.NON_DOWNLOADABLE
+  is VerificationResult.StructureWarnings -> VerificationResults.VerificationResult.ResultType.STRUCTURE_WARNINGS
+  is VerificationResult.CompatibilityProblems -> VerificationResults.VerificationResult.ResultType.INVALID_PLUGIN
+  is VerificationResult.MissingDependencies -> VerificationResults.VerificationResult.ResultType.MISSING_DEPENDENCIES
+  is VerificationResult.InvalidPlugin -> VerificationResults.VerificationResult.ResultType.INVALID_PLUGIN
+  is VerificationResult.NotFound -> VerificationResults.VerificationResult.ResultType.NON_DOWNLOADABLE
+  is VerificationResult.FailedToDownload -> VerificationResults.VerificationResult.ResultType.NON_DOWNLOADABLE
 }

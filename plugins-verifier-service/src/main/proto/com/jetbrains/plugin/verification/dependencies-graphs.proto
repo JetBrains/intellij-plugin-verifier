@@ -29,7 +29,7 @@ message DependenciesGraph {
         Dependency dependency = 3;
     }
 
-    Node start = 1;
+    Node verifiedPlugin = 1;
     repeated Node vertices = 2;
     repeated Edge edges = 3;
 }

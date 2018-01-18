@@ -1,22 +1,19 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.google.common.collect.LinkedHashMultimap
-import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.results.VerificationResult
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 /**
@@ -36,84 +33,80 @@ class VerifierService(taskManager: ServiceTaskManager,
 
   : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES, taskManager) {
 
-  private val verifiableUpdates = hashSetOf<UpdateInfo>()
+  /**
+   * Descriptor of the plugin and IDE against which the plugins is to be verified.
+   */
+  private data class PluginAndIdeVersion(val updateInfo: UpdateInfo, val ideVersion: IdeVersion) {
+    override fun toString() = "$updateInfo against $ideVersion"
+  }
 
-  private val lastCheckDate = hashMapOf<UpdateInfo, Instant>()
+  private val inProgress = hashSetOf<PluginAndIdeVersion>()
 
-  private val updatesMissingCompatibleIde = TreeSet<UpdateInfo>(compareBy { it.updateId })
+  private val lastCheckDate = hashMapOf<PluginAndIdeVersion, Instant>()
 
   override fun doServe() {
-    val updateToIdes = requestUpdatesToCheck()
-    logger.info("Checking updates: ${updateToIdes.asMap()}")
-    for ((updateInfo, ideVersions) in updateToIdes.asMap()) {
-      if (verifiableUpdates.size > 500) {
+    val pluginsToCheck = requestPluginsToCheck()
+    logger.info("Checking updates: $pluginsToCheck")
+    for (pluginAndIdeVersion in pluginsToCheck) {
+      if (inProgress.size > 500) {
         return
       }
-      if (updateInfo !in verifiableUpdates && !isCheckedRecently(updateInfo)) {
-        schedule(updateInfo, ideVersions.toList())
+
+      if (pluginAndIdeVersion !in inProgress && !isCheckedRecently(pluginAndIdeVersion)) {
+        schedule(pluginAndIdeVersion)
       }
     }
   }
 
-  private fun isCheckedRecently(updateInfo: UpdateInfo): Boolean {
-    val lastCheckTime = lastCheckDate[updateInfo] ?: Instant.EPOCH
+  private fun isCheckedRecently(pluginAndIdeVersion: PluginAndIdeVersion): Boolean {
+    val lastCheckTime = lastCheckDate[pluginAndIdeVersion] ?: Instant.EPOCH
     val now = Instant.now()
     return lastCheckTime.plus(Duration.of(10, ChronoUnit.MINUTES)).isAfter(now)
-        || updateInfo in updatesMissingCompatibleIde && lastCheckTime.plus(Duration.of(1, ChronoUnit.DAYS)).isAfter(now)
   }
 
-  private fun requestUpdatesToCheck(): Multimap<UpdateInfo, IdeVersion> {
-    val updateInfoToIdes = LinkedHashMultimap.create<UpdateInfo, IdeVersion>()
-    for (ideVersion in ideKeeper.getAvailableIdeVersions()) {
-      verifierServiceProtocol.requestUpdatesToCheck(ideVersion).forEach {
-        updateInfoToIdes.put(it, ideVersion)
+  private fun requestPluginsToCheck(): List<PluginAndIdeVersion> {
+    return ideKeeper.getAvailableIdeVersions().flatMap { ideVersion ->
+      verifierServiceProtocol.requestUpdatesToCheck(ideVersion).map {
+        PluginAndIdeVersion(it, ideVersion)
       }
     }
-    return updateInfoToIdes
   }
 
-  private fun schedule(updateInfo: UpdateInfo, versions: List<IdeVersion>) {
-    lastCheckDate[updateInfo] = Instant.now()
-    verifiableUpdates.add(updateInfo)
-    val task = CheckRangeTask(
-        updateInfo,
+  private fun schedule(pluginAndIdeVersion: PluginAndIdeVersion) {
+    lastCheckDate[pluginAndIdeVersion] = Instant.now()
+    inProgress.add(pluginAndIdeVersion)
+    val task = VerifyPluginTask(
+        pluginAndIdeVersion.updateInfo,
         JdkPath(Settings.JDK_8_HOME.getAsPath()),
-        versions,
+        pluginAndIdeVersion.ideVersion,
         pluginDetailsCache,
         ideDescriptorsCache,
         jdkDescriptorsCache
     )
+
     val taskStatus = taskManager.enqueue(
         task,
-        { taskResult, _ -> onSuccess(taskResult, updateInfo) },
-        { error, tid -> onError(error, tid, task) },
-        { onCompletion(task) }
+        { taskResult, _ -> onSuccess(pluginAndIdeVersion, taskResult) },
+        { error, _ -> onError(pluginAndIdeVersion, error) },
+        { onCompletion(pluginAndIdeVersion) }
     )
-    logger.info("Check [since; until] for $updateInfo is scheduled #${taskStatus.taskId}")
+    logger.info("Check $pluginAndIdeVersion is scheduled #${taskStatus.taskId}")
   }
 
-  private fun onCompletion(task: CheckRangeTask) {
-    verifiableUpdates.remove(task.updateInfo)
+  private fun onCompletion(pluginAndIdeVersion: PluginAndIdeVersion) {
+    inProgress.remove(pluginAndIdeVersion)
   }
 
-  private fun onError(error: Throwable, taskStatus: ServiceTaskStatus, task: CheckRangeTask) {
-    val updateInfo = task.updateInfo
-    logger.error("Unable to check $updateInfo (task #${taskStatus.taskId})", error)
+  private fun onError(pluginAndIdeVersion: PluginAndIdeVersion, error: Throwable) {
+    logger.error("Unable to check $pluginAndIdeVersion", error)
   }
 
-  private fun onSuccess(result: CheckRangeTask.Result, updateInfo: UpdateInfo) {
-    logger.info("Update ${result.updateInfo} is checked: $result")
-
-    if (result.resultType == CheckRangeTask.Result.ResultType.NO_COMPATIBLE_IDES) {
-      updatesMissingCompatibleIde.add(updateInfo)
-    } else {
-      updatesMissingCompatibleIde.remove(updateInfo)
-    }
-
+  private fun onSuccess(pluginAndIdeVersion: PluginAndIdeVersion, result: VerificationResult) {
+    logger.info("Checked $pluginAndIdeVersion: $result")
     try {
       verifierServiceProtocol.sendVerificationResult(result)
     } catch (e: Exception) {
-      logger.error("Unable to send verification result of ${result.updateInfo}", e)
+      logger.error("Unable to send verification result of checking $pluginAndIdeVersion", e)
     }
   }
 

@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
@@ -21,77 +20,36 @@ import com.jetbrains.pluginverifier.reporting.verification.VerificationReporters
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
-import org.jetbrains.plugins.verifier.service.service.verifier.CheckRangeTask.Result
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
 import org.slf4j.LoggerFactory
 
 /**
- * The service task that runs the plugin verification
- * of the [updateInfo] against (since; until)-compatible
- * IDEs from the [toCheckIdeVersions] and
- * returns the aggregated [result] [Result].
+ * [ServiceTask] task that verifies the [plugin] [updateInfo]
+ * against the [IDE] [ideVersion].
  */
-class CheckRangeTask(val updateInfo: UpdateInfo,
-                     private val jdkPath: JdkPath,
-                     private val toCheckIdeVersions: List<IdeVersion>,
-                     private val pluginDetailsCache: PluginDetailsCache,
-                     private val ideDescriptorsCache: IdeDescriptorsCache,
-                     private val jdkDescriptorsCache: JdkDescriptorsCache)
-  : ServiceTask<CheckRangeTask.Result>("Check $updateInfo with IDE from [since; until]") {
+class VerifyPluginTask(val updateInfo: UpdateInfo,
+                       private val jdkPath: JdkPath,
+                       private val ideVersion: IdeVersion,
+                       private val pluginDetailsCache: PluginDetailsCache,
+                       private val ideDescriptorsCache: IdeDescriptorsCache,
+                       private val jdkDescriptorsCache: JdkDescriptorsCache)
+  : ServiceTask<VerificationResult>("Check $updateInfo against IDE $ideVersion") {
 
   companion object {
-    private val LOG = LoggerFactory.getLogger(CheckRangeTask::class.java)
+    private val LOG = LoggerFactory.getLogger(VerifyPluginTask::class.java)
   }
 
-  data class Result(val updateInfo: UpdateInfo,
-                    val resultType: ResultType,
-                    val verificationResults: List<VerificationResult>? = null,
-                    val invalidPluginProblems: List<PluginProblem>? = null,
-                    val nonDownloadableReason: String? = null) {
-    enum class ResultType {
-      NON_DOWNLOADABLE,
-      NO_COMPATIBLE_IDES,
-      INVALID_PLUGIN,
-      VERIFICATION_DONE
+  override fun execute(progress: ProgressIndicator): VerificationResult {
+    return ideDescriptorsCache.getIdeDescriptorCacheEntry(ideVersion).use { entry ->
+      val ideDescriptor = entry.resource
+      val verificationReportage = createVerificationReportage(progress)
+      checkPluginWithIde(ideDescriptor, verificationReportage)
     }
-
-    override fun toString() = resultType.toString()
-  }
-
-  override fun execute(progress: ProgressIndicator): Result {
-    val ideDescriptorEntries = ideDescriptorsCache.getIdeDescriptors { availableIdeVersions ->
-      availableIdeVersions.filter {
-        it in toCheckIdeVersions && updateInfo.isCompatibleWith(it)
-      }
-    }
-
-    return try {
-      if (ideDescriptorEntries.isEmpty()) {
-        Result(updateInfo, Result.ResultType.NO_COMPATIBLE_IDES)
-      } else {
-        val ideDescriptors = ideDescriptorEntries.map { it.resource }
-        checkPluginWithIdes(ideDescriptors, progress)
-      }
-    } finally {
-      ideDescriptorEntries.forEach { it.close() }
-    }
-  }
-
-  private fun checkPluginWithIdes(ideDescriptors: List<IdeDescriptor>, progress: ProgressIndicator): Result {
-    val verificationReportage = createVerificationReportage(progress)
-    val allResults = ideDescriptors.flatMap { checkPluginWithIde(it, verificationReportage) }
-    if (allResults.any { it is VerificationResult.NotFound }) {
-      return Result(updateInfo, Result.ResultType.NON_DOWNLOADABLE)
-    }
-    if (allResults.any { it is VerificationResult.InvalidPlugin }) {
-      return Result(updateInfo, Result.ResultType.INVALID_PLUGIN)
-    }
-    return Result(updateInfo, Result.ResultType.VERIFICATION_DONE, allResults)
   }
 
   private fun checkPluginWithIde(ideDescriptor: IdeDescriptor,
-                                 verificationReportage: VerificationReportage): List<VerificationResult> {
+                                 verificationReportage: VerificationReportage): VerificationResult {
     val dependencyFinder = IdeDependencyFinder(
         ideDescriptor.ide,
         updateInfo.pluginRepository,
@@ -106,6 +64,7 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
         findDeprecatedApiUsages = true
     )
 
+    //todo: reuse the thread pool allocated in the Verifcation.
     val verifierTask = VerifierTask(updateInfo, ideDescriptor, dependencyFinder)
     return Verification.run(
         verifierParameters,
@@ -113,7 +72,7 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
         listOf(verifierTask),
         verificationReportage,
         jdkDescriptorsCache
-    )
+    ).single()
   }
 
   private fun createDelegatingReporter(progress: ProgressIndicator): Reporter<Double> {
@@ -142,7 +101,7 @@ class CheckRangeTask(val updateInfo: UpdateInfo,
                 progressReporters = listOf(createDelegatingReporter(progress)),
                 warningReporters = emptyList(),
                 problemsReporters = emptyList(),
-                dependenciesGraphReporters = listOf(LogReporter(LOG)),
+                dependenciesGraphReporters = listOf(),
                 ignoredProblemReporters = emptyList(),
                 deprecatedReporters = emptyList(),
                 exceptionReporters = listOf(LogReporter(LOG))

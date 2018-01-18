@@ -6,39 +6,49 @@ import "com/jetbrains/plugin/verification/dependencies-graphs.proto";
 
 option java_generate_equals_and_hash = true;
 
-message Warning {
-    string message = 1;
+message PluginStructureWarning {
+  string message = 1;
 }
 
-message Problem {
-    string message = 1;
+message PluginStructureError {
+  string message = 1;
 }
 
-message InvalidPluginProblem {
-    string message = 1;
-    Level level = 2;
-
-    enum Level {
-        ERROR = 0;
-        WARNING = 1;
-    }
+message CompatibilityProblem {
+  string message = 1;
 }
 
 message VerificationResult {
 
-    string ide_version = 1;
+  int32 update_id = 1;
 
-    DependenciesGraph dependencies_graph = 2;
+  string ide_version = 2;
 
-    repeated Warning warnings = 3;
+  DependenciesGraph dependencies_graph = 3;
 
-    repeated Problem problems = 4;
+  ResultType result_type = 4;
 
-    enum ResultType {
-        OK = 0;
-        WARNINGS = 1;
-        MISSING_DEPENDENCIES = 2;
-        PROBLEMS = 3;
-    }
+  repeated PluginStructureWarning plugin_structure_warnings = 5;
+
+  repeated PluginStructureError plugin_structure_errors = 6;
+
+  repeated CompatibilityProblem compatibility_problems = 7;
+
+  string non_downloadable_reason = 8;
+
+  enum ResultType {
+    OK = 0;
+
+    STRUCTURE_WARNINGS = 1;
+
+    MISSING_DEPENDENCIES = 2;
+
+    COMPATIBILITY_PROBLEMS = 3;
+
+    INVALID_PLUGIN = 4;
+
+    NON_DOWNLOADABLE = 5;
+
+  }
 
 }
