@@ -79,11 +79,13 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
       val headingChildren = childrenLines.dropLast(1)
       val lastChild = childrenLines.last()
 
-      for (headingChild in headingChildren) {
-        val firstLine = headingChild.first().let { NOT_LAST_DEPENDENCY_FIRST_LINE_PREFIX + it }
-        val tailLines = headingChild.drop(1).map { NOT_LAST_DEPENDENCY_INTERMEDIATE_LINE_PREFIX + it }
-        result.add(firstLine)
-        result.addAll(tailLines)
+      if (headingChildren.isNotEmpty()) {
+        for (headingChild in headingChildren) {
+          val firstLine = headingChild.first().let { NOT_LAST_DEPENDENCY_FIRST_LINE_PREFIX + it }
+          val tailLines = headingChild.drop(1).map { NOT_LAST_DEPENDENCY_INTERMEDIATE_LINE_PREFIX + it }
+          result.add(firstLine)
+          result.addAll(tailLines)
+        }
       }
 
       val lastChildFirstLine = lastChild.first().let { LAST_DEPENDENCY_FIRST_LINE_PREFIX + it }
