@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.presentation.methodOrConstructorWord
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 
 data class ClassNotFoundProblem(val unresolved: ClassReference,
@@ -16,7 +17,7 @@ data class ClassNotFoundProblem(val unresolved: ClassReference,
     get() {
       val type = when (usage) {
         is ClassLocation -> "Class"
-        is MethodLocation -> "Method"
+        is MethodLocation -> usage.methodOrConstructorWord.capitalize()
         is FieldLocation -> "Field"
         else -> throw IllegalArgumentException()
       }
