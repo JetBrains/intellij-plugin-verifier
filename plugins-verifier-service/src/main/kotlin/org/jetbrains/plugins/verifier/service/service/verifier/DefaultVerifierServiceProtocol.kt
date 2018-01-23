@@ -31,7 +31,7 @@ interface VerifierRetrofitConnector {
 
   @POST("/verification/receiveUpdateCheckResult")
   @Multipart
-  fun sendUpdateCheckResult(@Part("checkResults") checkResult: RequestBody,
+  fun sendUpdateCheckResult(@Part("verificationResult") verificationResult: RequestBody,
                             @Part("userName") userName: RequestBody,
                             @Part("password") password: RequestBody): Call<ResponseBody>
 

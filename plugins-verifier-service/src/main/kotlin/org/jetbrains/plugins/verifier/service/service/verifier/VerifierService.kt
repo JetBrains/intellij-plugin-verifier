@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
@@ -9,7 +10,6 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
-import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
 import java.time.Duration
 import java.time.Instant
@@ -25,16 +25,17 @@ import java.util.concurrent.TimeUnit
  * [Plugin verifier integration with the Plugins Repository](https://confluence.jetbrains.com/display/PLREP/plugin-verifier+integration+with+the+plugins.jetbrains.com)
  */
 class VerifierService(taskManager: ServiceTaskManager,
+                      jdkDescriptorsCache: JdkDescriptorsCache,
                       private val verifierServiceProtocol: VerifierServiceProtocol,
                       private val ideKeeper: IdeKeeper,
                       private val pluginDetailsCache: PluginDetailsCache,
                       private val ideDescriptorsCache: IdeDescriptorsCache,
-                      private val jdkDescriptorsCache: JdkDescriptorsCache)
+                      private val jdkPath: JdkPath)
 
   : BaseService("VerifierService", 0, 5, TimeUnit.MINUTES, taskManager) {
 
   /**
-   * Descriptor of the plugin and IDE against which the plugins is to be verified.
+   * Descriptor of the plugin and IDE against which the plugin is to be verified.
    */
   private data class PluginAndIdeVersion(val updateInfo: UpdateInfo, val ideVersion: IdeVersion) {
     override fun toString() = "$updateInfo against $ideVersion"
@@ -43,6 +44,8 @@ class VerifierService(taskManager: ServiceTaskManager,
   private val inProgress = hashSetOf<PluginAndIdeVersion>()
 
   private val lastCheckDate = hashMapOf<PluginAndIdeVersion, Instant>()
+
+  private val verifierExecutor = Verification.createVerifierExecutor(pluginDetailsCache, jdkDescriptorsCache)
 
   override fun doServe() {
     val pluginsToCheck = requestPluginsToCheck()
@@ -76,12 +79,12 @@ class VerifierService(taskManager: ServiceTaskManager,
     lastCheckDate[pluginAndIdeVersion] = Instant.now()
     inProgress.add(pluginAndIdeVersion)
     val task = VerifyPluginTask(
+        verifierExecutor,
         pluginAndIdeVersion.updateInfo,
-        JdkPath(Settings.JDK_8_HOME.getAsPath()),
+        jdkPath,
         pluginAndIdeVersion.ideVersion,
         pluginDetailsCache,
-        ideDescriptorsCache,
-        jdkDescriptorsCache
+        ideDescriptorsCache
     )
 
     val taskStatus = taskManager.enqueue(
@@ -110,4 +113,8 @@ class VerifierService(taskManager: ServiceTaskManager,
     }
   }
 
+  override fun onStop() {
+    super.onStop()
+    verifierExecutor.close()
+  }
 }

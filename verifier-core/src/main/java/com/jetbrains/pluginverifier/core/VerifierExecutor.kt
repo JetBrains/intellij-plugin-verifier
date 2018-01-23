@@ -19,6 +19,8 @@ import java.util.concurrent.*
  * The [pluginDetailsCache] provides the
  * [plugin details] [com.jetbrains.pluginverifier.plugin.PluginDetails]
  * of the verified and dependent plugins.
+ *
+ * The [VerifierExecutor] can be reused for several [verifications] [verify].
  */
 class VerifierExecutor(private val concurrentWorkers: Int,
                        private val pluginDetailsCache: PluginDetailsCache,

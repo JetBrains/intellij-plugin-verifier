@@ -2,13 +2,12 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.core.Verification
+import com.jetbrains.pluginverifier.core.VerifierExecutor
 import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.Reporter
@@ -25,15 +24,16 @@ import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
 import org.slf4j.LoggerFactory
 
 /**
- * [ServiceTask] task that verifies the [plugin] [updateInfo]
- * against the [IDE] [ideVersion].
+ * [ServiceTask] verifies the [plugin] [updateInfo]
+ * against the [IDE] [ideVersion] in the [verifierExecutor]
+ * using the [JDK] [jdkPath].
  */
-class VerifyPluginTask(val updateInfo: UpdateInfo,
+class VerifyPluginTask(private val verifierExecutor: VerifierExecutor,
+                       private val updateInfo: UpdateInfo,
                        private val jdkPath: JdkPath,
                        private val ideVersion: IdeVersion,
                        private val pluginDetailsCache: PluginDetailsCache,
-                       private val ideDescriptorsCache: IdeDescriptorsCache,
-                       private val jdkDescriptorsCache: JdkDescriptorsCache)
+                       private val ideDescriptorsCache: IdeDescriptorsCache)
   : ServiceTask<VerificationResult>("Check $updateInfo against IDE $ideVersion") {
 
   companion object {
@@ -57,22 +57,16 @@ class VerifyPluginTask(val updateInfo: UpdateInfo,
     )
 
     val verifierParameters = VerifierParameters(
-        jdkPath = jdkPath,
         externalClassesPrefixes = emptyList(),
         problemFilters = emptyList(),
         externalClassPath = EmptyResolver,
         findDeprecatedApiUsages = true
     )
 
-    //todo: reuse the thread pool allocated in the Verifcation.
-    val verifierTask = VerifierTask(updateInfo, ideDescriptor, dependencyFinder)
-    return Verification.run(
-        verifierParameters,
-        pluginDetailsCache,
-        listOf(verifierTask),
-        verificationReportage,
-        jdkDescriptorsCache
-    ).single()
+    val tasks = listOf(VerifierTask(updateInfo, jdkPath, ideDescriptor, dependencyFinder))
+    return verifierExecutor
+        .verify(tasks, verifierParameters, verificationReportage)
+        .single()
   }
 
   private fun createDelegatingReporter(progress: ProgressIndicator): Reporter<Double> {

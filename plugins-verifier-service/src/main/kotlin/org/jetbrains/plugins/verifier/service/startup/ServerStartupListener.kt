@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
+import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
@@ -110,13 +111,15 @@ class ServerStartupListener : ServletContextListener {
 
     with(serverContext) {
       val verifierServiceProtocol = DefaultVerifierServiceProtocol(authorizationData, pluginRepository)
+      val jdkPath = JdkPath(Settings.JDK_8_HOME.getAsPath())
       val verifierService = VerifierService(
           taskManager,
+          jdkDescriptorsCache,
           verifierServiceProtocol,
           ideKeeper,
           pluginDetailsCache,
           ideDescriptorsCache,
-          jdkDescriptorsCache
+          jdkPath
       )
 
       val featureServiceProtocol = DefaultFeatureServiceProtocol(authorizationData, pluginRepository)

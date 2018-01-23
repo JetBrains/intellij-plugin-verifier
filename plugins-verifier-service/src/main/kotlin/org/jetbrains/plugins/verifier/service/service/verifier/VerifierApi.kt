@@ -28,12 +28,12 @@ fun VerificationResult.prepareVerificationResponse(): VerificationResults.Verifi
   return VerificationResults.VerificationResult.newBuilder()
       .setUpdateId((plugin as UpdateInfo).updateId)
       .setIdeVersion(ideVersion.asString())
-      .setDependenciesGraph(dependenciesGraph)
+      .apply { if (dependenciesGraph != null) setDependenciesGraph(dependenciesGraph) }
       .setResultType(resultType)
       .addAllPluginStructureWarnings(pluginStructureWarnings)
       .addAllPluginStructureErrors(pluginStructureErrors)
       .addAllCompatibilityProblems(compatibilityProblems)
-      .setNonDownloadableReason(nonDownloadableReason)
+      .apply { if (nonDownloadableReason != null) setNonDownloadableReason(nonDownloadableReason) }
       .build()
 }
 
