@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.core
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.pluginverifier.misc.findCause
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.results.VerificationResult
@@ -22,7 +22,7 @@ import java.util.concurrent.*
  */
 class VerifierExecutor(private val concurrentWorkers: Int,
                        private val pluginDetailsCache: PluginDetailsCache,
-                       private val jdkDescriptor: JdkDescriptor) : Closeable {
+                       private val jdkDescriptorCache: JdkDescriptorsCache) : Closeable {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(VerifierExecutor::class.java)
@@ -51,13 +51,14 @@ class VerifierExecutor(private val concurrentWorkers: Int,
       parameters: VerifierParameters,
       reportage: VerificationReportage
   ): List<VerificationResult> {
-    val workers = tasks.map { (pluginInfo, ideDescriptor, dependencyFinder) ->
+    val workers = tasks.map { (pluginInfo, jdkPath, ideDescriptor, dependencyFinder) ->
       val pluginVerificationReportage = reportage.createPluginReportage(pluginInfo, ideDescriptor.ideVersion)
       val pluginVerifier = PluginVerifier(
           pluginInfo,
           ideDescriptor,
           dependencyFinder,
-          jdkDescriptor,
+          jdkDescriptorCache,
+          jdkPath,
           parameters,
           pluginVerificationReportage,
           pluginDetailsCache

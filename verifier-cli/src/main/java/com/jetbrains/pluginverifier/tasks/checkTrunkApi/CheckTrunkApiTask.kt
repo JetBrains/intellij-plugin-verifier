@@ -29,7 +29,6 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
       val pluginInfosToCheck = pluginsToCheck.plugins.filterNot { it.toPluginIdAndVersion() in allBrokenPlugins }
 
       val verifierParameters = VerifierParameters(
-          parameters.jdkPath,
           parameters.externalClassesPrefixes,
           parameters.problemsFilters,
           EmptyResolver,
@@ -38,10 +37,10 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
 
       val verifierTasks = arrayListOf<VerifierTask>()
       pluginInfosToCheck.mapTo(verifierTasks) {
-        VerifierTask(it, releaseIde, ReleaseFinder())
+        VerifierTask(it, parameters.jdkPath, releaseIde, ReleaseFinder())
       }
       pluginInfosToCheck.mapTo(verifierTasks) {
-        VerifierTask(it, trunkIde, TrunkFinder())
+        VerifierTask(it, parameters.jdkPath, trunkIde, TrunkFinder())
       }
 
       val results = Verification.run(

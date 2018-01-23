@@ -18,13 +18,12 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
 
   override fun execute(verificationReportage: VerificationReportage) = with(parameters) {
     val verifierParams = VerifierParameters(
-        parameters.jdkPath,
         emptyList(),
         emptyList(),
         EmptyResolver,
         true
     )
-    val tasks = pluginsToCheck.plugins.map { VerifierTask(it, ideDescriptor, dependencyFinder) }
+    val tasks = pluginsToCheck.plugins.map { VerifierTask(it, parameters.jdkPath, ideDescriptor, dependencyFinder) }
     verificationReportage.logVerificationStage("Search of the deprecated API of ${ideDescriptor.ideVersion} in " + "plugin".pluralizeWithNumber(pluginsToCheck.plugins.size) + " is about to start")
     val results = Verification.run(verifierParams, pluginDetailsCache, tasks, verificationReportage, jdkDescriptorsCache)
     val pluginToDeprecatedUsages = results.associateBy({ it.plugin }, { it.toDeprecatedUsages() })

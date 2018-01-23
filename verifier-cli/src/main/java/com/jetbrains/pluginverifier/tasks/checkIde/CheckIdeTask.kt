@@ -22,7 +22,6 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
   //todo: get rid of excludedPlugins here?
   override fun execute(verificationReportage: VerificationReportage): CheckIdeResult {
     val verifierParams = VerifierParameters(
-        parameters.jdkPath,
         parameters.externalClassesPrefixes,
         parameters.problemsFilters,
         parameters.externalClassPath,
@@ -30,7 +29,7 @@ class CheckIdeTask(private val parameters: CheckIdeParams,
     )
     val tasks = parameters.pluginsToCheck.plugins
         .filterNot { it.toPluginIdAndVersion() in parameters.excludedPlugins }
-        .map { VerifierTask(it, parameters.ideDescriptor, parameters.dependencyFinder) }
+        .map { VerifierTask(it, parameters.jdkPath, parameters.ideDescriptor, parameters.dependencyFinder) }
 
     val results = Verification.run(
         verifierParams,

@@ -60,11 +60,10 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
     val tasks = parameters.ideDescriptors.flatMap { ideDescriptor ->
       val dependencyFinder = createDependencyFinder(ideDescriptor)
       parameters.pluginsToCheck.plugins.map { pluginInfo ->
-        VerifierTask(pluginInfo, ideDescriptor, dependencyFinder)
+        VerifierTask(pluginInfo, parameters.jdkPath, ideDescriptor, dependencyFinder)
       }
     }
     val verifierParams = VerifierParameters(
-        parameters.jdkPath,
         parameters.externalClassesPrefixes,
         parameters.problemsFilters,
         parameters.externalClasspath,

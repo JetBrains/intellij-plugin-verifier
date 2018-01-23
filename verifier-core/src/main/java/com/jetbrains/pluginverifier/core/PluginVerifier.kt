@@ -15,12 +15,15 @@ import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
+import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.UnableToReadPluginClassFilesProblem
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
@@ -34,7 +37,7 @@ import java.util.concurrent.Callable
  * 2) Builds the dependencies graph of the plugin using the provided [dependencyFinder].
  * 3) Runs the [bytecode verification] [BytecodeVerifier]
  * of plugins' classes against classes of the [IDE] [ideDescriptor],
- * classes of the resolved dependencies and classes of the [JDK] [jdkDescriptor].
+ * classes of the resolved dependencies and classes of the [JDK] [jdkPath].
  * The [parameters] [verifierParameters] are used to configure the verification.
  * The [pluginVerificationReportage] is used to log the verification steps,
  * progress, and the results.
@@ -44,7 +47,8 @@ import java.util.concurrent.Callable
 class PluginVerifier(private val pluginInfo: PluginInfo,
                      private val ideDescriptor: IdeDescriptor,
                      private val dependencyFinder: DependencyFinder,
-                     private val jdkDescriptor: JdkDescriptor,
+                     private val jdkDescriptorsCache: JdkDescriptorsCache,
+                     private val jdkPath: JdkPath,
                      private val verifierParameters: VerifierParameters,
                      private val pluginVerificationReportage: PluginVerificationReportage,
                      private val pluginDetailsCache: PluginDetailsCache) : Callable<VerificationResult> {
@@ -150,14 +154,13 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     resultHolder.addCycleWarningIfExists(apiGraph)
   }
 
+  private fun createInvalidPluginResult(e: Exception): VerificationResult {
+    resultHolder.registerPluginErrorOrWarning(UnableToReadPluginClassFilesProblem(e))
+    return VerificationResult.InvalidPlugin()
+  }
+
   private fun runVerification(depGraph: DirectedGraph<DepVertex, DepEdge>,
                               pluginDetails: PluginDetails): VerificationResult? {
-
-    fun createInvalidPluginResult(e: Exception): VerificationResult {
-      resultHolder.registerPluginErrorOrWarning(UnableToReadPluginClassFilesProblem(e))
-      return VerificationResult.InvalidPlugin()
-    }
-
     /**
      * Create the plugin's own classes resolver.
      */
@@ -173,12 +176,26 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
      */
     val dependenciesResolver = depGraph.createDependenciesResolver()
 
+    val jdkCacheEntry = jdkDescriptorsCache.getJdkResolver(jdkPath)
+    return when (jdkCacheEntry) {
+      is ResourceCacheEntryResult.Found -> jdkCacheEntry.resourceCacheEntry.use {
+        runVerification(pluginResolver, dependenciesResolver, pluginDetails, it.resource)
+      }
+      is ResourceCacheEntryResult.Failed -> throw IllegalStateException("Unable to resolve JDK descriptor", jdkCacheEntry.error)
+      is ResourceCacheEntryResult.NotFound -> throw IllegalStateException("Unable to find JDK $jdkPath: ${jdkCacheEntry.message}")
+    }
+  }
+
+  private fun runVerification(pluginResolver: Resolver,
+                              dependenciesResolver: Resolver,
+                              pluginDetails: PluginDetails,
+                              jdkDescriptor: JdkDescriptor): VerificationResult? {
     /**
      * Create the plugin's class loader used during the verification.
      * Don't close this classLoader because it contains the client's resolvers.
      */
     val classLoader = try {
-      getVerificationClassLoader(pluginResolver, dependenciesResolver)
+      getVerificationClassLoader(pluginResolver, dependenciesResolver, jdkDescriptor.jdkClassesResolver)
     } catch (e: Exception) {
       pluginVerificationReportage.logException("Unable to create the plugin class loader of ${pluginInfo}", e)
       return createInvalidPluginResult(e)
@@ -238,11 +255,13 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
    * 4) if not found, among the classes of the plugin dependencies' classes
    * 5) if not found, it is finally searched in the external classes specified in the verification parameters.
    */
-  private fun getVerificationClassLoader(mainPluginResolver: Resolver, dependenciesResolver: Resolver) = CacheResolver(
+  private fun getVerificationClassLoader(mainPluginResolver: Resolver,
+                                         dependenciesResolver: Resolver,
+                                         jdkResolver: Resolver) = CacheResolver(
       UnionResolver.create(
           listOf(
               mainPluginResolver,
-              jdkDescriptor.jdkClassesResolver,
+              jdkResolver,
               ideDescriptor.ideResolver,
               dependenciesResolver,
               verifierParameters.externalClassPath
