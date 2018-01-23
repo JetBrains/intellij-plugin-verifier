@@ -23,7 +23,11 @@ data class DependenciesGraph(val verifiedPlugin: DependencyNode,
    * Returns all cycles in this graph.
    * The dependencies cycles are harmful and should be fixed.
    */
-  fun getAllCycles() = DependenciesGraphCycleFinder(this).findAllCycles().map { it.reversed() }
+  fun getAllCycles(): List<List<DependencyNode>> =
+      DependenciesGraphCycleFinder(this)
+          .findAllCycles()
+          .filter { verifiedPlugin in it }
+          .map { it.reversed() }
 
   /**
    * Finds all the transitive dependencies starting at the [verifiedPlugin]
