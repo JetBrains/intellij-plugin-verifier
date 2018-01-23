@@ -106,7 +106,8 @@ private fun VerificationResult.getDependenciesGraph() = with(this) {
 
 private fun CompatibilityProblem.convertCompatibilityProblem() =
     VerificationResults.CompatibilityProblem.newBuilder()
-        .setMessage(fullDescription)
+        .setShortDescription(shortDescription)
+        .setFullDescription(fullDescription)
         .build()
 
 private fun PluginStructureWarning.convertPluginStructureWarning() =

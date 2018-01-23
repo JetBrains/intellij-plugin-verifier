@@ -15,7 +15,9 @@ message PluginStructureError {
 }
 
 message CompatibilityProblem {
-  string message = 1;
+  string shortDescription = 1;
+
+  string fullDescription = 2;
 }
 
 message VerificationResult {
