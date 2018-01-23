@@ -3,8 +3,8 @@ package com.jetbrains.pluginverifier.dependencies
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 
 /**
- * Represents an edge in the [DependenciesGraph]
- * a plugin [from] to a plugin [to] by [dependency].
+ * Represents an edge in the [DependenciesGraph],
+ * which is a [dependency] of the plugin [from] on the plugin [to].
  */
 data class DependencyEdge(val from: DependencyNode,
                           val to: DependencyNode,

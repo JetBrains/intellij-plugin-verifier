@@ -7,7 +7,9 @@ import com.jetbrains.pluginverifier.ide.IdeRepository
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
 
 /**
- * Determinant of IDE builds which must be kept on the server at the moment.
+ * Determines IDE builds which must be kept on the server at the moment.
+ * Current implementation selects all the release builds
+ * and last builds for each branch.
  *
  * It requests the IDE index from the [IDE Repository] [com.jetbrains.pluginverifier.ide.IdeRepository]
  * and determines which IDEs are missing or no more required by comparing the index result
@@ -61,9 +63,6 @@ class IdeKeeper(private val serviceDAO: ServiceDAO,
   /**
    * Fetches IDE index from the [IDE Repository] [com.jetbrains.pluginverifier.ide.IdeRepository]
    * and selects versions which should be kept for the server purposes.
-   *
-   * Current implementation behaves as follows. Of the IDE builds from the release channel
-   * it selects all the release versions and last version for every branch.
    */
   private fun fetchRelevantIdes(): Set<AvailableIde> {
     val index = ideRepository.fetchIndex()
