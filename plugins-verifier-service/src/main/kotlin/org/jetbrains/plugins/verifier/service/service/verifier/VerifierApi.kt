@@ -24,7 +24,7 @@ fun VerificationResult.prepareVerificationResponse(): VerificationResults.Verifi
   val dependenciesGraph = getDependenciesGraph()?.let { convertDependencyGraph(it) }
   val resultType = convertResultType()
   val compatibilityProblems = problems.map { it.convertCompatibilityProblem() }
-  val nonDownloadableReason = (this as? VerificationResult.FailedToDownload)?.reason
+  val nonDownloadableReason = (this as? VerificationResult.FailedToDownload)?.reason ?: (this as? VerificationResult.NotFound)?.reason
   return VerificationResults.VerificationResult.newBuilder()
       .setUpdateId((plugin as UpdateInfo).updateId)
       .setIdeVersion(ideVersion.asString())
@@ -120,9 +120,9 @@ private fun PluginStructureError.convertPluginStructureError() =
         .build()
 
 private fun VerificationResult.convertResultType() = when (this) {
-  is VerificationResult.OK -> VerificationResults.VerificationResult.ResultType.NON_DOWNLOADABLE
+  is VerificationResult.OK -> VerificationResults.VerificationResult.ResultType.OK
   is VerificationResult.StructureWarnings -> VerificationResults.VerificationResult.ResultType.STRUCTURE_WARNINGS
-  is VerificationResult.CompatibilityProblems -> VerificationResults.VerificationResult.ResultType.INVALID_PLUGIN
+  is VerificationResult.CompatibilityProblems -> VerificationResults.VerificationResult.ResultType.COMPATIBILITY_PROBLEMS
   is VerificationResult.MissingDependencies -> VerificationResults.VerificationResult.ResultType.MISSING_DEPENDENCIES
   is VerificationResult.InvalidPlugin -> VerificationResults.VerificationResult.ResultType.INVALID_PLUGIN
   is VerificationResult.NotFound -> VerificationResults.VerificationResult.ResultType.NON_DOWNLOADABLE
