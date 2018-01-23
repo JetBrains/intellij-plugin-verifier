@@ -56,7 +56,7 @@ class VerifierService(taskManager: ServiceTaskManager,
       }
 
       if (pluginAndIdeVersion !in inProgress && !isCheckedRecently(pluginAndIdeVersion)) {
-        schedule(pluginAndIdeVersion)
+        scheduleVerification(pluginAndIdeVersion)
       }
     }
   }
@@ -75,14 +75,14 @@ class VerifierService(taskManager: ServiceTaskManager,
     }
   }
 
-  private fun schedule(pluginAndIdeVersion: PluginAndIdeVersion) {
+  private fun scheduleVerification(pluginAndIdeVersion: PluginAndIdeVersion) {
     lastCheckDate[pluginAndIdeVersion] = Instant.now()
     inProgress.add(pluginAndIdeVersion)
     val task = VerifyPluginTask(
         verifierExecutor,
         pluginAndIdeVersion.updateInfo,
-        jdkPath,
         pluginAndIdeVersion.ideVersion,
+        jdkPath,
         pluginDetailsCache,
         ideDescriptorsCache
     )

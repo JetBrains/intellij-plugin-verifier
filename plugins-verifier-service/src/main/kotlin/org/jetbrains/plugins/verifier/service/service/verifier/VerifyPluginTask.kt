@@ -11,7 +11,6 @@ import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.Reporter
-import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterSet
@@ -21,7 +20,6 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
-import org.slf4j.LoggerFactory
 
 /**
  * [ServiceTask] verifies the [plugin] [updateInfo]
@@ -30,15 +28,11 @@ import org.slf4j.LoggerFactory
  */
 class VerifyPluginTask(private val verifierExecutor: VerifierExecutor,
                        private val updateInfo: UpdateInfo,
-                       private val jdkPath: JdkPath,
                        private val ideVersion: IdeVersion,
+                       private val jdkPath: JdkPath,
                        private val pluginDetailsCache: PluginDetailsCache,
                        private val ideDescriptorsCache: IdeDescriptorsCache)
   : ServiceTask<VerificationResult>("Check $updateInfo against IDE $ideVersion") {
-
-  companion object {
-    private val LOG = LoggerFactory.getLogger(VerifyPluginTask::class.java)
-  }
 
   override fun execute(progress: ProgressIndicator): VerificationResult {
     return ideDescriptorsCache.getIdeDescriptorCacheEntry(ideVersion).use { entry ->
@@ -82,7 +76,7 @@ class VerifyPluginTask(private val verifierExecutor: VerifierExecutor,
   private fun createVerificationReportage(progress: ProgressIndicator) = VerificationReportageImpl(
       reporterSetProvider = object : VerificationReportersProvider {
 
-        override val globalMessageReporters = listOf<Reporter<String>>(LogReporter(LOG))
+        override val globalMessageReporters = listOf<Reporter<String>>()
 
         override val globalProgressReporters = listOf(createDelegatingReporter(progress))
 
@@ -90,16 +84,16 @@ class VerifyPluginTask(private val verifierExecutor: VerifierExecutor,
 
         override fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, ideVersion: IdeVersion) =
             VerificationReporterSet(
-                verificationResultReporters = listOf(LogReporter(LOG)),
-                messageReporters = listOf(LogReporter(LOG)),
-                progressReporters = listOf(createDelegatingReporter(progress)),
+                verificationResultReporters = listOf(),
+                messageReporters = listOf(),
+                progressReporters = listOf(),
                 pluginStructureWarningsReporters = emptyList(),
                 pluginStructureErrorsReporters = emptyList(),
                 problemsReporters = emptyList(),
                 dependenciesGraphReporters = listOf(),
                 ignoredProblemReporters = emptyList(),
                 deprecatedReporters = emptyList(),
-                exceptionReporters = listOf(LogReporter(LOG))
+                exceptionReporters = listOf()
             )
       }
   )
