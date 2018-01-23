@@ -74,7 +74,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
         }
         pluginStructureWarnings = resultHolder.pluginStructureWarnings
         pluginStructureErrors = resultHolder.pluginStructureErrors
-        problems = resultHolder.compatibilityProblems
+        compatibilityProblems = resultHolder.compatibilityProblems
         reason = resultHolder.reason
         deprecatedUsages = resultHolder.deprecatedUsages
       }

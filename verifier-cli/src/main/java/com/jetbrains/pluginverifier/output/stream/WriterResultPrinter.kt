@@ -48,7 +48,7 @@ class WriterResultPrinter(private val out: PrintWriter,
                                        plugin: PluginInfo) {
     printDependencies(verificationResult)
     printWarnings(ideVersion, plugin, verificationResult.pluginStructureWarnings)
-    printProblems(ideVersion, plugin, verificationResult.problems)
+    printProblems(ideVersion, plugin, verificationResult.compatibilityProblems)
   }
 
   private fun printDependencies(verificationResult: VerificationResult.MissingDependencies) {
@@ -62,7 +62,7 @@ class WriterResultPrinter(private val out: PrintWriter,
   private fun printProblemsResult(ideVersion: IdeVersion,
                                   plugin: PluginInfo,
                                   verificationResult: VerificationResult.CompatibilityProblems) {
-    printProblems(ideVersion, plugin, verificationResult.problems)
+    printProblems(ideVersion, plugin, verificationResult.compatibilityProblems)
     printWarnings(ideVersion, plugin, verificationResult.pluginStructureWarnings)
   }
 

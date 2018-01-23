@@ -100,7 +100,7 @@ class VerificationCorrectnessTest {
       assertTrue(pluginFile.exists())
       val verificationResult = doIdeaAndPluginVerification(ideaFile, pluginFile)
       result = verificationResult as VerificationResult.MissingDependencies
-      actualProblems = result.problems
+      actualProblems = result.compatibilityProblems
       actualDeprecatedUsages = result.deprecatedUsages
       redundantProblems = actualProblems.toMutableList()
       redundantDeprecated = actualDeprecatedUsages.toMutableList()

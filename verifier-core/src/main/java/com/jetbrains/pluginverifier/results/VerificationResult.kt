@@ -76,7 +76,7 @@ sealed class VerificationResult {
    *
    * _This field is applicable only for the [CompatibilityProblems] and [MissingDependencies] result types._
    */
-  var problems: Set<CompatibilityProblem> = emptySet()
+  var compatibilityProblems: Set<CompatibilityProblem> = emptySet()
 
   /**
    * Contains the reason of a [non-downloadable] [FailedToDownload] or [not found] [NotFound] result.
@@ -117,32 +117,32 @@ sealed class VerificationResult {
    * [missing dependencies] [com.jetbrains.pluginverifier.dependencies.MissingDependency]
    * that were not found during the verification.
    *
-   * Some of the [compatibility problems] [problems] might have been caused by miss of the dependencies.
+   * Some [compatibility problems] [compatibilityProblems] might have been caused by miss of the dependencies.
    * For example, problems of type "class X is unresolved" might have been
-   * reported because the class `X` resides in some of the unresolved dependencies.
+   * reported because the class `X` resides in an unresolved dependency.
    *
    * The [pluginStructureWarnings] are the [warnings] [PluginProblem.Level.WARNING]
    * of the plugin's structure that should be fixed.*
    *
-   * _The available fields are  [dependenciesGraph], [problems] and [pluginStructureWarnings]
+   * _The available fields are  [dependenciesGraph], [compatibilityProblems] and [pluginStructureWarnings]
    * and [deprecatedUsages].
    */
   class MissingDependencies : VerificationResult() {
     override fun toString() = "Missing ${directMissingDependencies.size} direct plugins and modules " +
-        "dependency".pluralize(directMissingDependencies.size) + " and ${problems.size} " + "problem".pluralize(problems.size)
+        "dependency".pluralize(directMissingDependencies.size) + " and ${compatibilityProblems.size} " + "problem".pluralize(compatibilityProblems.size)
 
     val directMissingDependencies: List<MissingDependency>
       get() = dependenciesGraph.verifiedPlugin.missingDependencies
   }
 
   /**
-   * The [plugin] has compatibility [problems] when running in the [IDE] [ideVersion].
+   * The [plugin] has [compatibilityProblems] when running in the [IDE] [ideVersion].
    *
-   * _The available fields are  [problems], [dependenciesGraph], [pluginStructureWarnings]
+   * _The available fields are  [compatibilityProblems], [dependenciesGraph], [pluginStructureWarnings]
    * and [deprecatedUsages]._
    */
   class CompatibilityProblems : VerificationResult() {
-    override fun toString() = "Found ${problems.size} compatibility " + "problem".pluralize(problems.size) +
+    override fun toString() = "Found ${compatibilityProblems.size} compatibility " + "problem".pluralize(compatibilityProblems.size) +
         " and ${pluginStructureWarnings.size} " + "warning".pluralize(pluginStructureWarnings.size)
   }
 

@@ -45,8 +45,8 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
       if (setBuildStatus) {
         val totalProblemsNumber = results.flatMap {
           when (it) {
-            is VerificationResult.CompatibilityProblems -> it.problems
-            is VerificationResult.MissingDependencies -> it.problems //some problems might have been caused by missing dependencies
+            is VerificationResult.CompatibilityProblems -> it.compatibilityProblems
+            is VerificationResult.MissingDependencies -> it.compatibilityProblems //some problems might have been caused by missing dependencies
             is VerificationResult.InvalidPlugin -> setOf(Any())
             is VerificationResult.OK,
             is VerificationResult.StructureWarnings,

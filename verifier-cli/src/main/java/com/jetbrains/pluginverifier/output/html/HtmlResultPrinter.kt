@@ -125,10 +125,10 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
         when (this) {
           is VerificationResult.OK -> "OK"
           is VerificationResult.StructureWarnings -> "${pluginStructureWarnings.size} " + "warning".pluralize(pluginStructureWarnings.size) + " found"
-          is VerificationResult.CompatibilityProblems -> "${problems.size} " + "problem".pluralize(problems.size) + " found"
+          is VerificationResult.CompatibilityProblems -> "${compatibilityProblems.size} " + "problem".pluralize(compatibilityProblems.size) + " found"
           is VerificationResult.MissingDependencies -> "Plugin has " +
               "${directMissingDependencies.size} missing direct " + "dependency".pluralize(directMissingDependencies.size) + " and " +
-              "${problems.size} " + "problem".pluralize(problems.size)
+              "${compatibilityProblems.size} " + "problem".pluralize(compatibilityProblems.size)
           is VerificationResult.InvalidPlugin -> "Plugin is invalid"
           is VerificationResult.NotFound -> "Plugin ${result.plugin} is not found in the Repository"
           is VerificationResult.FailedToDownload -> "Plugin ${result.plugin} is not downloaded from the Repository"
@@ -155,7 +155,7 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
       when (this) {
         is VerificationResult.OK -> +"No problems."
         is VerificationResult.StructureWarnings -> printWarnings(pluginStructureWarnings)
-        is VerificationResult.CompatibilityProblems -> printProblems(problems)
+        is VerificationResult.CompatibilityProblems -> printProblems(compatibilityProblems)
         is VerificationResult.InvalidPlugin -> printShortAndFullDescription(pluginStructureErrors.joinToString(), result.plugin.pluginId)
         is VerificationResult.NotFound -> printShortAndFullDescription("Plugin ${result.plugin} is not found in the Repository", reason)
         is VerificationResult.FailedToDownload -> printShortAndFullDescription("Plugin ${result.plugin} is not downloaded from the Repository", reason)
@@ -165,7 +165,7 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
   }
 
   private fun HtmlBuilder.printMissingDependenciesResult(verificationResult: VerificationResult.MissingDependencies) {
-    printProblems(verificationResult.problems)
+    printProblems(verificationResult.compatibilityProblems)
     val missingDependencies = verificationResult.directMissingDependencies
     printMissingDependencies(missingDependencies.filterNot { it.dependency.isOptional })
     printMissingDependencies(missingDependencies.filter { it.dependency.isOptional && !missingDependencyIgnoring.ignoreMissingOptionalDependency(it.dependency) })

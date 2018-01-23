@@ -84,8 +84,8 @@ private fun VerificationResult.getCompatibilityProblems() = with(this) {
   when (this) {
     is VerificationResult.OK -> emptySet()
     is VerificationResult.StructureWarnings -> emptySet()
-    is VerificationResult.MissingDependencies -> problems
-    is VerificationResult.CompatibilityProblems -> problems
+    is VerificationResult.MissingDependencies -> compatibilityProblems
+    is VerificationResult.CompatibilityProblems -> compatibilityProblems
     is VerificationResult.InvalidPlugin -> emptySet()
     is VerificationResult.NotFound -> emptySet()
     is VerificationResult.FailedToDownload -> emptySet()

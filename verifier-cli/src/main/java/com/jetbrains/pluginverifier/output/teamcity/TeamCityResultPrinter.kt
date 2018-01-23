@@ -125,8 +125,8 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
   }
 
   private fun VerificationResult.getProblems() = when (this) {
-    is VerificationResult.CompatibilityProblems -> problems
-    is VerificationResult.MissingDependencies -> problems
+    is VerificationResult.CompatibilityProblems -> compatibilityProblems
+    is VerificationResult.MissingDependencies -> compatibilityProblems
     is VerificationResult.OK,
     is VerificationResult.StructureWarnings,
     is VerificationResult.InvalidPlugin,
@@ -208,7 +208,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
                                            testName: String) {
     tcLog.testStarted(testName).use {
       return@use when (verificationResult) {
-        is VerificationResult.CompatibilityProblems -> printProblems(plugin, testName, verificationResult.problems)
+        is VerificationResult.CompatibilityProblems -> printProblems(plugin, testName, verificationResult.compatibilityProblems)
         is VerificationResult.MissingDependencies -> printMissingDependencies(plugin, verificationResult, testName)
         is VerificationResult.InvalidPlugin -> printBadPluginResult(verificationResult, testName)
         is VerificationResult.OK,
@@ -223,7 +223,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
   private fun printMissingDependencies(plugin: PluginInfo,
                                        verificationResult: VerificationResult.MissingDependencies,
                                        testName: String) {
-    val problems = verificationResult.problems
+    val problems = verificationResult.compatibilityProblems
     val missingDependencies = verificationResult.directMissingDependencies
     if (problems.isNotEmpty() || missingDependencies.any { !it.dependency.isOptional }) {
       val overview = buildString {
@@ -272,7 +272,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
           }
 
   private fun getMissingDependenciesProblemsContent(verificationResult: VerificationResult.MissingDependencies): String {
-    val problems = verificationResult.problems
+    val problems = verificationResult.compatibilityProblems
     val missingDependencies = verificationResult.directMissingDependencies
 
     val notFoundClassesProblems = problems.filterIsInstance<ClassNotFoundProblem>()
