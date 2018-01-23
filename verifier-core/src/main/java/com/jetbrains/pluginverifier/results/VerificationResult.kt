@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.emptyDependenciesGraph
 import com.jetbrains.pluginverifier.misc.pluralize
+import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult.*
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
@@ -109,7 +110,7 @@ sealed class VerificationResult {
    * _The available fields are  [pluginStructureWarnings], [dependenciesGraph] and [deprecatedUsages]._
    */
   class StructureWarnings : VerificationResult() {
-    override fun toString() = "Found ${pluginStructureWarnings.size} " + "warning".pluralize(pluginStructureWarnings.size)
+    override fun toString() = "Found " + "warning".pluralizeWithNumber(pluginStructureWarnings.size)
   }
 
   /**
@@ -128,8 +129,28 @@ sealed class VerificationResult {
    * and [deprecatedUsages].
    */
   class MissingDependencies : VerificationResult() {
-    override fun toString() = "Missing ${directMissingDependencies.size} direct plugins and modules " +
-        "dependency".pluralize(directMissingDependencies.size) + " and ${compatibilityProblems.size} " + "problem".pluralize(compatibilityProblems.size)
+    override fun toString(): String {
+      val (modules, plugins) = directMissingDependencies.partition { it.dependency.isModule }
+      return buildString {
+        append("Missing ")
+        if (modules.isNotEmpty()) {
+          append(modules.size)
+          append(" direct " + "module".pluralize(modules.size))
+        }
+        if (plugins.isNotEmpty()) {
+          if (modules.isNotEmpty()) {
+            append(" and")
+          }
+          append(plugins.size)
+          append(" direct " + "plugin".pluralize(plugins.size))
+        }
+        append(" ")
+        append("dependency".pluralize(modules.size + plugins.size))
+        if (compatibilityProblems.isNotEmpty()) {
+          append(" and compatibility " + "problem".pluralize(compatibilityProblems.size))
+        }
+      }
+    }
 
     val directMissingDependencies: List<MissingDependency>
       get() = dependenciesGraph.verifiedPlugin.missingDependencies
@@ -152,7 +173,7 @@ sealed class VerificationResult {
    * _The available field is only the [pluginStructureErrors]._
    */
   class InvalidPlugin : VerificationResult() {
-    override fun toString() = "Plugin is invalid: ${pluginStructureErrors.joinToString()}"
+    override fun toString() = "Plugin is invalid"
   }
 
   /**
@@ -161,7 +182,7 @@ sealed class VerificationResult {
    * _The available field is only the [reason]._
    */
   class NotFound : VerificationResult() {
-    override fun toString() = "Plugin is not found: $reason"
+    override fun toString() = "Plugin is not found"
   }
 
   /**
@@ -171,7 +192,7 @@ sealed class VerificationResult {
    * _The available field is only the [reason]._
    */
   class FailedToDownload : VerificationResult() {
-    override fun toString() = "Failed to download plugin: $reason"
+    override fun toString() = "Failed to download plugin"
   }
 
 }
