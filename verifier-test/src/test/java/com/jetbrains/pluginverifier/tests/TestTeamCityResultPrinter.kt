@@ -77,13 +77,11 @@ class TestTeamCityResultPrinter {
       )
       tcPrinter.printResults(
             pluginInfos.map {
-              VerificationResult.OK(
-                  it,
-                  IdeVersion.createIdeVersion("IU-145"),
-                  emptySet(),
-                  DependenciesGraph(dependencyNode, listOf(dependencyNode), emptyList()),
-                  emptySet()
-              )
+              VerificationResult.OK().apply {
+                plugin = it
+                ideVersion = IdeVersion.createIdeVersion("IU-145")
+                dependenciesGraph = DependenciesGraph(dependencyNode, listOf(dependencyNode), emptyList())
+              }
             }
         )
       stringWriter.toString()

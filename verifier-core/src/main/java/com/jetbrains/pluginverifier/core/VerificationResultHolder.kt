@@ -7,6 +7,8 @@ import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.results.structure.PluginStructureError
+import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import com.jetbrains.pluginverifier.results.warnings.DependenciesCycleWarning
 
 /**
@@ -16,13 +18,19 @@ class VerificationResultHolder(private val pluginVerificationReportage: PluginVe
 
   val compatibilityProblems: MutableSet<CompatibilityProblem> = hashSetOf()
 
-  val pluginWarnings: MutableSet<PluginProblem> = hashSetOf()
-
   val deprecatedUsages: MutableSet<DeprecatedApiUsage> = hashSetOf()
 
   var dependenciesGraph: DependenciesGraph? = null
 
   val ignoredProblemsHolder = IgnoredProblemsHolder(pluginVerificationReportage)
+
+  val pluginStructureWarnings: MutableSet<PluginStructureWarning> = hashSetOf()
+
+  val pluginStructureErrors: MutableSet<PluginStructureError> = hashSetOf()
+
+  var reason: String = ""
+
+  private val pluginErrorsAndWarnings: MutableSet<PluginProblem> = hashSetOf()
 
   fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
     if (deprecatedApiUsage !in deprecatedUsages) {
@@ -44,10 +52,18 @@ class VerificationResultHolder(private val pluginVerificationReportage: PluginVe
     }
   }
 
-  private fun registerWarning(warning: PluginProblem) {
-    if (warning !in pluginWarnings) {
-      pluginWarnings.add(warning)
-      pluginVerificationReportage.logNewWarningDetected(warning)
+  fun registerPluginErrorOrWarning(errorOrWarning: PluginProblem) {
+    if (errorOrWarning !in pluginErrorsAndWarnings) {
+      pluginErrorsAndWarnings.add(errorOrWarning)
+      if (errorOrWarning.level == PluginProblem.Level.WARNING) {
+        val pluginStructureWarning = PluginStructureWarning(errorOrWarning.message)
+        pluginStructureWarnings.add(pluginStructureWarning)
+        pluginVerificationReportage.logNewPluginStructureWarning(pluginStructureWarning)
+      } else {
+        val pluginStructureError = PluginStructureError(errorOrWarning.message)
+        pluginStructureErrors.add(pluginStructureError)
+        pluginVerificationReportage.logNewPluginStructureError(pluginStructureError)
+      }
     }
   }
 
@@ -56,13 +72,7 @@ class VerificationResultHolder(private val pluginVerificationReportage: PluginVe
     if (cycles.isNotEmpty()) {
       val nodes = cycles[0]
       val cyclePresentation = nodes.joinToString(separator = " -> ") + " -> " + nodes[0]
-      registerWarning(DependenciesCycleWarning(cyclePresentation))
-    }
-  }
-
-  fun addPluginWarnings(pluginWarnings: List<PluginProblem>) {
-    pluginWarnings.forEach {
-      registerWarning(it)
+      registerPluginErrorOrWarning(DependenciesCycleWarning(cyclePresentation))
     }
   }
 

@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.reporting.verification
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.misc.impossible
@@ -8,6 +7,8 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.results.structure.PluginStructureError
+import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 
 object EmptyPluginVerificationReportage : PluginVerificationReportage {
   override val plugin: PluginInfo
@@ -26,7 +27,9 @@ object EmptyPluginVerificationReportage : PluginVerificationReportage {
 
   override fun logException(message: String, exception: Throwable) = Unit
 
-  override fun logNewWarningDetected(warning: PluginProblem) = Unit
+  override fun logNewPluginStructureWarning(pluginStructureWarning: PluginStructureWarning) = Unit
+
+  override fun logNewPluginStructureError(pluginStructureError: PluginStructureError) = Unit
 
   override fun logProgress(completed: Double) = Unit
 

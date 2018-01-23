@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
@@ -20,6 +19,8 @@ import com.jetbrains.pluginverifier.repository.local.LocalPluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.results.structure.PluginStructureError
+import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -73,7 +74,8 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
         verificationResultReporters = createResultsReporters(pluginVerificationDirectory),
         messageReporters = createMessageReporters(),
         progressReporters = createProgressReporters(pluginInfo, ideVersion),
-        warningReporters = createWarningReporters(pluginVerificationDirectory),
+        pluginStructureWarningsReporters = createPluginStructureWarningsReporters(pluginVerificationDirectory),
+        pluginStructureErrorsReporters = createPluginStructureErrorsReporters(pluginVerificationDirectory),
         problemsReporters = createProblemReporters(pluginVerificationDirectory),
         dependenciesGraphReporters = createDependencyGraphReporters(pluginVerificationDirectory),
         ignoredProblemReporters = createIgnoredProblemReporters(pluginVerificationDirectory, ideVersion),
@@ -112,8 +114,12 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
     }
   }
 
-  private fun createWarningReporters(pluginVerificationDirectory: Path) = buildList<Reporter<PluginProblem>> {
-    add(FileReporter(pluginVerificationDirectory.resolve("warnings.txt")))
+  private fun createPluginStructureWarningsReporters(pluginVerificationDirectory: Path) = buildList<Reporter<PluginStructureWarning>> {
+    add(FileReporter(pluginVerificationDirectory.resolve("plugin-warnings.txt")))
+  }
+
+  private fun createPluginStructureErrorsReporters(pluginVerificationDirectory: Path) = buildList<Reporter<PluginStructureError>> {
+    add(FileReporter(pluginVerificationDirectory.resolve("plugin-errors.txt")))
   }
 
   private fun createDeprecatedReporters(pluginVerificationDirectory: Path) = buildList<Reporter<DeprecatedApiUsage>> {

@@ -452,7 +452,7 @@ class VerificationCorrectnessTest {
         "Method mock.plugin.MethodProblems.brokenMultiArray() : void",
         "Method mock.plugin.MethodProblems.brokenInvocation() : void",
 
-        "Method mock.plugin.ParentDoesntExist.<init>() : void",
+        "Constructor mock.plugin.ParentDoesntExist.<init>() : void",
         "Method mock.plugin.arrays.ANewArrayInsn.foo(long l, double d, Object a) : void",
         "Method mock.plugin.field.FieldProblemsContainer.accessUnknownClassOfArray() : void",
         "Method mock.plugin.field.FieldProblemsContainer.accessUnknownClass() : void",

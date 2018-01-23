@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.reporting.verification
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.reporting.common.MessageAndException
@@ -9,6 +8,8 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.results.structure.PluginStructureError
+import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 
 class PluginVerificationReportageImpl(private val verificationReportage: VerificationReportage,
                                       override val plugin: PluginInfo,
@@ -40,8 +41,12 @@ class PluginVerificationReportageImpl(private val verificationReportage: Verific
     reporterSet.problemsReporters.forEach { it.report(problem) }
   }
 
-  override fun logNewWarningDetected(warning: PluginProblem) {
-    reporterSet.warningReporters.forEach { it.report(warning) }
+  override fun logNewPluginStructureWarning(pluginStructureWarning: PluginStructureWarning) {
+    reporterSet.pluginStructureWarningsReporters.forEach { it.report(pluginStructureWarning) }
+  }
+
+  override fun logNewPluginStructureError(pluginStructureError: PluginStructureError) {
+    reporterSet.pluginStructureErrorsReporters.forEach { it.report(pluginStructureError) }
   }
 
   override fun logDependencyGraph(dependenciesGraph: DependenciesGraph) {
