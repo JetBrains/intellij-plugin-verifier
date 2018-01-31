@@ -81,12 +81,12 @@ class MockPluginsTest : BaseMockPluginTest() {
 
   @Test
   fun `plugin jar packed in lib directory of zip archive`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-lib.zip", "lib/mock-plugin-1.0.jar", true)
+    testMockPluginStructureAndConfiguration("mock-plugin-lib.zip", "lib" + File.separator + "mock-plugin-1.0.jar", true)
   }
 
   @Test
   fun `directory with lib subdirectory containing jar file`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-dir", "lib/mock-plugin-1.0.jar", true)
+    testMockPluginStructureAndConfiguration("mock-plugin-dir", "lib" + File.separator + "mock-plugin-1.0.jar", true)
   }
 
   @Test
@@ -98,7 +98,7 @@ class MockPluginsTest : BaseMockPluginTest() {
   @Test
   @Throws(Exception::class)
   fun `plugin directory with lib containing jar file - packed in zip archive`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-directory-with-lib-in-zip.zip", "lib/mock-plugin-1.0.jar", true)
+    testMockPluginStructureAndConfiguration("mock-plugin-directory-with-lib-in-zip.zip", "lib" + File.separator + "mock-plugin-1.0.jar",true)
   }
 
   private fun testMockIdeCompatibility(plugin: IdePlugin) {
