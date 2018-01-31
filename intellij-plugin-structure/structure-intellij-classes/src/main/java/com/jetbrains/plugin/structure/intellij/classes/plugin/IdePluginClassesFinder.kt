@@ -25,7 +25,7 @@ class IdePluginClassesFinder private constructor(private val idePlugin: IdePlugi
   private fun findPluginClasses(): IdePluginClassesLocations {
     val pluginFile = idePlugin.originalFile
     if (pluginFile == null) {
-      throw IllegalArgumentException("Class path cannot be created for a virtual plugin descriptor $idePlugin")
+      return IdePluginClassesLocations(idePlugin, Closeable { /* Nothing to close */ }, emptyMap())
     } else if (!pluginFile.exists()) {
       throw IllegalArgumentException("Plugin file doesn't exist " + pluginFile)
     } else if (!pluginFile.isDirectory && !isJar(pluginFile) && !isZip(pluginFile)) {
