@@ -18,7 +18,7 @@ class PluginXmlXIncludePathResolver(files: List<File>) : DefaultXIncludePathReso
           .filter { FileUtil.isJar(it) || FileUtil.isZip(it) }
           .mapNotNull {
             try {
-              URLUtil.getJarEntryURL(it, "META-INF")
+              URLUtil.getJarEntryURL(it, "META-INF/")
             } catch (e: MalformedURLException) {
               null
             }
