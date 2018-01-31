@@ -32,7 +32,7 @@ class FileRepositoryTest {
         folder,
         SimulationDownloader(),
         IntFileNameMapper(),
-        IdleSweepPolicy
+        IdleSweepPolicy()
     )
 
     val get0 = fileRepository.getFile(0) as FileRepositoryResult.Found
@@ -57,7 +57,7 @@ class FileRepositoryTest {
         folder,
         SimulationDownloader(),
         IntFileNameMapper(),
-        IdleSweepPolicy,
+        IdleSweepPolicy(),
         keyProvider = { it.nameWithoutExtension.toIntOrNull() }
     )
 
@@ -78,7 +78,7 @@ class FileRepositoryTest {
         tempFolder.newFolderPath(),
         downloader,
         IntFileNameMapper(),
-        IdleSweepPolicy
+        IdleSweepPolicy()
     )
 
     val numberOfThreads = 10
@@ -187,7 +187,7 @@ class FileRepositoryTest {
         tempFolder.newFolderPath(),
         downloader,
         IntFileNameMapper(),
-        IdleSweepPolicy
+        IdleSweepPolicy()
     )
 
     val fileLock = AtomicReference<FileLock>()
@@ -233,7 +233,7 @@ class FileRepositoryTest {
         tempFolder,
         SimulationDownloader(),
         IntFileNameMapper(),
-        IdleSweepPolicy,
+        IdleSweepPolicy(),
         keyProvider = {
           it.nameWithoutExtension.toIntOrNull()
         }

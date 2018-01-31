@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.tests.dependencies
 
+import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
@@ -11,19 +12,23 @@ import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
+import com.jetbrains.pluginverifier.repository.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
+import com.jetbrains.pluginverifier.repository.files.FileRepository
+import com.jetbrains.pluginverifier.repository.provider.ProvideResult
+import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
 import com.jetbrains.pluginverifier.tests.mocks.createMockIdeaCorePlugin
+import com.jetbrains.pluginverifier.tests.repository.IdleSweepPolicy
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.lang.Exception
+import java.nio.file.Path
 
 class IdeDependencyFinderTest {
 
@@ -52,19 +57,16 @@ class IdeDependencyFinderTest {
     val testPlugin = MockIdePlugin(
         pluginId = "test",
         pluginVersion = "1.0",
-        dependencies = listOf(PluginDependencyImpl("someModule", false, true), PluginDependencyImpl("somePlugin", false, false)),
-        originalFile = tempFolder.newFolder("test.plugin")
+        dependencies = listOf(PluginDependencyImpl("someModule", false, true), PluginDependencyImpl("somePlugin", false, false))
     )
     val somePlugin = MockIdePlugin(
         pluginId = "somePlugin",
-        pluginVersion = "1.0",
-        originalFile = tempFolder.newFolder("some.plugin")
+        pluginVersion = "1.0"
     )
     val moduleContainer = MockIdePlugin(
         pluginId = "moduleContainer",
         pluginVersion = "1.0",
-        definedModules = setOf("someModule"),
-        originalFile = tempFolder.newFolder("module.container")
+        definedModules = setOf("someModule")
     )
 
     val ide = MockIde(
@@ -88,24 +90,11 @@ class IdeDependencyFinderTest {
         )
     )
 
-    val repository = object : MockPluginRepositoryAdapter() {
-      override fun getIdOfPluginDeclaringModule(moduleId: String) =
-          if (moduleId == "externalModule") "externalPlugin" else null
-
-      override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String) =
-          if (pluginId == "externalPlugin") createMockUpdateInfo(pluginId, pluginId, "1.0", 0) else null
-
-      override fun downloadPluginFile(pluginInfo: PluginInfo) =
-          FileRepositoryResult.Failed("Failed to download test.", Exception())
-    }
-
-    val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder.newFolder().toPath())
-    val pluginDetailsCache = PluginDetailsCache(10, pluginDetailsProvider)
-    val ideDependencyResolver = IdeDependencyFinder(ide, repository, pluginDetailsCache)
+    val ideDependencyFinder = configureTestIdeDependencyFinder(ide)
 
     val start = DepVertex("myPlugin", DependencyFinder.Result.FoundPlugin(startPlugin))
     val graph = DefaultDirectedGraph<DepVertex, DepEdge>(DepEdge::class.java)
-    val depGraphBuilder = DepGraphBuilder(ideDependencyResolver)
+    val depGraphBuilder = DepGraphBuilder(ideDependencyFinder)
     depGraphBuilder.buildDependenciesGraph(graph, start)
 
     val dependenciesGraph = DepGraph2ApiGraphConverter().convert(graph, start)
@@ -114,6 +103,33 @@ class IdeDependencyFinderTest {
 
     assertEquals(listOf(MissingDependency(externalModuleDependency, "Failed to download test.")), dependenciesGraph.verifiedPlugin.missingDependencies)
     assertTrue(dependenciesGraph.getMissingDependencyPaths().size == 1)
+  }
+
+  private fun configureTestIdeDependencyFinder(ide: Ide): IdeDependencyFinder {
+    val pluginRepository = object : MockPluginRepositoryAdapter() {
+      override fun getIdOfPluginDeclaringModule(moduleId: String) =
+          if (moduleId == "externalModule") "externalPlugin" else null
+
+      override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String) =
+          if (pluginId == "externalPlugin") createMockPluginInfo(pluginId, pluginId, "1.0") else null
+    }
+
+    val downloadProvider = object : ResourceProvider<PluginInfo, Path> {
+      override fun provide(key: PluginInfo): ProvideResult<Path> {
+        if (key.pluginId == "externalPlugin") {
+          return ProvideResult.Failed("Failed to download test.", Exception())
+        }
+        val tempDir = createTempDir().apply { deleteOnExit() }.toPath()
+        return ProvideResult.Provided(tempDir)
+      }
+    }
+
+    val fileRepository = FileRepository(IdleSweepPolicy(), downloadProvider)
+
+    val pluginFilesBank = PluginFilesBank(pluginRepository, fileRepository)
+    val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder.newFolder().toPath())
+    val pluginDetailsCache = PluginDetailsCache(10, pluginDetailsProvider, pluginFilesBank)
+    return IdeDependencyFinder(ide, pluginRepository, pluginDetailsCache)
   }
 
 }

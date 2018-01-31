@@ -9,7 +9,7 @@ import java.net.URL
  * Utility class that requests metadata from the [IDE repository](https://www.jetbrains.com/intellij-repository/releases)
  * on [available] [AvailableIde] IDEs.
  */
-class IdeRepository(val repositoryUrl: String) {
+class IdeRepository(private val repositoryUrl: String) {
 
   private val snapshotsRepoUrl = repositoryUrl.trimEnd('/') + "/intellij-repository/snapshots/"
 

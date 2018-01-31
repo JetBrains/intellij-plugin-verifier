@@ -2,10 +2,7 @@ package com.jetbrains.pluginverifier.repository.bundled
 
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
-import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
 import java.net.URL
 
@@ -32,16 +29,6 @@ class BundledPluginsRepository(val ide: Ide, override val repositoryURL: URL) : 
 
   override fun getAllVersionsOfPlugin(pluginId: String) =
       getAllPlugins().filter { it.pluginId == pluginId }
-
-  override fun downloadPluginFile(pluginInfo: PluginInfo): FileRepositoryResult {
-    val idePlugin = (pluginInfo as BundledPluginInfo).idePlugin
-    if (idePlugin.originalFile != null) {
-      return FileRepositoryResult.Found(IdleFileLock(idePlugin.originalFile!!.toPath()))
-    }
-    return FileRepositoryResult.NotFound("Plugin $idePlugin doesn't have a base file")
-  }
-
-  override fun getPluginInfoById(updateId: Int) = null
 
   override fun getIdOfPluginDeclaringModule(moduleId: String) =
       ide.getPluginByModule(moduleId)?.pluginId

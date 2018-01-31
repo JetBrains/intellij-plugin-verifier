@@ -5,8 +5,6 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
-import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import java.net.URL
 
 /**
@@ -33,7 +31,7 @@ class LocalPluginRepository(override val repositoryURL: URL,
         sinceBuild!!,
         untilBuild,
         vendor,
-        originalFile!!.toPath(),
+        originalFile?.toPath(),
         definedModules
     )
   }
@@ -55,13 +53,8 @@ class LocalPluginRepository(override val repositoryURL: URL,
   override fun getAllVersionsOfPlugin(pluginId: String) =
       plugins.filter { it.pluginId == pluginId }
 
-  override fun getPluginInfoById(updateId: Int) = null
-
   override fun getIdOfPluginDeclaringModule(moduleId: String) =
       plugins.find { moduleId in it.definedModules }?.pluginId
-
-  override fun downloadPluginFile(pluginInfo: PluginInfo) =
-      FileRepositoryResult.Found(IdleFileLock((pluginInfo as LocalPluginInfo).pluginFile))
 
   fun findPluginById(pluginId: String): LocalPluginInfo? = plugins.find { it.pluginId == pluginId }
 

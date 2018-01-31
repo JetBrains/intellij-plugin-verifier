@@ -18,6 +18,9 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
+import com.jetbrains.pluginverifier.repository.PluginFilesBank
+import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
+import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
@@ -55,15 +58,17 @@ class VerificationCorrectnessTest {
 
     private fun doIdeaAndPluginVerification(ideaFile: Path, pluginFile: Path): VerificationResult {
       val repository = LocalPluginRepository(URL("http://example.com"))
-      val idePlugin = (IdePluginManager.createManager().createPlugin(pluginFile.toFile()) as PluginCreationSuccess).plugin
+      val tempDownloadDir = createTempDir().apply { deleteOnExit() }.toPath()
+      val pluginFilesBank = PluginFilesBank.create(repository, tempDownloadDir, DiskSpaceSetting(SpaceAmount.ZERO_SPACE))
 
+      val idePlugin = (IdePluginManager.createManager().createPlugin(pluginFile.toFile()) as PluginCreationSuccess).plugin
       val pluginInfo = repository.addLocalPlugin(idePlugin)
       val jdkPath = TestJdkDescriptorProvider.getJdkPathForTests()
 
       val tempFolder = Files.createTempDirectory("")
       try {
         val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
-        val pluginDetailsCache = PluginDetailsCache(10, pluginDetailsProvider)
+        val pluginDetailsCache = PluginDetailsCache(10, pluginDetailsProvider, pluginFilesBank)
         return IdeDescriptorCreator.createByPath(ideaFile, IdeVersion.createIdeVersion("IU-145.500")).use { ideDescriptor ->
           val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
           val verifierParams = VerifierParameters(

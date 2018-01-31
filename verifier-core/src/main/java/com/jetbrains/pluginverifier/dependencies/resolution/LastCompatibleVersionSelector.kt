@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.dependencies.resolution
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.UpdateInfo
 
 /**
  * The [PluginVersionSelector] that selects
@@ -10,10 +9,10 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
  */
 class LastCompatibleVersionSelector(val ideVersion: IdeVersion) : PluginVersionSelector {
   override fun selectPluginVersion(pluginId: String, pluginRepository: PluginRepository): PluginVersionSelector.Result {
-    val updateInfo = pluginRepository.getLastCompatibleVersionOfPlugin(ideVersion, pluginId) as? UpdateInfo
-    if (updateInfo != null) {
-      return PluginVersionSelector.Result.Selected(updateInfo)
+    val pluginInfo = pluginRepository.getLastCompatibleVersionOfPlugin(ideVersion, pluginId)
+    if (pluginInfo != null) {
+      return PluginVersionSelector.Result.Selected(pluginInfo)
     }
-    return PluginVersionSelector.Result.NotFound("Plugin $pluginId doesn't have a build compatible with ${ideVersion}")
+    return PluginVersionSelector.Result.NotFound("Plugin $pluginId doesn't have a build compatible with $ideVersion")
   }
 }

@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
+import com.jetbrains.pluginverifier.repository.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
@@ -57,9 +58,10 @@ class ServerStartupListener : ServletContextListener {
     val pluginDownloadDirSpaceSetting = getPluginDownloadDirDiskSpaceSetting()
 
     val pluginRepositoryUrl = Settings.PLUGINS_REPOSITORY_URL.getAsURL()
-    val pluginRepository = PublicPluginRepository(pluginRepositoryUrl, loadedPluginsDir, pluginDownloadDirSpaceSetting)
+    val pluginRepository = PublicPluginRepository(pluginRepositoryUrl)
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractedPluginsDir)
-    val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginDetailsProvider)
+    val pluginFilesBank = PluginFilesBank.create(pluginRepository, loadedPluginsDir, pluginDownloadDirSpaceSetting)
+    val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginDetailsProvider, pluginFilesBank)
 
     val ideRepository = IdeRepository(Settings.IDE_REPOSITORY_URL.get())
     val tasksManager = ServiceTaskManager(Settings.TASK_MANAGER_CONCURRENCY.getAsInt(), 1000)

@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.repository
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.safeEquals
 import com.jetbrains.pluginverifier.misc.safeHashCode
+import java.net.URL
 import java.util.*
 
 /**
@@ -24,7 +25,9 @@ open class PluginInfo(
 
     val untilBuild: IdeVersion?,
 
-    val vendor: String?
+    val vendor: String?,
+
+    val downloadUrl: URL?
 ) {
 
   fun isCompatibleWith(ideVersion: IdeVersion) =

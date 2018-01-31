@@ -14,6 +14,7 @@ import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
+import com.jetbrains.pluginverifier.repository.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
@@ -102,14 +103,15 @@ object PluginVerifierMain {
     freeArgs = freeArgs.drop(1)
 
     val pluginDownloadDirDiskSpaceSetting = getPluginDownloadDirDiskSpaceSetting()
-    val pluginRepository = PublicPluginRepository(URL(pluginRepositoryUrl), downloadDir, pluginDownloadDirDiskSpaceSetting)
+    val pluginRepository = PublicPluginRepository(URL(pluginRepositoryUrl))
+    val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDir, pluginDownloadDirDiskSpaceSetting)
 
     val ideRepository = IdeRepository(ideRepositoryUrl)
 
     val ideFilesDiskSetting = getIdeDownloadDirDiskSpaceSetting()
     val ideFilesBank = IdeFilesBank(ideDownloadDir, ideRepository, ideFilesDiskSetting, getIdeDownloadProgressListener())
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractDir)
-    PluginDetailsCache(10, pluginDetailsProvider).use {
+    PluginDetailsCache(10, pluginDetailsProvider, pluginFilesBank).use {
       runVerification(command, freeArgs, pluginRepository, ideFilesBank, it, opts)
     }
   }

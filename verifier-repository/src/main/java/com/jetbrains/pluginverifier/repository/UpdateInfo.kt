@@ -13,9 +13,9 @@ class UpdateInfo(pluginId: String,
                  sinceBuild: IdeVersion?,
                  untilBuild: IdeVersion?,
                  vendor: String,
+                 downloadUrl: URL,
                  val updateId: Int,
-                 val downloadUrl: URL,
-                 val browserURL: URL) : PluginInfo(pluginId, pluginName, version, pluginRepository, sinceBuild, untilBuild, vendor) {
+                 val browserURL: URL) : PluginInfo(pluginId, pluginName, version, pluginRepository, sinceBuild, untilBuild, vendor, downloadUrl) {
 
   override val presentableName: String = "$pluginId:$version (#$updateId)"
 

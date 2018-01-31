@@ -1,8 +1,6 @@
 package com.jetbrains.pluginverifier.repository.downloader
 
-import com.jetbrains.pluginverifier.misc.checkIfInterrupted
-import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.misc.makeOkHttpClient
+import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.network.*
 import okhttp3.ResponseBody
 import org.slf4j.Logger
@@ -16,9 +14,14 @@ import retrofit2.http.Url
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
-class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> {
+/**
+ * [Downloader] that can download files by URLs provided with [urlProvider].
+ */
+class UrlDownloader<in K>(private val downloadProgress: (Double) -> Unit = { },
+                          private val urlProvider: (K) -> URL?) : Downloader<K> {
 
   private companion object {
     private val LOG: Logger = LoggerFactory.getLogger(UrlDownloader::class.java)
@@ -44,6 +47,10 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
       return DownloadResult.FailedToDownload("Invalid URL", e)
     } ?: return DownloadResult.NotFound("Unknown URL for $key")
 
+    return downloadByUrl(key, downloadUrl, tempDirectory)
+  }
+
+  private fun downloadByUrl(key: K, downloadUrl: URL, tempDirectory: Path): DownloadResult {
     checkIfInterrupted()
     return try {
       doDownload(key, downloadUrl, tempDirectory)
@@ -55,18 +62,28 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
   }
 
   private fun doDownload(key: K, downloadUrl: URL, tempDirectory: Path): DownloadResult {
+    if (downloadUrl.protocol == "file") {
+      val path = Paths.get(downloadUrl.toURI())
+      return DownloadResult.Downloaded(path, path.extension, path.isDirectory)
+    }
     val response = downloadConnector.download(downloadUrl.toExternalForm()).executeSuccessfully()
     val extension = response.guessExtension()
     val downloadedTempFile = Files.createTempFile(tempDirectory, "", ".$extension")
     return try {
       LOG.debug("Downloading $key to $downloadedTempFile")
-      val responseBody = response.body()
-      val expectedSize = responseBody.contentLength()
-      copyInputStreamToFileWithProgress(responseBody.byteStream(), expectedSize, downloadedTempFile.toFile(), { })
+      copyResponseTo(response, downloadedTempFile)
       DownloadResult.Downloaded(downloadedTempFile, extension, false)
     } catch (e: Throwable) {
       downloadedTempFile.deleteLogged()
       throw e
+    }
+  }
+
+  private fun copyResponseTo(response: Response<ResponseBody>, file: Path) {
+    response.body().use { responseBody ->
+      val expectedSize = responseBody.contentLength()
+      downloadProgress(0.0)
+      copyInputStreamToFileWithProgress(responseBody.byteStream(), expectedSize, file.toFile(), downloadProgress)
     }
   }
 

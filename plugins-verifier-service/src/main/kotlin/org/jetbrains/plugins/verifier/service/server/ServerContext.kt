@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import org.jetbrains.plugins.verifier.service.database.ServerDatabase
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
@@ -24,7 +24,7 @@ import java.nio.file.Path
 class ServerContext(val applicationHomeDirectory: Path,
                     val ideRepository: IdeRepository,
                     val ideKeeper: IdeKeeper,
-                    val pluginRepository: PluginRepository,
+                    val pluginRepository: PublicPluginRepository,
                     val taskManager: ServiceTaskManager,
                     val authorizationData: AuthorizationData,
                     val jdkDescriptorsCache: JdkDescriptorsCache,

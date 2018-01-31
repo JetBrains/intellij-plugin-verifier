@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.createByteArrayRequestBody
 import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
-import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import okhttp3.HttpUrl
@@ -38,7 +38,7 @@ interface VerifierRetrofitConnector {
 }
 
 class DefaultVerifierServiceProtocol(authorizationData: AuthorizationData,
-                                     private val pluginRepository: PluginRepository) : VerifierServiceProtocol {
+                                     private val pluginRepository: PublicPluginRepository) : VerifierServiceProtocol {
 
   private val retrofitConnector: VerifierRetrofitConnector by lazy {
     Retrofit.Builder()

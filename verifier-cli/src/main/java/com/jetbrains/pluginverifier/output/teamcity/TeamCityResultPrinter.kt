@@ -4,6 +4,7 @@ import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.output.ResultPrinter
@@ -307,10 +308,11 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
   private fun requestLastVersionsOfCheckedPlugins(ideVersions: List<IdeVersion>): Map<IdeVersion, List<PluginInfo>> =
       ideVersions.associate {
         try {
-          val lastCompatibleUpdates = repository.getLastCompatiblePlugins(it)
-          it to lastCompatibleUpdates.sortedByDescending { (it as UpdateInfo).updateId }.distinctBy { it.pluginId }
+          it to repository.getLastCompatiblePlugins(it)
+              .sortedWith(LastVersionSelector.versionComparator.reversed())
+              .distinctBy { it.pluginId }
         } catch (e: Exception) {
-          LOG.info("Unable to determine the last compatible updates of IDE $it")
+          LOG.info("Unable to determine the last compatible updates of IDE $it", e)
           it to emptyList<UpdateInfo>()
         }
       }

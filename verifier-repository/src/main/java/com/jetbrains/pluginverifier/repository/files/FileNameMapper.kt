@@ -11,7 +11,7 @@ interface FileNameMapper<K> {
    *
    * For instance, every plugin from the Plugin Repository has
    * unique update id, which is a good candidate for naming
-   * a plugin's file ([PluginFileNameMapper])
+   * a plugin's file.
    */
   fun getFileNameWithoutExtension(key: K): String
 

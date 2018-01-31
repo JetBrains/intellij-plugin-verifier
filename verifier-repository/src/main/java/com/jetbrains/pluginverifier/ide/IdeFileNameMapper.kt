@@ -19,6 +19,6 @@ class IdeFileNameMapper : FileNameMapper<IdeVersion> {
 
   }
 
-  override fun getFileNameWithoutExtension(key: IdeVersion) = key.asString()
+  override fun getFileNameWithoutExtension(key: IdeVersion): String = key.asString()
 
 }

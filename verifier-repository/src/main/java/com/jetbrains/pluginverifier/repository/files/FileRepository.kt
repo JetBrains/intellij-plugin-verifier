@@ -4,9 +4,9 @@ import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
-import com.jetbrains.pluginverifier.repository.downloader.DownloadExecutor
 import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
 import com.jetbrains.pluginverifier.repository.downloader.SpaceWeight
+import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import com.jetbrains.pluginverifier.repository.resources.ResourceRepository
 import com.jetbrains.pluginverifier.repository.resources.ResourceRepositoryImpl
 import com.jetbrains.pluginverifier.repository.resources.ResourceRepositoryResult
@@ -18,13 +18,13 @@ import java.time.Clock
  * [resource repository] [ResourceRepository] for files.
  */
 class FileRepository<K>(sweepPolicy: SweepPolicy<K>,
-                        clock: Clock,
-                        downloadExecutor: DownloadExecutor<K>,
+                        resourceProvider: ResourceProvider<K, Path>,
+                        clock: Clock = Clock.systemUTC(),
                         presentableName: String = "FileRepository") {
   private val resourceRepository = ResourceRepositoryImpl(
       sweepPolicy,
       clock,
-      DownloadProvider(downloadExecutor),
+      resourceProvider,
       SpaceWeight(SpaceAmount.ZERO_SPACE),
       { SpaceWeight(it.fileSize) },
       { path -> path.deleteLogged() },

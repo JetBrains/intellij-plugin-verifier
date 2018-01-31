@@ -7,7 +7,6 @@ import com.jetbrains.pluginverifier.output.settings.dependencies.AllMissingDepen
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
 import org.junit.Assert
@@ -26,12 +25,12 @@ class TestTeamCityResultPrinter {
 
   private fun mockRepository(mockUpdateInfos: List<MockUpdateInfo>) = object : MockPluginRepositoryAdapter() {
 
-    val updateInfos: List<UpdateInfo>
-      get() = mockUpdateInfos.map { createMockUpdateInfo(it.id, it.name, it.version, it.updateId) }
+    val updateInfos: List<PluginInfo>
+      get() = mockUpdateInfos.map { createMockPluginInfo(it.id, it.name, it.version) }
 
     override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> = updateInfos
 
-    override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? = updateInfos.find { it.pluginId == pluginId }
+    override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): PluginInfo? = updateInfos.find { it.pluginId == pluginId }
 
     override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String): List<PluginInfo> = updateInfos.toList()
   }
@@ -57,7 +56,7 @@ class TestTeamCityResultPrinter {
   @Test
   fun `no repository connection lead to no -newest suffix`() {
     val mockPluginRepository = noConnectionPluginRepository()
-    val output = getTeamCityOutput(mockPluginRepository, listOf(mockPluginRepository.createMockUpdateInfo("id", "name", "v", 1)))
+    val output = getTeamCityOutput(mockPluginRepository, listOf(mockPluginRepository.createMockPluginInfo("id", "name", "v")))
     Assert.assertEquals("""##teamcity[testSuiteStarted name='id']
 ##teamcity[testStarted name='(v)']
 ##teamcity[testFinished name='(v)']
@@ -65,7 +64,7 @@ class TestTeamCityResultPrinter {
 """, output)
   }
 
-  private fun getTeamCityOutput(pluginRepository: MockPluginRepositoryAdapter, pluginInfos: List<UpdateInfo>): String {
+  private fun getTeamCityOutput(pluginRepository: MockPluginRepositoryAdapter, pluginInfos: List<PluginInfo>): String {
     val dependencyNode = DependencyNode("id", "version", emptyList())
     return StringWriter().use { stringWriter ->
       val tcLog = TeamCityLog(PrintWriter(stringWriter))

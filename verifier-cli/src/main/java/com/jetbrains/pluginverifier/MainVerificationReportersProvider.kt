@@ -3,7 +3,10 @@ package com.jetbrains.pluginverifier
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
-import com.jetbrains.pluginverifier.misc.*
+import com.jetbrains.pluginverifier.misc.buildList
+import com.jetbrains.pluginverifier.misc.closeLogged
+import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
+import com.jetbrains.pluginverifier.misc.writeText
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.CollectingReporter
 import com.jetbrains.pluginverifier.reporting.common.FileReporter
@@ -15,7 +18,6 @@ import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterS
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportersProvider
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.repository.local.LocalPluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
@@ -104,10 +106,6 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
     return when (pluginInfo) {
       is UpdateInfo -> {
         val version = "${pluginInfo.version} (#${pluginInfo.updateId})".replaceInvalidFileNameCharacters()
-        Paths.get(pluginId, version)
-      }
-      is LocalPluginInfo -> {
-        val version = "${pluginInfo.version} (${pluginInfo.pluginFile.simpleName})".replaceInvalidFileNameCharacters()
         Paths.get(pluginId, version)
       }
       else -> Paths.get(pluginId, pluginInfo.version.replaceInvalidFileNameCharacters())

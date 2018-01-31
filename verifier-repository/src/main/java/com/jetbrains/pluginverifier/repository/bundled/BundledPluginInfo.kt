@@ -19,5 +19,6 @@ class BundledPluginInfo(
     bundledPluginsRepository,
     idePlugin.sinceBuild,
     idePlugin.untilBuild,
-    idePlugin.vendor
+    idePlugin.vendor,
+    idePlugin.originalFile?.toURI()?.toURL()
 )

@@ -7,11 +7,6 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.network.executeSuccessfully
-import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
-import com.jetbrains.pluginverifier.repository.cleanup.LruFileSizeSweepPolicy
-import com.jetbrains.pluginverifier.repository.downloader.PluginDownloader
-import com.jetbrains.pluginverifier.repository.files.FileRepositoryBuilder
-import com.jetbrains.pluginverifier.repository.files.PluginFileNameMapper
 import com.jetbrains.pluginverifier.repository.retrofit.JsonUpdateInfo
 import com.jetbrains.pluginverifier.repository.retrofit.JsonUpdateSinceUntil
 import com.jetbrains.pluginverifier.repository.retrofit.JsonUpdatesResponse
@@ -22,7 +17,6 @@ import org.slf4j.LoggerFactory
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.net.URL
-import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -33,9 +27,7 @@ import java.util.concurrent.TimeUnit
  * The plugin repository implementation that communicates with
  * [JetBrains Plugins Repository](https://plugins.jetbrains.com/)
  */
-class PublicPluginRepository(override val repositoryURL: URL,
-                             downloadDir: Path,
-                             diskSpaceSetting: DiskSpaceSetting) : PluginRepository {
+class PublicPluginRepository(override val repositoryURL: URL) : PluginRepository {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(PublicPluginRepository::class.java)
@@ -54,15 +46,6 @@ class PublicPluginRepository(override val repositoryURL: URL,
         "com.intellij.modules.swift.lang", "com.intellij.clion-swift")
   }
 
-  private val downloadedPluginsFileRepository = FileRepositoryBuilder().createFromExistingFiles(
-      downloadDir,
-      PluginDownloader(repositoryURL),
-      PluginFileNameMapper(),
-      LruFileSizeSweepPolicy(diskSpaceSetting),
-      keyProvider = { PluginFileNameMapper.getUpdateIdByFile(it) },
-      presentableName = "downloaded-plugins"
-  )
-
   private val repositoryConnector: PublicPluginRepositoryConnector = Retrofit.Builder()
       .baseUrl(HttpUrl.get(repositoryURL))
       .addConverterFactory(GsonConverterFactory.create(Gson()))
@@ -78,7 +61,12 @@ class PublicPluginRepository(override val repositoryURL: URL,
 
   private fun getDownloadUrl(updateId: Int) = URL("${repositoryURL.toExternalForm().trimEnd('/')}/plugin/download/?noStatistic=true&updateId=$updateId")
 
-  override fun getPluginInfoById(updateId: Int) =
+  /**
+   * Given the [update ID] [updateId], which is a unique identifier
+   * of the plugin version in the Plugins Repository database,
+   * returns its more detailed [UpdateInfo].
+   */
+  fun getPluginInfoById(updateId: Int) =
       updateInfosRequester.getUpdateInfoById(updateId)
 
   override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String) =
@@ -105,8 +93,8 @@ class PublicPluginRepository(override val repositoryURL: URL,
           it.sinceBuild.prepareIdeVersion(),
           it.untilBuild.prepareIdeVersion(),
           vendor,
-          it.updateId,
-          getDownloadUrl(it.updateId), getBrowserUrl(pluginId)
+          getDownloadUrl(it.updateId),
+          it.updateId, getBrowserUrl(pluginId)
       )
     }
     updateInfos.forEach { updateInfosRequester.putUpdateInfo(it) }
@@ -133,9 +121,6 @@ class PublicPluginRepository(override val repositoryURL: URL,
 
   override fun getIdOfPluginDeclaringModule(moduleId: String) =
       INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
-
-  override fun downloadPluginFile(pluginInfo: PluginInfo) =
-      downloadedPluginsFileRepository.getFile((pluginInfo as UpdateInfo).updateId)
 
   override fun toString(): String = repositoryURL.toExternalForm()
 
@@ -230,8 +215,8 @@ class PublicPluginRepository(override val repositoryURL: URL,
         sinceString.prepareIdeVersion(),
         untilString.prepareIdeVersion(),
         vendor,
-        updateId,
-        getDownloadUrl(updateId), getBrowserUrl(pluginId)
+        getDownloadUrl(updateId),
+        updateId, getBrowserUrl(pluginId)
     )
 
   }

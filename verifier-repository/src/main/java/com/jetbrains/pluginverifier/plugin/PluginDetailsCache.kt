@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache.Result.Provided
+import com.jetbrains.pluginverifier.repository.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.cache.ResourceCache
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
@@ -18,11 +19,13 @@ import java.io.Closeable
  *
  * The cache must be [closed] [close] on the application shutdown to free all the details.
  */
-class PluginDetailsCache(cacheSize: Int, pluginDetailsProvider: PluginDetailsProvider) : Closeable {
+class PluginDetailsCache(cacheSize: Int,
+                         pluginDetailsProvider: PluginDetailsProvider,
+                         pluginFilesBank: PluginFilesBank) : Closeable {
 
   private val resourceCache = ResourceCache(
       cacheSize.toLong(),
-      PluginDetailsResourceProvider(pluginDetailsProvider),
+      PluginDetailsResourceProvider(pluginDetailsProvider, pluginFilesBank),
       { it.close() },
       "PluginDetailsCache"
   )
@@ -123,10 +126,11 @@ class PluginDetailsCache(cacheSize: Int, pluginDetailsProvider: PluginDetailsPro
   /**
    * The bridge class that friends the [ResourceProvider] and [PluginDetailsProvider].
    */
-  private class PluginDetailsResourceProvider(private val pluginDetailsProvider: PluginDetailsProvider) : ResourceProvider<PluginInfo, PluginDetailsProvider.Result> {
+  private class PluginDetailsResourceProvider(private val pluginDetailsProvider: PluginDetailsProvider,
+                                              private val pluginFilesBank: PluginFilesBank) : ResourceProvider<PluginInfo, PluginDetailsProvider.Result> {
 
     override fun provide(key: PluginInfo): ProvideResult<PluginDetailsProvider.Result> {
-      return with(key.pluginRepository.downloadPluginFile(key)) {
+      return with(pluginFilesBank.getPluginFile(key)) {
         when (this) {
           is FileRepositoryResult.Found -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(key, lockedFile))
           is FileRepositoryResult.NotFound -> ProvideResult.NotFound(reason)

@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.results
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
@@ -21,12 +21,11 @@ class TestMainPluginRepository {
   @JvmField
   var temporaryFolder = TemporaryFolder()
 
-  private lateinit var repository: PluginRepository
+  private lateinit var repository: PublicPluginRepository
 
   @Before
   fun prepareRepository() {
-    val tempDownloadFolder = temporaryFolder.newFolder().toPath()
-    repository = PublicPluginRepository(URL("https://plugins.jetbrains.com"), tempDownloadFolder, DiskSpaceSetting(SpaceAmount.ofMegabytes(100)))
+    repository = PublicPluginRepository(URL("https://plugins.jetbrains.com"))
   }
 
   @Test
@@ -45,7 +44,7 @@ class TestMainPluginRepository {
     val updates = repository.getAllVersionsOfPlugin("Pythonid")
     assertNotNull(updates)
     assertFalse(updates.isEmpty())
-    val update = updates[0] as UpdateInfo
+    val update = updates[0]
     assertEquals("Pythonid", update.pluginId)
     assertEquals("Python", update.pluginName)
     assertEquals("JetBrains", update.vendor)
@@ -59,7 +58,7 @@ class TestMainPluginRepository {
 
   @Test
   fun lastUpdate() {
-    val info = repository.getLastCompatibleVersionOfPlugin(ideVersion, "org.jetbrains.kotlin") as? UpdateInfo
+    val info = repository.getLastCompatibleVersionOfPlugin(ideVersion, "org.jetbrains.kotlin")
     assertNotNull(info)
     assertTrue(info!!.updateId > 20000)
   }
@@ -83,7 +82,9 @@ class TestMainPluginRepository {
   fun downloadExistentPlugin() {
     val updateInfo = repository.getPluginInfoById(40625) //.gitignore 2.3.2
     assertNotNull(updateInfo)
-    val downloadPluginResult = repository.downloadPluginFile(updateInfo!!)
+    val tempDownloadFolder = temporaryFolder.newFolder().toPath()
+    val pluginFilesBank = PluginFilesBank.create(repository, tempDownloadFolder, DiskSpaceSetting(SpaceAmount.ofMegabytes(100)))
+    val downloadPluginResult = pluginFilesBank.getPluginFile(updateInfo!!)
     assertTrue(downloadPluginResult is FileRepositoryResult.Found)
     val fileLock = (downloadPluginResult as FileRepositoryResult.Found).lockedFile
     assertNotNull(fileLock)

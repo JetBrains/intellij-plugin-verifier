@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.tests.tasks
 
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion.createIdeVersion
@@ -12,22 +13,27 @@ import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
+import com.jetbrains.pluginverifier.repository.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
+import com.jetbrains.pluginverifier.repository.files.FileRepository
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
+import com.jetbrains.pluginverifier.repository.provider.ProvideResult
+import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tasks.PluginsToCheck
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiParams
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiTask
 import com.jetbrains.pluginverifier.tests.mocks.*
+import com.jetbrains.pluginverifier.tests.repository.IdleSweepPolicy
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.instanceOf
 import org.junit.Assert.assertThat
 import org.junit.Test
 import java.io.Closeable
-import java.io.File
 import java.net.URL
+import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
@@ -37,11 +43,11 @@ import java.nio.file.Paths
  * 2) Dependencies on modules contained in locally available plugins
  *
  * The following dependencies between plugins and modules are declared:
- *
+ * ```
  * plugin.to.check 1.0
  *  +--- org.jetbrains.plugin (this is the JetBrains plugin which version differs between RELEASE and TRUNK IDEs)
  *  \--- org.jetbrains.module (this module is declared in a plugin 'org.jetbrains.module.container')
- *
+ * ```
  *  'org.jetbrains.plugin' is to be found in the IDE/plugins directory (called the "local" repository).
  */
 @Suppress("MemberVisibilityCanPrivate")
@@ -77,8 +83,7 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
   val releaseSomeJetBrainsMockPlugin = someJetBrainsPluginBase.copy(
       pluginVersion = "1.0",
       sinceBuild = releaseVersion,
-      untilBuild = releaseVersion,
-      originalFile = File("jetbrains.1.0")
+      untilBuild = releaseVersion
   )
 
   /**
@@ -88,8 +93,7 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
   val trunkSomeJetBrainsMockPlugin = someJetBrainsPluginBase.copy(
       pluginVersion = "2.0",
       sinceBuild = trunkVersion,
-      untilBuild = trunkVersion,
-      originalFile = File("jetbrains.2.0")
+      untilBuild = trunkVersion
   )
 
   /**
@@ -99,8 +103,7 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
       pluginId = someJetBrainsPluginContainingModuleId,
       pluginName = "some jetbrains plugin containing module",
       pluginVersion = "1.0",
-      definedModules = setOf(someJetBrainsModule),
-      originalFile = File("jetbrains.module.container.1.0")
+      definedModules = setOf(someJetBrainsModule)
   )
 
   /**
@@ -115,14 +118,23 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
 
           //Dependency on module which is defined in [someJetBrainsPluginContainingModuleId]
           PluginDependencyImpl(someJetBrainsModule, false, true)
-      ),
-      originalFile = File("plugin.to.check.file")
+      )
   )
 
   @Test
   fun `local plugins are resolved both by ID and by module`() {
     val checkTrunkApiParams = createTrunkApiParamsForTest(releaseIde, trunkIde)
-    PluginDetailsCache(10, createPluginDetailsProviderForTest()).use { pluginDetailsCache ->
+
+    val downloadProvider = object : ResourceProvider<PluginInfo, Path> {
+      override fun provide(key: PluginInfo): ProvideResult<Path> {
+        val tempDir = createTempDir().apply { deleteOnExit() }.toPath()
+        return ProvideResult.Provided(tempDir)
+      }
+    }
+    val fileRepository = FileRepository(IdleSweepPolicy(), downloadProvider)
+    val pluginFilesBank = PluginFilesBank(EmptyPublicPluginRepository, fileRepository)
+
+    PluginDetailsCache(10, createPluginDetailsProviderForTest(), pluginFilesBank).use { pluginDetailsCache ->
       val checkTrunkApiTask = CheckTrunkApiTask(
           checkTrunkApiParams,
           EmptyPublicPluginRepository,
@@ -194,19 +206,15 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
         listOf(someJetBrainsPluginId),
         false,
         IdleFileLock(Paths.get("unnecessary")),
-        createLocalRepository(releaseSomeJetBrainsMockPlugin, releaseVersion), createLocalRepository(trunkSomeJetBrainsMockPlugin, trunkVersion)
+        createLocalPluginRepository(releaseSomeJetBrainsMockPlugin, releaseVersion),
+        createLocalPluginRepository(trunkSomeJetBrainsMockPlugin, trunkVersion)
     )
   }
 
-  /**
-   * Creates the [LocalPluginRepository] consisting of
-   * 1) [jetBrainsPlugin] specified
-   */
-  private fun createLocalRepository(jetBrainsPlugin: MockIdePlugin,
-                                    ideVersion: IdeVersion): LocalPluginRepository {
+  private fun createLocalPluginRepository(idePlugin: IdePlugin, ideVersion: IdeVersion): LocalPluginRepository {
     val localPluginRepository = LocalPluginRepository(repositoryURL)
     val plugins = listOf(
-        jetBrainsPlugin,
+        idePlugin,
         someJetBrainsMockPluginContainingModule.copy(
             sinceBuild = ideVersion,
             untilBuild = ideVersion

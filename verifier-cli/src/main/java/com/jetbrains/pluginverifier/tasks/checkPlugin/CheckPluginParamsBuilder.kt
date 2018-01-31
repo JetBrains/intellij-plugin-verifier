@@ -13,6 +13,7 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
@@ -68,7 +69,7 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
       pluginToTestArg.matches("#\\d+".toRegex()) -> {
         val updateId = Integer.parseInt(pluginToTestArg.drop(1))
         val updateInfo = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "get update information for update #$updateId") {
-          getPluginInfoById(updateId)
+          (this as? PublicPluginRepository)?.getPluginInfoById(updateId)
         } ?: throw IllegalArgumentException("Update #$updateId is not found in the Plugin Repository")
         pluginsToCheck.plugins.add(updateInfo)
       }

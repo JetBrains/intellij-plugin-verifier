@@ -12,13 +12,14 @@ import com.jetbrains.pluginverifier.repository.bundled.BundledPluginsRepository
 class BundledPluginDependencyFinder(val ide: Ide,
                                     private val pluginDetailsCache: PluginDetailsCache) : DependencyFinder {
 
+  private val bundledPluginsRepository = BundledPluginsRepository(ide, ide.idePath.toURI().toURL())
+
   override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
-    val pluginsRepository = BundledPluginsRepository(ide, ide.idePath.toURI().toURL())
     val id = dependency.id
     val bundledPluginInfo = if (dependency.isModule) {
-      pluginsRepository.findPluginByModule(id)
+      bundledPluginsRepository.findPluginByModule(id)
     } else {
-      pluginsRepository.findPluginById(id)
+      bundledPluginsRepository.findPluginById(id)
     }
 
     if (bundledPluginInfo != null) {

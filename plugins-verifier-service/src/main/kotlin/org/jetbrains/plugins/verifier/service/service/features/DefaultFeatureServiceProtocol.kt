@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.createJsonRequestBody
 import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
-import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import okhttp3.HttpUrl
 import okhttp3.RequestBody
@@ -35,7 +35,7 @@ interface FeaturesRetrofitConnector {
 }
 
 class DefaultFeatureServiceProtocol(authorizationData: AuthorizationData,
-                                    private val pluginRepository: PluginRepository) : FeatureServiceProtocol {
+                                    private val pluginRepository: PublicPluginRepository) : FeatureServiceProtocol {
 
   private val userNameRequestBody = createStringRequestBody(authorizationData.pluginRepositoryUserName)
 

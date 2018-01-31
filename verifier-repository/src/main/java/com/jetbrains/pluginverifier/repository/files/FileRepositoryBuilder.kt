@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.repository.files
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy
 import com.jetbrains.pluginverifier.repository.downloader.DownloadExecutor
+import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
 import java.nio.file.Path
 import java.time.Clock
@@ -16,7 +17,8 @@ class FileRepositoryBuilder {
                                   presentableName: String = "File repository at $repositoryDir",
                                   keyProvider: (Path) -> K? = { null }): FileRepository<K> {
     val downloadExecutor = DownloadExecutor(repositoryDir, downloader, fileNameMapper)
-    val fileRepository = FileRepository(sweepPolicy, clock, downloadExecutor, presentableName)
+    val downloadProvider = DownloadProvider(downloadExecutor)
+    val fileRepository = FileRepository(sweepPolicy, downloadProvider, clock, presentableName)
     readAvailableFiles(fileRepository, keyProvider, downloadExecutor)
     fileRepository.cleanup()
     return fileRepository
