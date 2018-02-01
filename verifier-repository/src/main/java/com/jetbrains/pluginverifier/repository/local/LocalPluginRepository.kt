@@ -22,19 +22,7 @@ class LocalPluginRepository(override val repositoryURL: URL,
     return localPluginInfo
   }
 
-  private fun createLocalPluginInfo(idePlugin: IdePlugin) = with(idePlugin) {
-    LocalPluginInfo(
-        pluginId!!,
-        pluginName!!,
-        pluginVersion!!,
-        this@LocalPluginRepository,
-        sinceBuild!!,
-        untilBuild,
-        vendor,
-        originalFile?.toPath(),
-        definedModules
-    )
-  }
+  private fun createLocalPluginInfo(idePlugin: IdePlugin) = LocalPluginInfo(idePlugin, this@LocalPluginRepository)
 
   override fun getAllPlugins() = plugins
 

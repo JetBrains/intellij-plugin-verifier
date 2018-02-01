@@ -14,6 +14,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.repository.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.cleanup.IdleSweepPolicy
 import com.jetbrains.pluginverifier.repository.files.FileRepository
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
@@ -21,7 +22,6 @@ import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
 import com.jetbrains.pluginverifier.tests.mocks.createMockIdeaCorePlugin
-import com.jetbrains.pluginverifier.tests.repository.IdleSweepPolicy
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -97,7 +97,7 @@ class IdeDependencyFinderTest {
     val depGraphBuilder = DepGraphBuilder(ideDependencyFinder)
     depGraphBuilder.buildDependenciesGraph(graph, start)
 
-    val dependenciesGraph = DepGraph2ApiGraphConverter().convert(graph, start)
+    val dependenciesGraph = DepGraph2ApiGraphConverter(IdeVersion.createIdeVersion("IU-181.1")).convert(graph, start)
     val deps = dependenciesGraph.vertices.map { it.pluginId }
     assertEquals(setOf("myPlugin", "test", "moduleContainer", "somePlugin", "com.intellij"), deps.toSet())
 
@@ -126,7 +126,7 @@ class IdeDependencyFinderTest {
 
     val fileRepository = FileRepository(IdleSweepPolicy(), downloadProvider)
 
-    val pluginFilesBank = PluginFilesBank(pluginRepository, fileRepository)
+    val pluginFilesBank = PluginFilesBank(fileRepository)
     val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder.newFolder().toPath())
     val pluginDetailsCache = PluginDetailsCache(10, pluginDetailsProvider, pluginFilesBank)
     return IdeDependencyFinder(ide, pluginRepository, pluginDetailsCache)

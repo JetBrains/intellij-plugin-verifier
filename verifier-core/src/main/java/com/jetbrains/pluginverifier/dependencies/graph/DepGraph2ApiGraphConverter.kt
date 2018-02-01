@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.dependencies.graph
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
@@ -14,11 +15,7 @@ import org.jgrapht.DirectedGraph
  * Utility class that converts the internal presentation of the
  * [dependencies graph] [DepVertex] to the API version [DependenciesGraph].
  */
-class DepGraph2ApiGraphConverter {
-
-  companion object {
-    val UNSPECIFIED_VERSION = "<unspecified>"
-  }
+class DepGraph2ApiGraphConverter(private val ideVersion: IdeVersion) {
 
   fun convert(graph: DirectedGraph<DepVertex, DepEdge>, startVertex: DepVertex): DependenciesGraph {
     val startNode = graph.toDependencyNode(startVertex)!!
@@ -73,7 +70,9 @@ class DepGraph2ApiGraphConverter {
   private fun DirectedGraph<DepVertex, DepEdge>.toDependencyNode(depVertex: DepVertex): DependencyNode? {
     val missingDependencies = outgoingEdgesOf(depVertex).mapNotNull { it.toMissingDependency() }
     val plugin = depVertex.dependencyResult.getPlugin()
-    return plugin?.run { DependencyNode(pluginId ?: depVertex.dependencyId, pluginVersion ?: UNSPECIFIED_VERSION, missingDependencies) }
+    return plugin?.run {
+      DependencyNode(pluginId ?: depVertex.dependencyId, pluginVersion ?: ideVersion.asString(), missingDependencies)
+    }
   }
 
 }

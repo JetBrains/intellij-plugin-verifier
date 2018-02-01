@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.ide
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.LruFileSizeSweepPolicy
+import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryBuilder
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
@@ -19,21 +20,20 @@ import java.nio.file.Path
  */
 class IdeFilesBank(private val bankDirectory: Path,
                    ideRepository: IdeRepository,
-                   diskSpaceSetting: DiskSpaceSetting,
-                   downloadProgress: (Double) -> Unit) {
+                   diskSpaceSetting: DiskSpaceSetting) {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(IdeFilesBank::class.java)
   }
 
-  private val ideFilesRepository = FileRepositoryBuilder().createFromExistingFiles(
-      bankDirectory,
-      IdeDownloader(ideRepository, downloadProgress),
-      IdeFileNameMapper(),
-      LruFileSizeSweepPolicy(diskSpaceSetting),
-      keyProvider = { IdeFileNameMapper.getIdeVersionByFile(it) },
-      presentableName = "IDEs"
-  )
+  val ideDownloader = IdeDownloader(ideRepository)
+  val ideFileNameMapper = IdeFileNameMapper()
+  private val ideFilesRepository = FileRepositoryBuilder<IdeVersion>()
+      .sweepPolicy(LruFileSizeSweepPolicy(diskSpaceSetting))
+      .resourceProvider(DownloadProvider(bankDirectory, ideDownloader, ideFileNameMapper))
+      .presentableName("IDEs bank at $bankDirectory")
+      .addInitialFilesFrom(bankDirectory) { IdeFileNameMapper.getIdeVersionByFile(it) }
+      .build()
 
   fun <R> lockAndAccess(block: () -> R) = ideFilesRepository.lockAndExecute(block)
 

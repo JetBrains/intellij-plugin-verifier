@@ -78,7 +78,7 @@ class ServerStartupListener : ServletContextListener {
     val serverDatabase = MapDbServerDatabase(applicationHomeDir)
     val serviceDAO = ServiceDAO(serverDatabase)
 
-    val ideFilesBank = IdeFilesBank(ideFilesDir, ideRepository, ideDownloadDirDiskSpaceSetting, downloadProgress = {})
+    val ideFilesBank = IdeFilesBank(ideFilesDir, ideRepository, ideDownloadDirDiskSpaceSetting)
     val ideKeeper = IdeKeeper(serviceDAO, ideRepository, ideFilesBank)
     val ideDescriptorsCache = IdeDescriptorsCache(IDE_DESCRIPTORS_CACHE_SIZE, ideFilesBank)
 

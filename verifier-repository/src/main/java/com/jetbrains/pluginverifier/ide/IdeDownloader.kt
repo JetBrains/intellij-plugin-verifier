@@ -12,10 +12,9 @@ import java.nio.file.Path
 /**
  * [Downloader] of the IDEs from the [IdeRepository].
  */
-class IdeDownloader(private val ideRepository: IdeRepository,
-                    downloadProgress: (Double) -> Unit = { }) : Downloader<IdeVersion> {
+class IdeDownloader(private val ideRepository: IdeRepository) : Downloader<IdeVersion> {
 
-  private val urlDownloader = UrlDownloader<IdeVersion>(downloadProgress) { getIdeDownloadUrl(it) }
+  private val urlDownloader = UrlDownloader<IdeVersion> { getIdeDownloadUrl(it) }
 
   private fun getIdeDownloadUrl(key: IdeVersion) =
       try {

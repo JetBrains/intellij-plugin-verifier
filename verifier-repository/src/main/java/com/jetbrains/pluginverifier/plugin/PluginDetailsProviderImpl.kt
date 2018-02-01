@@ -21,11 +21,11 @@ import java.nio.file.Path
 class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDetailsProvider {
 
   override fun providePluginDetails(pluginInfo: PluginInfo, pluginFileLock: FileLock): PluginDetailsProvider.Result {
-    if (pluginInfo is BundledPluginInfo) {
-      return findPluginClasses(pluginInfo, pluginFileLock, pluginInfo.idePlugin, emptyList())
-    }
-
     pluginFileLock.closeOnException {
+      if (pluginInfo is BundledPluginInfo) {
+        return findPluginClasses(pluginInfo, pluginFileLock, pluginInfo.idePlugin!!, emptyList())
+      }
+
       val pluginFile = pluginFileLock.file
       val pluginCreationResult = IdePluginManager.createManager(extractDirectory.toFile()).createPlugin(pluginFile.toFile())
       return if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {

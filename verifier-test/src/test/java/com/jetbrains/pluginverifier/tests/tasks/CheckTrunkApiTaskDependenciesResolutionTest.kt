@@ -15,6 +15,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
 import com.jetbrains.pluginverifier.repository.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.cleanup.IdleSweepPolicy
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.FileRepository
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
@@ -26,7 +27,6 @@ import com.jetbrains.pluginverifier.tasks.PluginsToCheck
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiParams
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiTask
 import com.jetbrains.pluginverifier.tests.mocks.*
-import com.jetbrains.pluginverifier.tests.repository.IdleSweepPolicy
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.instanceOf
 import org.junit.Assert.assertThat
@@ -132,7 +132,7 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
       }
     }
     val fileRepository = FileRepository(IdleSweepPolicy(), downloadProvider)
-    val pluginFilesBank = PluginFilesBank(EmptyPublicPluginRepository, fileRepository)
+    val pluginFilesBank = PluginFilesBank(fileRepository)
 
     PluginDetailsCache(10, createPluginDetailsProviderForTest(), pluginFilesBank).use { pluginDetailsCache ->
       val checkTrunkApiTask = CheckTrunkApiTask(

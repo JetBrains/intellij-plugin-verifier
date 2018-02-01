@@ -12,7 +12,7 @@ import java.net.URL
 class BundledPluginsRepository(val ide: Ide, override val repositoryURL: URL) : PluginRepository {
   override fun getAllPlugins() =
       ide.bundledPlugins.map {
-        BundledPluginInfo(this, ide, it)
+        BundledPluginInfo(this, it, ide)
       }
 
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion) =
@@ -35,5 +35,5 @@ class BundledPluginsRepository(val ide: Ide, override val repositoryURL: URL) : 
 
   fun findPluginById(pluginId: String) = getAllVersionsOfPlugin(pluginId).firstOrNull()
 
-  fun findPluginByModule(moduleId: String) = getAllPlugins().find { moduleId in it.idePlugin.definedModules }
+  fun findPluginByModule(moduleId: String) = getAllPlugins().find { moduleId in it.idePlugin!!.definedModules }
 }

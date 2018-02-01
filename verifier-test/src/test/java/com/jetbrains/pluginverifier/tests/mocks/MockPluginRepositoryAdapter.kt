@@ -35,7 +35,8 @@ open class MockPluginRepositoryAdapter : PluginRepository {
           null,
           null,
           "vendor",
-          downloadUrl
+          downloadUrl,
+          null
       )
 
 }

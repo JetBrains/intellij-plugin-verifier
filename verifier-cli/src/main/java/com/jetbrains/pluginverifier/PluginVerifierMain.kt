@@ -109,7 +109,7 @@ object PluginVerifierMain {
     val ideRepository = IdeRepository(ideRepositoryUrl)
 
     val ideFilesDiskSetting = getIdeDownloadDirDiskSpaceSetting()
-    val ideFilesBank = IdeFilesBank(ideDownloadDir, ideRepository, ideFilesDiskSetting, getIdeDownloadProgressListener())
+    val ideFilesBank = IdeFilesBank(ideDownloadDir, ideRepository, ideFilesDiskSetting)
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractDir)
     PluginDetailsCache(10, pluginDetailsProvider, pluginFilesBank).use {
       runVerification(command, freeArgs, pluginRepository, ideFilesBank, it, opts)

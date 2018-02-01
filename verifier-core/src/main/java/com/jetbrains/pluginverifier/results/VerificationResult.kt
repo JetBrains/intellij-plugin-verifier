@@ -139,7 +139,7 @@ sealed class VerificationResult {
         }
         if (plugins.isNotEmpty()) {
           if (modules.isNotEmpty()) {
-            append(" and")
+            append(" and ")
           }
           append(plugins.size)
           append(" direct " + "plugin".pluralize(plugins.size))
@@ -147,7 +147,7 @@ sealed class VerificationResult {
         append(" ")
         append("dependency".pluralize(modules.size + plugins.size))
         if (compatibilityProblems.isNotEmpty()) {
-          append(" and compatibility " + "problem".pluralize(compatibilityProblems.size))
+          append(" and ${compatibilityProblems.size} compatibility " + "problem".pluralize(compatibilityProblems.size))
         }
       }
     }

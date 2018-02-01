@@ -89,3 +89,6 @@ val Path.simpleName
 
 val Path.extension
   get() = toFile().extension
+
+val Path.length
+  get() = toFile().length()

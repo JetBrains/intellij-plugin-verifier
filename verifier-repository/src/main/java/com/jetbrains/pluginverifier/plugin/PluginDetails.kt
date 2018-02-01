@@ -38,7 +38,7 @@ data class PluginDetails(
      * which guarantees that the file will not be deleted
      * while it is used.
      */
-    private val pluginFileLock: FileLock
+    private val pluginFileLock: FileLock?
 
 ) : Closeable {
 

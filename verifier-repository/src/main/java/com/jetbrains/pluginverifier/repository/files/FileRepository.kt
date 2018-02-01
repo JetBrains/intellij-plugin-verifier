@@ -4,7 +4,6 @@ import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
-import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
 import com.jetbrains.pluginverifier.repository.downloader.SpaceWeight
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import com.jetbrains.pluginverifier.repository.resources.ResourceRepository
@@ -33,7 +32,7 @@ class FileRepository<K>(sweepPolicy: SweepPolicy<K>,
 
   /**
    * Provides the file by [key]. The file is returned from the
-   * local cache or is [downloaded] [DownloadProvider].
+   * local cache or is provided by the [ResourceProvider] of this class's constructor.
    *
    * The possible results are represented as subclasses of [FileRepositoryResult].
    * If the file is found locally or successfully downloaded, a [file lock] [FileLock] is registered

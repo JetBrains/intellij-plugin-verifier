@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.repository.downloader
 import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.network.*
 import okhttp3.ResponseBody
+import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import retrofit2.Call
@@ -14,16 +15,18 @@ import retrofit2.http.Url
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
 /**
  * [Downloader] that can download files by URLs provided with [urlProvider].
  */
-class UrlDownloader<in K>(private val downloadProgress: (Double) -> Unit = { },
-                          private val urlProvider: (K) -> URL?) : Downloader<K> {
+class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> {
 
   private companion object {
+    private const val FILE_PROTOCOL = "file"
+    private const val HTTP_PROTOCOL = "http"
+    private const val HTTPS_PROTOCOL = "https"
+
     private val LOG: Logger = LoggerFactory.getLogger(UrlDownloader::class.java)
   }
 
@@ -62,10 +65,22 @@ class UrlDownloader<in K>(private val downloadProgress: (Double) -> Unit = { },
   }
 
   private fun doDownload(key: K, downloadUrl: URL, tempDirectory: Path): DownloadResult {
-    if (downloadUrl.protocol == "file") {
-      val path = Paths.get(downloadUrl.toURI())
-      return DownloadResult.Downloaded(path, path.extension, path.isDirectory)
+    val protocol = downloadUrl.protocol
+    return when (protocol) {
+      FILE_PROTOCOL -> copyFileOrDirectory(downloadUrl, tempDirectory)
+      HTTP_PROTOCOL, HTTPS_PROTOCOL -> downloadFileOrDirectory(downloadUrl, tempDirectory, key)
+      else -> throw IllegalArgumentException("Unknown protocol: $protocol of $downloadUrl")
     }
+  }
+
+  private fun copyFileOrDirectory(downloadUrl: URL, tempDirectory: Path): DownloadResult.Downloaded {
+    val original = FileUtils.toFile(downloadUrl).toPath()
+    val destination = tempDirectory.resolve(original.simpleName)
+    original.toFile().copyRecursively(destination.toFile())
+    return DownloadResult.Downloaded(destination, destination.extension, destination.isDirectory)
+  }
+
+  private fun downloadFileOrDirectory(downloadUrl: URL, tempDirectory: Path, key: K): DownloadResult {
     val response = downloadConnector.download(downloadUrl.toExternalForm()).executeSuccessfully()
     val extension = response.guessExtension()
     val downloadedTempFile = Files.createTempFile(tempDirectory, "", ".$extension")
@@ -82,8 +97,7 @@ class UrlDownloader<in K>(private val downloadProgress: (Double) -> Unit = { },
   private fun copyResponseTo(response: Response<ResponseBody>, file: Path) {
     response.body().use { responseBody ->
       val expectedSize = responseBody.contentLength()
-      downloadProgress(0.0)
-      copyInputStreamToFileWithProgress(responseBody.byteStream(), expectedSize, file.toFile(), downloadProgress)
+      copyInputStreamToFileWithProgress(responseBody.byteStream(), expectedSize, file.toFile(), { })
     }
   }
 

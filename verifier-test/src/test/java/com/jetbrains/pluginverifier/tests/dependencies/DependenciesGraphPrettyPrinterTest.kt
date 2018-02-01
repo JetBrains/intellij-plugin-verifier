@@ -2,11 +2,11 @@ package com.jetbrains.pluginverifier.tests.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
 import org.junit.Assert
@@ -21,12 +21,14 @@ class DependenciesGraphPrettyPrinterTest {
 
   private val fromAndTo2Dependencies = hashMapOf<Pair<PluginIdAndVersion, PluginIdAndVersion>, PluginDependency>()
 
+  private val ideVersion = IdeVersion.createIdeVersion("IU-181.1")
+
   private fun parsePluginIdAndVersion(description: String): PluginIdAndVersion {
     if (":" in description) {
       val (pluginId, version) = description.split(":")
       return PluginIdAndVersion(pluginId, version)
     }
-    return PluginIdAndVersion(description, DepGraph2ApiGraphConverter.UNSPECIFIED_VERSION)
+    return PluginIdAndVersion(description, ideVersion.asString())
   }
 
   private fun parseFromAndTo(edgeDescription: String): Pair<PluginIdAndVersion, PluginIdAndVersion> {
@@ -79,11 +81,11 @@ class DependenciesGraphPrettyPrinterTest {
         """
 start:1.0
 +--- b:1.0
-|    +--- c:1.0
-|    |    +--- (optional) optional.module:<unspecified> [declaring module optional.module]
-|    |    +--- (failed) e: plugin e is not found
-|    |    \--- (failed) f (optional): plugin e is not found
-|    \--- some.module:<unspecified> [declaring module some.module]
+|    +--- some.module:IU-181.1 [declaring module some.module]
+|    \--- c:1.0
+|         +--- (optional) optional.module:IU-181.1 [declaring module optional.module]
+|         +--- (failed) e: plugin e is not found
+|         \--- (failed) f (optional): plugin e is not found
 \--- c:1.0 (*)
 """.trim(), prettyPresentation)
   }

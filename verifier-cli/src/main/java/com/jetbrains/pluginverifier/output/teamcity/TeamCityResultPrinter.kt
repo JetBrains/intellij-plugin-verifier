@@ -288,7 +288,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
                                                notFoundClassesProblems: List<ClassNotFoundProblem>,
                                                problems: Set<CompatibilityProblem>): String {
     val otherProblems: String = getProblemsContent(problems.filterNot { it in notFoundClassesProblems }.sortedBy { it.javaClass.name }.toSet())
-    return "There are too much missing classes (${notFoundClassesProblems.size});\n" +
+    return "There are too many missing classes (${notFoundClassesProblems.size});\n" +
         "it's probably because of missing plugins (${missingDependencies.map { it.dependency }.joinToString()});\n" +
         "some not-found classes: [${notFoundClassesProblems.take(20).map { it.unresolved }.joinToString()}...];\n" +
         "\nrelevant problems: $otherProblems"

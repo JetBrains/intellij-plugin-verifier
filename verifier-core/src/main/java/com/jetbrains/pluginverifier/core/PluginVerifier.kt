@@ -148,7 +148,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     val start = DepVertex(plugin.pluginId!!, DependencyFinder.Result.FoundPlugin(plugin))
     DepGraphBuilder(dependencyFinder).buildDependenciesGraph(depGraph, start)
 
-    val apiGraph = DepGraph2ApiGraphConverter().convert(depGraph, start)
+    val apiGraph = DepGraph2ApiGraphConverter(ideDescriptor.ideVersion).convert(depGraph, start)
     resultHolder.dependenciesGraph = apiGraph
     pluginVerificationReportage.logDependencyGraph(apiGraph)
     resultHolder.addCycleWarningIfExists(apiGraph)

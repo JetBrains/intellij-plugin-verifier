@@ -1,13 +1,14 @@
 package com.jetbrains.pluginverifier.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache.Result.Provided
 import com.jetbrains.pluginverifier.repository.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.cache.ResourceCache
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
-import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import java.io.Closeable
@@ -132,12 +133,24 @@ class PluginDetailsCache(cacheSize: Int,
     override fun provide(key: PluginInfo): ProvideResult<PluginDetailsProvider.Result> {
       return with(pluginFilesBank.getPluginFile(key)) {
         when (this) {
-          is FileRepositoryResult.Found -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(key, lockedFile))
-          is FileRepositoryResult.NotFound -> ProvideResult.NotFound(reason)
-          is FileRepositoryResult.Failed -> ProvideResult.Failed(reason, error)
+          is PluginFilesBank.Result.Found -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(key, pluginFileLock))
+          is PluginFilesBank.Result.InMemoryPlugin -> ProvideResult.Provided(createDetailsOfInMemoryPlugin(idePlugin, key))
+          is PluginFilesBank.Result.NotFound -> ProvideResult.NotFound(reason)
+          is PluginFilesBank.Result.Failed -> ProvideResult.Failed(reason, error)
         }
       }
     }
+
+    private fun createDetailsOfInMemoryPlugin(idePlugin: IdePlugin, pluginInfo: PluginInfo) =
+        PluginDetailsProvider.Result.Provided(
+            PluginDetails(
+                pluginInfo,
+                idePlugin,
+                emptyList(),
+                IdePluginClassesLocations(idePlugin, Closeable { }, emptyMap()),
+                null
+            )
+        )
 
   }
 
