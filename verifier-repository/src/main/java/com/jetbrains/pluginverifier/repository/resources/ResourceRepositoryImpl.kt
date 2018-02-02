@@ -200,6 +200,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
     is ProvideResult.Failed<R> -> ResourceRepositoryResult.Failed(reason, error)
   }
 
+  //todo: handle exceptions of the [EvictionPolicy] carefully.
   @Synchronized
   override fun cleanup() {
     if (evictionPolicy.isNecessary(resourcesRegistrar.totalWeight)) {

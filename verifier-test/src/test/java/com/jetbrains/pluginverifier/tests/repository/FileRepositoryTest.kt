@@ -226,4 +226,25 @@ class FileRepositoryTest {
     assertEquals(setOf(1), fileRepository.getAllExistingKeys())
     assertEquals(listOf(trueFile), tempFolder.listFiles())
   }
+
+  @Test
+  fun `all existing keys`() {
+    val tempFolder = tempFolder.newFolderPath()
+    val fileRepository = FileRepositoryBuilder<Int>()
+        .resourceProvider(createDownloadingProvider(tempFolder))
+        .build()
+    with(fileRepository) {
+      val one = getFile(1) as FileRepositoryResult.Found
+      val two = getFile(2) as FileRepositoryResult.Found
+      assertEquals(setOf(1, 2), getAllExistingKeys())
+      one.lockedFile.release()
+      two.lockedFile.release()
+      //releasing of keys should not lead to eviction.
+      assertEquals(setOf(1, 2), getAllExistingKeys())
+      remove(1)
+      assertEquals(setOf(2), getAllExistingKeys())
+      remove(2)
+      assertEquals(emptySet<Int>(), getAllExistingKeys())
+    }
+  }
 }
