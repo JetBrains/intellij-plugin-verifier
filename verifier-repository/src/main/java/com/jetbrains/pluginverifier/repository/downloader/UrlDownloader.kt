@@ -37,9 +37,9 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
       .build()
       .create(DownloadConnector::class.java)
 
-  private fun Response<ResponseBody>.guessExtension() = when {
-    body().contentType() == jarContentMediaType -> "jar"
-    body().contentType() == jsonMediaType -> "json"
+  private fun Response<ResponseBody>.guessExtension() = when (body().contentType()) {
+    jarContentMediaType, xJarContentMediaType -> "jar"
+    jsonMediaType -> "json"
     else -> "zip"
   }
 
