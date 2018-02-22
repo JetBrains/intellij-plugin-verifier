@@ -36,6 +36,7 @@ class DocumentedProblemsParserTest {
         DocFieldTypeChanged("com/example/Foo", "fieldTypeChanged"),
         DocFieldVisibilityChanged("com/example/Foo", "fieldVisibilityChanged"),
         DocClassRemoved("com/example/Inner\$Class"),
+        DocClassRemoved("com/example/Bam"),
         DocMethodParameterTypeChanged("com/example/Foo", "foo"),
         DocMethodRemoved("com/example/Baz", "<init>"),
         DocMethodParameterTypeChanged("com/example/Baf", "<init>"),

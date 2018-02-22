@@ -17,6 +17,7 @@ class DocumentedProblemsParser {
     //todo: don't ignore the method parameter types.
     private val pattern2Parser = mapOf<Regex, (List<String>) -> DocumentedProblem>(
         Regex("($IDENTIFIER) class removed") to { s -> DocClassRemoved(s[0].toInternalName()) },
+        Regex("($IDENTIFIER) class renamed.*") to { s -> DocClassRemoved(s[0].toInternalName()) },
         Regex("($IDENTIFIER)\\.($IDENTIFIER)($METHOD_PARAMS)? method removed") to { s -> DocMethodRemoved(s[0].toInternalName(), s[1]) },
         Regex("($IDENTIFIER)($METHOD_PARAMS)? constructor removed") to { s -> DocMethodRemoved(s[0].toInternalName(), "<init>") },
         Regex("($IDENTIFIER)\\.($IDENTIFIER)($METHOD_PARAMS)? method return type changed.*") to { s -> DocMethodReturnTypeChanged(s[0].toInternalName(), s[1]) },

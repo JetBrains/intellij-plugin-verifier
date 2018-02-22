@@ -69,3 +69,4 @@ NOTE: You are allowed to prettify the pattern using markdown-features:
 | `com.example.Baz` constructor removed | It is a comment why |
 | `com.example.Baf` constructor parameter `ParamType` removed | It is a comment why |
 | `com.example.Bam` constructor parameter `ParamType` type changed | It is a comment why |
+| `com.example.Bam` class renamed to `com.example.NewBam` | It is a comment why |
