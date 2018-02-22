@@ -28,7 +28,7 @@ import java.io.File
  * Created by Sergey Patrikeev
  */
 class MockPluginsTest : BaseMockPluginTest() {
-  override fun getMockPluginBuildDirectory(): File = File("mock-plugin/build/mocks")
+  override fun getMockPluginBuildDirectory(): File = File("mock-plugin").resolve("build").resolve("mocks")
 
   @JvmField
   @Rule
@@ -202,7 +202,7 @@ class MockPluginsTest : BaseMockPluginTest() {
     assertSetsEqual(setOf("packagename/ClassOne", "packagename/InFileClassOne", "packagename/ClassOne\$ClassOneInnerStatic", "packagename/ClassOne\$ClassOneInner", "packagename/InFileClassOne"), allClasses)
 
     val allClassPath = mainResolvers.flatMap { it.classPath }
-    assertTrue(allClassPath.all { it.canonicalPath.endsWith(classPath) })
+    assertTrue(allClassPath.all { it.canonicalPath.replace("\\", "/").endsWith(classPath) })
   }
 
   private fun testCompileServerJars(classesLocations: IdePluginClassesLocations) {
