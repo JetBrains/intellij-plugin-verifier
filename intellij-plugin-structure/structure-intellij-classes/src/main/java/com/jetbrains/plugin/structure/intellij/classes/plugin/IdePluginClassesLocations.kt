@@ -20,8 +20,8 @@ data class IdePluginClassesLocations(val idePlugin: IdePlugin,
   override fun close() {
     if (!isClosed) {
       isClosed = true
-      allocatedResource.closeLogged()
       locations.values.forEach { it.closeLogged() }
+      allocatedResource.closeLogged()
     }
   }
 
