@@ -9,10 +9,7 @@ import com.jetbrains.pluginverifier.repository.cleanup.LruFileSizeSweepPolicy
 import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
 import com.jetbrains.pluginverifier.repository.downloader.UrlDownloader
 import com.jetbrains.pluginverifier.repository.files.*
-import com.jetbrains.pluginverifier.repository.provider.ProvideResult
-import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import org.apache.commons.io.FileUtils
-import java.net.URL
 import java.nio.file.Path
 
 /**
@@ -33,11 +30,10 @@ class PluginFilesBank(private val fileRepository: FileRepository<PluginInfo>) {
       val urlDownloader = UrlDownloader<PluginInfo> { it.downloadUrl }
 
       val downloadProvider = DownloadProvider(pluginsDir, urlDownloader, PluginFileNameMapper)
-      val pluginFileResourceProvider = PluginFileResourceProvider(downloadProvider)
 
       val fileRepository = FileRepositoryBuilder<PluginInfo>()
           .sweepPolicy(sweepPolicy)
-          .resourceProvider(pluginFileResourceProvider)
+          .resourceProvider(downloadProvider)
           .presentableName("downloaded-plugins")
           .addInitialFilesFrom(pluginsDir) { getPluginInfoByFile(repository, it) }
           .build()
@@ -70,8 +66,14 @@ class PluginFilesBank(private val fileRepository: FileRepository<PluginInfo>) {
    * deletion or eviction while the file is used.
    */
   fun getPluginFile(pluginInfo: PluginInfo): Result {
-    if (pluginInfo.downloadUrl == null) {
-      return Result.InMemoryPlugin(pluginInfo.idePlugin!!)
+    val downloadUrl = pluginInfo.downloadUrl ?: return Result.InMemoryPlugin(pluginInfo.idePlugin!!)
+    if (downloadUrl.protocol == "file") {
+      val file = FileUtils.toFile(downloadUrl)
+      return if (file.exists()) {
+        Result.Found(IdleFileLock(file.toPath()))
+      } else {
+        Result.NotFound("Plugin file doesn't exist: $file")
+      }
     }
     return with(fileRepository.getFile(pluginInfo)) {
       when (this) {
@@ -103,31 +105,4 @@ object PluginFileNameMapper : FileNameMapper<PluginInfo> {
     is UpdateInfo -> key.updateId.toString()
     else -> (key.pluginId + "-" + key.version).replaceInvalidFileNameCharacters()
   }
-}
-
-class PluginFileResourceProvider(private val downloadProvider: DownloadProvider<PluginInfo>) : ResourceProvider<PluginInfo, Path> {
-
-  override fun provide(key: PluginInfo): ProvideResult<Path> {
-    val downloadUrl = key.downloadUrl ?: return ProvideResult.NotFound("Plugin file of $key is not found")
-    if (downloadUrl.protocol == "file") {
-      /**
-       * Though the [DownloadProvider] is capable to provide local files by
-       * URLs with `file://` scheme, it may require files copying to ensure
-       * that the source file will not be corrupted.
-       * In the current case, it is safe to return the plugin's file directly.
-       */
-      return providedLocalFile(downloadUrl)
-    }
-    return downloadProvider.provide(key)
-  }
-
-  private fun providedLocalFile(downloadUrl: URL): ProvideResult<Path> {
-    val file = FileUtils.toFile(downloadUrl)
-    return if (file.exists()) {
-      ProvideResult.Provided(file.toPath())
-    } else {
-      ProvideResult.NotFound("Plugin file doesn't exist: $file")
-    }
-  }
-
 }
