@@ -23,12 +23,16 @@ data class MethodNotFoundProblem(val unresolvedMethod: MethodReference,
                                  val methodOwnerHierarchy: ClassHierarchy,
                                  val ideVersion: IdeVersion) : CompatibilityProblem() {
 
-  override val shortDescription = "Invocation of unresolved method {0}".formatMessage(unresolvedMethod.formatMethodReference(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME))
+  override val shortDescription = "Invocation of unresolved {0} {1}".formatMessage(
+      unresolvedMethod.methodOrConstructorWord,
+      unresolvedMethod.formatMethodReference(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME)
+  )
 
   private val descriptionMainPart = buildString {
-    append("${caller.methodOrConstructorWord.capitalize()} {0} contains an *{1}* instruction referencing an unresolved ${unresolvedMethod.methodOrConstructorWord} {2}. ".formatMessage(
+    append("${caller.methodOrConstructorWord.capitalize()} {0} contains an *{1}* instruction referencing an unresolved {2} {3}. ".formatMessage(
         caller.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE),
         instruction,
+        unresolvedMethod.methodOrConstructorWord,
         unresolvedMethod.formatMethodReference(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME)
     ))
     append("This can lead to **NoSuchMethodError** exception at runtime.")

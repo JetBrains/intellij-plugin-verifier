@@ -15,6 +15,7 @@ import com.jetbrains.pluginverifier.results.presentation.MethodReturnTypeOption.
 import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
 import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 import com.jetbrains.pluginverifier.results.presentation.formatMethodReference
+import com.jetbrains.pluginverifier.results.presentation.methodOrConstructorWord
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 
 data class IllegalMethodAccessProblem(val bytecodeMethodReference: MethodReference,
@@ -23,24 +24,27 @@ data class IllegalMethodAccessProblem(val bytecodeMethodReference: MethodReferen
                                       val caller: MethodLocation,
                                       val instruction: Instruction) : CompatibilityProblem() {
 
-  override val shortDescription = "Illegal invocation of {0} method {1}".formatMessage(methodAccessModifier, inaccessibleMethod)
+  override val shortDescription = "Illegal invocation of {0} {1} {2}".formatMessage(methodAccessModifier, inaccessibleMethod.methodOrConstructorWord, inaccessibleMethod)
 
   override val fullDescription = buildString {
-    append("Method {0} contains an *{1}* instruction referencing ".formatMessage(
+    append("{0} {1} contains an *{2}* instruction referencing ".formatMessage(
+        caller.methodOrConstructorWord.capitalize(),
         caller.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, NO_PARAMETER_NAMES),
         instruction
     ))
 
     val actualMethodPresentation = inaccessibleMethod.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, NO_PARAMETER_NAMES)
     if (bytecodeMethodReference.hostClass.className == inaccessibleMethod.hostClass.className) {
-      append("a {0} method {1} ".formatMessage(
+      append("a {0} {1} {2} ".formatMessage(
           methodAccessModifier,
+          inaccessibleMethod.methodOrConstructorWord,
           actualMethodPresentation
       ))
     } else {
-      append("{0} which is resolved to a {1} method {2} ".formatMessage(
+      append("{0} which is resolved to a {1} {2} {3} ".formatMessage(
           bytecodeMethodReference.formatMethodReference(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME),
           methodAccessModifier,
+          inaccessibleMethod.methodOrConstructorWord,
           actualMethodPresentation
       ))
     }
