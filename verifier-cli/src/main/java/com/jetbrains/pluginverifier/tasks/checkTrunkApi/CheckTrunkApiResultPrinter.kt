@@ -4,6 +4,7 @@ import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.misc.pluralize
@@ -11,13 +12,15 @@ import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 
-class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions) : TaskResultPrinter {
+class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions,
+                                 private val pluginRepository: PluginRepository) : TaskResultPrinter {
 
   override fun printResults(taskResult: TaskResult) {
     with(taskResult as CheckTrunkApiResult) {
@@ -35,6 +38,47 @@ class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions) : Tas
       result.putAll(plugin, cmp.getNewApiProblems())
     }
     return result
+  }
+
+  private fun PluginInfo.presentableSinceUntilRange(): String? {
+    if (sinceBuild != null) {
+      if (untilBuild != null) {
+        return "[$sinceBuild; $untilBuild]"
+      }
+      return "$sinceBuild+"
+    }
+    return null
+  }
+
+  private fun createCompatibilityNote(plugin: PluginInfo,
+                                      releaseIdeVersion: IdeVersion,
+                                      trunkIdeVersion: IdeVersion): String {
+    return buildString {
+      val sinceUntil = plugin.presentableSinceUntilRange()
+      append("\nNote that the compatibility range ")
+      if (sinceUntil != null) {
+        append("$sinceUntil ")
+      }
+      append("of $plugin doesn't include $trunkIdeVersion. ")
+
+      val lastCompatibleVersion = try {
+        pluginRepository.getLastCompatibleVersionOfPlugin(trunkIdeVersion, plugin.pluginId)
+      } catch (e: Exception) {
+        null
+      }
+      if (lastCompatibleVersion != null) {
+        append("There is a newer version '${lastCompatibleVersion.version}' compatible with $trunkIdeVersion " +
+            "in the Plugin Repository. Anyway the ${plugin.version} has been checked because this check configuration " +
+            "tracks breaking API changes of the IntelliJ Platform between $releaseIdeVersion and $trunkIdeVersion, " +
+            "not the plugins' incompatibilities."
+        )
+      } else {
+        append("Though the '${plugin.version}' cannot be installed in $trunkIdeVersion, " +
+            "incompatible API changes are discouraged and should be avoided as stated in " +
+            "the API compatibility policy: https://confluence.jetbrains.com/display/IDEA/IntelliJ+Platform+API+compatibility+policy"
+        )
+      }
+    }
   }
 
   private fun printTrunkApiCompareResult(apiChanges: CheckTrunkApiResult) {
@@ -58,6 +102,9 @@ class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions) : Tas
                   val problemDetails = buildString {
                     append(problem.fullDescription)
                     append("\nThis problem takes place in ${apiChanges.trunkIdeVersion} but not in ${apiChanges.releaseIdeVersion}")
+                    if (!plugin.isCompatibleWith(apiChanges.trunkIdeVersion)) {
+                      append(createCompatibilityNote(plugin, apiChanges.releaseIdeVersion, apiChanges.trunkIdeVersion))
+                    }
                     append(getMissingDependenciesDetails(apiChanges, plugin))
                   }
                   val pluginUrl = (plugin as? UpdateInfo)?.browserURL
