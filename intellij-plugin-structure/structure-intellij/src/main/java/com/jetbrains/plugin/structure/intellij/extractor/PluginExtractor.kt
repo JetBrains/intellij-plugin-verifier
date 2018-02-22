@@ -16,7 +16,7 @@ object PluginExtractor {
       throw IllegalArgumentException("Must be a zip archive: " + pluginZip)
     }
 
-    val extractedPlugin = FileUtil.createTempDir(extractDirectory, "plugin_")
+    val extractedPlugin = FileUtil.createTempDir(extractDirectory, "plugin_${pluginZip.nameWithoutExtension}_")
 
     try {
       ZipUtil.extractZip(pluginZip, extractedPlugin)
