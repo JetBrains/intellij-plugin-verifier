@@ -291,7 +291,7 @@ class VerificationCorrectnessTest {
     )
 
     assertProblemFound("Method mock.plugin.news.NewProblems.newInterface() : void contains an *invokespecial* instruction referencing an unresolved constructor misc.BecomeInterface.<init>() : void. This can lead to **NoSuchMethodError** exception at runtime.",
-        "Invocation of unresolved method misc.BecomeInterface.<init>() : void"
+        "Invocation of unresolved constructor misc.BecomeInterface.<init>() : void"
     )
   }
 
@@ -309,7 +309,7 @@ class VerificationCorrectnessTest {
     )
 
     assertProblemFound("Constructor mock.plugin.inheritance.SuperClassBecameInterface.<init>() : void contains an *invokespecial* instruction referencing an unresolved constructor misc.BecomeInterface.<init>() : void. This can lead to **NoSuchMethodError** exception at runtime.",
-        "Invocation of unresolved method misc.BecomeInterface.<init>() : void"
+        "Invocation of unresolved constructor misc.BecomeInterface.<init>() : void"
     )
   }
 
@@ -394,7 +394,7 @@ class VerificationCorrectnessTest {
   @Test
   fun missingDefaultConstructor() {
     assertProblemFound("Constructor mock.plugin.constructors.MissingDefaultConstructor.<init>() : void contains an *invokespecial* instruction referencing an unresolved constructor constructors.DeletedDefaultConstructor.<init>() : void. This can lead to **NoSuchMethodError** exception at runtime.",
-        "Invocation of unresolved method constructors.DeletedDefaultConstructor.<init>() : void"
+        "Invocation of unresolved constructor constructors.DeletedDefaultConstructor.<init>() : void"
     )
   }
 
@@ -425,8 +425,8 @@ class VerificationCorrectnessTest {
 
   @Test
   fun constructorBecamePrivate() {
-    assertProblemFound("Method mock.plugin.AccessChangedProblem.foo() : void contains an *invokespecial* instruction referencing a private method com.intellij.openapi.diagnostic.LogUtil.<init>() : void inaccessible to a class mock.plugin.AccessChangedProblem. This can lead to **IllegalAccessError** exception at runtime.",
-        "Illegal invocation of private method com.intellij.openapi.diagnostic.LogUtil.<init>() : void"
+    assertProblemFound("Method mock.plugin.AccessChangedProblem.foo() : void contains an *invokespecial* instruction referencing a private constructor com.intellij.openapi.diagnostic.LogUtil.<init>() : void inaccessible to a class mock.plugin.AccessChangedProblem. This can lead to **IllegalAccessError** exception at runtime.",
+        "Illegal invocation of private constructor com.intellij.openapi.diagnostic.LogUtil.<init>() : void"
     )
   }
 
