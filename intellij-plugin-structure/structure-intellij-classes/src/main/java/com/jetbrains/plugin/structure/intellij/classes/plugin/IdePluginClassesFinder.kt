@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.base.utils.FileUtil
 import com.jetbrains.plugin.structure.base.utils.FileUtil.isJar
 import com.jetbrains.plugin.structure.base.utils.FileUtil.isZip
 import com.jetbrains.plugin.structure.base.utils.closeLogged
+import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.ClassesDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.JarPluginKey
@@ -44,9 +45,10 @@ class IdePluginClassesFinder private constructor(private val idePlugin: IdePlugi
     val extractorResult = PluginExtractor.extractPlugin(pluginZip, extractDirectory)
     return when (extractorResult) {
       is ExtractorResult.Success -> {
-        val extractedPlugin = extractorResult.extractedPlugin
-        val locations = findLocations(extractedPlugin.pluginFile)
-        IdePluginClassesLocations(idePlugin, extractedPlugin, locations)
+        extractorResult.extractedPlugin.closeOnException {
+          val locations = findLocations(it.pluginFile)
+          IdePluginClassesLocations(idePlugin, it, locations)
+        }
       }
       is ExtractorResult.Fail -> throw IOException(extractorResult.pluginProblem.message)
     }
@@ -84,10 +86,9 @@ class IdePluginClassesFinder private constructor(private val idePlugin: IdePlugi
       return findPluginClasses(idePlugin, extractDirectory, additionalKeys)
     }
 
-    fun findPluginClasses(
-        idePlugin: IdePlugin,
-        extractDirectory: File,
-        additionalKeys: List<LocationKey> = emptyList()
+    fun findPluginClasses(idePlugin: IdePlugin,
+                          extractDirectory: File,
+                          additionalKeys: List<LocationKey> = emptyList()
     ): IdePluginClassesLocations {
       val locatorKeys = MAIN_CLASSES_KEYS + additionalKeys
       return IdePluginClassesFinder(idePlugin, extractDirectory, locatorKeys).findPluginClasses()

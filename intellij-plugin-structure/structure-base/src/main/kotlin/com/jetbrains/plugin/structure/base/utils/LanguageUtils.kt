@@ -14,6 +14,15 @@ fun <T : Closeable?> T.closeLogged() {
   }
 }
 
+inline fun <T : Closeable?, R> T.closeOnException(block: (T) -> R): R {
+  try {
+    return block(this)
+  } catch (e: Throwable) {
+    this?.closeLogged()
+    throw e
+  }
+}
+
 fun <T> Iterator<T>.toList() = asSequence().toList()
 
 fun <T> Iterator<T>.toSet() = asSequence().toSet()
