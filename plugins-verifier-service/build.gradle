@@ -25,7 +25,7 @@ buildscript {
   }
 }
 
-def serviceVersion = project.hasProperty('myVersion') ? project.myVersion : '1.0'
+def serviceVersion = project.hasProperty('verifierServiceProjectVersion') ? project.verifierServiceProjectVersion : '1.0'
 
 configure(allprojects) {
   version = serviceVersion

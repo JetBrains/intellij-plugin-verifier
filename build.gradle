@@ -1,4 +1,4 @@
-def projectVersion = project.hasProperty('myVersion') ? project.myVersion : 'dev'
+def projectVersion = project.hasProperty('verifierProjectVersion') ? project.verifierProjectVersion : 'dev'
 def isDevMode = projectVersion == 'dev'
 def intellijStructureVersion = 'dev'
 if (!isDevMode) {
