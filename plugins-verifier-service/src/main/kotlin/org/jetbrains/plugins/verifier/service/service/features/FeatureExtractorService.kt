@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.features
 
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
+import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.service.BaseService
@@ -32,7 +33,7 @@ class FeatureExtractorService(taskManager: ServiceTaskManager,
 
   override fun doServe() {
     val updatesToExtract = featureServiceProtocol.getUpdatesToExtract()
-    logger.info("Extracting features of ${updatesToExtract.size} updates: $updatesToExtract")
+    logger.info("Extracting features of ${updatesToExtract.size} updates")
     for (updateInfo in updatesToExtract) {
       if (processingUpdates.size > 500) {
         return
@@ -59,7 +60,7 @@ class FeatureExtractorService(taskManager: ServiceTaskManager,
     )
     val taskStatus = taskManager.enqueue(
         runner,
-        { result, _ -> onSuccess(result) },
+        { result, _ -> result.onSuccess() },
         { t, tid -> onError(t, tid, runner) },
         { _ -> onCompletion(runner) }
     )
@@ -75,15 +76,12 @@ class FeatureExtractorService(taskManager: ServiceTaskManager,
     logger.error("Unable to extract features of ${task.updateInfo} (#${taskStatus.taskId})", error)
   }
 
-  private fun onSuccess(extractorResult: ExtractFeaturesTask.Result) {
-    val updateInfo = extractorResult.updateInfo
-    val resultType = extractorResult.resultType
-    val size = extractorResult.features.size
-    logger.info("Plugin $updateInfo extracted $size features: ($resultType)")
+  private fun ExtractFeaturesTask.Result.onSuccess() {
+    logger.info("For plugin $updateInfo there are " + "feature".pluralizeWithNumber(features.size) + " extracted: $resultType")
     try {
-      featureServiceProtocol.sendExtractedFeatures(extractorResult)
+      featureServiceProtocol.sendExtractedFeatures(this)
     } catch (e: Exception) {
-      logger.error("Unable to send extracted features of the plugin ${extractorResult.updateInfo}", e)
+      logger.error("Unable to send extracted features of the plugin ${this.updateInfo}", e)
     }
   }
 

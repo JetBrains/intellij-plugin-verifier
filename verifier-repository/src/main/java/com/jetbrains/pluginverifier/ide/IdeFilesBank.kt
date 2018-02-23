@@ -26,11 +26,9 @@ class IdeFilesBank(private val bankDirectory: Path,
     private val LOG: Logger = LoggerFactory.getLogger(IdeFilesBank::class.java)
   }
 
-  val ideDownloader = IdeDownloader(ideRepository)
-  val ideFileNameMapper = IdeFileNameMapper()
   private val ideFilesRepository = FileRepositoryBuilder<IdeVersion>()
       .sweepPolicy(LruFileSizeSweepPolicy(diskSpaceSetting))
-      .resourceProvider(DownloadProvider(bankDirectory, ideDownloader, ideFileNameMapper))
+      .resourceProvider(DownloadProvider(bankDirectory, IdeDownloader(ideRepository), IdeFileNameMapper()))
       .presentableName("IDEs bank at $bankDirectory")
       .addInitialFilesFrom(bankDirectory) { IdeFileNameMapper.getIdeVersionByFile(it) }
       .build()

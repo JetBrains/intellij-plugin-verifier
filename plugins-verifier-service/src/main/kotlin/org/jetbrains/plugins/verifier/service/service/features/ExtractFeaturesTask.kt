@@ -37,17 +37,19 @@ class ExtractFeaturesTask(val updateInfo: UpdateInfo,
     }
   }
 
-  override fun execute(progress: ProgressIndicator) = getSomeCompatibleIde().use {
-    val ideDescriptor = it.resource
-    pluginDetailsCache.getPluginDetailsCacheEntry(updateInfo).use {
-      with(it) {
-        when (this) {
-          is PluginDetailsCache.Result.Provided -> runFeatureExtractor(ideDescriptor, pluginDetails.plugin)
-          is PluginDetailsCache.Result.FileNotFound -> Result(updateInfo, Result.ResultType.NOT_FOUND, emptyList())
-          is PluginDetailsCache.Result.InvalidPlugin -> Result(updateInfo, Result.ResultType.BAD_PLUGIN, emptyList())
-          is PluginDetailsCache.Result.Failed -> {
-            LOG.info("Unable to get plugin details for $updateInfo", error)
-            Result(updateInfo, Result.ResultType.NOT_FOUND, emptyList())
+  override fun execute(progress: ProgressIndicator): Result {
+    return getIde().use {
+      val ideDescriptor = it.resource
+      pluginDetailsCache.getPluginDetailsCacheEntry(updateInfo).use {
+        with(it) {
+          when (this) {
+            is PluginDetailsCache.Result.Provided -> runFeatureExtractor(ideDescriptor, pluginDetails.plugin)
+            is PluginDetailsCache.Result.FileNotFound -> Result(updateInfo, Result.ResultType.NOT_FOUND, emptyList())
+            is PluginDetailsCache.Result.InvalidPlugin -> Result(updateInfo, Result.ResultType.BAD_PLUGIN, emptyList())
+            is PluginDetailsCache.Result.Failed -> {
+              LOG.info("Unable to get plugin details for $updateInfo", error)
+              Result(updateInfo, Result.ResultType.NOT_FOUND, emptyList())
+            }
           }
         }
       }
@@ -64,11 +66,13 @@ class ExtractFeaturesTask(val updateInfo: UpdateInfo,
   }
 
   /**
-   * Selects any IDE compatible with the [updateInfo] among all the IDEs available in the cache now.
+   * Selects an IDE used to extract features of the [updateInfo].
    */
-  private fun getSomeCompatibleIde() =
+  private fun getIde() =
       ideDescriptorsCache.getIdeDescriptor { availableIdes ->
-        availableIdes.find { updateInfo.isCompatibleWith(it) }!!
+        availableIdes.find { updateInfo.isCompatibleWith(it) }
+            ?: availableIdes.firstOrNull()
+            ?: throw IllegalStateException("There are no IDEs on the server available")
       }
 
 }

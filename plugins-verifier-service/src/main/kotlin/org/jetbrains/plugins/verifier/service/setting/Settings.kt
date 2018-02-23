@@ -20,7 +20,7 @@ enum class Settings(val key: String,
   ENABLE_FEATURE_EXTRACTOR_SERVICE("verifier.service.enable.feature.extractor.service", { "false" }),
   ENABLE_PLUGIN_VERIFIER_SERVICE("verifier.service.enable.plugin.verifier.service", { "false" }),
   ENABLE_IDE_LIST_UPDATER("verifier.service.enable.ide.list.updater", { "false" }),
-  PLUGIN_REPOSITORY_VERIFIER_USERNAME("verifier.service.plugin.repository.verifier.username"),
+  PLUGIN_REPOSITORY_VERIFIER_USERNAME("verifier.service.plugin.repository.verifier.username", encrypted = true),
   PLUGIN_REPOSITORY_VERIFIER_PASSWORD("verifier.service.plugin.repository.verifier.password", encrypted = true),
 
   TASK_MANAGER_CONCURRENCY("verifier.service.task.manager.concurrency", { "4" }),

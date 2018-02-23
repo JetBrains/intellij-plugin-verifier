@@ -30,7 +30,7 @@ class IdeDescriptorsCache(cacheSize: Int,
    * and registers a [ResourceCacheEntry] for the [IdeDescriptor].
    * The cache's state is not modified until this method returns.
    */
-  fun getIdeDescriptor(selector: (Iterable<IdeVersion>) -> IdeVersion): ResourceCacheEntry<IdeDescriptor> =
+  fun getIdeDescriptor(selector: (Set<IdeVersion>) -> IdeVersion): ResourceCacheEntry<IdeDescriptor> =
       getIdeDescriptors {
         listOf(selector(it))
       }.single()
@@ -40,7 +40,7 @@ class IdeDescriptorsCache(cacheSize: Int,
    * and registers the [ResourceCacheEntry]s for the corresponding [IdeDescriptor]s.
    * The cache's state is not modified until this method returns.
    */
-  fun getIdeDescriptors(selector: (Iterable<IdeVersion>) -> List<IdeVersion>): List<ResourceCacheEntry<IdeDescriptor>> {
+  fun getIdeDescriptors(selector: (Set<IdeVersion>) -> List<IdeVersion>): List<ResourceCacheEntry<IdeDescriptor>> {
     //Register fake locks protecting IDEs from deletion
     //while requesting the cache entries.
     val ides = arrayListOf<Pair<IdeVersion, FileLock>>()

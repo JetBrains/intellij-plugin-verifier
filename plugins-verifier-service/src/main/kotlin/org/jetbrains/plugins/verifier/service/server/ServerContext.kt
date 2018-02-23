@@ -46,6 +46,7 @@ class ServerContext(val applicationHomeDirectory: Path,
     serverDatabase.closeLogged()
     ideDescriptorsCache.closeLogged()
     pluginDetailsCache.closeLogged()
+    jdkDescriptorsCache.closeLogged()
   }
 
 }

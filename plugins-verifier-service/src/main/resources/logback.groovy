@@ -62,5 +62,6 @@ logger("com.intellij.structure", ERROR, loggers, false)
 logger("org.jetbrains.plugins.verifier.service", developmentMode ? DEBUG : INFO, loggers, false)
 logger("com.jetbrains.pluginverifier", developmentMode ? DEBUG : INFO, loggers, false)
 logger("com.jetbrains.intellij.feature.extractor", developmentMode ? DEBUG : ERROR, loggers, false)
+logger("FeaturesExtractor", developmentMode ? DEBUG : ERROR, loggers, false)
 
 root(INFO, loggers)
