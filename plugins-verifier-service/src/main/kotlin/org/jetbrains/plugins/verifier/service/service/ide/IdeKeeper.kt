@@ -68,7 +68,7 @@ class IdeKeeper(private val serviceDAO: ServiceDAO,
     val index = ideRepository.fetchIndex()
 
     val branchToVersions: Map<Int, List<AvailableIde>> = index
-        .filterNot { it.isCommunity }
+        .filter { it.version.productCode == "IU" }
         .groupBy { it.version.baselineVersion }
 
     val lastBranchBuilds = branchToVersions

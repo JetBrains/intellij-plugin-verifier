@@ -12,7 +12,7 @@ class IdeFileNameMapper : FileNameMapper<IdeVersion> {
     fun getIdeVersionByFile(file: Path) =
         if (file.isDirectory) {
           IdeVersion.createIdeVersionIfValid(file.simpleName)
-              ?.let { IdeRepository.setProductCodeIfAbsent(it, "IU") }
+              ?.let { it.setProductCodeIfAbsent("IU") }
         } else {
           null
         }

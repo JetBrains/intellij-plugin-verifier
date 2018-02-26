@@ -18,10 +18,11 @@ class IdeDownloader(private val ideRepository: IdeRepository) : Downloader<IdeVe
 
   private fun getIdeDownloadUrl(key: IdeVersion) =
       try {
-        ideRepository.fetchAvailableIdeDescriptor(key)?.downloadUrl
+        ideRepository.fetchAvailableIdeDescriptor(key, false)
+            ?: ideRepository.fetchAvailableIdeDescriptor(key, true)
       } catch (e: Exception) {
         null
-      }
+      }?.downloadUrl
 
   override fun download(key: IdeVersion, tempDirectory: Path): DownloadResult {
     val downloadResult = downloadIdeToTempFile(key, tempDirectory)
