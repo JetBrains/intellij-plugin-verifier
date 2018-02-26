@@ -18,7 +18,7 @@ import com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilte
 import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
-import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsFetcher
+import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsPagesFetcher
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsParser
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -120,18 +120,20 @@ object OptionsParser {
   }
 
   private fun createDocumentedProblemsFilter(opts: CmdOpts): ProblemsFilter? {
-    if (opts.documentedProblemsPageUrl != null) {
-      val documentedPage = fetchDocumentedProblemsPage(opts) ?: return null
-      val documentedProblems = DocumentedProblemsParser().parse(documentedPage)
+    val documentedProblemsPageUrl = opts.documentedProblemsPageUrl
+    if (documentedProblemsPageUrl != null) {
+      val documentedPages = fetchDocumentedProblemsPages(documentedProblemsPageUrl) ?: return null
+      val documentedProblemsParser = DocumentedProblemsParser()
+      val documentedProblems = documentedPages.flatMap { documentedProblemsParser.parse(it) }
       return DocumentedProblemsFilter(documentedProblems)
     }
     return null
   }
 
-  private fun fetchDocumentedProblemsPage(opts: CmdOpts): String? = try {
-    DocumentedProblemsFetcher().fetchPage(opts.documentedProblemsPageUrl!!)
+  private fun fetchDocumentedProblemsPages(mainPageUrl: String) = try {
+    DocumentedProblemsPagesFetcher().fetchPages(mainPageUrl)
   } catch (e: Exception) {
-    LOG.error("Failed to fetch documented problems page ${opts.documentedProblemsPageUrl}. " +
+    LOG.error("Failed to fetch documented problems page $mainPageUrl. " +
         "The problems described on the page will not be ignored.", e)
     null
   }
