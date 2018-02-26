@@ -3,7 +3,7 @@ package org.jetbrains.plugins.verifier.service.startup
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IdeRepository
-import com.jetbrains.pluginverifier.misc.createDir
+import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
@@ -12,6 +12,7 @@ import com.jetbrains.pluginverifier.repository.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
+import org.apache.commons.io.FileUtils
 import org.jetbrains.plugins.verifier.service.database.MapDbServerDatabase
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
@@ -26,6 +27,7 @@ import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetti
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
 import org.slf4j.LoggerFactory
+import java.nio.file.Path
 import javax.servlet.ServletContextEvent
 import javax.servlet.ServletContextListener
 
@@ -49,11 +51,27 @@ class ServerStartupListener : ServletContextListener {
     createServerContext()
   }
 
+  //todo: delete.
+  private fun prepareForNewServerLayout(applicationHomeDir: Path, loadedPluginsDir: Path) {
+    val oldPluginsDir = applicationHomeDir.resolve("verifier").resolve("cache")
+    if (oldPluginsDir.exists()) {
+      if (!loadedPluginsDir.exists() || loadedPluginsDir.listFiles().isEmpty()) {
+        loadedPluginsDir.deleteLogged()
+        FileUtils.moveDirectory(oldPluginsDir.toFile(), loadedPluginsDir.toFile())
+      }
+      loadedPluginsDir.listFiles().filter { it.simpleName.contains("currentDownload") }.forEach {
+        it.deleteLogged()
+      }
+    }
+  }
+
   private fun createServerContext(): ServerContext {
     val applicationHomeDir = Settings.APP_HOME_DIRECTORY.getAsPath().createDir()
     val loadedPluginsDir = applicationHomeDir.resolve("loaded-plugins").createDir()
     val extractedPluginsDir = applicationHomeDir.resolve("extracted-plugins").createDir()
     val ideFilesDir = applicationHomeDir.resolve("ides").createDir()
+
+    prepareForNewServerLayout(applicationHomeDir, loadedPluginsDir)
 
     val pluginDownloadDirSpaceSetting = getPluginDownloadDirDiskSpaceSetting()
 
