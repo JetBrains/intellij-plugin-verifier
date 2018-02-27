@@ -54,8 +54,6 @@ class DocumentedProblemsReportingTest {
 
     for (problem in problems) {
       val shouldReportProblem = problemsFilter.shouldReportProblem(
-          verificationContext.plugin,
-          verificationContext.ideVersion,
           problem,
           verificationContext
       )

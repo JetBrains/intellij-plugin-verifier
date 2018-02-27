@@ -14,10 +14,7 @@ import com.jetbrains.pluginverifier.output.settings.dependencies.AllMissingDepen
 import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.settings.dependencies.SpecifiedMissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
-import com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilter
-import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsFilter
-import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
-import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
+import com.jetbrains.pluginverifier.parameters.filtering.*
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsPagesFetcher
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsParser
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
@@ -138,10 +135,20 @@ object OptionsParser {
     null
   }
 
+  private fun createAndroidProblemsFilter(opts: CmdOpts): ProblemsFilter? {
+    if (opts.ignoreAndroidProblems) {
+      return AndroidProblemsFilter()
+    }
+    return null
+  }
+
   fun getProblemsFilters(opts: CmdOpts): List<ProblemsFilter> {
     val ignoredProblemsFilter = createIgnoredProblemsFilter(opts)
     val documentedProblemsFilter = createDocumentedProblemsFilter(opts)
-    return ignoredProblemsFilter.singletonOrEmpty() + documentedProblemsFilter.singletonOrEmpty()
+    val androidProblemsFilter = createAndroidProblemsFilter(opts)
+    return ignoredProblemsFilter.singletonOrEmpty() +
+        documentedProblemsFilter.singletonOrEmpty() +
+        androidProblemsFilter.singletonOrEmpty()
   }
 
   /**

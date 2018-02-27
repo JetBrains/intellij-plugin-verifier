@@ -25,7 +25,7 @@ data class VerificationContext(
 ) {
 
   fun registerProblem(problem: CompatibilityProblem) {
-    val shouldReportDecisions = problemFilters.map { it.shouldReportProblem(plugin, ideVersion, problem, this) }
+    val shouldReportDecisions = problemFilters.map { it.shouldReportProblem(problem, this) }
     val ignoreDecisions = shouldReportDecisions.filterIsInstance<ProblemsFilter.Result.Ignore>()
     if (ignoreDecisions.isNotEmpty()) {
       resultHolder.registerIgnoredProblem(problem, ignoreDecisions)

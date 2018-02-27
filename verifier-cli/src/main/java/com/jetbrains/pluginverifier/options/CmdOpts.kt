@@ -58,8 +58,10 @@ open class CmdOpts(
     var pluginsToCheckFile: String? = null,
 
     @set:Argument("external-prefixes", alias = "ex-prefixes", delimiter = ":", description = "The prefixes of classes from the external libraries. The Verifier will not report 'No such class' for such classes.")
-    var externalClassesPrefixes: Array<String> = arrayOf()
+    var externalClassesPrefixes: Array<String> = arrayOf(),
 
+    @set:Argument("ignore-android-problems", alias = "i-android", description = "Whether to ignore problems belonging to Android source code, which is merged into IDEA sources and is authored by Google team. By default the value is 'true'.")
+    var ignoreAndroidProblems: Boolean = true
 ) {
   companion object {
     const val DEFAULT_DOCUMENTED_PROBLEMS_PAGE_URL = "https://raw.githubusercontent.com/JetBrains/intellij-sdk-docs/master/reference_guide/api_changes_list.md"
