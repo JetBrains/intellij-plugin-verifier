@@ -93,6 +93,10 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
       for (path in pluginPaths) {
         if (path.startsWith("id:")) {
           pluginsToCheck.plugins.addAll(getCompatiblePluginVersions(path.substringAfter("id:"), ideVersion))
+        } else if (path.startsWith("#")) {
+          val updateId = path.substringAfter("#").toIntOrNull() ?: continue
+          val pluginInfo = getPluginInfoByUpdateId(updateId) ?: continue
+          pluginsToCheck.plugins.add(pluginInfo)
         } else {
           var pluginFile = Paths.get(path)
           if (!pluginFile.isAbsolute) {
@@ -126,6 +130,10 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
         }
       }
 
+  private fun getPluginInfoByUpdateId(updateId: Int): PluginInfo? =
+      pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch plugin info for #$updateId") {
+        (pluginRepository as? PublicPluginRepository)?.getPluginInfoById(updateId)
+      }
 
   private fun getCompatiblePluginVersions(pluginId: String, ideVersion: IdeVersion): List<PluginInfo> {
     val allCompatibleUpdatesOfPlugin = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch all compatible updates of plugin $pluginId with $ideVersion") {
