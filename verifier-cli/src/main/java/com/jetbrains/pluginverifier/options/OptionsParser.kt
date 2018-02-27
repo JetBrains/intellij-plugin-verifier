@@ -135,20 +135,24 @@ object OptionsParser {
     null
   }
 
-  private fun createAndroidProblemsFilter(opts: CmdOpts): ProblemsFilter? {
-    if (opts.ignoreAndroidProblems) {
-      return AndroidProblemsFilter()
-    }
-    return null
-  }
+  /**
+   * Determines whether we would like to track
+   * only IDEA-related problems, or only Android-related problems (MP-1377).
+   */
+  private fun createIdeaOrAndroidProblemsFilter(opts: CmdOpts) =
+      if (opts.checkAndroid) {
+        IdeaProblemsFilter()
+      } else {
+        AndroidProblemsFilter()
+      }
 
   fun getProblemsFilters(opts: CmdOpts): List<ProblemsFilter> {
     val ignoredProblemsFilter = createIgnoredProblemsFilter(opts)
     val documentedProblemsFilter = createDocumentedProblemsFilter(opts)
-    val androidProblemsFilter = createAndroidProblemsFilter(opts)
+    val codeProblemsFilter = createIdeaOrAndroidProblemsFilter(opts)
     return ignoredProblemsFilter.singletonOrEmpty() +
         documentedProblemsFilter.singletonOrEmpty() +
-        androidProblemsFilter.singletonOrEmpty()
+        codeProblemsFilter.singletonOrEmpty()
   }
 
   /**
