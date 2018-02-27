@@ -179,7 +179,7 @@ final class PluginCreator {
       return PluginBeanExtractor.extractPluginBean(document);
     } catch (Exception e) {
       registerProblem(new UnableToReadDescriptor(myDescriptorPath));
-      LOG.error("Unable to read plugin descriptor " + myDescriptorPath + " of " + myActualFile, e);
+      LOG.info("Unable to read plugin descriptor " + myDescriptorPath + " of " + myActualFile, e);
       return null;
     }
   }
