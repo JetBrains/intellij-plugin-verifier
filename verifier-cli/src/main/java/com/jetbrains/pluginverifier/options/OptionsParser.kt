@@ -136,15 +136,21 @@ object OptionsParser {
   }
 
   /**
-   * Determines whether we would like to track
-   * only IDEA-related problems, or only Android-related problems (MP-1377).
+   * Determines whether we would like to track only IDEA-related problems,
+   * or only Android-related problems (MP-1377), or both IDEA and Android problems.
    */
-  private fun createIdeaOrAndroidProblemsFilter(opts: CmdOpts) =
-      if (opts.checkAndroid) {
-        IdeaProblemsFilter()
-      } else {
-        AndroidProblemsFilter()
-      }
+  private fun createIdeaOrAndroidProblemsFilter(opts: CmdOpts): ProblemsFilter? {
+    if (opts.checkAndroidOnly && opts.checkIdeaOnly) {
+      throw IllegalArgumentException("Only one option -idea or -android can be specified")
+    }
+    if (opts.checkIdeaOnly) {
+      return AndroidProblemsFilter()
+    }
+    if (opts.checkAndroidOnly) {
+      return IdeaProblemsFilter()
+    }
+    return null
+  }
 
   fun getProblemsFilters(opts: CmdOpts): List<ProblemsFilter> {
     val ignoredProblemsFilter = createIgnoredProblemsFilter(opts)

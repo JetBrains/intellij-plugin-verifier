@@ -60,9 +60,13 @@ open class CmdOpts(
     @set:Argument("external-prefixes", alias = "ex-prefixes", delimiter = ":", description = "The prefixes of classes from the external libraries. The Verifier will not report 'No such class' for such classes.")
     var externalClassesPrefixes: Array<String> = arrayOf(),
 
-    @set:Argument("check-android", alias = "c-android", description = "Whether to check only Android source code, which is authored by Google team and gets merged into IDEA sources. " +
-        "By default the value is 'false'. If the value is 'true', only the Android-related code will be verified.")
-    var checkAndroid: Boolean = false
+    @set:Argument("check-android-only", alias = "android", description = "Whether to check only Android-related code, which is authored by Google team and gets merged into IDEA sources. By default the value is 'false'.")
+    var checkAndroidOnly: Boolean = false,
+
+    @set:Argument("check-idea-only", alias = "idea", description = "Whether to check only IDEA-related code, excluding problems related to Android source code authored by Google team " +
+        "and merged into IDEA. By default the value is 'false'.")
+    var checkIdeaOnly: Boolean = false
+
 ) {
   companion object {
     const val DEFAULT_DOCUMENTED_PROBLEMS_PAGE_URL = "https://raw.githubusercontent.com/JetBrains/intellij-sdk-docs/master/reference_guide/api_changes_list.md"
