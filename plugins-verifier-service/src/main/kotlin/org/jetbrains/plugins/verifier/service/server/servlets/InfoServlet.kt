@@ -163,8 +163,8 @@ class InfoServlet : BaseServlet() {
                   td { +DATE_FORMAT.format(taskStatus.startTime) }
                   td { +taskStatus.state.toString() }
                   td { +taskStatus.progress.text }
-                  td { +String.format(".2f", taskStatus.progress.fraction) }
-                  td { +taskStatus.elapsedTime.toMillis() }
+                  td { +String.format("%.2f", taskStatus.progress.fraction) }
+                  td { +taskStatus.elapsedTime.toMillis().toString() }
                 }
               }
             }
