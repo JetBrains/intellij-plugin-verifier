@@ -4,8 +4,10 @@ import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.repository.cleanup.SizeEvictionPolicy
 import com.jetbrains.pluginverifier.repository.cleanup.SizeWeight
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
+import com.jetbrains.pluginverifier.repository.resources.EvictionPolicy
 import com.jetbrains.pluginverifier.repository.resources.ResourceRepositoryImpl
 import com.jetbrains.pluginverifier.repository.resources.ResourceRepositoryResult
+import com.jetbrains.pluginverifier.repository.resources.ResourceWeight
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.Closeable
@@ -32,25 +34,15 @@ import java.time.Instant
  * the resource _may be_ [disposed] [disposer]. Note that it is not necessarily happens
  * immediately as the same resource may be requested once again shortly.
  *
- * todo: provide more guarantees on this. don't add the resource to cache if it leads to exceeding the size limit.
- * The cache is limited in size of [cacheSize], though it is possible
- * to exceed this limit if all the requested resources are locked.
  * While there are available "slots" in the cache, the resources are not disposed.
  * All the unreleased resources will be [disposed] [disposer] once the cache is [closed] [close].
  */
 class ResourceCache<R, in K>(
     /**
-     * The maximum number of resources held by this cache at a moment.
-     *
-     * The [cleanup] [SizeEvictionPolicy] procedure will be
-     * carried out once the cache size reaches this value.
+     * [ResourceProvider] that provides the
+     * requested resources by [keys] [K].
      */
-    private val cacheSize: Long,
-    /**
-     * The resource [provider] [ResourceProvider] that
-     * provides the requested resources by [keys] [K].
-     */
-    private val resourceProvider: ResourceProvider<K, R>,
+    resourceProvider: ResourceProvider<K, R>,
     /**
      * The disposer used to close the resources.
      *
@@ -59,9 +51,22 @@ class ResourceCache<R, in K>(
      * or when the resources are removed from the [resourceRepository].
      * On [close], all the resources are removed and closed.
      */
-    private val disposer: (R) -> Unit,
+    disposer: (R) -> Unit,
     /**
-     * The cache name that can be used for logging and debug purposes
+     * [EvictionPolicy] that manages eviction of resources
+     * held in this cache.
+     */
+    evictionPolicy: EvictionPolicy<R, K>,
+    /**
+     * Initial weight of the resources held in this cache.
+     */
+    initialWeight: ResourceWeight,
+    /**
+     * Weigher of the resources held in this cache.
+     */
+    weigher: (R) -> ResourceWeight,
+    /**
+     * The cache name that can be used for logging and debugging purposes
      */
     private val presentableName: String
 ) : Closeable {
@@ -77,19 +82,17 @@ class ResourceCache<R, in K>(
    * Initially, the repository is empty, meaning that there
    * are no resources opened.
    *
-   * The repository is limited in size of [cacheSize].
-   *
    * When the repository is full and a new resource is requested,
-   * the unused resources are [disposed] [disposer].
+   * unused resources are [disposed] [disposer].
    */
   private val resourceRepository = ResourceRepositoryImpl(
-      SizeEvictionPolicy(cacheSize),
+      evictionPolicy,
       Clock.systemUTC(),
       resourceProvider,
-      initialWeight = SizeWeight(0),
-      weigher = { SizeWeight(1) },
-      disposer = disposer,
-      presentableName = presentableName
+      initialWeight,
+      weigher,
+      disposer,
+      presentableName
   )
 
   /**
@@ -167,3 +170,17 @@ class ResourceCache<R, in K>(
   }
 
 }
+
+fun <K, R> createSizeLimitedResourceCache(
+    cacheSize: Int,
+    resourceProvider: ResourceProvider<K, R>,
+    disposer: (R) -> Unit,
+    presentableName: String
+) = ResourceCache(
+    resourceProvider,
+    disposer,
+    SizeEvictionPolicy(cacheSize),
+    SizeWeight(0),
+    { SizeWeight(1) },
+    presentableName
+)

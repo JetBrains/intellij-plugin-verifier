@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.parameters.jdk
 
 import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
-import com.jetbrains.pluginverifier.repository.cache.ResourceCache
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
+import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import java.io.Closeable
@@ -12,7 +12,7 @@ import java.io.Closeable
  */
 class JdkDescriptorsCache : Closeable {
 
-  private val resourceCache = ResourceCache(
+  private val resourceCache = createSizeLimitedResourceCache(
       3,
       JdkClassesResourceProvider(),
       { it.close() },

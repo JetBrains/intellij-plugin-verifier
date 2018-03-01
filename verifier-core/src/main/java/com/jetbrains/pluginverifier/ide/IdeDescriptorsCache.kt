@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.repository.cache.ResourceCache
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
+import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
@@ -18,8 +18,8 @@ import java.io.Closeable
 class IdeDescriptorsCache(cacheSize: Int,
                           private val ideFilesBank: IdeFilesBank) : Closeable {
 
-  private val resourceCache = ResourceCache(
-      cacheSize.toLong(),
+  private val resourceCache = createSizeLimitedResourceCache(
+      cacheSize,
       IdeDescriptorResourceProvider(ideFilesBank),
       { it.close() },
       "IdeDescriptorsCache"

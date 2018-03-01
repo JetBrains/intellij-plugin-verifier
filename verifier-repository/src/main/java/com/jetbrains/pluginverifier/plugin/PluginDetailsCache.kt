@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.cache.ResourceCache
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
+import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import java.io.Closeable
@@ -24,8 +25,8 @@ class PluginDetailsCache(cacheSize: Int,
                          pluginDetailsProvider: PluginDetailsProvider,
                          pluginFilesBank: PluginFilesBank) : Closeable {
 
-  private val resourceCache = ResourceCache(
-      cacheSize.toLong(),
+  private val resourceCache = createSizeLimitedResourceCache(
+      cacheSize,
       PluginDetailsResourceProvider(pluginDetailsProvider, pluginFilesBank),
       { it.close() },
       "PluginDetailsCache"

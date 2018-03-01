@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.tests.cache
 
-import com.jetbrains.pluginverifier.repository.cache.ResourceCache
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
+import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import org.junit.Assert.assertEquals
@@ -18,8 +18,8 @@ class ResourceCacheTest {
     /**
      * Create a resource cache
      */
-    val resourceCache = ResourceCache(
-        N.toLong(),
+    val resourceCache = createSizeLimitedResourceCache(
+        N,
         object : ResourceProvider<Int, Closeable> {
           override fun provide(key: Int): ProvideResult.Provided<Closeable> {
             val closeable = Closeable {
@@ -31,9 +31,7 @@ class ResourceCacheTest {
             )
           }
         },
-        {
-          it.close()
-        },
+        { it.close() },
         "testCache"
     )
 

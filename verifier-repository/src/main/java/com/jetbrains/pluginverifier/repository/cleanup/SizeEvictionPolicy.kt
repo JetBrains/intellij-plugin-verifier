@@ -11,7 +11,7 @@ import com.jetbrains.pluginverifier.repository.resources.ResourceWeight
  * It selects for deletion the files that have not been
  * accessed for the longest time.
  */
-class SizeEvictionPolicy<R, K>(private val maximumSize: Long) : EvictionPolicy<R, K> {
+class SizeEvictionPolicy<R, K>(private val maximumSize: Int) : EvictionPolicy<R, K> {
   override fun isNecessary(totalWeight: ResourceWeight) =
       (totalWeight as SizeWeight).size > maximumSize
 
@@ -19,5 +19,10 @@ class SizeEvictionPolicy<R, K>(private val maximumSize: Long) : EvictionPolicy<R
       evictionInfo.availableResources
           .filterNot { it.isLocked }
           .sortedBy { it.usageStatistic.lastAccessTime }
-          .take(((evictionInfo.totalWeight as SizeWeight).size - maximumSize).coerceAtLeast(0L).toInt())
+          .take(howManyToRemove(evictionInfo))
+
+  private fun howManyToRemove(evictionInfo: EvictionInfo<R, K>): Int {
+    val size = (evictionInfo.totalWeight as SizeWeight).size
+    return (size - maximumSize).coerceAtLeast(0L).toInt()
+  }
 }
