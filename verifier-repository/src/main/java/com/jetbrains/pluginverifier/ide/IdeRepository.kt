@@ -79,7 +79,7 @@ internal class IdeRepositoryIndexParser(private val repositoryUrl: String) {
          */
         val downloadUrl = with(artifactInfo) {
           "${repositoryUrl.trimEnd('/')}/" +
-              if (snapshots) "snapshots" else "releases" +
+              (if (snapshots) "snapshots" else "releases") +
                   "/${groupId.replace('.', '/')}/$artifactId/$version/$artifactId-$version.$packaging"
         }.let { URL(it) }
 
