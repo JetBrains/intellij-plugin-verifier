@@ -48,8 +48,10 @@ class IdeDescriptorsCache(cacheSize: Int,
       ideFilesBank.lockAndAccess {
         val ideVersions = selector(ideFilesBank.getAvailableIdeVersions())
         for (ideVersion in ideVersions) {
-          val fileLock = ideFilesBank.getIdeFileLock(ideVersion)!!
-          ides.add(ideVersion to fileLock)
+          val result = ideFilesBank.getIde(ideVersion)
+          if (result is IdeFilesBank.Result.Found) {
+            ides.add(ideVersion to result.ideFileLock)
+          }
         }
       }
     } catch (e: Throwable) {
@@ -97,7 +99,8 @@ class IdeDescriptorsCache(cacheSize: Int,
   private class IdeDescriptorResourceProvider(private val ideFilesBank: IdeFilesBank) : ResourceProvider<IdeVersion, IdeDescriptor> {
 
     override fun provide(key: IdeVersion): ProvideResult<IdeDescriptor> {
-      val ideLock = ideFilesBank.getIdeFileLock(key)
+      val result = ideFilesBank.getIde(key)
+      val ideLock = (result as? IdeFilesBank.Result.Found)?.ideFileLock
           ?: return ProvideResult.NotFound("IDE $key is not found in the $ideFilesBank")
       val ideDescriptor = try {
         IdeDescriptorCreator.createByPath(ideLock.file, null)

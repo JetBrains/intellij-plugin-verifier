@@ -15,9 +15,11 @@ import java.util.concurrent.TimeUnit
  * Utility class that requests metadata from the [IDE repository](https://www.jetbrains.com/intellij-repository/releases)
  * on [available] [AvailableIde] IDEs.
  */
-class IdeRepository(jetbrainsUrl: String) {
+class IdeRepository {
 
-  private val repositoryUrl = jetbrainsUrl.trimEnd('/') + "/intellij-repository/"
+  companion object {
+    private const val repositoryUrl = "https://www.jetbrains.com/intellij-repository/"
+  }
 
   private val repositoryIndexConnector by lazy {
     Retrofit.Builder()
@@ -34,12 +36,9 @@ class IdeRepository(jetbrainsUrl: String) {
     } else {
       repositoryIndexConnector.getReleaseIndex()
     }.executeSuccessfully().body().artifacts
-    return IdeRepositoryIndexParser(getRepositoryUrl(snapshots))
+    return IdeRepositoryIndexParser(repositoryUrl)
         .parseArtifacts(artifacts, snapshots)
   }
-
-  private fun getRepositoryUrl(snapshots: Boolean) =
-      repositoryUrl + if (snapshots) "snapshots" else "releases"
 
   fun fetchAvailableIdeDescriptor(ideVersion: IdeVersion, snapshots: Boolean): AvailableIde? {
     val fullIdeVersion = ideVersion.setProductCodeIfAbsent("IU")

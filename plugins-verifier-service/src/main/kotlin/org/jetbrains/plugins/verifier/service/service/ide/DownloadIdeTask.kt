@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
 
@@ -13,9 +14,9 @@ class DownloadIdeTask(private val ideKeeper: IdeKeeper,
 
   override fun execute(progress: ProgressIndicator): Boolean {
     //initiates downloading of the IDE.
-    val fileLock = ideKeeper.getIdeFileLock(ideVersion)
-    fileLock?.release()
-    return fileLock != null
+    val result = ideKeeper.getIdeFileLock(ideVersion)
+    (result as? IdeFilesBank.Result.Found)?.ideFileLock?.release()
+    return result is IdeFilesBank.Result.Found
   }
 
 }

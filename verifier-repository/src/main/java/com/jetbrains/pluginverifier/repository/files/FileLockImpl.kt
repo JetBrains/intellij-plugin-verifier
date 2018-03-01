@@ -11,4 +11,6 @@ internal class FileLockImpl(private val resourceLock: ResourceLock<Path>) : File
 ) {
 
   override fun release() = resourceLock.release()
+
+  override fun toString() = "FileLock for ${resourceLock.resource}"
 }

@@ -58,7 +58,12 @@ class CheckTrunkApiParamsBuilder(private val pluginRepository: PluginRepository,
       apiOpts.majorIdeVersion != null -> {
         val ideVersion = parseIdeVersion(apiOpts.majorIdeVersion!!)
         releaseIdeFileLock = tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "download ide $ideVersion") {
-          ideFilesBank.getIdeFileLock(ideVersion) ?: throw RuntimeException("IDE $ideVersion is not found in ${ideFilesBank}")
+          val result = ideFilesBank.getIde(ideVersion)
+          if (result is IdeFilesBank.Result.Found) {
+            result.ideFileLock
+          } else {
+            throw RuntimeException("IDE $ideVersion is not found in $ideFilesBank")
+          }
         }
         deleteReleaseIdeOnExit = !apiOpts.saveMajorIdeFile
       }

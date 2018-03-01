@@ -7,8 +7,6 @@ import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryBuilder
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
 /**
@@ -21,10 +19,6 @@ import java.nio.file.Path
 class IdeFilesBank(private val bankDirectory: Path,
                    ideRepository: IdeRepository,
                    diskSpaceSetting: DiskSpaceSetting) {
-
-  companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(IdeFilesBank::class.java)
-  }
 
   private val ideFilesRepository = FileRepositoryBuilder<IdeVersion>()
       .sweepPolicy(LruFileSizeSweepPolicy(diskSpaceSetting))
@@ -41,18 +35,21 @@ class IdeFilesBank(private val bankDirectory: Path,
 
   fun deleteIde(ideVersion: IdeVersion) = ideFilesRepository.remove(ideVersion)
 
-  fun getIdeFileLock(ideVersion: IdeVersion): FileLock? = with(ideFilesRepository.getFile(ideVersion)) {
-    when (this) {
-      is FileRepositoryResult.Found -> lockedFile
-      is FileRepositoryResult.NotFound -> {
-        LOG.info("IDE $ideVersion is not found: $reason")
-        null
+  fun getIde(ideVersion: IdeVersion): Result =
+      with(ideFilesRepository.getFile(ideVersion)) {
+        when (this) {
+          is FileRepositoryResult.Found -> Result.Found(lockedFile)
+          is FileRepositoryResult.NotFound -> Result.NotFound(reason)
+          is FileRepositoryResult.Failed -> Result.Failed(reason, error)
+        }
       }
-      is FileRepositoryResult.Failed -> {
-        LOG.info("Unable to download IDE $ideVersion: $reason", error)
-        null
-      }
-    }
+
+  sealed class Result {
+    data class Found(val ideFileLock: FileLock) : Result()
+
+    data class NotFound(val reason: String) : Result()
+
+    data class Failed(val reason: String, val exception: Exception) : Result()
   }
 
   override fun toString() = "IDEs at $bankDirectory"

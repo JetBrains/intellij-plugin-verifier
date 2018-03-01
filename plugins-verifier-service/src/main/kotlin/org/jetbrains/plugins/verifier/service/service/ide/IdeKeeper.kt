@@ -31,7 +31,7 @@ class IdeKeeper(private val serviceDAO: ServiceDAO,
 
   fun getAvailableIdeVersions(): Set<IdeVersion> = ideFilesBank.getAvailableIdeVersions()
 
-  fun getIdeFileLock(ideVersion: IdeVersion) = ideFilesBank.getIdeFileLock(ideVersion)
+  fun getIdeFileLock(ideVersion: IdeVersion) = ideFilesBank.getIde(ideVersion)
 
   fun deleteIde(ideVersion: IdeVersion) = ideFilesBank.deleteIde(ideVersion)
 

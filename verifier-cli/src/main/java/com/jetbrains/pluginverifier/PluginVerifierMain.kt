@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier
 
-import com.google.common.util.concurrent.AtomicDouble
 import com.jetbrains.pluginverifier.PluginVerifierMain.commandRunners
 import com.jetbrains.pluginverifier.PluginVerifierMain.main
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
@@ -46,10 +45,6 @@ object PluginVerifierMain {
       DeprecatedUsagesRunner()
   )
 
-  private val DEFAULT_IDE_REPOSITORY_URL = "https://jetbrains.com"
-
-  private val DEFAULT_PLUGIN_REPOSITORY_URL = "https://plugins.jetbrains.com"
-
   private val verifierHomeDir: Path by lazy {
     val verifierHomeDir = System.getProperty("plugin.verifier.home.dir")
     if (verifierHomeDir != null) {
@@ -64,14 +59,9 @@ object PluginVerifierMain {
     }
   }
 
-  private val ideRepositoryUrl: String by lazy {
-    System.getProperty("ide.repository.url")?.trimEnd('/')
-        ?: DEFAULT_IDE_REPOSITORY_URL
-  }
-
   private val pluginRepositoryUrl: String by lazy {
     System.getProperty("plugin.repository.url")?.trimEnd('/')
-        ?: DEFAULT_PLUGIN_REPOSITORY_URL
+        ?: "https://plugins.jetbrains.com"
   }
 
   private val downloadDir: Path = verifierHomeDir.resolve("loaded-plugins").createDir()
@@ -106,7 +96,7 @@ object PluginVerifierMain {
     val pluginRepository = PublicPluginRepository(URL(pluginRepositoryUrl))
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDir, pluginDownloadDirDiskSpaceSetting)
 
-    val ideRepository = IdeRepository(ideRepositoryUrl)
+    val ideRepository = IdeRepository()
 
     val ideFilesDiskSetting = getIdeDownloadDirDiskSpaceSetting()
     val ideFilesBank = IdeFilesBank(ideDownloadDir, ideRepository, ideFilesDiskSetting)
@@ -155,16 +145,6 @@ object PluginVerifierMain {
       val taskResultsPrinter = runner.createTaskResultsPrinter(outputOptions, pluginRepository)
       taskResultsPrinter.printResults(taskResult)
 
-    }
-  }
-
-  private fun getIdeDownloadProgressListener(): (Double) -> Unit {
-    val lastProgress = AtomicDouble()
-    return { currentProgress ->
-      if (currentProgress == 1.0 || currentProgress - lastProgress.get() > 0.1) {
-        LOG.info("IDE downloading progress ${(currentProgress * 100).toInt()}%")
-        lastProgress.set(currentProgress)
-      }
     }
   }
 
