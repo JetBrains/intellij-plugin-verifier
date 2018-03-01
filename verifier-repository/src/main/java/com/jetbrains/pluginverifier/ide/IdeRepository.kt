@@ -64,7 +64,8 @@ internal class IdeRepositoryIndexParser(private val repositoryUrl: String) {
 
   fun parseArtifacts(artifacts: List<ArtifactJson>, snapshots: Boolean): List<AvailableIde> {
     val allAvailableIdes = arrayListOf<AvailableIde>()
-    for ((version, withVersion) in artifacts.groupBy { it.version }) {
+    for ((groupAndVersion, withVersion) in artifacts.groupBy { it.groupId to it.version }) {
+      val (groupId, version) = groupAndVersion
       val actualBuildNumber = withVersion.find { it.artifactId == "BUILD" }?.content ?: continue
       val ideArtifacts = withVersion.filter { it.packaging == "zip" && it.artifactId in artifactIdToIdeProductCode }
       for (artifactInfo in ideArtifacts) {
@@ -89,31 +90,35 @@ internal class IdeRepositoryIndexParser(private val repositoryUrl: String) {
       }
     }
 
-    /**
-     * For one [AvailableIde.version] there might be two [AvailableIde]s:
-     * one with `isRelease = true` and another with `isRelease = false`.
-     * We have to keep only the release one.
-     */
     return allAvailableIdes.groupBy { it.version }.mapValues {
       with(it.value) {
-        if (size == 2) {
-          val first = first()
-          val second = last()
-          if (first.isRelease != second.isRelease) {
-            if (first.isRelease) {
-              listOf(first)
-            } else {
-              listOf(second)
-            }
+        getUniqueIde()
+      }
+    }.values.toList()
+  }
+
+  /**
+   * For one [AvailableIde.version] there might be two [AvailableIde]s:
+   * one with `isRelease = true` and another with `isRelease = false`.
+   * We'd like to keep only the release one.
+   * For snapshots channel we want to keep only one IDE.
+   */
+  private fun List<AvailableIde>.getUniqueIde(): AvailableIde =
+      if (size == 2) {
+        val first = first()
+        val second = last()
+        if (first.isRelease != second.isRelease) {
+          if (first.isRelease) {
+            first
           } else {
-            this
+            second
           }
         } else {
-          this
+          first
         }
+      } else {
+        first()
       }
-    }.values.flatten()
-  }
 
   /**
    * Examples of release versions:
