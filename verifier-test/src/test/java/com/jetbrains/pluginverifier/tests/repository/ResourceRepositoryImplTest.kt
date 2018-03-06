@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class ResourceRepositoryImplTest {
 
-  private fun createSizedResourceRepository(maximumSize: Long,
+  private fun createSizedResourceRepository(maximumSize: Int,
                                             resourceProvider: (Int) -> Closeable) = ResourceRepositoryImpl(
       SizeEvictionPolicy(maximumSize),
       Clock.systemUTC(),
@@ -52,7 +52,7 @@ class ResourceRepositoryImplTest {
   @Test
   fun `getAllExistingKeys must return an immutable copy`() {
     val size = 10
-    val resourceRepository = createSizedResourceRepository(size.toLong()) {
+    val resourceRepository = createSizedResourceRepository(size) {
       Closeable { }
     }
 
@@ -77,7 +77,7 @@ class ResourceRepositoryImplTest {
   fun `removeAll must evict all non-locked resources and schedule for eviction all the locked ones`() {
     val evictedResources = hashSetOf<Int>()
     val size = 10
-    val resourceRepository = createSizedResourceRepository(size.toLong()) { i ->
+    val resourceRepository = createSizedResourceRepository(size) { i ->
       Closeable {
         evictedResources.add(i)
       }
