@@ -29,7 +29,7 @@ open class CmdOpts(
         "SDK Documentation: http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html")
     var documentedProblemsPageUrl: String? = DEFAULT_DOCUMENTED_PROBLEMS_PAGE_URL,
 
-    @set:Argument("runtime-dir", alias = "r", description = "The path to directory containing Java runtime jars (e.g. /usr/lib/jvm/java-8-oracle ")
+    @set:Argument("runtime-dir", alias = "r", description = "The path to directory containing Java runtime jars (e.g. /usr/lib/jvm/java-8-oracle). If not specified, the JDK from 'JAVA_HOME' will be chosen.")
     var runtimeDir: String? = null,
 
     @set:Argument("team-city", alias = "tc", description = "Specify this flag if you want to print the TeamCity compatible output on stdout.")
@@ -38,13 +38,13 @@ open class CmdOpts(
     @set:Argument("tc-grouping", alias = "g", description = "How to group the TeamCity presentation of the problems: either 'plugin' to group by each plugin or 'problem_type' to group by problem type")
     var teamCityGroupType: String? = null,
 
-    @set:Argument("plugins-to-check-all-builds", alias = "p-all", delimiter = ":", description = "The plugin ids to check with IDE. The plugin verifier will check ALL compatible plugin builds")
+    @set:Argument("plugins-to-check-all-builds", alias = "p-all", delimiter = ":", description = "The plugin IDs to check with IDE. The plugin verifier will check ALL compatible plugin builds")
     var pluginToCheckAllBuilds: Array<String> = arrayOf(),
 
-    @set:Argument("plugins-to-check-last-builds", alias = "p-last", delimiter = ":", description = "The plugin ids to check with IDE. The plugin verifier will check LAST plugin build only")
+    @set:Argument("plugins-to-check-last-builds", alias = "p-last", delimiter = ":", description = "The plugin IDs to check with IDE. The plugin verifier will check LAST plugin build only")
     var pluginToCheckLastBuild: Array<String> = arrayOf(),
 
-    @set:Argument("excluded-plugins-file", alias = "epf", description = "File with list of excluded plugin builds (e.g. '<IDE-home>/lib/resources.jar/brokenPlugins.txt')")
+    @set:Argument("excluded-plugins-file", alias = "epf", description = "File with list of excluded plugin builds (e.g. '<IDE-home>/lib/resources.jar/brokenPlugins.txt'). The verifier will not verify such updates even if they are compatible with IDE.")
     var excludedPluginsFile: String? = null,
 
     @set:Argument("dump-broken-plugin-list", alias = "d", description = "File to dump broken plugin ids. The broken plugins are those which contain at least one problem as a result of the verification")
@@ -54,17 +54,17 @@ open class CmdOpts(
     @Deprecated("This field is deprecated as HTML reports are automatically generated in the log directory")
     var htmlReportFile: String? = null,
 
-    @set:Argument("plugins-to-check-file", alias = "ptcf", description = "File that contains list of plugins to check (e.g. '<IDE-home>/lib/resources.jar/checkedPlugins.txt')")
+    @set:Argument("plugins-to-check-file", alias = "ptcf", description = "File that contains list of plugins to check (e.g. '<IDE-home>/lib/resources.jar/checkedPlugins.txt'). " +
+        "Each line of the file is either '<plugin_id>' (check ALL builds of the plugin) or '@<plugin_id>' (check only LAST build of the plugin).")
     var pluginsToCheckFile: String? = null,
 
     @set:Argument("external-prefixes", alias = "ex-prefixes", delimiter = ":", description = "The prefixes of classes from the external libraries. The Verifier will not report 'No such class' for such classes.")
     var externalClassesPrefixes: Array<String> = arrayOf(),
 
-    @set:Argument("check-android-only", alias = "android", description = "Whether to check only Android-related code, which is authored by Google team and gets merged into IDEA sources. By default the value is 'false'.")
+    @set:Argument("check-android-only", alias = "android", description = "Whether to check only Android Studio related code, which is authored by Google team and gets merged into IDEA sources. By default the value is 'false'.")
     var checkAndroidOnly: Boolean = false,
 
-    @set:Argument("check-idea-only", alias = "idea", description = "Whether to check only IDEA-related code, excluding problems related to Android source code authored by Google team " +
-        "and merged into IDEA. By default the value is 'false'.")
+    @set:Argument("check-idea-only", alias = "idea", description = "Whether to check only IDEA-related code, excluding problems related to Android Studio source code authored by Google team and merged into IDEA. By default the value is 'false'.")
     var checkIdeaOnly: Boolean = false
 
 ) {

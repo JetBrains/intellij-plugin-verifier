@@ -154,13 +154,13 @@ class CheckTrunkApiParamsBuilder(private val pluginRepository: PluginRepository,
 }
 
 class CheckTrunkApiOpts {
-  @set:Argument("major-ide-version", alias = "miv", description = "The IDE version with which to compare API problems")
+  @set:Argument("major-ide-version", alias = "miv", description = "The IDE version with which to compare API problems. This IDE will be downloaded from the IDE builds repository: https://www.jetbrains.com/intellij-repository/releases/.")
   var majorIdeVersion: String? = null
 
   @set:Argument("save-major-ide-file", alias = "smif", description = "Whether to save a downloaded release IDE in cache directory for use in later verifications")
   var saveMajorIdeFile: Boolean = false
 
-  @set:Argument("major-ide-path", alias = "mip", description = "The path to the IDE with which to compare API problems")
+  @set:Argument("major-ide-path", alias = "mip", description = "The path to release (major) IDE build with which to compare API problems in trunk (master) IDE build.")
   var majorIdePath: String? = null
 
   @set:Argument("jetbrains-plugins-file", alias = "jbpf", description = "The path to a file with plugin ids separated by newline. " +
@@ -171,8 +171,8 @@ class CheckTrunkApiOpts {
 
   @set:Argument("release-jetbrains-plugins", alias = "rjbp", description = "The root of the local plugin repository containing JetBrains plugins compatible with the release IDE. " +
       "The local repository is a set of non-bundled JetBrains plugins built from the same sources (see Installers/<artifacts>/IU-plugins). " +
-      "If a meta-file 'plugins.xml' is available, the repository content will be read from it, otherwise we will read the plugin descriptors from every plugin-like file under the specified directory." +
-      "On the release IDE verification, the JetBrains plugins will be taken from the local repository if present and from the public repository, otherwise.")
+      "The Plugin Verifier will read the plugin descriptors from every plugin-like file under the specified directory." +
+      "On the release IDE verification, the JetBrains plugins will be taken from the local repository if present, and from the public repository, otherwise.")
   var releaseLocalPluginRepositoryRoot: String? = null
 
   @set:Argument("trunk-jetbrains-plugins", alias = "tjbp", description = "The same as --release-local-repository but specifies the local repository of the trunk IDE.")
