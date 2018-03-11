@@ -35,6 +35,8 @@ class IdeFilesBank(private val bankDirectory: Path,
 
   fun deleteIde(ideVersion: IdeVersion) = ideFilesRepository.remove(ideVersion)
 
+  fun isLockedOrBeingProvided(ideVersion: IdeVersion) = ideFilesRepository.isLockedOrBeingProvided(ideVersion)
+
   fun getIde(ideVersion: IdeVersion): Result =
       with(ideFilesRepository.getFile(ideVersion)) {
         when (this) {

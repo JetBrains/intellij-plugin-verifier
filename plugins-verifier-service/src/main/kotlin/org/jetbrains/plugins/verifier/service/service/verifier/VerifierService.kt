@@ -3,13 +3,13 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
+import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
 import java.time.Duration
 import java.time.Instant
@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit
 class VerifierService(taskManager: ServiceTaskManager,
                       jdkDescriptorsCache: JdkDescriptorsCache,
                       private val verifierServiceProtocol: VerifierServiceProtocol,
-                      private val ideKeeper: IdeKeeper,
+                      private val ideFilesBank: IdeFilesBank,
                       private val pluginDetailsCache: PluginDetailsCache,
                       private val ideDescriptorsCache: IdeDescriptorsCache,
                       private val jdkPath: JdkPath)
@@ -68,7 +68,7 @@ class VerifierService(taskManager: ServiceTaskManager,
   }
 
   private fun requestPluginsToCheck(): List<PluginAndIdeVersion> {
-    return ideKeeper.getAvailableIdeVersions().flatMap { ideVersion ->
+    return ideFilesBank.getAvailableIdeVersions().flatMap { ideVersion ->
       verifierServiceProtocol.requestUpdatesToCheck(ideVersion).map {
         PluginAndIdeVersion(it, ideVersion)
       }

@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
-import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import java.io.Closeable
@@ -41,38 +41,19 @@ class IdeDescriptorsCache(cacheSize: Int,
    * The cache's state is not modified until this method returns.
    */
   fun getIdeDescriptors(selector: (Set<IdeVersion>) -> List<IdeVersion>): List<ResourceCacheEntry<IdeDescriptor>> {
-    //Register fake locks protecting IDEs from deletion
-    //while requesting the cache entries.
-    val ides = arrayListOf<Pair<IdeVersion, FileLock>>()
-    try {
-      ideFilesBank.lockAndAccess {
-        val ideVersions = selector(ideFilesBank.getAvailableIdeVersions())
-        for (ideVersion in ideVersions) {
-          val result = ideFilesBank.getIde(ideVersion)
-          if (result is IdeFilesBank.Result.Found) {
-            ides.add(ideVersion to result.ideFileLock)
-          }
-        }
-      }
-    } catch (e: Throwable) {
-      ides.forEach { it.second.release() }
-      throw e
-    }
-
     val result = arrayListOf<ResourceCacheEntry<IdeDescriptor>>()
     try {
-      for ((ideVersion, _) in ides) {
-        result.add(getIdeDescriptorCacheEntry(ideVersion))
+      /**
+       * Lock the [ideFilesBank] to guarantee that the available IDEs will not be removed
+       * until the corresponding [ResourceCacheEntry]s are registered for them.
+       */
+      ideFilesBank.lockAndAccess {
+        val selectedVersions = selector(ideFilesBank.getAvailableIdeVersions())
+        selectedVersions.mapTo(result) { getIdeDescriptorCacheEntry(it) }
       }
     } catch (e: Throwable) {
-      result.forEach { it.close() }
+      result.forEach { it.closeLogged() }
       throw e
-    } finally {
-      //Release all the fake locks as they
-      //are handed over to the [ResourceCacheEntry]s.
-      ides.forEach {
-        it.second.release()
-      }
     }
     return result
   }

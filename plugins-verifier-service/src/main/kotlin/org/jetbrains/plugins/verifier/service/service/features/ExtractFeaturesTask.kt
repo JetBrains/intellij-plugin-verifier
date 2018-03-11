@@ -16,8 +16,8 @@ import org.slf4j.LoggerFactory
  * [ServiceTask] that runs the [feature extractor] [FeaturesExtractor] for the [updateInfo].
  */
 class ExtractFeaturesTask(val updateInfo: UpdateInfo,
-                          val ideDescriptorsCache: IdeDescriptorsCache,
-                          val pluginDetailsCache: PluginDetailsCache) : ServiceTask<ExtractFeaturesTask.Result>("Features of $updateInfo") {
+                          private val ideDescriptorsCache: IdeDescriptorsCache,
+                          private val pluginDetailsCache: PluginDetailsCache) : ServiceTask<ExtractFeaturesTask.Result>("Features of $updateInfo") {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(ExtractFeaturesTask::class.java)

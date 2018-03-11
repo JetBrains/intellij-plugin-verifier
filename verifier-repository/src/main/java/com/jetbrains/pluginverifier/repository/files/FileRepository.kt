@@ -55,6 +55,8 @@ class FileRepository<K>(sweepPolicy: SweepPolicy<K>,
 
   fun removeAll() = resourceRepository.removeAll()
 
+  fun isLockedOrBeingProvided(key: K) = resourceRepository.isLockedOrBeingProvided(key)
+
   fun has(key: K) = resourceRepository.has(key)
 
   fun getAllExistingKeys() = resourceRepository.getAllExistingKeys()

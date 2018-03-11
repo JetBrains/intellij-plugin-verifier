@@ -16,7 +16,7 @@ class IdeServlet : BaseServlet() {
     when {
       path.endsWith("download") -> processDownloadIde(req, resp)
       path.endsWith("deleteIde") -> processDeleteIde(req, resp)
-      else -> sendJson(resp, serverContext.ideKeeper.getAvailableIdeVersions())
+      else -> sendJson(resp, serverContext.ideFilesBank.getAvailableIdeVersions())
     }
   }
 
@@ -37,18 +37,18 @@ class IdeServlet : BaseServlet() {
       return
     }
     val ideVersion = availableIde.version
-    val ideRunner = DownloadIdeTask(serverContext.ideKeeper, ideVersion)
+    val ideRunner = DownloadIdeTask(serverContext.ideFilesBank, ideVersion)
     val taskStatus = serverContext.taskManager.enqueue(ideRunner)
-    serverContext.ideKeeper.registerManuallyDownloadedIde(ideVersion)
+    serverContext.serviceDAO.manuallyDownloadedIdes.add(ideVersion)
     sendOk(resp, "Downloading $ideVersion (#${taskStatus.taskId})")
   }
 
   private fun processDeleteIde(req: HttpServletRequest, resp: HttpServletResponse) {
     val ideVersion = parseIdeVersionParameter(req, resp) ?: return
-    if (serverContext.ideKeeper.isAvailableIde(ideVersion)) {
-      val deleteIdeRunner = DeleteIdeTask(serverContext.ideKeeper, ideVersion)
+    if (serverContext.ideFilesBank.isAvailable(ideVersion)) {
+      val deleteIdeRunner = DeleteIdeTask(serverContext.ideFilesBank, ideVersion)
       val taskStatus = serverContext.taskManager.enqueue(deleteIdeRunner)
-      serverContext.ideKeeper.removeManuallyDownloadedIde(ideVersion)
+      serverContext.serviceDAO.manuallyDownloadedIdes.remove(ideVersion)
       sendOk(resp, "Deleting $ideVersion (#${taskStatus.taskId})")
     }
   }

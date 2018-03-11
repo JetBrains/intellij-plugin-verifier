@@ -9,12 +9,12 @@ import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
  * [ServiceTask] responsible for downloading IDE build having the specified [IDE version] [ideVersion]
  * from the [IDE Repository] [com.jetbrains.pluginverifier.ide.IdeRepository].
  */
-class DownloadIdeTask(private val ideKeeper: IdeKeeper,
+class DownloadIdeTask(private val ideFilesBank: IdeFilesBank,
                       private val ideVersion: IdeVersion) : ServiceTask<Boolean>("Downloading IDE $ideVersion") {
 
   override fun execute(progress: ProgressIndicator): Boolean {
     //initiates downloading of the IDE.
-    val result = ideKeeper.getIdeFileLock(ideVersion)
+    val result = ideFilesBank.getIde(ideVersion)
     (result as? IdeFilesBank.Result.Found)?.ideFileLock?.release()
     return result is IdeFilesBank.Result.Found
   }

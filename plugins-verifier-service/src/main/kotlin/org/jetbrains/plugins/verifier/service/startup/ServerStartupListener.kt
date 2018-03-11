@@ -17,7 +17,6 @@ import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
 import org.jetbrains.plugins.verifier.service.service.features.DefaultFeatureServiceProtocol
 import org.jetbrains.plugins.verifier.service.service.features.FeatureExtractorService
-import org.jetbrains.plugins.verifier.service.service.ide.IdeKeeper
 import org.jetbrains.plugins.verifier.service.service.ide.IdeListUpdater
 import org.jetbrains.plugins.verifier.service.service.verifier.DefaultVerifierServiceProtocol
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
@@ -79,13 +78,12 @@ class ServerStartupListener : ServletContextListener {
     val serviceDAO = ServiceDAO(serverDatabase)
 
     val ideFilesBank = IdeFilesBank(ideFilesDir, ideRepository, ideDownloadDirDiskSpaceSetting)
-    val ideKeeper = IdeKeeper(serviceDAO, ideRepository, ideFilesBank)
     val ideDescriptorsCache = IdeDescriptorsCache(IDE_DESCRIPTORS_CACHE_SIZE, ideFilesBank)
 
     return ServerContext(
         applicationHomeDir,
         ideRepository,
-        ideKeeper,
+        ideFilesBank,
         pluginRepository,
         tasksManager,
         authorizationData,
@@ -118,7 +116,7 @@ class ServerStartupListener : ServletContextListener {
           taskManager,
           jdkDescriptorsCache,
           verifierServiceProtocol,
-          ideKeeper,
+          ideFilesBank,
           pluginDetailsCache,
           ideDescriptorsCache,
           jdkPath
@@ -134,7 +132,9 @@ class ServerStartupListener : ServletContextListener {
       )
       val ideListUpdater = IdeListUpdater(
           taskManager,
-          ideKeeper
+          serviceDAO,
+          ideRepository,
+          ideFilesBank
       )
 
       addService(verifierService)

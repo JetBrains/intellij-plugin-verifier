@@ -134,7 +134,7 @@ class InfoServlet : BaseServlet() {
               +"Available IDEs: "
             }
             ul {
-              serverContext.ideKeeper.getAvailableIdeVersions().forEach {
+              serverContext.ideFilesBank.getAvailableIdeVersions().forEach {
                 li {
                   +it.toString()
                 }

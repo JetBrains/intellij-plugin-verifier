@@ -88,6 +88,14 @@ interface ResourceRepository<R, K> {
   fun has(key: K): Boolean
 
   /**
+   * Returns `true` if the resource by specified key is available in
+   * the repository and is locked, or it is being provided,
+   * at the moment of invocation of this method.
+   * Returns `false` otherwise.
+   */
+  fun isLockedOrBeingProvided(key: K): Boolean
+
+  /**
    * Returns all keys [available] [has] in the repository at the moment.
    *
    * The returned set is an immutable copy of the internal set.

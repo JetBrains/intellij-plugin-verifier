@@ -67,7 +67,10 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
   override fun has(key: K) = resourcesRegistrar.has(key)
 
   @Synchronized
-  override fun remove(key: K): Boolean = if (isLockedKey(key) || isBeingProvided(key)) {
+  override fun isLockedOrBeingProvided(key: K) = isLockedKey(key) || isBeingProvided(key)
+
+  @Synchronized
+  override fun remove(key: K): Boolean = if (isLockedOrBeingProvided(key)) {
     logger.debug("remove($key): the resource is locked or is being provided, enqueue for removing later.")
     removeQueue.add(key)
     false
