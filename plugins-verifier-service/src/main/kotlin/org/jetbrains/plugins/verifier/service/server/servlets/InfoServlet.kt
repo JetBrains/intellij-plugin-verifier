@@ -8,7 +8,6 @@ import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
@@ -18,7 +17,7 @@ import javax.servlet.http.HttpServletResponse
 class InfoServlet : BaseServlet() {
 
   companion object {
-    private val DATE_FORMAT = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+    private val DATE_FORMAT = DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm:ss")
         .withZone(ZoneId.systemDefault())
   }
 
