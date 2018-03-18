@@ -102,4 +102,6 @@ class JarFileResolver(private val ioJarFile: File) : Resolver() {
 
   override fun close() = jarFile.close()
 
+  override fun toString() = ioJarFile.canonicalPath!!
+
 }

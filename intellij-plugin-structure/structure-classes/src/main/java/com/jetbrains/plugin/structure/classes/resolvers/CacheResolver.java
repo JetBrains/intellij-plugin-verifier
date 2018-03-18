@@ -67,7 +67,7 @@ public class CacheResolver extends Resolver {
 
   @Override
   public String toString() {
-    return myDelegate.toString();
+    return "Caching resolver for " + myDelegate.toString();
   }
 
   @NotNull

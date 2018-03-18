@@ -66,6 +66,8 @@ class UnionResolver private constructor(private val resolvers: List<Resolver>) :
     }
   }
 
+  override fun toString() = "Union of ${resolvers.size} resolver" + (if (resolvers.size != 1) "s" else "")
+
   companion object {
 
     @JvmStatic

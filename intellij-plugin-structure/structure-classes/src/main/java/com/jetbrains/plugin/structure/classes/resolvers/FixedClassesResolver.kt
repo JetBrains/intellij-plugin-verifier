@@ -34,4 +34,7 @@ class FixedClassesResolver(private val classes: Map<String, ClassNode>) : Resolv
   override fun containsClass(className: String) = className in classes
 
   override fun close() = Unit
+
+  override fun toString() = "Resolver of ${classes.size} predefined class" + (if (classes.size != 1) "es" else "")
+
 }

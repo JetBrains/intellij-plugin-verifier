@@ -69,5 +69,5 @@ class ClassFilesResolver(private val root: File) : Resolver() {
           .map { readClassNode(it) }
           .all { processor(it) }
 
-  override fun toString() = root.canonicalPath
+  override fun toString() = root.canonicalPath!!
 }
