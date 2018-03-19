@@ -4,12 +4,13 @@ import com.jetbrains.pluginverifier.misc.formatMessage
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 
-data class InvalidClassFileProblem(val brokenClass: ClassReference,
+data class InvalidClassFileProblem(val invalidClass: ClassReference,
                                    val usage: Location,
-                                   val reason: String) : CompatibilityProblem() {
+                                   val asmError: String) : CompatibilityProblem() {
 
-  override val shortDescription = "Invalid class-file {0}".formatMessage(brokenClass)
+  override val shortDescription = "Invalid class-file {0}".formatMessage(invalidClass)
 
-  override val fullDescription = "Class-file {0} referenced from {1} is invalid: {2}. This can lead to **ClassFormatError** exception at runtime.".formatMessage(brokenClass, usage, reason)
+  override val fullDescription = ("Class {0} referenced from {1} cannot be read using the ASM Java Bytecode engineering library. " +
+      "The internal ASM exception: {2}. You may try to recompile the class-file. Invalid classes can lead to **ClassFormatError** exception at runtime.").formatMessage(invalidClass, usage, asmError)
 
 }

@@ -216,7 +216,8 @@ class PublicPluginRepository(override val repositoryURL: URL) : PluginRepository
         untilString.prepareIdeVersion(),
         vendor,
         getDownloadUrl(updateId),
-        updateId, getBrowserUrl(pluginId)
+        updateId,
+        getBrowserUrl(pluginId)
     )
 
   }

@@ -1,9 +1,11 @@
 package com.jetbrains.pluginverifier.verifiers
 
+import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException
 import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedClassUsage
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
+import com.jetbrains.pluginverifier.results.problems.FailedToReadClassFileProblem
 import com.jetbrains.pluginverifier.results.problems.IllegalClassAccessProblem
 import com.jetbrains.pluginverifier.results.problems.InvalidClassFileProblem
 import com.jetbrains.pluginverifier.results.reference.ClassReference
@@ -16,11 +18,12 @@ import java.util.*
 sealed class ClsResolution {
   object NotFound : ClsResolution()
   object ExternalClass : ClsResolution()
-  data class InvalidClassFile(val reason: String) : ClsResolution()
+  data class InvalidClassFile(val asmError: String) : ClsResolution()
+  data class FailedToReadClassFile(val reason: String) : ClsResolution()
   data class Found(val node: ClassNode) : ClsResolution()
 }
 
-private val ClassFileLogger: Logger = LoggerFactory.getLogger("plugin.verifier.class.file.reader")
+private val ClassFileLogger: Logger = LoggerFactory.getLogger("plugin.verifier.class.file.read.logger")
 
 /**
  * To resolve an unresolved symbolic reference from D to a class or interface C denoted by N, the following steps are performed:
@@ -34,9 +37,12 @@ private fun VerificationContext.resolveClass(className: String): ClsResolution {
   }
   val node = try {
     classLoader.findClass(className)
+  } catch (e: InvalidClassFileException) {
+    ClassFileLogger.debug("Unable to read invalid class $className", e)
+    return ClsResolution.InvalidClassFile(e.asmError)
   } catch (e: Exception) {
-    ClassFileLogger.debug("Unable to read class $className", e)
-    return ClsResolution.InvalidClassFile("Unable to read class-file $className using ASM Java Bytecode engineering library. Internal error: ${e.message}")
+    ClassFileLogger.info("Unable to read class $className", e)
+    return ClsResolution.FailedToReadClassFile(e.message ?: e.javaClass.name)
   }
   return node?.let { ClsResolution.Found(it) } ?: ClsResolution.NotFound
 }
@@ -63,7 +69,11 @@ fun VerificationContext.resolveClassOrProblem(className: String,
         null
       }
       is ClsResolution.InvalidClassFile -> {
-        registerProblem(InvalidClassFileProblem(ClassReference(className), lookupLocation(), reason))
+        registerProblem(InvalidClassFileProblem(ClassReference(className), lookupLocation(), asmError))
+        null
+      }
+      is ClsResolution.FailedToReadClassFile -> {
+        registerProblem(FailedToReadClassFileProblem(ClassReference(className), lookupLocation(), reason))
         null
       }
     }

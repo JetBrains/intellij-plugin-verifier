@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.classes.utils;
 
 import com.google.common.io.Files;
+import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
@@ -20,19 +21,13 @@ public class AsmUtil {
       new ClassReader(inputStream).accept(node, 0);
       return node;
     } catch (RuntimeException e) {
-      throw new IOException("Unable to read a class `" + className + "`. Perhaps it is an invalid class-file. " +
-          "ASM internal exception " + getAsmProblemMessage(e) + ". You may try to recompile a class-file", e);
+      throw new InvalidClassFileException(className, getAsmErrorMessage(e));
     }
   }
 
-  private static String getAsmProblemMessage(RuntimeException e) {
-    String message;
-    if (e instanceof ArrayIndexOutOfBoundsException) {
-      message = e.getClass().getName() + (e.getLocalizedMessage() != null ? " " + e.getLocalizedMessage() : "");
-    } else {
-      message = e.getLocalizedMessage() != null ? e.getLocalizedMessage() : e.getClass().getName();
-    }
-    return message;
+  private static String getAsmErrorMessage(RuntimeException e) {
+    String message = e.getLocalizedMessage();
+    return e.getClass().getName() + (message != null ? ": " + message : "");
   }
 
   @NotNull
@@ -43,11 +38,11 @@ public class AsmUtil {
       ClassReader classReader = new ClassReader(is);
       String className = classReader.getClassName();
       if (className == null) {
-        throw new IOException("Unable to read class name from " + classFile);
+        throw new InvalidClassFileException(classFile.getName(), "class name is not available in bytecode.");
       }
       return className;
     } catch (RuntimeException e) {
-      throw new IOException("Unable to read class file from " + classFile, e);
+      throw new InvalidClassFileException(classFile.getName(), getAsmErrorMessage(e));
     } finally {
       IOUtils.closeQuietly(is);
     }

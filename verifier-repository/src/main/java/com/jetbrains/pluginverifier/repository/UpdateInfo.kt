@@ -29,6 +29,6 @@ class UpdateInfo(
     null
 ) {
 
-  override val presentableName: String = "$pluginId:$version (#$updateId)"
+  override val presentableName = "$pluginId:$version (#$updateId)"
 
 }

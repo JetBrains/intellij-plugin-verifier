@@ -52,9 +52,10 @@ abstract class Resolver : Closeable {
    *
    * @param className class name in *binary* form (see JVM specification)
    * @return a class-node for accessing the bytecode
+   * @throws InvalidClassFileException if the class file is not valid from the point of view of the ASM bytecode engineering library
    * @throws IOException if IO error occurs, e.g. file .class-file was deleted
    */
-  @Throws(IOException::class)
+  @Throws(InvalidClassFileException::class, IOException::class)
   abstract fun findClass(className: String): ClassNode?
 
   /**

@@ -6,38 +6,38 @@
       <module name="after-idea_test" target="1.8" />
       <module name="before-idea_main" target="1.8" />
       <module name="before-idea_test" target="1.8" />
-      <module name="intellij-feature-extractor_main" target="1.6" />
-      <module name="intellij-feature-extractor_test" target="1.6" />
-      <module name="intellij-plugin-structure_main" target="1.6" />
-      <module name="intellij-plugin-structure_test" target="1.6" />
-      <module name="mock-compile-library_main" target="1.6" />
-      <module name="mock-compile-library_test" target="1.6" />
-      <module name="mock-plugin_main" target="1.6" />
-      <module name="mock-plugin_test" target="1.6" />
+      <module name="intellij-feature-extractor_main" target="1.8" />
+      <module name="intellij-feature-extractor_test" target="1.8" />
+      <module name="intellij-plugin-structure_main" target="1.8" />
+      <module name="intellij-plugin-structure_test" target="1.8" />
+      <module name="mock-compile-library_main" target="1.8" />
+      <module name="mock-compile-library_test" target="1.8" />
+      <module name="mock-plugin_main" target="1.8" />
+      <module name="mock-plugin_test" target="1.8" />
       <module name="plugins-verifier-service_main" target="1.8" />
       <module name="plugins-verifier-service_test" target="1.8" />
-      <module name="structure-base_main" target="1.6" />
-      <module name="structure-base_test" target="1.6" />
-      <module name="structure-classes_main" target="1.6" />
-      <module name="structure-classes_test" target="1.6" />
+      <module name="structure-base_main" target="1.8" />
+      <module name="structure-base_test" target="1.8" />
+      <module name="structure-classes_main" target="1.8" />
+      <module name="structure-classes_test" target="1.8" />
       <module name="structure-common_main" target="1.6" />
       <module name="structure-common_test" target="1.6" />
-      <module name="structure-ide-classes_main" target="1.6" />
-      <module name="structure-ide-classes_test" target="1.6" />
-      <module name="structure-ide_main" target="1.6" />
-      <module name="structure-ide_test" target="1.6" />
-      <module name="structure-intellij-classes_main" target="1.6" />
-      <module name="structure-intellij-classes_test" target="1.6" />
-      <module name="structure-intellij_main" target="1.6" />
-      <module name="structure-intellij_test" target="1.6" />
-      <module name="structure-teamcity_main" target="1.6" />
-      <module name="structure-teamcity_test" target="1.6" />
-      <module name="teamcity-mock-plugin_main" target="1.6" />
-      <module name="teamcity-mock-plugin_test" target="1.6" />
-      <module name="test-classes_main" target="1.6" />
-      <module name="test-classes_test" target="1.6" />
-      <module name="tests_main" target="1.6" />
-      <module name="tests_test" target="1.6" />
+      <module name="structure-ide-classes_main" target="1.8" />
+      <module name="structure-ide-classes_test" target="1.8" />
+      <module name="structure-ide_main" target="1.8" />
+      <module name="structure-ide_test" target="1.8" />
+      <module name="structure-intellij-classes_main" target="1.8" />
+      <module name="structure-intellij-classes_test" target="1.8" />
+      <module name="structure-intellij_main" target="1.8" />
+      <module name="structure-intellij_test" target="1.8" />
+      <module name="structure-teamcity_main" target="1.8" />
+      <module name="structure-teamcity_test" target="1.8" />
+      <module name="teamcity-mock-plugin_main" target="1.8" />
+      <module name="teamcity-mock-plugin_test" target="1.8" />
+      <module name="test-classes_main" target="1.8" />
+      <module name="test-classes_test" target="1.8" />
+      <module name="tests_main" target="1.8" />
+      <module name="tests_test" target="1.8" />
       <module name="verifier-cli_main" target="1.8" />
       <module name="verifier-cli_test" target="1.8" />
       <module name="verifier-core_main" target="1.8" />

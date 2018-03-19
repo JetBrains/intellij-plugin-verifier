@@ -11,37 +11,34 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 public class CacheResolver extends Resolver {
 
+  private static final int DEFAULT_CACHE_SIZE = 1024;
+
   private final Resolver myDelegate;
-  /**
-   * An exception indicating that a class file is not found in the @myDelegate resolver.
-   * It lacks the stack trace which gives us less overhead.
-   * It is necessary because the guava caches require to throw an exception if a key isn't found.
-   */
-  private final static Exception CLASS_NOT_FOUND_IN_CACHE_EXCEPTION = new Exception("Not found", null, false, false) {
-  };
-  private final LoadingCache<String, ClassNode> myCache;
+
+  private final LoadingCache<String, Optional<ClassNode>> myCache;
 
   public CacheResolver(@NotNull Resolver delegate) {
-    this(delegate, 1000);
+    this(delegate, DEFAULT_CACHE_SIZE);
   }
 
   public CacheResolver(@NotNull Resolver delegate, int cacheSize) {
     myDelegate = delegate;
     myCache = CacheBuilder.newBuilder()
         .maximumSize(cacheSize)
-        .build(new CacheLoader<String, ClassNode>() {
+        .build(new CacheLoader<String, Optional<ClassNode>>() {
           @Override
-          public ClassNode load(String key) throws Exception {
+          public Optional<ClassNode> load(String key) throws Exception {
             ClassNode classNode = myDelegate.findClass(key);
             if (classNode == null) {
-              throw CLASS_NOT_FOUND_IN_CACHE_EXCEPTION;
+              return Optional.empty();
             }
-            return classNode;
+            return Optional.of(classNode);
           }
         });
   }
@@ -50,11 +47,14 @@ public class CacheResolver extends Resolver {
   @Nullable
   public ClassNode findClass(@NotNull String className) throws IOException {
     try {
-      return myCache.get(className);
+      return myCache.get(className).orElse(null);
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
-      if (CLASS_NOT_FOUND_IN_CACHE_EXCEPTION == cause) {
-        return null;
+      if (cause instanceof IOException) {
+        throw (IOException) cause;
+      }
+      if (cause instanceof RuntimeException) {
+        throw (RuntimeException) cause;
       }
       throw new IOException(e);
     }
