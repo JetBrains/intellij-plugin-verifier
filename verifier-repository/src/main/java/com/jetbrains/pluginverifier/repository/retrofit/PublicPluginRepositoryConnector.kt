@@ -18,7 +18,7 @@ internal interface PublicPluginRepositoryConnector {
   fun getAllCompatibleUpdates(@Query("build") build: String): Call<List<JsonUpdateInfo>>
 
   @GET("/plugin/updates")
-  fun getPluginUpdates(@Query("xmlId") xmlId: String): Call<JsonUpdatesResponse>
+  fun getPluginUpdates(@Query("xmlId") xmlId: String): Call<JsonUpdatesIdsHolder>
 
   @POST("/manager/getUpdateInfosForIdsBetween")
   fun getUpdateInfosForIdsBetween(@Query("startId") startId: Int, @Query("endId") endId: Int): Call<List<JsonUpdateInfo>>
@@ -29,40 +29,26 @@ internal interface PublicPluginRepositoryConnector {
    * and reduce the load on the Plugin Repository.
    */
   @GET("/manager/allUpdatesSince")
-  fun getAllUpdateSinceAndUntil(@Query("build") build: String, @Query("updateId") startUpdateId: Int): Call<List<JsonUpdateSinceUntil>>
+  fun getAllUpdateSinceAndUntil(@Query("build") build: String, @Query("updateId") startUpdateId: Int): Call<List<JsonUpdateIdHolder>>
 }
 
-internal data class JsonUpdateInfo(@SerializedName("pluginId") val pluginId: String,
-                                   @SerializedName("pluginName") val pluginName: String,
-                                   @SerializedName("version", alternate = arrayOf("pluginVersion")) val version: String,
-                                   @SerializedName("updateId") val updateId: Int,
-                                   @SerializedName("vendor") val vendor: String,
-                                   @SerializedName("since") val sinceString: String,
-                                   @SerializedName("until") val untilString: String)
-
-internal data class JsonUpdatesResponse(@SerializedName("pluginXmlId") val pluginId: String,
-                                        @SerializedName("pluginName") val pluginName: String,
-                                        @SerializedName("vendor") val vendor: String,
-                                        @SerializedName("updates") val updates: List<JsonUpdate>) {
-
-  data class JsonUpdate(
-      @SerializedName("id")
-      val updateId: Int,
-
-      @SerializedName("updateVersion")
-      val updateVersion: String,
-
-      @SerializedName("since")
-      val sinceBuild: String,
-
-      @SerializedName("until")
-      val untilBuild: String
-  )
-}
-
-internal data class JsonUpdateSinceUntil(
+internal data class JsonUpdateInfo(
+    @SerializedName("pluginId") val pluginId: String,
+    @SerializedName("pluginName") val pluginName: String,
+    @SerializedName("version", alternate = arrayOf("pluginVersion")) val version: String,
     @SerializedName("updateId") val updateId: Int,
-    @SerializedName("pluginId") val pluginDatabaseId: Int,
-    @SerializedName("since") val sinceBuild: String,
-    @SerializedName("until") val untilBuild: String
+    @SerializedName("vendor") val vendor: String,
+    @SerializedName("since") val sinceString: String,
+    @SerializedName("until") val untilString: String,
+    @SerializedName("tags") val tags: List<String>?
+)
+
+internal data class JsonUpdatesIdsHolder(
+    @SerializedName("updates")
+    val updateIds: List<JsonUpdateIdHolder>
+)
+
+internal data class JsonUpdateIdHolder(
+    @SerializedName("updateId", alternate = ["id"])
+    val updateId: Int
 )

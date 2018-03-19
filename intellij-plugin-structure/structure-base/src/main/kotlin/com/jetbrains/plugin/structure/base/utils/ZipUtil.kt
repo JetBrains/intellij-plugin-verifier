@@ -1,6 +1,5 @@
 package com.jetbrains.plugin.structure.base.utils
 
-import com.google.common.base.Throwables
 import org.apache.commons.io.FileUtils
 import org.codehaus.plexus.archiver.AbstractArchiver
 import org.codehaus.plexus.archiver.jar.JarArchiver
@@ -15,16 +14,11 @@ import java.io.IOException
 object ZipUtil {
   @Throws(IOException::class)
   fun extractZip(pluginZip: File, destDir: File) {
-    try {
-      val ua = ZipUnArchiver(pluginZip)
-      ua.enableLogging(ConsoleLogger(Logger.LEVEL_WARN, ""))
-      FileUtils.forceMkdir(destDir)
-      ua.destDirectory = destDir
-      ua.extract()
-    } catch (e: Throwable) {
-      FileUtils.deleteQuietly(destDir)
-      throw Throwables.propagate(e)
-    }
+    val ua = ZipUnArchiver(pluginZip)
+    ua.enableLogging(ConsoleLogger(Logger.LEVEL_WARN, ""))
+    FileUtils.forceMkdir(destDir)
+    ua.destDirectory = destDir
+    ua.extract()
   }
 
   @Throws(IOException::class)

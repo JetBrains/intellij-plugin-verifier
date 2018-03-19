@@ -16,7 +16,8 @@ class UpdateInfo(
     vendor: String,
     downloadUrl: URL,
     val updateId: Int,
-    val browserURL: URL
+    val browserURL: URL,
+    val tags: List<String>
 ) : PluginInfo(
     pluginId,
     pluginName,

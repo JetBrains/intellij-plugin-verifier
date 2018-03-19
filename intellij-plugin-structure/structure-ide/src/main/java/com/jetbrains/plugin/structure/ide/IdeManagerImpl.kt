@@ -1,7 +1,6 @@
 package com.jetbrains.plugin.structure.ide
 
 import com.google.common.base.Joiner
-import com.google.common.io.Files
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -20,7 +19,6 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.net.URL
-import java.nio.charset.Charset
 
 class IdeManagerImpl : IdeManager() {
 
@@ -124,7 +122,7 @@ class IdeManagerImpl : IdeManager() {
   }
 
   private fun readBuildNumber(versionFile: File): IdeVersion {
-    val buildNumberString = Files.toString(versionFile, Charset.defaultCharset()).trim { it <= ' ' }
+    val buildNumberString = versionFile.readText().trim()
     return IdeVersion.createIdeVersion(buildNumberString)
   }
 
