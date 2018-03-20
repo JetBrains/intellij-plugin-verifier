@@ -22,7 +22,7 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
         printOnStdOut(this)
       }
 
-      outputOptions.saveToHtmlFile(ideVersion, excludedPlugins, results)
+      outputOptions.saveToHtmlFile(ideVersion, results)
 
       if (outputOptions.dumpBrokenPluginsFile != null) {
         val brokenPlugins = results
@@ -41,7 +41,7 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
       val tcLog = TeamCityLog(System.out)
       val resultPrinter = TeamCityResultPrinter(tcLog, groupBy, pluginRepository, outputOptions.missingDependencyIgnoring)
       resultPrinter.printResults(results)
-      resultPrinter.printNoCompatibleUpdatesProblems(noCompatibleUpdatesProblems)
+      resultPrinter.printNoCompatibleVersionsProblems(missingCompatibleVersionsProblems)
       if (setBuildStatus) {
         val totalProblemsNumber = results.flatMap {
           when (it) {
@@ -69,7 +69,6 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
       val printWriter = PrintWriter(System.out)
       val resultPrinter = WriterResultPrinter(printWriter, outputOptions.missingDependencyIgnoring)
       resultPrinter.printResults(results)
-      resultPrinter.printInvalidPluginFiles(invalidPluginFiles)
       printWriter.flush()
     }
   }

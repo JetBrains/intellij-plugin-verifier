@@ -4,7 +4,7 @@ import com.jetbrains.pluginverifier.reporting.Reporter
 
 open class CollectingReporter<T> : Reporter<T> {
 
-  private val reported: MutableList<T> = arrayListOf<T>()
+  private val reported = arrayListOf<T>()
 
   fun getReported(): List<T> = reported
 

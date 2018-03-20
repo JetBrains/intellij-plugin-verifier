@@ -38,10 +38,11 @@ object IdeResourceUtil {
     return tokens.drop(1).map { PluginIdAndVersion(pluginId, it) }
   }
 
-  private fun getBrokenPluginsByLines(lines: List<String>): List<PluginIdAndVersion> = lines
-      .map { line -> line.trim { it <= ' ' } }
-      .filterNot { it.startsWith("//") }
-      .flatMap { getBrokenPluginsByLine(it) }
+  private fun getBrokenPluginsByLines(lines: List<String>) =
+      lines
+          .map { line -> line.trim { it <= ' ' } }
+          .filterNot { it.startsWith("//") }
+          .flatMapTo(hashSetOf()) { getBrokenPluginsByLine(it) }
 
   fun dumbBrokenPluginsList(dumpBrokenPluginsFile: File, brokenPlugins: List<PluginInfo>) {
     PrintWriter(dumpBrokenPluginsFile.create()).use { out ->
@@ -57,16 +58,17 @@ object IdeResourceUtil {
     }
   }
 
-  fun readBrokenPluginsFromFile(file: File) = file.bufferedReader().use {
-    getBrokenPluginsByLines(it.readLines())
-  }
+  fun readBrokenPluginsFromFile(file: File) =
+      file.bufferedReader().use {
+        getBrokenPluginsByLines(it.readLines())
+      }
 
   /**
    * Returns contents of the `<IDE>/lib/resources/brokenPlugins.txt` file
-   * which is a list of plugins that must not be installed in the IDE.
+   * that is a set of plugins that must not be installed in the IDE.
    */
-  fun getBrokenPluginsListedInIde(ide: Ide): List<PluginIdAndVersion>? {
-    val ideResourceFile = readIdeResourceLines(ide, RESOURCES_JAR_PATH, BROKEN_PLUGINS_FILE_NAME) ?: return null
+  fun getBrokenPluginsListedInIde(ide: Ide): Set<PluginIdAndVersion> {
+    val ideResourceFile = readIdeResourceLines(ide, RESOURCES_JAR_PATH, BROKEN_PLUGINS_FILE_NAME) ?: return emptySet()
     return getBrokenPluginsByLines(ideResourceFile)
   }
 

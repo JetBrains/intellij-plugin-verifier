@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion.createIdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
@@ -23,7 +24,6 @@ import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import com.jetbrains.pluginverifier.results.VerificationResult
-import com.jetbrains.pluginverifier.tasks.PluginsToCheck
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiParams
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiTask
 import com.jetbrains.pluginverifier.tests.mocks.*
@@ -193,10 +193,10 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
   }
 
   private fun createTrunkApiParamsForTest(releaseIde: MockIde, trunkIde: MockIde): CheckTrunkApiParams {
-    val pluginsToCheck = PluginsToCheck()
-    pluginsToCheck.plugins.add(LocalPluginRepository(repositoryURL).addLocalPlugin(pluginToCheck))
+    val pluginsSet = PluginsSet()
+    pluginsSet.schedulePlugin(LocalPluginRepository(repositoryURL).addLocalPlugin(pluginToCheck))
     return CheckTrunkApiParams(
-        pluginsToCheck,
+        pluginsSet,
         TestJdkDescriptorProvider.getJdkPathForTests(),
         IdeDescriptor(trunkIde, EmptyResolver),
         IdeDescriptor(releaseIde, EmptyResolver),

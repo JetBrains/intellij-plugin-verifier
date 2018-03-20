@@ -17,10 +17,10 @@ import com.jetbrains.pluginverifier.tasks.Task
 
 /**
  * The 'check-plugin' [task] [Task] that verifies
- * each plugin from the [CheckPluginParams.pluginsToCheck]
+ * each plugin from the [CheckPluginParams.pluginsSet]
  * against each IDE from the [CheckPluginParams.ideDescriptors].
  *
- * If one [verified] [CheckPluginParams.pluginsToCheck] plugin depends on
+ * If one [verified] [CheckPluginParams.pluginsSet] plugin depends on
  * another verified plugin then the [dependency resolution] [DependencyFinder]
  * prefers the verified plugin to a plugin from the [PluginRepository].
  */
@@ -36,7 +36,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
   private inner class VerifiedPluginsDependencyFinder : DependencyFinder {
 
     override fun findPluginDependency(dependency: PluginDependency) =
-        parameters.pluginsToCheck.plugins
+        parameters.pluginsSet.pluginsToCheck
             .filterIsInstance<LocalPluginInfo>()
             .filter { it.pluginId == dependency.id }
             .maxWith(compareBy(VersionComparatorUtil.COMPARATOR) { it.version })
@@ -47,7 +47,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
 
   /**
    * Creates the [DependencyFinder] that:
-   * 1) Resolves the [dependency] [PluginDependency] in the [verified] [CheckPluginParams.pluginsToCheck] plugins
+   * 1) Resolves the [dependency] [PluginDependency] in the [verified] [CheckPluginParams.pluginsSet] plugins
    * 2) If not found, resolves the [dependency] [PluginDependency] using the [IdeDependencyFinder].
    */
   private fun createDependencyFinder(ideDescriptor: IdeDescriptor): DependencyFinder {
@@ -57,20 +57,25 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
   }
 
   override fun execute(verificationReportage: VerificationReportage): CheckPluginResult {
-    val tasks = parameters.ideDescriptors.flatMap { ideDescriptor ->
-      val dependencyFinder = createDependencyFinder(ideDescriptor)
-      parameters.pluginsToCheck.plugins.map { pluginInfo ->
-        VerifierTask(pluginInfo, parameters.jdkPath, ideDescriptor, dependencyFinder)
+    with(parameters) {
+      val tasks = ideDescriptors.flatMap { ideDescriptor ->
+        val dependencyFinder = createDependencyFinder(ideDescriptor)
+        pluginsSet.pluginsToCheck.map { pluginInfo ->
+          VerifierTask(pluginInfo, jdkPath, ideDescriptor, dependencyFinder)
+        }
       }
+      val verifierParams = VerifierParameters(
+          externalClassesPrefixes,
+          problemsFilters,
+          externalClasspath,
+          true
+      )
+      val results = Verification.run(verifierParams, pluginDetailsCache, tasks, verificationReportage, jdkDescriptorsCache)
+      return CheckPluginResult(
+          invalidPluginFiles,
+          results
+      )
     }
-    val verifierParams = VerifierParameters(
-        parameters.externalClassesPrefixes,
-        parameters.problemsFilters,
-        parameters.externalClasspath,
-        true
-    )
-    val results = Verification.run(verifierParams, pluginDetailsCache, tasks, verificationReportage, parameters.jdkDescriptorsCache)
-    return CheckPluginResult(parameters.pluginsToCheck.invalidPluginFiles, results)
   }
 
 }

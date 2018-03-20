@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.Reporter
+import com.jetbrains.pluginverifier.reporting.ignoring.PluginIgnoredEvent
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterSet
@@ -75,6 +76,7 @@ class VerifyPluginTask(private val verifierExecutor: VerifierExecutor,
 
   private fun createVerificationReportage(progress: ProgressIndicator) = VerificationReportageImpl(
       reporterSetProvider = object : VerificationReportersProvider {
+        override val ignoredPluginsReporters: List<Reporter<PluginIgnoredEvent>> = emptyList()
 
         override val globalMessageReporters = listOf<Reporter<String>>()
 

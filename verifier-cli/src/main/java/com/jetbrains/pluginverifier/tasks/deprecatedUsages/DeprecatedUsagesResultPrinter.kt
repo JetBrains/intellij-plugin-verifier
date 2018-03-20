@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
-import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -24,8 +23,6 @@ class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val plugin
     if (outputOptions.needTeamCityLog) {
       val teamCityLog = TeamCityLog(System.out)
       with(deprecatedUsagesResult) {
-        TeamCityResultPrinter.printInvalidPluginFiles(teamCityLog, invalidPluginFiles)
-
         val deprecatedIdeApiToPluginUsages = hashMapOf<Location, MutableMap<PluginInfo, Int>>()
         for ((plugin, pluginUsages) in pluginDeprecatedUsages) {
           pluginUsages

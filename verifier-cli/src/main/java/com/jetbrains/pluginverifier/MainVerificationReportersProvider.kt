@@ -12,6 +12,7 @@ import com.jetbrains.pluginverifier.reporting.common.CollectingReporter
 import com.jetbrains.pluginverifier.reporting.common.FileReporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.common.MessageAndException
+import com.jetbrains.pluginverifier.reporting.ignoring.PluginIgnoredEvent
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import com.jetbrains.pluginverifier.reporting.progress.LogSteppedProgressReporter
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterSet
@@ -68,6 +69,10 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
 
   private val ideVersion2AllIgnoredProblemsReporter = hashMapOf<IdeVersion, CollectingReporter<ProblemIgnoredEvent>>()
 
+  private val ignoredPluginsReporter = CollectingReporter<PluginIgnoredEvent>()
+
+  override val ignoredPluginsReporters = listOf(ignoredPluginsReporter)
+
   override fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, ideVersion: IdeVersion): VerificationReporterSet {
     val ideResultsDirectory = getIdeResultsDirectory(ideVersion)
     val pluginVerificationDirectory = ideResultsDirectory.resolve("plugins").resolve(createPluginVerificationDirectory(pluginInfo))
@@ -85,7 +90,6 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
         exceptionReporters = createExceptionReporters(pluginVerificationDirectory)
     )
   }
-
 
   private fun getIdeResultsDirectory(ideVersion: IdeVersion) =
       verificationReportsDirectory.resolve("$ideVersion".replaceInvalidFileNameCharacters())
@@ -190,6 +194,24 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
     globalMessageReporters.forEach { it.closeLogged() }
     globalProgressReporters.forEach { it.closeLogged() }
     saveIdeIgnoredProblems()
+    saveAllIgnoredPluginsList()
+  }
+
+  private fun saveAllIgnoredPluginsList() {
+    val allIgnoredPlugins = ignoredPluginsReporter.getReported()
+    for ((ideVersion, ignoredPlugins) in allIgnoredPlugins.groupBy { it.ideVersion }) {
+      val ignoredPluginsFile = getIdeResultsDirectory(ideVersion).resolve("all-ignored-plugins.txt")
+      try {
+        val message = "The following plugins were excluded from the verification: \n" +
+            ignoredPlugins.joinToString(separator = "\n") {
+              "${it.pluginInfo}: ${it.reason}"
+            }
+        ignoredPluginsFile.writeText(message)
+      } catch (e: Exception) {
+        LOG.error("Unable to save ignored plugins of $ideVersion", e)
+      }
+    }
+    ignoredPluginsReporter.closeLogged()
   }
 
   private fun saveIdeIgnoredProblems() {

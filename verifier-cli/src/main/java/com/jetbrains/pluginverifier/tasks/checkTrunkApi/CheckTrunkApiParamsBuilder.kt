@@ -3,12 +3,15 @@ package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
+import com.jetbrains.pluginverifier.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.misc.listPresentationInColumns
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.options.PluginsSet
+import com.jetbrains.pluginverifier.options.filter.ExcludedPluginFilter
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -16,7 +19,6 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepositoryFactory
-import com.jetbrains.pluginverifier.tasks.PluginsToCheck
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
@@ -102,27 +104,37 @@ class CheckTrunkApiParamsBuilder(private val pluginRepository: PluginRepository,
     val jetBrainsPluginIds = getJetBrainsPluginIds(apiOpts)
 
     verificationReportage.logVerificationStage("Requesting a list of plugins compatible with the RELEASE IDE $releaseVersion")
-    val releaseCompatibleUpdates = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch last compatible updates with $releaseVersion") {
+    val releaseCompatibleVersions = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch last compatible updates with $releaseVersion") {
       getLastCompatiblePlugins(releaseVersion)
     }
 
-    val pluginsToCheck = PluginsToCheck()
-    pluginsToCheck.plugins.addAll(releaseCompatibleUpdates
-        .filterNot { it.pluginId in jetBrainsPluginIds }
-        .sortedByDescending { (it as UpdateInfo).updateId }
+    val pluginsSet = PluginsSet()
+    pluginsSet.schedulePlugins(
+        releaseCompatibleVersions
+            .filterNot { it.pluginId in jetBrainsPluginIds }
+            .sortedByDescending { (it as UpdateInfo).updateId }
     )
 
-    println("The following updates will be checked with both " +
-        "#$trunkVersion and #$releaseVersion:\n" +
-        pluginsToCheck.plugins
+    val allBrokenPlugins = (IdeResourceUtil.getBrokenPluginsListedInIde(releaseIdeDescriptor.ide) +
+        IdeResourceUtil.getBrokenPluginsListedInIde(trunkIdeDescriptor.ide))
+
+    pluginsSet.addPluginFilter(ExcludedPluginFilter(allBrokenPlugins))
+
+    println("The following updates will be checked with both #$trunkVersion and #$releaseVersion:\n" +
+        pluginsSet.pluginsToCheck
             .sortedBy { (it as UpdateInfo).updateId }
             .listPresentationInColumns(4, 60)
     )
 
+    pluginsSet.ignoredPlugins.forEach { plugin, reason ->
+      verificationReportage.logPluginVerificationIgnored(plugin, releaseVersion, reason)
+      verificationReportage.logPluginVerificationIgnored(plugin, trunkVersion, reason)
+    }
+
     val jdkDescriptorsCache = JdkDescriptorsCache()
     return jdkDescriptorsCache.closeOnException {
       CheckTrunkApiParams(
-          pluginsToCheck,
+          pluginsSet,
           OptionsParser.getJdkPath(opts),
           trunkIdeDescriptor,
           releaseIdeDescriptor,
@@ -149,7 +161,7 @@ class CheckTrunkApiParamsBuilder(private val pluginRepository: PluginRepository,
 
   private fun parseIdeVersion(ideVersion: String) = IdeVersion.createIdeVersionIfValid(ideVersion)
       ?: throw IllegalArgumentException("Invalid IDE version: $ideVersion. Please provide IDE version (with product ID) with which to compare API problems; " +
-      "See https://www.jetbrains.com/intellij-repository/releases/")
+          "See https://www.jetbrains.com/intellij-repository/releases/")
 
 }
 

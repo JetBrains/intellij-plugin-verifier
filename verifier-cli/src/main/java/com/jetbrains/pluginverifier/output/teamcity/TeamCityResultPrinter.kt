@@ -16,7 +16,7 @@ import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
-import com.jetbrains.pluginverifier.tasks.checkIde.MissingCompatibleUpdate
+import com.jetbrains.pluginverifier.tasks.checkIde.MissingCompatibleVersionProblem
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -63,15 +63,15 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
 
   }
 
-  fun printNoCompatibleUpdatesProblems(missingProblems: List<MissingCompatibleUpdate>) {
+  fun printNoCompatibleVersionsProblems(missingVersionsProblems: List<MissingCompatibleVersionProblem>) {
     return when (groupBy) {
       GroupBy.NOT_GROUPED -> {
-        missingProblems.forEach { tcLog.buildProblem(it.toString()) }
+        missingVersionsProblems.forEach { tcLog.buildProblem(it.toString()) }
       }
       GroupBy.BY_PLUGIN -> {
-        missingProblems.forEach { missingProblem ->
+        missingVersionsProblems.forEach { missingProblem ->
           tcLog.testSuiteStarted(missingProblem.pluginId).use {
-            val testName = "(no compatible update)"
+            val testName = "(no compatible version)"
             tcLog.testStarted(testName).use {
               tcLog.testFailed(testName, "#$missingProblem\n", "")
             }
@@ -79,8 +79,8 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
         }
       }
       GroupBy.BY_PROBLEM_TYPE -> {
-        tcLog.testSuiteStarted("(no compatible update)").use {
-          missingProblems.forEach { problem ->
+        tcLog.testSuiteStarted("(no compatible version)").use {
+          missingVersionsProblems.forEach { problem ->
             tcLog.testSuiteStarted(problem.pluginId).use {
               val testName = problem.pluginId
               tcLog.testStarted(testName).use {

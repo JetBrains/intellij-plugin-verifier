@@ -18,8 +18,9 @@ class DeprecatedUsagesRunner : CommandRunner() {
   override fun getParametersBuilder(
       pluginRepository: PluginRepository,
       ideFilesBank: IdeFilesBank,
-      pluginDetailsCache: PluginDetailsCache, verificationReportage: VerificationReportage
-  ) = DeprecatedUsagesParamsBuilder(pluginRepository, pluginDetailsCache)
+      pluginDetailsCache: PluginDetailsCache,
+      verificationReportage: VerificationReportage
+  ) = DeprecatedUsagesParamsBuilder(pluginRepository, pluginDetailsCache, verificationReportage)
 
   override fun createTask(
       parameters: TaskParameters,

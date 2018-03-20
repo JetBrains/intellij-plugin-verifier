@@ -18,6 +18,8 @@ fun <T> List<T>.listPresentationInColumns(columns: Int, minColumnWidth: Int): St
   }
 }
 
+fun String?.appendWithSpaceIfNotBlank(): String = if (this != null && this.isNotBlank()) " $this" else ""
+
 fun String.pluralizeWithNumber(times: Int): String = "$times " + this.pluralize(times)
 
 fun String.pluralizeWithNumber(times: Long): String = pluralizeWithNumber(times.coerceToIntegerMax())

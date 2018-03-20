@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.tasks
 
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.options.PluginsSet
 import java.io.Closeable
 
 /**
@@ -13,9 +14,13 @@ import java.io.Closeable
  */
 abstract class TaskParameters(
     /**
-     * Plugins to be verified in this task.
+     * Plugins set to be verified in this task.
      */
-    val pluginsToCheck: PluginsToCheck
+    val pluginsSet: PluginsSet
 ) : Closeable {
-  abstract fun presentableText(): String
+
+  abstract val presentableText: String
+
+  override fun toString() = presentableText
+
 }

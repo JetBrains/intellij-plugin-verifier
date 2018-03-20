@@ -22,7 +22,7 @@ class CheckPluginResultPrinter(private val outputOptions: OutputOptions,
       }
 
       results.groupBy { it.ideVersion }.forEach { ideVersion, resultsOfIde ->
-        outputOptions.saveToHtmlFile(ideVersion, emptyList(), resultsOfIde)
+        outputOptions.saveToHtmlFile(ideVersion, resultsOfIde)
       }
     }
   }

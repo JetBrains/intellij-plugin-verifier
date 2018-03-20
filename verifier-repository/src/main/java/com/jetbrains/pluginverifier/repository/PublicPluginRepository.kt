@@ -173,7 +173,7 @@ class PublicPluginRepository(override val repositoryURL: URL) : PluginRepository
             .executeSuccessfully().body()
             .map { it.toUpdateInfo() }
       } catch (e: Exception) {
-        LOG.error("Unable to request [$start; $end] UpdateInfos", e)
+        LOG.info("Unable to request [$start; $end] UpdateInfos", e)
         requestSingleUpdateInfo(updateId).singletonOrEmpty()
       }
     }

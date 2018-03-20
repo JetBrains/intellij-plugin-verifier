@@ -25,4 +25,9 @@ interface VerificationReportage : Closeable {
    */
   fun logVerificationStage(stageMessage: String)
 
+  /**
+   * Logs that the verification of [pluginInfo] against [ideVersion] is ignored due to some [reason].
+   */
+  fun logPluginVerificationIgnored(pluginInfo: PluginInfo, ideVersion: IdeVersion, reason: String)
+
 }

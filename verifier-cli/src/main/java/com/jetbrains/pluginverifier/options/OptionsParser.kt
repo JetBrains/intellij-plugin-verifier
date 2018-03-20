@@ -21,7 +21,6 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.tasks.PluginsToCheck
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.BufferedReader
@@ -215,7 +214,7 @@ object OptionsParser {
    *
    * Returns (ID-s of plugins to check all builds, ID-s of plugins to check last builds)
    */
-  private fun parseAllAndLastPluginIdsToCheck(opts: CmdOpts): Pair<List<String>, List<String>> {
+  fun parseAllAndLastPluginIdsToCheck(opts: CmdOpts): Pair<List<String>, List<String>> {
     val pluginsCheckAllBuilds = arrayListOf<String>()
     val pluginsCheckLastBuilds = arrayListOf<String>()
 
@@ -244,13 +243,6 @@ object OptionsParser {
     }
 
     return pluginsCheckAllBuilds to pluginsCheckLastBuilds
-  }
-
-  fun parsePluginsToCheck(opts: CmdOpts, ideVersion: IdeVersion, pluginRepository: PluginRepository): PluginsToCheck {
-    val pluginsToCheck = PluginsToCheck()
-    val (allVersions, lastVersions) = parseAllAndLastPluginIdsToCheck(opts)
-    pluginsToCheck.plugins.addAll(requestUpdatesToCheckByIds(allVersions, lastVersions, ideVersion, pluginRepository))
-    return pluginsToCheck
   }
 
   /**
@@ -284,8 +276,12 @@ object OptionsParser {
     }
   }
 
-  fun parseExcludedPlugins(opts: CmdOpts): List<PluginIdAndVersion> {
-    val epf = opts.excludedPluginsFile ?: return emptyList()
+  /**
+   * Parses set of excluded plugins from [CmdOpts.excludedPluginsFile] file,
+   * which is a set of pairs of `(<plugin-id>, <version>)`.
+   */
+  fun parseExcludedPlugins(opts: CmdOpts): Set<PluginIdAndVersion> {
+    val epf = opts.excludedPluginsFile ?: return emptySet()
     return IdeResourceUtil.readBrokenPluginsFromFile(File(epf))
   }
 

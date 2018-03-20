@@ -27,8 +27,8 @@ class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions,
       if (outputOptions.needTeamCityLog) {
         printTrunkApiCompareResult(this)
       }
-      outputOptions.saveToHtmlFile(releaseIdeVersion, emptyList(), releaseResults)
-      outputOptions.saveToHtmlFile(trunkIdeVersion, emptyList(), trunkResults)
+      outputOptions.saveToHtmlFile(releaseIdeVersion, releaseResults)
+      outputOptions.saveToHtmlFile(trunkIdeVersion, trunkResults)
     }
   }
 
@@ -118,8 +118,6 @@ class CheckTrunkApiResultPrinter(private val outputOptions: OutputOptions,
         }
       }
     }
-
-    TeamCityResultPrinter.printInvalidPluginFiles(tcLog, apiChanges.invalidPluginFiles)
 
     val newProblemsCnt = allProblems.distinctBy { it.shortDescription }.size
     if (newProblemsCnt > 0) {

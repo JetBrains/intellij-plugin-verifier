@@ -5,10 +5,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.dependencies.resolution.*
-import com.jetbrains.pluginverifier.ide.IdeDescriptor
-import com.jetbrains.pluginverifier.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
-import com.jetbrains.pluginverifier.parameters.filtering.toPluginIdAndVersion
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -25,8 +22,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
 
   override fun execute(verificationReportage: VerificationReportage): CheckTrunkApiResult {
     with(parameters) {
-      val allBrokenPlugins = (releaseIde.getIdeBrokenListedPlugins() + trunkIde.getIdeBrokenListedPlugins()).toSet()
-      val pluginInfosToCheck = pluginsToCheck.plugins.filterNot { it.toPluginIdAndVersion() in allBrokenPlugins }
+      val pluginToCheck = pluginsSet.pluginsToCheck
 
       val verifierParameters = VerifierParameters(
           parameters.externalClassesPrefixes,
@@ -36,10 +32,10 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
       )
 
       val verifierTasks = arrayListOf<VerifierTask>()
-      pluginInfosToCheck.mapTo(verifierTasks) {
+      pluginToCheck.mapTo(verifierTasks) {
         VerifierTask(it, parameters.jdkPath, releaseIde, ReleaseFinder())
       }
-      pluginInfosToCheck.mapTo(verifierTasks) {
+      pluginToCheck.mapTo(verifierTasks) {
         VerifierTask(it, parameters.jdkPath, trunkIde, TrunkFinder())
       }
 
@@ -55,14 +51,10 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
           releaseIde.ideVersion,
           results.filter { it.ideVersion == releaseIde.ideVersion },
           trunkIde.ideVersion,
-          results.filter { it.ideVersion == trunkIde.ideVersion },
-          pluginsToCheck.invalidPluginFiles
+          results.filter { it.ideVersion == trunkIde.ideVersion }
       )
     }
   }
-
-  private fun IdeDescriptor.getIdeBrokenListedPlugins() =
-      IdeResourceUtil.getBrokenPluginsListedInIde(ide).orEmpty()
 
   private val publicRepositoryReleaseCompatibleFinder = RepositoryDependencyFinder(pluginRepository, LastCompatibleVersionSelector(parameters.releaseIde.ideVersion), pluginDetailsCache)
 

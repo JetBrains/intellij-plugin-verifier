@@ -9,7 +9,6 @@ import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
-import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
@@ -19,8 +18,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 class HtmlResultPrinter(val ideVersion: IdeVersion,
-                        val isExcluded: (PluginIdAndVersion) -> Boolean,
-                        val htmlFile: Path,
+                        private val htmlFile: Path,
                         private val missingDependencyIgnoring: MissingDependencyIgnoring) : ResultPrinter {
 
   override fun printResults(results: List<VerificationResult>) {
@@ -65,15 +63,13 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
       }
       div {
         pluginResults
-            .filterNot { isExcluded(PluginIdAndVersion(it.plugin.pluginId, it.plugin.version)) }
             .sortedWith(compareByDescending(VersionComparatorUtil.COMPARATOR, { it.plugin.version }))
             .forEach { printPluginResult(it) }
       }
     }
   }
 
-  private fun getPluginStyle(pluginResults: List<VerificationResult>): String {
-    val results = pluginResults.filterNot { isExcluded(PluginIdAndVersion(it.plugin.pluginId, it.plugin.version)) }
+  private fun getPluginStyle(results: List<VerificationResult>): String {
     if (results.any { it is VerificationResult.CompatibilityProblems }) {
       return "pluginHasProblems"
     }
@@ -100,13 +96,7 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
       is VerificationResult.FailedToDownload -> "failedToDownload"
     }
 
-    val excludedStyle = if (isExcluded(PluginIdAndVersion(result.plugin.pluginId, result.plugin.version))) {
-      "excluded"
-    } else {
-      ""
-    }
-
-    div(classes = "update $resultStyle $excludedStyle") {
+    div(classes = "update $resultStyle") {
       h3 {
         printUpdateHeader(result)
       }

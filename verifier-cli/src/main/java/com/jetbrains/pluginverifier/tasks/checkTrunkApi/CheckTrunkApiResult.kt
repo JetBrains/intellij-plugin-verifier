@@ -3,22 +3,19 @@ package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
-import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import com.jetbrains.pluginverifier.tasks.TaskResult
 
-class CheckTrunkApiResult(invalidPluginFiles: List<InvalidPluginFile>,
-                          val releaseIdeVersion: IdeVersion,
+class CheckTrunkApiResult(val releaseIdeVersion: IdeVersion,
                           val releaseResults: List<VerificationResult>,
                           val trunkIdeVersion: IdeVersion,
                           val trunkResults: List<VerificationResult>,
-                          val comparingResults: Map<PluginInfo, PluginComparingResult>) : TaskResult(invalidPluginFiles) {
+                          val comparingResults: Map<PluginInfo, PluginComparingResult>) : TaskResult() {
 
   companion object {
     fun create(releaseIdeVersion: IdeVersion,
                releaseResults: List<VerificationResult>,
                trunkIdeVersion: IdeVersion,
-               trunkResults: List<VerificationResult>,
-               invalidPluginFiles: MutableList<InvalidPluginFile>): CheckTrunkApiResult {
+               trunkResults: List<VerificationResult>): CheckTrunkApiResult {
       val trunkPlugin2Result = trunkResults.associateBy { it.plugin }
       val releasePlugin2Result = releaseResults.associateBy { it.plugin }
       val comparingResults = hashMapOf<PluginInfo, PluginComparingResult>()
@@ -33,7 +30,7 @@ class CheckTrunkApiResult(invalidPluginFiles: List<InvalidPluginFile>,
         comparingResults[plugin] = PluginComparingResult(plugin, oldResult, newResult)
       }
 
-      return CheckTrunkApiResult(invalidPluginFiles, releaseIdeVersion, releaseResults, trunkIdeVersion, trunkResults, comparingResults)
+      return CheckTrunkApiResult(releaseIdeVersion, releaseResults, trunkIdeVersion, trunkResults, comparingResults)
     }
 
   }

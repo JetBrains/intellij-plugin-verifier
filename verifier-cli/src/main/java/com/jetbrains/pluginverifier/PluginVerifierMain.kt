@@ -134,7 +134,7 @@ object PluginVerifierMain {
       }
 
       val taskResult = parameters.use {
-        println("Task ${runner.commandName} parameters: $parameters")
+        println("Task ${runner.commandName} parameters:\n$parameters")
 
         runner
             .createTask(parameters, pluginRepository, pluginDetailsCache)
