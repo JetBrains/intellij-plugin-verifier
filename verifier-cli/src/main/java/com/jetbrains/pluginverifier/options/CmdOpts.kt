@@ -50,10 +50,6 @@ open class CmdOpts(
     @set:Argument("dump-broken-plugin-list", alias = "d", description = "File to dump broken plugin ids. The broken plugins are those which contain at least one problem as a result of the verification")
     var dumpBrokenPluginsFile: String? = null,
 
-    @set:Argument("html-report", description = "Create HTML report of broken plugins. This field is deprecated as HTML reports are automatically generated in the log directory")
-    @Deprecated("This field is deprecated as HTML reports are automatically generated in the log directory")
-    var htmlReportFile: String? = null,
-
     @set:Argument("plugins-to-check-file", alias = "ptcf", description = "File that contains list of plugins to check (e.g. '<IDE-home>/lib/resources.jar/checkedPlugins.txt'). " +
         "Each line of the file is either '<plugin_id>' (check ALL builds of the plugin) or '@<plugin_id>' (check only LAST build of the plugin).")
     var pluginsToCheckFile: String? = null,
@@ -61,11 +57,15 @@ open class CmdOpts(
     @set:Argument("external-prefixes", alias = "ex-prefixes", delimiter = ":", description = "The prefixes of classes from the external libraries. The Verifier will not report 'No such class' for such classes.")
     var externalClassesPrefixes: Array<String> = arrayOf(),
 
-    @set:Argument("check-android-only", alias = "android", description = "Whether to check only Android Studio related code, which is authored by Google team and gets merged into IDEA sources. By default the value is 'false'.")
-    var checkAndroidOnly: Boolean = false,
-
-    @set:Argument("check-idea-only", alias = "idea", description = "Whether to check only IDEA-related code, excluding problems related to Android Studio source code authored by Google team and merged into IDEA. By default the value is 'false'.")
-    var checkIdeaOnly: Boolean = false
+    @set:Argument(
+        "subsystems-to-check",
+        alias = "subsystems",
+        description = "Specifies which subsystems of IDE should be checked. Available options: all (default), android-only, without-android.\n" +
+            "\tall - verify all code\n" +
+            "\tandroid-only - verify only code related to Android support.\n" +
+            "\twithout-android - exclude problems related to Android support. "
+    )
+    var subsystemsToCheck: String = "all"
 
 ) {
   companion object {

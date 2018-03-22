@@ -135,26 +135,23 @@ object OptionsParser {
   }
 
   /**
-   * Determines whether we would like to track only IDEA-related problems,
-   * or only Android-related problems (MP-1377), or both IDEA and Android problems.
+   * Determines which subsystem should be verified in this task.
+   *
+   * Whether we would like to track only IDEA related problems (-without-android),
+   * or only Android related problems (MP-1377) (-android-only),
+   * or both IDEA and Android problems (-all).
    */
-  private fun createIdeaOrAndroidProblemsFilter(opts: CmdOpts): ProblemsFilter? {
-    if (opts.checkAndroidOnly && opts.checkIdeaOnly) {
-      throw IllegalArgumentException("Only one option -idea or -android can be specified")
-    }
-    if (opts.checkIdeaOnly) {
-      return AndroidProblemsFilter()
-    }
-    if (opts.checkAndroidOnly) {
-      return IdeaProblemsFilter()
-    }
-    return null
-  }
+  private fun createSubsystemProblemsFilter(opts: CmdOpts) =
+      when (opts.subsystemsToCheck) {
+        "android-only" -> AndroidProblemsFilter()
+        "without-android" -> IdeaOnlyProblemsFilter()
+        else -> null
+      }
 
   fun getProblemsFilters(opts: CmdOpts): List<ProblemsFilter> {
     val ignoredProblemsFilter = createIgnoredProblemsFilter(opts)
     val documentedProblemsFilter = createDocumentedProblemsFilter(opts)
-    val codeProblemsFilter = createIdeaOrAndroidProblemsFilter(opts)
+    val codeProblemsFilter = createSubsystemProblemsFilter(opts)
     return ignoredProblemsFilter.singletonOrEmpty() +
         documentedProblemsFilter.singletonOrEmpty() +
         codeProblemsFilter.singletonOrEmpty()

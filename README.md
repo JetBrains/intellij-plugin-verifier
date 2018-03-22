@@ -110,7 +110,7 @@ For clarity, here is an example of the command:
 
     check-trunk-api 
        -r /usr/lib/jvm/java-8-oracle 
-       -check-idea-only
+       -subsystems-to-check without-android
        -team-city 
        -jetbrains-plugins-file all-jetbrains-plugins.txt
        -release-jetbrains-plugins release-plugins
@@ -135,8 +135,8 @@ release IDE gets out, but for intermediate builds it can be not true.
     * `-release-jetbrains-plugins release-plugins` points to a directory containing all the plugins built along with the **release** IDE. 
      Plugins can be in form of `.jar`, `.zip` or directories.
     * `-trunk-jetbrains-plugins trunk-plugins` points to a directory containing all the plugins built along with the **trunk** IDE.
-2) The `-check-idea-only` is used to not report problems relating to Android Studio sources, which are authored by Google team
-and occasionally merged into IDEA sources: the IDEA developers can do nothing about the breakages introduced in Android Studio at this stage.
+2) `-subystems-to-check without-android` specifies that the Plugin Verifier should not show problems related to Android support.    
+
 
 Here is the full syntax of the command:
 
@@ -146,8 +146,7 @@ Here is the full syntax of the command:
         [-major-ide-version | -miv <IDE version>]
         [-external-prefixes <':'-separated list>]
         [-ignored-problems | -ip <file>]
-        [-check-android-only | -android]
-        [-check-idea-only | -idea]
+        [-subsystems-to-check | -subsystems]
         [-release-jetbrains-plugins | -rjbp <path>]
         [-trunk-jetbrains-plugins | -tjbp <path>]
         [-jetbrains-plugins-file | -jbpf <file>]
@@ -215,13 +214,13 @@ Here is the full syntax of the command:
             plugin_id (check ALL builds of the plugin) 
             $plugin_id' (check only LAST build of the plugin)
             
-    -check-android-only (-android)
-        Whether to check only Android Studio related code, which is authored by Google team and gets merged into IDEA sources. 
-        By default the value is 'false'.
-    
-    -check-idea-only (-idea)
-        Whether to check only IDEA-related code, excluding problems related to Android Studio source code authored by Google team
-        By default the value is 'false'.
+    - subsystems-to-check (-subsystems)
+        Specifies which subsystems of IDE should be checked. 
+        Available options: all (default), android-only, without-android. 
+        
+        all - verify all code
+        android-only - verify only code related to Android support.
+        without-android - exclude problems related to Android support. 
         
         
 ## Technical details

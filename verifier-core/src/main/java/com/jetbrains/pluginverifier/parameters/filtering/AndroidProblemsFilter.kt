@@ -6,10 +6,7 @@ import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 
 /**
- * Ignores compatibility problems that originate from
- * Android source code, which is author by Google team
- * and gets merged into IDEA codebase.
- * Those problems should be tracked in a separate configuration.
+ * [ProblemsFilter] that yields only Android related problems.
  */
 class AndroidProblemsFilter : ProblemsFilter {
 
@@ -19,22 +16,13 @@ class AndroidProblemsFilter : ProblemsFilter {
     fun String.belongsToPackage(packageName: String) =
         startsWith(packageName + "/")
 
-    fun ClassLocation.belongsToPackage(packageName: String) =
-        className.belongsToPackage(packageName)
+    fun ClassLocation.belongsToAndroid() = androidPackages.any { className.belongsToPackage(it) }
 
-    fun ClassReference.belongsToPackage(packageName: String) =
-        className.belongsToPackage(packageName)
-
-    fun ClassLocation.belongsToAndroid() = androidPackages.any { belongsToPackage(it) }
-
-    fun ClassReference.belongsToAndroid() = androidPackages.any { belongsToPackage(it) }
+    fun ClassReference.belongsToAndroid() = androidPackages.any { className.belongsToPackage(it) }
   }
 
-  override fun shouldReportProblem(
-      problem: CompatibilityProblem,
-      verificationContext: VerificationContext
-  ): ProblemsFilter.Result {
-    val ignore = with(problem) {
+  override fun shouldReportProblem(problem: CompatibilityProblem, verificationContext: VerificationContext): ProblemsFilter.Result {
+    val report = with(problem) {
       when (this) {
         is AbstractClassInstantiationProblem -> abstractClass.belongsToAndroid()
         is AbstractMethodInvocationProblem -> method.hostClass.belongsToAndroid()
@@ -64,10 +52,11 @@ class AndroidProblemsFilter : ProblemsFilter {
         else -> false
       }
     }
-    return if (ignore) {
-      ProblemsFilter.Result.Ignore("the problem belongs to Android code, which is authored by Google team and gets merged into IDEA sources")
-    } else {
+
+    return if (report) {
       ProblemsFilter.Result.Report
+    } else {
+      ProblemsFilter.Result.Ignore("the problem doesn't belong to Android subsystem")
     }
   }
 }
