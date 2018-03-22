@@ -75,9 +75,13 @@ data class PluginsSet(
     scheduledPlugins.addAll(pluginInfos)
   }
 
-  override fun toString() = """
-      |Plugins (${pluginsToCheck.size}): [${pluginsToCheck.joinToString()}]
-      |Ignored : [${_ignoredPlugins.keys.joinToString()}]
-  """.trimMargin()
+  override fun toString(): String {
+    //Invoke [pluginsToCheck] once to avoid double work.
+    val plugins = pluginsToCheck
+    return """
+        |Plugins (${plugins.size}): [${plugins.joinToString()}]
+        |Ignored : [${_ignoredPlugins.keys.joinToString()}]
+    """.trimMargin()
+  }
 
 }

@@ -7,15 +7,15 @@
 IntelliJ Plugin Verifier is used to check binary compatibility between IntelliJ IDE builds and 
 IntelliJ Platform plugins.
 
-The reason this tool may be useful is that the plugins authors' often specify wide [[since; until] compatibility range](http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html)
-but compile a plugin against only a specific IDE from the range. The IntelliJ API may be occasionally changed between releases,
+This tool is useful because plugins authors' often specify wide [[since; until] compatibility range](http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html)
+but compile a plugin against only a specific IDE from the range. IntelliJ API may be occasionally changed between releases,
 so binary incompatibilities may arise, leading to `NoClassDefFoundError`, `NoSuchMethodError` and similar exceptions at runtime.
 
 Examples of problems that the Plugin Verifier is able to detect:
 1) Plugin references a class `com.example.Foo` which is not available in IDE.
 It may happen if the plugin had been compiled against IDE 1.0, and the class `com.example.Foo` was removed in IDE 2.0.
-2) Plugin references a missing method of some class, which causes a `NoSuchMethodError` thrown at runtime.
-3) Many other binary incompatibilities, as stated in [Java Spec. on Binary Compatibility](https://docs.oracle.com/javase/specs/jls/se9/html/jls-13.html)   
+2) Plugin references a missing method of IDE's class, which leads to `NoSuchMethodError` at runtime.
+3) Many other binary incompatibilities listed in [Java Spec. on Binary Compatibility](https://docs.oracle.com/javase/specs/jls/se9/html/jls-13.html)   
 4) Missing plugin's dependencies problems: a plugin `A` depends on another plugin `B` that doesn't have a build compatible with this IDE: 
 it means that the user cannot install the plugin `A` at all, as the IDE requires all dependent plugins to be installed.
 
@@ -222,3 +222,37 @@ Here is the full syntax of the command:
     -check-idea-only (-idea)
         Whether to check only IDEA-related code, excluding problems related to Android Studio source code authored by Google team
         By default the value is 'false'.
+        
+        
+## Technical details
+
+Plugin Verifier uses the following paths for operational purposes:
+* `<home-directory>` - base directory for all other directories  
+    * By default it is `<USER_HOME>/.pluginVerifier`
+    * It can be modified via `-Dplugin.verifier.home.dir` JVM parameter, e.g. `-Dplugin.verifier.home.dir=/tmp/verifier` 
+* `<plugins-directory> = <home-directory>/loaded-plugins` - cache directory for downloaded plugins
+* `<extracted-directory> = <home-directory>/extracted-plugins` - temporary directory used for extracting plugins that are distributed as `.zip` archives.
+
+###### Downloading plugins
+
+Plugins to be verified and plugins' dependencies are downloaded into `<plugins-directory>`.
+It can be reused between multiple runs of the Plugin Verifier: on the first run
+all the necessary plugins will be downloaded, and on the subsequent runs they will be taken from the cache.
+Note that not only the verified plugins are downloaded but also all plugins' dependencies.
+
+Plugins are downloaded from the [Plugin Repository](https://plugins.jetbrains.com/) into 
+`<plugins-directory>/<update-ID>.jar` or `<plugins-directory>/<update-ID>.zip`, depending on the 
+plugin's packaging type. `<update-ID>` is the unique ID of the plugin's version in the Plugin Repository's database.
+For example, [Kotlin 1.2.30-release-IJ2018.1-1](https://plugins.jetbrains.com/plugin/6954-kotlin/update/43775) has `update-ID`
+equal to `43775`.
+
+###### Limit size of `<plugins-directory>`
+
+That's possible to limit size of the `<plugins-directory>`, which is 5 GB by default.
+To do this, specify JVM option `-Dplugin.verifier.cache.dir.max.space=<max-space-MB>`. 
+The Plugin Verifier will remove the least recently used plugins from the cache as soon as the occupied space reaches the limit.
+
+###### Extracting .zip-ed plugins
+
+Plugins packaged in `.zip` archives are extracted into `<extracted-directory>/<temp-dir>` before the verification of
+these plugins starts. This is necessary to speedup the verification, which needs to do a lot of searches of class-files.
