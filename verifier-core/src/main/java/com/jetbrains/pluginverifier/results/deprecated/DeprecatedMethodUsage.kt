@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 
 data class DeprecatedMethodUsage(override val deprecatedElement: MethodLocation,
                                  override val usageLocation: Location) : DeprecatedApiUsage() {
-  override val shortDescription: String = "Deprecated method usage ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}"
+  override val shortDescription = "Deprecated method usage ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}"
 
-  override val fullDescription: String = "Deprecated method ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)} is used in " + usageLocation.formatUsageLocation()
+  override val fullDescription = "Deprecated method ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)} is used in " + usageLocation.formatDeprecatedUsageLocation()
 }

@@ -12,7 +12,6 @@ import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
-import com.jetbrains.pluginverifier.results.location.classpath.ClassPath
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.ClassReference
@@ -85,7 +84,6 @@ class DocumentedProblemsReportingTest {
             ClassLocation(
                 "org/test/other/B",
                 "",
-                ClassPath(ClassPath.Type.ROOT, ""),
                 Modifiers(0)
             ),
             "foo",
@@ -114,14 +112,14 @@ class DocumentedProblemsReportingTest {
     )
 
     val abstractMethodLocation = MethodLocation(
-        ClassLocation("org/test/I", "", ClassPath(ClassPath.Type.ROOT, ""), Modifiers(0x1)),
+        ClassLocation("org/test/I", "", Modifiers(0x1)),
         "abstractMethod",
         "()V",
         emptyList(),
         "",
         Modifiers(0x1)
     )
-    val incompleteClass = ClassLocation("org/test/IImplDerived", "", ClassPath(ClassPath.Type.ROOT, ""), Modifiers(0x1))
+    val incompleteClass = ClassLocation("org/test/IImplDerived", "", Modifiers(0x1))
 
     val methodNotImplementedProblem = MethodNotImplementedProblem(
         abstractMethodLocation,
@@ -161,7 +159,7 @@ class DocumentedProblemsReportingTest {
   private fun createVerificationContextForHierarchicalTest(): VerificationContext {
     val classes = buildClassesForHierarchicalTest()
     return createSimpleVerificationContext().copy(
-        classLoader = FixedClassesResolver.create(classes)
+        verificationClassLoader = FixedClassesResolver.create(classes)
     )
   }
 
@@ -176,6 +174,9 @@ class DocumentedProblemsReportingTest {
     return VerificationContext(
         idePlugin,
         ideVersion,
+        EmptyResolver,
+        EmptyResolver,
+        EmptyResolver,
         EmptyResolver,
         EmptyResolver,
         VerificationResultHolder(EmptyPluginVerificationReportage),

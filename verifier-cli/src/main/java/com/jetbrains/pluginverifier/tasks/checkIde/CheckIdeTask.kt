@@ -19,7 +19,6 @@ class CheckIdeTask(
       val verifierParams = VerifierParameters(
           externalClassesPrefixes,
           problemsFilters,
-          externalClassPath,
           false
       )
       val tasks = pluginsSet.pluginsToCheck

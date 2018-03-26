@@ -22,23 +22,23 @@ fun MethodReference.formatMethodReference(hostClassOption: HostClassOption,
                                           methodReturnTypeOption: MethodReturnTypeOption): String = buildString {
   val formattedHost = hostClass.formatHost(hostClassOption)
   if (formattedHost.isNotEmpty()) {
-    append(formattedHost + ".")
+    append("$formattedHost.")
   }
   append(methodName)
   val (params, returnType) = getMethodParametersAndReturnType(methodParameterTypeOption, methodReturnTypeOption)
   append("(" + params.joinToString() + ")")
-  append(" : " + returnType)
+  append(" : $returnType")
 }
 
 fun FieldReference.formatFieldReference(hostClassOption: HostClassOption, fieldTypeOption: FieldTypeOption): String = buildString {
   val formattedHost = hostClass.formatHost(hostClassOption)
   if (formattedHost.isNotEmpty()) {
-    append(formattedHost + ".")
+    append("$formattedHost.")
   }
   append(fieldName)
   val fieldType = getFieldType(fieldTypeOption)
   if (fieldType.isNotEmpty()) {
-    append(" : " + fieldType)
+    append(" : $fieldType")
   }
 }
 

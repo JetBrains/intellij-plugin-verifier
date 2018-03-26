@@ -1,5 +1,6 @@
-import com.jetbrains.pluginverifier.results.location.Location
-import com.jetbrains.pluginverifier.results.location.classpath.ClassPath
+import com.jetbrains.pluginverifier.results.location.ClassLocation
+import com.jetbrains.pluginverifier.results.location.FieldLocation
+import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import org.junit.Assert
 import org.junit.Test
@@ -35,7 +36,7 @@ class TestSignatures {
     Assert.assertEquals(expectedResult, fromClass.toString())
   }
 
-  private fun genSomeClassLocation(className: String, signature: String) = Location.fromClass(className, signature, ClassPath(ClassPath.Type.ROOT, ""), Modifiers(0))
+  private fun genSomeClassLocation(className: String, signature: String) = ClassLocation(className, signature, Modifiers(0))
 
   @Test
   fun assertCollectionsMin() {
@@ -53,13 +54,13 @@ class TestSignatures {
   }
 
   private fun assertMethod(methodName: String, methodDescriptor: String, className: String, classSignature: String, parameterNames: List<String>, signature: String, expected: String) {
-    val methodLocation = Location.fromMethod(genSomeClassLocation(className, classSignature), methodName, methodDescriptor, parameterNames, signature, Modifiers(0))
+    val methodLocation = MethodLocation(genSomeClassLocation(className, classSignature), methodName, methodDescriptor, parameterNames, signature, Modifiers(0))
     Assert.assertEquals(expected, methodLocation.toString())
   }
 
   @Test
   fun assertField() {
-    val fieldLocation = Location.fromField(genSomeClassLocation("some/Class", "<E:Ljava/lang/Object;>Ljava/lang/Object;Ljava/util/Collection<TE;>;"), "field", "I", "TT;", Modifiers(0))
+    val fieldLocation = FieldLocation(genSomeClassLocation("some/Class", "<E:Ljava/lang/Object;>Ljava/lang/Object;Ljava/util/Collection<TE;>;"), "field", "I", "TT;", Modifiers(0))
     Assert.assertEquals("some.Class<E>.field : T", fieldLocation.toString())
   }
 }

@@ -39,8 +39,8 @@ class OverrideNonFinalVerifier : MethodVerifier {
     ClassParentsVisitor(ctx, false).visitClass(clazz, false, onEnter = { parent ->
       val sameMethod = (parent.methods as List<MethodNode>).firstOrNull { it.name == method.name && it.desc == method.desc }
       if (sameMethod != null && sameMethod.isFinal()) {
-        val methodLocation = ctx.fromMethod(parent, sameMethod)
-        ctx.registerProblem(OverridingFinalMethodProblem(methodLocation, ctx.fromClass(clazz)))
+        val methodLocation = createMethodLocation(parent, sameMethod)
+        ctx.registerProblem(OverridingFinalMethodProblem(methodLocation, clazz.createClassLocation()))
         false
       } else {
         true

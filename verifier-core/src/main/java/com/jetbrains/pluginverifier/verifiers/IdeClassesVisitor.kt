@@ -36,18 +36,18 @@ class IdeClassesVisitor {
       val fields = classNode.fields as List<FieldNode>
 
       if (classNode.isDeprecated()) {
-        deprecatedElements.add(classLocationByClassNode(classNode, this))
+        deprecatedElements.add(classNode.createClassLocation())
       }
 
       methods
           .asSequence()
           .filter { it -> it.isDeprecated() }
-          .mapTo(deprecatedElements) { methodLocationByClassAndMethodNodes(classNode, it, this) }
+          .mapTo(deprecatedElements) { createMethodLocation(classNode, it) }
 
       fields
           .asSequence()
           .filter { it.isDeprecated() }
-          .mapTo(deprecatedElements) { fieldLocationByFieldAndClassNodes(classNode, it, this) }
+          .mapTo(deprecatedElements) { createFieldLocation(classNode, it) }
     }
 
     return deprecatedElements

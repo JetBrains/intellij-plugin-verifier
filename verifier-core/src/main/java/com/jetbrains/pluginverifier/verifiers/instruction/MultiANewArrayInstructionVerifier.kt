@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.createMethodLocation
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescr
-import com.jetbrains.pluginverifier.verifiers.fromMethod
 import com.jetbrains.pluginverifier.verifiers.resolveClassOrProblem
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
@@ -16,6 +16,6 @@ class MultiANewArrayInstructionVerifier : InstructionVerifier {
 
     //During resolution of the symbolic reference to the class, array, or interface type,
     // any of the exceptions documented in §5.4.3.1 can be thrown.
-    ctx.resolveClassOrProblem(descr, clazz, { ctx.fromMethod(clazz, method) })
+    ctx.resolveClassOrProblem(descr, clazz, { createMethodLocation(clazz, method) })
   }
 }

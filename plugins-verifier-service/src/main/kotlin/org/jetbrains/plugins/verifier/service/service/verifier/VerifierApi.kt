@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
+import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
@@ -21,10 +22,12 @@ fun VerificationResult.prepareVerificationResponse(): VerificationResults.Verifi
   val problems = getCompatibilityProblems()
   val pluginStructureWarnings = getPluginStructureWarnings().map { it.convertPluginStructureWarning() }
   val pluginStructureErrors = (this as? VerificationResult.InvalidPlugin)?.pluginStructureErrors.orEmpty().map { it.convertPluginStructureError() }
+  val deprecatedUsages = getDeprecatedUsages().map { it.convertDeprecatedApiUsage() }
   val dependenciesGraph = getDependenciesGraph()?.let { convertDependencyGraph(it) }
   val resultType = convertResultType()
   val compatibilityProblems = problems.map { it.convertCompatibilityProblem() }
-  val nonDownloadableReason = (this as? VerificationResult.FailedToDownload)?.reason ?: (this as? VerificationResult.NotFound)?.reason
+  val nonDownloadableReason = (this as? VerificationResult.FailedToDownload)?.failedToDownloadReason
+      ?: (this as? VerificationResult.NotFound)?.notFoundReason
   return VerificationResults.VerificationResult.newBuilder()
       .setUpdateId((plugin as UpdateInfo).updateId)
       .setIdeVersion(ideVersion.asString())
@@ -32,6 +35,7 @@ fun VerificationResult.prepareVerificationResponse(): VerificationResults.Verifi
       .setResultType(resultType)
       .addAllPluginStructureWarnings(pluginStructureWarnings)
       .addAllPluginStructureErrors(pluginStructureErrors)
+      .addAllDeprecatedUsages(deprecatedUsages)
       .addAllCompatibilityProblems(compatibilityProblems)
       .apply { if (nonDownloadableReason != null) setNonDownloadableReason(nonDownloadableReason) }
       .build()
@@ -80,6 +84,18 @@ private fun VerificationResult.getPluginStructureWarnings() = with(this) {
   }
 }
 
+private fun VerificationResult.getDeprecatedUsages() = with(this) {
+  when (this) {
+    is VerificationResult.OK -> deprecatedUsages
+    is VerificationResult.StructureWarnings -> deprecatedUsages
+    is VerificationResult.MissingDependencies -> deprecatedUsages
+    is VerificationResult.CompatibilityProblems -> deprecatedUsages
+    is VerificationResult.InvalidPlugin -> emptySet()
+    is VerificationResult.NotFound -> emptySet()
+    is VerificationResult.FailedToDownload -> emptySet()
+  }
+}
+
 private fun VerificationResult.getCompatibilityProblems() = with(this) {
   when (this) {
     is VerificationResult.OK -> emptySet()
@@ -106,6 +122,12 @@ private fun VerificationResult.getDependenciesGraph() = with(this) {
 
 private fun CompatibilityProblem.convertCompatibilityProblem() =
     VerificationResults.CompatibilityProblem.newBuilder()
+        .setShortDescription(shortDescription)
+        .setFullDescription(fullDescription)
+        .build()
+
+private fun DeprecatedApiUsage.convertDeprecatedApiUsage() =
+    VerificationResults.DeprecatedApiUsage.newBuilder()
         .setShortDescription(shortDescription)
         .setFullDescription(fullDescription)
         .build()

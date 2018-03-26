@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.tasks.checkIde
 
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.closeLogged
@@ -16,7 +15,6 @@ class CheckIdeParams(
     val jdkPath: JdkPath,
     val ideDescriptor: IdeDescriptor,
     val jdkDescriptorsCache: JdkDescriptorsCache,
-    val externalClassPath: Resolver,
     val externalClassesPrefixes: List<String>,
     val problemsFilters: List<ProblemsFilter>,
     val dependencyFinder: DependencyFinder,
@@ -33,7 +31,6 @@ class CheckIdeParams(
   override fun close() {
     ideDescriptor.closeLogged()
     jdkDescriptorsCache.closeLogged()
-    externalClassPath.closeLogged()
   }
 
 }

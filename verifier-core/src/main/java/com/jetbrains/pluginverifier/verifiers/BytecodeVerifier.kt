@@ -64,7 +64,7 @@ class BytecodeVerifier {
 
   private fun verifyClass(className: String, verificationContext: VerificationContext) {
     val node = try {
-      verificationContext.classLoader.findClass(className)
+      verificationContext.verificationClassLoader.findClass(className)
     } catch (e: Exception) {
       null
     }

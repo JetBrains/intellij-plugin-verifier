@@ -16,8 +16,11 @@ import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 data class VerificationContext(
     val plugin: IdePlugin,
     val ideVersion: IdeVersion,
-    val classLoader: Resolver,
-    val ideClassLoader: Resolver,
+    val verificationClassLoader: Resolver,
+    val pluginResolver: Resolver,
+    val dependenciesResolver: Resolver,
+    val jdkClassesResolver: Resolver,
+    val ideResolver: Resolver,
     val resultHolder: VerificationResultHolder,
     val externalClassesPrefixes: List<String>,
     val findDeprecatedApiUsages: Boolean,
@@ -38,21 +41,46 @@ data class VerificationContext(
     if (findDeprecatedApiUsages) {
       val deprecatedElement = deprecatedApiUsage.deprecatedElement
       val hostClass = deprecatedElement.getHostClass()
-      if (isIdeClass(hostClass.className)) {
+      if (shouldIndexDeprecatedClass(hostClass.className)) {
         resultHolder.registerDeprecatedUsage(deprecatedApiUsage)
       }
     }
   }
 
-  private fun Location.getHostClass(): ClassLocation = when (this) {
+  fun getOriginOfClass(className: String): ClassFileOrigin? {
+    if (pluginResolver.containsClass(className)) {
+      return ClassFileOrigin.PluginInternalClass
+    }
+    if (jdkClassesResolver.containsClass(className)) {
+      return ClassFileOrigin.JdkClass
+    }
+    if (ideResolver.containsClass(className)) {
+      return ClassFileOrigin.IdeClass
+    }
+    if (dependenciesResolver.containsClass(className)) {
+      return ClassFileOrigin.ClassOfPluginDependency
+    }
+    return null
+  }
+
+  /**
+   * Determines whether we should index usage of deprecated API.
+   *
+   * We would like to index only usages of deprecated API of IDE and API of plugin's dependencies',
+   * and exclude usages of deprecated JDK API and plugin's internal deprecated API.
+   */
+  private fun shouldIndexDeprecatedClass(className: String) =
+      with(getOriginOfClass(className)) {
+        this == ClassFileOrigin.IdeClass || this == ClassFileOrigin.ClassOfPluginDependency
+      }
+
+  private fun Location.getHostClass() = when (this) {
     is ClassLocation -> this
     is MethodLocation -> this.hostClass
     is FieldLocation -> this.hostClass
     else -> impossible()
   }
 
-  fun isIdeClass(className: String): Boolean = ideClassLoader.containsClass(className)
-
-  fun isExternalClass(className: String): Boolean = externalClassesPrefixes.any { it.isNotEmpty() && className.startsWith(it) }
+  fun isExternalClass(className: String) = externalClassesPrefixes.any { it.isNotEmpty() && className.startsWith(it) }
 
 }

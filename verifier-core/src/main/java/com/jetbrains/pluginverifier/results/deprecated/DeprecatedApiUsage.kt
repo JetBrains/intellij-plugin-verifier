@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.results.deprecated
 
-import com.jetbrains.pluginverifier.misc.impossible
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.Location
@@ -25,24 +24,15 @@ abstract class DeprecatedApiUsage {
 
   abstract val fullDescription: String
 
-  final override fun equals(other: Any?): Boolean = other is DeprecatedApiUsage && fullDescription == other.fullDescription
+  final override fun equals(other: Any?) = other is DeprecatedApiUsage && fullDescription == other.fullDescription
 
-  final override fun hashCode(): Int = fullDescription.hashCode()
+  final override fun hashCode() = fullDescription.hashCode()
 
-  final override fun toString(): String = fullDescription
+  final override fun toString() = fullDescription
 }
 
-fun Location.formatUsageLocation(): String = when (this) {
+fun Location.formatDeprecatedUsageLocation() = when (this) {
   is ClassLocation -> formatClassLocation(FULL_NAME, NO_GENERICS)
   is MethodLocation -> formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, NO_PARAMETER_NAMES)
   is FieldLocation -> formatFieldLocation(FULL_HOST_NAME, SIMPLE_TYPE)
-  else -> impossible()
 }
-
-val Location.locationType: String
-  get() = when (this) {
-    is ClassLocation -> "class"
-    is MethodLocation -> "method"
-    is FieldLocation -> "field"
-    else -> impossible()
-  }

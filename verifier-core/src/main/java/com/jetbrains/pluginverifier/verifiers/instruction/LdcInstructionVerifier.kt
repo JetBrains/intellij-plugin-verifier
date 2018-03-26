@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.createMethodLocation
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescr
-import com.jetbrains.pluginverifier.verifiers.fromMethod
 import com.jetbrains.pluginverifier.verifiers.resolveClassOrProblem
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AbstractInsnNode
@@ -22,6 +22,6 @@ class LdcInstructionVerifier : InstructionVerifier {
     // then the named class is resolved (§5.4.3.1)
     //During resolution of a symbolic reference to a class, any of the exceptions pertaining
     // to class resolution (§5.4.3.1) can be thrown.
-    ctx.resolveClassOrProblem(className, clazz, { ctx.fromMethod(clazz, method) })
+    ctx.resolveClassOrProblem(className, clazz, { createMethodLocation(clazz, method) })
   }
 }

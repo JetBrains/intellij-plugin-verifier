@@ -2,8 +2,6 @@ package com.jetbrains.pluginverifier.options
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
-import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
-import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorCreator
@@ -31,6 +29,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 object OptionsParser {
 
@@ -48,19 +47,19 @@ object OptionsParser {
       dir.createDir()
     }
     val nowTime = TIMESTAMP_DATE_FORMAT.format(Date())
-    val directoryName = ("verification-" + nowTime).replaceInvalidFileNameCharacters()
+    val directoryName = ("verification-$nowTime").replaceInvalidFileNameCharacters()
     return Paths.get(directoryName).createDir()
   }
 
   fun parseOutputOptions(opts: CmdOpts, verificationReportsDirectory: Path) = OutputOptions(
-      createMissingDependencyIgnorer(opts),
+      createMissingDependencyIgnoring(opts),
       opts.needTeamCityLog,
       TeamCityResultPrinter.GroupBy.parse(opts.teamCityGroupType),
       opts.dumpBrokenPluginsFile,
       verificationReportsDirectory
   )
 
-  private fun createMissingDependencyIgnorer(opts: CmdOpts): MissingDependencyIgnoring {
+  private fun createMissingDependencyIgnoring(opts: CmdOpts): MissingDependencyIgnoring {
     if (opts.ignoreAllMissingOptionalDeps) {
       return AllMissingDependencyIgnoring
     }
@@ -78,7 +77,7 @@ object OptionsParser {
     val build = opts.actualIdeVersion
     if (!build.isNullOrBlank()) {
       return IdeVersion.createIdeVersionIfValid(build!!)
-          ?: throw IllegalArgumentException("Incorrect update IDE-version has been specified " + build)
+          ?: throw IllegalArgumentException("Incorrect update IDE-version has been specified $build")
     }
     return null
   }
@@ -96,14 +95,12 @@ object OptionsParser {
 
       runtimeDirectory = Paths.get(javaHome)
       if (!runtimeDirectory.isDirectory) {
-        throw RuntimeException("Invalid JAVA_HOME: " + javaHome)
+        throw RuntimeException("Invalid JAVA_HOME: $javaHome")
       }
     }
 
     return runtimeDirectory
   }
-
-  fun getExternalClassPath(opts: CmdOpts) = UnionResolver.create(opts.externalClasspath.map { JarFileResolver(File(it)) })
 
   fun getExternalClassesPrefixes(opts: CmdOpts) = opts.externalClassesPrefixes.map { it.replace('.', '/') }
 
@@ -163,7 +160,7 @@ object OptionsParser {
   private fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): Multimap<PluginIdAndVersion, Regex> {
     val file = File(ignoreProblemsFile)
     if (!file.exists()) {
-      throw IllegalArgumentException("Ignored problems file doesn't exist " + ignoreProblemsFile)
+      throw IllegalArgumentException("Ignored problems file doesn't exist $ignoreProblemsFile")
     }
 
     val m = HashMultimap.create<PluginIdAndVersion, Regex>()
@@ -191,7 +188,7 @@ object OptionsParser {
         }
       }
     } catch (e: Exception) {
-      throw RuntimeException("Unable to parse ignored problems file " + ignoreProblemsFile, e)
+      throw RuntimeException("Unable to parse ignored problems file $ignoreProblemsFile", e)
     }
 
     return m
@@ -271,6 +268,24 @@ object OptionsParser {
 
       return result
     }
+  }
+
+  /**
+   * Parses the command line for a set of plugins to be checked
+   * and requests [UpdateInfo]s by plugin IDs that are compatible
+   * with [ideVersion] from the [pluginRepository].
+   */
+  fun createPluginsToCheckSet(opts: CmdOpts,
+                              pluginRepository: PluginRepository,
+                              ideVersion: IdeVersion): PluginsSet {
+    val (allVersions, lastVersions) = parseAllAndLastPluginIdsToCheck(opts)
+
+    val pluginsSet = PluginsSet()
+    tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch updates to check with $ideVersion") {
+      val pluginInfos = requestUpdatesToCheckByIds(allVersions, lastVersions, ideVersion, pluginRepository)
+      pluginsSet.schedulePlugins(pluginInfos)
+    }
+    return pluginsSet
   }
 
   /**

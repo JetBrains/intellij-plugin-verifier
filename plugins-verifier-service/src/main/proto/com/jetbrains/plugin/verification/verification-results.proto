@@ -20,6 +20,12 @@ message CompatibilityProblem {
   string fullDescription = 2;
 }
 
+message DeprecatedApiUsage {
+    string shortDescription = 1;
+
+    string fullDescription = 2;
+}
+
 message VerificationResult {
 
   int32 update_id = 1;
@@ -30,13 +36,15 @@ message VerificationResult {
 
   ResultType result_type = 4;
 
-  repeated PluginStructureWarning plugin_structure_warnings = 5;
+  string non_downloadable_reason = 5;
 
-  repeated PluginStructureError plugin_structure_errors = 6;
+  repeated PluginStructureWarning plugin_structure_warnings = 6;
 
-  repeated CompatibilityProblem compatibility_problems = 7;
+  repeated PluginStructureError plugin_structure_errors = 7;
 
-  string non_downloadable_reason = 8;
+  repeated CompatibilityProblem compatibility_problems = 8;
+
+  repeated DeprecatedApiUsage deprecated_usages = 9;
 
   enum ResultType {
     OK = 0;

@@ -8,31 +8,43 @@ import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentat
 import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentation.splitMethodDescriptorOnRawParametersAndReturnTypes
 
 /**
- * Convert the simple binary class name of the possibly nested class to Java-like presentation.
+ * Convert the simple binary class name of the possibly nested class to Java-like presentation,
+ * preserving '$' dollar sign for anonymous classes.
  *
  * - SomeClass -> SomeClass
  * - SomeClass$Nested -> SomeClass.Nested
  * - SomeClass$Static$Inner -> SomeClass.Static.Inner
+ * - SomeClass$Static$2 -> SomeClass.Static$2
  * - SomeClass$ -> SomeClass$
+ * - SomeClass$4 -> SomeClass$4
+ * - SomeClass$2$5 -> SomeClass$2$5
+ * - SomeClass$321$XXX$555 -> SomeClass$321.XXX$555
  */
-private fun String.toNormalNestedClassNames() = if (endsWith("$")) {
-  javaClass::class.qualifiedName
-  trimEnd('$').replace('$', '.') + takeLastWhile { it == '$' }
-} else {
-  replace('$', '.')
-}
+private fun String.convertSimpleClassName() =
+    buildString {
+      for (part in this@convertSimpleClassName.split("$")) {
+        if (isNotEmpty()) {
+          if (part.isEmpty() || part.first().isDigit()) {
+            append("$")
+          } else {
+            append(".")
+          }
+        }
+        append(part)
+      }
+    }
 
 /**
  * Converts class name in binary form into Java-like presentation.
  * E.g. 'org/some/Class$Inner1$Inner2' -> 'org.some.Class.Inner1.Inner2'
  */
-val toFullJavaClassName: (String) -> String = { binaryName -> binaryName.replace('/', '.').toNormalNestedClassNames() }
+val toFullJavaClassName: (String) -> String = { binaryName -> binaryName.replace('/', '.').convertSimpleClassName() }
 
 /**
  * Cuts off the package of the class and converts the simple name of the class to Java-like presentation
  * E.g. 'org/some/Class$Inner1$Inner2' -> 'Class.Inner1.Inner2'
  */
-val toSimpleJavaClassName: (String) -> String = { binaryName -> binaryName.substringAfterLast("/").toNormalNestedClassNames() }
+val toSimpleJavaClassName: (String) -> String = { binaryName -> binaryName.substringAfterLast("/").convertSimpleClassName() }
 
 private fun FieldLocation.toFieldType(fieldTypeOption: FieldTypeOption): String {
   val descriptorConverter = when (fieldTypeOption) {
@@ -83,7 +95,7 @@ fun MethodLocation.formatMethodLocation(hostClassOption: HostClassOption,
                                         methodParameterNameOption: MethodParameterNameOption): String = buildString {
   val formattedHost = hostClass.formatHostClass(hostClassOption)
   if (formattedHost.isNotEmpty()) {
-    append(formattedHost + ".")
+    append("$formattedHost.")
   }
   append("$methodName(")
   val (paramAndNames, returnType) = methodParametersWithNamesAndReturnType(methodParameterTypeOption, methodReturnTypeOption, methodParameterNameOption)
@@ -94,7 +106,7 @@ fun MethodLocation.formatMethodLocation(hostClassOption: HostClassOption,
 fun FieldLocation.formatFieldLocation(hostClassOption: HostClassOption, fieldTypeOption: FieldTypeOption): String = buildString {
   val formattedHost = hostClass.formatHostClass(hostClassOption)
   if (formattedHost.isNotEmpty()) {
-    append(formattedHost + ".")
+    append("$formattedHost.")
   }
   append(fieldName)
   val type = toFieldType(fieldTypeOption)

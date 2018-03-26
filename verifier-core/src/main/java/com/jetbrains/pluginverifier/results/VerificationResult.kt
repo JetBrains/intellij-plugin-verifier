@@ -80,14 +80,21 @@ sealed class VerificationResult {
   var compatibilityProblems: Set<CompatibilityProblem> = emptySet()
 
   /**
-   * Contains the reason of a [non-downloadable] [FailedToDownload] or [not found] [NotFound] result.
+   * Contains the reason of a [non-downloadable] [FailedToDownload] result.
    *
-   * _This field is applicable only for the [NotFound] and [FailedToDownload] result types._
+   * _This field is applicable only for the [FailedToDownload] result type._
    */
-  var reason: String = ""
+  var failedToDownloadReason: String = ""
 
   /**
-   * Contains the plugin's references on the IDE's [deprecated] [DeprecatedApiUsage] API.
+   * Contains the reason of a [not-found] [NotFound] result.
+   *
+   * _This field is applicable only for the [NotFound] result type._
+   */
+  var notFoundReason: String = ""
+
+  /**
+   * Contains [deprecated] [DeprecatedApiUsage] IDE API usages inside the plugin.
    *
    * _This field is applicable only for the [OK], [StructureWarnings], [MissingDependencies], and [CompatibilityProblems] result types._
    */
@@ -177,9 +184,9 @@ sealed class VerificationResult {
   }
 
   /**
-   * The [plugin] is not found during the verification by some [reason].
+   * The [plugin] is not found during the verification by some [failedToDownloadReason].
    *
-   * _The available field is only the [reason]._
+   * _The available field is only the [failedToDownloadReason]._
    */
   class NotFound : VerificationResult() {
     override fun toString() = "Plugin is not found"
@@ -187,9 +194,9 @@ sealed class VerificationResult {
 
   /**
    * The [plugin] is registered in the Plugin Repository database
-   * but its file couldn't be obtained by some [reason].
+   * but its file couldn't be obtained by some [failedToDownloadReason].
    *
-   * _The available field is only the [reason]._
+   * _The available field is only the [failedToDownloadReason]._
    */
   class FailedToDownload : VerificationResult() {
     override fun toString() = "Failed to download plugin"

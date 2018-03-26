@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.logic.hierarchy
 
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
+import com.jetbrains.pluginverifier.verifiers.ClassFileOrigin
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.isInterface
 import com.jetbrains.pluginverifier.verifiers.logic.CommonClassNames
@@ -12,7 +13,7 @@ class ClassHierarchyBuilder(private val context: VerificationContext) {
     val JAVA_LANG_OBJECT_HIERARCHY = ClassHierarchy(
         CommonClassNames.JAVA_LANG_OBJECT,
         false,
-        false,
+        ClassFileOrigin.JdkClass,
         null,
         emptyList()
     )
@@ -27,13 +28,16 @@ class ClassHierarchyBuilder(private val context: VerificationContext) {
 
     ClassParentsVisitor(context, true).visitClass(classNode, true,
         onEnter = { parent ->
-          className2Hierarchy[parent.name] = ClassHierarchy(
-              parent.name,
-              parent.isInterface(),
-              context.isIdeClass(parent.name),
-              null,
-              emptyList()
-          )
+          val parentOrigin = context.getOriginOfClass(parent.name)
+          if (parentOrigin != null) {
+            className2Hierarchy[parent.name] = ClassHierarchy(
+                parent.name,
+                parent.isInterface(),
+                parentOrigin,
+                null,
+                emptyList()
+            )
+          }
           true
         },
         onExit = { parent ->

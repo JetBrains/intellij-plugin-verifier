@@ -4,7 +4,6 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.misc.exists
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -40,7 +39,8 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
 
     val pluginsSet = PluginsSet()
     val invalidPluginFiles = arrayListOf<InvalidPluginFile>()
-    parsePluginsToCheckSet(pluginsSet, invalidPluginFiles, freeArgs[0], ideDescriptors.map { it.ideVersion })
+    val pluginToTestArg = freeArgs[0]
+    parsePluginsToCheckSet(pluginsSet, invalidPluginFiles, pluginToTestArg, ideDescriptors.map { it.ideVersion })
 
     pluginsSet.ignoredPlugins.forEach { plugin, reason ->
       ideDescriptors.map { it.ideVersion }.forEach { ideVersion ->
@@ -50,22 +50,19 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
 
     val jdkDescriptorsCache = JdkDescriptorsCache()
     val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
-    val externalClasspath = OptionsParser.getExternalClassPath(opts)
-    externalClasspath.closeOnException {
-      val problemsFilters = OptionsParser.getProblemsFilters(opts)
-      return CheckPluginParams(
-          pluginsSet,
-          OptionsParser.getJdkPath(opts),
-          ideDescriptors,
-          jdkDescriptorsCache,
-          externalClassesPrefixes,
-          problemsFilters,
-          invalidPluginFiles,
-          externalClasspath
-      )
-    }
+    val problemsFilters = OptionsParser.getProblemsFilters(opts)
+    return CheckPluginParams(
+        pluginsSet,
+        OptionsParser.getJdkPath(opts),
+        ideDescriptors,
+        jdkDescriptorsCache,
+        externalClassesPrefixes,
+        problemsFilters,
+        invalidPluginFiles
+    )
   }
 
+  //todo: move to [OptionsParser] and perform refactoring
   private fun parsePluginsToCheckSet(pluginsSet: PluginsSet,
                                      invalidPluginFiles: MutableList<InvalidPluginFile>,
                                      pluginToTestArg: String,

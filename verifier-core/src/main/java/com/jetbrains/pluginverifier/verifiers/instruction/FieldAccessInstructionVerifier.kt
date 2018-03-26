@@ -59,7 +59,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     Otherwise, if the resolved field is a static field, putfield throws an IncompatibleClassChangeError.
      */
     if (found.fieldNode.isStatic()) {
-      val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
+      val fieldDeclaration = createFieldLocation(found.definingClass, found.fieldNode)
       ctx.registerProblem(NonStaticAccessOfStaticFieldProblem(fieldDeclaration, getFromMethod(), Instruction.PUT_FIELD))
     }
 
@@ -74,7 +74,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     */
     if (found.fieldNode.isFinal()) {
       if (found.definingClass.name != verifiableClass.name) {
-        val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
+        val fieldDeclaration = createFieldLocation(found.definingClass, found.fieldNode)
         val accessor = getFromMethod()
         ctx.registerProblem(ChangeFinalFieldProblem(fieldDeclaration, accessor, Instruction.PUT_FIELD))
       }
@@ -86,7 +86,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
 
     //Otherwise, if the resolved field is a static field, getfield throws an IncompatibleClassChangeError.
     if (found.fieldNode.isStatic()) {
-      val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
+      val fieldDeclaration = createFieldLocation(found.definingClass, found.fieldNode)
       ctx.registerProblem(NonStaticAccessOfStaticFieldProblem(fieldDeclaration, getFromMethod(), Instruction.GET_FIELD))
     }
   }
@@ -96,7 +96,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
 
     //Otherwise, if the resolved field is not a static (class) field or an interface field, putstatic throws an IncompatibleClassChangeError.
     if (!found.fieldNode.isStatic()) {
-      val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
+      val fieldDeclaration = createFieldLocation(found.definingClass, found.fieldNode)
       val methodLocation = getFromMethod()
       ctx.registerProblem(StaticAccessOfNonStaticFieldProblem(fieldDeclaration, methodLocation, Instruction.PUT_STATIC))
     }
@@ -109,7 +109,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     */
     if (found.fieldNode.isFinal()) {
       if (found.definingClass.name != verifiableClass.name) {
-        val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
+        val fieldDeclaration = createFieldLocation(found.definingClass, found.fieldNode)
         val accessor = getFromMethod()
         ctx.registerProblem(ChangeFinalFieldProblem(fieldDeclaration, accessor, Instruction.PUT_STATIC))
       }
@@ -122,7 +122,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
 
     //Otherwise, if the resolved field is not a static (class) field or an interface field, getstatic throws an IncompatibleClassChangeError.
     if (!found.fieldNode.isStatic()) {
-      val fieldDeclaration = ctx.fromField(found.definingClass, found.fieldNode)
+      val fieldDeclaration = createFieldLocation(found.definingClass, found.fieldNode)
       val methodLocation = getFromMethod()
       ctx.registerProblem(StaticAccessOfNonStaticFieldProblem(fieldDeclaration, methodLocation, Instruction.GET_STATIC))
     }
@@ -155,7 +155,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     }
 
     if (accessProblem != null) {
-      val fieldDeclaration = ctx.fromField(location.definingClass, location.fieldNode)
+      val fieldDeclaration = createFieldLocation(location.definingClass, location.fieldNode)
       val fieldBytecodeReference = SymbolicReference.fieldOf(fieldOwner, fieldName, fieldDescriptor)
       ctx.registerProblem(IllegalFieldAccessProblem(fieldBytecodeReference, fieldDeclaration, getFromMethod(), instruction, accessProblem))
     }
@@ -212,15 +212,15 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
   private fun checkFieldIsDeprecated(resolvedField: ResolvedField) {
     with(resolvedField) {
       if (fieldNode.isDeprecated()) {
-        ctx.registerDeprecatedUsage(DeprecatedFieldUsage(ctx.fromField(definingClass, fieldNode), getFromMethod()))
+        ctx.registerDeprecatedUsage(DeprecatedFieldUsage(createFieldLocation(definingClass, fieldNode), getFromMethod()))
       } else if (definingClass.isDeprecated()) {
-        ctx.registerDeprecatedUsage(DeprecatedClassFieldUsage(ctx.fromClass(definingClass), getFromMethod(), ctx.fromField(definingClass, fieldNode)))
+        ctx.registerDeprecatedUsage(DeprecatedClassFieldUsage(definingClass.createClassLocation(), getFromMethod(), createFieldLocation(definingClass, fieldNode)))
       }
     }
   }
 
 
-  fun getFromMethod() = ctx.fromMethod(verifiableClass, verifiableMethod)
+  fun getFromMethod() = createMethodLocation(verifiableClass, verifiableMethod)
 
   data class LookupResult(val fail: Boolean, val resolvedField: ResolvedField?)
 
@@ -246,7 +246,8 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
      * of the specified class or interface C.
      */
     for (anInterface in currentClass.interfaces as List<String>) {
-      val resolvedIntf = ctx.resolveClassOrProblem(anInterface, currentClass, { ctx.fromClass(currentClass) }) ?: return FAILED_LOOKUP
+      val resolvedIntf = ctx.resolveClassOrProblem(anInterface, currentClass, { currentClass.createClassLocation() })
+          ?: return FAILED_LOOKUP
 
       val (fail, resolvedField) = resolveFieldSteps(resolvedIntf)
       if (fail) {
@@ -262,7 +263,8 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
      */
     val superName = currentClass.superName
     if (superName != null) {
-      val resolvedSuper = ctx.resolveClassOrProblem(superName, currentClass, { ctx.fromClass(currentClass) }) ?: return FAILED_LOOKUP
+      val resolvedSuper = ctx.resolveClassOrProblem(superName, currentClass, { currentClass.createClassLocation() })
+          ?: return FAILED_LOOKUP
       val (fail, resolvedField) = resolveFieldSteps(resolvedSuper)
       if (fail) {
         return FAILED_LOOKUP

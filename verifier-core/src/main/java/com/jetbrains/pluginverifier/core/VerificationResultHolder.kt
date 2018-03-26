@@ -12,7 +12,12 @@ import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import com.jetbrains.pluginverifier.results.warnings.DependenciesCycleWarning
 
 /**
- * Aggregates the plugin verification results.
+ * Aggregates the plugin verification results:
+ * 1) Plugin structure [errors] [pluginStructureErrors]
+ * 2) Plugin structure [warnings] [pluginStructureWarnings]
+ * 3) Binary compatibility [problems] [compatibilityProblems]
+ * 4) Deprecated API [usages] [deprecatedUsages]
+ * 5) Dependencies [graph] [dependenciesGraph] used during the verification
  */
 class VerificationResultHolder(private val pluginVerificationReportage: PluginVerificationReportage) {
 
@@ -28,7 +33,9 @@ class VerificationResultHolder(private val pluginVerificationReportage: PluginVe
 
   val pluginStructureErrors: MutableSet<PluginStructureError> = hashSetOf()
 
-  var reason: String = ""
+  var failedToDownloadReason: String = ""
+
+  var notFoundReason: String = ""
 
   private val pluginErrorsAndWarnings: MutableSet<PluginProblem> = hashSetOf()
 

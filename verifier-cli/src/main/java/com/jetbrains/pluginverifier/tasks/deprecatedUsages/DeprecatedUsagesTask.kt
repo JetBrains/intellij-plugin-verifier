@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 
-import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.pluginverifier.core.Verification
 import com.jetbrains.pluginverifier.core.VerifierTask
 import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
@@ -20,7 +19,6 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
     val verifierParams = VerifierParameters(
         emptyList(),
         emptyList(),
-        EmptyResolver,
         true
     )
     val tasks = pluginsSet.pluginsToCheck.map { VerifierTask(it, parameters.jdkPath, ideDescriptor, dependencyFinder) }

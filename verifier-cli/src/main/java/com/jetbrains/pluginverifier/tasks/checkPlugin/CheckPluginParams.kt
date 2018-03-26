@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
-import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.options.PluginsSet
@@ -17,8 +15,7 @@ class CheckPluginParams(pluginsSet: PluginsSet,
                         val jdkDescriptorsCache: JdkDescriptorsCache,
                         val externalClassesPrefixes: List<String>,
                         val problemsFilters: List<ProblemsFilter>,
-                        val invalidPluginFiles: List<InvalidPluginFile>,
-                        val externalClasspath: Resolver = EmptyResolver) : TaskParameters(pluginsSet) {
+                        val invalidPluginFiles: List<InvalidPluginFile>) : TaskParameters(pluginsSet) {
 
   override val presentableText
     get() = """

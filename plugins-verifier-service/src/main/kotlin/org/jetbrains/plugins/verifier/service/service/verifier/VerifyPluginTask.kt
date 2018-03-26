@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.VerifierExecutor
 import com.jetbrains.pluginverifier.core.VerifierTask
@@ -54,7 +53,6 @@ class VerifyPluginTask(private val verifierExecutor: VerifierExecutor,
     val verifierParameters = VerifierParameters(
         externalClassesPrefixes = emptyList(),
         problemFilters = emptyList(),
-        externalClassPath = EmptyResolver,
         findDeprecatedApiUsages = true
     )
 

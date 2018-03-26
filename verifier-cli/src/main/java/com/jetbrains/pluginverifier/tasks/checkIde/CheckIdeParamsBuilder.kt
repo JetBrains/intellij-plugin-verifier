@@ -4,11 +4,8 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.misc.isDirectory
-import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.options.OptionsParser.parseAllAndLastPluginIdsToCheck
-import com.jetbrains.pluginverifier.options.OptionsParser.requestUpdatesToCheckByIds
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.options.filter.ExcludedPluginFilter
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
@@ -19,7 +16,6 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import java.nio.file.Paths
-import java.util.concurrent.TimeUnit
 
 class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
                             val pluginDetailsCache: PluginDetailsCache,
@@ -30,46 +26,38 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
     }
     val ideFile = Paths.get(freeArgs[0])
     if (!ideFile.isDirectory) {
-      throw IllegalArgumentException("IDE path must be a directory: " + ideFile)
+      throw IllegalArgumentException("IDE path must be a directory: $ideFile")
     }
     verificationReportage.logVerificationStage("Reading classes of IDE $ideFile")
     OptionsParser.createIdeDescriptor(ideFile, opts).closeOnException { ideDescriptor ->
       val jdkDescriptorsCache = JdkDescriptorsCache()
       val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
-      OptionsParser.getExternalClassPath(opts).closeOnException { externalClassPath ->
-        val problemsFilters = OptionsParser.getProblemsFilters(opts)
+      val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
-        val (allVersions, lastVersions) = parseAllAndLastPluginIdsToCheck(opts)
-        val pluginsSet = PluginsSet()
-        tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch updates to check with ${ideDescriptor.ideVersion}") {
-          val pluginInfos = requestUpdatesToCheckByIds(allVersions, lastVersions, ideDescriptor.ideVersion, pluginRepository)
-          pluginsSet.schedulePlugins(pluginInfos)
-        }
+      val pluginsSet = OptionsParser.createPluginsToCheckSet(opts, pluginRepository, ideDescriptor.ideVersion)
 
-        val excludedPlugins = OptionsParser.parseExcludedPlugins(opts)
-        val excludedFilter = ExcludedPluginFilter(excludedPlugins)
-        pluginsSet.addPluginFilter(excludedFilter)
+      val excludedPlugins = OptionsParser.parseExcludedPlugins(opts)
+      val excludedFilter = ExcludedPluginFilter(excludedPlugins)
+      pluginsSet.addPluginFilter(excludedFilter)
 
-        pluginsSet.ignoredPlugins.forEach { plugin, reason ->
-          verificationReportage.logPluginVerificationIgnored(plugin, ideDescriptor.ideVersion, reason)
-        }
-
-        val missingCompatibleVersionsProblems = findMissingCompatibleVersionsProblems(ideDescriptor.ideVersion, pluginsSet)
-
-        val ideDependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
-        val jdkPath = OptionsParser.getJdkPath(opts)
-        return CheckIdeParams(
-            pluginsSet,
-            jdkPath,
-            ideDescriptor,
-            jdkDescriptorsCache,
-            externalClassPath,
-            externalClassesPrefixes,
-            problemsFilters,
-            ideDependencyFinder,
-            missingCompatibleVersionsProblems
-        )
+      pluginsSet.ignoredPlugins.forEach { plugin, reason ->
+        verificationReportage.logPluginVerificationIgnored(plugin, ideDescriptor.ideVersion, reason)
       }
+
+      val missingCompatibleVersionsProblems = findMissingCompatibleVersionsProblems(ideDescriptor.ideVersion, pluginsSet)
+
+      val ideDependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
+      val jdkPath = OptionsParser.getJdkPath(opts)
+      return CheckIdeParams(
+          pluginsSet,
+          jdkPath,
+          ideDescriptor,
+          jdkDescriptorsCache,
+          externalClassesPrefixes,
+          problemsFilters,
+          ideDependencyFinder,
+          missingCompatibleVersionsProblems
+      )
     }
   }
 

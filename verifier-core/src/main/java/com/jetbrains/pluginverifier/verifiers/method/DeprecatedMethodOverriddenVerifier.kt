@@ -21,8 +21,8 @@ class DeprecatedMethodOverriddenVerifier : MethodVerifier {
     ClassParentsVisitor(ctx, true).visitClass(clazz, false, onEnter = { parent ->
       val sameMethod = (parent.methods as List<MethodNode>).firstOrNull { it.name == method.name && it.desc == method.desc }
       if (sameMethod != null && sameMethod.isDeprecated()) {
-        val methodLocation = ctx.fromMethod(parent, sameMethod)
-        ctx.registerDeprecatedUsage(DeprecatedMethodOverridden(methodLocation, ctx.fromMethod(clazz, method)))
+        val methodLocation = createMethodLocation(parent, sameMethod)
+        ctx.registerDeprecatedUsage(DeprecatedMethodOverridden(methodLocation, createMethodLocation(clazz, method)))
         false
       } else {
         true

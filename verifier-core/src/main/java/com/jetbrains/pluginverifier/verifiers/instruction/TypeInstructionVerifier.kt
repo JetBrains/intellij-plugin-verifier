@@ -21,15 +21,15 @@ class TypeInstructionVerifier : InstructionVerifier {
     val desc = instr.desc
     val className = desc.extractClassNameFromDescr() ?: return
 
-    val aClass = ctx.resolveClassOrProblem(className, clazz, { ctx.fromMethod(clazz, method) }) ?: return
+    val aClass = ctx.resolveClassOrProblem(className, clazz, { createMethodLocation(clazz, method) }) ?: return
 
     if (instr.opcode == Opcodes.NEW) {
       if (aClass.isInterface()) {
-        val interfaze = ctx.fromClass(aClass)
-        ctx.registerProblem(InterfaceInstantiationProblem(interfaze, ctx.fromMethod(clazz, method)))
+        val interfaze = aClass.createClassLocation()
+        ctx.registerProblem(InterfaceInstantiationProblem(interfaze, createMethodLocation(clazz, method)))
       } else if (aClass.isAbstract()) {
-        val classOrInterface = ctx.fromClass(aClass)
-        ctx.registerProblem(AbstractClassInstantiationProblem(classOrInterface, ctx.fromMethod(clazz, method)))
+        val classOrInterface = aClass.createClassLocation()
+        ctx.registerProblem(AbstractClassInstantiationProblem(classOrInterface, createMethodLocation(clazz, method)))
       }
     }
 

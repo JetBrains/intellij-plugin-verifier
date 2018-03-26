@@ -5,9 +5,6 @@ import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.options.OptionsParser.parseAllAndLastPluginIdsToCheck
-import com.jetbrains.pluginverifier.options.OptionsParser.requestUpdatesToCheckByIds
-import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
@@ -28,7 +25,7 @@ class DeprecatedUsagesParamsBuilder(private val pluginRepository: PluginReposito
     }
     val idePath = Paths.get(unparsedArgs[0])
     if (!idePath.isDirectory) {
-      throw IllegalArgumentException("IDE path must be a directory: " + idePath)
+      throw IllegalArgumentException("IDE path must be a directory: $idePath")
     }
     val ideDescriptor = OptionsParser.createIdeDescriptor(idePath, opts)
     val jdkDescriptorsCache = JdkDescriptorsCache()
@@ -39,9 +36,7 @@ class DeprecatedUsagesParamsBuilder(private val pluginRepository: PluginReposito
     val ideVersion = deprecatedOpts.releaseIdeVersion?.let { IdeVersion.createIdeVersionIfValid(it) }
         ?: ideDescriptor.ideVersion
 
-    val pluginsSet = PluginsSet()
-    val (allVersions, lastVersions) = parseAllAndLastPluginIdsToCheck(opts)
-    pluginsSet.schedulePlugins(requestUpdatesToCheckByIds(allVersions, lastVersions, ideVersion, pluginRepository))
+    val pluginsSet = OptionsParser.createPluginsToCheckSet(opts, pluginRepository, ideVersion)
 
     pluginsSet.ignoredPlugins.forEach { plugin, reason ->
       verificationReportage.logPluginVerificationIgnored(plugin, ideVersion, reason)

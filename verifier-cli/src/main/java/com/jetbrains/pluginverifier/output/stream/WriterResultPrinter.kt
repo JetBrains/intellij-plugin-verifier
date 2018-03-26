@@ -24,8 +24,8 @@ class WriterResultPrinter(private val out: PrintWriter,
           is VerificationResult.CompatibilityProblems -> printProblemsResult(ideVersion, plugin, this)
           is VerificationResult.MissingDependencies -> printMissingDependencies(this, ideVersion, plugin)
           is VerificationResult.InvalidPlugin -> out.println("The plugin $plugin is broken: ${pluginStructureErrors.joinToString()}")
-          is VerificationResult.NotFound -> out.println("The plugin $plugin is not found: $reason")
-          is VerificationResult.FailedToDownload -> out.println("The plugin $plugin is not downloaded from the Repository: $reason")
+          is VerificationResult.NotFound -> out.println("The plugin $plugin is not found: $notFoundReason")
+          is VerificationResult.FailedToDownload -> out.println("The plugin $plugin is not downloaded from the Repository: $failedToDownloadReason")
         }
       }
     }

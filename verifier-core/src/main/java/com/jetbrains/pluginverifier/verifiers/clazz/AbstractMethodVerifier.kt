@@ -18,7 +18,7 @@ class AbstractMethodVerifier : ClassVerifier {
       @Suppress("UNCHECKED_CAST")
       (parent.methods as List<MethodNode>).forEach { method ->
         if (!method.isPrivate() && !method.isStatic()) {
-          val methodLocation = ctx.fromMethod(parent, method)
+          val methodLocation = createMethodLocation(parent, method)
           val methodSignature = MethodSignature(method.name, method.desc)
           if (method.isAbstract()) {
             abstractMethods.put(methodSignature, methodLocation)
@@ -30,7 +30,7 @@ class AbstractMethodVerifier : ClassVerifier {
       true
     })
 
-    val currentClass = ctx.fromClass(clazz)
+    val currentClass = clazz.createClassLocation()
     (abstractMethods.keys - implementedMethods.keys).forEach { method ->
       val abstractMethod = abstractMethods[method]!!
       ctx.registerProblem(MethodNotImplementedProblem(abstractMethod, currentClass))

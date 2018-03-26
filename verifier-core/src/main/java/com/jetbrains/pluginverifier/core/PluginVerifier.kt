@@ -79,7 +79,8 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
         pluginStructureWarnings = resultHolder.pluginStructureWarnings
         pluginStructureErrors = resultHolder.pluginStructureErrors
         compatibilityProblems = resultHolder.compatibilityProblems
-        reason = resultHolder.reason
+        failedToDownloadReason = resultHolder.failedToDownloadReason
+        notFoundReason = resultHolder.notFoundReason
         deprecatedUsages = resultHolder.deprecatedUsages
       }
       pluginVerificationReportage.logVerificationResult(result)
@@ -99,12 +100,12 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
         VerificationResult.InvalidPlugin()
       }
       is PluginDetailsCache.Result.FileNotFound -> {
-        resultHolder.reason = it.reason
+        resultHolder.notFoundReason = it.reason
         VerificationResult.NotFound()
       }
       is PluginDetailsCache.Result.Failed -> {
         pluginVerificationReportage.logException("Plugin $pluginInfo was not downloaded", it.error)
-        resultHolder.reason = "Plugin $pluginInfo was not downloaded due to ${it.error.message}"
+        resultHolder.failedToDownloadReason = "Plugin $pluginInfo was not downloaded due to ${it.error.message}"
         VerificationResult.FailedToDownload()
       }
     }
@@ -194,10 +195,10 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
      * Create the plugin's class loader used during the verification.
      * Don't close this classLoader because it contains the client's resolvers.
      */
-    val classLoader = try {
-      getVerificationClassLoader(pluginResolver, dependenciesResolver, jdkDescriptor.jdkClassesResolver)
+    val verificationClassLoader = try {
+      getVerificationClassLoader(pluginResolver, jdkDescriptor.jdkClassesResolver, dependenciesResolver)
     } catch (e: Exception) {
-      pluginVerificationReportage.logException("Unable to create the plugin class loader of ${pluginInfo}", e)
+      pluginVerificationReportage.logException("Unable to create the plugin class loader of $pluginInfo", e)
       return createInvalidPluginResult(e)
     }
 
@@ -207,21 +208,27 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     val checkClasses = try {
       getClassesForCheck(pluginDetails.pluginClassesLocations)
     } catch (e: Exception) {
-      pluginVerificationReportage.logException("Unable to select classes for check of ${pluginInfo}", e)
+      pluginVerificationReportage.logException("Unable to select classes for check of $pluginInfo", e)
       return createInvalidPluginResult(e)
     }
 
-    buildVerificationContextAndDoVerification(pluginDetails.plugin, classLoader, checkClasses)
+    buildVerificationContextAndDoVerification(pluginDetails.plugin, checkClasses, pluginResolver, dependenciesResolver, jdkDescriptor.jdkClassesResolver, verificationClassLoader)
     return null
   }
 
   private fun buildVerificationContextAndDoVerification(plugin: IdePlugin,
-                                                        classLoader: Resolver,
-                                                        checkClasses: Set<String>) {
+                                                        checkClasses: Set<String>,
+                                                        pluginResolver: Resolver,
+                                                        dependenciesResolver: Resolver,
+                                                        jdkClassesResolver: Resolver,
+                                                        verificationClassLoader: Resolver) {
     val verificationContext = VerificationContext(
         plugin,
         ideDescriptor.ideVersion,
-        classLoader,
+        verificationClassLoader,
+        pluginResolver,
+        dependenciesResolver,
+        jdkClassesResolver,
         ideDescriptor.ideResolver,
         resultHolder,
         verifierParameters.externalClassesPrefixes,
@@ -248,25 +255,21 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
   )
 
   /**
-   * Specifies the order of the classes resolution:
-   * 1) firstly a class is searched among classes of the plugin
-   * 2) if not found, among the classes of the used JDK
-   * 3) if not found, among the libraries of the checked IDE
-   * 4) if not found, among the classes of the plugin dependencies' classes
-   * 5) if not found, it is finally searched in the external classes specified in the verification parameters.
+   * Constructs a class files resolver that searches for
+   * classes in an order described in [com.jetbrains.pluginverifier.verifiers.ClassFileOrigin].
    */
-  private fun getVerificationClassLoader(mainPluginResolver: Resolver,
-                                         dependenciesResolver: Resolver,
-                                         jdkResolver: Resolver) = CacheResolver(
-      UnionResolver.create(
-          listOf(
-              mainPluginResolver,
-              jdkResolver,
-              ideDescriptor.ideResolver,
-              dependenciesResolver,
-              verifierParameters.externalClassPath
-          )
-      ))
+  private fun getVerificationClassLoader(pluginResolver: Resolver,
+                                         jdkResolver: Resolver,
+                                         dependenciesResolver: Resolver) =
+      CacheResolver(
+          UnionResolver.create(
+              listOf(
+                  pluginResolver,
+                  jdkResolver,
+                  ideDescriptor.ideResolver,
+                  dependenciesResolver
+              )
+          ))
 
   private fun DirectedGraph<DepVertex, DepEdge>.createDependenciesResolver(): Resolver {
     val dependenciesResolvers = arrayListOf<Resolver>()

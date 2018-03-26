@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.results.presentation
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
+import com.jetbrains.pluginverifier.verifiers.ClassFileOrigin
 import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassHierarchyVisitor
 
 object HierarchicalProblemsDescription {
@@ -10,7 +11,7 @@ object HierarchicalProblemsDescription {
     val ideSuperClasses = hashSetOf<String>()
     val ideSuperInterfaces = hashSetOf<String>()
     ClassHierarchyVisitor(true).visitClassHierarchy(ownerHierarchy, false, onEnter = { parent ->
-      if (parent.isIdeClass) {
+      if (parent.classOrigin == ClassFileOrigin.IdeClass) {
         if (parent.isInterface) {
           ideSuperInterfaces.add(parent.name)
         } else {

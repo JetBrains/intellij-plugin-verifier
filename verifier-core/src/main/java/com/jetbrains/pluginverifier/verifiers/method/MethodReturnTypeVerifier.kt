@@ -2,8 +2,8 @@ package com.jetbrains.pluginverifier.verifiers.method
 
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.checkClassExistsOrExternal
+import com.jetbrains.pluginverifier.verifiers.createMethodLocation
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescr
-import com.jetbrains.pluginverifier.verifiers.fromMethod
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
@@ -18,6 +18,6 @@ class MethodReturnTypeVerifier : MethodVerifier {
 
     val returnTypeDesc = descriptor.extractClassNameFromDescr() ?: return
 
-    ctx.checkClassExistsOrExternal(returnTypeDesc, { ctx.fromMethod(clazz, method) })
+    ctx.checkClassExistsOrExternal(returnTypeDesc, { createMethodLocation(clazz, method) })
   }
 }
