@@ -1,8 +1,8 @@
 package com.jetbrains.plugin.structure.intellij.problems
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
 data class PropertyWithDefaultValue(val descriptorPath: String, val propertyName: String) :
     InvalidDescriptorProblem(descriptorPath, "<$propertyName> has default value") {
@@ -15,12 +15,12 @@ data class InvalidDependencyBean(val descriptorPath: String) :
 }
 
 data class InvalidModuleBean(val descriptorPath: String) :
-    InvalidDescriptorProblem(descriptorPath, "module is not specified") {
+    InvalidDescriptorProblem(descriptorPath, "module is empty. It must be specified as <module value=\"my.module\"/>") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 }
 
 data class SinceBuildNotSpecified(val descriptorPath: String) :
-    InvalidDescriptorProblem(descriptorPath, "since build not specified") {
+    InvalidDescriptorProblem(descriptorPath, "since build is not specified") {
   override val level: PluginProblem.Level = PluginProblem.Level.ERROR
 }
 

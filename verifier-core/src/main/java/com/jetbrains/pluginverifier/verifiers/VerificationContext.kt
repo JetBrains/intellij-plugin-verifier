@@ -4,7 +4,6 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.VerificationResultHolder
-import com.jetbrains.pluginverifier.misc.impossible
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.location.ClassLocation
@@ -78,7 +77,6 @@ data class VerificationContext(
     is ClassLocation -> this
     is MethodLocation -> this.hostClass
     is FieldLocation -> this.hostClass
-    else -> impossible()
   }
 
   fun isExternalClass(className: String) = externalClassesPrefixes.any { it.isNotEmpty() && className.startsWith(it) }

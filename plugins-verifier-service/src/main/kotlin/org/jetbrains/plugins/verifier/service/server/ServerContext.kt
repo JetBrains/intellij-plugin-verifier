@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import org.jetbrains.plugins.verifier.service.database.ServerDatabase
 import org.jetbrains.plugins.verifier.service.service.BaseService
+import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter
 import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
@@ -32,7 +33,8 @@ class ServerContext(val applicationHomeDirectory: Path,
                     val serviceDAO: ServiceDAO,
                     val serverDatabase: ServerDatabase,
                     val ideDescriptorsCache: IdeDescriptorsCache,
-                    val pluginDetailsCache: PluginDetailsCache) : Closeable {
+                    val pluginDetailsCache: PluginDetailsCache,
+                    val verificationResultsFilter: VerificationResultFilter) : Closeable {
 
   val allServices = arrayListOf<BaseService>()
 

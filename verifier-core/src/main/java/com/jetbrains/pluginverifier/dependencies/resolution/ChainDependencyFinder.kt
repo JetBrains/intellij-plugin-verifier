@@ -11,11 +11,16 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
  */
 class ChainDependencyFinder(private val dependencyFinders: List<DependencyFinder>) : DependencyFinder {
 
-  override fun findPluginDependency(dependency: PluginDependency) =
-      dependencyFinders
-          .asSequence()
-          .map { it.findPluginDependency(dependency) }
-          .firstOrNull { it !is DependencyFinder.Result.NotFound }
-          ?: DependencyFinder.Result.NotFound("Dependency $dependency is not resolved")
+  override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
+    var lastNotFound: DependencyFinder.Result.NotFound? = null
+    for (dependencyFinder in dependencyFinders) {
+      val findResult = dependencyFinder.findPluginDependency(dependency)
+      if (findResult !is DependencyFinder.Result.NotFound) {
+        return findResult
+      }
+      lastNotFound = findResult
+    }
+    return lastNotFound ?: DependencyFinder.Result.NotFound("Dependency $dependency is not resolved")
+  }
 
 }

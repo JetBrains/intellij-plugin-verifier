@@ -19,7 +19,6 @@ data class ClassNotFoundProblem(val unresolved: ClassReference,
         is ClassLocation -> "Class"
         is MethodLocation -> usage.methodOrConstructorWord.capitalize()
         is FieldLocation -> "Field"
-        else -> throw IllegalArgumentException()
       }
       return "{0} {1} references an unresolved class {2}. This can lead to **NoSuchClassError** exception at runtime.".formatMessage(type, usage, unresolved)
     }

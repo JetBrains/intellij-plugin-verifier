@@ -29,7 +29,7 @@ def serviceVersion = project.hasProperty('verifierServiceProjectVersion') ? proj
 
 configure(allprojects) {
   version = serviceVersion
-  group "org.jetbrains.intellij.plugins.verifier"
+  group = "org.jetbrains.intellij.plugins.verifier"
 
   apply plugin: "war"
   apply plugin: 'kotlin'
@@ -126,5 +126,6 @@ publishToMavenLocal.dependsOn test
 //Tasks defined in plugins are added after all projects are evaluated
 //We have to hook after the evaluation to prevent an evaluation failure
 project.afterEvaluate {
+  compileJava.dependsOn generateProto
   compileKotlin.dependsOn generateProto
 }

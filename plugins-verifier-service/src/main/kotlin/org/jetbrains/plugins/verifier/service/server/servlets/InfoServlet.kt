@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.verifier.service.server.servlets
 
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.MemoryInfo
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import org.jetbrains.plugins.verifier.service.service.BaseService
+import org.jetbrains.plugins.verifier.service.service.verifier.PluginAndIdeVersion
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
 import java.time.ZoneId
@@ -23,11 +25,32 @@ class InfoServlet : BaseServlet() {
 
   override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
     val path = getPath(req, resp) ?: return
-    if (path.endsWith("control-service")) {
-      processServiceControl(req, resp)
-    } else {
-      processStatus(resp)
+    when {
+      path.endsWith("control-service") -> processServiceControl(req, resp)
+      path.endsWith("unignore-verification") -> processUnignoreVerification(req, resp)
+      else -> processStatus(resp)
     }
+  }
+
+  private fun processUnignoreVerification(req: HttpServletRequest, resp: HttpServletResponse) {
+    val updateId = req.getParameter("updateId")?.toIntOrNull()
+    if (updateId == null) {
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Parameter 'updateId' must be specified")
+      return
+    }
+    val ideVersion = req.getParameter("ideVersion")?.let { IdeVersion.createIdeVersionIfValid(it) }
+    if (ideVersion == null) {
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Parameter 'ideVersion' must be specified")
+      return
+    }
+    val updateInfo = serverContext.pluginRepository.getPluginInfoById(updateId)
+    if (updateInfo == null) {
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Update #$updateId is not found in ${serverContext.pluginRepository}")
+      return
+    }
+    val pluginAndIdeVersion = PluginAndIdeVersion(updateInfo, ideVersion)
+    serverContext.verificationResultsFilter.unignoreVerificationResultFor(pluginAndIdeVersion)
+    sendOk(resp, "Verification for $pluginAndIdeVersion has been unignored")
   }
 
   private fun processServiceControl(req: HttpServletRequest, resp: HttpServletResponse) {
@@ -84,7 +107,7 @@ class InfoServlet : BaseServlet() {
         body {
           div {
             h1 {
-              +("Plugin Verifier Service " + appVersion)
+              +("Plugin Verifier Service $appVersion")
             }
             h2 {
               +"Runtime parameters:"
@@ -138,6 +161,32 @@ class InfoServlet : BaseServlet() {
                 li {
                   +it.toString()
                 }
+              }
+            }
+
+            val ignoredVerifications = serverContext.verificationResultsFilter.ignoredVerifications
+            if (ignoredVerifications.isNotEmpty()) {
+              h2 {
+                +"Ignored verification results"
+              }
+              table("width: 100%") {
+                tr {
+                  th { +"Plugin" }
+                  th { +"IDE" }
+                  th { +"Time" }
+                  th { +"Verdict" }
+                  th { +"Reason" }
+                }
+                ignoredVerifications
+                    .forEach { (pluginAndIdeVersion, ignore) ->
+                      tr {
+                        td { +pluginAndIdeVersion.updateInfo.toString() }
+                        td { +pluginAndIdeVersion.ideVersion.toString() }
+                        td { +DATE_FORMAT.format(ignore.verificationEndTime) }
+                        td { +ignore.verificationVerdict }
+                        td { +ignore.ignoreReason }
+                      }
+                    }
               }
             }
 

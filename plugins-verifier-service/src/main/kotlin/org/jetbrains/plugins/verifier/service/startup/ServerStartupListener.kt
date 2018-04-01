@@ -19,6 +19,7 @@ import org.jetbrains.plugins.verifier.service.service.features.DefaultFeatureSer
 import org.jetbrains.plugins.verifier.service.service.features.FeatureExtractorService
 import org.jetbrains.plugins.verifier.service.service.ide.IdeListUpdater
 import org.jetbrains.plugins.verifier.service.service.verifier.DefaultVerifierServiceProtocol
+import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
 import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetting
@@ -80,6 +81,8 @@ class ServerStartupListener : ServletContextListener {
     val ideFilesBank = IdeFilesBank(ideFilesDir, ideRepository, ideDownloadDirDiskSpaceSetting)
     val ideDescriptorsCache = IdeDescriptorsCache(IDE_DESCRIPTORS_CACHE_SIZE, ideFilesBank)
 
+    val verificationResultsFilter = VerificationResultFilter()
+
     return ServerContext(
         applicationHomeDir,
         ideRepository,
@@ -92,7 +95,8 @@ class ServerStartupListener : ServletContextListener {
         serviceDAO,
         serverDatabase,
         ideDescriptorsCache,
-        pluginDetailsCache
+        pluginDetailsCache,
+        verificationResultsFilter
     )
   }
 
@@ -119,7 +123,8 @@ class ServerStartupListener : ServletContextListener {
           ideFilesBank,
           pluginDetailsCache,
           ideDescriptorsCache,
-          jdkPath
+          jdkPath,
+          verificationResultsFilter
       )
 
       val featureServiceProtocol = DefaultFeatureServiceProtocol(authorizationData, pluginRepository)

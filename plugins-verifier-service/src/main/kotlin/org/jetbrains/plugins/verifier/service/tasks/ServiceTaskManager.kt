@@ -80,17 +80,17 @@ class ServiceTaskManager(concurrency: Int, maxKeepResults: Int) : Closeable {
 
     taskFuture
         .whenComplete { result, error ->
-          if (result != null) {
-            taskStatus.state = ServiceTaskState.SUCCESS
-            onSuccess(result, taskStatus)
-            taskProgress.text = "Finished successfully"
-          } else {
-            taskStatus.state = ServiceTaskState.ERROR
-            onError(error, taskStatus)
-            taskProgress.text = "Finished with error"
-          }
           taskStatus.endTime = Instant.now()
           taskProgress.fraction = 1.0
+          if (result != null) {
+            taskStatus.state = ServiceTaskState.SUCCESS
+            taskProgress.text = "Finished successfully"
+            onSuccess(result, taskStatus)
+          } else {
+            taskStatus.state = ServiceTaskState.ERROR
+            taskProgress.text = "Finished with error"
+            onError(error, taskStatus)
+          }
         }
         .whenComplete { _, _ ->
           onCompletion(taskStatus)

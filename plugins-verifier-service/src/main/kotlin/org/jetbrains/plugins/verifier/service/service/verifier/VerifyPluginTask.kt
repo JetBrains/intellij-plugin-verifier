@@ -51,9 +51,9 @@ class VerifyPluginTask(private val verifierExecutor: VerifierExecutor,
     )
 
     val verifierParameters = VerifierParameters(
-        externalClassesPrefixes = emptyList(),
-        problemFilters = emptyList(),
-        findDeprecatedApiUsages = true
+        emptyList(),
+        emptyList(),
+        true
     )
 
     val tasks = listOf(VerifierTask(updateInfo, jdkPath, ideDescriptor, dependencyFinder))
