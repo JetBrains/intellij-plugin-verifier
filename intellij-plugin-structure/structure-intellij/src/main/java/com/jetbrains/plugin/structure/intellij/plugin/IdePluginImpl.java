@@ -171,8 +171,8 @@ public class IdePluginImpl implements IdePlugin {
       myVendorUrl = vendorBean.url;
       myVendorEmail = vendorBean.email;
     }
-    myNotes = bean.getChangeNotes();
-    myDescription = bean.getDescription();
+    myNotes = bean.changeNotes;
+    myDescription = bean.description;
   }
 
   @Override

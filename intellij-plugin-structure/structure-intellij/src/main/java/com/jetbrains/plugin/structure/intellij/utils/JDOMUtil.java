@@ -21,7 +21,6 @@ import org.jdom2.*;
 import org.jdom2.filter.AbstractFilter;
 import org.jdom2.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 
 import java.io.*;
@@ -104,14 +103,7 @@ public class JDOMUtil {
     InputStreamReader reader = new InputStreamReader(copied, Charset.forName("UTF-8"));
     try {
       SAXBuilder saxBuilder = new SAXBuilder();
-      saxBuilder.setEntityResolver(new EntityResolver() {
-        @Override
-        @NotNull
-        public InputSource resolveEntity(String publicId, String systemId) {
-          return new InputSource(new CharArrayReader(EMPTY_CHAR_ARRAY));
-        }
-      });
-
+      saxBuilder.setEntityResolver((publicId, systemId) -> new InputSource(new CharArrayReader(EMPTY_CHAR_ARRAY)));
       return saxBuilder.build(reader);
     } finally {
       IOUtils.closeQuietly(reader);

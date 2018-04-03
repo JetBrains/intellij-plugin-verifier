@@ -70,8 +70,8 @@ final class PluginCreator {
       validateId(bean.id);
       validateName(bean.name);
       validateVersion(bean.pluginVersion);
-      validateDescription(bean.getDescription());
-      validateChangeNotes(bean.getChangeNotes());
+      validateDescription(bean.description);
+      validateChangeNotes(bean.changeNotes);
       validateVendor(bean.vendor);
       validateIdeaVersion(bean.ideaVersion);
 
