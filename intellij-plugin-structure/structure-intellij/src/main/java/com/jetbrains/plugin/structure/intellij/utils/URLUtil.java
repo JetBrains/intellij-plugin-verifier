@@ -15,7 +15,7 @@
  */
 package com.jetbrains.plugin.structure.intellij.utils;
 
-import org.apache.commons.io.FileUtils;
+import kotlin.Pair;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,19 +24,15 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.zip.ZipFile;
 
 public class URLUtil {
-  public static final String SCHEME_SEPARATOR = "://";
-  public static final String FILE_PROTOCOL = "file";
-  public static final String HTTP_PROTOCOL = "http";
-  public static final String JAR_PROTOCOL = "jar";
-  public static final String JAR_SEPARATOR = "!/";
+  private static final String SCHEME_SEPARATOR = "://";
+  private static final String FILE_PROTOCOL = "file";
+  private static final String HTTP_PROTOCOL = "http";
+  private static final String JAR_PROTOCOL = "jar";
+  private static final String JAR_SEPARATOR = "!/";
 
   private URLUtil() {
   }
@@ -45,15 +41,11 @@ public class URLUtil {
    * Opens a url stream. The semantics is the sames as {@link URL#openStream()}. The
    * separate method is needed, since jar URLs open jars via JarFactory and thus keep them
    * mapped into memory.
-   *
-   * @param url url to open stream of
-   * @return input stream of the specified URL
-   * @throws IOException if IO problems occur
    */
   @NotNull
   public static InputStream openStream(@NotNull URL url) throws IOException {
-    @NonNls String protocol = url.getProtocol();
-    return protocol.equals(JAR_PROTOCOL) ? openRecursiveJarStream(url) : url.openStream();
+    String protocol = url.getProtocol();
+    return protocol.equals(JAR_PROTOCOL) ? openJarStream(url) : url.openStream();
   }
 
   @NotNull
@@ -61,14 +53,31 @@ public class URLUtil {
     return file.getCanonicalFile().toURI().toURL();
   }
 
-  public static boolean resourceExists(@NotNull URL url) {
-    try {
-      InputStream inputStream = openStream(url);
-      inputStream.close();
-      return true;
-    } catch (IOException e) {
-      return false;
+  /**
+   * Checks whether a local resource specified by {@code url} exists.
+   * <p/>
+   * Returns {@link ThreeState#UNSURE} if {@code url} points to a remote resource.
+   */
+  @NotNull
+  public static ThreeState resourceExists(@NotNull URL url) {
+    if (url.getProtocol().equals(FILE_PROTOCOL)) {
+      return ThreeState.fromBoolean(urlToFile(url).exists());
     }
+    if (url.getProtocol().equals(JAR_PROTOCOL)) {
+      Pair<String, String> paths = splitJarUrl(url.getFile());
+      if (paths == null) {
+        return ThreeState.NO;
+      }
+      if (!new File(paths.getFirst()).isFile()) {
+        return ThreeState.NO;
+      }
+      try (ZipFile file = new ZipFile(paths.getFirst())) {
+        return ThreeState.fromBoolean(file.getEntry(paths.getSecond()) != null);
+      } catch (IOException e) {
+        return ThreeState.NO;
+      }
+    }
+    return ThreeState.UNSURE;
   }
 
   @NotNull
@@ -88,160 +97,87 @@ public class URLUtil {
       }
       if (file != null && file.startsWith("/")) {
         InputStream resourceStream = URLUtil.class.getResourceAsStream(file);
-        if (resourceStream != null) return resourceStream;
+        if (resourceStream != null) {
+          return resourceStream;
+        }
       }
       throw ex;
     }
   }
 
   @NotNull
-  public static String unquote(@NotNull String urlString) {
-    urlString = urlString.replace('/', File.separatorChar);
-    return unescapePercentSequences(urlString);
-  }
-
-  private static int decode(char c) {
-    if ((c >= '0') && (c <= '9'))
-      return c - '0';
-    if ((c >= 'a') && (c <= 'f'))
-      return c - 'a' + 10;
-    if ((c >= 'A') && (c <= 'F'))
-      return c - 'A' + 10;
-    return -1;
-  }
-
-  @NotNull
-  public static File urlToFile(@NotNull URL url) throws URISyntaxException, MalformedURLException {
+  private static File urlToFile(@NotNull URL url) {
     try {
-      return new File(url.toURI());
+      return new File(url.toURI().getSchemeSpecificPart());
     } catch (URISyntaxException e) {
-      String str = url.toString();
-      if (str.indexOf(' ') > 0) {
-        return new File(new URL(StringUtil.replace(str, " ", "%20")).toURI());
-      }
-      throw e;
+      throw new IllegalArgumentException("URL='" + url.toString() + "'", e);
     }
   }
 
   @NotNull
-  public static String unescapePercentSequences(@NotNull String s) {
-    if (s.indexOf('%') == -1) {
-      return s;
+  private static InputStream openJarStream(@NotNull URL url) throws IOException {
+    Pair<String, String> paths = splitJarUrl(url.getFile());
+    if (paths == null) {
+      throw new MalformedURLException(url.getFile());
     }
 
-    StringBuilder decoded = new StringBuilder();
-    final int len = s.length();
-    int i = 0;
-    while (i < len) {
-      char c = s.charAt(i);
-      if (c == '%') {
-        List<Integer> bytes = new ArrayList<Integer>();
-        while (i + 2 < len && s.charAt(i) == '%') {
-          final int d1 = decode(s.charAt(i + 1));
-          final int d2 = decode(s.charAt(i + 2));
-          if (d1 != -1 && d2 != -1) {
-            bytes.add(((d1 & 0xf) << 4 | d2 & 0xf));
-            i += 3;
-          } else {
-            break;
-          }
-        }
-        if (!bytes.isEmpty()) {
-          final byte[] bytesArray = new byte[bytes.size()];
-          for (int j = 0; j < bytes.size(); j++) {
-            bytesArray[j] = bytes.get(j).byteValue();
-          }
-          decoded.append(new String(bytesArray, Charset.forName("UTF-8")));
-          continue;
-        }
+    final ZipFile zipFile = new ZipFile(paths.getFirst());
+    ZipEntry zipEntry = zipFile.getEntry(paths.getSecond());
+    if (zipEntry == null) {
+      zipFile.close();
+      throw new FileNotFoundException("Entry " + paths.getSecond() + " is not found in " + paths.getFirst());
+    }
+
+    return new FilterInputStream(zipFile.getInputStream(zipEntry)) {
+      @Override
+      public void close() throws IOException {
+        super.close();
+        zipFile.close();
       }
-
-      decoded.append(c);
-      i++;
-    }
-    return decoded.toString();
-  }
-
-  /**
-   * Opens a .zip- (or .jar-) file stream which may be in some other .zip<p>
-   * e.g. <i>jar:jar:file:/home/user/Documents/a.zip!/lib/b.jar!/META-INF/plugin.xml</i>
-   * returns an input stream for plugin.xml
-   *
-   * @param url and url which represents a path to a zip, or to a .zip inside the other .zip
-   * @return input stream of the resource
-   * @throws IOException if URL is malformed or unable to open a stream
-   */
-  @NotNull
-  private static InputStream openRecursiveJarStream(@NotNull URL url) throws IOException {
-    String[] paths = splitUrl(url.toExternalForm());
-    if (paths.length == 0) {
-      throw new MalformedURLException(url.toExternalForm());
-    }
-    File baseJarFile = new File(unquote(paths[0]));
-    ZipInputStream baseJarStream = new ZipInputStream(new BufferedInputStream(FileUtils.openInputStream(baseJarFile)));
-    if (paths.length == 1) {
-      return baseJarStream;
-    }
-    return openRecursiveJarStream(baseJarStream, Arrays.copyOfRange(paths, 1, paths.length));
-  }
-
-  @NotNull
-  private static InputStream openRecursiveJarStream(@NotNull final ZipInputStream baseZipStream,
-                                                    @NotNull String[] innerJarEntries) throws IOException {
-    ZipInputStream currentStream = baseZipStream;
-    for (int i = 0; i < innerJarEntries.length; i++) {
-      String entryName = innerJarEntries[i];
-      ZipEntry entry = findEntryByName(currentStream, entryName);
-      if (entry == null) {
-        baseZipStream.close();
-        throw new FileNotFoundException(Arrays.toString(innerJarEntries));
-      } else {
-        if (isJarOrZipEntry(entryName)) {
-          currentStream = new ZipInputStream(currentStream);
-        } else {
-          if (i != innerJarEntries.length - 1) {
-            baseZipStream.close();
-            throw new FileNotFoundException("Entry " + entryName + " is neither .zip nor .jar archive: " + Arrays.toString(innerJarEntries));
-          }
-        }
-      }
-    }
-    return currentStream;
-  }
-
-  @Nullable
-  private static ZipEntry findEntryByName(ZipInputStream zipStream, String entryName) throws IOException {
-    for (ZipEntry e; (e = zipStream.getNextEntry()) != null; ) {
-      if (e.getName().equals(entryName)) {
-        return e;
-      }
-    }
-    return null;
-  }
-
-  private static boolean isJarOrZipEntry(String entry) {
-    return StringUtil.endsWithIgnoreCase(entry, ".jar") || StringUtil.endsWithIgnoreCase(entry, ".zip");
+    };
   }
 
   @NotNull
   public static URL getJarEntryURL(@NotNull File file, @NotNull String pathInJar) throws MalformedURLException {
-    String fileURL = getFileEscapedUri(file);
+    String fileURL = StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
     return new URL(JAR_PROTOCOL + ':' + fileURL + JAR_SEPARATOR + StringUtil.trimLeading(pathInJar, '/'));
   }
 
-  @NotNull
-  public static String[] splitUrl(@NotNull String path) {
-    while (path.startsWith("jar:")) {
-      path = StringUtil.trimStart(path, "jar:");
-    }
-    while (path.startsWith("file:")) {
-      path = StringUtil.trimStart(path, "file:");
-    }
-    return path.split(JAR_SEPARATOR);
-  }
+  /**
+   * Splits .jar URL along a separator and strips "jar" and "file" prefixes, if any.
+   * <p/>
+   * Returns a pair of path to a .jar file and entry name inside a .jar,
+   * or null if the URL does not contain a separator.
+   * <p/>
+   * E.g. "jar:file:///path/to/jar.jar!/resource.xml" is converted into ["/path/to/jar.jar", "resource.xml"].
+   * <p>
+   * Please note that the first part is platform-dependent.
+   */
+  @Nullable
+  public static Pair<String, String> splitJarUrl(@NotNull String url) {
+    int pivot = url.indexOf(JAR_SEPARATOR);
+    if (pivot < 0) return null;
 
-  @NotNull
-  public static String getFileEscapedUri(@NotNull File file) {
-    return StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
+    String resourcePath = url.substring(pivot + JAR_SEPARATOR.length());
+    String jarPath = url.substring(0, pivot);
+
+    if (jarPath.startsWith(JAR_PROTOCOL + ":")) {
+      jarPath = jarPath.substring(JAR_PROTOCOL.length() + 1);
+    }
+
+    if (jarPath.startsWith(FILE_PROTOCOL)) {
+      try {
+        jarPath = urlToFile(new URL(jarPath)).getPath().replace('\\', '/');
+      } catch (Exception e) {
+        jarPath = jarPath.substring(FILE_PROTOCOL.length());
+        if (jarPath.startsWith(SCHEME_SEPARATOR)) {
+          jarPath = jarPath.substring(SCHEME_SEPARATOR.length());
+        } else if (jarPath.startsWith(":")) {
+          jarPath = jarPath.substring(1);
+        }
+      }
+    }
+
+    return new Pair<>(jarPath, resourcePath);
   }
 }

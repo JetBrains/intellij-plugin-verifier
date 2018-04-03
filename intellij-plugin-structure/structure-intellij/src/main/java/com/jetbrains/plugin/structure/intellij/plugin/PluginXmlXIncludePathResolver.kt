@@ -1,10 +1,10 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.utils.FileUtil
+import com.jetbrains.plugin.structure.intellij.utils.ThreeState
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.DefaultXIncludePathResolver
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludeException
-import org.jetbrains.annotations.Nullable
 import java.io.File
 import java.net.MalformedURLException
 import java.net.URL
@@ -24,28 +24,27 @@ class PluginXmlXIncludePathResolver(files: List<File>) : DefaultXIncludePathReso
             }
           }.toList()
 
-  private fun defaultResolve(relativePath: String, @Nullable base: String?): URL {
-    return if (base != null && relativePath.startsWith("/META-INF/")) {
-      try {
-        URL(URL(base), ".." + relativePath)
-      } catch (e: MalformedURLException) {
-        throw XIncludeException(e)
+  private fun defaultResolve(relativePath: String, base: String?) =
+      if (base != null && relativePath.startsWith("/META-INF/")) {
+        try {
+          URL(URL(base), "..$relativePath")
+        } catch (e: MalformedURLException) {
+          throw XIncludeException(e)
+        }
+      } else {
+        super.resolvePath(relativePath, base)
       }
-    } else {
-      super.resolvePath(relativePath, base)
-    }
-  }
 
   private fun getRelativeUrl(base: URL, path: String) =
       if (path.startsWith("/")) {
-        URL(base, ".." + path)
+        URL(base, "..$path")
       } else {
         URL(base, path)
       }
 
   override fun resolvePath(relativePath: String, base: String?): URL {
     val url = defaultResolve(relativePath, base)
-    if (URLUtil.resourceExists(url)) {
+    if (URLUtil.resourceExists(url) == ThreeState.YES) {
       return url
     }
 
@@ -57,8 +56,7 @@ class PluginXmlXIncludePathResolver(files: List<File>) : DefaultXIncludePathReso
             null
           }
         }
-        .filter { URLUtil.resourceExists(it) }
-        .firstOrNull()
+        .find { URLUtil.resourceExists(it) == ThreeState.YES }
         ?: url
   }
 }
