@@ -176,7 +176,7 @@ final class PluginCreator {
   @Nullable
   private PluginBean readDocumentIntoXmlBean(@NotNull Document document) {
     try {
-      return PluginBeanExtractor.extractPluginBean(document);
+      return PluginBeanExtractor.INSTANCE.extractPluginBean(document);
     } catch (Exception e) {
       registerProblem(new UnableToReadDescriptor(myDescriptorPath));
       LOG.info("Unable to read plugin descriptor " + myDescriptorPath + " of " + myActualFile, e);
