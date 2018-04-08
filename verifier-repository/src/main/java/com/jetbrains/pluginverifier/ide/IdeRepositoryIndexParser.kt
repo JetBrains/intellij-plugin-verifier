@@ -6,7 +6,12 @@ import java.net.URL
 internal class IdeRepositoryIndexParser(private val repositoryUrl: String) {
 
   companion object {
-    private val artifactIdToIdeProductCode = mapOf("ideaIC" to "IC", "ideaIU" to "IU", "riderRD" to "RD")
+    private val artifactIdToIdeProductCode = mapOf(
+        "ideaIC" to "IC",
+        "ideaIU" to "IU",
+        "riderRD" to "RD",
+        "mps" to "MPS"
+    )
   }
 
   fun parseArtifacts(artifacts: List<ArtifactJson>, snapshots: Boolean): List<AvailableIde> {

@@ -57,6 +57,13 @@ class IdeRepositoryTest {
             null,
             false,
             URL("https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/rider/riderRD/173.3994.2442/riderRD-173.3994.2442.zip")
+        ),
+
+        AvailableIde(
+            IdeVersion.createIdeVersion("MPS-181.1168"),
+            "2018.1",
+            false,
+            URL("https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/mps/mps/2018.1/mps-2018.1.zip")
         )
     )
 

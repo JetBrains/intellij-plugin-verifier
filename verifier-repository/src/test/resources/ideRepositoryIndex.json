@@ -1,6 +1,68 @@
 {
   "artifacts": [
     {
+      "groupId": "com.jetbrains.mps",
+      "artifactId": "BUILD",
+      "version": "2018.1",
+      "classifier": "",
+      "packaging": "txt",
+      "lastModified": "2018-04-06T00:22:38Z",
+      "lastModifiedUnixTimeMs": 1522974158000,
+      "eTag": "2bef3f317123985f80847c397d3abbe4",
+      "content": "181.1168"
+    },
+    {
+      "groupId": "com.jetbrains.mps",
+      "artifactId": "mps",
+      "version": "2018.1",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "2018-04-06T00:22:24Z",
+      "lastModifiedUnixTimeMs": 1522974144000,
+      "eTag": "b1243d28c388ea556a3ba50640b853da"
+    },
+    {
+      "groupId": "com.jetbrains.mps",
+      "artifactId": "mps",
+      "version": "2018.1",
+      "classifier": "",
+      "packaging": "zip",
+      "lastModified": "2018-04-06T00:22:17Z",
+      "lastModifiedUnixTimeMs": 1522974137000,
+      "eTag": "b4f2d73b5c4bf72c072f14cd83bf674c-45"
+    },
+    {
+      "groupId": "com.jetbrains.mps",
+      "artifactId": "BUILD",
+      "version": "181.1168",
+      "classifier": "",
+      "packaging": "txt",
+      "lastModified": "2018-04-06T00:22:07Z",
+      "lastModifiedUnixTimeMs": 1522974127000,
+      "eTag": "2bef3f317123985f80847c397d3abbe4",
+      "content": "181.1168"
+    },
+    {
+      "groupId": "com.jetbrains.mps",
+      "artifactId": "mps",
+      "version": "181.1168",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "2018-04-06T00:21:54Z",
+      "lastModifiedUnixTimeMs": 1522974114000,
+      "eTag": "78acf5c105a7f02672ae71b4ed5f40ba"
+    },
+    {
+      "groupId": "com.jetbrains.mps",
+      "artifactId": "mps",
+      "version": "181.1168",
+      "classifier": "",
+      "packaging": "zip",
+      "lastModified": "2018-04-06T00:21:49Z",
+      "lastModifiedUnixTimeMs": 1522974109000,
+      "eTag": "b4f2d73b5c4bf72c072f14cd83bf674c-45"
+    },
+    {
       "groupId": "com.jetbrains.intellij.idea",
       "artifactId": "BUILD",
       "version": "181.3870.7",
