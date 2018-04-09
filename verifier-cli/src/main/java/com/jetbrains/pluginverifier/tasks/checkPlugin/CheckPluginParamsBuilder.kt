@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.exists
+import com.jetbrains.pluginverifier.misc.readLines
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
@@ -15,10 +16,8 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
-import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
@@ -73,7 +72,7 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
         schedulePluginsFromFile(
             pluginsSet,
             invalidPluginFiles,
-            File(pluginToTestArg.substringAfter("@")),
+            Paths.get(pluginToTestArg.substringAfter("@")),
             ideVersions
         )
       }
@@ -89,21 +88,21 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
         if (!file.exists()) {
           throw IllegalArgumentException("The file $file doesn't exist")
         }
-        addPluginToCheckFromFile(file, LocalPluginRepository(file.toUri().toURL()), pluginsSet, invalidPluginFiles)
+        addPluginToCheckFromFile(file, pluginsSet, invalidPluginFiles)
       }
     }
   }
 
   private fun schedulePluginsFromFile(pluginsSet: PluginsSet,
                                       invalidPluginsFiles: MutableList<InvalidPluginFile>,
-                                      pluginsListFile: File,
+                                      pluginsListFile: Path,
                                       ideVersions: List<IdeVersion>) {
     val pluginPaths = pluginsListFile.readLines().map { it.trim() }.filterNot { it.isEmpty() }
-    val localPluginRepository = LocalPluginRepository(pluginsListFile.toURI().toURL())
     for (ideVersion in ideVersions) {
       for (path in pluginPaths) {
         if (path.startsWith("id:")) {
-          pluginsSet.schedulePlugins(getCompatiblePluginVersions(path.substringAfter("id:"), ideVersion))
+          val compatiblePluginVersions = getCompatiblePluginVersions(path.substringAfter("id:"), ideVersion)
+          pluginsSet.schedulePlugins(compatiblePluginVersions)
         } else if (path.startsWith("#")) {
           val updateId = path.substringAfter("#").toIntOrNull() ?: continue
           val pluginInfo = getPluginInfoByUpdateId(updateId) ?: continue
@@ -111,28 +110,24 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
         } else {
           var pluginFile = Paths.get(path)
           if (!pluginFile.isAbsolute) {
-            pluginFile = pluginsListFile.toPath().resolve(path)
+            pluginFile = pluginsListFile.resolveSibling(path)
           }
           if (!pluginFile.exists()) {
-            throw RuntimeException("Plugin file '" + path + "' specified in '" + pluginsListFile.absolutePath + "' doesn't exist")
+            throw RuntimeException("Plugin file '$path' with absolute '${pluginFile.toAbsolutePath()}' specified in '${pluginsListFile.toAbsolutePath()}' doesn't exist")
           }
           verificationReportage.logVerificationStage("Reading descriptor of a plugin to check from $pluginFile")
-          addPluginToCheckFromFile(pluginFile, localPluginRepository, pluginsSet, invalidPluginsFiles)
+          addPluginToCheckFromFile(pluginFile, pluginsSet, invalidPluginsFiles)
         }
       }
     }
   }
 
   private fun addPluginToCheckFromFile(pluginFile: Path,
-                                       localPluginRepository: LocalPluginRepository,
                                        pluginsSet: PluginsSet,
                                        invalidPluginFiles: MutableList<InvalidPluginFile>) {
     with(IdePluginManager.createManager().createPlugin(pluginFile.toFile())) {
       when (this) {
-        is PluginCreationSuccess -> {
-          val localPluginInfo = localPluginRepository.addLocalPlugin(plugin)
-          pluginsSet.schedulePlugin(localPluginInfo)
-        }
+        is PluginCreationSuccess -> pluginsSet.scheduleLocalPlugin(plugin)
         is PluginCreationFail -> {
           verificationReportage.logVerificationStage("Plugin is invalid in $pluginFile: ${errorsAndWarnings.joinToString()}")
           invalidPluginFiles.add(InvalidPluginFile(pluginFile, errorsAndWarnings))

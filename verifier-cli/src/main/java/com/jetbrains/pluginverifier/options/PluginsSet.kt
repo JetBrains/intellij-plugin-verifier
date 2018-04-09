@@ -1,8 +1,11 @@
 package com.jetbrains.pluginverifier.options
 
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.options.filter.DeprecatedPluginFilter
 import com.jetbrains.pluginverifier.options.filter.PluginFilter
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
+import java.net.URL
 
 /**
  * Set of plugins to be verified and to be ignored,
@@ -63,12 +66,19 @@ data class PluginsSet(
       }
     }.toMap()
 
+
+  val localRepository = LocalPluginRepository(URL("http://unused.com"))
+
   fun addPluginFilter(pluginFilter: PluginFilter) {
     _pluginFilters.add(pluginFilter)
   }
 
   fun schedulePlugin(pluginInfo: PluginInfo) {
     scheduledPlugins.add(pluginInfo)
+  }
+
+  fun scheduleLocalPlugin(idePlugin: IdePlugin) {
+    schedulePlugin(localRepository.addLocalPlugin(idePlugin))
   }
 
   fun schedulePlugins(pluginInfos: Iterable<PluginInfo>) {

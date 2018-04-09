@@ -52,6 +52,8 @@ fun Path.writeText(text: String) {
 
 fun Path.readText() = toFile().readText()
 
+fun Path.readLines() = toFile().readLines()
+
 fun Path.writeBytes(bytes: ByteArray) {
   toFile().writeBytes(bytes)
 }
