@@ -287,11 +287,16 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
   private fun getTooManyUnknownClassesProblems(missingDependencies: List<MissingDependency>,
                                                notFoundClassesProblems: List<ClassNotFoundProblem>,
                                                problems: Set<CompatibilityProblem>): String {
-    val otherProblems: String = getProblemsContent(problems.filterNot { it in notFoundClassesProblems }.sortedBy { it.javaClass.name }.toSet())
-    return "There are too many missing classes (${notFoundClassesProblems.size});\n" +
-        "it's probably because of missing plugins (${missingDependencies.map { it.dependency }.joinToString()});\n" +
-        "some not-found classes: [${notFoundClassesProblems.take(20).map { it.unresolved }.joinToString()}...];\n" +
-        "\nrelevant problems: $otherProblems"
+    val otherProblems = getProblemsContent(problems.filterNot { it in notFoundClassesProblems }.sortedBy { it.javaClass.name }.toSet())
+    return buildString {
+      appendln("There are too many missing classes (${notFoundClassesProblems.size});")
+      appendln("it's probably because of missing plugins or modules: ${missingDependencies.map { it.dependency }.joinToString()};")
+      appendln("some not-found classes: [${notFoundClassesProblems.take(20).map { it.unresolved }.joinToString()}...];")
+      if (otherProblems.isNotEmpty()) {
+        appendln("Other problems: ")
+        appendln(otherProblems)
+      }
+    }
   }
 
   private fun StringBuilder.appendMissingDependencies(missingDeps: List<MissingDependency>) {
