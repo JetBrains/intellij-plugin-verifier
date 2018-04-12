@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.ide
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
+import com.jetbrains.pluginverifier.misc.stripTopLevelDirectory
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
 import com.jetbrains.pluginverifier.repository.downloader.UrlDownloader
@@ -55,6 +56,12 @@ class IdeDownloader(private val ideRepository: IdeRepository) : Downloader<IdeVe
     val destinationDir = Files.createTempDirectory(tempDirectory, "")
     return try {
       zippedIde.toFile().extractTo(destinationDir.toFile())
+      /**
+       * Some IDE builds (like MPS) are distributed in form
+       * of `<build>.zip/<single>/...`
+       * where the <single> is the only directory under .zip.
+       */
+      stripTopLevelDirectory(destinationDir)
       DownloadResult.Downloaded(destinationDir, "", true)
     } catch (e: Exception) {
       destinationDir.deleteLogged()

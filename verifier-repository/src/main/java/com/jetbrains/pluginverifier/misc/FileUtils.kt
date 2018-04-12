@@ -94,3 +94,52 @@ val Path.extension
 
 val Path.length
   get() = toFile().length()
+
+/**
+ * If the [directory] contains a single directory,
+ * that directory will be truncated and all its
+ * content will be moved one level up.
+ */
+fun stripTopLevelDirectory(directory: Path) {
+  val entries = directory.listFiles()
+  if (entries.size != 1) {
+    return
+  }
+
+  val single = entries.single()
+  if (!single.isDirectory) {
+    return
+  }
+
+  val contents = single.listFiles()
+
+  var conflict: Path? = null
+  for (from in contents) {
+    if (from.simpleName == single.simpleName) {
+      conflict = from
+      continue
+    }
+
+    val to = directory.resolve(from.simpleName)
+    Files.move(from, to)
+  }
+
+  if (conflict != null) {
+    //Create a unique temporary name from the set of files.
+    //This name will be used as a destination of a conflicting name.
+    val uniqueTempName = contents.map { it.simpleName }.sorted().last() + ".temp"
+    val tempDestination = directory.resolve(uniqueTempName)
+
+    //Move conflict to unique location.
+    require(!tempDestination.exists())
+    Files.move(conflict, tempDestination)
+
+    //Delete empty single
+    require(single.listFiles().isEmpty())
+    single.deleteLogged()
+
+    Files.move(tempDestination, single)
+  } else {
+    single.deleteLogged()
+  }
+}
