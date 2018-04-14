@@ -17,8 +17,6 @@ import com.jetbrains.pluginverifier.verifiers.logic.CommonClassNames
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.util.*
 
 sealed class ClsResolution {
@@ -28,8 +26,6 @@ sealed class ClsResolution {
   data class FailedToReadClassFile(val reason: String) : ClsResolution()
   data class Found(val node: ClassNode) : ClsResolution()
 }
-
-private val ClassFileLogger: Logger = LoggerFactory.getLogger("plugin.verifier.class.file.read.logger")
 
 /**
  * To resolve an unresolved symbolic reference from D to a class or interface C denoted by N, the following steps are performed:
@@ -44,10 +40,8 @@ private fun VerificationContext.resolveClass(className: String): ClsResolution {
   val node = try {
     verificationClassLoader.findClass(className)
   } catch (e: InvalidClassFileException) {
-    ClassFileLogger.debug("Unable to read invalid class $className", e)
     return ClsResolution.InvalidClassFile(e.asmError)
   } catch (e: Exception) {
-    ClassFileLogger.info("Unable to read class $className", e)
     return ClsResolution.FailedToReadClassFile(e.message ?: e.javaClass.name)
   }
   return node?.let { ClsResolution.Found(it) } ?: ClsResolution.NotFound

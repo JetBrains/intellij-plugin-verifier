@@ -4,7 +4,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult;
 import com.jetbrains.plugin.structure.base.plugin.PluginManager;
 import com.jetbrains.plugin.structure.base.plugin.Settings;
 import com.jetbrains.plugin.structure.base.problems.*;
-import com.jetbrains.plugin.structure.base.utils.FileUtil;
+import com.jetbrains.plugin.structure.base.utils.FileUtilKt;
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractedPlugin;
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult;
 import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor;
@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -82,7 +81,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       zipFile = new ZipFile(jarFile);
     } catch (Exception e) {
       LOG.info("Unable to read jar file " + jarFile, e);
-      return new PluginCreator(descriptorPath, new UnableToReadJarFile(jarFile), jarFile);
+      return new PluginCreator(descriptorPath, new UnableToReadJarFile(), jarFile);
     }
 
     try {
@@ -162,7 +161,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
 
     final File[] files = libDir.listFiles();
     if (files == null || files.length == 0) {
-      return new PluginCreator(descriptorPath, new PluginLibDirectoryIsEmpty(libDir), root);
+      return new PluginCreator(descriptorPath, new PluginLibDirectoryIsEmpty(), root);
     }
     sortFilesWithRespectToRootDirectoryName(root, files);
 
@@ -172,7 +171,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
 
     for (final File file : files) {
       PluginCreator innerCreator;
-      if (FileUtil.INSTANCE.isJar(file) || FileUtil.INSTANCE.isZip(file)) {
+      if (FileUtilKt.isJar(file) || FileUtilKt.isZip(file)) {
         innerCreator = loadDescriptorFromJarFile(file, descriptorPath, pathResolver, validateDescriptor);
       } else if (file.isDirectory()) {
         innerCreator = loadDescriptorFromDir(file, descriptorPath, validateDescriptor);
@@ -206,15 +205,12 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   private void sortFilesWithRespectToRootDirectoryName(@NotNull final File root, File[] files) {
     //move plugin-jar to the beginning: Sample.jar goes first (if Sample is a plugin name)
     final String rootDirectoryName = root.getName();
-    Arrays.sort(files, new Comparator<File>() {
-      @Override
-      public int compare(@NotNull File o1, @NotNull File o2) {
-        if (o2.getName().startsWith(rootDirectoryName)) return Integer.MAX_VALUE;
-        if (o1.getName().startsWith(rootDirectoryName)) return -Integer.MAX_VALUE;
-        if (o2.getName().startsWith("resources")) return -Integer.MAX_VALUE;
-        if (o1.getName().startsWith("resources")) return Integer.MAX_VALUE;
-        return 0;
-      }
+    Arrays.sort(files, (o1, o2) -> {
+      if (o2.getName().startsWith(rootDirectoryName)) return Integer.MAX_VALUE;
+      if (o1.getName().startsWith(rootDirectoryName)) return -Integer.MAX_VALUE;
+      if (o2.getName().startsWith("resources")) return -Integer.MAX_VALUE;
+      if (o1.getName().startsWith("resources")) return Integer.MAX_VALUE;
+      return 0;
     });
   }
 
@@ -226,7 +222,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     PluginCreator pluginCreator;
     if (jarOrDirectory.isDirectory()) {
       pluginCreator = loadDescriptorFromDir(jarOrDirectory, descriptorPath, validateDescriptor);
-    } else if (FileUtil.INSTANCE.isJar(jarOrDirectory)) {
+    } else if (FileUtilKt.isJar(jarOrDirectory)) {
       pluginCreator = loadDescriptorFromJarFile(jarOrDirectory, descriptorPath, myPathResolver, validateDescriptor);
     } else {
       return new PluginCreator(descriptorPath, new IncorrectPluginFile(jarOrDirectory), jarOrDirectory);
@@ -274,11 +270,8 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       return new PluginCreator(PLUGIN_XML, new UnableToExtractZip(zipPlugin), zipPlugin);
     }
     if (extractorResult instanceof ExtractorResult.Success) {
-      ExtractedPlugin extractedPlugin = ((ExtractorResult.Success) extractorResult).getExtractedPlugin();
-      try {
+      try (ExtractedPlugin extractedPlugin = ((ExtractorResult.Success) extractorResult).getExtractedPlugin()) {
         return loadDescriptorFromJarOrDirectory(extractedPlugin.getPluginFile(), PLUGIN_XML, validateDescriptor);
-      } finally {
-        extractedPlugin.close();
       }
     } else {
       return new PluginCreator(PLUGIN_XML, ((ExtractorResult.Fail) extractorResult).getPluginProblem(), zipPlugin);
@@ -304,7 +297,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       throw new IllegalArgumentException("Plugin file " + pluginFile + " does not exist");
     }
     PluginCreator pluginCreator;
-    if (FileUtil.INSTANCE.isZip(pluginFile)) {
+    if (FileUtilKt.isZip(pluginFile)) {
       pluginCreator = extractZipAndCreatePlugin(pluginFile, validateDescriptor);
     } else {
       pluginCreator = loadDescriptorFromJarOrDirectory(pluginFile, PLUGIN_XML, validateDescriptor);

@@ -2,7 +2,7 @@ package com.jetbrains.plugin.structure.teamcity
 
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.*
-import com.jetbrains.plugin.structure.base.utils.FileUtil
+import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.teamcity.beans.extractPluginBean
 import org.jdom2.input.JDOMParseException
 import org.slf4j.Logger
@@ -29,7 +29,7 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
     }
     return when {
       pluginFile.isDirectory -> loadDescriptorFromDirectory(pluginFile)
-      FileUtil.isZip(pluginFile) -> loadDescriptorFromZip(pluginFile)
+      pluginFile.isZip() -> loadDescriptorFromZip(pluginFile)
       else -> PluginCreationFail(IncorrectPluginFile(pluginFile))
     }
   }

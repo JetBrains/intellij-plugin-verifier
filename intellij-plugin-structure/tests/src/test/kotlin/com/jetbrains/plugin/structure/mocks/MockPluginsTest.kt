@@ -37,7 +37,7 @@ class MockPluginsTest : BaseMockPluginTest() {
   @Test
   fun `invalid plugin with classes packed in a root of a zip`() {
     val brokenZipFile = getMockPluginFile("invalid-mock-pluginJarAsZip.zip")
-    InvalidPluginsTest.assertExpectedProblems(brokenZipFile, listOf(PluginZipContainsMultipleFiles(brokenZipFile, listOf("META-INF", "icons", "optionalsDir", "packagename"))))
+    InvalidPluginsTest.assertExpectedProblems(brokenZipFile, listOf(PluginZipContainsMultipleFiles(listOf("META-INF", "icons", "optionalsDir", "packagename"))))
   }
 
   private fun testMockConfigs(plugin: IdePlugin) {

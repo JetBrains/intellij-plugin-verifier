@@ -9,10 +9,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.CoreMatchers.instanceOf
-import org.hamcrest.Matchers.containsInAnyOrder
-import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.*
 import org.junit.Assert.assertThat
 import org.junit.Rule
 import org.junit.Test
@@ -61,7 +58,7 @@ class InvalidPluginsTest {
   @Test
   fun `failed to read jar file`() {
     val incorrect = temporaryFolder.newFile("incorrect.jar")
-    assertExpectedProblems(incorrect, listOf(UnableToReadJarFile(incorrect)))
+    assertExpectedProblems(incorrect, listOf(UnableToReadJarFile()))
   }
 
   @Test()

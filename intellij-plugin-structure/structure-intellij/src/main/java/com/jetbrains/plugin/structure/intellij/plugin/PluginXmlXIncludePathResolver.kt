@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.jetbrains.plugin.structure.base.utils.FileUtil
+import com.jetbrains.plugin.structure.base.utils.isJar
+import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.intellij.utils.ThreeState
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.DefaultXIncludePathResolver
@@ -15,7 +16,7 @@ class PluginXmlXIncludePathResolver(files: List<File>) : DefaultXIncludePathReso
 
   private fun getMetaInfUrls(files: List<File>) =
       files.asSequence()
-          .filter { FileUtil.isJar(it) || FileUtil.isZip(it) }
+          .filter { it.isJar() || it.isZip() }
           .mapNotNull {
             try {
               URLUtil.getJarEntryURL(it, "META-INF/")

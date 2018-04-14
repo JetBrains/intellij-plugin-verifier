@@ -1,11 +1,10 @@
 package com.jetbrains.plugin.structure.intellij.classes.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.Settings
-import com.jetbrains.plugin.structure.base.utils.FileUtil
-import com.jetbrains.plugin.structure.base.utils.FileUtil.isJar
-import com.jetbrains.plugin.structure.base.utils.FileUtil.isZip
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.closeOnException
+import com.jetbrains.plugin.structure.base.utils.isJar
+import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.ClassesDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.JarPluginKey
@@ -28,12 +27,12 @@ class IdePluginClassesFinder private constructor(private val idePlugin: IdePlugi
     if (pluginFile == null) {
       return IdePluginClassesLocations(idePlugin, Closeable { /* Nothing to close */ }, emptyMap())
     } else if (!pluginFile.exists()) {
-      throw IllegalArgumentException("Plugin file doesn't exist " + pluginFile)
-    } else if (!pluginFile.isDirectory && !isJar(pluginFile) && !isZip(pluginFile)) {
+      throw IllegalArgumentException("Plugin file doesn't exist $pluginFile")
+    } else if (!pluginFile.isDirectory && !pluginFile.isJar() && !pluginFile.isZip()) {
       throw IllegalArgumentException("Incorrect plugin file type $pluginFile: expected a directory, a .zip or a .jar archive")
     }
 
-    return if (FileUtil.isZip(pluginFile)) {
+    return if (pluginFile.isZip()) {
       findInZip(pluginFile)
     } else {
       val locations = findLocations(pluginFile)

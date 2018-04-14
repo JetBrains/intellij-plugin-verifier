@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
-import com.jetbrains.plugin.structure.base.utils.FileUtil
 import com.jetbrains.plugin.structure.base.utils.closeLogged
+import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
@@ -25,7 +25,7 @@ class JarFileResolver(private val ioJarFile: File) : Resolver() {
     if (!ioJarFile.exists()) {
       throw IllegalArgumentException("Jar file $ioJarFile doesn't exist")
     }
-    if (!FileUtil.isJar(ioJarFile)) {
+    if (!ioJarFile.isJar()) {
       throw IllegalArgumentException("File $ioJarFile is not a jar archive")
     }
 
