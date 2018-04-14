@@ -10,7 +10,7 @@ import java.nio.file.Paths
 enum class Settings(val key: String,
                     private val default: (() -> String?)? = null,
                     val encrypted: Boolean = false) {
-  APP_HOME_DIRECTORY("verifier.service.home.dir"),
+  APP_HOME_DIRECTORY("verifier.service.home.directory"),
   JDK_8_HOME("verifier.service.jdk.8.dir"),
   MAX_DISK_SPACE_MB("verifier.service.max.disk.space.mb", { (50 * 1024).toString() }),
   IDE_REPOSITORY_URL("verifier.service.ide.repository.url", { "https://www.jetbrains.com" }),
@@ -23,7 +23,7 @@ enum class Settings(val key: String,
   PLUGIN_REPOSITORY_VERIFIER_USERNAME("verifier.service.plugin.repository.verifier.username", encrypted = true),
   PLUGIN_REPOSITORY_VERIFIER_PASSWORD("verifier.service.plugin.repository.verifier.password", encrypted = true),
 
-  TASK_MANAGER_CONCURRENCY("verifier.service.task.manager.concurrency", { "4" }),
+  TASK_MANAGER_CONCURRENCY("verifier.service.task.manager.concurrency", { "8" }),
 
   SERVICE_ADMIN_PASSWORD("verifier.service.admin.password", encrypted = true);
 

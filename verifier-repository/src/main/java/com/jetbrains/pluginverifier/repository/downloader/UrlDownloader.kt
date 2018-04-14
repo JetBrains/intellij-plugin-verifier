@@ -95,6 +95,7 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
   }
 
   private fun copyResponseTo(response: Response<ResponseBody>, file: Path) {
+    checkIfInterrupted()
     response.body().use { responseBody ->
       val expectedSize = responseBody.contentLength()
       copyInputStreamToFileWithProgress(responseBody.byteStream(), expectedSize, file.toFile(), { })

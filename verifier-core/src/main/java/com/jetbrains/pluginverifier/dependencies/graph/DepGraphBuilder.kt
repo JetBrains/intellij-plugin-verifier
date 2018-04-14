@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.dependencies.graph
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
+import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import org.jgrapht.DirectedGraph
 
@@ -16,6 +17,7 @@ class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
    * starting from the [start].
    */
   fun buildDependenciesGraph(graph: DirectedGraph<DepVertex, DepEdge>, start: DepVertex) {
+    checkIfInterrupted()
     if (!graph.containsVertex(start)) {
       graph.addVertex(start)
       val plugin = start.dependencyResult.getPlugin()

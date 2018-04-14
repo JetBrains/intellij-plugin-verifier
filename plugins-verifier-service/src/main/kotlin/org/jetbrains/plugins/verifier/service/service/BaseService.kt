@@ -100,7 +100,7 @@ abstract class BaseService(val serviceName: String,
         logger.error("$serviceName failed to serve", e)
       } finally {
         val duration = System.currentTimeMillis() - start
-        logger.info("$serviceName has served in $duration ms")
+        logger.info("$serviceName has completed in $duration ms")
         state = State.SLEEPING
       }
     }

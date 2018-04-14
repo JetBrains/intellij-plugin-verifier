@@ -91,6 +91,7 @@ class VerifierService(taskManager: ServiceTaskManager,
         task,
         { taskResult, taskStatus -> onSuccess(taskResult, taskStatus) },
         { error, _ -> onError(pluginAndIdeVersion, error) },
+        { _, _ -> },
         { onCompletion(pluginAndIdeVersion) }
     )
     logger.info("Verification $pluginAndIdeVersion is scheduled in task #${taskStatus.taskId}")
@@ -121,7 +122,6 @@ class VerifierService(taskManager: ServiceTaskManager,
   }
 
   override fun onStop() {
-    super.onStop()
     verifierExecutor.close()
   }
 }

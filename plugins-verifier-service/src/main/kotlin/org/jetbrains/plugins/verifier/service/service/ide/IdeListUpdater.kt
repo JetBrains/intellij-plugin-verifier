@@ -61,8 +61,10 @@ class IdeListUpdater(taskManager: ServiceTaskManager,
     val taskStatus = taskManager.enqueue(
         runner,
         { _, _ -> },
-        { _, _ -> }
-    ) { _ -> downloadingIdes.remove(ideVersion) }
+        { _, _ -> },
+        { _, _ -> },
+        { _ -> downloadingIdes.remove(ideVersion) }
+    )
     logger.info("Downloading IDE version #$ideVersion (task #${taskStatus.taskId})")
 
     downloadingIdes.add(ideVersion)

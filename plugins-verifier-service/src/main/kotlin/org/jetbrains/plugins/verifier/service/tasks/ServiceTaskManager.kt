@@ -2,6 +2,7 @@ package org.jetbrains.plugins.verifier.service.tasks
 
 import com.google.common.collect.EvictingQueue
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.jetbrains.pluginverifier.misc.causedBy
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.Closeable
@@ -55,6 +56,7 @@ class ServiceTaskManager(concurrency: Int, maxKeepResults: Int) : Closeable {
   fun <T> enqueue(task: ServiceTask<T>,
                   onSuccess: (T, ServiceTaskStatus) -> Unit,
                   onError: (Throwable, ServiceTaskStatus) -> Unit,
+                  onCancelled: (Throwable, ServiceTaskStatus) -> Unit,
                   onCompletion: (ServiceTaskStatus) -> Unit): ServiceTaskStatus {
     val taskId = nextTaskId.incrementAndGet()
 
@@ -77,6 +79,7 @@ class ServiceTaskManager(concurrency: Int, maxKeepResults: Int) : Closeable {
       taskProgress.text = "Running..."
       task.execute(taskProgress)
     }, executorService)
+    executorService
 
     taskFuture
         .whenComplete { result, error ->
@@ -87,9 +90,15 @@ class ServiceTaskManager(concurrency: Int, maxKeepResults: Int) : Closeable {
             taskProgress.text = "Finished successfully"
             onSuccess(result, taskStatus)
           } else {
-            taskStatus.state = ServiceTaskState.ERROR
-            taskProgress.text = "Finished with error"
-            onError(error, taskStatus)
+            if (error.causedBy(InterruptedException::class.java)) {
+              taskStatus.state = ServiceTaskState.CANCELLED
+              taskProgress.text = "Cancelled"
+              onCancelled(error, taskStatus)
+            } else {
+              taskStatus.state = ServiceTaskState.ERROR
+              taskProgress.text = "Finished with error"
+              onError(error, taskStatus)
+            }
           }
         }
         .whenComplete { _, _ ->
@@ -106,6 +115,7 @@ class ServiceTaskManager(concurrency: Int, maxKeepResults: Int) : Closeable {
    */
   fun <T> enqueue(task: ServiceTask<T>) = enqueue(
       task,
+      { _, _ -> },
       { _, _ -> },
       { _, _ -> },
       { _ -> }

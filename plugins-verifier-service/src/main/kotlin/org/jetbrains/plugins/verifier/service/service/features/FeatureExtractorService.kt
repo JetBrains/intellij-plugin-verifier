@@ -62,6 +62,7 @@ class FeatureExtractorService(taskManager: ServiceTaskManager,
         runner,
         { result, _ -> result.onSuccess() },
         { t, tid -> onError(t, tid, runner) },
+        { _, _ -> },
         { _ -> onCompletion(runner) }
     )
     processingUpdates.add(updateInfo)

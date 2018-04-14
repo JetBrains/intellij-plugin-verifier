@@ -35,6 +35,7 @@ class TaskManagerTest {
           onError = { e, _ ->
             error.set(e)
           },
+          onCancelled = { _, _ -> },
           onCompletion = {
             status.set(it)
           }

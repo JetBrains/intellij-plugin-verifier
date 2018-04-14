@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
@@ -66,8 +67,9 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
   private val resultHolder = VerificationResultHolder(pluginVerificationReportage)
 
   override fun call(): VerificationResult {
-    pluginVerificationReportage.logVerificationStarted()
     try {
+      checkIfInterrupted()
+      pluginVerificationReportage.logVerificationStarted()
       val result = runVerification()
       result.apply {
         plugin = pluginInfo
@@ -86,6 +88,9 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
       pluginVerificationReportage.logVerificationResult(result)
       pluginVerificationReportage.logVerificationFinished(result.toString())
       return result
+    } catch (ie: InterruptedException) {
+      pluginVerificationReportage.logVerificationFinished("Cancelled")
+      throw ie
     } catch (e: Throwable) {
       pluginVerificationReportage.logVerificationFinished("Failed with exception: ${e.message}")
       throw RuntimeException("Failed to verify $pluginInfo against $ideDescriptor", e)
@@ -162,6 +167,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
 
   private fun runVerification(depGraph: DirectedGraph<DepVertex, DepEdge>,
                               pluginDetails: PluginDetails): VerificationResult? {
+    checkIfInterrupted()
     /**
      * Create the plugin's own classes resolver.
      */
@@ -222,6 +228,7 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
                                                         dependenciesResolver: Resolver,
                                                         jdkClassesResolver: Resolver,
                                                         verificationClassLoader: Resolver) {
+    checkIfInterrupted()
     val verificationContext = VerificationContext(
         plugin,
         ideDescriptor.ideVersion,

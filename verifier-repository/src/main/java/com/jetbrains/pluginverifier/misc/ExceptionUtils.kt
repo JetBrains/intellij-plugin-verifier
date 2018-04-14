@@ -9,4 +9,4 @@ fun <T : Throwable> Throwable.findCause(klass: Class<T>): T? {
   return e as? T
 }
 
-fun <T : Throwable> Throwable.causedBy(klass: Class<T>): Boolean = findCause(klass) != null
+fun <T : Throwable> Throwable.causedBy(klass: Class<T>) = findCause(klass) != null
