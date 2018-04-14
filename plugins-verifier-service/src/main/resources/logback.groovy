@@ -13,7 +13,7 @@ appender('STDOUT', ConsoleAppender) {
   }
 }
 
-def home = System.getProperty('verifier.service.home.dir') ?: System.getProperty("user.home") + File.separator + ".verifier-service"
+def home = System.getProperty('verifier.service.home.directory') ?: System.getProperty("user.home") + File.separator + ".verifier-service"
 
 appender('FILE', RollingFileAppender) {
   //the logger is always logging into this file (but rollovers the files according to fileNamePattern)
@@ -55,13 +55,13 @@ appender('ERRORS_FILE', RollingFileAppender) {
 boolean developmentMode = 'true' == System.getProperty('verifier.service.development.mode')
 def loggers = ['STDOUT', 'ERRORS_FILE', 'FILE']
 
-logger("com.jetbrains.pluginverifier.repository.DownloadManager", ERROR, ['STDOUT', 'FILE'], false)
-logger("com.jetbrains.pluginverifier.repository.PublicPluginRepository", ERROR, loggers, false)
-logger("com.jetbrains.pluginverifier.core", ERROR, loggers, false)
-logger("com.intellij.structure", ERROR, loggers, false)
-logger("org.jetbrains.plugins.verifier.service", developmentMode ? DEBUG : INFO, loggers, false)
-logger("com.jetbrains.pluginverifier", developmentMode ? DEBUG : INFO, loggers, false)
-logger("com.jetbrains.intellij.feature.extractor", developmentMode ? DEBUG : ERROR, loggers, false)
+//Configure used libraries' loggers.
+logger("com.jetbrains.pluginverifier", WARN, loggers, false)
+logger("com.jetbrains.plugin.structure", WARN, loggers, false)
+logger("com.jetbrains.intellij.feature.extractor", WARN, loggers, false)
 logger("FeaturesExtractor", developmentMode ? DEBUG : ERROR, loggers, false)
+
+//Configure the service's loggers.
+logger("org.jetbrains.plugins.verifier.service", developmentMode ? DEBUG : INFO, loggers, false)
 
 root(INFO, loggers)
