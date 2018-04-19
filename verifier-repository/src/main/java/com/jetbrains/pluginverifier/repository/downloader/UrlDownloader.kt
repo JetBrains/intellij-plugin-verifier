@@ -37,11 +37,17 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
       .build()
       .create(DownloadConnector::class.java)
 
-  private fun Response<ResponseBody>.guessExtension() = when (body().contentType()) {
-    jarContentMediaType, xJarContentMediaType -> "jar"
-    jsonMediaType -> "json"
-    else -> "zip"
-  }
+  //todo: provide more guarantees here.
+  private fun Response<ResponseBody>.guessExtension() =
+      when (body().contentType()) {
+        jarContentMediaType, xJarContentMediaType -> "jar"
+        jsonMediaType -> "json"
+        else -> if (raw().request().url().encodedPath().endsWith(".jar")) {
+          "jar"
+        } else {
+          "zip"
+        }
+      }
 
   override fun download(key: K, tempDirectory: Path): DownloadResult {
     val downloadUrl = try {
