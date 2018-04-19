@@ -1,7 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.problems
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 
 data class NoModuleDependencies(val descriptorPath: String) : PluginProblem() {
@@ -50,8 +49,11 @@ data class PluginWordInPluginName(val descriptorPath: String) : PluginProblem() 
 
 }
 
-data class MissingOptionalDependencyConfigurationFile(val descriptorPath: String, val dependency: PluginDependency, val configurationFile: String) :
-    InvalidDescriptorProblem(descriptorPath, "configuration file $configurationFile of the dependency $dependency is not found") {
+data class MissingOptionalDependencyConfigurationFile(val descriptorPath: String,
+                                                      val dependency: PluginDependency,
+                                                      val configurationFile: String) : PluginProblem() {
 
   override val level = PluginProblem.Level.WARNING
+
+  override val message = "Configuration file $configurationFile for the optional dependency ${dependency.id} is not found"
 }
