@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.options
 
-import com.google.common.collect.HashMultimap
-import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorCreator
@@ -21,9 +19,7 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.BufferedReader
 import java.io.File
-import java.io.FileReader
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -106,8 +102,11 @@ object OptionsParser {
 
   private fun createIgnoredProblemsFilter(opts: CmdOpts): ProblemsFilter? {
     if (opts.ignoreProblemsFile != null) {
-      val problemsToIgnore = getProblemsToIgnoreFromFile(opts.ignoreProblemsFile!!)
-      return IgnoredProblemsFilter(problemsToIgnore)
+      val file = File(opts.ignoreProblemsFile!!)
+      if (!file.exists()) {
+        throw IllegalArgumentException("Ignored problems file doesn't exist $file")
+      }
+      return getIgnoreFilter(file)
     }
     return null
   }
@@ -154,45 +153,43 @@ object OptionsParser {
         codeProblemsFilter.singletonOrEmpty()
   }
 
-  /**
-   * @return _(pluginXmlId, version)_ -> to be ignored _problem pattern_
-   */
-  private fun getProblemsToIgnoreFromFile(ignoreProblemsFile: String): Multimap<PluginIdAndVersion, Regex> {
-    val file = File(ignoreProblemsFile)
-    if (!file.exists()) {
-      throw IllegalArgumentException("Ignored problems file doesn't exist $ignoreProblemsFile")
-    }
-
-    val m = HashMultimap.create<PluginIdAndVersion, Regex>()
+  private fun getIgnoreFilter(ignoreProblemsFile: File): IgnoredProblemsFilter {
+    val ignoreConditions = arrayListOf<IgnoreCondition>()
     try {
-      BufferedReader(FileReader(file)).use { br ->
-        var s: String?
-        while (true) {
-          s = br.readLine() ?: break
-          s = s.trim { it <= ' ' }
-          if (s.isEmpty() || s.startsWith("//")) continue //it is a comment
-
-          val tokens = s.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-
-          if (tokens.size != 3) {
-            throw IllegalArgumentException("incorrect problem line $s\nthe line must be in the form: <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>\n" +
-                "<plugin_version> may be empty (which means that a problem will be ignored in all the versions of the plugin)\n" +
-                "example: org.jetbrains.kotlin::access to unresolved class org.jetbrains.kotlin.compiler.*")
+      ignoreProblemsFile.useLines { lines ->
+        for (line in lines.map { it.trim() }) {
+          if (line.isBlank() || line.startsWith("//")) {
+            //it is a comment
+            continue
           }
 
-          val pluginId = tokens[0].trim { it <= ' ' }
-          val pluginVersion = tokens[1].trim { it <= ' ' }
-          val ignorePattern = tokens[2].trim { it <= ' ' }.replace('/', '.')
+          val tokens = line.split(":").map { it.trim() }
+          val parseRegexp = { s: String -> Regex(s, RegexOption.IGNORE_CASE) }
 
-          m.put(PluginIdAndVersion(pluginId, pluginVersion), Regex(ignorePattern, RegexOption.IGNORE_CASE))
+          ignoreConditions.add(when {
+            tokens.size == 1 -> IgnoreCondition(null, null, parseRegexp(tokens[0]))
+            tokens.size == 2 -> IgnoreCondition(tokens[0], null, parseRegexp(tokens[1]))
+            tokens.size == 3 -> IgnoreCondition(tokens[0], tokens[1].takeIf { it.isNotEmpty() }, parseRegexp(tokens[2]))
+            else -> throw incorrectIgnoredProblemLineException(line)
+          })
         }
       }
     } catch (e: Exception) {
-      throw RuntimeException("Unable to parse ignored problems file $ignoreProblemsFile", e)
+      throw IllegalArgumentException("Unable to parse ignored problems file $ignoreProblemsFile", e)
     }
 
-    return m
+    return IgnoredProblemsFilter(ignoreConditions)
   }
+
+  private fun incorrectIgnoredProblemLineException(line: String) = IllegalArgumentException(
+      """Incorrect problem ignoring line
+$line
+the line must be in the form: [<plugin_xml_id>[:<plugin_version>]:]<problem_description_regexp_pattern>
+Examples:
+org.some.plugin:3.4.0:access to unresolved class org.foo.Foo.*                    --- ignore for plugin 'org.some.plugin' of version 3.4.0
+org.jetbrains.kotlin::access to unresolved class org.jetbrains.kotlin.compiler.*  --- ignore for all versions of Kotlin plugin
+access to unresolved class org.jetbrains.kotlin.compiler.*                        --- ignore for all plugins
+""")
 
   /**
    * Parses a file containing a list of plugin IDs to check.

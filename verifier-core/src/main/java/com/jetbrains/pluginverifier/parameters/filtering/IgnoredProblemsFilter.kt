@@ -1,22 +1,24 @@
 package com.jetbrains.pluginverifier.parameters.filtering
 
-import com.google.common.collect.Multimap
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 
-class IgnoredProblemsFilter(private val problemsToIgnore: Multimap<PluginIdAndVersion, Regex>) : ProblemsFilter {
+data class IgnoreCondition(val pluginId: String?, val version: String?, val pattern: Regex)
 
-  override fun shouldReportProblem(problem: CompatibilityProblem, verificationContext: VerificationContext): ProblemsFilter.Result {
-    val xmlId = verificationContext.plugin.pluginId
-    val version = verificationContext.plugin.pluginVersion
-    for ((pluginIdAndVersion, ignoredPattern) in problemsToIgnore.entries()) {
-      val ignoreXmlId = pluginIdAndVersion.pluginId
-      val ignoreVersion = pluginIdAndVersion.version
+class IgnoredProblemsFilter(val ignoreConditions: List<IgnoreCondition>) : ProblemsFilter {
 
-      if (xmlId == ignoreXmlId) {
-        if (ignoreVersion.isEmpty() || version == ignoreVersion) {
-          if (problem.shortDescription.matches(ignoredPattern)) {
-            return ProblemsFilter.Result.Ignore("ignoring pattern matches - $ignoredPattern")
+  override fun shouldReportProblem(
+      problem: CompatibilityProblem,
+      verificationContext: VerificationContext
+  ): ProblemsFilter.Result {
+    val currentId = verificationContext.plugin.pluginId
+    val currentVersion = verificationContext.plugin.pluginVersion
+
+    for ((pluginId, version, pattern) in ignoreConditions) {
+      if (pluginId == null || pluginId == currentId) {
+        if (version == null || version == currentVersion) {
+          if (problem.shortDescription.matches(pattern)) {
+            return ProblemsFilter.Result.Ignore("the problem is ignored by RegExp pattern: \"$pattern\"")
           }
         }
       }

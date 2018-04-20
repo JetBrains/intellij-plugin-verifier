@@ -145,7 +145,6 @@ Here is the full syntax of the command:
         [-major-ide-path | -mip <file>]
         [-major-ide-version | -miv <IDE version>]
         [-external-prefixes <':'-separated list>]
-        [-ignored-problems | -ip <file>]
         [-subsystems-to-check | -subsystems]
         [-release-jetbrains-plugins | -rjbp <path>]
         [-trunk-jetbrains-plugins | -tjbp <path>]
