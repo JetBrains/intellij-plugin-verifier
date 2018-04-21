@@ -14,9 +14,10 @@ object PluginExtractor {
 
   fun extractPlugin(pluginZip: File, extractDirectory: File): ExtractorResult {
     if (!pluginZip.isZip()) {
-      throw IllegalArgumentException("Must be a zip archive: " + pluginZip)
+      throw IllegalArgumentException("Must be a zip archive: $pluginZip")
     }
 
+    Files.createDirectories(extractDirectory.toPath())
     val extractedPlugin = Files.createTempDirectory(extractDirectory.toPath(), "plugin_${pluginZip.nameWithoutExtension}_").toFile()
 
     try {
@@ -42,23 +43,23 @@ object PluginExtractor {
 
   private fun getExtractorResult(extractedPlugin: File): ExtractorResult {
     val rootFiles = extractedPlugin.listFiles() ?: return fail(PluginZipIsEmpty(), extractedPlugin)
-    if (rootFiles.isEmpty()) {
-      return fail(PluginZipIsEmpty(), extractedPlugin)
-    } else if (rootFiles.size == 1) {
-      val singleFile = rootFiles[0]
-      if (singleFile.name.endsWith(".jar")) {
-        return success(singleFile, extractedPlugin)
-      } else if (singleFile.isDirectory) {
-        if (singleFile.name == "lib") {
-          return success(extractedPlugin, extractedPlugin)
+    when {
+      rootFiles.isEmpty() -> return fail(PluginZipIsEmpty(), extractedPlugin)
+      rootFiles.size == 1 -> {
+        val singleFile = rootFiles[0]
+        return if (singleFile.name.endsWith(".jar")) {
+          success(singleFile, extractedPlugin)
+        } else if (singleFile.isDirectory) {
+          if (singleFile.name == "lib") {
+            success(extractedPlugin, extractedPlugin)
+          } else {
+            success(singleFile, extractedPlugin)
+          }
         } else {
-          return success(singleFile, extractedPlugin)
+          fail(PluginZipContainsUnknownFile(singleFile.name), extractedPlugin)
         }
-      } else {
-        return fail(PluginZipContainsUnknownFile(singleFile.name), extractedPlugin)
       }
-    } else {
-      return fail(PluginZipContainsMultipleFiles(rootFiles.map { it.name }.sorted()), extractedPlugin)
+      else -> return fail(PluginZipContainsMultipleFiles(rootFiles.map { it.name }.sorted()), extractedPlugin)
     }
   }
 
