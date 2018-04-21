@@ -158,7 +158,7 @@ class VerificationCorrectnessTest {
   fun `deprecated method is used`() {
     //Auxiliary deprecated usage.
     assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.method() : void")
-    assertDeprecatedUsageFound("Method <init>() : void of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.method() : void")
+    assertDeprecatedUsageFound("Constructor <init>() : void of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.method() : void")
 
     assertDeprecatedUsageFound("Deprecated method deprecated.DeprecatedMethod.foo(int x) : void is used in mock.plugin.deprecated.DeprecatedUser.method() : void")
   }
@@ -170,7 +170,7 @@ class VerificationCorrectnessTest {
 
   @Test
   fun `deprecated constructor is used`() {
-    assertDeprecatedUsageFound("Deprecated method deprecated.DeprecatedMethod.<init>() : void is used in mock.plugin.deprecated.DeprecatedUser.method() : void")
+    assertDeprecatedUsageFound("Deprecated constructor deprecated.DeprecatedMethod.<init>() : void is used in mock.plugin.deprecated.DeprecatedUser.method() : void")
   }
 
   @Test
@@ -187,13 +187,13 @@ class VerificationCorrectnessTest {
 
   @Test
   fun `use default deprecated constructor`() {
-    assertDeprecatedUsageFound("Deprecated method deprecated.DeprecatedMethod.<init>() : void is used in mock.plugin.deprecated.OverrideDeprecatedMethod.<init>() : void")
+    assertDeprecatedUsageFound("Deprecated constructor deprecated.DeprecatedMethod.<init>() : void is used in mock.plugin.deprecated.OverrideDeprecatedMethod.<init>() : void")
   }
 
   @Test
   fun `deprecated class is used`() {
     //Auxiliary deprecated usage.
-    assertDeprecatedUsageFound("Method <init>() : void of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.clazz() : void")
+    assertDeprecatedUsageFound("Constructor <init>() : void of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.clazz() : void")
 
     assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.clazz() : void")
   }
@@ -201,7 +201,7 @@ class VerificationCorrectnessTest {
   @Test
   fun `deprecated with comment class is used`() {
     //Auxiliary deprecated usage.
-    assertDeprecatedUsageFound("Method <init>() : void of the deprecated class deprecated.DeprecatedWithCommentClass is used in mock.plugin.deprecated.DeprecatedUser.clazzWithComment() : void")
+    assertDeprecatedUsageFound("Constructor <init>() : void of the deprecated class deprecated.DeprecatedWithCommentClass is used in mock.plugin.deprecated.DeprecatedUser.clazzWithComment() : void")
 
     assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedWithCommentClass is used in mock.plugin.deprecated.DeprecatedUser.clazzWithComment() : void")
   }
@@ -216,7 +216,7 @@ class VerificationCorrectnessTest {
   fun `field of the deprecated class usage`() {
     //Auxiliary usages
     assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.field() : void")
-    assertDeprecatedUsageFound("Method <init>() : void of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.field() : void")
+    assertDeprecatedUsageFound("Constructor <init>() : void of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.field() : void")
 
     assertDeprecatedUsageFound("Field x : int of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.field() : void")
   }
