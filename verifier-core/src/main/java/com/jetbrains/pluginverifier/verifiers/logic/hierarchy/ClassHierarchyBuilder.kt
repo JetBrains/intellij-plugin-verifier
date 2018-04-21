@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.verifiers.logic.hierarchy
 
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
-import com.jetbrains.pluginverifier.verifiers.ClassFileOrigin
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.isInterface
 import com.jetbrains.pluginverifier.verifiers.logic.CommonClassNames
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileOrigin
 import org.objectweb.asm.tree.ClassNode
 
 class ClassHierarchyBuilder(private val context: VerificationContext) {
@@ -28,7 +28,7 @@ class ClassHierarchyBuilder(private val context: VerificationContext) {
 
     ClassParentsVisitor(context, true).visitClass(classNode, true,
         onEnter = { parent ->
-          val parentOrigin = context.getOriginOfClass(parent.name)
+          val parentOrigin = context.clsResolver.getOriginOfClass(parent.name)
           if (parentOrigin != null) {
             className2Hierarchy[parent.name] = ClassHierarchy(
                 parent.name,

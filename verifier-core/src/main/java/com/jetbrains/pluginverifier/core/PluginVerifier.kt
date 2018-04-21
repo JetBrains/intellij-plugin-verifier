@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.core
 
-import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
@@ -15,7 +14,6 @@ import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.parameters.VerifierParameters
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetails
@@ -28,6 +26,8 @@ import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolver
+import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolver
 import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
 import java.util.concurrent.Callable
@@ -186,28 +186,22 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
     val jdkCacheEntry = jdkDescriptorsCache.getJdkResolver(jdkPath)
     return when (jdkCacheEntry) {
       is ResourceCacheEntryResult.Found -> jdkCacheEntry.resourceCacheEntry.use {
-        runVerification(pluginResolver, dependenciesResolver, pluginDetails, it.resource)
+        val clsResolver = DefaultClsResolver(
+            pluginResolver,
+            dependenciesResolver,
+            it.resource.jdkClassesResolver,
+            ideDescriptor.ideResolver,
+            verifierParameters.externalClassesPrefixes
+        )
+
+        runVerification(pluginDetails, clsResolver)
       }
       is ResourceCacheEntryResult.Failed -> throw IllegalStateException("Unable to resolve JDK descriptor", jdkCacheEntry.error)
       is ResourceCacheEntryResult.NotFound -> throw IllegalStateException("Unable to find JDK $jdkPath: ${jdkCacheEntry.message}")
     }
   }
 
-  private fun runVerification(pluginResolver: Resolver,
-                              dependenciesResolver: Resolver,
-                              pluginDetails: PluginDetails,
-                              jdkDescriptor: JdkDescriptor): VerificationResult? {
-    /**
-     * Create the plugin's class loader used during the verification.
-     * Don't close this classLoader because it contains the client's resolvers.
-     */
-    val verificationClassLoader = try {
-      getVerificationClassLoader(pluginResolver, jdkDescriptor.jdkClassesResolver, dependenciesResolver)
-    } catch (e: Exception) {
-      pluginVerificationReportage.logException("Unable to create the plugin class loader of $pluginInfo", e)
-      return createInvalidPluginResult(e)
-    }
-
+  private fun runVerification(pluginDetails: PluginDetails, clsResolver: ClsResolver): VerificationResult? {
     /**
      * Select classes for the verification.
      */
@@ -218,29 +212,26 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
       return createInvalidPluginResult(e)
     }
 
-    buildVerificationContextAndDoVerification(pluginDetails.plugin, checkClasses, pluginResolver, dependenciesResolver, jdkDescriptor.jdkClassesResolver, verificationClassLoader)
+    buildVerificationContextAndDoVerification(
+        pluginDetails.plugin,
+        checkClasses,
+        clsResolver
+    )
     return null
   }
 
   private fun buildVerificationContextAndDoVerification(plugin: IdePlugin,
                                                         checkClasses: Set<String>,
-                                                        pluginResolver: Resolver,
-                                                        dependenciesResolver: Resolver,
-                                                        jdkClassesResolver: Resolver,
-                                                        verificationClassLoader: Resolver) {
+                                                        clsResolver: ClsResolver) {
     checkIfInterrupted()
+
     val verificationContext = VerificationContext(
         plugin,
         ideDescriptor.ideVersion,
-        verificationClassLoader,
-        pluginResolver,
-        dependenciesResolver,
-        jdkClassesResolver,
-        ideDescriptor.ideResolver,
         resultHolder,
-        verifierParameters.externalClassesPrefixes,
         verifierParameters.findDeprecatedApiUsages,
-        verifierParameters.problemFilters
+        verifierParameters.problemFilters,
+        clsResolver
     )
 
     val progressIndicator = object : Reporter<Double> {
@@ -260,23 +251,6 @@ class PluginVerifier(private val pluginInfo: PluginInfo,
   private fun IdePluginClassesLocations.createPluginClassLoader() = UnionResolver.create(
       classesSelectors.map { it.getClassLoader(this) }
   )
-
-  /**
-   * Constructs a class files resolver that searches for
-   * classes in an order described in [com.jetbrains.pluginverifier.verifiers.ClassFileOrigin].
-   */
-  private fun getVerificationClassLoader(pluginResolver: Resolver,
-                                         jdkResolver: Resolver,
-                                         dependenciesResolver: Resolver) =
-      CacheResolver(
-          UnionResolver.create(
-              listOf(
-                  pluginResolver,
-                  jdkResolver,
-                  ideDescriptor.ideResolver,
-                  dependenciesResolver
-              )
-          ))
 
   private fun DirectedGraph<DepVertex, DepEdge>.createDependenciesResolver(): Resolver {
     val dependenciesResolvers = arrayListOf<Resolver>()

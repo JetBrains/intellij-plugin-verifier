@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers
 
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.core.VerificationResultHolder
@@ -11,19 +10,16 @@ import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileOrigin
+import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolver
 
 data class VerificationContext(
     val plugin: IdePlugin,
     val ideVersion: IdeVersion,
-    val verificationClassLoader: Resolver,
-    val pluginResolver: Resolver,
-    val dependenciesResolver: Resolver,
-    val jdkClassesResolver: Resolver,
-    val ideResolver: Resolver,
     val resultHolder: VerificationResultHolder,
-    val externalClassesPrefixes: List<String>,
     val findDeprecatedApiUsages: Boolean,
-    val problemFilters: List<ProblemsFilter>
+    val problemFilters: List<ProblemsFilter>,
+    val clsResolver: ClsResolver
 ) {
 
   fun registerProblem(problem: CompatibilityProblem) {
@@ -46,22 +42,6 @@ data class VerificationContext(
     }
   }
 
-  fun getOriginOfClass(className: String): ClassFileOrigin? {
-    if (pluginResolver.containsClass(className)) {
-      return ClassFileOrigin.PluginInternalClass
-    }
-    if (jdkClassesResolver.containsClass(className)) {
-      return ClassFileOrigin.JdkClass
-    }
-    if (ideResolver.containsClass(className)) {
-      return ClassFileOrigin.IdeClass
-    }
-    if (dependenciesResolver.containsClass(className)) {
-      return ClassFileOrigin.ClassOfPluginDependency
-    }
-    return null
-  }
-
   /**
    * Determines whether we should index usage of deprecated API.
    *
@@ -69,7 +49,7 @@ data class VerificationContext(
    * and exclude usages of deprecated JDK API and plugin's internal deprecated API.
    */
   private fun shouldIndexDeprecatedClass(className: String) =
-      with(getOriginOfClass(className)) {
+      with(clsResolver.getOriginOfClass(className)) {
         this == ClassFileOrigin.IdeClass || this == ClassFileOrigin.ClassOfPluginDependency
       }
 
@@ -78,7 +58,5 @@ data class VerificationContext(
     is MethodLocation -> this.hostClass
     is FieldLocation -> this.hostClass
   }
-
-  fun isExternalClass(className: String) = externalClassesPrefixes.any { it.isNotEmpty() && className.startsWith(it) }
 
 }

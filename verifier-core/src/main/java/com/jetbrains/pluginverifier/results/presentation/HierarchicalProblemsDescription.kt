@@ -3,8 +3,8 @@ package com.jetbrains.pluginverifier.results.presentation
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
-import com.jetbrains.pluginverifier.verifiers.ClassFileOrigin
 import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassHierarchyVisitor
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileOrigin
 
 object HierarchicalProblemsDescription {
   private fun findIdeSuperClassesAndInterfaces(ownerHierarchy: ClassHierarchy): Pair<Set<String>, Set<String>> {

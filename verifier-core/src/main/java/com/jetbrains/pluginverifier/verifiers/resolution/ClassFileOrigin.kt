@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.verifiers
+package com.jetbrains.pluginverifier.verifiers.resolution
 
 /**
  * Represents one of possible locations of a class file.

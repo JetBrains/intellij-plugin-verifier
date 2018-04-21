@@ -18,10 +18,12 @@ import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.tests.bytecode.createClassNode
+import com.jetbrains.pluginverifier.tests.mocks.EmptyClsResolver
 import com.jetbrains.pluginverifier.tests.mocks.MOCK_METHOD_LOCATION
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassHierarchyBuilder
+import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolver
 import net.bytebuddy.ByteBuddy
 import org.junit.Assert.fail
 import org.junit.Test
@@ -159,7 +161,13 @@ class DocumentedProblemsReportingTest {
   private fun createVerificationContextForHierarchicalTest(): VerificationContext {
     val classes = buildClassesForHierarchicalTest()
     return createSimpleVerificationContext().copy(
-        verificationClassLoader = FixedClassesResolver.create(classes)
+        clsResolver = DefaultClsResolver(
+            FixedClassesResolver.create(classes),
+            EmptyResolver,
+            EmptyResolver,
+            EmptyResolver,
+            emptyList()
+        )
     )
   }
 
@@ -174,15 +182,10 @@ class DocumentedProblemsReportingTest {
     return VerificationContext(
         idePlugin,
         ideVersion,
-        EmptyResolver,
-        EmptyResolver,
-        EmptyResolver,
-        EmptyResolver,
-        EmptyResolver,
         VerificationResultHolder(EmptyPluginVerificationReportage),
-        emptyList(),
         false,
-        emptyList()
+        emptyList(),
+        EmptyClsResolver
     )
   }
 

@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers
 
-import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException
 import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedClassUsage
 import com.jetbrains.pluginverifier.results.location.ClassLocation
@@ -14,43 +13,16 @@ import com.jetbrains.pluginverifier.results.problems.IllegalClassAccessProblem
 import com.jetbrains.pluginverifier.results.problems.InvalidClassFileProblem
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.verifiers.logic.CommonClassNames
+import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolution
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
 import java.util.*
 
-private sealed class ClsResolution {
-  object NotFound : ClsResolution()
-  object ExternalClass : ClsResolution()
-  data class InvalidClassFile(val asmError: String) : ClsResolution()
-  data class FailedToReadClassFile(val reason: String) : ClsResolution()
-  data class Found(val node: ClassNode) : ClsResolution()
-}
-
-/**
- * To resolve an unresolved symbolic reference from D to a class or interface C denoted by N, the following steps are performed:
- * ...<JVM-related stuff>...
- *  3) Finally, access permissions to C are checked.
- *  If C is not accessible (§5.4.4) to D, class or interface resolution throws an IllegalAccessError.
- */
-private fun VerificationContext.resolveClass(className: String): ClsResolution {
-  if (isExternalClass(className)) {
-    return ClsResolution.ExternalClass
-  }
-  val node = try {
-    verificationClassLoader.findClass(className)
-  } catch (e: InvalidClassFileException) {
-    return ClsResolution.InvalidClassFile(e.asmError)
-  } catch (e: Exception) {
-    return ClsResolution.FailedToReadClassFile(e.message ?: e.javaClass.name)
-  }
-  return node?.let { ClsResolution.Found(it) } ?: ClsResolution.NotFound
-}
-
 fun VerificationContext.resolveClassOrProblem(className: String,
                                               lookup: ClassNode,
                                               lookupLocation: () -> Location): ClassNode? {
-  val resolution = resolveClass(className)
+  val resolution = clsResolver.resolveClass(className)
   return with(resolution) {
     when (this) {
       is ClsResolution.Found -> {
@@ -80,11 +52,9 @@ fun VerificationContext.resolveClassOrProblem(className: String,
   }
 }
 
-private fun VerificationContext.classExists(className: String) = verificationClassLoader.containsClass(className)
-
 //todo: check the cases when the accessibility must be checked.
 fun VerificationContext.checkClassExistsOrExternal(className: String, lookupLocation: () -> Location) {
-  if (!isExternalClass(className) && !classExists(className)) {
+  if (!clsResolver.isExternalClass(className) && !clsResolver.classExists(className)) {
     registerProblem(ClassNotFoundProblem(ClassReference(className), lookupLocation()))
   }
 }
@@ -106,7 +76,7 @@ fun VerificationContext.isSubclassOrSelf(childClassName: String, possibleParentN
 }
 
 fun VerificationContext.isSubclassOf(childClassName: String, possibleParentName: String): Boolean {
-  val childClass = (resolveClass(childClassName) as? ClsResolution.Found)?.node ?: return false
+  val childClass = (clsResolver.resolveClass(childClassName) as? ClsResolution.Found)?.node ?: return false
   return isSubclassOf(childClass, possibleParentName)
 }
 
