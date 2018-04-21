@@ -15,8 +15,8 @@ import org.objectweb.asm.tree.ClassNode
 class InterfacesVerifier : ClassVerifier {
   override fun verify(clazz: ClassNode, ctx: VerificationContext) {
     //If any of the classes or interfaces named as direct superinterfaces of C is not in fact an interface, loading throws an IncompatibleClassChangeError.
-    clazz.interfaces
-        .filterIsInstance(String::class.java)
+    @Suppress("UNCHECKED_CAST")
+    (clazz.interfaces as List<String>)
         .mapNotNull { ctx.resolveClassOrProblem(it, clazz, { clazz.createClassLocation() }) }
         .filterNot { it.isInterface() }
         .forEach { ctx.registerProblem(SuperInterfaceBecameClassProblem(clazz.createClassLocation(), it.createClassLocation())) }

@@ -129,7 +129,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
   }
 
 
-  private fun checkFieldIsAccessible(location: ResolvedField) {
+  private fun checkFieldIsAccessible(location: LookupResult.Found) {
     val definingClass = location.definingClass
     val fieldNode = location.fieldNode
 
@@ -171,7 +171,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
    *  If the reference to C can be successfully resolved, an exception relating
    *  to the failure of resolution of the field reference itself can be thrown.
    */
-  private fun resolveField(): ResolvedField? {
+  private fun resolveField(): LookupResult.Found? {
     if (fieldOwner.startsWith("[")) {
       //check that the array type exists
       val arrayType = fieldOwner.extractClassNameFromDescr()
@@ -183,17 +183,19 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
 
     val ownerNode = ctx.resolveClassOrProblem(fieldOwner, verifiableClass, { getFromMethod() }) ?: return null
 
-    val (fail, resolvedField) = resolveFieldSteps(ownerNode)
-    if (fail) {
-      return null
+    val lookupResult = resolveFieldSteps(ownerNode)
+    return when (lookupResult) {
+      FieldsImplementation.LookupResult.Abort -> null
+      FieldsImplementation.LookupResult.NotFound -> {
+        registerFieldNotFoundProblem(ownerNode)
+        null
+      }
+      is FieldsImplementation.LookupResult.Found -> {
+        checkFieldIsAccessible(lookupResult)
+        checkFieldIsDeprecated(lookupResult)
+        lookupResult
+      }
     }
-    if (resolvedField == null) {
-      registerFieldNotFoundProblem(ownerNode)
-    } else {
-      checkFieldIsAccessible(resolvedField)
-      checkFieldIsDeprecated(resolvedField)
-    }
-    return resolvedField
   }
 
   //todo: test the field's and method's problems descriptions properly.
@@ -209,7 +211,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     ))
   }
 
-  private fun checkFieldIsDeprecated(resolvedField: ResolvedField) {
+  private fun checkFieldIsDeprecated(resolvedField: LookupResult.Found) {
     with(resolvedField) {
       if (fieldNode.isDeprecated()) {
         ctx.registerDeprecatedUsage(DeprecatedFieldUsage(createFieldLocation(definingClass, fieldNode), getFromMethod()))
@@ -222,11 +224,12 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
 
   fun getFromMethod() = createMethodLocation(verifiableClass, verifiableMethod)
 
-  data class LookupResult(val fail: Boolean, val resolvedField: ResolvedField?)
+  sealed class LookupResult {
+    object Abort : LookupResult()
 
-  companion object {
-    val NOT_FOUND = LookupResult(false, null)
-    val FAILED_LOOKUP = LookupResult(true, null)
+    object NotFound : LookupResult()
+
+    data class Found(val definingClass: ClassNode, val fieldNode: FieldNode) : LookupResult()
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -238,7 +241,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     val fields = currentClass.fields as List<FieldNode>
     val matching = fields.firstOrNull { it.name == fieldName && it.desc == fieldDescriptor }
     if (matching != null) {
-      return LookupResult(false, ResolvedField(currentClass, matching))
+      return LookupResult.Found(currentClass, matching)
     }
 
     /**
@@ -247,14 +250,13 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
      */
     for (anInterface in currentClass.interfaces as List<String>) {
       val resolvedIntf = ctx.resolveClassOrProblem(anInterface, currentClass, { currentClass.createClassLocation() })
-          ?: return FAILED_LOOKUP
+          ?: return LookupResult.Abort
 
-      val (fail, resolvedField) = resolveFieldSteps(resolvedIntf)
-      if (fail) {
-        return FAILED_LOOKUP
-      }
-      if (resolvedField != null) {
-        return LookupResult(false, resolvedField)
+      val lookupResult = resolveFieldSteps(resolvedIntf)
+      when (lookupResult) {
+        LookupResult.NotFound -> Unit
+        LookupResult.Abort -> return lookupResult
+        is LookupResult.Found -> return lookupResult
       }
     }
 
@@ -264,23 +266,20 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     val superName = currentClass.superName
     if (superName != null) {
       val resolvedSuper = ctx.resolveClassOrProblem(superName, currentClass, { currentClass.createClassLocation() })
-          ?: return FAILED_LOOKUP
-      val (fail, resolvedField) = resolveFieldSteps(resolvedSuper)
-      if (fail) {
-        return FAILED_LOOKUP
-      }
-      if (resolvedField != null) {
-        return LookupResult(false, resolvedField)
+          ?: return LookupResult.Abort
+      val lookupResult = resolveFieldSteps(resolvedSuper)
+      when (lookupResult) {
+        LookupResult.NotFound -> Unit
+        LookupResult.Abort -> return lookupResult
+        is LookupResult.Found -> return lookupResult
       }
     }
 
     /**
      * 4) Otherwise, field lookup fails.
      */
-    return NOT_FOUND
+    return LookupResult.NotFound
   }
-
-  data class ResolvedField(val definingClass: ClassNode, val fieldNode: FieldNode)
 
 }
 

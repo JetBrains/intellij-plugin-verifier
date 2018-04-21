@@ -30,11 +30,14 @@ class ClassParentsVisitor(private val context: VerificationContext,
 
     val superParents = currentClass.superName.singletonOrEmpty() + interfaces
 
-    superParents
-        .asSequence()
-        .filterNot { it in visitedClasses }
-        .mapNotNull { context.resolveClassOrProblem(it, currentClass, { currentClass.createClassLocation() }) }
-        .forEach { visitClass(it, true, onEnter, onExit) }
+    for (superParent in superParents) {
+      if (superParent !in visitedClasses) {
+        val superNode = context.resolveClassOrProblem(superParent, currentClass, { currentClass.createClassLocation() })
+        if (superNode != null) {
+          visitClass(superNode, true, onEnter, onExit)
+        }
+      }
+    }
 
     if (visitSelf) {
       onExit(currentClass)

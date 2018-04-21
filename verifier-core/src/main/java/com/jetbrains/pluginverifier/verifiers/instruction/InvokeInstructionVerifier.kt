@@ -124,11 +124,10 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
 
        So I caught up a nasty bug of incorrectly determining the method to be invoked.
     */
-    val classRef: ClassNode
-    if (resolved.methodNode.name != "<init>" && (!ownerNode.isInterface() && methodOwner == verifiableClass.superName) && verifiableClass.isSuperFlag()) {
-      classRef = ctx.resolveClassOrProblem(verifiableClass.superName, verifiableClass, { getFromMethod() }) ?: return
+    val classRef: ClassNode = if (resolved.methodNode.name != "<init>" && (!ownerNode.isInterface() && methodOwner == verifiableClass.superName) && verifiableClass.isSuperFlag()) {
+      ctx.resolveClassOrProblem(verifiableClass.superName, verifiableClass, { getFromMethod() }) ?: return
     } else {
-      classRef = ctx.resolveClassOrProblem(methodOwner, verifiableClass, { getFromMethod() }) ?: return
+      ctx.resolveClassOrProblem(methodOwner, verifiableClass, { getFromMethod() }) ?: return
     }
 
     /*
@@ -152,7 +151,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
   }
 
 
-  private fun invokeSpecialLookup(classRef: ClassNode, resolvedReference: ResolvedMethod): Pair<Int, ResolvedMethod>? {
+  private fun invokeSpecialLookup(classRef: ClassNode, resolvedReference: LookupResult.Found): Pair<Int, LookupResult.Found>? {
     val resolvedMethod = resolvedReference.methodNode
     /*
       1) If C contains a declaration for an instance method with the same name and descriptor as the resolved method,
@@ -160,7 +159,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     */
     val matching = (classRef.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc }
     if (matching != null) {
-      return 1 to ResolvedMethod(classRef, matching)
+      return 1 to LookupResult.Found(classRef, matching)
     }
 
     /*
@@ -175,7 +174,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       while (true) {
         val match = (current.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc }
         if (match != null) {
-          return 2 to ResolvedMethod(current, match)
+          return 2 to LookupResult.Found(current, match)
         }
 
         val superName = current.superName
@@ -193,7 +192,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
           ?: return null
       val match = (objectClass.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc && it.isPublic() }
       if (match != null) {
-        return 3 to ResolvedMethod(objectClass, match)
+        return 3 to LookupResult.Found(objectClass, match)
       }
     }
 
@@ -316,7 +315,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
      * This is a corresponding question on stack-overflow:
      * http://stackoverflow.com/questions/42294217/binary-compatibility-of-changing-a-class-with-static-methods-to-interface-in-jav
      */
-    val resolved: ResolvedMethod = resolveClassMethod(ownerNode) ?: return
+    val resolved: LookupResult.Found = resolveClassMethod(ownerNode) ?: return
 
     /*
     Otherwise, if the resolved method is an instance method, the invokestatic instruction throws an IncompatibleClassChangeError.
@@ -330,40 +329,40 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
 
   private fun getFromMethod() = createMethodLocation(verifiableClass, verifiableMethod)
 
-  fun resolveInterfaceMethod(ownerNode: ClassNode): ResolvedMethod? {
-    val (fail, resolvedMethod) = resolveInterfaceMethod0(ownerNode)
-    if (fail) {
-      return null
+  fun resolveInterfaceMethod(ownerNode: ClassNode): LookupResult.Found? {
+    val lookupResult = resolveInterfaceMethod0(ownerNode)
+    return when (lookupResult) {
+      is InvokeImplementation.LookupResult.Found -> {
+        /*
+         * Otherwise, if method lookup succeeds and the referenced method is not accessible (§5.4.4) to D,
+         * method resolution throws an IllegalAccessError.
+         */
+        checkMethodIsAccessibleOrDeprecated(lookupResult)
+      }
+      InvokeImplementation.LookupResult.Abort -> null
+      InvokeImplementation.LookupResult.NotFound -> {
+        registerMethodNotFoundProblem(ownerNode)
+        null
+      }
     }
-
-    if (resolvedMethod != null) {
-      /*
-       * Otherwise, if method lookup succeeds and the referenced method is not accessible (§5.4.4) to D,
-       * method resolution throws an IllegalAccessError.
-       */
-      return checkMethodIsAccessibleOrDeprecated(resolvedMethod)
-    }
-
-    registerMethodNotFoundProblem(ownerNode)
-    return null
   }
 
-  fun resolveClassMethod(ownerNode: ClassNode): ResolvedMethod? {
-    val (fail, resolvedMethod) = resolveClassMethod0(ownerNode)
-    if (fail) {
-      return null
-    }
-
-    if (resolvedMethod != null) {
-      /*
+  fun resolveClassMethod(ownerNode: ClassNode): LookupResult.Found? {
+    val lookupResult = resolveClassMethod0(ownerNode)
+    return when (lookupResult) {
+      InvokeImplementation.LookupResult.Abort -> null
+      InvokeImplementation.LookupResult.NotFound -> {
+        registerMethodNotFoundProblem(ownerNode)
+        null
+      }
+      is InvokeImplementation.LookupResult.Found -> {
+        /*
        * Otherwise, if method lookup succeeds and the referenced method is not accessible (§5.4.4) to D,
        * method resolution throws an IllegalAccessError.
        */
-      return checkMethodIsAccessibleOrDeprecated(resolvedMethod)
+        checkMethodIsAccessibleOrDeprecated(lookupResult)
+      }
     }
-
-    registerMethodNotFoundProblem(ownerNode)
-    return null
   }
 
   private fun registerMethodNotFoundProblem(ownerNode: ClassNode) {
@@ -388,7 +387,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
    * and is declared by a class in the same run-time package as D.
    * - R is private and is declared in D.
    */
-  fun checkMethodIsAccessibleOrDeprecated(resolvedMethod: ResolvedMethod): ResolvedMethod? {
+  fun checkMethodIsAccessibleOrDeprecated(resolvedMethod: LookupResult.Found): LookupResult.Found? {
     val definingClass = resolvedMethod.definingClass
     val methodNode = resolvedMethod.methodNode
 
@@ -424,7 +423,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     return resolvedMethod
   }
 
-  private fun checkMethodIsDeprecated(resolvedMethod: ResolvedMethod) {
+  private fun checkMethodIsDeprecated(resolvedMethod: LookupResult.Found) {
     with(resolvedMethod) {
       if (methodNode.isDeprecated()) {
         ctx.registerDeprecatedUsage(DeprecatedMethodUsage(createMethodLocation(definingClass, methodNode), getFromMethod()))
@@ -452,7 +451,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       val methodReference = SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)
       val caller = getFromMethod()
       ctx.registerProblem(InvokeInterfaceMethodOnClassProblem(methodReference, caller, instruction))
-      return FAILED_LOOKUP
+      return LookupResult.Abort
     }
 
     /*
@@ -461,7 +460,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     */
     val matching = (interfaceNode.methods as List<MethodNode>).firstOrNull { it.name == methodName && it.desc == methodDescriptor }
     if (matching != null) {
-      return LookupResult(false, ResolvedMethod(interfaceNode, matching))
+      return LookupResult.Found(interfaceNode, matching)
     }
 
     /*
@@ -470,10 +469,10 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     method lookup succeeds.
     */
     val objectClass = ctx.resolveClassOrProblem(CommonClassNames.JAVA_LANG_OBJECT, interfaceNode, { interfaceNode.createClassLocation() })
-        ?: return FAILED_LOOKUP
+        ?: return LookupResult.Abort
     val objectMethod = (objectClass.methods as List<MethodNode>).firstOrNull { it.name == methodName && it.desc == methodDescriptor && it.isPublic() && !it.isStatic() }
     if (objectMethod != null) {
-      return LookupResult(false, ResolvedMethod(objectClass, objectMethod))
+      return LookupResult.Found(objectClass, objectMethod)
     }
 
     /*
@@ -481,25 +480,27 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     and descriptor specified by the method reference include exactly one method that does not
     have its ACC_ABSTRACT flag set, then this method is chosen and method lookup succeeds.
      */
-    val maximallySpecificSuperInterfaceMethods = getMaximallySpecificSuperInterfaceMethods(interfaceNode) ?: return FAILED_LOOKUP
+    val maximallySpecificSuperInterfaceMethods = getMaximallySpecificSuperInterfaceMethods(interfaceNode)
+        ?: return LookupResult.Abort
     val single = maximallySpecificSuperInterfaceMethods.singleOrNull { it.methodNode.name == methodName && it.methodNode.desc == methodDescriptor && !it.methodNode.isAbstract() }
     if (single != null) {
-      return LookupResult(false, single)
+      return single
     }
 
     /*
     5) Otherwise, if any superinterface of C declares a method with the name and descriptor specified by the method
     reference that has neither its ACC_PRIVATE flag nor its ACC_STATIC flag set, one of these is arbitrarily chosen and method lookup succeeds.
      */
-    val matchings = getSuperInterfaceMethods(interfaceNode, { it.name == methodName && it.desc == methodDescriptor && !it.isPrivate() && !it.isStatic() }) ?: return FAILED_LOOKUP
+    val matchings = getSuperInterfaceMethods(interfaceNode, { it.name == methodName && it.desc == methodDescriptor && !it.isPrivate() && !it.isStatic() })
+        ?: return LookupResult.Abort
     if (matchings.isNotEmpty()) {
-      return LookupResult(false, matchings.first())
+      return matchings.first()
     }
 
     /*
     6) Otherwise, method lookup fails.
      */
-    return NOT_FOUND
+    return LookupResult.NotFound
   }
 
 
@@ -513,7 +514,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
    * - Where the method is declared in interface I, there exists no other maximally-specific superinterface
    * method of C with the specified name and descriptor that is declared in a subinterface of I.
    */
-  private fun getMaximallySpecificSuperInterfaceMethods(start: ClassNode): List<ResolvedMethod>? {
+  private fun getMaximallySpecificSuperInterfaceMethods(start: ClassNode): List<LookupResult.Found>? {
     val predicate: (MethodNode) -> Boolean = { it.name == methodName && it.desc == methodDescriptor && !it.isPrivate() && !it.isStatic() }
     val allMatching = getSuperInterfaceMethods(start, predicate) ?: return null
     return allMatching.filterIndexed { index, (definingClass) ->
@@ -530,17 +531,18 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
   /**
    * @return all direct and indirect super-interface methods matching the given predicate
    */
-  private fun getSuperInterfaceMethods(start: ClassNode, predicate: (MethodNode) -> Boolean): List<ResolvedMethod>? {
+  private fun getSuperInterfaceMethods(start: ClassNode, predicate: (MethodNode) -> Boolean): List<LookupResult.Found>? {
     //breadth-first-search
     val queue: Queue<ClassNode> = LinkedList<ClassNode>()
     val visited = hashSetOf<String>()
-    val result = arrayListOf<ResolvedMethod>()
+    val result = arrayListOf<LookupResult.Found>()
     queue.add(start)
     visited.add(start.name)
     while (!queue.isEmpty()) {
       val cur = queue.remove()
-      val matching = (cur.methods as List<MethodNode>).filter(predicate)
-      result.addAll(matching.map { ResolvedMethod(cur, it) })
+      (cur.methods as List<MethodNode>)
+          .filter(predicate)
+          .mapTo(result) { LookupResult.Found(cur, it) }
 
       (cur.interfaces as List<String>).forEach {
         if (it !in visited) {
@@ -585,40 +587,39 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
         val methodReference = SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)
         val caller = getFromMethod()
         ctx.registerProblem(InvokeClassMethodOnInterfaceProblem(methodReference, caller, instruction))
-        return FAILED_LOOKUP
+        return LookupResult.Abort
       }
     }
 
     /*
       2) Otherwise, method resolution attempts to locate the referenced method in C and its superclasses:
     */
-    val (shouldStop2, resolvedMethod2) = resolveClassMethodStep2(classNode)
-    if (shouldStop2) {
-      return FAILED_LOOKUP
-    }
-    if (resolvedMethod2 != null) {
-      return LookupResult(false, resolvedMethod2)
+    val lookupResult2 = resolveClassMethodStep2(classNode)
+    when (lookupResult2) {
+      LookupResult.Abort -> return lookupResult2
+      is LookupResult.Found -> return lookupResult2
+      LookupResult.NotFound -> Unit
     }
 
     /*
       3) Otherwise, method resolution attempts to locate the referenced method in the superinterfaces of the specified class C:
     */
-    val (shouldStop3, resolvedMethod3) = resolveClassMethodStep3(classNode)
-    if (shouldStop3) {
-      return FAILED_LOOKUP
-    }
-    if (resolvedMethod3 != null) {
-      return LookupResult(false, resolvedMethod3)
+    val lookupResult3 = resolveClassMethodStep3(classNode)
+    when (lookupResult3) {
+      LookupResult.Abort -> return lookupResult3
+      is LookupResult.Found -> return lookupResult3
+      LookupResult.NotFound -> Unit
     }
 
-    return NOT_FOUND
+    return LookupResult.NotFound
   }
 
-  data class LookupResult(val fail: Boolean, val resolvedMethod: ResolvedMethod?)
+  sealed class LookupResult {
+    object Abort : LookupResult()
 
-  companion object {
-    val FAILED_LOOKUP = LookupResult(true, null)
-    val NOT_FOUND = LookupResult(false, null)
+    object NotFound : LookupResult()
+
+    data class Found(val definingClass: ClassNode, val methodNode: MethodNode) : LookupResult()
   }
 
   fun resolveClassMethodStep2(currentClass: ClassNode): LookupResult {
@@ -635,7 +636,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
 
     val matchByName = methods.firstOrNull { it.name == methodName }
     if (matchByName != null && isSignaturePolymorphic(currentClass.name, matchByName) && methods.count { it.name == methodName } == 1) {
-      return LookupResult(false, ResolvedMethod(currentClass, matchByName))
+      return LookupResult.Found(currentClass, matchByName)
     }
 
     /*
@@ -644,7 +645,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
      */
     val matching = methods.find { methodName == it.name && methodDescriptor == it.desc }
     if (matching != null) {
-      return LookupResult(false, ResolvedMethod(currentClass, matching))
+      return LookupResult.Found(currentClass, matching)
     }
 
     /*
@@ -654,15 +655,16 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     val superName = currentClass.superName
     if (superName != null) {
       val resolvedSuper = ctx.resolveClassOrProblem(superName, currentClass, { currentClass.createClassLocation() })
-          ?: return LookupResult(true, null)
-      val (shouldStopLookup, resolvedMethod) = resolveClassMethodStep2(resolvedSuper)
-      if (shouldStopLookup) {
-        return FAILED_LOOKUP
+          ?: return LookupResult.Abort
+      val lookupResult = resolveClassMethodStep2(resolvedSuper)
+      when (lookupResult) {
+        is LookupResult.Found -> return lookupResult
+        LookupResult.Abort -> return LookupResult.Abort
+        LookupResult.NotFound -> Unit
       }
-      return LookupResult(false, resolvedMethod)
     }
 
-    return NOT_FOUND
+    return LookupResult.NotFound
   }
 
   fun resolveClassMethodStep3(currentClass: ClassNode): LookupResult {
@@ -672,10 +674,11 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     by the method reference include exactly one method that does not have its ACC_ABSTRACT
     flag set, then this method is chosen and method lookup succeeds.
      */
-    val maximallySpecificSuperInterfaceMethods = getMaximallySpecificSuperInterfaceMethods(currentClass) ?: return FAILED_LOOKUP
+    val maximallySpecificSuperInterfaceMethods = getMaximallySpecificSuperInterfaceMethods(currentClass)
+        ?: return LookupResult.Abort
     val single = maximallySpecificSuperInterfaceMethods.singleOrNull { it.methodNode.name == methodName && it.methodNode.desc == methodDescriptor && !it.methodNode.isAbstract() }
     if (single != null) {
-      return LookupResult(false, single)
+      return single
     }
 
     /*
@@ -683,17 +686,16 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     by the method reference that has neither its ACC_PRIVATE flag nor its ACC_STATIC
     flag set, one of these is arbitrarily chosen and method lookup succeeds.
      */
-    val matchings = getSuperInterfaceMethods(currentClass, { it.name == methodName && it.desc == methodDescriptor && !it.isPrivate() && !it.isStatic() }) ?: return FAILED_LOOKUP
+    val matchings = getSuperInterfaceMethods(currentClass, { it.name == methodName && it.desc == methodDescriptor && !it.isPrivate() && !it.isStatic() })
+        ?: return LookupResult.Abort
     if (matchings.isNotEmpty()) {
-      return LookupResult(false, matchings.first())
+      return matchings.first()
     }
 
     /*
     3.3) Otherwise, method lookup fails.
      */
-    return NOT_FOUND
+    return LookupResult.NotFound
   }
-
-  data class ResolvedMethod(val definingClass: ClassNode, val methodNode: MethodNode)
 
 }

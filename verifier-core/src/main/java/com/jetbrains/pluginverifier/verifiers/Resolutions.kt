@@ -19,7 +19,7 @@ import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
 import java.util.*
 
-sealed class ClsResolution {
+private sealed class ClsResolution {
   object NotFound : ClsResolution()
   object ExternalClass : ClsResolution()
   data class InvalidClassFile(val asmError: String) : ClsResolution()
