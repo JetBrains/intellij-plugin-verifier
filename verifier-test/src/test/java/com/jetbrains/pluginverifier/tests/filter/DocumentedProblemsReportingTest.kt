@@ -2,12 +2,12 @@ package com.jetbrains.pluginverifier.tests.filter
 
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.classes.resolvers.FixedClassesResolver
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.core.VerificationResultHolder
+import com.jetbrains.pluginverifier.ResultHolder
 import com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.documented.*
 import com.jetbrains.pluginverifier.reporting.verification.EmptyPluginVerificationReportage
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.ClassLocation
@@ -19,8 +19,8 @@ import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.tests.bytecode.createClassNode
 import com.jetbrains.pluginverifier.tests.mocks.EmptyClsResolver
+import com.jetbrains.pluginverifier.tests.mocks.EmptyPublicPluginRepository
 import com.jetbrains.pluginverifier.tests.mocks.MOCK_METHOD_LOCATION
-import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassHierarchyBuilder
 import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolver
@@ -28,6 +28,7 @@ import net.bytebuddy.ByteBuddy
 import org.junit.Assert.fail
 import org.junit.Test
 import org.objectweb.asm.tree.ClassNode
+import java.net.URL
 
 /**
  * This test asserts that the
@@ -70,8 +71,7 @@ class DocumentedProblemsReportingTest {
         MethodReference(classBReference, "foo", "()V"),
         MOCK_METHOD_LOCATION,
         Instruction.INVOKE_VIRTUAL,
-        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY,
-        IdeVersion.createIdeVersion("IU-163")
+        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY
     )
 
     val constructorIsNotFoundProblem = methodFooIsNotFoundProblem.copy(
@@ -109,8 +109,7 @@ class DocumentedProblemsReportingTest {
         FieldReference(classBReference, "x", "I"),
         MOCK_METHOD_LOCATION,
         ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY,
-        Instruction.GET_FIELD,
-        IdeVersion.createIdeVersion("IU-163")
+        Instruction.GET_FIELD
     )
 
     val abstractMethodLocation = MethodLocation(
@@ -166,28 +165,20 @@ class DocumentedProblemsReportingTest {
             EmptyResolver,
             EmptyResolver,
             EmptyResolver,
+            emptyList(),
             emptyList()
         )
     )
   }
 
-  private fun createSimpleVerificationContext(): VerificationContext {
-    val idePlugin = MockIdePlugin(
-        pluginId = "pluginId",
-        pluginVersion = "1.0"
-    )
-
-    val ideVersion = IdeVersion.createIdeVersion("IU-163.1")
-
-    return VerificationContext(
-        idePlugin,
-        ideVersion,
-        VerificationResultHolder(EmptyPluginVerificationReportage),
-        false,
-        emptyList(),
-        EmptyClsResolver
-    )
-  }
+  private fun createSimpleVerificationContext() =
+      VerificationContext(
+          PluginInfo("pluginId", "1.0", "1.0", EmptyPublicPluginRepository, null, null, null, URL("http://example.com"), null),
+          ResultHolder(EmptyPluginVerificationReportage),
+          false,
+          emptyList(),
+          EmptyClsResolver
+      )
 
 
   /**
@@ -267,8 +258,7 @@ class DocumentedProblemsReportingTest {
         MethodReference(deletedClassRef, "foo", "()V"),
         MOCK_METHOD_LOCATION,
         Instruction.INVOKE_VIRTUAL,
-        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY,
-        IdeVersion.createIdeVersion("IU-163")
+        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY
     )
 
     //field with deleted owner
@@ -276,8 +266,7 @@ class DocumentedProblemsReportingTest {
         FieldReference(deletedClassRef, "x", "I"),
         MOCK_METHOD_LOCATION,
         ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY,
-        Instruction.GET_FIELD,
-        IdeVersion.createIdeVersion("IU-163")
+        Instruction.GET_FIELD
     )
 
     val unrelatedClassRef = ClassReference("org/just/some/Class")
@@ -287,8 +276,7 @@ class DocumentedProblemsReportingTest {
         MethodReference(unrelatedClassRef, "foo", "(Lorg/some/deleted/Class;)V"),
         MOCK_METHOD_LOCATION,
         Instruction.INVOKE_VIRTUAL,
-        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY,
-        IdeVersion.createIdeVersion("IU-163")
+        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY
     )
 
     //field with deleted param type
@@ -296,8 +284,7 @@ class DocumentedProblemsReportingTest {
         FieldReference(unrelatedClassRef, "x", "Lorg/some/deleted/Class;"),
         MOCK_METHOD_LOCATION,
         ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY,
-        Instruction.GET_FIELD,
-        IdeVersion.createIdeVersion("IU-163")
+        Instruction.GET_FIELD
     )
 
     val methodWithOwnerFromRemovedPackage = with(methodWithRemovedOwnerProblem) {

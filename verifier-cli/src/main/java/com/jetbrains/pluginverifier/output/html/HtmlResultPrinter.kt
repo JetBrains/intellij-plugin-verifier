@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.output.html
 
-import com.google.common.io.Resources
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
@@ -13,11 +12,10 @@ import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import java.io.PrintWriter
-import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 
-class HtmlResultPrinter(val ideVersion: IdeVersion,
+class HtmlResultPrinter(private val verificationTarget: VerificationTarget,
                         private val htmlFile: Path,
                         private val missingDependencyIgnoring: MissingDependencyIgnoring) : ResultPrinter {
 
@@ -31,14 +29,14 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
   private fun HtmlBuilder.doPrintResults(results: List<VerificationResult>) {
     html {
       head {
-        title("Verification result of IDE $ideVersion")
+        title("Verification result $verificationTarget")
         script(src = "https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.9.1.min.js", type = "text/javascript")
         script(src = "https://code.jquery.com/ui/1.9.2/jquery-ui.min.js", type = "text/javascript")
         link(rel = "stylesheet", href = "https://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css", type = "text/css")
         style(type = "text/css") { unsafe(loadReportCss()) }
       }
       body {
-        h2 { +ideVersion.toString() }
+        h2 { +verificationTarget.toString() }
         label {
           unsafe("""<input id="problematicOnlyCB" type="checkbox" onchange="if ($('#problematicOnlyCB').is(':checked')) {$('body').addClass('problematicOnly')} else {$('body').removeClass('problematicOnly')}">""")
           +"Show problematic plugins only"
@@ -174,9 +172,9 @@ class HtmlResultPrinter(val ideVersion: IdeVersion,
     nonOptionals.forEach { printShortAndFullDescription("missing dependency: $it", it.missingReason) }
   }
 
-  private fun loadReportScript() = Resources.toString(HtmlResultPrinter::class.java.getResource("/reportScript.js"), Charset.forName("UTF-8"))
+  private fun loadReportScript() = HtmlResultPrinter::class.java.getResource("/reportScript.js").readText()
 
-  private fun loadReportCss() = Resources.toString(HtmlResultPrinter::class.java.getResource("/reportCss.css"), Charset.forName("UTF-8"))
+  private fun loadReportCss() = HtmlResultPrinter::class.java.getResource("/reportCss.css").readText()
 
   private fun HtmlBuilder.printProblems(problems: Set<CompatibilityProblem>) {
     problems

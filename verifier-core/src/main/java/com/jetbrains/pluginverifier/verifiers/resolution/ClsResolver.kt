@@ -1,6 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
-interface ClsResolver {
+import java.io.Closeable
+
+interface ClsResolver : Closeable {
   fun resolveClass(className: String): ClsResolution
 
   fun isExternalClass(className: String): Boolean

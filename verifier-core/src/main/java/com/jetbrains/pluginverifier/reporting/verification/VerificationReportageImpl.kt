@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.reporting.verification
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.reporting.ignoring.PluginIgnoredEvent
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -18,24 +18,24 @@ class VerificationReportageImpl(private val reporterSetProvider: VerificationRep
     reportMessage(stageMessage)
   }
 
-  override fun logPluginVerificationIgnored(pluginInfo: PluginInfo, ideVersion: IdeVersion, reason: String) {
-    val pluginIgnoredEvent = PluginIgnoredEvent(pluginInfo, ideVersion, reason)
+  override fun logPluginVerificationIgnored(pluginInfo: PluginInfo, verificationTarget: VerificationTarget, reason: String) {
+    val pluginIgnoredEvent = PluginIgnoredEvent(pluginInfo, verificationTarget, reason)
     reporterSetProvider.ignoredPluginsReporters.forEach { it.report(pluginIgnoredEvent) }
   }
 
   @Synchronized
   override fun logPluginVerificationFinished(pluginVerificationReportage: PluginVerificationReportage) {
     ++verified
-    reportMessage("$verified of $totalTasks tasks finished: ${pluginVerificationReportage.plugin} and #${pluginVerificationReportage.ideVersion}")
+    reportMessage("$verified of $totalTasks tasks finished: ${pluginVerificationReportage.plugin} against ${pluginVerificationReportage.verificationTarget}")
     pluginVerificationReportage.closeLogged()
     reporterSetProvider.globalProgressReporters.forEach { it.report(verified.toDouble() / totalTasks) }
   }
 
   @Synchronized
-  override fun createPluginReportage(pluginInfo: PluginInfo, ideVersion: IdeVersion): PluginVerificationReportage {
+  override fun createPluginReportage(pluginInfo: PluginInfo, verificationTarget: VerificationTarget): PluginVerificationReportage {
     totalTasks++
-    val reporterSet = reporterSetProvider.getReporterSetForPluginVerification(pluginInfo, ideVersion)
-    return PluginVerificationReportageImpl(this, pluginInfo, ideVersion, reporterSet)
+    val reporterSet = reporterSetProvider.getReporterSetForPluginVerification(pluginInfo, verificationTarget)
+    return PluginVerificationReportageImpl(this, pluginInfo, verificationTarget, reporterSet)
   }
 
   override fun close() {

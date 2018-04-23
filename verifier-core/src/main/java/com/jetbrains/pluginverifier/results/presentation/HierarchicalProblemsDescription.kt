@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.results.presentation
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassHierarchyVisitor
@@ -26,7 +25,6 @@ object HierarchicalProblemsDescription {
   fun presentableElementMightHaveBeenDeclaredInIdeSuperTypes(
       elementType: String,
       ownerHierarchy: ClassHierarchy,
-      ideVersion: IdeVersion,
       canBeDeclaredInSuperClass: Boolean,
       canBeDeclaredInSuperInterface: Boolean
   ): String {
@@ -40,7 +38,7 @@ object HierarchicalProblemsDescription {
     } else buildString {
       append(" The $elementType might have been declared ")
       if (superClasses.isNotEmpty()) {
-        append("in the super " + "class".pluralize(superClasses.size) + " belonging to $ideVersion")
+        append("in the super " + "class".pluralize(superClasses.size))
         append(" (")
         append(superClasses.sorted().joinToString(transform = toFullJavaClassName))
         append(")")
@@ -49,7 +47,7 @@ object HierarchicalProblemsDescription {
         if (superClasses.isNotEmpty()) {
           append(" or ")
         }
-        append("in the super " + "interface".pluralize(superInterfaces.size) + " belonging to $ideVersion")
+        append("in the super " + "interface".pluralize(superInterfaces.size))
         append(" (")
         append(superInterfaces.sorted().joinToString(transform = toFullJavaClassName))
         append(")")

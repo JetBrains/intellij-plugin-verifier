@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.repository
 
-import com.google.common.primitives.Ints
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.misc.nameWithoutExtension
 import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
@@ -10,6 +9,7 @@ import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
 import com.jetbrains.pluginverifier.repository.downloader.UrlDownloader
 import com.jetbrains.pluginverifier.repository.files.*
 import org.apache.commons.io.FileUtils
+import java.net.URL
 import java.nio.file.Path
 
 /**
@@ -43,7 +43,7 @@ class PluginFilesBank(private val fileRepository: FileRepository<PluginInfo>) {
 
     private fun getPluginInfoByFile(repository: PluginRepository, file: Path): PluginInfo? {
       val name = file.nameWithoutExtension
-      val updateId = Ints.tryParse(name)
+      val updateId = name.toIntOrNull()
       if (updateId != null && repository is PublicPluginRepository) {
         return repository.getPluginInfoById(updateId)
       }

@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.core
+package com.jetbrains.pluginverifier.parameters.classes
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver

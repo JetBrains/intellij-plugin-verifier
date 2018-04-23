@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.reporting.Reporter
@@ -18,9 +19,12 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
+import com.jetbrains.pluginverifier.repository.cleanup.SpaceUnit
+import com.jetbrains.pluginverifier.repository.cleanup.bytesToSpaceAmount
 import com.jetbrains.pluginverifier.tasks.CommandRunner
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeRunner
 import com.jetbrains.pluginverifier.tasks.checkPlugin.CheckPluginRunner
+import com.jetbrains.pluginverifier.tasks.checkPluginApi.CheckPluginApiRunner
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiRunner
 import com.jetbrains.pluginverifier.tasks.deprecatedUsages.DeprecatedUsagesRunner
 import com.sampullara.cli.Args
@@ -42,7 +46,8 @@ object PluginVerifierMain {
       CheckPluginRunner(),
       CheckIdeRunner(),
       CheckTrunkApiRunner(),
-      DeprecatedUsagesRunner()
+      DeprecatedUsagesRunner(),
+      CheckPluginApiRunner()
   )
 
   private val verifierHomeDir: Path by lazy {
@@ -136,9 +141,14 @@ object PluginVerifierMain {
       val taskResult = parameters.use {
         println("Task ${runner.commandName} parameters:\n$parameters")
 
-        runner
-            .createTask(parameters, pluginRepository, pluginDetailsCache)
-            .execute(verificationReportage)
+        val concurrentWorkers = estimateNumberOfConcurrentWorkers()
+        JdkDescriptorsCache().use { jdkDescriptorCache ->
+          VerifierExecutor(concurrentWorkers).use { verifierExecutor ->
+            runner
+                .createTask(parameters, pluginRepository, pluginDetailsCache)
+                .execute(verificationReportage, verifierExecutor, jdkDescriptorCache, pluginDetailsCache)
+          }
+        }
       }
 
       val outputOptions = OptionsParser.parseOutputOptions(opts, verificationReportsDirectory)
@@ -146,6 +156,18 @@ object PluginVerifierMain {
       taskResultsPrinter.printResults(taskResult)
 
     }
+  }
+
+  private fun estimateNumberOfConcurrentWorkers(): Int {
+    val availableMemory = Runtime.getRuntime().maxMemory().bytesToSpaceAmount()
+    val availableCpu = Runtime.getRuntime().availableProcessors().toLong()
+    /**
+     * We assume that about 200 Mb is needed for an average verification
+     */
+    val maxByMemory = availableMemory.to(SpaceUnit.MEGA_BYTE).toLong() / 200
+    val concurrencyLevel = maxOf(4, minOf(maxByMemory, availableCpu)).toInt()
+    LOG.info("Available memory: $availableMemory; Available CPU = $availableCpu; Concurrency level = $concurrencyLevel")
+    return concurrencyLevel
   }
 
   private fun getIdeDownloadDirDiskSpaceSetting(): DiskSpaceSetting =

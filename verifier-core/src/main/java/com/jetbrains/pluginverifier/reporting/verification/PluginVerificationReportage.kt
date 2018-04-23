@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.reporting.verification
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
@@ -25,7 +25,7 @@ import java.io.Closeable
 interface PluginVerificationReportage : Closeable {
   val plugin: PluginInfo
 
-  val ideVersion: IdeVersion
+  val verificationTarget: VerificationTarget
 
   fun logVerificationStarted()
 

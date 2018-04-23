@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.output.teamcity
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
 import com.jetbrains.pluginverifier.misc.pluralize
@@ -12,6 +13,7 @@ import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependen
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
@@ -168,9 +170,10 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     //........missing optional dependency dep#3
     //pluginTwo
     //...and so on...
-    val ideLastPluginVersions = requestLastVersionsOfCheckedPlugins(results.map { it.ideVersion }.distinct())
+    val verificationTargets = results.map { it.verificationTarget }.distinct()
+    val targetToLastPluginVersions = requestLastVersionsOfCheckedPlugins(verificationTargets)
     results.groupBy { it.plugin.pluginId }.forEach { (pluginId, pluginResults) ->
-      printResultsForSpecificPluginId(pluginId, pluginResults, ideLastPluginVersions)
+      printResultsForSpecificPluginId(pluginId, pluginResults, targetToLastPluginVersions)
     }
   }
 
@@ -193,11 +196,11 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
    */
   private fun printResultsForSpecificPluginId(pluginId: String,
                                               pluginResults: List<VerificationResult>,
-                                              ideLastPluginVersions: Map<IdeVersion, List<PluginInfo>>) {
+                                              targetToLastPluginVersions: Map<VerificationTarget, List<PluginInfo>>) {
     tcLog.testSuiteStarted(pluginId).use {
       pluginResults.groupBy { it.plugin.version }.forEach { versionToResults ->
         versionToResults.value.forEach { result ->
-          val testName = getPluginVersionAsTestName(result.plugin, result.ideVersion, ideLastPluginVersions)
+          val testName = getPluginVersionAsTestName(result.plugin, result.verificationTarget, targetToLastPluginVersions)
           printResultOfSpecificVersion(result.plugin, result, testName)
         }
       }
@@ -310,12 +313,20 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
    * of the plugin available in the [repository] and compatible with
    * this IDE version.
    */
-  private fun requestLastVersionsOfCheckedPlugins(ideVersions: List<IdeVersion>): Map<IdeVersion, List<PluginInfo>> =
-      ideVersions.associate {
+  private fun requestLastVersionsOfCheckedPlugins(verificationTargets: List<VerificationTarget>): Map<VerificationTarget, List<PluginInfo>> =
+      verificationTargets.associate {
         try {
-          it to repository.getLastCompatiblePlugins(it)
-              .sortedWith(LastVersionSelector.versionComparator.reversed())
-              .distinctBy { it.pluginId }
+          when (it) {
+            is VerificationTarget.Ide -> it to repository.getLastCompatiblePlugins(it.ideVersion)
+                .sortedWith(LastVersionSelector.versionComparator.reversed())
+                .distinctBy { it.pluginId }
+            is VerificationTarget.Plugin -> {
+              it to repository.getAllPlugins()
+                  .groupBy { it.pluginId }
+                  .mapValues { it.value.maxWith(LocalPluginRepository.VERSION_COMPARATOR)!! }
+                  .values.toList()
+            }
+          }
         } catch (e: Exception) {
           LOG.info("Unable to determine the last compatible updates of IDE $it", e)
           it to emptyList<UpdateInfo>()
@@ -338,13 +349,13 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
    * 2) `(173.3727.244.997 - newest)`
    */
   private fun getPluginVersionAsTestName(pluginInfo: PluginInfo,
-                                         ideVersion: IdeVersion,
-                                         ideLastPluginVersions: Map<IdeVersion, List<PluginInfo>>) = with(pluginInfo) {
-    val lastVersions = ideLastPluginVersions.getOrDefault(ideVersion, emptyList())
-    if (this in lastVersions) {
-      "($version - newest)"
+                                         verificationTarget: VerificationTarget,
+                                         ideLastPluginVersions: Map<VerificationTarget, List<PluginInfo>>): String {
+    val lastVersions = ideLastPluginVersions.getOrDefault(verificationTarget, emptyList())
+    return if (pluginInfo in lastVersions) {
+      "(${pluginInfo.version} - newest)"
     } else {
-      "($version)"
+      "(${pluginInfo.version})"
     }
   }
 

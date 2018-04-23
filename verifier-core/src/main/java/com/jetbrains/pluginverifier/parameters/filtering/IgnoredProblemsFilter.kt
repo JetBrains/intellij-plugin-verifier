@@ -12,7 +12,7 @@ class IgnoredProblemsFilter(val ignoreConditions: List<IgnoreCondition>) : Probl
       verificationContext: VerificationContext
   ): ProblemsFilter.Result {
     val currentId = verificationContext.plugin.pluginId
-    val currentVersion = verificationContext.plugin.pluginVersion
+    val currentVersion = verificationContext.plugin.version
 
     for ((pluginId, version, pattern) in ignoreConditions) {
       if (pluginId == null || pluginId == currentId) {

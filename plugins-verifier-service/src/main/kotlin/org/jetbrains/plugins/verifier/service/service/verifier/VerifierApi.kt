@@ -3,6 +3,7 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.verification.DependenciesGraphs
 import com.jetbrains.plugin.verification.VerificationResults
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
@@ -30,7 +31,7 @@ fun VerificationResult.prepareVerificationResponse(): VerificationResults.Verifi
       ?: (this as? VerificationResult.NotFound)?.notFoundReason
   return VerificationResults.VerificationResult.newBuilder()
       .setUpdateId((plugin as UpdateInfo).updateId)
-      .setIdeVersion(ideVersion.asString())
+      .setIdeVersion((verificationTarget as VerificationTarget.Ide).ideVersion.asString())
       .apply { if (dependenciesGraph != null) setDependenciesGraph(dependenciesGraph) }
       .setResultType(resultType)
       .addAllPluginStructureWarnings(pluginStructureWarnings)

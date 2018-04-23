@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.core
+package com.jetbrains.pluginverifier
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
@@ -19,7 +19,7 @@ import com.jetbrains.pluginverifier.results.warnings.DependenciesCycleWarning
  * 4) Deprecated API [usages] [deprecatedUsages]
  * 5) Dependencies [graph] [dependenciesGraph] used during the verification
  */
-class VerificationResultHolder(private val pluginVerificationReportage: PluginVerificationReportage) {
+class ResultHolder(private val pluginVerificationReportage: PluginVerificationReportage) {
 
   val compatibilityProblems: MutableSet<CompatibilityProblem> = hashSetOf()
 
@@ -33,9 +33,9 @@ class VerificationResultHolder(private val pluginVerificationReportage: PluginVe
 
   val pluginStructureErrors: MutableSet<PluginStructureError> = hashSetOf()
 
-  var failedToDownloadReason: String = ""
+  var failedToDownloadReason: String? = null
 
-  var notFoundReason: String = ""
+  var notFoundReason: String? = null
 
   private val pluginErrorsAndWarnings: MutableSet<PluginProblem> = hashSetOf()
 

@@ -7,25 +7,18 @@ import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
 import java.io.Closeable
 
-class DefaultClsResolver(private val pluginResolver: Resolver,
-                         private val dependenciesResolver: Resolver,
-                         private val jdkClassesResolver: Resolver,
-                         private val ideResolver: Resolver,
-                         private val externalClassesPrefixes: List<String>,
-                         private val closeableResources: List<Closeable>) : ClsResolver {
+class PluginApiClsResolver(private val checkedPluginResolver: Resolver,
+                           private val basePluginResolver: Resolver,
+                           private val jdkClassesResolver: Resolver,
+                           private val closeableResources: List<Closeable>) : ClsResolver {
 
   private val cachingResolver = CacheResolver(
       UnionResolver.create(
-          listOf(
-              pluginResolver,
-              jdkClassesResolver,
-              ideResolver,
-              dependenciesResolver
-          )
+          listOf(checkedPluginResolver, basePluginResolver, jdkClassesResolver)
       )
   )
 
-  override fun isExternalClass(className: String) = externalClassesPrefixes.any { it.isNotEmpty() && className.startsWith(it) }
+  override fun isExternalClass(className: String) = !cachingResolver.containsClass(className)
 
   override fun classExists(className: String) = getOriginOfClass(className) != null
 
@@ -44,17 +37,14 @@ class DefaultClsResolver(private val pluginResolver: Resolver,
   }
 
   override fun getOriginOfClass(className: String): ClassFileOrigin? {
-    if (pluginResolver.containsClass(className)) {
+    if (checkedPluginResolver.containsClass(className)) {
       return ClassFileOrigin.PluginInternalClass
+    }
+    if (basePluginResolver.containsClass(className)) {
+      return ClassFileOrigin.ClassOfPluginDependency
     }
     if (jdkClassesResolver.containsClass(className)) {
       return ClassFileOrigin.JdkClass
-    }
-    if (ideResolver.containsClass(className)) {
-      return ClassFileOrigin.IdeClass
-    }
-    if (dependenciesResolver.containsClass(className)) {
-      return ClassFileOrigin.ClassOfPluginDependency
     }
     return null
   }

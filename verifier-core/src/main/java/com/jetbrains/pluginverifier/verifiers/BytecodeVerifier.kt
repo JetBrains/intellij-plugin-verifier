@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.pluginverifier.misc.checkIfInterrupted
-import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.InheritFromFinalClassVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier
@@ -53,12 +52,12 @@ class BytecodeVerifier {
       FieldAccessInstructionVerifier()
   )
 
-  fun verify(classesToCheck: Set<String>, verificationContext: VerificationContext, progressReporter: Reporter<Double>) {
+  fun verify(classesToCheck: Set<String>, verificationContext: VerificationContext, progressIndicator: (Double) -> Unit) {
     if (classesToCheck.isNotEmpty()) {
       for ((totalVerifiedClasses, className) in classesToCheck.withIndex()) {
         checkIfInterrupted()
         verifyClass(className, verificationContext)
-        progressReporter.report((totalVerifiedClasses + 1).toDouble() / classesToCheck.size)
+        progressIndicator((totalVerifiedClasses + 1).toDouble() / classesToCheck.size)
       }
     }
   }

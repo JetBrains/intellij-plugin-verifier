@@ -22,7 +22,7 @@ import java.io.Closeable
  * The cache must be [closed] [close] on the application shutdown to free all the details.
  */
 class PluginDetailsCache(cacheSize: Int,
-                         pluginDetailsProvider: PluginDetailsProvider,
+                         val pluginDetailsProvider: PluginDetailsProvider,
                          pluginFilesBank: PluginFilesBank) : Closeable {
 
   private val resourceCache = createSizeLimitedResourceCache(
@@ -135,17 +135,16 @@ class PluginDetailsCache(cacheSize: Int,
       return with(pluginFilesBank.getPluginFile(key)) {
         when (this) {
           is PluginFilesBank.Result.Found -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(key, pluginFileLock))
-          is PluginFilesBank.Result.InMemoryPlugin -> ProvideResult.Provided(createDetailsOfInMemoryPlugin(idePlugin, key))
+          is PluginFilesBank.Result.InMemoryPlugin -> ProvideResult.Provided(createDetailsOfInMemoryPlugin(idePlugin))
           is PluginFilesBank.Result.NotFound -> ProvideResult.NotFound(reason)
           is PluginFilesBank.Result.Failed -> ProvideResult.Failed(reason, error)
         }
       }
     }
 
-    private fun createDetailsOfInMemoryPlugin(idePlugin: IdePlugin, pluginInfo: PluginInfo) =
+    private fun createDetailsOfInMemoryPlugin(idePlugin: IdePlugin) =
         PluginDetailsProvider.Result.Provided(
             PluginDetails(
-                pluginInfo,
                 idePlugin,
                 emptyList(),
                 IdePluginClassesLocations(idePlugin, Closeable { }, emptyMap()),

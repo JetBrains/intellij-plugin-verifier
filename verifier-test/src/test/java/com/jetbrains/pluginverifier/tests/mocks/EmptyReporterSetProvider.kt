@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tests.mocks
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.ignoring.PluginIgnoredEvent
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterSet
@@ -16,7 +16,7 @@ object EmptyReporterSetProvider : VerificationReportersProvider {
 
   override fun close() = Unit
 
-  override fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, ideVersion: IdeVersion): VerificationReporterSet =
+  override fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, verificationTarget: VerificationTarget): VerificationReporterSet =
       VerificationReporterSet(
           emptyList(),
           emptyList(),

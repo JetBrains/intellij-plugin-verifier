@@ -1,34 +1,23 @@
-package com.jetbrains.pluginverifier.core
+package com.jetbrains.pluginverifier
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.pluginverifier.misc.causedBy
 import com.jetbrains.pluginverifier.misc.findCause
-import com.jetbrains.pluginverifier.parameters.VerifierParameters
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
-import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.results.VerificationResult
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.util.concurrent.*
 
 /**
- * Verification executor that [runs] [verify] the [verification tasks] [VerifierTask]
+ * Verification executor that [runs] [verify] the verification tasks
  * with a concurrency level of [concurrentWorkers].
  *
- * The [pluginDetailsCache] provides the
- * [plugin details] [com.jetbrains.pluginverifier.plugin.PluginDetails]
- * of the verified and dependent plugins.
- *
- * The [VerifierExecutor] can be reused for several [verifications] [verify].
+ * The [VerifierExecutor] can be reused for several verifications.
  */
-class VerifierExecutor(private val concurrentWorkers: Int,
-                       private val pluginDetailsCache: PluginDetailsCache,
-                       private val jdkDescriptorCache: JdkDescriptorsCache) : Closeable {
+class VerifierExecutor(private val concurrentWorkers: Int) : Closeable {
 
   companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(VerifierExecutor::class.java)
+    private val LOG = LoggerFactory.getLogger(VerifierExecutor::class.java)
   }
 
   private val executor = Executors.newFixedThreadPool(concurrentWorkers,
@@ -37,8 +26,6 @@ class VerifierExecutor(private val concurrentWorkers: Int,
           .setNameFormat("verifier-%d")
           .build()
   )
-
-  private val completionService = ExecutorCompletionService<VerificationResult>(executor)
 
   override fun close() {
     executor.shutdownNow()
@@ -49,33 +36,18 @@ class VerifierExecutor(private val concurrentWorkers: Int,
    * The [parameters] configure the verification.
    * The [reportage] is used to save the verification stages and results.
    */
-  fun verify(
-      tasks: List<VerifierTask>,
-      parameters: VerifierParameters,
-      reportage: VerificationReportage
-  ): List<VerificationResult> {
-    val workers = tasks.map { (pluginInfo, jdkPath, ideDescriptor, dependencyFinder) ->
-      val pluginVerificationReportage = reportage.createPluginReportage(pluginInfo, ideDescriptor.ideVersion)
-      val pluginVerifier = PluginVerifier(
-          pluginInfo,
-          ideDescriptor,
-          dependencyFinder,
-          jdkDescriptorCache,
-          jdkPath,
-          parameters,
-          pluginVerificationReportage,
-          pluginDetailsCache
-      )
-      try {
-        completionService.submit(pluginVerifier)
-      } catch (e: RejectedExecutionException) {
-        throw InterruptedException("Verifier executor rejected the next task")
-      }
+  fun verify(tasks: List<PluginVerifier>): List<VerificationResult> {
+    val completionService = ExecutorCompletionService<VerificationResult>(executor)
+    val workers = try {
+      tasks.map { completionService.submit(it) }
+    } catch (e: RejectedExecutionException) {
+      throw InterruptedException("The verifier executor rejected to execute the next task")
     }
-    return waitForAllResults(workers)
+    return waitForAllWorkers(completionService, workers)
   }
 
-  private fun waitForAllResults(workers: List<Future<VerificationResult>>): List<VerificationResult> {
+  private fun waitForAllWorkers(completionService: ExecutorCompletionService<VerificationResult>,
+                                workers: List<Future<VerificationResult>>): List<VerificationResult> {
     val results = arrayListOf<VerificationResult>()
     try {
       for (finished in 1..workers.size) {
@@ -109,13 +81,12 @@ class VerifierExecutor(private val concurrentWorkers: Int,
       for (worker in workers) {
         try {
           /**
-           * Force wait for the worker to finish.
-           * It's necessary in cases:
+           * Force wait for the worker to finish, which is necessary in cases:
            * 1) An exception has been thrown by any worker in `.get()`.
-           * It means that the verification is corrupted.
+           * It means that the program is corrupted.
            *
            * 2) The current thread has been interrupted.
-           * It means that the verification has been cancelled.
+           * It means that the process has been cancelled.
            *
            * In both cases the thrown exception will be propagated after
            * this finally block finishes.

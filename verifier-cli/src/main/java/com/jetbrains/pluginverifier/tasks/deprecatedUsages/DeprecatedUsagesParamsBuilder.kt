@@ -1,11 +1,11 @@
 package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -28,7 +28,6 @@ class DeprecatedUsagesParamsBuilder(private val pluginRepository: PluginReposito
       throw IllegalArgumentException("IDE path must be a directory: $idePath")
     }
     val ideDescriptor = OptionsParser.createIdeDescriptor(idePath, opts)
-    val jdkDescriptorsCache = JdkDescriptorsCache()
     /**
      * If the release IDE version is specified, get the compatible plugins' versions based on it.
      * Otherwise, use the version of the verified IDE.
@@ -39,7 +38,7 @@ class DeprecatedUsagesParamsBuilder(private val pluginRepository: PluginReposito
     val pluginsSet = OptionsParser.createPluginsToCheckSet(opts, pluginRepository, ideVersion)
 
     pluginsSet.ignoredPlugins.forEach { plugin, reason ->
-      verificationReportage.logPluginVerificationIgnored(plugin, ideVersion, reason)
+      verificationReportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(ideVersion), reason)
     }
 
     val dependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
@@ -47,7 +46,6 @@ class DeprecatedUsagesParamsBuilder(private val pluginRepository: PluginReposito
         pluginsSet,
         OptionsParser.getJdkPath(opts),
         ideDescriptor,
-        jdkDescriptorsCache,
         dependencyFinder,
         ideVersion
     )

@@ -1,11 +1,12 @@
 package org.jetbrains.plugins.verifier.service.server.servlets
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.MemoryInfo
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.service.verifier.PluginAndIdeVersion
+import org.jetbrains.plugins.verifier.service.service.verifier.PluginAndTarget
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
 import java.time.ZoneId
@@ -48,7 +49,7 @@ class InfoServlet : BaseServlet() {
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Update #$updateId is not found in ${serverContext.pluginRepository}")
       return
     }
-    val pluginAndIdeVersion = PluginAndIdeVersion(updateInfo, ideVersion)
+    val pluginAndIdeVersion = PluginAndTarget(updateInfo, VerificationTarget.Ide(ideVersion))
     serverContext.verificationResultsFilter.unignoreVerificationResultFor(pluginAndIdeVersion)
     sendOk(resp, "Verification for $pluginAndIdeVersion has been unignored")
   }
@@ -178,10 +179,10 @@ class InfoServlet : BaseServlet() {
                   th { +"Reason" }
                 }
                 ignoredVerifications
-                    .forEach { (pluginAndIdeVersion, ignore) ->
+                    .forEach { (pluginAndTarget, ignore) ->
                       tr {
-                        td { +pluginAndIdeVersion.updateInfo.toString() }
-                        td { +pluginAndIdeVersion.ideVersion.toString() }
+                        td { +pluginAndTarget.updateInfo.toString() }
+                        td { +pluginAndTarget.verificationTarget.toString() }
                         td { +DATE_FORMAT.format(ignore.verificationEndTime) }
                         td { +ignore.verificationVerdict }
                         td { +ignore.ignoreReason }

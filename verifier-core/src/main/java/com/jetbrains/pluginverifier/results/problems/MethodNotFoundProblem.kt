@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.results.problems
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.formatMessage
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.results.instruction.Instruction
@@ -20,8 +19,7 @@ import com.jetbrains.pluginverifier.results.reference.MethodReference
 data class MethodNotFoundProblem(val unresolvedMethod: MethodReference,
                                  val caller: MethodLocation,
                                  val instruction: Instruction,
-                                 val methodOwnerHierarchy: ClassHierarchy,
-                                 val ideVersion: IdeVersion) : CompatibilityProblem() {
+                                 val methodOwnerHierarchy: ClassHierarchy) : CompatibilityProblem() {
 
   override val shortDescription = "Invocation of unresolved {0} {1}".formatMessage(
       unresolvedMethod.methodOrConstructorWord,
@@ -41,7 +39,7 @@ data class MethodNotFoundProblem(val unresolvedMethod: MethodReference,
   override val fullDescription = buildString {
     append(descriptionMainPart)
     if (instruction != Instruction.INVOKE_SPECIAL) {
-      append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("method", methodOwnerHierarchy, ideVersion, true, true))
+      append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("method", methodOwnerHierarchy, true, true))
     }
   }
 

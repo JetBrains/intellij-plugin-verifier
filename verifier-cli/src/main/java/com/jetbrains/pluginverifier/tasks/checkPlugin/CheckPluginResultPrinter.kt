@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
 import com.jetbrains.pluginverifier.output.OutputOptions
+import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
@@ -21,8 +22,14 @@ class CheckPluginResultPrinter(private val outputOptions: OutputOptions,
         printOnStdout(this)
       }
 
-      results.groupBy { it.ideVersion }.forEach { ideVersion, resultsOfIde ->
-        outputOptions.saveToHtmlFile(ideVersion, resultsOfIde)
+      results.groupBy { it.verificationTarget }.forEach { verificationTarget, resultsOfIde ->
+        HtmlResultPrinter(
+            verificationTarget,
+            verificationTarget
+                .getReportDirectory(outputOptions.verificationReportsDirectory)
+                .resolve("report.html"),
+            outputOptions.missingDependencyIgnoring
+        ).printResults(resultsOfIde)
       }
     }
   }

@@ -1,9 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers
 
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.core.VerificationResultHolder
+import com.jetbrains.pluginverifier.ResultHolder
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
@@ -14,9 +13,8 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileOrigin
 import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolver
 
 data class VerificationContext(
-    val plugin: IdePlugin,
-    val ideVersion: IdeVersion,
-    val resultHolder: VerificationResultHolder,
+    val plugin: PluginInfo,
+    val resultHolder: ResultHolder,
     val findDeprecatedApiUsages: Boolean,
     val problemFilters: List<ProblemsFilter>,
     val clsResolver: ClsResolver

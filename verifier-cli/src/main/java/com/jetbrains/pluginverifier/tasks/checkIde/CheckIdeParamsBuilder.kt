@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.misc.isDirectory
@@ -8,7 +9,6 @@ import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.options.filter.ExcludedPluginFilter
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -30,7 +30,6 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
     }
     verificationReportage.logVerificationStage("Reading classes of IDE $ideFile")
     OptionsParser.createIdeDescriptor(ideFile, opts).closeOnException { ideDescriptor ->
-      val jdkDescriptorsCache = JdkDescriptorsCache()
       val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
       val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
@@ -41,7 +40,7 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
       pluginsSet.addPluginFilter(excludedFilter)
 
       pluginsSet.ignoredPlugins.forEach { plugin, reason ->
-        verificationReportage.logPluginVerificationIgnored(plugin, ideDescriptor.ideVersion, reason)
+        verificationReportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(ideDescriptor.ideVersion), reason)
       }
 
       val missingCompatibleVersionsProblems = findMissingCompatibleVersionsProblems(ideDescriptor.ideVersion, pluginsSet)
@@ -52,7 +51,6 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
           pluginsSet,
           jdkPath,
           ideDescriptor,
-          jdkDescriptorsCache,
           externalClassesPrefixes,
           problemsFilters,
           ideDependencyFinder,

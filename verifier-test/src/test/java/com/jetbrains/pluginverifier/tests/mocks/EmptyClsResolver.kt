@@ -11,4 +11,6 @@ object EmptyClsResolver : ClsResolver {
   override fun classExists(className: String) = false
 
   override fun getOriginOfClass(className: String) = null
+
+  override fun close() = Unit
 }

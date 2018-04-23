@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.misc.buildList
@@ -67,32 +66,28 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
     private val LOG = LoggerFactory.getLogger(MainVerificationReportersProvider::class.java)
   }
 
-  private val ideVersion2AllIgnoredProblemsReporter = hashMapOf<IdeVersion, CollectingReporter<ProblemIgnoredEvent>>()
+  private val target2AllIgnoredProblemsReporter = hashMapOf<VerificationTarget, CollectingReporter<ProblemIgnoredEvent>>()
 
   private val ignoredPluginsReporter = CollectingReporter<PluginIgnoredEvent>()
 
   override val ignoredPluginsReporters = listOf(ignoredPluginsReporter)
 
-  override fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, ideVersion: IdeVersion): VerificationReporterSet {
-    val ideResultsDirectory = getIdeResultsDirectory(ideVersion)
-    val pluginVerificationDirectory = ideResultsDirectory.resolve("plugins").resolve(createPluginVerificationDirectory(pluginInfo))
+  override fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, verificationTarget: VerificationTarget): VerificationReporterSet {
+    val pluginVerificationDirectory = verificationTarget.getReportDirectory(verificationReportsDirectory).resolve("plugins").resolve(createPluginVerificationDirectory(pluginInfo))
 
     return VerificationReporterSet(
         verificationResultReporters = createResultsReporters(pluginVerificationDirectory),
         messageReporters = createMessageReporters(),
-        progressReporters = createProgressReporters(pluginInfo, ideVersion),
+        progressReporters = createProgressReporters(pluginInfo, verificationTarget),
         pluginStructureWarningsReporters = createPluginStructureWarningsReporters(pluginVerificationDirectory),
         pluginStructureErrorsReporters = createPluginStructureErrorsReporters(pluginVerificationDirectory),
         problemsReporters = createProblemReporters(pluginVerificationDirectory),
         dependenciesGraphReporters = createDependencyGraphReporters(pluginVerificationDirectory),
-        ignoredProblemReporters = createIgnoredProblemReporters(pluginVerificationDirectory, ideVersion),
+        ignoredProblemReporters = createIgnoredProblemReporters(pluginVerificationDirectory, verificationTarget),
         deprecatedReporters = createDeprecatedReporters(pluginVerificationDirectory),
         exceptionReporters = createExceptionReporters(pluginVerificationDirectory)
     )
   }
-
-  private fun getIdeResultsDirectory(ideVersion: IdeVersion) =
-      verificationReportsDirectory.resolve("$ideVersion".replaceInvalidFileNameCharacters())
 
   /**
    * Creates a directory for reports of the plugin in the verified IDE:
@@ -163,8 +158,8 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
   }
 
   private fun createIgnoredProblemReporters(pluginVerificationDirectory: Path,
-                                            ideVersion: IdeVersion) = buildList<Reporter<ProblemIgnoredEvent>> {
-    val ideCollectingProblemsReporter = ideVersion2AllIgnoredProblemsReporter.getOrPut(ideVersion) { CollectingReporter() }
+                                            verificationTarget: VerificationTarget) = buildList<Reporter<ProblemIgnoredEvent>> {
+    val ideCollectingProblemsReporter = target2AllIgnoredProblemsReporter.getOrPut(verificationTarget) { CollectingReporter() }
     add(ideCollectingProblemsReporter)
     if (logger.isDebugEnabled) {
       add(LogReporter(logger))
@@ -172,16 +167,17 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
     add(FileReporter(pluginVerificationDirectory.resolve("ignored-problems.txt")))
   }
 
-  private fun createProgressReporters(pluginInfo: PluginInfo, ideVersion: IdeVersion) = buildList<LogSteppedProgressReporter> {
+  private fun createProgressReporters(pluginInfo: PluginInfo,
+                                      verificationTarget: VerificationTarget) = buildList<LogSteppedProgressReporter> {
     if (printPluginVerificationProgress) {
-      val logMessageProvider = createProgressMessageProvider(pluginInfo, ideVersion)
+      val logMessageProvider = createProgressMessageProvider(pluginInfo, verificationTarget)
       add(LogSteppedProgressReporter(logger, logMessageProvider, step = 0.1))
     }
   }
 
-  private fun createProgressMessageProvider(pluginInfo: PluginInfo, ideVersion: IdeVersion): (Double) -> String = { progress ->
+  private fun createProgressMessageProvider(pluginInfo: PluginInfo, verificationTarget: VerificationTarget): (Double) -> String = { progress ->
     buildString {
-      append("Plugin $pluginInfo and #$ideVersion verification: ")
+      append("Plugin $pluginInfo against $verificationTarget verification: ")
       if (progress == 1.0) {
         append("100% finished")
       } else {
@@ -199,8 +195,8 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
 
   private fun saveAllIgnoredPluginsList() {
     val allIgnoredPlugins = ignoredPluginsReporter.getReported()
-    for ((ideVersion, ignoredPlugins) in allIgnoredPlugins.groupBy { it.ideVersion }) {
-      val ignoredPluginsFile = getIdeResultsDirectory(ideVersion).resolve("all-ignored-plugins.txt")
+    for ((verificationTarget, ignoredPlugins) in allIgnoredPlugins.groupBy { it.verificationTarget }) {
+      val ignoredPluginsFile = verificationTarget.getReportDirectory(verificationReportsDirectory).resolve("all-ignored-plugins.txt")
       try {
         val message = "The following plugins were excluded from the verification: \n" +
             ignoredPlugins.joinToString(separator = "\n") {
@@ -208,31 +204,31 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
             }
         ignoredPluginsFile.writeText(message)
       } catch (e: Exception) {
-        LOG.error("Unable to save ignored plugins of $ideVersion", e)
+        LOG.error("Unable to save ignored plugins of $verificationTarget", e)
       }
     }
     ignoredPluginsReporter.closeLogged()
   }
 
   private fun saveIdeIgnoredProblems() {
-    for ((ideVersion, collectingReporter) in ideVersion2AllIgnoredProblemsReporter) {
+    for ((verificationTarget, collectingReporter) in target2AllIgnoredProblemsReporter) {
       val allIdeIgnoredProblems = collectingReporter.getReported()
       if (allIdeIgnoredProblems.isNotEmpty()) {
-        val ignoredProblemsText = formatIgnoredProblemsOfIde(ideVersion, allIdeIgnoredProblems)
-        val ignoredProblemsFile = getIdeResultsDirectory(ideVersion).resolve("all-ignored-problems.txt")
+        val ignoredProblemsText = formatIgnoredProblems(verificationTarget, allIdeIgnoredProblems)
+        val ignoredProblemsFile = verificationTarget.getReportDirectory(verificationReportsDirectory).resolve("all-ignored-problems.txt")
         try {
           ignoredProblemsFile.writeText(ignoredProblemsText)
         } catch (e: Exception) {
-          LOG.error("Unable to save ignored problems of $ideVersion", e)
+          LOG.error("Unable to save ignored problems of $verificationTarget", e)
         }
       }
     }
-    ideVersion2AllIgnoredProblemsReporter.values.forEach { it.closeLogged() }
+    target2AllIgnoredProblemsReporter.values.forEach { it.closeLogged() }
   }
 
-  private fun formatIgnoredProblemsOfIde(ideVersion: IdeVersion, allIdeIgnoredProblems: List<ProblemIgnoredEvent>): String =
+  private fun formatIgnoredProblems(verificationTarget: VerificationTarget, allIdeIgnoredProblems: List<ProblemIgnoredEvent>): String =
       buildString {
-        appendln("The following problems of $ideVersion were ignored:")
+        appendln("The following problems against $verificationTarget were ignored:")
         for ((reason, allWithReason) in allIdeIgnoredProblems.groupBy { it.reason }) {
           appendln("because $reason:")
           for ((shortDescription, allWithShortDescription) in allWithReason.groupBy { it.problem.shortDescription }) {

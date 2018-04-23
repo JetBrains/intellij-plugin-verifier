@@ -28,24 +28,24 @@ class VerificationResultFilter {
     private val logger = LoggerFactory.getLogger(VerificationResultFilter::class.java)
   }
 
-  private val acceptedVerifications = hashSetOf<PluginAndIdeVersion>()
+  private val acceptedVerifications = hashSetOf<PluginAndTarget>()
 
-  private val _ignoredVerifications = hashMapOf<PluginAndIdeVersion, Result.Ignore>()
+  private val _ignoredVerifications = hashMapOf<PluginAndTarget, Result.Ignore>()
 
-  val ignoredVerifications: Map<PluginAndIdeVersion, Result.Ignore>
+  val ignoredVerifications: Map<PluginAndTarget, Result.Ignore>
     get() = _ignoredVerifications
 
   /**
-   * Accepts verification of a plugin against IDE specified by [pluginAndIdeVersion].
+   * Accepts verification of a plugin against IDE specified by [pluginAndTarget].
    *
    * When the verification of the plugin against this IDE occurs next time
    * the verification result will be sent anyway.
    */
   @Synchronized
-  fun unignoreVerificationResultFor(pluginAndIdeVersion: PluginAndIdeVersion) {
-    logger.info("Unignore verification result for $pluginAndIdeVersion")
-    acceptedVerifications.add(pluginAndIdeVersion)
-    _ignoredVerifications.remove(pluginAndIdeVersion)
+  fun unignoreVerificationResultFor(pluginAndTarget: PluginAndTarget) {
+    logger.info("Unignore verification result for $pluginAndTarget")
+    acceptedVerifications.add(pluginAndTarget)
+    _ignoredVerifications.remove(pluginAndTarget)
   }
 
   /**
@@ -70,14 +70,14 @@ class VerificationResultFilter {
         is VerificationResult.CompatibilityProblems -> compatibilityProblems
       }
 
-      val pluginAndIdeVersion = PluginAndIdeVersion(plugin as UpdateInfo, ideVersion)
+      val pluginAndIdeVersion = PluginAndTarget(plugin as UpdateInfo, verificationTarget)
 
       if (compatibilityProblems.size > TOO_MANY_PROBLEMS_THRESHOLD) {
         if (pluginAndIdeVersion in acceptedVerifications) {
           logger.info("Verification $pluginAndIdeVersion has been accepted, though there are many compatibility problems: ${compatibilityProblems.size}")
           return Result.Send
         }
-        val reason = "There are too many compatibility problems between $plugin and $ideVersion: ${compatibilityProblems.size}"
+        val reason = "There are too many compatibility problems between $plugin and $verificationTarget: ${compatibilityProblems.size}"
         logger.info(reason)
         val verdict = this.toString()
         val ignore = Result.Ignore(verdict, verificationEndTime, reason)

@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.reporting.verification
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import java.io.Closeable
 
@@ -11,9 +11,9 @@ interface VerificationReportage : Closeable {
 
   /**
    * Creates a [PluginVerificationReportage] for saving the reports
-   * of the verification of the [pluginInfo] against [ideVersion].
+   * of the verification of the [pluginInfo] against [verificationTarget].
    */
-  fun createPluginReportage(pluginInfo: PluginInfo, ideVersion: IdeVersion): PluginVerificationReportage
+  fun createPluginReportage(pluginInfo: PluginInfo, verificationTarget: VerificationTarget): PluginVerificationReportage
 
   /**
    * Invoked when the verification finishes.
@@ -26,8 +26,8 @@ interface VerificationReportage : Closeable {
   fun logVerificationStage(stageMessage: String)
 
   /**
-   * Logs that the verification of [pluginInfo] against [ideVersion] is ignored due to some [reason].
+   * Logs that the verification of [pluginInfo] against [verificationTarget] is ignored due to some [reason].
    */
-  fun logPluginVerificationIgnored(pluginInfo: PluginInfo, ideVersion: IdeVersion, reason: String)
+  fun logPluginVerificationIgnored(pluginInfo: PluginInfo, verificationTarget: VerificationTarget, reason: String)
 
 }

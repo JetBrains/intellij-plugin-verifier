@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IdeResourceUtil
@@ -12,7 +13,6 @@ import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.options.filter.ExcludedPluginFilter
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -127,27 +127,23 @@ class CheckTrunkApiParamsBuilder(private val pluginRepository: PluginRepository,
     )
 
     pluginsSet.ignoredPlugins.forEach { plugin, reason ->
-      verificationReportage.logPluginVerificationIgnored(plugin, releaseVersion, reason)
-      verificationReportage.logPluginVerificationIgnored(plugin, trunkVersion, reason)
+      verificationReportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(releaseVersion), reason)
+      verificationReportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(trunkVersion), reason)
     }
 
-    val jdkDescriptorsCache = JdkDescriptorsCache()
-    return jdkDescriptorsCache.closeOnException {
-      CheckTrunkApiParams(
-          pluginsSet,
-          OptionsParser.getJdkPath(opts),
-          trunkIdeDescriptor,
-          releaseIdeDescriptor,
-          externalClassesPrefixes,
-          problemsFilters,
-          jdkDescriptorsCache,
-          jetBrainsPluginIds,
-          deleteReleaseIdeOnExit,
-          releaseIdeFileLock,
-          releaseLocalRepository,
-          trunkLocalRepository
-      )
-    }
+    return CheckTrunkApiParams(
+        pluginsSet,
+        OptionsParser.getJdkPath(opts),
+        trunkIdeDescriptor,
+        releaseIdeDescriptor,
+        externalClassesPrefixes,
+        problemsFilters,
+        jetBrainsPluginIds,
+        deleteReleaseIdeOnExit,
+        releaseIdeFileLock,
+        releaseLocalRepository,
+        trunkLocalRepository
+    )
   }
 
   private fun getJetBrainsPluginIds(apiOpts: CheckTrunkApiOpts): List<String> {

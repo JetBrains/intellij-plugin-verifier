@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.core.VerifierExecutor
-import com.jetbrains.pluginverifier.core.VerifierTask
+import com.jetbrains.pluginverifier.PluginVerifier
+import com.jetbrains.pluginverifier.VerificationTarget
+import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
-import com.jetbrains.pluginverifier.parameters.VerifierParameters
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.Reporter
@@ -18,24 +18,26 @@ import com.jetbrains.pluginverifier.reporting.verification.VerificationReporters
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
+import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
 
 /**
  * [ServiceTask] verifies the [plugin] [updateInfo]
- * against the [IDE] [ideVersion] in the [verifierExecutor]
+ * against the [verificationTarget] in the [verifierExecutor]
  * using the [JDK] [jdkPath].
  */
 class VerifyPluginTask(private val verifierExecutor: VerifierExecutor,
                        private val updateInfo: UpdateInfo,
-                       private val ideVersion: IdeVersion,
+                       private val verificationTarget: VerificationTarget.Ide,
                        private val jdkPath: JdkPath,
                        private val pluginDetailsCache: PluginDetailsCache,
-                       private val ideDescriptorsCache: IdeDescriptorsCache)
-  : ServiceTask<VerificationResult>("Check $updateInfo against IDE $ideVersion") {
+                       private val ideDescriptorsCache: IdeDescriptorsCache,
+                       private val jdkDescriptorsCache: JdkDescriptorsCache)
+  : ServiceTask<VerificationResult>("Check $updateInfo against $verificationTarget") {
 
   override fun execute(progress: ProgressIndicator): VerificationResult {
-    return ideDescriptorsCache.getIdeDescriptorCacheEntry(ideVersion).use { entry ->
+    return ideDescriptorsCache.getIdeDescriptorCacheEntry(verificationTarget.ideVersion).use { entry ->
       val ideDescriptor = entry.resource
       val verificationReportage = createVerificationReportage(progress)
       checkPluginWithIde(ideDescriptor, verificationReportage)
@@ -50,15 +52,23 @@ class VerifyPluginTask(private val verifierExecutor: VerifierExecutor,
         pluginDetailsCache
     )
 
-    val verifierParameters = VerifierParameters(
+    val tasks = listOf(PluginVerifier(
+        updateInfo,
+        verificationReportage,
         emptyList(),
-        emptyList(),
-        true
-    )
-
-    val tasks = listOf(VerifierTask(updateInfo, jdkPath, ideDescriptor, dependencyFinder))
+        true,
+        pluginDetailsCache,
+        DefaultClsResolverProvider(
+            dependencyFinder,
+            jdkDescriptorsCache,
+            jdkPath,
+            ideDescriptor,
+            emptyList()
+        ),
+        VerificationTarget.Ide(ideDescriptor.ideVersion)
+    ))
     return verifierExecutor
-        .verify(tasks, verifierParameters, verificationReportage)
+        .verify(tasks)
         .single()
   }
 
@@ -82,7 +92,7 @@ class VerifyPluginTask(private val verifierExecutor: VerifierExecutor,
 
         override fun close() = Unit
 
-        override fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, ideVersion: IdeVersion) =
+        override fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, verificationTarget: VerificationTarget) =
             VerificationReporterSet(
                 verificationResultReporters = listOf(),
                 messageReporters = listOf(),

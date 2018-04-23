@@ -16,18 +16,8 @@
 
     </appender>
 
-    <!--
-        <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-            <file>verification-${startTime}.log</file>
-            <encoder>
-                <pattern>${log.pattern}</pattern>
-            </encoder>
-        </appender>
-    -->
-
     <root level="${plugin.verifier.logger.root.level:-INFO}">
         <appender-ref ref="STDOUT"/>
-        <!--<appender-ref ref="FILE"/>-->
     </root>
 
 </configuration>

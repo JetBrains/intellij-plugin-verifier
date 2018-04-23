@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.results.problems
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.formatMessage
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.results.instruction.Instruction
@@ -11,8 +10,7 @@ import com.jetbrains.pluginverifier.results.reference.FieldReference
 data class FieldNotFoundProblem(val unresolvedField: FieldReference,
                                 val accessor: MethodLocation,
                                 val fieldOwnerHierarchy: ClassHierarchy,
-                                val instruction: Instruction,
-                                val ideVersion: IdeVersion) : CompatibilityProblem() {
+                                val instruction: Instruction) : CompatibilityProblem() {
 
   override val shortDescription = "Access to unresolved field {0}".formatMessage(unresolvedField)
 
@@ -34,7 +32,7 @@ data class FieldNotFoundProblem(val unresolvedField: FieldReference,
     append(descriptionMainPart)
     //Non-static fields can only be declared in super classes.
     val canBeDeclaredInSuperInterface = instruction == Instruction.GET_STATIC || instruction == Instruction.PUT_STATIC
-    append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("field", fieldOwnerHierarchy, ideVersion, true, canBeDeclaredInSuperInterface))
+    append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("field", fieldOwnerHierarchy, true, canBeDeclaredInSuperInterface))
   }
 
   override val equalityReference: String

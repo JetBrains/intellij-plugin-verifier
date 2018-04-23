@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.reporting.verification
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.reporting.common.MessageAndException
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
@@ -13,19 +13,19 @@ import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 
 class PluginVerificationReportageImpl(private val verificationReportage: VerificationReportage,
                                       override val plugin: PluginInfo,
-                                      override val ideVersion: IdeVersion,
+                                      override val verificationTarget: VerificationTarget,
                                       private val reporterSet: VerificationReporterSet) : PluginVerificationReportage {
   @Volatile
   private var startTime: Long = 0
 
   override fun logVerificationStarted() {
-    reportMessage("Start verification of $plugin against $ideVersion")
+    reportMessage("Start verification of $plugin against $verificationTarget")
     startTime = System.currentTimeMillis()
   }
 
   override fun logVerificationFinished(message: String) {
     val elapsedTime = System.currentTimeMillis() - startTime
-    reportMessage("Finished verification of $plugin against $ideVersion in ${"%.2f".format(elapsedTime / 1000.0)} seconds: $message")
+    reportMessage("Finished verification of $plugin against $verificationTarget in ${"%.2f".format(elapsedTime / 1000.0)} seconds: $message")
     verificationReportage.logPluginVerificationFinished(this)
   }
 
@@ -62,7 +62,7 @@ class PluginVerificationReportageImpl(private val verificationReportage: Verific
   }
 
   override fun logProblemIgnored(problem: CompatibilityProblem, reason: String) {
-    reporterSet.ignoredProblemReporters.forEach { it.report(ProblemIgnoredEvent(plugin, ideVersion, problem, reason)) }
+    reporterSet.ignoredProblemReporters.forEach { it.report(ProblemIgnoredEvent(plugin, verificationTarget, problem, reason)) }
   }
 
   override fun logDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {

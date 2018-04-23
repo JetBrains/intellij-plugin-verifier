@@ -12,6 +12,7 @@ import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.bundled.BundledPluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
+import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
 /**
@@ -19,36 +20,45 @@ import java.nio.file.Path
  * uses the [extractDirectory] for extracting the `.zip`-ped plugins.
  */
 class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDetailsProvider {
-
-  override fun providePluginDetails(pluginInfo: PluginInfo, pluginFileLock: FileLock): PluginDetailsProvider.Result {
-    pluginFileLock.closeOnException {
-      if (pluginInfo is BundledPluginInfo) {
-        return findPluginClasses(pluginInfo, pluginFileLock, pluginInfo.idePlugin!!, emptyList())
-      }
-
-      val pluginFile = pluginFileLock.file
-      val pluginCreationResult = IdePluginManager.createManager(extractDirectory.toFile()).createPlugin(pluginFile.toFile())
-      return if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
-        findPluginClasses(pluginInfo, pluginFileLock, pluginCreationResult.plugin, pluginCreationResult.warnings)
-      } else {
-        pluginFileLock.closeLogged()
-        PluginDetailsProvider.Result.InvalidPlugin((pluginCreationResult as PluginCreationFail<*>).errorsAndWarnings)
-      }
-    }
+  companion object {
+    private val LOG = LoggerFactory.getLogger(PluginDetailsProviderImpl::class.java)
   }
 
-  private fun findPluginClasses(pluginInfo: PluginInfo,
-                                pluginFileLock: FileLock,
-                                idePlugin: IdePlugin,
-                                warnings: List<PluginProblem>): PluginDetailsProvider.Result {
+  private val idePluginManager = IdePluginManager.createManager(extractDirectory.toFile())
+
+  override fun providePluginDetails(pluginInfo: PluginInfo, pluginFileLock: FileLock) =
+      pluginFileLock.closeOnException {
+        if (pluginInfo is BundledPluginInfo) {
+          findPluginClasses(pluginInfo.idePlugin!!, emptyList(), pluginFileLock)
+        } else {
+          createPluginDetails(pluginFileLock.file, pluginFileLock)
+        }
+      }
+
+  override fun providePluginDetails(pluginFile: Path) = createPluginDetails(pluginFile, null)
+
+  private fun createPluginDetails(pluginFile: Path, pluginFileLock: FileLock?) =
+      with(idePluginManager.createPlugin(pluginFile.toFile())) {
+        when (this) {
+          is PluginCreationSuccess -> findPluginClasses(plugin, warnings, pluginFileLock)
+          is PluginCreationFail -> {
+            pluginFileLock.closeLogged()
+            PluginDetailsProvider.Result.InvalidPlugin(errorsAndWarnings)
+          }
+        }
+      }
+
+  private fun findPluginClasses(idePlugin: IdePlugin,
+                                warnings: List<PluginProblem>,
+                                pluginFileLock: FileLock?): PluginDetailsProvider.Result {
     val pluginClassesLocations = try {
       idePlugin.findPluginClasses()
     } catch (e: Exception) {
-      return PluginDetailsProvider.Result.InvalidPlugin(listOf(UnableToReadPluginClassFilesProblem(e)))
+      LOG.info("Unable to read class files of $idePlugin", e)
+      return PluginDetailsProvider.Result.InvalidPlugin(listOf(UnableToReadPluginClassFilesProblem()))
     }
     return PluginDetailsProvider.Result.Provided(
         PluginDetails(
-            pluginInfo,
             idePlugin,
             warnings,
             pluginClassesLocations,

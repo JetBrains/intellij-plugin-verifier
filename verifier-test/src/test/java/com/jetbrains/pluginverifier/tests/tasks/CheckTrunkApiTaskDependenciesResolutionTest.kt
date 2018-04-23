@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion.createIdeVersion
+import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.PluginsSet
@@ -140,9 +141,10 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
           EmptyPublicPluginRepository,
           pluginDetailsCache
       )
-      val checkTrunkApiResult = checkTrunkApiTask.execute(VerificationReportageImpl(EmptyReporterSetProvider))
-      val releaseResults = checkTrunkApiResult.releaseResults
-      val trunkResults = checkTrunkApiResult.trunkResults
+      val verifierExecutor = VerifierExecutor(4)
+      val checkTrunkApiResult = checkTrunkApiTask.execute(VerificationReportageImpl(EmptyReporterSetProvider), verifierExecutor, JdkDescriptorsCache(), pluginDetailsCache)
+      val releaseResults = checkTrunkApiResult.baseResults
+      val trunkResults = checkTrunkApiResult.newResults
       val releaseResult = releaseResults.single()
       val trunkResult = trunkResults.single()
       assertPluginsAreProperlyResolved(releaseResult, trunkResult)
@@ -174,7 +176,6 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
     for (plugin in allPlugins) {
       val pluginInfo = LocalPluginRepository(repositoryURL).addLocalPlugin(plugin)
       infoToDetails[pluginInfo] = PluginDetails(
-          pluginInfo,
           plugin,
           emptyList(),
           IdePluginClassesLocations(plugin, Closeable { }, emptyMap()), IdleFileLock(Paths.get("."))
@@ -189,6 +190,8 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
         }
         return PluginDetailsProvider.Result.InvalidPlugin(emptyList())
       }
+
+      override fun providePluginDetails(pluginFile: Path) = throw UnsupportedOperationException()
     }
   }
 
@@ -202,7 +205,6 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
         IdeDescriptor(releaseIde, EmptyResolver),
         emptyList(),
         emptyList(),
-        JdkDescriptorsCache(),
         listOf(someJetBrainsPluginId),
         false,
         IdleFileLock(Paths.get("unnecessary")),

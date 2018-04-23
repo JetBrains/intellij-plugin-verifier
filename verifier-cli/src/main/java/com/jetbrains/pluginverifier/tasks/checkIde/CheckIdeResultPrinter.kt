@@ -1,7 +1,9 @@
 package com.jetbrains.pluginverifier.tasks.checkIde
 
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.output.OutputOptions
+import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
@@ -22,7 +24,13 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
         printOnStdOut(this)
       }
 
-      outputOptions.saveToHtmlFile(ideVersion, results)
+      HtmlResultPrinter(
+          VerificationTarget.Ide(ideVersion),
+          VerificationTarget.Ide(ideVersion)
+              .getReportDirectory(outputOptions.verificationReportsDirectory)
+              .resolve("report.html"),
+          outputOptions.missingDependencyIgnoring
+      ).printResults(results)
 
       if (outputOptions.dumpBrokenPluginsFile != null) {
         val brokenPlugins = results

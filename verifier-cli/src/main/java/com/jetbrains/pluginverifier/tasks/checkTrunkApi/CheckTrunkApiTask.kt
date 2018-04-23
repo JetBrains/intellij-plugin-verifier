@@ -1,14 +1,17 @@
 package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.pluginverifier.core.Verification
-import com.jetbrains.pluginverifier.core.VerifierTask
+import com.jetbrains.pluginverifier.PluginVerifier
+import com.jetbrains.pluginverifier.VerificationTarget
+import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.dependencies.resolution.*
-import com.jetbrains.pluginverifier.parameters.VerifierParameters
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.Task
+import com.jetbrains.pluginverifier.tasks.common.NewProblemsResult
+import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
 
 /**
  * The 'check-trunk-api' task that runs the verification
@@ -19,37 +22,60 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
                         private val pluginRepository: PluginRepository,
                         private val pluginDetailsCache: PluginDetailsCache) : Task {
 
-  override fun execute(verificationReportage: VerificationReportage): CheckTrunkApiResult {
+  override fun execute(
+      verificationReportage: VerificationReportage,
+      verifierExecutor: VerifierExecutor,
+      jdkDescriptorCache: JdkDescriptorsCache,
+      pluginDetailsCache: PluginDetailsCache
+  ): NewProblemsResult {
     with(parameters) {
       val pluginToCheck = pluginsSet.pluginsToCheck
 
-      val verifierParameters = VerifierParameters(
-          parameters.externalClassesPrefixes,
-          parameters.problemsFilters,
-          false
-      )
-
-      val verifierTasks = arrayListOf<VerifierTask>()
-      pluginToCheck.mapTo(verifierTasks) {
-        VerifierTask(it, parameters.jdkPath, releaseIde, ReleaseFinder())
+      val tasks = arrayListOf<PluginVerifier>()
+      pluginToCheck.mapTo(tasks) {
+        val dependencyFinder = ReleaseFinder()
+        PluginVerifier(
+            it,
+            verificationReportage,
+            parameters.problemsFilters,
+            false,
+            pluginDetailsCache,
+            DefaultClsResolverProvider(
+                dependencyFinder,
+                jdkDescriptorCache,
+                parameters.jdkPath,
+                releaseIde,
+                parameters.externalClassesPrefixes
+            ),
+            VerificationTarget.Ide(releaseIde.ideVersion)
+        )
       }
-      pluginToCheck.mapTo(verifierTasks) {
-        VerifierTask(it, parameters.jdkPath, trunkIde, TrunkFinder())
+      pluginToCheck.mapTo(tasks) {
+        val dependencyFinder = TrunkFinder()
+        PluginVerifier(
+            it,
+            verificationReportage,
+            parameters.problemsFilters,
+            false,
+            pluginDetailsCache,
+            DefaultClsResolverProvider(
+                dependencyFinder,
+                jdkDescriptorCache,
+                parameters.jdkPath,
+                trunkIde,
+                parameters.externalClassesPrefixes
+            ),
+            VerificationTarget.Ide(trunkIde.ideVersion)
+        )
       }
 
-      val results = Verification.run(
-          verifierParameters,
-          pluginDetailsCache,
-          verifierTasks,
-          verificationReportage,
-          jdkDescriptorsCache
-      )
+      val results = verifierExecutor.verify(tasks)
 
-      return CheckTrunkApiResult.create(
-          releaseIde.ideVersion,
-          results.filter { it.ideVersion == releaseIde.ideVersion },
-          trunkIde.ideVersion,
-          results.filter { it.ideVersion == trunkIde.ideVersion }
+      return NewProblemsResult.create(
+          VerificationTarget.Ide(releaseIde.ideVersion),
+          results.filter { (it.verificationTarget as VerificationTarget.Ide).ideVersion == releaseIde.ideVersion },
+          VerificationTarget.Ide(trunkIde.ideVersion),
+          results.filter { (it.verificationTarget as VerificationTarget.Ide).ideVersion == trunkIde.ideVersion }
       )
     }
   }

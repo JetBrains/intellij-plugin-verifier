@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.reporting.verification
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.ignoring.PluginIgnoredEvent
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -33,7 +33,7 @@ interface VerificationReportersProvider : Closeable {
   /**
    * Provides a [VerificationReporterSet] used in the [PluginVerificationReportage]
    * for reporting the verification stages, progress and results
-   * of verifying the [pluginInfo] against [ideVersion].
+   * of verifying the [pluginInfo] against [verificationTarget].
    */
-  fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, ideVersion: IdeVersion): VerificationReporterSet
+  fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, verificationTarget: VerificationTarget): VerificationReporterSet
 }

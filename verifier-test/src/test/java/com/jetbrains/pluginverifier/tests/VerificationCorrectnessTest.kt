@@ -4,15 +4,16 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.core.Verification
-import com.jetbrains.pluginverifier.core.VerifierTask
+import com.jetbrains.pluginverifier.PluginVerifier
+import com.jetbrains.pluginverifier.VerificationTarget
+import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.dependencies.resolution.EmptyDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptorCreator
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.exists
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.parameters.VerifierParameters
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
@@ -25,8 +26,8 @@ import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tests.mocks.EmptyReporterSetProvider
-import com.jetbrains.pluginverifier.tests.mocks.NotFoundDependencyFinder
 import com.jetbrains.pluginverifier.tests.mocks.TestJdkDescriptorProvider
+import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
 import org.hamcrest.core.Is.`is`
 import org.junit.AfterClass
 import org.junit.Assert.*
@@ -70,15 +71,28 @@ class VerificationCorrectnessTest {
         val pluginDetailsCache = PluginDetailsCache(10, pluginDetailsProvider, pluginFilesBank)
         return IdeDescriptorCreator.createByPath(ideaFile, IdeVersion.createIdeVersion("IU-145.500")).use { ideDescriptor ->
           val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
-          val verifierParams = VerifierParameters(
-              externalClassesPrefixes,
-              emptyList(),
-              true
-          )
-          val tasks = listOf(VerifierTask(pluginInfo, jdkPath, ideDescriptor, NotFoundDependencyFinder()))
-
           VerificationReportageImpl(EmptyReporterSetProvider).use { verificationReportage ->
-            Verification.run(verifierParams, pluginDetailsCache, tasks, verificationReportage, JdkDescriptorsCache()).single()
+            JdkDescriptorsCache().use { jdkDescriptorCache ->
+              val tasks = listOf(PluginVerifier(
+                  pluginInfo,
+                  verificationReportage,
+                  emptyList(),
+                  true,
+                  pluginDetailsCache,
+                  DefaultClsResolverProvider(
+                      EmptyDependencyFinder,
+                      jdkDescriptorCache,
+                      jdkPath,
+                      ideDescriptor,
+                      externalClassesPrefixes
+                  ),
+                  VerificationTarget.Ide(ideDescriptor.ideVersion)
+              ))
+
+              VerifierExecutor(4).use { verifierExecutor ->
+                verifierExecutor.verify(tasks).single()
+              }
+            }
           }
         }
       } finally {
@@ -121,7 +135,7 @@ class VerificationCorrectnessTest {
         assertTrue("Redundant problems: \n$message", redundantProblems.isEmpty())
 
         val deprecatedMessage = redundantDeprecated.joinToString(separator = "\n") { "${it.fullDescription}\n" }
-        assertTrue("Redundant deprecated usages found: \n" + deprecatedMessage, redundantDeprecated.isEmpty())
+        assertTrue("Redundant deprecated usages found: \n$deprecatedMessage", redundantDeprecated.isEmpty())
       }
     }
   }
@@ -131,7 +145,7 @@ class VerificationCorrectnessTest {
     val missingDependencies = result.directMissingDependencies
     assertFalse(missingDependencies.isEmpty())
     println(missingDependencies)
-    val expectedDep = setOf(MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Plugin MissingPlugin doesn't have a build compatible with IU-145.500"))
+    val expectedDep = setOf(MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Plugin MissingPlugin is not found"))
     assertEquals(expectedDep, missingDependencies.toSet())
   }
 
@@ -405,7 +419,7 @@ class VerificationCorrectnessTest {
 
   @Test
   fun missingVirtualMethod() {
-    assertProblemFound("Method mock.plugin.non.existing.InvokeRemovedMethod.foo() : void contains an *invokevirtual* instruction referencing an unresolved method non.existing.Child.removedMethod() : void. This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class belonging to IU-145.500 (non.existing.Parent)",
+    assertProblemFound("Method mock.plugin.non.existing.InvokeRemovedMethod.foo() : void contains an *invokevirtual* instruction referencing an unresolved method non.existing.Child.removedMethod() : void. This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class (non.existing.Parent)",
         "Invocation of unresolved method non.existing.Child.removedMethod() : void"
     )
   }
@@ -511,8 +525,8 @@ class VerificationCorrectnessTest {
   @Test
   fun `method of the IDE class was invoked virtually on plugin's subclass`() {
     assertProblemFound("Method mock.plugin.non.existing.InvokeRemovedMethod.invokeVirtual() : void contains an *invokevirtual* instruction referencing an unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void. " +
-        "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class belonging " +
-        "to IU-145.500 (non.existing.Parent) or in the super interfaces belonging to IU-145.500 (interfaces.SomeInterface, interfaces.SomeInterface2)",
+        "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class (non.existing.Parent) " +
+        "or in the super interfaces (interfaces.SomeInterface, interfaces.SomeInterface2)",
         "Invocation of unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void"
     )
   }
@@ -520,8 +534,8 @@ class VerificationCorrectnessTest {
   @Test
   fun `static method of the IDE class was invoked on plugin's subclass`() {
     assertProblemFound("Method mock.plugin.non.existing.InvokeRemovedMethod.invokeStatic() : void contains an *invokevirtual* instruction referencing an unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void. " +
-        "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class belonging " +
-        "to IU-145.500 (non.existing.Parent) or in the super interfaces belonging to IU-145.500 (interfaces.SomeInterface, interfaces.SomeInterface2)",
+        "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class (non.existing.Parent) " +
+        "or in the super interfaces (interfaces.SomeInterface, interfaces.SomeInterface2)",
         "Invocation of unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void"
     )
   }
@@ -529,8 +543,7 @@ class VerificationCorrectnessTest {
   @Test
   fun `instance field of the IDE class was accessed on plugin's subclass`() {
     assertProblemFound("Method mock.plugin.non.existing.AccessRemovedField.foo() : void contains a *getfield* instruction referencing an unresolved field mock.plugin.non.existing.InheritField.removedField : int. " +
-        "This can lead to **NoSuchFieldError** exception at runtime. The field might have been declared in the super class belonging " +
-        "to IU-145.500 (non.existing.Parent)",
+        "This can lead to **NoSuchFieldError** exception at runtime. The field might have been declared in the super class (non.existing.Parent)",
         "Access to unresolved field mock.plugin.non.existing.InheritField.removedField : int"
     )
   }
@@ -538,8 +551,8 @@ class VerificationCorrectnessTest {
   @Test
   fun `final static field of the IDE interface was accessed in plugin`() {
     assertProblemFound("Method mock.plugin.non.existing.AccessRemovedField.foo() : void contains a *getstatic* instruction referencing an unresolved field mock.plugin.non.existing.InheritField.FINAL_FIELD : java.lang.Object. " +
-        "This can lead to **NoSuchFieldError** exception at runtime. The field might have been declared in the super class belonging " +
-        "to IU-145.500 (non.existing.Parent) or in the super interfaces belonging to IU-145.500 (interfaces.SomeInterface, interfaces.SomeInterface2)",
+        "This can lead to **NoSuchFieldError** exception at runtime. The field might have been declared in the super class (non.existing.Parent) " +
+        "or in the super interfaces (interfaces.SomeInterface, interfaces.SomeInterface2)",
         "Access to unresolved field mock.plugin.non.existing.InheritField.FINAL_FIELD : Object"
     )
   }

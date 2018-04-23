@@ -372,8 +372,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
         methodReference,
         getFromMethod(),
         instruction,
-        methodOwnerHierarchy,
-        ctx.ideVersion
+        methodOwnerHierarchy
     ))
   }
 

@@ -198,7 +198,6 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     }
   }
 
-  //todo: test the field's and method's problems descriptions properly.
   private fun registerFieldNotFoundProblem(ownerNode: ClassNode) {
     val fieldReference = SymbolicReference.fieldOf(fieldOwner, fieldName, fieldDescriptor)
     val fieldOwnerHierarchy = ClassHierarchyBuilder(ctx).buildClassHierarchy(ownerNode)
@@ -206,8 +205,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
         fieldReference,
         getFromMethod(),
         fieldOwnerHierarchy,
-        instruction,
-        ctx.ideVersion
+        instruction
     ))
   }
 

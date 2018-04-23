@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.results
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.emptyDependenciesGraph
@@ -16,7 +16,7 @@ import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 
 /**
  * Represents possible outcomes of verifying
- * the [plugin] [PluginInfo] against the [ideVersion].
+ * the [plugin] [PluginInfo] against the [verificationTarget].
  *
  * The verification outcome can be one of the following:
  * - [OK]
@@ -37,11 +37,11 @@ sealed class VerificationResult {
   lateinit var plugin: PluginInfo
 
   /**
-   * IDE build number against which the [plugin] has been verified.
+   * Target against which the [plugin] has been verified.
    *
    * _This field is applicable for all the result types._
    */
-  lateinit var ideVersion: IdeVersion
+  lateinit var verificationTarget: VerificationTarget
 
   /**
    * [CompatibilityProblem]s that were manually ignored.
@@ -73,7 +73,7 @@ sealed class VerificationResult {
   var pluginStructureErrors: Set<PluginStructureError> = emptySet()
 
   /**
-   * Contains the [compatibility problems] [CompatibilityProblem] of the [plugin] when running in the [IDE] [ideVersion].
+   * Contains the [compatibility problems] [CompatibilityProblem] of the [plugin] against the [verificationTarget].
    *
    * _This field is applicable only for the [CompatibilityProblems] and [MissingDependencies] result types._
    */
@@ -103,7 +103,7 @@ sealed class VerificationResult {
   /**
    * The [plugin] neither has the structure [errors] [PluginStructureError]
    * nor the structure [warnings] [PluginStructureWarning] nor
-   * the [compatibility problems] [CompatibilityProblem] when running in the [IDE] [ideVersion].
+   * the [compatibility problems] [CompatibilityProblem] against the [verificationTarget].
    *
    * _The available fields are  [dependenciesGraph] and [deprecatedUsages]._
    */
@@ -164,7 +164,7 @@ sealed class VerificationResult {
   }
 
   /**
-   * The [plugin] has [compatibilityProblems] when running in the [IDE] [ideVersion].
+   * The [plugin] has [compatibilityProblems] against the [verificationTarget].
    *
    * _The available fields are  [compatibilityProblems], [dependenciesGraph], [pluginStructureWarnings]
    * and [deprecatedUsages]._

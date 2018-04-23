@@ -4,13 +4,13 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.misc.exists
 import com.jetbrains.pluginverifier.misc.readLines
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsSet
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -43,18 +43,16 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
 
     pluginsSet.ignoredPlugins.forEach { plugin, reason ->
       ideDescriptors.map { it.ideVersion }.forEach { ideVersion ->
-        verificationReportage.logPluginVerificationIgnored(plugin, ideVersion, reason)
+        verificationReportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(ideVersion), reason)
       }
     }
 
-    val jdkDescriptorsCache = JdkDescriptorsCache()
     val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
     val problemsFilters = OptionsParser.getProblemsFilters(opts)
     return CheckPluginParams(
         pluginsSet,
         OptionsParser.getJdkPath(opts),
         ideDescriptors,
-        jdkDescriptorsCache,
         externalClassesPrefixes,
         problemsFilters,
         invalidPluginFiles

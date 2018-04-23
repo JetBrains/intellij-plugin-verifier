@@ -4,7 +4,6 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.misc.closeLogged
-import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import java.io.Closeable
 
@@ -12,11 +11,6 @@ import java.io.Closeable
  * Holder of plugin's resources necessary for the verification.
  */
 data class PluginDetails(
-
-    /**
-     * Descriptor of the plugin being verified.
-     */
-    val pluginInfo: PluginInfo,
 
     /**
      * The [IDE plugin] [IdePlugin] being verified.
@@ -47,6 +41,6 @@ data class PluginDetails(
     pluginFileLock.closeLogged()
   }
 
-  override fun toString() = "PluginDetails($pluginInfo)"
+  override fun toString() = "PluginDetails($plugin)"
 
 }

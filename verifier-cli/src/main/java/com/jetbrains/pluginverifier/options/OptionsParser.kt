@@ -169,7 +169,7 @@ object OptionsParser {
           ignoreConditions.add(when {
             tokens.size == 1 -> IgnoreCondition(null, null, parseRegexp(tokens[0]))
             tokens.size == 2 -> IgnoreCondition(tokens[0], null, parseRegexp(tokens[1]))
-            tokens.size == 3 -> IgnoreCondition(tokens[0], tokens[1].takeIf { it.isNotEmpty() }, parseRegexp(tokens[2]))
+            tokens.size == 3 -> IgnoreCondition(tokens[0].takeIf { it.isNotEmpty() }, tokens[1].takeIf { it.isNotEmpty() }, parseRegexp(tokens[2]))
             else -> throw incorrectIgnoredProblemLineException(line)
           })
         }

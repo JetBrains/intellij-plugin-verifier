@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.reporting.verification
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.misc.impossible
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -14,7 +14,7 @@ object EmptyPluginVerificationReportage : PluginVerificationReportage {
   override val plugin: PluginInfo
     get() = impossible()
 
-  override val ideVersion: IdeVersion
+  override val verificationTarget: VerificationTarget
     get() = impossible()
 
   override fun logVerificationStarted() = Unit

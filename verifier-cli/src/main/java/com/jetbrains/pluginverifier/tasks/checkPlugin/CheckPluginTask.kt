@@ -1,18 +1,20 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.pluginverifier.core.Verification
-import com.jetbrains.pluginverifier.core.VerifierTask
+import com.jetbrains.pluginverifier.PluginVerifier
+import com.jetbrains.pluginverifier.VerificationTarget
+import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.dependencies.resolution.ChainDependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.LocalRepositoryDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
-import com.jetbrains.pluginverifier.parameters.VerifierParameters
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.Task
+import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
 
 /**
  * The 'check-plugin' [task] [Task] that verifies
@@ -42,20 +44,34 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
     return ChainDependencyFinder(listOf(localFinder, ideDependencyFinder))
   }
 
-  override fun execute(verificationReportage: VerificationReportage): CheckPluginResult {
+  override fun execute(
+      verificationReportage: VerificationReportage,
+      verifierExecutor: VerifierExecutor,
+      jdkDescriptorCache: JdkDescriptorsCache,
+      pluginDetailsCache: PluginDetailsCache
+  ): CheckPluginResult {
     with(parameters) {
       val tasks = ideDescriptors.flatMap { ideDescriptor ->
         val dependencyFinder = createDependencyFinder(ideDescriptor)
-        pluginsSet.pluginsToCheck.map { pluginInfo ->
-          VerifierTask(pluginInfo, jdkPath, ideDescriptor, dependencyFinder)
+        pluginsSet.pluginsToCheck.map {
+          PluginVerifier(
+              it,
+              verificationReportage,
+              problemsFilters,
+              true,
+              pluginDetailsCache,
+              DefaultClsResolverProvider(
+                  dependencyFinder,
+                  jdkDescriptorCache,
+                  jdkPath,
+                  ideDescriptor,
+                  externalClassesPrefixes
+              ),
+              VerificationTarget.Ide(ideDescriptor.ideVersion)
+          )
         }
       }
-      val verifierParams = VerifierParameters(
-          externalClassesPrefixes,
-          problemsFilters,
-          true
-      )
-      val results = Verification.run(verifierParams, pluginDetailsCache, tasks, verificationReportage, jdkDescriptorsCache)
+      val results = verifierExecutor.verify(tasks)
       return CheckPluginResult(
           invalidPluginFiles,
           results

@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider.Result
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import java.io.Closeable
+import java.nio.file.Path
 
 /**
  * [Provides] [providePluginDetails] the [PluginDetails] of the plugins.
@@ -13,10 +14,15 @@ import java.io.Closeable
 interface PluginDetailsProvider {
 
   /**
-   * Creates the [PluginDetails] for the [plugin] [pluginInfo] which
+   * Creates the [PluginDetails] for [plugin] [pluginInfo] which
    * files are locked with the [pluginFileLock].
    */
   fun providePluginDetails(pluginInfo: PluginInfo, pluginFileLock: FileLock): Result
+
+  /**
+   * Creates [PluginDetails] for a plugin from [pluginFile].
+   */
+  fun providePluginDetails(pluginFile: Path): Result
 
   /**
    * Represents possible results of [providing] [providePluginDetails] the [PluginDetails].

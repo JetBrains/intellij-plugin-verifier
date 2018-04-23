@@ -26,7 +26,7 @@ class CheckIdeRunner : CommandRunner() {
       parameters: TaskParameters,
       pluginRepository: PluginRepository,
       pluginDetailsCache: PluginDetailsCache
-  ) = CheckIdeTask(parameters as CheckIdeParams, pluginRepository, pluginDetailsCache)
+  ) = CheckIdeTask(parameters as CheckIdeParams)
 
   override fun createTaskResultsPrinter(outputOptions: OutputOptions, pluginRepository: PluginRepository): TaskResultPrinter =
       CheckIdeResultPrinter(outputOptions, pluginRepository)

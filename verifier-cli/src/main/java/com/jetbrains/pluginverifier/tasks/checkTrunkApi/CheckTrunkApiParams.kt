@@ -5,7 +5,6 @@ import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
@@ -18,7 +17,6 @@ class CheckTrunkApiParams(pluginsSet: PluginsSet,
                           val releaseIde: IdeDescriptor,
                           val externalClassesPrefixes: List<String>,
                           val problemsFilters: List<ProblemsFilter>,
-                          val jdkDescriptorsCache: JdkDescriptorsCache,
                           val jetBrainsPluginIds: List<String>,
                           private val deleteReleaseIdeOnExit: Boolean,
                           private val releaseIdeFile: FileLock,
@@ -39,7 +37,6 @@ class CheckTrunkApiParams(pluginsSet: PluginsSet,
     if (deleteReleaseIdeOnExit) {
       releaseIdeFile.file.deleteLogged()
     }
-    jdkDescriptorsCache.closeLogged()
   }
 
 }
