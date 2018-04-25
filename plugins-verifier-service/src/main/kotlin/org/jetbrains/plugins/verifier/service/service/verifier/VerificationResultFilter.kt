@@ -70,18 +70,18 @@ class VerificationResultFilter {
         is VerificationResult.CompatibilityProblems -> compatibilityProblems
       }
 
-      val pluginAndIdeVersion = PluginAndTarget(plugin as UpdateInfo, verificationTarget)
+      val pluginAndTarget = PluginAndTarget(plugin as UpdateInfo, verificationTarget)
 
       if (compatibilityProblems.size > TOO_MANY_PROBLEMS_THRESHOLD) {
-        if (pluginAndIdeVersion in acceptedVerifications) {
-          logger.info("Verification $pluginAndIdeVersion has been accepted, though there are many compatibility problems: ${compatibilityProblems.size}")
+        if (pluginAndTarget in acceptedVerifications) {
+          logger.info("Verification $pluginAndTarget has been accepted, though there are many compatibility problems: ${compatibilityProblems.size}")
           return Result.Send
         }
         val reason = "There are too many compatibility problems between $plugin and $verificationTarget: ${compatibilityProblems.size}"
         logger.info(reason)
         val verdict = this.toString()
         val ignore = Result.Ignore(verdict, verificationEndTime, reason)
-        _ignoredVerifications[pluginAndIdeVersion] = ignore
+        _ignoredVerifications[pluginAndTarget] = ignore
         return ignore
       }
 

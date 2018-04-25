@@ -73,7 +73,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
       }
       val results = verifierExecutor.verify(tasks)
       return CheckPluginResult(
-          invalidPluginFiles,
+          pluginsSet.invalidPluginFiles,
           results
       )
     }

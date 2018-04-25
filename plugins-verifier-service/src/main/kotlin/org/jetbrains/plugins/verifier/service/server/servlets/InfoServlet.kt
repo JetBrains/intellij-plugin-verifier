@@ -49,9 +49,9 @@ class InfoServlet : BaseServlet() {
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Update #$updateId is not found in ${serverContext.pluginRepository}")
       return
     }
-    val pluginAndIdeVersion = PluginAndTarget(updateInfo, VerificationTarget.Ide(ideVersion))
-    serverContext.verificationResultsFilter.unignoreVerificationResultFor(pluginAndIdeVersion)
-    sendOk(resp, "Verification for $pluginAndIdeVersion has been unignored")
+    val pluginAndTarget = PluginAndTarget(updateInfo, VerificationTarget.Ide(ideVersion))
+    serverContext.verificationResultsFilter.unignoreVerificationResultFor(pluginAndTarget)
+    sendOk(resp, "Verification for $pluginAndTarget has been unignored")
   }
 
   private fun processServiceControl(req: HttpServletRequest, resp: HttpServletResponse) {

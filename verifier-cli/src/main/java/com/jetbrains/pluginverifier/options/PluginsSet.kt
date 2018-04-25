@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.options.filter.DeprecatedPluginFilter
 import com.jetbrains.pluginverifier.options.filter.PluginFilter
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
+import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import java.net.URL
 
 /**
@@ -66,6 +67,11 @@ data class PluginsSet(
       }
     }.toMap()
 
+  /**
+   * Plugins' files that have been specified for check
+   * but are not valid plugins
+   */
+  val invalidPluginFiles: MutableList<InvalidPluginFile> = arrayListOf()
 
   val localRepository = LocalPluginRepository(URL("http://unused.com"))
 

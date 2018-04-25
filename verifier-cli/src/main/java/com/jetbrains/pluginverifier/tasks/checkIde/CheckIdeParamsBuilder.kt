@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.options.PluginsParsing
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.options.filter.ExcludedPluginFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
@@ -33,7 +34,7 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
       val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
       val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
-      val pluginsSet = OptionsParser.createPluginsToCheckSet(opts, pluginRepository, ideDescriptor.ideVersion)
+      val pluginsSet = PluginsParsing(pluginRepository, verificationReportage).parsePluginsToCheck(opts, ideDescriptor.ideVersion)
 
       val excludedPlugins = OptionsParser.parseExcludedPlugins(opts)
       val excludedFilter = ExcludedPluginFilter(excludedPlugins)

@@ -34,7 +34,8 @@ fun URL.safeHashCode() = toExternalForm().trim('/').hashCode()
 fun <T, R> T.tryInvokeSeveralTimes(attempts: Int,
                                    attemptsDelay: Long,
                                    attemptsDelayTimeUnit: TimeUnit,
-                                   presentableBlockName: String, block: T.() -> R): R {
+                                   presentableBlockName: String,
+                                   block: T.() -> R): R {
   for (attempt in 1..attempts) {
     try {
       return block()

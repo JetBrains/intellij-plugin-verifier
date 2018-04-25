@@ -14,6 +14,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.net.URL
 
+//todo: ignore the test if no internet connection available
 class TestMainPluginRepository {
 
   @Rule

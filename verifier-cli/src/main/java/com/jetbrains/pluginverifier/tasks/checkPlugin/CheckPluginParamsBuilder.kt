@@ -1,26 +1,13 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.VerificationTarget
-import com.jetbrains.pluginverifier.misc.exists
-import com.jetbrains.pluginverifier.misc.readLines
-import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.options.PluginsSet
+import com.jetbrains.pluginverifier.options.PluginsParsing
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
-import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.PublicPluginRepository
-import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
-import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.TimeUnit
 
 class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
                                val verificationReportage: VerificationReportage) : TaskParametersBuilder {
@@ -36,13 +23,12 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
       OptionsParser.createIdeDescriptor(it, opts)
     }
 
-    val pluginsSet = PluginsSet()
-    val invalidPluginFiles = arrayListOf<InvalidPluginFile>()
     val pluginToTestArg = freeArgs[0]
-    parsePluginsToCheckSet(pluginsSet, invalidPluginFiles, pluginToTestArg, ideDescriptors.map { it.ideVersion })
+    val ideVersions = ideDescriptors.map { it.ideVersion }
+    val pluginsSet = PluginsParsing(pluginRepository, verificationReportage).parsePluginsToCheck(pluginToTestArg, ideVersions)
 
     pluginsSet.ignoredPlugins.forEach { plugin, reason ->
-      ideDescriptors.map { it.ideVersion }.forEach { ideVersion ->
+      ideVersions.forEach { ideVersion ->
         verificationReportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(ideVersion), reason)
       }
     }
@@ -54,97 +40,8 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
         OptionsParser.getJdkPath(opts),
         ideDescriptors,
         externalClassesPrefixes,
-        problemsFilters,
-        invalidPluginFiles
+        problemsFilters
     )
   }
-
-  //todo: move to [OptionsParser] and perform refactoring
-  private fun parsePluginsToCheckSet(pluginsSet: PluginsSet,
-                                     invalidPluginFiles: MutableList<InvalidPluginFile>,
-                                     pluginToTestArg: String,
-                                     ideVersions: List<IdeVersion>) {
-    verificationReportage.logVerificationStage("Parse a list of plugins to check")
-    when {
-      pluginToTestArg.startsWith("@") -> {
-        schedulePluginsFromFile(
-            pluginsSet,
-            invalidPluginFiles,
-            Paths.get(pluginToTestArg.substringAfter("@")),
-            ideVersions
-        )
-      }
-      pluginToTestArg.matches("#\\d+".toRegex()) -> {
-        val updateId = Integer.parseInt(pluginToTestArg.drop(1))
-        val updateInfo = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "get update information for update #$updateId") {
-          (this as? PublicPluginRepository)?.getPluginInfoById(updateId)
-        } ?: throw IllegalArgumentException("Update #$updateId is not found in the Plugin Repository")
-        pluginsSet.schedulePlugin(updateInfo)
-      }
-      else -> {
-        val file = Paths.get(pluginToTestArg)
-        if (!file.exists()) {
-          throw IllegalArgumentException("The file $file doesn't exist")
-        }
-        addPluginToCheckFromFile(file, pluginsSet, invalidPluginFiles)
-      }
-    }
-  }
-
-  private fun schedulePluginsFromFile(pluginsSet: PluginsSet,
-                                      invalidPluginsFiles: MutableList<InvalidPluginFile>,
-                                      pluginsListFile: Path,
-                                      ideVersions: List<IdeVersion>) {
-    val pluginPaths = pluginsListFile.readLines().map { it.trim() }.filterNot { it.isEmpty() }
-    for (ideVersion in ideVersions) {
-      for (path in pluginPaths) {
-        if (path.startsWith("id:")) {
-          val compatiblePluginVersions = getCompatiblePluginVersions(path.substringAfter("id:"), ideVersion)
-          pluginsSet.schedulePlugins(compatiblePluginVersions)
-        } else if (path.startsWith("#")) {
-          val updateId = path.substringAfter("#").toIntOrNull() ?: continue
-          val pluginInfo = getPluginInfoByUpdateId(updateId) ?: continue
-          pluginsSet.schedulePlugin(pluginInfo)
-        } else {
-          var pluginFile = Paths.get(path)
-          if (!pluginFile.isAbsolute) {
-            pluginFile = pluginsListFile.resolveSibling(path)
-          }
-          if (!pluginFile.exists()) {
-            throw RuntimeException("Plugin file '$path' with absolute '${pluginFile.toAbsolutePath()}' specified in '${pluginsListFile.toAbsolutePath()}' doesn't exist")
-          }
-          verificationReportage.logVerificationStage("Reading descriptor of a plugin to check from $pluginFile")
-          addPluginToCheckFromFile(pluginFile, pluginsSet, invalidPluginsFiles)
-        }
-      }
-    }
-  }
-
-  private fun addPluginToCheckFromFile(pluginFile: Path,
-                                       pluginsSet: PluginsSet,
-                                       invalidPluginFiles: MutableList<InvalidPluginFile>) {
-    with(IdePluginManager.createManager().createPlugin(pluginFile.toFile())) {
-      when (this) {
-        is PluginCreationSuccess -> pluginsSet.scheduleLocalPlugin(plugin)
-        is PluginCreationFail -> {
-          verificationReportage.logVerificationStage("Plugin is invalid in $pluginFile: ${errorsAndWarnings.joinToString()}")
-          invalidPluginFiles.add(InvalidPluginFile(pluginFile, errorsAndWarnings))
-        }
-      }
-    }
-  }
-
-  private fun getPluginInfoByUpdateId(updateId: Int): PluginInfo? =
-      pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch plugin info for #$updateId") {
-        (pluginRepository as? PublicPluginRepository)?.getPluginInfoById(updateId)
-      }
-
-  private fun getCompatiblePluginVersions(pluginId: String, ideVersion: IdeVersion): List<PluginInfo> {
-    val allCompatibleUpdatesOfPlugin = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch all compatible updates of plugin $pluginId with $ideVersion") {
-      getAllCompatibleVersionsOfPlugin(ideVersion, pluginId)
-    }
-    return allCompatibleUpdatesOfPlugin.map { it as UpdateInfo }
-  }
-
 
 }
