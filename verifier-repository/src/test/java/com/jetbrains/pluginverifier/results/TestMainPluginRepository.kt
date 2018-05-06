@@ -9,13 +9,20 @@ import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import org.junit.Assert.*
 import org.junit.Before
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.net.URL
 
-//todo: ignore the test if no internet connection available
+@HostReachableRule.HostReachable("https://plugins.jetbrains.com")
 class TestMainPluginRepository {
+
+  companion object {
+    @ClassRule
+    @JvmField
+    var hostReachableRule = HostReachableRule()
+  }
 
   @Rule
   @JvmField
