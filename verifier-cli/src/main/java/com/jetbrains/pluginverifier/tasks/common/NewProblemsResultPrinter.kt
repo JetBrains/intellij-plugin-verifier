@@ -6,7 +6,6 @@ import com.google.common.collect.Multimaps
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
@@ -48,9 +47,8 @@ class NewProblemsResultPrinter(private val outputOptions: OutputOptions,
 
   private fun NewProblemsResult.getNewPluginProblems(): Multimap<PluginInfo, CompatibilityProblem> {
     val result = HashMultimap.create<PluginInfo, CompatibilityProblem>()
-    for ((plugin, cmp) in baseAndNewResults) {
-      val newApiProblems = NewProblemsResult.getNewApiProblems(cmp.first, cmp.second)
-      result.putAll(plugin, newApiProblems)
+    for ((plugin, cmp) in resultsComparisons) {
+      result.putAll(plugin, cmp.newProblems)
     }
     return result
   }
@@ -146,16 +144,18 @@ class NewProblemsResultPrinter(private val outputOptions: OutputOptions,
     }
   }
 
-  private fun DependenciesGraph.getResolvedDependency(dependency: PluginDependency): DependencyNode? =
+  private fun DependenciesGraph.getResolvedDependency(dependency: PluginDependency) =
       edges.find { it.dependency == dependency }?.to
 
-  private fun VerificationResult.getResolvedDependency(dependency: PluginDependency): DependencyNode? =
-      (this as? VerificationResult.MissingDependencies)?.dependenciesGraph?.getResolvedDependency(dependency)
+  private fun VerificationResult.getResolvedDependency(dependency: PluginDependency) =
+      dependenciesGraph.getResolvedDependency(dependency)
 
-  private fun StringBuilder.appendMissingDependenciesNotes(apiChanges: NewProblemsResult, plugin: PluginInfo) {
-    val (baseResult, newResult) = apiChanges.baseAndNewResults[plugin] ?: return
-    val baseMissingDependencies = baseResult.getDirectMissingDependencies()
-    val newMissingDependencies = newResult.getDirectMissingDependencies()
+  private fun StringBuilder.appendMissingDependenciesNotes(newProblemsResult: NewProblemsResult, plugin: PluginInfo) {
+    val comparison = newProblemsResult.resultsComparisons[plugin] ?: return
+
+    val baseResult = comparison.oldResult
+    val baseMissingDependencies = comparison.oldDirectMissingDependencies
+    val newMissingDependencies = comparison.newDirectMissingDependencies
 
     if (newMissingDependencies.isNotEmpty()) {
       append("\nNote: some problems might have been caused by missing dependencies: [\n")
@@ -164,11 +164,11 @@ class NewProblemsResultPrinter(private val outputOptions: OutputOptions,
 
         val baseResolvedDependency = baseResult.getResolvedDependency(dependency)
         if (baseResolvedDependency != null) {
-          append(" (when ${apiChanges.baseTarget} was checked, $baseResolvedDependency was used)")
+          append(" (when ${newProblemsResult.baseTarget} was checked, $baseResolvedDependency was used)")
         } else {
           val baseMissingDep = baseMissingDependencies.find { it.dependency == dependency }
           if (baseMissingDep != null) {
-            append(" (it was also missing when we checked ${apiChanges.baseTarget} ")
+            append(" (it was also missing when we checked ${newProblemsResult.baseTarget} ")
             if (missingReason == baseMissingDep.missingReason) {
               append("by the same reason)")
             } else {
@@ -180,11 +180,6 @@ class NewProblemsResultPrinter(private val outputOptions: OutputOptions,
       }
       append("]")
     }
-  }
-
-  private fun VerificationResult.getDirectMissingDependencies() = when (this) {
-    is VerificationResult.MissingDependencies -> directMissingDependencies
-    else -> emptyList()
   }
 
 }

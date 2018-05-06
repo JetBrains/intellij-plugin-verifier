@@ -29,58 +29,67 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
       pluginDetailsCache: PluginDetailsCache
   ): NewProblemsResult {
     with(parameters) {
-      val pluginToCheck = pluginsSet.pluginsToCheck
+      val releaseFinder = ReleaseFinder()
+      val trunkFinder = TrunkFinder()
+
+      val releaseTarget = VerificationTarget.Ide(releaseIde.ideVersion)
+      val trunkTarget = VerificationTarget.Ide(trunkIde.ideVersion)
+
+      val releaseResolverProvider = DefaultClsResolverProvider(
+          releaseFinder,
+          jdkDescriptorCache,
+          parameters.jdkPath,
+          releaseIde,
+          parameters.externalClassesPrefixes
+      )
+      val trunkResolverProvider = DefaultClsResolverProvider(
+          trunkFinder,
+          jdkDescriptorCache,
+          parameters.jdkPath,
+          trunkIde,
+          parameters.externalClassesPrefixes
+      )
 
       val tasks = arrayListOf<PluginVerifier>()
-      pluginToCheck.mapTo(tasks) {
-        val dependencyFinder = ReleaseFinder()
-        PluginVerifier(
-            it,
+
+      for (pluginInfo in pluginsSet.pluginsToCheck) {
+        tasks.add(PluginVerifier(
+            pluginInfo,
             verificationReportage,
             parameters.problemsFilters,
             false,
             pluginDetailsCache,
-            DefaultClsResolverProvider(
-                dependencyFinder,
-                jdkDescriptorCache,
-                parameters.jdkPath,
-                releaseIde,
-                parameters.externalClassesPrefixes
-            ),
-            VerificationTarget.Ide(releaseIde.ideVersion)
-        )
-      }
-      pluginToCheck.mapTo(tasks) {
-        val dependencyFinder = TrunkFinder()
-        PluginVerifier(
-            it,
+            releaseResolverProvider,
+            releaseTarget
+        ))
+
+        tasks.add(PluginVerifier(
+            pluginInfo,
             verificationReportage,
             parameters.problemsFilters,
             false,
             pluginDetailsCache,
-            DefaultClsResolverProvider(
-                dependencyFinder,
-                jdkDescriptorCache,
-                parameters.jdkPath,
-                trunkIde,
-                parameters.externalClassesPrefixes
-            ),
-            VerificationTarget.Ide(trunkIde.ideVersion)
-        )
+            trunkResolverProvider,
+            trunkTarget
+        ))
       }
 
       val results = verifierExecutor.verify(tasks)
 
       return NewProblemsResult.create(
-          VerificationTarget.Ide(releaseIde.ideVersion),
-          results.filter { (it.verificationTarget as VerificationTarget.Ide).ideVersion == releaseIde.ideVersion },
-          VerificationTarget.Ide(trunkIde.ideVersion),
-          results.filter { (it.verificationTarget as VerificationTarget.Ide).ideVersion == trunkIde.ideVersion }
+          releaseTarget,
+          results.filter { it.verificationTarget == releaseTarget },
+          trunkTarget,
+          results.filter { it.verificationTarget == trunkTarget }
       )
     }
   }
 
-  private val publicRepositoryReleaseCompatibleFinder = RepositoryDependencyFinder(pluginRepository, LastCompatibleVersionSelector(parameters.releaseIde.ideVersion), pluginDetailsCache)
+  private val publicRepositoryReleaseCompatibleFinder = RepositoryDependencyFinder(
+      pluginRepository,
+      LastCompatibleVersionSelector(parameters.releaseIde.ideVersion),
+      pluginDetailsCache
+  )
 
   /**
    * [DependencyFinder] for the verification of the [release] [CheckTrunkApiParams.releaseIde] IDE that:

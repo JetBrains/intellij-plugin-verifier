@@ -1,16 +1,24 @@
 package com.jetbrains.pluginverifier.tasks.common
 
 import com.jetbrains.pluginverifier.VerificationTarget
+import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.tasks.TaskResult
 
+data class VerificationResultComparison(val plugin: PluginInfo,
+                                        val oldResult: VerificationResult,
+                                        val newResult: VerificationResult,
+                                        val newProblems: Set<CompatibilityProblem>,
+                                        val oldDirectMissingDependencies: List<MissingDependency>,
+                                        val newDirectMissingDependencies: List<MissingDependency>)
+
 class NewProblemsResult(val baseTarget: VerificationTarget,
                         val baseResults: List<VerificationResult>,
                         val newTarget: VerificationTarget,
                         val newResults: List<VerificationResult>,
-                        val baseAndNewResults: Map<PluginInfo, Pair<VerificationResult, VerificationResult>>) : TaskResult() {
+                        val resultsComparisons: Map<PluginInfo, VerificationResultComparison>) : TaskResult() {
 
   companion object {
     fun create(baseTarget: VerificationTarget,
@@ -19,19 +27,49 @@ class NewProblemsResult(val baseTarget: VerificationTarget,
                newResults: List<VerificationResult>): NewProblemsResult {
       val basePlugin2Result = baseResults.associateBy { it.plugin }
       val newPlugin2Result = newResults.associateBy { it.plugin }
-      val baseAndNewResults = hashMapOf<PluginInfo, Pair<VerificationResult, VerificationResult>>()
+
+      val resultsComparisons = hashMapOf<PluginInfo, VerificationResultComparison>()
 
       for ((plugin, newResult) in newPlugin2Result) {
-        val oldResult = basePlugin2Result[plugin] ?: continue
-        val oldNotChecked = oldResult is VerificationResult.NotFound || oldResult is VerificationResult.FailedToDownload
-        val newNotChecked = newResult is VerificationResult.NotFound || newResult is VerificationResult.FailedToDownload
-        if (oldNotChecked || newNotChecked) {
+        val baseResult = basePlugin2Result[plugin] ?: continue
+        val newProblems = getNewProblems(baseResult, newResult)
+
+        val oldDirectMissingDeps = baseResult.getDirectMissingDependencies()
+        val newDirectMissingDeps = newResult.getDirectMissingDependencies()
+
+        if (shouldSkipResult(baseResult, newResult)) {
           continue
         }
-        baseAndNewResults[plugin] = oldResult to newResult
+        resultsComparisons[plugin] = VerificationResultComparison(
+            plugin,
+            baseResult,
+            newResult,
+            newProblems,
+            oldDirectMissingDeps,
+            newDirectMissingDeps
+        )
       }
 
-      return NewProblemsResult(baseTarget, baseResults, newTarget, newResults, baseAndNewResults)
+      return NewProblemsResult(baseTarget, baseResults, newTarget, newResults, resultsComparisons)
+    }
+
+    /**
+     * Determines whether it is necessary to skip comparison of [baseResult] and [newResult]
+     * due to mismatch in plugins that were available at the verification time.
+     *
+     * For example, if a plugin to be verified could have been resolved when we verified the [releaseIdeVersion],
+     * and later it became unavailable when we verified the [trunkIdeVersion],
+     * we should skip that plugin to avoid false-positives.
+     */
+    private fun shouldSkipResult(baseResult: VerificationResult,
+                                 newResult: VerificationResult): Boolean {
+      if (baseResult is VerificationResult.NotFound ||
+          baseResult is VerificationResult.FailedToDownload ||
+          newResult is VerificationResult.NotFound ||
+          newResult is VerificationResult.FailedToDownload) {
+        return true
+      }
+      return false
     }
 
     /**
@@ -39,10 +77,15 @@ class NewProblemsResult(val baseTarget: VerificationTarget,
      * comparing to the base target, with respect to possible
      * problems transformations.
      */
-    fun getNewApiProblems(baseResult: VerificationResult, newResult: VerificationResult): Set<CompatibilityProblem> {
-      val baseProblems = baseResult.getProblems()
+    private fun getNewProblems(oldResult: VerificationResult, newResult: VerificationResult): Set<CompatibilityProblem> {
+      val oldProblems = oldResult.getProblems()
       val newProblems = newResult.getProblems()
-      return newProblems.filterNotTo(hashSetOf()) { isOldProblem(it, baseProblems) }
+      return newProblems.filterNotTo(hashSetOf()) { isOldProblem(it, oldProblems) }
+    }
+
+    private fun VerificationResult.getDirectMissingDependencies() = when (this) {
+      is VerificationResult.MissingDependencies -> directMissingDependencies
+      else -> emptyList()
     }
 
     /**
