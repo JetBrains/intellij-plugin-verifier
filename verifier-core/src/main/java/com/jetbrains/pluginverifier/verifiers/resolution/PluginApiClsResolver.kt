@@ -7,6 +7,15 @@ import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
 import java.io.Closeable
 
+/**
+ * [ClsResolver] that resolves classes in the following order:
+ * 1) Verified plugin
+ * 2) Classes of a plugin against which the plugin is verified
+ * 3) Classes of JDK
+ *
+ * Unresolved classes are considered external in order
+ * to skip verification of them.
+ */
 class PluginApiClsResolver(private val checkedPluginResolver: Resolver,
                            private val basePluginResolver: Resolver,
                            private val jdkClassesResolver: Resolver,
@@ -38,15 +47,15 @@ class PluginApiClsResolver(private val checkedPluginResolver: Resolver,
 
   override fun getOriginOfClass(className: String): ClassFileOrigin? {
     if (checkedPluginResolver.containsClass(className)) {
-      return ClassFileOrigin.PluginInternalClass
+      return ClassFileOrigin.PLUGIN_INTERNAL_CLASS
     }
     if (basePluginResolver.containsClass(className)) {
-      return ClassFileOrigin.ClassOfPluginDependency
+      return ClassFileOrigin.CLASS_OF_PLUGIN_DEPENDENCY
     }
     if (jdkClassesResolver.containsClass(className)) {
-      return ClassFileOrigin.JdkClass
+      return ClassFileOrigin.JDK_CLASS
     }
-    return null
+    return ClassFileOrigin.EXTERNAL
   }
 
   override fun close() {

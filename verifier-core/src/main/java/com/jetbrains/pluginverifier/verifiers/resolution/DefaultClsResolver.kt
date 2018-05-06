@@ -7,6 +7,13 @@ import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
 import java.io.Closeable
 
+/**
+ * Default implementation of [ClsResolver] that resolves classes in the following order:
+ * 1) Verified plugin
+ * 2) JDK classes
+ * 3) IDE classes
+ * 4) Class of plugin's dependencies
+ */
 class DefaultClsResolver(private val pluginResolver: Resolver,
                          private val dependenciesResolver: Resolver,
                          private val jdkClassesResolver: Resolver,
@@ -45,16 +52,16 @@ class DefaultClsResolver(private val pluginResolver: Resolver,
 
   override fun getOriginOfClass(className: String): ClassFileOrigin? {
     if (pluginResolver.containsClass(className)) {
-      return ClassFileOrigin.PluginInternalClass
+      return ClassFileOrigin.PLUGIN_INTERNAL_CLASS
     }
     if (jdkClassesResolver.containsClass(className)) {
-      return ClassFileOrigin.JdkClass
+      return ClassFileOrigin.JDK_CLASS
     }
     if (ideResolver.containsClass(className)) {
-      return ClassFileOrigin.IdeClass
+      return ClassFileOrigin.IDE_CLASS
     }
     if (dependenciesResolver.containsClass(className)) {
-      return ClassFileOrigin.ClassOfPluginDependency
+      return ClassFileOrigin.CLASS_OF_PLUGIN_DEPENDENCY
     }
     return null
   }

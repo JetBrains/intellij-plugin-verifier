@@ -100,7 +100,7 @@ class PluginVerifier(private val plugin: PluginInfo,
       return
     }
 
-    clsResolverProvider.create(pluginDetails, resultHolder, pluginReportage).use { clsResolver ->
+    clsResolverProvider.provide(pluginDetails, resultHolder, pluginReportage).use { clsResolver ->
       val verificationContext = VerificationContext(
           plugin,
           resultHolder,

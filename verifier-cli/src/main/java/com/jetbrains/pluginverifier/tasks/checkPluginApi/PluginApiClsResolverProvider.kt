@@ -17,10 +17,10 @@ class PluginApiClsResolverProvider(private val jdkDescriptorCache: JdkDescriptor
                                    private val jdkPath: JdkPath,
                                    private val basePluginResolver: Resolver) : ClsResolverProvider {
 
-  override fun create(pluginDetails: PluginDetails,
-                      resultHolder: ResultHolder,
-                      reportage: PluginVerificationReportage): ClsResolver {
-    val pluginResolver = pluginDetails.pluginClassesLocations.createPluginResolver()
+  override fun provide(checkedPluginDetails: PluginDetails,
+                       resultHolder: ResultHolder,
+                       reportage: PluginVerificationReportage): ClsResolver {
+    val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()
     return with(jdkDescriptorCache.getJdkResolver(jdkPath)) {
       when (this) {
         is ResourceCacheEntryResult.Found -> {

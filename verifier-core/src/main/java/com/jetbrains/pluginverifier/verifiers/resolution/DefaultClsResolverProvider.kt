@@ -23,20 +23,23 @@ import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
 import java.io.Closeable
 
+/**
+ * [ClsResolverProvider] that provides the [DefaultClsResolver].
+ */
 class DefaultClsResolverProvider(private val dependencyFinder: DependencyFinder,
                                  private val jdkDescriptorsCache: JdkDescriptorsCache,
                                  private val jdkPath: JdkPath,
                                  private val ideDescriptor: IdeDescriptor,
                                  private val externalClassesPrefixes: List<String>) : ClsResolverProvider {
 
-  override fun create(pluginDetails: PluginDetails,
-                      resultHolder: ResultHolder,
-                      reportage: PluginVerificationReportage): ClsResolver {
-    val pluginResolver = pluginDetails.pluginClassesLocations.createPluginResolver()
+  override fun provide(checkedPluginDetails: PluginDetails,
+                       resultHolder: ResultHolder,
+                       reportage: PluginVerificationReportage): ClsResolver {
+    val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()
 
     val depGraph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
     return try {
-      buildDependenciesGraph(pluginDetails.plugin, resultHolder, depGraph, reportage)
+      buildDependenciesGraph(checkedPluginDetails.plugin, resultHolder, depGraph, reportage)
       provide(pluginResolver, reportage, depGraph)
     } catch (e: Throwable) {
       depGraph.vertexSet().forEach { it.dependencyResult.closeLogged() }

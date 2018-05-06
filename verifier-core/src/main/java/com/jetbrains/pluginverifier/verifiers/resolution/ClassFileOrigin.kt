@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
 /**
- * Represents one of possible locations of a class file.
+ * Represents possible locations of a class file.
  *
- * Note that classes with the same name may be found in several paths.
+ * Classes with the same name may be found in several paths.
  * For example, a class `com.google.common.cache.Cache` may be found
  * in a `IDE/lib/guava.jar` and in a `plugin/guava.jar` but the class loader
  * constructed by IDE defines a specific search order:
@@ -16,14 +16,16 @@ package com.jetbrains.pluginverifier.verifiers.resolution
  * This class specifies the first path where a class is found.
  *
  * If a class is not found in the previous paths,
- * a "no such class" problem will be reported.
+ * a "no such class" problem may be reported.
  */
-sealed class ClassFileOrigin {
-  object PluginInternalClass : ClassFileOrigin()
+enum class ClassFileOrigin {
+  PLUGIN_INTERNAL_CLASS,
 
-  object JdkClass : ClassFileOrigin()
+  JDK_CLASS,
 
-  object IdeClass : ClassFileOrigin()
+  IDE_CLASS,
 
-  object ClassOfPluginDependency : ClassFileOrigin()
+  CLASS_OF_PLUGIN_DEPENDENCY,
+
+  EXTERNAL
 }

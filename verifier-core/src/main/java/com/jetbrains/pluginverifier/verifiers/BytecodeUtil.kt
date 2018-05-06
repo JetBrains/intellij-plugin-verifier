@@ -15,7 +15,7 @@ fun MethodNode.getParameterNames(): List<String> {
     parameterNames = (localVariables as List<LocalVariableNode>).map { it.name }.drop(offset).take(argumentsNumber)
   }
   if (parameterNames.size != argumentsNumber) {
-    parameterNames = (0..argumentsNumber - 1).map { "arg$it" }
+    parameterNames = (0 until argumentsNumber).map { "arg$it" }
   }
   return parameterNames
 }
@@ -131,9 +131,6 @@ fun haveTheSamePackage(first: ClassNode, second: ClassNode): Boolean = extractPa
 @Suppress("UNCHECKED_CAST")
 fun ClassNode.getInvisibleAnnotations() = (invisibleAnnotations as? List<AnnotationNode>).orEmpty()
 
-@Suppress("UNCHECKED_CAST")
-fun ClassNode.getVisibleAnnotations() = (visibleAnnotations as? List<AnnotationNode>).orEmpty()
-
 /**
  * Access Control
  * A class or interface C is accessible to a class or interface D if and only if either of the following is true:
@@ -143,33 +140,3 @@ fun ClassNode.getVisibleAnnotations() = (visibleAnnotations as? List<AnnotationN
 fun isClassAccessibleToOtherClass(me: ClassNode, other: ClassNode): Boolean = me.isPublic() || haveTheSamePackage(me, other)
 
 private fun extractPackage(className: String): String = className.substringBeforeLast('/', "")
-
-/**
- * An instance method mC declared in class C overrides another instance method mA declared in
- * class A iff either mC is the same as mA, or all of the following are true:
- *  1) C is a subclass of A.
- *  2) mC has the same name and descriptor as mA.
- *  3) mC is not marked ACC_PRIVATE.
- *  4) One of the following is true:
- *      mA is marked ACC_PUBLIC; or is marked ACC_PROTECTED; or is marked neither ACC_PUBLIC nor ACC_PROTECTED
- *      nor ACC_PRIVATE and A belongs to the same run-time package as C.
- *      mC overrides a method m' (m' distinct from mC and mA) such that m' overrides mA.
- */
-fun overrides(firstOwner: ClassNode,
-              firstMethod: MethodNode,
-              secondOwner: ClassNode,
-              secondMethod: MethodNode,
-              ctx: VerificationContext): Boolean {
-  if (firstOwner.name == secondOwner.name && firstMethod.name == secondMethod.name && firstMethod.desc == secondMethod.desc) {
-    //the same
-    return true
-  }
-  val isAccessible = firstMethod.isPublic() ||
-      firstMethod.isProtected() ||
-      (firstMethod.isDefaultAccess() && haveTheSamePackage(firstOwner, secondOwner))
-
-  return ctx.isSubclassOf(firstOwner, secondOwner)
-      && firstMethod.name == secondMethod.name && firstMethod.desc == secondMethod.desc
-      && !firstMethod.isPrivate()
-      && isAccessible
-}

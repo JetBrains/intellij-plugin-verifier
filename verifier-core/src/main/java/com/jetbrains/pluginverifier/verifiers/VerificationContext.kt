@@ -48,7 +48,7 @@ data class VerificationContext(
    */
   private fun shouldIndexDeprecatedClass(className: String) =
       with(clsResolver.getOriginOfClass(className)) {
-        this == ClassFileOrigin.IdeClass || this == ClassFileOrigin.ClassOfPluginDependency
+        this == ClassFileOrigin.IDE_CLASS || this == ClassFileOrigin.CLASS_OF_PLUGIN_DEPENDENCY
       }
 
   private fun Location.getHostClass() = when (this) {

@@ -10,7 +10,7 @@ object HierarchicalProblemsDescription {
     val ideSuperClasses = hashSetOf<String>()
     val ideSuperInterfaces = hashSetOf<String>()
     ClassHierarchyVisitor(true).visitClassHierarchy(ownerHierarchy, false, onEnter = { parent ->
-      if (parent.classOrigin == ClassFileOrigin.IdeClass) {
+      if (parent.classOrigin == ClassFileOrigin.IDE_CLASS) {
         if (parent.isInterface) {
           ideSuperInterfaces.add(parent.name)
         } else {

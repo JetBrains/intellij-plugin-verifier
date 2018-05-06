@@ -52,7 +52,6 @@ fun VerificationContext.resolveClassOrProblem(className: String,
   }
 }
 
-//todo: check the cases when the accessibility must be checked.
 fun VerificationContext.checkClassExistsOrExternal(className: String, lookupLocation: () -> Location) {
   if (!clsResolver.isExternalClass(className) && !clsResolver.classExists(className)) {
     registerProblem(ClassNotFoundProblem(ClassReference(className), lookupLocation()))
