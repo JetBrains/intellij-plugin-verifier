@@ -52,7 +52,9 @@ class IdeManagerImpl : IdeManager() {
     if (firstExists != null) {
       return readBuildNumber(firstExists)
     }
-    throw IllegalArgumentException("None file of the list exists: " + suitableFiles.joinToString())
+    throw IllegalArgumentException("Build number is not found in the following files relative to $idePath: " +
+        suitableFiles.map { it.relativeTo(idePath) }.joinToString()
+    )
   }
 
   private fun readVersionFromSourcesDir(idePath: File): IdeVersion {

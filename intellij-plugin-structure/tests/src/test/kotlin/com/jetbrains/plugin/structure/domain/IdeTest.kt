@@ -31,7 +31,11 @@ class IdeTest {
     val ideaFolder = temporaryFolder.newFolder()
 
     expectedEx.expect(IllegalArgumentException::class.java)
-    expectedEx.expectMessage(ideaFolder.absolutePath + File.separator + "build.txt is not found")
+    expectedEx.expectMessage(
+        "Build number is not found in the following files relative to $ideaFolder: " +
+            "build.txt, Resources${File.separator}build.txt, community${File.separator}build.txt, " +
+            "ultimate${File.separator}community${File.separator}build.txt"
+    )
 
     IdeManager.createManager().createIde(ideaFolder)
   }
