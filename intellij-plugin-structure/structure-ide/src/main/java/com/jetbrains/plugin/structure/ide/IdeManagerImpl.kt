@@ -41,23 +41,16 @@ class IdeManagerImpl : IdeManager() {
     return IdeImpl(idePath, ideVersion, bundled)
   }
 
-  private fun isMacOs(): Boolean {
-    val osName = System.getProperty("os.name")?.toLowerCase() ?: return false
-    return osName.contains("mac os x") || osName.contains("darwin") || osName.contains("osx")
-  }
-
   private fun readVersionFromBinaries(idePath: File): IdeVersion {
-    if (isMacOs()) {
-      val versionFile = File(idePath, "Resources/build.txt")
-      if (versionFile.exists()) {
-        return readBuildNumber(versionFile)
-      }
+    val buildTxt = File(idePath, "build.txt")
+    if (buildTxt.exists()) {
+      return readBuildNumber(buildTxt)
     }
-    val versionFile = File(idePath, "build.txt")
-    if (!versionFile.exists()) {
-      throw IllegalArgumentException(versionFile.toString() + " is not found")
+    val macBuildTxt = File(idePath, "Resources/build.txt")
+    if (macBuildTxt.exists()) {
+      return readBuildNumber(macBuildTxt)
     }
-    return readBuildNumber(versionFile)
+    throw IllegalArgumentException("Neither $buildTxt nor $macBuildTxt exists")
   }
 
   private fun readVersionFromSourcesDir(idePath: File): IdeVersion {
