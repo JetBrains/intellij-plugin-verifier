@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.results.VerificationResult
 
 interface VerifierServiceProtocol {
 
-  fun requestUpdatesToCheck(availableIde: IdeVersion): List<UpdateInfo>
+  fun requestUpdatesToCheck(ideVersion: IdeVersion): List<UpdateInfo>
 
   fun sendVerificationResult(verificationResult: VerificationResult)
 

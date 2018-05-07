@@ -14,7 +14,7 @@ class DownloadIdeTask(private val ideFilesBank: IdeFilesBank,
 
   override fun execute(progress: ProgressIndicator): Boolean {
     //initiates downloading of the IDE.
-    val result = ideFilesBank.getIde(ideVersion)
+    val result = ideFilesBank.getIdeFile(ideVersion)
     (result as? IdeFilesBank.Result.Found)?.ideFileLock?.release()
     return result is IdeFilesBank.Result.Found
   }

@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
@@ -24,20 +25,21 @@ import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
 
 /**
  * [ServiceTask] verifies the [plugin] [updateInfo]
- * against the [verificationTarget] in the [verifierExecutor]
+ * against the [ideVersion] in the [verifierExecutor]
  * using the [JDK] [jdkPath].
  */
-class VerifyPluginTask(private val verifierExecutor: VerifierExecutor,
-                       private val updateInfo: UpdateInfo,
-                       private val verificationTarget: VerificationTarget.Ide,
-                       private val jdkPath: JdkPath,
-                       private val pluginDetailsCache: PluginDetailsCache,
-                       private val ideDescriptorsCache: IdeDescriptorsCache,
-                       private val jdkDescriptorsCache: JdkDescriptorsCache)
-  : ServiceTask<VerificationResult>("Check $updateInfo against $verificationTarget") {
+class VerifyPluginTask(
+    private val verifierExecutor: VerifierExecutor,
+    private val updateInfo: UpdateInfo,
+    private val ideVersion: IdeVersion,
+    private val jdkPath: JdkPath,
+    private val pluginDetailsCache: PluginDetailsCache,
+    private val ideDescriptorsCache: IdeDescriptorsCache,
+    private val jdkDescriptorsCache: JdkDescriptorsCache
+) : ServiceTask<VerificationResult>("Check $updateInfo against $ideVersion") {
 
   override fun execute(progress: ProgressIndicator): VerificationResult {
-    return ideDescriptorsCache.getIdeDescriptorCacheEntry(verificationTarget.ideVersion).use { entry ->
+    return ideDescriptorsCache.getIdeDescriptorCacheEntry(ideVersion).use { entry ->
       val ideDescriptor = entry.resource
       val verificationReportage = createVerificationReportage(progress)
       checkPluginWithIde(ideDescriptor, verificationReportage)

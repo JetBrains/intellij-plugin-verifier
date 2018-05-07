@@ -53,9 +53,9 @@ class DefaultVerifierServiceProtocol(authorizationData: AuthorizationData,
 
   private val passwordRequestBody = createStringRequestBody(authorizationData.pluginRepositoryPassword)
 
-  override fun requestUpdatesToCheck(availableIde: IdeVersion): List<UpdateInfo> =
+  override fun requestUpdatesToCheck(ideVersion: IdeVersion): List<UpdateInfo> =
       retrofitConnector.getUpdatesToCheck(
-          createStringRequestBody(availableIde.asString()),
+          createStringRequestBody(ideVersion.asString()),
           userNameRequestBody,
           passwordRequestBody
       )

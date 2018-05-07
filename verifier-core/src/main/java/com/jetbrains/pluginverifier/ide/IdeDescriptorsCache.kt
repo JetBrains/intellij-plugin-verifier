@@ -80,7 +80,7 @@ class IdeDescriptorsCache(cacheSize: Int,
   private class IdeDescriptorResourceProvider(private val ideFilesBank: IdeFilesBank) : ResourceProvider<IdeVersion, IdeDescriptor> {
 
     override fun provide(key: IdeVersion): ProvideResult<IdeDescriptor> {
-      val result = ideFilesBank.getIde(key)
+      val result = ideFilesBank.getIdeFile(key)
       val ideLock = (result as? IdeFilesBank.Result.Found)?.ideFileLock
           ?: return ProvideResult.NotFound("IDE $key is not found in the $ideFilesBank")
       val ideDescriptor = try {

@@ -60,7 +60,7 @@ class CheckTrunkApiParamsBuilder(private val pluginRepository: PluginRepository,
       apiOpts.majorIdeVersion != null -> {
         val ideVersion = parseIdeVersion(apiOpts.majorIdeVersion!!)
         releaseIdeFileLock = tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "download ide $ideVersion") {
-          val result = ideFilesBank.getIde(ideVersion)
+          val result = ideFilesBank.getIdeFile(ideVersion)
           if (result is IdeFilesBank.Result.Found) {
             result.ideFileLock
           } else {

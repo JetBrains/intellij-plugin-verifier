@@ -25,20 +25,16 @@ import java.util.concurrent.TimeUnit
  *
  * [Plugin verifier integration with the Plugins Repository](https://confluence.jetbrains.com/display/PLREP/plugin-verifier+integration+with+the+plugins.jetbrains.com)
  */
-class VerifierService(taskManager: ServiceTaskManager,
-                      private val jdkDescriptorsCache: JdkDescriptorsCache,
-                      private val verifierServiceProtocol: VerifierServiceProtocol,
-                      private val ideFilesBank: IdeFilesBank,
-                      private val pluginDetailsCache: PluginDetailsCache,
-                      private val ideDescriptorsCache: IdeDescriptorsCache,
-                      private val jdkPath: JdkPath,
-                      private val verificationResultsFilter: VerificationResultFilter)
-
-  : BaseService("VerifierService", 0, 1, TimeUnit.MINUTES, taskManager) {
-
-  companion object {
-    private const val MAXIMUM_SIMULTANEOUS_VERIFICATIONS = 128
-  }
+class VerifierService(
+    taskManager: ServiceTaskManager,
+    private val jdkDescriptorsCache: JdkDescriptorsCache,
+    private val verifierServiceProtocol: VerifierServiceProtocol,
+    private val ideFilesBank: IdeFilesBank,
+    private val pluginDetailsCache: PluginDetailsCache,
+    private val ideDescriptorsCache: IdeDescriptorsCache,
+    private val jdkPath: JdkPath,
+    private val verificationResultsFilter: VerificationResultFilter
+) : BaseService("VerifierService", 0, 1, TimeUnit.MINUTES, taskManager) {
 
   private val inProgress = hashSetOf<PluginAndTarget>()
 
@@ -48,20 +44,9 @@ class VerifierService(taskManager: ServiceTaskManager,
 
   override fun doServe() {
     val pluginsToCheck = requestPluginsToCheck()
-    logger.info("There are ${pluginsToCheck.size} new plugins to be verified")
-    for (pluginAndIdeVersion in pluginsToCheck) {
-      if (inProgress.size > MAXIMUM_SIMULTANEOUS_VERIFICATIONS) {
-        return
-      }
-
-      scheduleVerification(pluginAndIdeVersion)
-    }
+    logger.info("There are ${pluginsToCheck.size} plugins waiting for verification")
+    pluginsToCheck.forEach { scheduleVerification(it) }
   }
-
-  private fun shouldVerify(pluginAndTarget: PluginAndTarget) =
-      pluginAndTarget !in inProgress
-          && !isCheckedRecently(pluginAndTarget)
-          && !verificationResultsFilter.ignoredVerifications.containsKey(pluginAndTarget)
 
   private fun isCheckedRecently(pluginAndTarget: PluginAndTarget): Boolean {
     val lastCheckTime = lastCheckDate[pluginAndTarget] ?: Instant.EPOCH
@@ -69,21 +54,29 @@ class VerifierService(taskManager: ServiceTaskManager,
     return lastCheckTime.plus(Duration.of(10, ChronoUnit.MINUTES)).isAfter(now)
   }
 
-  private fun requestPluginsToCheck() =
-      ideFilesBank.getAvailableIdeVersions()
+  private fun requestPluginsToCheck(): List<PluginAndTarget> =
+      ideFilesBank
+          .getAvailableIdeVersions()
           .flatMap { ideVersion ->
             verifierServiceProtocol
                 .requestUpdatesToCheck(ideVersion)
                 .map { PluginAndTarget(it, VerificationTarget.Ide(ideVersion)) }
-          }.filter { shouldVerify(it) }
+          }
 
   private fun scheduleVerification(pluginAndTarget: PluginAndTarget) {
+    if (pluginAndTarget in inProgress
+        || isCheckedRecently(pluginAndTarget)
+        || verificationResultsFilter.ignoredVerifications.containsKey(pluginAndTarget)
+    ) {
+      return
+    }
+
     lastCheckDate[pluginAndTarget] = Instant.now()
     inProgress.add(pluginAndTarget)
     val task = VerifyPluginTask(
         verifierExecutor,
         pluginAndTarget.updateInfo,
-        pluginAndTarget.verificationTarget as VerificationTarget.Ide,
+        (pluginAndTarget.verificationTarget as VerificationTarget.Ide).ideVersion,
         jdkPath,
         pluginDetailsCache,
         ideDescriptorsCache,
@@ -97,7 +90,7 @@ class VerifierService(taskManager: ServiceTaskManager,
         { _, _ -> },
         { onCompletion(pluginAndTarget) }
     )
-    logger.info("Verification $pluginAndTarget is scheduled in task #${taskStatus.taskId}")
+    logger.info("Verification $pluginAndTarget is scheduled with task #${taskStatus.taskId}")
   }
 
   @Synchronized

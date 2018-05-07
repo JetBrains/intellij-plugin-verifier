@@ -9,8 +9,7 @@ import java.io.Closeable
 import java.util.concurrent.*
 
 /**
- * Verification executor that [runs] [verify] the verification tasks
- * with a concurrency level of [concurrentWorkers].
+ * [Runs] [verify] the verification tasks with a concurrency level of [concurrentWorkers].
  *
  * The [VerifierExecutor] can be reused for several verifications.
  */

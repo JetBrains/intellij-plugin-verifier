@@ -25,7 +25,7 @@ class VerificationResultFilter {
   companion object {
     private const val TOO_MANY_PROBLEMS_THRESHOLD = 100
 
-    private val logger = LoggerFactory.getLogger(VerificationResultFilter::class.java)
+    private val LOG = LoggerFactory.getLogger(VerificationResultFilter::class.java)
   }
 
   private val acceptedVerifications = hashSetOf<PluginAndTarget>()
@@ -43,7 +43,7 @@ class VerificationResultFilter {
    */
   @Synchronized
   fun unignoreVerificationResultFor(pluginAndTarget: PluginAndTarget) {
-    logger.info("Unignore verification result for $pluginAndTarget")
+    LOG.info("Unignore verification result for $pluginAndTarget")
     acceptedVerifications.add(pluginAndTarget)
     _ignoredVerifications.remove(pluginAndTarget)
   }
@@ -52,7 +52,7 @@ class VerificationResultFilter {
    * Determines whether the verification result should be sent.
    *
    * Currently, if the verification reports too many compatibility problems,
-   * that is more than [TOO_MANY_PROBLEMS_THRESHOLD],
+   * which is more than [TOO_MANY_PROBLEMS_THRESHOLD],
    * the result is not sent unless it has been manually accepted
    * via [unignoreVerificationResultFor].
    */
@@ -74,11 +74,11 @@ class VerificationResultFilter {
 
       if (compatibilityProblems.size > TOO_MANY_PROBLEMS_THRESHOLD) {
         if (pluginAndTarget in acceptedVerifications) {
-          logger.info("Verification $pluginAndTarget has been accepted, though there are many compatibility problems: ${compatibilityProblems.size}")
+          LOG.info("Verification $pluginAndTarget has been accepted, though there are many compatibility problems: ${compatibilityProblems.size}")
           return Result.Send
         }
         val reason = "There are too many compatibility problems between $plugin and $verificationTarget: ${compatibilityProblems.size}"
-        logger.info(reason)
+        LOG.info(reason)
         val verdict = this.toString()
         val ignore = Result.Ignore(verdict, verificationEndTime, reason)
         _ignoredVerifications[pluginAndTarget] = ignore

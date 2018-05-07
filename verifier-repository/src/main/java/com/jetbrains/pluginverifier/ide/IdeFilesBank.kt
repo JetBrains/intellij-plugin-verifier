@@ -37,7 +37,7 @@ class IdeFilesBank(private val bankDirectory: Path,
 
   fun isLockedOrBeingProvided(ideVersion: IdeVersion) = ideFilesRepository.isLockedOrBeingProvided(ideVersion)
 
-  fun getIde(ideVersion: IdeVersion): Result =
+  fun getIdeFile(ideVersion: IdeVersion): Result =
       with(ideFilesRepository.getFile(ideVersion)) {
         when (this) {
           is FileRepositoryResult.Found -> Result.Found(lockedFile)
