@@ -42,15 +42,17 @@ class IdeManagerImpl : IdeManager() {
   }
 
   private fun readVersionFromBinaries(idePath: File): IdeVersion {
-    val buildTxt = File(idePath, "build.txt")
-    if (buildTxt.exists()) {
-      return readBuildNumber(buildTxt)
+    val suitableFiles = listOf(
+        idePath.resolve("build.txt"),
+        idePath.resolve("Resources").resolve("build.txt"),
+        idePath.resolve("community").resolve("build.txt"),
+        idePath.resolve("ultimate").resolve("community").resolve("build.txt")
+    )
+    val firstExists = suitableFiles.find { it.exists() }
+    if (firstExists != null) {
+      return readBuildNumber(firstExists)
     }
-    val macBuildTxt = File(idePath, "Resources/build.txt")
-    if (macBuildTxt.exists()) {
-      return readBuildNumber(macBuildTxt)
-    }
-    throw IllegalArgumentException("Neither $buildTxt nor $macBuildTxt exists")
+    throw IllegalArgumentException("None file of the list exists: " + suitableFiles.joinToString())
   }
 
   private fun readVersionFromSourcesDir(idePath: File): IdeVersion {
