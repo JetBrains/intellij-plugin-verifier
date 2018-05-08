@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.verifier.service.server.servlets
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.MemoryInfo
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.service.verifier.PluginAndTarget
+import org.jetbrains.plugins.verifier.service.service.verifier.ScheduledVerification
+import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskState
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
 import java.time.ZoneId
@@ -49,9 +49,9 @@ class InfoServlet : BaseServlet() {
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Update #$updateId is not found in ${serverContext.pluginRepository}")
       return
     }
-    val pluginAndTarget = PluginAndTarget(updateInfo, VerificationTarget.Ide(ideVersion))
-    serverContext.verificationResultsFilter.unignoreVerificationResultFor(pluginAndTarget)
-    sendOk(resp, "Verification for $pluginAndTarget has been unignored")
+    val scheduledVerification = ScheduledVerification(updateInfo, ideVersion)
+    serverContext.verificationResultsFilter.unignoreVerificationResultFor(scheduledVerification)
+    sendOk(resp, "Verification $scheduledVerification has been unignored")
   }
 
   private fun processServiceControl(req: HttpServletRequest, resp: HttpServletResponse) {
@@ -179,10 +179,10 @@ class InfoServlet : BaseServlet() {
                   th { +"Reason" }
                 }
                 ignoredVerifications
-                    .forEach { (pluginAndTarget, ignore) ->
+                    .forEach { (scheduledVerification, ignore) ->
                       tr {
-                        td { +pluginAndTarget.updateInfo.toString() }
-                        td { +pluginAndTarget.verificationTarget.toString() }
+                        td { +scheduledVerification.updateInfo.toString() }
+                        td { +scheduledVerification.ideVersion.toString() }
                         td { +DATE_FORMAT.format(ignore.verificationEndTime) }
                         td { +ignore.verificationVerdict }
                         td { +ignore.ignoreReason }
@@ -191,29 +191,43 @@ class InfoServlet : BaseServlet() {
               }
             }
 
-            h2 {
-              +"Running tasks"
-            }
-            table("width: 100%") {
-              tr {
-                th { +"ID" }
-                th { +"Task name" }
-                th { +"Start time" }
-                th { +"State" }
-                th { +"Message" }
-                th { +"Completion %" }
-                th { +"Total time (ms)" }
-              }
+            val activeTasks = serverContext.taskManager.activeTasks
+            val runningTasks = activeTasks.filter { it.state == ServiceTaskState.RUNNING }
+            val waitingTasks = activeTasks.filter { it.state == ServiceTaskState.WAITING }
 
-              serverContext.taskManager.getRunningTasks().forEach { taskStatus ->
+            val finishedTasks = serverContext.taskManager.finishedTasks
+
+            mapOf(
+                "Running tasks" to runningTasks.sortedByDescending { it.startTime },
+                "Pending tasks (10 latest)" to waitingTasks.sortedByDescending { it.startTime }.take(10),
+                "Finished tasks (10 latest)" to finishedTasks.sortedByDescending { it.startTime }.take(10)
+            ).forEach { title, tasks ->
+              h2 {
+                +title
+              }
+              table("width: 100%") {
                 tr {
-                  td { +taskStatus.taskId.toString() }
-                  td { +taskStatus.presentableName }
-                  td { +DATE_FORMAT.format(taskStatus.startTime) }
-                  td { +taskStatus.state.toString() }
-                  td { +taskStatus.progress.text }
-                  td { +String.format("%.2f", taskStatus.progress.fraction) }
-                  td { +taskStatus.elapsedTime.toMillis().toString() }
+                  th(style = "width: 5%") { +"ID" }
+                  th(style = "width: 20%") { +"Task name" }
+                  th(style = "width: 10%") { +"Start time" }
+                  th(style = "width: 5%") { +"State" }
+                  th(style = "width: 50%") { +"Message" }
+                  th(style = "width: 5%") { +"Completion %" }
+                  th(style = "width: 5%") { +"Total time (ms)" }
+                }
+
+                tasks.forEach {
+                  with(it) {
+                    tr {
+                      td { +taskId.toString() }
+                      td { +presentableName }
+                      td { +DATE_FORMAT.format(startTime) }
+                      td { +state.toString() }
+                      td { +progress.text }
+                      td { +String.format("%.2f", progress.fraction) }
+                      td { +elapsedTime.toMillis().toString() }
+                    }
+                  }
                 }
               }
             }

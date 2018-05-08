@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.features
 
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
+import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -27,7 +28,7 @@ class FeatureExtractorService(taskManager: ServiceTaskManager,
                               private val pluginDetailsCache: PluginDetailsCache)
   : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, taskManager) {
 
-  private val processingUpdates = hashSetOf<UpdateInfo>()
+  private val inProgressUpdates = hashSetOf<UpdateInfo>()
 
   private val lastProceedDate = hashMapOf<UpdateInfo, Instant>()
 
@@ -35,9 +36,6 @@ class FeatureExtractorService(taskManager: ServiceTaskManager,
     val updatesToExtract = featureServiceProtocol.getUpdatesToExtract()
     logger.info("Extracting features of ${updatesToExtract.size} updates")
     for (updateInfo in updatesToExtract) {
-      if (processingUpdates.size > 500) {
-        return
-      }
       if (!isProcessedRecently(updateInfo)) {
         schedule(updateInfo)
       }
@@ -65,12 +63,12 @@ class FeatureExtractorService(taskManager: ServiceTaskManager,
         { _, _ -> },
         { _ -> onCompletion(runner) }
     )
-    processingUpdates.add(updateInfo)
+    inProgressUpdates.add(updateInfo)
     logger.info("Extract features of $updateInfo is scheduled with taskId #${taskStatus.taskId}")
   }
 
   private fun onCompletion(task: ExtractFeaturesTask) {
-    processingUpdates.remove(task.updateInfo)
+    inProgressUpdates.remove(task.updateInfo)
   }
 
   private fun onError(error: Throwable, taskStatus: ServiceTaskStatus, task: ExtractFeaturesTask) {
@@ -78,7 +76,7 @@ class FeatureExtractorService(taskManager: ServiceTaskManager,
   }
 
   private fun ExtractFeaturesTask.Result.onSuccess() {
-    logger.info("For plugin $updateInfo there are " + "feature".pluralizeWithNumber(features.size) + " extracted: $resultType")
+    logger.info("For plugin $updateInfo there " + "is".pluralize(features.size) + " " + "feature".pluralizeWithNumber(features.size) + " extracted: $resultType")
     try {
       featureServiceProtocol.sendExtractedFeatures(this)
     } catch (e: Exception) {

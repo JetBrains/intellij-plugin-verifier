@@ -17,7 +17,6 @@ import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
 import org.jetbrains.plugins.verifier.service.service.features.DefaultFeatureServiceProtocol
 import org.jetbrains.plugins.verifier.service.service.features.FeatureExtractorService
-import org.jetbrains.plugins.verifier.service.service.ide.IdeListUpdater
 import org.jetbrains.plugins.verifier.service.service.verifier.DefaultVerifierServiceProtocol
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
@@ -64,7 +63,7 @@ class ServerStartupListener : ServletContextListener {
     val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginDetailsProvider, pluginFilesBank)
 
     val ideRepository = IdeRepository()
-    val tasksManager = ServiceTaskManager(Settings.TASK_MANAGER_CONCURRENCY.getAsInt(), 1000)
+    val tasksManager = ServiceTaskManager(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
 
     val authorizationData = AuthorizationData(
         Settings.PLUGIN_REPOSITORY_VERIFIER_USERNAME.get(),
@@ -120,7 +119,6 @@ class ServerStartupListener : ServletContextListener {
           taskManager,
           jdkDescriptorsCache,
           verifierServiceProtocol,
-          ideFilesBank,
           pluginDetailsCache,
           ideDescriptorsCache,
           jdkPath,
@@ -135,25 +133,15 @@ class ServerStartupListener : ServletContextListener {
           ideDescriptorsCache,
           pluginDetailsCache
       )
-      val ideListUpdater = IdeListUpdater(
-          taskManager,
-          serviceDAO,
-          ideRepository,
-          ideFilesBank
-      )
 
       addService(verifierService)
       addService(featureService)
-      addService(ideListUpdater)
 
       if (Settings.ENABLE_PLUGIN_VERIFIER_SERVICE.getAsBoolean()) {
         verifierService.start()
       }
       if (Settings.ENABLE_FEATURE_EXTRACTOR_SERVICE.getAsBoolean()) {
         featureService.start()
-      }
-      if (Settings.ENABLE_IDE_LIST_UPDATER.getAsBoolean()) {
-        ideListUpdater.start()
       }
 
       sce.servletContext.setAttribute(SERVER_CONTEXT_KEY, serverContext)

@@ -1,9 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
-import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
@@ -29,54 +27,39 @@ class VerifierService(
     taskManager: ServiceTaskManager,
     private val jdkDescriptorsCache: JdkDescriptorsCache,
     private val verifierServiceProtocol: VerifierServiceProtocol,
-    private val ideFilesBank: IdeFilesBank,
     private val pluginDetailsCache: PluginDetailsCache,
     private val ideDescriptorsCache: IdeDescriptorsCache,
     private val jdkPath: JdkPath,
     private val verificationResultsFilter: VerificationResultFilter
 ) : BaseService("VerifierService", 0, 1, TimeUnit.MINUTES, taskManager) {
 
-  private val inProgress = hashSetOf<PluginAndTarget>()
+  private val running = hashSetOf<ScheduledVerification>()
 
-  private val lastCheckDate = hashMapOf<PluginAndTarget, Instant>()
+  private val lastVerifiedDate = hashMapOf<ScheduledVerification, Instant>()
 
   private val verifierExecutor = VerifierExecutor(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
 
   override fun doServe() {
-    val pluginsToCheck = requestPluginsToCheck()
-    logger.info("There are ${pluginsToCheck.size} plugins waiting for verification")
-    pluginsToCheck.forEach { scheduleVerification(it) }
+    val verifications = verifierServiceProtocol.requestScheduledVerifications()
+        .filter { it.shouldVerify() }
+        .sortedByDescending { it.updateInfo.updateId }
+    logger.info("There are ${verifications.size} pending verifications")
+    verifications.forEach { scheduleVerification(it) }
   }
 
-  private fun isCheckedRecently(pluginAndTarget: PluginAndTarget): Boolean {
-    val lastCheckTime = lastCheckDate[pluginAndTarget] ?: Instant.EPOCH
+  private fun isCheckedRecently(scheduledVerification: ScheduledVerification): Boolean {
+    val lastCheckTime = lastVerifiedDate[scheduledVerification] ?: Instant.EPOCH
     val now = Instant.now()
     return lastCheckTime.plus(Duration.of(10, ChronoUnit.MINUTES)).isAfter(now)
   }
 
-  private fun requestPluginsToCheck(): List<PluginAndTarget> =
-      ideFilesBank
-          .getAvailableIdeVersions()
-          .flatMap { ideVersion ->
-            verifierServiceProtocol
-                .requestUpdatesToCheck(ideVersion)
-                .map { PluginAndTarget(it, VerificationTarget.Ide(ideVersion)) }
-          }
-
-  private fun scheduleVerification(pluginAndTarget: PluginAndTarget) {
-    if (pluginAndTarget in inProgress
-        || isCheckedRecently(pluginAndTarget)
-        || verificationResultsFilter.ignoredVerifications.containsKey(pluginAndTarget)
-    ) {
-      return
-    }
-
-    lastCheckDate[pluginAndTarget] = Instant.now()
-    inProgress.add(pluginAndTarget)
+  private fun scheduleVerification(scheduledVerification: ScheduledVerification) {
+    lastVerifiedDate[scheduledVerification] = Instant.now()
+    running.add(scheduledVerification)
     val task = VerifyPluginTask(
         verifierExecutor,
-        pluginAndTarget.updateInfo,
-        (pluginAndTarget.verificationTarget as VerificationTarget.Ide).ideVersion,
+        scheduledVerification.updateInfo,
+        scheduledVerification.ideVersion,
         jdkPath,
         pluginDetailsCache,
         ideDescriptorsCache,
@@ -86,20 +69,23 @@ class VerifierService(
     val taskStatus = taskManager.enqueue(
         task,
         { taskResult, taskStatus -> onSuccess(taskResult, taskStatus) },
-        { error, _ -> onError(pluginAndTarget, error) },
+        { error, _ -> onError(scheduledVerification, error) },
         { _, _ -> },
-        { onCompletion(pluginAndTarget) }
+        { onCompletion(scheduledVerification) }
     )
-    logger.info("Verification $pluginAndTarget is scheduled with task #${taskStatus.taskId}")
+    logger.info("Verification $scheduledVerification is scheduled with task #${taskStatus.taskId}")
+  }
+
+  private fun ScheduledVerification.shouldVerify() =
+      this !in running && !isCheckedRecently(this) && !verificationResultsFilter.ignoredVerifications.containsKey(this)
+
+  @Synchronized
+  private fun onCompletion(pluginAndTarget: ScheduledVerification) {
+    running.remove(pluginAndTarget)
   }
 
   @Synchronized
-  private fun onCompletion(pluginAndTarget: PluginAndTarget) {
-    inProgress.remove(pluginAndTarget)
-  }
-
-  @Synchronized
-  private fun onError(pluginAndTarget: PluginAndTarget, error: Throwable) {
+  private fun onError(pluginAndTarget: ScheduledVerification, error: Throwable) {
     logger.error("Unable to check $pluginAndTarget", error)
   }
 

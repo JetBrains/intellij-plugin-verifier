@@ -3,25 +3,23 @@ package org.jetbrains.plugins.verifier.service.tasks
 import com.google.common.collect.EvictingQueue
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.pluginverifier.misc.causedBy
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.time.Instant
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Supplier
 
 /**
- * Service tasks manager responsible for enqueuing service [tasks] [ServiceTask]
+ * Service tasks manager responsible for enqueuing service tasks
  * and executing the completion callbacks.
  */
-class ServiceTaskManager(concurrency: Int, maxKeepResults: Int) : Closeable {
-  companion object {
-    val LOG: Logger = LoggerFactory.getLogger(ServiceTaskManager::class.java)
+class ServiceTaskManager(concurrency: Int) : Closeable {
+  private companion object {
+    val LOG = LoggerFactory.getLogger(ServiceTaskManager::class.java)
   }
 
-  private val nextTaskId = AtomicLong()
+  private var nextTaskId: Long = 0
 
   private val executorService = Executors.newFixedThreadPool(concurrency,
       ThreadFactoryBuilder()
@@ -30,11 +28,23 @@ class ServiceTaskManager(concurrency: Int, maxKeepResults: Int) : Closeable {
           .build()
   )
 
-  private val tasks = EvictingQueue.create<ServiceTaskStatus>(maxKeepResults)
+  private val _activeTasks = linkedSetOf<ServiceTaskStatus>()
 
-  @Synchronized
-  fun getRunningTasks(): List<ServiceTaskStatus> = tasks
-      .sortedByDescending { it.startTime }
+  private val _finishedTasks = EvictingQueue.create<ServiceTaskStatus>(100)
+
+  /**
+   * Tasks with status either [ServiceTaskState.WAITING] or [ServiceTaskState.RUNNING]
+   */
+  val activeTasks: Set<ServiceTaskStatus>
+    @Synchronized
+    get() = _activeTasks.toSet()
+
+  /**
+   * Tasks with status either [ServiceTaskState.SUCCESS], [ServiceTaskState.ERROR] or [ServiceTaskState.CANCELLED]
+   */
+  val finishedTasks: Set<ServiceTaskStatus>
+    @Synchronized
+    get() = _finishedTasks.toSet()
 
   /**
    * Enqueues the [task] to be executed on a background
@@ -58,7 +68,7 @@ class ServiceTaskManager(concurrency: Int, maxKeepResults: Int) : Closeable {
                   onError: (Throwable, ServiceTaskStatus) -> Unit,
                   onCancelled: (Throwable, ServiceTaskStatus) -> Unit,
                   onCompletion: (ServiceTaskStatus) -> Unit): ServiceTaskStatus {
-    val taskId = nextTaskId.incrementAndGet()
+    val taskId = ++nextTaskId
 
     val taskProgress = DefaultProgressIndicator()
     taskProgress.fraction = 0.0
@@ -72,7 +82,7 @@ class ServiceTaskManager(concurrency: Int, maxKeepResults: Int) : Closeable {
         null,
         ServiceTaskState.WAITING
     )
-    tasks.add(taskStatus)
+    _activeTasks.add(taskStatus)
 
     val taskFuture = CompletableFuture.supplyAsync(Supplier {
       taskStatus.state = ServiceTaskState.RUNNING
@@ -85,16 +95,18 @@ class ServiceTaskManager(concurrency: Int, maxKeepResults: Int) : Closeable {
         .whenComplete { result, error ->
           taskStatus.endTime = Instant.now()
           taskProgress.fraction = 1.0
-          if (result != null) {
-            taskStatus.state = ServiceTaskState.SUCCESS
-            taskProgress.text = "Finished successfully"
-            onSuccess(result, taskStatus)
-          } else {
-            if (error.causedBy(InterruptedException::class.java)) {
+          when {
+            result != null -> {
+              taskStatus.state = ServiceTaskState.SUCCESS
+              taskProgress.text = "Finished successfully"
+              onSuccess(result, taskStatus)
+            }
+            error.causedBy(InterruptedException::class.java) -> {
               taskStatus.state = ServiceTaskState.CANCELLED
               taskProgress.text = "Cancelled"
               onCancelled(error, taskStatus)
-            } else {
+            }
+            else -> {
               taskStatus.state = ServiceTaskState.ERROR
               taskProgress.text = "Finished with error"
               onError(error, taskStatus)
@@ -102,6 +114,8 @@ class ServiceTaskManager(concurrency: Int, maxKeepResults: Int) : Closeable {
           }
         }
         .whenComplete { _, _ ->
+          _activeTasks.remove(taskStatus)
+          _finishedTasks.add(taskStatus)
           onCompletion(taskStatus)
         }
 
@@ -113,6 +127,7 @@ class ServiceTaskManager(concurrency: Int, maxKeepResults: Int) : Closeable {
    * completion callbacks.
    * To specify the callbacks use [enqueue] method instead.
    */
+  @Synchronized
   fun <T> enqueue(task: ServiceTask<T>) = enqueue(
       task,
       { _, _ -> },

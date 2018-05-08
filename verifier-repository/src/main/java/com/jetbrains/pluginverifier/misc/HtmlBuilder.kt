@@ -38,7 +38,7 @@ class HtmlBuilder(val output: PrintWriter) {
 
   fun tr(block: () -> Unit) = tag("tr", block)
 
-  fun th(block: () -> Unit) = tag("th", block)
+  fun th(style: String = "", block: () -> Unit) = tag("th", block, mapOf("style" to style))
 
   fun td(block: () -> Unit) = tag("td", block)
 

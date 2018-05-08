@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter.Result.Ignore
@@ -28,24 +29,24 @@ class VerificationResultFilter {
     private val LOG = LoggerFactory.getLogger(VerificationResultFilter::class.java)
   }
 
-  private val acceptedVerifications = hashSetOf<PluginAndTarget>()
+  private val acceptedVerifications = hashSetOf<ScheduledVerification>()
 
-  private val _ignoredVerifications = hashMapOf<PluginAndTarget, Result.Ignore>()
+  private val _ignoredVerifications = hashMapOf<ScheduledVerification, Result.Ignore>()
 
-  val ignoredVerifications: Map<PluginAndTarget, Result.Ignore>
+  val ignoredVerifications: Map<ScheduledVerification, Result.Ignore>
     get() = _ignoredVerifications
 
   /**
-   * Accepts verification of a plugin against IDE specified by [pluginAndTarget].
+   * Accepts verification of a plugin against IDE specified by [scheduledVerification].
    *
    * When the verification of the plugin against this IDE occurs next time
    * the verification result will be sent anyway.
    */
   @Synchronized
-  fun unignoreVerificationResultFor(pluginAndTarget: PluginAndTarget) {
-    LOG.info("Unignore verification result for $pluginAndTarget")
-    acceptedVerifications.add(pluginAndTarget)
-    _ignoredVerifications.remove(pluginAndTarget)
+  fun unignoreVerificationResultFor(scheduledVerification: ScheduledVerification) {
+    LOG.info("Unignore verification result for $scheduledVerification")
+    acceptedVerifications.add(scheduledVerification)
+    _ignoredVerifications.remove(scheduledVerification)
   }
 
   /**
@@ -70,18 +71,18 @@ class VerificationResultFilter {
         is VerificationResult.CompatibilityProblems -> compatibilityProblems
       }
 
-      val pluginAndTarget = PluginAndTarget(plugin as UpdateInfo, verificationTarget)
+      val scheduledVerification = ScheduledVerification(plugin as UpdateInfo, (verificationTarget as VerificationTarget.Ide).ideVersion)
 
       if (compatibilityProblems.size > TOO_MANY_PROBLEMS_THRESHOLD) {
-        if (pluginAndTarget in acceptedVerifications) {
-          LOG.info("Verification $pluginAndTarget has been accepted, though there are many compatibility problems: ${compatibilityProblems.size}")
+        if (scheduledVerification in acceptedVerifications) {
+          LOG.info("Verification $scheduledVerification has been accepted, though there are many compatibility problems: ${compatibilityProblems.size}")
           return Result.Send
         }
         val reason = "There are too many compatibility problems between $plugin and $verificationTarget: ${compatibilityProblems.size}"
         LOG.info(reason)
         val verdict = this.toString()
         val ignore = Result.Ignore(verdict, verificationEndTime, reason)
-        _ignoredVerifications[pluginAndTarget] = ignore
+        _ignoredVerifications[scheduledVerification] = ignore
         return ignore
       }
 

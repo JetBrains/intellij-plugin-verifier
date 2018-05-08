@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference
 class TaskManagerTest {
   @Test
   fun `general functionality of the service task manager`() {
-    ServiceTaskManager(4, 1000).use { tm ->
+    ServiceTaskManager(4).use { tm ->
       val finish = AtomicBoolean()
 
       val serviceTask: ServiceTask<Int> = object : ServiceTask<Int>("testTask") {
@@ -41,8 +41,8 @@ class TaskManagerTest {
           }
       )
 
-      assertEquals(1, tm.getRunningTasks().size)
-      val taskInfo = tm.getRunningTasks()[0]
+      assertEquals(1, tm.activeTasks.size)
+      val taskInfo = tm.activeTasks.first()
 
       assertEquals(0.0, taskInfo.progress.fraction, 1e-5)
       finish.set(true)

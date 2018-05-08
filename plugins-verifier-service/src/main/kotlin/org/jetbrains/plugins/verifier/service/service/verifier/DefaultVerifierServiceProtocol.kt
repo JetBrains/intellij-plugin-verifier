@@ -1,13 +1,13 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.createByteArrayRequestBody
 import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
-import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import okhttp3.HttpUrl
 import okhttp3.RequestBody
@@ -21,21 +21,25 @@ import retrofit2.http.POST
 import retrofit2.http.Part
 import java.util.concurrent.TimeUnit
 
-interface VerifierRetrofitConnector {
+private interface VerifierRetrofitConnector {
 
-  @POST("/verification/getUpdatesToCheck")
+  @POST("/verification/getScheduledVerifications")
   @Multipart
-  fun getUpdatesToCheck(@Part("availableIde") availableIde: RequestBody,
-                        @Part("userName") userName: RequestBody,
-                        @Part("password") password: RequestBody): Call<List<Int>>
+  fun getScheduledVerifications(@Part("userName") userName: RequestBody,
+                                @Part("password") password: RequestBody): Call<List<ScheduledVerificationJson>>
 
-  @POST("/verification/receiveUpdateCheckResult")
+  @POST("/verification/receiveVerificationResult")
   @Multipart
   fun sendUpdateCheckResult(@Part("verificationResult") verificationResult: RequestBody,
                             @Part("userName") userName: RequestBody,
                             @Part("password") password: RequestBody): Call<ResponseBody>
 
 }
+
+private data class ScheduledVerificationJson(
+    @SerializedName("updateId") val updateId: Int,
+    @SerializedName("ideVersion") val ideVersion: String
+)
 
 class DefaultVerifierServiceProtocol(authorizationData: AuthorizationData,
                                      private val pluginRepository: PublicPluginRepository) : VerifierServiceProtocol {
@@ -53,15 +57,19 @@ class DefaultVerifierServiceProtocol(authorizationData: AuthorizationData,
 
   private val passwordRequestBody = createStringRequestBody(authorizationData.pluginRepositoryPassword)
 
-  override fun requestUpdatesToCheck(ideVersion: IdeVersion): List<UpdateInfo> =
-      retrofitConnector.getUpdatesToCheck(
-          createStringRequestBody(ideVersion.asString()),
-          userNameRequestBody,
-          passwordRequestBody
-      )
+  override fun requestScheduledVerifications(): List<ScheduledVerification> =
+      retrofitConnector
+          .getScheduledVerifications(userNameRequestBody, passwordRequestBody)
           .executeSuccessfully().body()
-          .sortedDescending()
-          .mapNotNull { pluginRepository.getPluginInfoById(it) }
+          .mapNotNull {
+            val updateInfo = pluginRepository.getPluginInfoById(it.updateId)
+            val ideVersion = IdeVersion.createIdeVersionIfValid(it.ideVersion)
+            if (updateInfo != null && ideVersion != null) {
+              ScheduledVerification(updateInfo, ideVersion)
+            } else {
+              null
+            }
+          }
 
   override fun sendVerificationResult(verificationResult: VerificationResult) {
     retrofitConnector.sendUpdateCheckResult(
