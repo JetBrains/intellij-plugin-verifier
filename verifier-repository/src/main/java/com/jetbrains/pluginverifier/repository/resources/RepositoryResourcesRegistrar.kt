@@ -19,8 +19,12 @@ internal class RepositoryResourcesRegistrar<R, K>(var totalWeight: ResourceWeigh
 
   /**
    * Associates the [resource] with [key].
+   *
    * It disposes the [resource] if the [key] is
    * already associated, or if an exception occurs.
+   *
+   * Returns `true` if the resource was added,
+   * and `false` if the [key] is occupied.
    */
   fun addResource(key: K, resource: R): Boolean {
     try {
