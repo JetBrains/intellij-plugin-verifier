@@ -10,12 +10,20 @@ import org.slf4j.Logger
  * weights of the resources in a controlled way and the [disposer] used to deallocate
  * the resources being removed.
  */
-internal class RepositoryResourcesRegistrar<R, K>(var totalWeight: ResourceWeight,
+internal class RepositoryResourcesRegistrar<R, K>(initWeight: ResourceWeight,
                                                   private val weigher: (R) -> ResourceWeight,
                                                   private val disposer: (R) -> Unit,
                                                   private val logger: Logger) {
 
-  val resources: MutableMap<K, ResourceInfo<R>> = hashMapOf()
+  private var _totalWeight: ResourceWeight = initWeight
+
+  private val _resources = hashMapOf<K, ResourceInfo<R>>()
+
+  val totalWeight: ResourceWeight
+    get() = _totalWeight
+
+  val resources: Map<K, ResourceInfo<R>>
+    get() = _resources.toMap()
 
   /**
    * Associates the [resource] with [key].
@@ -28,16 +36,16 @@ internal class RepositoryResourcesRegistrar<R, K>(var totalWeight: ResourceWeigh
    */
   fun addResource(key: K, resource: R): Boolean {
     try {
-      if (key in resources) {
+      if (key in _resources) {
         logger.debug("add($key): the $resource is already available. Disposing the duplicate resource.")
         safeDispose(key, resource)
         return false
       }
 
       val resourceWeight = weigher(resource)
-      totalWeight += resourceWeight
-      logger.debug("add($key): adding the $resource of weight $resourceWeight. Total weight: $totalWeight")
-      resources[key] = ResourceInfo(resource, resourceWeight)
+      _totalWeight += resourceWeight
+      logger.debug("add($key): adding the $resource of weight $resourceWeight. Total weight: $_totalWeight")
+      _resources[key] = ResourceInfo(resource, resourceWeight)
       return true
     } catch (e: Throwable) {
       safeDispose(key, resource)
@@ -45,20 +53,20 @@ internal class RepositoryResourcesRegistrar<R, K>(var totalWeight: ResourceWeigh
     }
   }
 
-  fun getAllKeys() = resources.keys
+  fun getAllKeys() = _resources.keys.toSet()
 
-  fun has(key: K) = key in resources
+  fun has(key: K) = key in _resources
 
-  fun get(key: K) = resources[key]
+  fun get(key: K) = _resources[key]
 
   fun removeResource(key: K) {
-    assert(key in resources)
-    val resourceInfo = resources[key]!!
+    check(key in _resources)
+    val resourceInfo = _resources[key]!!
     val resource = resourceInfo.resource
     val weight = resourceInfo.weight
-    totalWeight -= weight
-    logger.debug("remove($key): removing the $resource of weight $weight. Total weight: $totalWeight")
-    resources.remove(key)
+    _totalWeight -= weight
+    logger.debug("remove($key): removing the $resource of weight $weight. Total weight: $_totalWeight")
+    _resources.remove(key)
     safeDispose(key, resource)
   }
 
