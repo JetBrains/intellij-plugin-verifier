@@ -77,20 +77,22 @@ class VerifierExecutor(private val concurrentWorkers: Int) : Closeable {
         }
       }
     } finally {
+      /**
+       * Force wait for the workers to finish, which is necessary in cases:
+       * 1) An exception has been thrown by any worker in `.get()`.
+       * It means that the program is corrupted.
+       *
+       * 2) The current thread has been interrupted.
+       * It means that the process has been cancelled.
+       *
+       * In both cases the thrown exception will be propagated after
+       * this finally block finishes.
+       */
       for (worker in workers) {
         try {
-          /**
-           * Force wait for the worker to finish, which is necessary in cases:
-           * 1) An exception has been thrown by any worker in `.get()`.
-           * It means that the program is corrupted.
-           *
-           * 2) The current thread has been interrupted.
-           * It means that the process has been cancelled.
-           *
-           * In both cases the thrown exception will be propagated after
-           * this finally block finishes.
-           */
-          worker.get()
+          if (!worker.isCancelled) {
+            worker.get()
+          }
         } catch (e: Throwable) {
           if (!e.causedBy(InterruptedException::class.java)) {
             LOG.error("Worker $worker finished abruptly", e)
