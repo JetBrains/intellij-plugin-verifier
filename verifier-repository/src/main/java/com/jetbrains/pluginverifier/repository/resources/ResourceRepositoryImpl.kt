@@ -147,7 +147,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
 
   private fun getOrWait(key: K): ResourceRepositoryResult<R> {
     checkIfInterrupted()
-    val (addTask, runInCurrentThread) = synchronized(this) {
+    val (fetchTask, runInCurrentThread) = synchronized(this) {
       if (resourcesRegistrar.has(key)) {
         val lock = registerLock(key)
         logger.debug("get($key): the resource is available and a lock is registered $lock")
@@ -155,29 +155,28 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
       }
 
       waitedKeys.add(key)
-      val task = additionTasks[key]
-      if (task != null) {
+      val oldTask = additionTasks[key]
+      if (oldTask != null) {
         logger.debug("get($key): waiting for another thread to finish fetching the resource")
-        task to false
+        oldTask to false
       } else {
         logger.debug("get($key): fetching the resource in the current thread")
-        val addTask = FutureTask {
+        val newTask = FutureTask {
           getAndAddResource(key)
         }
-        additionTasks[key] = addTask
-        addTask to true
+        additionTasks[key] = newTask
+        newTask to true
       }
     }
 
     //Run the provision task in the current thread
-    //if the thread has started the provision of this key first.
+    //if it started the provision of the key first.
     if (runInCurrentThread) {
-      addTask.run()
+      fetchTask.run()
     }
 
     try {
-      val provideResult = addTask.get()
-      return provideResult.registerLockIfProvided(key)
+      return fetchTask.get().registerLockIfProvided(key)
     } finally {
       synchronized(this) {
         waitedKeys.remove(key)

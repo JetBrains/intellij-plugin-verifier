@@ -17,18 +17,28 @@ internal class RepositoryResourcesRegistrar<R, K>(var totalWeight: ResourceWeigh
 
   val resources: MutableMap<K, ResourceInfo<R>> = hashMapOf()
 
+  /**
+   * Associates the [resource] with [key].
+   * It disposes the [resource] if the [key] is
+   * already associated, or if an exception occurs.
+   */
   fun addResource(key: K, resource: R): Boolean {
-    if (key in resources) {
-      logger.debug("add($key): the $resource is already available. Disposing the duplicate resource.")
-      safeDispose(key, resource)
-      return false
-    }
+    try {
+      if (key in resources) {
+        logger.debug("add($key): the $resource is already available. Disposing the duplicate resource.")
+        safeDispose(key, resource)
+        return false
+      }
 
-    val resourceWeight = weigher(resource)
-    totalWeight += resourceWeight
-    logger.debug("add($key): adding the $resource of weight $resourceWeight. Total weight: $totalWeight")
-    resources[key] = ResourceInfo(resource, resourceWeight)
-    return true
+      val resourceWeight = weigher(resource)
+      totalWeight += resourceWeight
+      logger.debug("add($key): adding the $resource of weight $resourceWeight. Total weight: $totalWeight")
+      resources[key] = ResourceInfo(resource, resourceWeight)
+      return true
+    } catch (e: Throwable) {
+      safeDispose(key, resource)
+      throw e
+    }
   }
 
   fun getAllKeys() = resources.keys
