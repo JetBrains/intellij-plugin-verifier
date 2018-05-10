@@ -16,6 +16,8 @@
 
     </appender>
 
+    <logger name="com.jetbrains.plugin.structure" level="WARN"/>
+
     <root level="${plugin.verifier.logger.root.level:-INFO}">
         <appender-ref ref="STDOUT"/>
     </root>
