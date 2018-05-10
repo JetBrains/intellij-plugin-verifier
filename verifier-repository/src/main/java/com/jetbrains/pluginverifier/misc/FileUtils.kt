@@ -47,7 +47,7 @@ fun File.create(): File {
 }
 
 fun Path.writeText(text: String) {
-  toFile().writeText(text)
+  toFile().create().writeText(text)
 }
 
 fun Path.readText() = toFile().readText()

@@ -199,9 +199,8 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
       val ignoredPluginsFile = verificationTarget.getReportDirectory(verificationReportsDirectory).resolve("all-ignored-plugins.txt")
       try {
         val message = "The following plugins were excluded from the verification: \n" +
-            ignoredPlugins.joinToString(separator = "\n") {
-              "${it.pluginInfo}: ${it.reason}"
-            }
+            ignoredPlugins.joinToString(separator = "\n") { "${it.pluginInfo}: ${it.reason}" }
+
         ignoredPluginsFile.writeText(message)
       } catch (e: Exception) {
         LOG.error("Unable to save ignored plugins of $verificationTarget", e)
