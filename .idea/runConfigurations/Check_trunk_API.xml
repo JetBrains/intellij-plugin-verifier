@@ -1,17 +1,11 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Check trunk API" type="Application" factoryName="Application">
-    <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <option name="MAIN_CLASS_NAME" value="com.jetbrains.pluginverifier.PluginVerifierMain" />
-    <option name="VM_PARAMETERS" value="-Xmx200m" />
-    <option name="PROGRAM_PARAMETERS" value="check-trunk-api -r /usr/lib/jvm/java-8-oracle -miv IU-171.3780.107 -dmif -tc -html-report ideResult for_tests/IU-172.2524" />
-    <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
-    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-    <option name="ALTERNATIVE_JRE_PATH" />
-    <option name="ENABLE_SWING_INSPECTOR" value="false" />
-    <option name="ENV_VARIABLES" />
-    <option name="PASS_PARENT_ENVS" value="true" />
     <module name="verifier-cli_main" />
-    <envs />
-    <method />
+    <option name="PROGRAM_PARAMETERS" value="check-trunk-api -subsystems-to-check without-android -r /usr/lib/jvm/java-8-oracle -ip for_tests/ignoredProblems.txt -jbpf for_tests/all-jetbrains-plugins.txt -mip for_tests/IU-181.4203.519 -rjbp for_tests/release-plugins -tjbp for_tests/master-plugins -tc for_tests/IU-182.2252" />
+    <option name="VM_PARAMETERS" value="-Xmx2000m -Dplugin.verifier.home.dir=$USER_HOME$/.verifier-service" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
   </configuration>
 </component>

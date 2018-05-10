@@ -9,23 +9,22 @@ import com.jetbrains.pluginverifier.repository.bundled.BundledPluginsRepository
  * [DependencyFinder] that searches for the plugin
  * among the [bundled] [Ide.getBundledPlugins] [ide] plugins.
  */
-class BundledPluginDependencyFinder(val ide: Ide,
-                                    private val pluginDetailsCache: PluginDetailsCache) : DependencyFinder {
+class BundledPluginDependencyFinder(val ide: Ide, private val pluginDetailsCache: PluginDetailsCache) : DependencyFinder {
 
   private val bundledPluginsRepository = BundledPluginsRepository(ide, ide.idePath.toURI().toURL())
 
   override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
-    val id = dependency.id
+    val dependencyId = dependency.id
     val bundledPluginInfo = if (dependency.isModule) {
-      bundledPluginsRepository.findPluginByModule(id)
+      bundledPluginsRepository.findPluginByModule(dependencyId)
     } else {
-      bundledPluginsRepository.findPluginById(id)
+      bundledPluginsRepository.findPluginById(dependencyId)
     }
 
     if (bundledPluginInfo != null) {
       return DependencyFinder.Result.DetailsProvided(pluginDetailsCache.getPluginDetailsCacheEntry(bundledPluginInfo))
     }
-    return DependencyFinder.Result.NotFound("Dependency $id is not found among the bundled plugins of $ide")
+    return DependencyFinder.Result.NotFound("Dependency $dependencyId is not found among the bundled plugins of $ide")
   }
 
 }
