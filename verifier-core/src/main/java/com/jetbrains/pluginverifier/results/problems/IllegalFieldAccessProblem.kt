@@ -17,12 +17,15 @@ import com.jetbrains.pluginverifier.results.presentation.formatFieldLocation
 import com.jetbrains.pluginverifier.results.presentation.formatFieldReference
 import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 import com.jetbrains.pluginverifier.results.reference.FieldReference
+import java.util.*
 
-data class IllegalFieldAccessProblem(val fieldBytecodeReference: FieldReference,
-                                     val inaccessibleField: FieldLocation,
-                                     val accessor: MethodLocation,
-                                     val instruction: Instruction,
-                                     val fieldAccess: AccessType) : CompatibilityProblem() {
+class IllegalFieldAccessProblem(
+    val fieldBytecodeReference: FieldReference,
+    val inaccessibleField: FieldLocation,
+    val accessor: MethodLocation,
+    val instruction: Instruction,
+    val fieldAccess: AccessType
+) : CompatibilityProblem() {
 
   override val shortDescription = "Illegal access to a {0} field {1}".formatMessage(fieldAccess, inaccessibleField)
 
@@ -50,5 +53,14 @@ data class IllegalFieldAccessProblem(val fieldBytecodeReference: FieldReference,
     ))
     append("This can lead to **IllegalAccessError** exception at runtime.")
   }
+
+  override fun equals(other: Any?) =
+      other is IllegalFieldAccessProblem
+          && fieldAccess == other.fieldAccess
+          && inaccessibleField == other.inaccessibleField
+          && accessor == other.accessor
+          && instruction == other.instruction
+
+  override fun hashCode() = Objects.hash(fieldAccess, inaccessibleField, accessor, instruction)
 
 }

@@ -6,11 +6,14 @@ import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.presentation.*
 import com.jetbrains.pluginverifier.results.reference.FieldReference
+import java.util.*
 
-data class FieldNotFoundProblem(val unresolvedField: FieldReference,
-                                val accessor: MethodLocation,
-                                val fieldOwnerHierarchy: ClassHierarchy,
-                                val instruction: Instruction) : CompatibilityProblem() {
+class FieldNotFoundProblem(
+    val unresolvedField: FieldReference,
+    val accessor: MethodLocation,
+    val fieldOwnerHierarchy: ClassHierarchy,
+    val instruction: Instruction
+) : CompatibilityProblem() {
 
   override val shortDescription = "Access to unresolved field {0}".formatMessage(unresolvedField)
 
@@ -35,6 +38,10 @@ data class FieldNotFoundProblem(val unresolvedField: FieldReference,
     append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("field", fieldOwnerHierarchy, true, canBeDeclaredInSuperInterface))
   }
 
-  override val equalityReference: String
-    get() = descriptionMainPart
+  override fun equals(other: Any?) = other is FieldNotFoundProblem
+      && unresolvedField == other.unresolvedField
+      && accessor == other.accessor
+      && instruction == other.instruction
+
+  override fun hashCode() = Objects.hash(unresolvedField, accessor, instruction)
 }

@@ -74,11 +74,14 @@ class DocumentedProblemsReportingTest {
         ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY
     )
 
-    val constructorIsNotFoundProblem = methodFooIsNotFoundProblem.copy(
-        unresolvedMethod = methodFooIsNotFoundProblem.unresolvedMethod.copy(
-            methodName = "<init>"
-        )
-    )
+    val constructorIsNotFoundProblem = with(methodFooIsNotFoundProblem) {
+      MethodNotFoundProblem(
+          unresolvedMethod.copy(methodName = "<init>"),
+          caller,
+          instruction,
+          methodOwnerHierarchy
+      )
+    }
 
     val illegalMethodAccessProblem = IllegalMethodAccessProblem(
         constructorIsNotFoundProblem.unresolvedMethod,
@@ -99,11 +102,15 @@ class DocumentedProblemsReportingTest {
         Instruction.INVOKE_SPECIAL
     )
 
-    val illegalConstructorAccessProblem = illegalMethodAccessProblem.copy(
-        inaccessibleMethod = illegalMethodAccessProblem.inaccessibleMethod.copy(
-            methodName = "<init>"
-        )
-    )
+    val illegalConstructorAccessProblem = with(illegalMethodAccessProblem) {
+      IllegalMethodAccessProblem(
+          bytecodeMethodReference,
+          inaccessibleMethod.copy(methodName = "<init>"),
+          methodAccessModifier,
+          caller,
+          instruction
+      )
+    }
 
     val fieldXNotFoundProblem = FieldNotFoundProblem(
         FieldReference(classBReference, "x", "I"),
@@ -288,22 +295,20 @@ class DocumentedProblemsReportingTest {
     )
 
     val methodWithOwnerFromRemovedPackage = with(methodWithRemovedOwnerProblem) {
-      copy(
-          unresolvedMethod = unresolvedMethod.copy(
-              unresolvedMethod.hostClass.copy(
-                  className = "some/removed/package/Class"
-              )
-          )
+      MethodNotFoundProblem(
+          unresolvedMethod.copy(hostClass = ClassReference("some/removed/package/Class")),
+          caller,
+          instruction,
+          methodOwnerHierarchy
       )
     }
 
     val fieldWithOwnerFromRemovedPackage = with(fieldWithRemovedOwnerProblem) {
-      copy(
-          unresolvedField = unresolvedField.copy(
-              unresolvedField.hostClass.copy(
-                  className = "some/removed/package/Class"
-              )
-          )
+      FieldNotFoundProblem(
+          unresolvedField.copy(hostClass = ClassReference("some/removed/package/Class")),
+          accessor,
+          fieldOwnerHierarchy,
+          instruction
       )
     }
 

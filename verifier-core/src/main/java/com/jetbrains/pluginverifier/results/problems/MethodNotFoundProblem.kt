@@ -15,11 +15,14 @@ import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 import com.jetbrains.pluginverifier.results.presentation.formatMethodReference
 import com.jetbrains.pluginverifier.results.presentation.methodOrConstructorWord
 import com.jetbrains.pluginverifier.results.reference.MethodReference
+import java.util.*
 
-data class MethodNotFoundProblem(val unresolvedMethod: MethodReference,
-                                 val caller: MethodLocation,
-                                 val instruction: Instruction,
-                                 val methodOwnerHierarchy: ClassHierarchy) : CompatibilityProblem() {
+class MethodNotFoundProblem(
+    val unresolvedMethod: MethodReference,
+    val caller: MethodLocation,
+    val instruction: Instruction,
+    val methodOwnerHierarchy: ClassHierarchy
+) : CompatibilityProblem() {
 
   override val shortDescription = "Invocation of unresolved {0} {1}".formatMessage(
       unresolvedMethod.methodOrConstructorWord,
@@ -43,7 +46,11 @@ data class MethodNotFoundProblem(val unresolvedMethod: MethodReference,
     }
   }
 
-  override val equalityReference: String
-    get() = descriptionMainPart
+  override fun equals(other: Any?) = other is MethodNotFoundProblem
+      && unresolvedMethod == other.unresolvedMethod
+      && caller == other.caller
+      && instruction == other.instruction
+
+  override fun hashCode() = Objects.hash(unresolvedMethod, caller, instruction)
 
 }

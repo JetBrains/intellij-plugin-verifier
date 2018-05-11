@@ -17,7 +17,7 @@ data class ClassLocation(val className: String,
 
   override fun equals(other: Any?) = other is ClassLocation && className == other.className
 
-  override fun hashCode() = Objects.hash(className)
+  override fun hashCode() = className.hashCode()
 
   override fun toString() = formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.WITH_GENERICS)
 }

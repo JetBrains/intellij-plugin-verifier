@@ -217,7 +217,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       val methodReference = SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)
       var implementation1 = createMethodLocation(filtered[0].definingClass, filtered[0].methodNode)
       var implementation2 = createMethodLocation(filtered[1].definingClass, filtered[1].methodNode)
-      if (implementation1.hostClass.className > implementation2.hostClass.className) {
+      if (implementation1.toString() > implementation2.toString()) {
         val tmp = implementation1
         implementation1 = implementation2
         implementation2 = tmp

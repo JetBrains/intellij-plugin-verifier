@@ -17,12 +17,15 @@ import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 import com.jetbrains.pluginverifier.results.presentation.formatMethodReference
 import com.jetbrains.pluginverifier.results.presentation.methodOrConstructorWord
 import com.jetbrains.pluginverifier.results.reference.MethodReference
+import java.util.*
 
-data class IllegalMethodAccessProblem(val bytecodeMethodReference: MethodReference,
-                                      val inaccessibleMethod: MethodLocation,
-                                      val methodAccessModifier: AccessType,
-                                      val caller: MethodLocation,
-                                      val instruction: Instruction) : CompatibilityProblem() {
+class IllegalMethodAccessProblem(
+    val bytecodeMethodReference: MethodReference,
+    val inaccessibleMethod: MethodLocation,
+    val methodAccessModifier: AccessType,
+    val caller: MethodLocation,
+    val instruction: Instruction
+) : CompatibilityProblem() {
 
   override val shortDescription = "Illegal invocation of {0} {1} {2}".formatMessage(methodAccessModifier, inaccessibleMethod.methodOrConstructorWord, inaccessibleMethod)
 
@@ -53,4 +56,12 @@ data class IllegalMethodAccessProblem(val bytecodeMethodReference: MethodReferen
     ))
     append("This can lead to **IllegalAccessError** exception at runtime.")
   }
+
+  override fun equals(other: Any?) = other is IllegalMethodAccessProblem
+      && methodAccessModifier == other.methodAccessModifier
+      && inaccessibleMethod == other.inaccessibleMethod
+      && caller == other.caller
+      && instruction == other.instruction
+
+  override fun hashCode() = Objects.hash(methodAccessModifier, inaccessibleMethod, caller, instruction)
 }

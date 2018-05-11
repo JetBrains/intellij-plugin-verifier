@@ -7,9 +7,12 @@ import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.presentation.methodOrConstructorWord
 import com.jetbrains.pluginverifier.results.reference.ClassReference
+import java.util.*
 
-data class ClassNotFoundProblem(val unresolved: ClassReference,
-                                val usage: Location) : CompatibilityProblem() {
+class ClassNotFoundProblem(
+    val unresolved: ClassReference,
+    val usage: Location
+) : CompatibilityProblem() {
 
   override val shortDescription = "Access to unresolved class {0}".formatMessage(unresolved)
 
@@ -22,4 +25,10 @@ data class ClassNotFoundProblem(val unresolved: ClassReference,
       }
       return "{0} {1} references an unresolved class {2}. This can lead to **NoSuchClassError** exception at runtime.".formatMessage(type, usage, unresolved)
     }
+
+  override fun equals(other: Any?) = other is ClassNotFoundProblem
+      && unresolved == other.unresolved
+      && usage == other.usage
+
+  override fun hashCode() = Objects.hash(unresolved, usage)
 }
