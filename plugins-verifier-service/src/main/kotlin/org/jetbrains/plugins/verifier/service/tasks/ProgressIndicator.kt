@@ -2,7 +2,7 @@ package org.jetbrains.plugins.verifier.service.tasks
 
 /**
  * The progress indicator is used to monitor
- * and control the [task] [ServiceTask] execution progress,
+ * and control the [task] [Task] execution progress,
  * [induce] [cancel] and [check] [checkCancelled] the cancellation.
  */
 interface ProgressIndicator {

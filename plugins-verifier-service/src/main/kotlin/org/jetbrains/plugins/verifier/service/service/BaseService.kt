@@ -2,7 +2,7 @@ package org.jetbrains.plugins.verifier.service.service
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.jetbrains.plugins.verifier.service.service.BaseService.State
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
+import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
@@ -24,7 +24,7 @@ abstract class BaseService(val serviceName: String,
                            private val initialDelay: Long,
                            private val period: Long,
                            private val timeUnit: TimeUnit,
-                           protected val taskManager: ServiceTaskManager) {
+                           protected val taskManager: TaskManager) {
 
   enum class State {
     NOT_STARTED, SLEEPING, RUNNING, PAUSED, STOPPED

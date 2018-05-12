@@ -6,8 +6,8 @@ import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
+import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
+import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
  *
  * See [Feature extractor integration with the plugin repository](https://confluence.jetbrains.com/display/PLREP/features-extractor+integration+with+the+plugins.jetbrains.com)
  */
-class FeatureExtractorService(taskManager: ServiceTaskManager,
+class FeatureExtractorService(taskManager: TaskManager,
                               private val featureServiceProtocol: FeatureServiceProtocol,
                               private val ideDescriptorsCache: IdeDescriptorsCache,
                               private val pluginDetailsCache: PluginDetailsCache)
@@ -56,7 +56,7 @@ class FeatureExtractorService(taskManager: ServiceTaskManager,
         ideDescriptorsCache,
         pluginDetailsCache
     )
-    val taskStatus = taskManager.enqueue(
+    val taskDescriptor = taskManager.enqueue(
         runner,
         { result, _ -> result.onSuccess() },
         { t, tid -> onError(t, tid, runner) },
@@ -64,15 +64,15 @@ class FeatureExtractorService(taskManager: ServiceTaskManager,
         { _ -> onCompletion(runner) }
     )
     inProgressUpdates.add(updateInfo)
-    logger.info("Extract features of $updateInfo is scheduled with taskId #${taskStatus.taskId}")
+    logger.info("Extract features of $updateInfo is scheduled with taskId #${taskDescriptor.taskId}")
   }
 
   private fun onCompletion(task: ExtractFeaturesTask) {
     inProgressUpdates.remove(task.updateInfo)
   }
 
-  private fun onError(error: Throwable, taskStatus: ServiceTaskStatus, task: ExtractFeaturesTask) {
-    logger.error("Unable to extract features of ${task.updateInfo} (#${taskStatus.taskId})", error)
+  private fun onError(error: Throwable, taskDescriptor: TaskDescriptor, task: ExtractFeaturesTask) {
+    logger.error("Unable to extract features of ${task.updateInfo} (#${taskDescriptor.taskId})", error)
   }
 
   private fun ExtractFeaturesTask.Result.onSuccess() {

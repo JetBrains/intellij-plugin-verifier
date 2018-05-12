@@ -31,8 +31,8 @@ import java.time.Instant
  * that protect them from eviction from the cache while the resources
  * are used by requesting threads. Only once all the [cache entries] [ResourceCacheEntry]
  * of a resource by a specific [key] [K] get [closed] [ResourceCacheEntry.close],
- * the resource _may be_ [disposed] [disposer]. Note that it is not necessarily happens
- * immediately as the same resource may be requested once again shortly.
+ * the resource _may be_ [disposed] [disposer]. Note that it may not happen immediately
+ * since the same resource may be requested once again shortly.
  *
  * While there are available "slots" in the cache, the resources are not disposed.
  * All the unreleased resources will be [disposed] [disposer] once the cache is [closed] [close].
@@ -109,15 +109,14 @@ class ResourceCache<R, in K>(
    *
    * The resources being requested at the time of [close] invocation will
    * be released and closed at the [getResourceCacheEntry].
-   * Thus, no new keys can appear after the [close] is invoked.
+   * Thus, no new resources can be allocated after the [close] is invoked.
    */
+  @Synchronized
   override fun close() {
     LOG.info("Closing the $presentableName")
-    synchronized(this) {
-      if (!isClosed) {
-        isClosed = true
-        resourceRepository.removeAll()
-      }
+    if (!isClosed) {
+      isClosed = true
+      resourceRepository.removeAll()
     }
   }
 
@@ -153,8 +152,8 @@ class ResourceCache<R, in K>(
      * If _this_ cache was closed after the [key]
      * had been requested, release the lock and register
      * the [key] for deletion: it will be either
-     * removed immediately, or after the last holder releases
-     * its lock for the same [key].
+     * removed immediately, or just after the last
+     * holder releases the lock.
      */
     synchronized(this) {
       if (isClosed) {

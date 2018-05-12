@@ -22,10 +22,10 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
+import org.jetbrains.plugins.verifier.service.tasks.Task
 
 /**
- * [ServiceTask] verifies the [plugin] [updateInfo]
+ * [Task] verifies the [plugin] [updateInfo]
  * against the [ideVersion] in the [verifierExecutor]
  * using the [JDK] [jdkPath].
  */
@@ -37,7 +37,7 @@ class VerifyPluginTask(
     private val pluginDetailsCache: PluginDetailsCache,
     private val ideDescriptorsCache: IdeDescriptorsCache,
     private val jdkDescriptorsCache: JdkDescriptorsCache
-) : ServiceTask<VerificationResult>("Check $updateInfo against $ideVersion") {
+) : Task<VerificationResult>("Check $updateInfo against $ideVersion") {
 
   override fun execute(progress: ProgressIndicator): VerificationResult {
     return ideDescriptorsCache.getIdeDescriptorCacheEntry(ideVersion).use { entry ->

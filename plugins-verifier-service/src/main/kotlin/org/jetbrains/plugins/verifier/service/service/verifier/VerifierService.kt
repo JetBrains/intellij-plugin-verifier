@@ -8,8 +8,8 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.results.VerificationResult
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
+import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
+import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit
  * [Plugin verifier integration with the Plugins Repository](https://confluence.jetbrains.com/display/PLREP/plugin-verifier+integration+with+the+plugins.jetbrains.com)
  */
 class VerifierService(
-    taskManager: ServiceTaskManager,
+    taskManager: TaskManager,
     private val jdkDescriptorsCache: JdkDescriptorsCache,
     private val verifierServiceProtocol: VerifierServiceProtocol,
     private val pluginDetailsCache: PluginDetailsCache,
@@ -66,14 +66,14 @@ class VerifierService(
         jdkDescriptorsCache
     )
 
-    val taskStatus = taskManager.enqueue(
+    val taskDescriptor = taskManager.enqueue(
         task,
-        { taskResult, taskStatus -> onSuccess(taskResult, taskStatus) },
+        { taskResult, taskDescriptor -> onSuccess(taskResult, taskDescriptor) },
         { error, _ -> onError(scheduledVerification, error) },
         { _, _ -> },
         { onCompletion(scheduledVerification) }
     )
-    logger.info("Verification $scheduledVerification is scheduled with task #${taskStatus.taskId}")
+    logger.info("Verification $scheduledVerification is scheduled with task #${taskDescriptor.taskId}")
   }
 
   private fun ScheduledVerification.shouldVerify() =
@@ -89,9 +89,9 @@ class VerifierService(
     logger.error("Unable to check $pluginAndTarget", error)
   }
 
-  private fun onSuccess(result: VerificationResult, taskStatus: ServiceTaskStatus) {
+  private fun onSuccess(result: VerificationResult, taskDescriptor: TaskDescriptor) {
     logger.info("Verified ${result.plugin} against ${result.verificationTarget}: $result")
-    val decision = verificationResultsFilter.shouldSendVerificationResult(result, taskStatus.endTime!!)
+    val decision = verificationResultsFilter.shouldSendVerificationResult(result, taskDescriptor.endTime!!)
     if (decision == VerificationResultFilter.Result.Send) {
       try {
         verifierServiceProtocol.sendVerificationResult(result)

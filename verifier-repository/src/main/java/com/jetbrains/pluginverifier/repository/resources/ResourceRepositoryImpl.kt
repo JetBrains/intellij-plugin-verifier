@@ -31,7 +31,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
 
   private var nextLockId = 0L
 
-  private val key2Locks = hashMapOf<K, MutableSet<ResourceLock<R>>>()
+  private val key2Locks = hashMapOf<K, MutableSet<ResourceLockImpl<R, K>>>()
 
   private val removeQueue = hashSetOf<K>()
 
@@ -181,8 +181,8 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
       }
     }
 
-    //Run the provision task in the current thread
-    //if it started the provision of the key first.
+    //Run the task in the current thread
+    //if it started fetching the key first.
     if (runInCurrentThread) {
       fetchTask.run()
     }
@@ -241,7 +241,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
    * Provides the resource by [key].
    *
    * If the resource is cached, returns it from the cache,
-   * otherwise it firstly provides the resources, adds the resource
+   * otherwise it firstly provides the resource, adds it to
    * to the cache and returns it.
 
    * The possible results are represented as subclasses of [ResourceRepositoryResult].

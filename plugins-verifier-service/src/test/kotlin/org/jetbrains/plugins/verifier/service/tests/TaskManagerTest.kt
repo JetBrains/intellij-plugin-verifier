@@ -1,21 +1,23 @@
 package org.jetbrains.plugins.verifier.service.tests
 
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskStatus
+import org.jetbrains.plugins.verifier.service.tasks.Task
+import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
+import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.junit.Assert.*
 import org.junit.Test
+import java.util.*
+import java.util.concurrent.RunnableFuture
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 class TaskManagerTest {
   @Test
   fun `general functionality of the service task manager`() {
-    ServiceTaskManager(4).use { tm ->
+    TaskManager(4).use { tm ->
       val finish = AtomicBoolean()
 
-      val serviceTask: ServiceTask<Int> = object : ServiceTask<Int>("testTask") {
+      val serviceTask: Task<Int> = object : Task<Int>("testTask") {
         override fun execute(progress: ProgressIndicator): Int {
           while (!finish.get()) {
           }
@@ -23,7 +25,7 @@ class TaskManagerTest {
         }
       }
 
-      val status = AtomicReference<ServiceTaskStatus>()
+      val status = AtomicReference<TaskDescriptor>()
       val success = AtomicReference<Int>()
       val error = AtomicReference<Throwable>()
 

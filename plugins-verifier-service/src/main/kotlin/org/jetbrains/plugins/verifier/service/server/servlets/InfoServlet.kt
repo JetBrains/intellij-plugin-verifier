@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.misc.MemoryInfo
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.verifier.ScheduledVerification
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskState
+import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
 import java.time.ZoneId
@@ -192,8 +192,8 @@ class InfoServlet : BaseServlet() {
             }
 
             val activeTasks = serverContext.taskManager.activeTasks
-            val runningTasks = activeTasks.filter { it.state == ServiceTaskState.RUNNING }
-            val waitingTasks = activeTasks.filter { it.state == ServiceTaskState.WAITING }
+            val runningTasks = activeTasks.filter { it.state == TaskDescriptor.State.RUNNING }
+            val waitingTasks = activeTasks.filter { it.state == TaskDescriptor.State.WAITING }
 
             val finishedTasks = serverContext.taskManager.finishedTasks
 

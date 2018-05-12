@@ -43,7 +43,7 @@ abstract class ResourceLock<out R>(
   abstract fun release()
 
   /**
-   * The close method gives the opportunity to use the try-with-resources expression.
+   * The close method allows to use the try-with-resources expression.
    */
   final override fun close() = release()
 

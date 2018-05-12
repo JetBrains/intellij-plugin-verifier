@@ -7,13 +7,13 @@ package org.jetbrains.plugins.verifier.service.tasks
  * and its [progress] [ProgressIndicator] on the
  * server [status] [org.jetbrains.plugins.verifier.service.server.servlets.InfoServlet] page .
  */
-abstract class ServiceTask<out T>(val presentableName: String) {
+abstract class Task<out T>(val presentableName: String) {
 
   /**
    * Executes the task and returns the result.
    */
   abstract fun execute(progress: ProgressIndicator): T
 
-  final override fun toString(): String = presentableName
+  final override fun toString() = presentableName
 
 }

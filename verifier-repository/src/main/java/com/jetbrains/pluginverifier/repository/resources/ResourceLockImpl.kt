@@ -10,8 +10,7 @@ internal class ResourceLockImpl<R, K>(lockTime: Instant,
 
   override fun release() = repository.releaseLock(this)
 
-  override fun equals(other: Any?): Boolean = other is ResourceLockImpl<*, *>
-      && lockId == other.lockId && repository === other.repository
+  override fun equals(other: Any?) = other is ResourceLockImpl<*, *> && lockId == other.lockId && repository === other.repository
 
   override fun hashCode() = lockId.hashCode()
 

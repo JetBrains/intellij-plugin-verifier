@@ -12,7 +12,7 @@ import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter
 import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTaskManager
+import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import java.io.Closeable
 import java.nio.file.Path
 
@@ -26,7 +26,7 @@ class ServerContext(val applicationHomeDirectory: Path,
                     val ideRepository: IdeRepository,
                     val ideFilesBank: IdeFilesBank,
                     val pluginRepository: PublicPluginRepository,
-                    val taskManager: ServiceTaskManager,
+                    val taskManager: TaskManager,
                     val authorizationData: AuthorizationData,
                     val jdkDescriptorsCache: JdkDescriptorsCache,
                     val startupSettings: List<Settings>,

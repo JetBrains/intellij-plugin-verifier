@@ -71,7 +71,7 @@ class IdePluginClassesFinder private constructor(private val idePlugin: IdePlugi
 
   companion object {
 
-    val MAIN_CLASSES_KEYS: List<LocationKey> = listOf(JarPluginKey, ClassesDirectoryKey, LibDirectoryKey)
+    val MAIN_CLASSES_KEYS = listOf(JarPluginKey, ClassesDirectoryKey, LibDirectoryKey)
 
     fun findPluginClasses(
         idePlugin: IdePlugin,
@@ -85,13 +85,12 @@ class IdePluginClassesFinder private constructor(private val idePlugin: IdePlugi
       return findPluginClasses(idePlugin, extractDirectory, additionalKeys)
     }
 
-    fun findPluginClasses(idePlugin: IdePlugin,
-                          extractDirectory: File,
-                          additionalKeys: List<LocationKey> = emptyList()
-    ): IdePluginClassesLocations {
-      val locatorKeys = MAIN_CLASSES_KEYS + additionalKeys
-      return IdePluginClassesFinder(idePlugin, extractDirectory, locatorKeys).findPluginClasses()
-    }
+    fun findPluginClasses(
+        idePlugin: IdePlugin,
+        extractDirectory: File,
+        additionalKeys: List<LocationKey> = emptyList()
+    ) = IdePluginClassesFinder(idePlugin, extractDirectory, MAIN_CLASSES_KEYS + additionalKeys)
+        .findPluginClasses()
   }
 
 }

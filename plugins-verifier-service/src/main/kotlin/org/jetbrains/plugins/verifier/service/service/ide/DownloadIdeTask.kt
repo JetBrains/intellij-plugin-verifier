@@ -3,14 +3,14 @@ package org.jetbrains.plugins.verifier.service.service.ide
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
-import org.jetbrains.plugins.verifier.service.tasks.ServiceTask
+import org.jetbrains.plugins.verifier.service.tasks.Task
 
 /**
- * [ServiceTask] responsible for downloading IDE build having the specified [IDE version] [ideVersion]
+ * [Task] responsible for downloading IDE build having the specified [IDE version] [ideVersion]
  * from the [IDE Repository] [com.jetbrains.pluginverifier.ide.IdeRepository].
  */
 class DownloadIdeTask(private val ideFilesBank: IdeFilesBank,
-                      private val ideVersion: IdeVersion) : ServiceTask<Boolean>("Downloading IDE $ideVersion") {
+                      private val ideVersion: IdeVersion) : Task<Boolean>("Downloading IDE $ideVersion") {
 
   override fun execute(progress: ProgressIndicator): Boolean {
     //initiates downloading of the IDE.

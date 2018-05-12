@@ -21,9 +21,11 @@ import java.io.Closeable
  *
  * The cache must be [closed] [close] on the application shutdown to free all the details.
  */
-class PluginDetailsCache(cacheSize: Int,
-                         val pluginDetailsProvider: PluginDetailsProvider,
-                         pluginFilesBank: PluginFilesBank) : Closeable {
+class PluginDetailsCache(
+    cacheSize: Int,
+    val pluginDetailsProvider: PluginDetailsProvider,
+    pluginFilesBank: PluginFilesBank
+) : Closeable {
 
   private val resourceCache = createSizeLimitedResourceCache(
       cacheSize,
