@@ -14,6 +14,7 @@ import com.jetbrains.pluginverifier.parameters.filtering.*
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsPagesFetcher
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsParser
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
+import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
@@ -92,7 +93,12 @@ object OptionsParser {
     return runtimeDirectory
   }
 
-  fun getExternalClassesPrefixes(opts: CmdOpts) = opts.externalClassesPrefixes.map { it.replace('.', '/') }
+  fun getExternalClassesPackageFilter(opts: CmdOpts): PackageFilter =
+      opts.externalClassesPrefixes
+          .map { it.replace('.', '/') }
+          .let {
+            PackageFilter(it.map { PackageFilter.Descriptor(true, it) })
+          }
 
   private fun createIgnoredProblemsFilter(opts: CmdOpts): ProblemsFilter? {
     if (opts.ignoreProblemsFile != null) {

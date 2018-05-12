@@ -2,10 +2,13 @@ package com.jetbrains.pluginverifier.tests.filter
 
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.classes.resolvers.FixedClassesResolver
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ResultHolder
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.documented.*
+import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.reporting.verification.EmptyPluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.access.AccessType
@@ -172,7 +175,7 @@ class DocumentedProblemsReportingTest {
             EmptyResolver,
             EmptyResolver,
             EmptyResolver,
-            emptyList(),
+            PackageFilter(emptyList()),
             emptyList()
         )
     )
@@ -181,6 +184,7 @@ class DocumentedProblemsReportingTest {
   private fun createSimpleVerificationContext() =
       VerificationContext(
           PluginInfo("pluginId", "1.0", "1.0", EmptyPublicPluginRepository, null, null, null, URL("http://example.com"), null),
+          VerificationTarget.Ide(IdeVersion.createIdeVersion("IU-145.1")),
           ResultHolder(EmptyPluginVerificationReportage),
           false,
           emptyList(),

@@ -65,7 +65,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
                   jdkDescriptorCache,
                   jdkPath,
                   ideDescriptor,
-                  externalClassesPrefixes
+                  externalClassesPackageFilter
               ),
               VerificationTarget.Ide(ideDescriptor.ideVersion)
           )

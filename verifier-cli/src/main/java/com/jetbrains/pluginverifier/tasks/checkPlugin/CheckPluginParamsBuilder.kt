@@ -33,13 +33,13 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
       }
     }
 
-    val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
+    val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(opts)
     val problemsFilters = OptionsParser.getProblemsFilters(opts)
     return CheckPluginParams(
         pluginsSet,
         OptionsParser.getJdkPath(opts),
         ideDescriptors,
-        externalClassesPrefixes,
+        externalClassesPackageFilter,
         problemsFilters
     )
   }

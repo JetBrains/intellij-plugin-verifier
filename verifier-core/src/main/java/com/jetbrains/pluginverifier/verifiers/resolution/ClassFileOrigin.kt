@@ -25,7 +25,6 @@ enum class ClassFileOrigin {
 
   IDE_CLASS,
 
-  CLASS_OF_PLUGIN_DEPENDENCY,
+  CLASS_OF_PLUGIN_DEPENDENCY
 
-  EXTERNAL
 }

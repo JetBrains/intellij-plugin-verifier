@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileExceptio
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
+import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import java.io.Closeable
 
 /**
@@ -18,7 +19,7 @@ class DefaultClsResolver(private val pluginResolver: Resolver,
                          private val dependenciesResolver: Resolver,
                          private val jdkClassesResolver: Resolver,
                          private val ideResolver: Resolver,
-                         private val externalClassesPrefixes: List<String>,
+                         private val externalClassesPackageFilter: PackageFilter,
                          private val closeableResources: List<Closeable>) : ClsResolver {
 
   private val cachingResolver = CacheResolver(
@@ -32,7 +33,7 @@ class DefaultClsResolver(private val pluginResolver: Resolver,
       )
   )
 
-  override fun isExternalClass(className: String) = externalClassesPrefixes.any { it.isNotEmpty() && className.startsWith(it) }
+  override fun isExternalClass(className: String) = externalClassesPackageFilter.accept(className)
 
   override fun classExists(className: String) = getOriginOfClass(className) != null
 

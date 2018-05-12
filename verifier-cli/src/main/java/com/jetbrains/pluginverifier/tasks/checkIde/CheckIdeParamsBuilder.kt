@@ -31,7 +31,7 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
     }
     verificationReportage.logVerificationStage("Reading classes of IDE $ideFile")
     OptionsParser.createIdeDescriptor(ideFile, opts).closeOnException { ideDescriptor ->
-      val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
+      val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(opts)
       val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
       val pluginsSet = PluginsParsing(pluginRepository, verificationReportage).parsePluginsToCheck(opts, ideDescriptor.ideVersion)
@@ -52,7 +52,7 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
           pluginsSet,
           jdkPath,
           ideDescriptor,
-          externalClassesPrefixes,
+          externalClassesPackageFilter,
           problemsFilters,
           ideDependencyFinder,
           missingCompatibleVersionsProblems

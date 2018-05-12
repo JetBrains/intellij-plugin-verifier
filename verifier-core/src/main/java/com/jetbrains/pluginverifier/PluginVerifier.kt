@@ -103,6 +103,7 @@ class PluginVerifier(private val plugin: PluginInfo,
     clsResolverProvider.provide(pluginDetails, resultHolder, pluginReportage).use { clsResolver ->
       val verificationContext = VerificationContext(
           plugin,
+          verificationTarget,
           resultHolder,
           findDeprecatedApiUsages,
           problemFilters,

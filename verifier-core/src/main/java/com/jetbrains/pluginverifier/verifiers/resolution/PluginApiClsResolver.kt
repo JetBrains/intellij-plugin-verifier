@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileExceptio
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
+import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import java.io.Closeable
 
 /**
@@ -13,13 +14,20 @@ import java.io.Closeable
  * 2) Classes of a plugin against which the plugin is verified
  * 3) Classes of JDK
  *
- * Unresolved classes are considered external in order
- * to skip verification of them.
+ * A class is considered external if:
+ * 1) [basePluginResolver] doesn't contain it in class files
+ * 2) [basePluginPackageFilter] rejects it, meaning that
+ * the class is not supposed to reside in the base plugin
+ *
+ * For instance, if the class is expected to reside in the base plugin
+ * and is not resolved among its classes, a "Class not found" problem
+ * will be reported.
  */
 class PluginApiClsResolver(private val checkedPluginResolver: Resolver,
                            private val basePluginResolver: Resolver,
                            private val jdkClassesResolver: Resolver,
-                           private val closeableResources: List<Closeable>) : ClsResolver {
+                           private val closeableResources: List<Closeable>,
+                           private val basePluginPackageFilter: PackageFilter) : ClsResolver {
 
   private val cachingResolver = CacheResolver(
       UnionResolver.create(
@@ -27,7 +35,8 @@ class PluginApiClsResolver(private val checkedPluginResolver: Resolver,
       )
   )
 
-  override fun isExternalClass(className: String) = !cachingResolver.containsClass(className)
+  override fun isExternalClass(className: String) =
+      !basePluginPackageFilter.accept(className) && !cachingResolver.containsClass(className)
 
   override fun classExists(className: String) = getOriginOfClass(className) != null
 
@@ -37,7 +46,9 @@ class PluginApiClsResolver(private val checkedPluginResolver: Resolver,
     }
 
     return try {
-      cachingResolver.findClass(className)?.let { ClsResolution.Found(it) } ?: ClsResolution.NotFound
+      cachingResolver.findClass(className)
+          ?.let { ClsResolution.Found(it) }
+          ?: ClsResolution.NotFound
     } catch (e: InvalidClassFileException) {
       ClsResolution.InvalidClassFile(e.asmError)
     } catch (e: Exception) {
@@ -55,7 +66,7 @@ class PluginApiClsResolver(private val checkedPluginResolver: Resolver,
     if (jdkClassesResolver.containsClass(className)) {
       return ClassFileOrigin.JDK_CLASS
     }
-    return ClassFileOrigin.EXTERNAL
+    return null
   }
 
   override fun close() {

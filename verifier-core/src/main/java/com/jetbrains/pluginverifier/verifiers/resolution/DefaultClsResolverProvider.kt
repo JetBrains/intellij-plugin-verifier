@@ -15,6 +15,7 @@ import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
+import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
@@ -30,7 +31,7 @@ class DefaultClsResolverProvider(private val dependencyFinder: DependencyFinder,
                                  private val jdkDescriptorsCache: JdkDescriptorsCache,
                                  private val jdkPath: JdkPath,
                                  private val ideDescriptor: IdeDescriptor,
-                                 private val externalClassesPrefixes: List<String>) : ClsResolverProvider {
+                                 private val externalClassesPackageFilter: PackageFilter) : ClsResolverProvider {
 
   override fun provide(checkedPluginDetails: PluginDetails,
                        resultHolder: ResultHolder,
@@ -63,7 +64,7 @@ class DefaultClsResolverProvider(private val dependencyFinder: DependencyFinder,
             dependenciesResolver,
             jdkClassesResolver,
             ideDescriptor.ideResolver,
-            externalClassesPrefixes,
+            externalClassesPackageFilter,
             closeableResources
         )
       }

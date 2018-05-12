@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
+import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.ignoring.PluginIgnoredEvent
@@ -65,7 +66,7 @@ class VerifyPluginTask(
             jdkDescriptorsCache,
             jdkPath,
             ideDescriptor,
-            emptyList()
+            PackageFilter(emptyList())
         ),
         VerificationTarget.Ide(ideDescriptor.ideVersion)
     ))

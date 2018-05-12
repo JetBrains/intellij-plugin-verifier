@@ -70,7 +70,7 @@ class VerificationCorrectnessTest {
         val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
         val pluginDetailsCache = PluginDetailsCache(10, pluginDetailsProvider, pluginFilesBank)
         return IdeDescriptorCreator.createByPath(ideaFile, IdeVersion.createIdeVersion("IU-145.500")).use { ideDescriptor ->
-          val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(CmdOpts())
+          val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())
           VerificationReportageImpl(EmptyReporterSetProvider).use { verificationReportage ->
             JdkDescriptorsCache().use { jdkDescriptorCache ->
               val tasks = listOf(PluginVerifier(
@@ -84,7 +84,7 @@ class VerificationCorrectnessTest {
                       jdkDescriptorCache,
                       jdkPath,
                       ideDescriptor,
-                      externalClassesPrefixes
+                      externalClassesPackageFilter
                   ),
                   VerificationTarget.Ide(ideDescriptor.ideVersion)
               ))

@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.pluginverifier.ResultHolder
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
@@ -14,6 +15,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolver
 
 data class VerificationContext(
     val plugin: PluginInfo,
+    val verificationTarget: VerificationTarget,
     val resultHolder: ResultHolder,
     val findDeprecatedApiUsages: Boolean,
     val problemFilters: List<ProblemsFilter>,
@@ -56,5 +58,7 @@ data class VerificationContext(
     is MethodLocation -> this.hostClass
     is FieldLocation -> this.hostClass
   }
+
+  override fun toString() = "Verification context for $plugin against $verificationTarget"
 
 }

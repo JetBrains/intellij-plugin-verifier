@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
+import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParameters
@@ -15,7 +16,7 @@ class CheckTrunkApiParams(pluginsSet: PluginsSet,
                           val jdkPath: JdkPath,
                           val trunkIde: IdeDescriptor,
                           val releaseIde: IdeDescriptor,
-                          val externalClassesPrefixes: List<String>,
+                          val externalClassesPackageFilter: PackageFilter,
                           val problemsFilters: List<ProblemsFilter>,
                           val jetBrainsPluginIds: List<String>,
                           private val deleteReleaseIdeOnExit: Boolean,
@@ -27,7 +28,6 @@ class CheckTrunkApiParams(pluginsSet: PluginsSet,
       |Trunk IDE        : $trunkIde
       |Release IDE      : $releaseIde
       |JDK              : $jdkPath
-      |External classes : [${externalClassesPrefixes.joinToString()}]
     """.trimMargin()
 
   override fun close() {

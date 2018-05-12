@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
+import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.tasks.TaskParameters
 
 
@@ -13,7 +14,7 @@ class CheckIdeParams(
     pluginsSet: PluginsSet,
     val jdkPath: JdkPath,
     val ideDescriptor: IdeDescriptor,
-    val externalClassesPrefixes: List<String>,
+    val externalClassesPackageFilter: PackageFilter,
     val problemsFilters: List<ProblemsFilter>,
     val dependencyFinder: DependencyFinder,
     val missingCompatibleVersionsProblems: List<MissingCompatibleVersionProblem>

@@ -31,7 +31,7 @@ class CheckIdeTask(private val parameters: CheckIdeParams) : Task {
                     jdkDescriptorCache,
                     jdkPath,
                     ideDescriptor,
-                    externalClassesPrefixes
+                    externalClassesPackageFilter
                 ),
                 VerificationTarget.Ide(ideDescriptor.ideVersion)
             )

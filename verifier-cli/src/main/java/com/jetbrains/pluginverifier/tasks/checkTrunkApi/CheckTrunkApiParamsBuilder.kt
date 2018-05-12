@@ -89,7 +89,7 @@ class CheckTrunkApiParamsBuilder(private val pluginRepository: PluginRepository,
       deleteReleaseIdeOnExit: Boolean,
       releaseIdeFileLock: FileLock
   ): CheckTrunkApiParams {
-    val externalClassesPrefixes = OptionsParser.getExternalClassesPrefixes(opts)
+    val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(opts)
     val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
     val releaseVersion = releaseIdeDescriptor.ideVersion
@@ -136,7 +136,7 @@ class CheckTrunkApiParamsBuilder(private val pluginRepository: PluginRepository,
         OptionsParser.getJdkPath(opts),
         trunkIdeDescriptor,
         releaseIdeDescriptor,
-        externalClassesPrefixes,
+        externalClassesPackageFilter,
         problemsFilters,
         jetBrainsPluginIds,
         deleteReleaseIdeOnExit,

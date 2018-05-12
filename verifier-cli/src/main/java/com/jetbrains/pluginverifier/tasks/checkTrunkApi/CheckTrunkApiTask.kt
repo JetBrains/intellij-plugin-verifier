@@ -40,14 +40,14 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
           jdkDescriptorCache,
           parameters.jdkPath,
           releaseIde,
-          parameters.externalClassesPrefixes
+          parameters.externalClassesPackageFilter
       )
       val trunkResolverProvider = DefaultClsResolverProvider(
           trunkFinder,
           jdkDescriptorCache,
           parameters.jdkPath,
           trunkIde,
-          parameters.externalClassesPrefixes
+          parameters.externalClassesPackageFilter
       )
 
       val tasks = arrayListOf<PluginVerifier>()
