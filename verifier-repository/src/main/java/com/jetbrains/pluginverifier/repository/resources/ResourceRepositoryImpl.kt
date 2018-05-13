@@ -141,9 +141,13 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
         key2Locks.remove(key)
 
         if (key in removeQueue) {
-          logger.debug("removing the $key as it is enqueued for removing and it has been just released")
-          removeQueue.remove(key)
-          doRemove(key)
+          if (isBeingProvided(key)) {
+            logger.debug("hand over removing of the $key to another thread waiting for this key")
+          } else {
+            logger.debug("removing the $key as it is enqueued for removing and it has been just released")
+            removeQueue.remove(key)
+            doRemove(key)
+          }
         }
       }
     } else {
@@ -153,7 +157,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
 
   @Synchronized
   private fun doRemove(key: K) {
-    check(key !in additionTasks)
+    check(!isBeingProvided(key))
     resourcesRegistrar.removeResource(key)
     statistics.remove(key)
   }
