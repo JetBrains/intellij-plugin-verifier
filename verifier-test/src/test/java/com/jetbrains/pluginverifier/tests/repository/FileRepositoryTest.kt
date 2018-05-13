@@ -15,6 +15,7 @@ import java.time.Clock
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
@@ -88,7 +89,7 @@ class FileRepositoryTest {
         }
       })
     } finally {
-      executorService.shutdownNow()
+      executorService.shutdownAndAwaitTermination(1, TimeUnit.MINUTES)
     }
 
     assertThat(downloader.errors, org.hamcrest.Matchers.empty())

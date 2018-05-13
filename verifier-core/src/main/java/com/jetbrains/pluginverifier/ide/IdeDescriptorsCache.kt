@@ -27,10 +27,10 @@ class IdeDescriptorsCache(cacheSize: Int,
 
   /**
    * Atomically [selects] [selector] an IDE from a set of [available] [IdeFilesBank.getAvailableIdeVersions] IDEs
-   * and registers a [ResourceCacheEntry] for the [IdeDescriptor].
+   * and registers an entry for the [IdeDescriptor].
    * The cache's state is not modified until this method returns.
    */
-  fun getIdeDescriptor(selector: (Set<IdeVersion>) -> IdeVersion): ResourceCacheEntry<IdeDescriptor> =
+  fun getIdeDescriptor(selector: (Set<IdeVersion>) -> IdeVersion): Result.Found =
       getIdeDescriptors {
         listOf(selector(it))
       }.single()
@@ -40,8 +40,8 @@ class IdeDescriptorsCache(cacheSize: Int,
    * and registers the [ResourceCacheEntry]s for the corresponding [IdeDescriptor]s.
    * The cache's state is not modified until this method returns.
    */
-  fun getIdeDescriptors(selector: (Set<IdeVersion>) -> List<IdeVersion>): List<ResourceCacheEntry<IdeDescriptor>> {
-    val result = arrayListOf<ResourceCacheEntry<IdeDescriptor>>()
+  private fun getIdeDescriptors(selector: (Set<IdeVersion>) -> List<IdeVersion>): List<Result.Found> {
+    val result = arrayListOf<Result.Found>()
     try {
       /**
        * Lock the [ideFilesBank] to guarantee that the available IDEs will not be removed
@@ -49,7 +49,9 @@ class IdeDescriptorsCache(cacheSize: Int,
        */
       ideFilesBank.lockAndAccess {
         val selectedVersions = selector(ideFilesBank.getAvailableIdeVersions())
-        selectedVersions.mapTo(result) { getIdeDescriptorCacheEntry(it) }
+        selectedVersions.mapNotNullTo(result) {
+          getIdeDescriptorCacheEntry(it) as? Result.Found
+        }
       }
     } catch (e: Throwable) {
       result.forEach { it.closeLogged() }
@@ -63,14 +65,32 @@ class IdeDescriptorsCache(cacheSize: Int,
    * and registers a [ResourceCacheEntry] for it.
    * The cache's state is not modified until this method returns.
    */
-  fun getIdeDescriptorCacheEntry(ideVersion: IdeVersion): ResourceCacheEntry<IdeDescriptor> {
+  fun getIdeDescriptorCacheEntry(ideVersion: IdeVersion): Result {
     val resourceCacheEntryResult = resourceCache.getResourceCacheEntry(ideVersion)
     return with(resourceCacheEntryResult) {
       when (this) {
-        is ResourceCacheEntryResult.Found -> resourceCacheEntry
-        is ResourceCacheEntryResult.Failed -> throw IllegalStateException(message, error)
-        is ResourceCacheEntryResult.NotFound -> throw IllegalStateException(message)
+        is ResourceCacheEntryResult.Found -> Result.Found(resourceCacheEntry)
+        is ResourceCacheEntryResult.Failed -> Result.Failed(message, error)
+        is ResourceCacheEntryResult.NotFound -> Result.NotFound(message)
       }
+    }
+  }
+
+  sealed class Result : Closeable {
+    data class Found(private val resourceCacheEntry: ResourceCacheEntry<IdeDescriptor>) : Result() {
+
+      val ideDescriptor: IdeDescriptor
+        get() = resourceCacheEntry.resource
+
+      override fun close() = resourceCacheEntry.close()
+    }
+
+    data class Failed(val message: String, val error: Throwable) : Result() {
+      override fun close() = Unit
+    }
+
+    data class NotFound(val message: String) : Result() {
+      override fun close() = Unit
     }
   }
 

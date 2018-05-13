@@ -2,34 +2,49 @@ package org.jetbrains.plugins.verifier.service.tasks
 
 import com.google.common.collect.EvictingQueue
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.jetbrains.pluginverifier.misc.causedBy
+import com.jetbrains.pluginverifier.misc.findCause
+import com.jetbrains.pluginverifier.misc.shutdownAndAwaitTermination
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.time.Instant
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executors
-import java.util.function.Supplier
+import java.util.*
+import java.util.concurrent.*
 
 /**
  * Enqueues tasks and executes completion callbacks.
  */
 class TaskManager(concurrency: Int) : Closeable {
   private companion object {
-    val LOG = LoggerFactory.getLogger(TaskManager::class.java)
+    private val LOG = LoggerFactory.getLogger(TaskManager::class.java)
   }
 
   private var nextTaskId: Long = 0
 
-  private val executorService = Executors.newFixedThreadPool(concurrency,
+  private val executorService = object : ThreadPoolExecutor(
+      concurrency,
+      concurrency,
+      0L,
+      TimeUnit.MILLISECONDS,
+      PriorityBlockingQueue(),
       ThreadFactoryBuilder()
           .setDaemon(true)
           .setNameFormat("worker-%d")
           .build()
-  )
+  ) {
 
-  private val _activeTasks = linkedSetOf<TaskDescriptor>()
+    override fun <T : Any?> newTaskFor(runnable: Runnable?, value: T): RunnableFuture<T> {
+      if (runnable is PriorityTask<*>) {
+        @Suppress("UNCHECKED_CAST")
+        return runnable as PriorityTask<T>
+      }
+      return super.newTaskFor(runnable, value)
+    }
 
-  private val _finishedTasks = EvictingQueue.create<TaskDescriptor>(100)
+  }
+
+  private val _activeTasks = Collections.synchronizedSet(linkedSetOf<TaskDescriptor>())
+
+  private val _finishedTasks = Collections.synchronizedCollection(EvictingQueue.create<TaskDescriptor>(100))
 
   /**
    * Tasks with state either [TaskDescriptor.State.WAITING] or [TaskDescriptor.State.RUNNING]
@@ -83,42 +98,54 @@ class TaskManager(concurrency: Int) : Closeable {
     )
     _activeTasks.add(descriptor)
 
-    val taskFuture = CompletableFuture.supplyAsync(Supplier {
-      descriptor.state = TaskDescriptor.State.RUNNING
-      taskProgress.text = "Running..."
-      task.execute(taskProgress)
-    }, executorService)
-    executorService
-
-    taskFuture
-        .whenComplete { result, error ->
-          descriptor.endTime = Instant.now()
-          taskProgress.fraction = 1.0
-          when {
-            result != null -> {
-              descriptor.state = TaskDescriptor.State.SUCCESS
-              taskProgress.text = "Finished successfully"
-              onSuccess(result, descriptor)
-            }
-            error.causedBy(InterruptedException::class.java) -> {
-              descriptor.state = TaskDescriptor.State.CANCELLED
-              taskProgress.text = "Cancelled"
-              onCancelled(error, descriptor)
-            }
-            else -> {
-              descriptor.state = TaskDescriptor.State.ERROR
-              taskProgress.text = "Finished with error"
-              onError(error, descriptor)
-            }
-          }
-        }
-        .whenComplete { _, _ ->
-          _activeTasks.remove(descriptor)
-          _finishedTasks.add(descriptor)
-          onCompletion(descriptor)
-        }
+    val runnable = createRunner(task, descriptor, onSuccess, onError, onCancelled, onCompletion)
+    val futureTask = FutureTask<T>(runnable, null)
+    val priorityTask = PriorityTask(taskId, task, futureTask)
+    executorService.submit(priorityTask)
 
     return descriptor
+  }
+
+  private fun <T> createRunner(
+      task: Task<T>,
+      descriptor: TaskDescriptor,
+      onSuccess: (T, TaskDescriptor) -> Unit,
+      onError: (Throwable, TaskDescriptor) -> Unit,
+      onCancelled: (Throwable, TaskDescriptor) -> Unit,
+      onCompletion: (TaskDescriptor) -> Unit
+  ) = Runnable {
+    with(descriptor) {
+      state = TaskDescriptor.State.RUNNING
+      progress.text = "Running..."
+      try {
+        try {
+          val result = try {
+            task.execute(progress)
+          } finally {
+            endTime = Instant.now()
+            progress.fraction = 1.0
+          }
+          state = TaskDescriptor.State.SUCCESS
+          progress.text = "Finished successfully"
+          onSuccess(result, descriptor)
+        } catch (e: Throwable) {
+          val ie = e.findCause(InterruptedException::class.java)
+          if (ie != null) {
+            state = TaskDescriptor.State.CANCELLED
+            progress.text = ie.message ?: "Cancelled"
+            onCancelled(ie, descriptor)
+          } else {
+            state = TaskDescriptor.State.ERROR
+            progress.text = "Finished with error"
+            onError(e, descriptor)
+          }
+        }
+      } finally {
+        _activeTasks.remove(descriptor)
+        _finishedTasks.add(descriptor)
+        onCompletion(descriptor)
+      }
+    }
   }
 
   /**
@@ -138,7 +165,7 @@ class TaskManager(concurrency: Int) : Closeable {
   @Synchronized
   override fun close() {
     LOG.info("Stopping task manager")
-    executorService.shutdownNow()
+    executorService.shutdownAndAwaitTermination(1, TimeUnit.MINUTES)
   }
 
 }

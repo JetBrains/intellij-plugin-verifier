@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.jetbrains.pluginverifier.misc.shutdownAndAwaitTermination
 import org.jetbrains.plugins.verifier.service.service.BaseService.State
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.slf4j.Logger
@@ -81,7 +82,7 @@ abstract class BaseService(val serviceName: String,
     if (state == State.PAUSED || state == State.SLEEPING) {
       logger.info("Stopping $serviceName")
       state = State.STOPPED
-      executor.shutdownNow()
+      executor.shutdownAndAwaitTermination(1, TimeUnit.MINUTES)
       onStop()
       return true
     }

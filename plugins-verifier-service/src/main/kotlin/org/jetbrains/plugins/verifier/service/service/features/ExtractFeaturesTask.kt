@@ -15,16 +15,18 @@ import org.slf4j.LoggerFactory
 /**
  * [Task] that runs the [feature extractor] [FeaturesExtractor] for the [updateInfo].
  */
-class ExtractFeaturesTask(val updateInfo: UpdateInfo,
-                          private val ideDescriptorsCache: IdeDescriptorsCache,
-                          private val pluginDetailsCache: PluginDetailsCache) : Task<ExtractFeaturesTask.Result>("Features of $updateInfo") {
+class ExtractFeaturesTask(
+    val updateInfo: UpdateInfo,
+    private val ideDescriptorsCache: IdeDescriptorsCache,
+    private val pluginDetailsCache: PluginDetailsCache
+) : Task<ExtractFeaturesTask.Result>("Features of $updateInfo") {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(ExtractFeaturesTask::class.java)
   }
 
   /**
-   * The result of the feature extractor service [task] [FeatureExtractorService].
+   * Result of the [feature extractor service] [FeatureExtractorService] task.
    */
   data class Result(val updateInfo: UpdateInfo,
                     val resultType: ResultType,
@@ -39,7 +41,7 @@ class ExtractFeaturesTask(val updateInfo: UpdateInfo,
 
   override fun execute(progress: ProgressIndicator): Result {
     return getIde().use {
-      val ideDescriptor = it.resource
+      val ideDescriptor = it.ideDescriptor
       pluginDetailsCache.getPluginDetailsCacheEntry(updateInfo).use {
         with(it) {
           when (this) {

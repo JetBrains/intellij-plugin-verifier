@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.pluginverifier.misc.causedBy
 import com.jetbrains.pluginverifier.misc.findCause
+import com.jetbrains.pluginverifier.misc.shutdownAndAwaitTermination
 import com.jetbrains.pluginverifier.results.VerificationResult
 import org.slf4j.LoggerFactory
 import java.io.Closeable
@@ -27,13 +28,11 @@ class VerifierExecutor(private val concurrentWorkers: Int) : Closeable {
   )
 
   override fun close() {
-    executor.shutdownNow()
+    executor.shutdownAndAwaitTermination(1, TimeUnit.MINUTES)
   }
 
   /**
    * Runs the [tasks] concurrently on the thread pool allocated for this [VerifierExecutor].
-   * The [parameters] configure the verification.
-   * The [reportage] is used to save the verification stages and results.
    */
   fun verify(tasks: List<PluginVerifier>): List<VerificationResult> {
     val completionService = ExecutorCompletionService<VerificationResult>(executor)

@@ -37,13 +37,20 @@ class VerifyPluginTask(
     private val pluginDetailsCache: PluginDetailsCache,
     private val ideDescriptorsCache: IdeDescriptorsCache,
     private val jdkDescriptorsCache: JdkDescriptorsCache
-) : Task<VerificationResult>("Check $updateInfo against $ideVersion") {
+) : Task<VerificationResult>("Check $updateInfo against $ideVersion"), Comparable<VerifyPluginTask> {
 
   override fun execute(progress: ProgressIndicator): VerificationResult {
-    return ideDescriptorsCache.getIdeDescriptorCacheEntry(ideVersion).use { entry ->
-      val ideDescriptor = entry.resource
-      val verificationReportage = createVerificationReportage(progress)
-      checkPluginWithIde(ideDescriptor, verificationReportage)
+    val cacheEntry = ideDescriptorsCache.getIdeDescriptorCacheEntry(ideVersion)
+    return cacheEntry.use {
+      when (cacheEntry) {
+        is IdeDescriptorsCache.Result.Found -> {
+          val ideDescriptor = cacheEntry.ideDescriptor
+          val verificationReportage = createVerificationReportage(progress)
+          checkPluginWithIde(ideDescriptor, verificationReportage)
+        }
+        is IdeDescriptorsCache.Result.NotFound -> throw InterruptedException("IDE $ideVersion is not found")
+        is IdeDescriptorsCache.Result.Failed -> throw InterruptedException("Failed to get $ideVersion: ${cacheEntry.message}: ${cacheEntry.error.message}")
+      }
     }
   }
 
@@ -110,5 +117,13 @@ class VerifyPluginTask(
             )
       }
   )
+
+  /**
+   * Verify newer plugins first.
+   * This comparison result is used by [org.jetbrains.plugins.verifier.service.tasks.TaskManager]
+   * to order tasks execution.
+   */
+  override fun compareTo(other: VerifyPluginTask) =
+      Integer.compare(other.updateInfo.updateId, updateInfo.updateId)
 
 }
