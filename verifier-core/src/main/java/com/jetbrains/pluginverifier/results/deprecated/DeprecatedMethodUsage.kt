@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.results.presentation.MethodParameterTypeOpti
 import com.jetbrains.pluginverifier.results.presentation.MethodReturnTypeOption.FULL_RETURN_TYPE_CLASS_NAME
 import com.jetbrains.pluginverifier.results.presentation.MethodReturnTypeOption.NO_RETURN_TYPE
 import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
+import com.jetbrains.pluginverifier.results.presentation.isConstructor
 import com.jetbrains.pluginverifier.results.presentation.methodOrConstructorWord
 import java.util.*
 
@@ -20,6 +21,13 @@ data class DeprecatedMethodUsage(
   override val shortDescription = "Deprecated " + deprecatedElement.methodOrConstructorWord + " ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)} invocation"
 
   override val fullDescription = "Deprecated " + deprecatedElement.methodOrConstructorWord + " ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)} is invoked in " + usageLocation.formatDeprecatedUsageLocation()
+
+  override val deprecatedElementType: DeprecatedElementType
+    get() = if (deprecatedElement.isConstructor) {
+      DeprecatedElementType.CONSTRUCTOR
+    } else {
+      DeprecatedElementType.METHOD
+    }
 
   override fun equals(other: Any?) = other is DeprecatedMethodUsage
       && deprecatedElement == other.deprecatedElement

@@ -15,6 +15,8 @@ data class DeprecatedFieldUsage(
 
   override val fullDescription = "Deprecated field ${deprecatedElement.formatFieldLocation(FULL_HOST_NAME, FieldTypeOption.FULL_TYPE)} is accessed in ${usageLocation.formatDeprecatedUsageLocation()}"
 
+  override val deprecatedElementType = DeprecatedElementType.FIELD
+
   override fun equals(other: Any?) = other is DeprecatedFieldUsage
       && deprecatedElement == other.deprecatedElement
       && usageLocation == other.usageLocation

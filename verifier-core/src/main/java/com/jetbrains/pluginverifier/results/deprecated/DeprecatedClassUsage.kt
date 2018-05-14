@@ -16,6 +16,8 @@ class DeprecatedClassUsage(
 
   override val fullDescription = "Deprecated class ${deprecatedElement.formatClassLocation(FULL_NAME, WITH_GENERICS)} is referenced in " + usageLocation.formatDeprecatedUsageLocation()
 
+  override val deprecatedElementType = DeprecatedElementType.CLASS
+
   override fun equals(other: Any?) = other is DeprecatedClassUsage
       && deprecatedElement == other.deprecatedElement
       && usageLocation == other.usageLocation

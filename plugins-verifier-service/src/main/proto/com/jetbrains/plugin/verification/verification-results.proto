@@ -21,9 +21,25 @@ message CompatibilityProblem {
 }
 
 message DeprecatedApiUsage {
-    string shortDescription = 1;
+  string shortDescription = 1;
 
-    string fullDescription = 2;
+  string fullDescription = 2;
+
+  string deprecatedElement = 3;
+
+  string usageLocation = 4;
+
+  DeprecatedElementType deprecatedElementType = 5;
+
+  enum DeprecatedElementType {
+    CLASS = 0;
+
+    METHOD = 1;
+
+    FIELD = 2;
+
+    CONSTRUCTOR = 4;
+  }
 }
 
 message VerificationResult {

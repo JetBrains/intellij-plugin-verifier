@@ -22,6 +22,8 @@ class DeprecatedMethodOverridden(
 
   override val fullDescription = "Deprecated method ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)} is overridden in class ${usageLocation.hostClass.formatClassLocation(FULL_NAME, NO_GENERICS)}"
 
+  override val deprecatedElementType = DeprecatedElementType.METHOD
+
   override fun equals(other: Any?) = other is DeprecatedMethodOverridden
       && deprecatedElement == other.deprecatedElement
       && usageLocation == other.usageLocation

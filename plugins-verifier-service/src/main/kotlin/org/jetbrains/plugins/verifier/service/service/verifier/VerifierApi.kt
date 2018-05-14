@@ -11,6 +11,12 @@ import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.results.deprecated.DeprecatedElementType
+import com.jetbrains.pluginverifier.results.location.ClassLocation
+import com.jetbrains.pluginverifier.results.location.FieldLocation
+import com.jetbrains.pluginverifier.results.location.Location
+import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.presentation.*
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
@@ -131,7 +137,51 @@ private fun DeprecatedApiUsage.convertDeprecatedApiUsage() =
     VerificationResults.DeprecatedApiUsage.newBuilder()
         .setShortDescription(shortDescription)
         .setFullDescription(fullDescription)
+        .setDeprecatedElement(deprecatedElement.presentableDeprecatedElement())
+        .setUsageLocation(usageLocation.presentableUsageLocation())
+        .setDeprecatedElementType(deprecatedElementType.convertDeprecatedElementType())
         .build()
+
+private fun DeprecatedElementType.convertDeprecatedElementType() = when (this) {
+  DeprecatedElementType.CLASS -> VerificationResults.DeprecatedApiUsage.DeprecatedElementType.CLASS
+  DeprecatedElementType.METHOD -> VerificationResults.DeprecatedApiUsage.DeprecatedElementType.METHOD
+  DeprecatedElementType.FIELD -> VerificationResults.DeprecatedApiUsage.DeprecatedElementType.FIELD
+  DeprecatedElementType.CONSTRUCTOR -> VerificationResults.DeprecatedApiUsage.DeprecatedElementType.CONSTRUCTOR
+}
+
+private fun Location.presentableDeprecatedElement(): String = when (this) {
+  is ClassLocation -> formatClassLocation(
+      ClassOption.FULL_NAME,
+      ClassGenericsSignatureOption.NO_GENERICS
+  )
+  is MethodLocation -> formatMethodLocation(
+      HostClassOption.FULL_HOST_NAME,
+      MethodParameterTypeOption.FULL_PARAM_CLASS_NAME,
+      MethodReturnTypeOption.FULL_RETURN_TYPE_CLASS_NAME,
+      MethodParameterNameOption.WITH_PARAM_NAMES_IF_AVAILABLE
+  )
+  is FieldLocation -> formatFieldLocation(
+      HostClassOption.FULL_HOST_NAME,
+      FieldTypeOption.FULL_TYPE
+  )
+}
+
+private fun Location.presentableUsageLocation(): String = when (this) {
+  is ClassLocation -> formatClassLocation(
+      ClassOption.FULL_NAME,
+      ClassGenericsSignatureOption.NO_GENERICS
+  )
+  is MethodLocation -> formatMethodLocation(
+      HostClassOption.FULL_HOST_NAME,
+      MethodParameterTypeOption.SIMPLE_PARAM_CLASS_NAME,
+      MethodReturnTypeOption.NO_RETURN_TYPE,
+      MethodParameterNameOption.NO_PARAMETER_NAMES
+  )
+  is FieldLocation -> formatFieldLocation(
+      HostClassOption.FULL_HOST_NAME,
+      FieldTypeOption.NO_TYPE
+  )
+}
 
 private fun PluginStructureWarning.convertPluginStructureWarning() =
     VerificationResults.PluginStructureWarning.newBuilder()

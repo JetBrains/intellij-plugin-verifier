@@ -24,6 +24,8 @@ abstract class DeprecatedApiUsage {
 
   abstract val fullDescription: String
 
+  abstract val deprecatedElementType: DeprecatedElementType
+
   abstract override fun equals(other: Any?): Boolean
 
   abstract override fun hashCode(): Int
