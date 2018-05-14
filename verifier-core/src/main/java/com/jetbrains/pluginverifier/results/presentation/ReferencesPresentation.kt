@@ -27,7 +27,9 @@ fun MethodReference.formatMethodReference(hostClassOption: HostClassOption,
   append(methodName)
   val (params, returnType) = getMethodParametersAndReturnType(methodParameterTypeOption, methodReturnTypeOption)
   append("(" + params.joinToString() + ")")
-  append(" : $returnType")
+  if (methodName != "<init>" && methodReturnTypeOption != MethodReturnTypeOption.NO_RETURN_TYPE) {
+    append(" : $returnType")
+  }
 }
 
 fun FieldReference.formatFieldReference(hostClassOption: HostClassOption, fieldTypeOption: FieldTypeOption): String = buildString {

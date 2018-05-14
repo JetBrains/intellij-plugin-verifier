@@ -171,20 +171,20 @@ class VerificationCorrectnessTest {
   @Test
   fun `deprecated method is used`() {
     //Auxiliary deprecated usage.
-    assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.method() : void")
-    assertDeprecatedUsageFound("Constructor <init>() : void of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.method() : void")
+    assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedClass is referenced in mock.plugin.deprecated.DeprecatedUser.method() : void")
+    assertDeprecatedUsageFound("Constructor <init>() of deprecated class deprecated.DeprecatedClass is invoked in mock.plugin.deprecated.DeprecatedUser.method() : void")
 
-    assertDeprecatedUsageFound("Deprecated method deprecated.DeprecatedMethod.foo(int x) : void is used in mock.plugin.deprecated.DeprecatedUser.method() : void")
+    assertDeprecatedUsageFound("Deprecated method deprecated.DeprecatedMethod.foo(int x) : void is invoked in mock.plugin.deprecated.DeprecatedUser.method() : void")
   }
 
   @Test
   fun `usage of the method of the deprecated class`() {
-    assertDeprecatedUsageFound("Method foo() : void of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.method() : void")
+    assertDeprecatedUsageFound("Method foo() : void of deprecated class deprecated.DeprecatedClass is invoked in mock.plugin.deprecated.DeprecatedUser.method() : void")
   }
 
   @Test
   fun `deprecated constructor is used`() {
-    assertDeprecatedUsageFound("Deprecated constructor deprecated.DeprecatedMethod.<init>() : void is used in mock.plugin.deprecated.DeprecatedUser.method() : void")
+    assertDeprecatedUsageFound("Deprecated constructor deprecated.DeprecatedMethod.<init>() is invoked in mock.plugin.deprecated.DeprecatedUser.method() : void")
   }
 
   @Test
@@ -194,45 +194,45 @@ class VerificationCorrectnessTest {
 
   @Test
   fun `overriding deprecated interface method`() {
-    assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedInterface is used in mock.plugin.deprecated.OverrideDeprecatedMethod")
+    assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedInterface is referenced in mock.plugin.deprecated.OverrideDeprecatedMethod")
     assertDeprecatedUsageFound("Deprecated method deprecated.DeprecatedInterface.bar() : void is overridden in class mock.plugin.deprecated.OverrideDeprecatedMethod")
   }
 
 
   @Test
   fun `use default deprecated constructor`() {
-    assertDeprecatedUsageFound("Deprecated constructor deprecated.DeprecatedMethod.<init>() : void is used in mock.plugin.deprecated.OverrideDeprecatedMethod.<init>() : void")
+    assertDeprecatedUsageFound("Deprecated constructor deprecated.DeprecatedMethod.<init>() is invoked in mock.plugin.deprecated.OverrideDeprecatedMethod.<init>()")
   }
 
   @Test
   fun `deprecated class is used`() {
     //Auxiliary deprecated usage.
-    assertDeprecatedUsageFound("Constructor <init>() : void of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.clazz() : void")
+    assertDeprecatedUsageFound("Constructor <init>() of deprecated class deprecated.DeprecatedClass is invoked in mock.plugin.deprecated.DeprecatedUser.clazz() : void")
 
-    assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.clazz() : void")
+    assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedClass is referenced in mock.plugin.deprecated.DeprecatedUser.clazz() : void")
   }
 
   @Test
   fun `deprecated with comment class is used`() {
     //Auxiliary deprecated usage.
-    assertDeprecatedUsageFound("Constructor <init>() : void of the deprecated class deprecated.DeprecatedWithCommentClass is used in mock.plugin.deprecated.DeprecatedUser.clazzWithComment() : void")
+    assertDeprecatedUsageFound("Constructor <init>() of deprecated class deprecated.DeprecatedWithCommentClass is invoked in mock.plugin.deprecated.DeprecatedUser.clazzWithComment() : void")
 
-    assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedWithCommentClass is used in mock.plugin.deprecated.DeprecatedUser.clazzWithComment() : void")
+    assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedWithCommentClass is referenced in mock.plugin.deprecated.DeprecatedUser.clazzWithComment() : void")
   }
 
 
   @Test
   fun `deprecated field usage`() {
-    assertDeprecatedUsageFound("Deprecated field deprecated.DeprecatedField.x : int is used in mock.plugin.deprecated.DeprecatedUser.field() : void")
+    assertDeprecatedUsageFound("Deprecated field deprecated.DeprecatedField.x : int is accessed in mock.plugin.deprecated.DeprecatedUser.field() : void")
   }
 
   @Test
   fun `field of the deprecated class usage`() {
     //Auxiliary usages
-    assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.field() : void")
-    assertDeprecatedUsageFound("Constructor <init>() : void of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.field() : void")
+    assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedClass is referenced in mock.plugin.deprecated.DeprecatedUser.field() : void")
+    assertDeprecatedUsageFound("Constructor <init>() of deprecated class deprecated.DeprecatedClass is invoked in mock.plugin.deprecated.DeprecatedUser.field() : void")
 
-    assertDeprecatedUsageFound("Field x : int of the deprecated class deprecated.DeprecatedClass is used in mock.plugin.deprecated.DeprecatedUser.field() : void")
+    assertDeprecatedUsageFound("Field x of deprecated class deprecated.DeprecatedClass is accessed in mock.plugin.deprecated.DeprecatedUser.field() : void")
   }
 
   @Test
@@ -302,8 +302,8 @@ class VerificationCorrectnessTest {
         "Instantiation of an interface misc.BecomeInterface"
     )
 
-    assertProblemFound("Method mock.plugin.news.NewProblems.newInterface() : void contains an *invokespecial* instruction referencing an unresolved constructor misc.BecomeInterface.<init>() : void. This can lead to **NoSuchMethodError** exception at runtime.",
-        "Invocation of unresolved constructor misc.BecomeInterface.<init>() : void"
+    assertProblemFound("Method mock.plugin.news.NewProblems.newInterface() : void contains an *invokespecial* instruction referencing an unresolved constructor misc.BecomeInterface.<init>(). This can lead to **NoSuchMethodError** exception at runtime.",
+        "Invocation of unresolved constructor misc.BecomeInterface.<init>()"
     )
   }
 
@@ -320,8 +320,8 @@ class VerificationCorrectnessTest {
         "Incompatible change of super class misc.BecomeInterface to interface"
     )
 
-    assertProblemFound("Constructor mock.plugin.inheritance.SuperClassBecameInterface.<init>() : void contains an *invokespecial* instruction referencing an unresolved constructor misc.BecomeInterface.<init>() : void. This can lead to **NoSuchMethodError** exception at runtime.",
-        "Invocation of unresolved constructor misc.BecomeInterface.<init>() : void"
+    assertProblemFound("Constructor mock.plugin.inheritance.SuperClassBecameInterface.<init>() contains an *invokespecial* instruction referencing an unresolved constructor misc.BecomeInterface.<init>(). This can lead to **NoSuchMethodError** exception at runtime.",
+        "Invocation of unresolved constructor misc.BecomeInterface.<init>()"
     )
   }
 
@@ -405,8 +405,8 @@ class VerificationCorrectnessTest {
 
   @Test
   fun missingDefaultConstructor() {
-    assertProblemFound("Constructor mock.plugin.constructors.MissingDefaultConstructor.<init>() : void contains an *invokespecial* instruction referencing an unresolved constructor constructors.DeletedDefaultConstructor.<init>() : void. This can lead to **NoSuchMethodError** exception at runtime.",
-        "Invocation of unresolved constructor constructors.DeletedDefaultConstructor.<init>() : void"
+    assertProblemFound("Constructor mock.plugin.constructors.MissingDefaultConstructor.<init>() contains an *invokespecial* instruction referencing an unresolved constructor constructors.DeletedDefaultConstructor.<init>(). This can lead to **NoSuchMethodError** exception at runtime.",
+        "Invocation of unresolved constructor constructors.DeletedDefaultConstructor.<init>()"
     )
   }
 
@@ -437,8 +437,8 @@ class VerificationCorrectnessTest {
 
   @Test
   fun constructorBecamePrivate() {
-    assertProblemFound("Method mock.plugin.AccessChangedProblem.foo() : void contains an *invokespecial* instruction referencing a private constructor com.intellij.openapi.diagnostic.LogUtil.<init>() : void inaccessible to a class mock.plugin.AccessChangedProblem. This can lead to **IllegalAccessError** exception at runtime.",
-        "Illegal invocation of private constructor com.intellij.openapi.diagnostic.LogUtil.<init>() : void"
+    assertProblemFound("Method mock.plugin.AccessChangedProblem.foo() : void contains an *invokespecial* instruction referencing a private constructor com.intellij.openapi.diagnostic.LogUtil.<init>() inaccessible to a class mock.plugin.AccessChangedProblem. This can lead to **IllegalAccessError** exception at runtime.",
+        "Illegal invocation of private constructor com.intellij.openapi.diagnostic.LogUtil.<init>()"
     )
   }
 
@@ -468,7 +468,7 @@ class VerificationCorrectnessTest {
         "Method mock.plugin.MethodProblems.brokenMultiArray() : void",
         "Method mock.plugin.MethodProblems.brokenInvocation() : void",
 
-        "Constructor mock.plugin.ParentDoesntExist.<init>() : void",
+        "Constructor mock.plugin.ParentDoesntExist.<init>()",
         "Method mock.plugin.arrays.ANewArrayInsn.foo(long l, double d, Object a) : void",
         "Method mock.plugin.field.FieldProblemsContainer.accessUnknownClassOfArray() : void",
         "Method mock.plugin.field.FieldProblemsContainer.accessUnknownClass() : void",

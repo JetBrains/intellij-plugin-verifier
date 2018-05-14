@@ -100,7 +100,10 @@ fun MethodLocation.formatMethodLocation(hostClassOption: HostClassOption,
   append("$methodName(")
   val (paramAndNames, returnType) = methodParametersWithNamesAndReturnType(methodParameterTypeOption, methodReturnTypeOption, methodParameterNameOption)
   append(paramAndNames.joinToString())
-  append(") : $returnType")
+  append(")")
+  if (methodName != "<init>" && methodReturnTypeOption != MethodReturnTypeOption.NO_RETURN_TYPE) {
+    append(" : $returnType")
+  }
 }
 
 fun FieldLocation.formatFieldLocation(hostClassOption: HostClassOption, fieldTypeOption: FieldTypeOption): String = buildString {
@@ -132,6 +135,7 @@ private fun MethodLocation.methodParametersWithNamesAndReturnType(methodParamete
   val returnConverter = when (methodReturnTypeOption) {
     MethodReturnTypeOption.SIMPLE_RETURN_TYPE_CLASS_NAME -> toSimpleJavaClassName
     MethodReturnTypeOption.FULL_RETURN_TYPE_CLASS_NAME -> toFullJavaClassName
+    MethodReturnTypeOption.NO_RETURN_TYPE -> toSimpleJavaClassName
   }
   val (parametersTypes, returnType) = if (signature.isNotEmpty()) {
     JvmDescriptorsPresentation.parseMethodSignature(signature, paramsConverter)
