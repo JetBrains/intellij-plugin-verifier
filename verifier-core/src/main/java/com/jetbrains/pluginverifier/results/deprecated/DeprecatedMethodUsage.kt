@@ -8,10 +8,20 @@ import com.jetbrains.pluginverifier.results.presentation.MethodParameterTypeOpti
 import com.jetbrains.pluginverifier.results.presentation.MethodReturnTypeOption.SIMPLE_RETURN_TYPE_CLASS_NAME
 import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 import com.jetbrains.pluginverifier.results.presentation.methodOrConstructorWord
+import java.util.*
 
-data class DeprecatedMethodUsage(override val deprecatedElement: MethodLocation,
-                                 override val usageLocation: Location) : DeprecatedApiUsage() {
+data class DeprecatedMethodUsage(
+    override val deprecatedElement: MethodLocation,
+    override val usageLocation: Location
+) : DeprecatedApiUsage() {
   override val shortDescription = "Deprecated " + deprecatedElement.methodOrConstructorWord + " usage ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}"
 
   override val fullDescription = "Deprecated " + deprecatedElement.methodOrConstructorWord + " ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)} is used in " + usageLocation.formatDeprecatedUsageLocation()
+
+  override fun equals(other: Any?) = other is DeprecatedMethodUsage
+      && deprecatedElement == other.deprecatedElement
+      && usageLocation == other.usageLocation
+
+  override fun hashCode() = Objects.hash(deprecatedElement, usageLocation)
+
 }

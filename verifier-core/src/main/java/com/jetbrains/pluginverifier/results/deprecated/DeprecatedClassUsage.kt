@@ -6,10 +6,20 @@ import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureO
 import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureOption.WITH_GENERICS
 import com.jetbrains.pluginverifier.results.presentation.ClassOption.FULL_NAME
 import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
+import java.util.*
 
-data class DeprecatedClassUsage(override val deprecatedElement: ClassLocation,
-                                override val usageLocation: Location) : DeprecatedApiUsage() {
+class DeprecatedClassUsage(
+    override val deprecatedElement: ClassLocation,
+    override val usageLocation: Location
+) : DeprecatedApiUsage() {
   override val shortDescription = "Deprecated class usage ${deprecatedElement.formatClassLocation(FULL_NAME, NO_GENERICS)}"
 
   override val fullDescription = "Deprecated class ${deprecatedElement.formatClassLocation(FULL_NAME, WITH_GENERICS)} is used in " + usageLocation.formatDeprecatedUsageLocation()
+
+  override fun equals(other: Any?) = other is DeprecatedClassUsage
+      && deprecatedElement == other.deprecatedElement
+      && usageLocation == other.usageLocation
+
+  override fun hashCode() = Objects.hash(deprecatedElement, usageLocation)
+
 }

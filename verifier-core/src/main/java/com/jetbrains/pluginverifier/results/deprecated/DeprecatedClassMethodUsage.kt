@@ -13,11 +13,22 @@ import com.jetbrains.pluginverifier.results.presentation.MethodReturnTypeOption.
 import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
 import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 import com.jetbrains.pluginverifier.results.presentation.methodOrConstructorWord
+import java.util.*
 
-data class DeprecatedClassMethodUsage(override val deprecatedElement: ClassLocation,
-                                      override val usageLocation: Location,
-                                      val method: MethodLocation) : DeprecatedApiUsage() {
+class DeprecatedClassMethodUsage(
+    override val deprecatedElement: ClassLocation,
+    override val usageLocation: Location,
+    val method: MethodLocation
+) : DeprecatedApiUsage() {
   override val shortDescription = method.methodOrConstructorWord.capitalize() + " of a deprecated class is used ${method.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}"
 
   override val fullDescription = method.methodOrConstructorWord.capitalize() + " ${method.formatMethodLocation(NO_HOST, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)} of the deprecated class ${deprecatedElement.formatClassLocation(FULL_NAME, WITH_GENERICS)} is used in ${usageLocation.formatDeprecatedUsageLocation()}"
+
+  override fun equals(other: Any?) = other is DeprecatedClassMethodUsage
+      && deprecatedElement == other.deprecatedElement
+      && usageLocation == other.usageLocation
+      && method == other.method
+
+  override fun hashCode() = Objects.hash(deprecatedElement, usageLocation, method)
+
 }

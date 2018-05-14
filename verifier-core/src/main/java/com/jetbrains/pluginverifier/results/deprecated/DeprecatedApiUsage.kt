@@ -24,9 +24,9 @@ abstract class DeprecatedApiUsage {
 
   abstract val fullDescription: String
 
-  final override fun equals(other: Any?) = other is DeprecatedApiUsage && fullDescription == other.fullDescription
+  abstract override fun equals(other: Any?): Boolean
 
-  final override fun hashCode() = fullDescription.hashCode()
+  abstract override fun hashCode(): Int
 
   final override fun toString() = fullDescription
 }
