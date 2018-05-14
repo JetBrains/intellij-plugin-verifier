@@ -34,24 +34,32 @@ data class VerificationContext(
 
   fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
     if (findDeprecatedApiUsages) {
-      val deprecatedElement = deprecatedApiUsage.deprecatedElement
-      val hostClass = deprecatedElement.getHostClass()
-      if (shouldIndexDeprecatedClass(hostClass.className)) {
+      val deprecatedElementHost = deprecatedApiUsage.deprecatedElement.getHostClass()
+      val usageHostClass = deprecatedApiUsage.usageLocation.getHostClass()
+      if (shouldIndexDeprecatedClass(deprecatedElementHost, usageHostClass)) {
         resultHolder.registerDeprecatedUsage(deprecatedApiUsage)
       }
     }
   }
 
   /**
-   * Determines whether we should index usage of deprecated API.
-   *
-   * We would like to index only usages of deprecated API of IDE and API of plugin's dependencies',
-   * and exclude usages of deprecated JDK API and plugin's internal deprecated API.
+   * Determines whether we should index usage of deprecated API:
+   * 1) Usage resides in plugin
+   * 2) API is either IDE API or plugin's dependency API,
+   * and it is not deprecated JDK API nor plugin's internal
+   * deprecated API.
    */
-  private fun shouldIndexDeprecatedClass(className: String) =
-      with(clsResolver.getOriginOfClass(className)) {
-        this == ClassFileOrigin.IDE_CLASS || this == ClassFileOrigin.CLASS_OF_PLUGIN_DEPENDENCY
-      }
+  private fun shouldIndexDeprecatedClass(
+      deprecatedElementHost: ClassLocation,
+      usageHostClass: ClassLocation
+  ): Boolean {
+    val usageHostOrigin = clsResolver.getOriginOfClass(usageHostClass.className)
+    if (usageHostOrigin == ClassFileOrigin.PLUGIN_INTERNAL_CLASS) {
+      val deprecatedHostOrigin = clsResolver.getOriginOfClass(deprecatedElementHost.className)
+      return deprecatedHostOrigin == ClassFileOrigin.IDE_CLASS || deprecatedHostOrigin == ClassFileOrigin.CLASS_OF_PLUGIN_DEPENDENCY
+    }
+    return false
+  }
 
   private fun Location.getHostClass() = when (this) {
     is ClassLocation -> this
