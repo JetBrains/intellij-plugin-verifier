@@ -141,15 +141,35 @@ sealed class VerificationResult {
       return buildString {
         append("Missing ")
         if (modules.isNotEmpty()) {
-          append(modules.size)
-          append(" direct " + "module".pluralize(modules.size))
+          val (optional, nonOptional) = modules.partition { it.dependency.isOptional }
+          if (nonOptional.isNotEmpty()) {
+            append(nonOptional.size)
+            append(" mandatory " + "module".pluralize(nonOptional.size))
+          }
+          if (optional.isNotEmpty()) {
+            if (nonOptional.isNotEmpty()) {
+              append(" and ")
+            }
+            append(optional.size)
+            append(" optional " + "module".pluralize(optional.size))
+          }
         }
         if (plugins.isNotEmpty()) {
           if (modules.isNotEmpty()) {
             append(" and ")
           }
-          append(plugins.size)
-          append(" direct " + "plugin".pluralize(plugins.size))
+          val (optional, nonOptional) = plugins.partition { it.dependency.isOptional }
+          if (nonOptional.isNotEmpty()) {
+            append(nonOptional.size)
+            append(" mandatory " + "plugin".pluralize(nonOptional.size))
+          }
+          if (optional.isNotEmpty()) {
+            if (nonOptional.isNotEmpty()) {
+              append(" and ")
+            }
+            append(optional.size)
+            append(" optional " + "plugin".pluralize(optional.size))
+          }
         }
         append(" ")
         append("dependency".pluralize(modules.size + plugins.size))

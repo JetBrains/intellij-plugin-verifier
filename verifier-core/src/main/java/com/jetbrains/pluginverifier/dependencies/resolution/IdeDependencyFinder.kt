@@ -10,8 +10,8 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
  * dependency among the [bundled] [Ide.getBundledPlugins] [ide] plugins,
  * or the [last compatible] [LastCompatibleVersionSelector] plugin in the [PluginRepository].
  */
-class IdeDependencyFinder(ide: Ide,
-                          pluginRepository: PluginRepository,
+class IdeDependencyFinder(private val ide: Ide,
+                          private val pluginRepository: PluginRepository,
                           pluginDetailsCache: PluginDetailsCache) : DependencyFinder {
 
   private val bundledPluginFinder = BundledPluginDependencyFinder(ide, pluginDetailsCache)
@@ -22,9 +22,16 @@ class IdeDependencyFinder(ide: Ide,
       pluginDetailsCache
   )
 
-  private val dependencyFinder = ChainDependencyFinder(listOf(bundledPluginFinder, repositoryDependencyFinder))
-
-  override fun findPluginDependency(dependency: PluginDependency) =
-      dependencyFinder.findPluginDependency(dependency)
+  override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
+    val bundledPlugin = bundledPluginFinder.findPluginDependency(dependency)
+    if (bundledPlugin !is DependencyFinder.Result.NotFound) {
+      return bundledPlugin
+    }
+    val repositoryPlugin = repositoryDependencyFinder.findPluginDependency(dependency)
+    if (repositoryPlugin !is DependencyFinder.Result.NotFound) {
+      return repositoryPlugin
+    }
+    return DependencyFinder.Result.NotFound("Dependency $dependency is neither resolved among bundled plugins of $ide, nor is it available in $pluginRepository")
+  }
 
 }
