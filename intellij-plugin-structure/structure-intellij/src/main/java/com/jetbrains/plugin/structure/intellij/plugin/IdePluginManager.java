@@ -39,7 +39,8 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
 
   private static final Logger LOG = LoggerFactory.getLogger(IdePluginManager.class);
 
-  private static final String PLUGIN_XML = "plugin.xml";
+  public static final String PLUGIN_XML = "plugin.xml";
+  public static final String META_INF = "META-INF";
 
   @NotNull
   private final XIncludePathResolver myPathResolver;
@@ -123,11 +124,11 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     if (descriptorPath.startsWith("../")) {
       return StringUtil.trimStart(descriptorPath, "../");
     }
-    return "META-INF" + File.separator + descriptorPath;
+    return META_INF + File.separator + descriptorPath;
   }
 
   private PluginCreator loadDescriptorFromDir(@NotNull File pluginDirectory, @NotNull String filePath, boolean validateDescriptor) {
-    File descriptorFile = new File(pluginDirectory, "META-INF" + File.separator + filePath);
+    File descriptorFile = new File(pluginDirectory, META_INF + File.separator + filePath);
     if (descriptorFile.exists()) {
       return loadDescriptorFromDescriptorFile(filePath, pluginDirectory, descriptorFile, validateDescriptor);
     } else {
@@ -253,8 +254,8 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   }
 
   private PluginCreator resolveOptionalConfigurationFile(@NotNull File jarOrDirectory, @NotNull String configurationFile) {
-    if (configurationFile.startsWith("/META-INF/")) {
-      configurationFile = StringUtil.trimStart(configurationFile, "/META-INF/");
+    if (configurationFile.startsWith("/" + META_INF + "/")) {
+      configurationFile = StringUtil.trimStart(configurationFile, "/" + META_INF + "/");
     }
     return loadDescriptorFromJarOrDirectory(jarOrDirectory, configurationFile, false);
   }
@@ -286,13 +287,22 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
 
   @NotNull
   public PluginCreationResult<IdePlugin> createPlugin(@NotNull File pluginFile, boolean validateDescriptor) {
-    PluginCreator pluginCreator = getPluginCreatorWithResult(pluginFile, validateDescriptor);
+    return createPlugin(pluginFile, validateDescriptor, PLUGIN_XML);
+  }
+
+  @NotNull
+  public PluginCreationResult<IdePlugin> createPlugin(@NotNull File pluginFile,
+                                                      boolean validateDescriptor,
+                                                      @NotNull String descriptorPath) {
+    PluginCreator pluginCreator = getPluginCreatorWithResult(pluginFile, validateDescriptor, descriptorPath);
     pluginCreator.setOriginalFileAndExtractDir(pluginFile, myExtractDirectory);
     return pluginCreator.getPluginCreationResult();
   }
 
   @NotNull
-  private PluginCreator getPluginCreatorWithResult(@NotNull File pluginFile, boolean validateDescriptor) {
+  private PluginCreator getPluginCreatorWithResult(@NotNull File pluginFile,
+                                                   boolean validateDescriptor,
+                                                   @NotNull String descriptorPath) {
     if (!pluginFile.exists()) {
       throw new IllegalArgumentException("Plugin file " + pluginFile + " does not exist");
     }
@@ -300,7 +310,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     if (FileUtilKt.isZip(pluginFile)) {
       pluginCreator = extractZipAndCreatePlugin(pluginFile, validateDescriptor);
     } else {
-      pluginCreator = loadDescriptorFromJarOrDirectory(pluginFile, PLUGIN_XML, validateDescriptor);
+      pluginCreator = loadDescriptorFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor);
     }
     return pluginCreator;
   }

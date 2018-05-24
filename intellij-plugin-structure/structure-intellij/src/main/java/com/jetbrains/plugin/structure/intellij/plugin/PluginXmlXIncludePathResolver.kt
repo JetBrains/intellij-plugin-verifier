@@ -19,14 +19,14 @@ class PluginXmlXIncludePathResolver(files: List<File>) : DefaultXIncludePathReso
           .filter { it.isJar() || it.isZip() }
           .mapNotNull {
             try {
-              URLUtil.getJarEntryURL(it, "META-INF/")
+              URLUtil.getJarEntryURL(it, "${IdePluginManager.META_INF}/")
             } catch (e: MalformedURLException) {
               null
             }
           }.toList()
 
   private fun defaultResolve(relativePath: String, base: String?) =
-      if (base != null && relativePath.startsWith("/META-INF/")) {
+      if (base != null && relativePath.startsWith("/${IdePluginManager.META_INF}/")) {
         try {
           URL(URL(base), "..$relativePath")
         } catch (e: MalformedURLException) {
@@ -43,21 +43,15 @@ class PluginXmlXIncludePathResolver(files: List<File>) : DefaultXIncludePathReso
         URL(base, path)
       }
 
-  override fun resolvePath(relativePath: String, base: String?): URL {
-    val url = defaultResolve(relativePath, base)
-    if (URLUtil.resourceExists(url) == ThreeState.YES) {
-      return url
-    }
-
-    return metaInfUrls.asSequence()
-        .mapNotNull {
-          try {
-            getRelativeUrl(it, relativePath)
-          } catch (e: MalformedURLException) {
-            null
+  override fun resolvePath(relativePath: String, base: String?): URL =
+      metaInfUrls.asSequence()
+          .mapNotNull {
+            try {
+              getRelativeUrl(it, relativePath)
+            } catch (e: MalformedURLException) {
+              null
+            }
           }
-        }
-        .find { URLUtil.resourceExists(it) == ThreeState.YES }
-        ?: url
-  }
+          .find { URLUtil.resourceExists(it) == ThreeState.YES }
+          ?: defaultResolve(relativePath, base)
 }

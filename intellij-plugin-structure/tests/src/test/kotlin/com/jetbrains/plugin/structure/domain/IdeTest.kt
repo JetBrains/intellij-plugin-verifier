@@ -64,7 +64,7 @@ class IdeTest {
     val ideaPluginXml = temporaryFolder.newFolder().resolve("META-INF").resolve("plugin.xml")
     ideaPluginXml.parentFile.mkdirs()
     ideaPluginXml.writeText(perfectXmlBuilder.apply {
-      id = "<id>idea.plugin</id>"
+      id = "<id>IDEA CORE</id>"
       modules = listOf("some.idea.module")
     }.asString())
 
@@ -83,7 +83,7 @@ class IdeTest {
     val bundledPlugin = ide.bundledPlugins[0]!!
     val ideaCorePlugin = ide.bundledPlugins[1]!!
     assertEquals("someId", bundledPlugin.pluginId)
-    assertEquals("idea.plugin", ideaCorePlugin.pluginId)
+    assertEquals("IDEA CORE", ideaCorePlugin.pluginId)
     assertEquals("some.idea.module", ideaCorePlugin.definedModules.single())
     assertEquals(ideaCorePlugin, ide.getPluginByModule("some.idea.module"))
   }

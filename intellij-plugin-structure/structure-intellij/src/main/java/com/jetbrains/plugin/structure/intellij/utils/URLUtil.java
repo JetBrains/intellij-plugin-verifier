@@ -28,11 +28,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class URLUtil {
-  private static final String SCHEME_SEPARATOR = "://";
-  private static final String FILE_PROTOCOL = "file";
-  private static final String HTTP_PROTOCOL = "http";
-  private static final String JAR_PROTOCOL = "jar";
-  private static final String JAR_SEPARATOR = "!/";
+  public static final String SCHEME_SEPARATOR = "://";
+  public static final String FILE_PROTOCOL = "file";
+  public static final String HTTP_PROTOCOL = "http";
+  public static final String JAR_PROTOCOL = "jar";
+  public static final String JAR_SEPARATOR = "!/";
 
   private URLUtil() {
   }
@@ -106,10 +106,18 @@ public class URLUtil {
   }
 
   @NotNull
-  private static File urlToFile(@NotNull URL url) {
+  public static File urlToFile(@NotNull URL url) {
     try {
       return new File(url.toURI().getSchemeSpecificPart());
     } catch (URISyntaxException e) {
+      String str = url.toString();
+      if (str.contains(" ")) {
+        try {
+          return new File(new URL(str.replace(" ", "%20")).toURI());
+        } catch (URISyntaxException | MalformedURLException e2) {
+          throw new IllegalArgumentException("URL='" + url.toString() + "'", e2);
+        }
+      }
       throw new IllegalArgumentException("URL='" + url.toString() + "'", e);
     }
   }
