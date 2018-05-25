@@ -37,6 +37,8 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
 
   private val additionTasks = hashMapOf<K, FutureTask<ProvideResult<R>>>()
 
+  private val additionWaitingThreads = hashMapOf<K, Int>()
+
   private val statistics = hashMapOf<K, UsageStatistic>()
 
   /**
@@ -172,6 +174,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
       }
 
       val oldTask = additionTasks[key]
+      additionWaitingThreads.compute(key) { _, v -> (v ?: 0) + 1 }
       if (oldTask != null) {
         logger.debug("get($key): waiting for another thread to finish fetching the resource")
         oldTask to false
@@ -195,7 +198,8 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
       return fetchTask.get().registerLockIfProvided(key)
     } finally {
       synchronized(this) {
-        if (runInCurrentThread) {
+        additionWaitingThreads.compute(key) { _, v -> if (v!! == 1) null else (v - 1) }
+        if (!additionWaitingThreads.containsKey(key)) {
           additionTasks.remove(key)
         }
       }
