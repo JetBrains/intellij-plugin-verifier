@@ -235,12 +235,14 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
         if (problems.isNotEmpty()) {
           append("$plugin has ${"problem".pluralizeWithNumber(problems.size)}\n")
         }
-        if (missingDependencies.isNotEmpty()) {
+        val mandatoryMissing = missingDependencies.filterNot { it.dependency.isOptional }
+        val optionalNotExcludedMissing = missingDependencies.filter { it.dependency.isOptional && !missingDependencyIgnoring.ignoreMissingOptionalDependency(it.dependency) }
+        if (mandatoryMissing.isNotEmpty() || optionalNotExcludedMissing.isNotEmpty()) {
           if (problems.isNotEmpty()) {
             append("Some problems might have been caused by missing plugins:").append('\n')
           }
-          appendMissingDependencies(missingDependencies.filterNot { it.dependency.isOptional })
-          appendMissingDependencies(missingDependencies.filter { it.dependency.isOptional && !missingDependencyIgnoring.ignoreMissingOptionalDependency(it.dependency) })
+          appendMissingDependencies(mandatoryMissing)
+          appendMissingDependencies(optionalNotExcludedMissing)
         }
       }
       val problemsContent = getMissingDependenciesProblemsContent(verificationResult)
