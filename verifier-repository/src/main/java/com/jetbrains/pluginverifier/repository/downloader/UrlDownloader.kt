@@ -4,7 +4,6 @@ import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.network.*
 import okhttp3.ResponseBody
 import org.apache.commons.io.FileUtils
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import retrofit2.Call
 import retrofit2.Response
@@ -27,7 +26,7 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
     private const val HTTP_PROTOCOL = "http"
     private const val HTTPS_PROTOCOL = "https"
 
-    private val LOG: Logger = LoggerFactory.getLogger(UrlDownloader::class.java)
+    private val LOG = LoggerFactory.getLogger(UrlDownloader::class.java)
   }
 
   private val downloadConnector: DownloadConnector = Retrofit.Builder()

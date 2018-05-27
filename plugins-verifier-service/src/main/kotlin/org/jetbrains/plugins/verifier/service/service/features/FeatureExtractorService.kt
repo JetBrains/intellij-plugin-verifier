@@ -8,9 +8,6 @@ import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 
 /**
@@ -30,43 +27,34 @@ class FeatureExtractorService(taskManager: TaskManager,
 
   private val inProgressUpdates = hashSetOf<UpdateInfo>()
 
-  private val lastProceedDate = hashMapOf<UpdateInfo, Instant>()
-
   override fun doServe() {
     val updatesToExtract = featureServiceProtocol.getUpdatesToExtract()
     logger.info("Extracting features of ${updatesToExtract.size} updates")
     for (updateInfo in updatesToExtract) {
-      if (!isProcessedRecently(updateInfo)) {
+      if (updateInfo !in inProgressUpdates) {
         schedule(updateInfo)
       }
     }
   }
 
-  private fun isProcessedRecently(updateInfo: UpdateInfo): Boolean {
-    val now = Instant.now()
-    val lastDate = lastProceedDate[updateInfo] ?: Instant.EPOCH
-    return lastDate.plus(Duration.of(10, ChronoUnit.MINUTES)).isAfter(now)
-  }
-
   private fun schedule(updateInfo: UpdateInfo) {
-    lastProceedDate[updateInfo] = Instant.now()
-
-    val runner = ExtractFeaturesTask(
+    val extractTask = ExtractFeaturesTask(
         updateInfo,
         ideDescriptorsCache,
         pluginDetailsCache
     )
     val taskDescriptor = taskManager.enqueue(
-        runner,
-        { result, _ -> result.onSuccess() },
-        { t, tid -> onError(t, tid, runner) },
+        extractTask,
+        { result, _ -> onSuccess(result) },
+        { t, tid -> onError(t, tid, extractTask) },
         { _, _ -> },
-        { _ -> onCompletion(runner) }
+        { _ -> onCompletion(extractTask) }
     )
     inProgressUpdates.add(updateInfo)
     logger.info("Extract features of $updateInfo is scheduled with taskId #${taskDescriptor.taskId}")
   }
 
+  @Synchronized
   private fun onCompletion(task: ExtractFeaturesTask) {
     inProgressUpdates.remove(task.updateInfo)
   }
@@ -75,12 +63,14 @@ class FeatureExtractorService(taskManager: TaskManager,
     logger.error("Unable to extract features of ${task.updateInfo} (#${taskDescriptor.taskId})", error)
   }
 
-  private fun ExtractFeaturesTask.Result.onSuccess() {
-    logger.info("For plugin $updateInfo there " + "is".pluralize(features.size) + " " + "feature".pluralizeWithNumber(features.size) + " extracted: $resultType")
-    try {
-      featureServiceProtocol.sendExtractedFeatures(this)
-    } catch (e: Exception) {
-      logger.error("Unable to send extracted features of the plugin ${this.updateInfo}", e)
+  private fun onSuccess(result: ExtractFeaturesTask.Result) {
+    with(result) {
+      logger.info("For plugin $updateInfo there " + "is".pluralize(features.size) + " " + "feature".pluralizeWithNumber(features.size) + " extracted: $resultType")
+      try {
+        featureServiceProtocol.sendExtractedFeatures(this)
+      } catch (e: Exception) {
+        logger.error("Unable to send extracted features of the plugin ${this.updateInfo}", e)
+      }
     }
   }
 

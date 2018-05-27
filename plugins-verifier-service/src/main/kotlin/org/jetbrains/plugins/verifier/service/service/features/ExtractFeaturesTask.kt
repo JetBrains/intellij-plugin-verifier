@@ -9,7 +9,6 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.Task
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
@@ -22,7 +21,7 @@ class ExtractFeaturesTask(
 ) : Task<ExtractFeaturesTask.Result>("Features of $updateInfo") {
 
   companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(ExtractFeaturesTask::class.java)
+    private val LOG = LoggerFactory.getLogger(ExtractFeaturesTask::class.java)
   }
 
   /**

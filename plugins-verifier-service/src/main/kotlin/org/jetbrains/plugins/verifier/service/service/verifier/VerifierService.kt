@@ -84,7 +84,6 @@ class VerifierService(
     running.remove(pluginAndTarget)
   }
 
-  @Synchronized
   private fun onError(pluginAndTarget: ScheduledVerification, error: Throwable) {
     logger.error("Unable to check $pluginAndTarget", error)
   }
