@@ -25,6 +25,8 @@ import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetti
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.slf4j.LoggerFactory
+import java.util.jar.Manifest
+import javax.servlet.ServletContext
 import javax.servlet.ServletContextEvent
 import javax.servlet.ServletContextListener
 
@@ -44,11 +46,9 @@ class ServerStartupListener : ServletContextListener {
     private const val IDE_DESCRIPTORS_CACHE_SIZE = 10
   }
 
-  private val serverContext by lazy {
-    createServerContext()
-  }
+  private lateinit var serverContext: ServerContext
 
-  private fun createServerContext(): ServerContext {
+  private fun createServerContext(appVersion: String?): ServerContext {
     val applicationHomeDir = Settings.APP_HOME_DIRECTORY.getAsPath().createDir()
     val loadedPluginsDir = applicationHomeDir.resolve("loaded-plugins").createDir()
     val extractedPluginsDir = applicationHomeDir.resolve("extracted-plugins").createDir()
@@ -84,6 +84,7 @@ class ServerStartupListener : ServletContextListener {
 
     return ServerContext(
         applicationHomeDir,
+        appVersion,
         ideRepository,
         ideFilesBank,
         pluginRepository,
@@ -111,6 +112,10 @@ class ServerStartupListener : ServletContextListener {
     LOG.info("Server is ready to start")
 
     validateSystemProperties()
+
+    val servletContext = sce.servletContext
+    val appVersion = getAppVersion(servletContext)
+    serverContext = createServerContext(appVersion)
 
     with(serverContext) {
       val verifierServiceProtocol = DefaultVerifierServiceProtocol(authorizationData, pluginRepository)
@@ -144,9 +149,15 @@ class ServerStartupListener : ServletContextListener {
         featureService.start()
       }
 
-      sce.servletContext.setAttribute(SERVER_CONTEXT_KEY, serverContext)
+      servletContext.setAttribute(SERVER_CONTEXT_KEY, serverContext)
     }
   }
+
+  private fun getAppVersion(servletContext: ServletContext): String? =
+      servletContext.getResourceAsStream("/META-INF/MANIFEST.MF")?.use { inputStream ->
+        val manifest = Manifest(inputStream)
+        manifest.mainAttributes.getValue("Plugin-Verifier-Service-Version")
+      }
 
   override fun contextDestroyed(sce: ServletContextEvent?) {
     serverContext.close()

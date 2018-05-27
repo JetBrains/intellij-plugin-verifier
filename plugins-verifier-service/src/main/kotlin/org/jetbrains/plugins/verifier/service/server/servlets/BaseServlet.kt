@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
-import java.util.jar.Manifest
 import javax.servlet.http.HttpServlet
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -90,13 +89,6 @@ abstract class BaseServlet : HttpServlet() {
     val writer = resp.writer
     GSON.toJson(src, writer)
     writer.flush()
-  }
-
-  val appVersion: String? by lazy {
-    servletContext.getResourceAsStream("/META-INF/MANIFEST.MF")?.use { inputStream ->
-      val manifest = Manifest(inputStream)
-      manifest.mainAttributes.getValue("Plugin-Verifier-Service-Version")
-    }
   }
 
   protected val serverContext by lazy {
