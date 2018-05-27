@@ -98,11 +98,16 @@ interface ResourceRepository<R, K> {
   /**
    * Returns all keys [available] [has] in the repository at the moment.
    *
-   * The returned set is an immutable copy of the internal set.
-   * It is not changed on the modifying actions like [add] and [remove].
-   * Thus, it can be safely used with modifying iterations.
+   * The returned value is a copy of the internal set.
    */
   fun getAllExistingKeys(): Set<K>
+
+  /**
+   * Returns all available resources in the repository at the moment.
+   *
+   * The returned value is a copy of the internal set.
+   */
+  fun getAvailableResources(): List<AvailableResource<R, K>>
 
   /**
    * Locks the repository for the time of [block] invocation

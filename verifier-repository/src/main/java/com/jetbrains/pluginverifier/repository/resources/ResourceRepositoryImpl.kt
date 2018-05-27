@@ -24,7 +24,6 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
                                    weigher: (R) -> ResourceWeight,
                                    disposer: (R) -> Unit,
                                    private val presentableName: String = "ResourceRepository") : ResourceRepository<R, K> {
-
   private val logger: Logger = LoggerFactory.getLogger(presentableName)
 
   private val resourcesRegistrar = RepositoryResourcesRegistrar<R, K>(initialWeight, weigher, disposer, logger)
@@ -220,13 +219,16 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
     is ProvideResult.Failed<R> -> ResourceRepositoryResult.Failed(reason, error)
   }
 
+  override fun getAvailableResources() =
+      resourcesRegistrar.resources.map { (key, resourceInfo) ->
+        AvailableResource(key, resourceInfo, statistics[key]!!, isLockedKey(key))
+      }
+
   //todo: handle exceptions of the [EvictionPolicy] carefully.
   @Synchronized
   override fun cleanup() {
     if (evictionPolicy.isNecessary(resourcesRegistrar.totalWeight)) {
-      val availableResources = resourcesRegistrar.resources.map { (key, resourceInfo) ->
-        AvailableResource(key, resourceInfo, statistics[key]!!, isLockedKey(key))
-      }
+      val availableResources = getAvailableResources()
 
       val evictionInfo = EvictionInfo(resourcesRegistrar.totalWeight, availableResources)
       val resourcesForEviction = evictionPolicy.selectResourcesForEviction(evictionInfo)

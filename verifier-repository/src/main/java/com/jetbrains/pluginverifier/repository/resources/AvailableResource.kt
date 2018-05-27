@@ -4,9 +4,6 @@ import com.jetbrains.pluginverifier.repository.cleanup.UsageStatistic
 
 /**
  * Descriptor of the resource available at the moment in the [ResourceRepository].
- *
- * This is used to select the resources that should be removed on the
- * [cleanup procedure] [EvictionPolicy].
  */
 open class AvailableResource<out R, out K>(
     /**

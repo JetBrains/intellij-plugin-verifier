@@ -1,16 +1,9 @@
 package org.jetbrains.plugins.verifier.service.server.servlets
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.HtmlBuilder
-import com.jetbrains.pluginverifier.misc.MemoryInfo
-import com.jetbrains.pluginverifier.repository.cleanup.fileSize
+import org.jetbrains.plugins.verifier.service.server.servlets.info.StatusPage
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.verifier.ScheduledVerification
-import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
-import java.io.ByteArrayOutputStream
-import java.io.PrintWriter
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 

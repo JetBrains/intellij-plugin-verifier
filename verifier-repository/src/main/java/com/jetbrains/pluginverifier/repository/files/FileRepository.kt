@@ -57,7 +57,14 @@ class FileRepository<K>(sweepPolicy: SweepPolicy<K>,
 
   fun has(key: K) = resourceRepository.has(key)
 
-  fun getAllExistingKeys() = resourceRepository.getAllExistingKeys()
+  fun getAllExistingKeys(): Set<K> = resourceRepository.getAllExistingKeys()
+
+  fun getAvailableFiles(): List<AvailableFile<K>> =
+      resourceRepository.getAvailableResources().map {
+        with(it) {
+          AvailableFile(key, resourceInfo, usageStatistic, isLocked)
+        }
+      }
 
   fun <R> lockAndExecute(block: () -> R) = resourceRepository.lockAndExecute(block)
 
