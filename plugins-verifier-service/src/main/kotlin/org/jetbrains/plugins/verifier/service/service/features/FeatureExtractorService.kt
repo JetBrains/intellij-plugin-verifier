@@ -1,8 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service.features
 
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
-import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.service.BaseService
@@ -65,11 +63,11 @@ class FeatureExtractorService(taskManager: TaskManager,
 
   private fun onSuccess(result: ExtractFeaturesTask.Result) {
     with(result) {
-      logger.info("For plugin $updateInfo there " + "is".pluralize(features.size) + " " + "feature".pluralizeWithNumber(features.size) + " extracted: $resultType")
+      logger.info("Plugin $updateInfo is processed: ${result.presentableText()}")
       try {
         featureServiceProtocol.sendExtractedFeatures(this)
       } catch (e: Exception) {
-        logger.error("Unable to send extracted features of the plugin ${this.updateInfo}", e)
+        logger.error("Failed to send features result for ${updateInfo}", e)
       }
     }
   }

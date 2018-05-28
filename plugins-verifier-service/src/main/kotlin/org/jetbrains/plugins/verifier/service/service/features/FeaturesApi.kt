@@ -31,6 +31,7 @@ private fun convertExtensionPoint(it: ExtensionPointFeatures): ApiExtensionPoint
 
 private fun ExtractFeaturesTask.Result.ResultType.convertResultType(): ApiFeaturesResult.ResultType = when (this) {
   ExtractFeaturesTask.Result.ResultType.NOT_FOUND -> ApiFeaturesResult.ResultType.NOT_FOUND
+  ExtractFeaturesTask.Result.ResultType.FAILED_TO_DOWNLOAD -> ApiFeaturesResult.ResultType.NOT_FOUND
   ExtractFeaturesTask.Result.ResultType.BAD_PLUGIN -> ApiFeaturesResult.ResultType.BAD_PLUGIN
   ExtractFeaturesTask.Result.ResultType.EXTRACTED_ALL -> ApiFeaturesResult.ResultType.EXTRACTED_ALL
   ExtractFeaturesTask.Result.ResultType.EXTRACTED_PARTIALLY -> ApiFeaturesResult.ResultType.EXTRACTED_PARTIALLY
