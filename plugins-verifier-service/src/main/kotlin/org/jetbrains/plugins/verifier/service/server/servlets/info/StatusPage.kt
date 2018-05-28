@@ -2,7 +2,7 @@ package org.jetbrains.plugins.verifier.service.server.servlets.info
 
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.MemoryInfo
-import com.jetbrains.pluginverifier.repository.cleanup.fileSize
+import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
 import java.io.ByteArrayOutputStream
@@ -60,8 +60,16 @@ class StatusPage(private val serverContext: ServerContext) {
               li { +"Used memory: $usedMemory" }
               li { +"Max memory: $maxMemory" }
 
-              val totalUsage = serverContext.applicationHomeDirectory.fileSize
-              li { +"Total disk usage: $totalUsage" }
+              val totalIdeFilesSize = serverContext.ideFilesBank.getAvailableIdeFiles()
+                  .map { it.fileInfo.fileSize }
+                  .fold(SpaceAmount.ZERO_SPACE) { acc, v -> acc + v }
+
+              val totalPluginsSize = serverContext.pluginDetailsCache.pluginFilesBank.getAvailablePluginFiles()
+                  .map { it.fileInfo.fileSize }
+                  .fold(SpaceAmount.ZERO_SPACE) { acc, v -> acc + v }
+
+              li { +"IDEs disk usage: $totalIdeFilesSize" }
+              li { +"Plugins disk usage: $totalPluginsSize" }
             }
 
             h2 {

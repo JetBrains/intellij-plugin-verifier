@@ -24,7 +24,7 @@ import java.io.Closeable
 class PluginDetailsCache(
     cacheSize: Int,
     val pluginDetailsProvider: PluginDetailsProvider,
-    pluginFilesBank: PluginFilesBank
+    val pluginFilesBank: PluginFilesBank
 ) : Closeable {
 
   private val resourceCache = createSizeLimitedResourceCache(

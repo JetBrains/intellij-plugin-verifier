@@ -9,7 +9,6 @@ import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
 import com.jetbrains.pluginverifier.repository.downloader.UrlDownloader
 import com.jetbrains.pluginverifier.repository.files.*
 import org.apache.commons.io.FileUtils
-import java.net.URL
 import java.nio.file.Path
 
 /**
@@ -83,6 +82,11 @@ class PluginFilesBank(private val fileRepository: FileRepository<PluginInfo>) {
       }
     }
   }
+
+  /**
+   * Returns a set of plugins available locally at the moment.
+   */
+  fun getAvailablePluginFiles() = fileRepository.getAvailableFiles()
 
   /**
    * Represents possible outcomes of [fetching] [getPluginFile] the plugin's file.

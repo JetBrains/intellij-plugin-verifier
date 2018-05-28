@@ -31,6 +31,8 @@ class IdeFilesBank(private val bankDirectory: Path,
 
   fun getAvailableIdeVersions() = ideFilesRepository.getAllExistingKeys()
 
+  fun getAvailableIdeFiles() = ideFilesRepository.getAvailableFiles()
+
   fun isAvailable(ideVersion: IdeVersion) = ideFilesRepository.has(ideVersion)
 
   fun deleteIde(ideVersion: IdeVersion) = ideFilesRepository.remove(ideVersion)
