@@ -52,7 +52,7 @@ class InvalidPluginsTest {
   @Test
   fun `incorrect plugin file type`() {
     val incorrect = temporaryFolder.newFile("incorrect.txt")
-    assertExpectedProblems(incorrect, listOf(IncorrectPluginFile(incorrect)))
+    assertExpectedProblems(incorrect, listOf(IncorrectIntellijFile(incorrect)))
   }
 
   @Test

@@ -3,9 +3,9 @@ package com.jetbrains.plugin.structure.base.problems
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import java.io.File
 
-data class IncorrectPluginFile(val file: File) : PluginProblem() {
+open class IncorrectPluginFile(file: File, expectedFileType: String) : PluginProblem() {
   override val level: Level = Level.ERROR
-  override val message: String = "Incorrect plugin file ${file.name}. Must be a .zip or .jar archive or a directory."
+  override val message: String = "Incorrect plugin file ${file.name}. Must be a $expectedFileType"
 }
 
 data class UnableToExtractZip(val pluginFile: File) : PluginProblem() {

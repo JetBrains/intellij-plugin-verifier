@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.teamcity.TeamcityPlugin
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
 import com.jetbrains.plugin.structure.teamcity.problems.ForbiddenWordInPluginName
+import com.jetbrains.plugin.structure.teamcity.problems.IncorrectTeamCityPluginFile
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.instanceOf
 import org.junit.Assert.assertThat
@@ -31,7 +32,7 @@ class TeamcityInvalidPluginsTest {
   @Test
   fun `incorrect plugin file type`() {
     val incorrect = temporaryFolder.newFile("incorrect.txt")
-    assertExpectedProblems(incorrect, listOf(IncorrectPluginFile(incorrect)))
+    assertExpectedProblems(incorrect, listOf(IncorrectTeamCityPluginFile(incorrect)))
   }
 
   @Test()

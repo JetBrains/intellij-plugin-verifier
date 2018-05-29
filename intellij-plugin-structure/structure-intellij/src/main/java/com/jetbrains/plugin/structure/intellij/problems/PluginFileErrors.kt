@@ -1,6 +1,11 @@
 package com.jetbrains.plugin.structure.intellij.problems
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.IncorrectPluginFile
+import java.io.File
+
+data class IncorrectIntellijFile(val file: File) :
+    IncorrectPluginFile(file, ".zip or .jar archive or a directory.")
 
 class PluginZipIsEmpty : PluginProblem() {
 

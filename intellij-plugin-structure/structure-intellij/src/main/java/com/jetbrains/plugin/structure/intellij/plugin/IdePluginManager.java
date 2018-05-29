@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.base.utils.FileUtilKt;
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractedPlugin;
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult;
 import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor;
+import com.jetbrains.plugin.structure.intellij.problems.IncorrectIntellijFile;
 import com.jetbrains.plugin.structure.intellij.problems.MultiplePluginDescriptorsInLibDirectory;
 import com.jetbrains.plugin.structure.intellij.problems.PluginLibDirectoryIsEmpty;
 import com.jetbrains.plugin.structure.intellij.problems.UnableToReadJarFile;
@@ -226,7 +227,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     } else if (FileUtilKt.isJar(jarOrDirectory)) {
       pluginCreator = loadDescriptorFromJarFile(jarOrDirectory, descriptorPath, myPathResolver, validateDescriptor);
     } else {
-      return new PluginCreator(descriptorPath, new IncorrectPluginFile(jarOrDirectory), jarOrDirectory);
+      return new PluginCreator(descriptorPath, new IncorrectIntellijFile(jarOrDirectory), jarOrDirectory);
     }
     return resolveOptionalDependencies(jarOrDirectory, pluginCreator);
   }
