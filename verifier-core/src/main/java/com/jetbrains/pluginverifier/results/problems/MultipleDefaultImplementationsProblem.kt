@@ -14,6 +14,9 @@ class MultipleDefaultImplementationsProblem(
     val implementation2: MethodLocation
 ) : CompatibilityProblem() {
 
+  override val problemType
+    get() = "Multiple default implementations"
+
   override val shortDescription = "Multiple default implementations of method {0}".formatMessage(methodReference)
 
   override val fullDescription = "Method {0} contains an *{1}* instruction referencing a method reference {2} which has multiple default implementations: {3} and {4}. This can lead to **IncompatibleClassChangeError** exception at runtime.".formatMessage(caller, instruction, methodReference, implementation1, implementation2)

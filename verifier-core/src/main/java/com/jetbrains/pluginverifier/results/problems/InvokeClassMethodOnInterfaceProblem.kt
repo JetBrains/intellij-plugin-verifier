@@ -13,6 +13,9 @@ class InvokeClassMethodOnInterfaceProblem(
     val instruction: Instruction
 ) : CompatibilityProblem() {
 
+  override val problemType
+    get() = "Incompatible change of class to interface"
+
   val changedClass: ClassReference
     get() = methodReference.hostClass
 

@@ -10,6 +10,9 @@ class AbstractClassInstantiationProblem(
     val creator: MethodLocation
 ) : CompatibilityProblem() {
 
+  override val problemType
+    get() = "Instantiation of an abstract class"
+
   override val shortDescription = "Instantiation of an abstract class {0}".formatMessage(abstractClass)
 
   override val fullDescription = "Method {0} has instantiation *new* instruction referencing an abstract class {1}. This can lead to **InstantiationError** exception at runtime.".formatMessage(creator, abstractClass)

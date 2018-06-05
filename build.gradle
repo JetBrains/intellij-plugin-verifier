@@ -107,6 +107,7 @@ publishing {
   }
 }
 
+test.dependsOn project(':verifier-test').test
 publishToMavenLocal.dependsOn test
 
 
@@ -140,5 +141,6 @@ bintrayUpload.doFirst {
   println("Uploading Plugin Verifier module ${project.name}:${project.version}" + ' to bintray')
 }
 
+//run tests before deploying
 //run tests before deploying
 bintrayUpload.dependsOn test

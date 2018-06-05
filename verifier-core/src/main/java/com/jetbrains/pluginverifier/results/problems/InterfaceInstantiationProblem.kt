@@ -10,6 +10,9 @@ class InterfaceInstantiationProblem(
     val creator: MethodLocation
 ) : CompatibilityProblem() {
 
+  override val problemType
+    get() = "Interface instantiation"
+
   override val shortDescription = "Instantiation of an interface {0}".formatMessage(interfaze)
 
   override val fullDescription = "Method {0} has instantiation *new* instruction referencing an interface {1}. This can lead to **InstantiationError** exception at runtime.".formatMessage(creator, interfaze)

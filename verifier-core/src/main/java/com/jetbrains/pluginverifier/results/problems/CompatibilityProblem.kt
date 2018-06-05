@@ -1,15 +1,20 @@
 package com.jetbrains.pluginverifier.results.problems
 
 /**
- * Base class for all the binary compatibility problems.
+ * Base class for all compatibility problems.
  *
  * Each problem has a [short] [shortDescription] description
  * which can be used to group similar problems of several plugins,
  * and a [full] [fullDescription] description containing all the details,
- * such as a problem location in the bytecode, the JVM specification
- * reference and a possible problem effect.
+ * such as problem's location in bytecode, JVM specification
+ * reference and possible effect.
+ *
+ * Each problem has a certain [problemType],
+ * which can be used to group similar problems.
  */
 abstract class CompatibilityProblem {
+
+  abstract val problemType: String
 
   abstract val shortDescription: String
 

@@ -11,6 +11,9 @@ class InvalidClassFileProblem(
     val asmError: String
 ) : CompatibilityProblem() {
 
+  override val problemType
+    get() = "Invalid class file"
+
   override val shortDescription = "Invalid class-file {0}".formatMessage(invalidClass)
 
   override val fullDescription = ("Class {0} referenced in {1} cannot be read using the ASM Java Bytecode engineering library. " +

@@ -11,6 +11,9 @@ class FailedToReadClassFileProblem(
     val reason: String
 ) : CompatibilityProblem() {
 
+  override val problemType
+    get() = "Corrupted class file"
+
   override val shortDescription = "Failed to read class {0}".formatMessage(failedClass)
 
   override val fullDescription = ("Class {0} referenced in {1} cannot be read: {2}. Unavailable classes can lead to " +

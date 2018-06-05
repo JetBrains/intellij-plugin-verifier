@@ -131,6 +131,7 @@ private fun CompatibilityProblem.convertCompatibilityProblem() =
     VerificationResults.CompatibilityProblem.newBuilder()
         .setShortDescription(shortDescription)
         .setFullDescription(fullDescription)
+        .setProblemType(problemType)
         .build()
 
 private fun DeprecatedApiUsage.convertDeprecatedApiUsage() =

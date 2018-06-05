@@ -18,9 +18,12 @@ class MethodNotImplementedProblem(
     val incompleteClass: ClassLocation
 ) : CompatibilityProblem() {
 
+  override val problemType
+    get() = "Missing abstract method implementation"
+
   override val shortDescription = "Abstract method ${abstractMethod.formatMethodLocation(FULL_HOST_WITH_SIGNATURE, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)} is not implemented"
 
-  override val fullDescription = "Non-abstract class ${incompleteClass.formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.NO_GENERICS)} inherits from ${abstractMethod.hostClass.formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.WITH_GENERICS)} but doesn't implement the abstract method ${abstractMethod.formatMethodLocation(NO_HOST, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}. This can lead to **AbstractMethodError** exception at runtime."
+  override val fullDescription = "Concrete class ${incompleteClass.formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.NO_GENERICS)} inherits from ${abstractMethod.hostClass.formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.WITH_GENERICS)} but doesn't implement the abstract method ${abstractMethod.formatMethodLocation(NO_HOST, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}. This can lead to **AbstractMethodError** exception at runtime."
 
   override fun equals(other: Any?) = other is MethodNotImplementedProblem
       && abstractMethod == other.abstractMethod

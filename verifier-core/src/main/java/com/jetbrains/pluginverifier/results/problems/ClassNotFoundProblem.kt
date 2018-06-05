@@ -14,6 +14,9 @@ class ClassNotFoundProblem(
     val usage: Location
 ) : CompatibilityProblem() {
 
+  override val problemType
+    get() = "Missing class access"
+
   override val shortDescription = "Access to unresolved class {0}".formatMessage(unresolved)
 
   override val fullDescription: String

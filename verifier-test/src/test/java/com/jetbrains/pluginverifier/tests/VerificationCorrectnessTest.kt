@@ -49,9 +49,6 @@ class VerificationCorrectnessTest {
 
     lateinit var actualDeprecatedUsages: Set<DeprecatedApiUsage>
 
-    /**
-     * The list is required here to take repetition of the problem into account.
-     */
     lateinit var redundantProblems: MutableSet<CompatibilityProblem>
 
     lateinit var redundantDeprecated: MutableSet<DeprecatedApiUsage>
@@ -64,7 +61,6 @@ class VerificationCorrectnessTest {
       val idePlugin = (IdePluginManager.createManager().createPlugin(pluginFile.toFile()) as PluginCreationSuccess).plugin
       val pluginInfo = repository.addLocalPlugin(idePlugin)
       val jdkPath = TestJdkDescriptorProvider.getJdkPathForTests()
-
       val tempFolder = Files.createTempDirectory("")
       try {
         val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
@@ -150,8 +146,11 @@ class VerificationCorrectnessTest {
   }
 
   private fun assertProblemFound(expectedFullDescription: String, expectedShortDescription: String) {
-    val problem = actualProblems.find { it.shortDescription == expectedShortDescription && it.fullDescription == expectedFullDescription }
-    assertNotNull("Problem is not found:\n$expectedFullDescription\n\nall problems: ${actualProblems.joinToString("\n") { it.fullDescription }}", problem)
+    val problem = actualProblems.find { it.fullDescription == expectedFullDescription }
+    if (problem != null && problem.shortDescription != expectedShortDescription) {
+      fail("Short description mismatches (expected, actual):\n$expectedShortDescription\n${problem.shortDescription}")
+    }
+    assertNotNull("Problem with this full description is not found:\n$expectedFullDescription\n\nall problems:\n${actualProblems.joinToString("\n") { it.fullDescription }}", problem)
     redundantProblems.remove(problem)
     assertThat(problem!!.shortDescription, `is`(expectedShortDescription))
     assertThat(problem.fullDescription, `is`(expectedFullDescription))
@@ -225,25 +224,25 @@ class VerificationCorrectnessTest {
 
   @Test
   fun notImplementedAbstractMethodFromInterface() {
-    assertProblemFound("Non-abstract class mock.plugin.NotImplementedProblem inherits from com.intellij.openapi.components.PersistentStateComponent<T> but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.",
+    assertProblemFound("Concrete class mock.plugin.NotImplementedProblem inherits from com.intellij.openapi.components.PersistentStateComponent<T> but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.",
         "Abstract method com.intellij.openapi.components.PersistentStateComponent<T>.getState() : T is not implemented"
     )
   }
 
   @Test
   fun notImplementedPrivateOverridingFromInterface() {
-    assertProblemFound("Non-abstract class mock.plugin.private_and_static.PrivateOverridingNotImplemented inherits from com.intellij.openapi.components.PersistentStateComponent<T> but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.", "Abstract method com.intellij.openapi.components.PersistentStateComponent<T>.getState() : T is not implemented")
+    assertProblemFound("Concrete class mock.plugin.private_and_static.PrivateOverridingNotImplemented inherits from com.intellij.openapi.components.PersistentStateComponent<T> but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.", "Abstract method com.intellij.openapi.components.PersistentStateComponent<T>.getState() : T is not implemented")
   }
 
   @Test
   fun notImplementedStaticOverridingFromInterface() {
-    assertProblemFound("Non-abstract class mock.plugin.private_and_static.StaticOverridingNotImplemented inherits from com.intellij.openapi.components.PersistentStateComponent<T> but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.", "Abstract method com.intellij.openapi.components.PersistentStateComponent<T>.getState() : T is not implemented")
+    assertProblemFound("Concrete class mock.plugin.private_and_static.StaticOverridingNotImplemented inherits from com.intellij.openapi.components.PersistentStateComponent<T> but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.", "Abstract method com.intellij.openapi.components.PersistentStateComponent<T>.getState() : T is not implemented")
   }
 
 
   @Test
   fun notImplementedAbstractMethodFromAbstractClass() {
-    assertProblemFound("Non-abstract class mock.plugin.abstrackt.NotImplementedAbstractMethod inherits from com.intellij.psi.search.UseScopeEnlarger but doesn't implement the abstract method getAdditionalUseScope(PsiElement arg0) : SearchScope. This can lead to **AbstractMethodError** exception at runtime.",
+    assertProblemFound("Concrete class mock.plugin.abstrackt.NotImplementedAbstractMethod inherits from com.intellij.psi.search.UseScopeEnlarger but doesn't implement the abstract method getAdditionalUseScope(PsiElement arg0) : SearchScope. This can lead to **AbstractMethodError** exception at runtime.",
         "Abstract method com.intellij.psi.search.UseScopeEnlarger.getAdditionalUseScope(PsiElement arg0) : SearchScope is not implemented"
     )
   }
@@ -258,8 +257,8 @@ class VerificationCorrectnessTest {
 
   @Test
   fun staticAccessOfNonStaticField() {
-    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.staticAccessOnInstance() : void has static access instruction *getstatic* referencing a non-static field fields.FieldsContainer.instanceField : int. This can lead to **IncompatibleClassChangeError** exception at runtime.",
-        "Attempt to execute a static access instruction *getstatic* on a non-static field fields.FieldsContainer.instanceField : int"
+    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.staticAccessOnInstance() : void has static field access instruction *getstatic* referencing an instance field fields.FieldsContainer.instanceField : int, what might have been caused by incompatible change of the field from static to instance. This can lead to **IncompatibleClassChangeError** exception at runtime.",
+        "Attempt to execute static access instruction *getstatic* on instance field fields.FieldsContainer.instanceField : int"
     )
   }
 
@@ -297,8 +296,8 @@ class VerificationCorrectnessTest {
 
   @Test
   fun nonStaticAccessOfStaticField() {
-    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.instanceAccessOnStatic() : void has non-static access instruction *getfield* referencing a static field fields.FieldsContainer.staticField : int. This can lead to **IncompatibleClassChangeError** exception at runtime.",
-        "Attempt to execute a non-static access instruction *getfield* on a static field fields.FieldsContainer.staticField : int"
+    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.instanceAccessOnStatic() : void has instance field access instruction *getfield* referencing static field fields.FieldsContainer.staticField : int, what might have been caused by incompatible change of the field to static. This can lead to **IncompatibleClassChangeError** exception at runtime.",
+        "Attempt to execute instance access instruction *getfield* on static field fields.FieldsContainer.staticField : int"
     )
   }
 
@@ -344,42 +343,42 @@ class VerificationCorrectnessTest {
 
   @Test
   fun invokeStaticOnNonStaticMethod() {
-    assertProblemFound("Method mock.plugin.invokeStaticOnInstance.InvocationProblemsUser.foo() : void contains an *invokestatic* instruction referencing a non-static method invocation.InvocationProblems.wasStatic() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.",
-        "Attempt to execute an *invokestatic* instruction on a non-static method invocation.InvocationProblems.wasStatic() : void"
+    assertProblemFound("Method mock.plugin.invokeStaticOnInstance.InvocationProblemsUser.foo() : void contains *invokestatic* instruction referencing instance method invocation.InvocationProblems.wasStatic() : void, what might have been caused by incompatible change of the method from static to instance. This can lead to **IncompatibleClassChangeError** exception at runtime.",
+        "Attempt to execute *invokestatic* instruction on instance method invocation.InvocationProblems.wasStatic() : void"
     )
   }
 
   @Test
   fun invokeVirtualOnStaticMethod() {
-    assertProblemFound("Method mock.plugin.invokeVirtualOnStatic.SmartEnterProcessorUser.main() : void contains an *invokevirtual* instruction referencing a static method com.intellij.lang.SmartEnterProcessor.commit() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.",
-        "Attempt to execute a non-static instruction *invokevirtual* on a static method com.intellij.lang.SmartEnterProcessor.commit() : void"
+    assertProblemFound("Method mock.plugin.invokeVirtualOnStatic.SmartEnterProcessorUser.main() : void contains an *invokevirtual* instruction referencing a static method com.intellij.lang.SmartEnterProcessor.commit() : void, what might have been caused by incompatible change of the method to static. This can lead to **IncompatibleClassChangeError** exception at runtime.",
+        "Attempt to execute instance instruction *invokevirtual* on a static method com.intellij.lang.SmartEnterProcessor.commit() : void"
     )
   }
 
   @Test
   fun invokeSpecialOnStaticMethod() {
-    assertProblemFound("Method mock.plugin.invokespecial.Child.invokeSpecialOnStaticMethod() : void contains an *invokespecial* instruction referencing a static method invokespecial.AbstractParent.becomeStatic() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.",
-        "Attempt to execute a non-static instruction *invokespecial* on a static method invokespecial.AbstractParent.becomeStatic() : void"
+    assertProblemFound("Method mock.plugin.invokespecial.Child.invokeSpecialOnStaticMethod() : void contains an *invokespecial* instruction referencing a static method invokespecial.AbstractParent.becomeStatic() : void, what might have been caused by incompatible change of the method to static. This can lead to **IncompatibleClassChangeError** exception at runtime.",
+        "Attempt to execute instance instruction *invokespecial* on a static method invokespecial.AbstractParent.becomeStatic() : void"
     )
   }
 
   @Test
   fun invokeInterfaceOnStaticMethod() {
-    assertProblemFound("Method mock.plugin.invokeClassMethodOnInterface.Caller.call3(MethodBecameStatic b) : void contains an *invokeinterface* instruction referencing a static method statics.MethodBecameStatic.becomeStatic() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.",
-        "Attempt to execute a non-static instruction *invokeinterface* on a static method statics.MethodBecameStatic.becomeStatic() : void"
+    assertProblemFound("Method mock.plugin.invokeClassMethodOnInterface.Caller.call3(MethodBecameStatic b) : void contains an *invokeinterface* instruction referencing a static method statics.MethodBecameStatic.becomeStatic() : void, what might have been caused by incompatible change of the method to static. This can lead to **IncompatibleClassChangeError** exception at runtime.",
+        "Attempt to execute instance instruction *invokeinterface* on a static method statics.MethodBecameStatic.becomeStatic() : void"
     )
   }
 
   @Test
   fun abstractMethodInvocation() {
-    assertProblemFound("Method mock.plugin.invokespecial.Child.bar() : void contains an *invokespecial* instruction referencing a method invokespecial.AbstractParent.foo() : void which doesn't have a non-abstract implementation. This can lead to **AbstractMethodError** exception at runtime.",
+    assertProblemFound("Method mock.plugin.invokespecial.Child.bar() : void contains an *invokespecial* instruction referencing a method invokespecial.AbstractParent.foo() : void which doesn't have an implementation. This can lead to **AbstractMethodError** exception at runtime.",
         "Attempt to invoke an abstract method invokespecial.AbstractParent.foo() : void"
     )
   }
 
   @Test
   fun abstractMethodInvocationZeroMaximallySpecificMethods() {
-    assertProblemFound("Method mock.plugin.invokespecial.Child.zeroMaximallySpecificMethods() : void contains an *invokespecial* instruction referencing a method invokespecial.SuperInterface.deletedBody() : void which doesn't have a non-abstract implementation. This can lead to **AbstractMethodError** exception at runtime.",
+    assertProblemFound("Method mock.plugin.invokespecial.Child.zeroMaximallySpecificMethods() : void contains an *invokespecial* instruction referencing a method invokespecial.SuperInterface.deletedBody() : void which doesn't have an implementation. This can lead to **AbstractMethodError** exception at runtime.",
         "Attempt to invoke an abstract method invokespecial.SuperInterface.deletedBody() : void"
     )
   }
@@ -418,7 +417,7 @@ class VerificationCorrectnessTest {
         "Invocation of unresolved method generics.Base.foo(Number) : void")
 
     assertProblemFound(
-        "Non-abstract class mock.plugin.generics.Subclass inherits from generics.Base<T> but doesn't implement the abstract method foo(T arg0) : void. This can lead to **AbstractMethodError** exception at runtime.",
+        "Concrete class mock.plugin.generics.Subclass inherits from generics.Base<T> but doesn't implement the abstract method foo(T arg0) : void. This can lead to **AbstractMethodError** exception at runtime.",
         "Abstract method generics.Base<T>.foo(T arg0) : void is not implemented"
     )
   }

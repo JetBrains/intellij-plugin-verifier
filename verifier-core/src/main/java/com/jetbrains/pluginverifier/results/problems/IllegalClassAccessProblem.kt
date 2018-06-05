@@ -13,6 +13,9 @@ class IllegalClassAccessProblem(
     val usage: Location
 ) : CompatibilityProblem() {
 
+  override val problemType
+    get() = "Illegal class access"
+
   override val shortDescription = "Illegal access to {0} class {1}".formatMessage(access, unavailableClass)
 
   override val fullDescription: String

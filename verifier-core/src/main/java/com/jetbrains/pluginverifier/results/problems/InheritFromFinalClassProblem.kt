@@ -10,6 +10,9 @@ class InheritFromFinalClassProblem(
     val finalClass: ClassLocation
 ) : CompatibilityProblem() {
 
+  override val problemType
+    get() = "Final class inheritance"
+
   override val shortDescription = "Inheritance from a final class {0}".formatMessage(finalClass)
 
   override val fullDescription: String

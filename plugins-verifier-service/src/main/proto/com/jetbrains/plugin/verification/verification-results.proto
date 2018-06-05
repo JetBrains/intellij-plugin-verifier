@@ -18,6 +18,8 @@ message CompatibilityProblem {
   string shortDescription = 1;
 
   string fullDescription = 2;
+
+  string problemType = 3;
 }
 
 message DeprecatedApiUsage {

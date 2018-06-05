@@ -27,6 +27,9 @@ class IllegalMethodAccessProblem(
     val instruction: Instruction
 ) : CompatibilityProblem() {
 
+  override val problemType
+    get() = "Illegal method invocation"
+
   override val shortDescription = "Illegal invocation of {0} {1} {2}".formatMessage(methodAccessModifier, inaccessibleMethod.methodOrConstructorWord, inaccessibleMethod)
 
   override val fullDescription = buildString {

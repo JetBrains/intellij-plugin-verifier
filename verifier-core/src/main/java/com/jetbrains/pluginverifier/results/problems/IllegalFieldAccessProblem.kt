@@ -27,6 +27,9 @@ class IllegalFieldAccessProblem(
     val fieldAccess: AccessType
 ) : CompatibilityProblem() {
 
+  override val problemType
+    get() = "Illegal field access"
+
   override val shortDescription = "Illegal access to a {0} field {1}".formatMessage(fieldAccess, inaccessibleField)
 
   override val fullDescription = buildString {

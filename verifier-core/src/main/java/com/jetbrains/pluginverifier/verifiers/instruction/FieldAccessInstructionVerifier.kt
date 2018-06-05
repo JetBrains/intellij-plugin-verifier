@@ -60,7 +60,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
      */
     if (found.fieldNode.isStatic()) {
       val fieldDeclaration = createFieldLocation(found.definingClass, found.fieldNode)
-      ctx.registerProblem(NonStaticAccessOfStaticFieldProblem(fieldDeclaration, getFromMethod(), Instruction.PUT_FIELD))
+      ctx.registerProblem(InstanceAccessOfStaticFieldProblem(fieldDeclaration, getFromMethod(), Instruction.PUT_FIELD))
     }
 
     /*
@@ -87,7 +87,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     //Otherwise, if the resolved field is a static field, getfield throws an IncompatibleClassChangeError.
     if (found.fieldNode.isStatic()) {
       val fieldDeclaration = createFieldLocation(found.definingClass, found.fieldNode)
-      ctx.registerProblem(NonStaticAccessOfStaticFieldProblem(fieldDeclaration, getFromMethod(), Instruction.GET_FIELD))
+      ctx.registerProblem(InstanceAccessOfStaticFieldProblem(fieldDeclaration, getFromMethod(), Instruction.GET_FIELD))
     }
   }
 
@@ -98,7 +98,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     if (!found.fieldNode.isStatic()) {
       val fieldDeclaration = createFieldLocation(found.definingClass, found.fieldNode)
       val methodLocation = getFromMethod()
-      ctx.registerProblem(StaticAccessOfNonStaticFieldProblem(fieldDeclaration, methodLocation, Instruction.PUT_STATIC))
+      ctx.registerProblem(StaticAccessOfInstanceFieldProblem(fieldDeclaration, methodLocation, Instruction.PUT_STATIC))
     }
 
     /*
@@ -124,7 +124,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     if (!found.fieldNode.isStatic()) {
       val fieldDeclaration = createFieldLocation(found.definingClass, found.fieldNode)
       val methodLocation = getFromMethod()
-      ctx.registerProblem(StaticAccessOfNonStaticFieldProblem(fieldDeclaration, methodLocation, Instruction.GET_STATIC))
+      ctx.registerProblem(StaticAccessOfInstanceFieldProblem(fieldDeclaration, methodLocation, Instruction.GET_STATIC))
     }
   }
 

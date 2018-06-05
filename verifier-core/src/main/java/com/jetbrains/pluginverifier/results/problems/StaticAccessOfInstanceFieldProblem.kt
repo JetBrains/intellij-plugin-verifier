@@ -6,24 +6,25 @@ import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import java.util.*
 
-class ChangeFinalFieldProblem(
+class StaticAccessOfInstanceFieldProblem(
     val field: FieldLocation,
     val accessor: MethodLocation,
     val instruction: Instruction
 ) : CompatibilityProblem() {
 
   override val problemType
-    get() = "Changing final field"
+    get() = "Static field change to instance field"
 
-  override val shortDescription = "Attempt to change a final field {0}".formatMessage(field)
+  override val shortDescription = "Attempt to execute static access instruction *{0}* on instance field {1}".formatMessage(instruction, field)
 
-  override val fullDescription = "Method {0} has modifying instruction *{1}* referencing a final field {2}. This can lead to **IllegalAccessError** exception at runtime.".formatMessage(accessor, instruction, field)
+  override val fullDescription = ("Method {0} has static field access instruction *{1}* referencing an instance field {2}, " +
+      "what might have been caused by incompatible change of the field from static to instance. " +
+      "This can lead to **IncompatibleClassChangeError** exception at runtime.").formatMessage(accessor, instruction, field)
 
-  override fun equals(other: Any?) = other is ChangeFinalFieldProblem
+  override fun equals(other: Any?) = other is StaticAccessOfInstanceFieldProblem
       && field == other.field
       && accessor == other.accessor
       && instruction == other.instruction
 
   override fun hashCode() = Objects.hash(field, accessor, instruction)
-
 }

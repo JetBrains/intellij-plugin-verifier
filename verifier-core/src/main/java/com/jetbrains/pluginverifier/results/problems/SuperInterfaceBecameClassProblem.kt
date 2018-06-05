@@ -10,6 +10,9 @@ class SuperInterfaceBecameClassProblem(
     val clazz: ClassLocation
 ) : CompatibilityProblem() {
 
+  override val problemType
+    get() = "Incompatible change of super interface to class"
+
   override val shortDescription = "Incompatible change of super interface {0} to class".formatMessage(clazz)
 
   override val fullDescription: String

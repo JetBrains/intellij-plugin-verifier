@@ -15,6 +15,9 @@ class FieldNotFoundProblem(
     val instruction: Instruction
 ) : CompatibilityProblem() {
 
+  override val problemType
+    get() = "Missing field access"
+
   override val shortDescription = "Access to unresolved field {0}".formatMessage(unresolvedField)
 
   private val descriptionMainPart = buildString {
@@ -33,7 +36,7 @@ class FieldNotFoundProblem(
 
   override val fullDescription = buildString {
     append(descriptionMainPart)
-    //Non-static fields can only be declared in super classes.
+    //Instance fields can only be declared in super classes.
     val canBeDeclaredInSuperInterface = instruction == Instruction.GET_STATIC || instruction == Instruction.PUT_STATIC
     append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("field", fieldOwnerHierarchy, true, canBeDeclaredInSuperInterface))
   }

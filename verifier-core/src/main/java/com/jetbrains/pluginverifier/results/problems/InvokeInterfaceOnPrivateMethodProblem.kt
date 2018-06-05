@@ -9,6 +9,9 @@ class InvokeInterfaceOnPrivateMethodProblem(
     val caller: MethodLocation
 ) : CompatibilityProblem() {
 
+  override val problemType
+    get() = "Illegal private method invocation"
+
   override val shortDescription = "Attempt to execute an *invokeinterface* instruction on a private method {0}".formatMessage(resolvedMethod)
 
   override val fullDescription = "Method {0} contains an *invokeinterface* instruction referencing a private method {1}. This can lead to **IncompatibleClassChangeError** exception at runtime.".formatMessage(caller, resolvedMethod)

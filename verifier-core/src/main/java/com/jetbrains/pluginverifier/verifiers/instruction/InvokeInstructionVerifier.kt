@@ -69,7 +69,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
        */
       val methodDeclaration = createMethodLocation(resolved.definingClass, resolved.methodNode)
       val caller = getFromMethod()
-      ctx.registerProblem(InvokeNonStaticInstructionOnStaticMethodProblem(methodDeclaration, caller, instruction))
+      ctx.registerProblem(InvokeInstanceInstructionOnStaticMethodProblem(methodDeclaration, caller, instruction))
     }
   }
 
@@ -99,7 +99,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
      */
     if (resolved.methodNode.isStatic()) {
       val resolvedMethod = createMethodLocation(resolved.definingClass, resolved.methodNode)
-      ctx.registerProblem(InvokeNonStaticInstructionOnStaticMethodProblem(resolvedMethod, getFromMethod(), instruction))
+      ctx.registerProblem(InvokeInstanceInstructionOnStaticMethodProblem(resolvedMethod, getFromMethod(), instruction))
     }
 
     /*
@@ -256,7 +256,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     }
     if (resolved.methodNode.isStatic()) {
       val resolvedMethod = createMethodLocation(resolved.definingClass, resolved.methodNode)
-      ctx.registerProblem(InvokeNonStaticInstructionOnStaticMethodProblem(resolvedMethod, getFromMethod(), instruction))
+      ctx.registerProblem(InvokeInstanceInstructionOnStaticMethodProblem(resolvedMethod, getFromMethod(), instruction))
     }
 
     /**
@@ -323,7 +323,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     if (!resolved.methodNode.isStatic()) {
       val methodDeclaration = createMethodLocation(resolved.definingClass, resolved.methodNode)
       val caller = getFromMethod()
-      ctx.registerProblem(InvokeStaticOnNonStaticMethodProblem(methodDeclaration, caller))
+      ctx.registerProblem(InvokeStaticOnInstanceMethodProblem(methodDeclaration, caller))
     }
   }
 

@@ -24,6 +24,9 @@ class MethodNotFoundProblem(
     val methodOwnerHierarchy: ClassHierarchy
 ) : CompatibilityProblem() {
 
+  override val problemType
+    get() = "Missing method invocation"
+
   override val shortDescription = "Invocation of unresolved {0} {1}".formatMessage(
       unresolvedMethod.methodOrConstructorWord,
       unresolvedMethod.formatMethodReference(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME)
