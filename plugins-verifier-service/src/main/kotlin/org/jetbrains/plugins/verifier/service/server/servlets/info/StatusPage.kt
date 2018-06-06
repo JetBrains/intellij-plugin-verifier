@@ -95,7 +95,7 @@ class StatusPage(private val serverContext: ServerContext) {
               +"Available IDEs: "
             }
             ul {
-              serverContext.ideFilesBank.getAvailableIdeVersions().forEach {
+              serverContext.ideFilesBank.getAvailableIdeVersions().sorted().forEach {
                 li {
                   +it.toString()
                 }
