@@ -516,14 +516,11 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
   private fun getMaximallySpecificSuperInterfaceMethods(start: ClassNode): List<LookupResult.Found>? {
     val predicate: (MethodNode) -> Boolean = { it.name == methodName && it.desc == methodDescriptor && !it.isPrivate() && !it.isStatic() }
     val allMatching = getSuperInterfaceMethods(start, predicate) ?: return null
-    return allMatching.filterIndexed { index, (definingClass) ->
-      var isDeepest = true
-      allMatching.forEachIndexed { otherIndex, (otherDefiningClass) ->
-        if (index != otherIndex && ctx.isSubclassOf(definingClass, otherDefiningClass)) {
-          isDeepest = false
-        }
+    return allMatching.filter { (definingClass) ->
+      //Check that [definingClass] is not a parent of any other interface.
+      allMatching.none { (otherDefiningClass) ->
+        otherDefiningClass.name != definingClass.name && ctx.isSubclassOf(otherDefiningClass, definingClass)
       }
-      isDeepest
     }
   }
 
@@ -685,7 +682,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     by the method reference that has neither its ACC_PRIVATE flag nor its ACC_STATIC
     flag set, one of these is arbitrarily chosen and method lookup succeeds.
      */
-    val matchings = getSuperInterfaceMethods(currentClass, { it.name == methodName && it.desc == methodDescriptor && !it.isPrivate() && !it.isStatic() })
+    val matchings = getSuperInterfaceMethods(currentClass) { it.name == methodName && it.desc == methodDescriptor && !it.isPrivate() && !it.isStatic() }
         ?: return LookupResult.Abort
     if (matchings.isNotEmpty()) {
       return matchings.first()
