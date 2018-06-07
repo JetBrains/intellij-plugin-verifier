@@ -17,6 +17,8 @@ import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
 import org.jetbrains.plugins.verifier.service.service.features.DefaultFeatureServiceProtocol
 import org.jetbrains.plugins.verifier.service.service.features.FeatureExtractorService
+import org.jetbrains.plugins.verifier.service.service.ide.AvailableIdeService
+import org.jetbrains.plugins.verifier.service.service.ide.DefaultAvailableIdeProtocol
 import org.jetbrains.plugins.verifier.service.service.verifier.DefaultVerifierServiceProtocol
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
@@ -118,38 +120,56 @@ class ServerStartupListener : ServletContextListener {
     serverContext = createServerContext(appVersion)
 
     with(serverContext) {
-      val verifierServiceProtocol = DefaultVerifierServiceProtocol(authorizationData, pluginRepository)
-      val jdkPath = JdkPath(Settings.JDK_8_HOME.getAsPath())
-      val verifierService = VerifierService(
-          taskManager,
-          jdkDescriptorsCache,
-          verifierServiceProtocol,
-          pluginDetailsCache,
-          ideDescriptorsCache,
-          jdkPath,
-          verificationResultsFilter
-      )
-
-      val featureServiceProtocol = DefaultFeatureServiceProtocol(authorizationData, pluginRepository)
-
-      val featureService = FeatureExtractorService(
-          taskManager,
-          featureServiceProtocol,
-          ideDescriptorsCache,
-          pluginDetailsCache
-      )
-
-      addService(verifierService)
-      addService(featureService)
-
-      if (Settings.ENABLE_PLUGIN_VERIFIER_SERVICE.getAsBoolean()) {
-        verifierService.start()
-      }
-      if (Settings.ENABLE_FEATURE_EXTRACTOR_SERVICE.getAsBoolean()) {
-        featureService.start()
-      }
+      addVerifierService()
+      addFeatureService()
+      addAvailableIdeService()
 
       servletContext.setAttribute(SERVER_CONTEXT_KEY, serverContext)
+    }
+  }
+
+  private fun ServerContext.addVerifierService() {
+    val verifierServiceProtocol = DefaultVerifierServiceProtocol(authorizationData, pluginRepository)
+    val jdkPath = JdkPath(Settings.JDK_8_HOME.getAsPath())
+    val verifierService = VerifierService(
+        taskManager,
+        jdkDescriptorsCache,
+        verifierServiceProtocol,
+        pluginDetailsCache,
+        ideDescriptorsCache,
+        jdkPath,
+        verificationResultsFilter
+    )
+    if (Settings.ENABLE_PLUGIN_VERIFIER_SERVICE.getAsBoolean()) {
+      verifierService.start()
+    }
+    addService(verifierService)
+  }
+
+  private fun ServerContext.addFeatureService() {
+    val featureServiceProtocol = DefaultFeatureServiceProtocol(authorizationData, pluginRepository)
+    val featureService = FeatureExtractorService(
+        taskManager,
+        featureServiceProtocol,
+        ideDescriptorsCache,
+        pluginDetailsCache
+    )
+    addService(featureService)
+    if (Settings.ENABLE_FEATURE_EXTRACTOR_SERVICE.getAsBoolean()) {
+      featureService.start()
+    }
+  }
+
+  private fun ServerContext.addAvailableIdeService() {
+    val availableIdeProtocol = DefaultAvailableIdeProtocol(authorizationData, pluginRepository)
+    val availableIdeService = AvailableIdeService(
+        taskManager,
+        availableIdeProtocol,
+        ideRepository
+    )
+    addService(availableIdeService)
+    if (Settings.ENABLE_AVAILABLE_IDE_SERVICE.getAsBoolean()) {
+      availableIdeService.start()
     }
   }
 
