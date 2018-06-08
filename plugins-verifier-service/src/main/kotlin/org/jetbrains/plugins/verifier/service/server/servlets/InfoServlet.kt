@@ -38,7 +38,7 @@ class InfoServlet : BaseServlet() {
       return
     }
     val scheduledVerification = ScheduledVerification(updateInfo, ideVersion)
-    serverContext.verificationResultsFilter.unignoreVerificationResultFor(scheduledVerification)
+    serverContext.verificationResultsFilter.forceVerificationResult(scheduledVerification)
     sendOk(resp, "Verification $scheduledVerification has been unignored")
   }
 

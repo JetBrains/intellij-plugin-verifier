@@ -40,12 +40,16 @@ class VerifierService(
   private val verifierExecutor = VerifierExecutor(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
 
   override fun doServe() {
+    val now = Instant.now()
     val verifications = verifierServiceProtocol.requestScheduledVerifications()
-        .filter { it.shouldVerify() }
+        .filter { it.shouldVerify(now) }
         .sortedByDescending { it.updateInfo.updateId }
     logger.info("There are ${verifications.size} pending verifications")
-    verifications.forEach { scheduleVerification(it) }
+    verifications.forEach { scheduleVerification(it, now) }
   }
+
+  private fun ScheduledVerification.shouldVerify(now: Instant) =
+      this !in running && !isCheckedRecently(this) && !verificationResultsFilter.shouldIgnoreVerification(this, now)
 
   private fun isCheckedRecently(scheduledVerification: ScheduledVerification): Boolean {
     val lastCheckTime = lastVerifiedDate[scheduledVerification] ?: Instant.EPOCH
@@ -53,8 +57,8 @@ class VerifierService(
     return lastCheckTime.plus(Duration.of(10, ChronoUnit.MINUTES)).isAfter(now)
   }
 
-  private fun scheduleVerification(scheduledVerification: ScheduledVerification) {
-    lastVerifiedDate[scheduledVerification] = Instant.now()
+  private fun scheduleVerification(scheduledVerification: ScheduledVerification, now: Instant) {
+    lastVerifiedDate[scheduledVerification] = now
     running.add(scheduledVerification)
     val task = VerifyPluginTask(
         verifierExecutor,
@@ -68,16 +72,13 @@ class VerifierService(
 
     val taskDescriptor = taskManager.enqueue(
         task,
-        { taskResult, taskDescriptor -> onSuccess(taskResult, taskDescriptor) },
+        { taskResult, taskDescriptor -> taskResult.onSuccess(taskDescriptor, scheduledVerification) },
         { error, _ -> onError(scheduledVerification, error) },
         { _, _ -> },
         { onCompletion(scheduledVerification) }
     )
     logger.info("Verification $scheduledVerification is scheduled with task #${taskDescriptor.taskId}")
   }
-
-  private fun ScheduledVerification.shouldVerify() =
-      this !in running && !isCheckedRecently(this) && !verificationResultsFilter.ignoredVerifications.containsKey(this)
 
   @Synchronized
   private fun onCompletion(pluginAndTarget: ScheduledVerification) {
@@ -88,17 +89,18 @@ class VerifierService(
     logger.error("Unable to check $pluginAndTarget", error)
   }
 
-  private fun onSuccess(result: VerificationResult, taskDescriptor: TaskDescriptor) {
-    logger.info("Verified ${result.plugin} against ${result.verificationTarget}: $result")
-    val decision = verificationResultsFilter.shouldSendVerificationResult(result, taskDescriptor.endTime!!)
+  private fun VerificationResult.onSuccess(taskDescriptor: TaskDescriptor,
+                                           scheduledVerification: ScheduledVerification) {
+    logger.info("Verified $plugin against $verificationTarget: ${this}")
+    val decision = verificationResultsFilter.shouldSendVerificationResult(this, taskDescriptor.endTime!!, scheduledVerification)
     if (decision == VerificationResultFilter.Result.Send) {
       try {
-        verifierServiceProtocol.sendVerificationResult(result)
+        verifierServiceProtocol.sendVerificationResult(this)
       } catch (e: Exception) {
-        logger.error("Unable to send verification result for ${result.plugin}", e)
+        logger.error("Unable to send verification result for $plugin", e)
       }
     } else if (decision is VerificationResultFilter.Result.Ignore) {
-      logger.info("Verification result for ${result.plugin} against ${result.verificationTarget} has been ignored: ${decision.ignoreReason}")
+      logger.info("Verification result for $plugin against $verificationTarget has been ignored: ${decision.ignoreReason}")
     }
   }
 
