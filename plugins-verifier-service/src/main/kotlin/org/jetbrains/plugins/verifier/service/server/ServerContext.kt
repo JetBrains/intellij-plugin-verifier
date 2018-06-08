@@ -37,10 +37,13 @@ class ServerContext(val applicationHomeDirectory: Path,
                     val pluginDetailsCache: PluginDetailsCache,
                     val verificationResultsFilter: VerificationResultFilter) : Closeable {
 
-  val allServices = arrayListOf<BaseService>()
+  private val _allServices = arrayListOf<BaseService>()
+
+  val allServices: List<BaseService>
+    get() = _allServices
 
   fun addService(service: BaseService) {
-    allServices.add(service)
+    _allServices.add(service)
   }
 
   override fun close() {
