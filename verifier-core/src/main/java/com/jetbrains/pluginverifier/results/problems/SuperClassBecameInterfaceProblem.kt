@@ -12,9 +12,11 @@ class SuperClassBecameInterfaceProblem(
   override val problemType
     get() = "Incompatible change of super class to interface"
 
-  override val shortDescription = "Incompatible change of super class {0} to interface".formatMessage(interfaze)
+  override val shortDescription
+    get() = "Incompatible change of super class {0} to interface".formatMessage(interfaze)
 
-  override val fullDescription = "Class {0} has a *super class* {1} which is actually an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.".formatMessage(child, interfaze)
+  override val fullDescription
+    get() = "Class {0} has a *super class* {1} which is actually an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.".formatMessage(child, interfaze)
 
   override fun equals(other: Any?) = other is SuperClassBecameInterfaceProblem
       && child == other.child

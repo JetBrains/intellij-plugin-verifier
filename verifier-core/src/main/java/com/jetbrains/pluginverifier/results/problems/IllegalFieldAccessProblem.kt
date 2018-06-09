@@ -30,32 +30,34 @@ class IllegalFieldAccessProblem(
   override val problemType
     get() = "Illegal field access"
 
-  override val shortDescription = "Illegal access to a {0} field {1}".formatMessage(fieldAccess, inaccessibleField)
+  override val shortDescription
+    get() = "Illegal access to a {0} field {1}".formatMessage(fieldAccess, inaccessibleField)
 
-  override val fullDescription = buildString {
-    append("Method {0} contains a *{1}* instruction referencing ".formatMessage(
-        accessor.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, NO_PARAMETER_NAMES),
-        instruction
-    ))
+  override val fullDescription
+    get() = buildString {
+      append("Method {0} contains a *{1}* instruction referencing ".formatMessage(
+          accessor.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, NO_PARAMETER_NAMES),
+          instruction
+      ))
 
-    val actualFieldPresentation = inaccessibleField.formatFieldLocation(FULL_HOST_NAME, FULL_TYPE)
-    if (fieldBytecodeReference.hostClass.className == inaccessibleField.hostClass.className) {
-      append("a {0} field {1} ".formatMessage(
-          fieldAccess,
-          actualFieldPresentation
+      val actualFieldPresentation = inaccessibleField.formatFieldLocation(FULL_HOST_NAME, FULL_TYPE)
+      if (fieldBytecodeReference.hostClass.className == inaccessibleField.hostClass.className) {
+        append("a {0} field {1} ".formatMessage(
+            fieldAccess,
+            actualFieldPresentation
+        ))
+      } else {
+        append("{0} which is resolved to a {1} field {2} ".formatMessage(
+            fieldBytecodeReference.formatFieldReference(FULL_HOST_NAME, FULL_TYPE),
+            fieldAccess,
+            actualFieldPresentation
+        ))
+      }
+      append("inaccessible to a class {0}. ".formatMessage(
+          accessor.hostClass.formatClassLocation(FULL_NAME, NO_GENERICS)
       ))
-    } else {
-      append("{0} which is resolved to a {1} field {2} ".formatMessage(
-          fieldBytecodeReference.formatFieldReference(FULL_HOST_NAME, FULL_TYPE),
-          fieldAccess,
-          actualFieldPresentation
-      ))
+      append("This can lead to **IllegalAccessError** exception at runtime.")
     }
-    append("inaccessible to a class {0}. ".formatMessage(
-        accessor.hostClass.formatClassLocation(FULL_NAME, NO_GENERICS)
-    ))
-    append("This can lead to **IllegalAccessError** exception at runtime.")
-  }
 
   override fun equals(other: Any?) =
       other is IllegalFieldAccessProblem

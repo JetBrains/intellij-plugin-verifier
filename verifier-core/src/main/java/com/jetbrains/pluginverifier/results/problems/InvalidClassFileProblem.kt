@@ -14,10 +14,12 @@ class InvalidClassFileProblem(
   override val problemType
     get() = "Invalid class file"
 
-  override val shortDescription = "Invalid class-file {0}".formatMessage(invalidClass)
+  override val shortDescription
+    get() = "Invalid class-file {0}".formatMessage(invalidClass)
 
-  override val fullDescription = ("Class {0} referenced in {1} cannot be read using the ASM Java Bytecode engineering library. " +
-      "The internal ASM exception: {2}. You may try to recompile the class-file. Invalid classes can lead to **ClassFormatError** exception at runtime.").formatMessage(invalidClass, usage, asmError)
+  override val fullDescription
+    get() = ("Class {0} referenced in {1} cannot be read using the ASM Java Bytecode engineering library. " +
+        "The internal ASM exception: {2}. You may try to recompile the class-file. Invalid classes can lead to **ClassFormatError** exception at runtime.").formatMessage(invalidClass, usage, asmError)
 
   override fun equals(other: Any?) = other is InvalidClassFileProblem
       && invalidClass == other.invalidClass

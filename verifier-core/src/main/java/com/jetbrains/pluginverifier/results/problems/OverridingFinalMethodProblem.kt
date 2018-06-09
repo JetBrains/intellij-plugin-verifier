@@ -20,9 +20,11 @@ class OverridingFinalMethodProblem(val finalMethod: MethodLocation,
   override val problemType
     get() = "Final method overriding"
 
-  override val shortDescription = "Overriding a final method ${finalMethod.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}"
+  override val shortDescription
+    get() = "Overriding a final method ${finalMethod.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}"
 
-  override val fullDescription = "Class ${invalidClass.formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.WITH_GENERICS)} overrides the final method ${finalMethod.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}. This can lead to **VerifyError** exception at runtime."
+  override val fullDescription
+    get() = "Class ${invalidClass.formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.WITH_GENERICS)} overrides the final method ${finalMethod.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}. This can lead to **VerifyError** exception at runtime."
 
   override fun equals(other: Any?) = other is OverridingFinalMethodProblem
       && finalMethod == other.finalMethod

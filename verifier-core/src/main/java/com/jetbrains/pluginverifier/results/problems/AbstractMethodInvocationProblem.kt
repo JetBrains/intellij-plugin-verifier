@@ -14,9 +14,11 @@ class AbstractMethodInvocationProblem(
   override val problemType
     get() = "Abstract method invocation"
 
-  override val shortDescription = "Attempt to invoke an abstract method {0}".formatMessage(method)
+  override val shortDescription
+    get() = "Attempt to invoke an abstract method {0}".formatMessage(method)
 
-  override val fullDescription = "Method {0} contains an *{1}* instruction referencing a method {2} which doesn''t have an implementation. This can lead to **AbstractMethodError** exception at runtime.".formatMessage(caller, instruction, method)
+  override val fullDescription
+    get() = "Method {0} contains an *{1}* instruction referencing a method {2} which doesn''t have an implementation. This can lead to **AbstractMethodError** exception at runtime.".formatMessage(caller, instruction, method)
 
   override fun equals(other: Any?) = other is AbstractMethodInvocationProblem
       && method == other.method

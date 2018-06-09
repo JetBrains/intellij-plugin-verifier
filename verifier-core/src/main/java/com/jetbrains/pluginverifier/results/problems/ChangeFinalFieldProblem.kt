@@ -15,9 +15,11 @@ class ChangeFinalFieldProblem(
   override val problemType
     get() = "Changing final field"
 
-  override val shortDescription = "Attempt to change a final field {0}".formatMessage(field)
+  override val shortDescription
+    get() = "Attempt to change a final field {0}".formatMessage(field)
 
-  override val fullDescription = "Method {0} has modifying instruction *{1}* referencing a final field {2}. This can lead to **IllegalAccessError** exception at runtime.".formatMessage(accessor, instruction, field)
+  override val fullDescription
+    get() = "Method {0} has modifying instruction *{1}* referencing a final field {2}. This can lead to **IllegalAccessError** exception at runtime.".formatMessage(accessor, instruction, field)
 
   override fun equals(other: Any?) = other is ChangeFinalFieldProblem
       && field == other.field

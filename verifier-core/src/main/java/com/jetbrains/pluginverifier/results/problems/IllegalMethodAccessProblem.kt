@@ -30,35 +30,37 @@ class IllegalMethodAccessProblem(
   override val problemType
     get() = "Illegal method invocation"
 
-  override val shortDescription = "Illegal invocation of {0} {1} {2}".formatMessage(methodAccessModifier, inaccessibleMethod.methodOrConstructorWord, inaccessibleMethod)
+  override val shortDescription
+    get() = "Illegal invocation of {0} {1} {2}".formatMessage(methodAccessModifier, inaccessibleMethod.methodOrConstructorWord, inaccessibleMethod)
 
-  override val fullDescription = buildString {
-    append("{0} {1} contains an *{2}* instruction referencing ".formatMessage(
-        caller.methodOrConstructorWord.capitalize(),
-        caller.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, NO_PARAMETER_NAMES),
-        instruction
-    ))
+  override val fullDescription
+    get() = buildString {
+      append("{0} {1} contains an *{2}* instruction referencing ".formatMessage(
+          caller.methodOrConstructorWord.capitalize(),
+          caller.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, NO_PARAMETER_NAMES),
+          instruction
+      ))
 
-    val actualMethodPresentation = inaccessibleMethod.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, NO_PARAMETER_NAMES)
-    if (bytecodeMethodReference.hostClass.className == inaccessibleMethod.hostClass.className) {
-      append("a {0} {1} {2} ".formatMessage(
-          methodAccessModifier,
-          inaccessibleMethod.methodOrConstructorWord,
-          actualMethodPresentation
+      val actualMethodPresentation = inaccessibleMethod.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, NO_PARAMETER_NAMES)
+      if (bytecodeMethodReference.hostClass.className == inaccessibleMethod.hostClass.className) {
+        append("a {0} {1} {2} ".formatMessage(
+            methodAccessModifier,
+            inaccessibleMethod.methodOrConstructorWord,
+            actualMethodPresentation
+        ))
+      } else {
+        append("{0} which is resolved to a {1} {2} {3} ".formatMessage(
+            bytecodeMethodReference.formatMethodReference(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME),
+            methodAccessModifier,
+            inaccessibleMethod.methodOrConstructorWord,
+            actualMethodPresentation
+        ))
+      }
+      append("inaccessible to a class {0}. ".formatMessage(
+          caller.hostClass.formatClassLocation(FULL_NAME, NO_GENERICS)
       ))
-    } else {
-      append("{0} which is resolved to a {1} {2} {3} ".formatMessage(
-          bytecodeMethodReference.formatMethodReference(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME),
-          methodAccessModifier,
-          inaccessibleMethod.methodOrConstructorWord,
-          actualMethodPresentation
-      ))
+      append("This can lead to **IllegalAccessError** exception at runtime.")
     }
-    append("inaccessible to a class {0}. ".formatMessage(
-        caller.hostClass.formatClassLocation(FULL_NAME, NO_GENERICS)
-    ))
-    append("This can lead to **IllegalAccessError** exception at runtime.")
-  }
 
   override fun equals(other: Any?) = other is IllegalMethodAccessProblem
       && methodAccessModifier == other.methodAccessModifier

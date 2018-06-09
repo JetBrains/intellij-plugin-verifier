@@ -15,11 +15,13 @@ class StaticAccessOfInstanceFieldProblem(
   override val problemType
     get() = "Static field change to instance field"
 
-  override val shortDescription = "Attempt to execute static access instruction *{0}* on instance field {1}".formatMessage(instruction, field)
+  override val shortDescription
+    get() = "Attempt to execute static access instruction *{0}* on instance field {1}".formatMessage(instruction, field)
 
-  override val fullDescription = ("Method {0} has static field access instruction *{1}* referencing an instance field {2}, " +
-      "what might have been caused by incompatible change of the field from static to instance. " +
-      "This can lead to **IncompatibleClassChangeError** exception at runtime.").formatMessage(accessor, instruction, field)
+  override val fullDescription
+    get() = ("Method {0} has static field access instruction *{1}* referencing an instance field {2}, " +
+        "what might have been caused by incompatible change of the field from static to instance. " +
+        "This can lead to **IncompatibleClassChangeError** exception at runtime.").formatMessage(accessor, instruction, field)
 
   override fun equals(other: Any?) = other is StaticAccessOfInstanceFieldProblem
       && field == other.field

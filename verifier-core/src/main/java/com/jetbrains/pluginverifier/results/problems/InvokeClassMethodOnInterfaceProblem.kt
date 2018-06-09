@@ -19,9 +19,11 @@ class InvokeClassMethodOnInterfaceProblem(
   val changedClass: ClassReference
     get() = methodReference.hostClass
 
-  override val shortDescription = "Incompatible change of class {0} to interface".formatMessage(changedClass)
+  override val shortDescription
+    get() = "Incompatible change of class {0} to interface".formatMessage(changedClass)
 
-  override val fullDescription = "Method {0} has invocation *{1}* instruction referencing a *class* method {2}, but the method''s host {3} is an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.".formatMessage(caller, instruction, methodReference, methodReference.hostClass)
+  override val fullDescription
+    get() = "Method {0} has invocation *{1}* instruction referencing a *class* method {2}, but the method''s host {3} is an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.".formatMessage(caller, instruction, methodReference, methodReference.hostClass)
 
   override fun equals(other: Any?) = other is InvokeClassMethodOnInterfaceProblem
       && methodReference == other.methodReference

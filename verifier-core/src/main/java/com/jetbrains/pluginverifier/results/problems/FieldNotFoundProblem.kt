@@ -18,7 +18,8 @@ class FieldNotFoundProblem(
   override val problemType
     get() = "Missing field access"
 
-  override val shortDescription = "Access to unresolved field {0}".formatMessage(unresolvedField)
+  override val shortDescription
+    get() = "Access to unresolved field {0}".formatMessage(unresolvedField)
 
   private val descriptionMainPart = buildString {
     append("Method {0} contains a *{1}* instruction referencing an unresolved field {2}. ".formatMessage(
@@ -34,12 +35,13 @@ class FieldNotFoundProblem(
     append("This can lead to **NoSuchFieldError** exception at runtime.")
   }
 
-  override val fullDescription = buildString {
-    append(descriptionMainPart)
-    //Instance fields can only be declared in super classes.
-    val canBeDeclaredInSuperInterface = instruction == Instruction.GET_STATIC || instruction == Instruction.PUT_STATIC
-    append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("field", fieldOwnerHierarchy, true, canBeDeclaredInSuperInterface))
-  }
+  override val fullDescription
+    get() = buildString {
+      append(descriptionMainPart)
+      //Instance fields can only be declared in super classes.
+      val canBeDeclaredInSuperInterface = instruction == Instruction.GET_STATIC || instruction == Instruction.PUT_STATIC
+      append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("field", fieldOwnerHierarchy, true, canBeDeclaredInSuperInterface))
+    }
 
   override fun equals(other: Any?) = other is FieldNotFoundProblem
       && unresolvedField == other.unresolvedField

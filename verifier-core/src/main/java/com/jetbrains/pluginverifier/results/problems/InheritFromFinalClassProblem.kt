@@ -13,7 +13,8 @@ class InheritFromFinalClassProblem(
   override val problemType
     get() = "Final class inheritance"
 
-  override val shortDescription = "Inheritance from a final class {0}".formatMessage(finalClass)
+  override val shortDescription
+    get() = "Inheritance from a final class {0}".formatMessage(finalClass)
 
   override val fullDescription: String
     get() {

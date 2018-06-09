@@ -14,12 +14,14 @@ class InvokeInstanceInstructionOnStaticMethodProblem(
   override val problemType
     get() = "Instance method changed to static method"
 
-  override val shortDescription = "Attempt to execute instance instruction *{0}* on a static method {1}".formatMessage(instruction, resolvedMethod)
+  override val shortDescription
+    get() = "Attempt to execute instance instruction *{0}* on a static method {1}".formatMessage(instruction, resolvedMethod)
 
-  override val fullDescription = ("Method {0} contains an *{1}* instruction referencing a static method {2}, " +
-      "what might have been caused by incompatible change of the method to static. " +
-      "This can lead to **IncompatibleClassChangeError** exception at runtime."
-      ).formatMessage(caller, instruction, resolvedMethod)
+  override val fullDescription
+    get() = ("Method {0} contains an *{1}* instruction referencing a static method {2}, " +
+        "what might have been caused by incompatible change of the method to static. " +
+        "This can lead to **IncompatibleClassChangeError** exception at runtime."
+        ).formatMessage(caller, instruction, resolvedMethod)
 
   override fun equals(other: Any?) = other is InvokeInstanceInstructionOnStaticMethodProblem
       && resolvedMethod == other.resolvedMethod

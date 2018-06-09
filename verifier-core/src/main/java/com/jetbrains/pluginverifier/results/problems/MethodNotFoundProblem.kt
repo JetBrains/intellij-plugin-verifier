@@ -27,10 +27,11 @@ class MethodNotFoundProblem(
   override val problemType
     get() = "Missing method invocation"
 
-  override val shortDescription = "Invocation of unresolved {0} {1}".formatMessage(
-      unresolvedMethod.methodOrConstructorWord,
-      unresolvedMethod.formatMethodReference(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME)
-  )
+  override val shortDescription
+    get() = "Invocation of unresolved {0} {1}".formatMessage(
+        unresolvedMethod.methodOrConstructorWord,
+        unresolvedMethod.formatMethodReference(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME)
+    )
 
   private val descriptionMainPart = buildString {
     append("${caller.methodOrConstructorWord.capitalize()} {0} contains an *{1}* instruction referencing an unresolved {2} {3}. ".formatMessage(
@@ -42,12 +43,13 @@ class MethodNotFoundProblem(
     append("This can lead to **NoSuchMethodError** exception at runtime.")
   }
 
-  override val fullDescription = buildString {
-    append(descriptionMainPart)
-    if (instruction != Instruction.INVOKE_SPECIAL) {
-      append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("method", methodOwnerHierarchy, true, true))
+  override val fullDescription
+    get() = buildString {
+      append(descriptionMainPart)
+      if (instruction != Instruction.INVOKE_SPECIAL) {
+        append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("method", methodOwnerHierarchy, true, true))
+      }
     }
-  }
 
   override fun equals(other: Any?) = other is MethodNotFoundProblem
       && unresolvedMethod == other.unresolvedMethod
