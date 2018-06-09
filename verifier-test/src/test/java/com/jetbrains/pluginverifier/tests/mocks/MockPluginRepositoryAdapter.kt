@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tests.mocks
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import java.net.URL
@@ -23,21 +23,7 @@ open class MockPluginRepositoryAdapter : PluginRepository {
 
   open fun defaultAction(): Nothing = throw AssertionError("Not required in tests")
 
-  fun createMockPluginInfo(pluginId: String,
-                           pluginName: String,
-                           version: String,
-                           downloadUrl: URL = URL("http://example.com")) =
-      PluginInfo(
-          pluginId,
-          pluginName,
-          version,
-          this@MockPluginRepositoryAdapter,
-          null,
-          null,
-          "vendor",
-          downloadUrl,
-          null
-      )
+  fun createMockPluginInfo(pluginId: String, version: String) = PluginIdAndVersion(pluginId, version)
 
 }
 

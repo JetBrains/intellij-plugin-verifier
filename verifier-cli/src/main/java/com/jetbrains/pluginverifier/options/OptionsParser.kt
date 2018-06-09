@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.options
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorCreator
 import com.jetbrains.pluginverifier.ide.IdeResourceUtil
@@ -15,6 +14,7 @@ import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedPr
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsParser
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
+import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path

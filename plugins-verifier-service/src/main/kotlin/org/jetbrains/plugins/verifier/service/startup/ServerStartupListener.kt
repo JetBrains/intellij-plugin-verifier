@@ -62,7 +62,7 @@ class ServerStartupListener : ServletContextListener {
     val pluginRepository = PublicPluginRepository(pluginRepositoryUrl)
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractedPluginsDir)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, loadedPluginsDir, pluginDownloadDirSpaceSetting)
-    val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginDetailsProvider, pluginFilesBank)
+    val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginFilesBank, pluginDetailsProvider)
 
     val ideRepository = IdeRepository()
     val tasksManager = TaskManager(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
@@ -138,7 +138,8 @@ class ServerStartupListener : ServletContextListener {
         pluginDetailsCache,
         ideDescriptorsCache,
         jdkPath,
-        verificationResultsFilter
+        verificationResultsFilter,
+        pluginRepository
     )
     if (Settings.ENABLE_PLUGIN_VERIFIER_SERVICE.getAsBoolean()) {
       verifierService.start()

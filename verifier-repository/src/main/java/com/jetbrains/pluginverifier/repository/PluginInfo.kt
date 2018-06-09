@@ -1,64 +1,107 @@
 package com.jetbrains.pluginverifier.repository
 
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.safeEquals
-import com.jetbrains.pluginverifier.misc.safeHashCode
 import java.net.URL
 import java.util.*
 
 /**
- * Identifier of a IDE plugin, which may
- * represent either a [plugin from the Plugin Repository] [UpdateInfo],
- * a [locally stored plugin] [com.jetbrains.pluginverifier.repository.local.LocalPluginInfo],
- * or a [bundled] [com.jetbrains.pluginverifier.repository.bundled.BundledPluginInfo] IDE plugin.
+ * Identifier of an IDE plugin.
  */
-open class PluginInfo(
+sealed class PluginInfo(
     val pluginId: String,
 
-    val pluginName: String,
-
     val version: String,
-
-    val pluginRepository: PluginRepository,
 
     val sinceBuild: IdeVersion?,
 
     val untilBuild: IdeVersion?,
 
-    val vendor: String?,
-
-    /**
-     * URL that can be used to download the plugin's file.
-     * It can be `null` only if _this_ is an in-memory plugin
-     * without a backed file. In this case the [idePlugin] is not null.
-     */
-    val downloadUrl: URL?,
-
-    /**
-     * Descriptor of this [IdePlugin] if it is already opened,
-     * like in case of a [bundled] [BundledPluginInfo] or
-     * a [local] [LocalPluginInfo] plugin.
-     */
-    val idePlugin: IdePlugin?
+    val vendor: String?
 ) {
-
-  init {
-    require(downloadUrl != null || idePlugin != null)
-  }
 
   fun isCompatibleWith(ideVersion: IdeVersion) =
       (sinceBuild == null || sinceBuild <= ideVersion) && (untilBuild == null || ideVersion <= untilBuild)
 
-  open val presentableName: String = "$pluginId $version"
+  open val presentableName
+    get() = "$pluginId $version"
 
   final override fun equals(other: Any?) = other is PluginInfo
       && pluginId == other.pluginId
       && version == other.version
-      && pluginRepository.repositoryURL.safeEquals(other.pluginRepository.repositoryURL)
 
-  final override fun hashCode() = Objects.hash(pluginId, version, pluginRepository.repositoryURL.safeHashCode())
+  final override fun hashCode() = Objects.hash(pluginId, version)
 
   final override fun toString() = presentableName
 
+}
+
+/**
+ * Identifier of a local plugin.
+ */
+class LocalPluginInfo(
+    val idePlugin: IdePlugin
+) : PluginInfo(
+    idePlugin.pluginId!!,
+    idePlugin.pluginVersion!!,
+    idePlugin.sinceBuild,
+    idePlugin.untilBuild,
+    idePlugin.vendor
+) {
+
+  val definedModules: Set<String>
+    get() = idePlugin.definedModules
+
+  override val presentableName
+    get() = idePlugin.toString()
+}
+
+/**
+ * Identifier of a plugin bundled to IDE.
+ */
+class BundledPluginInfo(
+    val ideVersion: IdeVersion,
+    val idePlugin: IdePlugin
+) : PluginInfo(
+    idePlugin.pluginId!!,
+    idePlugin.pluginVersion ?: ideVersion.asString(),
+    idePlugin.sinceBuild,
+    idePlugin.untilBuild,
+    idePlugin.vendor
+)
+
+/**
+ * Identifier of a plugin hosted in the Plugin Repository.
+ */
+class UpdateInfo(
+    pluginId: String,
+    version: String,
+    sinceBuild: IdeVersion?,
+    untilBuild: IdeVersion?,
+    vendor: String,
+    val downloadUrl: URL,
+    val updateId: Int,
+    val browserURL: URL,
+    val tags: List<String>
+) : PluginInfo(
+    pluginId,
+    version,
+    sinceBuild,
+    untilBuild,
+    vendor
+) {
+
+  override val presentableName
+    get() = "$pluginId:$version (#$updateId)"
+
+}
+
+/**
+ * Only plugin ID and version.
+ */
+class PluginIdAndVersion(
+    pluginId: String,
+    version: String
+) : PluginInfo(pluginId, version, null, null, null) {
+
+  override val presentableName
+    get() = "$pluginId $version"
 }

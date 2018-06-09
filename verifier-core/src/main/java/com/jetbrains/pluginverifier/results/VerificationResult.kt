@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.results
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
@@ -15,10 +14,9 @@ import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 
 /**
- * Represents possible outcomes of verifying
- * the [plugin] [PluginInfo] against the [verificationTarget].
+ * Represents possible results of verifying [plugin] against [verificationTarget].
  *
- * The verification outcome can be one of the following:
+ * The verification result can be one of the following:
  * - [OK]
  * - [StructureWarnings]
  * - [MissingDependencies]
@@ -32,7 +30,7 @@ sealed class VerificationResult {
   /**
    * Verified plugin.
    *
-   * _This field is applicable for all the result types._
+   * _This field is applicable for all result types._
    */
   lateinit var plugin: PluginInfo
 

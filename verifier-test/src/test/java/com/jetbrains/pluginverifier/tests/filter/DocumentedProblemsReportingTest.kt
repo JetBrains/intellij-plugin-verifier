@@ -1,8 +1,5 @@
 package com.jetbrains.pluginverifier.tests.filter
 
-import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
-import com.jetbrains.plugin.structure.classes.resolvers.FixedClassesResolver
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ResultHolder
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilter
@@ -10,7 +7,7 @@ import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.documented.*
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.reporting.verification.EmptyPluginVerificationReportage
-import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.ClassLocation
@@ -22,7 +19,6 @@ import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.tests.bytecode.createClassNode
 import com.jetbrains.pluginverifier.tests.mocks.EmptyClsResolver
-import com.jetbrains.pluginverifier.tests.mocks.EmptyPublicPluginRepository
 import com.jetbrains.pluginverifier.tests.mocks.MOCK_METHOD_LOCATION
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassHierarchyBuilder
@@ -31,7 +27,6 @@ import net.bytebuddy.ByteBuddy
 import org.junit.Assert.fail
 import org.junit.Test
 import org.objectweb.asm.tree.ClassNode
-import java.net.URL
 
 /**
  * This test asserts that the
@@ -183,7 +178,7 @@ class DocumentedProblemsReportingTest {
 
   private fun createSimpleVerificationContext() =
       VerificationContext(
-          PluginInfo("pluginId", "1.0", "1.0", EmptyPublicPluginRepository, null, null, null, URL("http://example.com"), null),
+          PluginIdAndVersion("pluginId", "1.0"),
           VerificationTarget.Ide(IdeVersion.createIdeVersion("IU-145.1")),
           ResultHolder(EmptyPluginVerificationReportage),
           false,

@@ -1,8 +1,5 @@
 package com.jetbrains.pluginverifier.dependencies.graph
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
@@ -58,7 +55,7 @@ class DepGraph2ApiGraphConverter(private val ideVersion: IdeVersion) {
     return when (this) {
       is DependencyFinder.Result.DetailsProvided -> with(pluginDetailsCacheResult) {
         when (this) {
-          is PluginDetailsCache.Result.Provided -> pluginDetails.plugin
+          is PluginDetailsCache.Result.Provided -> pluginDetails.idePlugin
           else -> null
         }
       }
@@ -70,7 +67,7 @@ class DepGraph2ApiGraphConverter(private val ideVersion: IdeVersion) {
   private fun DirectedGraph<DepVertex, DepEdge>.toDependencyNode(depVertex: DepVertex): DependencyNode? {
     val missingDependencies = outgoingEdgesOf(depVertex).mapNotNull { it.toMissingDependency() }
     val plugin = depVertex.dependencyResult.getPlugin()
-    return plugin?.run {
+    return plugin.run {
       DependencyNode(pluginId ?: depVertex.dependencyId, pluginVersion ?: ideVersion.asString(), missingDependencies)
     }
   }

@@ -39,8 +39,8 @@ class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val plugin
               .filter { it.deprecatedElement in deprecatedIdeApiElements }
               .forEach {
                 deprecatedIdeApiToPluginUsages
-                    .getOrPut(it.deprecatedElement, { hashMapOf() })
-                    .compute(plugin, { _, c -> (c ?: 0) + 1 })
+                    .getOrPut(it.deprecatedElement) { hashMapOf() }
+                    .compute(plugin) { _, c -> (c ?: 0) + 1 }
               }
         }
 

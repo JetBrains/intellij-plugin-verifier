@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.repository
 import com.google.common.cache.CacheBuilder
 import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.network.executeSuccessfully
@@ -79,7 +78,7 @@ class PublicPluginRepository(override val repositoryURL: URL) : PluginRepository
         emptyList()
       }
 
-  override fun getAllPlugins() =
+  override fun getAllPlugins(): List<UpdateInfo> =
       allUpdateIdsRequester.getAllUpdateIds()
           .mapNotNull { getPluginInfoById(it) }
 
@@ -198,9 +197,7 @@ class PublicPluginRepository(override val repositoryURL: URL) : PluginRepository
 
     private fun JsonUpdateInfo.toUpdateInfo() = UpdateInfo(
         pluginId,
-        pluginName,
         version,
-        this@PublicPluginRepository,
         sinceString.prepareIdeVersion(),
         untilString.prepareIdeVersion(),
         vendor,

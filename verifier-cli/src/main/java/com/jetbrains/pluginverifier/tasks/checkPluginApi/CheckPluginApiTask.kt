@@ -3,8 +3,6 @@ package com.jetbrains.pluginverifier.tasks.checkPluginApi
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
-import com.jetbrains.pluginverifier.createPluginResolver
-import com.jetbrains.pluginverifier.parameters.filtering.toPluginIdAndVersion
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
@@ -20,8 +18,8 @@ class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
       pluginDetailsCache: PluginDetailsCache
   ): NewProblemsResult {
     with(parameters) {
-      val baseTarget = VerificationTarget.Plugin(basePluginDetails.plugin.toPluginIdAndVersion())
-      val newTarget = VerificationTarget.Plugin(newPluginDetails.plugin.toPluginIdAndVersion())
+      val baseTarget = VerificationTarget.Plugin(basePluginDetails.pluginInfo)
+      val newTarget = VerificationTarget.Plugin(newPluginDetails.pluginInfo)
 
       val basePluginResolver = basePluginDetails.pluginClassesLocations.createPluginResolver()
       val newPluginResolver = newPluginDetails.pluginClassesLocations.createPluginResolver()

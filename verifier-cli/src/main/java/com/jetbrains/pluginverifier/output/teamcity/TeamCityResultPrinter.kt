@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.output.teamcity
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
@@ -13,7 +12,7 @@ import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependen
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
+import com.jetbrains.pluginverifier.repository.VERSION_COMPARATOR
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
@@ -325,20 +324,20 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
             is VerificationTarget.Plugin -> {
               it to repository.getAllPlugins()
                   .groupBy { it.pluginId }
-                  .mapValues { it.value.maxWith(LocalPluginRepository.VERSION_COMPARATOR)!! }
+                  .mapValues { it.value.maxWith(VERSION_COMPARATOR)!! }
                   .values.toList()
             }
           }
         } catch (e: Exception) {
           LOG.info("Unable to determine the last compatible updates of IDE $it", e)
-          it to emptyList<UpdateInfo>()
+          it to emptyList<PluginInfo>()
         }
       }
 
   /**
    * Generates a TC test name in which the verification report will be printed.
    *
-   * The test name is the [version] [PluginInfo.version] of the plugin
+   * The test name is the version of the plugin
    * plus, possibly, the suffix 'newest' indicating that this
    * is the last available version of the plugin.
    *

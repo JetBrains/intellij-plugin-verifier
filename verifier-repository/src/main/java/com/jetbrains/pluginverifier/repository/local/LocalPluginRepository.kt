@@ -1,28 +1,23 @@
 package com.jetbrains.pluginverifier.repository.local
 
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
-import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.LocalPluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.VERSION_COMPARATOR
 import java.net.URL
 
 /**
  * [PluginRepository] consisting of [locally] [LocalPluginInfo] stored plugins.
  */
-class LocalPluginRepository(override val repositoryURL: URL,
-                            private val plugins: MutableList<LocalPluginInfo> = arrayListOf()) : PluginRepository {
-  companion object {
-    val VERSION_COMPARATOR = compareBy<PluginInfo, String>(VersionComparatorUtil.COMPARATOR, { it.version })
-  }
+class LocalPluginRepository(
+    override val repositoryURL: URL,
+    private val plugins: MutableList<LocalPluginInfo> = arrayListOf()
+) : PluginRepository {
 
   fun addLocalPlugin(idePlugin: IdePlugin): LocalPluginInfo {
-    val localPluginInfo = createLocalPluginInfo(idePlugin)
+    val localPluginInfo = LocalPluginInfo(idePlugin)
     plugins.add(localPluginInfo)
     return localPluginInfo
   }
-
-  private fun createLocalPluginInfo(idePlugin: IdePlugin) = LocalPluginInfo(idePlugin, this@LocalPluginRepository)
 
   override fun getAllPlugins() = plugins
 

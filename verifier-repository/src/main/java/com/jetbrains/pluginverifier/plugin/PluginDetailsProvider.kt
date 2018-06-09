@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.plugin
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider.Result
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
@@ -9,20 +8,25 @@ import java.nio.file.Path
 
 /**
  * [Provides] [providePluginDetails] the [PluginDetails] of the plugins.
- * The possible results are represented as instances of [Result].
+ * Possible results are represented as instances of [Result].
  */
 interface PluginDetailsProvider {
-
-  /**
-   * Creates the [PluginDetails] for [plugin] [pluginInfo] which
-   * files are locked with the [pluginFileLock].
-   */
-  fun providePluginDetails(pluginInfo: PluginInfo, pluginFileLock: FileLock): Result
 
   /**
    * Creates [PluginDetails] for a plugin from [pluginFile].
    */
   fun providePluginDetails(pluginFile: Path): Result
+
+  /**
+   * Creates [PluginDetails] for existing plugin.
+   */
+  fun providePluginDetails(pluginInfo: PluginInfo, idePlugin: IdePlugin): Result
+
+  /**
+   * Creates the [PluginDetails] for [plugin] [pluginInfo] whose
+   * file is locked with [pluginFileLock].
+   */
+  fun providePluginDetails(pluginInfo: PluginInfo, pluginFileLock: FileLock): Result
 
   /**
    * Represents possible results of [providing] [providePluginDetails] the [PluginDetails].
@@ -37,6 +41,9 @@ interface PluginDetailsProvider {
       override fun close() = Unit
     }
 
+    data class Failed(val reason: String, val error: Exception) : Result() {
+      override fun close() = Unit
+    }
   }
 
 }

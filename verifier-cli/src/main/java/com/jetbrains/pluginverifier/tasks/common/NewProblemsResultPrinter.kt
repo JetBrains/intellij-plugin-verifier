@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.tasks.common
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.misc.pluralize
@@ -63,9 +62,11 @@ class NewProblemsResultPrinter(private val outputOptions: OutputOptions,
     return null
   }
 
-  private fun StringBuilder.appendIdeCompatibilityNote(plugin: PluginInfo,
-                                                       baseTarget: VerificationTarget,
-                                                       newTarget: VerificationTarget) {
+  private fun StringBuilder.appendIdeCompatibilityNote(
+      plugin: PluginInfo,
+      baseTarget: VerificationTarget,
+      newTarget: VerificationTarget
+  ) {
     if (baseTarget is VerificationTarget.Ide && newTarget is VerificationTarget.Ide && !plugin.isCompatibleWith(newTarget.ideVersion)) {
       val baseIdeVersion = baseTarget.ideVersion
       val newIdeVersion = newTarget.ideVersion

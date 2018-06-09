@@ -62,7 +62,7 @@ class ExtractFeaturesTask(
       pluginDetailsCache.getPluginDetailsCacheEntry(updateInfo).use {
         with(it) {
           when (this) {
-            is PluginDetailsCache.Result.Provided -> runFeatureExtractor(ideDescriptor, pluginDetails.plugin)
+            is PluginDetailsCache.Result.Provided -> runFeatureExtractor(ideDescriptor, pluginDetails.idePlugin)
             is PluginDetailsCache.Result.FileNotFound -> {
               Result(
                   updateInfo,

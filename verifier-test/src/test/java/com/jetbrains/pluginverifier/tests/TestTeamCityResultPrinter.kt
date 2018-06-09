@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.tests
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
@@ -26,14 +25,14 @@ class TestTeamCityResultPrinter {
 
   private fun mockRepository(mockUpdateInfos: List<MockUpdateInfo>) = object : MockPluginRepositoryAdapter() {
 
-    val updateInfos: List<PluginInfo>
-      get() = mockUpdateInfos.map { createMockPluginInfo(it.id, it.name, it.version) }
+    val pluginInfos: List<PluginInfo>
+      get() = mockUpdateInfos.map { createMockPluginInfo(it.id, it.version) }
 
-    override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> = updateInfos
+    override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> = pluginInfos
 
-    override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): PluginInfo? = updateInfos.find { it.pluginId == pluginId }
+    override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): PluginInfo? = pluginInfos.find { it.pluginId == pluginId }
 
-    override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String): List<PluginInfo> = updateInfos.toList()
+    override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String): List<PluginInfo> = pluginInfos.toList()
   }
 
   @Test
@@ -43,7 +42,7 @@ class TestTeamCityResultPrinter {
         MockUpdateInfo("id", "name", "version 2", 2)
     )
     val mockRepository = mockRepository(mockUpdateInfos)
-    val updateInfos = mockRepository.updateInfos
+    val updateInfos = mockRepository.pluginInfos
     val output = getTeamCityOutput(mockRepository, updateInfos)
     Assert.assertEquals("""##teamcity[testSuiteStarted name='id']
 ##teamcity[testStarted name='(version)']
@@ -57,7 +56,7 @@ class TestTeamCityResultPrinter {
   @Test
   fun `no repository connection lead to no -newest suffix`() {
     val mockPluginRepository = noConnectionPluginRepository()
-    val output = getTeamCityOutput(mockPluginRepository, listOf(mockPluginRepository.createMockPluginInfo("id", "name", "v")))
+    val output = getTeamCityOutput(mockPluginRepository, listOf(mockPluginRepository.createMockPluginInfo("id", "v")))
     Assert.assertEquals("""##teamcity[testSuiteStarted name='id']
 ##teamcity[testStarted name='(v)']
 ##teamcity[testFinished name='(v)']

@@ -8,7 +8,6 @@ import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
-import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
@@ -19,7 +18,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class CheckPluginApiParamsBuilder(private val pluginRepository: PluginRepository,
-                                  private val pluginDetailsCache: PluginDetailsCache) : TaskParametersBuilder {
+                                  private val pluginDetailsProvider: PluginDetailsProvider) : TaskParametersBuilder {
   companion object {
     private const val USAGE = """Expected exactly 3 arguments: <base plugin version> <new plugin version> <plugins to check>.
 Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip kotlin-depends.txt"""
@@ -88,11 +87,13 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
 
 
   private fun providePluginDetails(pluginFile: Path) =
-      with(pluginDetailsCache.pluginDetailsProvider.providePluginDetails(pluginFile)) {
+      with(pluginDetailsProvider.providePluginDetails(pluginFile)) {
         when (this) {
           is PluginDetailsProvider.Result.Provided -> pluginDetails
           is PluginDetailsProvider.Result.InvalidPlugin ->
             throw IllegalArgumentException("Plugin $pluginFile is invalid: \n" + pluginErrors.joinToString(separator = "\n") { it.message })
+          is PluginDetailsProvider.Result.Failed ->
+            throw IllegalArgumentException("Couldn't read plugin $pluginFile: $reason", error)
         }
       }
 

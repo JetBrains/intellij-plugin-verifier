@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.network.createByteArrayRequestBody
 import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
+import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import okhttp3.HttpUrl
 import okhttp3.RequestBody
@@ -71,9 +72,9 @@ class DefaultVerifierServiceProtocol(authorizationData: AuthorizationData,
             }
           }
 
-  override fun sendVerificationResult(verificationResult: VerificationResult) {
+  override fun sendVerificationResult(verificationResult: VerificationResult, updateInfo: UpdateInfo) {
     retrofitConnector.sendUpdateCheckResult(
-        createByteArrayRequestBody(verificationResult.prepareVerificationResponse().toByteArray()),
+        createByteArrayRequestBody(verificationResult.prepareVerificationResponse(updateInfo).toByteArray()),
         userNameRequestBody,
         passwordRequestBody
     ).executeSuccessfully()

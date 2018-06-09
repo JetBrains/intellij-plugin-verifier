@@ -25,7 +25,7 @@ import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
  * Converts the internal verifier [result] [VerificationResult]
  * to the protocol API version of [result] [VerificationResults.VerificationResult].
  */
-fun VerificationResult.prepareVerificationResponse(): VerificationResults.VerificationResult {
+fun VerificationResult.prepareVerificationResponse(updateInfo: UpdateInfo): VerificationResults.VerificationResult {
   val problems = getCompatibilityProblems()
   val pluginStructureWarnings = getPluginStructureWarnings().map { it.convertPluginStructureWarning() }
   val pluginStructureErrors = (this as? VerificationResult.InvalidPlugin)?.pluginStructureErrors.orEmpty().map { it.convertPluginStructureError() }
@@ -36,7 +36,7 @@ fun VerificationResult.prepareVerificationResponse(): VerificationResults.Verifi
   val nonDownloadableReason = (this as? VerificationResult.FailedToDownload)?.failedToDownloadReason
       ?: (this as? VerificationResult.NotFound)?.notFoundReason
   return VerificationResults.VerificationResult.newBuilder()
-      .setUpdateId((plugin as UpdateInfo).updateId)
+      .setUpdateId(updateInfo.updateId)
       .setIdeVersion((verificationTarget as VerificationTarget.Ide).ideVersion.asString())
       .apply { if (dependenciesGraph != null) setDependenciesGraph(dependenciesGraph) }
       .setResultType(resultType)

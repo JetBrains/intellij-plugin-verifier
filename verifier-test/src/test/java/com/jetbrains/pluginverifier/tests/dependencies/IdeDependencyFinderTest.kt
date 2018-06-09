@@ -1,8 +1,5 @@
 package com.jetbrains.pluginverifier.tests.dependencies
 
-import com.jetbrains.plugin.structure.ide.Ide
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.graph.DepEdge
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter
@@ -10,14 +7,12 @@ import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
+import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
-import com.jetbrains.pluginverifier.repository.PluginFilesBank
+import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.repository.PluginFileProvider
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.repository.cleanup.IdleSweepPolicy
-import com.jetbrains.pluginverifier.repository.files.FileRepository
-import com.jetbrains.pluginverifier.repository.provider.ProvideResult
-import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
+import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
@@ -28,6 +23,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.Closeable
 import java.nio.file.Path
 
 class IdeDependencyFinderTest {
@@ -101,7 +97,7 @@ class IdeDependencyFinderTest {
     val deps = dependenciesGraph.vertices.map { it.pluginId }
     assertEquals(setOf("myPlugin", "test", "moduleContainer", "somePlugin", "com.intellij"), deps.toSet())
 
-    assertEquals(listOf(MissingDependency(externalModuleDependency, "Failed to download test.")), dependenciesGraph.verifiedPlugin.missingDependencies)
+    assertEquals(listOf(MissingDependency(externalModuleDependency, "Failed to fetch plugin.")), dependenciesGraph.verifiedPlugin.missingDependencies)
     assertTrue(dependenciesGraph.getMissingDependencyPaths().size == 1)
   }
 
@@ -111,24 +107,39 @@ class IdeDependencyFinderTest {
           if (moduleId == "externalModule") "externalPlugin" else null
 
       override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String) =
-          if (pluginId == "externalPlugin") createMockPluginInfo(pluginId, pluginId, "1.0") else null
+          if (pluginId == "externalPlugin") createMockPluginInfo(pluginId, "1.0") else null
     }
 
-    val downloadProvider = object : ResourceProvider<PluginInfo, Path> {
-      override fun provide(key: PluginInfo): ProvideResult<Path> {
-        if (key.pluginId == "externalPlugin") {
-          return ProvideResult.Failed("Failed to download test.", Exception())
+    val pluginFileProvider = object : PluginFileProvider {
+      override fun getPluginFile(pluginInfo: PluginInfo): PluginFileProvider.Result {
+        if (pluginInfo.pluginId == "externalPlugin") {
+          return PluginFileProvider.Result.Failed("Failed to fetch plugin.", Exception())
         }
-        val tempDir = createTempDir().apply { deleteOnExit() }.toPath()
-        return ProvideResult.Provided(tempDir)
+        return PluginFileProvider.Result.NotFound("No need to be found")
       }
     }
 
-    val fileRepository = FileRepository(IdleSweepPolicy(), downloadProvider)
+    val pluginDetailsProvider = object : PluginDetailsProvider {
+      override fun providePluginDetails(pluginFile: Path) = throw IllegalArgumentException()
 
-    val pluginFilesBank = PluginFilesBank(fileRepository)
-    val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder.newFolder().toPath())
-    val pluginDetailsCache = PluginDetailsCache(10, pluginDetailsProvider, pluginFilesBank)
+      override fun providePluginDetails(pluginInfo: PluginInfo, pluginFileLock: FileLock) = throw IllegalArgumentException()
+
+      override fun providePluginDetails(pluginInfo: PluginInfo, idePlugin: IdePlugin) = PluginDetailsProvider.Result.Provided(
+          PluginDetails(
+              pluginInfo,
+              idePlugin,
+              emptyList(),
+              IdePluginClassesLocations(
+                  idePlugin,
+                  Closeable { },
+                  emptyMap()
+              ),
+              null
+          )
+      )
+    }
+
+    val pluginDetailsCache = PluginDetailsCache(10, pluginFileProvider, pluginDetailsProvider)
     return IdeDependencyFinder(ide, pluginRepository, pluginDetailsCache)
   }
 

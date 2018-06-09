@@ -18,6 +18,7 @@ import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterSet
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportersProvider
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
@@ -36,7 +37,8 @@ class VerifyPluginTask(
     private val jdkPath: JdkPath,
     private val pluginDetailsCache: PluginDetailsCache,
     private val ideDescriptorsCache: IdeDescriptorsCache,
-    private val jdkDescriptorsCache: JdkDescriptorsCache
+    private val jdkDescriptorsCache: JdkDescriptorsCache,
+    private val pluginRepository: PluginRepository
 ) : Task<VerificationResult>("Check $updateInfo against $ideVersion"), Comparable<VerifyPluginTask> {
 
   override fun execute(progress: ProgressIndicator): VerificationResult {
@@ -58,7 +60,7 @@ class VerifyPluginTask(
                                  verificationReportage: VerificationReportage): VerificationResult {
     val dependencyFinder = IdeDependencyFinder(
         ideDescriptor.ide,
-        updateInfo.pluginRepository,
+        pluginRepository,
         pluginDetailsCache
     )
 

@@ -1,10 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.ResultHolder
-import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.dependencies.graph.DepEdge
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
@@ -40,7 +36,7 @@ class DefaultClsResolverProvider(private val dependencyFinder: DependencyFinder,
 
     val depGraph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
     return try {
-      buildDependenciesGraph(checkedPluginDetails.plugin, resultHolder, depGraph, reportage)
+      buildDependenciesGraph(checkedPluginDetails.idePlugin, resultHolder, depGraph, reportage)
       provide(pluginResolver, reportage, depGraph)
     } catch (e: Throwable) {
       depGraph.vertexSet().forEach { it.dependencyResult.closeLogged() }

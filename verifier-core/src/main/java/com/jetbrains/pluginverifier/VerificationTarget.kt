@@ -1,8 +1,7 @@
 package com.jetbrains.pluginverifier
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
-import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import java.nio.file.Path
 
 sealed class VerificationTarget {
@@ -11,7 +10,7 @@ sealed class VerificationTarget {
     override fun toString() = ideVersion.toString()
   }
 
-  data class Plugin(val plugin: PluginIdAndVersion) : VerificationTarget() {
+  data class Plugin(val plugin: PluginInfo) : VerificationTarget() {
     override fun toString() = plugin.toString()
   }
 

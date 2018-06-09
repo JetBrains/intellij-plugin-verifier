@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.results
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.repository.PluginFileProvider
 import com.jetbrains.pluginverifier.repository.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.UpdateInfo
@@ -53,7 +53,6 @@ class TestMainPluginRepository {
     assertFalse(updates.isEmpty())
     val update = updates[0]
     assertEquals("Pythonid", update.pluginId)
-    assertEquals("Python", update.pluginName)
     assertEquals("JetBrains", update.vendor)
   }
 
@@ -92,7 +91,7 @@ class TestMainPluginRepository {
     val tempDownloadFolder = temporaryFolder.newFolder().toPath()
     val pluginFilesBank = PluginFilesBank.create(repository, tempDownloadFolder, DiskSpaceSetting(SpaceAmount.ofMegabytes(100)))
     val downloadPluginResult = pluginFilesBank.getPluginFile(updateInfo!!)
-    val fileLock = (downloadPluginResult as PluginFilesBank.Result.Found).pluginFileLock
+    val fileLock = (downloadPluginResult as PluginFileProvider.Result.Found).pluginFileLock
     assertNotNull(fileLock)
     assertTrue(fileLock.file.fileSize > SpaceAmount.ZERO_SPACE)
     fileLock.release()

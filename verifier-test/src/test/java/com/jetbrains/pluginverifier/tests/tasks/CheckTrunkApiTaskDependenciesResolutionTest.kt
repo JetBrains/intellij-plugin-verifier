@@ -1,11 +1,5 @@
 package com.jetbrains.pluginverifier.tests.tasks
 
-import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
-import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion.createIdeVersion
 import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
@@ -16,15 +10,11 @@ import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
-import com.jetbrains.pluginverifier.repository.PluginFilesBank
+import com.jetbrains.pluginverifier.repository.PluginFileProvider
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.repository.cleanup.IdleSweepPolicy
 import com.jetbrains.pluginverifier.repository.files.FileLock
-import com.jetbrains.pluginverifier.repository.files.FileRepository
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
-import com.jetbrains.pluginverifier.repository.provider.ProvideResult
-import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiParams
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiTask
@@ -127,16 +117,11 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
   fun `local plugins are resolved both by ID and by module`() {
     val checkTrunkApiParams = createTrunkApiParamsForTest(releaseIde, trunkIde)
 
-    val downloadProvider = object : ResourceProvider<PluginInfo, Path> {
-      override fun provide(key: PluginInfo): ProvideResult<Path> {
-        val tempDir = createTempDir().apply { deleteOnExit() }.toPath()
-        return ProvideResult.Provided(tempDir)
-      }
+    val pluginFileProvider = object : PluginFileProvider {
+      override fun getPluginFile(pluginInfo: PluginInfo) = throw IllegalArgumentException()
     }
-    val fileRepository = FileRepository(IdleSweepPolicy(), downloadProvider)
-    val pluginFilesBank = PluginFilesBank(fileRepository)
 
-    PluginDetailsCache(10, createPluginDetailsProviderForTest(), pluginFilesBank).use { pluginDetailsCache ->
+    PluginDetailsCache(10, pluginFileProvider, createPluginDetailsProviderForTest()).use { pluginDetailsCache ->
       val checkTrunkApiTask = CheckTrunkApiTask(
           checkTrunkApiParams,
           EmptyPublicPluginRepository,
@@ -177,9 +162,15 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
     for (plugin in allPlugins) {
       val pluginInfo = LocalPluginRepository(repositoryURL).addLocalPlugin(plugin)
       infoToDetails[pluginInfo] = PluginDetails(
+          pluginInfo,
           plugin,
           emptyList(),
-          IdePluginClassesLocations(plugin, Closeable { }, emptyMap()), IdleFileLock(Paths.get("."))
+          IdePluginClassesLocations(
+              plugin,
+              Closeable { },
+              emptyMap()
+          ),
+          IdleFileLock(Paths.get("."))
       )
     }
 
@@ -193,6 +184,20 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
       }
 
       override fun providePluginDetails(pluginFile: Path) = throw UnsupportedOperationException()
+
+      override fun providePluginDetails(pluginInfo: PluginInfo, idePlugin: IdePlugin) = PluginDetailsProvider.Result.Provided(
+          PluginDetails(
+              pluginInfo,
+              idePlugin,
+              emptyList(),
+              IdePluginClassesLocations(
+                  idePlugin,
+                  Closeable { },
+                  emptyMap()
+              ),
+              null
+          )
+      )
     }
   }
 

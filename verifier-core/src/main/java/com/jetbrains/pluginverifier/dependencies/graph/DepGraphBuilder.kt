@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.dependencies.graph
 
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
@@ -46,7 +45,7 @@ class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
 
   private fun DependencyFinder.Result.getPlugin() = when (this) {
     is DependencyFinder.Result.DetailsProvided -> when (pluginDetailsCacheResult) {
-      is PluginDetailsCache.Result.Provided -> pluginDetailsCacheResult.pluginDetails.plugin
+      is PluginDetailsCache.Result.Provided -> pluginDetailsCacheResult.pluginDetails.idePlugin
       is PluginDetailsCache.Result.InvalidPlugin -> null
       is PluginDetailsCache.Result.Failed -> null
       is PluginDetailsCache.Result.FileNotFound -> null

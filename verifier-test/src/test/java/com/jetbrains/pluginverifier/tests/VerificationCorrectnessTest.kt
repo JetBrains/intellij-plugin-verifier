@@ -1,9 +1,5 @@
 package com.jetbrains.pluginverifier.tests
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
@@ -18,10 +14,11 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
+import com.jetbrains.pluginverifier.repository.LocalPluginInfo
 import com.jetbrains.pluginverifier.repository.PluginFilesBank
+import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
-import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
@@ -54,17 +51,16 @@ class VerificationCorrectnessTest {
     lateinit var redundantDeprecated: MutableSet<DeprecatedApiUsage>
 
     private fun doIdeaAndPluginVerification(ideaFile: Path, pluginFile: Path): VerificationResult {
-      val repository = LocalPluginRepository(URL("http://example.com"))
       val tempDownloadDir = createTempDir().apply { deleteOnExit() }.toPath()
-      val pluginFilesBank = PluginFilesBank.create(repository, tempDownloadDir, DiskSpaceSetting(SpaceAmount.ZERO_SPACE))
+      val pluginFilesBank = PluginFilesBank.create(PublicPluginRepository(URL("http://unused.com")), tempDownloadDir, DiskSpaceSetting(SpaceAmount.ZERO_SPACE))
 
       val idePlugin = (IdePluginManager.createManager().createPlugin(pluginFile.toFile()) as PluginCreationSuccess).plugin
-      val pluginInfo = repository.addLocalPlugin(idePlugin)
+      val pluginInfo = LocalPluginInfo(idePlugin)
       val jdkPath = TestJdkDescriptorProvider.getJdkPathForTests()
       val tempFolder = Files.createTempDirectory("")
       try {
         val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
-        val pluginDetailsCache = PluginDetailsCache(10, pluginDetailsProvider, pluginFilesBank)
+        val pluginDetailsCache = PluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider)
         return IdeDescriptorCreator.createByPath(ideaFile, IdeVersion.createIdeVersion("IU-145.500")).use { ideDescriptor ->
           val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())
           VerificationReportageImpl(EmptyReporterSetProvider).use { verificationReportage ->

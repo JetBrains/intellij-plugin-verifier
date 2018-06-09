@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.VerificationResult
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.setting.Settings
@@ -30,7 +31,8 @@ class VerifierService(
     private val pluginDetailsCache: PluginDetailsCache,
     private val ideDescriptorsCache: IdeDescriptorsCache,
     private val jdkPath: JdkPath,
-    private val verificationResultsFilter: VerificationResultFilter
+    private val verificationResultsFilter: VerificationResultFilter,
+    private val pluginRepository: PluginRepository
 ) : BaseService("VerifierService", 0, 1, TimeUnit.MINUTES, taskManager) {
 
   private val running = hashSetOf<ScheduledVerification>()
@@ -67,7 +69,8 @@ class VerifierService(
         jdkPath,
         pluginDetailsCache,
         ideDescriptorsCache,
-        jdkDescriptorsCache
+        jdkDescriptorsCache,
+        pluginRepository
     )
 
     val taskDescriptor = taskManager.enqueue(
@@ -95,7 +98,7 @@ class VerifierService(
     val decision = verificationResultsFilter.shouldSendVerificationResult(this, taskDescriptor.endTime!!, scheduledVerification)
     if (decision == VerificationResultFilter.Result.Send) {
       try {
-        verifierServiceProtocol.sendVerificationResult(this)
+        verifierServiceProtocol.sendVerificationResult(this, scheduledVerification.updateInfo)
       } catch (e: Exception) {
         logger.error("Unable to send verification result for $plugin", e)
       }

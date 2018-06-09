@@ -53,13 +53,13 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
 
     val childrenLines = arrayListOf<List<String>>()
 
-    val directEdges = dependenciesGraph.edges.filter { it.from == currentNode }
+    val directEdges = dependenciesGraph.edges.sortedBy { it.dependency.id }.filter { it.from == currentNode }
     for (edge in directEdges) {
       val childLines = recursivelyCalculateLines(edge.to)
       val headerLine = childLines.first().let { line ->
         buildString {
           if (edge.dependency.isOptional) {
-            append(OPTIONAL_DEPENDENCY_PREFIX + " ")
+            append("$OPTIONAL_DEPENDENCY_PREFIX ")
           }
           append(line)
           if (edge.dependency.isModule) {

@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.repository
 
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.misc.nameWithoutExtension
 import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
@@ -9,6 +8,7 @@ import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
 import com.jetbrains.pluginverifier.repository.downloader.UrlDownloader
 import com.jetbrains.pluginverifier.repository.files.*
 import org.apache.commons.io.FileUtils
+import java.net.URL
 import java.nio.file.Path
 
 /**
@@ -18,15 +18,21 @@ import java.nio.file.Path
  * A lock is registered for the plugin file to avoid use-remove conflicts
  * when one thread uses the file and another thread deletes it.
  */
-class PluginFilesBank(private val fileRepository: FileRepository<PluginInfo>) {
+class PluginFilesBank(
+    private val fileRepository: FileRepository<PluginInfo>,
+    private val urlProvider: (PluginInfo) -> URL?
+) : PluginFileProvider {
 
   companion object {
-    fun create(repository: PluginRepository,
-               pluginsDir: Path,
-               diskSpaceSetting: DiskSpaceSetting): PluginFilesBank {
+    fun create(
+        repository: PublicPluginRepository,
+        pluginsDir: Path,
+        diskSpaceSetting: DiskSpaceSetting,
+        urlProvider: ((PluginInfo) -> URL?) = { (it as? UpdateInfo)?.downloadUrl }
+    ): PluginFilesBank {
       val sweepPolicy = LruFileSizeSweepPolicy<PluginInfo>(diskSpaceSetting)
 
-      val urlDownloader = UrlDownloader<PluginInfo> { it.downloadUrl }
+      val urlDownloader = UrlDownloader(urlProvider)
 
       val downloadProvider = DownloadProvider(pluginsDir, urlDownloader, PluginFileNameMapper)
 
@@ -37,13 +43,13 @@ class PluginFilesBank(private val fileRepository: FileRepository<PluginInfo>) {
           .addInitialFilesFrom(pluginsDir) { getPluginInfoByFile(repository, it) }
           .build()
 
-      return PluginFilesBank(fileRepository)
+      return PluginFilesBank(fileRepository, urlProvider)
     }
 
-    private fun getPluginInfoByFile(repository: PluginRepository, file: Path): PluginInfo? {
+    private fun getPluginInfoByFile(repository: PublicPluginRepository, file: Path): UpdateInfo? {
       val name = file.nameWithoutExtension
       val updateId = name.toIntOrNull()
-      if (updateId != null && repository is PublicPluginRepository) {
+      if (updateId != null) {
         return repository.getPluginInfoById(updateId)
       }
       val pluginId = name.substringBefore("-")
@@ -64,21 +70,22 @@ class PluginFilesBank(private val fileRepository: FileRepository<PluginInfo>) {
    * is registered for the plugin file to protect it against
    * deletion or eviction while the file is used.
    */
-  fun getPluginFile(pluginInfo: PluginInfo): Result {
-    val downloadUrl = pluginInfo.downloadUrl ?: return Result.InMemoryPlugin(pluginInfo.idePlugin!!)
+  override fun getPluginFile(pluginInfo: PluginInfo): PluginFileProvider.Result {
+    val downloadUrl = urlProvider(pluginInfo)
+        ?: return PluginFileProvider.Result.NotFound("Cannot find plugin $pluginInfo")
     if (downloadUrl.protocol == "file") {
       val file = FileUtils.toFile(downloadUrl)
       return if (file.exists()) {
-        Result.Found(IdleFileLock(file.toPath()))
+        PluginFileProvider.Result.Found(IdleFileLock(file.toPath()))
       } else {
-        Result.NotFound("Plugin file doesn't exist: $file")
+        PluginFileProvider.Result.NotFound("Plugin file doesn't exist: $file")
       }
     }
     return with(fileRepository.getFile(pluginInfo)) {
       when (this) {
-        is FileRepositoryResult.Found -> Result.Found(lockedFile)
-        is FileRepositoryResult.NotFound -> Result.NotFound(reason)
-        is FileRepositoryResult.Failed -> Result.Failed(reason, error)
+        is FileRepositoryResult.Found -> PluginFileProvider.Result.Found(lockedFile)
+        is FileRepositoryResult.NotFound -> PluginFileProvider.Result.NotFound(reason)
+        is FileRepositoryResult.Failed -> PluginFileProvider.Result.Failed(reason, error)
       }
     }
   }
@@ -87,21 +94,6 @@ class PluginFilesBank(private val fileRepository: FileRepository<PluginInfo>) {
    * Returns a set of plugins available locally at the moment.
    */
   fun getAvailablePluginFiles() = fileRepository.getAvailableFiles()
-
-  /**
-   * Represents possible outcomes of [fetching] [getPluginFile] the plugin's file.
-   */
-  sealed class Result {
-
-    data class Found(val pluginFileLock: FileLock) : Result()
-
-    data class NotFound(val reason: String) : Result()
-
-    data class Failed(val reason: String, val error: Exception) : Result()
-
-    data class InMemoryPlugin(val idePlugin: IdePlugin) : Result()
-  }
-
 }
 
 object PluginFileNameMapper : FileNameMapper<PluginInfo> {

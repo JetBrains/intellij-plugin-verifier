@@ -1,9 +1,8 @@
 package com.jetbrains.pluginverifier.ide
 
-import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.misc.create
-import com.jetbrains.pluginverifier.parameters.filtering.PluginIdAndVersion
+import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import java.io.File
 import java.io.PrintWriter
@@ -13,7 +12,7 @@ object IdeResourceUtil {
 
   private val RESOURCES_JAR_PATH = "lib" + File.separator + "resources.jar"
 
-  private val BROKEN_PLUGINS_FILE_NAME = "brokenPlugins.txt"
+  private const val BROKEN_PLUGINS_FILE_NAME = "brokenPlugins.txt"
 
   private fun readIdeResourceLines(ide: Ide, jarPath: String, resourceFileName: String): List<String>? {
     val idePath = ide.idePath
@@ -33,7 +32,7 @@ object IdeResourceUtil {
     if (tokens.isEmpty()) {
       return emptyList()
     }
-    require(tokens.size > 1, { "The line contains plugin id, but doesn't contain versions: $line" })
+    require(tokens.size > 1) { "The line contains plugin id, but doesn't contain versions: $line" }
     val pluginId = tokens[0]
     return tokens.drop(1).map { PluginIdAndVersion(pluginId, it) }
   }

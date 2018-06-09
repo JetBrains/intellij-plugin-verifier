@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier
 
-import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
-import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.parameters.classes.ExternalBuildClassesSelector
 import com.jetbrains.pluginverifier.parameters.classes.MainClassesSelector
@@ -17,13 +15,15 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolverProvider
 import java.util.concurrent.Callable
 
-class PluginVerifier(private val plugin: PluginInfo,
-                     verificationReportage: VerificationReportage,
-                     private val problemFilters: List<ProblemsFilter>,
-                     private val findDeprecatedApiUsages: Boolean,
-                     private val pluginDetailsCache: PluginDetailsCache,
-                     private val clsResolverProvider: ClsResolverProvider,
-                     private val verificationTarget: VerificationTarget) : Callable<VerificationResult> {
+class PluginVerifier(
+    private val plugin: PluginInfo,
+    verificationReportage: VerificationReportage,
+    private val problemFilters: List<ProblemsFilter>,
+    private val findDeprecatedApiUsages: Boolean,
+    private val pluginDetailsCache: PluginDetailsCache,
+    private val clsResolverProvider: ClsResolverProvider,
+    private val verificationTarget: VerificationTarget
+) : Callable<VerificationResult> {
 
   private val pluginReportage = verificationReportage.createPluginReportage(plugin, verificationTarget)
 

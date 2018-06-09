@@ -111,7 +111,7 @@ class VerificationResultFilter {
 
     var decision = verificationResult.checkTooManyProblems(verificationEndTime)
     if (decision === Send) {
-      decision = verificationResult.checkFailedToFetch(verificationEndTime)
+      decision = verificationResult.checkFailedToFetch(scheduledVerification.updateInfo, verificationEndTime)
     }
 
     if (decision is Ignore) {
@@ -134,9 +134,9 @@ class VerificationResultFilter {
    * then we have to send this verification, since it seems to be stable
    * and not caused by Marketplace's failures.
    */
-  private fun VerificationResult.checkFailedToFetch(verificationEndTime: Instant): Result {
+  private fun VerificationResult.checkFailedToFetch(updateInfo: UpdateInfo, verificationEndTime: Instant): Result {
     if (this is VerificationResult.NotFound || this is VerificationResult.FailedToDownload) {
-      val attempt = failedPlugins.getOrPut(plugin as UpdateInfo) { VerificationAttempt(0, verificationEndTime) }
+      val attempt = failedPlugins.getOrPut(updateInfo) { VerificationAttempt(0, verificationEndTime) }
       attempt.attempts++
       attempt.lastVerified = verificationEndTime
       if (attempt.attempts == RECHECK_ATTEMPTS) {
@@ -145,7 +145,7 @@ class VerificationResultFilter {
          *
          * Delete the plugin info from memory for future rechecks.
          */
-        failedPlugins.remove(plugin as UpdateInfo)
+        failedPlugins.remove(updateInfo)
         return Send
       }
       return Ignore(

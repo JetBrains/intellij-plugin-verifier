@@ -1,11 +1,7 @@
 package com.jetbrains.pluginverifier.plugin
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache.Result.Provided
-import com.jetbrains.pluginverifier.repository.PluginFilesBank
-import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.*
 import com.jetbrains.pluginverifier.repository.cache.ResourceCache
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
@@ -23,13 +19,13 @@ import java.io.Closeable
  */
 class PluginDetailsCache(
     cacheSize: Int,
-    val pluginDetailsProvider: PluginDetailsProvider,
-    val pluginFilesBank: PluginFilesBank
+    val pluginFileProvider: PluginFileProvider,
+    val pluginDetailsProvider: PluginDetailsProvider
 ) : Closeable {
 
   private val resourceCache = createSizeLimitedResourceCache(
       cacheSize,
-      PluginDetailsResourceProvider(pluginDetailsProvider, pluginFilesBank),
+      PluginDetailsResourceProvider(pluginFileProvider, pluginDetailsProvider),
       { it.close() },
       "PluginDetailsCache"
   )
@@ -49,6 +45,9 @@ class PluginDetailsCache(
 
               is PluginDetailsProvider.Result.InvalidPlugin ->
                 Result.InvalidPlugin(resourceCacheEntry, pluginErrors)
+
+              is PluginDetailsProvider.Result.Failed ->
+                Result.Failed(reason, error)
             }
           }
         }
@@ -130,30 +129,27 @@ class PluginDetailsCache(
   /**
    * The bridge class that friends the [ResourceProvider] and [PluginDetailsProvider].
    */
-  private class PluginDetailsResourceProvider(private val pluginDetailsProvider: PluginDetailsProvider,
-                                              private val pluginFilesBank: PluginFilesBank) : ResourceProvider<PluginInfo, PluginDetailsProvider.Result> {
+  private class PluginDetailsResourceProvider(
+      val pluginFileProvider: PluginFileProvider,
+      val pluginDetailsProvider: PluginDetailsProvider
+  ) : ResourceProvider<PluginInfo, PluginDetailsProvider.Result> {
 
-    override fun provide(key: PluginInfo): ProvideResult<PluginDetailsProvider.Result> {
-      return with(pluginFilesBank.getPluginFile(key)) {
+    override fun provide(key: PluginInfo) = when (key) {
+      is UpdateInfo -> provideFileAndDetails(key)
+      is PluginIdAndVersion -> provideFileAndDetails(key)
+      is LocalPluginInfo -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(key, key.idePlugin))
+      is BundledPluginInfo -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(key, key.idePlugin))
+    }
+
+    private fun provideFileAndDetails(pluginInfo: PluginInfo): ProvideResult<PluginDetailsProvider.Result> {
+      return with(pluginFileProvider.getPluginFile(pluginInfo)) {
         when (this) {
-          is PluginFilesBank.Result.Found -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(key, pluginFileLock))
-          is PluginFilesBank.Result.InMemoryPlugin -> ProvideResult.Provided(createDetailsOfInMemoryPlugin(idePlugin))
-          is PluginFilesBank.Result.NotFound -> ProvideResult.NotFound(reason)
-          is PluginFilesBank.Result.Failed -> ProvideResult.Failed(reason, error)
+          is PluginFileProvider.Result.Found -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(pluginInfo, pluginFileLock))
+          is PluginFileProvider.Result.NotFound -> ProvideResult.NotFound(reason)
+          is PluginFileProvider.Result.Failed -> ProvideResult.Failed(reason, error)
         }
       }
     }
-
-    private fun createDetailsOfInMemoryPlugin(idePlugin: IdePlugin) =
-        PluginDetailsProvider.Result.Provided(
-            PluginDetails(
-                idePlugin,
-                emptyList(),
-                IdePluginClassesLocations(idePlugin, Closeable { }, emptyMap()),
-                null
-            )
-        )
-
   }
 
 }
