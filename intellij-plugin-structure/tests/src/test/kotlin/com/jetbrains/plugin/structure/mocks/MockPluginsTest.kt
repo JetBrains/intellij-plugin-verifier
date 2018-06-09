@@ -59,9 +59,7 @@ class MockPluginsTest : BaseMockPluginTest() {
   }
 
   private fun testMockWarnings(problems: List<PluginProblem>) {
-    assertContains(problems,
-        listOf(MissingOptionalDependencyConfigurationFile("plugin.xml", PluginDependencyImpl("missingDependency", true, false), "missingFile"))
-    )
+    assertContains(problems, listOf(MissingOptionalDependencyConfigurationFile("missingFile", "missingDependency")))
   }
 
   @Test

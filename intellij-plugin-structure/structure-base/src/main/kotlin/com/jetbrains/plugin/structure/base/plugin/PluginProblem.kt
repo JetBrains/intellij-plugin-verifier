@@ -1,8 +1,9 @@
 package com.jetbrains.plugin.structure.base.plugin
 
+import java.io.Serializable
 import java.util.*
 
-abstract class PluginProblem {
+abstract class PluginProblem : Serializable {
 
   abstract val level: Level
 
@@ -13,7 +14,7 @@ abstract class PluginProblem {
     WARNING
   }
 
-  final override fun toString(): String = message
+  final override fun toString() = message
 
   final override fun equals(other: Any?) = other is PluginProblem
       && level == other.level && message == other.message

@@ -11,6 +11,6 @@ class InvalidClassFileException(
     val asmError: String
 ) : IOException() {
 
-  override val message: String
+  override val message
     get() = "Unable to read class-file `$className` using the ASM Java Bytecode engineering library. The internal ASM error: $asmError."
 }

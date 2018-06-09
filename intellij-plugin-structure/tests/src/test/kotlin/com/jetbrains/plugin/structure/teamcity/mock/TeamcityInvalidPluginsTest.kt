@@ -3,7 +3,10 @@ package com.jetbrains.plugin.structure.teamcity.mock
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
+import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
 import com.jetbrains.plugin.structure.teamcity.TeamcityPlugin
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
 import com.jetbrains.plugin.structure.teamcity.problems.ForbiddenWordInPluginName
@@ -32,7 +35,7 @@ class TeamcityInvalidPluginsTest {
   @Test
   fun `incorrect plugin file type`() {
     val incorrect = temporaryFolder.newFile("incorrect.txt")
-    assertExpectedProblems(incorrect, listOf(IncorrectTeamCityPluginFile(incorrect)))
+    assertExpectedProblems(incorrect, listOf(IncorrectTeamCityPluginFile(incorrect.name)))
   }
 
   @Test()
@@ -46,7 +49,7 @@ class TeamcityInvalidPluginsTest {
   @Test
   fun `unable to extract plugin`() {
     val brokenZipArchive = temporaryFolder.newFile("broken.zip")
-    assertExpectedProblems(brokenZipArchive, listOf(UnableToExtractZip(brokenZipArchive)))
+    assertExpectedProblems(brokenZipArchive, listOf(UnableToExtractZip(brokenZipArchive.name)))
   }
 
   @Test

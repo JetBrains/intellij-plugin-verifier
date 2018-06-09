@@ -3,7 +3,10 @@ package com.jetbrains.plugin.structure.intellij.plugin;
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult;
 import com.jetbrains.plugin.structure.base.plugin.PluginManager;
 import com.jetbrains.plugin.structure.base.plugin.Settings;
-import com.jetbrains.plugin.structure.base.problems.*;
+import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound;
+import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip;
+import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor;
+import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements;
 import com.jetbrains.plugin.structure.base.utils.FileUtilKt;
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractedPlugin;
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult;
@@ -227,7 +230,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     } else if (FileUtilKt.isJar(jarOrDirectory)) {
       pluginCreator = loadDescriptorFromJarFile(jarOrDirectory, descriptorPath, myPathResolver, validateDescriptor);
     } else {
-      return new PluginCreator(descriptorPath, new IncorrectIntellijFile(jarOrDirectory), jarOrDirectory);
+      return new PluginCreator(descriptorPath, new IncorrectIntellijFile(jarOrDirectory.getName()), jarOrDirectory);
     }
     return resolveOptionalDependencies(jarOrDirectory, pluginCreator);
   }
@@ -269,7 +272,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       extractorResult = PluginExtractor.INSTANCE.extractPlugin(zipPlugin, myExtractDirectory);
     } catch (Exception e) {
       LOG.info("Unable to extract plugin zip " + zipPlugin, e);
-      return new PluginCreator(PLUGIN_XML, new UnableToExtractZip(zipPlugin), zipPlugin);
+      return new PluginCreator(PLUGIN_XML, new UnableToExtractZip(zipPlugin.getName()), zipPlugin);
     }
     if (extractorResult instanceof ExtractorResult.Success) {
       try (ExtractedPlugin extractedPlugin = ((ExtractorResult.Success) extractorResult).getExtractedPlugin()) {

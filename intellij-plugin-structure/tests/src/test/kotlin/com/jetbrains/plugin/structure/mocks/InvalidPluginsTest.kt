@@ -3,7 +3,10 @@ package com.jetbrains.plugin.structure.mocks
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
+import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
 import com.jetbrains.plugin.structure.base.utils.ZipUtil
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
@@ -52,7 +55,7 @@ class InvalidPluginsTest {
   @Test
   fun `incorrect plugin file type`() {
     val incorrect = temporaryFolder.newFile("incorrect.txt")
-    assertExpectedProblems(incorrect, listOf(IncorrectIntellijFile(incorrect)))
+    assertExpectedProblems(incorrect, listOf(IncorrectIntellijFile(incorrect.name)))
   }
 
   @Test
@@ -72,7 +75,7 @@ class InvalidPluginsTest {
   @Test
   fun `unable to extract plugin`() {
     val brokenZipArchive = temporaryFolder.newFile("broken.zip")
-    assertExpectedProblems(brokenZipArchive, listOf(UnableToExtractZip(brokenZipArchive)))
+    assertExpectedProblems(brokenZipArchive, listOf(UnableToExtractZip(brokenZipArchive.name)))
   }
 
   @Test
@@ -230,7 +233,7 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           description = "<description>Описание без английского, но достаточно длинное</description>"
         },
-        listOf(NonLatinDescription("plugin.xml")))
+        listOf(NonLatinDescription()))
   }
 
   @Test
@@ -241,7 +244,7 @@ class InvalidPluginsTest {
           <a href=\"https://github.com/myamazinguserprofile/myamazingproject\">short text</a>
           ]]></description>"""
         },
-        listOf(ShortDescription("plugin.xml")))
+        listOf(ShortDescription()))
   }
 
   @Test

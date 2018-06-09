@@ -134,7 +134,7 @@ final class PluginCreator {
     if (pluginCreationResult instanceof PluginCreationSuccess) {
       myPlugin.addOptionalDescriptor(configurationFile, ((PluginCreationSuccess<IdePlugin>) pluginCreationResult).getPlugin());
     } else {
-      registerProblem(new MissingOptionalDependencyConfigurationFile(myDescriptorPath, pluginDependency, configurationFile));
+      registerProblem(new MissingOptionalDependencyConfigurationFile(configurationFile, pluginDependency.getId()));
     }
   }
 
@@ -264,7 +264,7 @@ final class PluginCreator {
     String textDescription = Jsoup.parseBodyFragment(htmlDescription).text();
 
     if (textDescription.length() < 40) {
-      registerProblem(new ShortDescription(myDescriptorPath));
+      registerProblem(new ShortDescription());
       return;
     }
 
@@ -276,7 +276,7 @@ final class PluginCreator {
 
     int latinSymbols = StringUtil.numberOfPatternMatches(textDescription, Pattern.compile("[A-Za-z]|\\s"));
     if (latinSymbols < 40) {
-      registerProblem(new NonLatinDescription(myDescriptorPath));
+      registerProblem(new NonLatinDescription());
     }
   }
 

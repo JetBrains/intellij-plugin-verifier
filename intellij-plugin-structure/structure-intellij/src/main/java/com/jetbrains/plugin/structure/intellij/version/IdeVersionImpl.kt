@@ -1,13 +1,16 @@
 package com.jetbrains.plugin.structure.intellij.version
 
 import com.jetbrains.plugin.structure.intellij.utils.StringUtil
+import java.io.InvalidObjectException
+import java.io.ObjectInputStream
+import java.io.Serializable
 import java.util.*
 
-/**
- * @author Sergey Evdokimov
- */
-class IdeVersionImpl private constructor(private val productCode: String, vararg components: Int, private val isSnapshot: Boolean = false) : IdeVersion() {
-  private val myComponents = components
+class IdeVersionImpl(
+    private val productCode: String,
+    private val components: IntArray,
+    private val isSnapshot: Boolean = false
+) : IdeVersion() {
 
   override fun compareTo(other: IdeVersion): Int {
     if (other !is IdeVersionImpl) {
@@ -23,10 +26,10 @@ class IdeVersionImpl private constructor(private val productCode: String, vararg
       return 0
     }
 
-    val c1 = myComponents
-    val c2 = other.myComponents
+    val c1 = components
+    val c2 = other.components
 
-    for (i in 0..Math.min(c1.size, c2.size) - 1) {
+    for (i in 0 until Math.min(c1.size, c2.size)) {
       if (c1[i] == c2[i] && c1[i] == SNAPSHOT_VALUE) return 0
       if (c1[i] == SNAPSHOT_VALUE) return 1
       if (c2[i] == SNAPSHOT_VALUE) return -1
@@ -44,10 +47,10 @@ class IdeVersionImpl private constructor(private val productCode: String, vararg
       builder.append(productCode).append('-')
     }
 
-    builder.append(myComponents[0])
-    for (i in 1..myComponents.size - 1) {
-      if (myComponents[i] != SNAPSHOT_VALUE) {
-        builder.append('.').append(myComponents[i])
+    builder.append(components[0])
+    for (i in 1 until components.size) {
+      if (components[i] != SNAPSHOT_VALUE) {
+        builder.append('.').append(components[i])
       } else if (includeSnapshotMarker) {
         builder.append('.').append(if (isSnapshot) SNAPSHOT else STAR)
       }
@@ -56,54 +59,39 @@ class IdeVersionImpl private constructor(private val productCode: String, vararg
     return builder.toString()
   }
 
-  override fun getComponents(): IntArray {
-    return myComponents.clone()
-  }
 
-  override fun getBaselineVersion(): Int {
-    return myComponents[0]
-  }
+  override fun getComponents() = components.clone()
+  override fun getBaselineVersion() = components[0]
 
-  override fun getProductCode(): String = productCode
+  override fun getProductCode() = productCode
 
-  override fun toString(): String {
-    return asString()
-  }
+  override fun toString() = asString()
 
-  override fun getBuild(): Int {
-    return myComponents[1]
-  }
+  override fun getBuild() = components[1]
 
-  override fun isSnapshot(): Boolean {
-    return isSnapshot
-  }
+  override fun isSnapshot() = isSnapshot
 
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other == null || javaClass != other.javaClass) return false
+  // writeReplace method for the serialization proxy pattern
+  private fun writeReplace(): Any = SerializationProxy(asString())
 
-    val that = other as IdeVersionImpl?
+  // readObject method for the serialization proxy pattern
+  @Suppress("UNUSED_PARAMETER")
+  private fun readObject(stream: ObjectInputStream): Unit = throw InvalidObjectException("Proxy required")
 
-    return productCode == that!!.productCode &&
-        isSnapshot == that.isSnapshot &&
-        Arrays.equals(myComponents, that.myComponents)
-
-  }
-
-  override fun hashCode(): Int {
-    var result = productCode.hashCode()
-    result = 31 * result + Arrays.hashCode(myComponents)
-    result = 31 * result + if (isSnapshot) 1 else 0
-    return result
+  private class SerializationProxy(val version: String) : Serializable {
+    // readResolve method for SerializationProxy
+    private fun readResolve(): Any = fromString(version)
   }
 
   companion object {
 
-    private val BUILD_NUMBER = "__BUILD_NUMBER__"
-    private val STAR = "*"
-    private val SNAPSHOT = "SNAPSHOT"
-    private val FALLBACK_VERSION = "999.SNAPSHOT"
-    private val SNAPSHOT_VALUE = Integer.MAX_VALUE
+    private const val serialVersionUID = 0L
+
+    private const val BUILD_NUMBER = "__BUILD_NUMBER__"
+    private const val STAR = "*"
+    private const val SNAPSHOT = "SNAPSHOT"
+    private const val FALLBACK_VERSION = "999.SNAPSHOT"
+    private const val SNAPSHOT_VALUE = Integer.MAX_VALUE
 
     @Throws(IllegalArgumentException::class)
     fun fromString(version: String): IdeVersionImpl {
@@ -113,7 +101,7 @@ class IdeVersionImpl private constructor(private val productCode: String, vararg
 
       if (BUILD_NUMBER == version || SNAPSHOT == version) {
         val fallback = fromString(FALLBACK_VERSION)
-        return IdeVersionImpl("", *fallback.myComponents, isSnapshot = true)
+        return IdeVersionImpl("", fallback.components, isSnapshot = true)
       }
 
       var code = version
@@ -133,7 +121,7 @@ class IdeVersionImpl private constructor(private val productCode: String, vararg
       if (baselineVersionSeparator > 0) {
         val baselineVersionString = code.substring(0, baselineVersionSeparator)
         if (baselineVersionString.trim { it <= ' ' }.isEmpty()) {
-          throw IllegalArgumentException("Invalid version number: " + version)
+          throw IllegalArgumentException("Invalid version number: $version")
         }
 
         val components = code.split('.')
@@ -158,18 +146,18 @@ class IdeVersionImpl private constructor(private val productCode: String, vararg
           intComponents[i] = intComponentsList[i]
         }
 
-        return IdeVersionImpl(productCode, *intComponents, isSnapshot = isSnapshot)
+        return IdeVersionImpl(productCode, intComponents, isSnapshot = isSnapshot)
 
       } else {
         buildNumber = parseBuildNumber(version, code)
 
         if (buildNumber <= 2000) {
           // it's probably a baseline, not a build number
-          return IdeVersionImpl(productCode, buildNumber, 0)
+          return IdeVersionImpl(productCode, intArrayOf(buildNumber, 0))
         }
 
         baselineVersion = getBaseLineForHistoricBuilds(buildNumber)
-        return IdeVersionImpl(productCode, baselineVersion, buildNumber)
+        return IdeVersionImpl(productCode, intArrayOf(baselineVersion, buildNumber))
       }
 
     }
@@ -181,27 +169,26 @@ class IdeVersionImpl private constructor(private val productCode: String, vararg
       try {
         return Integer.parseInt(code)
       } catch (e: NumberFormatException) {
-        throw IllegalArgumentException("Invalid version number: " + version)
+        throw IllegalArgumentException("Invalid version number: $version")
       }
 
     }
 
     // See http://www.jetbrains.net/confluence/display/IDEADEV/Build+Number+Ranges for historic build ranges
-    private fun getBaseLineForHistoricBuilds(bn: Int): Int {
-      when {
-        bn >= 10000 -> return 88 // Maia, 9x builds
-        bn >= 9500 -> return 85 // 8.1 builds
-        bn >= 9100 -> return 81 // 8.0.x builds
-        bn >= 8000 -> return 80 // 8.0, including pre-release builds
-        bn >= 7500 -> return 75 // 7.0.2+
-        bn >= 7200 -> return 72 // 7.0 final
-        bn >= 6900 -> return 69 // 7.0 pre-M2
-        bn >= 6500 -> return 65 // 7.0 pre-M1
-        bn >= 6000 -> return 60 // 6.0.2+
-        bn >= 5000 -> return 55 // 6.0 branch, including all 6.0 EAP builds
-        bn >= 4000 -> return 50 // 5.1 branch
-        else -> return 40
-      }
-    }
+    private fun getBaseLineForHistoricBuilds(bn: Int) =
+        when {
+          bn >= 10000 -> 88 // Maia, 9x builds
+          bn >= 9500 -> 85 // 8.1 builds
+          bn >= 9100 -> 81 // 8.0.x builds
+          bn >= 8000 -> 80 // 8.0, including pre-release builds
+          bn >= 7500 -> 75 // 7.0.2+
+          bn >= 7200 -> 72 // 7.0 final
+          bn >= 6900 -> 69 // 7.0 pre-M2
+          bn >= 6500 -> 65 // 7.0 pre-M1
+          bn >= 6000 -> 60 // 6.0.2+
+          bn >= 5000 -> 55 // 6.0 branch, including all 6.0 EAP builds
+          bn >= 4000 -> 50 // 5.1 branch
+          else -> 40
+        }
   }
 }

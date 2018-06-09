@@ -3,7 +3,11 @@ package com.jetbrains.plugin.structure.intellij.version;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class IdeVersion implements Comparable<IdeVersion> {
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Objects;
+
+public abstract class IdeVersion implements Comparable<IdeVersion>, Serializable {
 
   /**
    * Tries to parse specified string as IDE version and throws an {@link IllegalArgumentException}
@@ -65,11 +69,13 @@ public abstract class IdeVersion implements Comparable<IdeVersion> {
    * @param includeSnapshotMarker whether to append <i>SNAPSHOT</i> marker (if present)
    * @return string presentation of the ide version
    */
+  @NotNull
   public abstract String asString(boolean includeProductCode, boolean includeSnapshotMarker);
 
   /**
    * @return Returns a presentation with the product code and <i>SNAPSHOT</i> marker (if present)
    */
+  @NotNull
   public String asString() {
     return asString(true, true);
   }
@@ -93,4 +99,23 @@ public abstract class IdeVersion implements Comparable<IdeVersion> {
 
   public abstract int[] getComponents();
 
+  @Override
+  final public int hashCode() {
+    return Arrays.hashCode(getComponents()) + Objects.hash(getProductCode(), isSnapshot());
+  }
+
+  @Override
+  final public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+
+    if (obj instanceof IdeVersion) {
+      IdeVersion other = (IdeVersion) obj;
+      return getProductCode().equals(other.getProductCode())
+          && isSnapshot() == other.isSnapshot()
+          && Arrays.equals(getComponents(), other.getComponents());
+    }
+    return false;
+  }
 }

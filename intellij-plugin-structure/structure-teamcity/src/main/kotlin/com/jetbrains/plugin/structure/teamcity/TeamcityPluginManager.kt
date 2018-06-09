@@ -1,7 +1,10 @@
 package com.jetbrains.plugin.structure.teamcity
 
 import com.jetbrains.plugin.structure.base.plugin.*
-import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
+import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
+import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
 import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.teamcity.beans.extractPluginBean
 import com.jetbrains.plugin.structure.teamcity.problems.IncorrectTeamCityPluginFile
@@ -31,7 +34,7 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
     return when {
       pluginFile.isDirectory -> loadDescriptorFromDirectory(pluginFile)
       pluginFile.isZip() -> loadDescriptorFromZip(pluginFile)
-      else -> PluginCreationFail(IncorrectTeamCityPluginFile(pluginFile))
+      else -> PluginCreationFail(IncorrectTeamCityPluginFile(pluginFile.name))
     }
   }
 
@@ -39,7 +42,7 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
     loadDescriptorFromZip(ZipFile(pluginFile))
   } catch (e: IOException) {
     LOG.info("Unable to extract plugin zip: $pluginFile", e)
-    PluginCreationFail(UnableToExtractZip(pluginFile))
+    PluginCreationFail(UnableToExtractZip(pluginFile.name))
   }
 
   private fun loadDescriptorFromZip(pluginFile: ZipFile): PluginCreationResult<TeamcityPlugin> {
