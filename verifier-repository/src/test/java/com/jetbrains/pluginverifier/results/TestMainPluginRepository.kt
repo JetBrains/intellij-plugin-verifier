@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.results
 
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginFileProvider
 import com.jetbrains.pluginverifier.repository.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
@@ -54,6 +55,7 @@ class TestMainPluginRepository {
     val update = updates[0]
     assertEquals("Pythonid", update.pluginId)
     assertEquals("JetBrains", update.vendor)
+
   }
 
   @Test
