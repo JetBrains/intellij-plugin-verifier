@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.tasks.common
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.misc.pluralize

@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.plugin
 
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache.Result.Provided
 import com.jetbrains.pluginverifier.repository.*
 import com.jetbrains.pluginverifier.repository.cache.ResourceCache

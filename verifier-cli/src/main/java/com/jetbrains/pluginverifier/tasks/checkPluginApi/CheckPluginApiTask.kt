@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.tasks.checkPluginApi
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
+import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage

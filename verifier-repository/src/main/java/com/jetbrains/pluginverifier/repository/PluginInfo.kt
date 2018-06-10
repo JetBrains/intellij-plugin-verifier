@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.repository
 
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.net.URL
 import java.util.*
 

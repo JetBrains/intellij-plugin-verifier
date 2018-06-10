@@ -1,5 +1,11 @@
 package com.jetbrains.pluginverifier.tests.tasks
 
+import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
+import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion.createIdeVersion
 import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.ide.IdeDescriptor

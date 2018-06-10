@@ -1,7 +1,15 @@
 package com.jetbrains.pluginverifier.plugin
 
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
+import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.closeOnException
+import com.jetbrains.pluginverifier.repository.LocalPluginInfo
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import java.nio.file.Path

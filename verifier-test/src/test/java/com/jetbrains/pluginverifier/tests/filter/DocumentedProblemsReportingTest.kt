@@ -1,5 +1,8 @@
 package com.jetbrains.pluginverifier.tests.filter
 
+import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
+import com.jetbrains.plugin.structure.classes.resolvers.FixedClassesResolver
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ResultHolder
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilter

@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.repository.local
 
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.LocalPluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.VERSION_COMPARATOR

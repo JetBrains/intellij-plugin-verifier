@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.tests.mocks
 
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository

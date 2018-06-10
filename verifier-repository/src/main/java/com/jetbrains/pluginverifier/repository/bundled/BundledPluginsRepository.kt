@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.repository.bundled
 
+import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.BundledPluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.VERSION_COMPARATOR
@@ -34,7 +36,7 @@ class BundledPluginsRepository(
       getAllPlugins().filter { it.pluginId == pluginId }
 
   override fun getIdOfPluginDeclaringModule(moduleId: String) =
-      ide.getPluginByModule(moduleId).pluginId
+      ide.getPluginByModule(moduleId)?.pluginId
 
   fun findPluginById(pluginId: String) = getAllVersionsOfPlugin(pluginId).firstOrNull()
 

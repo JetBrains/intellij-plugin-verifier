@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier
 
+import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
+import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.parameters.classes.ExternalBuildClassesSelector
 import com.jetbrains.pluginverifier.parameters.classes.MainClassesSelector

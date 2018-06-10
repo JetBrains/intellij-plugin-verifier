@@ -1,5 +1,8 @@
 package com.jetbrains.pluginverifier.tests.dependencies
 
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode

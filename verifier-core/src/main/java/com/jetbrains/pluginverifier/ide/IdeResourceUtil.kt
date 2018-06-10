@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.ide
 
+import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion

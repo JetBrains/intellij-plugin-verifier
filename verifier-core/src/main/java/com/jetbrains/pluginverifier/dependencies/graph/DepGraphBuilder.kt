@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.dependencies.graph
 
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache

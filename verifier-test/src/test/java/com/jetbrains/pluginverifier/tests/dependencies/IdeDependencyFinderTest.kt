@@ -1,5 +1,10 @@
 package com.jetbrains.pluginverifier.tests.dependencies
 
+import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.graph.DepEdge
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter

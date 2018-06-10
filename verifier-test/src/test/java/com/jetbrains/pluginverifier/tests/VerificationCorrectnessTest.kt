@@ -1,5 +1,9 @@
 package com.jetbrains.pluginverifier.tests
 
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor

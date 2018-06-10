@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.options
 
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorCreator
 import com.jetbrains.pluginverifier.ide.IdeResourceUtil

@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier
 
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import java.nio.file.Path
