@@ -49,6 +49,7 @@ class VerificationResultFilter {
   private val _ignoredVerifications = hashMapOf<ScheduledVerification, Result.Ignore>()
 
   val ignoredVerifications: Map<ScheduledVerification, Result.Ignore>
+    @Synchronized
     get() = _ignoredVerifications
 
   /**
@@ -67,7 +68,7 @@ class VerificationResultFilter {
     /**
      * Check if this verification is ignored.
      */
-    if (ignoredVerifications.containsKey(scheduledVerification)) {
+    if (_ignoredVerifications.containsKey(scheduledVerification)) {
       return true
     }
 
@@ -136,7 +137,25 @@ class VerificationResultFilter {
    */
   private fun VerificationResult.checkFailedToFetch(updateInfo: UpdateInfo, verificationEndTime: Instant): Result {
     if (this is VerificationResult.NotFound || this is VerificationResult.FailedToDownload) {
-      val attempt = failedPlugins.getOrPut(updateInfo) { VerificationAttempt(0, verificationEndTime) }
+      var attempt = failedPlugins[updateInfo]
+      /**
+       * Check that it is too early to increment "attempts" counter
+       * because the last failed attempt was not that long ago.
+       */
+      if (attempt != null && attempt.lastVerified.plus(RECHECK_ATTEMPT_TIMEOUT).isAfter(verificationEndTime)) {
+        return Ignore(
+            toString(),
+            verificationEndTime,
+            "Plugin $plugin couldn't be fetched from the repository in ${attempt.attempts} " + "attempt".pluralize(attempt.attempts) + ". " +
+                "It is too early to re-fetch the failed plugin. Waiting for timeout."
+        )
+      }
+
+      if (attempt == null) {
+        attempt = VerificationAttempt(0, verificationEndTime)
+        failedPlugins[updateInfo] = attempt
+      }
+
       attempt.attempts++
       attempt.lastVerified = verificationEndTime
       if (attempt.attempts == RECHECK_ATTEMPTS) {
@@ -151,7 +170,8 @@ class VerificationResultFilter {
       return Ignore(
           toString(),
           verificationEndTime,
-          "Plugin $plugin couldn't be fetched from the repository in ${attempt.attempts} " + "attempt".pluralize(attempt.attempts) + ". Will recheck after timeout."
+          "Plugin $plugin couldn't be fetched from the repository in ${attempt.attempts} " + "attempt".pluralize(attempt.attempts) + ". " +
+              "Will recheck after timeout."
       )
     }
     return Send
