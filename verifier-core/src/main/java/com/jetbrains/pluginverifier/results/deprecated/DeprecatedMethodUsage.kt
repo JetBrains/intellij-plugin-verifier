@@ -18,9 +18,11 @@ data class DeprecatedMethodUsage(
     override val deprecatedElement: MethodLocation,
     override val usageLocation: Location
 ) : DeprecatedApiUsage() {
-  override val shortDescription = "Deprecated " + deprecatedElement.methodOrConstructorWord + " ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)} invocation"
+  override val shortDescription
+    get() = "Deprecated " + deprecatedElement.methodOrConstructorWord + " ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)} invocation"
 
-  override val fullDescription = "Deprecated " + deprecatedElement.methodOrConstructorWord + " ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)} is invoked in " + usageLocation.formatDeprecatedUsageLocation()
+  override val fullDescription
+    get() = "Deprecated " + deprecatedElement.methodOrConstructorWord + " ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)} is invoked in " + usageLocation.formatDeprecatedUsageLocation()
 
   override val deprecatedElementType: DeprecatedElementType
     get() = if (deprecatedElement.isConstructor) {

@@ -13,5 +13,6 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 data class DependenciesCycleWarning(val cyclePresentation: String) : PluginProblem() {
   override val level = Level.WARNING
 
-  override val message = "The plugin is on a dependencies cycle: $cyclePresentation"
+  override val message
+    get() = "The plugin is on a dependencies cycle: $cyclePresentation"
 }

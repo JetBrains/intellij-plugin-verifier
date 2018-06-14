@@ -6,9 +6,11 @@ import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import java.util.*
 
-class InstanceAccessOfStaticFieldProblem(val field: FieldLocation,
-                                         val accessor: MethodLocation,
-                                         val instruction: Instruction) : CompatibilityProblem() {
+class InstanceAccessOfStaticFieldProblem(
+    val field: FieldLocation,
+    val accessor: MethodLocation,
+    val instruction: Instruction
+) : CompatibilityProblem() {
 
   override val problemType
     get() = "Instance field changed to static field"

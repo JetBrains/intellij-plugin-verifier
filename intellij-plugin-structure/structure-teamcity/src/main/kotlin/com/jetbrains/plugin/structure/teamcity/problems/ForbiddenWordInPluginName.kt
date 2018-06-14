@@ -8,6 +8,7 @@ object ForbiddenWordInPluginName : PluginProblem() {
   override val level
     get() = PluginProblem.Level.ERROR
 
-  override val message = "Plugin name should not contain the following words: ${forbiddenWords.joinToString()}"
+  override val message
+    get() = "Plugin name should not contain the following words: ${forbiddenWords.joinToString()}"
 
 }

@@ -33,15 +33,16 @@ class MethodNotFoundProblem(
         unresolvedMethod.formatMethodReference(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME)
     )
 
-  private val descriptionMainPart = buildString {
-    append("${caller.methodOrConstructorWord.capitalize()} {0} contains an *{1}* instruction referencing an unresolved {2} {3}. ".formatMessage(
-        caller.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE),
-        instruction,
-        unresolvedMethod.methodOrConstructorWord,
-        unresolvedMethod.formatMethodReference(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME)
-    ))
-    append("This can lead to **NoSuchMethodError** exception at runtime.")
-  }
+  private val descriptionMainPart
+    get() = buildString {
+      append("${caller.methodOrConstructorWord.capitalize()} {0} contains an *{1}* instruction referencing an unresolved {2} {3}. ".formatMessage(
+          caller.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE),
+          instruction,
+          unresolvedMethod.methodOrConstructorWord,
+          unresolvedMethod.formatMethodReference(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME)
+      ))
+      append("This can lead to **NoSuchMethodError** exception at runtime.")
+    }
 
   override val fullDescription
     get() = buildString {

@@ -2,7 +2,10 @@ package com.jetbrains.pluginverifier.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache.Result.Provided
-import com.jetbrains.pluginverifier.repository.*
+import com.jetbrains.pluginverifier.repository.BundledPluginInfo
+import com.jetbrains.pluginverifier.repository.LocalPluginInfo
+import com.jetbrains.pluginverifier.repository.PluginFileProvider
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.cache.ResourceCache
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
@@ -136,10 +139,9 @@ class PluginDetailsCache(
   ) : ResourceProvider<PluginInfo, PluginDetailsProvider.Result> {
 
     override fun provide(key: PluginInfo) = when (key) {
-      is UpdateInfo -> provideFileAndDetails(key)
-      is PluginIdAndVersion -> provideFileAndDetails(key)
       is LocalPluginInfo -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(key, key.idePlugin))
       is BundledPluginInfo -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(key, key.idePlugin))
+      else -> provideFileAndDetails(key)
     }
 
     private fun provideFileAndDetails(pluginInfo: PluginInfo): ProvideResult<PluginDetailsProvider.Result> {

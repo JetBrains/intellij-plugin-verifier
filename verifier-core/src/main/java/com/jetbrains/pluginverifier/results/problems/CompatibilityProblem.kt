@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.results.problems
 
+import java.io.Serializable
+
 /**
  * Base class for all compatibility problems.
  *
@@ -12,7 +14,7 @@ package com.jetbrains.pluginverifier.results.problems
  * Each problem has a certain [problemType],
  * which can be used to group similar problems.
  */
-abstract class CompatibilityProblem {
+abstract class CompatibilityProblem : Serializable {
 
   abstract val problemType: String
 

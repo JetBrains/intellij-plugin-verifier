@@ -2,17 +2,22 @@ package com.jetbrains.plugin.structure.base.problems
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 
-open class IncorrectPluginFile(fileName: String, expectedFileType: String) : PluginProblem() {
+open class IncorrectPluginFile(
+    private val fileName: String,
+    private val expectedFileType: String
+) : PluginProblem() {
   override val level
     get() = Level.ERROR
 
-  override val message = "Incorrect plugin file $fileName. Must be a $expectedFileType"
+  override val message
+    get() = "Incorrect plugin file $fileName. Must be a $expectedFileType"
 }
 
-class UnableToExtractZip(fileName: String) : PluginProblem() {
+class UnableToExtractZip(private val fileName: String) : PluginProblem() {
 
   override val level
     get() = Level.ERROR
 
-  override val message = "Unable to extract plugin zip file $fileName"
+  override val message
+    get() = "Unable to extract plugin zip file $fileName"
 }

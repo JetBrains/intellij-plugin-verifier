@@ -14,8 +14,9 @@ import com.jetbrains.pluginverifier.results.presentation.MethodReturnTypeOption.
 import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
 import com.jetbrains.pluginverifier.results.presentation.formatFieldLocation
 import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
+import java.io.Serializable
 
-abstract class DeprecatedApiUsage {
+abstract class DeprecatedApiUsage : Serializable {
   abstract val deprecatedElement: Location
 
   abstract val usageLocation: Location

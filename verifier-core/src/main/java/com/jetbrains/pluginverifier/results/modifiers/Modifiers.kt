@@ -1,6 +1,8 @@
 package com.jetbrains.pluginverifier.results.modifiers
 
-data class Modifiers(private val flags: Int) {
+import java.io.Serializable
+
+data class Modifiers(private val flags: Int) : Serializable {
 
   enum class Modifier(val flag: Int) {
     PUBLIC(0x0001), // class, field, method

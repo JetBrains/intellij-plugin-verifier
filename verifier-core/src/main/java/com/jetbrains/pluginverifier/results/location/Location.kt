@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.results.location
 
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.results.presentation.*
+import java.io.Serializable
 import java.util.*
 
 /**
@@ -9,11 +10,13 @@ import java.util.*
  * such as [class][ClassLocation], [method][MethodLocation]
  * or [field][FieldLocation].
  */
-sealed class Location
+sealed class Location : Serializable
 
-data class ClassLocation(val className: String,
-                         val signature: String,
-                         val modifiers: Modifiers) : Location() {
+data class ClassLocation(
+    val className: String,
+    val signature: String,
+    val modifiers: Modifiers
+) : Location() {
 
   override fun equals(other: Any?) = other is ClassLocation && className == other.className
 
@@ -22,11 +25,13 @@ data class ClassLocation(val className: String,
   override fun toString() = formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.WITH_GENERICS)
 }
 
-data class FieldLocation(val hostClass: ClassLocation,
-                         val fieldName: String,
-                         val fieldDescriptor: String,
-                         val signature: String,
-                         val modifiers: Modifiers) : Location() {
+data class FieldLocation(
+    val hostClass: ClassLocation,
+    val fieldName: String,
+    val fieldDescriptor: String,
+    val signature: String,
+    val modifiers: Modifiers
+) : Location() {
 
   override fun equals(other: Any?) = other is FieldLocation
       && hostClass == other.hostClass
@@ -38,12 +43,14 @@ data class FieldLocation(val hostClass: ClassLocation,
   override fun toString() = formatFieldLocation(HostClassOption.FULL_HOST_WITH_SIGNATURE, FieldTypeOption.SIMPLE_TYPE)
 }
 
-data class MethodLocation(val hostClass: ClassLocation,
-                          val methodName: String,
-                          val methodDescriptor: String,
-                          val parameterNames: List<String>,
-                          val signature: String,
-                          val modifiers: Modifiers) : Location() {
+data class MethodLocation(
+    val hostClass: ClassLocation,
+    val methodName: String,
+    val methodDescriptor: String,
+    val parameterNames: List<String>,
+    val signature: String,
+    val modifiers: Modifiers
+) : Location() {
 
   override fun equals(other: Any?) = other is MethodLocation
       && hostClass == other.hostClass

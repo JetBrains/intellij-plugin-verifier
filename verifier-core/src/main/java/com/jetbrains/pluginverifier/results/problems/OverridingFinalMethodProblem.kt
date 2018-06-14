@@ -14,8 +14,10 @@ import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
 import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 import java.util.*
 
-class OverridingFinalMethodProblem(val finalMethod: MethodLocation,
-                                   val invalidClass: ClassLocation) : CompatibilityProblem() {
+class OverridingFinalMethodProblem(
+    val finalMethod: MethodLocation,
+    val invalidClass: ClassLocation
+) : CompatibilityProblem() {
 
   override val problemType
     get() = "Final method overriding"

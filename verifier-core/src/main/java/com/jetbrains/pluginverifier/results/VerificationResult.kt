@@ -12,6 +12,7 @@ import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
+import java.io.Serializable
 
 /**
  * Represents possible results of verifying [plugin] against [verificationTarget].
@@ -25,7 +26,7 @@ import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
  * - [NotFound]
  * - [FailedToDownload]
  */
-sealed class VerificationResult {
+sealed class VerificationResult : Serializable {
 
   /**
    * Verified plugin.
@@ -107,6 +108,10 @@ sealed class VerificationResult {
    */
   class OK : VerificationResult() {
     override fun toString() = "OK"
+
+    companion object {
+      private const val serialVersionUID = 0L
+    }
   }
 
   /**
@@ -116,6 +121,10 @@ sealed class VerificationResult {
    */
   class StructureWarnings : VerificationResult() {
     override fun toString() = "Found " + "warning".pluralizeWithNumber(pluginStructureWarnings.size)
+
+    companion object {
+      private const val serialVersionUID = 0L
+    }
   }
 
   /**
@@ -179,6 +188,10 @@ sealed class VerificationResult {
 
     val directMissingDependencies: List<MissingDependency>
       get() = dependenciesGraph.verifiedPlugin.missingDependencies
+
+    companion object {
+      private const val serialVersionUID = 0L
+    }
   }
 
   /**
@@ -190,6 +203,10 @@ sealed class VerificationResult {
   class CompatibilityProblems : VerificationResult() {
     override fun toString() = "Found ${compatibilityProblems.size} compatibility " + "problem".pluralize(compatibilityProblems.size) +
         " and ${pluginStructureWarnings.size} " + "warning".pluralize(pluginStructureWarnings.size)
+
+    companion object {
+      private const val serialVersionUID = 0L
+    }
   }
 
   /**
@@ -199,6 +216,10 @@ sealed class VerificationResult {
    */
   class InvalidPlugin : VerificationResult() {
     override fun toString() = "Plugin is invalid"
+
+    companion object {
+      private const val serialVersionUID = 0L
+    }
   }
 
   /**
@@ -208,6 +229,10 @@ sealed class VerificationResult {
    */
   class NotFound : VerificationResult() {
     override fun toString() = "Plugin is not found"
+
+    companion object {
+      private const val serialVersionUID = 0L
+    }
   }
 
   /**
@@ -218,6 +243,10 @@ sealed class VerificationResult {
    */
   class FailedToDownload : VerificationResult() {
     override fun toString() = "Failed to download plugin"
+
+    companion object {
+      private const val serialVersionUID = 0L
+    }
   }
 
 }

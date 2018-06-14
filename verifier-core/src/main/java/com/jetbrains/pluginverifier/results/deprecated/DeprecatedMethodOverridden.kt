@@ -18,11 +18,14 @@ class DeprecatedMethodOverridden(
     override val deprecatedElement: MethodLocation,
     override val usageLocation: MethodLocation
 ) : DeprecatedApiUsage() {
-  override val shortDescription = "Deprecated method ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)} is overridden"
+  override val shortDescription
+    get() = "Deprecated method ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)} is overridden"
 
-  override val fullDescription = "Deprecated method ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)} is overridden in class ${usageLocation.hostClass.formatClassLocation(FULL_NAME, NO_GENERICS)}"
+  override val fullDescription
+    get() = "Deprecated method ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)} is overridden in class ${usageLocation.hostClass.formatClassLocation(FULL_NAME, NO_GENERICS)}"
 
-  override val deprecatedElementType = DeprecatedElementType.METHOD
+  override val deprecatedElementType
+    get() = DeprecatedElementType.METHOD
 
   override fun equals(other: Any?) = other is DeprecatedMethodOverridden
       && deprecatedElement == other.deprecatedElement

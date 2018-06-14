@@ -7,6 +7,8 @@ public class PluginDependencyImpl implements PluginDependency {
   private final boolean myIsOptional;
   private final boolean myIsModule;
 
+  private static final long serialVersionUID = 0;
+
   public PluginDependencyImpl(@NotNull String id, @NotNull final Boolean isOptional, boolean isModule) {
     myId = id;
     myIsOptional = isOptional;

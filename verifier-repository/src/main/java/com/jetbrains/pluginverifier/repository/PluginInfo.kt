@@ -2,13 +2,16 @@ package com.jetbrains.pluginverifier.repository
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import java.io.InvalidObjectException
+import java.io.ObjectInputStream
+import java.io.Serializable
 import java.net.URL
 import java.util.*
 
 /**
  * Identifier of an IDE plugin.
  */
-sealed class PluginInfo(
+open class PluginInfo(
     val pluginId: String,
 
     val version: String,
@@ -18,7 +21,7 @@ sealed class PluginInfo(
     val untilBuild: IdeVersion?,
 
     val vendor: String?
-) {
+) : Serializable {
 
   fun isCompatibleWith(ideVersion: IdeVersion) =
       (sinceBuild == null || sinceBuild <= ideVersion) && (untilBuild == null || ideVersion <= untilBuild)
@@ -33,6 +36,10 @@ sealed class PluginInfo(
   final override fun hashCode() = Objects.hash(pluginId, version)
 
   final override fun toString() = presentableName
+
+  companion object {
+    private const val serialVersionUID = 0L
+  }
 
 }
 
@@ -54,6 +61,18 @@ class LocalPluginInfo(
 
   override val presentableName
     get() = idePlugin.toString()
+
+  // writeReplace method for serialization
+  private fun writeReplace(): Any = PluginInfo(pluginId, version, sinceBuild, untilBuild, vendor)
+
+  // readObject method for serialization
+  @Suppress("UNUSED_PARAMETER")
+  private fun readObject(stream: ObjectInputStream): Unit = throw InvalidObjectException("Must have been serialized to PluginInfo")
+
+  companion object {
+    private const val serialVersionUID = 0L
+  }
+
 }
 
 /**
@@ -68,7 +87,20 @@ class BundledPluginInfo(
     idePlugin.sinceBuild,
     idePlugin.untilBuild,
     idePlugin.vendor
-)
+) {
+
+  // writeReplace method for serialization
+  private fun writeReplace(): Any = PluginInfo(pluginId, version, sinceBuild, untilBuild, vendor)
+
+  // readObject method for serialization
+  @Suppress("UNUSED_PARAMETER")
+  private fun readObject(stream: ObjectInputStream): Unit = throw InvalidObjectException("Must have been serialized to PluginInfo")
+
+  companion object {
+    private const val serialVersionUID = 0L
+  }
+
+}
 
 /**
  * Identifier of a plugin hosted in the Plugin Repository.

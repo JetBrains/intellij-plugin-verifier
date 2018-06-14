@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.dependencies
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphCycleFinder
 import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphWalker
+import java.io.Serializable
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -15,9 +16,11 @@ import kotlin.collections.ArrayList
  * The [nodes] [DependencyNode] contain additional data
  * on [missing] [MissingDependency] dependencies.
  */
-data class DependenciesGraph(val verifiedPlugin: DependencyNode,
-                             val vertices: List<DependencyNode>,
-                             val edges: List<DependencyEdge>) {
+data class DependenciesGraph(
+    val verifiedPlugin: DependencyNode,
+    val vertices: List<DependencyNode>,
+    val edges: List<DependencyEdge>
+) : Serializable {
 
   /**
    * Returns all cycles in this graph.
@@ -48,5 +51,9 @@ data class DependenciesGraph(val verifiedPlugin: DependencyNode,
   }
 
   override fun toString() = DependenciesGraphPrettyPrinter(this).prettyPresentation()
+
+  companion object {
+    private const val serialVersionUID = 0L
+  }
 
 }

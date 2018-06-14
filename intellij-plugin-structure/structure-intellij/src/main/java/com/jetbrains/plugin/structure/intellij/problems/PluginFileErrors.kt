@@ -10,25 +10,28 @@ class PluginZipIsEmpty : PluginProblem() {
   override val level
     get() = PluginProblem.Level.ERROR
 
-  override val message = "Plugin file is empty"
+  override val message
+    get() = "Plugin file is empty"
 
 }
 
-class PluginZipContainsUnknownFile(fileName: String) : PluginProblem() {
+class PluginZipContainsUnknownFile(private val fileName: String) : PluginProblem() {
 
   override val level
     get() = PluginProblem.Level.ERROR
 
-  override val message = "Plugin .zip file contains an unexpected file '$fileName'"
+  override val message
+    get() = "Plugin .zip file contains an unexpected file '$fileName'"
 
 }
 
-class PluginZipContainsMultipleFiles(fileNames: List<String>) : PluginProblem() {
+class PluginZipContainsMultipleFiles(private val fileNames: List<String>) : PluginProblem() {
 
   override val level
     get() = PluginProblem.Level.ERROR
 
-  override val message = "Plugin root directory must not contain multiple files: ${fileNames.joinToString()}"
+  override val message
+    get() = "Plugin root directory must not contain multiple files: ${fileNames.joinToString()}"
 
 }
 
@@ -37,7 +40,8 @@ class UnableToReadJarFile : PluginProblem() {
   override val level
     get() = PluginProblem.Level.ERROR
 
-  override val message = "Invalid jar file"
+  override val message
+    get() = "Invalid jar file"
 
 }
 
@@ -46,6 +50,7 @@ class PluginLibDirectoryIsEmpty : PluginProblem() {
   override val level
     get() = PluginProblem.Level.ERROR
 
-  override val message = "Directory 'lib' must not be empty"
+  override val message
+    get() = "Directory 'lib' must not be empty"
 
 }

@@ -2,7 +2,9 @@ package com.jetbrains.plugin.structure.intellij.plugin;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface PluginDependency {
+import java.io.Serializable;
+
+public interface PluginDependency extends Serializable {
   @NotNull
   String getId();
 
