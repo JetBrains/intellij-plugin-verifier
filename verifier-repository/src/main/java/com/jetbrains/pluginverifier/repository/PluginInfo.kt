@@ -29,11 +29,11 @@ open class PluginInfo(
   open val presentableName
     get() = "$pluginId $version"
 
-  final override fun equals(other: Any?) = other is PluginInfo
+  override fun equals(other: Any?) = other is PluginInfo
       && pluginId == other.pluginId
       && version == other.version
 
-  final override fun hashCode() = Objects.hash(pluginId, version)
+  override fun hashCode() = Objects.hash(pluginId, version)
 
   final override fun toString() = presentableName
 
@@ -69,6 +69,10 @@ class LocalPluginInfo(
   @Suppress("UNUSED_PARAMETER")
   private fun readObject(stream: ObjectInputStream): Unit = throw InvalidObjectException("Must have been serialized to PluginInfo")
 
+  override fun equals(other: Any?) = other is LocalPluginInfo && idePlugin == other.idePlugin
+
+  override fun hashCode() = idePlugin.hashCode()
+
   companion object {
     private const val serialVersionUID = 0L
   }
@@ -95,6 +99,12 @@ class BundledPluginInfo(
   // readObject method for serialization
   @Suppress("UNUSED_PARAMETER")
   private fun readObject(stream: ObjectInputStream): Unit = throw InvalidObjectException("Must have been serialized to PluginInfo")
+
+  override fun equals(other: Any?) = other is BundledPluginInfo
+      && ideVersion == other.ideVersion
+      && idePlugin == other.idePlugin
+
+  override fun hashCode() = Objects.hash(ideVersion, idePlugin)
 
   companion object {
     private const val serialVersionUID = 0L
