@@ -13,7 +13,7 @@ class StaticAccessOfInstanceFieldProblem(
 ) : CompatibilityProblem() {
 
   override val problemType
-    get() = "Static field change to instance field"
+    get() = "Static field changed to instance field"
 
   override val shortDescription
     get() = "Attempt to execute static access instruction *{0}* on instance field {1}".formatMessage(instruction, field)

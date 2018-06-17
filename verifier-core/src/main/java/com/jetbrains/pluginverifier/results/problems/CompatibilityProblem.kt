@@ -13,6 +13,10 @@ import java.io.Serializable
  *
  * Each problem has a certain [problemType],
  * which can be used to group similar problems.
+ *
+ * If you add a new implementation of [CompatibilityProblem],
+ * it is good to add an if-clause to
+ * [com.jetbrains.pluginverifier.analysis.AnalysisKt.getHostClassOfProblem].
  */
 abstract class CompatibilityProblem : Serializable {
 

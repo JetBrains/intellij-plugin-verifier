@@ -20,7 +20,7 @@ class OverridingFinalMethodProblem(
 ) : CompatibilityProblem() {
 
   override val problemType
-    get() = "Final method overriding"
+    get() = "Final method is overridden"
 
   override val shortDescription
     get() = "Overriding a final method ${finalMethod.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}"

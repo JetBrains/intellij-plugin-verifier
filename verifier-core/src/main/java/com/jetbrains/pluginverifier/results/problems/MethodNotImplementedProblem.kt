@@ -19,7 +19,7 @@ class MethodNotImplementedProblem(
 ) : CompatibilityProblem() {
 
   override val problemType
-    get() = "Missing abstract method implementation"
+    get() = "Abstract method is not implemented"
 
   override val shortDescription
     get() = "Abstract method ${abstractMethod.formatMethodLocation(FULL_HOST_WITH_SIGNATURE, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)} is not implemented"

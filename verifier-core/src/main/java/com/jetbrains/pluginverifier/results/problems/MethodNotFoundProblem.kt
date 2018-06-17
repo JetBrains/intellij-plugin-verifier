@@ -25,7 +25,7 @@ class MethodNotFoundProblem(
 ) : CompatibilityProblem() {
 
   override val problemType
-    get() = "Missing method invocation"
+    get() = "Method not found"
 
   override val shortDescription
     get() = "Invocation of unresolved {0} {1}".formatMessage(

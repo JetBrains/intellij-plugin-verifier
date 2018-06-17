@@ -15,7 +15,7 @@ class ClassNotFoundProblem(
 ) : CompatibilityProblem() {
 
   override val problemType
-    get() = "Missing class access"
+    get() = "Class not found"
 
   override val shortDescription
     get() = "Access to unresolved class {0}".formatMessage(unresolved)

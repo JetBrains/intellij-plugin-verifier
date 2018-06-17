@@ -16,7 +16,7 @@ class FieldNotFoundProblem(
 ) : CompatibilityProblem() {
 
   override val problemType
-    get() = "Missing field access"
+    get() = "Field not found"
 
   override val shortDescription
     get() = "Access to unresolved field {0}".formatMessage(unresolvedField)
