@@ -110,11 +110,11 @@ class StatusPage(private val serverContext: ServerContext) {
               }
               table("width: 100%") {
                 tr {
-                  th { +"Plugin" }
-                  th { +"IDE" }
-                  th { +"Time" }
-                  th { +"Verdict" }
-                  th { +"Reason" }
+                  th(style = "width: 20%") { +"Plugin" }
+                  th(style = "width: 10%") { +"IDE" }
+                  th(style = "width: 10%") { +"Time" }
+                  th(style = "width: 30%") { +"Verdict" }
+                  th(style = "width: 30%") { +"Reason" }
                 }
                 ignoredVerifications
                     .forEach { (scheduledVerification, ignore) ->
@@ -137,8 +137,8 @@ class StatusPage(private val serverContext: ServerContext) {
 
             mapOf(
                 "Running tasks" to runningTasks.sortedByDescending { it.startTime },
-                "Pending tasks (10 latest)" to waitingTasks.sortedByDescending { it.startTime }.take(10),
-                "Finished tasks (10 latest)" to lastFinishedTasks.sortedByDescending { it.startTime }.take(10)
+                "Pending tasks (20 latest)" to waitingTasks.sortedByDescending { it.startTime }.take(20),
+                "Finished tasks (20 latest)" to lastFinishedTasks.sortedByDescending { it.startTime }.take(20)
             ).forEach { title, tasks ->
               h2 {
                 +title
@@ -146,10 +146,10 @@ class StatusPage(private val serverContext: ServerContext) {
               table("width: 100%") {
                 tr {
                   th(style = "width: 5%") { +"ID" }
-                  th(style = "width: 20%") { +"Task name" }
+                  th(style = "width: 30%") { +"Task name" }
                   th(style = "width: 10%") { +"Start time" }
                   th(style = "width: 5%") { +"State" }
-                  th(style = "width: 50%") { +"Message" }
+                  th(style = "width: 40%") { +"Message" }
                   th(style = "width: 5%") { +"Completion %" }
                   th(style = "width: 5%") { +"Total time (ms)" }
                 }
