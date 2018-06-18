@@ -5,7 +5,6 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
 import java.io.InputStream
-import java.lang.RuntimeException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
@@ -13,31 +12,39 @@ import java.util.concurrent.atomic.AtomicReference
  * Executes this [Call] and returns its [Response].
  * Throws an exception if the call has failed.
  */
+@Throws(
+    NotFound404ResponseException::class,
+    ServerInternalError500Exception::class,
+    ServerUnavailable503Exception::class,
+    NonSuccessfulResponseException::class,
+    FailedRequestException::class
+)
 fun <T> Call<T>.executeSuccessfully(): Response<T> = executeWithInterruptionCheck(
-    onSuccess = { success ->
-      success
-    },
+    onSuccess = { success -> success },
     onProblems = { problems ->
       if (problems.code() == 404) {
         throw NotFound404ResponseException(serverUrl)
       }
       if (problems.code() == 500) {
-        throw Server500ResponseException(serverUrl)
+        throw ServerInternalError500Exception(serverUrl)
+      }
+      if (problems.code() == 503) {
+        throw ServerUnavailable503Exception(serverUrl)
       }
       val message = problems.message() ?: problems.errorBody().string().take(100)
-      throw NonSuccessfulResponseException(problems.code(), serverUrl, message)
+      throw NonSuccessfulResponseException(serverUrl, problems.code(), message)
     },
-    onFailure = { error ->
-      throw RuntimeException("Unable to communicate with $serverUrl: ${error.message}", error)
-    }
+    onFailure = { error -> throw FailedRequestException(serverUrl, error) }
 )
 
 private val <T> Call<T>.serverUrl: String
   get() = "${request().url().host()}:${request().url().port()}"
 
-private fun <T, R> Call<T>.executeWithInterruptionCheck(onSuccess: (Response<T>) -> R,
-                                                        onProblems: (Response<T>) -> R,
-                                                        onFailure: (Throwable) -> R): R {
+private fun <T, R> Call<T>.executeWithInterruptionCheck(
+    onSuccess: (Response<T>) -> R,
+    onProblems: (Response<T>) -> R,
+    onFailure: (Throwable) -> R
+): R {
   val responseRef = AtomicReference<Response<T>?>()
   val errorRef = AtomicReference<Throwable?>()
   val finished = AtomicBoolean()

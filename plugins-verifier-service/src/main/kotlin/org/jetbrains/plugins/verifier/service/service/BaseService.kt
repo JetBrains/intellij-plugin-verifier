@@ -10,7 +10,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 /**
- * Service is a job that is to be run periodically with
+ * Service is a job that runs periodically with
  * initial delay of [initialDelay] and period of [period] measured in [timeUnit]s.
  *
  * Service has a state which is one of [State] constants.

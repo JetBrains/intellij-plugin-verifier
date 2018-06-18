@@ -19,7 +19,7 @@ import retrofit2.http.POST
 import retrofit2.http.Part
 import java.util.concurrent.TimeUnit
 
-interface FeaturesRetrofitConnector {
+private interface FeaturesRetrofitConnector {
 
   @Multipart
   @POST("/feature/getUpdatesToExtractFeatures")
@@ -34,14 +34,16 @@ interface FeaturesRetrofitConnector {
 
 }
 
-class DefaultFeatureServiceProtocol(authorizationData: AuthorizationData,
-                                    private val pluginRepository: PublicPluginRepository) : FeatureServiceProtocol {
+class DefaultFeatureServiceProtocol(
+    authorizationData: AuthorizationData,
+    private val pluginRepository: PublicPluginRepository
+) : FeatureServiceProtocol {
 
   private val userNameRequestBody = createStringRequestBody(authorizationData.pluginRepositoryUserName)
 
   private val passwordRequestBody = createStringRequestBody(authorizationData.pluginRepositoryPassword)
 
-  private val retrofitConnector: FeaturesRetrofitConnector by lazy {
+  private val retrofitConnector by lazy {
     Retrofit.Builder()
         .baseUrl(HttpUrl.get(pluginRepository.repositoryURL))
         .addConverterFactory(GsonConverterFactory.create(Gson()))

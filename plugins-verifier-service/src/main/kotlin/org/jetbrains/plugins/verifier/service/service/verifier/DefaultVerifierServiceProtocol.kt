@@ -31,9 +31,9 @@ private interface VerifierRetrofitConnector {
 
   @POST("/verification/receiveVerificationResult")
   @Multipart
-  fun sendUpdateCheckResult(@Part("verificationResult") verificationResult: RequestBody,
-                            @Part("userName") userName: RequestBody,
-                            @Part("password") password: RequestBody): Call<ResponseBody>
+  fun sendVerificationResult(@Part("verificationResult") verificationResult: RequestBody,
+                             @Part("userName") userName: RequestBody,
+                             @Part("password") password: RequestBody): Call<ResponseBody>
 
 }
 
@@ -42,8 +42,10 @@ private data class ScheduledVerificationJson(
     @SerializedName("ideVersion") val ideVersion: String
 )
 
-class DefaultVerifierServiceProtocol(authorizationData: AuthorizationData,
-                                     private val pluginRepository: PublicPluginRepository) : VerifierServiceProtocol {
+class DefaultVerifierServiceProtocol(
+    authorizationData: AuthorizationData,
+    private val pluginRepository: PublicPluginRepository
+) : VerifierServiceProtocol {
 
   private val retrofitConnector: VerifierRetrofitConnector by lazy {
     Retrofit.Builder()
@@ -73,7 +75,7 @@ class DefaultVerifierServiceProtocol(authorizationData: AuthorizationData,
           }
 
   override fun sendVerificationResult(verificationResult: VerificationResult, updateInfo: UpdateInfo) {
-    retrofitConnector.sendUpdateCheckResult(
+    retrofitConnector.sendVerificationResult(
         createByteArrayRequestBody(verificationResult.prepareVerificationResponse(updateInfo).toByteArray()),
         userNameRequestBody,
         passwordRequestBody

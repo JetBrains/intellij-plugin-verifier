@@ -44,8 +44,10 @@ private interface AvailableIdeConnector {
                         @Part("availableIdes") availableIdes: List<AvailableIdeJson>): Call<ResponseBody>
 }
 
-class DefaultAvailableIdeProtocol(authorizationData: AuthorizationData,
-                                  pluginRepository: PluginRepository) : AvailableIdeProtocol {
+class DefaultAvailableIdeProtocol(
+    authorizationData: AuthorizationData,
+    pluginRepository: PluginRepository
+) : AvailableIdeProtocol {
 
   private val userNameRequestBody = createStringRequestBody(authorizationData.pluginRepositoryUserName)
 
