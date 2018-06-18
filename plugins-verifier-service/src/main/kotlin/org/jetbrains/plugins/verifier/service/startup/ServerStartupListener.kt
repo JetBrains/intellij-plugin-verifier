@@ -25,7 +25,7 @@ import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
 import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetting
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.tasks.TaskManager
+import org.jetbrains.plugins.verifier.service.tasks.TaskManagerImpl
 import org.slf4j.LoggerFactory
 import java.util.jar.Manifest
 import javax.servlet.ServletContext
@@ -65,7 +65,7 @@ class ServerStartupListener : ServletContextListener {
     val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginFilesBank, pluginDetailsProvider)
 
     val ideRepository = IdeRepository()
-    val tasksManager = TaskManager(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
+    val taskManager = TaskManagerImpl(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
 
     val authorizationData = AuthorizationData(
         Settings.PLUGIN_REPOSITORY_VERIFIER_USERNAME.get(),
@@ -90,7 +90,7 @@ class ServerStartupListener : ServletContextListener {
         ideRepository,
         ideFilesBank,
         pluginRepository,
-        tasksManager,
+        taskManager,
         authorizationData,
         jdkDescriptorsCache,
         Settings.values().toList(),

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.features
 
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
+import com.jetbrains.pluginverifier.network.ServerUnavailable503Exception
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.UpdateInfo
 import org.jetbrains.plugins.verifier.service.service.BaseService
@@ -23,13 +24,19 @@ class FeatureExtractorService(taskManager: TaskManager,
                               private val pluginDetailsCache: PluginDetailsCache)
   : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, taskManager) {
 
-  private val inProgressUpdates = hashSetOf<UpdateInfo>()
+  private val scheduledUpdates = linkedMapOf<UpdateInfo, TaskDescriptor>()
 
   override fun doServe() {
-    val updatesToExtract = featureServiceProtocol.getUpdatesToExtract()
+    val updatesToExtract = try {
+      featureServiceProtocol.getUpdatesToExtract()
+    } catch (e: ServerUnavailable503Exception) {
+      logger.info("Marketplace ${e.serverUrl} is currently unavailable (HTTP 503)")
+      return
+    }
+
     logger.info("Extracting features of ${updatesToExtract.size} updates")
     for (updateInfo in updatesToExtract) {
-      if (updateInfo !in inProgressUpdates) {
+      if (updateInfo !in scheduledUpdates) {
         schedule(updateInfo)
       }
     }
@@ -45,29 +52,50 @@ class FeatureExtractorService(taskManager: TaskManager,
         extractTask,
         { result, _ -> onSuccess(result) },
         { t, tid -> onError(t, tid, extractTask) },
-        { _, _ -> },
         { _ -> onCompletion(extractTask) }
     )
-    inProgressUpdates.add(updateInfo)
-    logger.info("Extract features of $updateInfo is scheduled with taskId #${taskDescriptor.taskId}")
+    scheduledUpdates[updateInfo] = taskDescriptor
+    logger.info("Schedule extraction of features for $updateInfo with taskId #${taskDescriptor.taskId}")
   }
 
   @Synchronized
   private fun onCompletion(task: ExtractFeaturesTask) {
-    inProgressUpdates.remove(task.updateInfo)
+    scheduledUpdates.remove(task.updateInfo)
   }
 
-  private fun onError(error: Throwable, taskDescriptor: TaskDescriptor, task: ExtractFeaturesTask) {
-    logger.error("Unable to extract features of ${task.updateInfo} (#${taskDescriptor.taskId})", error)
+  @Synchronized
+  private fun onError(
+      error: Throwable,
+      taskDescriptor: TaskDescriptor,
+      task: ExtractFeaturesTask
+  ) {
+    if (error is InterruptedException) {
+      logger.info("Feature extraction of ${task.updateInfo} was interrupted")
+    } else {
+      logger.error("Unable to extract features of ${task.updateInfo} (#${taskDescriptor.taskId})", error)
+    }
   }
 
+  @Synchronized
+  private fun pauseFeaturesExtraction() {
+    for ((update, taskDescriptor) in scheduledUpdates.entries) {
+      logger.info("Cancel extraction of features for $update")
+      taskManager.cancel(taskDescriptor)
+    }
+    scheduledUpdates.clear()
+  }
+
+  //Do not synchronize: results sending is performed from background threads.
   private fun onSuccess(result: ExtractFeaturesTask.Result) {
     with(result) {
-      logger.info("Plugin $updateInfo is processed: ${result.presentableText()}")
+      logger.info("Plugin $updateInfo is processed: $result")
       try {
         featureServiceProtocol.sendExtractedFeatures(this)
+      } catch (e: ServerUnavailable503Exception) {
+        logger.info("Marketplace ${e.serverUrl} is currently unavailable. Stop all the scheduled updates.")
+        pauseFeaturesExtraction()
       } catch (e: Exception) {
-        logger.error("Failed to send features result for ${updateInfo}", e)
+        logger.error("Failed to send features result for $updateInfo", e)
       }
     }
   }

@@ -3,18 +3,19 @@ package org.jetbrains.plugins.verifier.service.tests
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.Task
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
-import org.jetbrains.plugins.verifier.service.tasks.TaskManager
+import org.jetbrains.plugins.verifier.service.tasks.TaskManagerImpl
 import org.junit.Assert.*
 import org.junit.Test
 import java.util.*
+import java.util.Collections.synchronizedList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 class TaskManagerTest {
   @Test
-  fun `general functionality of the service task manager`() {
-    TaskManager(4).use { tm ->
+  fun `general functionality of the task manager`() {
+    TaskManagerImpl(4).use { tm ->
       val finish = AtomicBoolean()
 
       val serviceTask: Task<Int> = object : Task<Int>("testTask") {
@@ -37,7 +38,6 @@ class TaskManagerTest {
           onError = { e, _ ->
             error.set(e)
           },
-          onCancelled = { _, _ -> },
           onCompletion = {
             status.set(it)
           }
@@ -77,7 +77,7 @@ class TaskManagerTest {
     val random = Random()
     val priorities = listOf(Integer.MAX_VALUE) + (1 until totalTasks).map { random.nextInt() }
 
-    val notRun = Collections.synchronizedList(priorities.toMutableList())
+    val notRun = synchronizedList(priorities.toMutableList())
 
     val error = AtomicReference<String>()
 
@@ -97,7 +97,7 @@ class TaskManagerTest {
       override fun compareTo(other: TestTask) = Integer.compare(other.priority, priority)
     }
 
-    TaskManager(1).use { tm ->
+    TaskManagerImpl(1).use { tm ->
       priorities
           .map { TestTask(it) }
           .forEach { tm.enqueue(it) }
@@ -109,4 +109,64 @@ class TaskManagerTest {
       fail(msg)
     }
   }
+
+  /**
+   * Creates Task Manager for 4 threads.
+   *
+   * Schedules 8 tasks:
+   * - 4 tasks are waiting for interruption
+   * - 4 tasks will not be polled from the waiting queue
+   *
+   * Check that for no task 'onCompletion' callback is called.
+   */
+  @Test
+  fun `cancel tasks`() {
+    val runTasks = synchronizedList(arrayListOf<Int>())
+    val completedTasks = synchronizedList(arrayListOf<Int>())
+
+    class TestTask(val index: Int) : Task<Int>("test"), Comparable<TestTask> {
+      override fun execute(progress: ProgressIndicator): Int {
+        runTasks.add(index)
+        while (!Thread.currentThread().isInterrupted) {
+        }
+        throw InterruptedException()
+      }
+
+      //Run tasks according to their priorities (descending).
+      override fun compareTo(other: TestTask) = Integer.compare(other.index, index)
+    }
+
+    TaskManagerImpl(4).use { taskManager ->
+      val descriptors = (0 until 8).map { index ->
+
+        taskManager.enqueue(
+            TestTask(index),
+            { _, _ -> },
+            { _, _ -> },
+            { _ -> completedTasks.add(index) }
+        )
+      }
+
+      /**
+       * Wait until all threads of this Task Manager are started.
+       */
+      while (runTasks.size < 4) {
+      }
+
+      /**
+       * Check that the most prioritized tasks are started.
+       */
+      assertEquals(listOf(0, 1, 2, 3), runTasks.sorted())
+
+      /**
+       * Cancel all the tasks
+       */
+      for (descriptor in descriptors) {
+        taskManager.cancel(descriptor)
+      }
+
+      assertEquals(emptyList<Int>(), completedTasks)
+    }
+  }
+
 }

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.ide
 
 import com.jetbrains.pluginverifier.ide.IdeRepository
+import com.jetbrains.pluginverifier.network.ServerUnavailable503Exception
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import java.util.concurrent.TimeUnit
@@ -26,7 +27,11 @@ class AvailableIdeService(
 
   override fun doServe() {
     val availableIdes = ideRepository.fetchIndex(false) + ideRepository.fetchIndex(true)
-    protocol.sendAvailableIdes(availableIdes)
+    try {
+      protocol.sendAvailableIdes(availableIdes)
+    } catch (e: ServerUnavailable503Exception) {
+      logger.info("Marketplace ${e.serverUrl} is currently unavailable")
+    }
   }
 
 }

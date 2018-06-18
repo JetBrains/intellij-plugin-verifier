@@ -2,6 +2,7 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
+import com.jetbrains.pluginverifier.network.ServerUnavailable503Exception
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
@@ -35,15 +36,23 @@ class VerifierService(
     private val pluginRepository: PluginRepository
 ) : BaseService("VerifierService", 0, 1, TimeUnit.MINUTES, taskManager) {
 
-  private val running = hashSetOf<ScheduledVerification>()
+  private val scheduledVerifications = linkedMapOf<ScheduledVerification, TaskDescriptor>()
 
   private val lastVerifiedDate = hashMapOf<ScheduledVerification, Instant>()
 
   private val verifierExecutor = VerifierExecutor(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
 
   override fun doServe() {
+    val allScheduledVerifications = try {
+      verifierServiceProtocol.requestScheduledVerifications()
+    } catch (e: ServerUnavailable503Exception) {
+      logger.info("Do not schedule new verifications and pause the service because the Marketplace is currently unavailable")
+      pauseVerification()
+      return
+    }
+
     val now = Instant.now()
-    val verifications = verifierServiceProtocol.requestScheduledVerifications()
+    val verifications = allScheduledVerifications
         .filter { it.shouldVerify(now) }
         .sortedByDescending { it.updateInfo.updateId }
     logger.info("There are ${verifications.size} pending verifications")
@@ -51,17 +60,17 @@ class VerifierService(
   }
 
   private fun ScheduledVerification.shouldVerify(now: Instant) =
-      this !in running && !isCheckedRecently(this) && !verificationResultsFilter.shouldIgnoreVerification(this, now)
+      this !in scheduledVerifications
+          && !isCheckedRecently(this, now)
+          && !verificationResultsFilter.shouldIgnoreVerification(this, now)
 
-  private fun isCheckedRecently(scheduledVerification: ScheduledVerification): Boolean {
-    val lastCheckTime = lastVerifiedDate[scheduledVerification] ?: Instant.EPOCH
-    val now = Instant.now()
-    return lastCheckTime.plus(Duration.of(10, ChronoUnit.MINUTES)).isAfter(now)
+  private fun isCheckedRecently(scheduledVerification: ScheduledVerification, now: Instant): Boolean {
+    val lastTime = lastVerifiedDate[scheduledVerification] ?: Instant.EPOCH
+    return lastTime.plus(Duration.of(10, ChronoUnit.MINUTES)).isAfter(now)
   }
 
   private fun scheduleVerification(scheduledVerification: ScheduledVerification, now: Instant) {
     lastVerifiedDate[scheduledVerification] = now
-    running.add(scheduledVerification)
     val task = VerifyPluginTask(
         verifierExecutor,
         scheduledVerification.updateInfo,
@@ -77,28 +86,55 @@ class VerifierService(
         task,
         { taskResult, taskDescriptor -> taskResult.onSuccess(taskDescriptor, scheduledVerification) },
         { error, _ -> onError(scheduledVerification, error) },
-        { _, _ -> },
         { onCompletion(scheduledVerification) }
     )
-    logger.info("Verification $scheduledVerification is scheduled with task #${taskDescriptor.taskId}")
+    logger.info("Schedule verification $scheduledVerification with task #${taskDescriptor.taskId}")
+    scheduledVerifications[scheduledVerification] = taskDescriptor
   }
 
   @Synchronized
-  private fun onCompletion(pluginAndTarget: ScheduledVerification) {
-    running.remove(pluginAndTarget)
+  private fun onCompletion(scheduledVerification: ScheduledVerification) {
+    scheduledVerifications.remove(scheduledVerification)
   }
 
-  private fun onError(pluginAndTarget: ScheduledVerification, error: Throwable) {
-    logger.error("Unable to check $pluginAndTarget", error)
+  @Synchronized
+  private fun onError(scheduledVerification: ScheduledVerification, error: Throwable) {
+    if (error is InterruptedException) {
+      logger.info("Verification was interrupted $scheduledVerification")
+    } else {
+      logger.error("Verification failed $scheduledVerification", error)
+    }
   }
 
-  private fun VerificationResult.onSuccess(taskDescriptor: TaskDescriptor,
-                                           scheduledVerification: ScheduledVerification) {
+  /**
+   * Temporarily pause verifications because the Marketplace
+   * cannot process its results at the moment.
+   *
+   * Cancel all the scheduled verifications in order to avoid unnecessary work.
+   */
+  @Synchronized
+  private fun pauseVerification() {
+    for ((scheduledVerification, taskDescriptor) in scheduledVerifications.entries) {
+      logger.info("Cancel verification $scheduledVerification")
+      taskManager.cancel(taskDescriptor)
+    }
+    scheduledVerifications.clear()
+  }
+
+  //Do not synchronize: results sending is performed from background threads.
+  private fun VerificationResult.onSuccess(
+      taskDescriptor: TaskDescriptor,
+      scheduledVerification: ScheduledVerification
+  ) {
     logger.info("Verified $plugin against $verificationTarget: ${this}")
     val decision = verificationResultsFilter.shouldSendVerificationResult(this, taskDescriptor.endTime!!, scheduledVerification)
     if (decision == VerificationResultFilter.Result.Send) {
       try {
         verifierServiceProtocol.sendVerificationResult(this, scheduledVerification.updateInfo)
+      } catch (e: ServerUnavailable503Exception) {
+        logger.info("Marketplace $pluginRepository is currently unavailable (HTTP 503). " +
+            "Stop all the scheduled verification tasks.")
+        pauseVerification()
       } catch (e: Exception) {
         logger.error("Unable to send verification result for $plugin", e)
       }
