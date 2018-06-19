@@ -197,7 +197,17 @@ class MockPluginsTest : BaseMockPluginTest() {
 
     val mainResolvers = listOf(ClassesDirectoryKey, LibDirectoryKey, JarPluginKey).mapNotNull { locationsContainer.getResolver(it) }
     val allClasses = mainResolvers.flatMap { it.allClasses }.toSet()
-    assertSetsEqual(setOf("packagename/ClassOne", "packagename/InFileClassOne", "packagename/ClassOne\$ClassOneInnerStatic", "packagename/ClassOne\$ClassOneInner", "packagename/InFileClassOne"), allClasses)
+    assertSetsEqual(setOf(
+        "packagename/ClassOne",
+        "packagename/InFileClassOne",
+        "packagename/ClassOne\$ClassOneInnerStatic",
+        "packagename/ClassOne\$ClassOneInner",
+        "packagename/InFileClassOne",
+        "packagename/subpackage/ClassTwo"
+    ), allClasses)
+    assertSetsEqual(setOf("packagename", "packagename/subpackage"), mainResolvers.flatMap { it.allPackages }.toSet())
+    assertTrue(mainResolvers.any { it.containsPackage("packagename") })
+    assertTrue(mainResolvers.any { it.containsPackage("packagename/subpackage") })
 
     val allClassPath = mainResolvers.flatMap { it.classPath }
     assertTrue(allClassPath.all { it.canonicalPath.replace("\\", "/").endsWith(classPath) })

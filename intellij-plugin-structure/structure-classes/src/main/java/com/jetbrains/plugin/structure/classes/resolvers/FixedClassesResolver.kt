@@ -1,19 +1,28 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.classes.packages.PackageSet
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
 
 class FixedClassesResolver(private val classes: Map<String, ClassNode>) : Resolver() {
-  override fun processAllClasses(processor: (ClassNode) -> Boolean) =
-      classes.values
-          .asSequence()
-          .all(processor)
-
   companion object {
     fun create(classes: List<ClassNode>): Resolver {
       return FixedClassesResolver(classes.asReversed().associateBy { it.name })
     }
   }
+
+  private val packageSet = PackageSet()
+
+  init {
+    for (className in classes.keys) {
+      packageSet.addPackagesOfClass(className)
+    }
+  }
+
+  override fun processAllClasses(processor: (ClassNode) -> Boolean) =
+      classes.values
+          .asSequence()
+          .all(processor)
 
   override fun findClass(className: String): ClassNode? = classes[className]
 
@@ -21,6 +30,9 @@ class FixedClassesResolver(private val classes: Map<String, ClassNode>) : Resolv
 
   override val allClasses
     get() = classes.keys
+
+  override val allPackages: Set<String>
+    get() = packageSet.getAllPackages()
 
   override val isEmpty
     get() = classes.isEmpty()
@@ -32,6 +44,8 @@ class FixedClassesResolver(private val classes: Map<String, ClassNode>) : Resolv
     get() = listOf(this)
 
   override fun containsClass(className: String) = className in classes
+
+  override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
 
   override fun close() = Unit
 

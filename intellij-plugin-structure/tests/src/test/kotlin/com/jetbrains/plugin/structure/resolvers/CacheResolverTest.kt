@@ -13,6 +13,7 @@ class CacheResolverTest {
     val cacheResolver = CacheResolver(EmptyResolver)
     assertNull(cacheResolver.findClass("a"))
     assertTrue(cacheResolver.allClasses.isEmpty())
+    assertEquals(emptySet<String>(), cacheResolver.allPackages)
   }
 
   @Test
@@ -24,5 +25,6 @@ class CacheResolverTest {
     )
     assertEquals(1, cacheResolver.allClasses.size)
     assertEquals(classNode, cacheResolver.findClass(className))
+    assertEquals(setOf(""), cacheResolver.allPackages)
   }
 }

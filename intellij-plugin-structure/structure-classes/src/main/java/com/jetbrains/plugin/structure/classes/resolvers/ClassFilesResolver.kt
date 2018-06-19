@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.classes.packages.PackageSet
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.apache.commons.io.FileUtils
 import org.objectweb.asm.tree.ClassNode
@@ -7,8 +8,9 @@ import java.io.File
 import java.io.IOException
 
 class ClassFilesResolver(private val root: File) : Resolver() {
-
   private val nameToClassFile = hashMapOf<String, File>()
+
+  private val packageSet = PackageSet()
 
   private val classPaths = linkedSetOf<File>()
 
@@ -18,7 +20,8 @@ class ClassFilesResolver(private val root: File) : Resolver() {
       val className = AsmUtil.readClassName(classFile)
       val classRoot = getClassRoot(classFile, className)
       if (classRoot != null) {
-        nameToClassFile.put(className, classFile)
+        nameToClassFile[className] = classFile
+        packageSet.addPackagesOfClass(className)
         classPaths.add(classRoot)
       }
     }
@@ -28,7 +31,7 @@ class ClassFilesResolver(private val root: File) : Resolver() {
     val levelsUp = className.count { it == '/' }
     var root: File? = classFile
     for (i in 0 until levelsUp + 1) {
-      root = if (root != null) root.parentFile else null
+      root = root?.parentFile
     }
     return root
   }
@@ -47,6 +50,9 @@ class ClassFilesResolver(private val root: File) : Resolver() {
     null
   }
 
+  override val allPackages
+    get() = packageSet.getAllPackages()
+
   override val allClasses
     get() = nameToClassFile.keys
 
@@ -54,6 +60,8 @@ class ClassFilesResolver(private val root: File) : Resolver() {
     get() = nameToClassFile.isEmpty()
 
   override fun containsClass(className: String) = className in nameToClassFile
+
+  override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
 
   override val classPath
     get() = classPaths.toList()

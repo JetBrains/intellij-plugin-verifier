@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.classes.packages.PackageSet
 import org.objectweb.asm.tree.ClassNode
 import java.io.IOException
 
@@ -9,8 +10,11 @@ import java.io.IOException
  */
 class UnionResolver private constructor(private val resolvers: List<Resolver>) : Resolver() {
 
-  private val classNameToResolver: Map<String, Resolver> = {
-    val result = hashMapOf<String, Resolver>()
+  private val classToResolver = hashMapOf<String, Resolver>()
+
+  private val packageSet = PackageSet()
+
+  init {
     /**
      * We want to support the class path search order,
      * so the `class-name -> resolver` mapping should prefer
@@ -19,17 +23,20 @@ class UnionResolver private constructor(private val resolvers: List<Resolver>) :
      */
     for (resolver in resolvers.asReversed()) {
       for (className in resolver.allClasses) {
-        result[className] = resolver
+        classToResolver[className] = resolver
       }
+      packageSet.addPackages(resolver.allPackages)
     }
-    result
-  }()
+  }
 
   override val allClasses
-    get() = classNameToResolver.keys
+    get() = classToResolver.keys
+
+  override val allPackages
+    get() = packageSet.getAllPackages()
 
   override val isEmpty
-    get() = classNameToResolver.isEmpty()
+    get() = classToResolver.isEmpty()
 
   override val classPath
     get() = resolvers.flatMap { it.classPath }
@@ -42,12 +49,14 @@ class UnionResolver private constructor(private val resolvers: List<Resolver>) :
           .asSequence()
           .all { it.processAllClasses(processor) }
 
-  override fun containsClass(className: String) = className in classNameToResolver
+  override fun containsClass(className: String) = className in classToResolver
+
+  override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
 
   @Throws(IOException::class)
-  override fun findClass(className: String) = classNameToResolver[className]?.findClass(className)
+  override fun findClass(className: String) = classToResolver[className]?.findClass(className)
 
-  override fun getClassLocation(className: String) = classNameToResolver[className]?.getClassLocation(className)
+  override fun getClassLocation(className: String) = classToResolver[className]?.getClassLocation(className)
 
   @Throws(IOException::class)
   override fun close() {

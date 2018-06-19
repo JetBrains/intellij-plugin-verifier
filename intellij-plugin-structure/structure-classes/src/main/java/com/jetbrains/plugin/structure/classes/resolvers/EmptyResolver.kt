@@ -14,6 +14,8 @@ object EmptyResolver : Resolver() {
 
   override val allClasses = emptySet<String>()
 
+  override val allPackages = emptySet<String>()
+
   override val isEmpty = true
 
   override val classPath = emptyList<File>()

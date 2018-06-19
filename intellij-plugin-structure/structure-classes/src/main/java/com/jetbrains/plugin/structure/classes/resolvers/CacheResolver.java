@@ -76,6 +76,12 @@ public class CacheResolver extends Resolver {
     return myDelegate.getAllClasses();
   }
 
+  @NotNull
+  @Override
+  public Set<String> getAllPackages() {
+    return myDelegate.getAllPackages();
+  }
+
   @Override
   public boolean isEmpty() {
     return myDelegate.isEmpty();

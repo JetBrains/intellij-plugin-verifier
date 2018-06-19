@@ -26,6 +26,16 @@ abstract class Resolver : Closeable {
   abstract val allClasses: Set<String>
 
   /**
+   * Returns binary names of all contained packages and their super-packages.
+   *
+   * For example, if this Resolver contains classes of a package `com/example/utils`
+   * then [allPackages] contains `com`, `com/example` and `com/example/utils`.
+   *
+   * @return names of all packages in *binary* (separated with /) form.
+   */
+  abstract val allPackages: Set<String>
+
+  /**
    * Checks whether this resolver contains any class. Classes can be obtained through [.getAllClasses].
    *
    * @return true if this resolver is not empty, false otherwise
