@@ -12,8 +12,14 @@ interface PluginVersionSelector {
   fun selectPluginVersion(pluginId: String, pluginRepository: PluginRepository): Result
 
   sealed class Result {
+    /**
+     * Successfully selected one version of the plugin - [pluginInfo].
+     */
     data class Selected(val pluginInfo: PluginInfo) : Result()
 
+    /**
+     * Plugin is not found in the plugin repository.
+     */
     data class NotFound(val reason: String) : Result()
   }
 
