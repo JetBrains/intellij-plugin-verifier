@@ -16,7 +16,7 @@ import java.io.Serializable
  *
  * If you add a new implementation of [CompatibilityProblem],
  * it is good to add an if-clause to
- * [com.jetbrains.pluginverifier.analysis.AnalysisKt.getHostClassOfProblem].
+ * [com.jetbrains.pluginverifier.analysis.ProblemAnalysisKt.getHostClassOfProblem].
  */
 abstract class CompatibilityProblem : Serializable {
 

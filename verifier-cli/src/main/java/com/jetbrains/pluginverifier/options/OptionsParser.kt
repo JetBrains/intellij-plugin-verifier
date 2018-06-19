@@ -11,8 +11,6 @@ import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependen
 import com.jetbrains.pluginverifier.output.settings.dependencies.SpecifiedMissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.parameters.filtering.*
-import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsPagesFetcher
-import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsParser
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
@@ -112,25 +110,6 @@ object OptionsParser {
     return null
   }
 
-  private fun createDocumentedProblemsFilter(opts: CmdOpts): ProblemsFilter? {
-    val documentedProblemsPageUrl = opts.documentedProblemsPageUrl
-    if (documentedProblemsPageUrl != null) {
-      val documentedPages = fetchDocumentedProblemsPages(documentedProblemsPageUrl) ?: return null
-      val documentedProblemsParser = DocumentedProblemsParser()
-      val documentedProblems = documentedPages.flatMap { documentedProblemsParser.parse(it) }
-      return DocumentedProblemsFilter(documentedProblems)
-    }
-    return null
-  }
-
-  private fun fetchDocumentedProblemsPages(mainPageUrl: String) = try {
-    DocumentedProblemsPagesFetcher().fetchPages(mainPageUrl)
-  } catch (e: Exception) {
-    LOG.error("Failed to fetch documented problems page $mainPageUrl. " +
-        "The problems described on the page will not be ignored.", e)
-    null
-  }
-
   /**
    * Determines which subsystem should be verified in this task.
    *
@@ -147,11 +126,19 @@ object OptionsParser {
 
   fun getProblemsFilters(opts: CmdOpts): List<ProblemsFilter> {
     val ignoredProblemsFilter = createIgnoredProblemsFilter(opts)
-    val documentedProblemsFilter = createDocumentedProblemsFilter(opts)
+    val documentedProblemsFilter = safeCreateDocumentedProblemsFilter(opts)
     val codeProblemsFilter = createSubsystemProblemsFilter(opts)
     return ignoredProblemsFilter.singletonOrEmpty() +
         documentedProblemsFilter.singletonOrEmpty() +
         codeProblemsFilter.singletonOrEmpty()
+  }
+
+  private fun safeCreateDocumentedProblemsFilter(opts: CmdOpts) = try {
+    DocumentedProblemsFilter.createFilter(opts.documentedProblemsPageUrl)
+  } catch (e: Exception) {
+    LOG.error("Failed to fetch documented problems page ${opts.documentedProblemsPageUrl}. " +
+        "The problems described on the page will not be ignored.", e)
+    null
   }
 
   private fun getIgnoreFilter(ignoreProblemsFile: File): IgnoredProblemsFilter {
