@@ -40,6 +40,8 @@ class PluginApiClsResolver(private val checkedPluginResolver: Resolver,
 
   override fun classExists(className: String) = getOriginOfClass(className) != null
 
+  override fun packageExists(packageName: String) = cachingResolver.containsPackage(packageName)
+
   override fun resolveClass(className: String): ClsResolution {
     if (isExternalClass(className)) {
       return ClsResolution.ExternalClass

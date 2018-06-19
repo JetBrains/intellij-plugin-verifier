@@ -88,6 +88,15 @@ abstract class Resolver : Closeable {
   abstract fun containsClass(className: String): Boolean
 
   /**
+   * Returns true if `this` Resolver contains the given package,
+   * specified with binary name ('/'-separated). It may be faster
+   * than fetching [allPackages] and checking for presence in it.
+   *
+   * @return `true` if this package exists in Resolver, `false` otherwise
+   */
+  abstract fun containsPackage(packageName: String): Boolean
+
+  /**
    * Runs the given [processor] on [every] [allClasses] class contained in _this_ [Resolver].
    * The [processor] returns `true` to continue processing and `false` to stop.
    *

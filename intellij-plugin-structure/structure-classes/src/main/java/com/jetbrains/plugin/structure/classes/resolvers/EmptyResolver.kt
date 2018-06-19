@@ -12,6 +12,8 @@ object EmptyResolver : Resolver() {
 
   override fun containsClass(className: String) = false
 
+  override fun containsPackage(packageName: String) = false
+
   override val allClasses = emptySet<String>()
 
   override val allPackages = emptySet<String>()

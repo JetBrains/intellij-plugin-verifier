@@ -26,5 +26,6 @@ class CacheResolverTest {
     assertEquals(1, cacheResolver.allClasses.size)
     assertEquals(classNode, cacheResolver.findClass(className))
     assertEquals(setOf(""), cacheResolver.allPackages)
+    assertTrue(cacheResolver.containsPackage(""))
   }
 }

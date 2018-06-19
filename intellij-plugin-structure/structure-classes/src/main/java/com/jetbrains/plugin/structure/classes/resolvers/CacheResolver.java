@@ -92,6 +92,11 @@ public class CacheResolver extends Resolver {
     return myDelegate.containsClass(className);
   }
 
+  @Override
+  public boolean containsPackage(@NotNull String packageName) {
+    return myDelegate.containsPackage(packageName);
+  }
+
   @NotNull
   @Override
   public List<File> getClassPath() {

@@ -32,4 +32,9 @@ interface ClsResolver : Closeable {
    * Returns origin [location] [ClassFileOrigin] of class by [className].
    */
   fun getOriginOfClass(className: String): ClassFileOrigin?
+
+  /**
+   * Returns true if package with specified binary name exists.
+   */
+  fun packageExists(packageName: String): Boolean
 }
